@@ -97,3 +97,9 @@ wikipedia==1.4.0
 wrapt==1.16.0
 yarl==1.9.4
 zipp==3.17.0
+fastapi-health==0.4.0
+python-multipart==0.0.6
+langchain==0.1.1
+langchain-experimental==0.0.49
+langchain-openai==0.0.2.post1
+neo4j==5.16.0
