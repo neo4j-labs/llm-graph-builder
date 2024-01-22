@@ -1,4 +1,4 @@
-# llm-graph-builder
+## llm-graph-builder
 
 # Project Overview
 Welcome to our project! This project is built using FastAPI framework to create a fast and modern API with Python.
@@ -21,10 +21,24 @@ cd llm-graph-builder
 
 pip install -t requirement.txt
 
-3. Run the server:
+# Run backend project using unicorn
+Run the server:
 uvicorn score:app --reload
 
-4. Acces the API Documentation
+# Run project using docker
+# prerequisite 
+Before proceding, ensure the following software is installed on your machine
+Docker : https://www.docker.com/
+
+1. Build the docker image
+   docker build -t your_image_name .
+   Replace `your_image_name` with the meaningful name for your Docker image
+
+2. Run the Docker Container
+    docker run -it -p 8000:8000 your_image_name
+    Replcae `8000` with the desired port.
+
+# Acces the API Documentation
 Open your browser and navidate to
 http://127.0.0.1:8000/docs for Swagger UI or
 http://127.0.0.1:8000/redocs for ReDoc.
