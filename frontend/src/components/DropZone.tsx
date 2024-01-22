@@ -7,16 +7,17 @@ export default function DropZone() {
   const [files, setFiles] = useState<Partial<globalThis.File>[] | []>([]);
 
   const fileUpload = async (file: any) => {
-    const url = 'http://127.0.0.1:8000/predict';
+    const url = 'https://animated-space-broccoli-jpgjg6pg59qcp7pg-8000.app.github.dev';
     try {
       const formData = new FormData();
-      formData.append('file', file);
-      const response = await axios.post(
-        `${url}/upload_file`,
-
-        formData
-      );
+      formData.append("file",file)
+      const response = await axios.post( `${url}/predict`,formData,{
+        headers:{
+          "Content-Type":"multipart/form-data"
+        }
+      });
       console.log(response);
+      setFiles((files) => [...files, file]);
     } catch (error) {
       console.log(error);
     }
@@ -36,8 +37,9 @@ export default function DropZone() {
             accept: { 'application/pdf': ['.pdf'] },
             onDrop: (f: Partial<globalThis.File>[]) => {
               if (f.length) {
-                setFiles((files) => [...files, ...f]);
-                fileUpload(files);
+                console.log(f)
+                // setFiles((files) => [...files, ...f]);
+                fileUpload(f[0]);
               }
             },
           }}
