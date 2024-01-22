@@ -3,7 +3,7 @@ import uvicorn
 from fastapi import FastAPI, Depends
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
-from src.pdf_kg_neo import *
+from src.main import *
 
 def healthy_condition():
     return {"healthy": True}

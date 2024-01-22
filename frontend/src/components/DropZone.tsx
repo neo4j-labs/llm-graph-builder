@@ -17,7 +17,11 @@ export default function DropZone() {
         }
       });
       console.log(response);
-      setFiles((files) => [...files, file]);
+      if (response.data!="Failure") {
+        setFiles((files) => [...files, file]);
+      }else{
+        throw new Error("Failed to create KG")
+      }
     } catch (error) {
       console.log(error);
     }
