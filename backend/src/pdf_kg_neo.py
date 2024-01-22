@@ -23,17 +23,17 @@ def predict(filename):
       f.write(filename.read())
     loader = PyPDFLoader('temp.pdf')
     pages = loader.load_and_split()
-
+    # print(pages)
     for i in range(0,len(pages)):
       pages[i]=Document(page_content=pages[i].page_content.replace('\n',' '), metadata={"source": "local"})
 
-    graph_documents = diffbot_nlp.convert_to_graph_documents(pages[3:4])
-
+    graph_documents = diffbot_nlp.convert_to_graph_documents(pages)
+    print(graph_documents)
     graph.add_graph_documents(graph_documents)
 
     graph.refresh_schema()
 
-    print(graph_documents)
+   
     return 'Success'
   except Exception as e:
     print(e)
