@@ -50,5 +50,9 @@ http://127.0.0.1:8000/redocs for ReDoc.
 
 `app/` : Directory containing additional module routers, or utilities
 
+## Configuration
+
+Update the envirnment variable in `.env` file.
+
 ## Contact
 For questions or support, feel free to contact us at christopher.crosbie@neo4j.com or michael.hunger@neo4j.com
