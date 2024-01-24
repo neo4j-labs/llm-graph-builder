@@ -54,5 +54,15 @@ http://127.0.0.1:8000/redocs for ReDoc.
 
 Update the envirnment variable in `.env` file.
 
+`OPENAI_API_KEY`: Open AI key to use LLM
+
+`DIFFBOT_API_KEY` : Diffbot API key to use DiffbotGraphTransformer
+
+`NEO4J_URI` : Neo4j URL
+
+`NEO4J_USERNAME` : Neo4J database user name
+
+`NEO4J_PASSWORD` : Neo4j datanase user password
+
 ## Contact
 For questions or support, feel free to contact us at christopher.crosbie@neo4j.com or michael.hunger@neo4j.com

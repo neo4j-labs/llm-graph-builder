@@ -27,15 +27,9 @@ app.add_middleware(
 app.add_api_route("/health", health([healthy_condition, healthy]))
 
 
-@app.post('/predict')
-# async def predict():
-#     return predict(filename)
-#     # return batch_predict()
-
-async def kg_creation(file: UploadFile = File(...)):
-    # file_name = file.filename.split(".")[-1] in ("pdf")
-    # print(extension)
-    return predict(file.file)
+@app.post('/extract')
+async def body_kg_creation_predict_post(file: UploadFile = File(...)):
+    return extract(file)
 
 if __name__ == "__main__":
     uvicorn.run(app)
