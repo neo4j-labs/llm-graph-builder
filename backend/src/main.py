@@ -18,6 +18,7 @@ diffbot_api_key = os.environ.get('DIFFBOT_API_KEY')
 diffbot_nlp = DiffbotGraphTransformer(diffbot_api_key=diffbot_api_key)
 graph = Neo4jGraph(url=url, username=username, password=password)
 
+
 def extract(file):
   try:
     start_time = datetime.now()
