@@ -20,6 +20,7 @@ diffbot_api_key = os.environ.get('DIFFBOT_API_KEY')
 diffbot_nlp = DiffbotGraphTransformer(diffbot_api_key=diffbot_api_key)
 graph = Neo4jGraph(url=url, username=username, password=password)
 
+
 def extract(file):
   try:
     start_time = datetime.now()
@@ -32,21 +33,14 @@ def extract(file):
     print(metadata)
     for i in range(0,len(pages)):
       pages[i]=Document(page_content=pages[i].page_content.replace('\n',' '), metadata=metadata)
-
-    total_nodes_before_graph = calculate_nodes_relationship("MATCH (n) RETURN count(n) as count")
-    total_relationship_before_graph = calculate_nodes_relationship("MATCH ()-[r]->() RETURN count(r) as count")
     
     graph_documents = diffbot_nlp.convert_to_graph_documents(pages)
-    print(graph_documents)
+    # print(graph_documents)
     graph.add_graph_documents(graph_documents)
 
     graph.refresh_schema()
-
-    total_nodes_after_graph = calculate_nodes_relationship("MATCH (n) RETURN count(n) as count")
-    total_relationship_after_graph = calculate_nodes_relationship("MATCH ()-[r]->() RETURN count(r) as count")
-
-    nodes_created = total_nodes_after_graph[0]['count'] - total_nodes_before_graph[0]['count']
-    relationships_created = total_relationship_after_graph[0]['count'] - total_relationship_before_graph[0]['count']
+    nodes_created =len(graph_documents[0].nodes)
+    relationships_created = len(graph_documents[0].relationships)
 
     end_time = datetime.now()
     processed_time = end_time - start_time
@@ -54,7 +48,8 @@ def extract(file):
     output = {
         "nodeCount": nodes_created,
         "relationshipCount": relationships_created,
-        "processingTime": processed_time.total_seconds()
+        "processingTime": processed_time.total_seconds(),
+        "status" : "success"
     }
     
     return  JSONResponse(content=jsonable_encoder(output))
