@@ -9,6 +9,8 @@ from datetime import datetime
 import os
 import json
 import csv
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 load_dotenv()
 
 url =os.environ.get('NEO4J_URI')
@@ -55,7 +57,7 @@ def extract(file):
         "processingTime": processed_time.total_seconds()
     }
     
-    return json.dumps(output)
+    return  JSONResponse(content=jsonable_encoder(output))
   except Exception as e:
     print(e)
     return 'Failure'

@@ -1,9 +1,8 @@
 import { Dropzone, Box } from '@neo4j-ndl/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import FileTable from './FileTable';
-import axios from 'axios';
-import { Button } from '@neo4j-ndl/react';
 import Loader from '../utils/Loader';
+import { uploadAPI } from '../services/Upload';
 
 interface CustomFile extends Partial<globalThis.File> {
   processing: string,
@@ -14,27 +13,22 @@ export default function DropZone() {
 
   const [filesdata, setFilesdata] = useState<CustomFile[] | []>([]);
   const [files, setFiles] = useState<File[] | []>([]);
-  const [isloading, setisLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
   const fileUpload = async (file: File) => {
-    // const url = 'https://animated-space-broccoli-jpgjg6pg59qcp7pg-8000.app.github.dev';
-    const origin = window.location.origin.split("-");
-    origin[origin.length - 1] = "8000";
-    const finalurl = `${origin.join("-")}.app.github.dev`
-    console.log(finalurl);
     try {
-      const formData = new FormData();
-      formData.append("file", file)
-      const response = await axios.post(`${finalurl}/predict`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data"
-        }
-      });
-      console.log(response);
-    } catch (error) {
-      console.log(error);
+      setIsLoading(true);
+      const apiResponse = await uploadAPI(file);
+      // console.log('api', apiResponse.data.processingTime);
+      setFilesdata((prevfiles) => prevfiles.map((file) => ({ name: file.name, type: file.type, size: file.size, processing: JSON.parse(apiResponse?.data.processingTime), status: apiResponse?.statusText, NodesCount: JSON.parse(apiResponse?.data?.nodeCount) })));
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    if (files.length > 0) { fileUpload(files[files.length - 1]) }
+  }, [files]);
   return (
     <>
       <Box
@@ -45,28 +39,22 @@ export default function DropZone() {
         }}
       >
         <Dropzone
-          loadingComponent={isloading && <Loader />}
+          loadingComponent={isLoading && <Loader />}
           isTesting={true}
           dropZoneOptions={{
             accept: { 'application/pdf': ['.pdf'] },
             onDrop: (f: Partial<globalThis.File>[]) => {
-              setisLoading(false)
+              setIsLoading(false)
               if (f.length) {
-                console.log(f)
                 const defaultValues: CustomFile = {
                   processing: "None",
                   status: "None",
                   NodesCount: 0,
                 }
                 const updatedFiles: CustomFile[] = f.map((file) => ({ name: file.name, type: file.type, size: file.size, ...defaultValues, }))
-                setFiles((prevfiles) => [...prevfiles, ...(f as File[])])
+                setFiles((prevfiles) => [...prevfiles, ...(f as File[])]);
                 setFilesdata((prevfilesdata) => [...prevfilesdata, ...updatedFiles]);
-
-                // fileUpload(f[0]);
               }
-            },
-            onDragEnter: () => {
-              setisLoading(true)
             }
           }}
         />
@@ -74,8 +62,7 @@ export default function DropZone() {
 
       <div style={{ marginTop: '15px', width: '100%' }}>
         <div>
-          {filesdata.length > 0 && <FileTable files={filesdata} />}
-          {filesdata.length > 0 && <Button onClick={() => fileUpload(files[0])}>Generate Graph</Button>}
+          {!isLoading && filesdata.length > 0 && <FileTable files={filesdata} />}
         </div>
       </div>
     </>

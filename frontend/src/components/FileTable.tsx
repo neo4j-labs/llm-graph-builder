@@ -1,18 +1,19 @@
 import { DataGrid } from '@neo4j-ndl/react';
 import { useState, useEffect } from 'react';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
-interface CustomFile extends Partial<globalThis.File>{
-  processing:string,
-  status:string,
-  NodesCount:number
+import { formatFileSize } from '../utils/utils';
+// import Loader from '../utils/Loader';
+
+interface CustomFile extends Partial<globalThis.File> {
+  processing: string,
+  status: string,
+  NodesCount: number
 }
 export default function FileTable({ files }: { files: CustomFile[] | [] }) {
-  const bytesToMb=(bytes:any)=>{
-    return (bytes/(1024*1024)).toFixed(2);
-  }
-  console.log(files)
   const [data, setData] = useState([...files]);
+  // const [loading, setIsLoading] = useState(false);
   const columnHelper = createColumnHelper<CustomFile>();
+  // console.log('hello ', data);
   const columns = [
     columnHelper.accessor('name', {
       cell: (info) => info.getValue(),
@@ -20,7 +21,7 @@ export default function FileTable({ files }: { files: CustomFile[] | [] }) {
     }),
     columnHelper.accessor((row) => row.size, {
       id: 'fileSize',
-      cell: (info) => <i>{bytesToMb(info.getValue())}MB</i>,
+      cell: (info) => <i>{formatFileSize(info.getValue())}</i>,
       header: () => <span>File Size</span>,
       footer: (info) => info.column.id,
     }),
@@ -30,34 +31,56 @@ export default function FileTable({ files }: { files: CustomFile[] | [] }) {
       header: () => <span>File Type</span>,
       footer: (info) => info.column.id,
     }),
-    columnHelper.accessor((row)=>row.processing,{
-      id:"processing",
+    columnHelper.accessor((row) => row.processing, {
+      id: "processing",
       cell: (info) => <i>{info.getValue()}</i>,
       header: () => <span>Processing Time</span>,
       footer: (info) => info.column.id,
     }),
-    columnHelper.accessor((row)=>row.status,{
-      id:"status",
+    columnHelper.accessor((row) => row.status, {
+      id: "status",
       cell: (info) => <i>{info.getValue()}</i>,
       header: () => <span>Status</span>,
       footer: (info) => info.column.id,
     }),
-    columnHelper.accessor((row)=>row.NodesCount,{
-      id:"NodesCount",
+    columnHelper.accessor((row) => row.NodesCount, {
+      id: "NodesCount",
       cell: (info) => <i>{info.getValue()}</i>,
       header: () => <span>Nodes Count</span>,
       footer: (info) => info.column.id,
     })
   ];
+
   useEffect(() => {
     setData([...files]);
+    // setIsLoading(false);
   }, [files]);
+
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
+  // TO DO
+  // const table = () => {
+  //   const tableData = useMemo(
+  //     () => (loading ? Array(30).fill({}) : data),
+  //     [loading, data]
+  //   );
+  //   const tableColumns = useMemo(
+  //     () =>
+  //       loading
+  //         ? columns.map((column) => ({
+  //           ...column,
+  //           Cell: () => <Loader />,
+  //         }))
+  //         : columns,
+  //     [loading, columns]
+  //   );
+  //   useReactTable({ columns: tableColumns, data: tableData, getCoreRowModel: getCoreRowModel(), });
+
+  // }
 
   return (
     <>
@@ -70,10 +93,10 @@ export default function FileTable({ files }: { files: CustomFile[] | [] }) {
             styling={{
               zebraStriping: false,
               borderStyle: 'all-sides',
-              
+
             }}
           />
-          
+
         </div>
       ) : null}
     </>
