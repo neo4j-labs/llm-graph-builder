@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  fastapi-app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/app
+    container_name: fastapi-app
+    ports:
+      - "8000:8000"
+
+  react-app:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend:/app
+    container_name: react-app
+    ports:
+      - "5173:5173"
