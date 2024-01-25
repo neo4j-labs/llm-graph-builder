@@ -18,11 +18,39 @@ export default function DropZone() {
   const fileUpload = async (file: File) => {
     try {
       setIsLoading(true);
+      setFilesdata((prevfiles) => prevfiles.map((curfile) => {
+        if (file.name == curfile.name) {
+          return {
+            ...curfile,
+            status: "Processing"
+          }
+        } else {
+          return curfile
+        }
+      }))
       const apiResponse = await uploadAPI(file);
-      // console.log('api', apiResponse.data.processingTime);
-      setFilesdata((prevfiles) => prevfiles.map((file) => ({ name: file.name, type: file.type, size: file.size, processing: JSON.parse(apiResponse?.data.processingTime), status: apiResponse?.statusText, NodesCount: JSON.parse(apiResponse?.data?.nodeCount) })));
-    } finally {
+      console.log('api', apiResponse.data);
+      if (apiResponse.data != "Failure") {
+        setFilesdata((prevfiles) => prevfiles.map((curfile) => {
+          if (file.name == curfile.name) {
+            return {
+              ...curfile,
+              processing: apiResponse?.data.processingTime,
+              status: apiResponse?.data?.status,
+              NodesCount: apiResponse?.data?.nodeCount
+            }
+          } else {
+            return curfile
+          }
+        }));
+        setIsLoading(false);
+      } else {
+        throw new Error("API Failure")
+      }
+    } catch (err) {
+      console.log(err);
       setIsLoading(false);
+      setFilesdata((prevfiles) => prevfiles.map((f) => ({ ...f, status: "Failed" } as CustomFile)));
     }
   };
 
@@ -62,7 +90,7 @@ export default function DropZone() {
 
       <div style={{ marginTop: '15px', width: '100%' }}>
         <div>
-          {!isLoading && filesdata.length > 0 && <FileTable files={filesdata} />}
+          {filesdata.length > 0 && <FileTable files={filesdata} />}
         </div>
       </div>
     </>
