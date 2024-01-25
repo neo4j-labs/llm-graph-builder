@@ -50,7 +50,16 @@ export default function DropZone() {
     } catch (err) {
       console.log(err);
       setIsLoading(false);
-      setFilesdata((prevfiles) => prevfiles.map((f) => ({ ...f, status: "Failed" } as CustomFile)));
+      setFilesdata((prevfiles) => prevfiles.map((curfile) => {
+        if (file.name == curfile.name) {
+          return {
+            ...curfile,
+            status: "Failed"
+          }
+        } else {
+          return curfile
+        }
+      }))
     }
   };
 
