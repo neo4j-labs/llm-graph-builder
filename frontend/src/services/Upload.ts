@@ -18,4 +18,4 @@ const uploadAPI = async (file: any) => {
     }
 }
 
-export {uploadAPI};
+export { uploadAPI };
