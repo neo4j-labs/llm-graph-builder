@@ -23,6 +23,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./frontend:/app
+      - /app/node_modules
     environment:
       - BACKEND_API_URL=${BACKEND_API_URL-http://backend:8000}
     container_name: frontend
