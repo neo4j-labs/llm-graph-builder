@@ -45,6 +45,7 @@ export default function Content() {
           alignItems: 'center',
           gap: 1,
         }}>
+          { /*
           <ConnectionModal
             open={openConnection}
             setOpenConnection={setOpenConnection}
@@ -63,6 +64,7 @@ export default function Content() {
           ) : (
             <Button onClick={() => disconnect().then(() => setConnectionStatus(false))}>Disconnect</Button>
           )}
+          */ }
         </div>
         <Flex
           borderRadius="xl"

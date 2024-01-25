@@ -23,6 +23,8 @@ services:
       - net
 
   frontend:
+    depends_on:
+      - backend
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -30,7 +32,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - BACKEND_API_URL=${BACKEND_API_URL-http://backend:8000}
+      - BACKEND_API_URL=${BACKEND_API_URL-http://localhost:8000}
     container_name: frontend
     ports:
       - "5173:5173"
