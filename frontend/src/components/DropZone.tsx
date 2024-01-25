@@ -4,12 +4,12 @@ import FileTable from './FileTable';
 import Loader from '../utils/Loader';
 import { uploadAPI } from '../services/Upload';
 import { healthStatus } from '../services/HealthStatus';
-
-
+import { v4 as uuidv4 } from 'uuid';
 interface CustomFile extends Partial<globalThis.File> {
   processing: string,
   status: string,
-  NodesCount: number
+  NodesCount: number,
+  id: string,
 }
 export default function DropZone() {
 
@@ -18,11 +18,11 @@ export default function DropZone() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
 
-  const fileUpload = async (file: File) => {
+  const fileUpload = async (file: File, uid: string) => {
     try {
       setIsLoading(true);
       setFilesdata((prevfiles) => prevfiles.map((curfile) => {
-        if (file.name == curfile.name) {
+        if (curfile.id == uid) {
           return {
             ...curfile,
             status: "Processing"
@@ -35,10 +35,10 @@ export default function DropZone() {
       console.log('api', apiResponse.data);
       if (apiResponse.data != "Failure") {
         setFilesdata((prevfiles) => prevfiles.map((curfile) => {
-          if (file.name == curfile.name) {
+          if (curfile.id == uid) {
             return {
               ...curfile,
-              processing: apiResponse?.data.processingTime,
+              processing: apiResponse?.data.processingTime.toFixed(2),
               status: apiResponse?.data?.status,
               NodesCount: apiResponse?.data?.nodeCount
             }
@@ -54,7 +54,7 @@ export default function DropZone() {
       console.log(err);
       setIsLoading(false);
       setFilesdata((prevfiles) => prevfiles.map((curfile) => {
-        if (file.name == curfile.name) {
+        if (curfile.id == uid) {
           return {
             ...curfile,
             status: "Failed"
@@ -77,7 +77,9 @@ export default function DropZone() {
     getHealthStatus()
   }, [])
   useEffect(() => {
-    if (files.length > 0) { fileUpload(files[files.length - 1]) }
+    if (files.length > 0) {
+      fileUpload(files[files.length - 1], filesdata[filesdata.length - 1].id)
+    }
   }, [files]);
   return (
     <>
@@ -108,6 +110,7 @@ export default function DropZone() {
                     processing: "None",
                     status: "None",
                     NodesCount: 0,
+                    id: uuidv4()
                   }
                   const updatedFiles: CustomFile[] = f.map((file) => ({ name: file.name, type: file.type, size: file.size, ...defaultValues, }))
                   setFiles((prevfiles) => [...prevfiles, ...(f as File[])]);
