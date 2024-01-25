@@ -2,6 +2,9 @@ version: '3'
 
 services:
   backend:
+#    env_file:
+#      - path: ./backend/.env
+#        required: false
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -16,6 +19,8 @@ services:
     container_name: backend
     ports:
       - "8000:8000"
+    networks:
+      - net
 
   frontend:
     build:
@@ -29,3 +34,8 @@ services:
     container_name: frontend
     ports:
       - "5173:5173"
+    networks:
+      - net
+
+networks:
+  net:
