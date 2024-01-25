@@ -16,7 +16,7 @@ export default function DropZone() {
   const [filesdata, setFilesdata] = useState<CustomFile[] | []>([]);
   const [files, setFiles] = useState<File[] | []>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isbackendconnected, setisbackendconnected] = useState<boolean>(false);
+  const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
 
   const fileUpload = async (file: File) => {
     try {
@@ -69,9 +69,9 @@ export default function DropZone() {
     async function getHealthStatus() {
       try {
         const response = await healthStatus();
-        setisbackendconnected(response.data.healthy)
+        setIsBackendConnected(response.data.healthy)
       } catch (error) {
-        setisbackendconnected(false)
+        setIsBackendConnected(false)
       }
     }
     getHealthStatus()
@@ -92,10 +92,10 @@ export default function DropZone() {
         <Typography variant='body-medium' style={{ display: 'flex', marginBlock: "10px", marginLeft: "5px" }}>
           Backend connection Status:
           <Typography variant='body-medium' style={{ marginLeft: '10px' }}>
-            {!isbackendconnected ? <Label color='danger'>Not connected</Label> : <Label color='success'>Connected</Label>}
+            {!isBackendConnected ? <Label color='danger'>Not connected</Label> : <Label color='success'>Connected</Label>}
           </Typography>
         </Typography>
-        {isbackendconnected &&
+        {isBackendConnected &&
           <Dropzone
             loadingComponent={isLoading && <Loader />}
             isTesting={true}
