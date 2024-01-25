@@ -3,11 +3,12 @@ import uvicorn
 from fastapi import FastAPI, Depends
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from src.main import *
 
 def healthy_condition():
-    return {"healthy": True}
-
+    return JSONResponse(content=jsonable_encoder({"healthy": True}))
 
 def healthy():
     return True
