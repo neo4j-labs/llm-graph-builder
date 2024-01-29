@@ -17,6 +17,12 @@ npm install -g yarn
 yarn i
 yarn run dev
 ```
+
+##
+Do run yarn add -- package name to get project updated with required dependencies.
+
+29/01/2024> Latest dependency
+yarn add uuid 
 ##
 Upload api url should be picked from: ports tab under codespace environement // For demo
 ## What it looks like

@@ -12,6 +12,7 @@ interface CustomFile extends Partial<globalThis.File> {
   status: string;
   NodesCount: number;
   id: string;
+  relationshipCount: number,
 }
 
 export default function DropZone() {
@@ -48,6 +49,7 @@ export default function DropZone() {
                 processing: apiResponse?.data.processingTime.toFixed(2),
                 status: apiResponse?.data?.status,
                 NodesCount: apiResponse?.data?.nodeCount,
+                relationshipCount: apiResponse?.data?.relationshipCount,
               };
             } else {
               return curfile;
@@ -128,6 +130,7 @@ export default function DropZone() {
                     status: 'None',
                     NodesCount: 0,
                     id: uuidv4(),
+                    relationshipCount: 0,
                   };
                   const updatedFiles: CustomFile[] = f.map((file) => ({
                     name: file.name,

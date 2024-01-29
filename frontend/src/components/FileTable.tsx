@@ -2,12 +2,14 @@ import { DataGrid } from '@neo4j-ndl/react';
 import { useState, useEffect } from 'react';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
 import { formatFileSize } from '../utils/utils';
-import { v4 as uuidv4 } from 'uuid';
+
+
 interface CustomFile extends Partial<globalThis.File> {
   processing: string,
   status: string,
   NodesCount: number,
-  id:string
+  id: string,
+  relationshipCount: number,
 }
 export default function FileTable({ files }: { files: CustomFile[] | [] }) {
   const [data, setData] = useState([...files]);
@@ -46,6 +48,12 @@ export default function FileTable({ files }: { files: CustomFile[] | [] }) {
       id: "NodesCount",
       cell: (info) => <i>{info.getValue()}</i>,
       header: () => <span>Nodes Count</span>,
+      footer: (info) => info.column.id,
+    }),
+    columnHelper.accessor((row) => row.relationshipCount, {
+      id: "relationshipCount",
+      cell: (info) => <i>{info.getValue()}</i>,
+      header: () => <span>Relationships</span>,
       footer: (info) => info.column.id,
     })
   ];
