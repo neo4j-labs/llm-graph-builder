@@ -45,6 +45,7 @@ export default function Content() {
           alignItems: 'center',
           gap: 1,
         }}>
+          { /*
           <ConnectionModal
             open={openConnection}
             setOpenConnection={setOpenConnection}
@@ -63,8 +64,9 @@ export default function Content() {
           ) : (
             <Button onClick={() => disconnect().then(() => setConnectionStatus(false))}>Disconnect</Button>
           )}
+          */ }
         </div>
-        {connectionStatus && <Flex
+        <Flex
           borderRadius="xl"
           flexDirection="column"
           style={{
@@ -77,7 +79,7 @@ export default function Content() {
           }}
         >
           <DropZone />
-        </Flex>}
+        </Flex>
       </div>
     </>
   );
