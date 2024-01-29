@@ -1,6 +1,7 @@
 import { Button, Dialog, TextInput, Dropdown } from '@neo4j-ndl/react';
 import { useState } from 'react';
 import { setDriver } from '../utils/Driver';
+import { useCredentials } from '../context/UserCredentials';
 
 export default function ConnectionModal({ open, setOpenConnection, setConnectionStatus }) {
   const protocols = ['neo4j', 'neo4j+s', 'neo4j+ssc', 'bolt', 'bolt+s', 'bolt+ssc'];
@@ -10,9 +11,11 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
   const [database, setDatabase] = useState<string>('recommendations');
   const [username, setUsername] = useState<string>('recommendations');
   const [password, setPassword] = useState<string>('recommendations');
+  const {setUserCredentials}=useCredentials();
 
   function submitConnection() {
     const connectionURI = `${selectedProtocol}://${hostname}:${port}`;
+    setUserCredentials({uri:hostname,userName:username,password});
     setDriver(connectionURI, username, password).then((isSuccessful) => {
       setConnectionStatus(isSuccessful);
     });

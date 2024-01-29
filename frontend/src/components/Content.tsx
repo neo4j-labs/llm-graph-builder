@@ -2,19 +2,21 @@ import { useEffect, useState } from 'react';
 import ConnectionModal from './ConnectionModal';
 import { Button, Label, Typography, Flex } from '@neo4j-ndl/react';
 import { setDriver, disconnect } from '../utils/Driver';
-import { useBrowseCardVisibility } from '../context/BrowseToggle';
 import DropZone from './DropZone';
+import { useCredentials } from '../context/UserCredentials';
 
 export default function Content() {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
-  const { showBrowseCard } = useBrowseCardVisibility()
+  const { setUserCredentials } = useCredentials();
+
   useEffect(() => {
     if (!init) {
       let session = localStorage.getItem('neo4j.connection');
       if (session) {
         let neo4jConnection = JSON.parse(session);
+        setUserCredentials({ uri: neo4jConnection.uri, userName: neo4jConnection.user, password: neo4jConnection.password })
         setDriver(neo4jConnection.uri, neo4jConnection.user, neo4jConnection.password).then((isSuccessful: boolean) => {
           setConnectionStatus(isSuccessful);
         });
@@ -26,7 +28,6 @@ export default function Content() {
   return (
     <>
       <div
-
         style={{
           width: '100%',
           padding: 3,
@@ -77,9 +78,7 @@ export default function Content() {
         >
           <DropZone />
         </Flex>}
-
       </div>
-
     </>
   );
 }
