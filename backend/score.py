@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Form
 import uvicorn
 from fastapi import FastAPI, Depends
 from fastapi_health import health
@@ -30,7 +30,7 @@ app.add_api_route("/health", health([healthy_condition, healthy]))
 
 
 @app.post('/extract')
-async def body_kg_creation_predict_post(uri, userName, password,file: UploadFile = File(...)):
+async def body_kg_creation_predict_post(uri= Form(), userName= Form(), password= Form(),file: UploadFile = File(...)):
     return extract(uri, userName, password,file)
 
 if __name__ == "__main__":
