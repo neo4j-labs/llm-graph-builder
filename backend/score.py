@@ -8,7 +8,7 @@ from fastapi.encoders import jsonable_encoder
 from src.main import *
 
 def healthy_condition():
-    return JSONResponse(content=jsonable_encoder({"healthy": True}))
+    return {"healthy": True}
 
 def healthy():
     return True
@@ -29,8 +29,8 @@ app.add_api_route("/health", health([healthy_condition, healthy]))
 
 
 @app.post('/extract')
-async def body_kg_creation_predict_post(file: UploadFile = File(...)):
-    return extract(file)
+async def body_kg_creation_predict_post(uri, userName, password,file: UploadFile = File(...)):
+    return extract(uri, userName, password,file)
 
 if __name__ == "__main__":
     uvicorn.run(app)
