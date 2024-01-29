@@ -8,7 +8,8 @@ from fastapi.encoders import jsonable_encoder
 from src.main import *
 
 def healthy_condition():
-    return {"healthy": True}
+    output={"healthy": True}
+    return output
 
 def healthy():
     return True

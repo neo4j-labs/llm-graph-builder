@@ -2,11 +2,12 @@ import { DataGrid } from '@neo4j-ndl/react';
 import { useState, useEffect } from 'react';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
 import { formatFileSize } from '../utils/utils';
-
+import { v4 as uuidv4 } from 'uuid';
 interface CustomFile extends Partial<globalThis.File> {
   processing: string,
   status: string,
-  NodesCount: number
+  NodesCount: number,
+  id:string
 }
 export default function FileTable({ files }: { files: CustomFile[] | [] }) {
   const [data, setData] = useState([...files]);
