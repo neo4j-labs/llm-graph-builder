@@ -17,6 +17,7 @@ load_dotenv()
 # username = os.environ.get('NEO4J_USERNAME')
 # password = os.environ.get('NEO4J_PASSWORD')
 
+
 def extract(uri, userName, password, file):
   try:
     start_time = datetime.now()
@@ -32,7 +33,7 @@ def extract(uri, userName, password, file):
     source_node = "fileName: '{}'"
     update_node_prop = "SET s.fileSize = '{} KB', s.fileType = '{}' ,s.createdAt ='{}',s.status = 'In-Progess',s.nodeCount= 0, s.relationshipCount = 0"
     #create source node as file name if not exist
-    run_cyper_query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,start_time))
+    run_cyper_query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,start_time),graph)
 
     with open('temp.pdf','wb') as f:
       f.write(file.file.read())
@@ -54,7 +55,7 @@ def extract(uri, userName, password, file):
     processed_time = end_time - start_time
     
     update_node_prop = "SET s.fileSize = '{} KB', s.fileType = '{}' ,s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = 'completed', s.errorMessgae = '',s.nodeCount= {}, s.relationshipCount = {}"
-    run_cyper_query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,start_time,end_time,round(processed_time.total_seconds(),2),nodes_created,relationships_created))
+    run_cyper_query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,start_time,end_time,round(processed_time.total_seconds(),2),nodes_created,relationships_created),graph)
   
     output = {
         "nodeCount": nodes_created,
@@ -68,7 +69,7 @@ def extract(uri, userName, password, file):
     print(e)
     return 'Failure'
 
-def run_cyper_query(query_str):
+def run_cyper_query(query_str,graph):
   result = graph.query(query_str)
   return result
 
