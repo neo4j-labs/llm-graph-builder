@@ -2,7 +2,7 @@ import axios from 'axios';
 import { url } from '../utils/utils';
 const healthStatus = async () => {
     try {
-        const healthUrl = `${url()}/health`
+        const healthUrl = `${url()}health`
         const response = await axios.get(healthUrl);
         return response
     } catch (error) {
