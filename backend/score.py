@@ -29,8 +29,8 @@ app.add_api_route("/health", health([healthy_condition, healthy]))
 
 
 @app.post('/extract')
-async def extract_graph_from_file(uri= Form(), userName= Form(), password= Form(), files: List[UploadFile] = File(...)):
-    return extract_graph_from_file(uri, userName, password, files)
+async def extract_graph_from_file(uri= Form(), userName= Form(), password= Form(), file: UploadFile = File(...)):
+    return extract_graph_from_file(uri, userName, password, file)
 
 @app.get('/sources_list')
 async def get_source_list():
