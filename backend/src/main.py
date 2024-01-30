@@ -65,7 +65,7 @@ def extract_graph_from_file(uri, userName, password, file):
     graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,start_time,end_time,round(processed_time.total_seconds(),2),job_status,error_message,nodes_created,relationships_created))
 
     output = {
-        "fileSize":file_size+' KB',
+        "fileSize": file_size,
         "nodeCount": nodes_created,
         "relationshipCount": relationships_created,
         "processingTime": round(processed_time.total_seconds(),2),
