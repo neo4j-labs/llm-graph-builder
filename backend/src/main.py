@@ -19,7 +19,7 @@ load_dotenv()
 graph = Neo4jGraph();
 
 
-def extract(uri, userName, password, file):
+def extract_graph_from_file(uri, userName, password, file):
   try:
     start_time = datetime.now()
     job_status = "In-Progess"
@@ -37,7 +37,7 @@ def extract(uri, userName, password, file):
     source_node = "fileName: '{}'"
     update_node_prop = "SET s.fileSize = '{} KB', s.fileType = '{}' ,s.createdAt ='{}',s.status = '{}',s.nodeCount= 0, s.relationshipCount = 0"
     #create source node as file name if not exist
-    run_cyper_query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,start_time,job_status),graph)
+    graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,start_time,job_status))
 
     with open('temp.pdf','wb') as f:
       f.write(file.file.read())
@@ -62,7 +62,7 @@ def extract(uri, userName, password, file):
     error_message =""
 
     update_node_prop = "SET s.fileSize = '{} KB', s.fileType = '{}' ,s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessgae = '{}',s.nodeCount= {}, s.relationshipCount = {}"
-    run_cyper_query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,start_time,end_time,round(processed_time.total_seconds(),2),job_status,error_message,nodes_created,relationships_created))
+    graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,start_time,end_time,round(processed_time.total_seconds(),2),job_status,error_message,nodes_created,relationships_created))
 
     output = {
         "nodeCount": nodes_created,
@@ -76,16 +76,12 @@ def extract(uri, userName, password, file):
     job_status = "Failed"
     error_message = str(e)
     update_node_prop = "SET s.status = '{}', s.errorMessgae = '{}'"
-    run_cyper_query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
-    print('Unexpected Error: {e}')
-    return 'Unexpected Error: {e}'
+    graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
+    print(f'Unexpected Error: {str(e)[:200]}')
+    return f'Unexpected Error: {str(e)[:200]}'
 
-def run_cyper_query(query_str):
-  result = graph.query(query_str)
-  return result
-
-def sources_list_kg():
-  query = "MATCH(s:Source) RETURN s;"
+def get_source_list_from_graph():
+  query = "MATCH(s:Source) RETURN s ORDER BY s.updatedAt DESC;"
   result = graph.query(query)
   list_of_json_objects = [entry['s'] for entry in result]
   # Print the final result

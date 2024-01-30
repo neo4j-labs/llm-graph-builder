@@ -28,12 +28,12 @@ app.add_api_route("/health", health([healthy_condition, healthy]))
 
 
 @app.post('/extract')
-async def body_kg_creation_predict_post(uri= Form(), userName= Form(), password= Form(),file: UploadFile = File(...)):
-    return extract(uri, userName, password,file)
+async def extract_graph_from_file(uri= Form(), userName= Form(), password= Form(),file: UploadFile = File(...)):
+    return extract_graph_from_file(uri, userName, password,file)
 
 @app.get('/sources_list')
-async def get_list_kg_source_nodes():
-    return sources_list_kg()
+async def get_source_list():
+    return get_source_list_from_graph()
 
 if __name__ == "__main__":
     uvicorn.run(app)
