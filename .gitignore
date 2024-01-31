@@ -5,7 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
-
+/backend/graph
 # Distribution / packaging
 .Python
 build/
