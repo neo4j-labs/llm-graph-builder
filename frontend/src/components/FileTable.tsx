@@ -1,7 +1,6 @@
 import { DataGrid } from '@neo4j-ndl/react';
 import { useState, useEffect } from 'react';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
-import { formatFileSize } from '../utils/utils';
 
 interface CustomFile extends Partial<globalThis.File> {
   processing: string;
@@ -21,7 +20,7 @@ export default function FileTable({ files }: { files: CustomFile[] | [] }) {
     }),
     columnHelper.accessor((row) => row.size, {
       id: 'fileSize',
-      cell: (info) => <i>{formatFileSize(info.getValue())}</i>,
+      cell: (info) => <i>{info.getValue()}kb</i>,
       header: () => <span>File Size</span>,
       footer: (info) => info.column.id,
     }),

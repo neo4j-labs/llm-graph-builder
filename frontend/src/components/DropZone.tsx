@@ -22,59 +22,69 @@ export default function DropZone() {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
 
-  const fileUpload = async (file: File, uid: string) => {
-    try {
-      setIsLoading(true);
-      setFilesdata((prevfiles) =>
-        prevfiles.map((curfile) => {
-          if (curfile.id == uid) {
-            return {
-              ...curfile,
-              status: 'Processing',
-            };
-          } else {
-            return curfile;
-          }
-        })
-      );
-
-      const apiResponse = await uploadAPI(file, userCredentials);
-
-      if (apiResponse.data != 'Failure') {
+  const fileUpload = async (file: File, uid: number) => {
+    if (filesdata[uid].status == 'None') {
+      const apirequests = [];
+      try {
+        setIsLoading(true);
         setFilesdata((prevfiles) =>
-          prevfiles.map((curfile) => {
-            if (curfile.id == uid) {
+          prevfiles.map((curfile, idx) => {
+            if (idx == uid) {
               return {
                 ...curfile,
-                processing: apiResponse?.data.processingTime.toFixed(2),
-                status: apiResponse?.data?.status,
-                NodesCount: apiResponse?.data?.nodeCount,
-                relationshipCount: apiResponse?.data?.relationshipCount,
+                status: 'Processing',
               };
             } else {
               return curfile;
             }
           })
         );
+        const apiResponse = await uploadAPI(file, userCredentials);
+        apirequests.push(apiResponse);
+        Promise.allSettled(apirequests)
+          .then((r) => {
+            r.forEach((apiRes) => {
+              if (apiRes.status === 'fulfilled' && apiRes.value) {
+                if (apiRes?.value?.data != 'Unexpected Error') {
+                  setFilesdata((prevfiles) =>
+                    prevfiles.map((curfile, idx) => {
+                      if (idx == uid) {
+                        return {
+                          ...curfile,
+                          processing: apiRes?.value?.data?.processingTime?.toFixed(2),
+                          status: apiRes?.value?.data?.status,
+                          NodesCount: apiRes?.value?.data?.nodeCount,
+                          relationshipCount: apiRes?.value?.data?.relationshipCount,
+                        };
+                      } else {
+                        return curfile;
+                      }
+                    })
+                  );
+                  setIsLoading(false);
+                } else {
+                  throw new Error('API Failure');
+                }
+              }
+            });
+          })
+          .catch((err) => console.log(err));
+      } catch (err) {
+        console.log(err);
         setIsLoading(false);
-      } else {
-        throw new Error('API Failure');
+        setFilesdata((prevfiles) =>
+          prevfiles.map((curfile, idx) => {
+            if (idx == uid) {
+              return {
+                ...curfile,
+                status: 'Failed',
+              };
+            } else {
+              return curfile;
+            }
+          })
+        );
       }
-    } catch (err) {
-      console.log(err);
-      setIsLoading(false);
-      setFilesdata((prevfiles) =>
-        prevfiles.map((curfile) => {
-          if (curfile.id == uid) {
-            return {
-              ...curfile,
-              status: 'Failed',
-            };
-          } else {
-            return curfile;
-          }
-        })
-      );
     }
   };
 
@@ -92,7 +102,9 @@ export default function DropZone() {
 
   useEffect(() => {
     if (files.length > 0) {
-      fileUpload(files[files.length - 1], filesdata[filesdata.length - 1].id);
+      for (let i = 0; i < files.length; i++) {
+        fileUpload(files[i], i);
+      }
     }
   }, [files]);
 
