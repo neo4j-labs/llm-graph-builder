@@ -12,7 +12,7 @@ interface CustomFile extends Partial<globalThis.File> {
   status: string;
   NodesCount: number;
   id: string;
-  relationshipCount: number,
+  relationshipCount: number;
 }
 
 export default function DropZone() {
@@ -99,8 +99,6 @@ export default function DropZone() {
   return (
     <>
       <Box
-        borderRadius='xl'
-        className=' n-border n-border-palette-primary-border-strong'
         style={{
           width: '100%',
           padding: '0.8em',

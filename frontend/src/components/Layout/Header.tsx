@@ -24,7 +24,7 @@ export default function Header({ themeMode, toggleTheme }: { themeMode: string; 
         >
           <Typography variant='h6' component='a' href='#app-bar-with-responsive-menu' sx={{}}>
             <img
-              src={themeMode === 'dark' ? Neo4jLogoBW : Neo4jLogoColor }
+              src={themeMode === 'dark' ? Neo4jLogoBW : Neo4jLogoColor}
               style={{ height: '32px', minHeight: '32px', minWidth: '32px' }}
               alt='Neo4j Logo'
             />

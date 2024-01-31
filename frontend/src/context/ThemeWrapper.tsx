@@ -4,7 +4,7 @@ import QuickStarter from '../components/QuickStarter';
 import UserCredentialsWrapper from './UserCredentials';
 
 export const ThemeWrapperContext = createContext({
-  toggleColorMode: () => { },
+  toggleColorMode: () => {},
   colorMode: 'light' as string,
 });
 
