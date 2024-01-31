@@ -3,13 +3,12 @@ import { useState, useEffect } from 'react';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
 import { formatFileSize } from '../utils/utils';
 
-
 interface CustomFile extends Partial<globalThis.File> {
-  processing: string,
-  status: string,
-  NodesCount: number,
-  id: string,
-  relationshipCount: number,
+  processing: string;
+  status: string;
+  NodesCount: number;
+  id: string;
+  relationshipCount: number;
 }
 export default function FileTable({ files }: { files: CustomFile[] | [] }) {
   const [data, setData] = useState([...files]);
@@ -33,42 +32,40 @@ export default function FileTable({ files }: { files: CustomFile[] | [] }) {
       footer: (info) => info.column.id,
     }),
     columnHelper.accessor((row) => row.processing, {
-      id: "processing",
+      id: 'processing',
       cell: (info) => <i>{info.getValue()}</i>,
       header: () => <span>Processing Time</span>,
       footer: (info) => info.column.id,
     }),
     columnHelper.accessor((row) => row.status, {
-      id: "status",
+      id: 'status',
       cell: (info) => <i>{info.getValue()}</i>,
       header: () => <span>Status</span>,
       footer: (info) => info.column.id,
     }),
     columnHelper.accessor((row) => row.NodesCount, {
-      id: "NodesCount",
+      id: 'NodesCount',
       cell: (info) => <i>{info.getValue()}</i>,
       header: () => <span>Nodes Count</span>,
       footer: (info) => info.column.id,
     }),
     columnHelper.accessor((row) => row.relationshipCount, {
-      id: "relationshipCount",
+      id: 'relationshipCount',
       cell: (info) => <i>{info.getValue()}</i>,
       header: () => <span>Relationships</span>,
       footer: (info) => info.column.id,
-    })
+    }),
   ];
 
   useEffect(() => {
     setData([...files]);
   }, [files]);
 
-
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
-
 
   return (
     <>
@@ -81,10 +78,8 @@ export default function FileTable({ files }: { files: CustomFile[] | [] }) {
             styling={{
               zebraStriping: false,
               borderStyle: 'all-sides',
-
             }}
           />
-
         </div>
       ) : null}
     </>

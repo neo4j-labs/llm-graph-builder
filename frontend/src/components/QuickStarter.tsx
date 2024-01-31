@@ -1,5 +1,5 @@
 import Header from './Layout/Header';
-import PageLayout from './Layout/PageLayout';
+import Content from './Content';
 import React, { useState } from 'react';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
 
@@ -17,7 +17,7 @@ export default function QuickStarter() {
   return (
     <div>
       <Header themeMode={themeMode} toggleTheme={toggleColorMode} />
-      <PageLayout />
+      <Content />
     </div>
   );
 }
