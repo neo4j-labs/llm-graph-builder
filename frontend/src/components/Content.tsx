@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import ConnectionModal from './ConnectionModal';
 import { Button, Label, Typography, Flex } from '@neo4j-ndl/react';
 import { setDriver, disconnect } from '../utils/Driver';
-import DropZone from './DropZone';
+import LlmDropdown from './Dropdown';
 import { useCredentials } from '../context/UserCredentials';
+import FileTable from './FileTable';
 
 export default function Content() {
   const [init, setInit] = useState<boolean>(false);
@@ -52,7 +53,7 @@ export default function Content() {
           marginTop: '10px',
         }}
       >
-        <DropZone />
+        <LlmDropdown/>
       </Flex>
     </div>
   );

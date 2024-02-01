@@ -1,6 +1,8 @@
 import { DataGrid } from '@neo4j-ndl/react';
 import { useState, useEffect } from 'react';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
+import LlmDropdown from './Dropdown';
+import { Button } from '@neo4j-ndl/react';
 
 interface CustomFile extends Partial<globalThis.File> {
   processing: string;
@@ -69,17 +71,21 @@ export default function FileTable({ files }: { files: CustomFile[] | [] }) {
   return (
     <>
       {data ? (
-        <div className='n-w-full n-bg-light-neutral-text-weakest'>
-          <DataGrid
-            isResizable={true}
-            tableInstance={table}
-            isKeyboardNavigable={true}
-            styling={{
-              zebraStriping: false,
-              borderStyle: 'all-sides',
-            }}
-          />
-        </div>
+        <>
+          <div className='n-w-full'>
+            <DataGrid
+              isResizable={true}
+              tableInstance={table}
+              isKeyboardNavigable={true}
+              styling={{
+                zebraStriping: false,
+                borderStyle: 'all-sides',
+              }}
+            />
+          </div>
+          <div style={{ marginTop: '15px', width: '100%' }}><LlmDropdown />
+            <Button onClick={() => console.log('hello')}>Generate Graph</Button>
+          </div></>
       ) : null}
     </>
   );
