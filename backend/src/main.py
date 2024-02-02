@@ -9,6 +9,7 @@ from datetime import datetime
 import os
 import json
 import csv
+import traceback
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 load_dotenv()
@@ -18,26 +19,39 @@ load_dotenv()
 # password = os.environ.get('NEO4J_PASSWORD')
 graph = Neo4jGraph();
 
-
-def extract_graph_from_file(uri, userName, password, file):
+def create_source_node_graph(uri, userName, password, file):
   try:
     start_time = datetime.now()
-    job_status = "In-Progess"
+    job_status = "New"
     file_type = file.filename.split('.')[1]
     file_size = round(file.size/(1<<10), 2)
     file_name = file.filename
 
+    graph = Neo4jGraph(url=uri, username=userName, password=password)
+
+    source_node = "fileName: '{}'"
+    update_node_prop = "SET s.fileSize = '{} KB', s.fileType = '{}' ,s.createdAt ='{}',s.status = '{}'"
+    #create source node as file name if not exist
+    graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,start_time,job_status))
+    return create_api_response("Success",data="Source Node created succesfully")
+  except Exception as e:
+    job_status = "Failure"
+    error_message = str(e)
+    update_node_prop = "SET s.status = '{}', s.errorMessgae = '{}'"
+    graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
+    print(f'Exception Stack trace: {traceback.print_exc()}')
+    return create_api_response(job_status,error=error_message)
+
+def extract_graph_from_file(uri, userName, password, file):
+  try:
+    start_time = datetime.now()
+    file_name = file.filename
     diffbot_api_key = os.environ.get('DIFFBOT_API_KEY')
     diffbot_nlp = DiffbotGraphTransformer(diffbot_api_key=diffbot_api_key)
     
     graph = Neo4jGraph(url=uri, username=userName, password=password)
 
     metadata = {"source": "local","filename": file.filename, "filesize":file.size }
-    
-    source_node = "fileName: '{}'"
-    update_node_prop = "SET s.fileSize = '{} KB', s.fileType = '{}' ,s.createdAt ='{}',s.status = '{}',s.nodeCount= 0, s.relationshipCount = 0"
-    #create source node as file name if not exist
-    graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,start_time,job_status))
 
     with open('temp.pdf','wb') as f:
       f.write(file.file.read())
@@ -61,33 +75,49 @@ def extract_graph_from_file(uri, userName, password, file):
     job_status = "Completed"
     error_message =""
 
-    update_node_prop = "SET s.fileSize = '{} KB', s.fileType = '{}' ,s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessgae = '{}',s.nodeCount= {}, s.relationshipCount = {}"
-    graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,start_time,end_time,round(processed_time.total_seconds(),2),job_status,error_message,nodes_created,relationships_created))
+    source_node = "fileName: '{}'"
+    update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessgae = '{}',s.nodeCount= {}, s.relationshipCount = {}"
+    graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(start_time,end_time,round(processed_time.total_seconds(),2),job_status,error_message,nodes_created,relationships_created))
 
     output = {
-        "fileSize": file_size,
+        "fileName": file_name,
         "nodeCount": nodes_created,
         "relationshipCount": relationships_created,
         "processingTime": round(processed_time.total_seconds(),2),
         "status" : job_status
     }
     
-    return  JSONResponse(content=jsonable_encoder(output))
+    # return  JSONResponse(content=jsonable_encoder(output))
+    return create_api_response("Success",data=output)
   except Exception as e:
-    job_status = "Failed"
+    job_status = "Failure"
     error_message = str(e)
     update_node_prop = "SET s.status = '{}', s.errorMessgae = '{}'"
     graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
-    print(f'Unexpected Error: {str(e)[:200]}')
-    return f'Unexpected Error: {str(e)[:200]}'
+    print(f'Exception Stack trace: {traceback.print_exc()}')
+    return create_api_response(job_status,error=error_message)
 
 def get_source_list_from_graph():
-  query = "MATCH(s:Source) RETURN s ORDER BY s.updatedAt DESC;"
-  result = graph.query(query)
-  list_of_json_objects = [entry['s'] for entry in result]
-  # Print the final result
-  # print(list_of_json_objects)
-  return list_of_json_objects
+  try:
+    query = "MATCH(s:Source) RETURN s ORDER BY s.updatedAt DESC;"
+    result = graph.query(query)
+    list_of_json_objects = [entry['s'] for entry in result]
+    return create_api_response("Success",data=list_of_json_objects)
+  except Exception as e:
+    job_status = "Failure"
+    error_message = str(e)
+    return create_api_response(job_status,error=error_message)
+
+def create_api_response(status, data=None, error=None):
+  response = {"status": status}
+
+  if data is not None:
+    response["data"] = data
+
+  if error is not None:
+    response["error"] = error
+
+  return response
 
 # chain = GraphCypherQAChain.from_llm(
 #     cypher_llm=ChatOpenAI(temperature=0, model_name="gpt-4"),
