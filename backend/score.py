@@ -26,6 +26,9 @@ app.add_middleware(
 )
 app.add_api_route("/health", health([healthy_condition, healthy]))
 
+@app.post('/sources')
+async def create_source_knowledge_graph(uri= Form(), userName= Form(), password= Form(),file: UploadFile = File(...)):
+    return create_source_node_graph(uri, userName, password, file)
 
 @app.post('/extract')
 async def extract_knowledge_graph_from_file(uri= Form(), userName= Form(), password= Form(),file: UploadFile = File(...)):
