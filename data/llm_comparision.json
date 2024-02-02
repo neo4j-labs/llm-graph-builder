@@ -108,5 +108,16 @@
             "against",
             "on"
         ]
+    },{
+        "LLM": "Diffbot",
+        "File": "Football_news.pdf",
+        "Processing Time": "4.5s",
+        "Node count": 1,
+        "Relation count": 0,
+        "Nodes": [
+            "Maarten Paes"
+        ]
+        ,
+        "Relations": []
     }
 ]
