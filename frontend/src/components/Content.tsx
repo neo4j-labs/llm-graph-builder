@@ -35,7 +35,7 @@ export default function Content() {
       className='n-bg-palette-neutral-bg-default'
       style={{
         width: '100%',
-        height: 'calc(100dvh - 58px)',
+        height: 'calc(100dvh - 67px)',
         padding: 3,
         display: 'flex',
         flexDirection: 'column',
@@ -43,17 +43,44 @@ export default function Content() {
         gap: 1,
       }}
     >
+      <Flex className='w-full' alignItems='center' justifyContent='space-between' style={{ flexFlow: 'row' }}>
+        <ConnectionModal
+          open={openConnection}
+          setOpenConnection={setOpenConnection}
+          setConnectionStatus={setConnectionStatus}
+        />
+        <Typography variant='body-medium' style={{ display: 'flex', padding: '20px' }}>
+          Neo4j connection Status:
+          <Typography variant='body-medium' style={{ marginLeft: '10px' }}>
+            {!connectionStatus ? <Label color='danger'>Not connected</Label> : <Label color='success'>Connected</Label>}
+          </Typography>
+        </Typography>
+        {!connectionStatus ? (
+          <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
+            Connect to Neo4j
+          </Button>
+        ) : (
+          <Button className='mr-2.5' onClick={() => disconnect().then(() => setConnectionStatus(false))}>
+            Disconnect
+          </Button>
+        )}
+      </Flex>
       <Flex
         flexDirection='column'
         style={{
           padding: '12px',
-          justifyContent: 'center',
+          justifyContent: 'space-evenly',
           alignItems: 'center',
           width: '100%',
           marginTop: '10px',
+          height: '100%',
         }}
       >
-        <LlmDropdown/>
+        <FileTable></FileTable>
+        <div style={{ marginTop: '15px', width: '100%', display: 'flex', justifyContent: 'space-between' }}>
+          <LlmDropdown />
+          <Button onClick={() => console.log('hello')}>Generate Graph</Button>
+        </div>
       </Flex>
     </div>
   );

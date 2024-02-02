@@ -1,8 +1,7 @@
 import { DataGrid } from '@neo4j-ndl/react';
 import { useState, useEffect } from 'react';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
-import LlmDropdown from './Dropdown';
-import { Button } from '@neo4j-ndl/react';
+import { useFileContext } from '../context/UsersFiles';
 
 interface CustomFile extends Partial<globalThis.File> {
   processing: string;
@@ -11,13 +10,13 @@ interface CustomFile extends Partial<globalThis.File> {
   id: string;
   relationshipCount: number;
 }
-export default function FileTable({ files }: { files: CustomFile[] | [] }) {
-  const [data, setData] = useState([...files]);
+export default function FileTable() {
+  const { filesData } = useFileContext();
+  const [data, setData] = useState([...filesData]);
   const columnHelper = createColumnHelper<CustomFile>();
-  // console.log('hello ', data);
   const columns = [
     columnHelper.accessor('name', {
-      cell: (info) => info.getValue(),
+      cell: (info) => <div>{info.getValue()?.substring(0, 10) + '...'}</div>,
       footer: (info) => info.column.id,
     }),
     columnHelper.accessor((row) => row.size, {
@@ -59,13 +58,18 @@ export default function FileTable({ files }: { files: CustomFile[] | [] }) {
   ];
 
   useEffect(() => {
-    setData([...files]);
-  }, [files]);
+    setData([...filesData]);
+  }, [filesData]);
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 5,
+      },
+    },
   });
 
   return (
@@ -78,14 +82,13 @@ export default function FileTable({ files }: { files: CustomFile[] | [] }) {
               tableInstance={table}
               isKeyboardNavigable={true}
               styling={{
-                zebraStriping: false,
+                zebraStriping: true,
                 borderStyle: 'all-sides',
+                headerStyle: 'clean',
               }}
             />
           </div>
-          <div style={{ marginTop: '15px', width: '100%' }}><LlmDropdown />
-            <Button onClick={() => console.log('hello')}>Generate Graph</Button>
-          </div></>
+        </>
       ) : null}
     </>
   );
