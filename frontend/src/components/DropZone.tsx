@@ -1,11 +1,10 @@
-import { Dropzone, Box, Label, Typography } from '@neo4j-ndl/react';
-import { useState, useEffect } from 'react';
-import FileTable from './FileTable';
+import { Dropzone } from '@neo4j-ndl/react';
+import { useState, useEffect, FunctionComponent } from 'react';
 import Loader from '../utils/Loader';
 import { uploadAPI } from '../services/Upload';
-import { healthStatus } from '../services/HealthStatus';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
+import { useFileContext } from '../context/UsersFiles';
 
 interface CustomFile extends Partial<globalThis.File> {
   processing: string;
@@ -15,19 +14,17 @@ interface CustomFile extends Partial<globalThis.File> {
   relationshipCount: number;
 }
 
-export default function DropZone() {
-  const [filesdata, setFilesdata] = useState<CustomFile[] | []>([]);
-  const [files, setFiles] = useState<File[] | []>([]);
+const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => {
+  const { files, filesData, setFiles, setFilesData } = useFileContext();
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
 
   const fileUpload = async (file: File, uid: number) => {
-    if (filesdata[uid].status == 'None') {
+    if (filesData[uid].status == 'None') {
       const apirequests = [];
       try {
         setIsLoading(true);
-        setFilesdata((prevfiles) =>
+        setFilesData((prevfiles) =>
           prevfiles.map((curfile, idx) => {
             if (idx == uid) {
               return {
@@ -46,7 +43,7 @@ export default function DropZone() {
             r.forEach((apiRes) => {
               if (apiRes.status === 'fulfilled' && apiRes.value) {
                 if (apiRes?.value?.data != 'Unexpected Error') {
-                  setFilesdata((prevfiles) =>
+                  setFilesData((prevfiles) =>
                     prevfiles.map((curfile, idx) => {
                       if (idx == uid) {
                         return {
@@ -72,7 +69,7 @@ export default function DropZone() {
       } catch (err) {
         console.log(err);
         setIsLoading(false);
-        setFilesdata((prevfiles) =>
+        setFilesData((prevfiles) =>
           prevfiles.map((curfile, idx) => {
             if (idx == uid) {
               return {
@@ -89,18 +86,6 @@ export default function DropZone() {
   };
 
   useEffect(() => {
-    async function getHealthStatus() {
-      try {
-        const response = await healthStatus();
-        setIsBackendConnected(response.data.healthy);
-      } catch (error) {
-        setIsBackendConnected(false);
-      }
-    }
-    getHealthStatus();
-  }, []);
-
-  useEffect(() => {
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
         fileUpload(files[i], i);
@@ -110,55 +95,38 @@ export default function DropZone() {
 
   return (
     <>
-      <Box
-        style={{
-          width: '100%',
-          padding: '0.8em',
-        }}
-      >
-        <Typography variant='body-medium' style={{ display: 'flex', marginBlock: '10px', marginLeft: '5px' }}>
-          Backend connection Status:
-          <Typography variant='body-medium' style={{ marginLeft: '10px' }}>
-            {!isBackendConnected ? (
-              <Label color='danger'>Not connected</Label>
-            ) : (
-              <Label color='success'>Connected</Label>
-            )}
-          </Typography>
-        </Typography>
-        {isBackendConnected && (
-          <Dropzone
-            loadingComponent={isLoading && <Loader />}
-            isTesting={true}
-            dropZoneOptions={{
-              accept: { 'application/pdf': ['.pdf'] },
-              onDrop: (f: Partial<globalThis.File>[]) => {
-                setIsLoading(false);
-                if (f.length) {
-                  const defaultValues: CustomFile = {
-                    processing: 'None',
-                    status: 'None',
-                    NodesCount: 0,
-                    id: uuidv4(),
-                    relationshipCount: 0,
-                  };
-                  const updatedFiles: CustomFile[] = f.map((file) => ({
-                    name: file.name,
-                    type: file.type,
-                    size: file.size,
-                    ...defaultValues,
-                  }));
-                  setFiles((prevfiles) => [...prevfiles, ...(f as File[])]);
-                  setFilesdata((prevfilesdata) => [...prevfilesdata, ...updatedFiles]);
-                }
-              },
-            }}
-          />
-        )}
-      </Box>
-      <div style={{ marginTop: '15px', width: '100%' }}>
-        <div>{filesdata.length > 0 && <FileTable files={filesdata} />}</div>
-      </div>
+      {props.isBackendConnected && (
+        <Dropzone
+          loadingComponent={isLoading && <Loader />}
+          isTesting={true}
+          className='w-full h-full'
+          dropZoneOptions={{
+            accept: { 'application/pdf': ['.pdf'] },
+            onDrop: (f: Partial<globalThis.File>[]) => {
+              setIsLoading(false);
+              if (f.length) {
+                const defaultValues: CustomFile = {
+                  processing: 'None',
+                  status: 'None',
+                  NodesCount: 0,
+                  id: uuidv4(),
+                  relationshipCount: 0,
+                };
+                const updatedFiles: CustomFile[] = f.map((file) => ({
+                  name: file.name,
+                  type: file.type,
+                  size: file.size,
+                  ...defaultValues,
+                }));
+                setFiles((prevfiles) => [...prevfiles, ...(f as File[])]);
+                setFilesData((prevfilesdata) => [...prevfilesdata, ...updatedFiles]);
+              }
+            },
+          }}
+        />
+      )}
     </>
   );
-}
+};
+
+export default DropZone;

@@ -1,5 +1,7 @@
-import { createContext, useState, useContext } from 'react';
-
+import { createContext, useState, useContext, FunctionComponent, ReactNode } from 'react';
+type Props = {
+  children: ReactNode;
+};
 type UserCredentials = {
   uri: string;
   userName: string;
@@ -17,11 +19,12 @@ export const useCredentials = () => {
   const userCredentials = useContext(UserConnection);
   return userCredentials;
 };
-export default function UserCredentialsWrapper({ children }) {
+const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
   const [userCredentials, setUserCredentials] = useState<UserCredentials | null>(null);
   const value = {
     userCredentials,
     setUserCredentials,
   };
-  return <UserConnection.Provider value={value}>{children}</UserConnection.Provider>;
-}
+  return <UserConnection.Provider value={value}>{props.children}</UserConnection.Provider>;
+};
+export default UserCredentialsWrapper;
