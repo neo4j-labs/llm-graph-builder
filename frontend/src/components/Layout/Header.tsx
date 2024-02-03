@@ -30,7 +30,7 @@ export default function Header({ themeMode, toggleTheme }: { themeMode: string; 
             />
           </Typography>
         </section>
-        <section className='items-center justify-end hidden w-1/3 grow-0 flex' style={{ flexGrow: 0 }}>
+        <section className='items-center justify-end w-1/3 grow-0 flex' style={{ flexGrow: 0 }}>
           <div>
             <div
               className='inline-flex gap-x-1'
@@ -61,7 +61,6 @@ export default function Header({ themeMode, toggleTheme }: { themeMode: string; 
                   backgroundColor: 'white',
                 }}
               ></Typography>
-
               <User />
             </div>
           </div>

@@ -1,7 +1,9 @@
 import Header from './Layout/Header';
-import Content from './Content';
 import React, { useState } from 'react';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
+import PageLayout from './Layout/PageLayout';
+import { FileContextProvider } from '../context/UsersFiles';
+import UserCredentialsWrapper from '../context/UserCredentials';
 
 export default function QuickStarter() {
   const themeUtils = React.useContext(ThemeWrapperContext);
@@ -15,9 +17,11 @@ export default function QuickStarter() {
   };
 
   return (
-    <div>
-      <Header themeMode={themeMode} toggleTheme={toggleColorMode} />
-      <Content />
-    </div>
+    <FileContextProvider>
+      <UserCredentialsWrapper>
+        <Header themeMode={themeMode} toggleTheme={toggleColorMode} />
+        <PageLayout />
+      </UserCredentialsWrapper>
+    </FileContextProvider>
   );
 }
