@@ -2,16 +2,10 @@ from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransf
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.graphs import Neo4jGraph
 from langchain.docstore.document import Document
-# from langchain.chains import GraphCypherQAChain
-# from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 from datetime import datetime
 import os
-import json
-import csv
 import traceback
-from fastapi.responses import JSONResponse
-from fastapi.encoders import jsonable_encoder
 load_dotenv()
 
 # url =os.environ.get('NEO4J_URI')
@@ -24,15 +18,15 @@ def create_source_node_graph(uri, userName, password, file):
     start_time = datetime.now()
     job_status = "New"
     file_type = file.filename.split('.')[1]
-    file_size = round(file.size/(1<<10), 2)
+    file_size = file.size
     file_name = file.filename
 
     graph = Neo4jGraph(url=uri, username=userName, password=password)
 
     source_node = "fileName: '{}'"
-    update_node_prop = "SET s.fileSize = '{} KB', s.fileType = '{}' ,s.createdAt ='{}',s.status = '{}'"
+    update_node_prop = "SET s.fileSize = '{}', s.fileType = '{}' ,s.status = '{}'"
     #create source node as file name if not exist
-    graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,start_time,job_status))
+    graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,job_status))
     return create_api_response("Success",data="Source Node created succesfully")
   except Exception as e:
     job_status = "Failure"
@@ -118,13 +112,3 @@ def create_api_response(status, data=None, error=None):
     response["error"] = error
 
   return response
-
-# chain = GraphCypherQAChain.from_llm(
-#     cypher_llm=ChatOpenAI(temperature=0, model_name="gpt-4"),
-#     qa_llm=ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo"),
-#     graph=graph,
-#     verbose=True,
-# )
-
-# # chain.run("What is machine learning")
-# chain.run("Who is Mois Ture?")
