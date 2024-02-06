@@ -119,5 +119,62 @@
         ]
         ,
         "Relations": []
+    },{
+        "LLM": "Human Extraction",
+        "File": "Football_news.pdf",
+        "Node count": 22,
+        "Relation count": 24,
+        "Nodes": [
+            "Sergio Busquets",
+            "Cristiano Ronaldo",
+            "Luis Suarez",
+            "Messi",
+            "Barcelona",
+            "Argentina",
+            "Suarez",
+            "FC Dallas",
+            "Maartean Paes",
+            "Real Salt Lake",
+            "Inter Miami",
+            "Jesus Ferreira",
+            "Drake Callender",
+            "Noah Allen",
+            "Hong Kong",
+            "El Salvador",
+            "United States",
+            "Vissel Kobe",
+            "Florida club",
+            "Al Hilal",
+            "Al-Nassr",
+            "Saudi Arabia"
+        ]
+        ,
+        "Relations": [
+            "Against",
+            "Against",
+            "Against",
+            "Against",
+            "teammate",
+            "teammate",
+            "former teammate",
+            "former teammate",
+            "old rival",
+            " World cup winning Superstar",
+            "Created opening goal",
+            "defeated",
+            "defeated",
+            "Paired by",
+            "goalkeaper",
+            "goalkeaper",
+            "trailling",
+            "lead through",
+            "defender",
+            "return to",
+            "MLS season against",
+            "Draw",
+            "fixture against",
+            "head to"
+
+        ]
     }
 ]
