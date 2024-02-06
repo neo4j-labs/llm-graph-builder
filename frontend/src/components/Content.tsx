@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react';
 import ConnectionModal from './ConnectionModal';
+import LlmDropdown from './Dropdown';
+import FileTable from './FileTable';
 import { Button, Label, Typography, Flex } from '@neo4j-ndl/react';
 import { setDriver, disconnect } from '../utils/Driver';
-import LlmDropdown from './Dropdown';
 import { useCredentials } from '../context/UserCredentials';
-import FileTable from './FileTable';
+import { useFileContext } from '../context/UsersFiles';
+import { extractAPI } from '../services/Extract';
 
 export default function Content() {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
-  const { setUserCredentials } = useCredentials();
+  const { setUserCredentials, userCredentials } = useCredentials();
+  const { filesData, files, setFilesData } = useFileContext();
+  const [selectedOption, setSelectedOption] = useState<string>('');
 
   useEffect(() => {
     if (!init) {
@@ -30,6 +34,82 @@ export default function Content() {
     }
   });
 
+  const handleDropdownChange = (option: any) => {
+    setSelectedOption(option.value);
+  }
+
+  const fileUpload = async (file: File, uid: number) => {
+    if (filesData[uid].status == 'Failed') {
+      const apirequests = [];
+      try {
+        setFilesData((prevfiles) =>
+          prevfiles.map((curfile, idx) => {
+            if (idx == uid) {
+              return {
+                ...curfile,
+                status: 'Processing',
+              };
+            } else {
+              return curfile;
+            }
+          })
+        );
+        const apiResponse = await extractAPI(file, selectedOption, userCredentials);
+        apirequests.push(apiResponse);
+        Promise.allSettled(apirequests)
+          .then((r) => {
+            r.forEach((apiRes) => {
+              if (apiRes.status === 'fulfilled' && apiRes.value) {
+                if (apiRes?.value?.data != 'Unexpected Error') {
+                  setFilesData((prevfiles) =>
+                    prevfiles.map((curfile, idx) => {
+                      if (idx == uid) {
+                        return {
+                          ...curfile,
+                          processing: apiRes?.value?.data?.data?.processingTime?.toFixed(2),
+                          status: apiRes?.value?.data?.data?.status,
+                          NodesCount: apiRes?.value?.data?.data?.nodeCount,
+                          relationshipCount: apiRes?.value?.data?.data?.relationshipCount,
+                        };
+                      } else {
+                        return curfile;
+                      }
+                    })
+                  );
+                } else {
+                  throw new Error('API Failure');
+                }
+              }
+            });
+          })
+          .catch((err) => console.log(err));
+      } catch (err) {
+        console.log(err);
+        setFilesData((prevfiles) =>
+          prevfiles.map((curfile, idx) => {
+            if (idx == uid) {
+              return {
+                ...curfile,
+                status: 'Failed',
+              };
+            } else {
+              return curfile;
+            }
+          })
+        );
+      }
+    };
+  }
+
+  const handleGenerateGraph = async () => {
+    if (files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        if (filesData[i].status === 'Failed') {
+          fileUpload(files[i], i);
+        }
+      }
+    }
+  }
   return (
     <div
       className='n-bg-palette-neutral-bg-default'
@@ -78,8 +158,8 @@ export default function Content() {
       >
         <FileTable></FileTable>
         <div style={{ marginTop: '15px', width: '100%', display: 'flex', justifyContent: 'space-between' }}>
-          <LlmDropdown />
-          <Button onClick={() => console.log('hello')}>Generate Graph</Button>
+          <LlmDropdown onSelect={handleDropdownChange} />
+          <Button disabled={files.length > 0 ? false : true} onClick={handleGenerateGraph}>Generate Graph</Button>
         </div>
       </Flex>
     </div>
