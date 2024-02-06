@@ -1,20 +1,23 @@
 import { Dropdown } from '@neo4j-ndl/react';
-import { useState } from 'react';
+import { DropdownProps, OptionType } from '../types';
 
-export default function LlmDropdown() {
-  const [selectedValue, setSelectedValue] = useState<string>('');
+
+const LlmDropdown: React.FC<DropdownProps> = ({ onSelect }) => {
+  const handleChange = (selectedOption: OptionType | null | void) => {
+    onSelect(selectedOption);
+  }
   const allOptions = ['Diffbot', 'OpenAI GPT'];
-  console.log('selctedValue', selectedValue);
+  console.log('selctedValue', onSelect);
   return (
     <>
       <div style={{ width: '150px' }}>
         <Dropdown
           type='select'
+          aria-label="A selection dropdown"
           selectProps={{
-            onChange: (newValue) => newValue && setSelectedValue(newValue.value),
+            onChange: handleChange,
             options: allOptions.map((option) => ({ label: option, value: option })),
-            value: { label: selectedValue, value: selectedValue },
-            placeholder: 'Your',
+            placeholder: 'Select LLM',
           }}
           size='medium'
           fluid
@@ -23,3 +26,5 @@ export default function LlmDropdown() {
     </>
   );
 }
+
+export default LlmDropdown;
