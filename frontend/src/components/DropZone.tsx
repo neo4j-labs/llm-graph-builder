@@ -14,6 +14,7 @@ interface CustomFile extends Partial<globalThis.File> {
   relationshipCount: number;
 }
 
+
 const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => {
   const { files, filesData, setFiles, setFilesData } = useFileContext();
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -30,6 +31,7 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
               return {
                 ...curfile,
                 status: 'Processing',
+                type: curfile.type?.split('/')[1].toUpperCase(),
               };
             } else {
               return curfile;
@@ -48,10 +50,8 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
                       if (idx == uid) {
                         return {
                           ...curfile,
-                          processing: apiRes?.value?.data?.processingTime?.toFixed(2),
-                          status: apiRes?.value?.data?.status,
-                          NodesCount: apiRes?.value?.data?.nodeCount,
-                          relationshipCount: apiRes?.value?.data?.relationshipCount,
+                          status: 'New',
+                          type: "PDF",
                         };
                       } else {
                         return curfile;
@@ -75,6 +75,7 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
               return {
                 ...curfile,
                 status: 'Failed',
+                type: curfile.type?.split('/')[1].toUpperCase(),
               };
             } else {
               return curfile;

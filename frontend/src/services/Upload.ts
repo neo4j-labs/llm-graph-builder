@@ -9,7 +9,7 @@ const uploadAPI = async (file: any, userCredentials: any) => {
     formData.append('uri', userCredentials?.uri);
     formData.append('userName', userCredentials?.userName);
     formData.append('password', userCredentials?.password);
-    const response = await axios.post(`${url()}/extract`, formData, {
+    const response = await axios.post(`${url()}sources`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
