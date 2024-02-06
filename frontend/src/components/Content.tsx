@@ -39,7 +39,7 @@ export default function Content() {
   }
 
   const fileUpload = async (file: File, uid: number) => {
-    if (filesData[uid].status == 'Failed') {
+    if (filesData[uid].status == 'Failed'|| filesData[uid].status == 'New') {
       const apirequests = [];
       try {
         setFilesData((prevfiles) =>
@@ -60,7 +60,7 @@ export default function Content() {
           .then((r) => {
             r.forEach((apiRes) => {
               if (apiRes.status === 'fulfilled' && apiRes.value) {
-                if (apiRes?.value?.data != 'Unexpected Error') {
+                if (apiRes?.value?.data.status != 'Unexpected Error') {
                   setFilesData((prevfiles) =>
                     prevfiles.map((curfile, idx) => {
                       if (idx == uid) {
@@ -104,7 +104,7 @@ export default function Content() {
   const handleGenerateGraph = async () => {
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
-        if (filesData[i].status === 'Failed') {
+        if (filesData[i].status === 'New') {
           fileUpload(files[i], i);
         }
       }
@@ -159,7 +159,7 @@ export default function Content() {
         <FileTable></FileTable>
         <div style={{ marginTop: '15px', width: '100%', display: 'flex', justifyContent: 'space-between' }}>
           <LlmDropdown onSelect={handleDropdownChange} />
-          <Button disabled={files.length > 0 ? false : true} onClick={handleGenerateGraph}>Generate Graph</Button>
+          <Button onClick={handleGenerateGraph}>Generate Graph</Button>
         </div>
       </Flex>
     </div>
