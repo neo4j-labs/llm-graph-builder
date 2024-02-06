@@ -34,7 +34,7 @@ export default function FileTable() {
     }),
     columnHelper.accessor((row) => row.size, {
       id: 'fileSize',
-      cell: (info) => <i>{info.getValue()}</i>,
+      cell: (info) => <i>{(info?.getValue()/1000)?.toFixed(2)} KB</i>,
       header: () => <span>File Size</span>,
       footer: (info) => info.column.id,
     }),
