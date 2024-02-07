@@ -5,7 +5,7 @@ import { uploadAPI } from '../services/Upload';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
-
+import { saveFileToLocal } from '../utils/utils';
 interface CustomFile extends Partial<globalThis.File> {
   processing: string;
   status: string;
@@ -14,14 +14,14 @@ interface CustomFile extends Partial<globalThis.File> {
   relationshipCount: number;
 }
 
-
 const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => {
   const { files, filesData, setFiles, setFilesData } = useFileContext();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isClicked, setIsClicked] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
 
   const fileUpload = async (file: File, uid: number) => {
-    if (filesData[uid].status == 'None') {
+    if (filesData[uid].status == 'None' && isClicked) {
       const apirequests = [];
       try {
         setIsLoading(true);
@@ -38,6 +38,7 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
             }
           })
         );
+        console.log('Before API CALL', file);
         const apiResponse = await uploadAPI(file, userCredentials);
         apirequests.push(apiResponse);
         Promise.allSettled(apirequests)
@@ -51,13 +52,14 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
                         return {
                           ...curfile,
                           status: 'New',
-                          type: "PDF",
+                          type: 'PDF',
                         };
                       } else {
                         return curfile;
                       }
                     })
                   );
+                  setIsClicked(false);
                   setIsLoading(false);
                 } else {
                   throw new Error('API Failure');
@@ -69,6 +71,7 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
       } catch (err) {
         console.log(err);
         setIsLoading(false);
+        setIsClicked(false);
         setFilesData((prevfiles) =>
           prevfiles.map((curfile, idx) => {
             if (idx == uid) {
@@ -104,6 +107,8 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
           dropZoneOptions={{
             accept: { 'application/pdf': ['.pdf'] },
             onDrop: (f: Partial<globalThis.File>[]) => {
+              setIsClicked(true);
+              f.forEach((i) => saveFileToLocal(i));
               setIsLoading(false);
               if (f.length) {
                 const defaultValues: CustomFile = {
