@@ -1,10 +1,10 @@
 import { DataGrid } from '@neo4j-ndl/react';
-import { useState, useEffect } from 'react';
+import {  useEffect } from 'react';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/getFiles';
 import { v4 as uuidv4 } from 'uuid';
-
+import { getFileFromLocal } from '../utils/utils';
 interface SourceNode {
   fileName: string;
   fileSize: number;
@@ -23,9 +23,7 @@ interface CustomFile extends Partial<globalThis.File> {
 }
 
 export default function FileTable() {
-  const { filesData } = useFileContext();
-  const [data, setData] = useState([...filesData]);
-  const [preStoredData, setPreStoredData] = useState<CustomFile[]>([]);
+  const { filesData, setFiles, setFilesData } = useFileContext();
   const columnHelper = createColumnHelper<CustomFile>();
   const columns = [
     columnHelper.accessor('name', {
@@ -34,7 +32,7 @@ export default function FileTable() {
     }),
     columnHelper.accessor((row) => row.size, {
       id: 'fileSize',
-      cell: (info) => <i>{(info?.getValue()/1000)?.toFixed(2)} KB</i>,
+      cell: (info) => <i>{(info?.getValue() / 1000)?.toFixed(2)} KB</i>,
       header: () => <span>File Size</span>,
       footer: (info) => info.column.id,
     }),
@@ -71,12 +69,10 @@ export default function FileTable() {
   ];
 
   useEffect(() => {
-    setData([...preStoredData, ...filesData]);
-  }, [filesData, preStoredData]);
-  useEffect(() => {
     const fetchFiles = async () => {
       try {
-        const res = await getSourceNodes();
+        const res: any = await getSourceNodes();
+        console.log("SOURCE LIST GET",res.data.data)
         if (Array.isArray(res.data.data) && res.data.data.length) {
           const prefiles = res.data.data.map((item: SourceNode) => ({
             name: item.fileName,
@@ -88,7 +84,9 @@ export default function FileTable() {
             status: item.status,
             id: uuidv4(),
           }));
-          setPreStoredData(prefiles);
+          setFilesData(prefiles);
+          const prefetchedFiles = res.data.data.map((item: any) => getFileFromLocal(`${item.fileName}`));
+          setFiles(prefetchedFiles);
         }
       } catch (error) {
         console.log(error);
@@ -98,7 +96,7 @@ export default function FileTable() {
   }, []);
 
   const table = useReactTable({
-    data,
+    data: filesData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     initialState: {
@@ -110,7 +108,7 @@ export default function FileTable() {
 
   return (
     <>
-      {data ? (
+      {filesData ? (
         <>
           <div className='n-w-full'>
             <DataGrid

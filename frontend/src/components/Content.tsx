@@ -14,7 +14,7 @@ export default function Content() {
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials } = useCredentials();
   const { filesData, files, setFilesData } = useFileContext();
-  const [selectedOption, setSelectedOption] = useState<string>('');
+  const [selectedOption, setSelectedOption] = useState<string>('Diffbot');
 
   useEffect(() => {
     if (!init) {
@@ -54,7 +54,7 @@ export default function Content() {
             }
           })
         );
-        const apiResponse = await extractAPI(file, selectedOption, userCredentials);
+        const apiResponse = await extractAPI(file, selectedOption,userCredentials);
         apirequests.push(apiResponse);
         Promise.allSettled(apirequests)
           .then((r) => {
