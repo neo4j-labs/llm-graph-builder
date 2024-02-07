@@ -2,7 +2,18 @@ import { DataGrid } from '@neo4j-ndl/react';
 import { useState, useEffect } from 'react';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
 import { useFileContext } from '../context/UsersFiles';
+import { getSourceNodes } from '../services/getFiles';
+import { v4 as uuidv4 } from 'uuid';
 
+interface SourceNode {
+  fileName: string;
+  fileSize: number;
+  fileType?: string;
+  nodeCount?: number;
+  processingTime?: string;
+  relationshipCount?: number;
+  status: string;
+}
 interface CustomFile extends Partial<globalThis.File> {
   processing: string;
   status: string;
@@ -10,9 +21,11 @@ interface CustomFile extends Partial<globalThis.File> {
   id: string;
   relationshipCount: number;
 }
+
 export default function FileTable() {
   const { filesData } = useFileContext();
   const [data, setData] = useState([...filesData]);
+  const [preStoredData, setPreStoredData] = useState<CustomFile[]>([]);
   const columnHelper = createColumnHelper<CustomFile>();
   const columns = [
     columnHelper.accessor('name', {
@@ -21,7 +34,7 @@ export default function FileTable() {
     }),
     columnHelper.accessor((row) => row.size, {
       id: 'fileSize',
-      cell: (info) => <i>{info.getValue()}kb</i>,
+      cell: (info) => <i>{(info?.getValue()/1000)?.toFixed(2)} KB</i>,
       header: () => <span>File Size</span>,
       footer: (info) => info.column.id,
     }),
@@ -58,8 +71,31 @@ export default function FileTable() {
   ];
 
   useEffect(() => {
-    setData([...filesData]);
-  }, [filesData]);
+    setData([...preStoredData, ...filesData]);
+  }, [filesData, preStoredData]);
+  useEffect(() => {
+    const fetchFiles = async () => {
+      try {
+        const res = await getSourceNodes();
+        if (Array.isArray(res.data.data) && res.data.data.length) {
+          const prefiles = res.data.data.map((item: SourceNode) => ({
+            name: item.fileName,
+            size: item.fileSize,
+            type: item?.fileType?.toUpperCase(),
+            NodesCount: item?.nodeCount ?? 0,
+            processing: item?.processingTime ?? 'None',
+            relationshipCount: item?.relationshipCount ?? 0,
+            status: item.status,
+            id: uuidv4(),
+          }));
+          setPreStoredData(prefiles);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchFiles();
+  }, []);
 
   const table = useReactTable({
     data,
