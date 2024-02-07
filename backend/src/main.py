@@ -36,7 +36,7 @@ def create_source_node_graph(uri, userName, password, file):
     print(f'Exception Stack trace: {traceback.print_exc()}')
     return create_api_response(job_status,error=error_message)
 
-def extract_graph_from_file(uri, userName, password, file):
+def extract_graph_from_file(uri, userName, password, file, model):
   try:
     start_time = datetime.now()
     file_name = file.filename

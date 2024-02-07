@@ -31,8 +31,8 @@ async def create_source_knowledge_graph(uri= Form(), userName= Form(), password=
     return create_source_node_graph(uri, userName, password, file)
 
 @app.post('/extract')
-async def extract_knowledge_graph_from_file(uri= Form(), userName= Form(), password= Form(),file: UploadFile = File(...)):
-    return extract_graph_from_file(uri, userName, password, file)
+async def extract_knowledge_graph_from_file(uri= Form(), userName= Form(), password= Form(),file: UploadFile = File(...), model=Form()):
+    return extract_graph_from_file(uri, userName, password, file, model)
 
 @app.get('/sources_list')
 async def get_source_list():
