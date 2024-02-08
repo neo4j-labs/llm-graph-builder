@@ -20,6 +20,18 @@ load_dotenv()
 graph = Neo4jGraph();
 
 def create_source_node_graph(uri, userName, password, file):
+  """
+   Creates a source node in Neo4jGraph and sets properties.
+   
+   Args:
+   	 uri: URI of Graph Service to connect to
+   	 userName: Username to connect to Graph Service with ( default : None )
+   	 password: Password to connect to Graph Service with ( default : None )
+   	 file: File object with information about file to be added
+   
+   Returns: 
+   	 Success or Failure message of node creation
+  """
   try:
     start_time = datetime.now()
     job_status = "New"
@@ -44,14 +56,35 @@ def create_source_node_graph(uri, userName, password, file):
   
   
 def file_into_chunks(pages: List[Document]):
-    # Define chunking strategy
+    """
+     Split a list of documents(file pages) into chunks of fixed size.
+     
+     Args:
+     	 pages: A list of pages to split. Each page is a list of text strings.
+     
+     Returns: 
+     	 A list of chunks each of which is a langchain Document.
+    """
     text_splitter = TokenTextSplitter(chunk_size=200, chunk_overlap=20)
     chunks = text_splitter.split_documents(pages)
-    
     return chunks
    
 
 def extract_graph_from_file(uri, userName, password, file, model):
+  """
+   Extracts a Neo4jGraph from a PDF file based on the model.
+   
+   Args:
+   	 uri: URI of the graph to extract
+   	 userName: Username to use for graph creation ( if None will use username from config file )
+   	 password: Password to use for graph creation ( if None will use password from config file )
+   	 file: File object containing the PDF file to be used
+   	 model: Type of model to use ('Diffbot'or'OpenAI GPT')
+   
+   Returns: 
+   	 Json response to API with fileName, nodeCount, relationshipCount, processingTime, 
+     status and model as attributes.
+  """
   try:
     start_time = datetime.now()
     file_name = file.filename
@@ -65,27 +98,27 @@ def extract_graph_from_file(uri, userName, password, file, model):
     loader = PyPDFLoader('temp.pdf')
     pages = loader.load_and_split()
     
+    # Creates a new Document object for each page in the list of pages.
     for i in range(0,len(pages)):
       pages[i]=Document(page_content=pages[i].page_content.replace('\n',' '), metadata=metadata)
     
     chunks = file_into_chunks(pages)
     
+    # Get graph document list from models.
     if model == 'Diffbot' :
       graph_documents = extract_graph_from_diffbot(graph,chunks)
       
     elif model == 'OpenAI GPT':
        graph_documents = extract_graph_from_OpenAI(graph,chunks)
-       
-    # nodes_created = len(graph_documents[0].nodes)
-    # relationships_created = len(graph_documents[0].relationships) 
+        
     distinct_nodes = set()
     relations = []
     
     for graph_document in graph_documents:
-      #get all nodes
+      #get distinct nodes
       for node in graph_document.nodes:
             distinct_nodes.add(node.id)
-        #get all relations   
+      #get all relations   
       for relation in graph_document.relationships:
             relations.append(relation.type)
       
@@ -120,7 +153,12 @@ def extract_graph_from_file(uri, userName, password, file, model):
     print(f'Exception Stack trace: {traceback.print_exc()}')
     return create_api_response(job_status,error=error_message)
 
+
 def get_source_list_from_graph():
+  """
+   Returns a list of sources that are in the database by querying the graph and 
+   sorting the list by the last updated date. 
+ """
   try:
     query = "MATCH(s:Source) RETURN s ORDER BY s.updatedAt DESC;"
     result = graph.query(query)
@@ -131,12 +169,26 @@ def get_source_list_from_graph():
     error_message = str(e)
     return create_api_response(job_status,error=error_message)
 
+
 def create_api_response(status, data=None, error=None):
+  """
+   Create a response to be sent to the API. This is a helper function to create a JSON response that can be sent to the API.
+   
+   Args:
+   	 status: The status of the API call. Should be one of the constants in this module.
+   	 data: The data that was returned by the API call.
+   	 error: The error that was returned by the API call.
+   
+   Returns: 
+   	 A dictionary containing the status data and error if any
+  """
   response = {"status": status}
 
+  # Set the data of the response
   if data is not None:
     response["data"] = data
 
+  # Set the error message to the response.
   if error is not None:
     response["error"] = error
 
