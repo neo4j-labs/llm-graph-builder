@@ -13,7 +13,7 @@ def extract_graph_from_diffbot(graph: Neo4jGraph,
         graph (Neo4jGraph): Neo4jGraph connection object
         chunks (List[Document]): list of chunk documents created from input file
 
-    Returns: langchain GraphDocument - used to generate graph
+    Returns: List of langchain GraphDocument - used to generate graph
         
     """    
     diffbot_api_key = os.environ.get('DIFFBOT_API_KEY')
