@@ -22,7 +22,6 @@ from tqdm import tqdm
 
 load_dotenv()
 
-
 class Property(BaseModel):
   """A single property consisting of key and value"""
   key: str = Field(..., description="key")
@@ -43,17 +42,41 @@ class KnowledgeGraph(BaseModel):
     rels: List[Relationship] = Field(
         ..., description="List of relationships in the knowledge graph"
     )
+  
     
-def format_property_key(s: str) -> str:
+def format_property_key(s: str) -> str: 
+    """
+     Formats a property key to make it easier to read. 
+     This is used to ensure that the keys are consistent across the server
+     
+     Args:
+     	 s: The string to format.
+     
+     Returns: 
+     	 The formatted string or the original string if there was no
+    """
+    
     words = s.split()
+    # Returns the word if words is not empty.
+    # Returns the word if words is not empty.
     if not words:
         return s
     first_word = words[0].lower()
     capitalized_words = [word.capitalize() for word in words[1:]]
     return "".join([first_word] + capitalized_words)
 
+
 def props_to_dict(props) -> dict:
-    """Convert properties to a dictionary."""
+    """
+     Convert properties to a dictionary. 
+     This is used to convert a list of : class : ` Property ` objects to a dictionary
+     
+     Args:
+     	 props: List of : class : ` Property ` objects
+     
+     Returns: 
+     	 Dictionary of property keys and values or an empty dictionary
+    """
     properties = {}
     if not props:
       return properties
@@ -61,10 +84,19 @@ def props_to_dict(props) -> dict:
         properties[format_property_key(p.key)] = p.value
     return properties
 
+
 def map_to_base_node(node: Node) -> BaseNode:
-    """Map the KnowledgeGraph Node to the base Node."""
+    """
+     Map KnowledgeGraph Node to the Base Node. 
+     This is used to generate Cypher statements that are derived from the knowledge graph
+     
+     Args:
+     	 node: The node to be mapped
+     
+     Returns: 
+     	 A mapping of the KnowledgeGraph Node to the BaseNode
+    """
     properties = props_to_dict(node.properties) if node.properties else {}
-    # Add name property for better Cypher statement generation
     properties["name"] = node.id.title()
     return BaseNode(
         id=node.id.title(), type=node.type.capitalize(), properties=properties
@@ -72,20 +104,43 @@ def map_to_base_node(node: Node) -> BaseNode:
 
 
 def map_to_base_relationship(rel: Relationship) -> BaseRelationship:
-    """Map the KnowledgeGraph Relationship to the base Relationship."""
+    """
+     Map KnowledgeGraph relationships to the base Relationship. 
+    
+     Args:
+     	 rel: The relationship to be mapped
+     
+     Returns: 
+     	 The mapped : class : ` BaseRelationship ` 
+    """
     source = map_to_base_node(rel.source)
     target = map_to_base_node(rel.target)
     properties = props_to_dict(rel.properties) if rel.properties else {}
     return BaseRelationship(
         source=source, target=target, type=rel.type, properties=properties
     )  
+   
     
 llm = ChatOpenAI(model="gpt-3.5-turbo-16k", temperature=0)
+
 
 def get_extraction_chain(
     allowed_nodes: Optional[List[str]] = None,
     allowed_rels: Optional[List[str]] = None
     ):
+    
+    """
+    Get a chain of nodes and relationships to extract from GPT. 
+    This is an interactive function that prompts the user to select which nodes and relationships 
+    to extract from the Knowledge Graph and returns them as a list of Node objects.
+    
+    Args:
+     	 Optional allowed_nodes: A list of node IDs to be considered for extraction. 
+         Optional allowed_rels: A list of relationships to be considered for extraction. 
+         
+         If None ( default ) all nodes are considered. If a list of strings is provided only nodes that match the string will be considered.
+    """
+    
     prompt = ChatPromptTemplate.from_messages(
         [(
           "system",
@@ -119,45 +174,59 @@ Adhere to the rules strictly. Non-compliance will result in termination.
         ])
     return create_structured_output_chain(KnowledgeGraph, llm, prompt, verbose=False)
 
+
 def extract_and_store_graph(
     graph: Neo4jGraph,
     document: Document,
     nodes:Optional[List[str]] = None,
     rels:Optional[List[str]]=None) -> None:
-    # Extract graph data using OpenAI functions
+    
+    """
+     This is a wrapper around OpenAI functions to perform the extraction and 
+     store the result into a Neo4jGraph.
+     
+     Args:
+     	 graph: Neo4j graph to store the data into
+     	 document: Langchain document to extract data from
+     	 nodes: List of nodes to extract ( default : None )
+     	 rels: List of relationships to extract ( default : None )
+     
+     Returns: 
+     	 The GraphDocument that was extracted and stored into the Neo4jgraph
+    """
+   
     extract_chain = get_extraction_chain(nodes, rels)
     data = extract_chain.invoke(document.page_content)['function']
-    # Construct a graph document
+
     graph_document = GraphDocument(
       nodes = [map_to_base_node(node) for node in data.nodes],
       relationships = [map_to_base_relationship(rel) for rel in data.rels],
       source = document
     )
-    # Store information into a graph
+
     graph.add_graph_documents([graph_document])
     return graph_document   
+ 
     
 def extract_graph_from_OpenAI(graph: Neo4jGraph, 
                                chunks: List[Document]):
-    print("OpenAI graph extraction called !!")
-    
+    """
+        Extract graph from OpenAI and store it in database. 
+        This is a wrapper for extract_and_store_graph
+                                
+        Args:
+            graph: Neo4jGraph to be extracted.
+            chunks: List of chunk documents created from input file
+                                
+        Returns: 
+            List of langchain GraphDocument - used to generate graph
+    """
     openai_api_key = os.environ.get('OPENAI_API_KEY')
-    
-    distinct_nodes = set()
-    relations = []
     graph_document_list = []
 
     for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
         graph_document=extract_and_store_graph(graph,chunk_document)
         graph_document_list.append(graph_document)
-        
-        # #Get distinct nodes
-        # for node in graph_document.nodes:
-        #     distinct_nodes.add(node.id)
-        
-        # #Get all relations   
-        # for relation in graph_document.relationships:
-        #     relations.append(relation.type)
-            
+          
     return graph_document_list
                  
