@@ -85,7 +85,7 @@ def extract_graph_from_file(uri, userName, password, file, model):
       #get all nodes
       for node in graph_document.nodes:
             distinct_nodes.add(node.id)
-        #Get all relations   
+        #get all relations   
       for relation in graph_document.relationships:
             relations.append(relation.type)
       
@@ -98,15 +98,16 @@ def extract_graph_from_file(uri, userName, password, file, model):
     error_message =""
 
     source_node = "fileName: '{}'"
-    update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessgae = '{}',s.nodeCount= {}, s.relationshipCount = {}"
-    graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(start_time,end_time,round(processed_time.total_seconds(),2),job_status,error_message,nodes_created,relationships_created))
+    update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessgae = '{}',s.nodeCount= {}, s.relationshipCount = {}, s.model = '{}'"
+    graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(start_time,end_time,round(processed_time.total_seconds(),2),job_status,error_message,nodes_created,relationships_created,model))
 
     output = {
         "fileName": file_name,
         "nodeCount": nodes_created,
         "relationshipCount": relationships_created,
         "processingTime": round(processed_time.total_seconds(),2),
-        "status" : job_status
+        "status" : job_status,
+        "model" : model
     }
     
     # return  JSONResponse(content=jsonable_encoder(output))
