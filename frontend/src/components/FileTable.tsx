@@ -1,6 +1,13 @@
 import { DataGrid } from '@neo4j-ndl/react';
-import {  useEffect } from 'react';
-import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
+import { useEffect } from 'react';
+import React from 'react';
+import {
+  useReactTable,
+  getCoreRowModel,
+  createColumnHelper,
+  ColumnFiltersState,
+  getFilteredRowModel,
+} from '@tanstack/react-table';
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/getFiles';
 import { v4 as uuidv4 } from 'uuid';
@@ -25,6 +32,7 @@ interface CustomFile extends Partial<globalThis.File> {
 export default function FileTable() {
   const { filesData, setFiles, setFilesData } = useFileContext();
   const columnHelper = createColumnHelper<CustomFile>();
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const columns = [
     columnHelper.accessor('name', {
       cell: (info) => <div>{info.getValue()?.substring(0, 10) + '...'}</div>,
@@ -53,6 +61,7 @@ export default function FileTable() {
       cell: (info) => <i>{info.getValue()}</i>,
       header: () => <span>Status</span>,
       footer: (info) => info.column.id,
+      filterFn: "statusFilter" as any
     }),
     columnHelper.accessor((row) => row.NodesCount, {
       id: 'NodesCount',
@@ -72,7 +81,6 @@ export default function FileTable() {
     const fetchFiles = async () => {
       try {
         const res: any = await getSourceNodes();
-        console.log("SOURCE LIST GET",res.data.data)
         if (Array.isArray(res.data.data) && res.data.data.length) {
           const prefiles = res.data.data.map((item: SourceNode) => ({
             name: item.fileName,
@@ -99,18 +107,36 @@ export default function FileTable() {
     data: filesData,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnFiltersChange: setColumnFilters,
     initialState: {
       pagination: {
         pageSize: 5,
       },
     },
+    state: {
+      columnFilters,
+    },
+    filterFns: {
+      statusFilter: (row, columnId, filterValue) => {
+        return filterValue ? row.original[columnId] === 'New' : row.original[columnId];
+      },
+    },
+    enableGlobalFilter:false
   });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    table.getColumn('status')?.setFilterValue(e.target.checked);
+  };
 
   return (
     <>
       {filesData ? (
         <>
           <div className='n-w-full'>
+            <div className='flex gap-2 items-center p-2'>
+              <input type='checkbox' onChange={handleChange} />
+              <label>Show files with status New </label>
+            </div>
             <DataGrid
               isResizable={true}
               tableInstance={table}

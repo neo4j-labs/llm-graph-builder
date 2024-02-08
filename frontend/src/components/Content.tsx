@@ -159,7 +159,7 @@ export default function Content() {
         <FileTable></FileTable>
         <div style={{ marginTop: '15px', width: '100%', display: 'flex', justifyContent: 'space-between' }}>
           <LlmDropdown onSelect={handleDropdownChange} />
-          <Button onClick={handleGenerateGraph}>Generate Graph</Button>
+          <Button disabled={!files.length} onClick={handleGenerateGraph}>Generate Graph</Button>
         </div>
       </Flex>
     </div>
