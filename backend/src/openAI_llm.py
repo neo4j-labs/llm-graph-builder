@@ -198,13 +198,13 @@ def extract_and_store_graph(
     extract_chain = get_extraction_chain(nodes, rels)
     data = extract_chain.invoke(document.page_content)['function']
 
-    graph_document = GraphDocument(
+    graph_document = [GraphDocument(
       nodes = [map_to_base_node(node) for node in data.nodes],
       relationships = [map_to_base_relationship(rel) for rel in data.rels],
       source = document
-    )
+    )]
 
-    graph.add_graph_documents([graph_document])
+    graph.add_graph_documents(graph_document)
     return graph_document   
  
     
@@ -226,7 +226,6 @@ def extract_graph_from_OpenAI(graph: Neo4jGraph,
 
     for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
         graph_document=extract_and_store_graph(graph,chunk_document)
-        graph_document_list.append(graph_document)
-          
+        graph_document_list.append(graph_document[0])     
     return graph_document_list
                  
