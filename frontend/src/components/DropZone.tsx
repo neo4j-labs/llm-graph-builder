@@ -20,6 +20,44 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
   const [isClicked, setIsClicked] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
 
+  const onDropHandler = (f: Partial<globalThis.File>[]) => {
+    setIsClicked(true);
+    f.forEach((i) => saveFileToLocal(i));
+    setIsLoading(false);
+    if (f.length) {
+      const defaultValues: CustomFile = {
+        processing: 'None',
+        status: 'New',
+        NodesCount: 0,
+        id: uuidv4(),
+        relationshipCount: 0,
+      };
+      const updatedFilesData: CustomFile[] = [];
+      const updatedFiles: Partial<globalThis.File>[] = [];
+      f.forEach((file) => {
+        const filedataIndex = filesData.findIndex(
+          (filedataitem) => filedataitem.name === file.name && filedataitem.status == 'New'
+        );
+        const fileIndex = files.findIndex(
+          (filedataitem, i) => filedataitem.name === file.name && filesData[i].status === 'New'
+        );
+        if (filedataIndex == -1) {
+          updatedFilesData.push({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            ...defaultValues,
+          });
+        }
+        if (fileIndex == -1) {
+          updatedFiles.push(file);
+        }
+      });
+      setFiles((prevfiles) => [...prevfiles, ...(updatedFiles as File[])]);
+      setFilesData((prevfilesdata) => [...prevfilesdata, ...updatedFilesData]);
+    }
+  };
+
   const fileUpload = async (file: File, uid: number) => {
     if (filesData[uid].status == 'None' && isClicked) {
       const apirequests = [];
@@ -107,26 +145,7 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
           dropZoneOptions={{
             accept: { 'application/pdf': ['.pdf'] },
             onDrop: (f: Partial<globalThis.File>[]) => {
-              setIsClicked(true);
-              f.forEach((i) => saveFileToLocal(i));
-              setIsLoading(false);
-              if (f.length) {
-                const defaultValues: CustomFile = {
-                  processing: 'None',
-                  status: 'None',
-                  NodesCount: 0,
-                  id: uuidv4(),
-                  relationshipCount: 0,
-                };
-                const updatedFiles: CustomFile[] = f.map((file) => ({
-                  name: file.name,
-                  type: file.type,
-                  size: file.size,
-                  ...defaultValues,
-                }));
-                setFiles((prevfiles) => [...prevfiles, ...(f as File[])]);
-                setFilesData((prevfilesdata) => [...prevfilesdata, ...updatedFiles]);
-              }
+              onDropHandler(f);
             },
           }}
         />
