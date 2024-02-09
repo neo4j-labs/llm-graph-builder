@@ -34,7 +34,7 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
         id: uuidv4(),
         relationshipCount: 0,
         type: 'PDF',
-        model:"Diffbot"
+        model: 'Diffbot',
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
@@ -59,7 +59,7 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
             NodesCount: defaultValues.NodesCount,
             relationshipCount: defaultValues.relationshipCount,
             processing: defaultValues.processing,
-            model:defaultValues.model
+            model: defaultValues.model,
           });
         }
         if (fileIndex == -1) {
@@ -131,7 +131,7 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
               return {
                 ...curfile,
                 status: 'Failed',
-                type: curfile.type?.split('/')[1]?.toUpperCase()??"PDF",
+                type: curfile.type?.split('/')[1]?.toUpperCase() ?? 'PDF',
               };
             } else {
               return curfile;
