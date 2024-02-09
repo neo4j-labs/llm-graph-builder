@@ -32,7 +32,7 @@ export default function Content() {
       }
       setInit(true);
     }
-  });
+  },[]);
 
   const handleDropdownChange = (option: any) => {
     setSelectedOption(option.value);
@@ -70,6 +70,7 @@ export default function Content() {
                           status: apiRes?.value?.data?.data?.status,
                           NodesCount: apiRes?.value?.data?.data?.nodeCount,
                           relationshipCount: apiRes?.value?.data?.data?.relationshipCount,
+                          model:apiRes?.value?.data?.data?.model
                         };
                       } else {
                         return curfile;
@@ -159,7 +160,7 @@ export default function Content() {
         <FileTable></FileTable>
         <div style={{ marginTop: '15px', width: '100%', display: 'flex', justifyContent: 'space-between' }}>
           <LlmDropdown onSelect={handleDropdownChange} />
-          <Button disabled={!files.length} onClick={handleGenerateGraph}>
+          <Button disabled={!files.length&&filesData.some((item)=>item.status=="New")} onClick={handleGenerateGraph}>
             Generate Graph
           </Button>
         </div>

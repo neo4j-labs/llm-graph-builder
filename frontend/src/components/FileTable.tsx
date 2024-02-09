@@ -19,6 +19,7 @@ interface SourceNode {
   nodeCount?: number;
   processingTime?: string;
   relationshipCount?: number;
+  model: string;
   status: string;
 }
 interface CustomFile extends Partial<globalThis.File> {
@@ -27,6 +28,7 @@ interface CustomFile extends Partial<globalThis.File> {
   NodesCount: number;
   id: string;
   relationshipCount: number;
+  model: string;
 }
 
 export default function FileTable() {
@@ -76,6 +78,12 @@ export default function FileTable() {
       header: () => <span>Relationships</span>,
       footer: (info) => info.column.id,
     }),
+    columnHelper.accessor((row) => row.model, {
+      id: 'model',
+      cell: (info) => <i>{info.getValue()}</i>,
+      header: () => <span>Model</span>,
+      footer: (info) => info.column.id,
+    }),
   ];
 
   useEffect(() => {
@@ -92,6 +100,7 @@ export default function FileTable() {
             processing: item?.processingTime ?? 'None',
             relationshipCount: item?.relationshipCount ?? 0,
             status: getFileFromLocal(`${item.fileName}`) == null ? 'Unavailable' : item.status,
+            model: item?.model ?? 'Diffbot',
             id: uuidv4(),
           }));
           setLoading(false);
