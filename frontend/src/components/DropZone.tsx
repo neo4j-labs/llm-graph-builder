@@ -27,19 +27,20 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
     if (f.length) {
       const defaultValues: CustomFile = {
         processing: 'None',
-        status: 'New',
+        status: 'None',
         NodesCount: 0,
         id: uuidv4(),
         relationshipCount: 0,
+        type:"PDF"
       };
       const updatedFilesData: CustomFile[] = [];
       const updatedFiles: Partial<globalThis.File>[] = [];
       f.forEach((file) => {
         const filedataIndex = filesData.findIndex(
-          (filedataitem) => filedataitem.name === file.name && filedataitem.status == 'New'
+          (filedataitem) => filedataitem?.name === file?.name && filedataitem?.status == 'New'
         );
         const fileIndex = files.findIndex(
-          (filedataitem, i) => filedataitem.name === file.name && filesData[i].status === 'New'
+          (filedataitem, i) => filedataitem?.name === file?.name && filesData[i]?.status === 'New'
         );
         if (filedataIndex == -1) {
           updatedFilesData.push({
@@ -68,8 +69,7 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
             if (idx == uid) {
               return {
                 ...curfile,
-                status: 'Processing',
-                type: curfile.type?.split('/')[1].toUpperCase(),
+                status: 'Uploading',
               };
             } else {
               return curfile;
@@ -90,20 +90,19 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
                         return {
                           ...curfile,
                           status: 'New',
-                          type: 'PDF',
                         };
                       } else {
                         return curfile;
                       }
                     })
                   );
-                  setIsClicked(false);
                   setIsLoading(false);
                 } else {
                   throw new Error('API Failure');
                 }
               }
             });
+            setIsClicked(false);
           })
           .catch((err) => console.log(err));
       } catch (err) {

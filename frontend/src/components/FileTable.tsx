@@ -33,6 +33,7 @@ export default function FileTable() {
   const { filesData, setFiles, setFilesData } = useFileContext();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [loading, setLoading] = React.useState<boolean>(false);
   const columns = [
     columnHelper.accessor('name', {
       cell: (info) => <div>{info.getValue()?.substring(0, 10) + '...'}</div>,
@@ -61,7 +62,7 @@ export default function FileTable() {
       cell: (info) => <i>{info.getValue()}</i>,
       header: () => <span>Status</span>,
       footer: (info) => info.column.id,
-      filterFn: "statusFilter" as any
+      filterFn: 'statusFilter' as any,
     }),
     columnHelper.accessor((row) => row.NodesCount, {
       id: 'NodesCount',
@@ -80,23 +81,30 @@ export default function FileTable() {
   useEffect(() => {
     const fetchFiles = async () => {
       try {
+        setLoading(true);
         const res: any = await getSourceNodes();
         if (Array.isArray(res.data.data) && res.data.data.length) {
           const prefiles = res.data.data.map((item: SourceNode) => ({
             name: item.fileName,
-            size: item.fileSize,
-            type: item?.fileType?.toUpperCase(),
+            size: item.fileSize ?? 0,
+            type: item?.fileType?.toUpperCase() ?? 'None',
             NodesCount: item?.nodeCount ?? 0,
             processing: item?.processingTime ?? 'None',
             relationshipCount: item?.relationshipCount ?? 0,
-            status: item.status,
+            status: getFileFromLocal(`${item.fileName}`) == null ? 'Unavailable' : item.status,
             id: uuidv4(),
           }));
+          setLoading(false);
           setFilesData(prefiles);
-          const prefetchedFiles = res.data.data.map((item: any) => getFileFromLocal(`${item.fileName}`));
+          const prefetchedFiles: File[] = [];
+          res.data.data.forEach((item: any) => {
+            const localFile = getFileFromLocal(`${item.fileName}`);
+            if (localFile != null) prefetchedFiles.push(localFile);
+          });
           setFiles(prefetchedFiles);
         }
       } catch (error) {
+        setLoading(false);
         console.log(error);
       }
     };
@@ -122,7 +130,7 @@ export default function FileTable() {
         return filterValue ? row.original[columnId] === 'New' : row.original[columnId];
       },
     },
-    enableGlobalFilter:false
+    enableGlobalFilter: false,
   });
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     table.getColumn('status')?.setFilterValue(e.target.checked);
@@ -138,6 +146,7 @@ export default function FileTable() {
               <label>Show files with status New </label>
             </div>
             <DataGrid
+              isLoading={loading}
               isResizable={true}
               tableInstance={table}
               isKeyboardNavigable={true}
