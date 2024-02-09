@@ -33,7 +33,6 @@ def create_source_node_graph(uri, userName, password, file):
    	 Success or Failure message of node creation
   """
   try:
-    start_time = datetime.now()
     job_status = "New"
     file_type = file.filename.split('.')[1]
     file_size = file.size
@@ -49,7 +48,7 @@ def create_source_node_graph(uri, userName, password, file):
   except Exception as e:
     job_status = "Failure"
     error_message = str(e)
-    update_node_prop = "SET s.status = '{}', s.errorMessgae = '{}'"
+    update_node_prop = "SET s.status = '{}', s.errorMessage = '{}'"
     graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
     print(f'Exception Stack trace: {traceback.print_exc()}')
     return create_api_response(job_status,error=error_message)
@@ -88,6 +87,8 @@ def extract_graph_from_file(uri, userName, password, file, model):
   try:
     start_time = datetime.now()
     file_name = file.filename
+    source_node = "fileName: '{}'"
+    update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessage = '{}',s.nodeCount= {}, s.relationshipCount = {}, s.model = '{}'"
     
     graph = Neo4jGraph(url=uri, username=userName, password=password)
 
@@ -101,15 +102,15 @@ def extract_graph_from_file(uri, userName, password, file, model):
     # Creates a new Document object for each page in the list of pages.
     for i in range(0,len(pages)):
       pages[i]=Document(page_content=pages[i].page_content.replace('\n',' '), metadata=metadata)
-    
+    # Break down file into chunks
     chunks = file_into_chunks(pages)
     
     # Get graph document list from models.
     if model == 'Diffbot' :
-      graph_documents = extract_graph_from_diffbot(graph,chunks)
+      graph_documents = extract_graph_from_diffbot(graph,chunks,file_name)
       
     elif model == 'OpenAI GPT':
-       graph_documents = extract_graph_from_OpenAI(graph,chunks)
+       graph_documents = extract_graph_from_OpenAI(graph,chunks,file_name)
         
     distinct_nodes = set()
     relations = []
@@ -129,9 +130,7 @@ def extract_graph_from_file(uri, userName, password, file, model):
     processed_time = end_time - start_time
     job_status = "Completed"
     error_message =""
-
-    source_node = "fileName: '{}'"
-    update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessgae = '{}',s.nodeCount= {}, s.relationshipCount = {}, s.model = '{}'"
+    #Update source node properties
     graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(start_time,end_time,round(processed_time.total_seconds(),2),job_status,error_message,nodes_created,relationships_created,model))
 
     output = {
@@ -148,7 +147,7 @@ def extract_graph_from_file(uri, userName, password, file, model):
   except Exception as e:
     job_status = "Failure"
     error_message = str(e)
-    update_node_prop = "SET s.status = '{}', s.errorMessgae = '{}'"
+    update_node_prop = "SET s.status = '{}', s.errorMessage = '{}'"
     graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
     print(f'Exception Stack trace: {traceback.print_exc()}')
     return create_api_response(job_status,error=error_message)
@@ -156,7 +155,7 @@ def extract_graph_from_file(uri, userName, password, file, model):
 
 def get_source_list_from_graph():
   """
-   Returns a list of sources that are in the database by querying the graph and 
+   Returns a list of sources that are in the database by querying the graph and
    sorting the list by the last updated date. 
  """
   try:

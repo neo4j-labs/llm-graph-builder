@@ -18,6 +18,7 @@ from langchain.prompts import ChatPromptTemplate
 from datetime import datetime
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import TokenTextSplitter
+from src.make_relationships import create_source_chunk_entity_relationship
 from tqdm import tqdm
 
 load_dotenv()
@@ -97,9 +98,9 @@ def map_to_base_node(node: Node) -> BaseNode:
      	 A mapping of the KnowledgeGraph Node to the BaseNode
     """
     properties = props_to_dict(node.properties) if node.properties else {}
-    properties["name"] = node.id.title()
+    properties["name"] = node.id.title().replace(' ','_')
     return BaseNode(
-        id=node.id.title(), type=node.type.capitalize(), properties=properties
+        id=node.id.title().replace(' ','_'), type=node.type.capitalize().replace(' ','_'), properties=properties
     )
 
 
@@ -209,7 +210,8 @@ def extract_and_store_graph(
  
     
 def extract_graph_from_OpenAI(graph: Neo4jGraph, 
-                               chunks: List[Document]):
+                               chunks: List[Document],
+                               file_name : str):
     """
         Extract graph from OpenAI and store it in database. 
         This is a wrapper for extract_and_store_graph
@@ -217,6 +219,7 @@ def extract_graph_from_OpenAI(graph: Neo4jGraph,
         Args:
             graph: Neo4jGraph to be extracted.
             chunks: List of chunk documents created from input file
+            file_name (str) : file name of input source
                                 
         Returns: 
             List of langchain GraphDocument - used to generate graph
@@ -225,7 +228,9 @@ def extract_graph_from_OpenAI(graph: Neo4jGraph,
     graph_document_list = []
 
     for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
-        graph_document=extract_and_store_graph(graph,chunk_document)
+        graph_document = extract_and_store_graph(graph,chunk_document)
+        #create relationship between source,chunck and entity nodes
+        create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document)
         graph_document_list.append(graph_document[0])     
     return graph_document_list
                  
