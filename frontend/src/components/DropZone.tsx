@@ -13,6 +13,7 @@ interface CustomFile extends Partial<globalThis.File> {
   NodesCount: number;
   id: string;
   relationshipCount: number;
+  model: string;
 }
 
 const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => {
@@ -33,6 +34,7 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
         id: uuidv4(),
         relationshipCount: 0,
         type: 'PDF',
+        model:"Diffbot"
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
@@ -57,6 +59,7 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
             NodesCount: defaultValues.NodesCount,
             relationshipCount: defaultValues.relationshipCount,
             processing: defaultValues.processing,
+            model:defaultValues.model
           });
         }
         if (fileIndex == -1) {
@@ -128,7 +131,7 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
               return {
                 ...curfile,
                 status: 'Failed',
-                type: curfile.type?.split('/')[1].toUpperCase(),
+                type: curfile.type?.split('/')[1]?.toUpperCase()??"PDF",
               };
             } else {
               return curfile;

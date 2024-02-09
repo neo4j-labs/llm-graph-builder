@@ -5,6 +5,7 @@ interface CustomFile extends Partial<globalThis.File> {
   NodesCount: number;
   id: string;
   relationshipCount: number;
+  model: string;
 }
 interface FileContextType {
   files: File[] | [];
