@@ -103,6 +103,7 @@ export default function FileTable() {
           });
           setFiles(prefetchedFiles);
         }
+        setLoading(false);
       } catch (error) {
         setLoading(false);
         console.log(error);
