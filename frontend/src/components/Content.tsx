@@ -36,10 +36,10 @@ export default function Content() {
 
   const handleDropdownChange = (option: any) => {
     setSelectedOption(option.value);
-  }
+  };
 
   const fileUpload = async (file: File, uid: number) => {
-    if (filesData[uid].status == 'Failed'|| filesData[uid].status == 'New') {
+    if (filesData[uid].status == 'Failed' || filesData[uid].status == 'New') {
       const apirequests = [];
       try {
         setFilesData((prevfiles) =>
@@ -54,7 +54,7 @@ export default function Content() {
             }
           })
         );
-        const apiResponse = await extractAPI(file, selectedOption,userCredentials);
+        const apiResponse = await extractAPI(file, selectedOption, userCredentials);
         apirequests.push(apiResponse);
         Promise.allSettled(apirequests)
           .then((r) => {
@@ -98,8 +98,8 @@ export default function Content() {
           })
         );
       }
-    };
-  }
+    }
+  };
 
   const handleGenerateGraph = async () => {
     if (files.length > 0) {
@@ -109,7 +109,7 @@ export default function Content() {
         }
       }
     }
-  }
+  };
   return (
     <div
       className='n-bg-palette-neutral-bg-default'
@@ -159,7 +159,9 @@ export default function Content() {
         <FileTable></FileTable>
         <div style={{ marginTop: '15px', width: '100%', display: 'flex', justifyContent: 'space-between' }}>
           <LlmDropdown onSelect={handleDropdownChange} />
-          <Button disabled={!files.length} onClick={handleGenerateGraph}>Generate Graph</Button>
+          <Button disabled={!files.length} onClick={handleGenerateGraph}>
+            Generate Graph
+          </Button>
         </div>
       </Flex>
     </div>

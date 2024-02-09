@@ -5,7 +5,8 @@ import { uploadAPI } from '../services/Upload';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
-import { saveFileToLocal } from '../utils/utils';
+import { getFileFromLocal, saveFileToLocal } from '../utils/utils';
+
 interface CustomFile extends Partial<globalThis.File> {
   processing: string;
   status: string;
@@ -31,31 +32,43 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
         NodesCount: 0,
         id: uuidv4(),
         relationshipCount: 0,
-        type:"PDF"
+        type: 'PDF',
       };
-      const updatedFilesData: CustomFile[] = [];
-      const updatedFiles: Partial<globalThis.File>[] = [];
+
+      const copiedFilesData: CustomFile[] = [...filesData];
+      const copiedFiles: File[] = [...files];
+
       f.forEach((file) => {
-        const filedataIndex = filesData.findIndex(
-          (filedataitem) => filedataitem?.name === file?.name && filedataitem?.status == 'New'
-        );
-        const fileIndex = files.findIndex(
-          (filedataitem, i) => filedataitem?.name === file?.name && filesData[i]?.status === 'New'
-        );
+        const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === file?.name);
+        const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === file?.name);
         if (filedataIndex == -1) {
-          updatedFilesData.push({
+          copiedFilesData.push({
             name: file.name,
             type: file.type,
             size: file.size,
             ...defaultValues,
           });
+        } else {
+          const tempFileData = copiedFilesData[filedataIndex];
+          copiedFilesData.splice(filedataIndex, 1);
+          copiedFilesData.push({
+            ...tempFileData,
+            status: defaultValues.status,
+            NodesCount: defaultValues.NodesCount,
+            relationshipCount: defaultValues.relationshipCount,
+            processing: defaultValues.processing,
+          });
         }
         if (fileIndex == -1) {
-          updatedFiles.push(file);
+          copiedFiles.push(file as File);
+        } else {
+          const tempFile = copiedFiles[filedataIndex];
+          copiedFiles.splice(fileIndex, 1);
+          copiedFiles.push(getFileFromLocal(tempFile.name) ?? tempFile);
         }
       });
-      setFiles((prevfiles) => [...prevfiles, ...(updatedFiles as File[])]);
-      setFilesData((prevfilesdata) => [...prevfilesdata, ...updatedFilesData]);
+      setFiles(copiedFiles);
+      setFilesData(copiedFilesData);
     }
   };
 

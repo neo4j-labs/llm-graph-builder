@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { url } from '../utils/utils';
 
-const extractAPI = async (file: any, model: string, userCredentials?: any,) => {
+const extractAPI = async (file: any, model: string, userCredentials?: any) => {
   console.log('check URL', url());
   try {
     const formData = new FormData();

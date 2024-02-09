@@ -7,7 +7,7 @@ export const getSourceNodes = async () => {
       throw new Error('Some error occurred');
     }
 
-    return response
+    return response;
   } catch (error) {
     return error;
   }
