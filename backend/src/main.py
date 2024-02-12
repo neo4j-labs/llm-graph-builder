@@ -48,7 +48,7 @@ def create_source_node_graph(uri, userName, password, file):
   except Exception as e:
     job_status = "Failure"
     error_message = str(e)
-    update_node_prop = "SET s.status = '{}', s.errorMessage = '{}'"
+    update_node_prop = 'SET s.status = "{}"", s.errorMessage = "{}"'
     graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
     print(f'Exception Stack trace: {traceback.print_exc()}')
     return create_api_response(job_status,error=error_message)
@@ -152,7 +152,7 @@ def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=Fa
   except Exception as e:
     job_status = "Failure"
     error_message = str(e)
-    update_node_prop = "SET s.status = '{}', s.errorMessage = '{}'"
+    update_node_prop = 'SET s.status = "{}"", s.errorMessage = "{}"'
     graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
     print(f'Exception Stack trace: {traceback.print_exc()}')
     return create_api_response(job_status,error=error_message)
