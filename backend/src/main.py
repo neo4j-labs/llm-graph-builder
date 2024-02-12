@@ -69,7 +69,7 @@ def file_into_chunks(pages: List[Document]):
     return chunks
    
 
-def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=False, isChunk_relation_entity = False):
+def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=False, isChunk_relationship_entity = False):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -107,15 +107,15 @@ def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=Fa
     
     # Get graph document list from models.
     if model == 'Diffbot' :
-      graph_documents = extract_graph_from_diffbot(graph,chunks,file_name)
+      graph_documents = extract_graph_from_diffbot(graph,chunks,file_name,isEmbedding)
       
     elif model == 'OpenAI GPT 3.5':
       model_version = 'gpt-3.5-turbo-16k'
-      graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name)
+      graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,isEmbedding)
        
     elif model == 'OpenAI GPT 4':
       model_version = 'gpt-4-0125-preview' 
-      graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name)
+      graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,isEmbedding)
         
     distinct_nodes = set()
     relations = []
