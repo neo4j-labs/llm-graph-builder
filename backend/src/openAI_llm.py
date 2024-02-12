@@ -212,15 +212,18 @@ def extract_and_store_graph(
 def extract_graph_from_OpenAI(model_version,
                             graph: Neo4jGraph, 
                             chunks: List[Document],
-                            file_name : str):
+                            file_name : str,
+                            isEmbedding : bool):
     """
         Extract graph from OpenAI and store it in database. 
         This is a wrapper for extract_and_store_graph
                                 
         Args:
+            model_version : identify the model of LLM
             graph: Neo4jGraph to be extracted.
             chunks: List of chunk documents created from input file
             file_name (str) : file name of input source
+            isEmbedding (bool) : isEmbedding used to create embedding for chunks or not.
                                 
         Returns: 
             List of langchain GraphDocument - used to generate graph
@@ -231,7 +234,7 @@ def extract_graph_from_OpenAI(model_version,
     for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
         graph_document=extract_and_store_graph(model_version,graph,chunk_document)
         #create relationship between source,chunck and entity nodes
-        create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document)
+        create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document,isEmbedding)
         graph_document_list.append(graph_document[0])     
     return graph_document_list
                  

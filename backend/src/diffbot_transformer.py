@@ -8,13 +8,15 @@ import os
 
 def extract_graph_from_diffbot(graph: Neo4jGraph, 
                                chunks: List[Document],
-                               file_name : str):
+                               file_name : str,
+                               isEmbedding : bool):
     """ Create knowledge graph using diffbot transformer
 
     Args:
         graph (Neo4jGraph): Neo4jGraph connection object
         chunks (List[Document]): list of chunk documents created from input file
         file_name (str) : file name of input source
+        isEmbedding (bool) : isEmbedding used to create embedding for chunks or not.
 
     Returns: List of langchain GraphDocument - used to generate graph
         
@@ -27,7 +29,7 @@ def extract_graph_from_diffbot(graph: Neo4jGraph,
         graph_document = diffbot_nlp.convert_to_graph_documents([chunk])
         graph.add_graph_documents(graph_document)
         #create relationship between source,chunck and entity nodes
-        create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk)
+        create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk,isEmbedding)
         graph_document_list.append(graph_document[0]) 
            
     graph.refresh_schema()
