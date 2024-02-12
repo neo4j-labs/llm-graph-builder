@@ -119,16 +119,15 @@ def map_to_base_relationship(rel: Relationship) -> BaseRelationship:
     return BaseRelationship(
         source=source, target=target, type=rel.type, properties=properties
     )  
-   
-    
-llm = ChatOpenAI(model="gpt-3.5-turbo-16k", temperature=0)
 
 
 def get_extraction_chain(
+    model_version,
     allowed_nodes: Optional[List[str]] = None,
     allowed_rels: Optional[List[str]] = None
     ):
     
+    llm = ChatOpenAI(model= model_version, temperature=0)
     """
     Get a chain of nodes and relationships to extract from GPT. 
     This is an interactive function that prompts the user to select which nodes and relationships 
@@ -176,6 +175,7 @@ Adhere to the rules strictly. Non-compliance will result in termination.
 
 
 def extract_and_store_graph(
+    model_version,
     graph: Neo4jGraph,
     document: Document,
     nodes:Optional[List[str]] = None,
@@ -195,7 +195,7 @@ def extract_and_store_graph(
      	 The GraphDocument that was extracted and stored into the Neo4jgraph
     """
    
-    extract_chain = get_extraction_chain(nodes, rels)
+    extract_chain = get_extraction_chain(model_version,nodes, rels)
     data = extract_chain.invoke(document.page_content)['function']
 
     graph_document = [GraphDocument(
@@ -208,8 +208,9 @@ def extract_and_store_graph(
     return graph_document   
  
     
-def extract_graph_from_OpenAI(graph: Neo4jGraph, 
-                               chunks: List[Document]):
+def extract_graph_from_OpenAI(model_version,
+                            graph: Neo4jGraph, 
+                            chunks: List[Document]):
     """
         Extract graph from OpenAI and store it in database. 
         This is a wrapper for extract_and_store_graph
@@ -225,6 +226,6 @@ def extract_graph_from_OpenAI(graph: Neo4jGraph,
     graph_document_list = []
 
     for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
-        graph_document=extract_and_store_graph(graph,chunk_document)
+        graph_document=extract_and_store_graph(model_version,graph,chunk_document)
         graph_document_list.append(graph_document[0])     
     return graph_document_list
