@@ -13,8 +13,8 @@ export default function Content() {
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials } = useCredentials();
-  const { filesData, files, setFilesData } = useFileContext();
-  const [selectedOption, setSelectedOption] = useState<string>('Diffbot');
+  const { filesData, files, setFilesData, setModel } = useFileContext();
+  // const [selectedOption, setSelectedOption] = useState<string>('Diffbot');
 
   useEffect(() => {
     if (!init) {
@@ -35,7 +35,7 @@ export default function Content() {
   }, []);
 
   const handleDropdownChange = (option: any) => {
-    setSelectedOption(option.value);
+    setModel(option.value);
   };
 
   const fileUpload = async (file: File, uid: number) => {
@@ -54,7 +54,7 @@ export default function Content() {
             }
           })
         );
-        const apiResponse = await extractAPI(file, selectedOption, userCredentials);
+        const apiResponse = await extractAPI(file, filesData[uid].model, userCredentials);
         apirequests.push(apiResponse);
         Promise.allSettled(apirequests)
           .then((r) => {

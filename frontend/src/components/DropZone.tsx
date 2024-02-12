@@ -17,7 +17,7 @@ interface CustomFile extends Partial<globalThis.File> {
 }
 
 const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => {
-  const { files, filesData, setFiles, setFilesData } = useFileContext();
+  const { files, filesData, setFiles, setFilesData,model } = useFileContext();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isClicked, setIsClicked] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
@@ -34,7 +34,7 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
         id: uuidv4(),
         relationshipCount: 0,
         type: 'PDF',
-        model: 'Diffbot',
+        model: model,
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];

@@ -18,7 +18,6 @@ from langchain.prompts import ChatPromptTemplate
 from datetime import datetime
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import TokenTextSplitter
-from src.make_relationships import create_source_chunk_entity_relationship
 from tqdm import tqdm
 
 load_dotenv()
@@ -98,9 +97,9 @@ def map_to_base_node(node: Node) -> BaseNode:
      	 A mapping of the KnowledgeGraph Node to the BaseNode
     """
     properties = props_to_dict(node.properties) if node.properties else {}
-    properties["name"] = node.id.title().replace(' ','_')
+    properties["name"] = node.id.title()
     return BaseNode(
-        id=node.id.title().replace(' ','_'), type=node.type.capitalize().replace(' ','_'), properties=properties
+        id=node.id.title(), type=node.type.capitalize(), properties=properties
     )
 
 
@@ -120,15 +119,16 @@ def map_to_base_relationship(rel: Relationship) -> BaseRelationship:
     return BaseRelationship(
         source=source, target=target, type=rel.type, properties=properties
     )  
+   
+    
+llm = ChatOpenAI(model="gpt-3.5-turbo-16k", temperature=0)
 
 
 def get_extraction_chain(
-    model_version,
     allowed_nodes: Optional[List[str]] = None,
     allowed_rels: Optional[List[str]] = None
     ):
     
-    llm = ChatOpenAI(model= model_version, temperature=0)
     """
     Get a chain of nodes and relationships to extract from GPT. 
     This is an interactive function that prompts the user to select which nodes and relationships 
@@ -176,7 +176,6 @@ Adhere to the rules strictly. Non-compliance will result in termination.
 
 
 def extract_and_store_graph(
-    model_version,
     graph: Neo4jGraph,
     document: Document,
     nodes:Optional[List[str]] = None,
@@ -196,7 +195,7 @@ def extract_and_store_graph(
      	 The GraphDocument that was extracted and stored into the Neo4jgraph
     """
    
-    extract_chain = get_extraction_chain(model_version,nodes, rels)
+    extract_chain = get_extraction_chain(nodes, rels)
     data = extract_chain.invoke(document.page_content)['function']
 
     graph_document = [GraphDocument(
@@ -209,21 +208,15 @@ def extract_and_store_graph(
     return graph_document   
  
     
-def extract_graph_from_OpenAI(model_version,
-                            graph: Neo4jGraph, 
-                            chunks: List[Document],
-                            file_name : str,
-                            isEmbedding : bool):
+def extract_graph_from_OpenAI(graph: Neo4jGraph, 
+                               chunks: List[Document]):
     """
         Extract graph from OpenAI and store it in database. 
         This is a wrapper for extract_and_store_graph
                                 
         Args:
-            model_version : identify the model of LLM
             graph: Neo4jGraph to be extracted.
             chunks: List of chunk documents created from input file
-            file_name (str) : file name of input source
-            isEmbedding (bool) : isEmbedding used to create embedding for chunks or not.
                                 
         Returns: 
             List of langchain GraphDocument - used to generate graph
@@ -232,9 +225,6 @@ def extract_graph_from_OpenAI(model_version,
     graph_document_list = []
 
     for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
-        graph_document=extract_and_store_graph(model_version,graph,chunk_document)
-        #create relationship between source,chunck and entity nodes
-        create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document,isEmbedding)
+        graph_document=extract_and_store_graph(graph,chunk_document)
         graph_document_list.append(graph_document[0])     
     return graph_document_list
-                 

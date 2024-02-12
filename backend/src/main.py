@@ -1,4 +1,3 @@
-
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.graphs import Neo4jGraph
 from langchain.docstore.document import Document
@@ -69,7 +68,7 @@ def file_into_chunks(pages: List[Document]):
     return chunks
    
 
-def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=False, isChunk_relationship_entity = False):
+def extract_graph_from_file(uri, userName, password, file, model):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -87,8 +86,6 @@ def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=Fa
   try:
     start_time = datetime.now()
     file_name = file.filename
-    source_node = "fileName: '{}'"
-    update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessage = '{}',s.nodeCount= {}, s.relationshipCount = {}, s.model = '{}'"
     
     graph = Neo4jGraph(url=uri, username=userName, password=password)
 
@@ -105,17 +102,14 @@ def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=Fa
     # Break down file into chunks
     chunks = file_into_chunks(pages)
     
+    chunks = file_into_chunks(pages)
+    
     # Get graph document list from models.
     if model == 'Diffbot' :
-      graph_documents = extract_graph_from_diffbot(graph,chunks,file_name,isEmbedding)
+      graph_documents = extract_graph_from_diffbot(graph,chunks)
       
-    elif model == 'OpenAI GPT 3.5':
-      model_version = 'gpt-3.5-turbo-16k'
-      graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks)
-       
-    elif model == 'OpenAI GPT 4':
-      model_version = 'gpt-4-0125-preview' 
-      graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks)
+    elif model == 'OpenAI GPT':
+       graph_documents = extract_graph_from_OpenAI(graph,chunks)
         
     distinct_nodes = set()
     relations = []
@@ -135,7 +129,9 @@ def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=Fa
     processed_time = end_time - start_time
     job_status = "Completed"
     error_message =""
-    #Update source node properties
+
+    source_node = "fileName: '{}'"
+    update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessgae = '{}',s.nodeCount= {}, s.relationshipCount = {}, s.model = '{}'"
     graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(start_time,end_time,round(processed_time.total_seconds(),2),job_status,error_message,nodes_created,relationships_created,model))
 
     output = {
@@ -160,7 +156,7 @@ def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=Fa
 
 def get_source_list_from_graph():
   """
-   Returns a list of sources that are in the database by querying the graph and
+   Returns a list of sources that are in the database by querying the graph and 
    sorting the list by the last updated date. 
  """
   try:
