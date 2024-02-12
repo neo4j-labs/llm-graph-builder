@@ -232,24 +232,23 @@ def update_response_to_jsonFile(graph_documents,
   }
   
   file_exist = 'false'
-  llm_not_exist = 'false'
   json_file_path = '../data/llm_comparision.json'
   
   for graph_document in graph_documents:
-        for node in graph_document.nodes:
-            graph_dict["nodes"].append({
-                "id": node.id, "label": node.type, "properties": node.properties
+      for node in graph_document.nodes:
+          graph_dict["nodes"].append({
+          "id": node.id, "label": node.type, "properties": node.properties
         })
         
-  for relationship in graph_document.relationships:
-        graph_dict["relationships"].append({
-        "source": {"id": relationship.source.id,"label": relationship.source.type
-        },
-        "target": {"id": relationship.target.id,"label": relationship.target.type
-        },
-        "type": relationship.type,
-        "properties": relationship.properties
-    }) 
+      for relationship in graph_document.relationships:
+          graph_dict["relationships"].append({
+          "source": {"id": relationship.source.id,"label": relationship.source.type
+          },
+          "target": {"id": relationship.target.id,"label": relationship.target.type
+          },
+          "type": relationship.type,
+          "properties": relationship.properties
+        }) 
         
   data = {
             "file" : file, 
@@ -269,17 +268,18 @@ def update_response_to_jsonFile(graph_documents,
   if model not in json_file_data.keys():
         json_file_data.update({model : [data]})    
   
+  else :
   # Check if file already exist  
-  for i,existing_data in enumerate(json_file_data[model]):
-    if llm_data[model]['file'] == json_file_data[model][i]['file']:
-        file_exist = 'true'
-        
-  # Replace existing record with new response    
-  if file_exist == 'true': 
-    json_file_data[model][i] = llm_data[model] 
-  #  Add new file response to model  
-  else:
-    json_file_data[model].append(llm_data[model])  
+    for i,existing_data in enumerate(json_file_data[model]):
+      if llm_data[model]['file'] == json_file_data[model][i]['file']:
+          file_exist = 'true'
+          break
+    # Replace existing record with new response    
+    if file_exist == 'true': 
+      json_file_data[model][i] = llm_data[model] 
+    #  Add new file response to model  
+    else:
+      json_file_data[model].append(llm_data[model])  
 
   with open(json_file_path, 'w') as json_file :
     json.dump(json_file_data, json_file, indent=4)      
