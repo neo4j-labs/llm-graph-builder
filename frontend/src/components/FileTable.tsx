@@ -1,4 +1,4 @@
-import { DataGrid } from '@neo4j-ndl/react';
+import { DataGrid, DataGridComponents } from '@neo4j-ndl/react';
 import { useEffect } from 'react';
 import React from 'react';
 import {
@@ -7,6 +7,7 @@ import {
   createColumnHelper,
   ColumnFiltersState,
   getFilteredRowModel,
+  getPaginationRowModel,
 } from '@tanstack/react-table';
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/getFiles';
@@ -126,6 +127,7 @@ export default function FileTable() {
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange: setColumnFilters,
     initialState: {
       pagination: {
@@ -141,6 +143,11 @@ export default function FileTable() {
       },
     },
     enableGlobalFilter: false,
+    defaultColumn: {
+      size: 140,
+      minSize: 50,
+      maxSize: 150,
+    },
   });
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     table.getColumn('status')?.setFilterValue(e.target.checked);
@@ -150,20 +157,37 @@ export default function FileTable() {
     <>
       {filesData ? (
         <>
-          <div className='n-w-full'>
-            <div className='flex gap-2 items-center p-2'>
-              <input type='checkbox' onChange={handleChange} />
-              <label>Show files with status New </label>
-            </div>
+          <div className='flex gap-2 items-center '>
+            <input type='checkbox' onChange={handleChange} />
+            <label>Show files with status New </label>
+          </div>
+          <div>
             <DataGrid
-              isLoading={loading}
               isResizable={true}
               tableInstance={table}
-              isKeyboardNavigable={true}
               styling={{
-                zebraStriping: true,
                 borderStyle: 'all-sides',
-                headerStyle: 'clean',
+              }}
+              components={{
+                Body: (props) => <DataGridComponents.Body {...props} />,
+                PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
+                  return (
+                    <DataGridComponents.PaginationNumericButton
+                      {...restProps}
+                      isSelected={isSelected}
+                      innerProps={{
+                        ...innerProps,
+                        style: {
+                          ...(isSelected && {
+                            backgroundSize: '200% auto',
+                            boxShadow: '0 0 20px #eee',
+                            borderRadius: '10px',
+                          }),
+                        },
+                      }}
+                    />
+                  );
+                },
               }}
             />
           </div>

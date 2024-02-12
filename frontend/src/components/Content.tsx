@@ -115,13 +115,13 @@ export default function Content() {
     <div
       className='n-bg-palette-neutral-bg-default'
       style={{
-        width: '100%',
+        width: '77%',
         height: 'calc(100dvh - 67px)',
         padding: 3,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 1,
+        gap: '10px',
       }}
     >
       <Flex className='w-full' alignItems='center' justifyContent='space-between' style={{ flexFlow: 'row' }}>
@@ -146,27 +146,15 @@ export default function Content() {
           </Button>
         )}
       </Flex>
-      <Flex
-        flexDirection='column'
-        style={{
-          padding: '12px',
-          justifyContent: 'space-evenly',
-          alignItems: 'center',
-          width: '100%',
-          marginTop: '10px',
-          height: '100%',
-        }}
-      >
-        <FileTable></FileTable>
-        <div style={{ marginTop: '15px', width: '100%', display: 'flex', justifyContent: 'space-between' }}>
-          <LlmDropdown onSelect={handleDropdownChange} />
-          <Button
-            disabled={!files.length && filesData.some((item) => item.status == 'New')}
-            onClick={handleGenerateGraph}
-          >
-            Generate Graph
-          </Button>
-        </div>
+      <FileTable></FileTable>
+      <Flex className='w-half' justifyContent='space-between' style={{ flexFlow: 'row', marginTop: '5px' }}>
+        <LlmDropdown onSelect={handleDropdownChange} />
+        <Button
+          // disabled={!files.length || filesData.some((item) => item.status == 'New')}
+          onClick={handleGenerateGraph}
+        >
+          Generate Graph
+        </Button>
       </Flex>
     </div>
   );

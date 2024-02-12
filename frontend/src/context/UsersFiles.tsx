@@ -12,7 +12,7 @@ interface FileContextType {
   filesData: CustomFile[] | [];
   setFiles: Dispatch<SetStateAction<File[]>>;
   setFilesData: Dispatch<SetStateAction<CustomFile[]>>;
-  model:string,
+  model: string;
   setModel: Dispatch<SetStateAction<string>>;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
@@ -29,7 +29,7 @@ const FileContextProvider: React.FC<FileContextProviderProps> = ({ children }) =
     setFiles,
     setFilesData,
     model,
-    setModel
+    setModel,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };
