@@ -1,13 +1,17 @@
+import { useCredentials } from "../context/UserCredentials";
+import { uploadAPI } from "../services/Upload";
+
+
+
+// const { files, filesData, setFiles, setFilesData } = useFileContext();
+
 export const url = () => {
   if (process.env.BACKEND_API_URL !== undefined) {
     return process.env.BACKEND_API_URL;
   }
 };
 
-export const formatFileSize = (bytes: any) => {
-  return (bytes / (1024 * 1024)).toFixed(2) + 'mb';
-};
-
+//Convert file object to Base64
 export const fileToBase64 = (file: any) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -16,6 +20,7 @@ export const fileToBase64 = (file: any) => {
     reader.onerror = (error) => reject(error);
   });
 };
+
 // Save file to local storage
 export const saveFileToLocal = async (file: any) => {
   console.log(file.name);
@@ -27,6 +32,8 @@ export const saveFileToLocal = async (file: any) => {
     console.error('Error saving file to local storage:', error);
   }
 };
+
+//convert from base64 back to file
 export const base64ToFile = (base64String: any, fileName: any) => {
   const byteCharacters = atob(base64String.split(',')[1]);
   const byteArrays = [];
@@ -42,6 +49,7 @@ export const base64ToFile = (base64String: any, fileName: any) => {
   const file = new File(byteArrays, fileName, { type: 'application/pdf' });
   return file;
 };
+
 // Retrieve file from local storage
 export const getFileFromLocal = (filename: string) => {
   console.log(filename);
@@ -55,3 +63,74 @@ export const getFileFromLocal = (filename: string) => {
     return null;
   }
 };
+
+
+//Common Function 
+
+// const fileUpload = async (file: File, uid: number) => {
+//   const { userCredentials } = useCredentials();
+//   if (filesData[uid].status == 'None' && isClicked) {
+//     const apirequests = [];
+//     try {
+//       setIsLoading(true);
+//       setFilesData((prevfiles) =>
+//         prevfiles.map((curfile, idx) => {
+//           if (idx == uid) {
+//             return {
+//               ...curfile,
+//               status: 'Uploading',
+//             };
+//           } else {
+//             return curfile;
+//           }
+//         })
+//       );
+//       console.log('Before API CALL', file);
+//       const apiResponse = await uploadAPI(file, userCredentials);
+//       apirequests.push(apiResponse);
+//       Promise.allSettled(apirequests)
+//         .then((r) => {
+//           r.forEach((apiRes) => {
+//             if (apiRes.status === 'fulfilled' && apiRes.value) {
+//               if (apiRes?.value?.data != 'Unexpected Error') {
+//                 setFilesData((prevfiles) =>
+//                   prevfiles.map((curfile, idx) => {
+//                     if (idx == uid) {
+//                       return {
+//                         ...curfile,
+//                         status: 'New',
+//                       };
+//                     } else {
+//                       return curfile;
+//                     }
+//                   })
+//                 );
+//                 setIsLoading(false);
+//               } else {
+//                 throw new Error('API Failure');
+//               }
+//             }
+//           });
+//           setIsClicked(false);
+//         })
+//         .catch((err) => console.log(err));
+//     } catch (err) {
+//       console.log(err);
+//       setIsLoading(false);
+//       setIsClicked(false);
+//       setFilesData((prevfiles) =>
+//         prevfiles.map((curfile, idx) => {
+//           if (idx == uid) {
+//             return {
+//               ...curfile,
+//               status: 'Failed',
+//               type: curfile.type?.split('/')[1]?.toUpperCase() ?? 'PDF',
+//             };
+//           } else {
+//             return curfile;
+//           }
+//         })
+//       );
+//     }
+//   }
+// };
