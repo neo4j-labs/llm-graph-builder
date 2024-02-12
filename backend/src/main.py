@@ -69,7 +69,7 @@ def file_into_chunks(pages: List[Document]):
     return chunks
    
 
-def extract_graph_from_file(uri, userName, password, file, model):
+def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=False, isChunk_relation_entity = False):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
