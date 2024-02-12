@@ -111,11 +111,11 @@ def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=Fa
       
     elif model == 'OpenAI GPT 3.5':
       model_version = 'gpt-3.5-turbo-16k'
-      graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,isEmbedding)
+      graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks)
        
     elif model == 'OpenAI GPT 4':
       model_version = 'gpt-4-0125-preview' 
-      graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,isEmbedding)
+      graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks)
         
     distinct_nodes = set()
     relations = []
