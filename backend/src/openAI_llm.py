@@ -211,7 +211,8 @@ def extract_and_store_graph(
     
 def extract_graph_from_OpenAI(model_version,
                             graph: Neo4jGraph, 
-                            chunks: List[Document]):
+                            chunks: List[Document],
+                            file_name : str):
     """
         Extract graph from OpenAI and store it in database. 
         This is a wrapper for extract_and_store_graph
@@ -228,7 +229,9 @@ def extract_graph_from_OpenAI(model_version,
     graph_document_list = []
 
     for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
-        graph_document=extract_and_store_graph(graph,chunk_document)
+        graph_document=extract_and_store_graph(model_version,graph,chunk_document)
+        #create relationship between source,chunck and entity nodes
+        create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document)
         graph_document_list.append(graph_document[0])     
     return graph_document_list
                  
