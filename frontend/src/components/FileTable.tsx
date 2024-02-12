@@ -12,24 +12,7 @@ import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/getFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { getFileFromLocal } from '../utils/utils';
-interface SourceNode {
-  fileName: string;
-  fileSize: number;
-  fileType?: string;
-  nodeCount?: number;
-  processingTime?: string;
-  relationshipCount?: number;
-  model: string;
-  status: string;
-}
-interface CustomFile extends Partial<globalThis.File> {
-  processing: string;
-  status: string;
-  NodesCount: number;
-  id: string;
-  relationshipCount: number;
-  model: string;
-}
+import { CustomFile, SourceNode } from '../types';
 
 export default function FileTable() {
   const { filesData, setFiles, setFilesData } = useFileContext();
@@ -127,11 +110,6 @@ export default function FileTable() {
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnFiltersChange: setColumnFilters,
-    initialState: {
-      pagination: {
-        pageSize: 5,
-      },
-    },
     state: {
       columnFilters,
     },
@@ -150,12 +128,14 @@ export default function FileTable() {
     <>
       {filesData ? (
         <>
-          <div className='n-w-full'>
-            <div className='flex gap-2 items-center p-2'>
-              <input type='checkbox' onChange={handleChange} />
-              <label>Show files with status New </label>
-            </div>
+          <div className='flex gap-2 items-center'>
+            <input type='checkbox' onChange={handleChange} />
+            <label>Show files with status New </label>
+          </div>
             <DataGrid
+              rootProps={{
+                className: 'max-h-52 max-w-4xl'
+              }}
               isLoading={loading}
               isResizable={true}
               tableInstance={table}
@@ -165,8 +145,9 @@ export default function FileTable() {
                 borderStyle: 'all-sides',
                 headerStyle: 'clean',
               }}
+              components={{
+                Navigation: null}}
             />
-          </div>
         </>
       ) : null}
     </>

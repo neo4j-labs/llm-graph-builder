@@ -6,15 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { getFileFromLocal, saveFileToLocal } from '../utils/utils';
-
-interface CustomFile extends Partial<globalThis.File> {
-  processing: string;
-  status: string;
-  NodesCount: number;
-  id: string;
-  relationshipCount: number;
-  model: string;
-}
+import { CustomFile } from '../types';
 
 const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => {
   const { files, filesData, setFiles, setFilesData } = useFileContext();

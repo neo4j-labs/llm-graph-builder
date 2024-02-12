@@ -6,7 +6,7 @@ import { Button, Label, Typography, Flex } from '@neo4j-ndl/react';
 import { setDriver, disconnect } from '../utils/Driver';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
-import { extractAPI } from '../services/Extract';
+import { extractAPI } from '../services/Upload';
 
 export default function Content() {
   const [init, setInit] = useState<boolean>(false);
@@ -38,7 +38,7 @@ export default function Content() {
     setSelectedOption(option.value);
   };
 
-  const fileUpload = async (file: File, uid: number) => {
+  const extractFile = async (file: File, uid: number) => {
     if (filesData[uid].status == 'Failed' || filesData[uid].status == 'New') {
       const apirequests = [];
       try {
@@ -64,13 +64,14 @@ export default function Content() {
                   setFilesData((prevfiles) =>
                     prevfiles.map((curfile, idx) => {
                       if (idx == uid) {
+                        const response = apiRes?.value?.data?.data;
                         return {
                           ...curfile,
-                          processing: apiRes?.value?.data?.data?.processingTime?.toFixed(2),
-                          status: apiRes?.value?.data?.data?.status,
-                          NodesCount: apiRes?.value?.data?.data?.nodeCount,
-                          relationshipCount: apiRes?.value?.data?.data?.relationshipCount,
-                          model: apiRes?.value?.data?.data?.model,
+                          processing: response.processingTime?.toFixed(2),
+                          status: response.status,
+                          NodesCount: response.nodeCount,
+                          relationshipCount: response.relationshipCount,
+                          model: response.model,
                         };
                       } else {
                         return curfile;
@@ -106,7 +107,7 @@ export default function Content() {
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
         if (filesData[i].status === 'New') {
-          fileUpload(files[i], i);
+          extractFile(files[i], i);
         }
       }
     }
@@ -114,7 +115,7 @@ export default function Content() {
   return (
     <div
       className='n-bg-palette-neutral-bg-default'
-      style={{
+      style={{        
         width: '100%',
         height: 'calc(100dvh - 67px)',
         padding: 3,
@@ -146,27 +147,15 @@ export default function Content() {
           </Button>
         )}
       </Flex>
-      <Flex
-        flexDirection='column'
-        style={{
-          padding: '12px',
-          justifyContent: 'space-evenly',
-          alignItems: 'center',
-          width: '100%',
-          marginTop: '10px',
-          height: '100%',
-        }}
-      >
-        <FileTable></FileTable>
-        <div style={{ marginTop: '15px', width: '100%', display: 'flex', justifyContent: 'space-between' }}>
-          <LlmDropdown onSelect={handleDropdownChange} />
-          <Button
-            disabled={!files.length && filesData.some((item) => item.status == 'New')}
-            onClick={handleGenerateGraph}
-          >
-            Generate Graph
-          </Button>
-        </div>
+      <FileTable></FileTable>
+      <Flex className='w-half' justifyContent='space-between' style={{ flexFlow: 'row', marginTop: '5px' }}>
+        <LlmDropdown onSelect={handleDropdownChange} />
+        <Button
+          disabled={!files.length && filesData.some((item) => item.status == 'New')}
+          onClick={handleGenerateGraph}
+        >
+          Generate Graph
+        </Button>
       </Flex>
     </div>
   );
