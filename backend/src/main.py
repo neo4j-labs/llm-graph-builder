@@ -109,8 +109,13 @@ def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=Fa
     if model == 'Diffbot' :
       graph_documents = extract_graph_from_diffbot(graph,chunks,file_name)
       
-    elif model == 'OpenAI GPT':
-       graph_documents = extract_graph_from_OpenAI(graph,chunks,file_name)
+    elif model == 'OpenAI GPT 3.5':
+      model_version = 'gpt-3.5-turbo-16k'
+      graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks)
+       
+    elif model == 'OpenAI GPT 4':
+      model_version = 'gpt-4-0125-preview' 
+      graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks)
         
     distinct_nodes = set()
     relations = []
