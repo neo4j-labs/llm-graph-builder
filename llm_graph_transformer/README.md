@@ -47,10 +47,10 @@ from llm_graph_transformer.openaillm import *
    Creates a list of sources
    
     Args:
-  graph: Neo4j graph object
+        graph: Neo4j graph object
     Returns:
-   Returns a list of sources that are in the database by querying the graph and 
-   sorting the list by the last updated date. 
+         Returns a list of sources that are in the database by querying the graph and 
+         sorting the list by the last updated date. 
 
 # create_source_node_graph(uri, userName, password, file):
 
@@ -67,18 +67,18 @@ from llm_graph_transformer.openaillm import *
 
 ## Usage example
 
-from llm_graph_transformer.openAI_llm import *
-from dotenv import load_dotenv
-import os
-from langchain_community.graphs import Neo4jGraph
-load_dotenv()
+from llm_graph_transformer.openAI_llm import *\
+from dotenv import load_dotenv\
+import os\
+from langchain_community.graphs import Neo4jGraph\
+load_dotenv()\
 
-url =os.environ.get('NEO4J_URI')
-userName = os.environ.get('NEO4J_USERNAME')
-password = os.environ.get('NEO4J_PASSWORD')
-model=os.environ.get('LLM_MODEL')
-graph = Neo4jGraph()
-file_path='/workspaces/llm-graph-builder/data/Football_news.pdf'
-extract_graph_from_file(url, userName, password, file_path, model)
+url =os.environ.get('NEO4J_URI')\
+userName = os.environ.get('NEO4J_USERNAME')\
+password = os.environ.get('NEO4J_PASSWORD')\
+model=os.environ.get('LLM_MODEL')\
+graph = Neo4jGraph()\
+file_path='/workspaces/llm-graph-builder/data/Football_news.pdf'\
+extract_graph_from_file(url, userName, password, file_path, model)\
 
 
