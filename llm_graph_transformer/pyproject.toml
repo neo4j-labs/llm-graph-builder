@@ -1,0 +1,19 @@
+[tool.poetry]
+name='llm_graph_transformer'
+version='0.0.1'
+description='Knowledge graph creation using OpenAI GPT'
+author='Neo4j'
+
+[tool.poetry.dependencies]
+python="3.9"
+langchain_community="*"
+langchain="*"
+python-dotenv="*"
+tqdm="*"
+langchain_openai="*"
+neo4j="*"
+
+
+[build-system]
+requires=["poetry-core>=1.0.0"]
+build-backend="poetry.core.masonry.api"
