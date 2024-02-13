@@ -17,6 +17,7 @@ const LlmDropdown: React.FC<DropdownProps> = ({ onSelect }) => {
             options: allOptions.map((option) => ({ label: option, value: option })),
             placeholder: 'Select Model',
             defaultValue: { label: 'Diffbot', value: 'Diffbot' },
+            menuPlacement: 'auto',
           }}
           size='medium'
           fluid
