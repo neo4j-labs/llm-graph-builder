@@ -210,7 +210,7 @@ def extract_and_store_graph(
  
     
 def extract_graph_from_OpenAI(model_version,
-                            graph: Neo4jGraph, 
+                            graph: Neo4jGraph,
                             chunks: List[Document],
                             file_name : str,
                             isEmbedding : bool):
