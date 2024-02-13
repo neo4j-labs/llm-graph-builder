@@ -20,39 +20,39 @@ from llm_graph_transformer.openaillm import *
 
 ## Functions/Modules
 
-## extract_graph_from_file(uri, userName, password, file_path, model):
+# extract_graph_from_file(uri, userName, password, file_path, model):
    Extracts a Neo4jGraph from a PDF file based on the model.
    
-   ## Args:
+    Args:
    	 uri: URI of the graph to extract
    	 userName: Username to use for graph creation ( if None will use username from config file )
    	 password: Password to use for graph creation ( if None will use password from config file )
    	 file: File object containing the PDF file path to be used
    	 model: Type of model to use ('OpenAI GPT 3.5' or 'OpenAI GPT 4')
    
-   ## Returns: 
+     Returns: 
    	 Json response to API with fileName, nodeCount, relationshipCount, processingTime, 
      status and model as attributes.
 
-## get_source_list_from_graph(graph):
+# get_source_list_from_graph(graph):
 
-  # Args:
+    Args:
   graph: Neo4j graph object
-   # Returns:
+    Returns:
    Returns a list of sources that are in the database by querying the graph and 
    sorting the list by the last updated date. 
 
-## create_source_node_graph(uri, userName, password, file):
+# create_source_node_graph(uri, userName, password, file):
 
    Creates a source node in Neo4jGraph and sets properties.
    
-   ## Args:
+    Args:
    	 uri: URI of Graph Service to connect to
    	 userName: Username to connect to Graph Service with ( default : None )
    	 password: Password to connect to Graph Service with ( default : None )
    	 file: File object with information about file to be added
    
-   ## Returns: 
+    Returns: 
    	 Success or Failure message of node creation
 
 
