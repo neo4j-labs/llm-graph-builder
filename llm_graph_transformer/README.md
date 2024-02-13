@@ -4,6 +4,14 @@
 The 'llm_graph_transformer' package enables the generation of knowledge graphs in a Neo4j workspace using OpenAI's GPT.
 
 ## Installation
+Using Poetry is a more streamlined way to manage Python dependencies and projects. To manage python dependencies in 'pyproject.toml' file install Poetry using the following command:
+
+curl -sSL https://install.python-poetry.org | python3 -
+
+Install Dependencies specified in the 'pyproject.toml' file using the command:
+
+poetry install
+
 
 ## Setting up Environment Variables
 Create .env file and update the following env variables

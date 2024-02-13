@@ -1,5 +1,4 @@
 from langchain_community.graphs import Neo4jGraph
-import os
 from dotenv import load_dotenv 
 from langchain_community.graphs.graph_document import (
     Node as BaseNode,
@@ -23,13 +22,11 @@ from .prompt import *
 # load_dotenv()
 
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.graphs import Neo4jGraph
 from langchain.docstore.document import Document
 from datetime import datetime
 import os
 import traceback
 from langchain.text_splitter import TokenTextSplitter
-from tqdm import tqdm
 from typing import List
 
 
