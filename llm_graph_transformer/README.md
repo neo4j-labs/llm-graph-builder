@@ -35,7 +35,9 @@ from llm_graph_transformer.openaillm import *
      status and model as attributes.
 
 # get_source_list_from_graph(graph):
-
+   
+   Creates a list of sources
+   
     Args:
   graph: Neo4j graph object
     Returns:
