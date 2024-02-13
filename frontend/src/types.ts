@@ -15,8 +15,3 @@ export interface OptionType {
 export interface DropdownProps {
   onSelect: (option: OptionType | null | void) => void;
 }
-export interface CustomAlertProps {
-  open: boolean;
-  handleClose: () => void;
-  alertMessage: string;
-}
