@@ -27,3 +27,4 @@ def extract_graph_from_diffbot(graph: Neo4jGraph,
            
     graph.refresh_schema()
     return graph_document_list
+    

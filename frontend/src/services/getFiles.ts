@@ -2,7 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 import { url } from '../utils/utils';
 export const getSourceNodes = async () => {
   try {
-    const response = await axios.get(`${url()}sources_list`);
+    const response = await axios.get(`${url()}/sources_list`);
     if (response.status != 200) {
       throw new Error('Some error occurred');
     }

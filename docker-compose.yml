@@ -32,7 +32,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - BACKEND_API_URL=${BACKEND_API_URL-http://localhost:8000}
+      - BACKEND_API_URL=${BACKEND_API_URL-}
     container_name: frontend
     ports:
       - "5173:5173"

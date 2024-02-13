@@ -229,3 +229,4 @@ def extract_graph_from_OpenAI(model_version,
         graph_document=extract_and_store_graph(model_version,graph,chunk_document)
         graph_document_list.append(graph_document[0])     
     return graph_document_list
+                 
