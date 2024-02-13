@@ -45,3 +45,23 @@ from llm_graph_transformer.openaillm import *
 # get_source_list_from_graph(graph):
    
    Creates a list of sources
+   
+    Args:
+        graph: Neo4j graph object
+    Returns:
+         Returns a list of sources that are in the database by querying the graph and 
+         sorting the list by the last updated date. 
+
+# create_source_node_graph(uri, userName, password, file):
+
+   Creates a source node in Neo4jGraph and sets properties.
+   
+    Args:
+   	 uri: URI of Graph Service to connect to
+   	 userName: Username to connect to Graph Service with ( default : None )
+   	 password: Password to connect to Graph Service with ( default : None )
+   	 file: File object with information about file to be added
+   
+    Returns: 
+   	 Success or Failure message of node creation
+
