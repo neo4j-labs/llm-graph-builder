@@ -2,10 +2,10 @@
 name='llm_graph_transformer'
 version='0.0.1'
 description='Knowledge graph creation using OpenAI GPT'
-author='Neo4j'
+authors=['Neo4j']
 
 [tool.poetry.dependencies]
-python="3.9"
+python="3.10.13"
 langchain_community="*"
 langchain="*"
 python-dotenv="*"
