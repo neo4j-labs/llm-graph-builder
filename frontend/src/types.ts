@@ -4,6 +4,7 @@ export interface CustomFile extends Partial<globalThis.File> {
   NodesCount: number;
   id: string;
   relationshipCount: number;
+  model: string;
 }
 
 export interface OptionType {
@@ -13,4 +14,9 @@ export interface OptionType {
 
 export interface DropdownProps {
   onSelect: (option: OptionType | null | void) => void;
+}
+export interface CustomAlertProps {
+  open: boolean;
+  handleClose: () => void;
+  alertMessage: string;
 }

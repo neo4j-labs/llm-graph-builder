@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import { url } from '../utils/utils';
 export const getSourceNodes = async () => {
   try {
@@ -6,8 +6,7 @@ export const getSourceNodes = async () => {
     if (response.status != 200) {
       throw new Error('Some error occurred');
     }
-
-    return response
+    return response;
   } catch (error) {
     return error;
   }
