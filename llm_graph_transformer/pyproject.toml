@@ -1,3 +1,7 @@
+[build-system]
+requires=["poetry-core>=1.0.0"]
+build-backend="poetry.core.masonry.api"
+
 [tool.poetry]
 name='llm_graph_transformer'
 version='0.0.1'
@@ -12,6 +16,7 @@ python-dotenv="*"
 tqdm="*"
 langchain_openai="*"
 neo4j="*"
+pypdf="*"
 
 
 [build-system]

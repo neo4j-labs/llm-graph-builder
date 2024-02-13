@@ -11,7 +11,7 @@ from typing import List, Dict, Any, Optional
 from langchain.pydantic_v1 import Field, BaseModel
 from langchain.chains.openai_functions import (
     create_openai_fn_chain,
-    create_structured_output_chain,
+    create_structured_output_chain
 )
 from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
@@ -19,7 +19,7 @@ from datetime import datetime
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import TokenTextSplitter
 from tqdm import tqdm
-from prompt import *
+from .prompt import *
 # load_dotenv()
 
 from langchain_community.document_loaders import PyPDFLoader
@@ -30,7 +30,6 @@ import os
 import traceback
 from langchain.text_splitter import TokenTextSplitter
 from tqdm import tqdm
-from openAI_llm import extract_graph_from_OpenAI
 from typing import List
 
 
@@ -85,7 +84,9 @@ def file_into_chunks(pages: List[Document]):
     return chunks
    
 
-def extract_graph_from_file(uri, userName, password, file_path, model):
+def extract_graph_from_file(uri, userName, password, file_path, model,
+                            nodes:Optional[List[str]] = None,
+                            rels:Optional[List[str]]=None):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -106,9 +107,12 @@ def extract_graph_from_file(uri, userName, password, file_path, model):
     
     graph = Neo4jGraph(url=uri, username=userName, password=password)
 
-    metadata = {"source": "local","filename": file_name, "filesize":file.size }
+    file_size = os.stat(file_path)
+    print("file size :", file_size.st_size, "bytes")
 
-    loader = PyPDFLoader("../data/Football_news.pdf")
+    metadata = {"source": "local","filename": file_name, "filesize":file_size.st_size }
+
+    loader = PyPDFLoader(file_path)
     pages = loader.load_and_split()
     
     # Creates a new Document object for each page in the list of pages.
@@ -170,10 +174,13 @@ def extract_graph_from_file(uri, userName, password, file_path, model):
     return create_api_response(job_status,error=error_message)
 
 
-def get_source_list_from_graph():
+def get_source_list_from_graph(graph):
   """
    Returns a list of sources that are in the database by querying the graph and 
    sorting the list by the last updated date. 
+   
+   Agrs:
+   graph : Neo4j graph object
  """
   try:
     query = "MATCH(s:Source) RETURN s ORDER BY s.updatedAt DESC;"
@@ -368,7 +375,9 @@ def extract_and_store_graph(
     
 def extract_graph_from_OpenAI(model_version,
                             graph: Neo4jGraph, 
-                            chunks: List[Document]):
+                            chunks: List[Document],
+                            nodes:Optional[List[str]] = None,
+                            rels:Optional[List[str]]=None):
     """
         Extract graph from OpenAI and store it in database. 
         This is a wrapper for extract_and_store_graph
@@ -380,7 +389,6 @@ def extract_graph_from_OpenAI(model_version,
         Returns: 
             List of langchain GraphDocument - used to generate graph
     """
-    openai_api_key = os.environ.get('OPENAI_API_KEY')
     graph_document_list = []
 
     for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
