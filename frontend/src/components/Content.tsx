@@ -115,13 +115,14 @@ export default function Content() {
     <div
       className='n-bg-palette-neutral-bg-default'
       style={{
-        width: '77%',
-        height: 'calc(100dvh - 67px)',
+        width: 'calc(-342px + 100dvw)',
+        height: 'calc(100dvh - 70px)',
         padding: 3,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '10px',
+        gap: '5px',
+        position: 'relative',
       }}
     >
       <Flex className='w-full' alignItems='center' justifyContent='space-between' style={{ flexFlow: 'row' }}>
@@ -147,12 +148,13 @@ export default function Content() {
         )}
       </Flex>
       <FileTable></FileTable>
-      <Flex className='w-half' justifyContent='space-between' style={{ flexFlow: 'row', marginTop: '5px' }}>
+      <Flex
+        className='w-full p-2.5 absolute bottom-4'
+        justifyContent='space-between'
+        style={{ flexFlow: 'row', marginTop: '5px' }}
+      >
         <LlmDropdown onSelect={handleDropdownChange} />
-        <Button
-          // disabled={!files.length || filesData.some((item) => item.status == 'New')}
-          onClick={handleGenerateGraph}
-        >
+        <Button disabled={!files.length} onClick={handleGenerateGraph} className='mr-0.5'>
           Generate Graph
         </Button>
       </Flex>

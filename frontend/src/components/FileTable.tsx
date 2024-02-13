@@ -131,7 +131,7 @@ export default function FileTable() {
     onColumnFiltersChange: setColumnFilters,
     initialState: {
       pagination: {
-        pageSize: 5,
+        pageSize: 4,
       },
     },
     state: {
@@ -157,7 +157,7 @@ export default function FileTable() {
     <>
       {filesData ? (
         <>
-          <div className='flex gap-2 items-center '>
+          <div className='flex items-center p-5 self-start gap-2'>
             <input type='checkbox' onChange={handleChange} />
             <label>Show files with status New </label>
           </div>
@@ -167,6 +167,10 @@ export default function FileTable() {
               tableInstance={table}
               styling={{
                 borderStyle: 'all-sides',
+                headerStyle: 'clean',
+              }}
+              rootProps={{
+                className: 'filetable',
               }}
               components={{
                 Body: (props) => <DataGridComponents.Body {...props} />,
