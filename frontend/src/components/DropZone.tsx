@@ -1,11 +1,12 @@
 import { Dropzone } from '@neo4j-ndl/react';
-import { useState, useEffect, FunctionComponent } from 'react';
+import React, { useState, useEffect, FunctionComponent } from 'react';
 import Loader from '../utils/Loader';
 import { uploadAPI } from '../services/Upload';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { getFileFromLocal, saveFileToLocal } from '../utils/utils';
+import CustomAlert from './Alert';
 
 interface CustomFile extends Partial<globalThis.File> {
   processing: string;
@@ -21,6 +22,8 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isClicked, setIsClicked] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
+  const [errorMessage, setErrorMessage] = React.useState<string>('');
+  const [showAlert, setShowAlert] = React.useState<boolean>(false);
 
   const onDropHandler = (f: Partial<globalThis.File>[]) => {
     setIsClicked(true);
@@ -112,6 +115,7 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
                       }
                     })
                   );
+                  setIsClicked(false);
                   setIsLoading(false);
                 } else {
                   throw new Error('API Failure');
@@ -121,10 +125,15 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
             setIsClicked(false);
           })
           .catch((err) => console.log(err));
-      } catch (err) {
+      } catch (err: any) {
         console.log(err);
         setIsLoading(false);
         setIsClicked(false);
+<<<<<<< Updated upstream
+        setShowAlert(true);
+        setErrorMessage(err.message);
+=======
+>>>>>>> Stashed changes
         setFilesData((prevfiles) =>
           prevfiles.map((curfile, idx) => {
             if (idx == uid) {
@@ -141,7 +150,12 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
       }
     }
   };
-
+  const handleClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setShowAlert(false);
+  };
   useEffect(() => {
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
@@ -152,6 +166,8 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
 
   return (
     <>
+      <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
+
       {props.isBackendConnected && (
         <Dropzone
           loadingComponent={isLoading && <Loader />}
@@ -160,7 +176,30 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
           dropZoneOptions={{
             accept: { 'application/pdf': ['.pdf'] },
             onDrop: (f: Partial<globalThis.File>[]) => {
+<<<<<<< Updated upstream
               onDropHandler(f);
+=======
+              setIsClicked(true);
+              f.forEach((i) => saveFileToLocal(i));
+              setIsLoading(false);
+              if (f.length) {
+                const defaultValues: CustomFile = {
+                  processing: 'None',
+                  status: 'None',
+                  NodesCount: 0,
+                  id: uuidv4(),
+                  relationshipCount: 0,
+                };
+                const updatedFiles: CustomFile[] = f.map((file) => ({
+                  name: file.name,
+                  type: file.type,
+                  size: file.size,
+                  ...defaultValues,
+                }));
+                setFiles((prevfiles) => [...prevfiles, ...(f as File[])]);
+                setFilesData((prevfilesdata) => [...prevfilesdata, ...updatedFiles]);
+              }
+>>>>>>> Stashed changes
             },
           }}
         />

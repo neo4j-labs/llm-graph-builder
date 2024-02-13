@@ -23,6 +23,7 @@ interface SourceNode {
   model: string;
   status: string;
 }
+
 interface CustomFile extends Partial<globalThis.File> {
   processing: string;
   status: string;
@@ -37,6 +38,7 @@ export default function FileTable() {
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [loading, setLoading] = React.useState<boolean>(false);
+
   const columns = [
     columnHelper.accessor('name', {
       cell: (info) => <div>{info.getValue()?.substring(0, 10) + '...'}</div>,
