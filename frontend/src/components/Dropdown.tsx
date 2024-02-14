@@ -1,7 +1,7 @@
 import { Dropdown } from '@neo4j-ndl/react';
 import { DropdownProps, OptionType } from '../types';
 
-const LlmDropdown: React.FC<DropdownProps> = ({ onSelect,isDisabled }) => {
+const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
   };
@@ -18,7 +18,7 @@ const LlmDropdown: React.FC<DropdownProps> = ({ onSelect,isDisabled }) => {
             placeholder: 'Select Model',
             defaultValue: { label: 'Diffbot', value: 'Diffbot' },
             menuPlacement: 'auto',
-            isDisabled,
+            isDisabled
           }}
           size='medium'
           fluid
