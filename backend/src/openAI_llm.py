@@ -20,8 +20,10 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import TokenTextSplitter
 from src.make_relationships import create_source_chunk_entity_relationship
 from tqdm import tqdm
+import logging
 
 load_dotenv()
+logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
 class Property(BaseModel):
   """A single property consisting of key and value"""
@@ -58,8 +60,7 @@ def format_property_key(s: str) -> str:
     """
     
     words = s.split()
-    # Returns the word if words is not empty.
-    # Returns the word if words is not empty.
+    logging.debug("Returns the word if words is not empty.")
     if not words:
         return s
     first_word = words[0].lower()
@@ -233,8 +234,7 @@ def extract_graph_from_OpenAI(model_version,
 
     for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
         graph_document=extract_and_store_graph(model_version,graph,chunk_document)
-        #create relationship between source,chunck and entity nodes
+        logging.info("create relationship between source,chunck and entity nodes")
         create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document,isEmbedding)
         graph_document_list.append(graph_document[0])     
     return graph_document_list
-                 

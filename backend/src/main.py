@@ -3,7 +3,7 @@ from langchain_community.graphs import Neo4jGraph
 from langchain.docstore.document import Document
 from dotenv import load_dotenv
 from datetime import datetime
-import os
+import logging
 import traceback
 from langchain.text_splitter import TokenTextSplitter
 from tqdm import tqdm
@@ -12,7 +12,7 @@ from src.openAI_llm import extract_graph_from_OpenAI
 from typing import List
 
 load_dotenv()
-
+logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 # url =os.environ.get('NEO4J_URI')
 # username = os.environ.get('NEO4J_USERNAME')
 # password = os.environ.get('NEO4J_PASSWORD')
@@ -41,15 +41,15 @@ def create_source_node_graph(uri, userName, password, file):
 
     source_node = "fileName: '{}'"
     update_node_prop = "SET s.fileSize = '{}', s.fileType = '{}' ,s.status = '{}'"
-    #create source node as file name if not exist
+    logging.info("create source node as file name if not exist")
     graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,job_status))
     return create_api_response("Success",data="Source Node created succesfully")
   except Exception as e:
     job_status = "Failure"
     error_message = str(e)
-    update_node_prop = 'SET s.status = "{}"", s.errorMessage = "{}"'
+    update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}"'
     graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
-    print(f'Exception Stack trace: {traceback.print_exc()}')
+    logging.exception(f'Exception Stack trace:')
     return create_api_response(job_status,error=error_message)
   
   
@@ -97,14 +97,21 @@ def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=Fa
       f.write(file.file.read())
     loader = PyPDFLoader('temp.pdf')
     pages = loader.load_and_split()
-    
-    # Creates a new Document object for each page in the list of pages.
+
+    bad_chars = ['"', "\n", "'"]
+    logging.info("Creates a new Document object for each page in the list of pages")
     for i in range(0,len(pages)):
-      pages[i]=Document(page_content=pages[i].page_content.replace('\n',' '), metadata=metadata)
-    # Break down file into chunks
+      text = pages[i].page_content
+      for j in bad_chars:
+        if j == '\n':
+          text = text.replace(j, ' ')
+        else:
+          text = text.replace(j, '')
+      pages[i]=Document(page_content=str(text), metadata=metadata)
+    logging.info("Break down file into chunks")
     chunks = file_into_chunks(pages)
     
-    # Get graph document list from models.
+    logging.info("Get graph document list from models")
     if model == 'Diffbot' :
       graph_documents = extract_graph_from_diffbot(graph,chunks,file_name,isEmbedding)
       
@@ -120,10 +127,10 @@ def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=Fa
     relations = []
     
     for graph_document in graph_documents:
-      #get distinct nodes
+      logging.info("get distinct nodes")
       for node in graph_document.nodes:
             distinct_nodes.add(node.id)
-      #get all relations   
+      logging.info("get all relations")
       for relation in graph_document.relationships:
             relations.append(relation.type)
       
@@ -134,7 +141,7 @@ def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=Fa
     processed_time = end_time - start_time
     job_status = "Completed"
     error_message =""
-    #Update source node properties
+    logging.info("Update source node properties")
     graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(start_time,end_time,round(processed_time.total_seconds(),2),job_status,error_message,nodes_created,relationships_created,model))
 
     output = {
@@ -146,14 +153,13 @@ def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=Fa
         "model" : model
     }
     
-    # return  JSONResponse(content=jsonable_encoder(output))
     return create_api_response("Success",data=output)
   except Exception as e:
     job_status = "Failure"
     error_message = str(e)
-    update_node_prop = 'SET s.status = "{}"", s.errorMessage = "{}"'
+    update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}"'
     graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
-    print(f'Exception Stack trace: {traceback.print_exc()}')
+    logging.exception(f'Exception Stack trace:')
     return create_api_response(job_status,error=error_message)
 
 
@@ -170,6 +176,7 @@ def get_source_list_from_graph():
   except Exception as e:
     job_status = "Failure"
     error_message = str(e)
+    logging.exception('Exception')
     return create_api_response(job_status,error=error_message)
 
 

@@ -4,8 +4,9 @@ from langchain.docstore.document import Document
 from src.make_relationships import create_source_chunk_entity_relationship
 from typing import List
 import os
+import logging
 
-
+logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 def extract_graph_from_diffbot(graph: Neo4jGraph, 
                                chunks: List[Document],
                                file_name : str,
@@ -28,7 +29,7 @@ def extract_graph_from_diffbot(graph: Neo4jGraph,
     for chunk in chunks:
         graph_document = diffbot_nlp.convert_to_graph_documents([chunk])
         graph.add_graph_documents(graph_document)
-        #create relationship between source,chunck and entity nodes
+        logging.info("create relationship between source,chunck and entity nodes")
         create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk,isEmbedding)
         graph_document_list.append(graph_document[0]) 
            

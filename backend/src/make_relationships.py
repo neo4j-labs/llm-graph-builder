@@ -1,5 +1,8 @@
 from langchain_community.graphs import Neo4jGraph
 from langchain.docstore.document import Document
+import logging
+
+logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
 def create_source_chunk_entity_relationship(source_file_name :str,
                                             graph: Neo4jGraph,
@@ -16,7 +19,7 @@ def create_source_chunk_entity_relationship(source_file_name :str,
 
     """
     source_node = 'fileName: "{}"'
-    print(f'Graph Document print{graph_document}')
+    logging.debug(f'Graph Document print{graph_document}')
     chunk_node_id = 'uuid:"{}"'
     if isEmbedding:
         update_chunk_node_prop = 'SET c.text = "{}", c.embedding = True'
@@ -26,10 +29,10 @@ def create_source_chunk_entity_relationship(source_file_name :str,
     result = graph.query('CREATE(c:Chunk {uuid:randomUUID()}) '+update_chunk_node_prop.format(chunk.page_content)+' RETURN c.uuid AS UUID')
 
     chunk_uuid = result[0]['UUID']
-    #make relationship between chunk node and source node.
+    logging.info("make relationship between chunk node and source node")
     graph.query('MATCH(s:Source {'+source_node.format(source_file_name)+'}) ,(c:Chunk {'+chunk_node_id.format(chunk_uuid)+'}) CREATE (s)-[:HAS_CHILD]->(c)')
-    dict = {}
-    nodes_list = []
+    # dict = {}
+    # nodes_list = []
     for node in graph_document[0].nodes:
         node_id = node.id
         result = graph.query('MATCH(c:Chunk {'+chunk_node_id.format(chunk_uuid)+'}), (n:'+ node.type +'{ id: "'+node_id+'"}) CREATE (c)-[:HAS_ENTITY]->(n)')
