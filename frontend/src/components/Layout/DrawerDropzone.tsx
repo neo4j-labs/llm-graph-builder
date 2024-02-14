@@ -2,6 +2,7 @@ import { Drawer, Label, Typography } from '@neo4j-ndl/react';
 import DropZone from '../DropZone';
 import { useState, useEffect } from 'react';
 import { healthStatus } from '../../services/HealthStatus';
+import S3Component from '../S3Bucket';
 
 export default function DrawerDropzone() {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
@@ -16,6 +17,7 @@ export default function DrawerDropzone() {
     }
     getHealthStatus();
   }, []);
+
   return (
     <div
       className='relative'
@@ -45,7 +47,8 @@ export default function DrawerDropzone() {
                     </Typography>
                   </Typography>
                 </div>
-                <div className='h-full px-6'>
+                <div className='h-full px-6 imageBg'>
+                  <div className='s3Container'><S3Component/></div>
                   <DropZone isBackendConnected={isBackendConnected} />
                 </div>
               </div>
