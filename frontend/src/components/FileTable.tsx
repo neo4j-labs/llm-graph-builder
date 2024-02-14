@@ -19,7 +19,7 @@ export default function FileTable() {
   const { filesData, setFiles, setFilesData } = useFileContext();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [loading, setLoading] = React.useState<boolean>(false);
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
   const columns = [
     columnHelper.accessor('name', {
@@ -28,7 +28,7 @@ export default function FileTable() {
     }),
     columnHelper.accessor((row) => row.size, {
       id: 'fileSize',
-      cell: (info: any) => <i>{(info?.getValue() / 1000)?.toFixed(2)} KB</i>,
+      cell: (info:any) => <i>{(info?.getValue() / 1000)?.toFixed(2)} KB</i>,
       header: () => <span>File Size</span>,
       footer: (info) => info.column.id,
     }),
@@ -74,7 +74,7 @@ export default function FileTable() {
   useEffect(() => {
     const fetchFiles = async () => {
       try {
-        setLoading(true);
+        setIsLoading(true);
         const res: any = await getSourceNodes();
         if (Array.isArray(res.data.data) && res.data.data.length) {
           const prefiles = res.data.data.map((item: SourceNode) => ({
@@ -88,7 +88,7 @@ export default function FileTable() {
             model: item?.model ?? 'Diffbot',
             id: uuidv4(),
           }));
-          setLoading(false);
+          setIsLoading(false);
           setFilesData(prefiles);
           const prefetchedFiles: File[] = [];
           res.data.data.forEach((item: any) => {
@@ -99,9 +99,9 @@ export default function FileTable() {
           });
           setFiles(prefetchedFiles);
         }
-        setLoading(false);
+        setIsLoading(false);
       } catch (error) {
-        setLoading(false);
+        setIsLoading(false);
         console.log(error);
       }
     };
@@ -155,6 +155,7 @@ export default function FileTable() {
                 borderStyle: 'all-sides',
                 headerStyle: 'clean',
               }}
+              isLoading= {isLoading}
               rootProps={{
                 className: 'filetable',
               }}
