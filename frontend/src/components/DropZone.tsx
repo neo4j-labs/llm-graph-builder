@@ -165,7 +165,7 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
         <Dropzone
           loadingComponent={isLoading && <Loader />}
           isTesting={true}
-          className='w-full h-full'
+          className='bg-none'
           dropZoneOptions={{
             accept: { 'application/pdf': ['.pdf'] },
             onDrop: (f: Partial<globalThis.File>[]) => {
