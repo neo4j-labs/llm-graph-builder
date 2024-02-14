@@ -2,7 +2,6 @@ import axios from 'axios';
 import { url } from '../utils/utils';
 
 const uploadAPI = async (file: any, userCredentials: any) => {
-  console.log('check URL', url());
   try {
     const formData = new FormData();
     formData.append('file', file);
