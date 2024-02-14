@@ -20,7 +20,6 @@ export const fileToBase64 = (file: any) => {
 };
 // Save file to local storage
 export const saveFileToLocal = async (file: any) => {
-  console.log(file.name);
   try {
     const base64String: any = await fileToBase64(file);
     localStorage.setItem(`${file.name}`, base64String);
@@ -46,7 +45,6 @@ export const base64ToFile = (base64String: any, fileName: any) => {
 };
 // Retrieve file from local storage
 export const getFileFromLocal = (filename: string) => {
-  console.log(filename);
   const base64String = localStorage.getItem(filename);
   if (base64String) {
     const file = base64ToFile(base64String, filename);

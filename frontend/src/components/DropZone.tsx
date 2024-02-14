@@ -95,7 +95,7 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
             }
           })
         );
-        console.log('Before API CALL', file);
+
         const apiResponse = await uploadAPI(file, userCredentials);
         apirequests.push(apiResponse);
         Promise.allSettled(apirequests)
