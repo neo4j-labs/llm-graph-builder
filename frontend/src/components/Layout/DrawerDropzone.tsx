@@ -3,9 +3,12 @@ import DropZone from '../DropZone';
 import { useState, useEffect } from 'react';
 import { healthStatus } from '../../services/HealthStatus';
 import S3Component from '../S3Bucket';
+import S3Modal from '../S3Modal';
 
 export default function DrawerDropzone() {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
+  const [showModal, setshowModal] = useState<boolean>(false);
+
   useEffect(() => {
     async function getHealthStatus() {
       try {
@@ -17,6 +20,13 @@ export default function DrawerDropzone() {
     }
     getHealthStatus();
   }, []);
+
+  const openModal = () => {
+    setshowModal(true);
+  };
+  const hideModal = () => {
+    setshowModal(false);
+  };
 
   return (
     <div
@@ -48,7 +58,10 @@ export default function DrawerDropzone() {
                   </Typography>
                 </div>
                 <div className='h-full px-6 imageBg'>
-                  <div className='s3Container'><S3Component hideModal={close}/></div>
+                  <div className='s3Container'>
+                    <S3Component openModal={openModal} />
+                    <S3Modal hideModal={hideModal} open={showModal} />
+                  </div>
                   <DropZone isBackendConnected={isBackendConnected} />
                 </div>
               </div>

@@ -38,6 +38,9 @@ export type UploadParams={
 
 export type FormDataParams =(ExtractParams | UploadParams)
 
+export interface S3BucketProps{
+  openModal: () => void;
+}
 export interface S3ModalProps {
   hideModal: () => void;
   open: boolean;

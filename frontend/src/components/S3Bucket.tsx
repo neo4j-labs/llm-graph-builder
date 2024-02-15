@@ -1,15 +1,15 @@
 import { Button } from '@neo4j-ndl/react';
 import { CloudIconOutline } from '@neo4j-ndl/react/icons';
-import { S3ModalProps } from '../types';
+import { S3BucketProps } from '../types';
 
 
-const S3Component:React.FC<S3ModalProps> = ({ hideModal }) => {
+const S3Component:React.FC<S3BucketProps> = ({ openModal }) => {
     return (
         <Button
             aria-label="Aws s3"
             size="large"
             fill="text"
-            onClick={hideModal}
+            onClick={openModal}
         >
             <div>
                 <CloudIconOutline className="n-w-6 n-h-6" />
