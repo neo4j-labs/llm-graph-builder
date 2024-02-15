@@ -4,6 +4,7 @@ import ThemeWrapper from './context/ThemeWrapper';
 import QuickStarter from './components/QuickStarter';
 function App() {
   return (
+    //  @ts-ignore
     <ThemeWrapper>
       <QuickStarter />
     </ThemeWrapper>

@@ -5,6 +5,7 @@ import { healthStatus } from '../../services/HealthStatus';
 
 export default function DrawerDropzone() {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
+
   useEffect(() => {
     async function getHealthStatus() {
       try {
