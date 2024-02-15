@@ -1,9 +1,9 @@
 export const url = () => {
-  var url = window.location.href.replace("5173","8000");
+  let url = window.location.href.replace('5173', '8000');
   if (process.env.BACKEND_API_URL) {
     url = process.env.BACKEND_API_URL;
   }
-  return !url || !url.match("/$") ? url : url.substring(0, url.length-1);
+  return !url || !url.match('/$') ? url : url.substring(0, url.length - 1);
 };
 
 export const formatFileSize = (bytes: any) => {
@@ -52,8 +52,6 @@ export const getFileFromLocal = (filename: string) => {
     const file = base64ToFile(base64String, filename);
     console.log('File fetched from local storage:', file);
     return file;
-  } else {
-    console.error('File not found in local storage');
-    return null;
   }
+  return null;
 };

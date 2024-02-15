@@ -1,4 +1,4 @@
-import { createContext, useMemo, useState } from 'react';
+import React, { createContext, useMemo, useState } from 'react';
 import { NeedleThemeProvider, useMediaQuery } from '@neo4j-ndl/react';
 import QuickStarter from '../components/QuickStarter';
 
@@ -7,7 +7,7 @@ export const ThemeWrapperContext = createContext({
   colorMode: 'light' as string,
 });
 
-export default function ThemeWrapper() {
+const ThemeWrapper: React.FunctionComponent = () => {
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
   const [mode, setMode] = useState<string>(prefersDarkMode ? 'dark' : 'light');
   const [usingPreferredMode, setUsingPreferredMode] = useState<boolean>(true);
@@ -43,4 +43,5 @@ export default function ThemeWrapper() {
       </NeedleThemeProvider>
     </ThemeWrapperContext.Provider>
   );
-}
+};
+export default ThemeWrapper;

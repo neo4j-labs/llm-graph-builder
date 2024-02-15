@@ -13,25 +13,7 @@ import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/getFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { getFileFromLocal } from '../utils/utils';
-interface SourceNode {
-  fileName: string;
-  fileSize: number;
-  fileType?: string;
-  nodeCount?: number;
-  processingTime?: string;
-  relationshipCount?: number;
-  model: string;
-  status: string;
-}
-
-interface CustomFile extends Partial<globalThis.File> {
-  processing: string;
-  status: string;
-  NodesCount: number;
-  id: string;
-  relationshipCount: number;
-  model: string;
-}
+import { SourceNode,CustomFile } from '../types';
 
 export default function FileTable() {
   const { filesData, setFiles, setFilesData } = useFileContext();
@@ -46,7 +28,7 @@ export default function FileTable() {
     }),
     columnHelper.accessor((row) => row.size, {
       id: 'fileSize',
-      cell: (info) => <i>{(info?.getValue() / 1000)?.toFixed(2)} KB</i>,
+      cell: (info: any) => <i>{(info?.getValue() / 1000)?.toFixed(2)} KB</i>,
       header: () => <span>File Size</span>,
       footer: (info) => info.column.id,
     }),
@@ -111,7 +93,9 @@ export default function FileTable() {
           const prefetchedFiles: File[] = [];
           res.data.data.forEach((item: any) => {
             const localFile = getFileFromLocal(`${item.fileName}`);
-            if (localFile != null) prefetchedFiles.push(localFile);
+            if (localFile != null) {
+              prefetchedFiles.push(localFile);
+            }
           });
           setFiles(prefetchedFiles);
         }
@@ -133,7 +117,7 @@ export default function FileTable() {
     onColumnFiltersChange: setColumnFilters,
     initialState: {
       pagination: {
-        pageSize: 4,
+        pageSize: 3,
       },
     },
     state: {
@@ -174,6 +158,7 @@ export default function FileTable() {
               rootProps={{
                 className: 'filetable',
               }}
+              isLoading={loading}
               components={{
                 Body: (props) => <DataGridComponents.Body {...props} />,
                 PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
