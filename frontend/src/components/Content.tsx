@@ -38,12 +38,13 @@ export default function Content() {
   useEffect(() => {
     setFilesData((prevfiles) => {
       return prevfiles.map((curfile) => {
-        return { ...curfile, model: curfile.status === "New" ? model : curfile.model }
-      })
-    })
-  }, [model])
+        return { ...curfile, model: curfile.status === 'New' ? model : curfile.model };
+      });
+    });
+  }, [model]);
 
-  const disableCheck = (!files.length || !filesData.some((f)=>f.status === 'New'));
+  const disableCheck = !files.length || !filesData.some((f) => f.status === 'New');
+
   const handleDropdownChange = (option: any) => {
     setModel(option.value);
   };
@@ -174,7 +175,7 @@ export default function Content() {
           justifyContent='space-between'
           style={{ flexFlow: 'row', marginTop: '5px' }}
         >
-          <LlmDropdown onSelect={handleDropdownChange} isDisabled= {disableCheck} />
+          <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
           <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
             Generate Graph
           </Button>

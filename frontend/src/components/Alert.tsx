@@ -5,11 +5,7 @@ import { CustomAlertProps } from '../types';
 
 const CustomAlert: React.FC<CustomAlertProps> = ({ open, handleClose, alertMessage }) => {
   return (
-    <Snackbar
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-      open={open}
-      onClose={handleClose}
-    >
+    <Snackbar anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }} open={open} onClose={handleClose}>
       <Alert onClose={handleClose} severity='error' variant='filled' sx={{ width: '100%' }}>
         {alertMessage}
       </Alert>

@@ -13,7 +13,7 @@ import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/getFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { getFileFromLocal } from '../utils/utils';
-import { SourceNode,CustomFile } from '../types';
+import { SourceNode, CustomFile } from '../types';
 
 export default function FileTable() {
   const { filesData, setFiles, setFilesData } = useFileContext();
@@ -28,7 +28,7 @@ export default function FileTable() {
     }),
     columnHelper.accessor((row) => row.size, {
       id: 'fileSize',
-      cell: (info:any) => <i>{(info?.getValue() / 1000)?.toFixed(2)} KB</i>,
+      cell: (info: any) => <i>{(info?.getValue() / 1000)?.toFixed(2)} KB</i>,
       header: () => <span>File Size</span>,
       footer: (info) => info.column.id,
     }),
@@ -84,7 +84,8 @@ export default function FileTable() {
             NodesCount: item?.nodeCount ?? 0,
             processing: item?.processingTime ?? 'None',
             relationshipCount: item?.relationshipCount ?? 0,
-            status: getFileFromLocal(`${item.fileName}`) == null ? 'Unavailable' : item.status,
+            status:
+              getFileFromLocal(`${item.fileName}`) == null && item?.status != 'Completed' ? 'Unavailable' : item.status,
             model: item?.model ?? 'Diffbot',
             id: uuidv4(),
           }));
@@ -95,8 +96,8 @@ export default function FileTable() {
             const localFile = getFileFromLocal(`${item.fileName}`);
             if (localFile != null) {
               prefetchedFiles.push(localFile);
-            }else{
-            prefetchedFiles.push(null)
+            } else {
+              prefetchedFiles.push(null);
             }
           });
           setFiles(prefetchedFiles);
@@ -109,7 +110,7 @@ export default function FileTable() {
     };
     fetchFiles();
   }, []);
-
+  const pageSizeCalculation = Math.floor((window.outerHeight - 402) / 45);
   const table = useReactTable({
     data: filesData,
     columns,
@@ -119,7 +120,7 @@ export default function FileTable() {
     onColumnFiltersChange: setColumnFilters,
     initialState: {
       pagination: {
-        pageSize: 3,
+        pageSize: pageSizeCalculation,
       },
     },
     state: {
@@ -136,6 +137,7 @@ export default function FileTable() {
       minSize: 50,
       maxSize: 150,
     },
+    autoResetPageIndex: false,
   });
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     table.getColumn('status')?.setFilterValue(e.target.checked);
@@ -154,10 +156,10 @@ export default function FileTable() {
               isResizable={true}
               tableInstance={table}
               styling={{
-                borderStyle: 'all-sides',
+                borderStyle: 'horizontal',
                 headerStyle: 'clean',
               }}
-              isLoading= {isLoading}
+              isLoading={isLoading}
               rootProps={{
                 className: 'filetable',
               }}
