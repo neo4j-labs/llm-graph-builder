@@ -6,8 +6,9 @@ import { Button, Label, Typography, Flex } from '@neo4j-ndl/react';
 import { setDriver, disconnect } from '../utils/Driver';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
-import { extractAPI } from '../services/Extract';
 import CustomAlert from './Alert';
+import { extractAPI } from '../services/FileAPI';
+
 export default function Content() {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
@@ -37,12 +38,14 @@ export default function Content() {
   useEffect(() => {
     setFilesData((prevfiles) => {
       return prevfiles.map((curfile) => {
-        return { ...curfile, model: curfile.status === "New" ? model : curfile.model }
-      })
-    })
-  }, [model])
+        return { ...curfile, model: curfile.status === 'New' ? model : curfile.model };
+      });
+    });
+  }, [model]);
+
 
   const disableCheck = (!files.length || !filesData.some((f)=>f.status === 'New'));
+  
   const handleDropdownChange = (option: any) => {
     setModel(option.value);
   };
@@ -58,9 +61,8 @@ export default function Content() {
                 ...curfile,
                 status: 'Processing',
               };
-            } else {
-              return curfile;
             }
+            return curfile;
           })
         );
         const apiResponse = await extractAPI(file, filesData[uid].model, userCredentials);
@@ -73,17 +75,17 @@ export default function Content() {
                   setFilesData((prevfiles) =>
                     prevfiles.map((curfile, idx) => {
                       if (idx == uid) {
+                        const apiResponse = apiRes?.value?.data;
                         return {
                           ...curfile,
-                          processing: apiRes?.value?.data?.data?.processingTime?.toFixed(2),
-                          status: apiRes?.value?.data?.data?.status,
-                          NodesCount: apiRes?.value?.data?.data?.nodeCount,
-                          relationshipCount: apiRes?.value?.data?.data?.relationshipCount,
-                          model: apiRes?.value?.data?.data?.model,
+                          processing: apiResponse?.processingTime?.toFixed(2),
+                          status: apiResponse?.status,
+                          NodesCount: apiResponse?.nodeCount,
+                          relationshipCount: apiResponse?.relationshipCount,
+                          model: apiResponse?.model,
                         };
-                      } else {
-                        return curfile;
                       }
+                      return curfile;
                     })
                   );
                 } else {
@@ -106,9 +108,8 @@ export default function Content() {
                 ...curfile,
                 status: 'Failed',
               };
-            } else {
-              return curfile;
             }
+            return curfile;
           })
         );
       }

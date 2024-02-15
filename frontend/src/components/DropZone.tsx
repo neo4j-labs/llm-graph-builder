@@ -1,12 +1,12 @@
 import { Dropzone } from '@neo4j-ndl/react';
 import React, { useState, useEffect, FunctionComponent } from 'react';
 import Loader from '../utils/Loader';
-import { uploadAPI } from '../services/Upload';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { getFileFromLocal, saveFileToLocal } from '../utils/utils';
 import CustomAlert from './Alert';
+import { uploadAPI } from '../services/FileAPI';
 
 interface CustomFile extends Partial<globalThis.File> {
   processing: string;
@@ -16,8 +16,10 @@ interface CustomFile extends Partial<globalThis.File> {
   relationshipCount: number;
   model: string;
 }
-
-const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => {
+interface DropzoneProps {
+  isBackendConnected: boolean;
+}
+const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
   const { files, filesData, setFiles, setFilesData, model } = useFileContext();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isClicked, setIsClicked] = useState<boolean>(false);
@@ -90,9 +92,8 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
                 ...curfile,
                 status: 'Uploading',
               };
-            } else {
-              return curfile;
             }
+            return curfile;
           })
         );
 
@@ -110,9 +111,8 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
                           ...curfile,
                           status: 'New',
                         };
-                      } else {
-                        return curfile;
                       }
+                      return curfile;
                     })
                   );
                   setIsClicked(false);
@@ -139,18 +139,14 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
                 status: 'Failed',
                 type: curfile.type?.split('/')[1]?.toUpperCase() ?? 'PDF',
               };
-            } else {
-              return curfile;
             }
+            return curfile;
           })
         );
       }
     }
   };
-  const handleClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
-    if (reason === 'clickaway') {
-      return;
-    }
+  const handleClose = () => {
     setShowAlert(false);
   };
   useEffect(() => {
@@ -165,7 +161,7 @@ const DropZone: FunctionComponent<{ isBackendConnected: Boolean }> = (props) => 
     <>
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
 
-      {props.isBackendConnected && (
+      {isBackendConnected && (
         <Dropzone
           loadingComponent={isLoading && <Loader />}
           isTesting={true}
