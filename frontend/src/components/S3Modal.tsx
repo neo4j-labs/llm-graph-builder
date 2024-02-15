@@ -1,15 +1,22 @@
 import { TextInput, Button, Dialog } from '@neo4j-ndl/react';
 import React, { useState } from 'react';
 import { S3ModalProps } from '../types';
+import { bucketScanAPI } from '../services/BucketScan';
+import { useCredentials } from '../context/UserCredentials';
 
 const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [bucketUrl, setBucketUrl] = useState<string>('');
+  const { userCredentials } = useCredentials();
+
   const changeHandler = (e: any) => {
     setBucketUrl(e.target.value);
   };
-  const submitHandler = () => {
+  const submitHandler = async (bucketUrl: string) => {
     // console.log(/^(https?:\/\/)?s3:\/\/[a-zA-Z0-9.\-]+\/?$/.test(bucketUrl));
+    const apiResponse = await bucketScanAPI(bucketUrl, userCredentials);
+    console.log('response', apiResponse);
     hideModal();
+    alert('url stored');
   };
   return (
     <Dialog size='small' open={open} disableCloseButton>
@@ -41,7 +48,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           >
             Cancel
           </Button>
-          <Button onClick={() => submitHandler()} size='large'>
+          <Button onClick={() => submitHandler(bucketUrl)} size='large'>
             Continue
           </Button>
         </Dialog.Actions>
