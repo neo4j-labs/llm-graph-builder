@@ -21,3 +21,24 @@ export interface CustomAlertProps {
   handleClose: () => void;
   alertMessage: string;
 }
+
+export type UserCredentials = {
+  uri: string;
+  userName: string;
+  password: string;
+};
+
+export type ExtractParams={
+  file: string,
+  model: string,
+}
+export type UploadParams={
+  file: string
+}
+
+export type FormDataParams =(ExtractParams | UploadParams)
+
+export interface S3ModalProps {
+  hideModal: () => void;
+  open: boolean;
+}
