@@ -96,7 +96,7 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
             return curfile;
           })
         );
-        console.log('Before API CALL', file);
+
         const apiResponse = await uploadAPI(file, userCredentials);
         apirequests.push(apiResponse);
         Promise.allSettled(apirequests)

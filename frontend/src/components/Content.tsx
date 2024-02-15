@@ -43,12 +43,14 @@ export default function Content() {
     });
   }, [model]);
 
-  const disableCheck = !files.length || !filesData.some((f) => f.status === 'New');
+
+  const disableCheck = (!files.length || !filesData.some((f)=>f.status === 'New'));
+  
   const handleDropdownChange = (option: any) => {
     setModel(option.value);
   };
 
-  const fileUpload = async (file: File, uid: number) => {
+  const extractData = async (file: File, uid: number) => {
     if (filesData[uid].status == 'Failed' || filesData[uid].status == 'New') {
       const apirequests = [];
       try {
@@ -118,7 +120,7 @@ export default function Content() {
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
         if (filesData[i].status === 'New') {
-          fileUpload(files[i], i);
+          extractData(files[i], i);
         }
       }
     }
@@ -174,7 +176,7 @@ export default function Content() {
           justifyContent='space-between'
           style={{ flexFlow: 'row', marginTop: '5px' }}
         >
-          <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
+          <LlmDropdown onSelect={handleDropdownChange} isDisabled= {disableCheck} />
           <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
             Generate Graph
           </Button>
