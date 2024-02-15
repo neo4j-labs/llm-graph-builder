@@ -20,6 +20,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import TokenTextSplitter
 from tqdm import tqdm
 import logging
+import re
 
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
@@ -98,9 +99,11 @@ def map_to_base_node(node: Node) -> BaseNode:
      	 A mapping of the KnowledgeGraph Node to the BaseNode
     """
     properties = props_to_dict(node.properties) if node.properties else {}
-    properties["name"] = node.id.title()
+    properties["name"] = node.id.title().replace(' ','_')
+    #replace all non alphanumeric characters and spaces with underscore
+    node_type = re.sub(r'[^\w]+', '_', node.type.capitalize())
     return BaseNode(
-        id=node.id.title(), type=node.type.capitalize(), properties=properties
+        id=node.id.title().replace(' ','_'), type=node_type, properties=properties
     )
 
 
