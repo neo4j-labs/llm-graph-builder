@@ -85,7 +85,7 @@ def get_s3_files_info(s3_url):
     return files_info
  
   
-def create_source_node_graph_s3(uri, userName, password, s3_url):
+def create_source_node_graph_s3(uri, userName, password, s3_url_dir):
     """
       Creates a source node in Neo4jGraph and sets properties.
       
@@ -107,16 +107,17 @@ def create_source_node_graph_s3(uri, userName, password, s3_url):
 
     graph = Neo4jGraph(url=uri, username=userName, password=password)
 
-    files_info = get_s3_files_info(s3_url)
+    files_info = get_s3_files_info(s3_url_dir)
     
     for file_info in files_info:
         file_name=file_info['file_name'] 
         file_size=file_info['file_size_bytes']
+        s3_file_path=str(s3_url_dir+file_name)
         try:
           source_node = "fileName: '{}'"
-          update_node_prop = "SET s.fileSize = '{}', s.fileType = '{}' ,s.status = '{}'"
+          update_node_prop = "SET s.fileSize = '{}', s.fileType = '{}' ,s.status = '{}',s.s3url='{}'"
           logging.info("create source node as file name if not exist")
-          graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,job_status))
+          graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,job_status,s3_file_path))
           return create_api_response("Success",data="Source Node created succesfully")
         except Exception as e:
           job_status = "Failure"
@@ -170,7 +171,7 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
       loader = PyPDFLoader('temp.pdf')
       
     elif s3_url!=None:
-      file_name=s3_url
+      file_name=str(s3_url)
       print(file_name)
       bucket=file_name.split('/')[2]
       file_key=file_name.split('/')[-1]
@@ -181,7 +182,9 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
       file_size=response['ContentLength']
       
       metadata = {"source": "local","filename": file_name, "filesize":file_size }
-
+      print(bucket)
+      print(file_key)
+      print(file_size)
       loader = S3FileLoader(bucket,file_key)
       # loader = S3DirectoryLoader(
       #   os.environ.get('BUCKET'), 
@@ -189,7 +192,7 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
       #   aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"), 
       # )
       # documents = loader.load()
-
+      print(loader.load())
     pages = loader.load_and_split()
     print(pages)
     bad_chars = ['"', "\n", "'"]

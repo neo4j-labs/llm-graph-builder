@@ -54,8 +54,8 @@ async def get_source_list():
     return get_source_list_from_graph()
 
 @app.post('/bucket/scan')
-async def create_source_knowledge_graph(uri= Form(), userName= Form(), password= Form(),s3_url=Form()):
-    return create_source_node_graph_s3(uri, userName, password, s3_url)
+async def create_source_knowledge_graph(uri= Form(), userName= Form(), password= Form(),s3_url_dir=Form()):
+    return create_source_node_graph_s3(uri, userName, password, s3_url_dir)
 # async def s3_loader(bucket_url=Form(),model=Form()):
 #     return get_source_list_from_graph()
 
