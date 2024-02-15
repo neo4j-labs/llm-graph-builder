@@ -90,11 +90,13 @@ export default function FileTable() {
           }));
           setIsLoading(false);
           setFilesData(prefiles);
-          const prefetchedFiles: File[] = [];
+          const prefetchedFiles: any[] = [];
           res.data.data.forEach((item: any) => {
             const localFile = getFileFromLocal(`${item.fileName}`);
             if (localFile != null) {
               prefetchedFiles.push(localFile);
+            }else{
+            prefetchedFiles.push(null)
             }
           });
           setFiles(prefetchedFiles);
@@ -159,7 +161,6 @@ export default function FileTable() {
               rootProps={{
                 className: 'filetable',
               }}
-              isLoading={loading}
               components={{
                 Body: (props) => <DataGridComponents.Body {...props} />,
                 PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
