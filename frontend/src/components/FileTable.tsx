@@ -171,7 +171,8 @@ export default function FileTable() {
               isResizable={true}
               tableInstance={table}
               styling={{
-                borderStyle: 'horizontal',
+                borderStyle: "horizontal",
+                zebraStriping:true,
                 headerStyle: 'clean',
               }}
               isLoading={isLoading}
