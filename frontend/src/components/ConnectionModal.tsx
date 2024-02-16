@@ -11,22 +11,25 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
 }) => {
   const protocols = ['neo4j', 'neo4j+s', 'neo4j+ssc', 'bolt', 'bolt+s', 'bolt+ssc'];
   const [selectedProtocol, setSelectedProtocol] = useState<string>('neo4j');
-  const [hostname, setHostname] = useState<string>('demo.neo4jlabs.com');
-  const [port, setPort] = useState<number>(7687);
-  const [database, setDatabase] = useState<string>('recommendations');
-  const [username, setUsername] = useState<string>('recommendations');
-  const [password, setPassword] = useState<string>('recommendations');
+  const [hostname, setHostname] = useState<string>(localStorage.getItem('hostname') ?? '');
+  const [port, setPort] = useState<string>(localStorage.getItem('port') ?? '');
+  const [database, setDatabase] = useState<string>('');
+  const [username, setUsername] = useState<string>(localStorage.getItem('username') ?? '');
+  const [password, setPassword] = useState<string>('');
   const { setUserCredentials } = useCredentials();
 
   function submitConnection() {
     const connectionURI = `${selectedProtocol}://${hostname}:${port}`;
     setUserCredentials({ uri: hostname, userName: username, password });
+    localStorage.setItem('username', username);
+    localStorage.setItem('hostname', hostname);
+    localStorage.setItem('port', `${port}`);
     setDriver(connectionURI, username, password).then((isSuccessful) => {
       setConnectionStatus(isSuccessful);
     });
     setOpenConnection(false);
   }
-
+  const isDisabled = !username || !hostname || !password || !port;
   return (
     <>
       <Dialog size='small' open={open} aria-labelledby='form-dialog-title' disableCloseButton>
@@ -66,7 +69,7 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
                 label='Port'
                 placeholder='7687'
                 fluid
-                onChange={(e) => setPort(Number(e.target.value))}
+                onChange={(e) => setPort(e.target.value)}
               />
             </div>
           </div>
@@ -104,7 +107,20 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
               />
             </div>
           </div>
-          <Button onClick={() => submitConnection()}>Submit</Button>
+          <Dialog.Actions className='mt-6 mb-2'>
+            <Button
+              color='neutral'
+              fill='outlined'
+              onClick={() => {
+                setOpenConnection(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button   disabled={isDisabled} onClick={() => submitConnection()}>
+              Submit
+            </Button>
+          </Dialog.Actions>
         </Dialog.Content>
       </Dialog>
     </>
