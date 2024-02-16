@@ -81,7 +81,7 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
   };
 
   const fileUpload = async (file: File, uid: number) => {
-    if (filesData[uid].status == 'None' && isClicked) {
+    if (filesData[uid]?.status == 'None' && isClicked) {
       const apirequests = [];
       try {
         setIsLoading(true);
@@ -103,7 +103,9 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
           .then((r) => {
             r.forEach((apiRes) => {
               if (apiRes.status === 'fulfilled' && apiRes.value) {
-                if (apiRes?.value?.data?.status != 'Failure') {
+                if (apiRes?.value?.status === 'Failure') {
+                  throw new Error('API Failure');
+                } else {
                   setFilesData((prevfiles) =>
                     prevfiles.map((curfile, idx) => {
                       if (idx == uid) {
@@ -117,8 +119,6 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
                   );
                   setIsClicked(false);
                   setIsLoading(false);
-                } else {
-                  throw new Error('API Failure');
                 }
               }
             });
