@@ -111,7 +111,7 @@ export default function FileTable() {
     };
     fetchFiles();
   }, []);
-  
+
   const pageSizeCalculation = Math.floor((currentOuterHeight - 402) / 45);
 
   const table = useReactTable({
@@ -171,8 +171,8 @@ export default function FileTable() {
               isResizable={true}
               tableInstance={table}
               styling={{
-                borderStyle: "horizontal",
-                zebraStriping:true,
+                borderStyle: 'horizontal',
+                zebraStriping: true,
                 headerStyle: 'clean',
               }}
               isLoading={isLoading}
