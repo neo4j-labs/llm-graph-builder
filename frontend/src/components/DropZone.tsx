@@ -68,11 +68,11 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
           });
         }
         if (fileIndex == -1) {
-          copiedFiles.push(file as File);
+          copiedFiles.unshift(file as File);
         } else {
           const tempFile = copiedFiles[filedataIndex];
           copiedFiles.splice(fileIndex, 1);
-          copiedFiles.push(getFileFromLocal(tempFile.name) ?? tempFile);
+          copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
         }
       });
       setFiles(copiedFiles);
