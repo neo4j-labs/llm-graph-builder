@@ -72,7 +72,7 @@ export default function Content() {
           .then((r) => {
             r.forEach((apiRes) => {
               if (apiRes.status === 'fulfilled' && apiRes.value) {
-                if (apiRes?.value?.data.status != 'Unexpected Error') {
+                if (apiRes?.value?.data.status != 'Failure') {
                   setFilesData((prevfiles) =>
                     prevfiles.map((curfile, idx) => {
                       if (idx == uid) {
