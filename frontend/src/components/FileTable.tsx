@@ -1,5 +1,5 @@
 import { DataGrid, DataGridComponents } from '@neo4j-ndl/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import React from 'react';
 import {
   useReactTable,
@@ -18,8 +18,9 @@ import { SourceNode, CustomFile } from '../types';
 export default function FileTable() {
   const { filesData, setFiles, setFilesData } = useFileContext();
   const columnHelper = createColumnHelper<CustomFile>();
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
 
   const columns = [
     columnHelper.accessor('name', {
@@ -110,7 +111,9 @@ export default function FileTable() {
     };
     fetchFiles();
   }, []);
-  const pageSizeCalculation = Math.floor((window.outerHeight - 402) / 45);
+  
+  const pageSizeCalculation = Math.floor((currentOuterHeight - 402) / 45);
+
   const table = useReactTable({
     data: filesData,
     columns,
@@ -139,6 +142,18 @@ export default function FileTable() {
     },
     autoResetPageIndex: false,
   });
+
+  useEffect(() => {
+    const listener = (e: any) => {
+      setcurrentOuterHeight(e.currentTarget.outerHeight);
+      table.setPageSize(Math.floor((e.currentTarget.outerHeight - 402) / 45));
+    };
+    window.addEventListener('resize', listener);
+    return () => {
+      window.removeEventListener('resize', listener);
+    };
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     table.getColumn('status')?.setFilterValue(e.target.checked);
   };

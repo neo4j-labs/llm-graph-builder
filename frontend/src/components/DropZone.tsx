@@ -49,7 +49,7 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
         const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === file?.name);
         const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === file?.name);
         if (filedataIndex == -1) {
-          copiedFilesData.push({
+          copiedFilesData.unshift({
             name: file.name,
             type: file.type,
             size: file.size,
@@ -58,7 +58,7 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
         } else {
           const tempFileData = copiedFilesData[filedataIndex];
           copiedFilesData.splice(filedataIndex, 1);
-          copiedFilesData.push({
+          copiedFilesData.unshift({
             ...tempFileData,
             status: defaultValues.status,
             NodesCount: defaultValues.NodesCount,
