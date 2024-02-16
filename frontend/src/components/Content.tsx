@@ -43,7 +43,7 @@ export default function Content() {
     });
   }, [model]);
 
-  const disableCheck = !files.length || !filesData.some((f) => f.status === 'New');
+  const disableCheck = !files.length;
 
   const handleDropdownChange = (option: any) => {
     setModel(option.value);
