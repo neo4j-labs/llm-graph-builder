@@ -117,7 +117,7 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
             >
               Cancel
             </Button>
-            <Button   disabled={isDisabled} onClick={() => submitConnection()}>
+            <Button disabled={isDisabled} onClick={() => submitConnection()}>
               Submit
             </Button>
           </Dialog.Actions>
