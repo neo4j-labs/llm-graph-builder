@@ -30,6 +30,8 @@ export default function Content() {
         setDriver(neo4jConnection.uri, neo4jConnection.user, neo4jConnection.password).then((isSuccessful: boolean) => {
           setConnectionStatus(isSuccessful);
         });
+      }else{
+        setOpenConnection(true)
       }
       setInit(true);
     }
