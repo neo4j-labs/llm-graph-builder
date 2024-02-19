@@ -41,7 +41,7 @@ async def extract_knowledge_graph_from_file(uri= Form(), userName= Form(), passw
     elif s3_url:
         return extract_graph_from_file(uri, userName, password, model,s3_url=s3_url)
     else:
-        return {}
+        return {"job_status":"Failure","error":"No file found"}
     
 @app.get('/sources_list')
 async def get_source_list():
