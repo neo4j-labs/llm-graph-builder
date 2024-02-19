@@ -40,15 +40,13 @@ Docker: https://www.docker.com/
    
    Replace `8000` with the desired port.
 
-## Acces the API Documentation
+## Access the API Documentation
 Open your browser and navigate to
 http://127.0.0.1:8000/docs for Swagger UI or
 http://127.0.0.1:8000/redocs for ReDoc.
 
 ## Project Structure
 `score.py`: Score entry point for FastAPI application
-
-`app/` : Directory containing additional module routers, or utilities
 
 ## Configuration
 
@@ -60,9 +58,14 @@ Update the envirnment variable in `.env` file.
 
 `NEO4J_URI` : Neo4j URL
 
-`NEO4J_USERNAME` : Neo4J database user name
+`NEO4J_USERNAME` : Neo4J database username
 
-`NEO4J_PASSWORD` : Neo4j datanase user password
+`NEO4J_PASSWORD` : Neo4j database user password
+
+`AWS_ACCESS_KEY_ID` : AWS Access key ID
+
+`AWS_SECRET_ACCESS_KEY` : AWS secret access key
+
 
 ## Contact
 For questions or support, feel free to contact us at christopher.crosbie@neo4j.com or michael.hunger@neo4j.com
