@@ -6,6 +6,7 @@ interface CustomFile extends Partial<globalThis.File> {
   id: string;
   relationshipCount: number;
   model: string;
+  s3url?:string
 }
 interface FileContextType {
   files: File[] | [];

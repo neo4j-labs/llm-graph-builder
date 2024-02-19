@@ -22,6 +22,7 @@ interface SourceNode {
   relationshipCount?: number;
   model: string;
   status: string;
+  s3url?: string;
 }
 
 interface CustomFile extends Partial<globalThis.File> {
@@ -46,7 +47,7 @@ export default function FileTable() {
     }),
     columnHelper.accessor((row) => row.size, {
       id: 'fileSize',
-      cell: (info:any) => <i>{(info?.getValue() / 1000)?.toFixed(2)} KB</i>,
+      cell: (info: any) => <i>{(info?.getValue() / 1000)?.toFixed(2)} KB</i>,
       header: () => <span>File Size</span>,
       footer: (info) => info.column.id,
     }),
@@ -105,13 +106,18 @@ export default function FileTable() {
             status: getFileFromLocal(`${item.fileName}`) == null ? 'Unavailable' : item.status,
             model: item?.model ?? 'Diffbot',
             id: uuidv4(),
+            s3url: item.s3url ?? '',
           }));
           setIsLoading(false);
           setFilesData(prefiles);
-          const prefetchedFiles: File[] = [];
+          const prefetchedFiles: any[] = [];
           res.data.data.forEach((item: any) => {
             const localFile = getFileFromLocal(`${item.fileName}`);
-            if (localFile != null) prefetchedFiles.push(localFile);
+            if (localFile != null) {
+              prefetchedFiles.push(localFile);
+            } else {
+              prefetchedFiles.push(null);
+            }
           });
           setFiles(prefetchedFiles);
         }
@@ -171,7 +177,7 @@ export default function FileTable() {
                 borderStyle: 'all-sides',
                 headerStyle: 'clean',
               }}
-              isLoading= {isLoading}
+              isLoading={isLoading}
               rootProps={{
                 className: 'filetable',
               }}
