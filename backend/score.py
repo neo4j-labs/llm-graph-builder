@@ -4,7 +4,6 @@ from fastapi import FastAPI, Depends
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
-from src.utilities import *
 
 def healthy_condition():
     output = {"healthy": True}
@@ -30,6 +29,10 @@ app.add_middleware(
 app.add_api_route("/health", health([healthy_condition, healthy]))
 
 
+@app.post('/bucket/scan')
+async def create_source_knowledge_graph(uri= Form(), userName= Form(), password= Form(),s3_url_dir=Form()):
+    return create_source_node_graph_s3(uri, userName, password, s3_url_dir)
+
 @app.post('/extract')
 async def extract_knowledge_graph_from_file(uri= Form(), userName= Form(), password= Form(), model=Form(),file: UploadFile = File(None),s3_url=Form(None)):
     if file:
@@ -38,15 +41,6 @@ async def extract_knowledge_graph_from_file(uri= Form(), userName= Form(), passw
         return extract_graph_from_file(uri, userName, password, model,s3_url=s3_url)
     else:
         return {}
-
-# @app.post('/extract')
-# async def extract_knowledge_graph_from_file(uri= Form(), userName= Form(), password= Form(), model=Form(),file: UploadFile = File(None),s3_url=Form(None)):
-#     if file:
-#         return extract_graph_from_file(uri, userName, password, model,file)
-#     elif s3_url:
-#         return extract_graph_from_file(uri, userName, password, model,s3_url=s3_url)
-#     else:
-#         return {}
     
 @app.get('/sources_list')
 async def get_source_list():
@@ -63,11 +57,7 @@ async def get_source_list():
         return create_api_response(job_status, error=error_message)
 
 
-@app.post('/bucket/scan')
-async def create_source_knowledge_graph(uri= Form(), userName= Form(), password= Form(),s3_url_dir=Form()):
-    return create_source_node_graph_s3(uri, userName, password, s3_url_dir)
-# async def s3_loader(bucket_url=Form(),model=Form()):
-#     return get_source_list_from_graph()
+
 
 
 if __name__ == "__main__":
