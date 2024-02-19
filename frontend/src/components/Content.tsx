@@ -6,8 +6,9 @@ import { Button, Label, Typography, Flex } from '@neo4j-ndl/react';
 import { setDriver, disconnect } from '../utils/Driver';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
-import { extractAPI } from '../services/Extract';
 import CustomAlert from './Alert';
+import { extractAPI } from '../services/FileAPI';
+
 export default function Content() {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
@@ -29,6 +30,8 @@ export default function Content() {
         setDriver(neo4jConnection.uri, neo4jConnection.user, neo4jConnection.password).then((isSuccessful: boolean) => {
           setConnectionStatus(isSuccessful);
         });
+      } else {
+        setOpenConnection(true);
       }
       setInit(true);
     }
@@ -37,18 +40,19 @@ export default function Content() {
   useEffect(() => {
     setFilesData((prevfiles) => {
       return prevfiles.map((curfile) => {
-        return { ...curfile, model: curfile.status === "New" ? model : curfile.model }
-      })
-    })
-  }, [model])
+        return { ...curfile, model: curfile.status === 'New' ? model : curfile.model };
+      });
+    });
+  }, [model]);
 
-  const disableCheck = (!files.length || !filesData.some((f)=>f.status === 'New'));
+  const disableCheck = !files.length;
+
   const handleDropdownChange = (option: any) => {
     setModel(option.value);
   };
 
   const extractData = async (file: File, uid: number) => {
-    if (filesData[uid].status == 'Failed' || filesData[uid].status == 'New') {
+    if (filesData[uid]?.status == 'New') {
       const apirequests = [];
       try {
         setFilesData((prevfiles) =>
@@ -58,9 +62,8 @@ export default function Content() {
                 ...curfile,
                 status: 'Processing',
               };
-            } else {
-              return curfile;
             }
+            return curfile;
           })
         );
         const apiResponse = await extractAPI(file, filesData[uid].model, userCredentials,filesData[uid].s3url);
@@ -69,27 +72,27 @@ export default function Content() {
           .then((r) => {
             r.forEach((apiRes) => {
               if (apiRes.status === 'fulfilled' && apiRes.value) {
-                if (apiRes?.value?.data.status != 'Unexpected Error') {
-                  setFilesData((prevfiles) =>
-                    prevfiles.map((curfile, idx) => {
-                      if (idx == uid) {
-                        return {
-                          ...curfile,
-                          processing: apiRes?.value?.data?.data?.processingTime?.toFixed(2),
-                          status: apiRes?.value?.data?.data?.status,
-                          NodesCount: apiRes?.value?.data?.data?.nodeCount,
-                          relationshipCount: apiRes?.value?.data?.data?.relationshipCount,
-                          model: apiRes?.value?.data?.data?.model,
-                        };
-                      } else {
-                        return curfile;
-                      }
-                    })
-                  );
-                } else {
+                if (apiRes?.value?.status === 'Failure') {
                   setShowAlert(true);
                   setErrorMessage('Unexpected Error');
                   throw new Error('API Failure');
+                } else {
+                  setFilesData((prevfiles) =>
+                    prevfiles.map((curfile, idx) => {
+                      if (idx == uid) {
+                        const apiResponse = apiRes?.value?.data;
+                        return {
+                          ...curfile,
+                          processing: apiResponse?.processingTime?.toFixed(2),
+                          status: apiResponse?.status,
+                          NodesCount: apiResponse?.nodeCount,
+                          relationshipCount: apiResponse?.relationshipCount,
+                          model: apiResponse?.model,
+                        };
+                      }
+                      return curfile;
+                    })
+                  );
                 }
               }
             });
@@ -106,9 +109,8 @@ export default function Content() {
                 ...curfile,
                 status: 'Failed',
               };
-            } else {
-              return curfile;
             }
+            return curfile;
           })
         );
       }
@@ -119,6 +121,7 @@ export default function Content() {
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
         if (filesData[i].status === 'New') {
+          // console.log()
           extractData(files[i], i);
         }
       }
@@ -175,7 +178,7 @@ export default function Content() {
           justifyContent='space-between'
           style={{ flexFlow: 'row', marginTop: '5px' }}
         >
-          <LlmDropdown onSelect={handleDropdownChange} isDisabled= {disableCheck} />
+          <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
           <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
             Generate Graph
           </Button>

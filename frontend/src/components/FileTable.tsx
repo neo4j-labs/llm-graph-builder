@@ -1,5 +1,5 @@
 import { DataGrid, DataGridComponents } from '@neo4j-ndl/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import React from 'react';
 import {
   useReactTable,
@@ -37,8 +37,9 @@ interface CustomFile extends Partial<globalThis.File> {
 export default function FileTable() {
   const { filesData, setFiles, setFilesData } = useFileContext();
   const columnHelper = createColumnHelper<CustomFile>();
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
 
   const columns = [
     columnHelper.accessor('name', {
@@ -103,7 +104,8 @@ export default function FileTable() {
             NodesCount: item?.nodeCount ?? 0,
             processing: item?.processingTime ?? 'None',
             relationshipCount: item?.relationshipCount ?? 0,
-            status: getFileFromLocal(`${item.fileName}`) == null ? 'Unavailable' : item.status,
+            status:
+              getFileFromLocal(`${item.fileName}`) == null && item?.status != 'Completed' ? 'Unavailable' : item.status,
             model: item?.model ?? 'Diffbot',
             id: uuidv4(),
             s3url: item.s3url ?? '',
@@ -130,6 +132,8 @@ export default function FileTable() {
     fetchFiles();
   }, []);
 
+  const pageSizeCalculation = Math.floor((currentOuterHeight - 402) / 45);
+
   const table = useReactTable({
     data: filesData,
     columns,
@@ -139,7 +143,7 @@ export default function FileTable() {
     onColumnFiltersChange: setColumnFilters,
     initialState: {
       pagination: {
-        pageSize: 3,
+        pageSize: pageSizeCalculation,
       },
     },
     state: {
@@ -156,7 +160,20 @@ export default function FileTable() {
       minSize: 50,
       maxSize: 150,
     },
+    autoResetPageIndex: false,
   });
+
+  useEffect(() => {
+    const listener = (e: any) => {
+      setcurrentOuterHeight(e.currentTarget.outerHeight);
+      table.setPageSize(Math.floor((e.currentTarget.outerHeight - 402) / 45));
+    };
+    window.addEventListener('resize', listener);
+    return () => {
+      window.removeEventListener('resize', listener);
+    };
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     table.getColumn('status')?.setFilterValue(e.target.checked);
   };
@@ -174,7 +191,8 @@ export default function FileTable() {
               isResizable={true}
               tableInstance={table}
               styling={{
-                borderStyle: 'all-sides',
+                borderStyle: 'horizontal',
+                zebraStriping: true,
                 headerStyle: 'clean',
               }}
               isLoading={isLoading}
