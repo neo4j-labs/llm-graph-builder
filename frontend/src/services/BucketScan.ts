@@ -9,7 +9,7 @@ const bucketScanAPI = async (urlParam: string, userCredentials?: any ) => {
     formData.append('userName', userCredentials?.userName);
     formData.append('password', userCredentials?.password);
     formData.append('s3_url_dir', urlParam);
-    const response = await axios.post(`${url()}/bucket_scan`, formData, {
+    const response = await axios.post(`${url()}/bucket/scan`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

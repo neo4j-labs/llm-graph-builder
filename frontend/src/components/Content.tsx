@@ -68,7 +68,7 @@ export default function Content() {
             return curfile;
           })
         );
-        const apiResponse = await extractAPI(file, filesData[uid].model, userCredentials);
+        const apiResponse = await extractAPI(file, filesData[uid].model, userCredentials,filesData[uid].s3url);
         apirequests.push(apiResponse);
         Promise.allSettled(apirequests)
           .then((r) => {

@@ -9,6 +9,10 @@ const extractAPI = async (file: any, model: string, userCredentials?: any) => {
     formData.append('uri', userCredentials?.uri);
     formData.append('userName', userCredentials?.userName);
     formData.append('password', userCredentials?.password);
+    if (s3_url?.length) {
+      formData.append('s3_url', s3_url);
+      formData.delete('file');
+    }
     const response = await axios.post(`${url()}/extract`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
