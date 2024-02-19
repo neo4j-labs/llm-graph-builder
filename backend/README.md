@@ -3,8 +3,8 @@ Welcome to our project! This project is built using FastAPI framework to create 
 
 ## Feature
 API Endpoint : This project provides various API endpoint to perform specific tasks.
-Data Valication : Utilize FastAPI data validation and serialization feature.
-Interactiev Documentation : Access Swagger UI and ReDoc for interactive API documentation.
+Data Validation : Utilize FastAPI data validation and serialization feature.
+Interactive Documentation : Access Swagger UI and ReDoc for interactive API documentation.
 
 ## Getting Started 
 
@@ -50,7 +50,7 @@ http://127.0.0.1:8000/redocs for ReDoc.
 
 ## Configuration
 
-Update the envirnment variable in `.env` file.
+Update the environment variable in `.env` file.
 
 `OPENAI_API_KEY`: Open AI key to use LLM
 
