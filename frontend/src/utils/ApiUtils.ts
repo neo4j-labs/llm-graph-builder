@@ -18,6 +18,7 @@ const apiCall = async (
       //@ts-ignore
       formData.append(key, additionalParams[key]);
     }
+    console.log(formData)
     const response: AxiosResponse = await axios({
       method: method,
       url: url,

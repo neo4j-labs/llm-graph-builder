@@ -19,8 +19,9 @@ export type UserCredentials = {
 };
 
 export type ExtractParams = {
-  file: string;
+  file?: string;
   model: string;
+  s3_url?:string
 };
 export type UploadParams = {
   file: string;

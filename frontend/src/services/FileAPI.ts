@@ -11,11 +11,16 @@ export const uploadAPI = async (file: any, userCredentials: any): Promise<any> =
   return response;
 };
 
-export const extractAPI = async (file: any, model: string, userCredentials: any): Promise<any> => {
+export const extractAPI = async (file: any, model: string, userCredentials: any, s3_url?: any): Promise<any> => {
   const urlExtract = `${url()}/extract`;
   const method: Method = 'post';
   const commonParams: UserCredentials = userCredentials;
-  const additionalParams: ExtractParams = { file, model };
+  let additionalParams: ExtractParams;
+  if (s3_url?.length) {
+    additionalParams = { model, s3_url };
+  } else {
+    additionalParams = { file, model };
+  }
   const response = await apiCall(urlExtract, method, commonParams, additionalParams);
   return response;
 };

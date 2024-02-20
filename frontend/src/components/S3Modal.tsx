@@ -22,6 +22,9 @@ interface SourceNode {
 
 const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [bucketUrl, setBucketUrl] = useState<string>('');
+  const [accessKey, setAccessKey] = useState<string>('');
+  const [secretKey, setSecretKey] = useState<string>('');
+
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
@@ -33,8 +36,8 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     if (bucketUrl.trim() != '') {
       try {
         setStatus('info');
-        setStatusMessage('Loading...');
-        const apiResponse = await bucketScanAPI(bucketUrl, userCredentials);
+        setStatusMessage('Scaning...');
+        const apiResponse = await bucketScanAPI(bucketUrl, userCredentials, accessKey, secretKey);
         console.log('response', apiResponse);
         setStatus('success');
         setStatusMessage('Source Node created succesfully');
@@ -107,19 +110,51 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               }}
             />
           </div>
+          <div className='flex justify-between items-center w-full gap-4'>
+            <TextInput
+              id='url'
+              value={accessKey}
+              disabled={false}
+              label='Access Key'
+              className='w-full'
+              placeholder=''
+              autoFocus
+              fluid
+              required
+              isOptional
+              onChange={(e) => {
+                setAccessKey(e.target.value);
+              }}
+            />
+            <TextInput
+              id='url'
+              value={secretKey}
+              disabled={false}
+              label='Seceret Key'
+              className='w-full'
+              placeholder=''
+              autoFocus
+              fluid
+              required
+              isOptional
+              onChange={(e) => {
+                setSecretKey(e.target.value);
+              }}
+            />
+          </div>
         </div>
-        <Dialog.Actions className='mt-6 mb-2'>
+        <Dialog.Actions className='mt-4'>
           <Button
             color='neutral'
             fill='outlined'
             onClick={() => {
               hideModal();
             }}
-            size='large'
+            size='medium'
           >
             Cancel
           </Button>
-          <Button onClick={() => submitHandler(bucketUrl)} size='large'>
+          <Button onClick={() => submitHandler(bucketUrl)} size='medium'>
             Submit
           </Button>
         </Dialog.Actions>
