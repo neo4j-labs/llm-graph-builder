@@ -164,50 +164,23 @@ def file_into_chunks(pages: List[Document]):
     chunks = text_splitter.split_documents(pages)
     return chunks
 
-      
-
 def get_s3_pdf_content(s3_url):
-    try:
+    # try:
       # Extract bucket name and directory from the S3 URL
-      parsed_url = urlparse(s3_url)
-      bucket_name = parsed_url.netloc
-      directory = parsed_url.path.lstrip('/')
-
-      # Connect to S3
-      s3 = boto3.client('s3')
-
-      # List objects in the specified directory
-      response = s3.list_objects_v2(Bucket=bucket_name, Prefix=directory)
-
-      # Check each object for file size and type
-      for obj in response.get('Contents', []):
-          file_key = obj['Key']
-          file_name = os.path.basename(file_key)
-          file_size = obj['Size']
-          print(file_key)
-          # Get the object from S3
-          object_response = s3.get_object(Bucket=bucket_name, Key=file_key)
-
-          # Write object content to a temporary file
-          with NamedTemporaryFile(delete=False) as temp_file:
-              temp_file.write(object_response['Body'].read())
-              temp_file_path = temp_file.name
-
-          try:
-              # Use PyPDFLoader on the temporary PDF file
-              loader = PyPDFLoader(temp_file_path)
-              pages = loader.load_and_split()
-              # You can return pages or do any other processing here
-              return pages
-          finally:
-              # Clean up the temporary file
-              os.unlink(temp_file_path)
-
-      # If no PDF files were found in the directory
-      return None
+        parsed_url = urlparse(s3_url)
+        bucket_name = parsed_url.netloc
+        print(bucket_name)
+        directory = parsed_url.path.lstrip('/')
+        # print('directory:',directory)
+        if directory.endswith('.pdf'):
+          loader=S3DirectoryLoader(bucket_name, prefix=directory)
+          pages = loader.load_and_split()
+          return pages
+        else:
+          return None
     
-    except Exception as e:
-      return None
+    # except Exception as e:
+    #     return None
       
       
 
@@ -243,18 +216,17 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
           f.write(file.file.read())
         loader = PyPDFLoader('temp.pdf')
         pages = loader.load_and_split()
+        
       elif s3_url!=None:
         if aws_access_key_id !=None and aws_secret_access_key !=None:
           os.environ['AWS_ACCESS_KEY_ID']=  aws_access_key_id
           os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
-
-        file_name=str(s3_url)
-        # print(file_name)
-        bucket=file_name.split('/')[2]
-        file_key='/'.join(file_name.split('/')[3:])
+        
+        parsed_url = urlparse(s3_url)
+        bucket = parsed_url.netloc
+        file_key = parsed_url.path.lstrip('/')
         file_name=file_key.split('/')[-1]
-        print(bucket)
-        print(file_key)
+        
         source_node = "fileName: '{}'"
         update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessage = '{}',s.nodeCount= {}, s.relationshipCount = {}, s.model = '{}'"
         s3=boto3.client('s3')
