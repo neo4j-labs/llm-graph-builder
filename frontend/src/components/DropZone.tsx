@@ -7,19 +7,9 @@ import { useFileContext } from '../context/UsersFiles';
 import { getFileFromLocal, saveFileToLocal } from '../utils/utils';
 import CustomAlert from './Alert';
 import { uploadAPI } from '../services/FileAPI';
+import { CustomFile } from '../types';
 
-interface CustomFile extends Partial<globalThis.File> {
-  processing: string;
-  status: string;
-  NodesCount: number;
-  id: string;
-  relationshipCount: number;
-  model: string;
-}
-interface DropzoneProps {
-  isBackendConnected: boolean;
-}
-const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
+const DropZone: FunctionComponent = () => {
   const { files, filesData, setFiles, setFilesData, model } = useFileContext();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isClicked, setIsClicked] = useState<boolean>(false);
@@ -161,7 +151,6 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
     <>
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
 
-      {isBackendConnected && (
         <Dropzone
           loadingComponent={isLoading && <Loader />}
           isTesting={true}
@@ -173,7 +162,6 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
             },
           }}
         />
-      )}
     </>
   );
 };

@@ -57,13 +57,15 @@ export default function DrawerDropzone() {
                     </Typography>
                   </Typography>
                 </div>
-                <div className='h-full px-6 imageBg'>
-                  <div className='s3Container'>
-                    <S3Component openModal={openModal} />
-                    <S3Modal hideModal={hideModal} open={showModal} />
+                {isBackendConnected && (
+                  <div className='h-full px-6 imageBg'>
+                    <div className='s3Container'>
+                      <S3Component openModal={openModal} />
+                      <S3Modal hideModal={hideModal} open={showModal} />
+                    </div>
+                    <DropZone />
                   </div>
-                  <DropZone isBackendConnected={isBackendConnected} />
-                </div>
+                )}
               </div>
             </div>
           </div>
