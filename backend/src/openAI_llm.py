@@ -235,9 +235,9 @@ def extract_graph_from_OpenAI(model_version,
     openai_api_key = os.environ.get('OPENAI_API_KEY')
     graph_document_list = []
 
+    logging.info(f"create relationship between source,chunck and entity nodes created from {model_version}")
     for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
         graph_document=extract_and_store_graph(model_version,graph,chunk_document)
-        logging.info("create relationship between source,chunck and entity nodes")
         create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document,isEmbedding)
         graph_document_list.append(graph_document[0])     
     return graph_document_list

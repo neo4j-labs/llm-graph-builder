@@ -63,6 +63,7 @@ def file_into_chunks(pages: List[Document]):
      Returns: 
      	 A list of chunks each of which is a langchain Document.
     """
+    logging.info("Split file into smaller chunks")
     text_splitter = TokenTextSplitter(chunk_size=200, chunk_overlap=20)
     chunks = text_splitter.split_documents(pages)
     return chunks
@@ -83,6 +84,7 @@ def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=Fa
    	 Json response to API with fileName, nodeCount, relationshipCount, processingTime, 
      status and model as attributes.
   """
+  logging.info(f"extract_graph_from_file called for file:{file.filename}")
   try:
     start_time = datetime.now()
     file_name = file.filename
@@ -99,7 +101,7 @@ def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=Fa
     pages = loader.load_and_split()
 
     bad_chars = ['"', "\n", "'"]
-    logging.info("Creates a new Document object for each page in the list of pages")
+    #Creates a new Document object for each page in the list of pages
     for i in range(0,len(pages)):
       text = pages[i].page_content
       for j in bad_chars:
@@ -108,10 +110,11 @@ def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=Fa
         else:
           text = text.replace(j, '')
       pages[i]=Document(page_content=str(text), metadata=metadata)
-    logging.info("Break down file into chunks")
+    
+    #Break down file into chunks
     chunks = file_into_chunks(pages)
     
-    logging.info("Get graph document list from models")
+    logging.info(f"Get graph document list from model:{model}")
     if model == 'Diffbot' :
       graph_documents = extract_graph_from_diffbot(graph,chunks,file_name,isEmbedding)
       
@@ -127,10 +130,10 @@ def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=Fa
     relations = []
     
     for graph_document in graph_documents:
-      logging.info("get distinct nodes")
+      #get distinct nodes
       for node in graph_document.nodes:
             distinct_nodes.add(node.id)
-      logging.info("get all relations")
+      #get all relations
       for relation in graph_document.relationships:
             relations.append(relation.type)
       
@@ -152,7 +155,7 @@ def extract_graph_from_file(uri, userName, password, file, model, isEmbedding=Fa
         "status" : job_status,
         "model" : model
     }
-    
+    logging.info(f"Json response from extract API = {output}")
     return create_api_response("Success",data=output)
   except Exception as e:
     job_status = "Failure"
@@ -168,6 +171,7 @@ def get_source_list_from_graph():
    Returns a list of sources that are in the database by querying the graph and
    sorting the list by the last updated date. 
  """
+  logging.info("Get existing files list from graph")
   try:
     query = "MATCH(s:Source) RETURN s ORDER BY s.updatedAt DESC;"
     result = graph.query(query)
