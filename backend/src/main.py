@@ -93,7 +93,7 @@ def get_s3_files_info(s3_url):
   
  
   
-def create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_key_id,aws_secret_access_key):
+def create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_key_id=None,aws_secret_access_key=None):
     """
       Creates a source node in Neo4jGraph and sets properties.
       
@@ -107,8 +107,10 @@ def create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_k
         Success or Failure message of node creation
     """
     try:
-        os.environ['AWS_ACCESS_KEY_ID']=  aws_access_key_id
-        os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
+        if aws_access_key_id !=None and aws_secret_access_key !=None:
+          os.environ['AWS_ACCESS_KEY_ID']=  aws_access_key_id
+          os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
+        
         graph = Neo4jGraph(url=uri, username=userName, password=password)
         files_info = get_s3_files_info(s3_url_dir)
         if len(files_info)==0:
@@ -241,8 +243,10 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
         loader = PyPDFLoader('temp.pdf')
         pages = loader.load_and_split()
       elif s3_url!=None:
-        os.environ['AWS_ACCESS_KEY_ID']=  aws_access_key_id
-        os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
+        if aws_access_key_id !=None and aws_secret_access_key !=None:
+          os.environ['AWS_ACCESS_KEY_ID']=  aws_access_key_id
+          os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
+
         file_name=str(s3_url)
         # print(file_name)
         bucket=file_name.split('/')[2]
