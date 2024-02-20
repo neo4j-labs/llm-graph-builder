@@ -42,14 +42,14 @@ def create_source_node_graph(uri, userName, password, file):
       source_node = "fileName: '{}'"
       update_node_prop = "SET s.fileSize = '{}', s.fileType = '{}' ,s.status = '{}'"
       logging.info("create source node as file name if not exist")
-      graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,job_status))
+      graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(file_size,file_type,job_status))
       return create_api_response("Success",data="Source Node created successfully")
       
     except Exception as e:
       job_status = "Failure"
       error_message = str(e)
       update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}"'
-      graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
+      graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message))
       logging.exception(f'Exception Stack trace:')
       return create_api_response(job_status,error=error_message)
   except Exception as e:
@@ -128,7 +128,7 @@ def create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_k
               source_node = "fileName: '{}'"
               update_node_prop = "SET s.fileSize = '{}', s.fileType = '{}' ,s.status = '{}',s.s3url='{}'"
               logging.info("create source node as file name if not exist")
-              graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,job_status,s3_file_path))
+              graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(file_size,file_type,job_status,s3_file_path))
               success_count+=1
             except Exception as e:
               err_flag=1
@@ -136,7 +136,7 @@ def create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_k
               job_status='Failure'
               error_message = str(e)
               update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}"'
-              graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
+              graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message))
               logging.exception(f'Exception Stack trace:')
         if err_flag==1:
           job_status = "Failure"
@@ -257,7 +257,7 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
         # response = s3.get_object(Bucket=bucket, Key=file_key)
         file_size=response['ContentLength']
         
-        metadata = {"source": "local","filename": file_name, "filesize":file_size }
+        metadata = {"source": "local","filename": file_key, "filesize":file_size }
         print(bucket)
         print(file_key)
         print(file_size)
@@ -314,7 +314,7 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
       job_status = "Completed"
       error_message =""
       logging.info("Update source node properties")
-      graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(start_time,end_time,round(processed_time.total_seconds(),2),job_status,error_message,nodes_created,relationships_created,model))
+      graph.query('MERGE(s:Source {'+source_node.format(file_key.split('/')[-1])+'}) '+update_node_prop.format(start_time,end_time,round(processed_time.total_seconds(),2),job_status,error_message,nodes_created,relationships_created,model))
 
       output = {
           "fileName": file_name,
