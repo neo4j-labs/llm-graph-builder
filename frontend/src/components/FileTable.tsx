@@ -99,7 +99,8 @@ export default function FileTable() {
         setIsLoading(true);
         const res: any = await getSourceNodes();
         if (Array.isArray(res.data.data) && res.data.data.length) {
-          const prefiles = res.data.data.map((item: SourceNode) => ({
+          const prefiles = res.data.data.map((item: SourceNode) =>{
+            return {
             name: item.fileName,
             size: item.fileSize ?? 0,
             type: item?.fileType?.toUpperCase() ?? 'None',
@@ -107,7 +108,7 @@ export default function FileTable() {
             processing: item?.processingTime ?? 'None',
             relationshipCount: item?.relationshipCount ?? 0,
             status:
-              item?.s3url?.length > 0
+              (item?.s3url?.trim()!="" &&item.status!="Completed")
                 ? 'New'
                 : getFileFromLocal(`${item.fileName}`) == null && item?.status != 'Completed'
                 ? 'Unavailable'
@@ -115,7 +116,7 @@ export default function FileTable() {
             model: item?.model ?? 'Diffbot',
             id: uuidv4(),
             s3url: item.s3url ?? '',
-          }));
+          }});
           setIsLoading(false);
           setFilesData(prefiles);
           const prefetchedFiles: any[] = [];
