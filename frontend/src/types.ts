@@ -21,7 +21,7 @@ export type UserCredentials = {
 export type ExtractParams = {
   file?: string;
   model: string;
-  s3_url?:string
+  s3_url?: string;
 };
 export type UploadParams = {
   file: string;
@@ -37,7 +37,8 @@ export interface CustomAlertProps {
   handleClose: () => void;
   alertMessage: string;
 }
-export interface S3ButtonProps {
+
+export interface S3BucketProps {
   openModal: () => void;
 }
 export interface S3ModalProps {
