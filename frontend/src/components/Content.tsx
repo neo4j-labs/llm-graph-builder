@@ -30,6 +30,8 @@ export default function Content() {
         setDriver(neo4jConnection.uri, neo4jConnection.user, neo4jConnection.password).then((isSuccessful: boolean) => {
           setConnectionStatus(isSuccessful);
         });
+      } else {
+        setOpenConnection(true);
       }
       setInit(true);
     }
@@ -43,15 +45,14 @@ export default function Content() {
     });
   }, [model]);
 
+  const disableCheck = !files.length;
 
-  const disableCheck = (!files.length || !filesData.some((f)=>f.status === 'New'));
-  
   const handleDropdownChange = (option: any) => {
     setModel(option.value);
   };
 
   const extractData = async (file: File, uid: number) => {
-    if (filesData[uid].status == 'Failed' || filesData[uid].status == 'New') {
+    if (filesData[uid]?.status == 'New') {
       const apirequests = [];
       try {
         setFilesData((prevfiles) =>
@@ -71,7 +72,11 @@ export default function Content() {
           .then((r) => {
             r.forEach((apiRes) => {
               if (apiRes.status === 'fulfilled' && apiRes.value) {
-                if (apiRes?.value?.data.status != 'Unexpected Error') {
+                if (apiRes?.value?.status === 'Failure') {
+                  setShowAlert(true);
+                  setErrorMessage('Unexpected Error');
+                  throw new Error('API Failure');
+                } else {
                   setFilesData((prevfiles) =>
                     prevfiles.map((curfile, idx) => {
                       if (idx == uid) {
@@ -88,10 +93,6 @@ export default function Content() {
                       return curfile;
                     })
                   );
-                } else {
-                  setShowAlert(true);
-                  setErrorMessage('Unexpected Error');
-                  throw new Error('API Failure');
                 }
               }
             });
@@ -120,6 +121,7 @@ export default function Content() {
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
         if (filesData[i].status === 'New') {
+          // console.log()
           extractData(files[i], i);
         }
       }
@@ -176,7 +178,7 @@ export default function Content() {
           justifyContent='space-between'
           style={{ flexFlow: 'row', marginTop: '5px' }}
         >
-          <LlmDropdown onSelect={handleDropdownChange} isDisabled= {disableCheck} />
+          <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
           <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
             Generate Graph
           </Button>

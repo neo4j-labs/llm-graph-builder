@@ -29,7 +29,7 @@ export type UploadParams = {
 export type FormDataParams = ExtractParams | UploadParams;
 export interface DropdownProps {
   onSelect: (option: OptionType | null | void) => void;
-  isDisabled: boolean
+  isDisabled: boolean;
 }
 export interface CustomAlertProps {
   open: boolean;

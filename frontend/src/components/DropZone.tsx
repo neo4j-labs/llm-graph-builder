@@ -49,7 +49,7 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
         const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === file?.name);
         const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === file?.name);
         if (filedataIndex == -1) {
-          copiedFilesData.push({
+          copiedFilesData.unshift({
             name: file.name,
             type: file.type,
             size: file.size,
@@ -58,7 +58,7 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
         } else {
           const tempFileData = copiedFilesData[filedataIndex];
           copiedFilesData.splice(filedataIndex, 1);
-          copiedFilesData.push({
+          copiedFilesData.unshift({
             ...tempFileData,
             status: defaultValues.status,
             NodesCount: defaultValues.NodesCount,
@@ -68,11 +68,11 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
           });
         }
         if (fileIndex == -1) {
-          copiedFiles.push(file as File);
+          copiedFiles.unshift(file as File);
         } else {
           const tempFile = copiedFiles[filedataIndex];
           copiedFiles.splice(fileIndex, 1);
-          copiedFiles.push(getFileFromLocal(tempFile.name) ?? tempFile);
+          copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
         }
       });
       setFiles(copiedFiles);
@@ -81,7 +81,7 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
   };
 
   const fileUpload = async (file: File, uid: number) => {
-    if (filesData[uid].status == 'None' && isClicked) {
+    if (filesData[uid]?.status == 'None' && isClicked) {
       const apirequests = [];
       try {
         setIsLoading(true);
@@ -103,7 +103,9 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
           .then((r) => {
             r.forEach((apiRes) => {
               if (apiRes.status === 'fulfilled' && apiRes.value) {
-                if (apiRes?.value?.data != 'Unexpected Error') {
+                if (apiRes?.value?.status === 'Failure') {
+                  throw new Error('API Failure');
+                } else {
                   setFilesData((prevfiles) =>
                     prevfiles.map((curfile, idx) => {
                       if (idx == uid) {
@@ -117,8 +119,6 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
                   );
                   setIsClicked(false);
                   setIsLoading(false);
-                } else {
-                  throw new Error('API Failure');
                 }
               }
             });
