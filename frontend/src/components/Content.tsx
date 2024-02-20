@@ -66,7 +66,7 @@ export default function Content() {
             return curfile;
           })
         );
-        const apiResponse = await extractAPI(file, filesData[uid].model, userCredentials,filesData[uid].s3url);
+        const apiResponse = await extractAPI(file, filesData[uid].model, userCredentials, filesData[uid].s3url);
         apirequests.push(apiResponse);
         Promise.allSettled(apirequests)
           .then((r) => {
@@ -75,6 +75,17 @@ export default function Content() {
                 if (apiRes?.value?.status === 'Failure') {
                   setShowAlert(true);
                   setErrorMessage('Unexpected Error');
+                  setFilesData((prevfiles) =>
+                    prevfiles.map((curfile, idx) => {
+                      if (idx == uid) {
+                        return {
+                          ...curfile,
+                          status: 'Failed',
+                        };
+                      }
+                      return curfile;
+                    })
+                  );
                   throw new Error('API Failure');
                 } else {
                   setFilesData((prevfiles) =>
@@ -97,7 +108,9 @@ export default function Content() {
               }
             });
           })
-          .catch((err) => console.log(err));
+          .catch((err) => {
+            console.log(err);
+          });
       } catch (err: any) {
         console.log(err);
         setShowAlert(true);
