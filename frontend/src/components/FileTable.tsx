@@ -104,11 +104,12 @@ export default function FileTable() {
             NodesCount: item?.nodeCount ?? 0,
             processing: item?.processingTime ?? 'None',
             relationshipCount: item?.relationshipCount ?? 0,
-            status: item?.s3url
-              ? 'New'
-              : getFileFromLocal(`${item.fileName}`) == null && item?.status != 'Completed'
-              ? 'Unavailable'
-              : item.status,
+            status:
+              item?.s3url?.length > 0
+                ? 'New'
+                : getFileFromLocal(`${item.fileName}`) == null && item?.status != 'Completed'
+                ? 'Unavailable'
+                : item.status,
             model: item?.model ?? 'Diffbot',
             id: uuidv4(),
             s3url: item.s3url ?? '',

@@ -9,10 +9,10 @@ const bucketScanAPI = async (urlParam: string, userCredentials?: any, accessKey?
     formData.append('password', userCredentials?.password);
     formData.append('s3_url_dir', urlParam);
     if (accessKey?.length) {
-      formData.append('accesskey', accessKey);
+      formData.append('aws_access_key_id', accessKey);
     }
     if (secretKey?.length) {
-      formData.append('secretkey', secretKey);
+      formData.append('aws_secret_access_key', secretKey);
     }
 
     const response = await axios.post(`${url()}/bucket/scan`, formData, {

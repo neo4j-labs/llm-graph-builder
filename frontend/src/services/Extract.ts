@@ -10,7 +10,7 @@ const extractAPI = async (file: any, model: string, userCredentials?: any, s3_ur
     formData.append('password', userCredentials?.password);
     if (s3_url?.length) {
       formData.append('s3_url', s3_url);
-      formData.delete("file")
+      formData.delete('file');
     } else {
       formData.set('file', file);
     }
