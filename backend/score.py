@@ -31,15 +31,15 @@ async def create_source_knowledge_graph(uri= Form(), userName= Form(), password=
     return create_source_node_graph(uri, userName, password, file)
 
 @app.post('/bucket/scan')
-async def create_source_knowledge_graph(uri= Form(), userName= Form(), password= Form(),s3_url_dir=Form()):
-    return create_source_node_graph_s3(uri, userName, password, s3_url_dir)
+async def create_source_knowledge_graph(uri= Form(), userName= Form(), password= Form(),s3_url_dir=Form(),aws_access_key_id=Form(),aws_secret_access_key=Form()):
+    return create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_key_id,aws_secret_access_key)
 
 @app.post('/extract')
-async def extract_knowledge_graph_from_file(uri= Form(), userName= Form(), password= Form(), model=Form(),file: UploadFile = File(None),s3_url=Form(None)):
+async def extract_knowledge_graph_from_file(uri= Form(), userName= Form(), password= Form(), model=Form(),file: UploadFile = File(None),s3_url=Form(None),aws_access_key_id=Form(),aws_secret_access_key=Form()):
     if file:
         return extract_graph_from_file(uri, userName, password, model,file=file,s3_url=None)
     elif s3_url:
-        return extract_graph_from_file(uri, userName, password, model,s3_url=s3_url)
+        return extract_graph_from_file(uri, userName, password, model,s3_url=s3_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
     else:
         return {"job_status":"Failure","error":"No file found"}
     

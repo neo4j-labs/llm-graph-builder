@@ -84,7 +84,7 @@ def get_s3_files_info(s3_url):
 
           # Check if file is a PDF
           if file_name.endswith('.pdf'):
-            files_info.append({'file_name': file_name, 'file_size_bytes': file_size})
+            files_info.append({'file_key': file_key, 'file_size_bytes': file_size})
             
       return files_info
   except Exception as e:
@@ -93,7 +93,7 @@ def get_s3_files_info(s3_url):
   
  
   
-def create_source_node_graph_s3(uri, userName, password, s3_url_dir):
+def create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_key_id,aws_secret_access_key):
     """
       Creates a source node in Neo4jGraph and sets properties.
       
@@ -107,6 +107,8 @@ def create_source_node_graph_s3(uri, userName, password, s3_url_dir):
         Success or Failure message of node creation
     """
     try:
+        os.environ['AWS_ACCESS_KEY_ID']=  aws_access_key_id
+        os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
         graph = Neo4jGraph(url=uri, username=userName, password=password)
         files_info = get_s3_files_info(s3_url_dir)
         if len(files_info)==0:
@@ -119,7 +121,7 @@ def create_source_node_graph_s3(uri, userName, password, s3_url_dir):
         file_type='pdf'
         for file_info in files_info:
             job_status = "New"
-            file_name=file_info['file_name'] 
+            file_name=file_info['file_key'] 
             file_size=file_info['file_size_bytes']
             s3_file_path=str(s3_url_dir+file_name)
             try:
@@ -139,7 +141,7 @@ def create_source_node_graph_s3(uri, userName, password, s3_url_dir):
         if err_flag==1:
           job_status = "Failure"
           return create_api_response(job_status,error=error_message,success_count=success_count,failure_count=failure_count)  
-        return create_api_response("Success",data="Source Node created succesfully")
+        return create_api_response("Success",data="Source Node created successfully")
     except Exception as e:
             job_status = "Failure"
             error_message = str(e)
@@ -208,7 +210,7 @@ def get_s3_pdf_content(s3_url):
       
 
 
-def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, isChunk_relationship_entity = False, file=None,s3_url=None):
+def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, isChunk_relationship_entity = False, file=None,s3_url=None,aws_access_key_id=None,aws_secret_access_key=None):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -239,6 +241,8 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
         loader = PyPDFLoader('temp.pdf')
         pages = loader.load_and_split()
       elif s3_url!=None:
+        os.environ['AWS_ACCESS_KEY_ID']=  aws_access_key_id
+        os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
         file_name=str(s3_url)
         # print(file_name)
         bucket=file_name.split('/')[2]
