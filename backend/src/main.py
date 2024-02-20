@@ -58,7 +58,7 @@ def create_source_node_graph(uri, userName, password, file):
       return create_api_response(job_status,error=error_message)
 
 
-def get_s3_files_info(s3_url):
+def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
   try:
       # Extract bucket name and directory from the S3 URL
       parsed_url = urlparse(s3_url)
@@ -66,7 +66,7 @@ def get_s3_files_info(s3_url):
       directory = parsed_url.path.lstrip('/')
 
       # Connect to S3
-      s3 = boto3.client('s3')
+      s3 = boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
 
       # List objects in the specified directory
       response = s3.list_objects_v2(Bucket=bucket_name, Prefix=directory)
@@ -107,14 +107,14 @@ def create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_k
         Success or Failure message of node creation
     """
     try:
-        if aws_access_key_id !=None and aws_secret_access_key !=None:
-          os.environ['AWS_ACCESS_KEY_ID']=  aws_access_key_id
-          os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
+        # if aws_access_key_id !=None and aws_secret_access_key !=None:
+        #   os.environ['AWS_ACCESS_KEY_ID']=  aws_access_key_id
+        #   os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
         
         graph = Neo4jGraph(url=uri, username=userName, password=password)
-        files_info = get_s3_files_info(s3_url_dir)
+        files_info = get_s3_files_info(s3_url_dir,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
         if len(files_info)==0:
-          return create_api_response(job_status='Failure',success_count=0,failure_count=0,message='No pdf files found.')  
+          return create_api_response('Failure',success_count=0,failure_count=0,message='No pdf files found.')  
           
         print(files_info)
         err_flag=0
@@ -143,7 +143,7 @@ def create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_k
         if err_flag==1:
           job_status = "Failure"
           return create_api_response(job_status,error=error_message,success_count=success_count,failure_count=failure_count)  
-        return create_api_response("Success",data="Source Node created successfully")
+        return create_api_response("Success",data="Source Node created successfully",success_count=success_count,failure_count=failure_count)
     except Exception as e:
             job_status = "Failure"
             error_message = str(e)
@@ -164,7 +164,7 @@ def file_into_chunks(pages: List[Document]):
     chunks = text_splitter.split_documents(pages)
     return chunks
 
-def get_s3_pdf_content(s3_url):
+def get_s3_pdf_content(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
     # try:
       # Extract bucket name and directory from the S3 URL
         parsed_url = urlparse(s3_url)
@@ -173,7 +173,7 @@ def get_s3_pdf_content(s3_url):
         directory = parsed_url.path.lstrip('/')
         # print('directory:',directory)
         if directory.endswith('.pdf'):
-          loader=S3DirectoryLoader(bucket_name, prefix=directory)
+          loader=S3DirectoryLoader(bucket_name, prefix=directory,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
           pages = loader.load_and_split()
           return pages
         else:
@@ -218,9 +218,9 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
         pages = loader.load_and_split()
         
       elif s3_url!=None:
-        if aws_access_key_id !=None and aws_secret_access_key !=None:
-          os.environ['AWS_ACCESS_KEY_ID']=  aws_access_key_id
-          os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
+        # if aws_access_key_id !=None and aws_secret_access_key !=None:
+        #   os.environ['AWS_ACCESS_KEY_ID']=  aws_access_key_id
+        #   os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
         
         parsed_url = urlparse(s3_url)
         bucket = parsed_url.netloc
@@ -229,7 +229,7 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
         
         source_node = "fileName: '{}'"
         update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessage = '{}',s.nodeCount= {}, s.relationshipCount = {}, s.model = '{}'"
-        s3=boto3.client('s3')
+        s3=boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
         response=s3.head_object(Bucket=bucket,Key=file_key)
         # response = s3.get_object(Bucket=bucket, Key=file_key)
         file_size=response['ContentLength']
@@ -239,7 +239,7 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
         print(file_key)
         print(file_size)
         # loader = S3FileLoader(bucket,file_key)
-        pages=get_s3_pdf_content(s3_url)
+        pages=get_s3_pdf_content(s3_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
         if pages==None:
           job_status = "Failure"
           return create_api_response(job_status,error='Failed to load the pdf content')
