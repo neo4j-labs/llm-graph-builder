@@ -22,6 +22,8 @@ export type ExtractParams = {
   file?: string;
   model: string;
   s3_url?: string;
+  aws_access_key_id?:string;
+  aws_secret_access_key?:string;
 };
 export type UploadParams = {
   file: string;

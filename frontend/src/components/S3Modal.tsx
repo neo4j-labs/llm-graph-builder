@@ -33,6 +33,12 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     setBucketUrl(e.target.value);
   };
   const submitHandler = async (bucketUrl: string) => {
+    if (accessKey.length) {
+      sessionStorage.setItem('accesskey', accessKey);
+    }
+    if (secretKey.length) {
+      sessionStorage.setItem('secretkey', secretKey);
+    }
     if (bucketUrl.trim() != '') {
       try {
         setStatus('info');
@@ -51,7 +57,12 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             NodesCount: item?.nodeCount ?? 0,
             processing: item?.processingTime ?? 'None',
             relationshipCount: item?.relationshipCount ?? 0,
-            status: getFileFromLocal(`${item.fileName}`) == null ? 'Unavailable' : item.status,
+            status:
+              item?.s3url?.trim() != '' && item.status != 'Complted'
+                ? 'New'
+                : getFileFromLocal(`${item.fileName}`) == null && item?.status != 'Completed'
+                ? 'Unavailable'
+                : item.status,
             model: item?.model ?? 'Diffbot',
             id: uuidv4(),
             s3url: item.s3url ?? '',
@@ -110,7 +121,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               }}
             />
           </div>
-          <div className='flex justify-between items-center w-full gap-4'>
+          <div className='flex justify-between items-center w-full gap-4 mt-3'>
             <TextInput
               id='url'
               value={accessKey}
@@ -130,7 +141,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               id='url'
               value={secretKey}
               disabled={false}
-              label='Seceret Key'
+              label='Secret Key'
               className='w-full'
               placeholder=''
               autoFocus
