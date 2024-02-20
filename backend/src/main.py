@@ -234,6 +234,7 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
     try: 
       if file!=None:
         file_name = file.filename
+        file_key=file_name
         source_node = "fileName: '{}'"
         update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessage = '{}',s.nodeCount= {}, s.relationshipCount = {}, s.model = '{}'"
         metadata = {"source": "local","filename": file.filename, "filesize":file.size }
