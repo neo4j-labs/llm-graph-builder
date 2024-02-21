@@ -45,7 +45,11 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         const apiResponse = await bucketScanAPI(bucketUrl, userCredentials, accessKey, secretKey);
         console.log('response', apiResponse);
         setStatus('success');
-        setStatusMessage(`Successfully Created Source Nodes For ${apiResponse.data.success_count} Files`);
+        if (apiResponse.data.success_count) {
+          setStatusMessage(`Successfully Created Source Nodes For ${apiResponse.data.success_count} Files`);
+        }else{
+          setStatusMessage(`No Files Found`);
+        }
         setBucketUrl('');
         setAccessKey('');
         setSecretKey('');
