@@ -16,7 +16,7 @@ export type UserCredentials = {
   uri: string;
   userName: string;
   password: string;
-};
+}& { [key: string]: any };
 
 export type ExtractParams = {
   file?: string;
@@ -24,10 +24,10 @@ export type ExtractParams = {
   s3_url?: string;
   aws_access_key_id?:string;
   aws_secret_access_key?:string;
-};
+}& { [key: string]: any };
 export type UploadParams = {
   file: string;
-};
+}& { [key: string]: any };
 
 export type FormDataParams = ExtractParams | UploadParams;
 export interface DropdownProps {
