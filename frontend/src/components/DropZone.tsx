@@ -151,17 +151,17 @@ const DropZone: FunctionComponent = () => {
     <>
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
 
-        <Dropzone
-          loadingComponent={isLoading && <Loader />}
-          isTesting={true}
-          className='bg-none'
-          dropZoneOptions={{
-            accept: { 'application/pdf': ['.pdf'] },
-            onDrop: (f: Partial<globalThis.File>[]) => {
-              onDropHandler(f);
-            },
-          }}
-        />
+      <Dropzone
+        loadingComponent={isLoading && <Loader />}
+        isTesting={true}
+        className='bg-none'
+        dropZoneOptions={{
+          accept: { 'application/pdf': ['.pdf'] },
+          onDrop: (f: Partial<globalThis.File>[]) => {
+            onDropHandler(f);
+          },
+        }}
+      />
     </>
   );
 };

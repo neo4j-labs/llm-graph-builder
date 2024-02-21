@@ -97,24 +97,25 @@ export default function FileTable() {
         setIsLoading(true);
         const res: any = await getSourceNodes();
         if (Array.isArray(res.data.data) && res.data.data.length) {
-          const prefiles = res.data.data.map((item: SourceNode) =>{
+          const prefiles = res.data.data.map((item: SourceNode) => {
             return {
-            name: item.fileName,
-            size: item.fileSize ?? 0,
-            type: item?.fileType?.toUpperCase() ?? 'None',
-            NodesCount: item?.nodeCount ?? 0,
-            processing: item?.processingTime ?? 'None',
-            relationshipCount: item?.relationshipCount ?? 0,
-            status:
-              (item?.s3url?.trim()!="" &&item.status!="Completed")
-                ? 'New'
-                : getFileFromLocal(`${item.fileName}`) == null && item?.status != 'Completed'
-                ? 'Unavailable'
-                : item.status,
-            model: item?.model ?? 'Diffbot',
-            id: uuidv4(),
-            s3url: item.s3url ?? '',
-          }});
+              name: item.fileName,
+              size: item.fileSize ?? 0,
+              type: item?.fileType?.toUpperCase() ?? 'None',
+              NodesCount: item?.nodeCount ?? 0,
+              processing: item?.processingTime ?? 'None',
+              relationshipCount: item?.relationshipCount ?? 0,
+              status:
+                item?.s3url?.trim() != '' && item.status != 'Completed'
+                  ? 'New'
+                  : getFileFromLocal(`${item.fileName}`) == null && item?.status != 'Completed'
+                  ? 'Unavailable'
+                  : item.status,
+              model: item?.model ?? 'Diffbot',
+              id: uuidv4(),
+              s3url: item.s3url ?? '',
+            };
+          });
           setIsLoading(false);
           setFilesData(prefiles);
           const prefetchedFiles: any[] = [];
