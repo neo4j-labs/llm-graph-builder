@@ -5,7 +5,7 @@ import PageLayout from './Layout/PageLayout';
 import { FileContextProvider } from '../context/UsersFiles';
 import UserCredentialsWrapper from '../context/UserCredentials';
 
-export default function QuickStarter() {
+const QuickStarter: React.FunctionComponent = () => {
   const themeUtils = React.useContext(ThemeWrapperContext);
   const [themeMode, setThemeMode] = useState<string>(themeUtils.colorMode);
 
@@ -24,4 +24,5 @@ export default function QuickStarter() {
       </UserCredentialsWrapper>
     </FileContextProvider>
   );
-}
+};
+export default QuickStarter;

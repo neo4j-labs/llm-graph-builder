@@ -19,7 +19,7 @@ def create_source_chunk_entity_relationship(source_file_name :str,
 
     """
     source_node = 'fileName: "{}"'
-    logging.debug(f'Graph Document print{graph_document}')
+    logging.debug(f'Graph Document = {graph_document}')
     chunk_node_id = 'uuid:"{}"'
     if isEmbedding:
         update_chunk_node_prop = 'SET c.text = "{}", c.embedding = True'

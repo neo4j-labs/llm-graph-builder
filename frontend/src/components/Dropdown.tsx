@@ -18,7 +18,7 @@ const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
             placeholder: 'Select Model',
             defaultValue: { label: 'Diffbot', value: 'Diffbot' },
             menuPlacement: 'auto',
-            isDisabled
+            isDisabled,
           }}
           size='medium'
           fluid

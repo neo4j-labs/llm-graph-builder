@@ -4,6 +4,7 @@ from fastapi import FastAPI, Depends
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
+import asyncio
 
 def healthy_condition():
     output={"healthy": True}
@@ -28,24 +29,29 @@ app.add_api_route("/health", health([healthy_condition, healthy]))
 
 @app.post('/sources')
 async def create_source_knowledge_graph(uri= Form(), userName= Form(), password= Form(),file: UploadFile = File(...)):
-    return create_source_node_graph(uri, userName, password, file)
+    result = await asyncio.to_thread(create_source_node_graph, uri, userName, password, file)
+    return result
 
 @app.post('/bucket/scan')
 async def create_source_knowledge_graph(uri= Form(), userName= Form(), password= Form(),s3_url_dir=Form(),aws_access_key_id=Form(None),aws_secret_access_key=Form(None)):
     return create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_key_id,aws_secret_access_key)
 
 @app.post('/extract')
-async def extract_knowledge_graph_from_file(uri= Form(), userName= Form(), password= Form(), model=Form(),file: UploadFile = File(None),s3_url=Form(None),aws_access_key_id=Form(None),aws_secret_access_key=Form(None)):
+async def extract_knowledge_graph_from_file(uri= Form(), userName= Form(), password= Form(),file: UploadFile = File(None), model=Form(),s3_url=Form(None),aws_access_key_id=Form(None),aws_secret_access_key=Form(None)):
     if file:
-        return extract_graph_from_file(uri, userName, password, model,file=file,s3_url=None)
+        return await asyncio.to_thread(extract_graph_from_file,uri, userName, password, model,file=file,s3_url=None)
     elif s3_url:
-        return extract_graph_from_file(uri, userName, password, model,s3_url=s3_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
+        return await asyncio.to_thread(extract_graph_from_file,uri, userName, password, model,s3_url=s3_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
     else:
         return {"job_status":"Failure","error":"No file found"}
     
+    
+
+
 @app.get('/sources_list')
 async def get_source_list():
-    return get_source_list_from_graph()
+    result = await asyncio.to_thread(get_source_list_from_graph)
+    return result
 
 
 

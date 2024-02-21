@@ -21,6 +21,7 @@ from langchain.text_splitter import TokenTextSplitter
 from src.make_relationships import create_source_chunk_entity_relationship
 from tqdm import tqdm
 import logging
+import re
 
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
@@ -100,8 +101,10 @@ def map_to_base_node(node: Node) -> BaseNode:
     """
     properties = props_to_dict(node.properties) if node.properties else {}
     properties["name"] = node.id.title().replace(' ','_')
+    #replace all non alphanumeric characters and spaces with underscore
+    node_type = re.sub(r'[^\w]+', '_', node.type.capitalize())
     return BaseNode(
-        id=node.id.title().replace(' ','_'), type=node.type.capitalize().replace(' ','_'), properties=properties
+        id=node.id.title().replace(' ','_'), type=node_type, properties=properties
     )
 
 
@@ -232,9 +235,9 @@ def extract_graph_from_OpenAI(model_version,
     openai_api_key = os.environ.get('OPENAI_API_KEY')
     graph_document_list = []
 
+    logging.info(f"create relationship between source,chunck and entity nodes created from {model_version}")
     for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
         graph_document=extract_and_store_graph(model_version,graph,chunk_document)
-        logging.info("create relationship between source,chunck and entity nodes")
         create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document,isEmbedding)
         graph_document_list.append(graph_document[0])     
     return graph_document_list

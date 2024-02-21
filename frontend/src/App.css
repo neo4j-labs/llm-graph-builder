@@ -1,3 +1,4 @@
 .filetable {
   width: calc(-366px + 100dvw) !important;
+  height: calc(-322px + 100dvh);
 }

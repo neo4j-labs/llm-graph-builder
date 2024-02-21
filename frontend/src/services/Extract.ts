@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { url } from '../utils/utils';
 
-const extractAPI = async (file: any, model: string, userCredentials?: any,) => {
+const extractAPI = async (file: any, model: string, userCredentials?: any) => {
   try {
     const formData = new FormData();
     formData.append('file', file);

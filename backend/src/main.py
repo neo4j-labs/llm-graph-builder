@@ -160,6 +160,7 @@ def file_into_chunks(pages: List[Document]):
      Returns: 
      	 A list of chunks each of which is a langchain Document.
     """
+    logging.info("Split file into smaller chunks")
     text_splitter = TokenTextSplitter(chunk_size=200, chunk_overlap=20)
     chunks = text_splitter.split_documents(pages)
     return chunks
@@ -200,6 +201,7 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
    	 Json response to API with fileName, nodeCount, relationshipCount, processingTime, 
      status and model as attributes.
   """
+  logging.info(f"extract_graph_from_file called for file:{file.filename}")
   try:
     start_time = datetime.now()
 
@@ -310,7 +312,6 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
       graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
       logging.exception(f'Exception Stack trace:')
       return create_api_response(job_status,error=error_message)
-    
   except Exception as e:
       job_status = "Failure"
       error_message = str(e)
@@ -323,6 +324,7 @@ def get_source_list_from_graph():
    Returns a list of sources that are in the database by querying the graph and
    sorting the list by the last updated date. 
  """
+  logging.info("Get existing files list from graph")
   try:
     graph = Neo4jGraph()
     query = "MATCH(s:Source) RETURN s ORDER BY s.updatedAt DESC;"
