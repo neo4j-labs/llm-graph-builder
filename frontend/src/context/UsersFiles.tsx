@@ -5,12 +5,15 @@ interface CustomFile extends Partial<globalThis.File> {
   NodesCount: number;
   id: string;
   relationshipCount: number;
+  model: string;
 }
 interface FileContextType {
   files: File[] | [];
   filesData: CustomFile[] | [];
   setFiles: Dispatch<SetStateAction<File[]>>;
   setFilesData: Dispatch<SetStateAction<CustomFile[]>>;
+  model: string;
+  setModel: Dispatch<SetStateAction<string>>;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
 interface FileContextProviderProps {
@@ -19,11 +22,14 @@ interface FileContextProviderProps {
 const FileContextProvider: React.FC<FileContextProviderProps> = ({ children }) => {
   const [files, setFiles] = useState<File[] | []>([]);
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
+  const [model, setModel] = useState<string>('Diffbot');
   const value: FileContextType = {
     files,
     filesData,
     setFiles,
     setFilesData,
+    model,
+    setModel,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };
