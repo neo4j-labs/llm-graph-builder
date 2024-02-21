@@ -264,15 +264,15 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
       
       logging.info("Get graph document list from models")
       if model == 'Diffbot' :
-        graph_documents = extract_graph_from_diffbot(graph,chunks,file_name,isEmbedding)
+        graph_documents = extract_graph_from_diffbot(graph,chunks,file_name,isEmbedding,uri,userName,password)
         
       elif model == 'OpenAI GPT 3.5':
         model_version = 'gpt-3.5-turbo-16k'
-        graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,isEmbedding)
+        graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,isEmbedding,uri,userName,password)
         
       elif model == 'OpenAI GPT 4':
         model_version = 'gpt-4-0125-preview' 
-        graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,isEmbedding)
+        graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,isEmbedding,uri,userName,password)
           
       distinct_nodes = set()
       relations = []
