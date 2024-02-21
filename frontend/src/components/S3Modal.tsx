@@ -1,5 +1,4 @@
 import { TextInput, Button, Dialog, Banner } from '@neo4j-ndl/react';
-import { EyeIconOutline } from '@neo4j-ndl/react/icons';
 import React, { useState } from 'react';
 import { S3ModalProps } from '../types';
 import { bucketScanAPI } from '../services/BucketScan';
@@ -26,8 +25,6 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [accessKey, setAccessKey] = useState<string>('');
   const [secretKey, setSecretKey] = useState<string>('');
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
-  const [visible, setVisible] = useState<boolean>(false);
-  const [secretKeyVisible, setSecretKeyVisible] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
   const { setFiles, setFilesData } = useFileContext();
@@ -137,8 +134,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               fluid
               required
               isOptional
-              type={visible ? 'text' : 'password'}
-              rightIcon={<EyeIconOutline className='n-cursor-pointer' onClick={() => setVisible(!visible)} />}
+              type={'password'}
               onChange={(e) => {
                 setAccessKey(e.target.value);
               }}
@@ -154,10 +150,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               fluid
               required
               isOptional
-              type={secretKeyVisible ? 'text' : 'password'}
-              rightIcon={
-                <EyeIconOutline className='n-cursor-pointer' onClick={() => setSecretKeyVisible(!secretKeyVisible)} />
-              }
+              type={'password'}
               onChange={(e) => {
                 setSecretKey(e.target.value);
               }}
