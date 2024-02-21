@@ -70,7 +70,6 @@ def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
 
       # List objects in the specified directory
       response = s3.list_objects_v2(Bucket=bucket_name, Prefix=directory)
-  #     print(response)
       files_info = []
 
       # Check each object for file size and type
@@ -78,8 +77,7 @@ def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
           file_key = obj['Key']
           file_name = os.path.basename(file_key)
           # file_name=s3_url.split('/')[-1]
-          print('file_name',file_name)
-          print('file_key',file_key)
+          logging.info(f'file_name : {file_name}  and file key : {file_key}')
           file_size = obj['Size']
 
           # Check if file is a PDF
@@ -88,7 +86,7 @@ def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
             
       return files_info
   except Exception as e:
-        print("An error occurred:", str(e))
+        logging.exception("An error occurred:", str(e))
         return []
   
  
@@ -116,7 +114,7 @@ def create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_k
         if len(files_info)==0:
           return create_api_response('Failure',success_count=0,failure_count=0,message='No pdf files found.')  
           
-        print(files_info)
+        logging.info(f'files info : {files_info}')
         err_flag=0
         success_count=0
         failure_count=0
@@ -170,9 +168,8 @@ def get_s3_pdf_content(s3_url,aws_access_key_id=None,aws_secret_access_key=None)
       # Extract bucket name and directory from the S3 URL
         parsed_url = urlparse(s3_url)
         bucket_name = parsed_url.netloc
-        print(bucket_name)
+        logging.info(f'bucket name : {bucket_name}')
         directory = parsed_url.path.lstrip('/')
-        # print('directory:',directory)
         if directory.endswith('.pdf'):
           loader=S3DirectoryLoader(bucket_name, prefix=directory,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
           pages = loader.load_and_split()
@@ -237,20 +234,16 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
         file_size=response['ContentLength']
         
         metadata = {"source": "local","filename": file_key, "filesize":file_size }
-        print(bucket)
-        print(file_key)
-        print(file_size)
+        logging.info(f'bucket : {bucket},  file key : {file_key},  file size : {file_size}')
+        
         # loader = S3FileLoader(bucket,file_key)
         pages=get_s3_pdf_content(s3_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
         if pages==None:
           job_status = "Failure"
           return create_api_response(job_status,error='Failed to load the pdf content')
-        # print(loader.load())
         
       # pages = loader.load_and_split()
-      print(pages)
       bad_chars = ['"', "\n", "'"]
-      logging.info("Creates a new Document object for each page in the list of pages")
       for i in range(0,len(pages)):
         text = pages[i].page_content
         for j in bad_chars:
@@ -278,10 +271,10 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
       relations = []
       
       for graph_document in graph_documents:
-        logging.info("get distinct nodes")
+        #get distinct nodes
         for node in graph_document.nodes:
               distinct_nodes.add(node.id)
-        logging.info("get all relations")
+        #get all relations
         for relation in graph_document.relationships:
               relations.append(relation.type)
         
@@ -303,7 +296,7 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
           "status" : job_status,
           "model" : model
       }
-      
+      logging.info(f'Response from extract API : {output}')
       return create_api_response("Success",data=output)
     except Exception as e:
       job_status = "Failure"

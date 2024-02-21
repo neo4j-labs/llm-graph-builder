@@ -60,9 +60,19 @@ async def create_source_knowledge_graph(
         logging.exception(f"Exception Stack trace:{e}")
         return create_api_response(job_status, error=error_message)
 
-@app.post('/bucket/scan')
-async def create_source_knowledge_graph(uri= Form(), userName= Form(), password= Form(),s3_url_dir=Form(),aws_access_key_id=Form(None),aws_secret_access_key=Form(None)):
-    return create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_key_id,aws_secret_access_key)
+
+@app.post("/bucket/scan")
+async def create_source_knowledge_graph(
+    uri=Form(),
+    userName=Form(),
+    password=Form(),
+    s3_url_dir=Form(),
+    aws_access_key_id=Form(None),
+    aws_secret_access_key=Form(None),
+):
+    return create_source_node_graph_s3(
+        uri, userName, password, s3_url_dir, aws_access_key_id, aws_secret_access_key
+    )
 
 
 @app.post("/extract")
@@ -70,8 +80,11 @@ async def extract_knowledge_graph_from_file(
     uri=Form(),
     userName=Form(),
     password=Form(),
-    file: UploadFile = File(...),
+    file: UploadFile = File(None),
     model=Form(),
+    s3_url=Form(None),
+    aws_access_key_id=Form(None),
+    aws_secret_access_key=Form(None),
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
@@ -89,11 +102,28 @@ async def extract_knowledge_graph_from_file(
     """
     try:
         if file:
-            return await asyncio.to_thread(extract_graph_from_file,uri, userName, password, model,file=file,s3_url=None)
+            return await asyncio.to_thread(
+                extract_graph_from_file,
+                uri,
+                userName,
+                password,
+                model,
+                file=file,
+                s3_url=None,
+            )
         elif s3_url:
-            return await asyncio.to_thread(extract_graph_from_file,uri, userName, password, model,s3_url=s3_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
+            return await asyncio.to_thread(
+                extract_graph_from_file,
+                uri,
+                userName,
+                password,
+                model,
+                s3_url=s3_url,
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+            )
         else:
-            return {"job_status":"Failure","error":"No file found"}
+            return {"job_status": "Failure", "error": "No file found"}
     except Exception as e:
         job_status = "Failure"
         error_message = str(e)
@@ -114,9 +144,6 @@ async def get_source_list():
         error_message = str(e)
         logging.exception(f"Exception Stack trace:{e}")
         return create_api_response(job_status, error=error_message)
-
-
-
 
 
 if __name__ == "__main__":
