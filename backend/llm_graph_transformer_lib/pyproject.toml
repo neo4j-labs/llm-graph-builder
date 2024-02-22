@@ -1,0 +1,19 @@
+[build-system]
+requires=["poetry-core>=1.0.0"]
+build-backend="poetry.core.masonry.api"
+
+[tool.poetry]
+name='llm_graph_transformer'
+version='0.0.1'
+description='Knowledge graph creation using OpenAI GPT'
+authors=['Neo4j']
+
+[tool.poetry.dependencies]
+python="3.10.13"
+langchain_community="*"
+langchain="*"
+python-dotenv="*"
+tqdm="*"
+langchain_openai="*"
+neo4j="*"
+pypdf="*"
