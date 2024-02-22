@@ -17,7 +17,7 @@ import os
 from tempfile import NamedTemporaryFile
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
-from langchain.document_loaders import S3FileLoader
+# from langchain.document_loaders import S3FileLoader
 
 def create_source_node_graph(uri, userName, password, file):
   """
@@ -30,7 +30,7 @@ def create_source_node_graph(uri, userName, password, file):
    	 file: File object with information about file to be added
    
    Returns: 
-   	 Success or Failure message of node creation
+   	 Success or Failed message of node creation
   """
   try:
     job_status = "New"
@@ -46,30 +46,36 @@ def create_source_node_graph(uri, userName, password, file):
       return create_api_response("Success",data="Source Node created successfully")
       
     except Exception as e:
-      job_status = "Failure"
+      job_status = "Failed"
       error_message = str(e)
       update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}"'
       graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message))
       logging.exception(f'Exception Stack trace:')
       return create_api_response(job_status,error=error_message)
   except Exception as e:
-      job_status = "Failure"
+      job_status = "Failed"
       error_message = str(e)
       return create_api_response(job_status,error=error_message)
 
 
 def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
-  try:
+  # try:
       # Extract bucket name and directory from the S3 URL
       parsed_url = urlparse(s3_url)
       bucket_name = parsed_url.netloc
       directory = parsed_url.path.lstrip('/')
+      try:
+        # Connect to S3
+        s3 = boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
 
-      # Connect to S3
-      s3 = boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
-
-      # List objects in the specified directory
-      response = s3.list_objects_v2(Bucket=bucket_name, Prefix=directory)
+        # List objects in the specified directory
+        response = s3.list_objects_v2(Bucket=bucket_name, Prefix=directory)
+      except Exception as e:
+         return {
+    "status": "Failed",
+    # "success_count": 0,
+    # "Failed_count": 0,
+    "message": "Invalid AWS credentials"}
       files_info = []
 
       # Check each object for file size and type
@@ -85,9 +91,9 @@ def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
             files_info.append({'file_key': file_key, 'file_size_bytes': file_size})
             
       return files_info
-  except Exception as e:
-        logging.exception("An error occurred:", str(e))
-        return []
+  # except Exception as e:
+  #       logging.exception("An error occurred:", str(e))
+  #       return []
   
  
   
@@ -100,9 +106,10 @@ def create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_k
         userName: Username to connect to Graph Service with ( default : None )
         password: Password to connect to Graph Service with ( default : None )
         s3_url: s3 url for the bucket to fetch pdf files from
-      
+        aws_access_key_id: Aws access key id credentials (default : None)
+        aws_secret_access_key: Aws secret access key credentials (default : None)
       Returns: 
-        Success or Failure message of node creation
+        Success or Failed message of node creation
     """
     try:
         # if aws_access_key_id !=None and aws_secret_access_key !=None:
@@ -111,13 +118,14 @@ def create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_k
         
         graph = Neo4jGraph(url=uri, username=userName, password=password)
         files_info = get_s3_files_info(s3_url_dir,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
-        if len(files_info)==0:
-          return create_api_response('Failure',success_count=0,failure_count=0,message='No pdf files found.')  
-          
+        if isinstance(files_info,dict):
+           return files_info
+        elif len(files_info)==0:
+          return create_api_response('Failed',success_count=0,Failed_count=0,message='No pdf files found.')  
         logging.info(f'files info : {files_info}')
         err_flag=0
         success_count=0
-        failure_count=0
+        Failed_count=0
         file_type='pdf'
         for file_info in files_info:
             job_status = "New"
@@ -126,24 +134,24 @@ def create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_k
             s3_file_path=str(s3_url_dir+file_name)
             try:
               source_node = "fileName: '{}'"
-              update_node_prop = "SET s.fileSize = '{}', s.fileType = '{}' ,s.status = '{}',s.s3url='{}'"
+              update_node_prop = "SET s.fileSize = '{}', s.fileType = '{}' ,s.status = '{}',s.s3url='{}',s.awsAccessKeyId='{}'"
               logging.info("create source node as file name if not exist")
-              graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(file_size,file_type,job_status,s3_file_path))
+              graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(file_size,file_type,job_status,s3_file_path,aws_access_key_id))
               success_count+=1
             except Exception as e:
               err_flag=1
-              failure_count+=1
-              job_status='Failure'
+              Failed_count+=1
+              job_status='Failed'
               error_message = str(e)
               update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}"'
               graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message))
               logging.exception(f'Exception Stack trace:')
         if err_flag==1:
-          job_status = "Failure"
-          return create_api_response(job_status,error=error_message,success_count=success_count,failure_count=failure_count)  
-        return create_api_response("Success",data="Source Node created successfully",success_count=success_count,failure_count=failure_count)
+          job_status = "Failed"
+          return create_api_response(job_status,error=error_message,success_count=success_count,Failed_count=Failed_count)  
+        return create_api_response("Success",data="Source Node created successfully",success_count=success_count,Failed_count=Failed_count)
     except Exception as e:
-            job_status = "Failure"
+            job_status = "Failed"
             error_message = str(e)
             logging.exception(f'Exception Stack trace:')
             return create_api_response(job_status,error=error_message)  
@@ -239,7 +247,7 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
         # loader = S3FileLoader(bucket,file_key)
         pages=get_s3_pdf_content(s3_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
         if pages==None:
-          job_status = "Failure"
+          job_status = "Failed"
           return create_api_response(job_status,error='Failed to load the pdf content')
         
       # pages = loader.load_and_split()
@@ -299,14 +307,14 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
       logging.info(f'Response from extract API : {output}')
       return create_api_response("Success",data=output)
     except Exception as e:
-      job_status = "Failure"
+      job_status = "Failed"
       error_message = str(e)
       update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}"'
       graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
       logging.exception(f'Exception Stack trace:')
       return create_api_response(job_status,error=error_message)
   except Exception as e:
-      job_status = "Failure"
+      job_status = "Failed"
       error_message = str(e)
       logging.exception(f'Exception Stack trace:')
       return create_api_response(job_status,error=error_message)
@@ -325,13 +333,13 @@ def get_source_list_from_graph():
     list_of_json_objects = [entry['s'] for entry in result]
     return create_api_response("Success",data=list_of_json_objects)
   except Exception as e:
-    job_status = "Failure"
+    job_status = "Failed"
     error_message = str(e)
     logging.exception('Exception')
     return create_api_response(job_status,error=error_message)
 
 
-def create_api_response(status,success_count=None,failure_count=None, data=None, error=None,message=None):
+def create_api_response(status,success_count=None,Failed_count=None, data=None, error=None,message=None):
   """
    Create a response to be sent to the API. This is a helper function to create a JSON response that can be sent to the API.
    
@@ -340,7 +348,7 @@ def create_api_response(status,success_count=None,failure_count=None, data=None,
       data: The data that was returned by the API call.
       error: The error that was returned by the API call.
       success_count: Number of files successfully processed.
-      failure_count: Number of files failed to process.
+      Failed_count: Number of files failed to process.
    Returns: 
    	 A dictionary containing the status data and error if any
   """
@@ -356,7 +364,7 @@ def create_api_response(status,success_count=None,failure_count=None, data=None,
   
   if success_count is not None:
     response['success_count']=success_count
-    response['failure_count']=failure_count
+    response['Failed_count']=Failed_count
   
   if message is not None:
     response['message']=message
