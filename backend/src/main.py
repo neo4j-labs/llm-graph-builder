@@ -278,6 +278,7 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
       distinct_nodes = set()
       relations = []
       
+
       for graph_document in graph_documents:
         #get distinct nodes
         for node in graph_document.nodes:
@@ -313,6 +314,7 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
       graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
       logging.exception(f'Exception Stack trace:')
       return create_api_response(job_status,error=error_message)
+
   except Exception as e:
       job_status = "Failed"
       error_message = str(e)
@@ -370,3 +372,4 @@ def create_api_response(status,success_count=None,Failed_count=None, data=None, 
     response['message']=message
     
   return response
+
