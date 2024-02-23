@@ -217,7 +217,6 @@ def extract_graph_from_OpenAI(model_version,
                             graph: Neo4jGraph,
                             chunks: List[Document],
                             file_name : str,
-                            isEmbedding : bool,
                             uri : str,
                             userName : str,
                             password : str):
@@ -230,7 +229,6 @@ def extract_graph_from_OpenAI(model_version,
             graph: Neo4jGraph to be extracted.
             chunks: List of chunk documents created from input file
             file_name (str) : file name of input source
-            isEmbedding (bool) : isEmbedding used to create embedding for chunks or not.
             uri: URI of the graph to extract
             userName: Username to use for graph creation ( if None will use username from config file )
             password: Password to use for graph creation ( if None will use password from config file )    
@@ -243,6 +241,6 @@ def extract_graph_from_OpenAI(model_version,
     logging.info(f"create relationship between source,chunck and entity nodes created from {model_version}")
     for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
         graph_document=extract_and_store_graph(model_version,graph,chunk_document)
-        create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document,isEmbedding,uri,userName,password)
+        create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document,uri,userName,password)
         graph_document_list.append(graph_document[0])     
     return graph_document_list

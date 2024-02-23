@@ -146,12 +146,12 @@ async def get_source_list():
         return create_api_response(job_status, error=error_message)
     
 @app.post("/update_similarity_graph")
-async def update_similarity_graph(query=str):
+async def update_similarity_graph():
     """
     Calls 'update_graph' which post the query to update the similiar nodes in the graph
     """
     try:
-        result = await asyncio.to_thread(update_graph,query)
+        result = await asyncio.to_thread(update_graph)
         return result
     except Exception as e:
         job_status = "Failure"

@@ -191,7 +191,7 @@ def get_s3_pdf_content(s3_url,aws_access_key_id=None,aws_secret_access_key=None)
       
 
 
-def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, isChunk_relationship_entity = False, file=None,s3_url=None,aws_access_key_id=None,aws_secret_access_key=None):
+def extract_graph_from_file(uri, userName, password, model, file=None,s3_url=None,aws_access_key_id=None,aws_secret_access_key=None):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -241,7 +241,6 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
         # response = s3.get_object(Bucket=bucket, Key=file_key)
         file_size=response['ContentLength']
         
-        metadata = {"source": "local","filename": file_key, "filesize":file_size }
         logging.info(f'bucket : {bucket},  file key : {file_key},  file size : {file_size}')
         
         # loader = S3FileLoader(bucket,file_key)
@@ -259,21 +258,21 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
             text = text.replace(j, ' ')
           else:
             text = text.replace(j, '')
-        pages[i]=Document(page_content=str(text), metadata=metadata)
+        pages[i]=Document(page_content=str(text))
       logging.info("Break down file into chunks")
       chunks = file_into_chunks(pages)
       
       logging.info("Get graph document list from models")
       if model == 'Diffbot' :
-        graph_documents = extract_graph_from_diffbot(graph,chunks,file_name,isEmbedding,uri,userName,password)
+        graph_documents = extract_graph_from_diffbot(graph,chunks,file_name,uri,userName,password)
         
       elif model == 'OpenAI GPT 3.5':
         model_version = 'gpt-3.5-turbo-16k'
-        graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,isEmbedding,uri,userName,password)
+        graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
         
       elif model == 'OpenAI GPT 4':
         model_version = 'gpt-4-0125-preview' 
-        graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,isEmbedding,uri,userName,password)
+        graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
           
       distinct_nodes = set()
       relations = []
@@ -338,10 +337,15 @@ def get_source_list_from_graph():
     logging.exception('Exception')
     return create_api_response(job_status,error=error_message)
 
-def update_graph(query):
+def update_graph():
   """
-  query : query is used to update graph database based on query as per requirement passed in function
+  Update the graph node with SIMILAR relationship where embedding scrore match
   """
+  query = """ MATCH (c:Chunk) 
+              WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
+              CALL db.index.vector.queryNodes('vector', 5 , c.embedding) yield node, score
+              MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score
+          """
   graph = Neo4jGraph()
   result = graph.query(query)
   logging.info(f"result : {result}")
