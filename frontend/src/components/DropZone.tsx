@@ -93,7 +93,7 @@ const DropZone: FunctionComponent = () => {
           .then((r) => {
             r.forEach((apiRes) => {
               if (apiRes.status === 'fulfilled' && apiRes.value) {
-                if (apiRes?.value?.status === 'Failure') {
+                if (apiRes?.value?.status === 'Failed') {
                   throw new Error('API Failure');
                 } else {
                   setFilesData((prevfiles) =>
@@ -114,9 +114,24 @@ const DropZone: FunctionComponent = () => {
             });
             setIsClicked(false);
           })
-          .catch((err) => console.log(err));
+          .catch((err) => {
+            setShowAlert(true);
+            setErrorMessage(err.message);
+            setIsLoading(false);
+            setFilesData((prevfiles) =>
+              prevfiles.map((curfile, idx) => {
+                if (idx == uid) {
+                  return {
+                    ...curfile,
+                    status: 'Failed',
+                    type: curfile.type?.split('/')[1]?.toUpperCase() ?? 'PDF',
+                  };
+                }
+                return curfile;
+              })
+            );
+          });
       } catch (err: any) {
-        console.log(err);
         setIsLoading(false);
         setIsClicked(false);
         setShowAlert(true);
@@ -150,7 +165,6 @@ const DropZone: FunctionComponent = () => {
   return (
     <>
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
-
       <Dropzone
         loadingComponent={isLoading && <Loader />}
         isTesting={true}
