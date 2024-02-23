@@ -1,4 +1,4 @@
-import { DataGrid, DataGridComponents } from '@neo4j-ndl/react';
+import { DataGrid, DataGridComponents, StatusIndicator } from '@neo4j-ndl/react';
 import { useEffect, useState } from 'react';
 import React from 'react';
 import {
@@ -12,7 +12,7 @@ import {
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/getFiles';
 import { v4 as uuidv4 } from 'uuid';
-import { getFileFromLocal } from '../utils/utils';
+import { getFileFromLocal, statusCheck } from '../utils/utils';
 import { SourceNode, CustomFile } from '../types';
 
 export default function FileTable() {
@@ -23,8 +23,10 @@ export default function FileTable() {
   const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
 
   const columns = [
-    columnHelper.accessor('name', {
-      cell: (info) => <div>{info.getValue()?.substring(0, 10) + '...'}</div>,
+    columnHelper.accessor((row)=>row.name, {
+      id: 'name',
+      cell: (info) => <div><span title={info.getValue()}>{info.getValue()?.substring(0, 10) + '...'}</span></div>,
+      header: () => <span>File Name</span>,
       footer: (info) => info.column.id,
     }),
     columnHelper.accessor((row) => row.size, {
@@ -39,18 +41,11 @@ export default function FileTable() {
       header: () => <span>File Type</span>,
       footer: (info) => info.column.id,
     }),
-    columnHelper.accessor((row) => row.processing, {
-      id: 'processing',
+    columnHelper.accessor((row) => row.model, {
+      id: 'model',
       cell: (info) => <i>{info.getValue()}</i>,
-      header: () => <span>Processing Time</span>,
+      header: () => <span>Model</span>,
       footer: (info) => info.column.id,
-    }),
-    columnHelper.accessor((row) => row.status, {
-      id: 'status',
-      cell: (info) => <i>{info.getValue()}</i>,
-      header: () => <span>Status</span>,
-      footer: (info) => info.column.id,
-      filterFn: 'statusFilter' as any,
     }),
     columnHelper.accessor((row) => row.NodesCount, {
       id: 'NodesCount',
@@ -64,11 +59,18 @@ export default function FileTable() {
       header: () => <span>Relationships</span>,
       footer: (info) => info.column.id,
     }),
-    columnHelper.accessor((row) => row.model, {
-      id: 'model',
+    columnHelper.accessor((row) => row.processing, {
+      id: 'processing',
       cell: (info) => <i>{info.getValue()}</i>,
-      header: () => <span>Model</span>,
+      header: () => <span>Processing Time</span>,
       footer: (info) => info.column.id,
+    }),
+    columnHelper.accessor((row) => row.status, {
+      id: 'status',
+      cell: (info) => <div><StatusIndicator type={statusCheck(info.getValue())} /><i>{info.getValue()}</i></div>,
+      header: () => <span>Status</span>,
+      footer: (info) => info.column.id,
+      filterFn: 'statusFilter' as any,
     }),
   ];
 
@@ -86,7 +88,7 @@ export default function FileTable() {
             processing: item?.processingTime ?? 'None',
             relationshipCount: item?.relationshipCount ?? 0,
             status:
-              getFileFromLocal(`${item.fileName}`) == null && item?.status != 'Completed' ? 'Unavailable' : item.status,
+              getFileFromLocal(`${item.fileName}`) == null && item?.status != 'Completed' ? 'NA' : item.status,
             model: item?.model ?? 'Diffbot',
             id: uuidv4(),
           }));
@@ -171,7 +173,7 @@ export default function FileTable() {
               isResizable={true}
               tableInstance={table}
               styling={{
-                borderStyle: 'horizontal',
+                borderStyle: 'all-sides',
                 zebraStriping: true,
                 headerStyle: 'clean',
               }}
