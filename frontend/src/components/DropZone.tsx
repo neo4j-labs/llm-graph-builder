@@ -30,6 +30,7 @@ const DropZone: FunctionComponent = () => {
         relationshipCount: 0,
         type: 'PDF',
         model: model,
+        fileSource:"local file"
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
@@ -55,6 +56,7 @@ const DropZone: FunctionComponent = () => {
             relationshipCount: defaultValues.relationshipCount,
             processing: defaultValues.processing,
             model: defaultValues.model,
+            fileSource:defaultValues.fileSource
           });
         }
         if (fileIndex == -1) {

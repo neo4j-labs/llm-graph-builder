@@ -1,13 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
-interface CustomFile extends Partial<globalThis.File> {
-  processing: string;
-  status: string;
-  NodesCount: number;
-  id: string;
-  relationshipCount: number;
-  model: string;
-  s3url?: string;
-}
+import { CustomFile} from '../types';
+
 interface FileContextType {
   files: File[] | [];
   filesData: CustomFile[] | [];
