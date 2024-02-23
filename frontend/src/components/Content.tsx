@@ -111,9 +111,8 @@ export default function Content() {
                         };
                       }
                       return curfile;
-                    })
-                  );
-                  setIsLoading(false);
+                    });
+                  });
                 }
               }
             });
@@ -137,8 +136,7 @@ export default function Content() {
           })
         );
         setIsLoading(false);
-      }
-      finally {
+      } finally {
         setIsLoading(false);
       }
     }

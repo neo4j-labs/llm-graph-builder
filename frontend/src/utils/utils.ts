@@ -1,4 +1,4 @@
-//Get the Url 
+//Get the Url
 export const url = () => {
   let url = window.location.href.replace('5173', '8000');
   if (process.env.BACKEND_API_URL) {
@@ -61,17 +61,19 @@ export const getFileFromLocal = (filename: string) => {
 //Status indicator icons to status column
 export const statusCheck = (status: string) => {
   switch (status) {
-    case "New":
-      return "info";
-    case "N/A":
-      return "unknown";
-    case "Completed":
-      return "success";
-    case "Processing":
-      return "warning";
-    case "Uploading":
-      return "warning"
-    case "Failed":
-      return "danger";
+    case 'New':
+      return 'info';
+    case 'N/A':
+      return 'unknown';
+    case 'Completed':
+      return 'success';
+    case 'Processing':
+      return 'warning';
+    case 'Uploading':
+      return 'warning';
+    case 'Failed':
+      return 'danger';
+    default :
+      return 'unknown'
   }
-}
+};

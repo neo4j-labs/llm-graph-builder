@@ -65,6 +65,6 @@ export interface SourceNode {
   model: string;
   status: string;
   s3url?: string;
-  awsAccessKeyId?:string
-  fileSource:string
+  awsAccessKeyId?: string;
+  fileSource: string;
 }

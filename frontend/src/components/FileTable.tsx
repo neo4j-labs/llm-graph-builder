@@ -23,9 +23,13 @@ export default function FileTable() {
   const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
 
   const columns = [
-    columnHelper.accessor((row)=>row.name, {
+    columnHelper.accessor((row) => row.name, {
       id: 'name',
-      cell: (info) => <div><span title={info.getValue()}>{info.getValue()?.substring(0, 10) + '...'}</span></div>,
+      cell: (info) => (
+        <div>
+          <span title={info.getValue()}>{info.getValue()?.substring(0, 10) + '...'}</span>
+        </div>
+      ),
       header: () => <span>Name</span>,
       footer: (info) => info.column.id,
     }),
@@ -73,7 +77,12 @@ export default function FileTable() {
     }),
     columnHelper.accessor((row) => row.status, {
       id: 'status',
-      cell: (info) => <div><StatusIndicator type={statusCheck(info.getValue())} /><i>{info.getValue()}</i></div>,
+      cell: (info) => (
+        <div>
+          <StatusIndicator type={statusCheck(info.getValue())} />
+          <i>{info.getValue()}</i>
+        </div>
+      ),
       header: () => <span>Status</span>,
       footer: (info) => info.column.id,
       filterFn: 'statusFilter' as any,
@@ -103,7 +112,7 @@ export default function FileTable() {
               model: item?.model ?? 'Diffbot',
               id: uuidv4(),
               s3url: item.s3url ?? '',
-              fileSource: item.fileSource ?? 'None'
+              fileSource: item.fileSource ?? 'None',
             };
           });
           setIsLoading(false);
