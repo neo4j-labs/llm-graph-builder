@@ -71,15 +71,15 @@ export default function Content() {
           filesData[uid].model,
           userCredentials,
           filesData[uid].s3url,
-          sessionStorage.getItem('accesskey'),
-          sessionStorage.getItem('secretkey')
+          localStorage.getItem('accesskey'),
+          localStorage.getItem('secretkey')
         );
         apirequests.push(apiResponse);
         Promise.allSettled(apirequests)
           .then((r) => {
             r.forEach((apiRes) => {
               if (apiRes.status === 'fulfilled' && apiRes.value) {
-                if (apiRes?.value?.status === 'Failure') {
+                if (apiRes?.value?.status === 'Failed') {
                   setShowAlert(true);
                   setErrorMessage('Unexpected Error');
                   setFilesData((prevfiles) =>
@@ -95,8 +95,8 @@ export default function Content() {
                   );
                   throw new Error('API Failure');
                 } else {
-                  setFilesData((prevfiles) =>
-                    prevfiles.map((curfile, idx) => {
+                  setFilesData((prevfiles) => {
+                    return prevfiles.map((curfile, idx) => {
                       if (idx == uid) {
                         const apiResponse = apiRes?.value?.data;
                         return {
@@ -109,8 +109,8 @@ export default function Content() {
                         };
                       }
                       return curfile;
-                    })
-                  );
+                    });
+                  });
                 }
               }
             });
@@ -137,11 +137,10 @@ export default function Content() {
     }
   };
 
-  const handleGenerateGraph = async () => {
+  const handleGenerateGraph = () => {
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
         if (filesData[i].status === 'New') {
-          // console.log()
           extractData(files[i], i);
         }
       }

@@ -1,24 +1,12 @@
 import { TextInput, Button, Dialog, Banner } from '@neo4j-ndl/react';
 import React, { useState } from 'react';
-import { S3ModalProps } from '../types';
+import { S3ModalProps, SourceNode } from '../types';
 import { bucketScanAPI } from '../services/BucketScan';
 import { useCredentials } from '../context/UserCredentials';
 import { getSourceNodes } from '../services/getFiles';
 import { getFileFromLocal } from '../utils/utils';
 import { useFileContext } from '../context/UsersFiles';
 import { v4 as uuidv4 } from 'uuid';
-
-interface SourceNode {
-  fileName: string;
-  fileSize: number;
-  fileType?: string;
-  nodeCount?: number;
-  processingTime?: string;
-  relationshipCount?: number;
-  model: string;
-  status: string;
-  s3url?: string;
-}
 
 const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [bucketUrl, setBucketUrl] = useState<string>('');
@@ -33,10 +21,10 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   };
   const submitHandler = async (bucketUrl: string) => {
     if (accessKey.length) {
-      sessionStorage.setItem('accesskey', accessKey);
+      localStorage.setItem('accesskey', accessKey);
     }
-    if (secretKey.length) {
-      sessionStorage.setItem('secretkey', secretKey);
+    if (accessKey.length) {
+      localStorage.setItem('secretkey', secretKey);
     }
     if (bucketUrl.trim() != '') {
       try {
@@ -45,10 +33,13 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         const apiResponse = await bucketScanAPI(bucketUrl, userCredentials, accessKey, secretKey);
         console.log('response', apiResponse);
         setStatus('success');
-        if (apiResponse.data.success_count) {
-          setStatusMessage(`Successfully Created Source Nodes For ${apiResponse.data.success_count} Files`);
-        }else{
-          setStatusMessage(`No Files Found`);
+        if (apiResponse.data.status == 'Failed') {
+          setStatus("danger")
+          setStatusMessage(apiResponse.data.message);
+        } else {
+          if (apiResponse.data.success_count) {
+            setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
+          }
         }
         setBucketUrl('');
         setAccessKey('');
@@ -63,11 +54,11 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             processing: item?.processingTime ?? 'None',
             relationshipCount: item?.relationshipCount ?? 0,
             status:
-              item?.s3url?.trim() != '' && item.status != 'Complted'
-                ? 'New'
-                : getFileFromLocal(`${item.fileName}`) == null && item?.status != 'Completed'
-                ? 'Unavailable'
-                : item.status,
+              item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                ? item.status
+                : getFileFromLocal(`${item.fileName}`) != null
+                ? item.status
+                : 'Unavailable',
             model: item?.model ?? 'Diffbot',
             id: uuidv4(),
             s3url: item.s3url ?? '',
@@ -92,10 +83,10 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       setStatus('warning');
       setStatusMessage('Please Fill The Bucket URL');
     }
-
+    setStatus('unknown');
     setTimeout(() => {
       hideModal();
-    }, 2000);
+    }, 3000);
   };
   return (
     <Dialog size='small' open={open} disableCloseButton>
@@ -137,7 +128,6 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               autoFocus
               fluid
               required
-              isOptional
               type={'password'}
               onChange={(e) => {
                 setAccessKey(e.target.value);
@@ -153,7 +143,6 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               autoFocus
               fluid
               required
-              isOptional
               type={'password'}
               onChange={(e) => {
                 setSecretKey(e.target.value);

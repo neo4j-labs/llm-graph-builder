@@ -13,26 +13,7 @@ import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/getFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { getFileFromLocal } from '../utils/utils';
-interface SourceNode {
-  fileName: string;
-  fileSize: number;
-  fileType?: string;
-  nodeCount?: number;
-  processingTime?: string;
-  relationshipCount?: number;
-  model: string;
-  status: string;
-  s3url?: string;
-}
-
-interface CustomFile extends Partial<globalThis.File> {
-  processing: string;
-  status: string;
-  NodesCount: number;
-  id: string;
-  relationshipCount: number;
-  model: string;
-}
+import { SourceNode, CustomFile } from '../types';
 
 export default function FileTable() {
   const { filesData, setFiles, setFilesData } = useFileContext();
@@ -106,11 +87,11 @@ export default function FileTable() {
               processing: item?.processingTime ?? 'None',
               relationshipCount: item?.relationshipCount ?? 0,
               status:
-                item?.s3url?.trim() != '' && item.status != 'Completed'
-                  ? 'New'
-                  : getFileFromLocal(`${item.fileName}`) == null && item?.status != 'Completed'
-                  ? 'Unavailable'
-                  : item.status,
+                item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                  ? item.status
+                  : getFileFromLocal(`${item.fileName}`) != null
+                  ? item.status
+                  : 'Unavailable',
               model: item?.model ?? 'Diffbot',
               id: uuidv4(),
               s3url: item.s3url ?? '',
