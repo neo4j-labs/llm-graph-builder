@@ -1,6 +1,5 @@
 import Neo4jLogoBW from '../../logo.svg';
 import Neo4jLogoColor from '../../logo-color.svg';
-import User from './User';
 import { MoonIconOutline, SunIconOutline, Cog8ToothIconOutline } from '@neo4j-ndl/react/icons';
 import { Typography, IconButton } from '@neo4j-ndl/react';
 
@@ -61,7 +60,6 @@ export default function Header({ themeMode, toggleTheme }: { themeMode: string; 
                   backgroundColor: 'white',
                 }}
               ></Typography>
-              <User />
             </div>
           </div>
         </section>

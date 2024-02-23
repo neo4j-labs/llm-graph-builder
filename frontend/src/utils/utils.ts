@@ -1,3 +1,4 @@
+//Get the Url 
 export const url = () => {
   let url = window.location.href.replace('5173', '8000');
   if (process.env.BACKEND_API_URL) {
@@ -18,6 +19,7 @@ export const fileToBase64 = (file: any) => {
     reader.onerror = (error) => reject(error);
   });
 };
+
 // Save file to local storage
 export const saveFileToLocal = async (file: any) => {
   try {
@@ -28,6 +30,7 @@ export const saveFileToLocal = async (file: any) => {
     console.error('Error saving file to local storage:', error);
   }
 };
+
 export const base64ToFile = (base64String: any, fileName: any) => {
   const byteCharacters = atob(base64String.split(',')[1]);
   const byteArrays = [];
@@ -43,6 +46,7 @@ export const base64ToFile = (base64String: any, fileName: any) => {
   const file = new File(byteArrays, fileName, { type: 'application/pdf' });
   return file;
 };
+
 // Retrieve file from local storage
 export const getFileFromLocal = (filename: string) => {
   const base64String = localStorage.getItem(filename);
@@ -53,3 +57,19 @@ export const getFileFromLocal = (filename: string) => {
   }
   return null;
 };
+
+//Status indicator icons to status column
+export const statusCheck = (status: string) => {
+  switch (status) {
+    case "Completed":
+      return "success";
+    case "Processing":
+      return "warning";
+    case "Uploading":
+      return "warning"
+    case "Failed":
+      return "danger";
+    case "New":
+      return "info";
+  }
+}
