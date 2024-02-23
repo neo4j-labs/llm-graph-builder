@@ -26,7 +26,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     if (accessKey.length) {
       localStorage.setItem('secretkey', secretKey);
     }
-    if (bucketUrl.trim() !=''||secretKey.trim() !=''||accessKey.trim() !='') {
+    if (bucketUrl.trim() != '' || secretKey.trim() != '' || accessKey.trim() != '') {
       try {
         setStatus('info');
         setStatusMessage('Scaning...');
@@ -34,12 +34,10 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         console.log('response', apiResponse);
         setStatus('success');
         if (apiResponse.data.status == 'Failed') {
-          setStatus("danger")
+          setStatus('danger');
           setStatusMessage(apiResponse.data.message);
-        } else {
-          if (apiResponse.data.success_count) {
+        } else{
             setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
-          }
         }
         setBucketUrl('');
         setAccessKey('');
@@ -62,7 +60,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             model: item?.model ?? 'Diffbot',
             id: uuidv4(),
             s3url: item.s3url ?? '',
-            fileSource: item.fileSource ?? 'None'
+            fileSource: item.fileSource ?? 'None',
           }));
           setFilesData(prefiles);
           const prefetchedFiles: any[] = [];
