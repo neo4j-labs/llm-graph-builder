@@ -12,7 +12,6 @@ def create_source_chunk_entity_relationship(source_file_name :str,
                                             graph: Neo4jGraph,
                                             graph_document : list,
                                             chunk : Document,
-                                            isEmbedding : bool,
                                             uri : str,
                                             userName : str,
                                             password : str):
@@ -22,7 +21,6 @@ def create_source_chunk_entity_relationship(source_file_name :str,
         graph (Neo4jGraph): Neo4jGraph connection object
         graph_document (List): List of graph document, contain Nodes and relationships and source of chunk document
         chunk (Document): chunk document created from input file
-        isEmbedding (bool) : This param used to create embedding for chunks or not.
         uri: URI of the graph to extract
         userName: Username to use for graph creation ( if None will use username from config file )
         password: Password to use for graph creation ( if None will use password from config file )
@@ -32,6 +30,7 @@ def create_source_chunk_entity_relationship(source_file_name :str,
     # logging.info(f'Graph Document print{graph_document}')
     # openai_api_key = os.environ.get('OPENAI_API_KEY')
     embedding_model = os.environ.get('EMBEDDING_MODEL')
+    isEmbedding = os.environ.get('IS_EMBEDDING')
     
     chunk_uuid = str(uuid.uuid1())
     chunk_node_id_set = 'id:"{}"'
