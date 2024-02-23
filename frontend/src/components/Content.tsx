@@ -15,8 +15,10 @@ export default function Content() {
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials } = useCredentials();
   const { filesData, files, setFilesData, setModel, model } = useFileContext();
-  const [errorMessage, setErrorMessage] = React.useState<string>('');
-  const [showAlert, setShowAlert] = React.useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [showAlert, setShowAlert] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
   useEffect(() => {
     if (!init) {
       let session = localStorage.getItem('neo4j.connection');
@@ -93,6 +95,7 @@ export default function Content() {
                       return curfile;
                     })
                   );
+                  setIsLoading(false);
                 }
               }
             });
@@ -113,20 +116,25 @@ export default function Content() {
             return curfile;
           })
         );
+        setIsLoading(false);
+      }
+      finally {
+        setIsLoading(false);
       }
     }
   };
 
-  const handleGenerateGraph = async () => {
+  const handleGenerateGraph = () => {
+    setIsLoading(true);
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
         if (filesData[i].status === 'New') {
-          // console.log()
           extractData(files[i], i);
         }
       }
     }
   };
+
   const handleClose = () => {
     setShowAlert(false);
   };
@@ -179,7 +187,7 @@ export default function Content() {
           style={{ flexFlow: 'row', marginTop: '5px' }}
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
-          <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
+          <Button loading={isLoading} disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
             Generate Graph
           </Button>
         </Flex>
