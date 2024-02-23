@@ -144,6 +144,20 @@ async def get_source_list():
         error_message = str(e)
         logging.exception(f"Exception Stack trace:{e}")
         return create_api_response(job_status, error=error_message)
+    
+@app.post("/update_similarity_graph")
+async def update_similarity_graph(query=str):
+    """
+    Calls 'update_graph' which post the query to update the similiar nodes in the graph
+    """
+    try:
+        result = await asyncio.to_thread(update_graph,query)
+        return result
+    except Exception as e:
+        job_status = "Failure"
+        error_message = str(e)
+        logging.exception(f"Exception Stack trace:{e}")
+        return create_api_response(job_status, error=error_message)
 
 
 if __name__ == "__main__":

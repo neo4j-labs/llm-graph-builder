@@ -338,6 +338,14 @@ def get_source_list_from_graph():
     logging.exception('Exception')
     return create_api_response(job_status,error=error_message)
 
+def update_graph(query):
+  """
+  query : query is used to update graph database based on query as per requirement passed in function
+  """
+  graph = Neo4jGraph()
+  result = graph.query(query)
+  logging.info(f"result : {result}")
+  return create_api_response("Success",message="Query executed successfully",data=result)
 
 def create_api_response(status,success_count=None,Failed_count=None, data=None, error=None,message=None,file_source=None):
   """
