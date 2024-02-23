@@ -2,9 +2,12 @@ import { Drawer, Label, Typography } from '@neo4j-ndl/react';
 import DropZone from '../DropZone';
 import { useState, useEffect } from 'react';
 import { healthStatus } from '../../services/HealthStatus';
+import S3Component from '../S3Bucket';
+import S3Modal from '../S3Modal';
 
 export default function DrawerDropzone() {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
+  const [showModal, setshowModal] = useState<boolean>(false);
 
   useEffect(() => {
     async function getHealthStatus() {
@@ -17,6 +20,14 @@ export default function DrawerDropzone() {
     }
     getHealthStatus();
   }, []);
+
+  const openModal = () => {
+    setshowModal(true);
+  };
+  const hideModal = () => {
+    setshowModal(false);
+  };
+
   return (
     <div
       className='relative'
@@ -46,9 +57,15 @@ export default function DrawerDropzone() {
                     </Typography>
                   </Typography>
                 </div>
-                <div className='h-full px-6'>
-                  <DropZone isBackendConnected={isBackendConnected} />
-                </div>
+                {isBackendConnected && (
+                  <div className='h-full px-6 imageBg'>
+                    <div className='s3Container'>
+                      <S3Component openModal={openModal} />
+                      <S3Modal hideModal={hideModal} open={showModal} />
+                    </div>
+                    <DropZone />
+                  </div>
+                )}
               </div>
             </div>
           </div>

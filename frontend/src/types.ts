@@ -6,6 +6,7 @@ export interface CustomFile extends Partial<globalThis.File> {
   id: string;
   relationshipCount: number;
   model: string;
+  fileSource: string;
 }
 
 export interface OptionType {
@@ -16,17 +17,22 @@ export type UserCredentials = {
   uri: string;
   userName: string;
   password: string;
-};
+} & { [key: string]: any };
 
 export type ExtractParams = {
-  file: string;
+  file?: string;
   model: string;
-};
+  s3_url?: string;
+  aws_access_key_id?: string;
+  aws_secret_access_key?: string;
+} & { [key: string]: any };
+
 export type UploadParams = {
   file: string;
-};
+} & { [key: string]: any };
 
 export type FormDataParams = ExtractParams | UploadParams;
+
 export interface DropdownProps {
   onSelect: (option: OptionType | null | void) => void;
   isDisabled: boolean;
@@ -36,13 +42,15 @@ export interface CustomAlertProps {
   handleClose: () => void;
   alertMessage: string;
 }
-export interface S3ButtonProps {
+
+export interface S3BucketProps {
   openModal: () => void;
 }
 export interface S3ModalProps {
   hideModal: () => void;
   open: boolean;
 }
+
 export interface ConnectionModalProps {
   open: boolean;
   setOpenConnection: Dispatch<SetStateAction<boolean>>;
@@ -57,4 +65,7 @@ export interface SourceNode {
   relationshipCount?: number;
   model: string;
   status: string;
+  s3url?: string;
+  awsAccessKeyId?:string
+  fileSource:string
 }

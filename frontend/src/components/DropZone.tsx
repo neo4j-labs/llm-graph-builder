@@ -7,19 +7,9 @@ import { useFileContext } from '../context/UsersFiles';
 import { getFileFromLocal, saveFileToLocal } from '../utils/utils';
 import CustomAlert from './Alert';
 import { uploadAPI } from '../services/FileAPI';
+import { CustomFile } from '../types';
 
-interface CustomFile extends Partial<globalThis.File> {
-  processing: string;
-  status: string;
-  NodesCount: number;
-  id: string;
-  relationshipCount: number;
-  model: string;
-}
-interface DropzoneProps {
-  isBackendConnected: boolean;
-}
-const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
+const DropZone: FunctionComponent = () => {
   const { files, filesData, setFiles, setFilesData, model } = useFileContext();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isClicked, setIsClicked] = useState<boolean>(false);
@@ -103,7 +93,7 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
           .then((r) => {
             r.forEach((apiRes) => {
               if (apiRes.status === 'fulfilled' && apiRes.value) {
-                if (apiRes?.value?.status === 'Failure') {
+                if (apiRes?.value?.status === 'Failed') {
                   throw new Error('API Failure');
                 } else {
                   setFilesData((prevfiles) =>
@@ -124,9 +114,24 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
             });
             setIsClicked(false);
           })
-          .catch((err) => console.log(err));
+          .catch((err) => {
+            setShowAlert(true);
+            setErrorMessage(err.message);
+            setIsLoading(false);
+            setFilesData((prevfiles) =>
+              prevfiles.map((curfile, idx) => {
+                if (idx == uid) {
+                  return {
+                    ...curfile,
+                    status: 'Failed',
+                    type: curfile.type?.split('/')[1]?.toUpperCase() ?? 'PDF',
+                  };
+                }
+                return curfile;
+              })
+            );
+          });
       } catch (err: any) {
-        console.log(err);
         setIsLoading(false);
         setIsClicked(false);
         setShowAlert(true);
@@ -160,20 +165,17 @@ const DropZone: FunctionComponent<DropzoneProps> = ({ isBackendConnected }) => {
   return (
     <>
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
-
-      {isBackendConnected && (
-        <Dropzone
-          loadingComponent={isLoading && <Loader />}
-          isTesting={true}
-          className='w-full h-full'
-          dropZoneOptions={{
-            accept: { 'application/pdf': ['.pdf'] },
-            onDrop: (f: Partial<globalThis.File>[]) => {
-              onDropHandler(f);
-            },
-          }}
-        />
-      )}
+      <Dropzone
+        loadingComponent={isLoading && <Loader />}
+        isTesting={true}
+        className='bg-none'
+        dropZoneOptions={{
+          accept: { 'application/pdf': ['.pdf'] },
+          onDrop: (f: Partial<globalThis.File>[]) => {
+            onDropHandler(f);
+          },
+        }}
+      />
     </>
   );
 };

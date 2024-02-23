@@ -1,20 +1,21 @@
 import axios from 'axios';
 import { url } from '../utils/utils';
 
-const extractAPI = async (file: any, model: string, userCredentials?: any, s3_url?: string) => {
+const bucketScanAPI = async (urlParam: string, userCredentials?: any, accessKey?: string, secretKey?: string) => {
   try {
     const formData = new FormData();
-    formData.append('model', model);
     formData.append('uri', userCredentials?.uri);
     formData.append('userName', userCredentials?.userName);
     formData.append('password', userCredentials?.password);
-    if (s3_url?.length) {
-      formData.append('s3_url', s3_url);
-      formData.delete('file');
-    } else {
-      formData.set('file', file);
+    formData.append('s3_url_dir', urlParam);
+    if (accessKey?.length) {
+      formData.append('aws_access_key_id', accessKey);
     }
-    const response = await axios.post(`${url()}/extract`, formData, {
+    if (secretKey?.length) {
+      formData.append('aws_secret_access_key', secretKey);
+    }
+
+    const response = await axios.post(`${url()}/bucket/scan`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -26,4 +27,4 @@ const extractAPI = async (file: any, model: string, userCredentials?: any, s3_ur
   }
 };
 
-export { extractAPI };
+export { bucketScanAPI };

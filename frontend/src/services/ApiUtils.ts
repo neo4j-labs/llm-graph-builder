@@ -11,14 +11,11 @@ const apiCall = async (
   try {
     const formData = new FormData();
     for (const key in commonParams) {
-      const value = commonParams[key as keyof UserCredentials];
-      formData.append(key, value);
+      formData.append(key, commonParams[key]);
     }
     for (const key in additionalParams) {
-      const value = additionalParams[key as keyof FormDataParams];
-      formData.append(key, value);
+      formData.append(key, additionalParams[key]);
     }
-    console.log(formData);
     const response: AxiosResponse = await axios({
       method: method,
       url: url,

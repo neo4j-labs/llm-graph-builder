@@ -2,3 +2,25 @@
   width: calc(-366px + 100dvw) !important;
   height: calc(-322px + 100dvh);
 }
+
+.s3Container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  width: 245px;
+  border-radius: 8px;
+}
+
+.s3Container> button > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.imageBg {
+  background-image: url("./assets/images/bgImage.svg");
+      border-radius: 8px;
+      border-color: rgb(var(--theme-palette-neutral-border-strong));
+      padding: 4px;
+}

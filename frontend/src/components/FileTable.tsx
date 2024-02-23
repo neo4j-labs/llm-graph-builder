@@ -26,21 +26,27 @@ export default function FileTable() {
     columnHelper.accessor((row)=>row.name, {
       id: 'name',
       cell: (info) => <div><span title={info.getValue()}>{info.getValue()?.substring(0, 10) + '...'}</span></div>,
-      header: () => <span>File Name</span>,
+      header: () => <span>Name</span>,
       footer: (info) => info.column.id,
     }),
     columnHelper.accessor((row) => row.size, {
       id: 'fileSize',
       cell: (info: any) => <i>{(info?.getValue() / 1000)?.toFixed(2)} KB</i>,
-      header: () => <span>File Size</span>,
+      header: () => <span>Size</span>,
       footer: (info) => info.column.id,
     }),
     columnHelper.accessor((row) => row.type, {
       id: 'fileType',
       cell: (info) => <i>{info.getValue()}</i>,
-      header: () => <span>File Type</span>,
+      header: () => <span>Type</span>,
       footer: (info) => info.column.id,
     }),
+    // columnHelper.accessor((row) => row.fileSource, {
+    //   id: 'source',
+    //   cell: (info) => <i>{info.getValue()}</i>,
+    //   header: () => <span>Source</span>,
+    //   footer: (info) => info.column.id,
+    // }),
     columnHelper.accessor((row) => row.model, {
       id: 'model',
       cell: (info) => <i>{info.getValue()}</i>,
@@ -50,19 +56,19 @@ export default function FileTable() {
     columnHelper.accessor((row) => row.NodesCount, {
       id: 'NodesCount',
       cell: (info) => <i>{info.getValue()}</i>,
-      header: () => <span>Nodes Count</span>,
+      header: () => <span>Nodes</span>,
       footer: (info) => info.column.id,
     }),
     columnHelper.accessor((row) => row.relationshipCount, {
       id: 'relationshipCount',
       cell: (info) => <i>{info.getValue()}</i>,
-      header: () => <span>Relationships</span>,
+      header: () => <span>Relations</span>,
       footer: (info) => info.column.id,
     }),
     columnHelper.accessor((row) => row.processing, {
       id: 'processing',
       cell: (info) => <i>{info.getValue()}</i>,
-      header: () => <span>Processing Time</span>,
+      header: () => <span>Duration</span>,
       footer: (info) => info.column.id,
     }),
     columnHelper.accessor((row) => row.status, {
@@ -80,18 +86,26 @@ export default function FileTable() {
         setIsLoading(true);
         const res: any = await getSourceNodes();
         if (Array.isArray(res.data.data) && res.data.data.length) {
-          const prefiles = res.data.data.map((item: SourceNode) => ({
-            name: item.fileName,
-            size: item.fileSize ?? 0,
-            type: item?.fileType?.toUpperCase() ?? 'None',
-            NodesCount: item?.nodeCount ?? 0,
-            processing: item?.processingTime ?? 'None',
-            relationshipCount: item?.relationshipCount ?? 0,
-            status:
-              getFileFromLocal(`${item.fileName}`) == null && item?.status != 'Completed' ? 'NA' : item.status,
-            model: item?.model ?? 'Diffbot',
-            id: uuidv4(),
-          }));
+          const prefiles = res.data.data.map((item: SourceNode) => {
+            return {
+              name: item.fileName,
+              size: item.fileSize ?? 0,
+              type: item?.fileType?.toUpperCase() ?? 'None',
+              NodesCount: item?.nodeCount ?? 0,
+              processing: item?.processingTime ?? 'None',
+              relationshipCount: item?.relationshipCount ?? 0,
+              status:
+                item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                  ? item.status
+                  : getFileFromLocal(`${item.fileName}`) != null
+                  ? item.status
+                  : 'N/A',
+              model: item?.model ?? 'Diffbot',
+              id: uuidv4(),
+              s3url: item.s3url ?? '',
+              fileSource: item.fileSource ?? 'None'
+            };
+          });
           setIsLoading(false);
           setFilesData(prefiles);
           const prefetchedFiles: any[] = [];
