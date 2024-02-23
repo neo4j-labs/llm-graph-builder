@@ -26,7 +26,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     if (accessKey.length) {
       localStorage.setItem('secretkey', secretKey);
     }
-    if (bucketUrl.trim() != '') {
+    if (bucketUrl.trim() !=''||secretKey.trim() !=''||accessKey.trim() !='') {
       try {
         setStatus('info');
         setStatusMessage('Scaning...');
@@ -58,10 +58,11 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
                 ? item.status
                 : getFileFromLocal(`${item.fileName}`) != null
                 ? item.status
-                : 'Unavailable',
+                : 'N/A',
             model: item?.model ?? 'Diffbot',
             id: uuidv4(),
             s3url: item.s3url ?? '',
+            fileSource: item.fileSource ?? 'None'
           }));
           setFilesData(prefiles);
           const prefetchedFiles: any[] = [];
@@ -81,7 +82,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       }
     } else {
       setStatus('warning');
-      setStatusMessage('Please Fill The Bucket URL');
+      setStatusMessage('Please Fill The Valid Credentials');
     }
     setStatus('unknown');
     setTimeout(() => {

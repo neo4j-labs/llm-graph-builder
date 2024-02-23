@@ -6,6 +6,7 @@ export interface CustomFile extends Partial<globalThis.File> {
   id: string;
   relationshipCount: number;
   model: string;
+  fileSource: string;
 }
 
 export interface OptionType {
@@ -25,11 +26,13 @@ export type ExtractParams = {
   aws_access_key_id?: string;
   aws_secret_access_key?: string;
 } & { [key: string]: any };
+
 export type UploadParams = {
   file: string;
 } & { [key: string]: any };
 
 export type FormDataParams = ExtractParams | UploadParams;
+
 export interface DropdownProps {
   onSelect: (option: OptionType | null | void) => void;
   isDisabled: boolean;
