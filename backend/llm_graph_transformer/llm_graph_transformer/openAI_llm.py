@@ -18,7 +18,7 @@ from langchain.prompts import ChatPromptTemplate
 from datetime import datetime
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import TokenTextSplitter
-from src.make_relationships import create_source_chunk_entity_relationship
+from .make_relationships import create_source_chunk_entity_relationship
 from tqdm import tqdm
 import logging
 import re

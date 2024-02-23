@@ -5,11 +5,9 @@ from dotenv import load_dotenv
 from datetime import datetime
 import logging
 import traceback
-from langchain.text_splitter import TokenTextSplitter
 from tqdm import tqdm
-from src.diffbot_transformer import extract_graph_from_diffbot
-from src.openAI_llm import extract_graph_from_OpenAI
-from typing import List
+from diffbot_transformer import extract_graph_from_diffbot
+from .openAI_llm import extract_graph_from_OpenAI
 from langchain.document_loaders import S3DirectoryLoader
 import boto3
 from urllib.parse import urlparse
@@ -17,7 +15,7 @@ import os
 from tempfile import NamedTemporaryFile
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
-# from langchain.document_loaders import S3FileLoader
+from .utilities import *
 
 def create_source_node_graph(uri, userName, password, file):
   """
@@ -34,68 +32,35 @@ def create_source_node_graph(uri, userName, password, file):
   """
   try:
     job_status = "New"
-    file_type = file.filename.split('.')[1]
-    file_size = file.size
-    file_name = file.filename
+    if not isinstance(file,str):
+      file_type = file.filename.split('.')[1]
+      file_size = file.size
+      file_name = file.filename
+    else:
+      file_name = file.split('/')[-1]
+      file_type = file_name.split('.')[1]
+      file_size=os.path.getsize(file)
     graph = Neo4jGraph(url=uri, username=userName, password=password)
     try:
       source_node = "fileName: '{}'"
-      update_node_prop = "SET s.fileSize = '{}', s.fileType = '{}' ,s.status = '{}'"
+      update_node_prop = "SET s.fileSize = '{}', s.fileType = '{}' ,s.status = '{}',s.fileSource='{}'"
       logging.info("create source node as file name if not exist")
-      graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(file_size,file_type,job_status))
-      return create_api_response("Success",data="Source Node created successfully")
+      graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(file_size,file_type,job_status,'local file'))
+      return create_api_response("Success",data="Source Node created successfully",file_source='local file')
       
     except Exception as e:
       job_status = "Failed"
       error_message = str(e)
-      update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}"'
-      graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message))
+      update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}",s.fileSource="{}"'
+      graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message,'local file'))
       logging.exception(f'Exception Stack trace:')
-      return create_api_response(job_status,error=error_message)
+      return create_api_response(job_status,error=error_message,file_source='local file')
   except Exception as e:
       job_status = "Failed"
       error_message = str(e)
-      return create_api_response(job_status,error=error_message)
+      return create_api_response(job_status,error=error_message,file_source='local file')
 
-
-def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
-  # try:
-      # Extract bucket name and directory from the S3 URL
-      parsed_url = urlparse(s3_url)
-      bucket_name = parsed_url.netloc
-      directory = parsed_url.path.lstrip('/')
-      try:
-        # Connect to S3
-        s3 = boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
-
-        # List objects in the specified directory
-        response = s3.list_objects_v2(Bucket=bucket_name, Prefix=directory)
-      except Exception as e:
-         return {
-    "status": "Failed",
-    # "success_count": 0,
-    # "Failed_count": 0,
-    "message": "Invalid AWS credentials"}
-      files_info = []
-
-      # Check each object for file size and type
-      for obj in response.get('Contents', []):
-          file_key = obj['Key']
-          file_name = os.path.basename(file_key)
-          # file_name=s3_url.split('/')[-1]
-          logging.info(f'file_name : {file_name}  and file key : {file_key}')
-          file_size = obj['Size']
-
-          # Check if file is a PDF
-          if file_name.endswith('.pdf'):
-            files_info.append({'file_key': file_key, 'file_size_bytes': file_size})
-            
-      return files_info
-  # except Exception as e:
-  #       logging.exception("An error occurred:", str(e))
-  #       return []
   
- 
   
 def create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_key_id=None,aws_secret_access_key=None):
     """
@@ -112,9 +77,6 @@ def create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_k
         Success or Failed message of node creation
     """
     try:
-        # if aws_access_key_id !=None and aws_secret_access_key !=None:
-        #   os.environ['AWS_ACCESS_KEY_ID']=  aws_access_key_id
-        #   os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
         
         graph = Neo4jGraph(url=uri, username=userName, password=password)
         files_info = get_s3_files_info(s3_url_dir,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
@@ -134,100 +96,70 @@ def create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_k
             s3_file_path=str(s3_url_dir+file_name)
             try:
               source_node = "fileName: '{}'"
-              update_node_prop = "SET s.fileSize = '{}', s.fileType = '{}' ,s.status = '{}',s.s3url='{}',s.awsAccessKeyId='{}'"
+              update_node_prop = "SET s.fileSize = '{}', s.fileType = '{}' ,s.status = '{}',s.s3url='{}',s.awsAccessKeyId='{}',s.fileSource='{}'"
               logging.info("create source node as file name if not exist")
-              graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(file_size,file_type,job_status,s3_file_path,aws_access_key_id))
+              graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(file_size,file_type,job_status,s3_file_path,aws_access_key_id,'s3 bucket'))
               success_count+=1
             except Exception as e:
               err_flag=1
               Failed_count+=1
               job_status='Failed'
               error_message = str(e)
-              update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}"'
-              graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message))
+              update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}",s.fileSource="{}"'
+              graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message,'s3 bucket'))
               logging.exception(f'Exception Stack trace:')
         if err_flag==1:
           job_status = "Failed"
-          return create_api_response(job_status,error=error_message,success_count=success_count,Failed_count=Failed_count)  
-        return create_api_response("Success",data="Source Node created successfully",success_count=success_count,Failed_count=Failed_count)
+          return create_api_response(job_status,error=error_message,success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket')  
+        return create_api_response("Success",data="Source Node created successfully",success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket')
     except Exception as e:
             job_status = "Failed"
             error_message = str(e)
             logging.exception(f'Exception Stack trace:')
-            return create_api_response(job_status,error=error_message)  
+            return create_api_response(job_status,error=error_message,file_source='s3 bucket')   
       
-def file_into_chunks(pages: List[Document]):
-    """
-     Split a list of documents(file pages) into chunks of fixed size.
-     
-     Args:
-     	 pages: A list of pages to split. Each page is a list of text strings.
-     
-     Returns: 
-     	 A list of chunks each of which is a langchain Document.
-    """
-    logging.info("Split file into smaller chunks")
-    text_splitter = TokenTextSplitter(chunk_size=200, chunk_overlap=20)
-    chunks = text_splitter.split_documents(pages)
-    return chunks
-
-def get_s3_pdf_content(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
-    # try:
-      # Extract bucket name and directory from the S3 URL
-        parsed_url = urlparse(s3_url)
-        bucket_name = parsed_url.netloc
-        logging.info(f'bucket name : {bucket_name}')
-        directory = parsed_url.path.lstrip('/')
-        if directory.endswith('.pdf'):
-          loader=S3DirectoryLoader(bucket_name, prefix=directory,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
-          pages = loader.load_and_split()
-          return pages
-        else:
-          return None
-    
-    # except Exception as e:
-    #     return None
-      
-      
-
 
 def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, isChunk_relationship_entity = False, file=None,s3_url=None,aws_access_key_id=None,aws_secret_access_key=None):
-  """
-   Extracts a Neo4jGraph from a PDF file based on the model.
-   
-   Args:
-   	 uri: URI of the graph to extract
-   	 userName: Username to use for graph creation ( if None will use username from config file )
-   	 password: Password to use for graph creation ( if None will use password from config file )
-   	 file: File object containing the PDF file to be used
-   	 model: Type of model to use ('Diffbot'or'OpenAI GPT')
-   
-   Returns: 
-   	 Json response to API with fileName, nodeCount, relationshipCount, processingTime, 
-     status and model as attributes.
-  """
-  logging.info(f"extract_graph_from_file called for file:{file.filename}")
-  try:
-    start_time = datetime.now()
 
-    graph = Neo4jGraph(url=uri, username=userName, password=password)
-    try: 
+      """
+        Extracts a Neo4jGraph from a PDF file based on the model.
+
+        Args:
+          uri: URI of the graph to extract
+          userName: Username to use for graph creation ( if None will use username from config file )
+          password: Password to use for graph creation ( if None will use password from config file )
+          file: File object containing the PDF file to be used
+          model: Type of model to use ('Diffbot'or'OpenAI GPT')
+
+        Returns: 
+          Json response to API with fileName, nodeCount, relationshipCount, processingTime, 
+          status and model as attributes.
+      """
+
+  # try:
+      start_time = datetime.now()
+
+      graph = Neo4jGraph(url=uri, username=userName, password=password)
+    # try: 
       if file!=None:
-        file_name = file.filename
+        if not isinstance(file,str):
+          with open('temp.pdf','wb') as f:
+            f.write(file.file.read())
+          loader = PyPDFLoader('temp.pdf')
+          metadata = {"source": "local","filename": file.filename, "filesize":file.size }
+        else:
+          file_name = file.split('/')[-1]
+          loader = PyPDFLoader(file)
+          metadata = {"source": "local","filename": file_name, "filesize":os.path.getsize(file) }
+        pages = loader.load_and_split()
+        print(pages)
         file_key=file_name
         source_node = "fileName: '{}'"
         update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessage = '{}',s.nodeCount= {}, s.relationshipCount = {}, s.model = '{}'"
-        metadata = {"source": "local","filename": file.filename, "filesize":file.size }
 
-        with open('temp.pdf','wb') as f:
-          f.write(file.file.read())
-        loader = PyPDFLoader('temp.pdf')
-        pages = loader.load_and_split()
+
         
       elif s3_url!=None:
-        # if aws_access_key_id !=None and aws_secret_access_key !=None:
-        #   os.environ['AWS_ACCESS_KEY_ID']=  aws_access_key_id
-        #   os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
         
         parsed_url = urlparse(s3_url)
         bucket = parsed_url.netloc
@@ -238,19 +170,16 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
         update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessage = '{}',s.nodeCount= {}, s.relationshipCount = {}, s.model = '{}'"
         s3=boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
         response=s3.head_object(Bucket=bucket,Key=file_key)
-        # response = s3.get_object(Bucket=bucket, Key=file_key)
         file_size=response['ContentLength']
         
         metadata = {"source": "local","filename": file_key, "filesize":file_size }
         logging.info(f'bucket : {bucket},  file key : {file_key},  file size : {file_size}')
-        
-        # loader = S3FileLoader(bucket,file_key)
         pages=get_s3_pdf_content(s3_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
+        print(pages)
         if pages==None:
           job_status = "Failed"
           return create_api_response(job_status,error='Failed to load the pdf content')
         
-      # pages = loader.load_and_split()
       bad_chars = ['"', "\n", "'"]
       for i in range(0,len(pages)):
         text = pages[i].page_content
@@ -264,17 +193,18 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
       chunks = file_into_chunks(pages)
       
       logging.info("Get graph document list from models")
-      if model == 'Diffbot' :
+      if model.lower() == 'Diffbot'.lower() :
         graph_documents = extract_graph_from_diffbot(graph,chunks,file_name,isEmbedding,uri,userName,password)
         
-      elif model == 'OpenAI GPT 3.5':
+      elif model.lower() == 'OpenAI GPT 3.5'.lower():
         model_version = 'gpt-3.5-turbo-16k'
         graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,isEmbedding,uri,userName,password)
         
-      elif model == 'OpenAI GPT 4':
+      elif model.lower() == 'OpenAI GPT 4'.lower():
         model_version = 'gpt-4-0125-preview' 
         graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,isEmbedding,uri,userName,password)
-          
+      else:
+        create_api_response("Failed",error='Choose model OpenAI GPT 3.5/OpenAI GPT 4/Diffbot')
       distinct_nodes = set()
       relations = []
       
@@ -306,18 +236,18 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
       }
       logging.info(f'Response from extract API : {output}')
       return create_api_response("Success",data=output)
-    except Exception as e:
-      job_status = "Failed"
-      error_message = str(e)
-      update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}"'
-      graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
-      logging.exception(f'Exception Stack trace:')
-      return create_api_response(job_status,error=error_message)
-  except Exception as e:
-      job_status = "Failed"
-      error_message = str(e)
-      logging.exception(f'Exception Stack trace:')
-      return create_api_response(job_status,error=error_message)
+  #   except Exception as e:
+  #     job_status = "Failed"
+  #     error_message = str(e)
+  #     update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}"'
+  #     graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
+  #     logging.exception(f'Exception Stack trace:')
+  #     return create_api_response(job_status,error=error_message)
+  # except Exception as e:
+  #     job_status = "Failed"
+  #     error_message = str(e)
+  #     logging.exception(f'Exception Stack trace:')
+  #     return create_api_response(job_status,error=error_message)
 
 
 def get_source_list_from_graph():
@@ -339,7 +269,7 @@ def get_source_list_from_graph():
     return create_api_response(job_status,error=error_message)
 
 
-def create_api_response(status,success_count=None,Failed_count=None, data=None, error=None,message=None):
+def create_api_response(status,success_count=None,Failed_count=None, data=None, error=None,message=None,file_source=None):
   """
    Create a response to be sent to the API. This is a helper function to create a JSON response that can be sent to the API.
    
@@ -368,5 +298,8 @@ def create_api_response(status,success_count=None,Failed_count=None, data=None, 
   
   if message is not None:
     response['message']=message
+
+  if file_source is not None:
+    response['file_source']=file_source
     
   return response

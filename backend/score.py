@@ -3,7 +3,10 @@ import uvicorn
 from fastapi import FastAPI, Depends
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
-from src.main import *
+# from src.main import *
+from dotenv import load_dotenv
+load_dotenv()
+from llm_graph_transformer.llm_graph_transformer.graph_transformer import *
 import asyncio
 
 
