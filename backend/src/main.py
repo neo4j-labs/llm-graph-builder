@@ -206,7 +206,7 @@ def extract_graph_from_file(uri, userName, password, model, isEmbedding=False, i
    	 Json response to API with fileName, nodeCount, relationshipCount, processingTime, 
      status and model as attributes.
   """
-  logging.info(f"extract_graph_from_file called for file:{file.filename}")
+  # logging.info(f"extract_graph_from_file called for file:{file.filename}")
   try:
     start_time = datetime.now()
 
