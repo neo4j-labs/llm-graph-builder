@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import ConnectionModal from './ConnectionModal';
 import LlmDropdown from './Dropdown';
 import FileTable from './FileTable';
-import { Button, Label, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
+import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
 import { setDriver, disconnect } from '../utils/Driver';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
@@ -179,10 +179,13 @@ export default function Content() {
             setOpenConnection={setOpenConnection}
             setConnectionStatus={setConnectionStatus}
           />
-          <Typography variant='body-medium' style={{ display: 'flex', padding: '20px',alignItems:"center",justifyContent:"center" }}>
+          <Typography
+            variant='body-medium'
+            style={{ display: 'flex', padding: '20px', alignItems: 'center', justifyContent: 'center' }}
+          >
             <Typography variant='body-medium'>
               {!connectionStatus ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
-            </Typography>{' '}
+            </Typography>
             Neo4j connection
           </Typography>
           {!connectionStatus ? (

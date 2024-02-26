@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
-import { CustomFile} from '../types';
+import { CustomFile } from '../types';
 
 interface FileContextType {
   files: File[] | [];
