@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import ConnectionModal from './ConnectionModal';
 import LlmDropdown from './Dropdown';
 import FileTable from './FileTable';
-import { Button, Label, Typography, Flex } from '@neo4j-ndl/react';
+import { Button, Label, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
 import { setDriver, disconnect } from '../utils/Driver';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
@@ -163,7 +163,7 @@ export default function Content() {
       <div
         className='n-bg-palette-neutral-bg-default'
         style={{
-          width: 'calc(-342px + 100dvw)',
+          width: 'calc(-294px + 100dvw)',
           height: 'calc(100dvh - 70px)',
           padding: 3,
           display: 'flex',
@@ -179,15 +179,11 @@ export default function Content() {
             setOpenConnection={setOpenConnection}
             setConnectionStatus={setConnectionStatus}
           />
-          <Typography variant='body-medium' style={{ display: 'flex', padding: '20px' }}>
-            Neo4j connection Status:
-            <Typography variant='body-medium' style={{ marginLeft: '10px' }}>
-              {!connectionStatus ? (
-                <Label color='danger'>Not connected</Label>
-              ) : (
-                <Label color='success'>Connected</Label>
-              )}
-            </Typography>
+          <Typography variant='body-medium' style={{ display: 'flex', padding: '20px',alignItems:"center",justifyContent:"center" }}>
+            <Typography variant='body-medium'>
+              {!connectionStatus ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
+            </Typography>{' '}
+            Neo4j connection
           </Typography>
           {!connectionStatus ? (
             <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>

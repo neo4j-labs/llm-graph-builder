@@ -26,7 +26,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     if (accessKey.length) {
       localStorage.setItem('secretkey', secretKey);
     }
-    if (bucketUrl.trim() != '' || secretKey.trim() != '' || accessKey.trim() != '') {
+    if (bucketUrl.trim() != '' && secretKey.trim() != '' && accessKey.trim() != '') {
       try {
         setStatus('info');
         setStatusMessage('Scaning...');
@@ -36,8 +36,8 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         if (apiResponse.data.status == 'Failed') {
           setStatus('danger');
           setStatusMessage(apiResponse.data.message);
-        } else{
-            setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
+        } else {
+          setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
         }
         setBucketUrl('');
         setAccessKey('');
@@ -81,14 +81,29 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     } else {
       setStatus('warning');
       setStatusMessage('Please Fill The Valid Credentials');
+      setTimeout(() => {
+        setStatus('unknown');
+      }, 2000);
+      return;
     }
     setStatus('unknown');
-    setTimeout(() => {
-      hideModal();
-    }, 3000);
   };
   return (
-    <Dialog size='small' open={open} disableCloseButton>
+    <Dialog
+      size='small'
+      open={open}
+      disableCloseButton
+      modalProps={{
+        id: 'default-menu',
+      }}
+      onClose={() => {
+        hideModal();
+        setBucketUrl("");
+        setAccessKey("")
+        setSecretKey("")
+        setStatus('unknown');
+      }}
+    >
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
         {status != 'unknown' && (
           <Banner
