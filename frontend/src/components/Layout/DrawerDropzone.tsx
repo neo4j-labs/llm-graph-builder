@@ -62,10 +62,13 @@ export default function DrawerDropzone() {
                     <div className='px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 imageBg'>
                       <DropZone />
                     </div>
-                    <Flex gap='8' className='s3Container outline-dashed outline-2 outline-offset-2 outline-gray-100 h-[66%]'>
+                    <Flex
+                      gap='8'
+                      className='s3Container outline-dashed outline-2 outline-offset-2 outline-gray-100 h-[66%]'
+                    >
                       <S3Component openModal={openModal} />
                       <S3Modal hideModal={hideModal} open={showModal} />
-                      <GcsBucket  />
+                      <GcsBucket />
                     </Flex>
                   </Flex>
                 )}

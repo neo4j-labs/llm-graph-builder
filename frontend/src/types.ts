@@ -7,7 +7,7 @@ export interface CustomFile extends Partial<globalThis.File> {
   relationshipCount: number;
   model: string;
   fileSource: string;
-  s3url?:string
+  s3url?: string;
 }
 
 export interface OptionType {

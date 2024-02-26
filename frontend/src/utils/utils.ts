@@ -73,7 +73,7 @@ export const statusCheck = (status: string) => {
       return 'warning';
     case 'Failed':
       return 'danger';
-    default :
-      return 'unknown'
+    default:
+      return 'unknown';
   }
 };

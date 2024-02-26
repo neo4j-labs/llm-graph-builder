@@ -26,7 +26,12 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     if (accessKey.length) {
       localStorage.setItem('secretkey', secretKey);
     }
-    if (bucketUrl.trim() != '' && secretKey.trim() != '' && accessKey.trim() != '') {
+    if (
+      bucketUrl.trim() != '' &&
+      secretKey.trim() != '' &&
+      accessKey.trim() != '' &&
+      /^s3:\/\/([^/]+)\/$/.test(bucketUrl) != false
+    ) {
       try {
         setStatus('info');
         setStatusMessage('Scaning...');
@@ -98,9 +103,9 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       }}
       onClose={() => {
         hideModal();
-        setBucketUrl("");
-        setAccessKey("")
-        setSecretKey("")
+        setBucketUrl('');
+        setAccessKey('');
+        setSecretKey('');
         setStatus('unknown');
       }}
     >
