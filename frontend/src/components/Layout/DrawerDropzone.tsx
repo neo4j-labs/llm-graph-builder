@@ -1,9 +1,10 @@
-import { Drawer, Label, Typography } from '@neo4j-ndl/react';
+import { Drawer, Flex, StatusIndicator, Typography } from '@neo4j-ndl/react';
 import DropZone from '../DropZone';
 import { useState, useEffect } from 'react';
 import { healthStatus } from '../../services/HealthStatus';
 import S3Component from '../S3Bucket';
 import S3Modal from '../S3Modal';
+import GcsBucket from '../GcsBucket';
 
 export default function DrawerDropzone() {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
@@ -33,7 +34,7 @@ export default function DrawerDropzone() {
       className='relative'
       style={{
         userSelect: 'auto',
-        width: '342px',
+        width: '294px',
         maxWidth: '372px',
         minWidth: '250px',
         boxSizing: 'border-box',
@@ -45,26 +46,28 @@ export default function DrawerDropzone() {
           <div className='flex h-full flex-col'>
             <div className='relative h-full'>
               <div className='flex flex-col h-full'>
-                <div className='mx-6 flex flex-none items-center justify-between pb-6'>
-                  <Typography variant='body-medium' style={{ display: 'flex', marginBlock: '10px', marginLeft: '5px' }}>
-                    Backend connection Status:
+                <div className='mx-6 flex flex-none items-center justify-between pb-6 '>
+                  <Typography
+                    variant='body-medium'
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
                     <Typography variant='body-medium'>
-                      {!isBackendConnected ? (
-                        <Label color='danger'>Disconnected</Label>
-                      ) : (
-                        <Label color='success'>Connected</Label>
-                      )}
+                      {!isBackendConnected ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
                     </Typography>
+                    <span>Backend connection status</span>
                   </Typography>
                 </div>
                 {isBackendConnected && (
-                  <div className='h-full px-6 imageBg'>
-                    <div className='s3Container'>
+                  <Flex gap='6' className='h-full'>
+                    <div className='px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 imageBg'>
+                      <DropZone />
+                    </div>
+                    <Flex gap='8' className='s3Container outline-dashed outline-2 outline-offset-2 outline-gray-100 h-[66%]'>
                       <S3Component openModal={openModal} />
                       <S3Modal hideModal={hideModal} open={showModal} />
-                    </div>
-                    <DropZone />
-                  </div>
+                      <GcsBucket  />
+                    </Flex>
+                  </Flex>
                 )}
               </div>
             </div>
