@@ -274,6 +274,9 @@ def extract_graph_from_file(uri, userName, password, model, file=None,s3_url=Non
         model_version = 'gpt-4-0125-preview' 
         graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
           
+      #update_similarity_graph for the KNN Graph
+      update_graph()
+
       distinct_nodes = set()
       relations = []
       
