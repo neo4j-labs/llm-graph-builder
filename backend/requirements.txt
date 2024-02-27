@@ -177,3 +177,6 @@ wikipedia==1.4.0
 wrapt==1.16.0
 yarl==1.9.4
 zipp==3.17.0
+poppler-utils
+pytesseract
+pdf2image
