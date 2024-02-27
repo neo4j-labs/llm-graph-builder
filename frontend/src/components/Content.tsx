@@ -158,13 +158,11 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
     setShowAlert(false);
   };
 
-  const classNameCheck = isExpanded ? 'fileTableWithExpansion' : 'fileTableNoExpansion';
+  const classNameCheck = isExpanded ? 'contentWithExpansion' : 'contentWithNoExpansion';
   return (
     <>
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
-      <div
-        className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}
-      >
+      <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' style={{ flexFlow: 'row' }}>
           <ConnectionModal
             open={openConnection}
@@ -190,7 +188,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
             </Button>
           )}
         </Flex>
-        <FileTable></FileTable>
+        <FileTable isExpanded={isExpanded}></FileTable>
         <Flex
           className='w-full p-2.5 absolute bottom-4'
           justifyContent='space-between'
@@ -204,6 +202,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
       </div>
     </>
   );
-}
+};
 
 export default Content;

@@ -16,8 +16,15 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
   const { setFiles, setFilesData } = useFileContext();
+
   const changeHandler = (e: any) => {
-    setBucketUrl(e.target.value);
+    let inputUrl = e.target.value;
+    if (inputUrl && inputUrl.substr(-1) != '/') {
+      inputUrl += '/';
+    } else {
+      inputUrl;
+    }
+    setBucketUrl(inputUrl);
   };
   const submitHandler = async (bucketUrl: string) => {
     if (accessKey.length) {
@@ -29,8 +36,8 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     if (
       bucketUrl.trim() != '' &&
       secretKey.trim() != '' &&
-      accessKey.trim() != '' &&
-      /^s3:\/\/([^/]+)\/$/.test(bucketUrl) != false
+      accessKey.trim() != ''
+      // /^s3:\/\/([^/]+)\/$/.test(bucketUrl) != false
     ) {
       try {
         setStatus('info');
