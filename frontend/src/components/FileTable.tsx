@@ -22,14 +22,20 @@ export default function FileTable() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
 
+  const sourceFind = (name: any) => { 
+    return filesData.find((f) => { return f.name === name }) }
   const columns = [
     columnHelper.accessor((row) => row.name, {
       id: 'name',
-      cell: (info) => (
-        <div>
-          <span title={info.getValue()}>{info.getValue()?.substring(0, 10) + '...'}</span>
-        </div>
-      ),
+      cell: (info) => {
+        const sourceFindVal = sourceFind(info.getValue());
+        return (
+          <div>
+            <span title={sourceFindVal?.fileSource === 's3 bucket' ? sourceFindVal?.s3url : info.getValue()}>{info.getValue()?.substring(0, 10) + '...'}</span>
+          </div>
+        )
+      }
+      ,
       header: () => <span>Name</span>,
       footer: (info) => info.column.id,
     }),
@@ -45,12 +51,12 @@ export default function FileTable() {
       header: () => <span>Type</span>,
       footer: (info) => info.column.id,
     }),
-    // columnHelper.accessor((row) => row.fileSource, {
-    //   id: 'source',
-    //   cell: (info) => <i>{info.getValue()}</i>,
-    //   header: () => <span>Source</span>,
-    //   footer: (info) => info.column.id,
-    // }),
+    columnHelper.accessor((row) => row.fileSource, {
+      id: 'source',
+      cell: (info) => <i>{info.getValue()}</i>,
+      header: () => <span>Source</span>,
+      footer: (info) => info.column.id,
+    }),
     columnHelper.accessor((row) => row.model, {
       id: 'model',
       cell: (info) => <i>{info.getValue()}</i>,
@@ -107,8 +113,8 @@ export default function FileTable() {
                 item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                   ? item.status
                   : getFileFromLocal(`${item.fileName}`) != null
-                  ? item.status
-                  : 'N/A',
+                    ? item.status
+                    : 'N/A',
               model: item?.model ?? 'Diffbot',
               id: uuidv4(),
               s3url: item.s3url ?? '',
