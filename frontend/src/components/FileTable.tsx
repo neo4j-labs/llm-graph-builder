@@ -169,7 +169,6 @@ export default function FileTable() {
     defaultColumn: {
       size: 140,
       minSize: 50,
-      maxSize: 150,
     },
     autoResetPageIndex: false,
   });

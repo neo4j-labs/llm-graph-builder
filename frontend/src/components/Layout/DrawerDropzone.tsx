@@ -1,12 +1,13 @@
 import { Drawer, Flex, StatusIndicator, Typography } from '@neo4j-ndl/react';
 import DropZone from '../DropZone';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { healthStatus } from '../../services/HealthStatus';
 import S3Component from '../S3Bucket';
 import S3Modal from '../S3Modal';
 import GcsBucket from '../GcsBucket';
+import { DrawerProps } from '../../types';
 
-export default function DrawerDropzone() {
+const DrawerDropzone:  React.FC<DrawerProps>=({ isExpanded })=> {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
   const [showModal, setshowModal] = useState<boolean>(false);
 
@@ -28,20 +29,17 @@ export default function DrawerDropzone() {
   const hideModal = () => {
     setshowModal(false);
   };
-
   return (
     <div
-      className='relative'
       style={{
-        userSelect: 'auto',
-        width: '294px',
-        maxWidth: '372px',
-        minWidth: '250px',
-        boxSizing: 'border-box',
-        flexShrink: '0',
+        display: 'flex',
+        height: 'calc(40vh - 32px)',
+        minHeight: '700px',
+        overflow: 'hidden',
+        position: 'relative'
       }}
     >
-      <Drawer expanded isResizeable closeable={false}>
+      <Drawer expanded={isExpanded} isResizeable={true} type="push" closeable={false} onExpandedChange={function Ha() { }}>
         <Drawer.Body style={{ overflow: 'hidden' }}>
           <div className='flex h-full flex-col'>
             <div className='relative h-full'>
@@ -80,3 +78,6 @@ export default function DrawerDropzone() {
     </div>
   );
 }
+
+
+export default DrawerDropzone;

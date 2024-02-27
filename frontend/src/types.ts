@@ -70,3 +70,16 @@ export interface SourceNode {
   awsAccessKeyId?: string;
   fileSource: string;
 }
+export interface SideNavProps {
+  openDrawer: () => void;
+  closeDrawer:()=>void;
+  isExpanded: boolean;
+}
+
+export interface DrawerProps {
+  isExpanded:boolean;
+}
+
+export interface ContentProps {
+  isExpanded:boolean;
+}

@@ -8,8 +8,9 @@ import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { extractAPI } from '../services/FileAPI';
+import { ContentProps } from '../types';
 
-export default function Content() {
+const Content: React.FC<ContentProps> = ({ isExpanded }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
@@ -157,21 +158,13 @@ export default function Content() {
   const handleClose = () => {
     setShowAlert(false);
   };
+
+  const classNameCheck = isExpanded ? 'fileTableWithExpansion' : 'fileTableNoExpansion';
   return (
     <>
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
       <div
-        className='n-bg-palette-neutral-bg-default'
-        style={{
-          width: 'calc(-294px + 100dvw)',
-          height: 'calc(100dvh - 70px)',
-          padding: 3,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '5px',
-          position: 'relative',
-        }}
+        className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}
       >
         <Flex className='w-full' alignItems='center' justifyContent='space-between' style={{ flexFlow: 'row' }}>
           <ConnectionModal
@@ -213,3 +206,5 @@ export default function Content() {
     </>
   );
 }
+
+export default Content;
