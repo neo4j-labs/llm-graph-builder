@@ -13,17 +13,20 @@ import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/getFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { getFileFromLocal, statusCheck } from '../utils/utils';
-import { SourceNode, CustomFile } from '../types';
+import { SourceNode, CustomFile, ContentProps } from '../types';
 
-export default function FileTable() {
+const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
   const { filesData, setFiles, setFilesData } = useFileContext();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
 
-  const sourceFind = (name: any) => { 
-    return filesData.find((f) => { return f.name === name }) }
+  const sourceFind = (name: any) => {
+    return filesData.find((f) => {
+      return f.name === name;
+    });
+  };
   const columns = [
     columnHelper.accessor((row) => row.name, {
       id: 'name',
@@ -31,11 +34,12 @@ export default function FileTable() {
         const sourceFindVal = sourceFind(info.getValue());
         return (
           <div>
-            <span title={sourceFindVal?.fileSource === 's3 bucket' ? sourceFindVal?.s3url : info.getValue()}>{info.getValue()?.substring(0, 10) + '...'}</span>
+            <span title={sourceFindVal?.fileSource === 's3 bucket' ? sourceFindVal?.s3url : info.getValue()}>
+              {info.getValue()?.substring(0, 10) + '...'}
+            </span>
           </div>
-        )
-      }
-      ,
+        );
+      },
       header: () => <span>Name</span>,
       footer: (info) => info.column.id,
     }),
@@ -113,8 +117,8 @@ export default function FileTable() {
                 item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                   ? item.status
                   : getFileFromLocal(`${item.fileName}`) != null
-                    ? item.status
-                    : 'N/A',
+                  ? item.status
+                  : 'N/A',
               model: item?.model ?? 'Diffbot',
               id: uuidv4(),
               s3url: item.s3url ?? '',
@@ -187,6 +191,7 @@ export default function FileTable() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     table.getColumn('status')?.setFilterValue(e.target.checked);
   };
+  const classNameCheck = isExpanded ? 'fileTableWithExpansion' : 'filetable';
 
   return (
     <>
@@ -207,7 +212,7 @@ export default function FileTable() {
               }}
               isLoading={isLoading}
               rootProps={{
-                className: 'filetable',
+                className: classNameCheck,
               }}
               components={{
                 Body: (props) => <DataGridComponents.Body {...props} />,
@@ -236,4 +241,6 @@ export default function FileTable() {
       ) : null}
     </>
   );
-}
+};
+
+export default FileTable;

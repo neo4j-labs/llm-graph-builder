@@ -7,7 +7,7 @@ import S3Modal from '../S3Modal';
 import GcsBucket from '../GcsBucket';
 import { DrawerProps } from '../../types';
 
-const DrawerDropzone:  React.FC<DrawerProps>=({ isExpanded })=> {
+const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
   const [showModal, setshowModal] = useState<boolean>(false);
 
@@ -34,12 +34,18 @@ const DrawerDropzone:  React.FC<DrawerProps>=({ isExpanded })=> {
       style={{
         display: 'flex',
         height: 'calc(40vh - 32px)',
-        minHeight: '700px',
+        minHeight: '650px',
         overflow: 'hidden',
-        position: 'relative'
+        position: 'relative',
       }}
     >
-      <Drawer expanded={isExpanded} isResizeable={true} type="push" closeable={false} onExpandedChange={function Ha() { }}>
+      <Drawer
+        expanded={isExpanded}
+        isResizeable={false}
+        type='push'
+        closeable={false}
+        onExpandedChange={function Ha() {}}
+      >
         <Drawer.Body style={{ overflow: 'hidden' }}>
           <div className='flex h-full flex-col'>
             <div className='relative h-full'>
@@ -77,7 +83,6 @@ const DrawerDropzone:  React.FC<DrawerProps>=({ isExpanded })=> {
       </Drawer>
     </div>
   );
-}
-
+};
 
 export default DrawerDropzone;

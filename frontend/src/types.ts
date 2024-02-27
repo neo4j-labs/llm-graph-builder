@@ -72,14 +72,14 @@ export interface SourceNode {
 }
 export interface SideNavProps {
   openDrawer: () => void;
-  closeDrawer:()=>void;
+  closeDrawer: () => void;
   isExpanded: boolean;
 }
 
 export interface DrawerProps {
-  isExpanded:boolean;
+  isExpanded: boolean;
 }
 
 export interface ContentProps {
-  isExpanded:boolean;
+  isExpanded: boolean;
 }

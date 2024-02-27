@@ -3,10 +3,15 @@
   height: calc(-322px + 100dvh);
   border: 1px solid #d1d5db;
 }
+.fileTableWithExpansion{
+  width: calc(-400px + 100dvw)!important;
+  height: calc(-322px + 100dvh);
+  border: 1px solid #d1d5db;
+}
 
-.fileTableWithExpansion {
+.contentWithExpansion {
   width: calc(-360px + 100dvw);
-  height: calc(100dvh - 70px);
+  height: calc(100dvh - 60px);
   padding: 3;
   display: flex;
   flex-Direction: column;
@@ -15,9 +20,13 @@
   position: relative;
 }
 
-.fileTableNoExpansion {
+.ndl-side-navigation ndl-left > .ndl-side-navigation-nav > #ndl-side-nav-expand-btn{
+  display:none;
+}
+
+.contentWithNoExpansion {
   width: 100%;
-  height: calc(100dvh - 70px);
+  height: calc(100dvh - 60px);
   padding: 3;
   display: flex;
   flex-Direction: column;
