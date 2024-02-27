@@ -144,7 +144,6 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               label='Access Key'
               className='w-full'
               placeholder=''
-              autoFocus
               fluid
               required
               type={'password'}
@@ -159,7 +158,6 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               label='Secret Key'
               className='w-full'
               placeholder=''
-              autoFocus
               fluid
               required
               type={'password'}

@@ -1,6 +1,29 @@
 .filetable {
-  width: calc(-316px + 100dvw) !important;
+  width: calc(-360px + 100dvw);
   height: calc(-322px + 100dvh);
+  border: 1px solid #d1d5db;
+}
+
+.fileTableWithExpansion {
+  width: calc(-360px + 100dvw);
+  height: calc(100dvh - 70px);
+  padding: 3;
+  display: flex;
+  flex-Direction: column;
+  align-items: center;
+  gap: 5px;
+  position: relative;
+}
+
+.fileTableNoExpansion {
+  width: 100%;
+  height: calc(100dvh - 70px);
+  padding: 3;
+  display: flex;
+  flex-Direction: column;
+  align-items: center;
+  gap: 5px;
+  position: relative;
 }
 
 .s3Container {
@@ -12,7 +35,7 @@
   outline-color: #d1d5db;
 }
 
-.s3Container > button > div {
+.s3Container>button>div {
   display: flex;
   flex-direction: column;
   align-items: center;
