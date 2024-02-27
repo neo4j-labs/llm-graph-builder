@@ -39,17 +39,18 @@ def create_source_node_graph(uri, userName, password, file):
     file_name = file.filename
     graph = Neo4jGraph(url=uri, username=userName, password=password)
     try:
+      current_time = datetime.now()
       source_node = "fileName: '{}'"
-      update_node_prop = "SET s.fileSize = '{}', s.fileType = '{}' ,s.status = '{}',s.fileSource='{}'"
+      update_node_prop = "SET s.fileSize = '{}', s.fileType = '{}' ,s.status = '{}',s.fileSource='{}', s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}', s.errorMessage = '{}', s.nodeCount= {}, s.relationshipCount = {}"
       logging.info("create source node as file name if not exist")
-      graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(file_size,file_type,job_status,'local file'))
+      graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(file_size,file_type,job_status,'local file',current_time,current_time,0,'',0,0))
       return create_api_response("Success",data="Source Node created successfully",file_source='local file')
       
     except Exception as e:
       job_status = "Failed"
       error_message = str(e)
-      update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}",s.fileSource="{}"'
-      graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message,'local file'))
+      update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}"'
+      graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message))
       logging.exception(f'Exception Stack trace:')
       return create_api_response(job_status,error=error_message,file_source='local file')
   except Exception as e:
@@ -97,7 +98,7 @@ def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
   
  
   
-def create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_key_id=None,aws_secret_access_key=None):
+def create_source_node_graph_s3(uri, userName, password, s3_url_dir, aws_access_key_id=None,aws_secret_access_key=None):
     """
       Creates a source node in Neo4jGraph and sets properties.
       
@@ -134,17 +135,18 @@ def create_source_node_graph_s3(uri, userName, password, s3_url_dir,aws_access_k
             s3_file_path=str(s3_url_dir+file_name)
             try:
               source_node = "fileName: '{}'"
-              update_node_prop = "SET s.fileSize = '{}', s.fileType = '{}' ,s.status = '{}',s.s3url='{}',s.awsAccessKeyId='{}',s.fileSource='{}'"
+              current_time = datetime.now()
+              update_node_prop = "SET s.fileSize = '{}', s.fileType = '{}' ,s.status = '{}',s.s3url='{}',s.awsAccessKeyId='{}',s.fileSource='{}', s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}', s.errorMessage = '{}', s.nodeCount= {}, s.relationshipCount = {}"
               logging.info("create source node as file name if not exist")
-              graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(file_size,file_type,job_status,s3_file_path,aws_access_key_id,'s3 bucket'))
+              graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(file_size,file_type,job_status,s3_file_path,aws_access_key_id,'s3 bucket',current_time,current_time,0,'',0,0))
               success_count+=1
             except Exception as e:
               err_flag=1
               Failed_count+=1
               job_status='Failed'
               error_message = str(e)
-              update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}",s.fileSource="{}"'
-              graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message,'s3 bucket'))
+              update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}"'
+              graph.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message))
               logging.exception(f'Exception Stack trace:')
         if err_flag==1:
           job_status = "Failed"
@@ -187,9 +189,6 @@ def get_s3_pdf_content(s3_url,aws_access_key_id=None,aws_secret_access_key=None)
     
     # except Exception as e:
     #     return None
-      
-      
-
 
 def extract_graph_from_file(uri, userName, password, model, file=None,s3_url=None,aws_access_key_id=None,aws_secret_access_key=None):
   """
@@ -217,7 +216,6 @@ def extract_graph_from_file(uri, userName, password, model, file=None,s3_url=Non
         file_key=file_name
         source_node = "fileName: '{}'"
         update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessage = '{}',s.nodeCount= {}, s.relationshipCount = {}, s.model = '{}'"
-        metadata = {"source": "local","filename": file.filename, "filesize":file.size }
 
         with open('temp.pdf','wb') as f:
           f.write(file.file.read())
@@ -330,7 +328,7 @@ def get_source_list_from_graph():
   logging.info("Get existing files list from graph")
   try:
     graph = Neo4jGraph()
-    query = "MATCH(s:Source) RETURN s ORDER BY s.updatedAt DESC;"
+    query = "MATCH(s:Source) RETURN s ORDER BY s.updatedAt DESC"
     result = graph.query(query)
     list_of_json_objects = [entry['s'] for entry in result]
     return create_api_response("Success",data=list_of_json_objects)
