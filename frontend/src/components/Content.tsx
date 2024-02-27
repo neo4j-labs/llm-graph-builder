@@ -18,7 +18,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
   const { filesData, files, setFilesData, setModel, model } = useFileContext();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (!init) {
@@ -136,16 +135,11 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
             return curfile;
           })
         );
-        setIsLoading(false);
-      } finally {
-        setIsLoading(false);
       }
     }
   };
 
   const handleGenerateGraph = () => {
-    setIsLoading(true);
-
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
         if (filesData[i].status === 'New') {
@@ -196,7 +190,12 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
           style={{ flexFlow: 'row', marginTop: '5px' }}
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
-          <Button loading={isLoading} disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
+          <Button
+            loading={filesData.some((f) => f.status === 'Processing')}
+            disabled={disableCheck}
+            onClick={handleGenerateGraph}
+            className='mr-0.5'
+          >
             Generate Graph
           </Button>
         </Flex>

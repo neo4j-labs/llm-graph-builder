@@ -18,15 +18,12 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const { setFiles, setFilesData } = useFileContext();
 
   const changeHandler = (e: any) => {
-    let inputUrl = e.target.value;
-    if (inputUrl && inputUrl.substr(-1) != '/') {
-      inputUrl += '/';
-    } else {
-      inputUrl;
-    }
-    setBucketUrl(inputUrl);
+    setBucketUrl(e.target.value);
   };
   const submitHandler = async (bucketUrl: string) => {
+    if (bucketUrl && bucketUrl.substring(-1) != '/') {
+      setBucketUrl(bucketUrl + '/');
+    }
     if (accessKey.length) {
       localStorage.setItem('accesskey', accessKey);
     }
@@ -36,8 +33,8 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     if (
       bucketUrl.trim() != '' &&
       secretKey.trim() != '' &&
-      accessKey.trim() != ''
-      // /^s3:\/\/([^/]+)\/$/.test(bucketUrl) != false
+      accessKey.trim() != '' &&
+      /^s3:\/\/([^/]+)\/$/.test(bucketUrl) != false
     ) {
       try {
         setStatus('info');

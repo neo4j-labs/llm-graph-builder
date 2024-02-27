@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { healthStatus } from '../../services/HealthStatus';
 import S3Component from '../S3Bucket';
 import S3Modal from '../S3Modal';
-import GcsBucket from '../GcsBucket';
+// import GcsBucket from '../GcsBucket';
 import { DrawerProps } from '../../types';
 
 const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
@@ -46,7 +46,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
         closeable={false}
         onExpandedChange={function Ha() {}}
       >
-        <Drawer.Body style={{ overflow: 'hidden' }}>
+        <Drawer.Body style={{ overflow: 'hidden', height: 'intial' }}>
           <div className='flex h-full flex-col'>
             <div className='relative h-full'>
               <div className='flex flex-col h-full'>
@@ -68,11 +68,12 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                     </div>
                     <Flex
                       gap='8'
-                      className='s3Container outline-dashed outline-2 outline-offset-2 outline-gray-100 h-[66%]'
+                      className='s3Container outline-dashed outline-2 outline-offset-2 outline-gray-100 h-[436]'
                     >
                       <S3Component openModal={openModal} />
                       <S3Modal hideModal={hideModal} open={showModal} />
-                      <GcsBucket />
+                      {/* <GcsBucket />
+                      <GcsBucket /> */}
                     </Flex>
                   </Flex>
                 )}

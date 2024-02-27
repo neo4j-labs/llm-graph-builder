@@ -1,5 +1,5 @@
 .filetable {
-  width: calc(-360px + 100dvw);
+  width: calc(-360px + 100dvw) !important;
   height: calc(-322px + 100dvh);
   border: 1px solid #d1d5db;
 }
@@ -39,7 +39,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 200px;
+  height: calc(-388px + 100dvh );
   border-radius: 8px;
   outline-color: #d1d5db;
 }

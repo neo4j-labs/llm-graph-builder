@@ -21,6 +21,7 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
+  // const [currentOuterWidth, setcurrentOuterWidth] = useState<number>(window.outerWidth);
 
   const sourceFind = (name: any) => {
     return filesData.find((f) => {
@@ -180,6 +181,7 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
   useEffect(() => {
     const listener = (e: any) => {
       setcurrentOuterHeight(e.currentTarget.outerHeight);
+      // setcurrentOuterWidth(e.currentTarget.outerWidth);
       table.setPageSize(Math.floor((e.currentTarget.outerHeight - 402) / 45));
     };
     window.addEventListener('resize', listener);
@@ -191,7 +193,7 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     table.getColumn('status')?.setFilterValue(e.target.checked);
   };
-  const classNameCheck = isExpanded ? 'fileTableWithExpansion' : 'filetable';
+  const classNameCheck = isExpanded ? 'fileTableWithExpansion' : `filetable`;
 
   return (
     <>
@@ -203,7 +205,7 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
           </div>
           <div>
             <DataGrid
-              isResizable={true}
+              isResizable={false}
               tableInstance={table}
               styling={{
                 borderStyle: 'all-sides',
