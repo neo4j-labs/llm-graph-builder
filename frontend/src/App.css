@@ -26,10 +26,6 @@
   position: relative;
 }
 
-.ndl-side-navigation ndl-left > .ndl-side-navigation-nav > #ndl-side-nav-expand-btn {
-  display: none;
-}
-
 .contentWithNoExpansion {
   width: calc(100% - 64px);
   height: calc(100dvh - 60px);
@@ -59,4 +55,8 @@
 .imageBg {
   outline-color: #d1d5db;
   border-radius: 8px;
+}
+
+.ndl-data-grid-root .ndl-data-grid-navigation{
+  padding-block: 5px !important;
 }

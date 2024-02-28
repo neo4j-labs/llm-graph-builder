@@ -4,7 +4,7 @@ import SideNav from './SideNav';
 import { useState } from 'react';
 
 export default function PageLayout() {
-  const [isExpanded, setIsexpanded] = useState<boolean>(false);
+  const [isExpanded, setIsexpanded] = useState<boolean>(true);
   return (
     <div style={{ maxHeight: 'calc(100vh - 60px)', display: 'flex', overflow: 'hidden' }}>
       <SideNav
