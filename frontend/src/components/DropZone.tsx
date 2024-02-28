@@ -23,7 +23,7 @@ const DropZone: FunctionComponent = () => {
     setIsLoading(false);
     if (f.length) {
       const defaultValues: CustomFile = {
-        processing: 'None',
+        processing: 0,
         status: 'None',
         NodesCount: 0,
         id: uuidv4(),
