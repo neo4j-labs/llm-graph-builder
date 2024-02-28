@@ -21,8 +21,8 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     setBucketUrl(e.target.value);
   };
   const submitHandler = async (bucketUrl: string) => {
-    if (bucketUrl && bucketUrl.substring(-1) != '/') {
-      setBucketUrl(bucketUrl + '/');
+    if (bucketUrl && bucketUrl[bucketUrl.length -1] != '/') {
+      setBucketUrl(bucketUrl += '/');
     }
     if (accessKey.length) {
       localStorage.setItem('accesskey', accessKey);

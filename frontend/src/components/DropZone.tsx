@@ -110,11 +110,12 @@ const DropZone: FunctionComponent = () => {
                     })
                   );
                   setIsClicked(false);
-                  setIsLoading(false);
+                  
                 }
               }
             });
             setIsClicked(false);
+            setIsLoading(false);
           })
           .catch((err) => {
             setShowAlert(true);

@@ -21,7 +21,6 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
-  // const [currentOuterWidth, setcurrentOuterWidth] = useState<number>(window.outerWidth);
 
   const sourceFind = (name: any) => {
     return filesData.find((f) => {
@@ -55,6 +54,7 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
       header: () => <span>Status</span>,
       footer: (info) => info.column.id,
       filterFn: 'statusFilter' as any,
+      size: 200,
     }),
     columnHelper.accessor((row) => row.size, {
       id: 'fileSize',
@@ -118,8 +118,8 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
                 item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                   ? item.status
                   : getFileFromLocal(`${item.fileName}`) != null
-                  ? item.status
-                  : 'N/A',
+                    ? item.status
+                    : 'N/A',
               model: item?.model ?? 'Diffbot',
               id: uuidv4(),
               s3url: item.s3url ?? '',
@@ -171,10 +171,6 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
       },
     },
     enableGlobalFilter: false,
-    defaultColumn: {
-      size: 140,
-      minSize: 50,
-    },
     autoResetPageIndex: false,
   });
 
@@ -205,7 +201,7 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
           </div>
           <div style={{ width: 'calc(100% - 64px)' }}>
             <DataGrid
-              isResizable={false}
+              isResizable={true}
               tableInstance={table}
               styling={{
                 borderStyle: 'all-sides',
@@ -228,7 +224,6 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
                         style: {
                           ...(isSelected && {
                             backgroundSize: '200% auto',
-                            boxShadow: '0 0 20px #eee',
                             borderRadius: '10px',
                           }),
                         },
