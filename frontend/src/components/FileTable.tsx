@@ -118,8 +118,8 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
                 item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                   ? item.status
                   : getFileFromLocal(`${item.fileName}`) != null
-                    ? item.status
-                    : 'N/A',
+                  ? item.status
+                  : 'N/A',
               model: item?.model ?? 'Diffbot',
               id: uuidv4(),
               s3url: item.s3url ?? '',

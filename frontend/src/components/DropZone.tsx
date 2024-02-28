@@ -110,7 +110,6 @@ const DropZone: FunctionComponent = () => {
                     })
                   );
                   setIsClicked(false);
-                  
                 }
               }
             });
