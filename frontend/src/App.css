@@ -1,35 +1,41 @@
 .filetable {
-  width: calc(-360px + 100dvw) !important;
+  /* width: calc(-360px + 100dvw); */
   height: calc(-322px + 100dvh);
   border: 1px solid #d1d5db;
 }
-.fileTableWithExpansion{
-  width: calc(-400px + 100dvw)!important;
+.fileTableWithExpansion {
+  width: calc(-400px + 100dvw) !important;
   height: calc(-322px + 100dvh);
   border: 1px solid #d1d5db;
 }
 
+.fileTableWithExpansion .ndl-div-table {
+  width: max-content !important;
+}
+.filetable .ndl-div-table {
+  width: 100% !important;
+}
 .contentWithExpansion {
   width: calc(-360px + 100dvw);
   height: calc(100dvh - 60px);
   padding: 3;
   display: flex;
-  flex-Direction: column;
+  flex-direction: column;
   align-items: center;
   gap: 5px;
   position: relative;
 }
 
-.ndl-side-navigation ndl-left > .ndl-side-navigation-nav > #ndl-side-nav-expand-btn{
-  display:none;
+.ndl-side-navigation ndl-left > .ndl-side-navigation-nav > #ndl-side-nav-expand-btn {
+  display: none;
 }
 
 .contentWithNoExpansion {
-  width: 100%;
+  width: calc(100% - 64px);
   height: calc(100dvh - 60px);
   padding: 3;
   display: flex;
-  flex-Direction: column;
+  flex-direction: column;
   align-items: center;
   gap: 5px;
   position: relative;
@@ -39,12 +45,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: calc(-388px + 100dvh );
+  height: calc(-388px + 100dvh);
   border-radius: 8px;
   outline-color: #d1d5db;
 }
 
-.s3Container>button>div {
+.s3Container > button > div {
   display: flex;
   flex-direction: column;
   align-items: center;

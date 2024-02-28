@@ -44,6 +44,18 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
       header: () => <span>Name</span>,
       footer: (info) => info.column.id,
     }),
+    columnHelper.accessor((row) => row.status, {
+      id: 'status',
+      cell: (info) => (
+        <div>
+          <StatusIndicator type={statusCheck(info.getValue())} />
+          <i>{info.getValue()}</i>
+        </div>
+      ),
+      header: () => <span>Status</span>,
+      footer: (info) => info.column.id,
+      filterFn: 'statusFilter' as any,
+    }),
     columnHelper.accessor((row) => row.size, {
       id: 'fileSize',
       cell: (info: any) => <i>{(info?.getValue() / 1000)?.toFixed(2)} KB</i>,
@@ -85,18 +97,6 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
       cell: (info) => <i>{info.getValue()}</i>,
       header: () => <span>Duration</span>,
       footer: (info) => info.column.id,
-    }),
-    columnHelper.accessor((row) => row.status, {
-      id: 'status',
-      cell: (info) => (
-        <div>
-          <StatusIndicator type={statusCheck(info.getValue())} />
-          <i>{info.getValue()}</i>
-        </div>
-      ),
-      header: () => <span>Status</span>,
-      footer: (info) => info.column.id,
-      filterFn: 'statusFilter' as any,
     }),
   ];
 
@@ -203,7 +203,7 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
             <input type='checkbox' onChange={handleChange} />
             <label>Show files with status New </label>
           </div>
-          <div>
+          <div style={{ width: 'calc(100% - 64px)' }}>
             <DataGrid
               isResizable={false}
               tableInstance={table}
