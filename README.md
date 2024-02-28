@@ -66,5 +66,5 @@ Features deployed:
 - Grid View of source node files with : Name,Type,Size,Nodes,Relations,Duration,Status,Source,Model
 
 ## Links
- The Public [ Google cloud Run URL](Neo4j graph builder (frontend-dcavk67s4a-uc.a.run.app)).
+ The Public [ Google cloud Run URL](https://frontend-dcavk67s4a-uc.a.run.app).
  [Workspace URL](https://workspace-preview.neo4j.io/workspace)
