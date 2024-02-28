@@ -26,8 +26,7 @@ and
 ```bash
 cd backend
 python -m venv 'envName'
-for Git bash > source envName/bin/activate  or
-for cmd > envName\Scripts\activate
+source envName/bin/activate 
 pip install -r requirements.txt
 uvicorn score:app --reload
 ```
