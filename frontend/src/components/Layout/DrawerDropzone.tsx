@@ -33,7 +33,6 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
     <div
       style={{
         display: 'flex',
-        height: 'calc(40vh - 32px)',
         minHeight: '650px',
         overflow: 'hidden',
         position: 'relative',
