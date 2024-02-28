@@ -4,7 +4,6 @@ from langchain.docstore.document import Document
 from dotenv import load_dotenv
 from datetime import datetime
 import logging
-import traceback
 from langchain.text_splitter import TokenTextSplitter
 from tqdm import tqdm
 from src.diffbot_transformer import extract_graph_from_diffbot
@@ -342,13 +341,13 @@ def update_graph():
   """
   Update the graph node with SIMILAR relationship where embedding scrore match
   """
-  query = """ MATCH (c:Chunk) 
-              WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
-              CALL db.index.vector.queryNodes('vector', 5 , c.embedding) yield node, score
-              MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score
-          """
+  knn_min_score = os.environ.get('KNN_MIN_SCORE')
+
+  query = "WHERE node <> c and score >= {} MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score"
   graph = Neo4jGraph()
-  result = graph.query(query)
+  result = graph.query("""MATCH (c:Chunk)
+              WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
+              CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score """+ query.format(knn_min_score))
   logging.info(f"result : {result}")
   return create_api_response("Success",message="Query executed successfully",data=result)
 
