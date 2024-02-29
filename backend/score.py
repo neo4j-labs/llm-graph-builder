@@ -48,7 +48,7 @@ async def create_source_knowledge_graph(
     """
     try:
         result = await asyncio.to_thread(
-            create_source_node_graph, uri, userName, password, file
+            create_source_node_graph_local_file, uri, userName, password, file
         )
         return result
     except Exception as e:
@@ -58,17 +58,18 @@ async def create_source_knowledge_graph(
         return create_api_response(job_status, error=error_message)
 
 
-@app.post("/bucket/scan")
-async def create_source_knowledge_graph(
+@app.post("/url/scan")
+async def create_source_knowledge_graph_url(
     uri=Form(),
     userName=Form(),
     password=Form(),
-    s3_url_dir=Form(),
+    source_url=Form(),
     aws_access_key_id=Form(None),
     aws_secret_access_key=Form(None),
+    max_limit=Form(5)
 ):
-    return create_source_node_graph_s3(
-        uri, userName, password, s3_url_dir, aws_access_key_id, aws_secret_access_key
+    return create_source_node_graph_url(
+        uri, userName, password, source_url, max_limit, aws_access_key_id, aws_secret_access_key
     )
 
 
