@@ -13,7 +13,7 @@ const urlScanAPI = async (
     formData.append('uri', userCredentials?.uri);
     formData.append('userName', userCredentials?.userName);
     formData.append('password', userCredentials?.password);
-    formData.append('source_url', urlParam);
+    formData.append('s3_url_dir', urlParam);
     if (accessKey?.length) {
       formData.append('aws_access_key_id', accessKey);
     }
