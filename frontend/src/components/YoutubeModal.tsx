@@ -1,54 +1,37 @@
-import { TextInput } from '@neo4j-ndl/react';
-import React, { useState } from 'react';
-import { S3ModalProps, SourceNode } from '../types';
-import { urlScanAPI } from '../services/URLScan';
+import { Checkbox, TextInput } from '@neo4j-ndl/react';
+import { useState } from 'react';
 import { useCredentials } from '../context/UserCredentials';
-import { getSourceNodes } from '../services/getFiles';
-import { getFileFromLocal } from '../utils/utils';
 import { useFileContext } from '../context/UsersFiles';
+import { urlScanAPI } from '../services/URLScan';
+import { getSourceNodes } from '../services/getFiles';
+import { S3ModalProps, SourceNode } from '../types';
+import { getFileFromLocal } from '../utils/utils';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
 
-const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
-  const [bucketUrl, setBucketUrl] = useState<string>('');
-  const [accessKey, setAccessKey] = useState<string>('');
-  const [secretKey, setSecretKey] = useState<string>('');
+const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
+  const [youtubeURL, setYoutubeURL] = useState<string>('');
+  const [sourceLimit, setSourceLimit] = useState<number>(5);
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
+  const [showSourceLimitInput, setshowSourceLimitInput] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
   const { setFiles, setFilesData } = useFileContext();
-
-  const changeHandler = (e: any) => {
-    setBucketUrl(e.target.value);
-  };
   const reset = () => {
-    setBucketUrl('');
-    setAccessKey('');
-    setSecretKey('');
-  };
-  const validation = () => {
-    return (
-      bucketUrl.trim() != '' &&
-      secretKey.trim() != '' &&
-      accessKey.trim() != '' &&
-      /^s3:\/\/([^/]+)\/$/.test(bucketUrl) != false
-    );
+    setYoutubeURL('');
   };
   const submitHandler = async () => {
-    if (bucketUrl && bucketUrl[bucketUrl.length - 1] != '/') {
-      setBucketUrl((prev) => prev + '/');
-    }
-    if (accessKey.length) {
-      localStorage.setItem('accesskey', accessKey);
-    }
-    if (accessKey.length) {
-      localStorage.setItem('secretkey', secretKey);
-    }
-    if (validation()) {
+    if (!youtubeURL) {
+      setStatus('danger');
+      setStatusMessage('Please Fill the Valid YouTube link');
+      setTimeout(() => {
+        setStatus('unknown');
+      }, 2000);
+    } else {
       try {
         setStatus('info');
         setStatusMessage('Scaning...');
-        const apiResponse = await urlScanAPI(bucketUrl, userCredentials, accessKey, secretKey);
+        const apiResponse = await urlScanAPI(youtubeURL, userCredentials, '', '', sourceLimit);
         console.log('response', apiResponse);
         setStatus('success');
         if (apiResponse.data.status == 'Failed') {
@@ -57,7 +40,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         } else {
           setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
         }
-        reset();
+        setYoutubeURL('');
         const res: any = await getSourceNodes();
         if (Array.isArray(res.data.data) && res.data.data.length) {
           const prefiles = res.data.data.map((item: SourceNode) => ({
@@ -94,79 +77,68 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatus('danger');
         setStatusMessage('Some Error Occurred');
       }
-    } else {
-      setStatus('warning');
-      setStatusMessage('Please Fill The Valid Credentials');
-      setTimeout(() => {
-        setStatus('unknown');
-      }, 2000);
-      return;
     }
     setStatus('unknown');
   };
-
   const onClose = () => {
     hideModal();
     reset();
     setStatus('unknown');
   };
-
   return (
     <CustomModal
       open={open}
       onClose={onClose}
       statusMessage={statusMessage}
+      setStatus={setStatus}
       submitHandler={submitHandler}
       status={status}
-      setStatus={setStatus}
       submitLabel='Submit'
     >
       <div style={{ width: '100%', marginRight: '2.5%', display: 'inline-block' }}>
         <TextInput
           id='url'
-          value={bucketUrl}
+          value={youtubeURL}
           disabled={false}
-          label='Bucket URL'
-          placeholder='s3://data.neo4j.com/pdf/'
+          label='Youtube Link'
+          placeholder='https://youtu.be/qf7C1SATc7Y'
           autoFocus
           fluid
           required
           onChange={(e) => {
-            changeHandler(e);
+            setYoutubeURL(e.target.value);
           }}
         />
-      </div>
-      <div className='flex justify-between items-center w-full gap-4 mt-3'>
-        <TextInput
-          id='url'
-          value={accessKey}
-          disabled={false}
-          label='Access Key'
-          className='w-full'
-          placeholder=''
-          fluid
-          required
-          type={'password'}
-          onChange={(e) => {
-            setAccessKey(e.target.value);
-          }}
-        />
-        <TextInput
-          id='url'
-          value={secretKey}
-          disabled={false}
-          label='Secret Key'
-          className='w-full'
-          placeholder=''
-          fluid
-          required
-          type={'password'}
-          onChange={(e) => {
-            setSecretKey(e.target.value);
-          }}
-        />
+        {showSourceLimitInput && (
+          <TextInput
+            id='url'
+            value={sourceLimit}
+            disabled={false}
+            label='Max Source Limit'
+            placeholder='5'
+            autoFocus
+            fluid
+            required
+            type='number'
+            onChange={(e) => {
+              setSourceLimit(parseInt(e.target.value));
+            }}
+          />
+        )}
+        <div className='my-2'>
+          <Checkbox
+            label='Include Wikipedia Sources in the Knowledge Graph'
+            onChange={(e) => {
+              if (e.target.checked) {
+                setshowSourceLimitInput(true);
+              } else {
+                setshowSourceLimitInput(false);
+              }
+            }}
+          />
+        </div>
       </div>
     </CustomModal>
   );
 };
-export default S3Modal;
+export default YoutubeModal;

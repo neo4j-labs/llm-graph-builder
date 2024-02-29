@@ -1,22 +1,9 @@
-import { S3BucketProps } from '../types';
+import { DataComponentProps } from '../types';
 import s3logo from '../assets/images/s3logo.png';
+import CustomButton from './CustomButton';
 
-const S3Component: React.FC<S3BucketProps> = ({ openModal }) => {
-  return (
-    <div
-      onClick={openModal}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'pointer',
-        flexDirection: 'column',
-      }}
-    >
-      <img src={s3logo} width={50} height={50}></img>
-      <h6>Amazon S3</h6>
-    </div>
-  );
+const S3Component: React.FC<DataComponentProps> = ({ openModal }) => {
+  return <CustomButton title='Amazon S3' openModal={openModal} logo={s3logo} wrapperclassName='' className='' />;
 };
 
 export default S3Component;

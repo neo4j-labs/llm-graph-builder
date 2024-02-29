@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, ReactNode, SetStateAction } from 'react';
 export interface CustomFile extends Partial<globalThis.File> {
   processing: number;
   status: string;
@@ -44,7 +44,7 @@ export interface CustomAlertProps {
   alertMessage: string;
 }
 
-export interface S3BucketProps {
+export interface DataComponentProps {
   openModal: () => void;
 }
 export interface S3ModalProps {
@@ -82,4 +82,21 @@ export interface DrawerProps {
 
 export interface ContentProps {
   isExpanded: boolean;
+}
+export interface CustomModalProps {
+  open: boolean;
+  onClose: () => void;
+  children: ReactNode;
+  submitLabel: string;
+  submitHandler: () => void;
+  statusMessage: string;
+  status: 'unknown' | 'success' | 'info' | 'warning' | 'danger';
+  setStatus: Dispatch<SetStateAction<'unknown' | 'success' | 'info' | 'warning' | 'danger'>>;
+}
+export interface CommonButtonProps {
+  openModal: () => void;
+  wrapperclassName?: string;
+  logo: any;
+  title: string;
+  className?: string;
 }
