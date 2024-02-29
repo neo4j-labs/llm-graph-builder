@@ -171,6 +171,9 @@ If an entity, such as "John Doe", is mentioned multiple times in the text but is
 always use the most complete identifier for that entity throughout the knowledge graph. In this example, use "John Doe" as the entity ID.
 Remember, the knowledge graph should be coherent and easily understandable, so maintaining consistency in entity references is crucial.
 ## 5. Strict Compliance
+- **Colon values** : You may encounter colon(:) in content (example: Time references, description of title after heading). Please 
+treat them as text and do not treat them as dictionaries. For example, if time "10:00" is mentioned, considered it as part of text 
+content, not as data structure.
 Adhere to the rules strictly. Non-compliance will result in termination.
           """),
             ("human", "Use the given format to extract information from the following input: {input}"),
