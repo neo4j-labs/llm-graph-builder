@@ -20,6 +20,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const reset = () => {
     setYoutubeURL('');
   };
+
   const submitHandler = async () => {
     if (!youtubeURL) {
       setStatus('danger');
@@ -84,6 +85,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     hideModal();
     reset();
     setStatus('unknown');
+    setshowSourceLimitInput(false);
   };
   return (
     <CustomModal
