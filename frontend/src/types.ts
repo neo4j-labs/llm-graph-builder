@@ -1,13 +1,13 @@
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, ReactNode, SetStateAction } from 'react';
 export interface CustomFile extends Partial<globalThis.File> {
-  processing: string;
+  processing: number;
   status: string;
   NodesCount: number;
   id: string;
   relationshipCount: number;
   model: string;
   fileSource: string;
-  s3url?:string
+  s3url?: string;
 }
 
 export interface OptionType {
@@ -44,7 +44,7 @@ export interface CustomAlertProps {
   alertMessage: string;
 }
 
-export interface S3BucketProps {
+export interface DataComponentProps {
   openModal: () => void;
 }
 export interface S3ModalProps {
@@ -69,4 +69,34 @@ export interface SourceNode {
   s3url?: string;
   awsAccessKeyId?: string;
   fileSource: string;
+}
+export interface SideNavProps {
+  openDrawer: () => void;
+  closeDrawer: () => void;
+  isExpanded: boolean;
+}
+
+export interface DrawerProps {
+  isExpanded: boolean;
+}
+
+export interface ContentProps {
+  isExpanded: boolean;
+}
+export interface CustomModalProps {
+  open: boolean;
+  onClose: () => void;
+  children: ReactNode;
+  submitLabel: string;
+  submitHandler: () => void;
+  statusMessage: string;
+  status: 'unknown' | 'success' | 'info' | 'warning' | 'danger';
+  setStatus: Dispatch<SetStateAction<'unknown' | 'success' | 'info' | 'warning' | 'danger'>>;
+}
+export interface CommonButtonProps {
+  openModal: () => void;
+  wrapperclassName?: string;
+  logo: any;
+  title: string;
+  className?: string;
 }

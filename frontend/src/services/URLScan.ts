@@ -1,7 +1,13 @@
 import axios from 'axios';
 import { url } from '../utils/utils';
 
-const bucketScanAPI = async (urlParam: string, userCredentials?: any, accessKey?: string, secretKey?: string) => {
+const urlScanAPI = async (
+  urlParam: string,
+  userCredentials?: any,
+  accessKey?: string,
+  secretKey?: string,
+  max_limit?: number
+) => {
   try {
     const formData = new FormData();
     formData.append('uri', userCredentials?.uri);
@@ -14,8 +20,11 @@ const bucketScanAPI = async (urlParam: string, userCredentials?: any, accessKey?
     if (secretKey?.length) {
       formData.append('aws_secret_access_key', secretKey);
     }
+    if (max_limit != undefined) {
+      formData.append('max_limit', max_limit.toString());
+    }
 
-    const response = await axios.post(`${url()}/bucket/scan`, formData, {
+    const response = await axios.post(`${url()}/url/scan`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -27,4 +36,4 @@ const bucketScanAPI = async (urlParam: string, userCredentials?: any, accessKey?
   }
 };
 
-export { bucketScanAPI };
+export { urlScanAPI };
