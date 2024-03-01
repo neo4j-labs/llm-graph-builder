@@ -82,7 +82,7 @@ async def extract_knowledge_graph_from_file(
     password=Form(),
     file: UploadFile = File(None),
     model=Form(),
-    s3_url=Form(None),
+    url=Form(None),
     aws_access_key_id=Form(None),
     aws_secret_access_key=Form(None),
 ):
@@ -109,16 +109,16 @@ async def extract_knowledge_graph_from_file(
                 password,
                 model,
                 file=file,
-                s3_url=None,
+                url=None,
             )
-        elif s3_url:
+        elif url:
             return await asyncio.to_thread(
                 extract_graph_from_file,
                 uri,
                 userName,
                 password,
                 model,
-                s3_url=s3_url,
+                url=url,
                 aws_access_key_id=aws_access_key_id,
                 aws_secret_access_key=aws_secret_access_key,
             )

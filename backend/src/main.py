@@ -14,6 +14,9 @@ import boto3
 from urllib.parse import urlparse
 import os
 from tempfile import NamedTemporaryFile
+import re
+from langchain_community.document_loaders import YoutubeLoader
+
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 # from langchain.document_loaders import S3FileLoader
@@ -189,7 +192,7 @@ def get_s3_pdf_content(s3_url,aws_access_key_id=None,aws_secret_access_key=None)
     # except Exception as e:
     #     return None
 
-def extract_graph_from_file(uri, userName, password, model, file=None,s3_url=None,aws_access_key_id=None,aws_secret_access_key=None):
+def extract_graph_from_file(uri, userName, password, model, file=None,url=None,aws_access_key_id=None,aws_secret_access_key=None):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -209,43 +212,32 @@ def extract_graph_from_file(uri, userName, password, model, file=None,s3_url=Non
     start_time = datetime.now()
 
     graph = Neo4jGraph(url=uri, username=userName, password=password)
+    
     try: 
       if file!=None:
-        file_name = file.filename
-        file_key=file_name
-        source_node = "fileName: '{}'"
-        update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessage = '{}',s.nodeCount= {}, s.relationshipCount = {}, s.model = '{}'"
-
-        with open('temp.pdf','wb') as f:
-          f.write(file.file.read())
-        loader = PyPDFLoader('temp.pdf')
-        pages = loader.load_and_split()
-        
-      elif s3_url!=None:
-        # if aws_access_key_id !=None and aws_secret_access_key !=None:
-        #   os.environ['AWS_ACCESS_KEY_ID']=  aws_access_key_id
-        #   os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
-        
-        parsed_url = urlparse(s3_url)
-        bucket = parsed_url.netloc
-        file_key = parsed_url.path.lstrip('/')
-        file_name=file_key.split('/')[-1]
-        
-        source_node = "fileName: '{}'"
-        update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessage = '{}',s.nodeCount= {}, s.relationshipCount = {}, s.model = '{}'"
-        s3=boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
-        response=s3.head_object(Bucket=bucket,Key=file_key)
-        # response = s3.get_object(Bucket=bucket, Key=file_key)
-        file_size=response['ContentLength']
-        
-        logging.info(f'bucket : {bucket},  file key : {file_key},  file size : {file_size}')
-        
-        # loader = S3FileLoader(bucket,file_key)
-        pages=get_s3_pdf_content(s3_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
-        if pages==None:
+        file_name, file_key, pages = get_documents_from_file(file)
+         
+      elif is_valid_s3_url(url):
+        if(aws_access_key_id==None or aws_secret_access_key==None):
+          job_status = "Failed"
+          return create_api_response(job_status,error='Please provide AWS access and secret keys')
+        else:
+          file_name, file_key, pages = get_documents_from_s3(url, aws_access_key_id, aws_secret_access_key)
+      
+      elif is_valid_youtube_url(url):
+          file_name, file_key, pages = get_documents_from_youtube(url)
+      
+      else:
+          job_status = "Failed"
+          return create_api_response(job_status,error='Invalid url to create graph')
+          
+      if pages==None:
           job_status = "Failed"
           return create_api_response(job_status,error='Failed to load the pdf content')
-        
+          
+      source_node = "fileName: '{}'"
+      update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessage = '{}',s.nodeCount= {}, s.relationshipCount = {}, s.model = '{}'"
+  
       # pages = loader.load_and_split()
       bad_chars = ['"', "\n", "'"]
       for i in range(0,len(pages)):
@@ -318,6 +310,49 @@ def extract_graph_from_file(uri, userName, password, model, file=None,s3_url=Non
       logging.exception(f'Exception Stack trace:')
       return create_api_response(job_status,error=error_message)
 
+def get_documents_from_file(file):
+    print("get_documents_from_file called")
+    file_name = file.filename
+    print("file_name = ",file_name)
+    file_key=file_name
+    print("file_key = ",file_key)
+        
+    with open('temp.pdf','wb') as f:
+        f.write(file.file.read())
+    loader = PyPDFLoader('temp.pdf')
+    pages = loader.load_and_split()
+    return file_name,file_key,pages
+    
+def get_documents_from_s3(s3_url, aws_access_key_id, aws_secret_access_key):
+    # if aws_access_key_id !=None and aws_secret_access_key !=None:
+        #   os.environ['AWS_ACCESS_KEY_ID']=  aws_access_key_id
+        #   os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
+        
+        parsed_url = urlparse(s3_url)
+        bucket = parsed_url.netloc
+        file_key = parsed_url.path.lstrip('/')
+        file_name=file_key.split('/')[-1]
+        s3=boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
+        response=s3.head_object(Bucket=bucket,Key=file_key)
+        # response = s3.get_object(Bucket=bucket, Key=file_key)
+        file_size=response['ContentLength']
+        
+        logging.info(f'bucket : {bucket},  file key : {file_key},  file size : {file_size}')
+        
+        # loader = S3FileLoader(bucket,file_key)
+        pages=get_s3_pdf_content(s3_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
+        return file_name,file_key,pages
+ 
+ 
+def get_documents_from_youtube(url):
+          youtube_loader = YoutubeLoader.from_youtube_url(url, add_video_info=False)
+          pages = youtube_loader.load()
+          match = re.search(r"v=([a-zA-Z0-9_-]+)", url)
+          youtube_id=match.group(1)
+          file_name='YoutubeTranscript_'+youtube_id
+          file_key=file_name
+          print("Youtube pages = ",pages)
+          return file_name, file_key, pages     
 
 def get_source_list_from_graph():
   """
@@ -385,3 +420,24 @@ def create_api_response(status,success_count=None,Failed_count=None, data=None, 
     response['file_source']=file_source
     
   return response
+
+
+def is_valid_s3_url(url):
+    logging.info("Checking if s3 url is valid")
+    if url.startswith('s3://'):
+        return True 
+    return False    
+
+  
+def is_valid_youtube_url(url):
+  logging.info("Checking if youtube url is valid")
+  match = re.search(r"v=([a-zA-Z0-9_-]+)", url)
+  # Check if the URL is a valid format.
+  if isinstance(url, str) and url.startswith("https://www.youtube.com") and match is not None:
+    # Check if the video ID is valid.
+    if len(match.group(1)) == 11:
+      logging.info("Not valid video id, length incorrect")
+      return True
+
+  # The URL is valid.
+  return False
