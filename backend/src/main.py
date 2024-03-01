@@ -103,7 +103,7 @@ def check_url_source(url):
     try:
       youtube_id_regex = re.search(r"v=([a-zA-Z0-9_-]+)", url)
         
-      if re.match('^s3:\/\/[a-z0-9.-]{3,63}\/?$', url):
+      if url.startswith('s3://'):
         source ='s3 bucket'
         
       elif url.startswith("https://www.youtube.com/watch?") and youtube_id_regex is not None:
@@ -286,7 +286,7 @@ def extract_graph_from_file(uri, userName, password, model, file=None,source_url
       elif model == 'OpenAI GPT 4':
         model_version = 'gpt-4-0125-preview' 
         graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
-          
+                
       #update_similarity_graph for the KNN Graph
       update_graph()
 
