@@ -1,35 +1,32 @@
 
 # Knowledge Graph Builder App
+This application is designed to convert PDF documents into a knowledge graph stored in Neo4j. It utilizes the power of OpenAI's GPT/Diffbot LLM(Large language model) to extract nodes, relationships and properties from the text content of the PDF and then organizes them into a structured knowledge graph using Langchain framework. 
+Files can be uploaded from local machine or S3 bucket and then LLM model can be chosen to create the knowledge graph.
 
-## Technical Documentation
+### Getting started
 
-In the root directory:
+1. Run Docker Compose to build and start all components:
+    ```bash
+    docker-compose up --build
+    ```
 
-### Run development
+2. Alternatively, you can run specific directories separately:
 
-To develop all apps and packages, run the following command:
+    - For the frontend:
+        ```bash
+        cd frontend
+        yarn
+        yarn run dev
+        ```
 
-```bash
-docker-compose up --build
-```
-
-You can also run only a specific directory with
-
-```bash
-cd frontend
-yarn 
-yarn run dev
-```
-
-and 
-
-```bash
-cd backend
-python -m venv 'envName'
-source envName/bin/activate 
-pip install -r requirements.txt
-uvicorn score:app --reload
-```
+    - For the backend:
+        ```bash
+        cd backend
+        python -m venv envName
+        source envName/bin/activate 
+        pip install -r requirements.txt
+        uvicorn score:app --reload
+        ```
 
 ### Build
 
@@ -39,12 +36,15 @@ To build all apps and packages, run the following command:
 # Frontend build outputs to `apps/frontend/dist` folder.
 yarn build
 ```
+
 ```bash
-# Backend build outputs to .
+# Backend docker image 
+docker build -t imageName .
+docker run -it -p 8000:8000 imageNmae
 ```
 
 ###
-To deploy the app and packages, run the following command on google cloud run:
+To deploy the app and packages on Google Cloud Platform, run the following command on google cloud run:
 ```bash
 # Frontend deploy 
 gcloud run deploy 
@@ -54,17 +54,18 @@ Allow unauthenticated request : Yes
 ```
 ```bash
 # Backend deploy 
-gcloud run deploy --set-env-vars "OPENAI_API_KEY = " --set-env-vars "DIFFBOT_API_KEY = " --set-env-vars "NEO4J_URI = " --set-env-vars "NEO4J_PASSWORD = "
+gcloud run deploy --set-env-vars "OPENAI_API_KEY = " --set-env-vars "DIFFBOT_API_KEY = " --set-env-vars "NEO4J_URI = " --set-env-vars "NEO4J_PASSWORD = " --set-env-vars "NEO4J_USERNAME = "
 source location current directory > Backend
 region : 32 [us-central 1]
 Allow unauthenticated request : Yes
 ```
 ### Features
-Features deployed:
-- Connection to Neo4+j Database
-- File Upload from Drop zone and S3 bucket.
-- Grid View of source node files with : Name,Type,Size,Nodes,Relations,Duration,Status,Source,Model
-
+- **PDF Upload**: Users can upload PDF documents using the Drop Zone.
+- **S3 Bucket Integration**: Users can also specify PDF documents stored in an S3 bucket for processing.
+- **Knowledge Graph Generation**: The application employs OpenAI/Diffbot's LLM to extract relevant information from the PDFs and construct a knowledge graph.
+- **Neo4j Integration**: The extracted nodes and relationships are stored in a Neo4j database for easy visualization and querying.
+- **Grid View of source node files with** : Name,Type,Size,Nodes,Relations,Duration,Status,Source,Model
+  
 ## Setting up Environment Variables
 Create .env file and update the following env variables.\
 OPENAI_API_KEY = ""\
@@ -81,7 +82,7 @@ KNN_MIN_SCORE = ""\
 ## Functions/Modules
 
 # extract_graph_from_file(uri, userName, password, file_path, model):
-   Extracts a Neo4jGraph from a PDF file based on the model.
+   Extracts nodes , relationships and properties from a PDF file leveraging LLM models.
    
     Args:
    	 uri: URI of the graph to extract
