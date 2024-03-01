@@ -12,7 +12,7 @@ import {
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
-import { getFileFromLocal, statusCheck } from '../utils/utils';
+import { getFileFromLocal, statusCheck } from '../utils/Utils';
 import { SourceNode, CustomFile, ContentProps } from '../types';
 
 const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {

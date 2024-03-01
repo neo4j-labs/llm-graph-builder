@@ -23,7 +23,7 @@ export type UserCredentials = {
 export type ExtractParams = {
   file?: string;
   model: string;
-  s3_url?: string;
+  source_url?: string;
   aws_access_key_id?: string;
   aws_secret_access_key?: string;
 } & { [key: string]: any };

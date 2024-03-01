@@ -4,7 +4,7 @@ import { S3ModalProps, SourceNode } from '../types';
 import { urlScanAPI } from '../services/URLScan';
 import { useCredentials } from '../context/UserCredentials';
 import { getSourceNodes } from '../services/GetFiles';
-import { getFileFromLocal } from '../utils/utils';
+import { getFileFromLocal,validation } from '../utils/Utils';
 import { useFileContext } from '../context/UsersFiles';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
@@ -15,6 +15,8 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [secretKey, setSecretKey] = useState<string>('');
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
+  const [isFocused, setisFocused] = useState<boolean>(false);
+  const [isValid, setValid] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
   const { setFiles, setFilesData } = useFileContext();
 
@@ -25,18 +27,16 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     setBucketUrl('');
     setAccessKey('');
     setSecretKey('');
+    setValid(false);
+    setisFocused(false);
   };
-  const validation = () => {
-    return (
-      bucketUrl.trim() != '' &&
-      secretKey.trim() != '' &&
-      accessKey.trim() != '' &&
-      /^s3:\/\/([^/]+)\/$/.test(bucketUrl) != false
-    );
-  };
-  const submitHandler = async () => {
-    if (bucketUrl && bucketUrl[bucketUrl.length - 1] != '/') {
-      setBucketUrl((prev) => prev + '/');
+
+  const submitHandler = async (url: string) => {
+    if (url && url[url.length - 1] != '/') {
+      setBucketUrl((prev) => {
+        return prev + '/';
+      });
+      setValid(validation(bucketUrl) && isFocused);
     }
     if (accessKey.length) {
       localStorage.setItem('accesskey', accessKey);
@@ -44,11 +44,11 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     if (accessKey.length) {
       localStorage.setItem('secretkey', secretKey);
     }
-    if (validation()) {
+    if (isValid && accessKey.trim() != '' && secretKey.trim() != '') {
       try {
         setStatus('info');
         setStatusMessage('Scaning...');
-        const apiResponse = await urlScanAPI(bucketUrl, userCredentials, accessKey, secretKey);
+        const apiResponse = await urlScanAPI(url, userCredentials, accessKey, secretKey);
         console.log('response', apiResponse);
         setStatus('success');
         if (apiResponse.data.status == 'Failed') {
@@ -69,6 +69,8 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             relationshipCount: item?.relationshipCount ?? 0,
             status:
               item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                ? item.status
+                : item.fileSource === 'youtube'
                 ? item.status
                 : getFileFromLocal(`${item.fileName}`) != null
                 ? item.status
@@ -103,8 +105,10 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       return;
     }
     setStatus('unknown');
+    setTimeout(() => {
+      hideModal();
+    }, 2000);
   };
-
   const onClose = () => {
     hideModal();
     reset();
@@ -116,7 +120,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       open={open}
       onClose={onClose}
       statusMessage={statusMessage}
-      submitHandler={submitHandler}
+      submitHandler={() => submitHandler(bucketUrl)}
       status={status}
       setStatus={setStatus}
       submitLabel='Submit'
@@ -131,7 +135,10 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           autoFocus
           fluid
           required
+          errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
+          onBlur={() => setValid(validation(bucketUrl) && isFocused)}
           onChange={(e) => {
+            setisFocused(true);
             changeHandler(e);
           }}
         />

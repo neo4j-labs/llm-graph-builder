@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { url } from '../utils/utils';
+import { url } from '../utils/Utils';
 
 const urlScanAPI = async (
   urlParam: string,

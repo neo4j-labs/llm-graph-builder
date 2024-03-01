@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { url } from '../utils/utils';
+import { url } from '../utils/Utils';
 
 export const getSourceNodes = async () => {
   try {
