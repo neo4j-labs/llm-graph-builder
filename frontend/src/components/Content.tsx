@@ -8,14 +8,17 @@ import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { extractAPI } from '../services/FileAPI';
-import { ContentProps } from '../types';
+import { ContentProps, SourceNode } from '../types';
+import { getFileFromLocal } from '../utils/utils';
+import { getSourceNodes } from '../services/getFiles';
+import { v4 as uuidv4 } from 'uuid';
 
 const Content: React.FC<ContentProps> = ({ isExpanded }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials } = useCredentials();
-  const { filesData, files, setFilesData, setModel, model } = useFileContext();
+  const { filesData, files, setFilesData, setModel, model, setFiles } = useFileContext();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
 
@@ -79,43 +82,43 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
         apirequests.push(apiResponse);
         Promise.allSettled(apirequests)
           .then((r) => {
-            r.forEach((apiRes) => {
-              if (apiRes.status === 'fulfilled' && apiRes.value) {
-                if (apiRes?.value?.status === 'Failed') {
-                  setShowAlert(true);
-                  setErrorMessage('Unexpected Error');
-                  setFilesData((prevfiles) =>
-                    prevfiles.map((curfile, idx) => {
-                      if (idx == uid) {
-                        return {
-                          ...curfile,
-                          status: 'Failed',
-                        };
-                      }
-                      return curfile;
-                    })
-                  );
-                  throw new Error('API Failure');
-                } else {
-                  setFilesData((prevfiles) => {
-                    return prevfiles.map((curfile, idx) => {
-                      if (idx == uid) {
-                        const apiResponse = apiRes?.value?.data;
-                        return {
-                          ...curfile,
-                          processing: apiResponse?.processingTime?.toFixed(2),
-                          status: apiResponse?.status,
-                          NodesCount: apiResponse?.nodeCount,
-                          relationshipCount: apiResponse?.relationshipCount,
-                          model: apiResponse?.model,
-                        };
-                      }
-                      return curfile;
-                    });
-                  });
-                }
-              }
-            });
+            // r.forEach((apiRes) => {
+            //   if (apiRes.status === 'fulfilled' && apiRes.value) {
+            //     if (apiRes?.value?.status === 'Failed') {
+            //       setShowAlert(true);
+            //       setErrorMessage('Unexpected Error');
+            //       setFilesData((prevfiles) =>
+            //         prevfiles.map((curfile, idx) => {
+            //           if (idx == uid) {
+            //             return {
+            //               ...curfile,
+            //               status: 'Failed',
+            //             };
+            //           }
+            //           return curfile;
+            //         })
+            //       );
+            //       throw new Error('API Failure');
+            //     } else {
+            //       setFilesData((prevfiles) => {
+            //         return prevfiles.map((curfile, idx) => {
+            //           if (idx == uid) {
+            //             const apiResponse = apiRes?.value?.data;
+            //             return {
+            //               ...curfile,
+            //               processing: apiResponse?.processingTime?.toFixed(2),
+            //               status: apiResponse?.status,
+            //               NodesCount: apiResponse?.nodeCount,
+            //               relationshipCount: apiResponse?.relationshipCount,
+            //               model: apiResponse?.model,
+            //             };
+            //           }
+            //           return curfile;
+            //         });
+            //       });
+            //     }
+            //   }
+            // });
           })
           .catch((err) => {
             console.log(err);
@@ -135,6 +138,41 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
             return curfile;
           })
         );
+      } finally {
+        const res: any = await getSourceNodes();
+        if (Array.isArray(res.data.data) && res.data.data.length) {
+          const prefiles = res.data.data.map((item: SourceNode) => {
+            return {
+              name: item.fileName,
+              size: item.fileSize ?? 0,
+              type: item?.fileType?.toUpperCase() ?? 'None',
+              NodesCount: item?.nodeCount ?? 0,
+              processing: item?.processingTime ?? 'None',
+              relationshipCount: item?.relationshipCount ?? 0,
+              status:
+                item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                  ? item.status
+                  : getFileFromLocal(`${item.fileName}`) != null
+                  ? item.status
+                  : 'N/A',
+              model: item?.model ?? 'Diffbot',
+              id: uuidv4(),
+              s3url: item.s3url ?? '',
+              fileSource: item.fileSource ?? 'None',
+            };
+          });
+          setFilesData(prefiles);
+          const prefetchedFiles: any[] = [];
+          res.data.data.forEach((item: any) => {
+            const localFile = getFileFromLocal(`${item.fileName}`);
+            if (localFile != null) {
+              prefetchedFiles.push(localFile);
+            } else {
+              prefetchedFiles.push(null);
+            }
+          });
+          setFiles(prefetchedFiles);
+        }
       }
     }
   };
