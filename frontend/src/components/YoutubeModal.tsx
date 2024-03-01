@@ -15,10 +15,13 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [showSourceLimitInput, setshowSourceLimitInput] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('');
+  const [querySource, setQuerySource] = useState<string>('');
+
   const { userCredentials } = useCredentials();
   const { setFiles, setFilesData } = useFileContext();
   const reset = () => {
     setYoutubeURL('');
+    setQuerySource('');
   };
   const submitHandler = async () => {
     if (!youtubeURL) {
@@ -31,7 +34,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       try {
         setStatus('info');
         setStatusMessage('Scaning...');
-        const apiResponse = await urlScanAPI(youtubeURL, userCredentials, '', '', sourceLimit);
+        const apiResponse = await urlScanAPI(youtubeURL, userCredentials, '', '', sourceLimit, querySource);
         console.log('response', apiResponse);
         setStatus('success');
         if (apiResponse.data.status == 'Failed') {
@@ -108,6 +111,18 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           required
           onChange={(e) => {
             setYoutubeURL(e.target.value);
+          }}
+        />
+        <TextInput
+          id='Query Source'
+          className='my-3'
+          value={querySource}
+          disabled={false}
+          label='Include Wikipedia Query Sources'
+          placeholder=''
+          fluid
+          onChange={(e) => {
+            setQuerySource(e.target.value);
           }}
         />
         {showSourceLimitInput && (

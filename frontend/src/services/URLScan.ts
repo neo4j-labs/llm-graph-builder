@@ -6,7 +6,8 @@ const urlScanAPI = async (
   userCredentials?: any,
   accessKey?: string,
   secretKey?: string,
-  max_limit?: number
+  max_limit?: number,
+  query_source?: string
 ) => {
   try {
     const formData = new FormData();
@@ -19,6 +20,9 @@ const urlScanAPI = async (
     }
     if (secretKey?.length) {
       formData.append('aws_secret_access_key', secretKey);
+    }
+    if (query_source?.length) {
+      formData.append('query_source', query_source);
     }
     if (max_limit != undefined) {
       formData.append('max_limit', max_limit.toString());
