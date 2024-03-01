@@ -105,6 +105,9 @@ KNN_MIN_SCORE = ""\
 
 <img width="822" alt="get_source" src="https://github.com/neo4j-labs/llm-graph-builder/assets/118245454/1d8c7a86-6f10-4916-a4c1-8fdd9f312bcc">
 
+#### Chunk nodes and embeddings creation in Neo4j
+
+<img width="926" alt="chunking" src="https://github.com/neo4j-labs/llm-graph-builder/assets/118245454/4d61479c-e5e9-415e-954e-3edf6a773e72">
 
 ## Links
  The Public [ Google cloud Run URL](https://frontend-dcavk67s4a-uc.a.run.app).
