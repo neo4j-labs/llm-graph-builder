@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { urlScanAPI } from '../services/URLScan';
-import { getSourceNodes } from '../services/getFiles';
+import { getSourceNodes } from '../services/GetFiles';
 import { S3ModalProps, SourceNode } from '../types';
 import { getFileFromLocal } from '../utils/utils';
 import { v4 as uuidv4 } from 'uuid';
@@ -41,7 +41,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           setStatus('danger');
           setStatusMessage(apiResponse.data.message);
         } else {
-          setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
+          setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count ?? ''} Files`);
         }
         setYoutubeURL('');
         const res: any = await getSourceNodes();
@@ -56,12 +56,14 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             status:
               item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                 ? item.status
+                : item.fileSource === 'youtube'
+                ? item.status
                 : getFileFromLocal(`${item.fileName}`) != null
                 ? item.status
                 : 'N/A',
             model: item?.model ?? 'Diffbot',
             id: uuidv4(),
-            s3url: item.s3url ?? '',
+            source_url: item.url ?? '',
             fileSource: item.fileSource ?? 'None',
           }));
           setFilesData(prefiles);
@@ -118,7 +120,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           className='my-3'
           value={querySource}
           disabled={false}
-          label='Include Wikipedia Query Sources'
+          label='Additional Wikipedia Query Sources'
           placeholder=''
           fluid
           onChange={(e) => {
