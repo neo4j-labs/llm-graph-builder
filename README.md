@@ -28,21 +28,6 @@ Files can be uploaded from local machine or S3 bucket and then LLM model can be 
         uvicorn score:app --reload
         ```
 
-### Build
-
-To build all apps and packages, run the following command:
-
-```bash
-# Frontend build outputs to `apps/frontend/dist` folder.
-yarn build
-```
-
-```bash
-# Backend docker image 
-docker build -t imageName .
-docker run -it -p 8000:8000 imageNmae
-```
-
 ###
 To deploy the app and packages on Google Cloud Platform, run the following command on google cloud run:
 ```bash
@@ -81,7 +66,7 @@ KNN_MIN_SCORE = ""\
 
 ## Functions/Modules
 
-# extract_graph_from_file(uri, userName, password, file_path, model):
+#### extract_graph_from_file(uri, userName, password, file_path, model):
    Extracts nodes , relationships and properties from a PDF file leveraging LLM models.
    
     Args:
@@ -95,7 +80,7 @@ KNN_MIN_SCORE = ""\
    	 Json response to API with fileName, nodeCount, relationshipCount, processingTime, 
      status and model as attributes.
 
-# get_source_list_from_graph(graph):
+#### get_source_list_from_graph(graph):
    
    Creates a list of sources
    
@@ -105,7 +90,7 @@ KNN_MIN_SCORE = ""\
          Returns a list of sources that are in the database by querying the graph and 
          sorting the list by the last updated date. 
 
-# create_source_node_graph(uri, userName, password, file):
+#### create_source_node_graph(uri, userName, password, file):
 
    Creates a source node in Neo4jGraph and sets properties.
    
