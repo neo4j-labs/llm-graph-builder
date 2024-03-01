@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { url } from '../utils/utils';
+import { url } from '../utils/Utils';
 
 const uploadAPI = async (file: any, userCredentials: any) => {
   try {

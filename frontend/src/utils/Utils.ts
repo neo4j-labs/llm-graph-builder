@@ -7,6 +7,11 @@ export const url = () => {
   return !url || !url.match('/$') ? url : url.substring(0, url.length - 1);
 };
 
+// validation check for s3 bucket url
+export const validation = (url: string) => {
+  return url.trim() != '' && /^s3:\/\/([^/]+)\/?$/.test(url) != false;
+};
+
 export const fileToBase64 = (file: any) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

@@ -5,7 +5,7 @@ import { useFileContext } from '../context/UsersFiles';
 import { urlScanAPI } from '../services/URLScan';
 import { getSourceNodes } from '../services/GetFiles';
 import { S3ModalProps, SourceNode } from '../types';
-import { getFileFromLocal } from '../utils/utils';
+import { getFileFromLocal } from '../utils/Utils';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
 
@@ -22,6 +22,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const reset = () => {
     setYoutubeURL('');
     setQuerySource('');
+    setshowSourceLimitInput(false);
   };
   const submitHandler = async () => {
     if (!youtubeURL) {
@@ -41,9 +42,9 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           setStatus('danger');
           setStatusMessage(apiResponse.data.message);
         } else {
-          setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count ?? ''} Files`);
+          setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count ?? ''} Link`);
         }
-        setYoutubeURL('');
+        reset();
         const res: any = await getSourceNodes();
         if (Array.isArray(res.data.data) && res.data.data.length) {
           const prefiles = res.data.data.map((item: SourceNode) => ({
@@ -84,12 +85,14 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       }
     }
     setStatus('unknown');
+    setTimeout(() => {
+      hideModal();
+    }, 2000);
   };
   const onClose = () => {
     hideModal();
     reset();
     setStatus('unknown');
-    setshowSourceLimitInput(false);
   };
   return (
     <CustomModal
@@ -107,7 +110,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           value={youtubeURL}
           disabled={false}
           label='Youtube Link'
-          placeholder='https://youtu.be/qf7C1SATc7Y'
+          placeholder='https://www.youtube.com/watch?v=2W9HM1xBibo'
           autoFocus
           fluid
           required
@@ -146,6 +149,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         <div className='my-2'>
           <Checkbox
             label='Include Wikipedia Sources in the Knowledge Graph'
+            checked={showSourceLimitInput}
             onChange={(e) => {
               if (e.target.checked) {
                 setshowSourceLimitInput(true);

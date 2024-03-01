@@ -1,5 +1,5 @@
 import { Method } from 'axios';
-import { url } from '../utils/utils';
+import { url } from '../utils/Utils';
 import { UserCredentials, ExtractParams, UploadParams } from '../types';
 import { apiCall } from '../utils/ApiUtils';
 export const uploadAPI = async (file: any, userCredentials: any): Promise<any> => {
