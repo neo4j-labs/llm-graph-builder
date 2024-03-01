@@ -80,16 +80,6 @@ KNN_MIN_SCORE = ""\
    	 Json response to API with fileName, nodeCount, relationshipCount, processingTime, 
      status and model as attributes.
 
-#### get_source_list_from_graph(graph):
-   
-   Creates a list of sources
-   
-    Args:
-        graph: Neo4j graph object
-    Returns:
-         Returns a list of sources that are in the database by querying the graph and 
-         sorting the list by the last updated date. 
-
 #### create_source_node_graph(uri, userName, password, file):
 
    Creates a source node in Neo4jGraph and sets properties.
@@ -102,6 +92,15 @@ KNN_MIN_SCORE = ""\
    
     Returns: 
    	 Success or Failure message of node creation
+
+<img width="958" alt="neo_workspace" src="https://github.com/neo4j-labs/llm-graph-builder/assets/118245454/f2eb11cd-718c-453e-bec9-11410ec6e45d">
+
+
+#### get_source_list_from_graph():
+   
+     Returns a list of file sources in the database by querying the graph and 
+     sorting the list by the last updated date. 
+
 
 
 ## Links
