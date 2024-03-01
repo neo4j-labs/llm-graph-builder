@@ -224,12 +224,7 @@ def extract_graph_from_file(uri, userName, password, model, file=None,s3_url=Non
   # logging.info(f"extract_graph_from_file called for file:{file.filename}")
   try:
     start_time = datetime.now()
-    source_node = "fileName: '{}'"
-    job_status = 'Processing'
-    update_node_prop = "SET d.createdAt ='{}', d.updatedAt = '{}',d.status = '{}'"
     graph = Neo4jGraph(url=uri, username=userName, password=password)
-    graph.query('MERGE(d:Document {'+source_node.format(file_key.split('/')[-1])+'}) '+update_node_prop.format(start_time,start_time,job_status))
-    
     try: 
       if file!=None:
         file_name = file.filename
@@ -268,7 +263,10 @@ def extract_graph_from_file(uri, userName, password, model, file=None,s3_url=Non
         if pages==None:
           job_status = "Failed"
           return create_api_response(job_status,error='Failed to load the pdf content')
-        
+      source_node = "fileName: '{}'"
+      job_status = 'Processing'
+      update_node_prop = "SET d.createdAt ='{}', d.updatedAt = '{}',d.status = '{}'"
+      graph.query('MERGE(d:Document {'+source_node.format(file_key.split('/')[-1])+'}) '+update_node_prop.format(start_time,start_time,job_status))  
       # pages = loader.load_and_split()
       bad_chars = ['"', "\n", "'"]
       for i in range(0,len(pages)):
