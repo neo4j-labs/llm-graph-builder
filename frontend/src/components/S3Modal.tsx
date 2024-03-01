@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { S3ModalProps, SourceNode } from '../types';
 import { urlScanAPI } from '../services/URLScan';
 import { useCredentials } from '../context/UserCredentials';
-import { getSourceNodes } from '../services/getFiles';
+import { getSourceNodes } from '../services/GetFiles';
 import { getFileFromLocal } from '../utils/utils';
 import { useFileContext } from '../context/UsersFiles';
 import { v4 as uuidv4 } from 'uuid';
@@ -75,7 +75,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
                 : 'N/A',
             model: item?.model ?? 'Diffbot',
             id: uuidv4(),
-            s3url: item.s3url ?? '',
+            source_url: item.url ?? '',
             fileSource: item.fileSource ?? 'None',
           }));
           setFilesData(prefiles);

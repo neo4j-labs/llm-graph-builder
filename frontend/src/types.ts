@@ -7,7 +7,7 @@ export interface CustomFile extends Partial<globalThis.File> {
   relationshipCount: number;
   model: string;
   fileSource: string;
-  s3url?: string;
+  source_url?: string;
 }
 
 export interface OptionType {
@@ -65,7 +65,7 @@ export interface SourceNode {
   relationshipCount?: number;
   model: string;
   status: string;
-  s3url?: string;
+  url?: string;
   awsAccessKeyId?: string;
   fileSource: string;
 }

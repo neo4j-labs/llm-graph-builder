@@ -10,7 +10,7 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table';
 import { useFileContext } from '../context/UsersFiles';
-import { getSourceNodes } from '../services/getFiles';
+import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { getFileFromLocal, statusCheck } from '../utils/utils';
 import { SourceNode, CustomFile, ContentProps } from '../types';
@@ -34,7 +34,7 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
         const sourceFindVal = sourceFind(info.getValue());
         return (
           <div>
-            <span title={sourceFindVal?.fileSource === 's3 bucket' ? sourceFindVal?.s3url : info.getValue()}>
+            <span title={sourceFindVal?.fileSource === 's3 bucket' ? sourceFindVal?.source_url : info.getValue()}>
               {info.getValue()?.substring(0, 10) + '...'}
             </span>
           </div>
@@ -117,12 +117,14 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
               status:
                 item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                   ? item.status
+                  : item.fileSource === 'youtube'
+                  ? item.status
                   : getFileFromLocal(`${item.fileName}`) != null
                   ? item.status
                   : 'N/A',
               model: item?.model ?? 'Diffbot',
               id: uuidv4(),
-              s3url: item.s3url ?? '',
+              source_url: item.url ?? '',
               fileSource: item.fileSource ?? 'None',
             };
           });
