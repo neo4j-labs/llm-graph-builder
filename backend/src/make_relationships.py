@@ -14,7 +14,8 @@ def create_source_chunk_entity_relationship(source_file_name :str,
                                             chunk : Document,
                                             uri : str,
                                             userName : str,
-                                            password : str):
+                                            password : str,
+                                            isFirstChunk : bool):
     """ Create relationship between source, chunk and entity nodes
     Args:
         source_file_name (str): file name of input source
@@ -24,7 +25,7 @@ def create_source_chunk_entity_relationship(source_file_name :str,
         uri: URI of the graph to extract
         userName: Username to use for graph creation ( if None will use username from config file )
         password: Password to use for graph creation ( if None will use password from config file )
-
+        isFirstChunk : It's bool value to create FIRST_CHUNK AND NEXT_CHUNK relationship between chunk and document node.
     """
     source_node = 'fileName: "{}"'
     # logging.info(f'Graph Document print{graph_document}')
@@ -47,8 +48,14 @@ def create_source_chunk_entity_relationship(source_file_name :str,
     else:
         graph.query('CREATE(c:Chunk {id:"'+ chunk_uuid+'"})' + update_chunk_node_prop.format(chunk.page_content))
 
-    logging.info("make relationship between chunk node and source node")
-    graph.query('MATCH(s:Source {'+source_node.format(source_file_name)+'}) ,(c:Chunk {'+chunk_node_id_set.format(chunk_uuid)+'}) CREATE (s)-[:HAS_CHILD]->(c)')
+    logging.info("make PART_OF relationship between chunk node and document node")
+    graph.query('MATCH(d:Document {'+source_node.format(source_file_name)+'}) ,(c:Chunk {'+chunk_node_id_set.format(chunk_uuid)+'}) CREATE (c)-[:PART_OF]->(d)')
+
+    logging.info("make FIRST_CHUNK, NEXT_CHUNK relationship between chunk node and document node")
+    if isFirstChunk:
+        graph.query('MATCH(d:Document {'+source_node.format(source_file_name)+'}) ,(c:Chunk {'+chunk_node_id_set.format(chunk_uuid)+'}) CREATE (d)-[:FIRST_CHUNK]->(c)')
+    else:
+        graph.query('MATCH(d:Document {'+source_node.format(source_file_name)+'}) ,(c:Chunk {'+chunk_node_id_set.format(chunk_uuid)+'}) CREATE (d)-[:NEXT_CHUNK]->(c)')
     # dict = {}
     # nodes_list = []
     for node in graph_document[0].nodes:

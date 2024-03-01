@@ -69,10 +69,11 @@ async def create_source_knowledge_graph_url(
     source_url=Form(),
     aws_access_key_id=Form(None),
     aws_secret_access_key=Form(None),
-    max_limit=Form(5)
+    max_limit=Form(5),
+    query_source=Form(None)
 ):
     return create_source_node_graph_url(
-        uri, userName, password, source_url, max_limit, aws_access_key_id, aws_secret_access_key
+        uri, userName, password, source_url, max_limit, query_source, aws_access_key_id, aws_secret_access_key
     )
 
 

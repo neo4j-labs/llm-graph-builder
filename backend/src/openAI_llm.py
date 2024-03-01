@@ -243,7 +243,11 @@ def extract_graph_from_OpenAI(model_version,
 
     logging.info(f"create relationship between source,chunck and entity nodes created from {model_version}")
     for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
+        if i == 0:
+            firstChunk = True
+        else:
+            firstChunk = False
         graph_document=extract_and_store_graph(model_version,graph,chunk_document)
-        create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document,uri,userName,password)
+        create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document,uri,userName,password,firstChunk)
         graph_document_list.append(graph_document[0])     
     return graph_document_list

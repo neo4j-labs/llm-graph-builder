@@ -31,10 +31,14 @@ def extract_graph_from_diffbot(graph: Neo4jGraph,
     graph_document_list = []
     
     logging.info(f"create relationship between source,chunk and entity nodes created from Diffbot")
-    for chunk in chunks:
+    for i,chunk in chunks:
+        if i == 0:
+            firstChunk = True
+        else:
+            firstChunk = False
         graph_document = diffbot_nlp.convert_to_graph_documents([chunk])
         graph.add_graph_documents(graph_document)
-        create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk,uri,userName,password)
+        create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk,uri,userName,password,firstChunk)
         graph_document_list.append(graph_document[0]) 
            
     graph.refresh_schema()

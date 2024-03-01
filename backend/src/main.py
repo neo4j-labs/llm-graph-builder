@@ -24,14 +24,14 @@ def create_source_node(graph_obj,file_name,file_size,file_type,source,url=None,a
     current_time = datetime.now()
     job_status = "New"
     source_node = "fileName: '{}'"
-    update_node_prop = "SET s.fileSize = '{}', s.fileType = '{}' ,s.status = '{}',s.url='{}',s.awsAccessKeyId='{}',s.fileSource='{}', s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}', s.errorMessage = '{}', s.nodeCount= {}, s.relationshipCount = {}"
+    update_node_prop = "SET d.fileSize = '{}', d.fileType = '{}' ,d.status = '{}',d.url='{}',d.awsAccessKeyId='{}',d.fileSource='{}', d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}', d.errorMessage = '{}', d.nodeCount= {}, d.relationshipCount = {}"
     logging.info("create source node as file name if not exist")
-    graph_obj.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(file_size,file_type,job_status,url,aws_access_key_id,source,current_time,current_time,0,'',0,0))
+    graph_obj.query('MERGE(d:Document {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(file_size,file_type,job_status,url,aws_access_key_id,source,current_time,current_time,0,'',0,0))
   except Exception as e:
     job_status = "Failed"
     error_message = str(e)
-    update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}"'
-    graph_obj.query('MERGE(s:Source {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message))
+    update_node_prop = 'SET d.status = "{}", d.errorMessage = "{}"'
+    graph_obj.query('MERGE(d:Document {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message))
     raise Exception(str(e))
 
 def create_source_node_graph_local_file(uri, userName, password, file):
@@ -104,12 +104,12 @@ def check_url_source(url):
         source = 'youtube'
       else:
         source = 'unknown'
-      print(source)
+      
       return source
     except Exception as e:
         raise e
   
-def create_source_node_graph_url(uri, userName, password, source_url, max_limit, aws_access_key_id=None,aws_secret_access_key=None):
+def create_source_node_graph_url(uri, userName, password, source_url, max_limit, query_source, aws_access_key_id=None,aws_secret_access_key=None):
     """
       Creates a source node in Neo4jGraph and sets properties.
       
@@ -129,6 +129,7 @@ def create_source_node_graph_url(uri, userName, password, source_url, max_limit,
         #   os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
         graph = Neo4jGraph(url=uri, username=userName, password=password)
         source_type = check_url_source(source_url)
+        print(f"source type URL:{source_type}")
         if source_type == "s3 bucket":
             files_info = get_s3_files_info(source_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
             if isinstance(files_info,dict):
@@ -156,13 +157,17 @@ def create_source_node_graph_url(uri, userName, password, source_url, max_limit,
               job_status = "Failed"
               return create_api_response(job_status,error=error_message,success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket')  
             return create_api_response("Success",data="Source Node created successfully",success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket')
-        else:
+        elif source_type == 'youtube':
             file_name=''
             file_size=''
-            file_type=''
+            file_type='text'
             aws_access_key_id=''
+            job_status = "Completed"
             create_source_node(graph,file_name,file_size,file_type,source_type,source_url,aws_access_key_id)
-
+            return create_api_response(job_status)
+        else:
+           job_status = "Completed"
+           return create_api_response(job_status,data='Unknown URL')
     except Exception as e:
         job_status = "Failed"
         error_message = str(e)
@@ -219,14 +224,18 @@ def extract_graph_from_file(uri, userName, password, model, file=None,s3_url=Non
   # logging.info(f"extract_graph_from_file called for file:{file.filename}")
   try:
     start_time = datetime.now()
-
+    source_node = "fileName: '{}'"
+    job_status = 'Processing'
+    update_node_prop = "SET d.createdAt ='{}', d.updatedAt = '{}',d.status = '{}'"
     graph = Neo4jGraph(url=uri, username=userName, password=password)
+    graph.query('MERGE(d:Document {'+source_node.format(file_key.split('/')[-1])+'}) '+update_node_prop.format(start_time,start_time,job_status))
+    
     try: 
       if file!=None:
         file_name = file.filename
         file_key=file_name
         source_node = "fileName: '{}'"
-        update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessage = '{}',s.nodeCount= {}, s.relationshipCount = {}, s.model = '{}'"
+        update_node_prop = "SET d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}',d.status = '{}', d.errorMessage = '{}',d.nodeCount= {}, d.relationshipCount = {}, d.model = '{}'"
 
         with open('temp.pdf','wb') as f:
           f.write(file.file.read())
@@ -244,9 +253,11 @@ def extract_graph_from_file(uri, userName, password, model, file=None,s3_url=Non
         file_name=file_key.split('/')[-1]
         
         source_node = "fileName: '{}'"
-        update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessage = '{}',s.nodeCount= {}, s.relationshipCount = {}, s.model = '{}'"
+        update_node_prop = "SET d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}',d.status = '{}', d.errorMessage = '{}',d.nodeCount= {}, d.relationshipCount = {}, d.model = '{}'"
         s3=boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
+        print(f"s3 Client object: {s3}")
         response=s3.head_object(Bucket=bucket,Key=file_key)
+        print('running fine')
         # response = s3.get_object(Bucket=bucket, Key=file_key)
         file_size=response['ContentLength']
         
@@ -305,7 +316,7 @@ def extract_graph_from_file(uri, userName, password, model, file=None,s3_url=Non
       job_status = "Completed"
       error_message =""
       logging.info("Update source node properties")
-      graph.query('MERGE(s:Source {'+source_node.format(file_key.split('/')[-1])+'}) '+update_node_prop.format(start_time,end_time,round(processed_time.total_seconds(),2),job_status,error_message,nodes_created,relationships_created,model))
+      graph.query('MERGE(d:Document {'+source_node.format(file_key.split('/')[-1])+'}) '+update_node_prop.format(start_time,end_time,round(processed_time.total_seconds(),2),job_status,error_message,nodes_created,relationships_created,model))
 
       output = {
           "fileName": file_name,
@@ -320,8 +331,8 @@ def extract_graph_from_file(uri, userName, password, model, file=None,s3_url=Non
     except Exception as e:
       job_status = "Failed"
       error_message = str(e)
-      update_node_prop = 'SET s.status = "{}", s.errorMessage = "{}"'
-      graph.query('MERGE(s:Source {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
+      update_node_prop = 'SET d.status = "{}", d.errorMessage = "{}"'
+      graph.query('MERGE(d:Document {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
       logging.exception(f'Exception Stack trace:')
       return create_api_response(job_status,error=error_message)
   except Exception as e:
@@ -339,9 +350,9 @@ def get_source_list_from_graph():
   logging.info("Get existing files list from graph")
   try:
     graph = Neo4jGraph()
-    query = "MATCH(s:Source) RETURN s ORDER BY s.updatedAt DESC"
+    query = "MATCH(d:Document) RETURN d ORDER BY d.updatedAt DESC"
     result = graph.query(query)
-    list_of_json_objects = [entry['s'] for entry in result]
+    list_of_json_objects = [entry['d'] for entry in result]
     return create_api_response("Success",data=list_of_json_objects)
   except Exception as e:
     job_status = "Failed"
