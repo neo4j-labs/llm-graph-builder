@@ -170,7 +170,7 @@ def create_source_node_graph_url(uri, userName, password, source_url, max_limit,
         elif source_type == 'youtube':
             match = re.search(r"v=([a-zA-Z0-9_-]+)", source_url)
             youtube_id=match.group(1)
-            file_name='YoutubeTranscript_'+youtube_id
+            file_name=youtube_id
             file_size=''
             file_type='text'
             aws_access_key_id=''
@@ -373,7 +373,7 @@ def get_documents_from_youtube(url):
           pages = youtube_loader.load()
           match = re.search(r"v=([a-zA-Z0-9_-]+)", url)
           youtube_id=match.group(1)
-          file_name='YoutubeTranscript_'+youtube_id
+          file_name=youtube_id
           file_key=file_name
           print("Youtube pages = ",pages)
           return file_name, file_key, pages     
