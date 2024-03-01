@@ -79,6 +79,8 @@ KNN_MIN_SCORE = ""\
      Returns: 
    	 Json response to API with fileName, nodeCount, relationshipCount, processingTime, 
      status and model as attributes.
+     
+<img width="692" alt="neoooo" src="https://github.com/neo4j-labs/llm-graph-builder/assets/118245454/01e731df-b565-4f4f-b577-c47e39dd1748">
 
 #### create_source_node_graph(uri, userName, password, file):
 
@@ -101,6 +103,7 @@ KNN_MIN_SCORE = ""\
      Returns a list of file sources in the database by querying the graph and 
      sorting the list by the last updated date. 
 
+<img width="822" alt="get_source" src="https://github.com/neo4j-labs/llm-graph-builder/assets/118245454/1d8c7a86-6f10-4916-a4c1-8fdd9f312bcc">
 
 
 ## Links
