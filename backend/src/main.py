@@ -101,12 +101,19 @@ def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
 
 def check_url_source(url):
     try:
+      youtube_id_regex = re.search(r"v=([a-zA-Z0-9_-]+)", url)
+        
       if re.match('^s3:\/\/[a-z0-9.-]{3,63}\/?$', url):
         source ='s3 bucket'
-      elif re.match('^(https?:\/\/)?(www\.|m\.)?youtube\.com\/(c\/[^\/\?]+\/|channel\/[^\/\?]+\/|user\/[^\/\?]+\/)?(watch\?v=[^&\s]+|embed\/[^\/\?]+|[^\/\?]+)(&[^?\s]*)?$',url) :
-        source = 'youtube'
+        
+      elif url.startswith("https://www.youtube.com/watch?") and youtube_id_regex is not None:
+        if len(youtube_id_regex.group(1)) == 11:
+            source = 'youtube'
+            #re.match('^(https?:\/\/)?(www\.|m\.)?youtube\.com\/(c\/[^\/\?]+\/|channel\/[^\/\?]+\/|user\/[^\/\?]+\/)?(watch\?v=[^&\s]+|embed\/[^\/\?]+|[^\/\?]+)(&[^?\s]*)?$',url) :
+        else :
+          source = 'Invalid'
       else:
-        source = 'unknown'
+        source = 'Invalid'
       
       return source
     except Exception as e:
@@ -161,7 +168,9 @@ def create_source_node_graph_url(uri, userName, password, source_url, max_limit,
               return create_api_response(job_status,error=error_message,success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket')  
             return create_api_response("Success",data="Source Node created successfully",success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket')
         elif source_type == 'youtube':
-            file_name=''
+            match = re.search(r"v=([a-zA-Z0-9_-]+)", source_url)
+            youtube_id=match.group(1)
+            file_name='YoutubeTranscript_'+youtube_id
             file_size=''
             file_type='text'
             aws_access_key_id=''
@@ -209,7 +218,7 @@ def get_s3_pdf_content(s3_url,aws_access_key_id=None,aws_secret_access_key=None)
     # except Exception as e:
     #     return None
 
-def extract_graph_from_file(uri, userName, password, model, file=None,url=None,aws_access_key_id=None,aws_secret_access_key=None):
+def extract_graph_from_file(uri, userName, password, model, file=None,source_url=None,aws_access_key_id=None,aws_secret_access_key=None):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -232,16 +241,16 @@ def extract_graph_from_file(uri, userName, password, model, file=None,url=None,a
     try: 
       if file!=None:
         file_name, file_key, pages = get_documents_from_file(file)
-         
-      elif is_valid_s3_url(url):
+        
+      elif check_url_source(source_url)=='s3 bucket':
         if(aws_access_key_id==None or aws_secret_access_key==None):
           job_status = "Failed"
           return create_api_response(job_status,error='Please provide AWS access and secret keys')
         else:
-          file_name, file_key, pages = get_documents_from_s3(url, aws_access_key_id, aws_secret_access_key)
+          file_name, file_key, pages = get_documents_from_s3(source_url, aws_access_key_id, aws_secret_access_key)
       
-      elif is_valid_youtube_url(url):
-          file_name, file_key, pages = get_documents_from_youtube(url)
+      elif check_url_source(source_url)=='youtube':
+          file_name, file_key, pages = get_documents_from_youtube(source_url)
       
       else:
           job_status = "Failed"
@@ -252,8 +261,7 @@ def extract_graph_from_file(uri, userName, password, model, file=None,url=None,a
           return create_api_response(job_status,error='Failed to load the pdf content')
           
       source_node = "fileName: '{}'"
-      update_node_prop = "SET s.createdAt ='{}', s.updatedAt = '{}', s.processingTime = '{}',s.status = '{}', s.errorMessage = '{}',s.nodeCount= {}, s.relationshipCount = {}, s.model = '{}'"
-  
+      update_node_prop = "SET d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}',d.status = '{}', d.errorMessage = '{}',d.nodeCount= {}, d.relationshipCount = {}, d.model = '{}'"
       # pages = loader.load_and_split()
       bad_chars = ['"', "\n", "'"]
       for i in range(0,len(pages)):
@@ -436,24 +444,3 @@ def create_api_response(status,success_count=None,Failed_count=None, data=None, 
     response['file_source']=file_source
     
   return response
-
-
-def is_valid_s3_url(url):
-    logging.info("Checking if s3 url is valid")
-    if url.startswith('s3://'):
-        return True 
-    return False    
-
-  
-def is_valid_youtube_url(url):
-  logging.info("Checking if youtube url is valid")
-  match = re.search(r"v=([a-zA-Z0-9_-]+)", url)
-  # Check if the URL is a valid format.
-  if isinstance(url, str) and url.startswith("https://www.youtube.com") and match is not None:
-    # Check if the video ID is valid.
-    if len(match.group(1)) == 11:
-      logging.info("Not valid video id, length incorrect")
-      return True
-
-  # The URL is valid.
-  return False

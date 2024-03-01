@@ -31,7 +31,7 @@ def extract_graph_from_diffbot(graph: Neo4jGraph,
     graph_document_list = []
     
     logging.info(f"create relationship between source,chunk and entity nodes created from Diffbot")
-    for i,chunk in chunks:
+    for i,chunk in enumerate(chunks):
         if i == 0:
             firstChunk = True
         else:
