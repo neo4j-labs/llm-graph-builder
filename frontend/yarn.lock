@@ -847,6 +847,13 @@
     prop-types "^15.8.1"
     react-is "^18.2.0"
 
+"@neo4j-bloom/dagre@file:./nvl-modules/neo4j-nvl-core/neo4j-bloom-dagre.tgz":
+  version "0.8.14"
+  resolved "file:./nvl-modules/neo4j-nvl-core/neo4j-bloom-dagre.tgz#e738da67fd81b7d425444c1898b4f6681014f976"
+  dependencies:
+    graphlib "2.1.8"
+    lodash "^4.17.19"
+
 "@neo4j-cypher/antlr4-browser@1.0.0":
   version "1.0.0"
   resolved "https://registry.npmjs.org/@neo4j-cypher/antlr4-browser/-/antlr4-browser-1.0.0.tgz"
@@ -929,6 +936,34 @@
     react-use "^17.4.0"
     tinycolor2 "^1.4.2"
     usehooks-ts "2.9.1"
+
+"@neo4j-nvl/core@./nvl-modules/neo4j-nvl-core":
+  version "0.2.53"
+  dependencies:
+    "@neo4j-bloom/dagre" "file:./../../../../../../../AppData/Local/Yarn/Cache/v6/npm-@neo4j-nvl-core-0.2.53-374b42c1-c2a5-455f-81f3-5bc7d19e05d7-1709280654150/node_modules/@neo4j-nvl/core/neo4j-bloom-dagre.tgz"
+    "@neo4j-nvl/layout-workers" "file:./../../../../../../../AppData/Local/Yarn/Cache/v6/npm-@neo4j-nvl-core-0.2.53-374b42c1-c2a5-455f-81f3-5bc7d19e05d7-1709280654150/node_modules/@neo4j-nvl/core/neo4j-nvl-layout-workers.tgz"
+
+"@neo4j-nvl/interaction-handlers@./nvl-modules/neo4j-nvl-interaction-handlers":
+  version "0.2.56"
+  dependencies:
+    concaveman "^1.2.1"
+    lodash "4.17.21"
+
+"@neo4j-nvl/layout-workers@file:./nvl-modules/neo4j-nvl-core/neo4j-nvl-layout-workers.tgz":
+  version "0.2.55"
+  resolved "file:./nvl-modules/neo4j-nvl-core/neo4j-nvl-layout-workers.tgz#baf009990bb49962242616b0b19b3e15dc180530"
+  dependencies:
+    bin-pack "^1.0.2"
+    cytoscape "^3.23.0"
+    cytoscape-cose-bilkent "^4.1.0"
+    graphlib "^2.1.8"
+
+"@neo4j-nvl/react@./nvl-modules/neo4j-nvl-react":
+  version "0.2.52"
+  dependencies:
+    lodash "4.17.21"
+    react "^18.2.0"
+    react-dom "^18.2.0"
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
@@ -2420,6 +2455,11 @@ base64-js@^1.3.1:
   resolved "https://registry.npmjs.org/base64-js/-/base64-js-1.5.1.tgz"
   integrity sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==
 
+bin-pack@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/bin-pack/-/bin-pack-1.0.2.tgz#c2a014edbf0bed70a3292062ed46577b96120679"
+  integrity sha512-aOk0SxEon5LF9cMxQFViSKb4qccG6rs7XKyMXIb1J8f8LA2acTIWnHdT0IOTe4gYBbqgjdbuTZ5f+UP+vlh4Mw==
+
 binary-extensions@^2.0.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-2.2.0.tgz#75f502eeaf9ffde42fc98829645be4ea76bd9e2d"
@@ -2597,6 +2637,16 @@ concat-map@0.0.1:
   resolved "https://registry.npmjs.org/concat-map/-/concat-map-0.0.1.tgz"
   integrity sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==
 
+concaveman@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/concaveman/-/concaveman-1.2.1.tgz#47d20b4521125c15fabf453653c2696d9ee41e0b"
+  integrity sha512-PwZYKaM/ckQSa8peP5JpVr7IMJ4Nn/MHIaWUjP4be+KoZ7Botgs8seAZGpmaOM+UZXawcdYRao/px9ycrCihHw==
+  dependencies:
+    point-in-polygon "^1.1.0"
+    rbush "^3.0.1"
+    robust-predicates "^2.0.4"
+    tinyqueue "^2.0.3"
+
 convert-source-map@^1.5.0:
   version "1.9.0"
   resolved "https://registry.npmjs.org/convert-source-map/-/convert-source-map-1.9.0.tgz"
@@ -2613,6 +2663,13 @@ copy-to-clipboard@^3.3.1:
   integrity sha512-2KV8NhB5JqC3ky0r9PMCAZKbUHSwtEo4CwCs0KXgruG43gX5PMqDEBbVU4OUzw2MuAWUfsuFmWvEKG5QRfSnJA==
   dependencies:
     toggle-selection "^1.0.6"
+
+cose-base@^1.0.0:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/cose-base/-/cose-base-1.0.3.tgz#650334b41b869578a543358b80cda7e0abe0a60a"
+  integrity sha512-s9whTXInMSgAp/NVXVNuVxVKzGH2qck3aQlVHxDCdAEPgtMKwc4Wq6/QKhgdEdgbLSi9rBTAcPoRa6JpiG4ksg==
+  dependencies:
+    layout-base "^1.0.0"
 
 cosmiconfig@^7.0.0:
   version "7.1.0"
@@ -2663,6 +2720,21 @@ csstype@^3.0.2, csstype@^3.1.2, csstype@^3.1.3:
   version "3.1.3"
   resolved "https://registry.npmjs.org/csstype/-/csstype-3.1.3.tgz"
   integrity sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==
+
+cytoscape-cose-bilkent@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/cytoscape-cose-bilkent/-/cytoscape-cose-bilkent-4.1.0.tgz#762fa121df9930ffeb51a495d87917c570ac209b"
+  integrity sha512-wgQlVIUJF13Quxiv5e1gstZ08rnZj2XaLHGoFMYXz7SkNfCDOOteKBE6SYRfA9WxxI/iBc3ajfDoc6hb/MRAHQ==
+  dependencies:
+    cose-base "^1.0.0"
+
+cytoscape@^3.23.0:
+  version "3.28.1"
+  resolved "https://registry.yarnpkg.com/cytoscape/-/cytoscape-3.28.1.tgz#f32c3e009bdf32d47845a16a4cd2be2bbc01baf7"
+  integrity sha512-xyItz4O/4zp9/239wCcH8ZcFuuZooEeF8KHRmzjDfGdXsj3OG9MFSMA0pJE0uX3uCN/ygof6hHf4L7lst+JaDg==
+  dependencies:
+    heap "^0.2.6"
+    lodash "^4.17.21"
 
 date-fns@^2.30.0:
   version "2.30.0"
@@ -3336,6 +3408,13 @@ graphemer@^1.4.0:
   resolved "https://registry.npmjs.org/graphemer/-/graphemer-1.4.0.tgz"
   integrity sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==
 
+graphlib@2.1.8, graphlib@^2.1.8:
+  version "2.1.8"
+  resolved "https://registry.yarnpkg.com/graphlib/-/graphlib-2.1.8.tgz#5761d414737870084c92ec7b5dbcb0592c9d35da"
+  integrity sha512-jcLLfkpoVGmH7/InMC/1hIvOPSUh38oJtGhvrOFGzioE1DZ+0YW16RgmOJhHiuWTvGiJQ9Z1Ik43JvkRPRvE+A==
+  dependencies:
+    lodash "^4.17.15"
+
 has-bigints@^1.0.1, has-bigints@^1.0.2:
   version "1.0.2"
   resolved "https://registry.npmjs.org/has-bigints/-/has-bigints-1.0.2.tgz"
@@ -3397,6 +3476,11 @@ hastscript@^6.0.0:
     hast-util-parse-selector "^2.0.0"
     property-information "^5.0.0"
     space-separated-tokens "^1.0.0"
+
+heap@^0.2.6:
+  version "0.2.7"
+  resolved "https://registry.yarnpkg.com/heap/-/heap-0.2.7.tgz#1e6adf711d3f27ce35a81fe3b7bd576c2260a8fc"
+  integrity sha512-2bsegYkkHO+h/9MGbn6KWcE45cHZgPANo5LXF7EvWdT0yT2EguSVO1nDgU5c8+ZOPwp2vMNa7YFsJhVcDR9Sdg==
 
 highlight.js@^10.4.1, highlight.js@~10.7.0:
   version "10.7.3"
@@ -3781,6 +3865,11 @@ keyv@^4.5.3:
   dependencies:
     json-buffer "3.0.1"
 
+layout-base@^1.0.0:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/layout-base/-/layout-base-1.0.2.tgz#1291e296883c322a9dd4c5dd82063721b53e26e2"
+  integrity sha512-8h2oVEZNktL4BH2JCOI90iD1yXwL6iNW7KcCKT2QZgQJR2vbqDsldCTPRU9NifTCqHZci57XvQQ15YTu+sTYPg==
+
 "legacy-swc-helpers@npm:@swc/helpers@=0.4.14":
   version "0.4.14"
   resolved "https://registry.npmjs.org/@swc/helpers/-/helpers-0.4.14.tgz"
@@ -3832,6 +3921,11 @@ lodash.merge@^4.6.2:
   version "4.6.2"
   resolved "https://registry.npmjs.org/lodash.merge/-/lodash.merge-4.6.2.tgz"
   integrity sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==
+
+lodash@4.17.21, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.21:
+  version "4.17.21"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
+  integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
 
 loose-envify@^1.0.0, loose-envify@^1.1.0, loose-envify@^1.4.0:
   version "1.4.0"
@@ -4177,6 +4271,11 @@ pirates@^4.0.1:
   resolved "https://registry.yarnpkg.com/pirates/-/pirates-4.0.6.tgz#3018ae32ecfcff6c29ba2267cbf21166ac1f36b9"
   integrity sha512-saLsH7WeYYPiD25LDuLRRY/i+6HaPYr6G1OUlN39otzkSTxKnubR9RTxS3/Kk50s1g2JTgFwWQDQyplC5/SHZg==
 
+point-in-polygon@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/point-in-polygon/-/point-in-polygon-1.1.0.tgz#b0af2616c01bdee341cbf2894df643387ca03357"
+  integrity sha512-3ojrFwjnnw8Q9242TzgXuTD+eKiutbzyslcq1ydfu82Db2y+Ogbmyrkpv0Hgj31qwT3lbS9+QAAO/pIQM35XRw==
+
 postcss-import@^15.1.0:
   version "15.1.0"
   resolved "https://registry.yarnpkg.com/postcss-import/-/postcss-import-15.1.0.tgz#41c64ed8cc0e23735a9698b3249ffdbf704adc70"
@@ -4280,6 +4379,18 @@ queue-microtask@^1.2.2:
   version "1.2.3"
   resolved "https://registry.npmjs.org/queue-microtask/-/queue-microtask-1.2.3.tgz"
   integrity sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==
+
+quickselect@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/quickselect/-/quickselect-2.0.0.tgz#f19680a486a5eefb581303e023e98faaf25dd018"
+  integrity sha512-RKJ22hX8mHe3Y6wH/N3wCM6BWtjaxIyyUIkpHOvfFnxdI4yD4tBXEBKSbriGujF6jnSVkJrffuo6vxACiSSxIw==
+
+rbush@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/rbush/-/rbush-3.0.1.tgz#5fafa8a79b3b9afdfe5008403a720cc1de882ecf"
+  integrity sha512-XRaVO0YecOpEuIvbhbpTrZgoiI6xBlz6hnlr6EHhd+0x9ase6EmeN+hdwwUaJvLcsFFQ8iWVF1GAK1yB0BWi0w==
+  dependencies:
+    quickselect "^2.0.0"
 
 re-resizable@^6.9.11:
   version "6.9.11"
@@ -4441,13 +4552,6 @@ react-table@^7.7.0:
   resolved "https://registry.npmjs.org/react-table/-/react-table-7.8.0.tgz"
   integrity sha512-hNaz4ygkZO4bESeFfnfOft73iBUj8K5oKi1EcSHPAibEydfsX2MyU6Z8KCr3mv3C9Kqqh71U+DhZkFvibbnPbA==
 
-react-toastify@^10.0.4:
-  version "10.0.4"
-  resolved "https://registry.yarnpkg.com/react-toastify/-/react-toastify-10.0.4.tgz#6ecdbbf923a07fc45850e69b0566efc7bf733283"
-  integrity sha512-etR3RgueY8pe88SA67wLm8rJmL1h+CLqUGHuAoNsseW35oTGJEri6eBTyaXnFKNQ80v/eO10hBYLgz036XRGgA==
-  dependencies:
-    clsx "^2.1.0"
-
 react-transition-group@^4.3.0, react-transition-group@^4.4.5:
   version "4.4.5"
   resolved "https://registry.npmjs.org/react-transition-group/-/react-transition-group-4.4.5.tgz"
@@ -4578,6 +4682,11 @@ rimraf@^3.0.2:
   integrity sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==
   dependencies:
     glob "^7.1.3"
+
+robust-predicates@^2.0.4:
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/robust-predicates/-/robust-predicates-2.0.4.tgz#0a2367a93abd99676d075981707f29cfb402248b"
+  integrity sha512-l4NwboJM74Ilm4VKfbAtFeGq7aEjWL+5kVFcmgFA2MrdnQWx9iE/tUGvxY5HyMI7o/WpSIUFLbC5fbeaHgSCYg==
 
 rollup@^3.27.1:
   version "3.29.4"
@@ -4966,6 +5075,11 @@ tinycolor2@^1.4.2:
   version "1.6.0"
   resolved "https://registry.npmjs.org/tinycolor2/-/tinycolor2-1.6.0.tgz"
   integrity sha512-XPaBkWQJdsf3pLKJV9p4qN/S+fm2Oj8AIPo1BTUhg5oxkvm9+SVEGFdhyOz7tTdUTfvxMiAs4sp6/eZO2Ew+pw==
+
+tinyqueue@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/tinyqueue/-/tinyqueue-2.0.3.tgz#64d8492ebf39e7801d7bd34062e29b45b2035f08"
+  integrity sha512-ppJZNDuKGgxzkHihX8v9v9G5f+18gzaTfrukGrq6ueg0lmH4nqVnA2IPG0AEH3jKEk2GRJCUhDoqpoiw3PHLBA==
 
 to-fast-properties@^2.0.0:
   version "2.0.0"
