@@ -64,7 +64,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
                 : 'N/A',
             model: item?.model ?? 'Diffbot',
             id: uuidv4(),
-            source_url: item.url ?? '',
+            source_url: item.url != 'None' && item?.url != '' ? item.url : '',
             fileSource: item.fileSource ?? 'None',
           }));
           setFilesData(prefiles);
