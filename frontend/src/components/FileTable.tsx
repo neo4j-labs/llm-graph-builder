@@ -124,7 +124,7 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
                   : 'N/A',
               model: item?.model ?? 'Diffbot',
               id: uuidv4(),
-              source_url: item.url ?? '',
+              source_url: item.url != 'None' && item?.url != '' ? item.url : '',
               fileSource: item.fileSource ?? 'None',
             };
           });
