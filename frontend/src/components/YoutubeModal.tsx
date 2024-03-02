@@ -47,34 +47,41 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         reset();
         const res: any = await getSourceNodes();
         if (Array.isArray(res.data.data) && res.data.data.length) {
-          const prefiles = res.data.data.map((item: SourceNode) => ({
-            name: item.fileName,
-            size: item.fileSize ?? 0,
-            type: item?.fileType?.toUpperCase() ?? 'None',
-            NodesCount: item?.nodeCount ?? 0,
-            processing: item?.processingTime ?? 'None',
-            relationshipCount: item?.relationshipCount ?? 0,
-            status:
-              item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
-                ? item.status
-                : item.fileSource === 'youtube'
-                ? item.status
-                : getFileFromLocal(`${item.fileName}`) != null
-                ? item.status
-                : 'N/A',
-            model: item?.model ?? 'Diffbot',
-            id: uuidv4(),
-            source_url: item.url != 'None' && item?.url != '' ? item.url : '',
-            fileSource: item.fileSource ?? 'None',
-          }));
+          const prefiles: any[] = [];
+          res.data.data.forEach((item: SourceNode) => {
+            if (item.fileName != undefined) {
+              prefiles.push({
+                name: item.fileName,
+                size: item.fileSize ?? 0,
+                type: item?.fileType?.toUpperCase() ?? 'None',
+                NodesCount: item?.nodeCount ?? 0,
+                processing: item?.processingTime ?? 'None',
+                relationshipCount: item?.relationshipCount ?? 0,
+                status:
+                  item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                    ? item.status
+                    : item.fileSource === 'youtube'
+                    ? item.status
+                    : getFileFromLocal(`${item.fileName}`) != null
+                    ? item.status
+                    : 'N/A',
+                model: item?.model ?? 'Diffbot',
+                id: uuidv4(),
+                source_url: item.url != 'None' && item?.url != '' ? item.url : '',
+                fileSource: item.fileSource ?? 'None',
+              });
+            }
+          });
           setFilesData(prefiles);
           const prefetchedFiles: any[] = [];
           res.data.data.forEach((item: any) => {
             const localFile = getFileFromLocal(`${item.fileName}`);
-            if (localFile != null) {
-              prefetchedFiles.push(localFile);
-            } else {
-              prefetchedFiles.push(null);
+            if (item.fileName != undefined) {
+              if (localFile != null ) {
+                prefetchedFiles.push(localFile);
+              } else {
+                  prefetchedFiles.push(null);
+              }
             }
           });
           setFiles(prefetchedFiles);

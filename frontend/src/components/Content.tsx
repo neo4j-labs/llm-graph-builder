@@ -77,49 +77,44 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
           localStorage.getItem('secretkey')
         );
         apirequests.push(apiResponse);
-        Promise.allSettled(apirequests)
-          .then((r) => {
-            r.forEach((apiRes) => {
-              if (apiRes.status === 'fulfilled' && apiRes.value) {
-                if (apiRes?.value?.status === 'Failed') {
-                  setShowAlert(true);
-                  setErrorMessage('Unexpected Error');
-                  setFilesData((prevfiles) =>
-                    prevfiles.map((curfile, idx) => {
-                      if (idx == uid) {
-                        return {
-                          ...curfile,
-                          status: 'Failed',
-                        };
-                      }
-                      return curfile;
-                    })
-                  );
-                  throw new Error('API Failure');
-                } else {
-                  setFilesData((prevfiles) => {
-                    return prevfiles.map((curfile, idx) => {
-                      if (idx == uid) {
-                        const apiResponse = apiRes?.value?.data;
-                        return {
-                          ...curfile,
-                          processing: apiResponse?.processingTime?.toFixed(2),
-                          status: apiResponse?.status,
-                          NodesCount: apiResponse?.nodeCount,
-                          relationshipCount: apiResponse?.relationshipCount,
-                          model: apiResponse?.model,
-                        };
-                      }
-                      return curfile;
-                    });
-                  });
-                }
-              }
-            });
-          })
-          .catch((err) => {
-            console.log(err);
-          });
+        const results = await Promise.allSettled(apirequests);
+        results.forEach(async (apiRes) => {
+          if (apiRes.status === 'fulfilled' && apiRes.value) {
+            if (apiRes?.value?.status === 'Failed') {
+              setShowAlert(true);
+              setErrorMessage('Unexpected Error');
+              setFilesData((prevfiles) =>
+                prevfiles.map((curfile, idx) => {
+                  if (idx == uid) {
+                    return {
+                      ...curfile,
+                      status: 'Failed',
+                    };
+                  }
+                  return curfile;
+                })
+              );
+              throw new Error('API Failure');
+            } else {
+              setFilesData((prevfiles) => {
+                return prevfiles.map((curfile, idx) => {
+                  if (idx == uid) {
+                    const apiResponse = apiRes?.value?.data;
+                    return {
+                      ...curfile,
+                      processing: apiResponse?.processingTime?.toFixed(2),
+                      status: apiResponse?.status,
+                      NodesCount: apiResponse?.nodeCount,
+                      relationshipCount: apiResponse?.relationshipCount,
+                      model: apiResponse?.model,
+                    };
+                  }
+                  return curfile;
+                });
+              });
+            }
+          }
+        });
       } catch (err: any) {
         console.log(err);
         setShowAlert(true);
@@ -136,42 +131,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
           })
         );
       }
-      // } finally {
-      //   const res: any = await getSourceNodes();
-      //   if (Array.isArray(res.data.data) && res.data.data.length) {
-      //     const prefiles = res.data.data.map((item: SourceNode) => {
-      //       return {
-      //         name: item.fileName,
-      //         size: item.fileSize ?? 0,
-      //         type: item?.fileType?.toUpperCase() ?? 'None',
-      //         NodesCount: item?.nodeCount ?? 0,
-      //         processing: item?.processingTime ?? 'None',
-      //         relationshipCount: item?.relationshipCount ?? 0,
-      //         status:
-      //           item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
-      //             ? item.status
-      //             : getFileFromLocal(`${item.fileName}`) != null
-      //             ? item.status
-      //             : 'N/A',
-      //         model: item?.model ?? 'Diffbot',
-      //         id: uuidv4(),
-      //         source_url: item.url ?? '',
-      //         fileSource: item.fileSource ?? 'None',
-      //       };
-      //     });
-      //     setFilesData(prefiles);
-      //     const prefetchedFiles: any[] = [];
-      //     res.data.data.forEach((item: any) => {
-      //       const localFile = getFileFromLocal(`${item.fileName}`);
-      //       if (localFile != null) {
-      //         prefetchedFiles.push(localFile);
-      //       } else {
-      //         prefetchedFiles.push(null);
-      //       }
-      //     });
-      //     setFiles(prefetchedFiles);
-      //   }
-      // }
     }
   };
 
@@ -227,7 +186,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
           <Button
-            loading={filesData.some((f) => f.status === 'Processing')}
+            loading={filesData.some((f) => f?.status === 'Processing')}
             disabled={disableCheck}
             onClick={handleGenerateGraph}
             className='mr-0.5'
