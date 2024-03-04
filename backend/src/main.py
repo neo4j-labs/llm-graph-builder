@@ -17,6 +17,9 @@ import re
 from tempfile import NamedTemporaryFile
 import re
 from langchain_community.document_loaders import YoutubeLoader
+from langchain.document_loaders import WikipediaLoader
+import warnings
+warnings.filterwarnings("ignore")
 
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
@@ -119,7 +122,7 @@ def check_url_source(url):
     except Exception as e:
         raise e
   
-def create_source_node_graph_url(uri, userName, password, source_url, max_limit, query_source, aws_access_key_id=None,aws_secret_access_key=None):
+def create_source_node_graph_url(uri, userName, password, source_url, max_limit, wiki_query, aws_access_key_id=None,aws_secret_access_key=None):
     """
       Creates a source node in Neo4jGraph and sets properties.
       
@@ -134,9 +137,6 @@ def create_source_node_graph_url(uri, userName, password, source_url, max_limit,
         Success or Failed message of node creation
     """
     try:
-        # if aws_access_key_id !=None and aws_secret_access_key !=None:
-        #   os.environ['AWS_ACCESS_KEY_ID']=  aws_access_key_id
-        #   os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
         graph = Neo4jGraph(url=uri, username=userName, password=password)
         source_type = check_url_source(source_url)
         print(f"source type URL:{source_type}")
@@ -157,7 +157,7 @@ def create_source_node_graph_url(uri, userName, password, source_url, max_limit,
                 file_size=file_info['file_size_bytes']
                 s3_file_path=str(source_url+file_name)
                 try:
-                  create_source_node(graph,file_name,file_size,file_type,source_type,s3_file_path,aws_access_key_id)
+                  create_source_node(graph,file_name.split('/')[-1],file_size,file_type,source_type,s3_file_path,aws_access_key_id)
                   success_count+=1
                 except Exception as e:
                   err_flag=1
@@ -199,10 +199,12 @@ def file_into_chunks(pages: List[Document]):
     logging.info("Split file into smaller chunks")
     text_splitter = TokenTextSplitter(chunk_size=200, chunk_overlap=20)
     chunks = text_splitter.split_documents(pages)
+    # print('Before chunks',len(chunks))
+    chunks=chunks[:10]
     return chunks
 
 def get_s3_pdf_content(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
-    # try:
+    try:
       # Extract bucket name and directory from the S3 URL
         parsed_url = urlparse(s3_url)
         bucket_name = parsed_url.netloc
@@ -215,10 +217,22 @@ def get_s3_pdf_content(s3_url,aws_access_key_id=None,aws_secret_access_key=None)
         else:
           return None
     
-    # except Exception as e:
-    #     return None
+    except Exception as e:
+        return None
 
-def extract_graph_from_file(uri, userName, password, model, file=None,source_url=None,aws_access_key_id=None,aws_secret_access_key=None):
+def wiki_loader(wiki_query,max_sources,max_wiki_pages=2):
+
+  searches=wiki_query.split(',')
+  searches=searches[:max_sources]
+  pages=[]
+  for query in searches:
+    pages.extend(WikipediaLoader(query=query,load_all_available_meta=False).load())
+    pages=pages[:max_wiki_pages]
+  return pages
+
+
+
+def extract_graph_from_file(uri, userName, password, model, file=None,source_url=None,aws_access_key_id=None,aws_secret_access_key=None,wiki_query=None,max_sources=None,max_wiki_pages=2):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -256,14 +270,20 @@ def extract_graph_from_file(uri, userName, password, model, file=None,source_url
           job_status = "Failed"
           return create_api_response(job_status,error='Invalid url to create graph')
           
+      if wiki_query!=None:
+        wiki_pages=wiki_loader(wiki_query,max_sources,max_wiki_pages)
+        pages.extend(wiki_pages)
+
       if pages==None:
           job_status = "Failed"
           return create_api_response(job_status,error='Failed to load the pdf content')
           
       source_node = "fileName: '{}'"
       update_node_prop = "SET d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}',d.status = '{}', d.errorMessage = '{}',d.nodeCount= {}, d.relationshipCount = {}, d.model = '{}'"
-      # pages = loader.load_and_split()
       bad_chars = ['"', "\n", "'"]
+
+
+
       for i in range(0,len(pages)):
         text = pages[i].page_content
         for j in bad_chars:
@@ -272,6 +292,8 @@ def extract_graph_from_file(uri, userName, password, model, file=None,source_url
           else:
             text = text.replace(j, '')
         pages[i]=Document(page_content=str(text))
+
+
       logging.info("Break down file into chunks")
       chunks = file_into_chunks(pages)
       
@@ -348,9 +370,6 @@ def get_documents_from_file(file):
     return file_name,file_key,pages
     
 def get_documents_from_s3(s3_url, aws_access_key_id, aws_secret_access_key):
-    # if aws_access_key_id !=None and aws_secret_access_key !=None:
-        #   os.environ['AWS_ACCESS_KEY_ID']=  aws_access_key_id
-        #   os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
         
         parsed_url = urlparse(s3_url)
         bucket = parsed_url.netloc
@@ -358,12 +377,9 @@ def get_documents_from_s3(s3_url, aws_access_key_id, aws_secret_access_key):
         file_name=file_key.split('/')[-1]
         s3=boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
         response=s3.head_object(Bucket=bucket,Key=file_key)
-        # response = s3.get_object(Bucket=bucket, Key=file_key)
         file_size=response['ContentLength']
         
         logging.info(f'bucket : {bucket},  file key : {file_key},  file size : {file_size}')
-        
-        # loader = S3FileLoader(bucket,file_key)
         pages=get_s3_pdf_content(s3_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
         return file_name,file_key,pages
  

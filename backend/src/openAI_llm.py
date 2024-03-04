@@ -242,7 +242,7 @@ def extract_graph_from_OpenAI(model_version,
     openai_api_key = os.environ.get('OPENAI_API_KEY')
     graph_document_list = []
 
-    logging.info(f"create relationship between source,chunck and entity nodes created from {model_version}")
+    logging.info(f"create relationship between source,chunk and entity nodes created from {model_version}")
     for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
         if i == 0:
             firstChunk = True
