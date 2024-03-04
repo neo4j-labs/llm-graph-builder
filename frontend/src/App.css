@@ -73,6 +73,11 @@
   height: 70px;
   object-fit: contain;
 }
-::placeholder{
-  color:rgb(135, 130, 130) !important;
+::placeholder {
+  color: rgb(135, 130, 130) !important;
+}
+.textellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

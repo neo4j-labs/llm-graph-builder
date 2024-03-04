@@ -18,7 +18,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [querySource, setQuerySource] = useState<string>('');
 
   const { userCredentials } = useCredentials();
-  const { setFiles, setFilesData } = useFileContext();
+  const { setFiles, setFilesData, model } = useFileContext();
   const reset = () => {
     setYoutubeURL('');
     setQuerySource('');
@@ -38,9 +38,9 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         const apiResponse = await urlScanAPI(youtubeURL, userCredentials, '', '', sourceLimit, querySource);
         console.log('response', apiResponse);
         setStatus('success');
-        if (apiResponse.data.status == 'Failed') {
+        if (apiResponse.data.status == 'Failed'|| !apiResponse.data) {
           setStatus('danger');
-          setStatusMessage(apiResponse.data.message);
+          setStatusMessage(apiResponse.data.message??apiResponse?.message);
         } else {
           setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count ?? ''} Link`);
         }
@@ -65,7 +65,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
                     : getFileFromLocal(`${item.fileName}`) != null
                     ? item.status
                     : 'N/A',
-                model: item?.model ?? 'Diffbot',
+                model: item?.model ?? model,
                 id: uuidv4(),
                 source_url: item.url != 'None' && item?.url != '' ? item.url : '',
                 fileSource: item.fileSource ?? 'None',
@@ -77,10 +77,10 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           res.data.data.forEach((item: any) => {
             const localFile = getFileFromLocal(`${item.fileName}`);
             if (item.fileName != undefined) {
-              if (localFile != null ) {
+              if (localFile != null) {
                 prefetchedFiles.push(localFile);
               } else {
-                  prefetchedFiles.push(null);
+                prefetchedFiles.push(null);
               }
             }
           });

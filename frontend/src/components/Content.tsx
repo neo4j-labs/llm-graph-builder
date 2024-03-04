@@ -81,6 +81,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
         results.forEach(async (apiRes) => {
           if (apiRes.status === 'fulfilled' && apiRes.value) {
             if (apiRes?.value?.status === 'Failed') {
+              console.log('Error', apiRes?.value);
               setShowAlert(true);
               setErrorMessage('Unexpected Error');
               setFilesData((prevfiles) =>
@@ -94,7 +95,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
                   return curfile;
                 })
               );
-              throw new Error('API Failure');
+              throw new Error(apiRes?.value?.error);
             } else {
               setFilesData((prevfiles) => {
                 return prevfiles.map((curfile, idx) => {
