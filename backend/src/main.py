@@ -22,14 +22,14 @@ load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 # from langchain.document_loaders import S3FileLoader
 
-def create_source_node(graph_obj,file_name,file_size,file_type,source,url=None,aws_access_key_id=None):
+def create_source_node(graph_obj,file_name,file_size,file_type,source,model,url=None,aws_access_key_id=None):
   try:   
     current_time = datetime.now()
     job_status = "New"
     source_node = "fileName: '{}'"
-    update_node_prop = "SET d.fileSize = '{}', d.fileType = '{}' ,d.status = '{}',d.url='{}',d.awsAccessKeyId='{}',d.fileSource='{}', d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}', d.errorMessage = '{}', d.nodeCount= {}, d.relationshipCount = {}"
+    update_node_prop = "SET d.fileSize = '{}', d.fileType = '{}' ,d.status = '{}',d.url='{}',d.awsAccessKeyId='{}',d.fileSource='{}', d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}', d.errorMessage = '{}', d.nodeCount= {}, d.relationshipCount = {}, d.model= '{}'"
     logging.info("create source node as file name if not exist")
-    graph_obj.query('MERGE(d:Document {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(file_size,file_type,job_status,url,aws_access_key_id,source,current_time,current_time,0,'',0,0))
+    graph_obj.query('MERGE(d:Document {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(file_size,file_type,job_status,url,aws_access_key_id,source,current_time,current_time,0,'',0,0,model))
   except Exception as e:
     job_status = "Failed"
     error_message = str(e)
@@ -37,7 +37,7 @@ def create_source_node(graph_obj,file_name,file_size,file_type,source,url=None,a
     graph_obj.query('MERGE(d:Document {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message))
     raise Exception(str(e))
 
-def create_source_node_graph_local_file(uri, userName, password, file):
+def create_source_node_graph_local_file(uri, userName, password, file, model):
   """
    Creates a source node in Neo4jGraph and sets properties.
    
@@ -57,7 +57,7 @@ def create_source_node_graph_local_file(uri, userName, password, file):
     source = 'local file'
     graph = Neo4jGraph(url=uri, username=userName, password=password)    
 
-    create_source_node(graph,file_name,file_size,file_type,source)
+    create_source_node(graph,file_name,file_size,file_type,source,model)
     return create_api_response("Success",data="Source Node created successfully",file_source=source)
   except Exception as e:
     job_status = "Failed"
@@ -119,7 +119,7 @@ def check_url_source(url):
     except Exception as e:
         raise e
   
-def create_source_node_graph_url(uri, userName, password, source_url, max_limit, query_source, aws_access_key_id=None,aws_secret_access_key=None):
+def create_source_node_graph_url(uri, userName, password, source_url, max_limit, query_source, model, aws_access_key_id=None,aws_secret_access_key=None):
     """
       Creates a source node in Neo4jGraph and sets properties.
       
@@ -157,7 +157,7 @@ def create_source_node_graph_url(uri, userName, password, source_url, max_limit,
                 file_size=file_info['file_size_bytes']
                 s3_file_path=str(source_url+file_name)
                 try:
-                  create_source_node(graph,file_name,file_size,file_type,source_type,s3_file_path,aws_access_key_id)
+                  create_source_node(graph,file_name,file_size,file_type,source_type,model,s3_file_path,aws_access_key_id)
                   success_count+=1
                 except Exception as e:
                   err_flag=1
@@ -175,7 +175,7 @@ def create_source_node_graph_url(uri, userName, password, source_url, max_limit,
             file_type='text'
             aws_access_key_id=''
             job_status = "Completed"
-            create_source_node(graph,file_name,file_size,file_type,source_type,source_url,aws_access_key_id)
+            create_source_node(graph,file_name,file_size,file_type,source_type,model,source_url,aws_access_key_id)
             return create_api_response(job_status)
         else:
            job_status = "Completed"
@@ -237,103 +237,97 @@ def extract_graph_from_file(uri, userName, password, model, file=None,source_url
   try:
     start_time = datetime.now()
     graph = Neo4jGraph(url=uri, username=userName, password=password)
-    
-    try: 
-      if file!=None:
-        file_name, file_key, pages = get_documents_from_file(file)
-        
-      elif check_url_source(source_url)=='s3 bucket':
-        if(aws_access_key_id==None or aws_secret_access_key==None):
-          job_status = "Failed"
-          return create_api_response(job_status,error='Please provide AWS access and secret keys')
-        else:
-          file_name, file_key, pages = get_documents_from_s3(source_url, aws_access_key_id, aws_secret_access_key)
+    source_node = "fileName: '{}'" 
+    if file!=None:
+      file_name, file_key, pages = get_documents_from_file(file)
       
-      elif check_url_source(source_url)=='youtube':
-          file_name, file_key, pages = get_documents_from_youtube(source_url)
-      
+    elif check_url_source(source_url)=='s3 bucket':
+      if(aws_access_key_id==None or aws_secret_access_key==None):
+        job_status = "Failed"
+        return create_api_response(job_status,error='Please provide AWS access and secret keys')
       else:
-          job_status = "Failed"
-          return create_api_response(job_status,error='Invalid url to create graph')
-          
-      if pages==None:
-          job_status = "Failed"
-          return create_api_response(job_status,error='Failed to load the pdf content')
-          
-      source_node = "fileName: '{}'"
-      update_node_prop = "SET d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}',d.status = '{}', d.errorMessage = '{}',d.nodeCount= {}, d.relationshipCount = {}, d.model = '{}'"
-      # pages = loader.load_and_split()
-      bad_chars = ['"', "\n", "'"]
-      for i in range(0,len(pages)):
-        text = pages[i].page_content
-        for j in bad_chars:
-          if j == '\n':
-            text = text.replace(j, ' ')
-          else:
-            text = text.replace(j, '')
-        pages[i]=Document(page_content=str(text))
-      logging.info("Break down file into chunks")
-      chunks = file_into_chunks(pages)
+        file_name, file_key, pages = get_documents_from_s3(source_url, aws_access_key_id, aws_secret_access_key)
+    
+    elif check_url_source(source_url)=='youtube':
+        file_name, file_key, pages = get_documents_from_youtube(source_url)
+    
+    else:
+        job_status = "Failed"
+        return create_api_response(job_status,error='Invalid url to create graph')
+        
+    if pages==None:
+        job_status = "Failed"
+        return create_api_response(job_status,error='Failed to load the pdf content')
+        
+    update_node_prop = "SET d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}',d.status = '{}', d.errorMessage = '{}',d.nodeCount= {}, d.relationshipCount = {}, d.model = '{}'"
+    # pages = loader.load_and_split()
+    bad_chars = ['"', "\n", "'"]
+    for i in range(0,len(pages)):
+      text = pages[i].page_content
+      for j in bad_chars:
+        if j == '\n':
+          text = text.replace(j, ' ')
+        else:
+          text = text.replace(j, '')
+      pages[i]=Document(page_content=str(text))
+    logging.info("Break down file into chunks")
+    chunks = file_into_chunks(pages)
+    
+    logging.info("Get graph document list from models")
+    if model == 'Diffbot' :
+      graph_documents = extract_graph_from_diffbot(graph,chunks,file_name,uri,userName,password)
       
-      logging.info("Get graph document list from models")
-      if model == 'Diffbot' :
-        graph_documents = extract_graph_from_diffbot(graph,chunks,file_name,uri,userName,password)
-        
-      elif model == 'OpenAI GPT 3.5':
-        model_version = 'gpt-3.5-turbo-16k'
-        graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
-        
-      elif model == 'OpenAI GPT 4':
-        model_version = 'gpt-4-0125-preview' 
-        graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
-                
-      #update_similarity_graph for the KNN Graph
-      update_graph()
+    elif model == 'OpenAI GPT 3.5':
+      model_version = 'gpt-3.5-turbo-16k'
+      graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
+      
+    elif model == 'OpenAI GPT 4':
+      model_version = 'gpt-4-0125-preview' 
+      graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
+              
+    #update_similarity_graph for the KNN Graph
+    update_graph()
 
-      distinct_nodes = set()
-      relations = []
+    distinct_nodes = set()
+    relations = []
+    
+    for graph_document in graph_documents:
+      #get distinct nodes
+      for node in graph_document.nodes:
+            distinct_nodes.add(node.id)
+      #get all relations
+      for relation in graph_document.relationships:
+            relations.append(relation.type)
       
-      for graph_document in graph_documents:
-        #get distinct nodes
-        for node in graph_document.nodes:
-              distinct_nodes.add(node.id)
-        #get all relations
-        for relation in graph_document.relationships:
-              relations.append(relation.type)
-        
-      nodes_created = len(distinct_nodes)
-      relationships_created = len(relations)  
-      
-      end_time = datetime.now()
-      processed_time = end_time - start_time
-      job_status = "Completed"
-      error_message =""
-      logging.info("Update source node properties")
-      graph.query('MERGE(d:Document {'+source_node.format(file_key.split('/')[-1])+'}) '+update_node_prop.format(start_time,end_time,round(processed_time.total_seconds(),2),job_status,error_message,nodes_created,relationships_created,model))
+    nodes_created = len(distinct_nodes)
+    relationships_created = len(relations)  
+    
+    end_time = datetime.now()
+    processed_time = end_time - start_time
+    job_status = "Completed"
+    error_message =""
+    logging.info("Update source node properties")
+    graph.query('MERGE(d:Document {'+source_node.format(file_key.split('/')[-1])+'}) '+update_node_prop.format(start_time,end_time,round(processed_time.total_seconds(),2),job_status,error_message,nodes_created,relationships_created,model))
 
-      output = {
-          "fileName": file_name,
-          "nodeCount": nodes_created,
-          "relationshipCount": relationships_created,
-          "processingTime": round(processed_time.total_seconds(),2),
-          "status" : job_status,
-          "model" : model
-      }
-      logging.info(f'Response from extract API : {output}')
-      return create_api_response("Success",data=output)
-    except Exception as e:
+    output = {
+        "fileName": file_name,
+        "nodeCount": nodes_created,
+        "relationshipCount": relationships_created,
+        "processingTime": round(processed_time.total_seconds(),2),
+        "status" : job_status,
+        "model" : model
+    }
+    logging.info(f'Response from extract API : {output}')
+    return create_api_response("Success",data=output)
+      
+  except Exception as e:
       job_status = "Failed"
       error_message = str(e)
       update_node_prop = 'SET d.status = "{}", d.errorMessage = "{}"'
       graph.query('MERGE(d:Document {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
-      logging.exception(f'Exception Stack trace:')
+      logging.exception(f'Exception Stack trace: {error_message}')
       return create_api_response(job_status,error=error_message)
-  except Exception as e:
-      job_status = "Failed"
-      error_message = str(e)
-      logging.exception(f'Exception Stack trace:')
-      return create_api_response(job_status,error=error_message)
-
+  
 def get_documents_from_file(file):
     print("get_documents_from_file called")
     file_name = file.filename

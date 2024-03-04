@@ -34,7 +34,7 @@ app.add_api_route("/health", health([healthy_condition, healthy]))
 
 @app.post("/sources")
 async def create_source_knowledge_graph(
-    uri=Form(), userName=Form(), password=Form(), file: UploadFile = File(...)
+    uri=Form(), userName=Form(), password=Form(), file: UploadFile = File(...), model=Form()
 ):
     """
     Calls 'create_source_node_graph' function in a new thread to create
@@ -51,7 +51,7 @@ async def create_source_knowledge_graph(
     """
     try:
         result = await asyncio.to_thread(
-            create_source_node_graph_local_file, uri, userName, password, file
+            create_source_node_graph_local_file, uri, userName, password, file, model
         )
         return result
     except Exception as e:
@@ -70,10 +70,11 @@ async def create_source_knowledge_graph_url(
     aws_access_key_id=Form(None),
     aws_secret_access_key=Form(None),
     max_limit=Form(5),
-    query_source=Form(None)
+    query_source=Form(None),
+    model=Form(None)
 ):
     return create_source_node_graph_url(
-        uri, userName, password, source_url, max_limit, query_source, aws_access_key_id, aws_secret_access_key
+        uri, userName, password, source_url, max_limit, query_source, model, aws_access_key_id, aws_secret_access_key
     )
 
 
