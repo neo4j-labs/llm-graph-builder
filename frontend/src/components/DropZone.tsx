@@ -6,7 +6,7 @@ import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { getFileFromLocal, saveFileToLocal } from '../utils/Utils';
 import CustomAlert from './Alert';
-import { uploadAPI } from '../services/FileAPI';
+import { uploadAPI } from '../utils/FileAPI';
 import { CustomFile } from '../types';
 
 const DropZone: FunctionComponent = () => {
@@ -89,7 +89,7 @@ const DropZone: FunctionComponent = () => {
           })
         );
 
-        const apiResponse = await uploadAPI(file, userCredentials);
+        const apiResponse = await uploadAPI(file, userCredentials, model);
         apirequests.push(apiResponse);
         const results = await Promise.allSettled(apirequests);
         results.forEach((apiRes) => {

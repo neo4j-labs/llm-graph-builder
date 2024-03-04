@@ -1,34 +1,40 @@
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import axios from 'axios';
 import { url } from '../utils/Utils';
 
-const urlScanAPI = async (
-  urlParam: string,
-  userCredentials?: any,
-  accessKey?: string,
-  secretKey?: string,
-  max_limit?: number,
-  query_source?: string
-) => {
+interface ScanProps {
+  urlParam: string;
+  userCredentials?: any;
+  model?: string;
+  accessKey?: string;
+  secretKey?: string;
+  max_limit?: number;
+  query_source?: string;
+}
+
+const urlScanAPI = async (props: ScanProps) => {
   try {
     const formData = new FormData();
-    formData.append('uri', userCredentials?.uri);
-    formData.append('userName', userCredentials?.userName);
-    formData.append('password', userCredentials?.password);
-    formData.append('source_url', urlParam);
-    if (accessKey?.length) {
-      formData.append('aws_access_key_id', accessKey);
+    formData.append('uri', props?.userCredentials?.uri);
+    formData.append('userName', props?.userCredentials.userName);
+    formData.append('password', props?.userCredentials?.password);
+    formData.append('source_url', props?.urlParam);
+    if (props.model != undefined) {
+      formData.append('model', props?.model);
     }
-    if (secretKey?.length) {
-      formData.append('aws_secret_access_key', secretKey);
+    if (props.accessKey?.length) {
+      formData.append('aws_access_key_id', props?.accessKey);
     }
-    if (query_source?.length) {
-      formData.append('query_source', query_source);
+    if (props?.secretKey?.length) {
+      formData.append('aws_secret_access_key', props?.secretKey);
     }
-    if (max_limit != undefined) {
-      formData.append('max_limit', max_limit.toString());
+    if (props?.query_source?.length) {
+      formData.append('query_source', props?.query_source);
+    }
+    if (props?.max_limit != undefined) {
+      formData.append('max_limit', props?.max_limit.toString());
     }
 
-    const response:any = await axios.post(`${url()}/url/scan`, formData, {
+    const response: any = await axios.post(`${url()}/url/scan`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -36,7 +42,7 @@ const urlScanAPI = async (
     return response;
   } catch (error) {
     console.log('Error uploading file:', error);
-    throw error;
+    return error;
   }
 };
 
