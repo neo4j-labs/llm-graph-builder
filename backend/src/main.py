@@ -267,35 +267,37 @@ def extract_graph_from_file(uri, userName, password, model, file=None,source_url
         job_status = "Failed"
         return create_api_response(job_status,error='Please provide AWS access and secret keys')
       else:
-          job_status = "Failed"
-          return create_api_response(job_status,error='Invalid url to create graph')
-          
-      if wiki_query!=None:
-        wiki_pages=wiki_loader(wiki_query,max_sources,max_wiki_pages)
-        pages.extend(wiki_pages)
-
-      if pages==None:
-          job_status = "Failed"
-          return create_api_response(job_status,error='Failed to load the pdf content')
-          
-      source_node = "fileName: '{}'"
-      update_node_prop = "SET d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}',d.status = '{}', d.errorMessage = '{}',d.nodeCount= {}, d.relationshipCount = {}, d.model = '{}'"
-      bad_chars = ['"', "\n", "'"]
-
-
-
-      for i in range(0,len(pages)):
-        text = pages[i].page_content
-        for j in bad_chars:
-          if j == '\n':
-            text = text.replace(j, ' ')
-          else:
-            text = text.replace(j, '')
-        pages[i]=Document(page_content=str(text))
-
-
-      logging.info("Break down file into chunks")
-      chunks = file_into_chunks(pages)
+        logging.info("Insert in S3 Block")
+        file_name, file_key, pages = get_documents_from_s3(source_url, aws_access_key_id, aws_secret_access_key)
+        logging.info(f"filename {file_name} file_key: {file_key} pages:{pages}  ")
+    elif check_url_source(source_url)=='youtube':
+        file_name, file_key, pages = get_documents_from_youtube(source_url)
+    
+    else:
+        job_status = "Failed"
+        return create_api_response(job_status,error='Invalid url to create graph')
+        
+    if pages==None or len(pages)==0:
+        job_status = "Failed"
+        return create_api_response(job_status,error='Pdf content or Youtube transcript is not available')
+        
+    update_node_prop = "SET d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}',d.status = '{}', d.errorMessage = '{}',d.nodeCount= {}, d.relationshipCount = {}, d.model = '{}'"
+    # pages = loader.load_and_split()
+    bad_chars = ['"', "\n", "'"]
+    for i in range(0,len(pages)):
+      text = pages[i].page_content
+      for j in bad_chars:
+        if j == '\n':
+          text = text.replace(j, ' ')
+        else:
+          text = text.replace(j, '')
+      pages[i]=Document(page_content=str(text))
+    logging.info("Break down file into chunks")
+    chunks = file_into_chunks(pages)
+    
+    logging.info("Get graph document list from models")
+    if model == 'Diffbot' :
+      graph_documents = extract_graph_from_diffbot(graph,chunks,file_name,uri,userName,password)
       
     elif model == 'OpenAI GPT 3.5':
       model_version = 'gpt-3.5-turbo-16k'
@@ -343,6 +345,7 @@ def extract_graph_from_file(uri, userName, password, model, file=None,source_url
   except Exception as e:
       # job_status = "Failed"
       error_message = str(e)
+      logging.info(f"file name in exception: {file_name}")
       # update_node_prop = 'SET d.status = "{}", d.errorMessage = "{}"'
       update_exception_db(graph,file_name,error_message)
       # graph.query('MERGE(d:Document {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
