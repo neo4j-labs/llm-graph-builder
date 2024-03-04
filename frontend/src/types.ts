@@ -30,6 +30,7 @@ export type ExtractParams = {
 
 export type UploadParams = {
   file: string;
+  model: string;
 } & { [key: string]: any };
 
 export type FormDataParams = ExtractParams | UploadParams;

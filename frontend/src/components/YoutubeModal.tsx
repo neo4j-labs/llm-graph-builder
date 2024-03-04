@@ -35,12 +35,19 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       try {
         setStatus('info');
         setStatusMessage('Scaning...');
-        const apiResponse = await urlScanAPI(youtubeURL, userCredentials, '', '', sourceLimit, querySource);
-        console.log('response', apiResponse);
+        const apiResponse = await urlScanAPI({
+          urlParam: youtubeURL,
+          userCredentials,
+          model,
+          accessKey: '',
+          secretKey: '',
+          max_limit: sourceLimit,
+          query_source: querySource,
+        });
         setStatus('success');
-        if (apiResponse.data.status == 'Failed'|| !apiResponse.data) {
+        if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
-          setStatusMessage(apiResponse.data.message??apiResponse?.message);
+          setStatusMessage(apiResponse.data.message ?? apiResponse?.message);
         } else {
           setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count ?? ''} Link`);
         }

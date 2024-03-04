@@ -1,16 +1,19 @@
 import { Method } from 'axios';
-import { url } from '../utils/Utils';
+import { url } from './Utils';
 import { UserCredentials, ExtractParams, UploadParams } from '../types';
-import { apiCall } from '../utils/ApiUtils';
-export const uploadAPI = async (file: any, userCredentials: any): Promise<any> => {
+import { apiCall } from '../services/CommonAPI';
+
+// Upload Call
+export const uploadAPI = async (file: any, userCredentials: any, model: string): Promise<any> => {
   const urlUpload = `${url()}/sources`;
   const method: Method = 'post';
   const commonParams: UserCredentials = userCredentials;
-  const additionalParams: UploadParams = { file };
+  const additionalParams: UploadParams = { file, model };
   const response = await apiCall(urlUpload, method, commonParams, additionalParams);
   return response;
 };
 
+// Extract call
 export const extractAPI = async (
   file: any,
   model: string,

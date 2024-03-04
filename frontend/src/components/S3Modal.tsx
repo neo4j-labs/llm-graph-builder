@@ -48,7 +48,13 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       try {
         setStatus('info');
         setStatusMessage('Scaning...');
-        const apiResponse = await urlScanAPI(url, userCredentials, accessKey, secretKey);
+        const apiResponse = await urlScanAPI({
+          urlParam: url,
+          userCredentials: userCredentials,
+          model: model,
+          accessKey: accessKey,
+          secretKey: secretKey,
+        });
         console.log('response', apiResponse);
         setStatus('success');
         if (apiResponse?.data.status == 'Failed' || !apiResponse.data) {

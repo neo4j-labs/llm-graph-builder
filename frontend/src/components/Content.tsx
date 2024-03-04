@@ -7,7 +7,7 @@ import { setDriver, disconnect } from '../utils/Driver';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
-import { extractAPI } from '../services/FileAPI';
+import { extractAPI } from '../utils/FileAPI';
 import { ContentProps } from '../types';
 
 const Content: React.FC<ContentProps> = ({ isExpanded }) => {
