@@ -267,8 +267,9 @@ def extract_graph_from_file(uri, userName, password, model, file=None,source_url
         job_status = "Failed"
         return create_api_response(job_status,error='Please provide AWS access and secret keys')
       else:
+        logging.info("Insert in S3 Block")
         file_name, file_key, pages = get_documents_from_s3(source_url, aws_access_key_id, aws_secret_access_key)
-    
+        logging.info(f"filename {file_name} file_key: {file_key} pages:{pages}  ")
     elif check_url_source(source_url)=='youtube':
         file_name, file_key, pages = get_documents_from_youtube(source_url)
     
@@ -344,6 +345,7 @@ def extract_graph_from_file(uri, userName, password, model, file=None,source_url
   except Exception as e:
       # job_status = "Failed"
       error_message = str(e)
+      logging.info(f"file name in exception: {file_name}")
       # update_node_prop = 'SET d.status = "{}", d.errorMessage = "{}"'
       update_exception_db(graph,file_name,error_message)
       # graph.query('MERGE(d:Document {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))

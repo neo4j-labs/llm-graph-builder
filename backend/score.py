@@ -49,17 +49,10 @@ async def create_source_knowledge_graph(
     Returns:
          'Source' Node creation in Neo4j database
     """
-    try:
-        result = await asyncio.to_thread(
-            create_source_node_graph_local_file, uri, userName, password, file, model
-        )
-        return result
-    except Exception as e:
-        job_status = "Failure"
-        error_message = str(e)
-        logging.exception(f"Exception Stack trace:{e}")
-        return create_api_response(job_status, error=error_message)
-
+    result = await asyncio.to_thread(
+        create_source_node_graph_local_file, uri, userName, password, file, model
+    )
+    return result
 
 @app.post("/url/scan")
 async def create_source_knowledge_graph_url(
@@ -105,68 +98,53 @@ async def extract_knowledge_graph_from_file(
     Returns:
           Nodes and Relations created in Neo4j databse for the pdf file
     """
-    try:
-        if file:
-            return await asyncio.to_thread(
-                extract_graph_from_file,
-                uri,
-                userName,
-                password,
-                model,
-                file=file,
-                source_url=None,
-                wiki_query=wiki_query,
-                max_sources=max_sources,
-            )
-        elif source_url:
-            return await asyncio.to_thread(
-                extract_graph_from_file,
-                uri,
-                userName,
-                password,
-                model,
-                source_url=source_url,
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key,
-                wiki_query=wiki_query,
-                max_sources=max_sources,
-            )
-        else:
-            return {"job_status": "Failure", "error": "No file found"}
-    except Exception as e:
-        job_status = "Failure"
-        error_message = str(e)
-        logging.exception(f"Exception Stack trace:{e}")
-        return create_api_response(job_status, error=error_message)
-
+    
+    if file:
+        return await asyncio.to_thread(
+            extract_graph_from_file,
+            uri,
+            userName,
+            password,
+            model,
+            file=file,
+            source_url=None,
+            wiki_query=wiki_query,
+            max_sources=max_sources,
+        )
+    elif source_url:
+        return await asyncio.to_thread(
+            extract_graph_from_file,
+            uri,
+            userName,
+            password,
+            model,
+            source_url=source_url,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            wiki_query=wiki_query,
+            max_sources=max_sources,
+        )
+    else:
+        return {"job_status": "Failure", "error": "No file found"}
+    
 
 @app.get("/sources_list")
 async def get_source_list():
     """
     Calls 'get_source_list_from_graph' which returns list of sources which alreday exist in databse
     """
-    try:
-        result = await asyncio.to_thread(get_source_list_from_graph)
-        return result
-    except Exception as e:
-        job_status = "Failure"
-        error_message = str(e)
-        logging.exception(f"Exception Stack trace:{e}")
-        return create_api_response(job_status, error=error_message)
+    result = await asyncio.to_thread(get_source_list_from_graph)
+    return result
     
 @app.post("/update_similarity_graph")
 async def update_similarity_graph():
     """
     Calls 'update_graph' which post the query to update the similiar nodes in the graph
     """
-    try:
-        result = await asyncio.to_thread(update_graph)
-        return result
-    except Exception as e:
-        job_status = "Failure"
-        error_message = str(e)
-        logging.exception(f"Exception Stack trace:{e}")
-        return create_api_response(job_status, error=error_message)
+    
+    result = await asyncio.to_thread(update_graph)
+    return result
+    
 
 
 if __name__ == "__main__":
