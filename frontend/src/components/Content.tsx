@@ -83,7 +83,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
             if (apiRes?.value?.status === 'Failed') {
               console.log('Error', apiRes?.value);
               setShowAlert(true);
-              setErrorMessage('Unexpected Error');
+              setErrorMessage(apiRes?.value?.error);
               setFilesData((prevfiles) =>
                 prevfiles.map((curfile, idx) => {
                   if (idx == uid) {
