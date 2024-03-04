@@ -22,6 +22,12 @@ load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 # from langchain.document_loaders import S3FileLoader
 
+def update_exception_db(graph_obj,file_name,exp_msg):
+    job_status = "Failed"
+    source_node = "fileName: '{}'"
+    update_node_prop = 'SET d.status = "{}", d.errorMessage = "{}"'
+    graph_obj.query('MERGE(d:Document {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,exp_msg))
+
 def create_source_node(graph_obj,file_name,file_size,file_type,source,model,url=None,aws_access_key_id=None):
   try:   
     current_time = datetime.now()
@@ -29,12 +35,13 @@ def create_source_node(graph_obj,file_name,file_size,file_type,source,model,url=
     source_node = "fileName: '{}'"
     update_node_prop = "SET d.fileSize = '{}', d.fileType = '{}' ,d.status = '{}',d.url='{}',d.awsAccessKeyId='{}',d.fileSource='{}', d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}', d.errorMessage = '{}', d.nodeCount= {}, d.relationshipCount = {}, d.model= '{}'"
     logging.info("create source node as file name if not exist")
-    graph_obj.query('MERGE(d:Document {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(file_size,file_type,job_status,url,aws_access_key_id,source,current_time,current_time,0,'',0,0,model))
+    graph_obj.query('MERGE(d:Document {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,job_status,url,aws_access_key_id,source,current_time,current_time,0,'',0,0,model))
   except Exception as e:
-    job_status = "Failed"
+    # job_status = "Failed"
     error_message = str(e)
-    update_node_prop = 'SET d.status = "{}", d.errorMessage = "{}"'
-    graph_obj.query('MERGE(d:Document {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message))
+    update_exception_db(graph_obj,file_name,error_message)
+    # update_node_prop = 'SET d.status = "{}", d.errorMessage = "{}"'
+    # graph_obj.query('MERGE(d:Document {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message))
     raise Exception(str(e))
 
 def create_source_node_graph_local_file(uri, userName, password, file, model):
@@ -321,10 +328,11 @@ def extract_graph_from_file(uri, userName, password, model, file=None,source_url
     return create_api_response("Success",data=output)
       
   except Exception as e:
-      job_status = "Failed"
+      # job_status = "Failed"
       error_message = str(e)
-      update_node_prop = 'SET d.status = "{}", d.errorMessage = "{}"'
-      graph.query('MERGE(d:Document {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
+      # update_node_prop = 'SET d.status = "{}", d.errorMessage = "{}"'
+      update_exception_db(graph,file_name,error_message)
+      # graph.query('MERGE(d:Document {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
       logging.exception(f'Exception Stack trace: {error_message}')
       return create_api_response(job_status,error=error_message)
   
