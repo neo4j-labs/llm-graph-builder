@@ -207,11 +207,15 @@ def extract_and_store_graph(
     extract_chain = get_extraction_chain(model_version,nodes, rels)
     data = extract_chain.invoke(document.page_content)['function']
 
+    for rel in data.rels:  
+        if rel.type.casefold() == 'relationship'.casefold():
+            rel.type = 'relation'
+        
     graph_document = [GraphDocument(
       nodes = [map_to_base_node(node) for node in data.nodes],
       relationships = [map_to_base_relationship(rel) for rel in data.rels],
       source = document
-    )]
+    )]   
 
     graph.add_graph_documents(graph_document)
     return graph_document   

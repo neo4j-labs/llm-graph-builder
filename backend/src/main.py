@@ -262,9 +262,9 @@ def extract_graph_from_file(uri, userName, password, model, file=None,source_url
         job_status = "Failed"
         return create_api_response(job_status,error='Invalid url to create graph')
         
-    if pages==None:
+    if pages==None or len(pages)==0:
         job_status = "Failed"
-        return create_api_response(job_status,error='Failed to load the pdf content')
+        return create_api_response(job_status,error='Pdf content or Youtube transcript is not available')
         
     update_node_prop = "SET d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}',d.status = '{}', d.errorMessage = '{}',d.nodeCount= {}, d.relationshipCount = {}, d.model = '{}'"
     # pages = loader.load_and_split()
@@ -371,7 +371,10 @@ def get_documents_from_s3(s3_url, aws_access_key_id, aws_secret_access_key):
  
  
 def get_documents_from_youtube(url):
-          youtube_loader = YoutubeLoader.from_youtube_url(url, add_video_info=False)
+          youtube_loader = YoutubeLoader.from_youtube_url(url, 
+                                                          language=["en", "de","fr","hi","ja","zh"],
+                                                          translation = "en",
+                                                          add_video_info=False)
           pages = youtube_loader.load()
           match = re.search(r"v=([a-zA-Z0-9_-]+)", url)
           youtube_id=match.group(1)
