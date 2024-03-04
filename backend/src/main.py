@@ -372,7 +372,7 @@ def get_documents_from_s3(s3_url, aws_access_key_id, aws_secret_access_key):
  
 def get_documents_from_youtube(url):
           youtube_loader = YoutubeLoader.from_youtube_url(url, 
-                                                          language=["en-US", "en-gb", "en-ca", "en-au", "de","fr","hi","ja","zh"],
+                                                          language=["en-US", "en-gb", "en-ca", "en-au","zh-CN", "zh-Hans", "zh-TW", "fr-FR","de-DE","it-IT","ja-JP","pt-BR","ru-RU","es-ES"],
                                                           translation = "en",
                                                           add_video_info=True)
           pages = youtube_loader.load()
