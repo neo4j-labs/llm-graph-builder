@@ -372,9 +372,9 @@ def get_documents_from_s3(s3_url, aws_access_key_id, aws_secret_access_key):
  
 def get_documents_from_youtube(url):
           youtube_loader = YoutubeLoader.from_youtube_url(url, 
-                                                          language=["en", "de","fr","hi","ja","zh"],
+                                                          language=["en-US", "en-gb", "en-ca", "en-au", "de","fr","hi","ja","zh"],
                                                           translation = "en",
-                                                          add_video_info=False)
+                                                          add_video_info=True)
           pages = youtube_loader.load()
           match = re.search(r"v=([a-zA-Z0-9_-]+)", url)
           youtube_id=match.group(1)
