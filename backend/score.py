@@ -88,6 +88,8 @@ async def extract_knowledge_graph_from_file(
     source_url=Form(None),
     aws_access_key_id=Form(None),
     aws_secret_access_key=Form(None),
+    wiki_query=Form(None),
+    max_sources=Form(None),
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
@@ -113,6 +115,8 @@ async def extract_knowledge_graph_from_file(
                 model,
                 file=file,
                 source_url=None,
+                wiki_query=wiki_query,
+                max_sources=max_sources,
             )
         elif source_url:
             return await asyncio.to_thread(
@@ -124,6 +128,8 @@ async def extract_knowledge_graph_from_file(
                 source_url=source_url,
                 aws_access_key_id=aws_access_key_id,
                 aws_secret_access_key=aws_secret_access_key,
+                wiki_query=wiki_query,
+                max_sources=max_sources,
             )
         else:
             return {"job_status": "Failure", "error": "No file found"}
