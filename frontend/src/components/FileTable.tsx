@@ -16,7 +16,7 @@ import { getFileFromLocal, statusCheck } from '../utils/Utils';
 import { SourceNode, CustomFile, ContentProps } from '../types';
 
 const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
-  const { filesData, setFiles, setFilesData } = useFileContext();
+  const { filesData, setFiles, setFilesData, model } = useFileContext();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -33,9 +33,9 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
       cell: (info) => {
         const sourceFindVal = sourceFind(info.getValue());
         return (
-          <div>
+          <div className='textellipsis'>
             <span title={sourceFindVal?.fileSource === 's3 bucket' ? sourceFindVal?.source_url : info.getValue()}>
-              {info.getValue()?.substring(0, 10) + '...'}
+              {info.getValue()}
             </span>
           </div>
         );
@@ -124,7 +124,7 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
                     : getFileFromLocal(`${item.fileName}`) != null
                     ? item.status
                     : 'N/A',
-                model: item?.model ?? 'Diffbot',
+                model: item?.model ?? model,
                 id: uuidv4(),
                 source_url: item.url != 'None' && item?.url != '' ? item.url : '',
                 fileSource: item.fileSource ?? 'None',

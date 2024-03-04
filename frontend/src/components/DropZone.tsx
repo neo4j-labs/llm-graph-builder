@@ -95,7 +95,7 @@ const DropZone: FunctionComponent = () => {
         results.forEach((apiRes) => {
           if (apiRes.status === 'fulfilled' && apiRes.value) {
             if (apiRes?.value?.status === 'Failed') {
-              throw new Error('API Failure');
+              throw new Error(apiRes?.value?.error);
             } else {
               setFilesData((prevfiles) =>
                 prevfiles.map((curfile, idx) => {

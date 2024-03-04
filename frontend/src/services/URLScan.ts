@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 import { url } from '../utils/Utils';
 
 const urlScanAPI = async (
@@ -28,7 +28,7 @@ const urlScanAPI = async (
       formData.append('max_limit', max_limit.toString());
     }
 
-    const response = await axios.post(`${url()}/url/scan`, formData, {
+    const response:any = await axios.post(`${url()}/url/scan`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

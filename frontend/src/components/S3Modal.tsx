@@ -18,7 +18,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [isFocused, setisFocused] = useState<boolean>(false);
   const [isValid, setValid] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
-  const { setFiles, setFilesData } = useFileContext();
+  const { setFiles, setFilesData, model } = useFileContext();
 
   const changeHandler = (e: any) => {
     setBucketUrl(e.target.value);
@@ -51,9 +51,9 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         const apiResponse = await urlScanAPI(url, userCredentials, accessKey, secretKey);
         console.log('response', apiResponse);
         setStatus('success');
-        if (apiResponse.data.status == 'Failed') {
+        if (apiResponse?.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
-          setStatusMessage(apiResponse.data.message);
+          setStatusMessage(apiResponse.data.message ?? apiResponse.message);
         } else {
           setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
         }
@@ -78,7 +78,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
                     : getFileFromLocal(`${item.fileName}`) != null
                     ? item.status
                     : 'N/A',
-                model: item?.model ?? 'Diffbot',
+                model: item?.model ?? model,
                 id: uuidv4(),
                 source_url: item.url != 'None' && item?.url != '' ? item.url : '',
                 fileSource: item.fileSource ?? 'None',
