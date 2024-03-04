@@ -1,7 +1,7 @@
 import axios, { AxiosResponse, Method } from 'axios';
 import { UserCredentials, FormDataParams } from '../types';
 
-//API Call
+// API Call
 const apiCall = async (
   url: string,
   method: Method,

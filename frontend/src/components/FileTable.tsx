@@ -13,25 +13,48 @@ import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/getFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { getFileFromLocal, statusCheck } from '../utils/utils';
-import { SourceNode, CustomFile } from '../types';
+import { SourceNode, CustomFile, ContentProps } from '../types';
 
-export default function FileTable() {
+const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
   const { filesData, setFiles, setFilesData } = useFileContext();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
 
+  const sourceFind = (name: any) => {
+    return filesData.find((f) => {
+      return f.name === name;
+    });
+  };
   const columns = [
     columnHelper.accessor((row) => row.name, {
       id: 'name',
-      cell: (info) => (
-        <div>
-          <span title={info.getValue()}>{info.getValue()?.substring(0, 10) + '...'}</span>
-        </div>
-      ),
+      cell: (info) => {
+        const sourceFindVal = sourceFind(info.getValue());
+        return (
+          <div>
+            <span title={sourceFindVal?.fileSource === 's3 bucket' ? sourceFindVal?.s3url : info.getValue()}>
+              {info.getValue()?.substring(0, 10) + '...'}
+            </span>
+          </div>
+        );
+      },
       header: () => <span>Name</span>,
       footer: (info) => info.column.id,
+    }),
+    columnHelper.accessor((row) => row.status, {
+      id: 'status',
+      cell: (info) => (
+        <div>
+          <StatusIndicator type={statusCheck(info.getValue())} />
+          <i>{info.getValue()}</i>
+        </div>
+      ),
+      header: () => <span>Status</span>,
+      footer: (info) => info.column.id,
+      filterFn: 'statusFilter' as any,
+      size: 200,
     }),
     columnHelper.accessor((row) => row.size, {
       id: 'fileSize',
@@ -45,12 +68,12 @@ export default function FileTable() {
       header: () => <span>Type</span>,
       footer: (info) => info.column.id,
     }),
-    // columnHelper.accessor((row) => row.fileSource, {
-    //   id: 'source',
-    //   cell: (info) => <i>{info.getValue()}</i>,
-    //   header: () => <span>Source</span>,
-    //   footer: (info) => info.column.id,
-    // }),
+    columnHelper.accessor((row) => row.fileSource, {
+      id: 'source',
+      cell: (info) => <i>{info.getValue()}</i>,
+      header: () => <span>Source</span>,
+      footer: (info) => info.column.id,
+    }),
     columnHelper.accessor((row) => row.model, {
       id: 'model',
       cell: (info) => <i>{info.getValue()}</i>,
@@ -74,18 +97,6 @@ export default function FileTable() {
       cell: (info) => <i>{info.getValue()}</i>,
       header: () => <span>Duration</span>,
       footer: (info) => info.column.id,
-    }),
-    columnHelper.accessor((row) => row.status, {
-      id: 'status',
-      cell: (info) => (
-        <div>
-          <StatusIndicator type={statusCheck(info.getValue())} />
-          <i>{info.getValue()}</i>
-        </div>
-      ),
-      header: () => <span>Status</span>,
-      footer: (info) => info.column.id,
-      filterFn: 'statusFilter' as any,
     }),
   ];
 
@@ -160,17 +171,13 @@ export default function FileTable() {
       },
     },
     enableGlobalFilter: false,
-    defaultColumn: {
-      size: 140,
-      minSize: 50,
-      maxSize: 150,
-    },
     autoResetPageIndex: false,
   });
 
   useEffect(() => {
     const listener = (e: any) => {
       setcurrentOuterHeight(e.currentTarget.outerHeight);
+      // setcurrentOuterWidth(e.currentTarget.outerWidth);
       table.setPageSize(Math.floor((e.currentTarget.outerHeight - 402) / 45));
     };
     window.addEventListener('resize', listener);
@@ -182,6 +189,7 @@ export default function FileTable() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     table.getColumn('status')?.setFilterValue(e.target.checked);
   };
+  const classNameCheck = isExpanded ? 'fileTableWithExpansion' : `filetable`;
 
   return (
     <>
@@ -191,7 +199,7 @@ export default function FileTable() {
             <input type='checkbox' onChange={handleChange} />
             <label>Show files with status New </label>
           </div>
-          <div>
+          <div style={{ width: 'calc(100% - 64px)' }}>
             <DataGrid
               isResizable={true}
               tableInstance={table}
@@ -202,7 +210,7 @@ export default function FileTable() {
               }}
               isLoading={isLoading}
               rootProps={{
-                className: 'filetable',
+                className: classNameCheck,
               }}
               components={{
                 Body: (props) => <DataGridComponents.Body {...props} />,
@@ -216,7 +224,6 @@ export default function FileTable() {
                         style: {
                           ...(isSelected && {
                             backgroundSize: '200% auto',
-                            boxShadow: '0 0 20px #eee',
                             borderRadius: '10px',
                           }),
                         },
@@ -231,4 +238,6 @@ export default function FileTable() {
       ) : null}
     </>
   );
-}
+};
+
+export default FileTable;

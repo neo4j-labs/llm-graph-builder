@@ -1,13 +1,13 @@
 import { Dispatch, SetStateAction } from 'react';
 export interface CustomFile extends Partial<globalThis.File> {
-  processing: string;
+  processing: number;
   status: string;
   NodesCount: number;
   id: string;
   relationshipCount: number;
   model: string;
   fileSource: string;
-  s3url?:string
+  s3url?: string;
 }
 
 export interface OptionType {
@@ -69,4 +69,17 @@ export interface SourceNode {
   s3url?: string;
   awsAccessKeyId?: string;
   fileSource: string;
+}
+export interface SideNavProps {
+  openDrawer: () => void;
+  closeDrawer: () => void;
+  isExpanded: boolean;
+}
+
+export interface DrawerProps {
+  isExpanded: boolean;
+}
+
+export interface ContentProps {
+  isExpanded: boolean;
 }

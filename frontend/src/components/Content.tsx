@@ -2,14 +2,15 @@ import { useEffect, useState } from 'react';
 import ConnectionModal from './ConnectionModal';
 import LlmDropdown from './Dropdown';
 import FileTable from './FileTable';
-import { Button, Label, Typography, Flex } from '@neo4j-ndl/react';
+import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
 import { setDriver, disconnect } from '../utils/Driver';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { extractAPI } from '../services/FileAPI';
+import { ContentProps } from '../types';
 
-export default function Content() {
+const Content: React.FC<ContentProps> = ({ isExpanded }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
@@ -17,7 +18,6 @@ export default function Content() {
   const { filesData, files, setFilesData, setModel, model } = useFileContext();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (!init) {
@@ -135,16 +135,11 @@ export default function Content() {
             return curfile;
           })
         );
-        setIsLoading(false);
-      } finally {
-        setIsLoading(false);
       }
     }
   };
 
   const handleGenerateGraph = () => {
-    setIsLoading(true);
-
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
         if (filesData[i].status === 'New') {
@@ -157,37 +152,26 @@ export default function Content() {
   const handleClose = () => {
     setShowAlert(false);
   };
+
+  const classNameCheck = isExpanded ? 'contentWithExpansion' : 'contentWithNoExpansion';
   return (
     <>
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
-      <div
-        className='n-bg-palette-neutral-bg-default'
-        style={{
-          width: 'calc(-342px + 100dvw)',
-          height: 'calc(100dvh - 70px)',
-          padding: 3,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '5px',
-          position: 'relative',
-        }}
-      >
+      <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' style={{ flexFlow: 'row' }}>
           <ConnectionModal
             open={openConnection}
             setOpenConnection={setOpenConnection}
             setConnectionStatus={setConnectionStatus}
           />
-          <Typography variant='body-medium' style={{ display: 'flex', padding: '20px' }}>
-            Neo4j connection Status:
-            <Typography variant='body-medium' style={{ marginLeft: '10px' }}>
-              {!connectionStatus ? (
-                <Label color='danger'>Not connected</Label>
-              ) : (
-                <Label color='success'>Connected</Label>
-              )}
+          <Typography
+            variant='body-medium'
+            style={{ display: 'flex', padding: '20px', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Typography variant='body-medium'>
+              {!connectionStatus ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
             </Typography>
+            Neo4j connection
           </Typography>
           {!connectionStatus ? (
             <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
@@ -199,18 +183,25 @@ export default function Content() {
             </Button>
           )}
         </Flex>
-        <FileTable></FileTable>
+        <FileTable isExpanded={isExpanded}></FileTable>
         <Flex
           className='w-full p-2.5 absolute bottom-4'
           justifyContent='space-between'
           style={{ flexFlow: 'row', marginTop: '5px' }}
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
-          <Button loading={isLoading} disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
+          <Button
+            loading={filesData.some((f) => f.status === 'Processing')}
+            disabled={disableCheck}
+            onClick={handleGenerateGraph}
+            className='mr-0.5'
+          >
             Generate Graph
           </Button>
         </Flex>
       </div>
     </>
   );
-}
+};
+
+export default Content;

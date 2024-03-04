@@ -23,14 +23,14 @@ const DropZone: FunctionComponent = () => {
     setIsLoading(false);
     if (f.length) {
       const defaultValues: CustomFile = {
-        processing: 'None',
+        processing: 0,
         status: 'None',
         NodesCount: 0,
         id: uuidv4(),
         relationshipCount: 0,
         type: 'PDF',
         model: model,
-        fileSource:"local file"
+        fileSource: 'local file',
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
@@ -56,7 +56,7 @@ const DropZone: FunctionComponent = () => {
             relationshipCount: defaultValues.relationshipCount,
             processing: defaultValues.processing,
             model: defaultValues.model,
-            fileSource:defaultValues.fileSource
+            fileSource: defaultValues.fileSource,
           });
         }
         if (fileIndex == -1) {
@@ -110,11 +110,11 @@ const DropZone: FunctionComponent = () => {
                     })
                   );
                   setIsClicked(false);
-                  setIsLoading(false);
                 }
               }
             });
             setIsClicked(false);
+            setIsLoading(false);
           })
           .catch((err) => {
             setShowAlert(true);
