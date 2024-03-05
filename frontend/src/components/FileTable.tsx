@@ -103,59 +103,61 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
   ];
 
   useEffect(() => {
-    const fetchFiles = async () => {
-      try {
-        setIsLoading(true);
-        const res: any = await getSourceNodes(userCredentials);
-        if (Array.isArray(res.data.data) && res.data.data.length) {
-          const prefiles: any[] = [];
-          res.data.data.forEach((item: SourceNode) => {
-            if (item.fileName != undefined) {
-              prefiles.push({
-                name: item.fileName,
-                size: item.fileSize ?? 0,
-                type: item?.fileType?.toUpperCase() ?? 'None',
-                NodesCount: item?.nodeCount ?? 0,
-                processing: item?.processingTime ?? 'None',
-                relationshipCount: item?.relationshipCount ?? 0,
-                status:
-                  item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
-                    ? item.status
-                    : item.fileSource === 'youtube'
-                    ? item.status
-                    : getFileFromLocal(`${item.fileName}`) != null
-                    ? item.status
-                    : 'N/A',
-                model: item?.model ?? model,
-                id: uuidv4(),
-                source_url: item.url != 'None' && item?.url != '' ? item.url : '',
-                fileSource: item.fileSource ?? 'None',
-              });
-            }
-          });
-          setIsLoading(false);
-          setFilesData(prefiles);
-          const prefetchedFiles: any[] = [];
-          res.data.data.forEach((item: any) => {
-            const localFile = getFileFromLocal(`${item.fileName}`);
-            if (item.fileName != undefined) {
-              if (localFile != null) {
-                prefetchedFiles.push(localFile);
-              } else {
-                prefetchedFiles.push(null);
+    if (!userCredentials) {
+      const fetchFiles = async () => {
+        try {
+          setIsLoading(true);
+          const res: any = await getSourceNodes(userCredentials);
+          if (Array.isArray(res.data.data) && res.data.data.length) {
+            const prefiles: any[] = [];
+            res.data.data.forEach((item: SourceNode) => {
+              if (item.fileName != undefined) {
+                prefiles.push({
+                  name: item.fileName,
+                  size: item.fileSize ?? 0,
+                  type: item?.fileType?.toUpperCase() ?? 'None',
+                  NodesCount: item?.nodeCount ?? 0,
+                  processing: item?.processingTime ?? 'None',
+                  relationshipCount: item?.relationshipCount ?? 0,
+                  status:
+                    item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                      ? item.status
+                      : item.fileSource === 'youtube'
+                        ? item.status
+                        : getFileFromLocal(`${item.fileName}`) != null
+                          ? item.status
+                          : 'N/A',
+                  model: item?.model ?? model,
+                  id: uuidv4(),
+                  source_url: item.url != 'None' && item?.url != '' ? item.url : '',
+                  fileSource: item.fileSource ?? 'None',
+                });
               }
-            }
-          });
-          setFiles(prefetchedFiles);
+            });
+            setIsLoading(false);
+            setFilesData(prefiles);
+            const prefetchedFiles: any[] = [];
+            res.data.data.forEach((item: any) => {
+              const localFile = getFileFromLocal(`${item.fileName}`);
+              if (item.fileName != undefined) {
+                if (localFile != null) {
+                  prefetchedFiles.push(localFile);
+                } else {
+                  prefetchedFiles.push(null);
+                }
+              }
+            });
+            setFiles(prefetchedFiles);
+          }
+          setIsLoading(false);
+        } catch (error) {
+          setIsLoading(false);
+          console.log(error);
         }
-        setIsLoading(false);
-      } catch (error) {
-        setIsLoading(false);
-        console.log(error);
-      }
-    };
-    fetchFiles();
-  }, []);
+      };
+      fetchFiles();
+    }
+  }, [userCredentials]);
 
   const pageSizeCalculation = Math.floor((currentOuterHeight - 402) / 45);
 

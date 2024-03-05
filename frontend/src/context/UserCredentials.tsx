@@ -1,13 +1,10 @@
 import { createContext, useState, useContext, FunctionComponent, ReactNode } from 'react';
+import { UserCredentials } from '../types';
+
 type Props = {
   children: ReactNode;
 };
-type UserCredentials = {
-  uri: string;
-  userName: string;
-  password: string;
-  database: string;
-};
+
 interface ContextProps {
   readonly userCredentials: UserCredentials | null;
   setUserCredentials: (UserCredentials: UserCredentials) => void;
