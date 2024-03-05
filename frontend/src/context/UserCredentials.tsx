@@ -6,6 +6,7 @@ type UserCredentials = {
   uri: string;
   userName: string;
   password: string;
+  database: string;
 };
 interface ContextProps {
   readonly userCredentials: UserCredentials | null;

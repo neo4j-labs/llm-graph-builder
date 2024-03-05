@@ -18,6 +18,7 @@ export type UserCredentials = {
   uri: string;
   userName: string;
   password: string;
+  database: string;
 } & { [key: string]: any };
 
 export type ExtractParams = {
