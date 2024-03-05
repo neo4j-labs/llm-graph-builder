@@ -14,9 +14,11 @@ import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { getFileFromLocal, statusCheck } from '../utils/Utils';
 import { SourceNode, CustomFile, ContentProps } from '../types';
+import { useCredentials } from '../context/UserCredentials';
 
 const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
   const { filesData, setFiles, setFilesData, model } = useFileContext();
+  const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -104,7 +106,7 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
     const fetchFiles = async () => {
       try {
         setIsLoading(true);
-        const res: any = await getSourceNodes();
+        const res: any = await getSourceNodes(userCredentials);
         if (Array.isArray(res.data.data) && res.data.data.length) {
           const prefiles: any[] = [];
           res.data.data.forEach((item: SourceNode) => {

@@ -20,11 +20,12 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
 
   function submitConnection() {
     const connectionURI = `${selectedProtocol}://${hostname}:${port}`;
-    setUserCredentials({ uri: hostname, userName: username, password });
+    setUserCredentials({ uri: hostname, userName: username, password, database });
     localStorage.setItem('username', username);
     localStorage.setItem('hostname', hostname);
     localStorage.setItem('port', `${port}`);
-    setDriver(connectionURI, username, password).then((isSuccessful) => {
+    localStorage.setItem('database', database);
+    setDriver(connectionURI, username, password, database).then((isSuccessful) => {
       setConnectionStatus(isSuccessful);
     });
     setOpenConnection(false);

@@ -16,7 +16,6 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [showSourceLimitInput, setshowSourceLimitInput] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [querySource, setQuerySource] = useState<string>('');
-
   const { userCredentials } = useCredentials();
   const { setFiles, setFilesData, model } = useFileContext();
   const reset = () => {
@@ -34,7 +33,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     } else {
       try {
         setStatus('info');
-        setStatusMessage('Scaning...');
+        setStatusMessage('Scanning...');
         const apiResponse = await urlScanAPI({
           urlParam: youtubeURL,
           userCredentials,
@@ -52,7 +51,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count ?? ''} Link`);
         }
         reset();
-        const res: any = await getSourceNodes();
+        const res: any = await getSourceNodes(userCredentials);
         if (Array.isArray(res.data.data) && res.data.data.length) {
           const prefiles: any[] = [];
           res.data.data.forEach((item: SourceNode) => {

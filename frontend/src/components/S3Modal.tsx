@@ -64,7 +64,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
         }
         reset();
-        const res: any = await getSourceNodes();
+        const res: any = await getSourceNodes(userCredentials);
         if (Array.isArray(res.data.data) && res.data.data.length) {
           const prefiles: any[] = [];
           res.data.data.forEach((item: SourceNode) => {
