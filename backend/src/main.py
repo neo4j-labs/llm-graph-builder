@@ -308,7 +308,7 @@ def extract_graph_from_file(uri, userName, password, model, file=None,source_url
       graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
               
     #update_similarity_graph for the KNN Graph
-    update_graph()
+    update_graph(graph)
 
     distinct_nodes = set()
     relations = []
@@ -393,14 +393,21 @@ def get_documents_from_youtube(url):
           print("Youtube pages = ",pages)
           return file_name, file_key, pages     
 
-def get_source_list_from_graph():
+def get_source_list_from_graph(uri,userName,password):
   """
+  Args:
+    uri: URI of the graph to extract
+    userName: Username to use for graph creation ( if None will use username from config file )
+    password: Password to use for graph creation ( if None will use password from config file )
+    file: File object containing the PDF file to be used
+    model: Type of model to use ('Diffbot'or'OpenAI GPT')
+  Returns:
    Returns a list of sources that are in the database by querying the graph and
    sorting the list by the last updated date. 
  """
   logging.info("Get existing files list from graph")
   try:
-    graph = Neo4jGraph()
+    graph = Neo4jGraph(url=uri, username=userName, password=password)
     query = "MATCH(d:Document) RETURN d ORDER BY d.updatedAt DESC"
     result = graph.query(query)
     list_of_json_objects = [entry['d'] for entry in result]
@@ -411,14 +418,14 @@ def get_source_list_from_graph():
     logging.exception('Exception')
     return create_api_response(job_status,error=error_message)
 
-def update_graph():
+def update_graph(graph):
   """
   Update the graph node with SIMILAR relationship where embedding scrore match
   """
   knn_min_score = os.environ.get('KNN_MIN_SCORE')
 
   query = "WHERE node <> c and score >= {} MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score"
-  graph = Neo4jGraph()
+  # graph = Neo4jGraph()
   result = graph.query("""MATCH (c:Chunk)
               WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
               CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score """+ query.format(knn_min_score))

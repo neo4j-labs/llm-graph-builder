@@ -129,11 +129,11 @@ async def extract_knowledge_graph_from_file(
     
 
 @app.get("/sources_list")
-async def get_source_list():
+async def get_source_list(uri=Form(),userName=Form(),password=Form()):
     """
     Calls 'get_source_list_from_graph' which returns list of sources which alreday exist in databse
     """
-    result = await asyncio.to_thread(get_source_list_from_graph)
+    result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,password)
     return result
     
 @app.post("/update_similarity_graph")
