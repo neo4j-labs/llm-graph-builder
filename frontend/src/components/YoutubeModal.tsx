@@ -118,7 +118,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       status={status}
       submitLabel='Submit'
     >
-      <div style={{ width: '100%', marginRight: '2.5%', display: 'inline-block' }}>
+      <div style={{ width: '100%', display: 'inline-block' }}>
         <TextInput
           id='url'
           value={youtubeURL}
