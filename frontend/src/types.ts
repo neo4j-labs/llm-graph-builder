@@ -1,4 +1,5 @@
 import { Dispatch, ReactNode, SetStateAction } from 'react';
+
 export interface CustomFile extends Partial<globalThis.File> {
   processing: number;
   status: string;
@@ -19,6 +20,7 @@ export type UserCredentials = {
   userName: string;
   password: string;
   database: string;
+  selectedProtocol: string;
 } & { [key: string]: any };
 
 export type ExtractParams = {
