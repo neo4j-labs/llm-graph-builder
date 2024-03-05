@@ -47,7 +47,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     if (isValid && accessKey.trim() != '' && secretKey.trim() != '') {
       try {
         setStatus('info');
-        setStatusMessage('Scaning...');
+        setStatusMessage('Scanning...');
         const apiResponse = await urlScanAPI({
           urlParam: url,
           userCredentials: userCredentials,
