@@ -4,9 +4,9 @@ import { url } from '../utils/Utils';
 export const getSourceNodes = async (userCredentials: any) => {
   try {
     const response = await axios.get(
-      `${url()}/sources_list?uri=${userCredentials.uri}&userName=${userCredentials.userName}&password=${
+      `${url()}/sources_list?uri=${userCredentials.uri}&userName=${userCredentials.userName}&password=${atob(
         userCredentials.password
-      }`
+      )}`
     );
     if (response.status != 200) {
       throw new Error('Some error occurred');
