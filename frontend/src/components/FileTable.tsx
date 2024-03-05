@@ -60,8 +60,8 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
     }),
     columnHelper.accessor((row) => row.size, {
       id: 'fileSize',
-      cell: (info: any) => <i>{(info?.getValue() / 1000)?.toFixed(2)} KB</i>,
-      header: () => <span>Size</span>,
+      cell: (info: any) => <i>{(info?.getValue() / 1000)?.toFixed(2)}</i>,
+      header: () => <span>Size (KB)</span>,
       footer: (info) => info.column.id,
     }),
     columnHelper.accessor((row) => row.type, {
@@ -97,7 +97,7 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
     columnHelper.accessor((row) => row.processing, {
       id: 'processing',
       cell: (info) => <i>{info.getValue()}</i>,
-      header: () => <span>Duration</span>,
+      header: () => <span>Duration (s)</span>,
       footer: (info) => info.column.id,
     }),
   ];
