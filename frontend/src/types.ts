@@ -85,6 +85,7 @@ export interface DrawerProps {
 
 export interface ContentProps {
   isExpanded: boolean;
+  setConnectionStatus: Dispatch<SetStateAction<boolean>>;
 }
 export interface CustomModalProps {
   open: boolean;
