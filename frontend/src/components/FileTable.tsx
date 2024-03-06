@@ -13,11 +13,11 @@ import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { getFileFromLocal, statusCheck } from '../utils/Utils';
-import { SourceNode, CustomFile, ContentProps } from '../types';
+import { SourceNode, CustomFile, FileTableProps } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import CustomAlert from './Alert';
 
-const FileTable: React.FC<ContentProps> = ({ isExpanded, setConnectionStatus }) => {
+const FileTable: React.FC<FileTableProps> = ({ isExpanded, setConnectionStatus }) => {
   const { filesData, setFiles, setFilesData, model } = useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
@@ -110,32 +110,34 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded, setConnectionStatus }) 
       try {
         setIsLoading(true);
         const res: any = await getSourceNodes(userCredentials);
-        if (Array.isArray(res.data.data) && res.data.data.length) {
+        if (res.data.status !== 'Failed') {
           const prefiles: any[] = [];
-          res.data.data.forEach((item: SourceNode) => {
-            if (item.fileName != undefined) {
-              prefiles.push({
-                name: item.fileName,
-                size: item.fileSize ?? 0,
-                type: item?.fileType?.toUpperCase() ?? 'None',
-                NodesCount: item?.nodeCount ?? 0,
-                processing: item?.processingTime ?? 'None',
-                relationshipCount: item?.relationshipCount ?? 0,
-                status:
-                  item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
-                    ? item.status
-                    : item.fileSource === 'youtube'
-                    ? item.status
-                    : getFileFromLocal(`${item.fileName}`) != null
-                    ? item.status
-                    : 'N/A',
-                model: item?.model ?? model,
-                id: uuidv4(),
-                source_url: item.url != 'None' && item?.url != '' ? item.url : '',
-                fileSource: item.fileSource ?? 'None',
-              });
-            }
-          });
+          if (res.data.data.length) {
+            res.data.data.forEach((item: SourceNode) => {
+              if (item.fileName != undefined) {
+                prefiles.push({
+                  name: item.fileName,
+                  size: item.fileSize ?? 0,
+                  type: item?.fileType?.toUpperCase() ?? 'None',
+                  NodesCount: item?.nodeCount ?? 0,
+                  processing: item?.processingTime ?? 'None',
+                  relationshipCount: item?.relationshipCount ?? 0,
+                  status:
+                    item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                      ? item.status
+                      : item.fileSource === 'youtube'
+                      ? item.status
+                      : getFileFromLocal(`${item.fileName}`) != null
+                      ? item.status
+                      : 'N/A',
+                  model: item?.model ?? model,
+                  id: uuidv4(),
+                  source_url: item.url != 'None' && item?.url != '' ? item.url : '',
+                  fileSource: item.fileSource ?? 'None',
+                });
+              }
+            });
+          }
           setIsLoading(false);
           setFilesData(prefiles);
           const prefetchedFiles: any[] = [];

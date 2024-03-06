@@ -44,7 +44,7 @@ const urlScanAPI = async (props: ScanProps) => {
     return response;
   } catch (error) {
     console.log('Error uploading file:', error);
-    return error;
+    throw error;
   }
 };
 
