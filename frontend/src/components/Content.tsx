@@ -29,9 +29,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
           userName: neo4jConnection.user,
           password: neo4jConnection.password,
           database: neo4jConnection.database,
-          selectedProtocol: neo4jConnection.selectedProtocol
         });
-        setDriver(neo4jConnection.uri, neo4jConnection.user, neo4jConnection.password, neo4jConnection.database, neo4jConnection.selectedProtocol).then(
+        setDriver(neo4jConnection.uri, neo4jConnection.user, neo4jConnection.password, neo4jConnection.database).then(
           (isSuccessful: boolean) => {
             setConnectionStatus(isSuccessful);
           }
