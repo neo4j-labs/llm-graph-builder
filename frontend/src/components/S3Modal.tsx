@@ -63,9 +63,10 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           setTimeout(() => {
             hideModal();
             setStatus('unknown');
+            reset();
           }, 2000);
           return;
-        } 
+        }
         setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
         reset();
         const res: any = await getSourceNodes(userCredentials);

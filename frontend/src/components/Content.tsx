@@ -177,7 +177,15 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
               Connect to Neo4j
             </Button>
           ) : (
-            <Button className='mr-2.5' onClick={() => disconnect().then(() => setConnectionStatus(false))}>
+            <Button
+              className='mr-2.5'
+              onClick={() =>
+                disconnect().then(() => {
+                  setConnectionStatus(false);
+                  localStorage.removeItem('neo4j.connection');
+                })
+              }
+            >
               Disconnect
             </Button>
           )}

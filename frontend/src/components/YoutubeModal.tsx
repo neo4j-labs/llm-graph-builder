@@ -49,6 +49,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           setStatusMessage('Please Fill The Valid Credentials' ?? apiResponse?.message);
           setTimeout(() => {
             setStatus('unknown');
+            reset()
             hideModal();
           }, 2000);
           return;
