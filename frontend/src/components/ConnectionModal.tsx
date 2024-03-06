@@ -26,7 +26,7 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
     localStorage.setItem('port', `${port}`);
     localStorage.setItem('database', database);
     localStorage.setItem('selectedProtocol',selectedProtocol);
-    setDriver(connectionURI, username, password, database,selectedProtocol).then((isSuccessful) => {
+    setDriver(connectionURI, username, password, database).then((isSuccessful) => {
       setConnectionStatus(isSuccessful);
     });
     setOpenConnection(false);

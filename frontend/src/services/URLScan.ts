@@ -14,7 +14,7 @@ interface ScanProps {
 const urlScanAPI = async (props: ScanProps) => {
   try {
     const formData = new FormData();
-    formData.append('uri', props?.userCredentials?.connectionURI);
+    formData.append('uri', props?.userCredentials?.uri);
     formData.append('database', props?.userCredentials?.database);
     formData.append('userName', props?.userCredentials.userName);
     formData.append('password', props?.userCredentials?.password);
