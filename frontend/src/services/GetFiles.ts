@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { url } from '../utils/utils';
+import { url } from '../utils/Utils';
+
 export const getSourceNodes = async () => {
   try {
     const response = await axios.get(`${url()}/sources_list`);

@@ -171,6 +171,7 @@ If an entity, such as "John Doe", is mentioned multiple times in the text but is
 always use the most complete identifier for that entity throughout the knowledge graph. In this example, use "John Doe" as the entity ID.
 Remember, the knowledge graph should be coherent and easily understandable, so maintaining consistency in entity references is crucial.
 ## 5. Strict Compliance
+- **Not allowed Values** : Do not use 'Source' as label for any node and 'RELATIONSHIP' as relationship type for any relationships in graph.
 - **Colon values** : You may encounter colon(:) in content (example: Time references, description of title after heading). Please 
 treat them as text and do not treat them as dictionaries. For example, if time "10:00" is mentioned, considered it as part of text 
 content, not as data structure.
@@ -206,11 +207,15 @@ def extract_and_store_graph(
     extract_chain = get_extraction_chain(model_version,nodes, rels)
     data = extract_chain.invoke(document.page_content)['function']
 
+    for rel in data.rels:  
+        if rel.type.casefold() == 'relationship'.casefold():
+            rel.type = 'relation'
+        
     graph_document = [GraphDocument(
       nodes = [map_to_base_node(node) for node in data.nodes],
       relationships = [map_to_base_relationship(rel) for rel in data.rels],
       source = document
-    )]
+    )]   
 
     graph.add_graph_documents(graph_document)
     return graph_document   
@@ -241,9 +246,13 @@ def extract_graph_from_OpenAI(model_version,
     openai_api_key = os.environ.get('OPENAI_API_KEY')
     graph_document_list = []
 
-    logging.info(f"create relationship between source,chunck and entity nodes created from {model_version}")
+    logging.info(f"create relationship between source,chunk and entity nodes created from {model_version}")
     for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
+        if i == 0:
+            firstChunk = True
+        else:
+            firstChunk = False
         graph_document=extract_and_store_graph(model_version,graph,chunk_document)
-        create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document,uri,userName,password)
+        create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document,uri,userName,password,firstChunk)
         graph_document_list.append(graph_document[0])     
     return graph_document_list

@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, ReactNode, SetStateAction } from 'react';
 export interface CustomFile extends Partial<globalThis.File> {
   processing: number;
   status: string;
@@ -7,7 +7,7 @@ export interface CustomFile extends Partial<globalThis.File> {
   relationshipCount: number;
   model: string;
   fileSource: string;
-  s3url?: string;
+  source_url?: string;
 }
 
 export interface OptionType {
@@ -23,13 +23,14 @@ export type UserCredentials = {
 export type ExtractParams = {
   file?: string;
   model: string;
-  s3_url?: string;
+  source_url?: string;
   aws_access_key_id?: string;
   aws_secret_access_key?: string;
 } & { [key: string]: any };
 
 export type UploadParams = {
   file: string;
+  model: string;
 } & { [key: string]: any };
 
 export type FormDataParams = ExtractParams | UploadParams;
@@ -44,7 +45,7 @@ export interface CustomAlertProps {
   alertMessage: string;
 }
 
-export interface S3BucketProps {
+export interface DataComponentProps {
   openModal: () => void;
 }
 export interface S3ModalProps {
@@ -66,7 +67,7 @@ export interface SourceNode {
   relationshipCount?: number;
   model: string;
   status: string;
-  s3url?: string;
+  url?: string;
   awsAccessKeyId?: string;
   fileSource: string;
 }
@@ -82,4 +83,21 @@ export interface DrawerProps {
 
 export interface ContentProps {
   isExpanded: boolean;
+}
+export interface CustomModalProps {
+  open: boolean;
+  onClose: () => void;
+  children: ReactNode;
+  submitLabel: string;
+  submitHandler: () => void;
+  statusMessage: string;
+  status: 'unknown' | 'success' | 'info' | 'warning' | 'danger';
+  setStatus: Dispatch<SetStateAction<'unknown' | 'success' | 'info' | 'warning' | 'danger'>>;
+}
+export interface CommonButtonProps {
+  openModal: () => void;
+  wrapperclassName?: string;
+  logo: any;
+  title: string;
+  className?: string;
 }

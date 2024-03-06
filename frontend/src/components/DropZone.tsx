@@ -4,9 +4,9 @@ import Loader from '../utils/Loader';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
-import { getFileFromLocal, saveFileToLocal } from '../utils/utils';
+import { getFileFromLocal, saveFileToLocal } from '../utils/Utils';
 import CustomAlert from './Alert';
-import { uploadAPI } from '../services/FileAPI';
+import { uploadAPI } from '../utils/FileAPI';
 import { CustomFile } from '../types';
 
 const DropZone: FunctionComponent = () => {
@@ -89,50 +89,31 @@ const DropZone: FunctionComponent = () => {
           })
         );
 
-        const apiResponse = await uploadAPI(file, userCredentials);
+        const apiResponse = await uploadAPI(file, userCredentials, model);
         apirequests.push(apiResponse);
-        Promise.allSettled(apirequests)
-          .then((r) => {
-            r.forEach((apiRes) => {
-              if (apiRes.status === 'fulfilled' && apiRes.value) {
-                if (apiRes?.value?.status === 'Failed') {
-                  throw new Error('API Failure');
-                } else {
-                  setFilesData((prevfiles) =>
-                    prevfiles.map((curfile, idx) => {
-                      if (idx == uid) {
-                        return {
-                          ...curfile,
-                          status: 'New',
-                        };
-                      }
-                      return curfile;
-                    })
-                  );
-                  setIsClicked(false);
-                }
-              }
-            });
-            setIsClicked(false);
-            setIsLoading(false);
-          })
-          .catch((err) => {
-            setShowAlert(true);
-            setErrorMessage(err.message);
-            setIsLoading(false);
-            setFilesData((prevfiles) =>
-              prevfiles.map((curfile, idx) => {
-                if (idx == uid) {
-                  return {
-                    ...curfile,
-                    status: 'Failed',
-                    type: curfile.type?.split('/')[1]?.toUpperCase() ?? 'PDF',
-                  };
-                }
-                return curfile;
-              })
-            );
-          });
+        const results = await Promise.allSettled(apirequests);
+        results.forEach((apiRes) => {
+          if (apiRes.status === 'fulfilled' && apiRes.value) {
+            if (apiRes?.value?.status === 'Failed') {
+              throw new Error(apiRes?.value?.error);
+            } else {
+              setFilesData((prevfiles) =>
+                prevfiles.map((curfile, idx) => {
+                  if (idx == uid) {
+                    return {
+                      ...curfile,
+                      status: 'New',
+                    };
+                  }
+                  return curfile;
+                })
+              );
+              setIsClicked(false);
+            }
+          }
+        });
+        setIsClicked(false);
+        setIsLoading(false);
       } catch (err: any) {
         setIsLoading(false);
         setIsClicked(false);

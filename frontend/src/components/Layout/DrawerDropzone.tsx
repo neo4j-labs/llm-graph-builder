@@ -6,10 +6,13 @@ import S3Component from '../S3Bucket';
 import S3Modal from '../S3Modal';
 // import GcsBucket from '../GcsBucket';
 import { DrawerProps } from '../../types';
+import YouTubeButton from '../YoutubeButton';
+import YoutubeModal from '../YoutubeModal';
 
 const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
   const [showModal, setshowModal] = useState<boolean>(false);
+  const [showYoutubeModal, setShowYoutubeModal] = useState<boolean>(false);
 
   useEffect(() => {
     async function getHealthStatus() {
@@ -28,6 +31,12 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   };
   const hideModal = () => {
     setshowModal(false);
+  };
+  const hideYoutubeModal = () => {
+    setShowYoutubeModal(false);
+  };
+  const openYoutubeModal = () => {
+    setShowYoutubeModal(true);
   };
   return (
     <div
@@ -65,10 +74,11 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                     <div className='px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 imageBg'>
                       <DropZone />
                     </div>
-                    <Flex
-                      gap='8'
-                      className='s3Container outline-dashed outline-2 outline-offset-2 outline-gray-100 h-[436]'
-                    >
+                    <div className='outline-dashed imageBg'>
+                      <YouTubeButton openModal={openYoutubeModal} />
+                      <YoutubeModal hideModal={hideYoutubeModal} open={showYoutubeModal} />
+                    </div>
+                    <Flex gap='8' className='s3Container outline-dashed outline-2 outline-offset-2 outline-gray-100 '>
                       <S3Component openModal={openModal} />
                       <S3Modal hideModal={hideModal} open={showModal} />
                       {/* <GcsBucket />

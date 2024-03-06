@@ -41,7 +41,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: calc(-388px + 100dvh);
+  height: calc(-477px + 100dvh);
   border-radius: 8px;
   outline-color: #d1d5db;
 }
@@ -57,6 +57,27 @@
   border-radius: 8px;
 }
 
-.ndl-data-grid-root .ndl-data-grid-navigation{
+.ndl-data-grid-root .ndl-data-grid-navigation {
   padding-block: 5px !important;
+}
+.custombutton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-direction: column;
+  padding-block: 10px;
+}
+.brandimg {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+}
+::placeholder {
+  color: rgb(135, 130, 130) !important;
+}
+.textellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

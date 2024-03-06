@@ -1,67 +1,55 @@
-import { TextInput } from '@neo4j-ndl/react';
-import React, { useState } from 'react';
-import { S3ModalProps, SourceNode } from '../types';
-import { urlScanAPI } from '../services/URLScan';
+import { Checkbox, TextInput } from '@neo4j-ndl/react';
+import { useState } from 'react';
 import { useCredentials } from '../context/UserCredentials';
-import { getSourceNodes } from '../services/GetFiles';
-import { getFileFromLocal, validation } from '../utils/Utils';
 import { useFileContext } from '../context/UsersFiles';
+import { urlScanAPI } from '../services/URLScan';
+import { getSourceNodes } from '../services/GetFiles';
+import { S3ModalProps, SourceNode } from '../types';
+import { getFileFromLocal } from '../utils/Utils';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
 
-const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
-  const [bucketUrl, setBucketUrl] = useState<string>('');
-  const [accessKey, setAccessKey] = useState<string>('');
-  const [secretKey, setSecretKey] = useState<string>('');
+const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
+  const [youtubeURL, setYoutubeURL] = useState<string>('');
+  const [sourceLimit, setSourceLimit] = useState<number>(5);
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
+  const [showSourceLimitInput, setshowSourceLimitInput] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('');
-  const [isFocused, setisFocused] = useState<boolean>(false);
-  const [isValid, setValid] = useState<boolean>(false);
+  const [querySource, setQuerySource] = useState<string>('');
+
   const { userCredentials } = useCredentials();
   const { setFiles, setFilesData, model } = useFileContext();
-
-  const changeHandler = (e: any) => {
-    setBucketUrl(e.target.value);
-  };
   const reset = () => {
-    setBucketUrl('');
-    setAccessKey('');
-    setSecretKey('');
-    setValid(false);
-    setisFocused(false);
+    setYoutubeURL('');
+    setQuerySource('');
+    setshowSourceLimitInput(false);
   };
-
-  const submitHandler = async (url: string) => {
-    if (url && url[url.length - 1] != '/') {
-      setBucketUrl((prev) => {
-        return prev + '/';
-      });
-      setValid(validation(bucketUrl) && isFocused);
-    }
-    if (accessKey.length) {
-      localStorage.setItem('accesskey', accessKey);
-    }
-    if (accessKey.length) {
-      localStorage.setItem('secretkey', secretKey);
-    }
-    if (isValid && accessKey.trim() != '' && secretKey.trim() != '') {
+  const submitHandler = async () => {
+    if (!youtubeURL) {
+      setStatus('danger');
+      setStatusMessage('Please Fill the Valid YouTube link');
+      setTimeout(() => {
+        setStatus('unknown');
+      }, 2000);
+    } else {
       try {
         setStatus('info');
         setStatusMessage('Scaning...');
         const apiResponse = await urlScanAPI({
-          urlParam: url,
-          userCredentials: userCredentials,
-          model: model,
-          accessKey: accessKey,
-          secretKey: secretKey,
+          urlParam: youtubeURL,
+          userCredentials,
+          model,
+          accessKey: '',
+          secretKey: '',
+          max_limit: sourceLimit,
+          query_source: querySource,
         });
-        console.log('response', apiResponse);
         setStatus('success');
-        if (apiResponse?.data.status == 'Failed' || !apiResponse.data) {
+        if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
-          setStatusMessage(apiResponse.data.message ?? apiResponse.message);
+          setStatusMessage(apiResponse.data.message ?? apiResponse?.message);
         } else {
-          setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
+          setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count ?? ''} Link`);
         }
         reset();
         const res: any = await getSourceNodes();
@@ -109,13 +97,6 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatus('danger');
         setStatusMessage('Some Error Occurred');
       }
-    } else {
-      setStatus('warning');
-      setStatusMessage('Please Fill The Valid Credentials');
-      setTimeout(() => {
-        setStatus('unknown');
-      }, 2000);
-      return;
     }
     setStatus('unknown');
     setTimeout(() => {
@@ -127,66 +108,73 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     reset();
     setStatus('unknown');
   };
-
   return (
     <CustomModal
       open={open}
       onClose={onClose}
       statusMessage={statusMessage}
-      submitHandler={() => submitHandler(bucketUrl)}
-      status={status}
       setStatus={setStatus}
+      submitHandler={submitHandler}
+      status={status}
       submitLabel='Submit'
     >
       <div style={{ width: '100%', display: 'inline-block' }}>
         <TextInput
           id='url'
-          value={bucketUrl}
+          value={youtubeURL}
           disabled={false}
-          label='Bucket URL'
-          placeholder='s3://data.neo4j.com/pdf/'
+          label='Youtube Link'
+          placeholder='https://www.youtube.com/watch?v=2W9HM1xBibo'
           autoFocus
           fluid
           required
-          errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
-          onBlur={() => setValid(validation(bucketUrl) && isFocused)}
           onChange={(e) => {
-            setisFocused(true);
-            changeHandler(e);
-          }}
-        />
-      </div>
-      <div className='flex justify-between items-center w-full gap-4 mt-3'>
-        <TextInput
-          id='url'
-          value={accessKey}
-          disabled={false}
-          label='Access Key'
-          className='w-full'
-          placeholder=''
-          fluid
-          required
-          type={'password'}
-          onChange={(e) => {
-            setAccessKey(e.target.value);
+            setYoutubeURL(e.target.value);
           }}
         />
         <TextInput
-          id='url'
-          value={secretKey}
+          id='Query Source'
+          className='my-3'
+          value={querySource}
           disabled={false}
-          label='Secret Key'
-          className='w-full'
+          label='Additional Wikipedia Query Sources'
           placeholder=''
           fluid
-          required
-          type={'password'}
           onChange={(e) => {
-            setSecretKey(e.target.value);
+            setQuerySource(e.target.value);
           }}
         />
+        {showSourceLimitInput && (
+          <TextInput
+            id='url'
+            value={sourceLimit}
+            disabled={false}
+            label='Max Source Limit'
+            placeholder='5'
+            autoFocus
+            fluid
+            required
+            type='number'
+            onChange={(e) => {
+              setSourceLimit(parseInt(e.target.value));
+            }}
+          />
+        )}
+        <div className='my-2'>
+          <Checkbox
+            label='Include Wikipedia Sources in the Knowledge Graph'
+            checked={showSourceLimitInput}
+            onChange={(e) => {
+              if (e.target.checked) {
+                setshowSourceLimitInput(true);
+              } else {
+                setshowSourceLimitInput(false);
+              }
+            }}
+          />
+        </div>
       </div>
     </CustomModal>
   );
 };
-export default S3Modal;
+export default YoutubeModal;

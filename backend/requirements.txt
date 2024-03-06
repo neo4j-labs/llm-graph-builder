@@ -180,3 +180,5 @@ zipp==3.17.0
 poppler-utils
 pytesseract
 pdf2image
+youtube-transcript-api
+pytube

@@ -7,7 +7,7 @@ import { setDriver, disconnect } from '../utils/Driver';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
-import { extractAPI } from '../services/FileAPI';
+import { extractAPI } from '../utils/FileAPI';
 import { ContentProps } from '../types';
 
 const Content: React.FC<ContentProps> = ({ isExpanded }) => {
@@ -72,54 +72,50 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
           file,
           filesData[uid].model,
           userCredentials,
-          filesData[uid].s3url,
+          filesData[uid].source_url,
           localStorage.getItem('accesskey'),
           localStorage.getItem('secretkey')
         );
         apirequests.push(apiResponse);
-        Promise.allSettled(apirequests)
-          .then((r) => {
-            r.forEach((apiRes) => {
-              if (apiRes.status === 'fulfilled' && apiRes.value) {
-                if (apiRes?.value?.status === 'Failed') {
-                  setShowAlert(true);
-                  setErrorMessage('Unexpected Error');
-                  setFilesData((prevfiles) =>
-                    prevfiles.map((curfile, idx) => {
-                      if (idx == uid) {
-                        return {
-                          ...curfile,
-                          status: 'Failed',
-                        };
-                      }
-                      return curfile;
-                    })
-                  );
-                  throw new Error('API Failure');
-                } else {
-                  setFilesData((prevfiles) => {
-                    return prevfiles.map((curfile, idx) => {
-                      if (idx == uid) {
-                        const apiResponse = apiRes?.value?.data;
-                        return {
-                          ...curfile,
-                          processing: apiResponse?.processingTime?.toFixed(2),
-                          status: apiResponse?.status,
-                          NodesCount: apiResponse?.nodeCount,
-                          relationshipCount: apiResponse?.relationshipCount,
-                          model: apiResponse?.model,
-                        };
-                      }
-                      return curfile;
-                    });
-                  });
-                }
-              }
-            });
-          })
-          .catch((err) => {
-            console.log(err);
-          });
+        const results = await Promise.allSettled(apirequests);
+        results.forEach(async (apiRes) => {
+          if (apiRes.status === 'fulfilled' && apiRes.value) {
+            if (apiRes?.value?.status === 'Failed') {
+              console.log('Error', apiRes?.value);
+              setShowAlert(true);
+              setErrorMessage(apiRes?.value?.error);
+              setFilesData((prevfiles) =>
+                prevfiles.map((curfile, idx) => {
+                  if (idx == uid) {
+                    return {
+                      ...curfile,
+                      status: 'Failed',
+                    };
+                  }
+                  return curfile;
+                })
+              );
+              throw new Error(apiRes?.value?.error);
+            } else {
+              setFilesData((prevfiles) => {
+                return prevfiles.map((curfile, idx) => {
+                  if (idx == uid) {
+                    const apiResponse = apiRes?.value?.data;
+                    return {
+                      ...curfile,
+                      processing: apiResponse?.processingTime?.toFixed(2),
+                      status: apiResponse?.status,
+                      NodesCount: apiResponse?.nodeCount,
+                      relationshipCount: apiResponse?.relationshipCount,
+                      model: apiResponse?.model,
+                    };
+                  }
+                  return curfile;
+                });
+              });
+            }
+          }
+        });
       } catch (err: any) {
         console.log(err);
         setShowAlert(true);
@@ -191,7 +187,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
           <Button
-            loading={filesData.some((f) => f.status === 'Processing')}
+            loading={filesData.some((f) => f?.status === 'Processing')}
             disabled={disableCheck}
             onClick={handleGenerateGraph}
             className='mr-0.5'
