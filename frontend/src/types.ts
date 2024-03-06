@@ -86,6 +86,10 @@ export interface ContentProps {
   isExpanded: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
 }
+export interface FileTableProps {
+  isExpanded: boolean;
+  setConnectionStatus: Dispatch<SetStateAction<boolean>>;
+}
 export interface CustomModalProps {
   open: boolean;
   onClose: () => void;

@@ -59,38 +59,44 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatus('success');
         if (apiResponse?.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
-          setStatusMessage(apiResponse.data.message ?? apiResponse.message);
-        } else {
-          setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
-        }
+          setStatusMessage('Please Fill The Valid Credentials' ?? apiResponse?.message);
+          setTimeout(() => {
+            hideModal();
+            setStatus('unknown');
+          }, 2000);
+          return;
+        } 
+        setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
         reset();
         const res: any = await getSourceNodes(userCredentials);
-        if (Array.isArray(res.data.data) && res.data.data.length) {
+        if (res.data.status !== 'Failed') {
           const prefiles: any[] = [];
-          res.data.data.forEach((item: SourceNode) => {
-            if (item.fileName != undefined) {
-              prefiles.push({
-                name: item.fileName,
-                size: item.fileSize ?? 0,
-                type: item?.fileType?.toUpperCase() ?? 'None',
-                NodesCount: item?.nodeCount ?? 0,
-                processing: item?.processingTime ?? 'None',
-                relationshipCount: item?.relationshipCount ?? 0,
-                status:
-                  item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
-                    ? item.status
-                    : item.fileSource === 'youtube'
-                    ? item.status
-                    : getFileFromLocal(`${item.fileName}`) != null
-                    ? item.status
-                    : 'N/A',
-                model: item?.model ?? model,
-                id: uuidv4(),
-                source_url: item.url != 'None' && item?.url != '' ? item.url : '',
-                fileSource: item.fileSource ?? 'None',
-              });
-            }
-          });
+          if (res.data.data.length) {
+            res.data.data.forEach((item: SourceNode) => {
+              if (item.fileName != undefined) {
+                prefiles.push({
+                  name: item.fileName,
+                  size: item.fileSize ?? 0,
+                  type: item?.fileType?.toUpperCase() ?? 'None',
+                  NodesCount: item?.nodeCount ?? 0,
+                  processing: item?.processingTime ?? 'None',
+                  relationshipCount: item?.relationshipCount ?? 0,
+                  status:
+                    item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                      ? item.status
+                      : item.fileSource === 'youtube'
+                      ? item.status
+                      : getFileFromLocal(`${item.fileName}`) != null
+                      ? item.status
+                      : 'N/A',
+                  model: item?.model ?? model,
+                  id: uuidv4(),
+                  source_url: item.url != 'None' && item?.url != '' ? item.url : '',
+                  fileSource: item.fileSource ?? 'None',
+                });
+              }
+            });
+          }
           setFilesData(prefiles);
           const prefetchedFiles: any[] = [];
           res.data.data.forEach((item: any) => {

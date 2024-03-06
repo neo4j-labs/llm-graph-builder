@@ -9,7 +9,7 @@ export const setDriver = async (connectionURI: string, username: string, passwor
     console.log(serverInfo);
     localStorage.setItem(
       'neo4j.connection',
-      JSON.stringify({ uri: connectionURI, user: username, password: password, database: database})
+      JSON.stringify({ uri: connectionURI, user: username, password: password, database: database })
     );
     return true;
   } catch (err: any) {
