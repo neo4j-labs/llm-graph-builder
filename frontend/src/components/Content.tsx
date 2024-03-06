@@ -182,7 +182,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
             </Button>
           )}
         </Flex>
-        <FileTable isExpanded={isExpanded}></FileTable>
+        <FileTable isExpanded={isExpanded} setConnectionStatus={setConnectionStatus}></FileTable>
         <Flex
           className='w-full p-2.5 absolute bottom-4'
           justifyContent='space-between'

@@ -17,7 +17,7 @@ import { SourceNode, CustomFile, ContentProps } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import CustomAlert from './Alert';
 
-const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
+const FileTable: React.FC<ContentProps> = ({ isExpanded, setConnectionStatus }) => {
   const { filesData, setFiles, setFilesData, model } = useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
@@ -25,7 +25,7 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [showAlert, setShowAlert] = useState<boolean>(false)
+  const [showAlert, setShowAlert] = useState<boolean>(false);
 
   const sourceFind = (name: any) => {
     return filesData.find((f) => {
@@ -125,10 +125,10 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
                   item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                     ? item.status
                     : item.fileSource === 'youtube'
-                      ? item.status
-                      : getFileFromLocal(`${item.fileName}`) != null
-                        ? item.status
-                        : 'N/A',
+                    ? item.status
+                    : getFileFromLocal(`${item.fileName}`) != null
+                    ? item.status
+                    : 'N/A',
                 model: item?.model ?? model,
                 id: uuidv4(),
                 source_url: item.url != 'None' && item?.url != '' ? item.url : '',
@@ -150,17 +150,17 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
             }
           });
           setFiles(prefetchedFiles);
-        }
-        else {
-          throw new Error(res.data.error)
+        } else {
+          throw new Error(res.data.error);
         }
         setIsLoading(false);
-      } catch (error:any) {
+      } catch (error: any) {
         setIsLoading(false);
+        setConnectionStatus(false);
         setFilesData([]);
         setFiles([]);
         setShowAlert(true);
-        setErrorMessage("Please enter valid credentials");
+        setErrorMessage('Please enter valid credentials');
         console.log(error);
       }
     };
