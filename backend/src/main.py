@@ -393,7 +393,7 @@ def get_documents_from_youtube(url):
           print("Youtube pages = ",pages)
           return file_name, file_key, pages     
 
-def get_source_list_from_graph(uri,userName,password):
+def get_source_list_from_graph(uri,database,userName,password):
   """
   Args:
     uri: URI of the graph to extract
@@ -407,7 +407,7 @@ def get_source_list_from_graph(uri,userName,password):
  """
   logging.info("Get existing files list from graph")
   try:
-    graph = Neo4jGraph(url=uri, username=userName, password=password)
+    graph = Neo4jGraph(url=uri,database=database, username=userName, password=password)
     query = "MATCH(d:Document) RETURN d ORDER BY d.updatedAt DESC"
     result = graph.query(query)
     list_of_json_objects = [entry['d'] for entry in result]

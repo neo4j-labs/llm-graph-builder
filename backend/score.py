@@ -131,8 +131,9 @@ async def extract_knowledge_graph_from_file(
 
 @app.get("/sources_list")
 async def get_source_list(uri:str,
+                          database:str,
                           userName:str,
-                          password:str, selectedProtocol:str):
+                          password:str):
     """
     Calls 'get_source_list_from_graph' which returns list of sources which alreday exist in databse
     """
@@ -144,9 +145,10 @@ async def get_source_list(uri:str,
     sample_string_bytes = base64.b64decode(password)
     decoded_password = sample_string_bytes.decode("utf-8")
     print("decoded password=",decoded_password)
-    uri=selectedProtocol+uri
+    if " " in uri: 
+       uri= uri.replace(" ","+")
     print("uri = ",uri)
-    result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password)
+    result = await asyncio.to_thread(get_source_list_from_graph,uri,database,userName,decoded_password)
     return result
     
 @app.post("/update_similarity_graph")

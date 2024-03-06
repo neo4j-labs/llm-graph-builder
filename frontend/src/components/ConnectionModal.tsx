@@ -20,7 +20,7 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
 
   function submitConnection() {
     const connectionURI = `${selectedProtocol}://${hostname}:${port}`;
-    setUserCredentials({ uri: hostname, userName: username, password:password, database: database, selectedProtocol:selectedProtocol });
+    setUserCredentials({ uri: connectionURI, userName: username, password:password, database: database });
     localStorage.setItem('username', username);
     localStorage.setItem('hostname', hostname);
     localStorage.setItem('port', `${port}`);

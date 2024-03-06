@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getFileFromLocal, statusCheck } from '../utils/Utils';
 import { SourceNode, CustomFile, ContentProps } from '../types';
 import { useCredentials } from '../context/UserCredentials';
+import CustomAlert from './Alert';
 
 const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
   const { filesData, setFiles, setFilesData, model } = useFileContext();
@@ -23,6 +24,8 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [showAlert, setShowAlert] = useState<boolean>(false)
 
   const sourceFind = (name: any) => {
     return filesData.find((f) => {
@@ -119,13 +122,13 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
                 processing: item?.processingTime ?? 'None',
                 relationshipCount: item?.relationshipCount ?? 0,
                 status:
-                  item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                  item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                     ? item.status
                     : item.fileSource === 'youtube'
-                    ? item.status
-                    : getFileFromLocal(`${item.fileName}`) != null
-                    ? item.status
-                    : 'N/A',
+                      ? item.status
+                      : getFileFromLocal(`${item.fileName}`) != null
+                        ? item.status
+                        : 'N/A',
                 model: item?.model ?? model,
                 id: uuidv4(),
                 source_url: item.url != 'None' && item?.url != '' ? item.url : '',
@@ -148,9 +151,16 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
           });
           setFiles(prefetchedFiles);
         }
+        else {
+          throw new Error(res.data.error)
+        }
         setIsLoading(false);
-      } catch (error) {
+      } catch (error:any) {
         setIsLoading(false);
+        setFilesData([]);
+        setFiles([]);
+        setShowAlert(true);
+        setErrorMessage("Please enter valid credentials");
         console.log(error);
       }
     };
@@ -201,9 +211,13 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
     table.getColumn('status')?.setFilterValue(e.target.checked);
   };
   const classNameCheck = isExpanded ? 'fileTableWithExpansion' : `filetable`;
+  const handleClose = () => {
+    setShowAlert(false);
+  };
 
   return (
     <>
+      <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
       {filesData ? (
         <>
           <div className='flex items-center p-5 self-start gap-2'>
