@@ -190,6 +190,7 @@ def create_source_node_graph_url(uri, db_name, userName, password, source_url, m
            job_status = "Completed"
            return create_api_response(job_status,data='Unknown URL')
     except Exception as e:
+        source_type = ''
         job_status = "Failed"
         error_message = str(e)
         logging.exception(f'Exception Stack trace:')
@@ -412,6 +413,7 @@ def get_source_list_from_graph(uri,db_name,userName,password):
     query = "MATCH(d:Document) RETURN d ORDER BY d.updatedAt DESC"
     result = graph.query(query)
     list_of_json_objects = [entry['d'] for entry in result]
+    logging.info(f'list of object {list_of_json_objects}')
     return create_api_response("Success",data=list_of_json_objects)
   except Exception as e:
     job_status = "Failed"
