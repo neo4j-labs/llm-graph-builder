@@ -22,7 +22,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 load_dotenv()
-logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
+logging.basicConfig(format='%(asctime)s - %(message)s',level='DEBUG')
 # from langchain.document_loaders import S3FileLoader
 
 def update_exception_db(graph_obj,file_name,exp_msg):
@@ -47,12 +47,13 @@ def create_source_node(graph_obj,file_name,file_size,file_type,source,model,url=
     # graph_obj.query('MERGE(d:Document {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message))
     raise Exception(str(e))
 
-def create_source_node_graph_local_file(uri, userName, password, file, model):
+def create_source_node_graph_local_file(uri, db_name, userName, password, file, model):
   """
    Creates a source node in Neo4jGraph and sets properties.
    
    Args:
    	 uri: URI of Graph Service to connect to
+     db_name: database name to connect
    	 userName: Username to connect to Graph Service with ( default : None )
    	 password: Password to connect to Graph Service with ( default : None )
    	 file: File object with information about file to be added
@@ -65,7 +66,7 @@ def create_source_node_graph_local_file(uri, userName, password, file, model):
     file_size = file.size
     file_name = file.filename
     source = 'local file'
-    graph = Neo4jGraph(url=uri, username=userName, password=password)    
+    graph = Neo4jGraph(url=uri,database=db_name, username=userName, password=password)    
 
     create_source_node(graph,file_name,file_size,file_type,source,model)
     return create_api_response("Success",data="Source Node created successfully",file_source=source)
@@ -129,12 +130,13 @@ def check_url_source(url):
     except Exception as e:
         raise e
   
-def create_source_node_graph_url(uri, userName, password, source_url, max_limit, wiki_query,model, aws_access_key_id=None,aws_secret_access_key=None):
+def create_source_node_graph_url(uri, db_name, userName, password, source_url, max_limit, wiki_query,model, aws_access_key_id=None,aws_secret_access_key=None):
     """
       Creates a source node in Neo4jGraph and sets properties.
       
       Args:
         uri: URI of Graph Service to connect to
+        db_name: db_name is database name to connect to graph db
         userName: Username to connect to Graph Service with ( default : None )
         password: Password to connect to Graph Service with ( default : None )
         s3_url: s3 url for the bucket to fetch pdf files from
@@ -144,7 +146,7 @@ def create_source_node_graph_url(uri, userName, password, source_url, max_limit,
         Success or Failed message of node creation
     """
     try:
-        graph = Neo4jGraph(url=uri, username=userName, password=password)
+        graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
         source_type = check_url_source(source_url)
         print(f"source type URL:{source_type}")
         if source_type == "s3 bucket":
@@ -239,12 +241,13 @@ def wiki_loader(wiki_query,max_sources,max_wiki_pages=2):
 
 
 
-def extract_graph_from_file(uri, userName, password, model, file=None,source_url=None,aws_access_key_id=None,aws_secret_access_key=None,wiki_query=None,max_sources=None,max_wiki_pages=2):
+def extract_graph_from_file(uri, db_name, userName, password, model, file=None,source_url=None,aws_access_key_id=None,aws_secret_access_key=None,wiki_query=None,max_sources=None,max_wiki_pages=2):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
    Args:
    	 uri: URI of the graph to extract
+     db_name : db_name is database name to connect graph db
    	 userName: Username to use for graph creation ( if None will use username from config file )
    	 password: Password to use for graph creation ( if None will use password from config file )
    	 file: File object containing the PDF file to be used
@@ -257,7 +260,7 @@ def extract_graph_from_file(uri, userName, password, model, file=None,source_url
   # logging.info(f"extract_graph_from_file called for file:{file.filename}")
   try:
     start_time = datetime.now()
-    graph = Neo4jGraph(url=uri, username=userName, password=password)
+    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
     source_node = "fileName: '{}'" 
     if file!=None:
       file_name, file_key, pages = get_documents_from_file(file)
@@ -343,12 +346,9 @@ def extract_graph_from_file(uri, userName, password, model, file=None,source_url
     return create_api_response("Success",data=output)
       
   except Exception as e:
-      # job_status = "Failed"
       error_message = str(e)
       logging.info(f"file name in exception: {file_name}")
-      # update_node_prop = 'SET d.status = "{}", d.errorMessage = "{}"'
       update_exception_db(graph,file_name,error_message)
-      # graph.query('MERGE(d:Document {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,error_message))
       logging.exception(f'Exception Stack trace: {error_message}')
       return create_api_response(job_status,error=error_message)
   
@@ -393,10 +393,11 @@ def get_documents_from_youtube(url):
           print("Youtube pages = ",pages)
           return file_name, file_key, pages     
 
-def get_source_list_from_graph(uri,database,userName,password):
+def get_source_list_from_graph(uri,db_name,userName,password):
   """
   Args:
     uri: URI of the graph to extract
+    db_name: db_name is database name to connect to graph db
     userName: Username to use for graph creation ( if None will use username from config file )
     password: Password to use for graph creation ( if None will use password from config file )
     file: File object containing the PDF file to be used
@@ -407,7 +408,7 @@ def get_source_list_from_graph(uri,database,userName,password):
  """
   logging.info("Get existing files list from graph")
   try:
-    graph = Neo4jGraph(url=uri,database=database, username=userName, password=password)
+    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
     query = "MATCH(d:Document) RETURN d ORDER BY d.updatedAt DESC"
     result = graph.query(query)
     list_of_json_objects = [entry['d'] for entry in result]
@@ -415,7 +416,7 @@ def get_source_list_from_graph(uri,database,userName,password):
   except Exception as e:
     job_status = "Failed"
     error_message = str(e)
-    logging.exception('Exception')
+    logging.exception(f'Exception:{error_message}')
     return create_api_response(job_status,error=error_message)
 
 def update_graph(graph):

@@ -12,14 +12,11 @@ def healthy_condition():
     output = {"healthy": True}
     return output
 
-
 def healthy():
     return True
 
-
 def sick():
     return False
-
 
 app = FastAPI()
 
@@ -32,10 +29,9 @@ app.add_middleware(
 )
 app.add_api_route("/health", health([healthy_condition, healthy]))
 
-
 @app.post("/sources")
 async def create_source_knowledge_graph(
-    uri=Form(), userName=Form(), password=Form(), file: UploadFile = File(...), model=Form()
+    uri=Form(), database=Form(), userName=Form(), password=Form(), file: UploadFile = File(...), model=Form()
 ):
     """
     Calls 'create_source_node_graph' function in a new thread to create
@@ -51,13 +47,14 @@ async def create_source_knowledge_graph(
          'Source' Node creation in Neo4j database
     """
     result = await asyncio.to_thread(
-        create_source_node_graph_local_file, uri, userName, password, file, model
+        create_source_node_graph_local_file, uri, database, userName, password, file, model
     )
     return result
 
 @app.post("/url/scan")
 async def create_source_knowledge_graph_url(
     uri=Form(),
+    database=Form(),
     userName=Form(),
     password=Form(),
     source_url=Form(),
@@ -68,13 +65,14 @@ async def create_source_knowledge_graph_url(
     model=Form(None)
 ):
     return create_source_node_graph_url(
-        uri, userName, password, source_url, max_limit, query_source, model, aws_access_key_id, aws_secret_access_key
+        uri, database, userName, password, source_url, max_limit, query_source, model, aws_access_key_id, aws_secret_access_key
     )
 
 
 @app.post("/extract")
 async def extract_knowledge_graph_from_file(
     uri=Form(),
+    database=Form(),
     userName=Form(),
     password=Form(),
     file: UploadFile = File(None),
@@ -104,6 +102,7 @@ async def extract_knowledge_graph_from_file(
         return await asyncio.to_thread(
             extract_graph_from_file,
             uri,
+            database,
             userName,
             password,
             model,
@@ -116,6 +115,7 @@ async def extract_knowledge_graph_from_file(
         return await asyncio.to_thread(
             extract_graph_from_file,
             uri,
+            database,
             userName,
             password,
             model,
@@ -160,7 +160,5 @@ async def update_similarity_graph():
     result = await asyncio.to_thread(update_graph)
     return result
     
-
-
 if __name__ == "__main__":
     uvicorn.run(app)
