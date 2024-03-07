@@ -13,8 +13,9 @@ from langchain.document_loaders import S3DirectoryLoader
 import boto3
 from urllib.parse import urlparse
 import os
-import re
+
 from tempfile import NamedTemporaryFile
+
 import re
 from langchain_community.document_loaders import YoutubeLoader
 from langchain.document_loaders import WikipediaLoader
@@ -207,7 +208,7 @@ def file_into_chunks(pages: List[Document]):
     text_splitter = TokenTextSplitter(chunk_size=200, chunk_overlap=20)
     chunks = text_splitter.split_documents(pages)
     # print('Before chunks',len(chunks))
-    chunks=chunks[:10]
+    #chunks=chunks[:10]
     return chunks
 
 def get_s3_pdf_content(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
