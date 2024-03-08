@@ -27,10 +27,15 @@ logging.basicConfig(format='%(asctime)s - %(message)s',level='DEBUG')
 # from langchain.document_loaders import S3FileLoader
 
 def update_exception_db(graph_obj,file_name,exp_msg):
+  try:  
     job_status = "Failed"
     source_node = "fileName: '{}'"
     update_node_prop = 'SET d.status = "{}", d.errorMessage = "{}"'
     graph_obj.query('MERGE(d:Document {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,exp_msg))
+  except Exception as e:
+    error_message = str(e)
+    logging.error(f"Error in updating document node status as failed: {error_message}")
+    raise Exception(error_message)
 
 def create_source_node(graph_obj,file_name,file_size,file_type,source,model,url=None,aws_access_key_id=None):
   try:   
@@ -41,12 +46,9 @@ def create_source_node(graph_obj,file_name,file_size,file_type,source,model,url=
     logging.info("create source node as file name if not exist")
     graph_obj.query('MERGE(d:Document {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,job_status,url,aws_access_key_id,source,current_time,current_time,0,'',0,0,model))
   except Exception as e:
-    # job_status = "Failed"
     error_message = str(e)
     update_exception_db(graph_obj,file_name,error_message)
-    # update_node_prop = 'SET d.status = "{}", d.errorMessage = "{}"'
-    # graph_obj.query('MERGE(d:Document {'+source_node.format(file_name.split('/')[-1])+'}) '+update_node_prop.format(job_status,error_message))
-    raise Exception(str(e))
+    raise Exception(error_message)
 
 def create_source_node_graph_local_file(uri, db_name, userName, password, file, model):
   """
@@ -74,11 +76,12 @@ def create_source_node_graph_local_file(uri, db_name, userName, password, file, 
   except Exception as e:
     job_status = "Failed"
     error_message = str(e)
-    return create_api_response(job_status,error=error_message,file_source=source)
+    logging.error(f"Error in creating document node: {error_message}")
+    return create_api_response(job_status,error=error_message,file_source=source,file_name=file_name)
 
 
 def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
-  # try:
+  try:
       # Extract bucket name and directory from the S3 URL
       parsed_url = urlparse(s3_url)
       bucket_name = parsed_url.netloc
@@ -90,11 +93,7 @@ def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
         # List objects in the specified directory
         response = s3.list_objects_v2(Bucket=bucket_name, Prefix=directory)
       except Exception as e:
-         return {
-    "status": "Failed",
-    # "success_count": 0,
-    # "Failed_count": 0,
-    "message": "Invalid AWS credentials"}
+         return {"status": "Failed","message": "Invalid AWS credentials"}
       files_info = []
 
       # Check each object for file size and type
@@ -109,7 +108,11 @@ def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
           if file_name.endswith('.pdf'):
             files_info.append({'file_key': file_key, 'file_size_bytes': file_size})
             
-      return files_info  
+      return files_info
+  except Exception as e:
+    error_message = str(e)
+    logging.error(f"Error while reading files from s3: {error_message}")
+    raise Exception(error_message)
 
 def check_url_source(url):
     try:
@@ -129,7 +132,8 @@ def check_url_source(url):
       
       return source
     except Exception as e:
-        raise e
+      logging.error(f"Error in recognize URL: {e}")  
+      raise Exception(e)
   
 def create_source_node_graph_url(uri, db_name, userName, password, source_url, max_limit, wiki_query,model, aws_access_key_id=None,aws_secret_access_key=None):
     """
@@ -147,9 +151,9 @@ def create_source_node_graph_url(uri, db_name, userName, password, source_url, m
         Success or Failed message of node creation
     """
     try:
-        graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
         source_type = check_url_source(source_url)
-        print(f"source type URL:{source_type}")
+        graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+        logging.info(f"source type URL:{source_type}")
         if source_type == "s3 bucket":
             files_info = get_s3_files_info(source_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
             if isinstance(files_info,dict):
@@ -191,7 +195,6 @@ def create_source_node_graph_url(uri, db_name, userName, password, source_url, m
            job_status = "Completed"
            return create_api_response(job_status,data='Unknown URL')
     except Exception as e:
-        source_type = ''
         job_status = "Failed"
         error_message = str(e)
         logging.exception(f'Exception Stack trace:')
@@ -229,17 +232,21 @@ def get_s3_pdf_content(s3_url,aws_access_key_id=None,aws_secret_access_key=None)
           return None
     
     except Exception as e:
-        return None
+        logging.error(f"getting error while reading content from s3 files:{e}")
+        raise Exception(e)
 
 def wiki_loader(wiki_query,max_sources,max_wiki_pages=2):
-
-  searches=wiki_query.split(',')
-  searches=searches[:max_sources]
-  pages=[]
-  for query in searches:
-    pages.extend(WikipediaLoader(query=query,load_all_available_meta=False).load())
-    pages=pages[:max_wiki_pages]
-  return pages
+  try:
+    searches=wiki_query.split(',')
+    searches=searches[:max_sources]
+    pages=[]
+    for query in searches:
+      pages.extend(WikipediaLoader(query=query,load_all_available_meta=False).load())
+      pages=pages[:max_wiki_pages]
+    return pages
+  except Exception as e:
+    logging.error(f"Not finding wiki content:{e}")
+    raise Exception(e)
 
 
 
@@ -262,6 +269,7 @@ def extract_graph_from_file(uri, db_name, userName, password, model, file=None,s
   # logging.info(f"extract_graph_from_file called for file:{file.filename}")
   try:
     start_time = datetime.now()
+    file_name = ''
     graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
     source_node = "fileName: '{}'" 
     if file!=None:
@@ -348,18 +356,18 @@ def extract_graph_from_file(uri, db_name, userName, password, model, file=None,s
     return create_api_response("Success",data=output)
       
   except Exception as e:
+      job_status = "Failed"
       error_message = str(e)
-      logging.info(f"file name in exception: {file_name}")
+      logging.error(f"file failed in process: {file_name}")
       update_exception_db(graph,file_name,error_message)
       logging.exception(f'Exception Stack trace: {error_message}')
-      return create_api_response(job_status,error=error_message)
+      return create_api_response(job_status,error=error_message,file_name=file_name)
   
 def get_documents_from_file(file):
-    print("get_documents_from_file called")
+    logging.info("get_documents_from_file called")
     file_name = file.filename
-    print("file_name = ",file_name)
+    logging.info("file_name = ",file_name)
     file_key=file_name
-    print("file_key = ",file_key)
         
     with open('temp.pdf','wb') as f:
         f.write(file.file.read())
@@ -368,32 +376,36 @@ def get_documents_from_file(file):
     return file_name,file_key,pages
     
 def get_documents_from_s3(s3_url, aws_access_key_id, aws_secret_access_key):
-        
-        parsed_url = urlparse(s3_url)
-        bucket = parsed_url.netloc
-        file_key = parsed_url.path.lstrip('/')
-        file_name=file_key.split('/')[-1]
-        s3=boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
-        response=s3.head_object(Bucket=bucket,Key=file_key)
-        file_size=response['ContentLength']
-        
-        logging.info(f'bucket : {bucket},  file key : {file_key},  file size : {file_size}')
-        pages=get_s3_pdf_content(s3_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
-        return file_name,file_key,pages
+    parsed_url = urlparse(s3_url)
+    bucket = parsed_url.netloc
+    file_key = parsed_url.path.lstrip('/')
+    file_name=file_key.split('/')[-1]
+    s3=boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
+    response=s3.head_object(Bucket=bucket,Key=file_key)
+    file_size=response['ContentLength']
+    
+    logging.info(f'bucket : {bucket},  file key : {file_key},  file size : {file_size}')
+    pages=get_s3_pdf_content(s3_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
+    return file_name,file_key,pages
  
  
 def get_documents_from_youtube(url):
-          youtube_loader = YoutubeLoader.from_youtube_url(url, 
-                                                          language=["en-US", "en-gb", "en-ca", "en-au","zh-CN", "zh-Hans", "zh-TW", "fr-FR","de-DE","it-IT","ja-JP","pt-BR","ru-RU","es-ES"],
-                                                          translation = "en",
-                                                          add_video_info=True)
-          pages = youtube_loader.load()
-          match = re.search(r"v=([a-zA-Z0-9_-]+)", url)
-          youtube_id=match.group(1)
-          file_name=youtube_id
-          file_key=file_name
-          print("Youtube pages = ",pages)
-          return file_name, file_key, pages     
+    try:
+      youtube_loader = YoutubeLoader.from_youtube_url(url, 
+                                                      language=["en-US", "en-gb", "en-ca", "en-au","zh-CN", "zh-Hans", "zh-TW", "fr-FR","de-DE","it-IT","ja-JP","pt-BR","ru-RU","es-ES"],
+                                                      translation = "en",
+                                                      add_video_info=True)
+      pages = youtube_loader.load()
+      match = re.search(r"v=([a-zA-Z0-9_-]+)", url)
+      youtube_id=match.group(1)
+      file_name=youtube_id
+      file_key=file_name
+      print("Youtube pages = ",pages)
+      return file_name, file_key, pages
+    except Exception as e:
+      error_message = str(e)
+      logging.exception(f'Exception in reading transcript from youtube:{error_message}')
+      raise Exception(error_message)
 
 def get_source_list_from_graph(uri,db_name,userName,password):
   """
@@ -426,17 +438,21 @@ def update_graph(graph):
   """
   Update the graph node with SIMILAR relationship where embedding scrore match
   """
-  knn_min_score = os.environ.get('KNN_MIN_SCORE')
+  try:   
+    knn_min_score = os.environ.get('KNN_MIN_SCORE')
 
-  query = "WHERE node <> c and score >= {} MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score"
-  # graph = Neo4jGraph()
-  result = graph.query("""MATCH (c:Chunk)
-              WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
-              CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score """+ query.format(knn_min_score))
-  logging.info(f"result : {result}")
-  return create_api_response("Success",message="Query executed successfully",data=result)
+    query = "WHERE node <> c and score >= {} MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score"
+    # graph = Neo4jGraph()
+    result = graph.query("""MATCH (c:Chunk)
+                WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
+                CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score """+ query.format(knn_min_score))
+    logging.info(f"result : {result}")
+  except Exception as e:
+    error_message = str(e)
+    logging.exception(f'Exception in update KNN graph:{error_message}')
+    raise Exception(error_message)
 
-def create_api_response(status,success_count=None,Failed_count=None, data=None, error=None,message=None,file_source=None):
+def create_api_response(status,success_count=None,Failed_count=None, data=None, error=None,message=None,file_source=None,file_name=None):
   """
    Create a response to be sent to the API. This is a helper function to create a JSON response that can be sent to the API.
    
@@ -468,5 +484,8 @@ def create_api_response(status,success_count=None,Failed_count=None, data=None, 
 
   if file_source is not None:
     response['file_source']=file_source
+
+  if file_name is not None:
+    response['file_name']=file_name
     
   return response

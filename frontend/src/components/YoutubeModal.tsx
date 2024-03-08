@@ -1,4 +1,4 @@
-import { Checkbox, TextInput, dataGridUtils } from '@neo4j-ndl/react';
+import { Checkbox, TextInput } from '@neo4j-ndl/react';
 import { useState } from 'react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
@@ -49,7 +49,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           setStatusMessage('Please Fill The Valid Credentials' ?? apiResponse?.message);
           setTimeout(() => {
             setStatus('unknown');
-            reset()
+            reset();
             hideModal();
           }, 2000);
           return;
