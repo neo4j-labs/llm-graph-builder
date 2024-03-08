@@ -157,6 +157,13 @@ const DropZone: FunctionComponent = () => {
           onDrop: (f: Partial<globalThis.File>[]) => {
             onDropHandler(f);
           },
+          maxSize: 15000000,
+          onDropRejected: (e) => {
+            if (e.length) {
+              setShowAlert(true);
+              setErrorMessage(`File is larger than 15MB`);
+            }
+          },
         }}
       />
     </>

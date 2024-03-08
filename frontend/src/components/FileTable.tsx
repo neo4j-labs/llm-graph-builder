@@ -159,12 +159,12 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, setConnectionStatus }
         }
         setIsLoading(false);
       } catch (error: any) {
+        setErrorMessage('Please enter valid credentials');
         setIsLoading(false);
         setConnectionStatus(false);
         setFilesData([]);
         setFiles([]);
         setShowAlert(true);
-        setErrorMessage('Please enter valid credentials');
         console.log(error);
       }
     };
