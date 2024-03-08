@@ -64,6 +64,8 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           type: 'TEXT',
           model: model,
           fileSource: 'youtube',
+          max_sources: sourceLimit,
+          wiki_query: querySource,
         };
         const copiedFilesData = [...filesData];
         const copiedFiles = [...files];
@@ -77,7 +79,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           copiedFilesData.unshift({
             name: apiResponse.data.file_name.fileName,
             size: apiResponse.data.file_name.fileSize ?? 0,
-            source_url:apiResponse.data.file_name.url,
+            source_url: apiResponse.data.file_name.url,
             ...defaultValues,
           });
         } else {

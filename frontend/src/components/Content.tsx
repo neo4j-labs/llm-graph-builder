@@ -80,8 +80,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
           filesData[uid].source_url,
           localStorage.getItem('accesskey'),
           localStorage.getItem('secretkey'),
-          filesData[uid].max_limit,
-          filesData[uid].query_source
+          filesData[uid].max_sources,
+          filesData[uid].wiki_query
         );
         apirequests.push(apiResponse);
         const results = await Promise.allSettled(apirequests);
