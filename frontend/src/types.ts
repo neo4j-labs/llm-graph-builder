@@ -9,6 +9,8 @@ export interface CustomFile extends Partial<globalThis.File> {
   model: string;
   fileSource: string;
   source_url?: string;
+  max_limit?: number,
+  query_source?: string,
 }
 
 export interface OptionType {
@@ -29,6 +31,8 @@ export type ExtractParams = {
   source_url?: string;
   aws_access_key_id?: string;
   aws_secret_access_key?: string;
+  max_limit?: number,
+  query_source?: string,
 } & { [key: string]: any };
 
 export type UploadParams = {
@@ -76,6 +80,8 @@ export interface SourceNode {
   url?: string;
   awsAccessKeyId?: string;
   fileSource: string;
+  max_limit?: number,
+  query_source?: string,
 }
 export interface SideNavProps {
   openDrawer: () => void;
