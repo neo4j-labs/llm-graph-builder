@@ -31,7 +31,7 @@ app.add_api_route("/health", health([healthy_condition, healthy]))
 
 @app.post("/sources")
 async def create_source_knowledge_graph(
-    uri=Form(), database=Form(None), userName=Form(), password=Form(), file: UploadFile = File(...), model=Form()
+    uri=Form(), userName=Form(), password=Form(), file: UploadFile = File(...), model=Form(),database=Form(None), 
 ):
     """
     Calls 'create_source_node_graph' function in a new thread to create
@@ -47,17 +47,17 @@ async def create_source_knowledge_graph(
          'Source' Node creation in Neo4j database
     """
     result = await asyncio.to_thread(
-        create_source_node_graph_local_file, uri, database, userName, password, file, model
+        create_source_node_graph_local_file, uri, userName, password, file, model, database
     )
     return result
 
 @app.post("/url/scan")
 async def create_source_knowledge_graph_url(
     uri=Form(),
-    database=Form(None),
     userName=Form(),
     password=Form(),
     source_url=Form(),
+    database=Form(None),
     aws_access_key_id=Form(None),
     aws_secret_access_key=Form(None),
     max_limit=Form(5),
@@ -65,7 +65,7 @@ async def create_source_knowledge_graph_url(
     model=Form(None)
 ):
     return create_source_node_graph_url(
-        uri, database, userName, password, source_url, max_limit, query_source, model, aws_access_key_id, aws_secret_access_key
+        uri, userName, password, source_url, max_limit, query_source, model, database, aws_access_key_id, aws_secret_access_key
     )
 
 
