@@ -140,7 +140,7 @@ async def get_source_list(uri:str,
     decoded_password = decode_password(password)
     if " " in uri:
        uri= uri.replace(" ","+")
-    result = await asyncio.to_thread(get_source_list_from_graph,uri,database,userName,decoded_password)
+    result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
     return result
     
 @app.post("/update_similarity_graph")
