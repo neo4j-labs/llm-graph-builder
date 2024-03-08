@@ -173,6 +173,7 @@ def create_source_node_graph_url(uri, db_name, userName, password, source_url, m
         graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
         logging.info(f"source type URL:{source_type}")
         if source_type == "s3 bucket":
+            lst_s3_file_name = []
             files_info = get_s3_files_info(source_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
             if isinstance(files_info,dict):
               return files_info
@@ -191,6 +192,7 @@ def create_source_node_graph_url(uri, db_name, userName, password, source_url, m
                 try:
                   create_source_node(graph,file_name.split('/')[-1],file_size,file_type,source_type,model,s3_file_path,aws_access_key_id)
                   success_count+=1
+                  lst_s3_file_name.append(file_name.split('/')[-1])
                 except Exception as e:
                   err_flag=1
                   Failed_count+=1
@@ -198,7 +200,7 @@ def create_source_node_graph_url(uri, db_name, userName, password, source_url, m
             if err_flag==1:
               job_status = "Failed"
               return create_api_response(job_status,error=error_message,success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket')  
-            return create_api_response("Success",data="Source Node created successfully",success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket')
+            return create_api_response("Success",data="Source Node created successfully",success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket',file_name=lst_s3_file_name)
         elif source_type == 'youtube':
             source_url= youtube_url
             match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", source_url)
@@ -212,8 +214,8 @@ def create_source_node_graph_url(uri, db_name, userName, password, source_url, m
             create_source_node(graph,file_name,file_size,file_type,source_type,model,source_url,aws_access_key_id)
             return create_api_response(job_status)
         else:
-           job_status = "Completed"
-           return create_api_response(job_status,data='Unknown URL')
+           job_status = "Failed"
+           return create_api_response(job_status,data='Invalid URL')
     except Exception as e:
         job_status = "Failed"
         error_message = str(e)
