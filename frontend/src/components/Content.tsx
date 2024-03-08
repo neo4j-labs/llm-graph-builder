@@ -158,7 +158,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
 
   const openGraphUrl = `${process.env.BLOOM_URL}${userCredentials?.userName}@${localStorage.getItem(
     'hostname'
-  )}%3A${localStorage.getItem('port')}`;
+  )}%3A${localStorage.getItem('port')}&search=Show+me+a+graph`;
 
   const classNameCheck = isExpanded ? 'contentWithExpansion' : 'contentWithNoExpansion';
   return (
