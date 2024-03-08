@@ -1,6 +1,6 @@
 # Step 1: Build the React application
 FROM node:20 AS build
-ENV BACKEND_API_URL "https://backendtest-dcavk67s4a-uc.a.run.app"
+ENV BACKEND_API_URL "https://devbackend-dcavk67s4a-uc.a.run.app"
 ENV BLOOM_URL "https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=neo4j%2B://"
 WORKDIR /app
 COPY package.json  yarn.lock ./

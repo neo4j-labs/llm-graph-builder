@@ -134,6 +134,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, setConnectionStatus }
                   id: uuidv4(),
                   source_url: item.url != 'None' && item?.url != '' ? item.url : '',
                   fileSource: item.fileSource ?? 'None',
+                  max_limit: item.max_limit,
+                  query_source: item?.query_source,
                 });
               }
             });

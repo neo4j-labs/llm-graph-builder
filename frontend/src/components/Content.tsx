@@ -50,7 +50,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
     });
   }, [model]);
 
-  const disableCheck = !files.length || !filesData.some((f)=> f.status === 'New');
+  const disableCheck = !files.length || !filesData.some((f) => f.status === 'New');
 
   const disableCheckGraph = !files.length;
 
@@ -79,7 +79,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
           userCredentials,
           filesData[uid].source_url,
           localStorage.getItem('accesskey'),
-          localStorage.getItem('secretkey')
+          localStorage.getItem('secretkey'),
+          filesData[uid].max_limit,
+          filesData[uid].query_source
         );
         apirequests.push(apiResponse);
         const results = await Promise.allSettled(apirequests);
@@ -154,7 +156,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
     setShowAlert(false);
   };
 
-  const openGraphUrl = `${process.env.BLOOM_URL}${userCredentials?.userName}@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port')}`;
+  const openGraphUrl = `${process.env.BLOOM_URL}${userCredentials?.userName}@${localStorage.getItem(
+    'hostname'
+  )}%3A${localStorage.getItem('port')}&search=Show+me+a+graph`;
 
   const classNameCheck = isExpanded ? 'contentWithExpansion' : 'contentWithNoExpansion';
   return (
@@ -210,12 +214,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
             >
               Generate Graph
             </Button>
-            <Button
-              href={openGraphUrl}
-              target="_blank"
-              disabled={disableCheckGraph}
-              className='ml-0.5'
-            >
+            <Button href={openGraphUrl} target='_blank' disabled={disableCheckGraph} className='ml-0.5'>
               Open Graph
             </Button>
           </Flex>

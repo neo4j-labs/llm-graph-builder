@@ -197,7 +197,8 @@ def create_source_node_graph_url(uri, userName, password, source_url, max_limit,
                 try:
                   create_source_node(graph,file_name.split('/')[-1],file_size,file_type,source_type,model,s3_file_path,aws_access_key_id)
                   success_count+=1
-                  lst_s3_file_name.append(file_name.split('/')[-1])
+                  lst_s3_file_name.append({'fileName':file_name.split('/')[-1],'fileSize':file_size,'url':s3_file_path})
+
                 except Exception as e:
                   err_flag=1
                   Failed_count+=1
@@ -218,7 +219,7 @@ def create_source_node_graph_url(uri, userName, password, source_url, max_limit,
             aws_access_key_id=''
             job_status = "Completed"
             create_source_node(graph,file_name,file_size,file_type,source_type,model,source_url,aws_access_key_id)
-            return create_api_response(job_status)
+            return create_api_response(job_status,file_name={'fileName':file_name,'fileSize':file_size,'url':source_url})
         else:
            job_status = "Failed"
            return create_api_response(job_status,data='Invalid URL')

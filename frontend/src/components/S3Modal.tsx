@@ -1,14 +1,17 @@
 import { TextInput } from '@neo4j-ndl/react';
 import React, { useState } from 'react';
-import { S3ModalProps, SourceNode } from '../types';
+import { CustomFile, S3ModalProps } from '../types';
 import { urlScanAPI } from '../services/URLScan';
 import { useCredentials } from '../context/UserCredentials';
-import { getSourceNodes } from '../services/GetFiles';
 import { getFileFromLocal, validation } from '../utils/Utils';
 import { useFileContext } from '../context/UsersFiles';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
-
+interface S3File {
+  fileName: string;
+  fileSize: number;
+  url: string;
+}
 const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [bucketUrl, setBucketUrl] = useState<string>('');
   const [accessKey, setAccessKey] = useState<string>('');
@@ -18,7 +21,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [isFocused, setisFocused] = useState<boolean>(false);
   const [isValid, setValid] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
-  const { setFiles, setFilesData, model } = useFileContext();
+  const { setFiles, setFilesData, model, filesData, files } = useFileContext();
 
   const changeHandler = (e: any) => {
     setBucketUrl(e.target.value);
@@ -69,49 +72,52 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         }
         setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
         reset();
-        const res: any = await getSourceNodes(userCredentials);
-        if (res.data.status !== 'Failed') {
-          const prefiles: any[] = [];
-          if (res.data.data.length) {
-            res.data.data.forEach((item: SourceNode) => {
-              if (item.fileName != undefined) {
-                prefiles.push({
-                  name: item.fileName,
-                  size: item.fileSize ?? 0,
-                  type: item?.fileType?.toUpperCase() ?? 'None',
-                  NodesCount: item?.nodeCount ?? 0,
-                  processing: item?.processingTime ?? 'None',
-                  relationshipCount: item?.relationshipCount ?? 0,
-                  status:
-                    item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
-                      ? item.status
-                      : item.fileSource === 'youtube'
-                      ? item.status
-                      : getFileFromLocal(`${item.fileName}`) != null
-                      ? item.status
-                      : 'N/A',
-                  model: item?.model ?? model,
-                  id: uuidv4(),
-                  source_url: item.url != 'None' && item?.url != '' ? item.url : '',
-                  fileSource: item.fileSource ?? 'None',
-                });
-              }
+        const defaultValues: CustomFile = {
+          processing: 0,
+          status: 'New',
+          NodesCount: 0,
+          id: uuidv4(),
+          relationshipCount: 0,
+          type: 'PDF',
+          model: model,
+          fileSource: 's3 bucket',
+        };
+        const copiedFilesData: CustomFile[] = [...filesData];
+        const copiedFiles: File[] = [...files];
+        apiResponse?.data.file_name.forEach((item: S3File) => {
+          const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
+          const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
+          if (filedataIndex == -1) {
+            copiedFilesData.unshift({
+              name: item.fileName,
+              size: item.fileSize,
+              source_url: item.url,
+              ...defaultValues,
+            });
+          } else {
+            const tempFileData = copiedFilesData[filedataIndex];
+            copiedFilesData.splice(filedataIndex, 1);
+            copiedFilesData.unshift({
+              ...tempFileData,
+              status: defaultValues.status,
+              NodesCount: defaultValues.NodesCount,
+              relationshipCount: defaultValues.relationshipCount,
+              processing: defaultValues.processing,
+              model: defaultValues.model,
+              fileSource: defaultValues.fileSource,
             });
           }
-          setFilesData(prefiles);
-          const prefetchedFiles: any[] = [];
-          res.data.data.forEach((item: any) => {
-            const localFile = getFileFromLocal(`${item.fileName}`);
-            if (item.fileName != undefined) {
-              if (localFile != null) {
-                prefetchedFiles.push(localFile);
-              } else {
-                prefetchedFiles.push(null);
-              }
-            }
-          });
-          setFiles(prefetchedFiles);
-        }
+          if (fileIndex == -1) {
+            //@ts-ignore
+            copiedFiles.unshift(null);
+          } else {
+            const tempFile = copiedFiles[filedataIndex];
+            copiedFiles.splice(fileIndex, 1);
+            copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
+          }
+        });
+        setFilesData(copiedFilesData);
+        setFiles(copiedFiles);
       } catch (error) {
         setStatus('danger');
         setStatusMessage('Some Error Occurred');
