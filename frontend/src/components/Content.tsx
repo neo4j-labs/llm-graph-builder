@@ -50,7 +50,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
     });
   }, [model]);
 
-  const disableCheck = !files.length;
+  const disableCheck = !files.length || !filesData.some((f)=> f.status === 'New');
+
+  const disableCheckGraph = !files.length;
 
   const handleDropdownChange = (option: any) => {
     setModel(option.value);
@@ -211,7 +213,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
             <Button
               href={openGraphUrl}
               target="_blank"
-              disabled={disableCheck}
+              disabled={disableCheckGraph}
               className='ml-0.5'
             >
               Open Graph
