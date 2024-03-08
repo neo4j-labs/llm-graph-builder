@@ -15,6 +15,7 @@ export interface OptionType {
   value: string;
   label: string;
 }
+
 export type UserCredentials = {
   uri: string;
   userName: string;
@@ -41,6 +42,7 @@ export interface DropdownProps {
   onSelect: (option: OptionType | null | void) => void;
   isDisabled: boolean;
 }
+
 export interface CustomAlertProps {
   open: boolean;
   handleClose: () => void;
@@ -50,6 +52,7 @@ export interface CustomAlertProps {
 export interface DataComponentProps {
   openModal: () => void;
 }
+
 export interface S3ModalProps {
   hideModal: () => void;
   open: boolean;
@@ -60,6 +63,7 @@ export interface ConnectionModalProps {
   setOpenConnection: Dispatch<SetStateAction<boolean>>;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
 }
+
 export interface SourceNode {
   fileName: string;
   fileSize: number;
@@ -85,12 +89,13 @@ export interface DrawerProps {
 
 export interface ContentProps {
   isExpanded: boolean;
-  setConnectionStatus: Dispatch<SetStateAction<boolean>>;
 }
+
 export interface FileTableProps {
   isExpanded: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
 }
+
 export interface CustomModalProps {
   open: boolean;
   onClose: () => void;
@@ -101,6 +106,7 @@ export interface CustomModalProps {
   status: 'unknown' | 'success' | 'info' | 'warning' | 'danger';
   setStatus: Dispatch<SetStateAction<'unknown' | 'success' | 'info' | 'warning' | 'danger'>>;
 }
+
 export interface CommonButtonProps {
   openModal: () => void;
   wrapperclassName?: string;
