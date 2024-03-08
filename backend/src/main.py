@@ -19,11 +19,12 @@ from tempfile import NamedTemporaryFile
 import re
 from langchain_community.document_loaders import YoutubeLoader
 from langchain.document_loaders import WikipediaLoader
+from urllib.parse import urlparse, parse_qs
 import warnings
 warnings.filterwarnings("ignore")
 
 load_dotenv()
-logging.basicConfig(format='%(asctime)s - %(message)s',level='DEBUG')
+logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 # from langchain.document_loaders import S3FileLoader
 
 def update_exception_db(graph_obj,file_name,exp_msg):
@@ -114,14 +115,31 @@ def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
     logging.error(f"Error while reading files from s3: {error_message}")
     raise Exception(error_message)
 
+def create_youtube_url(url):
+    you_tu_url = "https://www.youtube.com/watch?v="
+    u_pars = urlparse(url)
+    quer_v = parse_qs(u_pars.query).get('v')
+    if quer_v:
+      return  you_tu_url + quer_v[0]
+
+    pth = u_pars.path.split('/')
+    if pth:
+      return you_tu_url + pth[-1]
+   
 def check_url_source(url):
     try:
-      youtube_id_regex = re.search(r"v=([a-zA-Z0-9_-]+)", url)
-        
+      logging.info(f"incoming URL: {url}")
+      if "youtu" in url:
+        youtube_url = create_youtube_url(url)
+        logging.info(youtube_url)
+      else:
+        youtube_url=''
+
+      youtube_id_regex = re.search(r"v=([a-zA-Z0-9_-]+)", youtube_url)
       if url.startswith('s3://'):
         source ='s3 bucket'
         
-      elif url.startswith("https://www.youtube.com/watch?") and youtube_id_regex is not None:
+      elif youtube_url.startswith("https://www.youtube.com/watch?") and youtube_id_regex is not None:
         if len(youtube_id_regex.group(1)) == 11:
             source = 'youtube'
             #re.match('^(https?:\/\/)?(www\.|m\.)?youtube\.com\/(c\/[^\/\?]+\/|channel\/[^\/\?]+\/|user\/[^\/\?]+\/)?(watch\?v=[^&\s]+|embed\/[^\/\?]+|[^\/\?]+)(&[^?\s]*)?$',url) :
@@ -130,7 +148,7 @@ def check_url_source(url):
       else:
         source = 'Invalid'
       
-      return source
+      return source,youtube_url
     except Exception as e:
       logging.error(f"Error in recognize URL: {e}")  
       raise Exception(e)
@@ -151,7 +169,7 @@ def create_source_node_graph_url(uri, db_name, userName, password, source_url, m
         Success or Failed message of node creation
     """
     try:
-        source_type = check_url_source(source_url)
+        source_type,youtube_url = check_url_source(source_url)
         graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
         logging.info(f"source type URL:{source_type}")
         if source_type == "s3 bucket":
@@ -182,7 +200,9 @@ def create_source_node_graph_url(uri, db_name, userName, password, source_url, m
               return create_api_response(job_status,error=error_message,success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket')  
             return create_api_response("Success",data="Source Node created successfully",success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket')
         elif source_type == 'youtube':
-            match = re.search(r"v=([a-zA-Z0-9_-]+)", source_url)
+            source_url= youtube_url
+            match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", source_url)
+            logging.info(f"match value{match}")
             youtube_id=match.group(1)
             file_name=youtube_id
             file_size=''
@@ -272,10 +292,11 @@ def extract_graph_from_file(uri, db_name, userName, password, model, file=None,s
     file_name = ''
     graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
     source_node = "fileName: '{}'" 
+    source_type, youtube_url = check_url_source(source_url)
     if file!=None:
       file_name, file_key, pages = get_documents_from_file(file)
       
-    elif check_url_source(source_url)=='s3 bucket':
+    elif source_type =='s3 bucket':
       if(aws_access_key_id==None or aws_secret_access_key==None):
         job_status = "Failed"
         return create_api_response(job_status,error='Please provide AWS access and secret keys')
@@ -283,7 +304,7 @@ def extract_graph_from_file(uri, db_name, userName, password, model, file=None,s
         logging.info("Insert in S3 Block")
         file_name, file_key, pages = get_documents_from_s3(source_url, aws_access_key_id, aws_secret_access_key)
         logging.info(f"filename {file_name} file_key: {file_key} pages:{pages}  ")
-    elif check_url_source(source_url)=='youtube':
+    elif source_type =='youtube':
         file_name, file_key, pages = get_documents_from_youtube(source_url)
     
     else:
@@ -292,7 +313,9 @@ def extract_graph_from_file(uri, db_name, userName, password, model, file=None,s
         
     if pages==None or len(pages)==0:
         job_status = "Failed"
-        return create_api_response(job_status,error='Pdf content or Youtube transcript is not available')
+        error_message = 'Pdf content or Youtube transcript is not available'
+        update_exception_db(graph,file_name,error_message)
+        return create_api_response(job_status,error=error_message)
         
     update_node_prop = "SET d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}',d.status = '{}', d.errorMessage = '{}',d.nodeCount= {}, d.relationshipCount = {}, d.model = '{}'"
     # pages = loader.load_and_split()
