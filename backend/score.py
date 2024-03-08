@@ -31,7 +31,7 @@ app.add_api_route("/health", health([healthy_condition, healthy]))
 
 @app.post("/sources")
 async def create_source_knowledge_graph(
-    uri=Form(), database=Form(None), userName=Form(), password=Form(), file: UploadFile = File(...), model=Form()
+    uri=Form(), userName=Form(), password=Form(), file: UploadFile = File(...), model=Form(),database=Form(None), 
 ):
     """
     Calls 'create_source_node_graph' function in a new thread to create
@@ -47,17 +47,17 @@ async def create_source_knowledge_graph(
          'Source' Node creation in Neo4j database
     """
     result = await asyncio.to_thread(
-        create_source_node_graph_local_file, uri, database, userName, password, file, model
+        create_source_node_graph_local_file, uri, userName, password, file, model, database
     )
     return result
 
 @app.post("/url/scan")
 async def create_source_knowledge_graph_url(
     uri=Form(),
-    database=Form(None),
     userName=Form(),
     password=Form(),
     source_url=Form(),
+    database=Form(None),
     aws_access_key_id=Form(None),
     aws_secret_access_key=Form(None),
     max_limit=Form(5),
@@ -65,18 +65,18 @@ async def create_source_knowledge_graph_url(
     model=Form(None)
 ):
     return create_source_node_graph_url(
-        uri, database, userName, password, source_url, max_limit, query_source, model, aws_access_key_id, aws_secret_access_key
+        uri, userName, password, source_url, max_limit, query_source, model, database, aws_access_key_id, aws_secret_access_key
     )
 
 
 @app.post("/extract")
 async def extract_knowledge_graph_from_file(
     uri=Form(),
-    database=Form(None),
     userName=Form(),
     password=Form(),
-    file: UploadFile = File(None),
     model=Form(),
+    database=Form(None),
+    file: UploadFile = File(None),
     source_url=Form(None),
     aws_access_key_id=Form(None),
     aws_secret_access_key=Form(None),
@@ -102,10 +102,10 @@ async def extract_knowledge_graph_from_file(
         return await asyncio.to_thread(
             extract_graph_from_file,
             uri,
-            database,
             userName,
             password,
             model,
+            database,
             file=file,
             source_url=None,
             wiki_query=wiki_query,
@@ -115,10 +115,10 @@ async def extract_knowledge_graph_from_file(
         return await asyncio.to_thread(
             extract_graph_from_file,
             uri,
-            database,
             userName,
             password,
             model,
+            database,
             source_url=source_url,
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,

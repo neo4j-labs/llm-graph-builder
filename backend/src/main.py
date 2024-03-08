@@ -9,17 +9,16 @@ from tqdm import tqdm
 from src.diffbot_transformer import extract_graph_from_diffbot
 from src.openAI_llm import extract_graph_from_OpenAI
 from typing import List
-from langchain.document_loaders import S3DirectoryLoader
+from langchain_community.document_loaders import S3DirectoryLoader
 import boto3
-from urllib.parse import urlparse
+from urllib.parse import urlparse,parse_qs
 import os
 
 from tempfile import NamedTemporaryFile
 
 import re
 from langchain_community.document_loaders import YoutubeLoader
-from langchain.document_loaders import WikipediaLoader
-from urllib.parse import urlparse, parse_qs
+from langchain_community.document_loaders import WikipediaLoader
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -51,7 +50,7 @@ def create_source_node(graph_obj,file_name,file_size,file_type,source,model,url=
     update_exception_db(graph_obj,file_name,error_message)
     raise Exception(error_message)
 
-def create_source_node_graph_local_file(uri, db_name, userName, password, file, model):
+def create_source_node_graph_local_file(uri, userName, password, file, model, db_name=None):
   """
    Creates a source node in Neo4jGraph and sets properties.
    
@@ -70,7 +69,10 @@ def create_source_node_graph_local_file(uri, db_name, userName, password, file, 
     file_size = file.size
     file_name = file.filename
     source = 'local file'
-    graph = Neo4jGraph(url=uri,database=db_name, username=userName, password=password)    
+    if db_name is not None:
+      graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+    else:
+       graph = Neo4jGraph(url=uri, username=userName, password=password)   
 
     create_source_node(graph,file_name,file_size,file_type,source,model)
     return create_api_response("Success",data="Source Node created successfully",file_source=source)
@@ -120,11 +122,11 @@ def create_youtube_url(url):
     u_pars = urlparse(url)
     quer_v = parse_qs(u_pars.query).get('v')
     if quer_v:
-      return  you_tu_url + quer_v[0]
+      return  you_tu_url + quer_v[0].strip()
 
     pth = u_pars.path.split('/')
     if pth:
-      return you_tu_url + pth[-1]
+      return you_tu_url + pth[-1].strip()
    
 def check_url_source(url):
     try:
@@ -153,7 +155,7 @@ def check_url_source(url):
       logging.error(f"Error in recognize URL: {e}")  
       raise Exception(e)
   
-def create_source_node_graph_url(uri, db_name, userName, password, source_url, max_limit, wiki_query,model, aws_access_key_id=None,aws_secret_access_key=None):
+def create_source_node_graph_url(uri, userName, password, source_url, max_limit, wiki_query,model, db_name=None,aws_access_key_id=None,aws_secret_access_key=None):
     """
       Creates a source node in Neo4jGraph and sets properties.
       
@@ -170,7 +172,10 @@ def create_source_node_graph_url(uri, db_name, userName, password, source_url, m
     """
     try:
         source_type,youtube_url = check_url_source(source_url)
-        graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+        if db_name is not None:
+          graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+        else:
+          graph = Neo4jGraph(url=uri, username=userName, password=password)
         logging.info(f"source type URL:{source_type}")
         if source_type == "s3 bucket":
             lst_s3_file_name = []
@@ -193,6 +198,7 @@ def create_source_node_graph_url(uri, db_name, userName, password, source_url, m
                   create_source_node(graph,file_name.split('/')[-1],file_size,file_type,source_type,model,s3_file_path,aws_access_key_id)
                   success_count+=1
                   lst_s3_file_name.append({'fileName':file_name.split('/')[-1],'fileSize':file_size,'url':s3_file_path})
+
                 except Exception as e:
                   err_flag=1
                   Failed_count+=1
@@ -203,10 +209,11 @@ def create_source_node_graph_url(uri, db_name, userName, password, source_url, m
             return create_api_response("Success",data="Source Node created successfully",success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket',file_name=lst_s3_file_name)
         elif source_type == 'youtube':
             source_url= youtube_url
-            match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", source_url)
+           # match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", source_url)
+            match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',source_url)
             logging.info(f"match value{match}")
             youtube_id=match.group(1)
-            file_name=youtube_id
+            file_name=youtube_id.strip()
             file_size=''
             file_type='text'
             aws_access_key_id=''
@@ -257,14 +264,19 @@ def get_s3_pdf_content(s3_url,aws_access_key_id=None,aws_secret_access_key=None)
         logging.error(f"getting error while reading content from s3 files:{e}")
         raise Exception(e)
 
-def wiki_loader(wiki_query,max_sources,max_wiki_pages=2):
+def get_wikipedia_content(wiki_query,max_sources):
   try:
     searches=wiki_query.split(',')
-    searches=searches[:max_sources]
+    if max_sources:
+      searches=searches[:int(max_sources)]
+    else:
+       searches=searches[:2] 
     pages=[]
     for query in searches:
-      pages.extend(WikipediaLoader(query=query,load_all_available_meta=False).load())
-      pages=pages[:max_wiki_pages]
+      wiki_pages = WikipediaLoader(query=query.strip(), load_max_docs=1, load_all_available_meta=False).load()
+      pages.extend(wiki_pages)
+    
+    logging.info(f"Total Pages from Wikipedia = {len(pages)}") 
     return pages
   except Exception as e:
     logging.error(f"Not finding wiki content:{e}")
@@ -272,7 +284,7 @@ def wiki_loader(wiki_query,max_sources,max_wiki_pages=2):
 
 
 
-def extract_graph_from_file(uri, db_name, userName, password, model, file=None,source_url=None,aws_access_key_id=None,aws_secret_access_key=None,wiki_query=None,max_sources=None,max_wiki_pages=2):
+def extract_graph_from_file(uri, userName, password, model, db_name=None, file=None,source_url=None,aws_access_key_id=None,aws_secret_access_key=None,wiki_query=None,max_sources=None):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -292,9 +304,15 @@ def extract_graph_from_file(uri, db_name, userName, password, model, file=None,s
   try:
     start_time = datetime.now()
     file_name = ''
-    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-    source_node = "fileName: '{}'" 
-    source_type, youtube_url = check_url_source(source_url)
+    if db_name is not None:
+      graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+    else:
+       graph = Neo4jGraph(url=uri, username=userName, password=password) 
+    source_node = "fileName: '{}'"
+    
+    if  source_url is not None:
+      source_type, youtube_url = check_url_source(source_url)
+      
     if file!=None:
       file_name, file_key, pages = get_documents_from_file(file)
       
@@ -308,6 +326,9 @@ def extract_graph_from_file(uri, db_name, userName, password, model, file=None,s
         logging.info(f"filename {file_name} file_key: {file_key} pages:{pages}  ")
     elif source_type =='youtube':
         file_name, file_key, pages = get_documents_from_youtube(source_url)
+        if wiki_query is not None:
+          logging.info(f"Wikipedia query source = {wiki_query}")
+          pages.extend(get_wikipedia_content(wiki_query, max_sources))
     
     else:
         job_status = "Failed"
@@ -389,9 +410,8 @@ def extract_graph_from_file(uri, db_name, userName, password, model, file=None,s
       return create_api_response(job_status,error=error_message,file_name=file_name)
   
 def get_documents_from_file(file):
-    logging.info("get_documents_from_file called")
     file_name = file.filename
-    logging.info("file_name = ",file_name)
+    logging.info(f"get_documents_from_file called for filename = {file_name}")
     file_key=file_name
         
     with open('temp.pdf','wb') as f:
@@ -401,18 +421,22 @@ def get_documents_from_file(file):
     return file_name,file_key,pages
     
 def get_documents_from_s3(s3_url, aws_access_key_id, aws_secret_access_key):
-    parsed_url = urlparse(s3_url)
-    bucket = parsed_url.netloc
-    file_key = parsed_url.path.lstrip('/')
-    file_name=file_key.split('/')[-1]
-    s3=boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
-    response=s3.head_object(Bucket=bucket,Key=file_key)
-    file_size=response['ContentLength']
-    
-    logging.info(f'bucket : {bucket},  file key : {file_key},  file size : {file_size}')
-    pages=get_s3_pdf_content(s3_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
-    return file_name,file_key,pages
- 
+    try:
+      parsed_url = urlparse(s3_url)
+      bucket = parsed_url.netloc
+      file_key = parsed_url.path.lstrip('/')
+      file_name=file_key.split('/')[-1]
+      s3=boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
+      response=s3.head_object(Bucket=bucket,Key=file_key)
+      file_size=response['ContentLength']
+      
+      logging.info(f'bucket : {bucket},  file key : {file_key},  file size : {file_size}')
+      pages=get_s3_pdf_content(s3_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
+      return file_name,file_key,pages
+    except Exception as e:
+      error_message = str(e)
+      logging.exception(f'Exception in reading content from S3:{error_message}')
+      raise Exception(error_message)
  
 def get_documents_from_youtube(url):
     try:
@@ -425,14 +449,13 @@ def get_documents_from_youtube(url):
       youtube_id=match.group(1)
       file_name=youtube_id
       file_key=file_name
-      print("Youtube pages = ",pages)
       return file_name, file_key, pages
     except Exception as e:
       error_message = str(e)
       logging.exception(f'Exception in reading transcript from youtube:{error_message}')
       raise Exception(error_message)
 
-def get_source_list_from_graph(uri,db_name,userName,password):
+def get_source_list_from_graph(uri,userName,password,db_name=None):
   """
   Args:
     uri: URI of the graph to extract
@@ -447,11 +470,13 @@ def get_source_list_from_graph(uri,db_name,userName,password):
  """
   logging.info("Get existing files list from graph")
   try:
-    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+    if db_name is not None:
+      graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+    else:
+       graph = Neo4jGraph(url=uri, username=userName, password=password)
     query = "MATCH(d:Document) RETURN d ORDER BY d.updatedAt DESC"
     result = graph.query(query)
     list_of_json_objects = [entry['d'] for entry in result]
-    logging.info(f'list of object {list_of_json_objects}')
     return create_api_response("Success",data=list_of_json_objects)
   except Exception as e:
     job_status = "Failed"
