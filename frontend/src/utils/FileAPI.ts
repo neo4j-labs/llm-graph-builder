@@ -20,14 +20,16 @@ export const extractAPI = async (
   userCredentials: any,
   source_url?: any,
   aws_access_key_id?: any,
-  aws_secret_access_key?: any
+  aws_secret_access_key?: any,
+  max_limit?: number,
+  query_source?: string,
 ): Promise<any> => {
   const urlExtract = `${url()}/extract`;
   const method: Method = 'post';
   const commonParams: UserCredentials = userCredentials;
   let additionalParams: ExtractParams;
   if (source_url?.length) {
-    additionalParams = { model, source_url, aws_secret_access_key, aws_access_key_id };
+    additionalParams = { model, source_url, aws_secret_access_key, aws_access_key_id, max_limit, query_source };
   } else {
     additionalParams = { file, model };
   }

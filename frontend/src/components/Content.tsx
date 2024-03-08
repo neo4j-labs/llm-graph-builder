@@ -79,7 +79,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
           userCredentials,
           filesData[uid].source_url,
           localStorage.getItem('accesskey'),
-          localStorage.getItem('secretkey')
+          localStorage.getItem('secretkey'),
+          filesData[uid].max_limit,
+          filesData[uid].query_source
         );
         apirequests.push(apiResponse);
         const results = await Promise.allSettled(apirequests);

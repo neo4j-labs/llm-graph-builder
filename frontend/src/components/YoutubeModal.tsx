@@ -81,6 +81,8 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
                   id: uuidv4(),
                   source_url: item.url != 'None' && item?.url != '' ? item.url : '',
                   fileSource: item.fileSource ?? 'None',
+                  max_limit: item.max_limit ?? sourceLimit,
+                  query_source: item.query_source ?? querySource
                 });
               }
             });
