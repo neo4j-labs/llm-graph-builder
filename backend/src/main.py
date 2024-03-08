@@ -50,7 +50,7 @@ def create_source_node(graph_obj,file_name,file_size,file_type,source,model,url=
     update_exception_db(graph_obj,file_name,error_message)
     raise Exception(error_message)
 
-def create_source_node_graph_local_file(uri, db_name, userName, password, file, model):
+def create_source_node_graph_local_file(uri, userName, password, file, model, db_name=None):
   """
    Creates a source node in Neo4jGraph and sets properties.
    
@@ -69,7 +69,10 @@ def create_source_node_graph_local_file(uri, db_name, userName, password, file, 
     file_size = file.size
     file_name = file.filename
     source = 'local file'
-    graph = Neo4jGraph(url=uri,database=db_name, username=userName, password=password)    
+    if db_name is not None:
+      graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+    else:
+       graph = Neo4jGraph(url=uri, username=userName, password=password)   
 
     create_source_node(graph,file_name,file_size,file_type,source,model)
     return create_api_response("Success",data="Source Node created successfully",file_source=source)
@@ -152,7 +155,7 @@ def check_url_source(url):
       logging.error(f"Error in recognize URL: {e}")  
       raise Exception(e)
   
-def create_source_node_graph_url(uri, db_name, userName, password, source_url, max_limit, wiki_query,model, aws_access_key_id=None,aws_secret_access_key=None):
+def create_source_node_graph_url(uri, userName, password, source_url, max_limit, wiki_query,model, db_name=None,aws_access_key_id=None,aws_secret_access_key=None):
     """
       Creates a source node in Neo4jGraph and sets properties.
       
@@ -169,7 +172,10 @@ def create_source_node_graph_url(uri, db_name, userName, password, source_url, m
     """
     try:
         source_type,youtube_url = check_url_source(source_url)
-        graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+        if db_name is not None:
+          graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+        else:
+          graph = Neo4jGraph(url=uri, username=userName, password=password)
         logging.info(f"source type URL:{source_type}")
         if source_type == "s3 bucket":
             lst_s3_file_name = []
@@ -448,7 +454,7 @@ def get_documents_from_youtube(url):
       logging.exception(f'Exception in reading transcript from youtube:{error_message}')
       raise Exception(error_message)
 
-def get_source_list_from_graph(uri,db_name,userName,password):
+def get_source_list_from_graph(uri,userName,password,db_name=None):
   """
   Args:
     uri: URI of the graph to extract
@@ -463,7 +469,10 @@ def get_source_list_from_graph(uri,db_name,userName,password):
  """
   logging.info("Get existing files list from graph")
   try:
-    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+    if db_name is not None:
+      graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+    else:
+       graph = Neo4jGraph(url=uri, username=userName, password=password)
     query = "MATCH(d:Document) RETURN d ORDER BY d.updatedAt DESC"
     result = graph.query(query)
     list_of_json_objects = [entry['d'] for entry in result]
