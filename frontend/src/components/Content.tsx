@@ -191,6 +191,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
                 disconnect().then(() => {
                   setConnectionStatus(false);
                   localStorage.removeItem('neo4j.connection');
+                  setUserCredentials({ uri: '', password: '', userName: '', database: '' });
                 })
               }
             >

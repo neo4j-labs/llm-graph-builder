@@ -6,7 +6,7 @@ type Props = {
 };
 
 interface ContextProps {
-  readonly userCredentials: UserCredentials | null;
+  userCredentials: UserCredentials | null;
   setUserCredentials: (UserCredentials: UserCredentials) => void;
 }
 export const UserConnection = createContext<ContextProps>({
