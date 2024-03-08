@@ -209,7 +209,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
               Generate Graph
             </Button>
             <Button
-              loading={filesData.some((f) => f?.status === 'Processing')}
               href={openGraphUrl}
               target="_blank"
               disabled={disableCheck}
