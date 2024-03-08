@@ -337,6 +337,7 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
     if pages==None or len(pages)==0:
         job_status = "Failed"
         error_message = 'Pdf content or Youtube transcript is not available'
+        logging.error(f"Pdf content or Youtube transcript is not available")
         update_exception_db(graph,file_name,error_message)
         return create_api_response(job_status,error=error_message)
         
