@@ -152,7 +152,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
     setShowAlert(false);
   };
 
-  const openGraphUrl = `https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=neo4j%2B://${userCredentials?.userName}@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port')}`;
+  const openGraphUrl = `${process.env.BLOOM_URL}${userCredentials?.userName}@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port')}`;
 
   const classNameCheck = isExpanded ? 'contentWithExpansion' : 'contentWithNoExpansion';
   return (
@@ -196,27 +196,27 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
         <Flex
           className='w-full p-2.5 absolute bottom-4'
           justifyContent='space-between'
-          style={{ flexFlow: 'row', marginTop: '5px', alignSelf:'flex-start' }}
+          style={{ flexFlow: 'row', marginTop: '5px', alignSelf: 'flex-start' }}
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
-          <Flex flexDirection='row' gap='2' style={{alignSelf:'flex-end'}}>
-          <Button
-            loading={filesData.some((f) => f?.status === 'Processing')}
-            disabled={disableCheck}
-            onClick={handleGenerateGraph}
-            className='mr-0.5'
-          >
-            Generate Graph
-          </Button>
-          <Button
-            loading={filesData.some((f) => f?.status === 'Processing')}
-            href={openGraphUrl}
-            target="_blank"
-            disabled={disableCheck}
-            className='ml-0.5'
-          >
-            Open Graph
-          </Button>
+          <Flex flexDirection='row' gap='2' style={{ alignSelf: 'flex-end' }}>
+            <Button
+              loading={filesData.some((f) => f?.status === 'Processing')}
+              disabled={disableCheck}
+              onClick={handleGenerateGraph}
+              className='mr-0.5'
+            >
+              Generate Graph
+            </Button>
+            <Button
+              loading={filesData.some((f) => f?.status === 'Processing')}
+              href={openGraphUrl}
+              target="_blank"
+              disabled={disableCheck}
+              className='ml-0.5'
+            >
+              Open Graph
+            </Button>
           </Flex>
         </Flex>
       </div>
