@@ -192,7 +192,7 @@ def create_source_node_graph_url(uri, db_name, userName, password, source_url, m
                 try:
                   create_source_node(graph,file_name.split('/')[-1],file_size,file_type,source_type,s3_file_path,aws_access_key_id)
                   success_count+=1
-                  lst_s3_file_name.append({'fileName':file_name.split('/')[-1],'fileSize':file_size,'url':s3_file_path})
+                  lst_s3_file_name.append(file_name.split('/')[-1])
                 except Exception as e:
                   err_flag=1
                   Failed_count+=1
