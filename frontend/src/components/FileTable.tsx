@@ -114,7 +114,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, setConnectionStatus }
           const prefiles: any[] = [];
           if (res.data.data.length) {
             res.data.data.forEach((item: SourceNode) => {
-              if (item.fileName != undefined) {
+              if (item.fileName != undefined && item.fileName.length) {
                 prefiles.push({
                   name: item.fileName,
                   size: item.fileSize ?? 0,
@@ -143,7 +143,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, setConnectionStatus }
           const prefetchedFiles: any[] = [];
           res.data.data.forEach((item: any) => {
             const localFile = getFileFromLocal(`${item.fileName}`);
-            if (item.fileName != undefined) {
+            if (item.fileName != undefined && item.fileName.length) {
               if (localFile != null) {
                 prefetchedFiles.push(localFile);
               } else {
