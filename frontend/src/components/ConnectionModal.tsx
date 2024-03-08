@@ -13,18 +13,20 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
   const [selectedProtocol, setSelectedProtocol] = useState<string>('neo4j');
   const [hostname, setHostname] = useState<string>(localStorage.getItem('hostname') ?? '');
   const [port, setPort] = useState<string>(localStorage.getItem('port') ?? '');
-  const [database, setDatabase] = useState<string>('');
+  const [database, setDatabase] = useState<string>(localStorage.getItem('database') ?? 'neo4j');
   const [username, setUsername] = useState<string>(localStorage.getItem('username') ?? '');
   const [password, setPassword] = useState<string>('');
   const { setUserCredentials } = useCredentials();
 
   function submitConnection() {
-    const connectionURI = `${selectedProtocol}://${hostname}:${port}`;
-    setUserCredentials({ uri: hostname, userName: username, password });
+    const connectionURI = `${selectedProtocol}://${hostname}`;
+    setUserCredentials({ uri: connectionURI, userName: username, password: password, database: database });
     localStorage.setItem('username', username);
     localStorage.setItem('hostname', hostname);
     localStorage.setItem('port', `${port}`);
-    setDriver(connectionURI, username, password).then((isSuccessful) => {
+    localStorage.setItem('database', database);
+    localStorage.setItem('selectedProtocol', selectedProtocol);
+    setDriver(connectionURI, username, password, database).then((isSuccessful) => {
       setConnectionStatus(isSuccessful);
     });
     setOpenConnection(false);

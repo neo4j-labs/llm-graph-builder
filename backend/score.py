@@ -5,6 +5,7 @@ from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
 import asyncio
+import base64
 
 
 def healthy_condition():
@@ -129,11 +130,25 @@ async def extract_knowledge_graph_from_file(
     
 
 @app.get("/sources_list")
-async def get_source_list(uri=Form(),database=Form(),userName=Form(),password=Form()):
+async def get_source_list(uri:str,
+                          database:str,
+                          userName:str,
+                          password:str):
     """
     Calls 'get_source_list_from_graph' which returns list of sources which alreday exist in databse
     """
-    result = await asyncio.to_thread(get_source_list_from_graph,uri,database,userName,password)
+    # base64_bytes = base64.b64encode(password.encode("utf-8"))
+    # base64_encoded_string = base64_bytes.decode("utf-8")
+    # print("encoded password=",base64_encoded_string)
+   
+    #base64_bytes = password.encode("ascii")
+    sample_string_bytes = base64.b64decode(password)
+    decoded_password = sample_string_bytes.decode("utf-8")
+    print("decoded password=",decoded_password)
+    if " " in uri: 
+       uri= uri.replace(" ","+")
+    print("uri = ",uri)
+    result = await asyncio.to_thread(get_source_list_from_graph,uri,database,userName,decoded_password)
     return result
     
 @app.post("/update_similarity_graph")

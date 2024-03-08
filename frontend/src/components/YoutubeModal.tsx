@@ -1,4 +1,4 @@
-import { Checkbox, TextInput } from '@neo4j-ndl/react';
+import { Checkbox, TextInput, dataGridUtils } from '@neo4j-ndl/react';
 import { useState } from 'react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
@@ -16,7 +16,6 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [showSourceLimitInput, setshowSourceLimitInput] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [querySource, setQuerySource] = useState<string>('');
-
   const { userCredentials } = useCredentials();
   const { setFiles, setFilesData, model } = useFileContext();
   const reset = () => {
@@ -34,7 +33,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     } else {
       try {
         setStatus('info');
-        setStatusMessage('Scaning...');
+        setStatusMessage('Loading...');
         const apiResponse = await urlScanAPI({
           urlParam: youtubeURL,
           userCredentials,
@@ -47,38 +46,45 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatus('success');
         if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
-          setStatusMessage(apiResponse.data.message ?? apiResponse?.message);
-        } else {
-          setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count ?? ''} Link`);
+          setStatusMessage('Please Fill The Valid Credentials' ?? apiResponse?.message);
+          setTimeout(() => {
+            setStatus('unknown');
+            reset()
+            hideModal();
+          }, 2000);
+          return;
         }
+        setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count ?? ''} Link`);
         reset();
-        const res: any = await getSourceNodes();
-        if (Array.isArray(res.data.data) && res.data.data.length) {
+        const res: any = await getSourceNodes(userCredentials);
+        if (res.data.status !== 'Failed') {
           const prefiles: any[] = [];
-          res.data.data.forEach((item: SourceNode) => {
-            if (item.fileName != undefined) {
-              prefiles.push({
-                name: item.fileName,
-                size: item.fileSize ?? 0,
-                type: item?.fileType?.toUpperCase() ?? 'None',
-                NodesCount: item?.nodeCount ?? 0,
-                processing: item?.processingTime ?? 'None',
-                relationshipCount: item?.relationshipCount ?? 0,
-                status:
-                  item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
-                    ? item.status
-                    : item.fileSource === 'youtube'
-                    ? item.status
-                    : getFileFromLocal(`${item.fileName}`) != null
-                    ? item.status
-                    : 'N/A',
-                model: item?.model ?? model,
-                id: uuidv4(),
-                source_url: item.url != 'None' && item?.url != '' ? item.url : '',
-                fileSource: item.fileSource ?? 'None',
-              });
-            }
-          });
+          if (res.data.data.length) {
+            res.data.data.forEach((item: SourceNode) => {
+              if (item.fileName != undefined) {
+                prefiles.push({
+                  name: item.fileName,
+                  size: item.fileSize ?? 0,
+                  type: item?.fileType?.toUpperCase() ?? 'None',
+                  NodesCount: item?.nodeCount ?? 0,
+                  processing: item?.processingTime ?? 'None',
+                  relationshipCount: item?.relationshipCount ?? 0,
+                  status:
+                    item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                      ? item.status
+                      : item.fileSource === 'youtube'
+                      ? item.status
+                      : getFileFromLocal(`${item.fileName}`) != null
+                      ? item.status
+                      : 'N/A',
+                  model: item?.model ?? model,
+                  id: uuidv4(),
+                  source_url: item.url != 'None' && item?.url != '' ? item.url : '',
+                  fileSource: item.fileSource ?? 'None',
+                });
+              }
+            });
+          }
           setFilesData(prefiles);
           const prefetchedFiles: any[] = [];
           res.data.data.forEach((item: any) => {

@@ -1,4 +1,5 @@
 import { Dispatch, ReactNode, SetStateAction } from 'react';
+
 export interface CustomFile extends Partial<globalThis.File> {
   processing: number;
   status: string;
@@ -18,6 +19,7 @@ export type UserCredentials = {
   uri: string;
   userName: string;
   password: string;
+  database?: string;
 } & { [key: string]: any };
 
 export type ExtractParams = {
@@ -83,6 +85,11 @@ export interface DrawerProps {
 
 export interface ContentProps {
   isExpanded: boolean;
+  setConnectionStatus: Dispatch<SetStateAction<boolean>>;
+}
+export interface FileTableProps {
+  isExpanded: boolean;
+  setConnectionStatus: Dispatch<SetStateAction<boolean>>;
 }
 export interface CustomModalProps {
   open: boolean;

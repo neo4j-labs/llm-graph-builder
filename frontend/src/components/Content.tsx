@@ -28,10 +28,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
           uri: neo4jConnection.uri,
           userName: neo4jConnection.user,
           password: neo4jConnection.password,
+          database: neo4jConnection.database,
         });
-        setDriver(neo4jConnection.uri, neo4jConnection.user, neo4jConnection.password).then((isSuccessful: boolean) => {
-          setConnectionStatus(isSuccessful);
-        });
+        setDriver(neo4jConnection.uri, neo4jConnection.user, neo4jConnection.password, neo4jConnection.database).then(
+          (isSuccessful: boolean) => {
+            setConnectionStatus(isSuccessful);
+          }
+        );
       } else {
         setOpenConnection(true);
       }
@@ -149,6 +152,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
     setShowAlert(false);
   };
 
+  const openGraphUrl = `${process.env.BLOOM_URL}${userCredentials?.userName}@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port')}`;
+
   const classNameCheck = isExpanded ? 'contentWithExpansion' : 'contentWithNoExpansion';
   return (
     <>
@@ -174,26 +179,45 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
               Connect to Neo4j
             </Button>
           ) : (
-            <Button className='mr-2.5' onClick={() => disconnect().then(() => setConnectionStatus(false))}>
+            <Button
+              className='mr-2.5'
+              onClick={() =>
+                disconnect().then(() => {
+                  setConnectionStatus(false);
+                  localStorage.removeItem('neo4j.connection');
+                })
+              }
+            >
               Disconnect
             </Button>
           )}
         </Flex>
-        <FileTable isExpanded={isExpanded}></FileTable>
+        <FileTable isExpanded={isExpanded} setConnectionStatus={setConnectionStatus}></FileTable>
         <Flex
           className='w-full p-2.5 absolute bottom-4'
           justifyContent='space-between'
-          style={{ flexFlow: 'row', marginTop: '5px' }}
+          style={{ flexFlow: 'row', marginTop: '5px', alignSelf: 'flex-start' }}
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
-          <Button
-            loading={filesData.some((f) => f?.status === 'Processing')}
-            disabled={disableCheck}
-            onClick={handleGenerateGraph}
-            className='mr-0.5'
-          >
-            Generate Graph
-          </Button>
+          <Flex flexDirection='row' gap='2' style={{ alignSelf: 'flex-end' }}>
+            <Button
+              loading={filesData.some((f) => f?.status === 'Processing')}
+              disabled={disableCheck}
+              onClick={handleGenerateGraph}
+              className='mr-0.5'
+            >
+              Generate Graph
+            </Button>
+            <Button
+              loading={filesData.some((f) => f?.status === 'Processing')}
+              href={openGraphUrl}
+              target="_blank"
+              disabled={disableCheck}
+              className='ml-0.5'
+            >
+              Open Graph
+            </Button>
+          </Flex>
         </Flex>
       </div>
     </>
