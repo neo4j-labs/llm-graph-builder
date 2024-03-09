@@ -98,6 +98,7 @@ export interface ContentProps {
 
 export interface FileTableProps {
   isExpanded: boolean;
+  connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
 }
 
