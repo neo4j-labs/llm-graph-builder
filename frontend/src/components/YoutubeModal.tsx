@@ -39,7 +39,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           model,
           accessKey: '',
           secretKey: '',
-          max_limit: sourceLimit,
+          max_limit: showSourceLimitInput?sourceLimit:0,
           query_source: querySource,
         });
         setStatus('success');
@@ -54,7 +54,6 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           return;
         }
         setStatusMessage(`Successfully Created Source Nodes for Link`);
-        reset();
         const defaultValues: CustomFile = {
           processing: 0,
           status: 'New',
@@ -64,9 +63,14 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           type: 'TEXT',
           model: model,
           fileSource: 'youtube',
-          max_sources: sourceLimit,
-          wiki_query: querySource,
         };
+        if(showSourceLimitInput){
+          defaultValues['max_sources']=sourceLimit
+        }
+        if (querySource.length) {
+          defaultValues['wiki_query']=querySource
+        }
+        reset();
         const copiedFilesData = [...filesData];
         const copiedFiles = [...files];
         const filedataIndex = copiedFilesData.findIndex(
