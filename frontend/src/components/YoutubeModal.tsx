@@ -23,6 +23,22 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     setshowSourceLimitInput(false);
   };
   const submitHandler = async () => {
+    const defaultValues: CustomFile = {
+      processing: 0,
+      status: 'New',
+      NodesCount: 0,
+      id: uuidv4(),
+      relationshipCount: 0,
+      type: 'TEXT',
+      model: model,
+      fileSource: 'youtube',
+    };
+    if(showSourceLimitInput){
+      defaultValues['max_sources']=sourceLimit
+    }
+    if (querySource.length) {
+      defaultValues['wiki_query']=querySource
+    }
     if (!youtubeURL) {
       setStatus('danger');
       setStatusMessage('Please Fill the Valid YouTube link');
@@ -54,22 +70,6 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           return;
         }
         setStatusMessage(`Successfully Created Source Nodes for Link`);
-        const defaultValues: CustomFile = {
-          processing: 0,
-          status: 'New',
-          NodesCount: 0,
-          id: uuidv4(),
-          relationshipCount: 0,
-          type: 'TEXT',
-          model: model,
-          fileSource: 'youtube',
-        };
-        if(showSourceLimitInput){
-          defaultValues['max_sources']=sourceLimit
-        }
-        if (querySource.length) {
-          defaultValues['wiki_query']=querySource
-        }
         reset();
         const copiedFilesData = [...filesData];
         const copiedFiles = [...files];
@@ -171,6 +171,8 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             fluid
             required
             type='number'
+            maxLength={3}
+            max={100}
             onChange={(e) => {
               setSourceLimit(parseInt(e.target.value));
             }}
