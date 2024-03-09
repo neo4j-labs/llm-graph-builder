@@ -23,7 +23,7 @@ const CustomModal: React.FC<CustomModalProps> = ({
     >
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
         {status !== 'unknown' && (
-          <Banner closeable description={statusMessage} onClose={() => setStatus('unknown')} type={status} />
+          <Banner closeable description={statusMessage} onClose={() => setStatus('unknown')} type={status} name='Custom Banner'/>
         )}
         <div className='n-flex n-flex-row n-flex-wrap'>{children}</div>
         <Dialog.Actions className='mt-4'>
