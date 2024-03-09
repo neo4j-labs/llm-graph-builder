@@ -372,11 +372,14 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
 
     distinct_nodes = set()
     relations = []
-    
+
     for graph_document in graph_documents:
       #get distinct nodes
       for node in graph_document.nodes:
-            distinct_nodes.add(node.id)
+            node_id = node.id
+            node_type= node.type
+            if (node_id, node_type) not in distinct_nodes:
+              distinct_nodes.add((node_id, node_type))
       #get all relations
       for relation in graph_document.relationships:
             relations.append(relation.type)
