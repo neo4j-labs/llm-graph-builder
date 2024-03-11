@@ -126,10 +126,10 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                     item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                       ? item.status
                       : item.fileSource === 'youtube'
-                        ? item.status
-                        : getFileFromLocal(`${item.fileName}`) != null
-                          ? item.status
-                          : 'N/A',
+                      ? item.status
+                      : getFileFromLocal(`${item.fileName}`) != null
+                      ? item.status
+                      : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
                   source_url: item.url != 'None' && item?.url != '' ? item.url : '',
@@ -170,7 +170,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     };
     if (connectionStatus) {
       fetchFiles();
-    }else{
+    } else {
       setFilesData([]);
       setFiles([]);
     }

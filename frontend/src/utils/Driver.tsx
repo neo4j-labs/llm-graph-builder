@@ -26,4 +26,4 @@ export const disconnect = async () => {
     console.error(`Disconnection error\n${err}\nCause: ${err.cause}`);
     return err;
   }
-}
+};
