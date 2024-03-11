@@ -37,7 +37,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       defaultValues.max_sources = sourceLimit;
     }
     if (querySource.length) {
-      defaultValues.wiki_query= querySource;
+      defaultValues.wiki_query = querySource;
     }
     if (!youtubeURL) {
       setStatus('danger');
@@ -69,7 +69,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         } else {
           setStatus('success');
           setStatusMessage(`Successfully Created Source Nodes for Link`);
-          
+
           const copiedFilesData = [...filesData];
           const copiedFiles = [...files];
           const filedataIndex = copiedFilesData.findIndex(
@@ -115,7 +115,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
       }
     }
-    
+
     setTimeout(() => {
       setStatus('unknown');
       hideModal();
@@ -177,8 +177,8 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             min={0}
             max={101}
             onChange={(e) => {
-              console.log(e.target.max)
-              if (parseInt(e.target.value)<=parseInt(e.target.max)) {
+              console.log(e.target.max);
+              if (parseInt(e.target.value) <= parseInt(e.target.max)) {
                 setSourceLimit(parseInt(e.target.value));
               }
             }}

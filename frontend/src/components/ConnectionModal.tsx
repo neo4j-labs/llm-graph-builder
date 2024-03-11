@@ -10,7 +10,9 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
   setConnectionStatus,
 }) => {
   const protocols = ['neo4j', 'neo4j+s', 'neo4j+ssc', 'bolt', 'bolt+s', 'bolt+ssc'];
-  const [selectedProtocol, setSelectedProtocol] = useState<string>(localStorage.getItem('selectedProtocol') ?? 'neo4j+s');
+  const [selectedProtocol, setSelectedProtocol] = useState<string>(
+    localStorage.getItem('selectedProtocol') ?? 'neo4j+s'
+  );
   const [hostname, setHostname] = useState<string>(localStorage.getItem('hostname') ?? '');
   const [database, setDatabase] = useState<string>(localStorage.getItem('database') ?? 'neo4j');
   const [username, setUsername] = useState<string>(localStorage.getItem('username') ?? 'neo4j');
@@ -18,10 +20,10 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
   const { setUserCredentials } = useCredentials();
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
-  const [loading,setLoading] =useState<boolean>(false);
-  
+  const [loading, setLoading] = useState<boolean>(false);
+
   const [port, setPort] = useState<string>(localStorage.getItem('port') ?? '7687');
-  const  submitConnection = async() =>{
+  const submitConnection = async () => {
     const connectionURI = `${selectedProtocol}://${hostname}:${port}`;
     setUserCredentials({ uri: connectionURI, userName: username, password: password, database: database });
     localStorage.setItem('username', username);
@@ -29,22 +31,21 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
     localStorage.setItem('database', database);
     localStorage.setItem('selectedProtocol', selectedProtocol);
     setLoading(true);
-     const status = await setDriver(connectionURI, username, password, database)
-      if (status === 'success') {
-        setOpenConnection(false);
-        setConnectionStatus(true);
-        setStatusMessage('');
-      }
-      else {
-        setStatus('danger');
-        setStatusMessage(status);
-        setConnectionStatus(false);
-        setTimeout(() => {
-          setStatus('unknown');
-        }, 5000)
-      }
-      setLoading(false);
-  }
+    const status = await setDriver(connectionURI, username, password, database);
+    if (status === 'success') {
+      setOpenConnection(false);
+      setConnectionStatus(true);
+      setStatusMessage('');
+    } else {
+      setStatus('danger');
+      setStatusMessage(status);
+      setConnectionStatus(false);
+      setTimeout(() => {
+        setStatus('unknown');
+      }, 5000);
+    }
+    setLoading(false);
+  };
 
   const isDisabled = !username || !hostname || !password;
   return (
@@ -53,7 +54,13 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
         <Dialog.Header id='form-dialog-title'>Connect to Neo4j</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
           {status !== 'unknown' && (
-            <Banner name='connection banner' closeable description={statusMessage} onClose={() => setStatus('unknown')} type={status} />
+            <Banner
+              name='connection banner'
+              closeable
+              description={statusMessage}
+              onClose={() => setStatus('unknown')}
+              type={status}
+            />
           )}
           <div className='n-flex n-flex-row n-flex-wrap'>
             <Dropdown

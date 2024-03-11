@@ -81,7 +81,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
           localStorage.getItem('accesskey'),
           localStorage.getItem('secretkey'),
           filesData[uid].max_sources,
-          filesData[uid].wiki_query??""
+          filesData[uid].wiki_query ?? ''
         );
         apirequests.push(apiResponse);
         const results = await Promise.allSettled(apirequests);
@@ -199,7 +199,11 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
             </Button>
           )}
         </Flex>
-        <FileTable isExpanded={isExpanded} connectionStatus={connectionStatus} setConnectionStatus={setConnectionStatus}></FileTable>
+        <FileTable
+          isExpanded={isExpanded}
+          connectionStatus={connectionStatus}
+          setConnectionStatus={setConnectionStatus}
+        ></FileTable>
         <Flex
           className='w-full p-2.5 absolute bottom-4'
           justifyContent='space-between'
