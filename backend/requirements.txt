@@ -61,11 +61,11 @@ jsonpointer==2.4
 jupyter_client==8.6.0
 jupyter_core==5.5.0
 kiwisolver==1.4.5
-langchain==0.1.1
-langchain-community==0.0.20
-langchain-core==0.1.23
-langchain-experimental==0.0.49
-langchain-openai==0.0.2.post1
+langchain==0.1.11
+langchain-community==0.0.27
+langchain-core==0.1.30
+langchain-experimental==0.0.53
+langchain-openai==0.0.8
 langdetect==1.0.9
 langsmith==0.0.87
 layoutparser==0.3.4

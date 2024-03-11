@@ -19,9 +19,10 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [loading,setLoading] =useState<boolean>(false);
-
+  
+  const [port, setPort] = useState<string>(localStorage.getItem('port') ?? '7687');
   const  submitConnection = async() =>{
-    const connectionURI = `${selectedProtocol}://${hostname}`;
+    const connectionURI = `${selectedProtocol}://${hostname}:${port}`;
     setUserCredentials({ uri: connectionURI, userName: username, password: password, database: database });
     localStorage.setItem('username', username);
     localStorage.setItem('hostname', hostname);
@@ -77,6 +78,17 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
                 autoFocus
                 fluid
                 onChange={(e) => setHostname(e.target.value)}
+              />
+            </div>
+            <div style={{ width: '15%', display: 'inline-block' }}>
+              <TextInput
+                id='port'
+                value={port}
+                disabled={false}
+                label='Port'
+                placeholder='7687'
+                fluid
+                onChange={(e) => setPort(e.target.value)}
               />
             </div>
           </div>
