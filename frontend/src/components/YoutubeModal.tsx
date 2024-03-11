@@ -34,10 +34,10 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       fileSource: 'youtube',
     };
     if (showSourceLimitInput) {
-      defaultValues['max_sources'] = sourceLimit;
+      defaultValues.max_sources = sourceLimit;
     }
     if (querySource.length) {
-      defaultValues['wiki_query'] = querySource;
+      defaultValues.wiki_query= querySource;
     }
     if (!youtubeURL) {
       setStatus('danger');
