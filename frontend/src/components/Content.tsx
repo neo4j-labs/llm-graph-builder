@@ -81,7 +81,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
           localStorage.getItem('accesskey'),
           localStorage.getItem('secretkey'),
           filesData[uid].max_sources,
-          filesData[uid].wiki_query
+          filesData[uid].wiki_query??""
         );
         apirequests.push(apiResponse);
         const results = await Promise.allSettled(apirequests);
@@ -90,7 +90,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
             if (apiRes?.value?.status === 'Failed') {
               console.log('Error', apiRes?.value);
               setShowAlert(true);
-              setErrorMessage(apiRes?.value?.error);
+              setErrorMessage(apiRes?.value?.message);
               setFilesData((prevfiles) =>
                 prevfiles.map((curfile, idx) => {
                   if (idx == uid) {
@@ -102,7 +102,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
                   return curfile;
                 })
               );
-              throw new Error(apiRes?.value?.error);
+              throw new Error(apiRes?.value?.message);
             } else {
               setFilesData((prevfiles) => {
                 return prevfiles.map((curfile, idx) => {

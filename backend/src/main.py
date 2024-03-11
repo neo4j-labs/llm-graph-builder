@@ -412,7 +412,7 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
       
   except Exception as e:
       job_status = "Failed"
-      message="Failed to process file"
+      message="Failed To Process File or OpenAI Unable To Parse Content"
       error_message = str(e)
       logging.error(f"file failed in process: {file_name}")
       update_exception_db(graph,file_name,error_message)

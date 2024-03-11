@@ -95,7 +95,7 @@ const DropZone: FunctionComponent = () => {
         results.forEach((apiRes) => {
           if (apiRes.status === 'fulfilled' && apiRes.value) {
             if (apiRes?.value?.status === 'Failed') {
-              throw new Error(apiRes?.value?.error);
+              throw new Error(apiRes?.value?.message);
             } else {
               setFilesData((prevfiles) =>
                 prevfiles.map((curfile, idx) => {
@@ -161,7 +161,7 @@ const DropZone: FunctionComponent = () => {
           onDropRejected: (e) => {
             if (e.length) {
               setShowAlert(true);
-              setErrorMessage(`File is larger than 15MB`);
+              setErrorMessage(`Failed To Upload, File is larger than 15MB`);
             }
           },
         }}
