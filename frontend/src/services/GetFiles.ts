@@ -10,7 +10,7 @@ export const getSourceNodes = async (userCredentials: any) => {
       }&password=${encodedstr}`
     );
     if (response.status != 200) {
-      throw new Error('Some error occurred');
+      throw new Error('Some Error Occurred or Please Check your Instance Connection');
     }
     console.log(response);
     return response;

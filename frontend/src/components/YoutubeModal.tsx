@@ -111,7 +111,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         }
       } catch (error) {
         setStatus('danger');
-        setStatusMessage('Some Error Occurred');
+        setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
       }
     }
     
