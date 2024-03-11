@@ -474,9 +474,11 @@ def get_source_list_from_graph(uri,userName,password,db_name=None):
  """
   logging.info("Get existing files list from graph")
   try:
-    if db_name is not None:
+    if len(db_name)!=0:
+      logging.info(f"Fetching source list from, database = {db_name}")
       graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
     else:
+       logging.info(f"Fetching source list from default database (neo4j)")
        graph = Neo4jGraph(url=uri, username=userName, password=password)
     query = "MATCH(d:Document) RETURN d ORDER BY d.updatedAt DESC"
     result = graph.query(query)
