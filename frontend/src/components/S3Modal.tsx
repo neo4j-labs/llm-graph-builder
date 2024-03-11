@@ -71,7 +71,6 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           return;
         }
         setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
-        reset();
         const defaultValues: CustomFile = {
           processing: 0,
           status: 'New',
@@ -118,6 +117,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         });
         setFilesData(copiedFilesData);
         setFiles(copiedFiles);
+        reset();
       } catch (error) {
         setStatus('danger');
         setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
