@@ -17,7 +17,7 @@ import { SourceNode, CustomFile, FileTableProps } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import CustomAlert from './Alert';
 
-const FileTable: React.FC<FileTableProps> = ({ isExpanded, setConnectionStatus }) => {
+const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus }) => {
   const { filesData, setFiles, setFilesData, model } = useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
@@ -126,10 +126,10 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, setConnectionStatus }
                     item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                       ? item.status
                       : item.fileSource === 'youtube'
-                      ? item.status
-                      : getFileFromLocal(`${item.fileName}`) != null
-                      ? item.status
-                      : 'N/A',
+                        ? item.status
+                        : getFileFromLocal(`${item.fileName}`) != null
+                          ? item.status
+                          : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
                   source_url: item.url != 'None' && item?.url != '' ? item.url : '',
@@ -159,7 +159,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, setConnectionStatus }
         }
         setIsLoading(false);
       } catch (error: any) {
-        setErrorMessage('Please enter valid credentials');
+        setErrorMessage(error.message);
         setIsLoading(false);
         setConnectionStatus(false);
         setFilesData([]);
@@ -168,10 +168,13 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, setConnectionStatus }
         console.log(error);
       }
     };
-    if (userCredentials) {
+    if (connectionStatus) {
       fetchFiles();
+    }else{
+      setFilesData([]);
+      setFiles([]);
     }
-  }, [userCredentials]);
+  }, [connectionStatus]);
 
   const pageSizeCalculation = Math.floor((currentOuterHeight - 402) / 45);
 

@@ -67,7 +67,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             hideModal();
             setStatus('unknown');
             reset();
-          }, 2000);
+          }, 5000);
           return;
         }
         setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
@@ -120,20 +120,20 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setFiles(copiedFiles);
       } catch (error) {
         setStatus('danger');
-        setStatusMessage('Some Error Occurred');
+        setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
       }
     } else {
       setStatus('warning');
       setStatusMessage('Please Fill The Valid Credentials');
       setTimeout(() => {
         setStatus('unknown');
-      }, 2000);
+      }, 5000);
       return;
     }
-    setStatus('unknown');
     setTimeout(() => {
+      setStatus('unknown');
       hideModal();
-    }, 2000);
+    }, 5000);
   };
   const onClose = () => {
     hideModal();

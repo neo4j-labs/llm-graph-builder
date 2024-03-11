@@ -33,18 +33,18 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       model: model,
       fileSource: 'youtube',
     };
-    if(showSourceLimitInput){
-      defaultValues['max_sources']=sourceLimit
+    if (showSourceLimitInput) {
+      defaultValues['max_sources'] = sourceLimit;
     }
     if (querySource.length) {
-      defaultValues['wiki_query']=querySource
+      defaultValues['wiki_query'] = querySource;
     }
     if (!youtubeURL) {
       setStatus('danger');
       setStatusMessage('Please Fill the Valid YouTube link');
       setTimeout(() => {
         setStatus('unknown');
-      }, 2000);
+      }, 5000);
     } else {
       try {
         setStatus('info');
@@ -55,10 +55,9 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           model,
           accessKey: '',
           secretKey: '',
-          max_limit: showSourceLimitInput?sourceLimit:0,
+          max_limit: showSourceLimitInput ? sourceLimit : 0,
           query_source: querySource,
         });
-        setStatus('success');
         if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
           setStatusMessage(apiResponse.data.data ?? apiResponse?.message);
@@ -66,58 +65,60 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             setStatus('unknown');
             reset();
             hideModal();
-          }, 2000);
-          return;
-        }
-        setStatusMessage(`Successfully Created Source Nodes for Link`);
-        reset();
-        const copiedFilesData = [...filesData];
-        const copiedFiles = [...files];
-        const filedataIndex = copiedFilesData.findIndex(
-          (filedataitem) => filedataitem?.name === apiResponse.data.file_name.fileName
-        );
-        const fileIndex = copiedFiles.findIndex(
-          (filedataitem) => filedataitem?.name === apiResponse.data.file_name.fileName
-        );
-        if (filedataIndex == -1) {
-          copiedFilesData.unshift({
-            name: apiResponse.data.file_name.fileName,
-            size: apiResponse.data.file_name.fileSize ?? 0,
-            source_url: apiResponse.data.file_name.url,
-            ...defaultValues,
-          });
+          }, 5000);
         } else {
-          const tempFileData = copiedFilesData[filedataIndex];
-          copiedFilesData.splice(filedataIndex, 1);
-          copiedFilesData.unshift({
-            ...tempFileData,
-            status: defaultValues.status,
-            NodesCount: defaultValues.NodesCount,
-            relationshipCount: defaultValues.relationshipCount,
-            processing: defaultValues.processing,
-            model: defaultValues.model,
-            fileSource: defaultValues.fileSource,
-          });
+          setStatus('success');
+          setStatusMessage(`Successfully Created Source Nodes for Link`);
+          reset();
+          const copiedFilesData = [...filesData];
+          const copiedFiles = [...files];
+          const filedataIndex = copiedFilesData.findIndex(
+            (filedataitem) => filedataitem?.name === apiResponse.data.file_name.fileName
+          );
+          const fileIndex = copiedFiles.findIndex(
+            (filedataitem) => filedataitem?.name === apiResponse.data.file_name.fileName
+          );
+          if (filedataIndex == -1) {
+            copiedFilesData.unshift({
+              name: apiResponse.data.file_name.fileName,
+              size: apiResponse.data.file_name.fileSize ?? 0,
+              source_url: apiResponse.data.file_name.url,
+              ...defaultValues,
+            });
+          } else {
+            const tempFileData = copiedFilesData[filedataIndex];
+            copiedFilesData.splice(filedataIndex, 1);
+            copiedFilesData.unshift({
+              ...tempFileData,
+              status: defaultValues.status,
+              NodesCount: defaultValues.NodesCount,
+              relationshipCount: defaultValues.relationshipCount,
+              processing: defaultValues.processing,
+              model: defaultValues.model,
+              fileSource: defaultValues.fileSource,
+            });
+          }
+          if (fileIndex == -1) {
+            //@ts-ignore
+            copiedFiles.unshift(null);
+          } else {
+            const tempFile = copiedFiles[filedataIndex];
+            copiedFiles.splice(fileIndex, 1);
+            copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
+          }
+          setFilesData(copiedFilesData);
+          setFiles(copiedFiles);
         }
-        if (fileIndex == -1) {
-          //@ts-ignore
-          copiedFiles.unshift(null);
-        } else {
-          const tempFile = copiedFiles[filedataIndex];
-          copiedFiles.splice(fileIndex, 1);
-          copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
-        }
-        setFilesData(copiedFilesData);
-        setFiles(copiedFiles);
       } catch (error) {
         setStatus('danger');
-        setStatusMessage('Some Error Occurred');
+        setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
       }
     }
-    setStatus('unknown');
+    
     setTimeout(() => {
+      setStatus('unknown');
       hideModal();
-    }, 2000);
+    }, 5000);
   };
   const onClose = () => {
     hideModal();

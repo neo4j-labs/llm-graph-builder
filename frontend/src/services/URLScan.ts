@@ -16,9 +16,8 @@ const urlScanAPI = async (props: ScanProps) => {
     const formData = new FormData();
     formData.append('uri', props?.userCredentials?.uri);
     formData.append('database', props?.userCredentials?.database);
-    formData.append('userName', props?.userCredentials.userName);
+    formData.append('userName', props?.userCredentials?.userName);
     formData.append('password', props?.userCredentials?.password);
-    formData.append('database', props?.userCredentials?.database);
     formData.append('source_url', props?.urlParam);
     if (props.model != undefined) {
       formData.append('model', props?.model);
