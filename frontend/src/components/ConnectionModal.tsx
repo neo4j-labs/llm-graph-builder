@@ -108,7 +108,6 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
                 value={password}
                 disabled={false}
                 label='Password'
-                placeholder='password'
                 type='password'
                 fluid
                 onChange={(e) => setPassword(e.target.value)}
