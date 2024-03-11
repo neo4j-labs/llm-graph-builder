@@ -69,13 +69,13 @@ def create_source_node_graph_local_file(uri, userName, password, file, model, db
     file_size = file.size
     file_name = file.filename
     source = 'local file'
-    if db_name is not None:
-      graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-    else:
-       graph = Neo4jGraph(url=uri, username=userName, password=password)   
-
+    # if db_name is not None:
+    #   graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+    # else:
+    #    graph = Neo4jGraph(url=uri, username=userName, password=password)   
+    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
     create_source_node(graph,file_name,file_size,file_type,source,model)
-    return create_api_response("Success",data="Source Node created successfully",file_source=source)
+    return create_api_response("Success",message="Source Node created successfully",file_source=source)
   except Exception as e:
     job_status = "Failed"
     message = "Unable to create source node"
@@ -156,7 +156,7 @@ def check_url_source(url):
       logging.error(f"Error in recognize URL: {e}")  
       raise Exception(e)
   
-def create_source_node_graph_url(uri, userName, password, source_url, max_limit, wiki_query,model, db_name=None,aws_access_key_id=None,aws_secret_access_key=None):
+def create_source_node_graph_url(uri, userName, password, source_url ,model, db_name=None,aws_access_key_id=None,aws_secret_access_key=None):
     """
       Creates a source node in Neo4jGraph and sets properties.
       
@@ -173,10 +173,11 @@ def create_source_node_graph_url(uri, userName, password, source_url, max_limit,
     """
     try:
         source_type,youtube_url = check_url_source(source_url)
-        if db_name is not None:
-          graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-        else:
-          graph = Neo4jGraph(url=uri, username=userName, password=password)
+        # if db_name is not None:
+        #   graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+        # else:
+        #   graph = Neo4jGraph(url=uri, username=userName, password=password)
+        graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
         logging.info(f"source type URL:{source_type}")
         if source_type == "s3 bucket":
             lst_s3_file_name = []
@@ -208,7 +209,7 @@ def create_source_node_graph_url(uri, userName, password, source_url, max_limit,
               job_status = "Failed"
               message="Unable to create source node for s3 bucket files"
               return create_api_response(job_status,message=message,error=error_message,success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket')  
-            return create_api_response("Success",data="Source Node created successfully",success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket',file_name=lst_s3_file_name)
+            return create_api_response("Success",message="Source Node created successfully",success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket',file_name=lst_s3_file_name)
         elif source_type == 'youtube':
             source_url= youtube_url
            # match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", source_url)
@@ -307,10 +308,11 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
   try:
     start_time = datetime.now()
     file_name = ''
-    if db_name is not None:
-      graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-    else:
-       graph = Neo4jGraph(url=uri, username=userName, password=password) 
+    # if db_name is not None:
+    #   graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+    # else:
+    #    graph = Neo4jGraph(url=uri, username=userName, password=password) 
+    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
     source_node = "fileName: '{}'"
     
     if  source_url is not None:
@@ -478,12 +480,13 @@ def get_source_list_from_graph(uri,userName,password,db_name=None):
  """
   logging.info("Get existing files list from graph")
   try:
-    if len(db_name)!=0:
-      logging.info(f"Fetching source list from, database = {db_name}")
-      graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-    else:
-       logging.info(f"Fetching source list from default database (neo4j)")
-       graph = Neo4jGraph(url=uri, username=userName, password=password)
+    # if len(db_name)!=0:
+    #   logging.info(f"Fetching source list from, database = {db_name}")
+    #   graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+    # else:
+    #    logging.info(f"Fetching source list from default database (neo4j)")
+    #    graph = Neo4jGraph(url=uri, username=userName, password=password)
+    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
     query = "MATCH(d:Document) RETURN d ORDER BY d.updatedAt DESC"
     result = graph.query(query)
     list_of_json_objects = [entry['d'] for entry in result]

@@ -31,7 +31,7 @@ app.add_api_route("/health", health([healthy_condition, healthy]))
 
 @app.post("/sources")
 async def create_source_knowledge_graph(
-    uri=Form(), userName=Form(), password=Form(), file: UploadFile = File(...), model=Form(),database=Form(None), 
+    uri=Form(None), userName=Form(None), password=Form(None), file: UploadFile = File(...), model=Form(),database=Form(None), 
 ):
     """
     Calls 'create_source_node_graph' function in a new thread to create
@@ -53,9 +53,9 @@ async def create_source_knowledge_graph(
 
 @app.post("/url/scan")
 async def create_source_knowledge_graph_url(
-    uri=Form(),
-    userName=Form(),
-    password=Form(),
+    uri=Form(None),
+    userName=Form(None),
+    password=Form(None),
     source_url=Form(),
     database=Form(None),
     aws_access_key_id=Form(None),
@@ -65,16 +65,16 @@ async def create_source_knowledge_graph_url(
     model=Form(None)
 ):
     return create_source_node_graph_url(
-        uri, userName, password, source_url, max_limit, query_source, model, database, aws_access_key_id, aws_secret_access_key
+        uri, userName, password, source_url, model, database, aws_access_key_id, aws_secret_access_key
     )
 
 
 @app.post("/extract")
 async def extract_knowledge_graph_from_file(
-    uri=Form(),
-    userName=Form(),
-    password=Form(),
-    model=Form(),
+    uri=Form(None),
+    userName=Form(None),
+    password=Form(None),
+    model=Form(None),
     database=Form(None),
     file: UploadFile = File(None),
     source_url=Form(None),
