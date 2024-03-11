@@ -69,7 +69,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         } else {
           setStatus('success');
           setStatusMessage(`Successfully Created Source Nodes for Link`);
-          reset();
+          
           const copiedFilesData = [...filesData];
           const copiedFiles = [...files];
           const filedataIndex = copiedFilesData.findIndex(
@@ -108,6 +108,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           }
           setFilesData(copiedFilesData);
           setFiles(copiedFiles);
+          reset();
         }
       } catch (error) {
         setStatus('danger');
@@ -173,9 +174,13 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             required
             type='number'
             maxLength={3}
-            max={100}
+            min={0}
+            max={101}
             onChange={(e) => {
-              setSourceLimit(parseInt(e.target.value));
+              console.log(e.target.max)
+              if (parseInt(e.target.value)<=parseInt(e.target.max)) {
+                setSourceLimit(parseInt(e.target.value));
+              }
             }}
           />
         )}
