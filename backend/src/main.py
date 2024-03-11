@@ -4,7 +4,7 @@ from langchain.docstore.document import Document
 from dotenv import load_dotenv
 from datetime import datetime
 import logging
-from langchain.text_splitter import TokenTextSplitter
+from langchain_text_splitters import TokenTextSplitter
 from tqdm import tqdm
 from src.diffbot_transformer import extract_graph_from_diffbot
 from src.openAI_llm import extract_graph_from_OpenAI
@@ -78,9 +78,10 @@ def create_source_node_graph_local_file(uri, userName, password, file, model, db
     return create_api_response("Success",data="Source Node created successfully",file_source=source)
   except Exception as e:
     job_status = "Failed"
+    message = "Unable to create source node"
     error_message = str(e)
     logging.error(f"Error in creating document node: {error_message}")
-    return create_api_response(job_status,error=error_message,file_source=source,file_name=file_name)
+    return create_api_response(job_status, message=message,error=error_message,file_source=source,file_name=file_name)
 
 
 def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
@@ -205,7 +206,8 @@ def create_source_node_graph_url(uri, userName, password, source_url, max_limit,
                   error_message = str(e)
             if err_flag==1:
               job_status = "Failed"
-              return create_api_response(job_status,error=error_message,success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket')  
+              message="Unable to create source node for s3 bucket files"
+              return create_api_response(job_status,message=message,error=error_message,success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket')  
             return create_api_response("Success",data="Source Node created successfully",success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket',file_name=lst_s3_file_name)
         elif source_type == 'youtube':
             source_url= youtube_url
@@ -222,12 +224,13 @@ def create_source_node_graph_url(uri, userName, password, source_url, max_limit,
             return create_api_response(job_status,file_name={'fileName':file_name,'fileSize':file_size,'url':source_url})
         else:
            job_status = "Failed"
-           return create_api_response(job_status,data='Invalid URL')
+           return create_api_response(job_status,message='Invalid URL')
     except Exception as e:
         job_status = "Failed"
+        message = "Unable to create source node with given url"
         error_message = str(e)
         logging.exception(f'Exception Stack trace:')
-        return create_api_response(job_status,error=error_message,file_source=source_type)  
+        return create_api_response(job_status,message=message,error=error_message,file_source=source_type)  
       
 def file_into_chunks(pages: List[Document]):
     """
@@ -319,7 +322,7 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
     elif source_type =='s3 bucket':
       if(aws_access_key_id==None or aws_secret_access_key==None):
         job_status = "Failed"
-        return create_api_response(job_status,error='Please provide AWS access and secret keys')
+        return create_api_response(job_status,message='Please provide AWS access and secret keys')
       else:
         logging.info("Insert in S3 Block")
         file_name, file_key, pages = get_documents_from_s3(source_url, aws_access_key_id, aws_secret_access_key)
@@ -332,14 +335,14 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
     
     else:
         job_status = "Failed"
-        return create_api_response(job_status,error='Invalid url to create graph')
+        return create_api_response(job_status,message='Invalid url to create graph')
         
     if pages==None or len(pages)==0:
         job_status = "Failed"
-        error_message = 'Pdf content or Youtube transcript is not available'
+        message = 'Pdf content or Youtube transcript is not available'
         logging.error(f"Pdf content or Youtube transcript is not available")
-        update_exception_db(graph,file_name,error_message)
-        return create_api_response(job_status,error=error_message)
+        update_exception_db(graph,file_name,message)
+        return create_api_response(job_status,message=message)
         
     update_node_prop = "SET d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}',d.status = '{}', d.errorMessage = '{}',d.nodeCount= {}, d.relationshipCount = {}, d.model = '{}'"
     # pages = loader.load_and_split()
@@ -407,11 +410,12 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
       
   except Exception as e:
       job_status = "Failed"
+      message="Failed to process file"
       error_message = str(e)
       logging.error(f"file failed in process: {file_name}")
       update_exception_db(graph,file_name,error_message)
       logging.exception(f'Exception Stack trace: {error_message}')
-      return create_api_response(job_status,error=error_message,file_name=file_name)
+      return create_api_response(job_status,message=message,error=error_message,file_name=file_name)
   
 def get_documents_from_file(file):
     file_name = file.filename
@@ -486,9 +490,10 @@ def get_source_list_from_graph(uri,userName,password,db_name=None):
     return create_api_response("Success",data=list_of_json_objects)
   except Exception as e:
     job_status = "Failed"
+    message="Unable to fetch source list"
     error_message = str(e)
     logging.exception(f'Exception:{error_message}')
-    return create_api_response(job_status,error=error_message)
+    return create_api_response(job_status,message=message,error=error_message)
 
 def update_graph(graph):
   """
