@@ -120,7 +120,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setFiles(copiedFiles);
       } catch (error) {
         setStatus('danger');
-        setStatusMessage('Some Error Occurred');
+        setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
       }
     } else {
       setStatus('warning');
