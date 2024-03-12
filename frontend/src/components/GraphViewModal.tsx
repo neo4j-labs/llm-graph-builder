@@ -95,11 +95,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             neo4jNodes.forEach(node => {
               const label = node.labels[0];
               if (scheme[label] == undefined) {
-                scheme[label] = colors[iterator]
+                scheme[label] = colors[iterator % colors.length]
                 iterator += 1;
               }
             });
-            
+
             const newNodes = neo4jNodes.map(n => {
               return {
                 id: n.elementId, size: getSize(n), captionAlign: 'bottom', captionHtml: <b>Test</b>, iconAlign: 'bottom',
@@ -146,7 +146,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       <Dialog size='unset' open={open} aria-labelledby='form-dialog-title' disableCloseButton>
         <Dialog.Header id='form-dialog-title'>Inspect Generated Graph from {inspectedName}. </Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
-          <div style={{ width: '100%', height: '500px' }}>
+          <div style={{ width: '100%', height: '600px' }}>
             <InteractiveNvlWrapper
               ref={nvlRef}
               nodes={nodes}
