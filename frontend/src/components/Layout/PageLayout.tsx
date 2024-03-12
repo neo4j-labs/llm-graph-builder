@@ -17,7 +17,7 @@ export default function PageLayout() {
         }}
       />
       <DrawerDropzone isExpanded={isExpanded} />
-      <Content isExpanded={isExpanded} />
+      <Content setIsexpanded={setIsexpanded} isExpanded={isExpanded} />
     </div>
   );
 }

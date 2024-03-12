@@ -9,8 +9,9 @@ import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { extractAPI } from '../utils/FileAPI';
 import { ContentProps } from '../types';
-
-const Content: React.FC<ContentProps> = ({ isExpanded }) => {
+import Chatbot from './Chatbot';
+import chatbotmessages from '../assets/ChatbotMessages.json';
+const Content: React.FC<ContentProps> = ({ isExpanded, setIsexpanded }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
@@ -18,6 +19,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
   const { filesData, files, setFilesData, setModel, model } = useFileContext();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
+  const [showQA, setShowQA] = useState<boolean>(false);
 
   useEffect(() => {
     if (!init) {
@@ -222,6 +224,15 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
             <Button href={openGraphUrl} target='_blank' disabled={disableCheckGraph} className='ml-0.5'>
               Open Graph
             </Button>
+            <Button
+              onClick={() => {
+                setShowQA(true);
+                setIsexpanded(false);
+              }}
+            >
+              Q&A Chat
+            </Button>
+            {showQA && <Chatbot messages={chatbotmessages.listMessages} />}
           </Flex>
         </Flex>
       </div>
