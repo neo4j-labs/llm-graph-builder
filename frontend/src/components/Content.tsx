@@ -9,10 +9,13 @@ import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { extractAPI } from '../utils/FileAPI';
 import { ContentProps } from '../types';
+import GraphViewModal from './GraphViewModal';
 
 const Content: React.FC<ContentProps> = ({ isExpanded }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
+  const [openGraphView, setOpenGraphView] = useState<boolean>(false);
+  const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials } = useCredentials();
   const { filesData, files, setFilesData, setModel, model } = useFileContext();
@@ -160,6 +163,11 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
             setOpenConnection={setOpenConnection}
             setConnectionStatus={setConnectionStatus}
           />
+          <GraphViewModal
+            inspectedName={inspectedName}
+            open={openGraphView}
+            setGraphViewOpen={setOpenGraphView}
+          />
           <Typography
             variant='body-medium'
             style={{ display: 'flex', padding: '20px', alignItems: 'center', justifyContent: 'center' }}
@@ -179,7 +187,10 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
             </Button>
           )}
         </Flex>
-        <FileTable isExpanded={isExpanded}></FileTable>
+        <FileTable isExpanded={isExpanded} onInspect={(name) => {
+          setInspectedName(name);
+          setOpenGraphView(true);
+        }}></FileTable>
         <Flex
           className='w-full p-2.5 absolute bottom-4'
           justifyContent='space-between'

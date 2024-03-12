@@ -1,4 +1,4 @@
-import { DataGrid, DataGridComponents, StatusIndicator } from '@neo4j-ndl/react';
+import { DataGrid, DataGridComponents, IconButton, StatusIndicator } from '@neo4j-ndl/react';
 import { useEffect, useState } from 'react';
 import React from 'react';
 import {
@@ -14,8 +14,9 @@ import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { getFileFromLocal, statusCheck } from '../utils/Utils';
 import { SourceNode, CustomFile, ContentProps } from '../types';
+import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
 
-const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
+const FileTable: React.FC<ContentProps> = ({ isExpanded, onInspect }) => {
   const { filesData, setFiles, setFilesData, model } = useFileContext();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -98,6 +99,16 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
       header: () => <span>Duration</span>,
       footer: (info) => info.column.id,
     }),
+    columnHelper.accessor((row) => row.status, {
+      id: 'inspect',
+      cell: (info) => <> <IconButton aria-label='Toggle settings'
+        size='large' disabled={statusCheck(info.getValue()) !== 'success'} 
+        clean onClick={() => onInspect(info.row.original.name)}>
+        <MagnifyingGlassCircleIconSolid />
+      </IconButton></>,
+      header: () => <span>View</span>,
+      footer: (info) => info.column.id,
+    }),
   ];
 
   useEffect(() => {
@@ -120,10 +131,10 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded }) => {
                   item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                     ? item.status
                     : item.fileSource === 'youtube'
-                    ? item.status
-                    : getFileFromLocal(`${item.fileName}`) != null
-                    ? item.status
-                    : 'N/A',
+                      ? item.status
+                      : getFileFromLocal(`${item.fileName}`) != null
+                        ? item.status
+                        : 'N/A',
                 model: item?.model ?? model,
                 id: uuidv4(),
                 source_url: item.url != 'None' && item?.url != '' ? item.url : '',
