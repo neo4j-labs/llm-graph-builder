@@ -94,6 +94,7 @@ export interface DrawerProps {
 
 export interface ContentProps {
   isExpanded: boolean;
+  setIsexpanded:Dispatch<SetStateAction<boolean>>
 }
 
 export interface FileTableProps {
