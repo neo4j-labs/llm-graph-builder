@@ -22,6 +22,9 @@ from src.make_relationships import create_source_chunk_entity_relationship
 from tqdm import tqdm
 import logging
 import re
+import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor
+import threading
 
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
@@ -203,7 +206,7 @@ def extract_and_store_graph(
      Returns: 
      	 The GraphDocument that was extracted and stored into the Neo4jgraph
     """
-   
+    logging.info(f"Processing chunk in thread: {threading.current_thread().name}")
     extract_chain = get_extraction_chain(model_version,nodes, rels)
     data = extract_chain.invoke(document.page_content)['function']
 
@@ -245,14 +248,19 @@ def extract_graph_from_OpenAI(model_version,
     """
     openai_api_key = os.environ.get('OPENAI_API_KEY')
     graph_document_list = []
-
+    futures=[]
     logging.info(f"create relationship between source,chunk and entity nodes created from {model_version}")
-    for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
-        if i == 0:
-            firstChunk = True
-        else:
-            firstChunk = False
-        graph_document=extract_and_store_graph(model_version,graph,chunk_document)
-        create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document,uri,userName,password,firstChunk)
-        graph_document_list.append(graph_document[0])     
+    
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
+            if i == 0:
+                firstChunk = True
+            else:
+                firstChunk = False
+            futures.append(executor.submit(extract_and_store_graph,model_version,graph,chunk_document))   
+        for future in concurrent.futures.as_completed(futures):
+            graph_document = future.result()
+            create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document,uri,userName,password,firstChunk)
+            graph_document_list.append(graph_document[0])
+        
     return graph_document_list
