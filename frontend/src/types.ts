@@ -66,6 +66,12 @@ export interface ConnectionModalProps {
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
 }
 
+export interface GraphViewModalProps {
+  open: boolean;
+  inspectedName: string;
+  setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
+}
+
 export interface SourceNode {
   fileName: string;
   fileSize: number;
@@ -93,8 +99,7 @@ export interface DrawerProps {
 
 export interface ContentProps {
   isExpanded: boolean;
-  showChatBot: boolean;
-  openChatBot: () => void;
+  onInspect: (id: any) => void;
 }
 
 export interface FileTableProps {
