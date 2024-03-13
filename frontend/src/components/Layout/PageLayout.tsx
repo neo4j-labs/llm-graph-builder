@@ -27,7 +27,9 @@ export default function PageLayout() {
         isExpanded={isExpanded}
         showChatBot={showChatBot}
       />
-      <RightSideBar showChatBot={showChatBot}></RightSideBar>
+      <RightSideBar  closeChatBot={()=>{
+        setShowChatBot(false);
+      }}showChatBot={showChatBot}></RightSideBar>
     </div>
   );
 }

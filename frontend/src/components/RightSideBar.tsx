@@ -1,21 +1,24 @@
 import { Drawer } from '@neo4j-ndl/react';
 import Chatbot from './Chatbot';
 import chatbotmessages from '../assets/ChatbotMessages.json';
-interface RightSideBarProps{
-showChatBot:boolean;
+interface RightSideBarProps {
+  showChatBot: boolean;
+  closeChatBot: () => void;
 }
-const RightSideBar:React.FC<RightSideBarProps> = ({showChatBot}) => {
+const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }) => {
   return (
     <Drawer
       expanded={showChatBot}
       isResizeable={false}
-      type='overlay'
-      closeable={false}
+      type='push'
+      closeable={true}
       position='right'
-      onExpandedChange={function Ha() {
+      onExpandedChange={function Ha(expanded) {
+        if (!expanded) {
+          closeChatBot();
+        }
       }}
       key={'rightdrawer'}
-      className='h-full'
     >
       <Drawer.Body>
         <Chatbot messages={chatbotmessages.listMessages}></Chatbot>

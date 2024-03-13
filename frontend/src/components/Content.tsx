@@ -121,6 +121,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             }
           }
         });
+        
       } catch (err: any) {
         console.log(err);
         setShowAlert(true);
