@@ -927,20 +927,20 @@
     "@babel/runtime" "^7.20.13"
     "@neo4j-cypher/codemirror" "1.0.2"
 
-"@neo4j-ndl/base@^2.7.2", "@neo4j-ndl/base@^2.7.5":
-  version "2.7.5"
-  resolved "https://registry.yarnpkg.com/@neo4j-ndl/base/-/base-2.7.5.tgz#4f4a78dd8ab7d463691fa8e3fa537a6b0eb1c840"
-  integrity sha512-AUQPwrBkTwJOfvgDlsbyw5AHPdDXWRYDgdMEWoby0gl6fakF9tiYnVacvuFY/oZMIjwxNDnBJKnYXQNrCjjAEw==
+"@neo4j-ndl/base@^2.3.0", "@neo4j-ndl/base@^2.7.6":
+  version "2.7.6"
+  resolved "https://registry.yarnpkg.com/@neo4j-ndl/base/-/base-2.7.6.tgz#a950cd204e9719c02406bb0493973c0204e341ec"
+  integrity sha512-fbKMS4ArYg8plru45IhDdAwIh9JJhp7qRxUYw7xku/X/Ind2+CQQgCnn2dubNvjWr4zYf/vpbb343FlFmWnd/g==
 
-"@neo4j-ndl/react@^2.8.3":
-  version "2.8.8"
-  resolved "https://registry.yarnpkg.com/@neo4j-ndl/react/-/react-2.8.8.tgz#1f28a61bfe504c75de4aba25cf1c8281d6016bbe"
-  integrity sha512-/6fmqBFPocx0UW4enw2RQpXmhM1PlbUHWDRA1wd2aKxWoXhdH2j4unux6odXxaU7HT7+JzFbnuatp5OMcF68Ow==
+"@neo4j-ndl/react@^2.3.0":
+  version "2.8.9"
+  resolved "https://registry.yarnpkg.com/@neo4j-ndl/react/-/react-2.8.9.tgz#4e9bdb88b9b31d4a6eadb0d666347b18f7da3ea1"
+  integrity sha512-KDLbSvRoW0LQhMijkCRRsfGcUfT43gV1mWWKpfCyaksFgXo3AFMEkrJrDpjUdzIBSlOMfXw9FGf7oRCsWO9qmA==
   dependencies:
     "@floating-ui/react" "0.25.1"
     "@heroicons/react" "2.0.13"
     "@neo4j-cypher/react-codemirror" "^1.0.1"
-    "@neo4j-ndl/base" "^2.7.5"
+    "@neo4j-ndl/base" "^2.7.6"
     "@table-nav/core" "0.0.7"
     "@table-nav/react" "0.0.7"
     "@tanstack/react-table" "^8.9.3"

@@ -73,7 +73,7 @@ export default function Chatbot(props: ChatbotProps) {
     }, [listMessages]);
 
     return (
-        <div className='n-bg-palette-neutral-bg-default flex flex-col justify-between min-h-screen max-h-full overflow-hidden w-[294px]'>
+        <div className='n-bg-palette-neutral-bg-default flex flex-col justify-between min-h-screen max-h-full overflow-hidden w-[312px]'>
             <div className='flex overflow-y-auto pb-12 min-w-full'>
                 <Widget className='n-bg-palette-neutral-bg-default h-full' header='' isElevated={false}>
                     <div className='flex flex-col gap-3 p-3'>
@@ -111,7 +111,7 @@ export default function Chatbot(props: ChatbotProps) {
                                 <Widget
                                     header=''
                                     isElevated={true}
-                                    className={`p-4 self-start max-w-[55%] ${chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-weak' : 'n-bg-palette-primary-bg-weak'
+                                    className={`p-4 self-start ${chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-weak' : 'n-bg-palette-primary-bg-weak'
                                         }`}
                                 >
                                     <div>
