@@ -9,9 +9,7 @@ import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { extractAPI } from '../utils/FileAPI';
 import { ContentProps } from '../types';
-import Chatbot from './Chatbot';
-import chatbotmessages from '../assets/ChatbotMessages.json';
-const Content: React.FC<ContentProps> = ({ isExpanded, setIsexpanded }) => {
+const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
@@ -19,8 +17,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, setIsexpanded }) => {
   const { filesData, files, setFilesData, setModel, model } = useFileContext();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
-  const [showQA, setShowQA] = useState<boolean>(false);
-
   useEffect(() => {
     if (!init) {
       let session = localStorage.getItem('neo4j.connection');
@@ -157,7 +153,14 @@ const Content: React.FC<ContentProps> = ({ isExpanded, setIsexpanded }) => {
   const openGraphUrl = ` https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=${userCredentials?.userName}@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port') ?? '7687'
     }&search=Show+me+a+graph`;
 
-  const classNameCheck = isExpanded ? 'contentWithExpansion' : 'contentWithNoExpansion';
+  const classNameCheck =
+    isExpanded && showChatBot
+      ? 'contentWithBothDrawers'
+      : isExpanded
+      ? 'contentWithExpansion'
+      : showChatBot
+      ? 'contentWithChatBot'
+      : 'contentWithNoExpansion';
   return (
     <>
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
@@ -221,13 +224,11 @@ const Content: React.FC<ContentProps> = ({ isExpanded, setIsexpanded }) => {
             </Button>
             <Button
               onClick={() => {
-                setShowQA(true);
-                setIsexpanded(false);
+                openChatBot();
               }}
             >
               Q&A Chat
             </Button>
-            {showQA && <Chatbot messages={chatbotmessages.listMessages} />}
           </Flex>
         </Flex>
       </div>

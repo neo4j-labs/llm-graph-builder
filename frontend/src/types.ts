@@ -94,7 +94,8 @@ export interface DrawerProps {
 
 export interface ContentProps {
   isExpanded: boolean;
-  setIsexpanded:Dispatch<SetStateAction<boolean>>
+  showChatBot:boolean;
+  openChatBot:()=>void;
 }
 
 export interface FileTableProps {
