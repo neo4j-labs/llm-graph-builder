@@ -20,7 +20,7 @@ const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }
       }}
       key={'rightdrawer'}
     >
-      <Drawer.Body>
+      <Drawer.Body className='!overflow-y-hidden'>
         <Chatbot messages={chatbotmessages.listMessages}></Chatbot>
       </Drawer.Body>
     </Drawer>
