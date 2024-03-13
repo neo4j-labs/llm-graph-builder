@@ -15,7 +15,9 @@ def create_source_chunk_entity_relationship(source_file_name :str,
                                             uri : str,
                                             userName : str,
                                             password : str,
-                                            isFirstChunk : bool):
+                                            isFirstChunk : bool,
+                                            current_chunk_id:uuid,
+                                            previous_chunk_id:uuid,)-> list:
     """ Create relationship between source, chunk and entity nodes
     Args:
         source_file_name (str): file name of input source
@@ -26,14 +28,16 @@ def create_source_chunk_entity_relationship(source_file_name :str,
         userName: Username to use for graph creation ( if None will use username from config file )
         password: Password to use for graph creation ( if None will use password from config file )
         isFirstChunk : It's bool value to create FIRST_CHUNK AND NEXT_CHUNK relationship between chunk and document node.
+        current_chunk_id : Unique id of chunk
+        previous_chunk_id : Unique id of previous chunk
     """
     source_node = 'fileName: "{}"'
+    lst_cypher_queries_chunk_relationship = []
     # logging.info(f'Graph Document print{graph_document}')
     # openai_api_key = os.environ.get('OPENAI_API_KEY')
     embedding_model = os.environ.get('EMBEDDING_MODEL')
     isEmbedding = os.environ.get('IS_EMBEDDING')
     
-    chunk_uuid = str(uuid.uuid1())
     chunk_node_id_set = 'id:"{}"'
     update_chunk_node_prop = ' SET c.text = "{}"'
     if isEmbedding:
@@ -43,27 +47,29 @@ def create_source_chunk_entity_relationship(source_file_name :str,
             url=uri,
             username=userName,
             password=password,
-            ids=[chunk_uuid]
+            ids=[current_chunk_id]
         )
     else:
-        graph.query('CREATE(c:Chunk {id:"'+ chunk_uuid+'"})' + update_chunk_node_prop.format(chunk.page_content))
+        graph.query('MERGE(c:Chunk {id:"'+ current_chunk_id+'"})' + update_chunk_node_prop.format(chunk.page_content))
 
     logging.info("make PART_OF relationship between chunk node and document node")
-    graph.query('MATCH(d:Document {'+source_node.format(source_file_name)+'}) ,(c:Chunk {'+chunk_node_id_set.format(chunk_uuid)+'}) CREATE (c)-[:PART_OF]->(d)')
+    graph.query('MATCH(d:Document {'+source_node.format(source_file_name)+'}) ,(c:Chunk {'+chunk_node_id_set.format(current_chunk_id)+'}) MERGE (c)-[:PART_OF]->(d)')
 
-    logging.info("make FIRST_CHUNK, NEXT_CHUNK relationship between chunk node and document node")
+    # logging.info("make FIRST_CHUNK, NEXT_CHUNK relationship between chunk node and document node")
     if isFirstChunk:
-        graph.query('MATCH(d:Document {'+source_node.format(source_file_name)+'}) ,(c:Chunk {'+chunk_node_id_set.format(chunk_uuid)+'}) CREATE (d)-[:FIRST_CHUNK]->(c)')
+        lst_cypher_queries_chunk_relationship.append('MATCH(d:Document {'+source_node.format(source_file_name)+'}) ,(c:Chunk {'+chunk_node_id_set.format(current_chunk_id)+'}) MERGE (d)-[:FIRST_CHUNK]->(c)')
+        # graph.query('MATCH(d:Document {'+source_node.format(source_file_name)+'}) ,(c:Chunk {'+chunk_node_id_set.format(current_chunk_id)+'}) CREATE (d)-[:FIRST_CHUNK]->(c)')
     else:
-        graph.query('MATCH(d:Document {'+source_node.format(source_file_name)+'}) ,(c:Chunk {'+chunk_node_id_set.format(chunk_uuid)+'}) CREATE (d)-[:NEXT_CHUNK]->(c)')
+        lst_cypher_queries_chunk_relationship.append('MATCH(pc:Chunk {'+chunk_node_id_set.format(previous_chunk_id)+'}) ,(cc:Chunk {'+chunk_node_id_set.format(current_chunk_id)+'}) MERGE (pc)-[:NEXT_CHUNK]->(cc)')
+        # graph.query('MATCH(pc:Chunk {'+chunk_node_id_set.format(previous_chunk_id)+'}) ,(cc:Chunk {'+chunk_node_id_set.format(current_chunk_id)+'}) CREATE (pc)-[:NEXT_CHUNK]->(cc)')
     # dict = {}
     # nodes_list = []
     for node in graph_document[0].nodes:
         node_id = node.id
-        result = graph.query('MATCH(c:Chunk {'+chunk_node_id_set.format(chunk_uuid)+'}), (n:'+ node.type +'{ id: "'+node_id+'"}) CREATE (c)-[:HAS_ENTITY]->(n)')
+        result = graph.query('MATCH(c:Chunk {'+chunk_node_id_set.format(current_chunk_id)+'}), (n:'+ node.type +'{ id: "'+node_id+'"}) MERGE (c)-[:HAS_ENTITY]->(n)')
     #     json_obj = {'node_id': node_id, 'node_type' : node.type, 'uuid' : chunk_uuid}
     #     nodes_list.append(json_obj)
-
+    return lst_cypher_queries_chunk_relationship
     # dict['chunk_doc'] = chunk.page_content
     # dict['rel_chunk_entity_node'] = nodes_list
     # dict['nodes_created_in_chunk'] = len(graph_document[0].nodes)
