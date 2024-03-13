@@ -84,6 +84,9 @@
 .ndl-data-grid-root .ndl-data-grid-navigation {
   padding-block: 5px !important;
 }
+.ndl-drawer .ndl-drawer-close-button {
+  background-color: rgb(245 246 246 / 1);
+}
 .custombutton {
   display: flex;
   align-items: center;
