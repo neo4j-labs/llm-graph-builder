@@ -1,23 +1,14 @@
 /* eslint-disable no-confusing-arrow */
 import { useEffect, useRef, useState } from 'react';
 import { Button, Widget, Typography, Avatar, TextInput } from '@neo4j-ndl/react';
-
 import ChatBotUserAvatar from '../assets/images/chatbot-user.png'
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
+import { ChatbotProps } from '../types';
 
-type ChatbotProps = {
-    messages: {
-        id: number;
-        user: string;
-        message: string;
-        datetime: string;
-        isTyping?: boolean;
-    }[];
-};
+
 
 export default function Chatbot(props: ChatbotProps) {
-    const { messages } = props;
-    const [listMessages, setListMessages] = useState(messages);
+    const { messages:listMessages,setMessages:setListMessages } = props;
     const [inputMessage, setInputMessage] = useState('');
     const formattedTextStyle = { color: 'rgb(var(--theme-palette-discovery-bg-strong))' };
 
