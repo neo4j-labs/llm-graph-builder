@@ -144,12 +144,15 @@ async def get_source_list(uri:str,
     return result
     
 @app.post("/update_similarity_graph")
-async def update_similarity_graph():
+async def update_similarity_graph(uri=Form(None),
+    userName=Form(None),
+    password=Form(None),
+    database=Form(None)):
     """
     Calls 'update_graph' which post the query to update the similiar nodes in the graph
     """
     
-    result = await asyncio.to_thread(update_graph)
+    result = await asyncio.to_thread(update_graph,uri,userName,password,database)
     return result
 
 def decode_password(pwd):

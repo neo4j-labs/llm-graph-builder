@@ -499,7 +499,7 @@ def get_source_list_from_graph(uri,userName,password,db_name=None):
     logging.exception(f'Exception:{error_message}')
     return create_api_response(job_status,message=message,error=error_message)
 
-def update_graph(graph):
+def update_graph(uri,userName,password,db_name):
   """
   Update the graph node with SIMILAR relationship where embedding scrore match
   """
@@ -507,7 +507,7 @@ def update_graph(graph):
     knn_min_score = os.environ.get('KNN_MIN_SCORE')
 
     query = "WHERE node <> c and score >= {} MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score"
-    # graph = Neo4jGraph()
+    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
     result = graph.query("""MATCH (c:Chunk)
                 WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
                 CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score """+ query.format(knn_min_score))
