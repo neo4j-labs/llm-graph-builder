@@ -17,7 +17,7 @@ def create_source_chunk_entity_relationship(source_file_name :str,
                                             password : str,
                                             isFirstChunk : bool,
                                             current_chunk_id:uuid,
-                                            previous_chunk_id:uuid,)-> list:
+                                            previous_chunk_id:uuid)-> list:
     """ Create relationship between source, chunk and entity nodes
     Args:
         source_file_name (str): file name of input source
