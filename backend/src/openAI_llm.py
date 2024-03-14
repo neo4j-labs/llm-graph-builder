@@ -275,10 +275,14 @@ def extract_graph_from_OpenAI(model_version,
         for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
             previous_chunk_id = current_chunk_id
             current_chunk_id = str(uuid.uuid1())
+            position = i+1
             if i == 0:
                 firstChunk = True
             else:
                 firstChunk = False
+            metadata = {"position": position,"length": len(chunk_document.page_content)}
+            chunk_document = Document(page_content=chunk_document.page_content,metadata = metadata)
+            
             futures.append(executor.submit(extract_and_store_graph,model_version,graph,chunk_document,file_name,uri,userName,password,firstChunk,current_chunk_id,previous_chunk_id))   
         for future in concurrent.futures.as_completed(futures):
             graph_document,lst_cypher_queries_chunk_relationship = future.result()
