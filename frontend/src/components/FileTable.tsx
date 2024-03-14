@@ -137,6 +137,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                       ? item.status
                       : getFileFromLocal(`${item.fileName}`) != null
                       ? item.status
+                      : item.status === 'Completed'
+                      ? item.status
                       : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
