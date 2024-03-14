@@ -86,6 +86,9 @@
 }
 .ndl-drawer .ndl-drawer-close-button {
   background-color: rgb(245 246 246 / 1);
+  width: 40px !important;
+  height: 40px !important;
+  right: 10px !important;
 }
 .custombutton {
   display: flex;
