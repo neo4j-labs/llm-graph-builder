@@ -6,9 +6,11 @@ import { Button, Label, Typography, Flex } from '@neo4j-ndl/react';
 import { setDriver, disconnect } from '../utils/Driver';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
-import { extractAPI } from '../services/Upload';
-
-export default function Content() {
+import CustomAlert from './Alert';
+import { extractAPI } from '../utils/FileAPI';
+import { ContentProps } from '../types';
+import { updateGraphAPI } from '../services/UpdateGraphAPI';
+const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
@@ -38,9 +40,8 @@ export default function Content() {
     setSelectedOption(option.value);
   };
 
-  const extractFile = async (file: File, uid: number) => {
-    if (filesData[uid].status == 'Failed' || filesData[uid].status == 'New') {
-      const apirequests = [];
+  const extractData = async (file: File, uid: number) => {
+    if (filesData[uid]?.status == 'New') {
       try {
         setFilesData((prevfiles) =>
           prevfiles.map((curfile, idx) => {
@@ -54,38 +55,18 @@ export default function Content() {
             }
           })
         );
-        const apiResponse = await extractAPI(file, selectedOption, userCredentials);
-        apirequests.push(apiResponse);
-        Promise.allSettled(apirequests)
-          .then((r) => {
-            r.forEach((apiRes) => {
-              if (apiRes.status === 'fulfilled' && apiRes.value) {
-                if (apiRes?.value?.data.status != 'Unexpected Error') {
-                  setFilesData((prevfiles) =>
-                    prevfiles.map((curfile, idx) => {
-                      if (idx == uid) {
-                        const response = apiRes?.value?.data?.data;
-                        return {
-                          ...curfile,
-                          processing: response.processingTime?.toFixed(2),
-                          status: response.status,
-                          NodesCount: response.nodeCount,
-                          relationshipCount: response.relationshipCount,
-                          model: response.model,
-                        };
-                      } else {
-                        return curfile;
-                      }
-                    })
-                  );
-                } else {
-                  throw new Error('API Failure');
-                }
-              }
-            });
-          })
-          .catch((err) => console.log(err));
-      } catch (err) {
+        const apiResponse = await extractAPI(
+          file,
+          filesData[uid].model,
+          userCredentials,
+          filesData[uid].source_url,
+          localStorage.getItem('accesskey'),
+          localStorage.getItem('secretkey'),
+          filesData[uid].max_sources,
+          filesData[uid].wiki_query ?? ''
+        );
+        return {...apiResponse,uid};
+      } catch (err: any) {
         console.log(err);
         setFilesData((prevfiles) =>
           prevfiles.map((curfile, idx) => {
@@ -104,12 +85,62 @@ export default function Content() {
   };
 
   const handleGenerateGraph = async () => {
+<<<<<<< Updated upstream
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
         if (filesData[i].status === 'New') {
           extractFile(files[i], i);
+=======
+    const extractApi = [];
+    if (files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        if (filesData[i]?.status === 'New') {
+          extractApi.push(extractData(files[i], i));
+>>>>>>> Stashed changes
         }
       }
+      const results = await Promise.allSettled(extractApi);
+      results.forEach(async (apiRes) => {
+        console.log(apiRes);
+        if (apiRes.status === 'fulfilled' && apiRes.value) {
+          if (apiRes?.value?.status === 'Failed') {
+            console.log('Error', apiRes?.value);
+            setShowAlert(true);
+            setErrorMessage(apiRes?.value?.message);
+            setFilesData((prevfiles) =>
+              prevfiles.map((curfile,idx) => {
+                if (idx == apiRes.value.uid) {
+                  return {
+                    ...curfile,
+                    status: 'Failed',
+                  };
+                }
+                return curfile;
+              })
+            );
+            throw new Error(apiRes?.value?.message);
+          } else {
+            setFilesData((prevfiles) => {
+              return prevfiles.map((curfile) => {
+                if (curfile.name == apiRes.value.data.fileName) {
+                  const apiResponse = apiRes?.value?.data;
+                  return {
+                    ...curfile,
+                    processing: apiResponse?.processingTime?.toFixed(2),
+                    status: apiResponse?.status,
+                    NodesCount: apiResponse?.nodeCount,
+                    relationshipCount: apiResponse?.relationshipCount,
+                    model: apiResponse?.model,
+                  };
+                }
+                return curfile;
+              });
+            });
+          }
+        }
+      });
+      const updateResponse = await updateGraphAPI(userCredentials);
+      console.log('response', updateResponse);
     }
   };
   return (
