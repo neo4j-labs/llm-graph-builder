@@ -216,7 +216,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           style={{ flexFlow: 'row', marginTop: '5px', alignSelf: 'flex-start' }}
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
-          <Flex flexDirection='row' gap='2' style={{ alignSelf: 'flex-end' }}>
+          <Flex flexDirection='row' gap='4' style={{ alignSelf: 'flex-end' }}>
             <Button
               loading={filesData.some((f) => f?.status === 'Processing')}
               disabled={disableCheck}

@@ -1,11 +1,15 @@
 import { Drawer } from '@neo4j-ndl/react';
 import Chatbot from './Chatbot';
 import chatbotmessages from '../assets/ChatbotMessages.json';
+import { useState } from 'react';
+import { messages } from '../types';
 interface RightSideBarProps {
   showChatBot: boolean;
   closeChatBot: () => void;
 }
+
 const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }) => {
+  const [messages, setMessages] = useState<messages[]>(chatbotmessages.listMessages);
   return (
     <Drawer
       expanded={showChatBot}
@@ -21,7 +25,7 @@ const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }
       key={'rightdrawer'}
     >
       <Drawer.Body className='!overflow-y-hidden'>
-        <Chatbot messages={chatbotmessages.listMessages}></Chatbot>
+        <Chatbot messages={messages} setMessages={setMessages}></Chatbot>
       </Drawer.Body>
     </Drawer>
   );
