@@ -222,6 +222,7 @@ def create_source_node_graph_url(uri, userName, password, source_url ,model, db_
             file_name = YouTube(source_url).title
             transcript= get_youtube_transcript(match.group(1))
             if transcript==None or len(transcript)==0:
+              file_size=''
               job_status = "Failed"
               message = f"Youtube transcript is not available for : {file_name}"
               error_message = str(e)
