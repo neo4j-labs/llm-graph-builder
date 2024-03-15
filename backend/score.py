@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
 import asyncio
 import base64
+from src.QA_integration import *
 
 
 def healthy_condition():
@@ -153,6 +154,15 @@ async def update_similarity_graph(uri=Form(None),
     """
     
     result = await asyncio.to_thread(update_graph,uri,userName,password,database)
+    return result
+        
+@app.post("/chat_bot")
+async def chat_bot(uri=Form(None),
+                          userName=Form(None),
+                          password=Form(None),
+                          question=Form(None),
+                          model=Form(None)):
+    result = await asyncio.to_thread(QA_RAG,uri=uri,userName=userName,password=password,model_version=model,question=question)
     return result
 
 def decode_password(pwd):
