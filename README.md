@@ -114,7 +114,7 @@ KNN_MIN_SCORE = ""\
 https://github.com/neo4j-labs/llm-graph-builder/assets/121786590/b725a503-6ade-46d2-9e70-61d57443c311
 
 ## Links
- The Public [ Google cloud Run URL](https://frontend-dcavk67s4a-uc.a.run.app).
+ The Public [ Google cloud Run URL](https://prod-frontend-dcavk67s4a-uc.a.run.app/).
  [Workspace URL](https://workspace-preview.neo4j.io/workspace)
 
 
