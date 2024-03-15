@@ -29,9 +29,8 @@ logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 def update_exception_db(graph_obj,file_name,exp_msg):
   try:  
     job_status = "Failed"
-    source_node = "fileName: '{}'"
-    update_node_prop = 'SET d.status = "{}", d.errorMessage = "{}"'
-    graph_obj.query('MERGE(d:Document {'+source_node.format(file_name)+'}) '+update_node_prop.format(job_status,exp_msg))
+    graph_obj.query("""MERGE(d:Document {fileName :$fName}) SET d.status = $status, d.errorMessage = $error_msg""",
+                    {"fName":file_name, "status":job_status, "error_msg":exp_msg})
   except Exception as e:
     error_message = str(e)
     logging.error(f"Error in updating document node status as failed: {error_message}")
@@ -41,10 +40,15 @@ def create_source_node(graph_obj,file_name,file_size,file_type,source,model,url=
   try:   
     current_time = datetime.now()
     job_status = "New"
-    source_node = "fileName: '{}'"
-    update_node_prop = "SET d.fileSize = '{}', d.fileType = '{}' ,d.status = '{}',d.url='{}',d.awsAccessKeyId='{}',d.fileSource='{}', d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}', d.errorMessage = '{}', d.nodeCount= {}, d.relationshipCount = {}, d.model= '{}'"
     logging.info("create source node as file name if not exist")
-    graph_obj.query('MERGE(d:Document {'+source_node.format(file_name)+'}) '+update_node_prop.format(file_size,file_type,job_status,url,aws_access_key_id,source,current_time,current_time,0,'',0,0,model))
+    graph_obj.query("""MERGE(d:Document {fileName :$fn}) SET d.fileSize = $fs, d.fileType = $ft ,
+                    d.status = $st, d.url = $url, d.awsAccessKeyId = $awsacc_key_id, 
+                    d.fileSource = $f_source, d.createdAt = $c_at, d.updatedAt = $u_at, 
+                    d.processingTime = $pt, d.errorMessage = $e_message, d.nodeCount= $n_count, 
+                    d.relationshipCount = $r_count, d.model= $model""",
+                    {"fn":file_name, "fs":file_size, "ft":file_type, "st":job_status, "url":url,
+                     "awsacc_key_id":aws_access_key_id, "f_source":source, "c_at":current_time,
+                     "u_at":current_time, "pt":0, "e_message":'', "n_count":0, "r_count":0, "model":model})
   except Exception as e:
     error_message = str(e)
     update_exception_db(graph_obj,file_name,error_message)
@@ -69,10 +73,6 @@ def create_source_node_graph_local_file(uri, userName, password, file, model, db
     file_size = file.size
     file_name = file.filename
     source = 'local file'
-    # if db_name is not None:
-    #   graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-    # else:
-    #    graph = Neo4jGraph(url=uri, username=userName, password=password)   
     graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
     create_source_node(graph,file_name,file_size,file_type,source,model)
     return create_api_response("Success",message="Source Node created successfully",file_source=source)
@@ -173,10 +173,6 @@ def create_source_node_graph_url(uri, userName, password, source_url ,model, db_
     """
     try:
         source_type,youtube_url = check_url_source(source_url)
-        # if db_name is not None:
-        #   graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-        # else:
-        #   graph = Neo4jGraph(url=uri, username=userName, password=password)
         graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
         logging.info(f"source type URL:{source_type}")
         if source_type == "s3 bucket":
@@ -212,7 +208,6 @@ def create_source_node_graph_url(uri, userName, password, source_url ,model, db_
             return create_api_response("Success",message="Source Node created successfully",success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket',file_name=lst_s3_file_name)
         elif source_type == 'youtube':
             source_url= youtube_url
-           # match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", source_url)
             match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',source_url)
             logging.info(f"match value{match}")
             youtube_id=match.group(1)
@@ -246,8 +241,6 @@ def file_into_chunks(pages: List[Document]):
     logging.info("Split file into smaller chunks")
     text_splitter = TokenTextSplitter(chunk_size=200, chunk_overlap=20)
     chunks = text_splitter.split_documents(pages)
-    # print('Before chunks',len(chunks))
-    #chunks=chunks[:10]
     return chunks
 
 def get_s3_pdf_content(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
@@ -304,14 +297,9 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
    	 Json response to API with fileName, nodeCount, relationshipCount, processingTime, 
      status and model as attributes.
   """
-  # logging.info(f"extract_graph_from_file called for file:{file.filename}")
   try:
     start_time = datetime.now()
     file_name = ''
-    # if db_name is not None:
-    #   graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-    # else:
-    #    graph = Neo4jGraph(url=uri, username=userName, password=password) 
     graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
     source_node = "fileName: '{}'"
     
@@ -398,7 +386,15 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
     job_status = "Completed"
     error_message =""
     logging.info("Update source node properties")
-    graph.query('MERGE(d:Document {'+source_node.format(file_key.split('/')[-1])+'}) '+update_node_prop.format(start_time,end_time,round(processed_time.total_seconds(),2),job_status,error_message,nodes_created,relationships_created,model))
+    graph.query("""MERGE(d:Document {fileName :$fn}) SET d.status = $st, d.createdAt = $c_at, 
+                    d.updatedAt = $u_at, d.processingTime = $pt, d.nodeCount= $n_count, 
+                    d.relationshipCount = $r_count, d.model= $model
+                """,
+                {"fn":file_key.split('/')[-1], "st":job_status, "c_at":start_time,
+                  "u_at":end_time, "pt":round(processed_time.total_seconds(),2), "e_message":'',
+                  "n_count":nodes_created, "r_count":relationships_created, "model":model
+                }
+                )
 
     output = {
         "fileName": file_name,
@@ -481,12 +477,6 @@ def get_source_list_from_graph(uri,userName,password,db_name=None):
  """
   logging.info("Get existing files list from graph")
   try:
-    # if len(db_name)!=0:
-    #   logging.info(f"Fetching source list from, database = {db_name}")
-    #   graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-    # else:
-    #    logging.info(f"Fetching source list from default database (neo4j)")
-    #    graph = Neo4jGraph(url=uri, username=userName, password=password)
     graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
     query = "MATCH(d:Document) RETURN d ORDER BY d.updatedAt DESC"
     result = graph.query(query)
@@ -505,12 +495,14 @@ def update_graph(uri,userName,password,db_name):
   """
   try:   
     knn_min_score = os.environ.get('KNN_MIN_SCORE')
-
-    query = "WHERE node <> c and score >= {} MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score"
     graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
     result = graph.query("""MATCH (c:Chunk)
-                WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
-                CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score """+ query.format(knn_min_score))
+                            WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
+                            CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score
+                            WHERE node <> c and score >= $score MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score
+                         """,
+                         {"score":knn_min_score}
+                         )
     logging.info(f"result : {result}")
   except Exception as e:
     error_message = str(e)

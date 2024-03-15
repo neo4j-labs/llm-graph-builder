@@ -33,14 +33,11 @@ def create_source_chunk_entity_relationship(source_file_name :str,
     """
     source_node = 'fileName: "{}"'
     lst_cypher_queries_chunk_relationship = []
-    # logging.info(f'Graph Document print{graph_document}')
-    # openai_api_key = os.environ.get('OPENAI_API_KEY')
-    embedding_model = os.environ.get('EMBEDDING_MODEL')
-    isEmbedding = os.environ.get('IS_EMBEDDING')
-    
+    embedding_model = os.getenv('EMBEDDING_MODEL')
+    isEmbedding = os.getenv('IS_EMBEDDING')
     chunk_node_id_set = 'id:"{}"'
-    update_chunk_node_prop = ' SET c.text = "{}"'
-    if isEmbedding:
+    
+    if isEmbedding.upper() == "TRUE":
         Neo4jVector.from_documents(
             [chunk],
             OpenAIEmbeddings(model=embedding_model),
@@ -50,23 +47,40 @@ def create_source_chunk_entity_relationship(source_file_name :str,
             ids=[current_chunk_id]
         )
     else:
-        graph.query('MERGE(c:Chunk {id:"'+ current_chunk_id+'"})' + update_chunk_node_prop.format(chunk.page_content))
+        graph.query("""MERGE(c:Chunk {id : $id}) SET c.text = $pg_content, c.position = $position, 
+                    c.length = $length
+                    """,
+                    {"id":current_chunk_id,"pg_content":chunk.page_content, "position": chunk.metadata['position'],
+                     "length": chunk.metadata['length']
+                    })
 
     logging.info("make PART_OF relationship between chunk node and document node")
-    graph.query('MATCH(d:Document {'+source_node.format(source_file_name)+'}) ,(c:Chunk {'+chunk_node_id_set.format(current_chunk_id)+'}) MERGE (c)-[:PART_OF]->(d)')
+    graph.query("""MATCH(d:Document {fileName : $f_name}) ,(c:Chunk {id : $chunk_id}) 
+                MERGE (c)-[:PART_OF]->(d)
+                """,
+                {"f_name":source_file_name,"chunk_id":current_chunk_id})
 
-    # logging.info("make FIRST_CHUNK, NEXT_CHUNK relationship between chunk node and document node")
-    if isFirstChunk:
+    #FYI-Reason : To use list below because some relationship are not creating due to function running in thread
+    #relationship between chunks as NEXT_CHUNK, FIRST_CHUNK, these queries executed end of the file process.
+    #could not change below query as parameterize because list only take single parameter and parameterize(2 parameter)
+    if isFirstChunk: 
         lst_cypher_queries_chunk_relationship.append('MATCH(d:Document {'+source_node.format(source_file_name)+'}) ,(c:Chunk {'+chunk_node_id_set.format(current_chunk_id)+'}) MERGE (d)-[:FIRST_CHUNK]->(c)')
-        # graph.query('MATCH(d:Document {'+source_node.format(source_file_name)+'}) ,(c:Chunk {'+chunk_node_id_set.format(current_chunk_id)+'}) CREATE (d)-[:FIRST_CHUNK]->(c)')
     else:
         lst_cypher_queries_chunk_relationship.append('MATCH(pc:Chunk {'+chunk_node_id_set.format(previous_chunk_id)+'}) ,(cc:Chunk {'+chunk_node_id_set.format(current_chunk_id)+'}) MERGE (pc)-[:NEXT_CHUNK]->(cc)')
-        # graph.query('MATCH(pc:Chunk {'+chunk_node_id_set.format(previous_chunk_id)+'}) ,(cc:Chunk {'+chunk_node_id_set.format(current_chunk_id)+'}) CREATE (pc)-[:NEXT_CHUNK]->(cc)')
     # dict = {}
     # nodes_list = []
     for node in graph_document[0].nodes:
         node_id = node.id
-        result = graph.query('MATCH(c:Chunk {'+chunk_node_id_set.format(current_chunk_id)+'}), (n:'+ node.type +'{ id: "'+node_id+'"}) MERGE (c)-[:HAS_ENTITY]->(n)')
+        #Below query also unable to change as parametrize because we can't make parameter of Label or node type
+        #https://neo4j.com/docs/cypher-manual/current/syntax/parameters/
+
+        graph.query('MATCH(c:Chunk {'+chunk_node_id_set.format(current_chunk_id)+'}), (n:'+ node.type +'{ id: "'+node_id+'"}) MERGE (c)-[:HAS_ENTITY]->(n)')
+
+        # graph.query("""MATCH(c:Chunk {id : $chunk_id}), (n:$node_type{ id: $node_id}) 
+        #             MERGE (c)-[:HAS_ENTITY]->(n)
+        #             """,
+        #             {"chunk_id":current_chunk_id,"node_type":node.type, "node_id":node_id})
+
     #     json_obj = {'node_id': node_id, 'node_type' : node.type, 'uuid' : chunk_uuid}
     #     nodes_list.append(json_obj)
     return lst_cypher_queries_chunk_relationship
