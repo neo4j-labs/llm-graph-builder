@@ -10,8 +10,8 @@ import CustomAlert from './Alert';
 import { extractAPI } from '../utils/FileAPI';
 import { ContentProps } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
+const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
 
-const Content: React.FC<ContentProps> = ({ isExpanded }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
@@ -19,7 +19,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
   const { filesData, files, setFilesData, setModel, model } = useFileContext();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
-
   useEffect(() => {
     if (!init) {
       let session = localStorage.getItem('neo4j.connection');
@@ -156,7 +155,14 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
   const openGraphUrl = ` https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=${userCredentials?.userName}@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port') ?? '7687'
     }&search=Show+me+a+graph`;
 
-  const classNameCheck = isExpanded ? 'contentWithExpansion' : 'contentWithNoExpansion';
+  const classNameCheck =
+    isExpanded && showChatBot
+      ? 'contentWithBothDrawers'
+      : isExpanded
+      ? 'contentWithExpansion'
+      : showChatBot
+      ? 'contentWithChatBot'
+      : 'contentWithNoExpansion';
   return (
     <>
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
@@ -206,7 +212,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
           style={{ flexFlow: 'row', marginTop: '5px', alignSelf: 'flex-start' }}
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
-          <Flex flexDirection='row' gap='2' style={{ alignSelf: 'flex-end' }}>
+          <Flex flexDirection='row' gap='4' style={{ alignSelf: 'flex-end' }}>
             <Button
               loading={filesData.some((f) => f?.status === 'Processing')}
               disabled={disableCheck}
@@ -217,6 +223,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
             </Button>
             <Button href={openGraphUrl} target='_blank' disabled={disableCheckGraph} className='ml-0.5'>
               Open Graph
+            </Button>
+            <Button
+              onClick={() => {
+                openChatBot();
+              }}
+            >
+              Q&A Chat
             </Button>
           </Flex>
         </Flex>

@@ -95,6 +95,8 @@ export interface DrawerProps {
 
 export interface ContentProps {
   isExpanded: boolean;
+  showChatBot: boolean;
+  openChatBot: () => void;
 }
 
 export interface FileTableProps {
@@ -121,3 +123,20 @@ export interface CommonButtonProps {
   title: string;
   className?: string;
 }
+export interface messages {
+  id: number;
+  message: string;
+  user: string;
+  datetime: string;
+  isTyping?: boolean;
+}
+export type ChatbotProps = {
+  messages: {
+    id: number;
+    user: string;
+    message: string;
+    datetime: string;
+    isTyping?: boolean;
+  }[];
+  setMessages: Dispatch<SetStateAction<messages[]>>;
+};

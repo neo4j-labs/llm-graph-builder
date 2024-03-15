@@ -8,6 +8,11 @@
   height: calc(-322px + 100dvh);
   border: 1px solid #d1d5db;
 }
+.fileTableWithBothDrawers{
+  width: calc(-650px + 100dvw) !important;
+  height: calc(-322px + 100dvh);
+  border: 1px solid #d1d5db;
+}
 
 .fileTableWithExpansion .ndl-div-table {
   width: max-content !important;
@@ -25,7 +30,26 @@
   gap: 5px;
   position: relative;
 }
-
+.contentWithBothDrawers{
+  width: calc(-721px + 100dvw);
+  height: calc(100dvh - 60px);
+  padding: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  position: relative;
+}
+.contentWithChatBot{
+  width: calc(-385px + 100dvw);
+  height: calc(100dvh - 60px);
+  padding: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  position: relative;
+}
 .contentWithNoExpansion {
   width: calc(100% - 64px);
   height: calc(100dvh - 60px);
@@ -59,6 +83,12 @@
 
 .ndl-data-grid-root .ndl-data-grid-navigation {
   padding-block: 5px !important;
+}
+.ndl-drawer .ndl-drawer-close-button {
+  background-color: rgb(var(--theme-palette-neutral-bg-strong)); 
+  width: 40px !important;
+  height: 40px !important;
+  right: 10px !important;
 }
 .custombutton {
   display: flex;
