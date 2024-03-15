@@ -20,6 +20,10 @@ import re
 from langchain_community.document_loaders import YoutubeLoader
 from langchain_community.document_loaders import WikipediaLoader
 import warnings
+from pytube import YouTube
+from youtube_transcript_api import YouTubeTranscriptApi 
+import sys
+
 warnings.filterwarnings("ignore")
 
 load_dotenv()
@@ -215,9 +219,16 @@ def create_source_node_graph_url(uri, userName, password, source_url ,model, db_
            # match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", source_url)
             match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',source_url)
             logging.info(f"match value{match}")
-            youtube_id=match.group(1)
-            file_name=youtube_id.strip()
-            file_size=''
+            file_name = YouTube(source_url).title
+            transcript= get_youtube_transcript(match.group(1))
+            if transcript==None or len(transcript)==0:
+              job_status = "Failed"
+              message = f"Youtube transcript is not available for : {file_name}"
+              error_message = str(e)
+              logging.exception(f'Exception Stack trace:')
+              return create_api_response(job_status,message=message,error=error_message,file_source=source_type)
+            else:  
+              file_size=sys.getsizeof(transcript)
             file_type='text'
             aws_access_key_id=''
             job_status = "Completed"
@@ -232,7 +243,15 @@ def create_source_node_graph_url(uri, userName, password, source_url ,model, db_
         error_message = str(e)
         logging.exception(f'Exception Stack trace:')
         return create_api_response(job_status,message=message,error=error_message,file_source=source_type)  
-      
+
+def get_youtube_transcript(youtube_id):
+  transcript_dict = YouTubeTranscriptApi.get_transcript(youtube_id)
+  transcript=''
+  for td in transcript_dict:
+    transcript += ''.join(td['text'])
+  return transcript
+  
+        
 def file_into_chunks(pages: List[Document]):
     """
      Split a list of documents(file pages) into chunks of fixed size.
@@ -456,9 +475,10 @@ def get_documents_from_youtube(url):
                                                       translation = "en",
                                                       add_video_info=True)
       pages = youtube_loader.load()
-      match = re.search(r"v=([a-zA-Z0-9_-]+)", url)
-      youtube_id=match.group(1)
-      file_name=youtube_id
+      # match = re.search(r"v=([a-zA-Z0-9_-]+)", url)
+      # youtube_id=match.group(1)
+      # file_name=youtube_id
+      file_name = YouTube(url).title
       file_key=file_name
       return file_name, file_key, pages
     except Exception as e:
