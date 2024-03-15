@@ -17,12 +17,12 @@ const QuickStarter: React.FunctionComponent = () => {
   };
 
   return (
-      <FileContextProvider>
-        <UserCredentialsWrapper>
-          <Header themeMode={themeMode} toggleTheme={toggleColorMode} />
-          <PageLayout />
-        </UserCredentialsWrapper>
-      </FileContextProvider>
+    <FileContextProvider>
+      <UserCredentialsWrapper>
+        <Header themeMode={themeMode} toggleTheme={toggleColorMode} />
+        <PageLayout />
+      </UserCredentialsWrapper>
+    </FileContextProvider>
   );
 };
 export default QuickStarter;

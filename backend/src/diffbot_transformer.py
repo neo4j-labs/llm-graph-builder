@@ -37,10 +37,13 @@ def extract_graph_from_diffbot(graph: Neo4jGraph,
     for i,chunk in enumerate(chunks):
         previous_chunk_id = current_chunk_id
         current_chunk_id = str(uuid.uuid1())
+        position = i+1
         if i == 0:
             firstChunk = True
         else:
             firstChunk = False
+        metadata = {"position": position,"length": len(chunk.page_content)}
+        chunk = Document(page_content=chunk.page_content,metadata = metadata)
         graph_document = diffbot_nlp.convert_to_graph_documents([chunk])
         graph.add_graph_documents(graph_document)
         lst_cypher_queries_chunk_relationship = create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk,uri,userName,password,firstChunk,current_chunk_id,
