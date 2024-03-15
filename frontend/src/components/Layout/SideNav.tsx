@@ -6,8 +6,8 @@ const SideNav: React.FC<SideNavProps> = ({ openDrawer, closeDrawer, isExpanded }
   const handleClick = () => {
     if (isExpanded) {
       closeDrawer();
-    }else{
-      openDrawer()
+    } else {
+      openDrawer();
     }
   };
 
