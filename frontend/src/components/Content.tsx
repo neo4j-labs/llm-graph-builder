@@ -9,6 +9,7 @@ import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { extractAPI } from '../utils/FileAPI';
 import { ContentProps } from '../types';
+import { updateGraphAPI } from '../services/UpdateGraph';
 
 const Content: React.FC<ContentProps> = ({ isExpanded }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -60,7 +61,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
 
   const extractData = async (file: File, uid: number) => {
     if (filesData[uid]?.status == 'New') {
-      const apirequests = [];
       try {
         setFilesData((prevfiles) =>
           prevfiles.map((curfile, idx) => {
@@ -83,46 +83,39 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
           filesData[uid].max_sources,
           filesData[uid].wiki_query ?? ''
         );
-        apirequests.push(apiResponse);
-        const results = await Promise.allSettled(apirequests);
-        results.forEach(async (apiRes) => {
-          if (apiRes.status === 'fulfilled' && apiRes.value) {
-            if (apiRes?.value?.status === 'Failed') {
-              console.log('Error', apiRes?.value);
-              setShowAlert(true);
-              setErrorMessage(apiRes?.value?.message);
-              setFilesData((prevfiles) =>
-                prevfiles.map((curfile, idx) => {
-                  if (idx == uid) {
-                    return {
-                      ...curfile,
-                      status: 'Failed',
-                    };
-                  }
-                  return curfile;
-                })
-              );
-              throw new Error(apiRes?.value?.message);
-            } else {
-              setFilesData((prevfiles) => {
-                return prevfiles.map((curfile, idx) => {
-                  if (idx == uid) {
-                    const apiResponse = apiRes?.value?.data;
-                    return {
-                      ...curfile,
-                      processing: apiResponse?.processingTime?.toFixed(2),
-                      status: apiResponse?.status,
-                      NodesCount: apiResponse?.nodeCount,
-                      relationshipCount: apiResponse?.relationshipCount,
-                      model: apiResponse?.model,
-                    };
-                  }
-                  return curfile;
-                });
-              });
-            }
-          }
-        });
+        if (apiResponse?.data?.status === 'Failed') {
+          setShowAlert(true);
+          setErrorMessage(apiResponse?.data?.message);
+          setFilesData((prevfiles) =>
+            prevfiles.map((curfile, idx) => {
+              if (idx == uid) {
+                return {
+                  ...curfile,
+                  status: 'Failed',
+                };
+              }
+              return curfile;
+            })
+          );
+          throw new Error(apiResponse?.data?.message);
+        } else {
+          setFilesData((prevfiles) => {
+            return prevfiles.map((curfile, idx) => {
+              if (idx == uid) {
+                const apiRes = apiResponse?.data;
+                return {
+                  ...curfile,
+                  processing: apiRes?.processingTime?.toFixed(2),
+                  status: apiRes?.status,
+                  NodesCount: apiRes?.nodeCount,
+                  relationshipCount: apiRes?.relationshipCount,
+                  model: apiRes?.model,
+                };
+              }
+              return curfile;
+            });
+          });
+        }
       } catch (err: any) {
         console.log(err);
         setShowAlert(true);
@@ -142,13 +135,17 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
     }
   };
 
-  const handleGenerateGraph = () => {
+  const handleGenerateGraph = async () => {
+    const data = [];
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
-        if (filesData[i].status === 'New') {
-          extractData(files[i], i);
+        if (filesData[i]?.status === 'New') {
+          data.push(extractData(files[i], i));
         }
       }
+      Promise.allSettled(data).then(async (_) => {
+        await updateGraphAPI(userCredentials);
+      });
     }
   };
 
@@ -156,9 +153,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
     setShowAlert(false);
   };
 
-  const openGraphUrl = `${process.env.BLOOM_URL}${userCredentials?.userName}@${localStorage.getItem('hostname')}%3A${
-    localStorage.getItem('port') ?? '7687'
-  }&search=Show+me+a+graph`;
+  const openGraphUrl = ` https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=${userCredentials?.userName}@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port') ?? '7687'
+    }&search=Show+me+a+graph`;
 
   const classNameCheck = isExpanded ? 'contentWithExpansion' : 'contentWithNoExpansion';
   return (

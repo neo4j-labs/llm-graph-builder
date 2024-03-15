@@ -39,7 +39,15 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         const sourceFindVal = sourceFind(info.getValue());
         return (
           <div className='textellipsis'>
-            <span title={sourceFindVal?.fileSource === 's3 bucket' ? sourceFindVal?.source_url : info.getValue()}>
+            <span
+              title={
+                sourceFindVal?.fileSource === 's3 bucket'
+                  ? sourceFindVal?.source_url
+                  : sourceFindVal?.fileSource === 'youtube'
+                  ? sourceFindVal?.source_url
+                  : info.getValue()
+              }
+            >
               {info.getValue()}
             </span>
           </div>
