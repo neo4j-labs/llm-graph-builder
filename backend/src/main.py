@@ -362,18 +362,19 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
     
     logging.info("Get graph document list from models")
     if model == 'Diffbot' :
-      graph_documents = extract_graph_from_diffbot(graph,chunks,file_name,uri,userName,password)
+      graph_documents, cypher_list = extract_graph_from_diffbot(graph,chunks,file_name,uri,userName,password)
       
     elif model == 'OpenAI GPT 3.5':
       model_version = 'gpt-3.5-turbo-16k'
-      graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
+      graph_documents, cypher_list = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
       
     elif model == 'OpenAI GPT 4':
       model_version = 'gpt-4-0125-preview' 
-      graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
+      graph_documents, cypher_list = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
               
-    #update_similarity_graph for the KNN Graph
-    update_graph(graph)
+    #create relation between chunks (FIRST_CHUNK and NEXT_CHUNK)
+    for query in cypher_list:
+       graph.query(query)
 
     distinct_nodes = set()
     relations = []
@@ -498,7 +499,7 @@ def get_source_list_from_graph(uri,userName,password,db_name=None):
     logging.exception(f'Exception:{error_message}')
     return create_api_response(job_status,message=message,error=error_message)
 
-def update_graph(graph):
+def update_graph(uri,userName,password,db_name):
   """
   Update the graph node with SIMILAR relationship where embedding scrore match
   """
@@ -506,7 +507,7 @@ def update_graph(graph):
     knn_min_score = os.environ.get('KNN_MIN_SCORE')
 
     query = "WHERE node <> c and score >= {} MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score"
-    # graph = Neo4jGraph()
+    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
     result = graph.query("""MATCH (c:Chunk)
                 WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
                 CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score """+ query.format(knn_min_score))
