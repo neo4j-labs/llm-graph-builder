@@ -11,7 +11,6 @@ import { extractAPI } from '../utils/FileAPI';
 import { ContentProps } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
-
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
@@ -152,8 +151,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     setShowAlert(false);
   };
 
-  const openGraphUrl = ` https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=${userCredentials?.userName}@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port') ?? '7687'
-    }&search=Show+me+a+graph`;
+  const openGraphUrl = ` https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=${
+    userCredentials?.userName
+  }@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port') ?? '7687'}&search=Show+me+a+graph`;
 
   const classNameCheck =
     isExpanded && showChatBot

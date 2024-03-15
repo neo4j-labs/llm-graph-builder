@@ -53,10 +53,8 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
         position='left'
         type='push'
         closeable={false}
-        key={"leftdrawer"}
-        onExpandedChange={function Ha() {
-          
-        }}
+        key={'leftdrawer'}
+        onExpandedChange={function Ha() {}}
       >
         <Drawer.Body style={{ overflow: 'hidden', height: 'intial' }}>
           <div className='flex h-full flex-col'>
