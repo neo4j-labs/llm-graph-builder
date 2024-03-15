@@ -52,11 +52,11 @@ export default function Chatbot(props: ChatbotProps) {
         const date = new Date();
         const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
         const userMessage = { id: 999, user: 'user', message: inputMessage, datetime: datetime };
-        const chatresponse = await chatBotAPI(userCredentials, model, inputMessage)
-        console.log(chatresponse)
         setListMessages((listMessages) => [...listMessages, userMessage]);
+        const chatresponse = await chatBotAPI(userCredentials, model, inputMessage)
         setInputMessage('');
-        const chatbotReply = 'Hello Sir, how can I help you today?'; // Replace with getting a response from your chatbot through your APIs
+        console.log(chatresponse)
+        const chatbotReply = chatresponse?.data?.message; // Replace with getting a response from your chatbot through your APIs
         simulateTypingEffect(chatbotReply);
     };
 
