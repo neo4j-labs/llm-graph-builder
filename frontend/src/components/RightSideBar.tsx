@@ -9,7 +9,7 @@ interface RightSideBarProps {
 }
 
 const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }) => {
-  const [messages, setMessages] = useState<messages[]>(chatbotmessages.listMessages);
+  const [messages, setMessages] = useState<messages[]>([chatbotmessages.listMessages[1]]);
   return (
     <Drawer
       expanded={showChatBot}
