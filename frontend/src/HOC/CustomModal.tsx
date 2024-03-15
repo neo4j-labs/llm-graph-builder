@@ -11,6 +11,7 @@ const CustomModal: React.FC<CustomModalProps> = ({
   status,
   setStatus,
 }) => {
+  const isDisabled = status === 'danger' || status === 'info' || status === 'warning' || status === 'success';
   return (
     <Dialog
       size='small'
@@ -36,7 +37,7 @@ const CustomModal: React.FC<CustomModalProps> = ({
           <Button color='neutral' fill='outlined' onClick={onClose} size='medium'>
             Cancel
           </Button>
-          <Button onClick={submitHandler} size='medium'>
+          <Button onClick={submitHandler} size='medium' disabled={isDisabled}>
             {submitLabel}
           </Button>
         </Dialog.Actions>

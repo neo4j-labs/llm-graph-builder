@@ -20,6 +20,10 @@ import re
 from langchain_community.document_loaders import YoutubeLoader
 from langchain_community.document_loaders import WikipediaLoader
 import warnings
+from pytube import YouTube
+from youtube_transcript_api import YouTubeTranscriptApi 
+import sys
+
 warnings.filterwarnings("ignore")
 
 load_dotenv()
@@ -215,9 +219,17 @@ def create_source_node_graph_url(uri, userName, password, source_url ,model, db_
            # match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", source_url)
             match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',source_url)
             logging.info(f"match value{match}")
-            youtube_id=match.group(1)
-            file_name=youtube_id.strip()
-            file_size=''
+            file_name = YouTube(source_url).title
+            transcript= get_youtube_transcript(match.group(1))
+            if transcript==None or len(transcript)==0:
+              file_size=''
+              job_status = "Failed"
+              message = f"Youtube transcript is not available for : {file_name}"
+              error_message = str(e)
+              logging.exception(f'Exception Stack trace:')
+              return create_api_response(job_status,message=message,error=error_message,file_source=source_type)
+            else:  
+              file_size=sys.getsizeof(transcript)
             file_type='text'
             aws_access_key_id=''
             job_status = "Completed"
@@ -232,7 +244,15 @@ def create_source_node_graph_url(uri, userName, password, source_url ,model, db_
         error_message = str(e)
         logging.exception(f'Exception Stack trace:')
         return create_api_response(job_status,message=message,error=error_message,file_source=source_type)  
-      
+
+def get_youtube_transcript(youtube_id):
+  transcript_dict = YouTubeTranscriptApi.get_transcript(youtube_id)
+  transcript=''
+  for td in transcript_dict:
+    transcript += ''.join(td['text'])
+  return transcript
+  
+        
 def file_into_chunks(pages: List[Document]):
     """
      Split a list of documents(file pages) into chunks of fixed size.
@@ -362,18 +382,19 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
     
     logging.info("Get graph document list from models")
     if model == 'Diffbot' :
-      graph_documents = extract_graph_from_diffbot(graph,chunks,file_name,uri,userName,password)
+      graph_documents, cypher_list = extract_graph_from_diffbot(graph,chunks,file_name,uri,userName,password)
       
     elif model == 'OpenAI GPT 3.5':
       model_version = 'gpt-3.5-turbo-16k'
-      graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
+      graph_documents, cypher_list = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
       
     elif model == 'OpenAI GPT 4':
       model_version = 'gpt-4-0125-preview' 
-      graph_documents = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
+      graph_documents, cypher_list = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
               
-    #update_similarity_graph for the KNN Graph
-    update_graph(graph)
+    #create relation between chunks (FIRST_CHUNK and NEXT_CHUNK)
+    for query in cypher_list:
+       graph.query(query)
 
     distinct_nodes = set()
     relations = []
@@ -455,9 +476,10 @@ def get_documents_from_youtube(url):
                                                       translation = "en",
                                                       add_video_info=True)
       pages = youtube_loader.load()
-      match = re.search(r"v=([a-zA-Z0-9_-]+)", url)
-      youtube_id=match.group(1)
-      file_name=youtube_id
+      # match = re.search(r"v=([a-zA-Z0-9_-]+)", url)
+      # youtube_id=match.group(1)
+      # file_name=youtube_id
+      file_name = YouTube(url).title
       file_key=file_name
       return file_name, file_key, pages
     except Exception as e:
@@ -498,7 +520,7 @@ def get_source_list_from_graph(uri,userName,password,db_name=None):
     logging.exception(f'Exception:{error_message}')
     return create_api_response(job_status,message=message,error=error_message)
 
-def update_graph(graph):
+def update_graph(uri,userName,password,db_name):
   """
   Update the graph node with SIMILAR relationship where embedding scrore match
   """
@@ -506,7 +528,7 @@ def update_graph(graph):
     knn_min_score = os.environ.get('KNN_MIN_SCORE')
 
     query = "WHERE node <> c and score >= {} MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score"
-    # graph = Neo4jGraph()
+    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
     result = graph.query("""MATCH (c:Chunk)
                 WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
                 CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score """+ query.format(knn_min_score))

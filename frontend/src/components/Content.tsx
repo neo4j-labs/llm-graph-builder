@@ -9,7 +9,9 @@ import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { extractAPI } from '../utils/FileAPI';
 import { ContentProps } from '../types';
+import { updateGraphAPI } from '../services/UpdateGraph';
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
+
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
@@ -80,8 +82,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           filesData[uid].max_sources,
           filesData[uid].wiki_query ?? ''
         );
-
-        if (apiResponse.data?.status === 'Failed') {
+        if (apiResponse?.data?.status === 'Failed') {
           setShowAlert(true);
           setErrorMessage(apiResponse?.data?.message);
           setFilesData((prevfiles) =>
@@ -133,13 +134,17 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     }
   };
 
-  const handleGenerateGraph = () => {
+  const handleGenerateGraph = async () => {
+    const data = [];
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
         if (filesData[i]?.status === 'New') {
-          extractData(files[i], i);
+          data.push(extractData(files[i], i));
         }
       }
+      Promise.allSettled(data).then(async (_) => {
+        await updateGraphAPI(userCredentials);
+      });
     }
   };
 
@@ -147,9 +152,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     setShowAlert(false);
   };
 
-  const openGraphUrl = `${process.env.BLOOM_URL}${userCredentials?.userName}@${localStorage.getItem('hostname')}%3A${
-    localStorage.getItem('port') ?? '7687'
-  }&search=Show+me+a+graph`;
+  const openGraphUrl = ` https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=${userCredentials?.userName}@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port') ?? '7687'
+    }&search=Show+me+a+graph`;
 
   const classNameCheck =
     isExpanded && showChatBot
