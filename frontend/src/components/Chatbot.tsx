@@ -4,14 +4,18 @@ import { Button, Widget, Typography, Avatar, TextInput } from '@neo4j-ndl/react'
 import ChatBotUserAvatar from '../assets/images/chatbot-user.png'
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
 import { ChatbotProps } from '../types';
+import { useCredentials } from '../context/UserCredentials';
+import { useFileContext } from '../context/UsersFiles';
+import chatBotAPI from '../services/QnaAPI';
 
 
 
 export default function Chatbot(props: ChatbotProps) {
-    const { messages:listMessages,setMessages:setListMessages } = props;
+    const { messages: listMessages, setMessages: setListMessages } = props;
     const [inputMessage, setInputMessage] = useState('');
     const formattedTextStyle = { color: 'rgb(var(--theme-palette-discovery-bg-strong))' };
-
+    const { userCredentials } = useCredentials();
+    const { model } = useFileContext()
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,7 +44,7 @@ export default function Chatbot(props: ChatbotProps) {
         }
     };
 
-    const handleSubmit = (e: { preventDefault: () => void }) => {
+    const handleSubmit = async (e: { preventDefault: () => void }) => {
         e.preventDefault();
         if (!inputMessage.trim()) {
             return;
@@ -48,9 +52,10 @@ export default function Chatbot(props: ChatbotProps) {
         const date = new Date();
         const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
         const userMessage = { id: 999, user: 'user', message: inputMessage, datetime: datetime };
+        const chatresponse = await chatBotAPI(userCredentials, model, inputMessage)
+        console.log(chatresponse)
         setListMessages((listMessages) => [...listMessages, userMessage]);
         setInputMessage('');
-
         const chatbotReply = 'Hello Sir, how can I help you today?'; // Replace with getting a response from your chatbot through your APIs
         simulateTypingEffect(chatbotReply);
     };
@@ -65,7 +70,7 @@ export default function Chatbot(props: ChatbotProps) {
 
     return (
         <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden w-[312px]'>
-            <div className='flex overflow-y-auto pb-12 min-w-full' style={{scrollbarWidth:"thin",overflowX:"hidden"}}>
+            <div className='flex overflow-y-auto pb-12 min-w-full' style={{ scrollbarWidth: "thin", overflowX: "hidden" }}>
                 <Widget className='n-bg-palette-neutral-bg-weak' header='' isElevated={false}>
                     <div className='flex flex-col gap-4 gap-y-4'>
                         {listMessages.map((chat) => (
