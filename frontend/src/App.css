@@ -85,7 +85,7 @@
   padding-block: 5px !important;
 }
 .ndl-drawer .ndl-drawer-close-button {
-  background-color: rgb(245 246 246 / 1);
+  background-color: rgb(var(--theme-palette-neutral-bg-strong)); 
   width: 40px !important;
   height: 40px !important;
   right: 10px !important;
