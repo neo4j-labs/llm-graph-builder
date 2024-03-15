@@ -58,7 +58,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
   const extractData = async (file: File, uid: number) => {
     if (filesData[uid]?.status == 'New') {
-      const apirequests = [];
       try {
         setFilesData((prevfiles) =>
           prevfiles.map((curfile, idx) => {
@@ -81,47 +80,40 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           filesData[uid].max_sources,
           filesData[uid].wiki_query ?? ''
         );
-        apirequests.push(apiResponse);
-        const results = await Promise.allSettled(apirequests);
-        results.forEach(async (apiRes) => {
-          if (apiRes.status === 'fulfilled' && apiRes.value) {
-            if (apiRes?.value?.status === 'Failed') {
-              console.log('Error', apiRes?.value);
-              setShowAlert(true);
-              setErrorMessage(apiRes?.value?.message);
-              setFilesData((prevfiles) =>
-                prevfiles.map((curfile, idx) => {
-                  if (idx == uid) {
-                    return {
-                      ...curfile,
-                      status: 'Failed',
-                    };
-                  }
-                  return curfile;
-                })
-              );
-              throw new Error(apiRes?.value?.message);
-            } else {
-              setFilesData((prevfiles) => {
-                return prevfiles.map((curfile, idx) => {
-                  if (idx == uid) {
-                    const apiResponse = apiRes?.value?.data;
-                    return {
-                      ...curfile,
-                      processing: apiResponse?.processingTime?.toFixed(2),
-                      status: apiResponse?.status,
-                      NodesCount: apiResponse?.nodeCount,
-                      relationshipCount: apiResponse?.relationshipCount,
-                      model: apiResponse?.model,
-                    };
-                  }
-                  return curfile;
-                });
-              });
-            }
-          }
-        });
-        
+
+        if (apiResponse.data?.status === 'Failed') {
+          setShowAlert(true);
+          setErrorMessage(apiResponse?.data?.message);
+          setFilesData((prevfiles) =>
+            prevfiles.map((curfile, idx) => {
+              if (idx == uid) {
+                return {
+                  ...curfile,
+                  status: 'Failed',
+                };
+              }
+              return curfile;
+            })
+          );
+          throw new Error(apiResponse?.data?.message);
+        } else {
+          setFilesData((prevfiles) => {
+            return prevfiles.map((curfile, idx) => {
+              if (idx == uid) {
+                const apiRes = apiResponse?.data;
+                return {
+                  ...curfile,
+                  processing: apiRes?.processingTime?.toFixed(2),
+                  status: apiRes?.status,
+                  NodesCount: apiRes?.nodeCount,
+                  relationshipCount: apiRes?.relationshipCount,
+                  model: apiRes?.model,
+                };
+              }
+              return curfile;
+            });
+          });
+        }
       } catch (err: any) {
         console.log(err);
         setShowAlert(true);
@@ -144,7 +136,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const handleGenerateGraph = () => {
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
-        if (filesData[i].status === 'New') {
+        if (filesData[i]?.status === 'New') {
           extractData(files[i], i);
         }
       }

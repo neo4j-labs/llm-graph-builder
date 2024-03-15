@@ -65,9 +65,9 @@ export default function Chatbot(props: ChatbotProps) {
 
     return (
         <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden w-[312px]'>
-            <div className='flex overflow-y-auto pb-12 min-w-full' style={{scrollbarWidth:"thin"}}>
+            <div className='flex overflow-y-auto pb-12 min-w-full' style={{scrollbarWidth:"thin",overflowX:"hidden"}}>
                 <Widget className='n-bg-palette-neutral-bg-weak' header='' isElevated={false}>
-                    <div className='flex flex-col gap-4 p-3'>
+                    <div className='flex flex-col gap-4 gap-y-4'>
                         {listMessages.map((chat) => (
                             <div
                                 ref={messagesEndRef}
@@ -125,7 +125,7 @@ export default function Chatbot(props: ChatbotProps) {
                     </div>
                 </Widget>
             </div>
-            <div className='n-bg-palette-neutral-bg-default flex gap-2.5 bottom-0 p-2.5 w-full'>
+            <div className='n-bg-palette-neutral-bg-weak flex gap-2.5 bottom-0 p-2.5 w-full'>
                 <form onSubmit={handleSubmit} className='flex gap-2.5 w-full'>
                     <TextInput
                         className='n-bg-palette-neutral-bg-default flex-grow-7 w-full'
