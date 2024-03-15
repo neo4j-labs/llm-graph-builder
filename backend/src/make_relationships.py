@@ -60,9 +60,9 @@ def create_source_chunk_entity_relationship(source_file_name :str,
                 """,
                 {"f_name":source_file_name,"chunk_id":current_chunk_id})
 
-    #FYI-Reason : To use list below because some relationship are not creating due to function running in thread
+    #FYI-Reason: To use the list below because some relationships are not creating due to chunks not existing because the function running in a thread (chunks creation async)
     #relationship between chunks as NEXT_CHUNK, FIRST_CHUNK, these queries executed end of the file process.
-    #could not change below query as parameterize because list only take single parameter and parameterize(2 parameter)
+    #could not change the below query as parameterize because the list only takes a single parameter and parameterizes (2 parameters)
     if isFirstChunk: 
         lst_cypher_queries_chunk_relationship.append('MATCH(d:Document {'+source_node.format(source_file_name)+'}) ,(c:Chunk {'+chunk_node_id_set.format(current_chunk_id)+'}) MERGE (d)-[:FIRST_CHUNK]->(c)')
     else:
@@ -71,7 +71,7 @@ def create_source_chunk_entity_relationship(source_file_name :str,
     # nodes_list = []
     for node in graph_document[0].nodes:
         node_id = node.id
-        #Below query also unable to change as parametrize because we can't make parameter of Label or node type
+        #Below query is also unable to change as parametrize because we can't make parameter of Label or node type
         #https://neo4j.com/docs/cypher-manual/current/syntax/parameters/
 
         graph.query('MATCH(c:Chunk {'+chunk_node_id_set.format(current_chunk_id)+'}), (n:'+ node.type +'{ id: "'+node_id+'"}) MERGE (c)-[:HAS_ENTITY]->(n)')
