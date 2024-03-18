@@ -55,9 +55,9 @@ export default function Chatbot(props: ChatbotProps) {
     setListMessages((listMessages) => [...listMessages, userMessage]);
     try {
       setLoading(true)
+      setInputMessage('');
       const chatresponse = await chatBotAPI(userCredentials, model, inputMessage);
       chatbotReply = chatresponse?.data?.message;
-      setInputMessage('');
       simulateTypingEffect(chatbotReply);
       setLoading(false)
     } catch (error) {
@@ -147,7 +147,7 @@ export default function Chatbot(props: ChatbotProps) {
             fluid
             onChange={handleInputChange}
           />
-          <Button type='submit' disabled={loading}>Submit</Button>
+          <Button type='submit' loading={loading}>Submit</Button>
         </form>
       </div>
     </div>
