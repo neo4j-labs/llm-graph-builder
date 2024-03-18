@@ -9,7 +9,8 @@ interface RightSideBarProps {
 }
 
 const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }) => {
-  const [messages, setMessages] = useState<messages[]>([chatbotmessages.listMessages[1]]);
+  const date = new Date();
+  const [messages, setMessages] = useState<messages[]>([{ ...chatbotmessages.listMessages[1], datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}` }]);
   return (
     <Drawer
       expanded={showChatBot}
