@@ -21,6 +21,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
   const { filesData, files, setFilesData, setModel, model } = useFileContext();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
+  const [showGraph, setShowGraph] = useState<boolean>(false);
+  const [selectedValue, setSelectedValue] = useState<string>('');
+
   useEffect(() => {
     if (!init) {
       let session = localStorage.getItem('neo4j.connection');
@@ -153,18 +156,31 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
     setShowAlert(false);
   };
 
-  const openGraphUrl = ` https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=${
-    userCredentials?.userName
-  }@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port') ?? '7687'}&search=Show+me+a+graph`;
+  const openGraphUrl = ` https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=${userCredentials?.userName
+    }@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port') ?? '7687'}&search=Show+me+a+graph`;
 
   const classNameCheck =
     isExpanded && showChatBot
       ? 'contentWithBothDrawers'
       : isExpanded
-      ? 'contentWithExpansion'
-      : showChatBot
-      ? 'contentWithChatBot'
-      : 'contentWithNoExpansion';
+        ? 'contentWithExpansion'
+        : showChatBot
+          ? 'contentWithChatBot'
+          : 'contentWithNoExpansion';
+
+
+  const handleGraphView = () => {
+    setOpenGraphView(!openGraphView);
+    console.log('hello ppl', openGraphView);
+  }
+  const handleCloseGraph = () => {
+    setShowGraph(false);
+  };
+
+  const handleSelectvalue = (value: string) => {
+    setSelectedValue(value);
+  }
+
   return (
     <>
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
@@ -179,6 +195,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
             inspectedName={inspectedName}
             open={openGraphView}
             setGraphViewOpen={setOpenGraphView}
+            viewPoint='tableGraph'
           />
           <Typography
             variant='body-medium'
@@ -227,6 +244,22 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
             >
               Generate Graph
             </Button>
+            <Button
+              loading={filesData.some((f) => f?.status === 'Processing')}
+              disabled={disableCheckGraph || !filesData.some((f) => f?.status === 'Completed')}
+              onClick={handleGraphView}
+              className='mr-0.5'
+            >
+              Show Graph
+            </Button>
+            {showGraph && (
+              <GraphViewModal
+                inspectedName={inspectedName}
+                open={openGraphView}
+                setGraphViewOpen={setOpenGraphView}
+                viewPoint='showGraphView'
+              />
+            )}
             <Button href={openGraphUrl} target='_blank' disabled={disableCheckGraph} className='ml-0.5'>
               Open Graph
             </Button>

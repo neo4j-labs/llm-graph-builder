@@ -146,4 +146,7 @@ export type ChatbotProps = {
 export interface WikipediaModalTypes {
   hideModal: () => void;
   open: boolean;
+  inspectedName: string;
+  setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
+  viewPoint: string;
 }
