@@ -139,3 +139,7 @@ export type ChatbotProps = {
   }[];
   setMessages: Dispatch<SetStateAction<messages[]>>;
 };
+export interface WikipediaModalTypes {
+  hideModal: () => void;
+  open: boolean;
+}
