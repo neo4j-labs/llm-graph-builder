@@ -5,6 +5,8 @@ from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
 import asyncio
+import base64
+from src.QA_integration import *
 
 
 def healthy_condition():
@@ -30,7 +32,7 @@ app.add_api_route("/health", health([healthy_condition, healthy]))
 
 @app.post("/sources")
 async def create_source_knowledge_graph(
-    uri=Form(), database=Form(), userName=Form(), password=Form(), file: UploadFile = File(...), model=Form()
+    uri=Form(None), userName=Form(None), password=Form(None), file: UploadFile = File(...), model=Form(),database=Form(None), 
 ):
     """
     Calls 'create_source_node_graph' function in a new thread to create
@@ -46,17 +48,17 @@ async def create_source_knowledge_graph(
          'Source' Node creation in Neo4j database
     """
     result = await asyncio.to_thread(
-        create_source_node_graph_local_file, uri, database, userName, password, file, model
+        create_source_node_graph_local_file, uri, userName, password, file, model, database
     )
     return result
 
 @app.post("/url/scan")
 async def create_source_knowledge_graph_url(
-    uri=Form(),
-    database=Form(),
-    userName=Form(),
-    password=Form(),
+    uri=Form(None),
+    userName=Form(None),
+    password=Form(None),
     source_url=Form(),
+    database=Form(None),
     aws_access_key_id=Form(None),
     aws_secret_access_key=Form(None),
     max_limit=Form(5),
@@ -64,18 +66,18 @@ async def create_source_knowledge_graph_url(
     model=Form(None)
 ):
     return create_source_node_graph_url(
-        uri, database, userName, password, source_url, max_limit, query_source, model, aws_access_key_id, aws_secret_access_key
+        uri, userName, password, source_url, model, database, aws_access_key_id, aws_secret_access_key
     )
 
 
 @app.post("/extract")
 async def extract_knowledge_graph_from_file(
-    uri=Form(),
-    database=Form(),
-    userName=Form(),
-    password=Form(),
+    uri=Form(None),
+    userName=Form(None),
+    password=Form(None),
+    model=Form(None),
+    database=Form(None),
     file: UploadFile = File(None),
-    model=Form(),
     source_url=Form(None),
     aws_access_key_id=Form(None),
     aws_secret_access_key=Form(None),
@@ -101,10 +103,10 @@ async def extract_knowledge_graph_from_file(
         return await asyncio.to_thread(
             extract_graph_from_file,
             uri,
-            database,
             userName,
             password,
             model,
+            database,
             file=file,
             source_url=None,
             wiki_query=wiki_query,
@@ -114,10 +116,10 @@ async def extract_knowledge_graph_from_file(
         return await asyncio.to_thread(
             extract_graph_from_file,
             uri,
-            database,
             userName,
             password,
             model,
+            database,
             source_url=source_url,
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
@@ -129,21 +131,44 @@ async def extract_knowledge_graph_from_file(
     
 
 @app.get("/sources_list")
-async def get_source_list(uri=Form(),database=Form(),userName=Form(),password=Form()):
+async def get_source_list(uri:str,
+                          userName:str,
+                          password:str,
+                          database:str=None):
     """
     Calls 'get_source_list_from_graph' which returns list of sources which alreday exist in databse
     """
-    result = await asyncio.to_thread(get_source_list_from_graph,uri,database,userName,password)
+    decoded_password = decode_password(password)
+    if " " in uri:
+       uri= uri.replace(" ","+")
+    result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
     return result
     
 @app.post("/update_similarity_graph")
-async def update_similarity_graph():
+async def update_similarity_graph(uri=Form(None),
+    userName=Form(None),
+    password=Form(None),
+    database=Form(None)):
     """
     Calls 'update_graph' which post the query to update the similiar nodes in the graph
     """
     
-    result = await asyncio.to_thread(update_graph)
+    result = await asyncio.to_thread(update_graph,uri,userName,password,database)
     return result
+        
+@app.post("/chat_bot")
+async def chat_bot(uri=Form(None),
+                          userName=Form(None),
+                          password=Form(None),
+                          question=Form(None),
+                          model=Form(None)):
+    result = await asyncio.to_thread(QA_RAG,uri=uri,userName=userName,password=password,model_version=model,question=question)
+    return result
+
+def decode_password(pwd):
+    sample_string_bytes = base64.b64decode(pwd)
+    decoded_password = sample_string_bytes.decode("utf-8")
+    return decoded_password
     
 if __name__ == "__main__":
     uvicorn.run(app)
