@@ -150,4 +150,5 @@ export interface GraphViewModalProps {
   open: boolean;
   inspectedName: string;
   setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
+  viewPoint: string;
 }

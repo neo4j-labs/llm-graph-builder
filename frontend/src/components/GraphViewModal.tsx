@@ -1,9 +1,11 @@
-import { Button, Dialog } from '@neo4j-ndl/react';
+import { Button, Dialog, Flex } from '@neo4j-ndl/react';
 import { useEffect, useRef, useState } from 'react';
 import { GraphViewModalProps } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL, { NvlOptions } from '@neo4j-nvl/core';
 import { driver } from '../utils/Driver';
+import GraphDropdown from '../HOC/CustomDropdown';
+import { useFileContext } from '../context/UsersFiles';
 
 const uniqueElementsForDocQuery = `
 // Finds a document with chunks & entities. Transforms path objects to return a list of unique nodes and relationships.
@@ -33,7 +35,7 @@ const colors = [
 ];
 
 
-const getNodeCaption = (node) => {
+const getNodeCaption = (node: any) => {
   if (node.properties['name']) {
     return node.properties['name'];
   }
@@ -46,7 +48,7 @@ const getNodeCaption = (node) => {
   return node.elementId
 }
 
-const getIcon = (node) => {
+const getIcon = (node: any) => {
   if (node.labels[0] == 'Document') {
     return 'paginate-filter-text.svg';
   }
@@ -56,7 +58,7 @@ const getIcon = (node) => {
   return undefined;
 }
 
-const getSize = (node) => {
+const getSize = (node: any) => {
   if (node.labels[0] == 'Document') {
     return 40;
   }
@@ -70,10 +72,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
   inspectedName,
   setGraphViewOpen,
+  viewPoint
 }) => {
   const nvlRef = useRef<NVL>(null);
   const [nodes, setNodes] = useState([]);
   const [relationships, setRelationships] = useState([]);
+  const {setGraphType } = useFileContext();
+
+  const handleDropdownChange = (option: any) => {
+    setGraphType(option.value);
+  };
 
   useEffect(() => {
     if (open) {
@@ -144,8 +152,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   return (
     <>
       <Dialog size='unset' open={open} aria-labelledby='form-dialog-title' disableCloseButton>
-        <Dialog.Header id='form-dialog-title'>Inspect Generated Graph from {inspectedName}. </Dialog.Header>
+        <Flex className='w-full' alignItems='center' justifyContent='space-between' style={{ flexFlow: 'row' }}>
+          <Dialog.Header id='form-dialog-title'>Inspect Generated Graph from {inspectedName}. </Dialog.Header>
+          {true && <GraphDropdown onSelect={handleDropdownChange} isDisabled={false} />}
+        </Flex>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
+          <></>
           <div style={{ width: '100%', height: '600px' }}>
             <InteractiveNvlWrapper
               ref={nvlRef}
