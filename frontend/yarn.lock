@@ -970,8 +970,8 @@
 "@neo4j-nvl/core@./nvl-modules/neo4j-nvl-core":
   version "0.2.53"
   dependencies:
-    "@neo4j-bloom/dagre" "file:./../../../../../../../AppData/Local/Yarn/Cache/v6/npm-@neo4j-nvl-core-0.2.53-374b42c1-c2a5-455f-81f3-5bc7d19e05d7-1709280654150/node_modules/@neo4j-nvl/core/neo4j-bloom-dagre.tgz"
-    "@neo4j-nvl/layout-workers" "file:./../../../../../../../AppData/Local/Yarn/Cache/v6/npm-@neo4j-nvl-core-0.2.53-374b42c1-c2a5-455f-81f3-5bc7d19e05d7-1709280654150/node_modules/@neo4j-nvl/core/neo4j-nvl-layout-workers.tgz"
+    "@neo4j-bloom/dagre" "file:../../../home/codespace/.cache/yarn/v6/npm-@neo4j-nvl-core-0.2.53-16c0cae0-a082-451a-9403-4d70c94d6a92-1710744099096/node_modules/@neo4j-nvl/core/neo4j-bloom-dagre.tgz"
+    "@neo4j-nvl/layout-workers" "file:../../../home/codespace/.cache/yarn/v6/npm-@neo4j-nvl-core-0.2.53-16c0cae0-a082-451a-9403-4d70c94d6a92-1710744099096/node_modules/@neo4j-nvl/core/neo4j-nvl-layout-workers.tgz"
 
 "@neo4j-nvl/interaction-handlers@./nvl-modules/neo4j-nvl-interaction-handlers":
   version "0.2.56"
