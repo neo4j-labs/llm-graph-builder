@@ -25,18 +25,34 @@ export default function Chatbot(props: ChatbotProps) {
     if (index < responseText.length) {
       const nextIndex = index + 1;
       const currentTypedText = responseText.substring(0, nextIndex);
-
       if (index === 0) {
         const date = new Date();
         const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-        setListMessages((msgs) => [
-          ...msgs,
-          { id: Date.now(), user: 'chatbot', message: currentTypedText, datetime: datetime, isTyping: true },
-        ]);
+        if (responseText.length <= 1) {
+          setListMessages((msgs) => [
+            ...msgs,
+            { id: Date.now(), user: 'chatbot', message: currentTypedText, datetime: datetime, isTyping: true },
+          ]);
+        } else {
+          setListMessages((msgs) => {
+            const lastmsg = { ...msgs[msgs.length - 1] };
+            lastmsg.id = Date.now();
+            lastmsg.user = "chatbot";
+            lastmsg.message = currentTypedText;
+            lastmsg.datetime = datetime;
+            lastmsg.isTyping = true;
+            return msgs.map((msg, index) => {
+              if (index === msgs.length - 1) {
+                return lastmsg
+              } else {
+                return msg;
+              }
+            })
+          });
+        }
       } else {
         setListMessages((msgs) => msgs.map((msg) => (msg.isTyping ? { ...msg, message: currentTypedText } : msg)));
       }
-
       setTimeout(() => simulateTypingEffect(responseText, nextIndex), 20);
     } else {
       setListMessages((msgs) => msgs.map((msg) => (msg.isTyping ? { ...msg, isTyping: false } : msg)));
@@ -56,6 +72,7 @@ export default function Chatbot(props: ChatbotProps) {
     try {
       setLoading(true)
       setInputMessage('');
+      simulateTypingEffect(" ");
       const chatresponse = await chatBotAPI(userCredentials, model, inputMessage);
       chatbotReply = chatresponse?.data?.message;
       simulateTypingEffect(chatbotReply);
@@ -81,7 +98,7 @@ export default function Chatbot(props: ChatbotProps) {
       <div className='flex overflow-y-auto pb-12 min-w-full' style={{ scrollbarWidth: 'thin', overflowX: 'hidden' }}>
         <Widget className='n-bg-palette-neutral-bg-weak' header='' isElevated={false}>
           <div className='flex flex-col gap-4 gap-y-4'>
-            {listMessages.map((chat) => (
+            {listMessages.map((chat, index) => (
               <div
                 ref={messagesEndRef}
                 key={chat.id}
@@ -118,7 +135,7 @@ export default function Chatbot(props: ChatbotProps) {
                   className={`p-4 self-start ${chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
                     }`}
                 >
-                  <div>
+                  <div className={`${(loading && index === listMessages.length - 1 && chat.user == "chatbot") ? "loader" : ""}`}>
                     {chat.message.split(/`(.+?)`/).map((part, index) =>
                       index % 2 === 1 ? (
                         <span key={index} style={formattedTextStyle}>
