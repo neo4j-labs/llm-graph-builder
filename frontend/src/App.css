@@ -123,3 +123,33 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.loader {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: block;
+  margin: 7px auto;
+  position: relative;
+  background: #FFF;
+  box-shadow: -12px 0 #FFF, 12px 0 #FFF;
+  box-sizing: border-box;
+  animation: shadowPulse 2s linear infinite;
+}
+
+@keyframes shadowPulse {
+  33% {
+    background: #FFF;
+    box-shadow: -12px 0 rgb(var(--theme-palette-primary-bg-strong)), 12px 0 #FFF;
+  }
+
+  66% {
+    background: rgb(var(--theme-palette-primary-bg-strong));
+    box-shadow: -12px 0 #FFF, 12px 0 #FFF;
+  }
+
+  100% {
+    background: #FFF;
+    box-shadow: -12px 0 #FFF, 12px 0 rgb(var(--theme-palette-primary-bg-strong));
+  }
+}
