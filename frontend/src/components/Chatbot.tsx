@@ -12,7 +12,7 @@ export default function Chatbot(props: ChatbotProps) {
   const { messages: listMessages, setMessages: setListMessages } = props;
   const [inputMessage, setInputMessage] = useState('');
   const formattedTextStyle = { color: 'rgb(var(--theme-palette-discovery-bg-strong))' };
-  const [loading, setLoading] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
   const { model } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -37,17 +37,16 @@ export default function Chatbot(props: ChatbotProps) {
           setListMessages((msgs) => {
             const lastmsg = { ...msgs[msgs.length - 1] };
             lastmsg.id = Date.now();
-            lastmsg.user = "chatbot";
+            lastmsg.user = 'chatbot';
             lastmsg.message = currentTypedText;
             lastmsg.datetime = datetime;
             lastmsg.isTyping = true;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
-                return lastmsg
-              } else {
-                return msg;
+                return lastmsg;
               }
-            })
+              return msg;
+            });
           });
         }
       } else {
@@ -70,18 +69,18 @@ export default function Chatbot(props: ChatbotProps) {
     const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime };
     setListMessages((listMessages) => [...listMessages, userMessage]);
     try {
-      setLoading(true)
+      setLoading(true);
       setInputMessage('');
-      simulateTypingEffect(" ");
+      simulateTypingEffect(' ');
       const chatresponse = await chatBotAPI(userCredentials, model, inputMessage);
       chatbotReply = chatresponse?.data?.message;
       simulateTypingEffect(chatbotReply);
-      setLoading(false)
+      setLoading(false);
     } catch (error) {
       chatbotReply = "Oops! It seems we couldn't retrieve the answer. Please try again later";
       setInputMessage('');
       simulateTypingEffect(chatbotReply);
-      setLoading(false)
+      setLoading(false);
     }
   };
 
@@ -132,10 +131,15 @@ export default function Chatbot(props: ChatbotProps) {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
-                    }`}
+                  className={`p-4 self-start ${
+                    chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                  }`}
                 >
-                  <div className={`${(loading && index === listMessages.length - 1 && chat.user == "chatbot") ? "loader" : ""}`}>
+                  <div
+                    className={`${
+                      loading && index === listMessages.length - 1 && chat.user == 'chatbot' ? 'loader' : ''
+                    }`}
+                  >
                     {chat.message.split(/`(.+?)`/).map((part, index) =>
                       index % 2 === 1 ? (
                         <span key={index} style={formattedTextStyle}>
@@ -164,7 +168,9 @@ export default function Chatbot(props: ChatbotProps) {
             fluid
             onChange={handleInputChange}
           />
-          <Button type='submit' loading={loading}>Submit</Button>
+          <Button type='submit' loading={loading}>
+            Submit
+          </Button>
         </form>
       </div>
     </div>
