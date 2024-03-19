@@ -177,6 +177,14 @@ async def chat_bot(uri=Form(None),
     result = await asyncio.to_thread(QA_RAG,uri=uri,userName=userName,password=password,model_version=model,question=question)
     return result
 
+@app.post("/connect")
+async def connect(uri=Form(None),
+                          userName=Form(None),
+                          password=Form(None),
+                          database=Form(None)):
+    result = await asyncio.to_thread(connection_check,uri,userName,password,database)
+    return result
+
 def decode_password(pwd):
     sample_string_bytes = base64.b64decode(pwd)
     decoded_password = sample_string_bytes.decode("utf-8")

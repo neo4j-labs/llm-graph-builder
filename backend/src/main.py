@@ -552,6 +552,27 @@ def update_graph(uri,userName,password,db_name):
     error_message = str(e)
     logging.exception(f'Exception in update KNN graph:{error_message}')
     raise Exception(error_message)
+  
+def connection_check(uri,userName,password,db_name):
+  """
+  Args:
+    uri: URI of the graph to extract
+    userName: Username to use for graph creation ( if None will use username from config file )
+    password: Password to use for graph creation ( if None will use password from config file )
+    db_name: db_name is database name to connect to graph db
+  Returns:
+   Returns a status of connection from NEO4j is success or failure
+ """
+  try:
+    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+    if graph:
+      return create_api_response("Success",message="Connection Successful")
+  except Exception as e:
+    job_status = "Failed"
+    message="Connection Failed"
+    error_message = str(e)
+    logging.exception(f'Exception:{error_message}')
+    return create_api_response(job_status,message=message,error=error_message)
 
 def create_api_response(status,success_count=None,Failed_count=None, data=None, error=None,message=None,file_source=None,file_name=None):
   """
