@@ -120,7 +120,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
           value={wikiQuery}
           disabled={false}
           label='Wikipedia Source'
-          placeholder='neo4j , gemini'
+          placeholder='Albert Eienstien , Isac Newton'
           autoFocus
           fluid
           required
