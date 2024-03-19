@@ -261,7 +261,6 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
            job_status = "Failed"
            return create_api_response(job_status,message='Invalid URL')
     except Exception as e:
-        failed_count+=1
         job_status = "Failed"
         message = "Unable to create source node with given url"
         error_message = str(e)
