@@ -233,24 +233,35 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
               return create_api_response(job_status,file_name={'fileName':file_name,'fileSize':file_size,'url':source_url})
           
         elif wiki_query:
+           success_count=0
+           Failed_count=0
            lst_file_metadata=[]
            queries =  wiki_query.split(',')
            for query in queries:
+              logging.info(f"Creating source node for {query.strip()}")
               pages = WikipediaLoader(query=query.strip(), load_max_docs=1, load_all_available_meta=True).load()
-              print(pages[0].metadata)
               file_name = query.strip()
               file_size = sys.getsizeof(pages[0].page_content)
               file_type = 'text'
+              source_url= pages[0].metadata['source']
               aws_access_key_id=''
               source_type = 'Wikipedia'
               job_status = 'Completed'
-              create_source_node(graph,file_name,file_size,file_type,source_type,model,source_url,aws_access_key_id)
-              lst_file_metadata.append({'fileName':file_name,'fileSize':file_size,'url':source_url})
-           return create_api_response(job_status,message="Source Node created successfully",file_name=lst_file_metadata)   
+              try:
+                create_source_node(graph,file_name,file_size,file_type,source_type,model,source_url,aws_access_key_id)
+                success_count+=1
+                lst_file_metadata.append({'fileName':file_name,'fileSize':file_size,'url':source_url})
+              except Exception as e:
+                    job_status = "Failed"
+                    Failed_count+=1
+                    error_message = str(e) 
+                    return create_api_response(job_status,message="SUnable to create source node for Wikipedia source",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count) 
+           return create_api_response(job_status,message="Source Node created successfully",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count)   
         else:
            job_status = "Failed"
            return create_api_response(job_status,message='Invalid URL')
     except Exception as e:
+        failed_count+=1
         job_status = "Failed"
         message = "Unable to create source node with given url"
         error_message = str(e)
