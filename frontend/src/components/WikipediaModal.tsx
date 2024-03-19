@@ -1,21 +1,26 @@
-import { TextInput } from '@neo4j-ndl/react';
 import { useState } from 'react';
-import { useCredentials } from '../context/UserCredentials';
-import { useFileContext } from '../context/UsersFiles';
-import { urlScanAPI } from '../services/URLScan';
-import { CustomFile, S3ModalProps } from '../types';
-import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
+import { TextInput } from '@neo4j-ndl/react';
+import { CustomFile, WikipediaModalTypes } from '../types';
+import { useFileContext } from '../context/UsersFiles';
 import { getFileFromLocal } from '../utils/Utils';
+import { v4 as uuidv4 } from 'uuid';
+import { useCredentials } from '../context/UserCredentials';
+import { urlScanAPI } from '../services/URLScan';
 
-const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
-  const [youtubeURL, setYoutubeURL] = useState<string>('');
-  const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
+const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
+  const [wikiQuery, setwikiQuery] = useState<string>('');
   const [statusMessage, setStatusMessage] = useState<string>('');
-  const { userCredentials } = useCredentials();
+  const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const { setFiles, setFilesData, model, filesData, files } = useFileContext();
+  const { userCredentials } = useCredentials();
+  const onClose = () => {
+    hideModal();
+    reset();
+    setStatus('unknown');
+  };
   const reset = () => {
-    setYoutubeURL('');
+    setwikiQuery('');
   };
   const submitHandler = async () => {
     const defaultValues: CustomFile = {
@@ -24,53 +29,42 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       NodesCount: 0,
       id: uuidv4(),
       relationshipCount: 0,
-      type: 'TEXT',
+      type: 'text',
       model: model,
-      fileSource: 'youtube',
+      fileSource: 'wikipedia',
     };
-
-    if (!youtubeURL) {
-      setStatus('danger');
-      setStatusMessage('Please Fill the Valid YouTube link');
-      setTimeout(() => {
-        setStatus('unknown');
-      }, 5000);
-    } else {
+    if (wikiQuery.length) {
       try {
         setStatus('info');
-        setStatusMessage('Loading...');
+        setStatusMessage('Scanning...');
         const apiResponse = await urlScanAPI({
-          urlParam: youtubeURL,
-          userCredentials,
-          model,
-          accessKey: '',
-          secretKey: '',
+          userCredentials: userCredentials,
+          model: model,
+          wikiquery: wikiQuery,
         });
-        if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
+        console.log('response', apiResponse);
+        setStatus('success');
+        if (apiResponse?.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
-          setStatusMessage(apiResponse.data.data ?? apiResponse?.message);
+          setStatusMessage('Please Fill The Valid Credentials' ?? apiResponse?.message);
           setTimeout(() => {
+            hideModal();
             setStatus('unknown');
             reset();
-            hideModal();
           }, 5000);
-        } else {
-          setStatus('success');
-          setStatusMessage(`Successfully Created Source Nodes for Link`);
-
-          const copiedFilesData = [...filesData];
-          const copiedFiles = [...files];
-          const filedataIndex = copiedFilesData.findIndex(
-            (filedataitem) => filedataitem?.name === apiResponse.data.file_name.fileName
-          );
-          const fileIndex = copiedFiles.findIndex(
-            (filedataitem) => filedataitem?.name === apiResponse.data.file_name.fileName
-          );
+          return;
+        }
+        setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Wikipedia Sources`);
+        const copiedFilesData: CustomFile[] = [...filesData];
+        const copiedFiles: File[] = [...files];
+        apiResponse?.data.file_name.forEach((item: any) => {
+          const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
+          const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
           if (filedataIndex == -1) {
             copiedFilesData.unshift({
-              name: apiResponse.data.file_name.fileName,
-              size: apiResponse.data.file_name.fileSize ?? 0,
-              source_url: apiResponse.data.file_name.url,
+              name: item.fileName,
+              size: item.fileSize,
+              wiki_query: item.fileName,
               ...defaultValues,
             });
           } else {
@@ -94,25 +88,26 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             copiedFiles.splice(fileIndex, 1);
             copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
           }
-          setFilesData(copiedFilesData);
-          setFiles(copiedFiles);
-          reset();
-        }
+        });
+        setFilesData(copiedFilesData);
+        setFiles(copiedFiles);
+        reset();
       } catch (error) {
         setStatus('danger');
         setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
       }
+    } else {
+      setStatus('danger');
+      setStatusMessage('Please Fill the Wikipedia source');
+      setTimeout(() => {
+        setStatus('unknown');
+      }, 5000);
+      return
     }
-
     setTimeout(() => {
       setStatus('unknown');
       hideModal();
     }, 5000);
-  };
-  const onClose = () => {
-    hideModal();
-    reset();
-    setStatus('unknown');
   };
   return (
     <CustomModal
@@ -127,19 +122,19 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       <div style={{ width: '100%', display: 'inline-block' }}>
         <TextInput
           id='url'
-          value={youtubeURL}
+          value={wikiQuery}
           disabled={false}
-          label='Youtube Link'
-          placeholder='https://www.youtube.com/watch?v=2W9HM1xBibo'
+          label='Wikipedia Source'
+          placeholder='Albert Einstein ,Isaac Newton'
           autoFocus
           fluid
           required
           onChange={(e) => {
-            setYoutubeURL(e.target.value);
+            setwikiQuery(e.target.value);
           }}
         />
       </div>
     </CustomModal>
   );
 };
-export default YoutubeModal;
+export default WikipediaModal;
