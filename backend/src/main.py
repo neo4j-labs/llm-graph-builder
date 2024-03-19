@@ -160,7 +160,7 @@ def check_url_source(url):
       logging.error(f"Error in recognize URL: {e}")  
       raise Exception(e)
   
-def create_source_node_graph_url(uri, userName, password, source_url ,model, db_name=None,aws_access_key_id=None,aws_secret_access_key=None):
+def create_source_node_graph_url(uri, userName, password ,model, source_url=None, db_name=None,wiki_query:List[str]=None,aws_access_key_id=None,aws_secret_access_key=None):
     """
       Creates a source node in Neo4jGraph and sets properties.
       
@@ -176,60 +176,77 @@ def create_source_node_graph_url(uri, userName, password, source_url ,model, db_
         Success or Failed message of node creation
     """
     try:
-        source_type,youtube_url = check_url_source(source_url)
         graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-        logging.info(f"source type URL:{source_type}")
-        if source_type == "s3 bucket":
-            lst_s3_file_name = []
-            files_info = get_s3_files_info(source_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
-            if isinstance(files_info,dict):
-              return files_info
-            elif len(files_info)==0:
-              return create_api_response('Failed',success_count=0,Failed_count=0,message='No pdf files found.')  
-            logging.info(f'files info : {files_info}')
-            err_flag=0
-            success_count=0
-            Failed_count=0
-            file_type='pdf'
-            for file_info in files_info:
-                job_status = "New"
-                file_name=file_info['file_key'] 
-                file_size=file_info['file_size_bytes']
-                s3_file_path=str(source_url+file_name)
-                try:
-                  create_source_node(graph,file_name.split('/')[-1],file_size,file_type,source_type,model,s3_file_path,aws_access_key_id)
-                  success_count+=1
-                  lst_s3_file_name.append({'fileName':file_name.split('/')[-1],'fileSize':file_size,'url':s3_file_path})
+        if source_url:
+          source_type,youtube_url = check_url_source(source_url)
+          logging.info(f"source type URL:{source_type}")
+          if source_type == "s3 bucket":
+              lst_s3_file_name = []
+              files_info = get_s3_files_info(source_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
+              if isinstance(files_info,dict):
+                return files_info
+              elif len(files_info)==0:
+                return create_api_response('Failed',success_count=0,Failed_count=0,message='No pdf files found.')  
+              logging.info(f'files info : {files_info}')
+              err_flag=0
+              success_count=0
+              Failed_count=0
+              file_type='pdf'
+              for file_info in files_info:
+                  job_status = "New"
+                  file_name=file_info['file_key'] 
+                  file_size=file_info['file_size_bytes']
+                  s3_file_path=str(source_url+file_name)
+                  try:
+                    create_source_node(graph,file_name.split('/')[-1],file_size,file_type,source_type,model,s3_file_path,aws_access_key_id)
+                    success_count+=1
+                    lst_s3_file_name.append({'fileName':file_name.split('/')[-1],'fileSize':file_size,'url':s3_file_path})
 
-                except Exception as e:
-                  err_flag=1
-                  Failed_count+=1
-                  error_message = str(e)
-            if err_flag==1:
-              job_status = "Failed"
-              message="Unable to create source node for s3 bucket files"
-              return create_api_response(job_status,message=message,error=error_message,success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket')  
-            return create_api_response("Success",message="Source Node created successfully",success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket',file_name=lst_s3_file_name)
-        elif source_type == 'youtube':
-            source_url= youtube_url
-            match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',source_url)
-            logging.info(f"match value{match}")
-            file_name = YouTube(source_url).title
-            transcript= get_youtube_transcript(match.group(1))
-            if transcript==None or len(transcript)==0:
-              file_size=''
-              job_status = "Failed"
-              message = f"Youtube transcript is not available for : {file_name}"
-              error_message = str(e)
-              logging.exception(f'Exception Stack trace:')
-              return create_api_response(job_status,message=message,error=error_message,file_source=source_type)
-            else:  
-              file_size=sys.getsizeof(transcript)
-            file_type='text'
-            aws_access_key_id=''
-            job_status = "Completed"
-            create_source_node(graph,file_name,file_size,file_type,source_type,model,source_url,aws_access_key_id)
-            return create_api_response(job_status,file_name={'fileName':file_name,'fileSize':file_size,'url':source_url})
+                  except Exception as e:
+                    err_flag=1
+                    Failed_count+=1
+                    error_message = str(e)
+              if err_flag==1:
+                job_status = "Failed"
+                message="Unable to create source node for s3 bucket files"
+                return create_api_response(job_status,message=message,error=error_message,success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket')  
+              return create_api_response("Success",message="Source Node created successfully",success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket',file_name=lst_s3_file_name)
+          elif source_type == 'youtube':
+              source_url= youtube_url
+              match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',source_url)
+              logging.info(f"match value{match}")
+              file_name = YouTube(source_url).title
+              transcript= get_youtube_transcript(match.group(1))
+              if transcript==None or len(transcript)==0:
+                file_size=''
+                job_status = "Failed"
+                message = f"Youtube transcript is not available for : {file_name}"
+                error_message = str(e)
+                logging.exception(f'Exception Stack trace:')
+                return create_api_response(job_status,message=message,error=error_message,file_source=source_type)
+              else:  
+                file_size=sys.getsizeof(transcript)
+              file_type='text'
+              aws_access_key_id=''
+              job_status = "Completed"
+              create_source_node(graph,file_name,file_size,file_type,source_type,model,source_url,aws_access_key_id)
+              return create_api_response(job_status,file_name={'fileName':file_name,'fileSize':file_size,'url':source_url})
+          
+        elif wiki_query:
+           lst_file_metadata=[]
+           queries =  wiki_query.split(',')
+           for query in queries:
+              pages = WikipediaLoader(query=query.strip(), load_max_docs=1, load_all_available_meta=True).load()
+              print(pages[0].metadata)
+              file_name = query.strip()
+              file_size = sys.getsizeof(pages[0].page_content)
+              file_type = 'text'
+              aws_access_key_id=''
+              source_type = 'Wikipedia'
+              job_status = 'Completed'
+              create_source_node(graph,file_name,file_size,file_type,source_type,model,source_url,aws_access_key_id)
+              lst_file_metadata.append({'fileName':file_name,'fileSize':file_size,'url':source_url})
+           return create_api_response(job_status,message="Source Node created successfully",file_name=lst_file_metadata)   
         else:
            job_status = "Failed"
            return create_api_response(job_status,message='Invalid URL')
@@ -281,25 +298,6 @@ def get_s3_pdf_content(s3_url,aws_access_key_id=None,aws_secret_access_key=None)
         logging.error(f"getting error while reading content from s3 files:{e}")
         raise Exception(e)
 
-def get_wikipedia_content(wiki_query,max_sources):
-  try:
-    searches=wiki_query.split(',')
-    if max_sources:
-      searches=searches[:int(max_sources)]
-    else:
-       searches=searches[:2] 
-    pages=[]
-    for query in searches:
-      wiki_pages = WikipediaLoader(query=query.strip(), load_max_docs=1, load_all_available_meta=False).load()
-      pages.extend(wiki_pages)
-    
-    logging.info(f"Total Pages from Wikipedia = {len(pages)}") 
-    return pages
-  except Exception as e:
-    logging.error(f"Not finding wiki content:{e}")
-    raise Exception(e)
-
-
 
 def extract_graph_from_file(uri, userName, password, model, db_name=None, file=None,source_url=None,aws_access_key_id=None,aws_secret_access_key=None,wiki_query=None,max_sources=None):
   """
@@ -329,6 +327,9 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
     if file!=None:
       file_name, file_key, pages = get_documents_from_file(file)
       
+    elif wiki_query:  
+        file_name, file_key, pages = get_documents_from_Wikipedia(wiki_query)
+      
     elif source_type =='s3 bucket':
       if(aws_access_key_id==None or aws_secret_access_key==None):
         job_status = "Failed"
@@ -339,9 +340,6 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
         logging.info(f"filename {file_name} file_key: {file_key} pages:{pages}  ")
     elif source_type =='youtube':
         file_name, file_key, pages = get_documents_from_youtube(source_url)
-        if wiki_query is not None:
-          logging.info(f"Wikipedia query source = {wiki_query}")
-          pages.extend(get_wikipedia_content(wiki_query, max_sources))
     
     else:
         job_status = "Failed"
@@ -482,6 +480,21 @@ def get_documents_from_youtube(url):
       error_message = str(e)
       logging.exception(f'Exception in reading transcript from youtube:{error_message}')
       raise Exception(error_message)
+
+def get_documents_from_Wikipedia(wiki_query:str):
+  try:
+    pages = WikipediaLoader(query=wiki_query.strip(), load_max_docs=1, load_all_available_meta=False).load()
+    file_name = wiki_query.strip()
+    file_key = wiki_query.strip()
+    logging.info(f"Total Pages from Wikipedia = {len(pages)}") 
+    return file_name, file_key, pages
+  except Exception as e:
+    job_status = "Failed"
+    message="Failed To Process Wikipedia Query"
+    error_message = str(e)
+    logging.error(f"Failed To Process Wikipedia Query: {file_name}")
+    logging.exception(f'Exception Stack trace: {error_message}')
+    return create_api_response(job_status,message=message,error=error_message,file_name=file_name)    
 
 def get_source_list_from_graph(uri,userName,password,db_name=None):
   """
