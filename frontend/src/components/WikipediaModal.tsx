@@ -102,7 +102,12 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
       setTimeout(() => {
         setStatus('unknown');
       }, 5000);
+      return
     }
+    setTimeout(() => {
+      setStatus('unknown');
+      hideModal();
+    }, 5000);
   };
   return (
     <CustomModal
@@ -120,7 +125,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
           value={wikiQuery}
           disabled={false}
           label='Wikipedia Source'
-          placeholder='Albert Eienstien , Isac Newton'
+          placeholder='Albert Einstein ,Isaac Newton'
           autoFocus
           fluid
           required
