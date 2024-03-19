@@ -78,7 +78,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           filesData[uid].source_url,
           localStorage.getItem('accesskey'),
           localStorage.getItem('secretkey'),
-          filesData[uid].max_sources,
           filesData[uid].wiki_query ?? ''
         );
         if (apiResponse?.data?.status === 'Failed') {
