@@ -1,11 +1,10 @@
-import { Button, Dialog, Flex } from '@neo4j-ndl/react';
+import { Button, Dialog, LoadingSpinner } from '@neo4j-ndl/react';
 import { useEffect, useRef, useState } from 'react';
 import { GraphViewModalProps } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL, { NvlOptions } from '@neo4j-nvl/core';
 import { driver } from '../utils/Driver';
 import GraphDropdown from '../HOC/CustomDropdown';
-import { useFileContext } from '../context/UsersFiles';
 
 const uniqueElementsForDocQuery = `
 // Finds a document with chunks & entities. Transforms path objects to return a list of unique nodes and relationships.
@@ -18,6 +17,55 @@ UNWIND relslist as rels
 UNWIND rels as rel
 WITH  nodes, collect(DISTINCT rel) as rels
 RETURN nodes, rels`
+
+const pureDocument = `
+MATCH (d:Document)
+WITH d ORDER BY d.createdAt DESC 
+MATCH files = (d)<-[part:PART_OF]-(c:Chunk)
+WITH nodes(files) as nodes, relationships(files) as rels
+UNWIND nodes as node
+WITH  collect(DISTINCT node) as nodes, collect(rels) as relslist
+UNWIND relslist as rels
+UNWIND rels as rel
+WITH  nodes, collect(DISTINCT rel) as rels
+RETURN nodes, rels,
+collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } as chain, 
+collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } as chunks;
+ `
+
+
+const docEntitiesGraph = `
+MATCH (d:Document) 
+WITH d ORDER BY d.createdAt DESC 
+MATCH files = (d)<-[:PART_OF]-(c:Chunk)
+OPTIONAL MATCH p=(d)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(e)--(:!Chunk)
+WITH nodes(p) as nodes, relationships(p) as rels
+UNWIND nodes as node
+WITH  collect(DISTINCT node) as nodes, collect(rels) as relslist
+UNWIND relslist as rels
+UNWIND rels as rel
+WITH  nodes, collect(DISTINCT rel) as rels
+RETURN nodes, rels,
+collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } as chain, 
+collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } as chunks, 
+collect { OPTIONAL MATCH p=(c)-[:HAS_ENTITY]->(e)--(:!Chunk) RETURN p } as entities;`
+
+
+const knowledgeGraph = `
+MATCH (d:Document) 
+WITH d ORDER BY d.createdAt DESC 
+LIMIT 50
+MATCH files = (d)<-[:PART_OF]-(c:Chunk)
+RETURN 
+collect { OPTIONAL MATCH p=(c)-[:HAS_ENTITY]->(e)--(:!Chunk) RETURN p } as entities`
+
+
+const queryMap: any = {
+  'Document Structure': pureDocument,
+  'Document & Knowledge Graph': docEntitiesGraph,
+  'Knowledge Graph Entities': knowledgeGraph
+};
+
 
 const colors = [
   '#588c7e',
@@ -77,7 +125,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const nvlRef = useRef<NVL>(null);
   const [nodes, setNodes] = useState([]);
   const [relationships, setRelationships] = useState([]);
-  const {setGraphType } = useFileContext();
+  const [graphType, setGraphType] = useState<string>('Document Structure');
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleDropdownChange = (option: any) => {
     setGraphType(option.value);
@@ -87,12 +136,20 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     if (open) {
       setNodes([]);
       setRelationships([]);
+      let queryToRun = '';
+      if (viewPoint === 'tableView') {
+        queryToRun = uniqueElementsForDocQuery;
+      }
+      else {
+        queryToRun = queryMap[graphType]
+      }
 
       const session = driver.session();
-      session.run(uniqueElementsForDocQuery, { 'document_name': inspectedName }).then(
+      session.run(queryToRun, { 'document_name': inspectedName }).then(
         (results) => {
           // If this doc exists in the graph, the result length will be one.
-          if (results.records.length == 1) {
+          setLoading(true);
+          if (results.records.length >= 1) {
             const neo4jNodes = results.records[0]._fields[0];
             const neo4jRels = results.records[0]._fields[1];
 
@@ -120,13 +177,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
             setNodes(newNodes);
             setRelationships(newRels);
-          } else {
+            setLoading(false);
+
+          }
+          else {
             console.error("Unable to retrieve document graph for " + inspectedName, results);
           }
         }
       );
     }
-  }, [open]);
+  }, [open, graphType]);
 
   // If the modal is closed, render nothing
   if (!open) {
@@ -152,13 +212,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   return (
     <>
       <Dialog size='unset' open={open} aria-labelledby='form-dialog-title' disableCloseButton>
-        <Flex className='w-full' alignItems='center' justifyContent='space-between' style={{ flexFlow: 'row' }}>
-          <Dialog.Header id='form-dialog-title'>Inspect Generated Graph from {inspectedName}. </Dialog.Header>
-          {true && <GraphDropdown onSelect={handleDropdownChange} isDisabled={false} />}
-        </Flex>
+        <Dialog.Header id='form-dialog-title'>Inspect Generated Graph from {inspectedName}. </Dialog.Header>
+        {viewPoint === 'showGraphView' && <GraphDropdown onSelect={handleDropdownChange} isDisabled={false} />}
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
           <></>
-          <div style={{ width: '100%', height: '600px' }}>
+          <div style={{ width: '100%', height: '600px', border: '1px solid red' }}>
+          {/* {loading && <LoadingSpinner size="large"/>} */}
             <InteractiveNvlWrapper
               ref={nvlRef}
               nodes={nodes}
