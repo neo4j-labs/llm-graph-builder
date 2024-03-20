@@ -2,12 +2,13 @@ import axios from 'axios';
 import { url } from '../utils/Utils';
 
 interface ScanProps {
-  urlParam: string;
+  urlParam?: string;
   userCredentials?: any;
   model?: string;
   accessKey?: string;
   secretKey?: string;
   max_limit?: number;
+  wikiquery?: string;
   query_source?: string;
 }
 
@@ -18,7 +19,8 @@ const urlScanAPI = async (props: ScanProps) => {
     formData.append('database', props?.userCredentials?.database ?? '');
     formData.append('userName', props?.userCredentials?.userName ?? '');
     formData.append('password', props?.userCredentials?.password ?? '');
-    formData.append('source_url', props?.urlParam);
+    formData.append('source_url', props?.urlParam ?? '');
+    formData.append('wiki_query', props?.wikiquery ?? '');
     if (props.model != undefined) {
       formData.append('model', props?.model);
     }

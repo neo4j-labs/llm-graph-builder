@@ -57,16 +57,17 @@ async def create_source_knowledge_graph_url(
     uri=Form(None),
     userName=Form(None),
     password=Form(None),
-    source_url=Form(),
+    source_url=Form(None),
     database=Form(None),
     aws_access_key_id=Form(None),
     aws_secret_access_key=Form(None),
     max_limit=Form(5),
     query_source=Form(None),
+    wiki_query=Form(None),
     model=Form(None)
 ):
     return create_source_node_graph_url(
-        uri, userName, password, source_url, model, database, aws_access_key_id, aws_secret_access_key
+        uri, userName, password, model, source_url, database, wiki_query, aws_access_key_id, aws_secret_access_key
     )
 
 
@@ -126,6 +127,17 @@ async def extract_knowledge_graph_from_file(
             wiki_query=wiki_query,
             max_sources=max_sources,
         )
+    elif wiki_query:
+         return await asyncio.to_thread(
+            extract_graph_from_file,
+            uri,
+            userName,
+            password,
+            model,
+            database,
+            wiki_query=wiki_query
+        )
+            
     else:
         return {"job_status": "Failure", "error": "No file found"}
     
@@ -163,6 +175,14 @@ async def chat_bot(uri=Form(None),
                           question=Form(None),
                           model=Form(None)):
     result = await asyncio.to_thread(QA_RAG,uri=uri,userName=userName,password=password,model_version=model,question=question)
+    return result
+
+@app.post("/connect")
+async def connect(uri=Form(None),
+                          userName=Form(None),
+                          password=Form(None),
+                          database=Form(None)):
+    result = await asyncio.to_thread(connection_check,uri,userName,password,database)
     return result
 
 def decode_password(pwd):

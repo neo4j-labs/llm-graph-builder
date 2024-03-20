@@ -5,7 +5,7 @@ const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
   };
-  const allOptions = ['OpenAI GPT 3.5','Diffbot'];
+  const allOptions = ['OpenAI GPT 3.5', 'Diffbot'];
   return (
     <>
       <div style={{ width: '150px' }}>
