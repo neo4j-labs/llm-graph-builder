@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { setDriver } from '../utils/Driver';
 import { useCredentials } from '../context/UserCredentials';
 import { ConnectionModalProps } from '../types';
+import connectAPI from '../services/ConnectAPI';
 
 const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
   open,
@@ -31,7 +32,7 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
     localStorage.setItem('database', database);
     localStorage.setItem('selectedProtocol', selectedProtocol);
     setLoading(true);
-    const status = await setDriver(connectionURI, username, password, database);
+    const status = await connectAPI(connectionURI);
     if (status === 'success') {
       setOpenConnection(false);
       setConnectionStatus(true);

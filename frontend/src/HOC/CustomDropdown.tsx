@@ -5,22 +5,21 @@ const GraphDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
   };
-  const allOptions = ['Pure Document','Document and Entities', 'Entities'];
+  const allOptions = ['Document Structure','Document & Knowledge Graph', 'Knowledge Graph Entities'];
   return (
     <>
-      <div style={{ width: '150px' }}>
+      <div style={{ width: '250px' }}>
         <Dropdown
           type='select'
           aria-label='A selection dropdown'
           selectProps={{
             onChange: handleChange,
             options: allOptions.map((option) => ({ label: option, value: option })),
-            placeholder: 'Select Graph Type',
-            defaultValue: { label: 'Pure Document', value: 'Pure Document' },
+            defaultValue: { label: 'Document Structure', value: 'Document Structure' },
             menuPlacement: 'auto',
             isDisabled,
           }}
-          size='medium'
+          size='large'
           fluid
         />
       </div>

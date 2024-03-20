@@ -25,6 +25,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [showAlert, setShowAlert] = useState<boolean>(false);
   const [showGraph, setShowGraph] = useState<boolean>(false);
   const [selectedValue, setSelectedValue] = useState<string>('');
+  const [viewPoint, setViewPoint] = useState<string>('tableView');
 
   useEffect(() => {
     if (!init) {
@@ -173,32 +174,20 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
 
   const handleGraphView = () => {
-    setOpenGraphView(!openGraphView);
-    console.log('hello ppl', openGraphView);
-  }
-  const handleCloseGraph = () => {
-    setShowGraph(false);
-  };
-
-  const handleSelectvalue = (value: string) => {
-    setSelectedValue(value);
+    setOpenGraphView(true);
+    setViewPoint('showGraphView');
   }
 
   return (
     <>
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
+
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' style={{ flexFlow: 'row' }}>
           <ConnectionModal
             open={openConnection}
             setOpenConnection={setOpenConnection}
             setConnectionStatus={setConnectionStatus}
-          />
-          <GraphViewModal
-            inspectedName={inspectedName}
-            open={openGraphView}
-            setGraphViewOpen={setOpenGraphView}
-            viewPoint='tableGraph'
           />
           <Typography
             variant='body-medium'
@@ -235,6 +224,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           onInspect={(name) => {
             setInspectedName(name);
             setOpenGraphView(true);
+            setViewPoint('tableView');
           }}
         ></FileTable>
         <Flex
@@ -260,14 +250,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             >
               Show Graph
             </Button>
-            {showGraph && (
-              <GraphViewModal
-                inspectedName={inspectedName}
-                open={openGraphView}
-                setGraphViewOpen={setOpenGraphView}
-                viewPoint='showGraphView'
-              />
-            )}
             <Button href={openGraphUrl} target='_blank' disabled={disableCheckGraph} className='ml-0.5'>
               Open Graph
             </Button>
@@ -281,6 +263,12 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           </Flex>
         </Flex>
       </div>
+      <GraphViewModal
+        inspectedName={inspectedName}
+        open={openGraphView}
+        setGraphViewOpen={setOpenGraphView}
+        viewPoint={viewPoint}
+      />
     </>
   );
 };

@@ -129,6 +129,9 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       try {
         setIsLoading(true);
         const res: any = await getSourceNodes(userCredentials);
+        if(!res.data){
+          throw new Error('Please check backend connection'); 
+        }
         if (res.data.status !== 'Failed') {
           const prefiles: any[] = [];
           if (res.data.data.length) {
