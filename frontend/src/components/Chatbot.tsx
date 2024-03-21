@@ -5,8 +5,9 @@ import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
 import { ChatbotProps } from '../types';
 import { useCredentials } from '../context/UserCredentials';
-import { useFileContext } from '../context/UsersFiles';
 import chatBotAPI from '../services/QnaAPI';
+import { v4 as uuidv4 } from 'uuid';
+
 
 export default function Chatbot(props: ChatbotProps) {
   const { messages: listMessages, setMessages: setListMessages } = props;
@@ -14,12 +15,20 @@ export default function Chatbot(props: ChatbotProps) {
   const formattedTextStyle = { color: 'rgb(var(--theme-palette-discovery-bg-strong))' };
   const [loading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
-  const { model } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem("session_id") ?? "")
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
   };
+
+  useEffect(() => {
+    if (!sessionStorage.getItem("session_id")) {
+      const id = uuidv4();
+      setSessionId(id);
+      sessionStorage.setItem("session_id", id);
+    }
+  }, [])
 
   const simulateTypingEffect = (responseText: string, index = 0) => {
     if (index < responseText.length) {
@@ -72,7 +81,7 @@ export default function Chatbot(props: ChatbotProps) {
       setLoading(true);
       setInputMessage('');
       simulateTypingEffect(' ');
-      const chatresponse = await chatBotAPI(userCredentials, model, inputMessage);
+      const chatresponse = await chatBotAPI(userCredentials, inputMessage, sessionId);
       chatbotReply = chatresponse?.data?.message;
       simulateTypingEffect(chatbotReply);
       setLoading(false);
@@ -131,14 +140,12 @@ export default function Chatbot(props: ChatbotProps) {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${
-                    chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
-                  }`}
+                  className={`p-4 self-start ${chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                    }`}
                 >
                   <div
-                    className={`${
-                      loading && index === listMessages.length - 1 && chat.user == 'chatbot' ? 'loader' : ''
-                    }`}
+                    className={`${loading && index === listMessages.length - 1 && chat.user == 'chatbot' ? 'loader' : ''
+                      }`}
                   >
                     {chat.message.split(/`(.+?)`/).map((part, index) =>
                       index % 2 === 1 ? (
