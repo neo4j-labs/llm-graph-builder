@@ -61,10 +61,10 @@ jsonpointer==2.4
 jupyter_client==8.6.0
 jupyter_core==5.5.0
 kiwisolver==1.4.5
-langchain==0.1.11
-langchain-community==0.0.27
-langchain-core==0.1.30
-langchain-experimental==0.0.53
+langchain==0.1.13
+langchain-community==0.0.29
+langchain-core==0.1.33
+langchain-experimental==0.0.55
 langchain-openai==0.0.8
 langdetect==1.0.9
 layoutparser==0.3.4
@@ -96,7 +96,7 @@ nvidia-nvtx-cu12==12.1.105
 omegaconf==2.3.0
 onnx==1.15.0
 onnxruntime==1.15.1
-openai
+openai==1.7.1
 opencv-python==4.9.0.80
 opencv-python-headless==4.9.0.80
 packaging==23.2

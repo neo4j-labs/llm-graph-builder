@@ -26,6 +26,7 @@ import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 import threading
 import uuid
+from langchain_experimental.graph_transformers import LLMGraphTransformer
 
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
@@ -242,6 +243,56 @@ def extract_and_store_graph(
     return graph_document, lst_cypher_queries_chunk_relationship
  
     
+# def extract_graph_from_OpenAI(model_version,
+#                             graph: Neo4jGraph,
+#                             chunks: List[Document],
+#                             file_name : str,
+#                             uri : str,
+#                             userName : str,
+#                             password : str):
+#     """
+#         Extract graph from OpenAI and store it in database. 
+#         This is a wrapper for extract_and_store_graph
+                                
+#         Args:
+#             model_version : identify the model of LLM
+#             graph: Neo4jGraph to be extracted.
+#             chunks: List of chunk documents created from input file
+#             file_name (str) : file name of input source
+#             uri: URI of the graph to extract
+#             userName: Username to use for graph creation ( if None will use username from config file )
+#             password: Password to use for graph creation ( if None will use password from config file )    
+#         Returns: 
+#             List of langchain GraphDocument - used to generate graph
+#     """
+#     openai_api_key = os.environ.get('OPENAI_API_KEY')
+#     graph_document_list = []
+#     relationship_cypher_list = []
+#     futures=[]
+#     logging.info(f"create relationship between source,chunk and entity nodes created from {model_version}")
+    
+#     with ThreadPoolExecutor(max_workers=10) as executor:
+#         current_chunk_id= ''
+#         for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
+#             previous_chunk_id = current_chunk_id
+#             current_chunk_id = str(uuid.uuid1())
+#             position = i+1
+#             if i == 0:
+#                 firstChunk = True
+#             else:
+#                 firstChunk = False
+#             metadata = {"position": position,"length": len(chunk_document.page_content)}
+#             chunk_document = Document(page_content=chunk_document.page_content,metadata = metadata)
+            
+#             futures.append(executor.submit(extract_and_store_graph,model_version,graph,chunk_document,file_name,uri,userName,password,firstChunk,current_chunk_id,previous_chunk_id))   
+#         for future in concurrent.futures.as_completed(futures):
+#             graph_document,lst_cypher_queries_chunk_relationship = future.result()
+            
+#             graph_document_list.append(graph_document[0])
+#             relationship_cypher_list.extend(lst_cypher_queries_chunk_relationship)
+        
+#     return graph_document_list, relationship_cypher_list
+
 def extract_graph_from_OpenAI(model_version,
                             graph: Neo4jGraph,
                             chunks: List[Document],
@@ -264,6 +315,10 @@ def extract_graph_from_OpenAI(model_version,
         Returns: 
             List of langchain GraphDocument - used to generate graph
     """
+    
+    llm = ChatOpenAI(model= model_version, temperature=0)
+    llm_transformer = LLMGraphTransformer(llm=llm)
+    
     openai_api_key = os.environ.get('OPENAI_API_KEY')
     graph_document_list = []
     relationship_cypher_list = []
@@ -272,7 +327,19 @@ def extract_graph_from_OpenAI(model_version,
     
     with ThreadPoolExecutor(max_workers=10) as executor:
         current_chunk_id= ''
-        for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
+        # for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
+        #     futures.append(executor.submit(llm_transformer.convert_to_graph_documents,[chunk_document]))   
+        for chunk_document in chunks:
+            futures.append(executor.submit(llm_transformer.convert_to_graph_documents,[chunk_document]))   
+        
+        for i, future in enumerate(concurrent.futures.as_completed(futures)):
+            graph_document = future.result()
+            for node in graph_document[0].nodes:
+                node.id = node.id.title().replace(' ','_')
+                #replace all non alphanumeric characters and spaces with underscore
+                node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
+            #print("graph_document page content = ",graph_document[0])
+            graph.add_graph_documents(graph_document)
             previous_chunk_id = current_chunk_id
             current_chunk_id = str(uuid.uuid1())
             position = i+1
@@ -280,14 +347,11 @@ def extract_graph_from_OpenAI(model_version,
                 firstChunk = True
             else:
                 firstChunk = False
-            metadata = {"position": position,"length": len(chunk_document.page_content)}
-            chunk_document = Document(page_content=chunk_document.page_content,metadata = metadata)
+            metadata = {"position": position,"length": len(graph_document[0].source.page_content)}
+            chunk_document = Document(page_content=graph_document[0].source.page_content,metadata = metadata)
             
-            futures.append(executor.submit(extract_and_store_graph,model_version,graph,chunk_document,file_name,uri,userName,password,firstChunk,current_chunk_id,previous_chunk_id))   
-        for future in concurrent.futures.as_completed(futures):
-            graph_document,lst_cypher_queries_chunk_relationship = future.result()
-            
+            lst_cypher_queries_chunk_relationship = create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document,uri,userName,password,firstChunk,current_chunk_id,previous_chunk_id)
             graph_document_list.append(graph_document[0])
             relationship_cypher_list.extend(lst_cypher_queries_chunk_relationship)
-        
+    graph.refresh_schema()    
     return graph_document_list, relationship_cypher_list
