@@ -1,10 +1,9 @@
-import { Button, Dialog, LoadingSpinner } from '@neo4j-ndl/react';
+import { Banner, Button, Dialog, LoadingSpinner, Radio } from '@neo4j-ndl/react';
 import { useEffect, useRef, useState } from 'react';
 import { GraphViewModalProps } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL, { NvlOptions } from '@neo4j-nvl/core';
 import { driver } from '../utils/Driver';
-import GraphDropdown from '../HOC/CustomDropdown';
 
 const uniqueElementsForDocQuery = `
 // Finds a document with chunks & entities. Transforms path objects to return a list of unique nodes and relationships.
@@ -16,56 +15,51 @@ WITH  collect(DISTINCT node) as nodes, collect(rels) as relslist
 UNWIND relslist as rels
 UNWIND rels as rel
 WITH  nodes, collect(DISTINCT rel) as rels
-RETURN nodes, rels`
+RETURN nodes, rels`;
 
 const pureDocument = `
-MATCH (d:Document)
+MATCH (d:Document {status:'Completed'}) 
 WITH d ORDER BY d.createdAt DESC 
-MATCH files = (d)<-[part:PART_OF]-(c:Chunk)
-WITH nodes(files) as nodes, relationships(files) as rels
-UNWIND nodes as node
-WITH  collect(DISTINCT node) as nodes, collect(rels) as relslist
-UNWIND relslist as rels
-UNWIND rels as rel
-WITH  nodes, collect(DISTINCT rel) as rels
-RETURN nodes, rels,
+LIMIT 10
+MATCH docs=(d)<-[:PART_OF]-(c:Chunk)
+WITH docs,
 collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } as chain, 
-collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } as chunks;
- `
-
+collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } as chunks
+WITH [docs] +chain + chunks as paths 
+CALL { WITH paths UNWIND paths AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }
+CALL { WITH paths UNWIND paths AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) as rels }
+RETURN nodes, rels
+ `;
 
 const docEntitiesGraph = `
-MATCH (d:Document) 
+MATCH (d:Document {status:'Completed'}) 
 WITH d ORDER BY d.createdAt DESC 
-MATCH files = (d)<-[:PART_OF]-(c:Chunk)
-OPTIONAL MATCH p=(d)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(e)--(:!Chunk)
-WITH nodes(p) as nodes, relationships(p) as rels
-UNWIND nodes as node
-WITH  collect(DISTINCT node) as nodes, collect(rels) as relslist
-UNWIND relslist as rels
-UNWIND rels as rel
-WITH  nodes, collect(DISTINCT rel) as rels
-RETURN nodes, rels,
+LIMIT 10
+MATCH docs=(d)<-[:PART_OF]-(c:Chunk)
+WITH docs, collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)--(:!Chunk) RETURN p } as entities,
 collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } as chain, 
-collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } as chunks, 
-collect { OPTIONAL MATCH p=(c)-[:HAS_ENTITY]->(e)--(:!Chunk) RETURN p } as entities;`
-
+collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } as chunks
+WITH entities + chain + chunks + [docs] as paths 
+CALL { WITH paths UNWIND paths AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }
+CALL { WITH paths UNWIND paths AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) as rels }
+RETURN nodes, rels`;
 
 const knowledgeGraph = `
-MATCH (d:Document) 
+MATCH (d:Document {status:'Completed'}) 
 WITH d ORDER BY d.createdAt DESC 
-LIMIT 50
-MATCH files = (d)<-[:PART_OF]-(c:Chunk)
-RETURN 
-collect { OPTIONAL MATCH p=(c)-[:HAS_ENTITY]->(e)--(:!Chunk) RETURN p } as entities`
-
+LIMIT 10
+MATCH (d)<-[:PART_OF]-(c:Chunk)
+WITH 
+collect { OPTIONAL MATCH p=(c)-[:HAS_ENTITY]->(e)--(:!Chunk) RETURN p } as entities
+CALL { WITH entities UNWIND entities AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }
+CALL { WITH entities UNWIND entities AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) as rels }
+RETURN nodes, rels`;
 
 const queryMap: any = {
   'Document Structure': pureDocument,
   'Document & Knowledge Graph': docEntitiesGraph,
-  'Knowledge Graph Entities': knowledgeGraph
+  'Knowledge Graph Entities': knowledgeGraph,
 };
-
 
 const colors = [
   '#588c7e',
@@ -82,19 +76,18 @@ const colors = [
   '#674d3c',
 ];
 
-
 const getNodeCaption = (node: any) => {
-  if (node.properties['name']) {
-    return node.properties['name'];
+  if (node.properties.name) {
+    return node.properties.name;
   }
-  if (node.properties['text']) {
-    return node.properties['text'];
+  if (node.properties.text) {
+    return node.properties.text;
   }
-  if (node.properties['fileName']) {
-    return node.properties['fileName'];
+  if (node.properties.fileName) {
+    return node.properties.fileName;
   }
-  return node.elementId
-}
+  return node.elementId;
+};
 
 const getIcon = (node: any) => {
   if (node.labels[0] == 'Document') {
@@ -104,7 +97,7 @@ const getIcon = (node: any) => {
     return 'paragraph-left-align.svg';
   }
   return undefined;
-}
+};
 
 const getSize = (node: any) => {
   if (node.labels[0] == 'Document') {
@@ -114,23 +107,35 @@ const getSize = (node: any) => {
     return 30;
   }
   return undefined;
-}
+};
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
   inspectedName,
   setGraphViewOpen,
-  viewPoint
+  viewPoint,
 }) => {
   const nvlRef = useRef<NVL>(null);
-  const [nodes, setNodes] = useState([]);
+  const [nodes, setNodes] = useState<any[]>([]);
   const [relationships, setRelationships] = useState([]);
-  const [graphType, setGraphType] = useState<string>('Document Structure');
+  const [graphType, setGraphType] = useState<string>('Knowledge Graph Entities');
   const [loading, setLoading] = useState<boolean>(false);
+  const [status, setStatus] = useState<'unknown' | 'success' | 'danger'>('unknown');
+  const [statusMessage, setStatusMessage] = useState<string>('');
 
-  const handleDropdownChange = (option: any) => {
-    setGraphType(option.value);
+  const handleRadioChange = (e: any) => {
+    if (e.target.checked) {
+      setGraphType(e.target.value);
+    }
   };
+
+  useEffect(() => {
+    return () => {
+      //@ts-ignore
+      nvlRef.current?.destroy();
+      setGraphType('Knowledge Graph Entities');
+    };
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -139,52 +144,114 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       let queryToRun = '';
       if (viewPoint === 'tableView') {
         queryToRun = uniqueElementsForDocQuery;
-      }
-      else {
-        queryToRun = queryMap[graphType]
+      } else {
+        queryToRun = queryMap[graphType];
       }
 
       const session = driver.session();
-      session.run(queryToRun, { 'document_name': inspectedName }).then(
-        (results) => {
+      setLoading(true);
+      session
+        .run(queryToRun, { document_name: inspectedName })
+        .then((results) => {
           // If this doc exists in the graph, the result length will be one.
-          setLoading(true);
-          if (results.records.length >= 1) {
+          if (results.records.length == 1) {
+            //@ts-ignore
             const neo4jNodes = results.records[0]._fields[0];
+            //@ts-ignore
             const neo4jRels = results.records[0]._fields[1];
 
             // Infer color schema dynamically
             let iterator = 0;
-            const scheme = {}
-
-            neo4jNodes.forEach(node => {
+            const scheme: any = {};
+            //@ts-ignore
+            neo4jNodes.forEach((node) => {
               const label = node.labels[0];
               if (scheme[label] == undefined) {
-                scheme[label] = colors[iterator % colors.length]
+                scheme[label] = colors[iterator % colors.length];
                 iterator += 1;
               }
             });
 
-            const newNodes = neo4jNodes.map(n => {
+            const newNodes = neo4jNodes.map((n:any) => {
               return {
-                id: n.elementId, size: getSize(n), captionAlign: 'bottom', captionHtml: <b>Test</b>, iconAlign: 'bottom',
-                icon: getIcon(n), caption: getNodeCaption(n), color: scheme[n.labels[0]]
+                id: n.elementId,
+                size: getSize(n),
+                captionAlign: 'bottom',
+                captionHtml: <b>Test</b>,
+                iconAlign: 'bottom',
+                icon: getIcon(n),
+                caption: getNodeCaption(n),
+                color: scheme[n.labels[0]],
               };
             });
-            const newRels = neo4jRels.map(r => {
-              return { id: r.elementId, from: r.startNodeElementId, to: r.endNodeElementId, caption: r.type };
-            });
-
+            const newRels: any = neo4jRels.map(
+              (r: { elementId: any; startNodeElementId: any; endNodeElementId: any; type: any }) => {
+                return { id: r.elementId, from: r.startNodeElementId, to: r.endNodeElementId, caption: r.type };
+              }
+            );
             setNodes(newNodes);
             setRelationships(newRels);
             setLoading(false);
+          } else if (results.records.length > 1) {
+            //@ts-ignore
+            const neo4jNodes = results.records.map((f) => f._fields[0]);
+            //@ts-ignore
+            const neo4jRels = results.records.map((f) => f._fields[1]);
 
+            // Infer color schema dynamically
+            let iterator = 0;
+            const scheme: any = {};
+
+            neo4jNodes.forEach((node) => {
+              const labels = node.map((f: any) => f.labels);
+
+              labels.forEach((label: any) => {
+                if (scheme[label] == undefined) {
+                  scheme[label] = colors[iterator % colors.length];
+                  iterator += 1;
+                }
+              });
+            });
+
+            const newNodes = neo4jNodes.map((n) => {
+              const totalNodes = n.map((g: any) => {
+                return {
+                  id: g.elementId,
+                  size: getSize(g),
+                  captionAlign: 'bottom',
+                  captionHtml: <b>Test</b>,
+                  iconAlign: 'bottom',
+                  icon: getIcon(g),
+                  caption: getNodeCaption(g),
+                  color: scheme[g.labels[0]],
+                };
+              });
+              return totalNodes;
+            });
+            const finalNodes = newNodes.flat();
+            const newRels: any = neo4jRels.map((r: any) => {
+              const totalRels = r.map((relations: any) => {
+                return {
+                  id: relations.elementId,
+                  from: relations.startNodeElementId,
+                  to: relations.endNodeElementId,
+                  caption: relations.type,
+                };
+              });
+              return totalRels;
+            });
+            const finalRels = newRels.flat();
+            setNodes(finalNodes);
+            setRelationships(finalRels);
+            setLoading(false);
+          } else {
+            throw new Error('No records found');
           }
-          else {
-            console.error("Unable to retrieve document graph for " + inspectedName, results);
-          }
-        }
-      );
+        })
+        .catch((error: any) => {
+          setStatus('danger');
+          setStatusMessage(error);
+        });
     }
   }, [open, graphType]);
 
@@ -201,23 +268,64 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const nvlOptions: NvlOptions = {
     allowDynamicMinZoom: false,
     disableWebGL: true,
-    maxZoom: 2,
+    maxZoom: 3,
     minZoom: 0.05,
     relationshipThreshold: 0.55,
     selectionBehaviour: 'single',
     useWebGL: false,
-    instanceId: 'inspect-graph',
+    instanceId: 'inspect-preview',
   };
+
+  const headerTitle =
+    viewPoint !== 'showGraphView' ? `Inspect Generated Graph from ${inspectedName}` : 'Generated Graph';
 
   return (
     <>
       <Dialog size='unset' open={open} aria-labelledby='form-dialog-title' disableCloseButton>
-        <Dialog.Header id='form-dialog-title'>Inspect Generated Graph from {inspectedName}. </Dialog.Header>
-        {viewPoint === 'showGraphView' && <GraphDropdown onSelect={handleDropdownChange} isDisabled={false} />}
+        <Dialog.Header id='form-dialog-title'>{headerTitle}</Dialog.Header>
+        {viewPoint === 'showGraphView' && (
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Radio
+              name='graphRadio'
+              checked={graphType === 'Knowledge Graph Entities'}
+              label='Knowledge Graph Entities'
+              value='Knowledge Graph Entities'
+              onChange={handleRadioChange}
+            />
+            <Radio
+              name='graphRadio'
+              checked={graphType === 'Document Structure'}
+              label='Document Structure'
+              onChange={handleRadioChange}
+              value='Document Structure'
+            />
+            <Radio
+              name='graphRadio'
+              checked={graphType === 'Document & Knowledge Graph'}
+              label='Document & Knowledge Graph'
+              value='Document & Knowledge Graph'
+              onChange={handleRadioChange}
+            />
+          </div>
+        )}
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
-          <></>
-          <div style={{ width: '100%', height: '600px', border: '1px solid red' }}>
-          {/* {loading && <LoadingSpinner size="large"/>} */}
+          <div style={{ width: '100%', height: '600px' }}>
+            {loading && (
+              <div className='my-40 flex items-center justify-center'>
+                <LoadingSpinner size='large' />
+              </div>
+            )}
+            {status !== 'unknown' && (
+              <div className='my-40 flex items-center justify-center'>
+                <Banner
+                  name='graph banner'
+                  closeable
+                  description={statusMessage}
+                  onClose={() => setStatus('unknown')}
+                  type={status}
+                />
+              </div>
+            )}
             <InteractiveNvlWrapper
               ref={nvlRef}
               nodes={nodes}
@@ -227,10 +335,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             />
           </div>
 
-          <Dialog.Actions className='mt-6 mb-2'>
-            <Button onClick={() => setGraphViewOpen(false)}>
-              Close
-            </Button>
+          <Dialog.Actions className='mt-2 mb-2'>
+            <Button onClick={() => setGraphViewOpen(false)}>Close</Button>
           </Dialog.Actions>
         </Dialog.Content>
       </Dialog>

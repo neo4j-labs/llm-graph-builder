@@ -99,7 +99,8 @@ export interface DrawerProps {
 
 export interface ContentProps {
   isExpanded: boolean;
-  onInspect: (id: any) => void;
+  showChatBot: boolean;
+  openChatBot: () => void;
 }
 
 export interface FileTableProps {
