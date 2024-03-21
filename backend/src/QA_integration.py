@@ -8,7 +8,7 @@ from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
 import logging
 from langchain_community.chat_message_histories import Neo4jChatMessageHistory
-
+import asyncio
 load_dotenv()
 
 openai_api_key = os.environ.get('OPENAI_API_KEY')
@@ -158,4 +158,4 @@ def QA_RAG(uri,userName,password,question,session_id):
     #   raise Exception(error_message)
       return {"session_id":session_id,"message":"Something went wrong","user":"chatbot"}
 
-    
+ 
