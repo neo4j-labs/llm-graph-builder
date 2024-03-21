@@ -114,11 +114,20 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     }),
     columnHelper.accessor((row) => row.status, {
       id: 'inspect',
-      cell: (info) => <> <IconButton aria-label='Toggle settings'
-        size='large' disabled={statusCheck(info.getValue()) !== 'success'} 
-        clean onClick={() => onInspect(info.row.original.name)}>
-        <MagnifyingGlassCircleIconSolid />
-      </IconButton></>,
+      cell: (info) => (
+        <>
+          {' '}
+          <IconButton
+            aria-label='Toggle settings'
+            size='large'
+            disabled={statusCheck(info.getValue()) !== 'success'}
+            clean
+            onClick={() => onInspect(info.row.original.name)}
+          >
+            <MagnifyingGlassCircleIconSolid />
+          </IconButton>
+        </>
+      ),
       header: () => <span>View</span>,
       footer: (info) => info.column.id,
     }),
@@ -129,8 +138,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       try {
         setIsLoading(true);
         const res: any = await getSourceNodes(userCredentials);
-        if(!res.data){
-          throw new Error('Please check backend connection'); 
+        if (!res.data) {
+          throw new Error('Please check backend connection');
         }
         if (res.data.status !== 'Failed') {
           const prefiles: any[] = [];

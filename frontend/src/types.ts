@@ -97,7 +97,6 @@ export interface ContentProps {
   isExpanded: boolean;
   showChatBot: boolean;
   openChatBot: () => void;
-  onInspect: (id: any) => void;
 }
 
 export interface FileTableProps {
