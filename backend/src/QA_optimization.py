@@ -12,7 +12,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()
 
-openai_api_key = os.environ.get('OPENAI_API_KEY')
+# openai_api_key = os.environ.get('OPENAI_API_KEY')
 # model_version='gpt-4-0125-preview'
 
 class ParallelComponent:
