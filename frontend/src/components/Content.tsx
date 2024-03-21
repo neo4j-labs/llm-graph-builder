@@ -87,12 +87,11 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           filesData[uid].source_url,
           localStorage.getItem('accesskey'),
           localStorage.getItem('secretkey'),
-          filesData[uid].max_sources,
           filesData[uid].wiki_query ?? ''
         );
-        if (apiResponse?.data?.status === 'Failed') {
+        if (apiResponse?.status === 'Failed') {
           setShowAlert(true);
-          setErrorMessage(apiResponse?.data?.message);
+          setErrorMessage(apiResponse?.message);
           setFilesData((prevfiles) =>
             prevfiles.map((curfile, idx) => {
               if (idx == uid) {
@@ -104,7 +103,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               return curfile;
             })
           );
-          throw new Error(apiResponse?.data?.message);
+          throw new Error(apiResponse?.message);
         } else {
           setFilesData((prevfiles) => {
             return prevfiles.map((curfile, idx) => {

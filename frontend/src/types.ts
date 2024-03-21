@@ -9,7 +9,6 @@ export interface CustomFile extends Partial<globalThis.File> {
   model: string;
   fileSource: string;
   source_url?: string;
-  max_sources?: number;
   wiki_query?: string;
 }
 
@@ -80,8 +79,8 @@ export interface SourceNode {
   url?: string;
   awsAccessKeyId?: string;
   fileSource: string;
-  max_limit?: number;
   query_source?: string;
+  max_limit?: number;
 }
 
 export interface SideNavProps {
@@ -145,6 +144,10 @@ export type ChatbotProps = {
   }[];
   setMessages: Dispatch<SetStateAction<messages[]>>;
 };
+export interface WikipediaModalTypes {
+  hideModal: () => void;
+  open: boolean;
+}
 
 export interface GraphViewModalProps {
   open: boolean;
