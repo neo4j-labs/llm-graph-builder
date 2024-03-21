@@ -79,6 +79,7 @@ export interface SourceNode {
   awsAccessKeyId?: string;
   fileSource: string;
   query_source?: string;
+  max_limit?: number;
 }
 export interface SideNavProps {
   openDrawer: () => void;
