@@ -10,14 +10,20 @@ import CustomAlert from './Alert';
 import { extractAPI } from '../utils/FileAPI';
 import { ContentProps } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
+import GraphViewModal from './GraphViewModal';
+
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
+  const [openGraphView, setOpenGraphView] = useState<boolean>(false);
+  const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials } = useCredentials();
   const { filesData, files, setFilesData, setModel, model } = useFileContext();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
+  const [viewPoint, setViewPoint] = useState<string>('tableView');
+
   useEffect(() => {
     if (!init) {
       let session = localStorage.getItem('neo4j.connection');
@@ -162,9 +168,16 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       : showChatBot
       ? 'contentWithChatBot'
       : 'contentWithNoExpansion';
+
+  const handleGraphView = () => {
+    setOpenGraphView(true);
+    setViewPoint('showGraphView');
+  };
+
   return (
     <>
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
+
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' style={{ flexFlow: 'row' }}>
           <ConnectionModal
@@ -204,6 +217,11 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           isExpanded={isExpanded}
           connectionStatus={connectionStatus}
           setConnectionStatus={setConnectionStatus}
+          onInspect={(name) => {
+            setInspectedName(name);
+            setOpenGraphView(true);
+            setViewPoint('tableView');
+          }}
         ></FileTable>
         <Flex
           className='w-full p-2.5 absolute bottom-4'
@@ -220,6 +238,14 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             >
               Generate Graph
             </Button>
+            <Button
+              loading={filesData.some((f) => f?.status === 'Processing')}
+              disabled={disableCheckGraph || !filesData.some((f) => f?.status === 'Completed')}
+              onClick={handleGraphView}
+              className='mr-0.5'
+            >
+              Show Graph
+            </Button>
             <Button href={openGraphUrl} target='_blank' disabled={disableCheckGraph} className='ml-0.5'>
               Open Graph
             </Button>
@@ -233,6 +259,12 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           </Flex>
         </Flex>
       </div>
+      <GraphViewModal
+        inspectedName={inspectedName}
+        open={openGraphView}
+        setGraphViewOpen={setOpenGraphView}
+        viewPoint={viewPoint}
+      />
     </>
   );
 };

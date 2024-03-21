@@ -82,6 +82,7 @@ export interface SourceNode {
   query_source?: string;
   max_limit?: number;
 }
+
 export interface SideNavProps {
   openDrawer: () => void;
   closeDrawer: () => void;
@@ -102,6 +103,7 @@ export interface FileTableProps {
   isExpanded: boolean;
   connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
+  onInspect: (id: any) => void;
 }
 
 export interface CustomModalProps {
@@ -122,6 +124,7 @@ export interface CommonButtonProps {
   title: string;
   className?: string;
 }
+
 export interface messages {
   id: number;
   message: string;
@@ -129,6 +132,7 @@ export interface messages {
   datetime: string;
   isTyping?: boolean;
 }
+
 export type ChatbotProps = {
   messages: {
     id: number;
@@ -142,4 +146,11 @@ export type ChatbotProps = {
 export interface WikipediaModalTypes {
   hideModal: () => void;
   open: boolean;
+}
+
+export interface GraphViewModalProps {
+  open: boolean;
+  inspectedName: string;
+  setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
+  viewPoint: string;
 }

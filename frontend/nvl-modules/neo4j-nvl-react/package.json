@@ -1,0 +1,38 @@
+{
+  "name": "@neo4j-nvl/react",
+  "version": "0.2.52",
+  "main": "lib/index.js",
+  "license": "SEE LICENSE IN 'Neo4j Early Access Agreement - Visualization Library.pdf'",
+  "scripts": {
+    "prebuild": "rm -rf lib/",
+    "build": "tsc",
+    "test": "jest",
+    "prepack": "cp ../../Neo4j\\ Early\\ Access\\ Agreement\\ -\\ Visualization\\ Library.pdf ./",
+    "postpack": "rm Neo4j\\ Early\\ Access\\ Agreement\\ -\\ Visualization\\ Library.pdf"
+  },
+  "files": [
+    "Neo4j Early Access Agreement - Visualization Library.pdf",
+    "lib"
+  ],
+  "engines": {
+    "yarn": "^1.10.1"
+  },
+  "typedoc": {
+    "entryPoint": "./src/index.ts",
+    "readmeFile": "./README.md",
+    "displayName": "React",
+    "tsconfig": "./tsconfig.json"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@types/lodash": "4.14.202",
+    "@types/react": "^18.0.18",
+    "babel-eslint": "^10.1.0"
+  },
+  "dependencies": {
+    "lodash": "4.17.21",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

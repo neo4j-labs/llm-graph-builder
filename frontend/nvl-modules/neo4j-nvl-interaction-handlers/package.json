@@ -1,0 +1,37 @@
+{
+  "name": "@neo4j-nvl/interaction-handlers",
+  "version": "0.2.56",
+  "license": "SEE LICENSE IN 'Neo4j Early Access Agreement - Visualization Library.pdf'",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "Neo4j Early Access Agreement - Visualization Library.pdf",
+    "lib"
+  ],
+  "scripts": {
+    "prebuild": "rm -rf lib/",
+    "build": "tsc",
+    "test": "jest",
+    "prepack": "cp ../../Neo4j\\ Early\\ Access\\ Agreement\\ -\\ Visualization\\ Library.pdf ./",
+    "postpack": "rm Neo4j\\ Early\\ Access\\ Agreement\\ -\\ Visualization\\ Library.pdf"
+  },
+  "typedoc": {
+    "entryPoint": "./src/index.ts",
+    "readmeFile": "./README.md",
+    "displayName": "Interaction Handlers",
+    "tsconfig": "./tsconfig.json"
+  },
+  "engines": {
+    "yarn": "^1.10.1"
+  },
+  "dependencies": {
+    "concaveman": "^1.2.1",
+    "lodash": "4.17.21"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@types/concaveman": "1.1.6",
+    "@types/lodash": "4.14.202"
+  }
+}

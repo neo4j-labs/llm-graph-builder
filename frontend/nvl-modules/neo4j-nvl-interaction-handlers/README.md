@@ -1,0 +1,1 @@
+This module is a collection of decorator classes that can be used to add interaction events to an NVL instance. The decorators are applied to the NVL class. You can find documentation for the decorators in the usage documentation of each class.
