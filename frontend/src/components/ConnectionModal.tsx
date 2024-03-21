@@ -1,8 +1,8 @@
 import { Button, Dialog, TextInput, Dropdown, Banner } from '@neo4j-ndl/react';
 import { useState } from 'react';
+import { setDriver } from '../utils/Driver';
 import { useCredentials } from '../context/UserCredentials';
 import { ConnectionModalProps } from '../types';
-import connectAPI from '../services/ConnectAPI';
 
 const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
   open,
@@ -17,7 +17,7 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
   const [database, setDatabase] = useState<string>(localStorage.getItem('database') ?? 'neo4j');
   const [username, setUsername] = useState<string>(localStorage.getItem('username') ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
-  const { setUserCredentials, userCredentials } = useCredentials();
+  const { setUserCredentials } = useCredentials();
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [loading, setLoading] = useState<boolean>(false);
@@ -31,14 +31,14 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
     localStorage.setItem('database', database);
     localStorage.setItem('selectedProtocol', selectedProtocol);
     setLoading(true);
-    const response = await connectAPI(userCredentials);
-    if (response.data.status === 'Success') {
+    const status = await setDriver(connectionURI, username, password, database);
+    if (status === 'success') {
       setOpenConnection(false);
       setConnectionStatus(true);
       setStatusMessage('');
     } else {
       setStatus('danger');
-      setStatusMessage(response.data.message);
+      setStatusMessage(status);
       setConnectionStatus(false);
       setTimeout(() => {
         setStatus('unknown');
