@@ -160,3 +160,5 @@ cython_debug/
 #.idea/
 .vscode/launch.json
 temp.pdf
+google-cloud-sdk
+google-cloud-cli-469.0.0-linux-x86_64.tar.gz
