@@ -22,6 +22,10 @@ from src.make_relationships import create_source_chunk_entity_relationship
 from tqdm import tqdm
 import logging
 import re
+import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor
+import threading
+import uuid
 
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
@@ -187,6 +191,13 @@ def extract_and_store_graph(
     model_version,
     graph: Neo4jGraph,
     document: Document,
+    file_name: str,
+    uri: str,
+    userName:str,
+    password:str,
+    firstChunk:bool,
+    current_chunk_id:uuid,
+    previous_chunk_id:uuid,
     nodes:Optional[List[str]] = None,
     rels:Optional[List[str]]=None) -> None:
     
@@ -195,15 +206,23 @@ def extract_and_store_graph(
      store the result into a Neo4jGraph.
      
      Args:
-     	 graph: Neo4j graph to store the data into
-     	 document: Langchain document to extract data from
-     	 nodes: List of nodes to extract ( default : None )
-     	 rels: List of relationships to extract ( default : None )
+        model_version: LLM model version
+        graph: Neo4j graph to store the data into
+        document: Langchain document to extract data from
+        file_name (str): file name of input source
+        uri: URI of the graph to extract
+        userName: Username to use for graph creation ( if None will use username from config file )
+        password: Password to use for graph creation ( if None will use password from config file )
+        firstChunk : It's bool value to create FIRST_CHUNK AND NEXT_CHUNK relationship between chunk and document node.
+        current_chunk_id : Unique id of chunk
+        previous_chunk_id : Unique id of previous chunk
+        nodes: List of nodes to extract ( default : None )
+        rels: List of relationships to extract ( default : None )
      
      Returns: 
      	 The GraphDocument that was extracted and stored into the Neo4jgraph
     """
-   
+    logging.info(f"Processing chunk in thread: {threading.current_thread().name}")
     extract_chain = get_extraction_chain(model_version,nodes, rels)
     data = extract_chain.invoke(document.page_content)['function']
 
@@ -218,7 +237,9 @@ def extract_and_store_graph(
     )]   
 
     graph.add_graph_documents(graph_document)
-    return graph_document   
+    lst_cypher_queries_chunk_relationship = create_source_chunk_entity_relationship(file_name,graph,graph_document,document,uri,userName,password,firstChunk,current_chunk_id,
+    previous_chunk_id)
+    return graph_document, lst_cypher_queries_chunk_relationship
  
     
 def extract_graph_from_OpenAI(model_version,
@@ -245,14 +266,28 @@ def extract_graph_from_OpenAI(model_version,
     """
     openai_api_key = os.environ.get('OPENAI_API_KEY')
     graph_document_list = []
-
+    relationship_cypher_list = []
+    futures=[]
     logging.info(f"create relationship between source,chunk and entity nodes created from {model_version}")
-    for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
-        if i == 0:
-            firstChunk = True
-        else:
-            firstChunk = False
-        graph_document=extract_and_store_graph(model_version,graph,chunk_document)
-        create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document,uri,userName,password,firstChunk)
-        graph_document_list.append(graph_document[0])     
-    return graph_document_list
+    
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        current_chunk_id= ''
+        for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
+            previous_chunk_id = current_chunk_id
+            current_chunk_id = str(uuid.uuid1())
+            position = i+1
+            if i == 0:
+                firstChunk = True
+            else:
+                firstChunk = False
+            metadata = {"position": position,"length": len(chunk_document.page_content)}
+            chunk_document = Document(page_content=chunk_document.page_content,metadata = metadata)
+            
+            futures.append(executor.submit(extract_and_store_graph,model_version,graph,chunk_document,file_name,uri,userName,password,firstChunk,current_chunk_id,previous_chunk_id))   
+        for future in concurrent.futures.as_completed(futures):
+            graph_document,lst_cypher_queries_chunk_relationship = future.result()
+            
+            graph_document_list.append(graph_document[0])
+            relationship_cypher_list.extend(lst_cypher_queries_chunk_relationship)
+        
+    return graph_document_list, relationship_cypher_list

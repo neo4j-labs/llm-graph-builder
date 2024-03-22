@@ -4,12 +4,12 @@ import QuickStarter from '../components/QuickStarter';
 
 export const ThemeWrapperContext = createContext({
   toggleColorMode: () => {},
-  colorMode: 'light' as string,
+  colorMode: localStorage.getItem('mode') as string,
 });
 
 const ThemeWrapper: React.FunctionComponent = () => {
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-  const [mode, setMode] = useState<string>(prefersDarkMode ? 'dark' : 'light');
+  const [mode, setMode] = useState<string>(prefersDarkMode ? 'dark' : localStorage.getItem('mode') ?? 'light');
   const [usingPreferredMode, setUsingPreferredMode] = useState<boolean>(true);
   const themeWrapperUtils = useMemo(
     () => ({
@@ -17,6 +17,7 @@ const ThemeWrapper: React.FunctionComponent = () => {
       toggleColorMode: () => {
         setMode((prevMode) => {
           setUsingPreferredMode(false);
+          localStorage.setItem('mode', prevMode === 'light' ? 'dark' : 'light');
           themeBodyInjection(prevMode);
           return prevMode === 'light' ? 'dark' : 'light';
         });

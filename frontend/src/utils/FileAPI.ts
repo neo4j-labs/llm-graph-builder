@@ -20,7 +20,8 @@ export const extractAPI = async (
   userCredentials: any,
   source_url?: any,
   aws_access_key_id?: any,
-  aws_secret_access_key?: any
+  aws_secret_access_key?: any,
+  wiki_query?: string
 ): Promise<any> => {
   const urlExtract = `${url()}/extract`;
   const method: Method = 'post';
@@ -28,6 +29,8 @@ export const extractAPI = async (
   let additionalParams: ExtractParams;
   if (source_url?.length) {
     additionalParams = { model, source_url, aws_secret_access_key, aws_access_key_id };
+  } else if (wiki_query?.length) {
+    additionalParams = { model, wiki_query };
   } else {
     additionalParams = { file, model };
   }

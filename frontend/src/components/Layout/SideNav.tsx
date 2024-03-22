@@ -4,9 +4,10 @@ import { SideNavProps } from '../../types';
 
 const SideNav: React.FC<SideNavProps> = ({ openDrawer, closeDrawer, isExpanded }) => {
   const handleClick = () => {
-    openDrawer();
     if (isExpanded) {
       closeDrawer();
+    } else {
+      openDrawer();
     }
   };
 

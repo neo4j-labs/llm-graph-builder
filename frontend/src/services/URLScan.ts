@@ -2,22 +2,25 @@ import axios from 'axios';
 import { url } from '../utils/Utils';
 
 interface ScanProps {
-  urlParam: string;
+  urlParam?: string;
   userCredentials?: any;
   model?: string;
   accessKey?: string;
   secretKey?: string;
   max_limit?: number;
+  wikiquery?: string;
   query_source?: string;
 }
 
 const urlScanAPI = async (props: ScanProps) => {
   try {
     const formData = new FormData();
-    formData.append('uri', props?.userCredentials?.uri);
-    formData.append('userName', props?.userCredentials.userName);
-    formData.append('password', props?.userCredentials?.password);
-    formData.append('source_url', props?.urlParam);
+    formData.append('uri', props?.userCredentials?.uri ?? '');
+    formData.append('database', props?.userCredentials?.database ?? '');
+    formData.append('userName', props?.userCredentials?.userName ?? '');
+    formData.append('password', props?.userCredentials?.password ?? '');
+    formData.append('source_url', props?.urlParam ?? '');
+    formData.append('wiki_query', props?.wikiquery ?? '');
     if (props.model != undefined) {
       formData.append('model', props?.model);
     }
@@ -42,7 +45,7 @@ const urlScanAPI = async (props: ScanProps) => {
     return response;
   } catch (error) {
     console.log('Error uploading file:', error);
-    return error;
+    throw error;
   }
 };
 

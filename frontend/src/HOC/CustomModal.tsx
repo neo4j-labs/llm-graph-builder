@@ -11,6 +11,7 @@ const CustomModal: React.FC<CustomModalProps> = ({
   status,
   setStatus,
 }) => {
+  const isDisabled = status === 'danger' || status === 'info' || status === 'warning' || status === 'success';
   return (
     <Dialog
       size='small'
@@ -23,14 +24,20 @@ const CustomModal: React.FC<CustomModalProps> = ({
     >
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
         {status !== 'unknown' && (
-          <Banner closeable description={statusMessage} onClose={() => setStatus('unknown')} type={status} />
+          <Banner
+            closeable
+            description={statusMessage}
+            onClose={() => setStatus('unknown')}
+            type={status}
+            name='Custom Banner'
+          />
         )}
         <div className='n-flex n-flex-row n-flex-wrap'>{children}</div>
         <Dialog.Actions className='mt-4'>
           <Button color='neutral' fill='outlined' onClick={onClose} size='medium'>
             Cancel
           </Button>
-          <Button onClick={submitHandler} size='medium'>
+          <Button onClick={submitHandler} size='medium' disabled={isDisabled}>
             {submitLabel}
           </Button>
         </Dialog.Actions>

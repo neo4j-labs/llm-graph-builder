@@ -11,7 +11,7 @@
         "version": "detect"
       }
     },
-    "ignorePatterns": ["node_modules/**", "packages/**/dist/**", "packages/**/coverage/**"],
+    "ignorePatterns": ["node_modules/**", "packages/**/dist/**", "packages/**/coverage/**","nvl-modules/"],
     "rules": {
       "@typescript-eslint/no-explicit-any": "off", // Off for v1
       "@typescript-eslint/ban-ts-comment": "off", // Off for v1

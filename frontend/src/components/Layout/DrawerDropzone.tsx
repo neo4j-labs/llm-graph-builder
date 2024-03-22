@@ -4,14 +4,16 @@ import React, { useState, useEffect } from 'react';
 import { healthStatus } from '../../services/HealthStatus';
 import S3Component from '../S3Bucket';
 import S3Modal from '../S3Modal';
-// import GcsBucket from '../GcsBucket';
+import Wikipedia from '../Wikipedia';
 import { DrawerProps } from '../../types';
 import YouTubeButton from '../YoutubeButton';
 import YoutubeModal from '../YoutubeModal';
+import WikipediaModal from '../WikipediaModal';
 
 const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
   const [showModal, setshowModal] = useState<boolean>(false);
+  const [showWikiepediaModal, setShowWikiepediaModal] = useState<boolean>(false);
   const [showYoutubeModal, setShowYoutubeModal] = useState<boolean>(false);
 
   useEffect(() => {
@@ -32,6 +34,12 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   const hideModal = () => {
     setshowModal(false);
   };
+  const openWikipediaModal = () => {
+    setShowWikiepediaModal(true);
+  };
+  const closeWikipediaModal = () => {
+    setShowWikiepediaModal(false);
+  };
   const hideYoutubeModal = () => {
     setShowYoutubeModal(false);
   };
@@ -50,9 +58,10 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
       <Drawer
         expanded={isExpanded}
         isResizeable={false}
+        position='left'
         type='push'
         closeable={false}
-        onExpandedChange={function Ha() {}}
+        key={'leftdrawer'}
       >
         <Drawer.Body style={{ overflow: 'hidden', height: 'intial' }}>
           <div className='flex h-full flex-col'>
@@ -78,11 +87,13 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                       <YouTubeButton openModal={openYoutubeModal} />
                       <YoutubeModal hideModal={hideYoutubeModal} open={showYoutubeModal} />
                     </div>
+                    <div className='outline-dashed imageBg'>
+                      <Wikipedia openModal={openWikipediaModal} />
+                      <WikipediaModal hideModal={closeWikipediaModal} open={showWikiepediaModal} />
+                    </div>
                     <Flex gap='8' className='s3Container outline-dashed outline-2 outline-offset-2 outline-gray-100 '>
                       <S3Component openModal={openModal} />
                       <S3Modal hideModal={hideModal} open={showModal} />
-                      {/* <GcsBucket />
-                      <GcsBucket /> */}
                     </Flex>
                   </Flex>
                 )}

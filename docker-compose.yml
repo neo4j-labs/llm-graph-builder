@@ -16,6 +16,13 @@ services:
       - NEO4J_USERNAME=${NEO4J_USERNAME-neo4j}
       - OPENAI_API_KEY=${OPENAI_API_KEY-}
       - DIFFBOT_API_KEY=${DIFFBOT_API_KEY-}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL-text-embedding-ada-002}
+      - LANGCHAIN_ENDPOINT=${LANGCHAIN_ENDPOINT-"https://api.smith.langchain.com"}
+      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2-true}
+      - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT}
+      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY}
+      - KNN_MIN_SCORE = ${KNN_MIN_SCORE-"0.94"}
+      - IS_EMBEDDING = ${IS_EMBEDDING-true}
     container_name: backend
     ports:
       - "8000:8000"
