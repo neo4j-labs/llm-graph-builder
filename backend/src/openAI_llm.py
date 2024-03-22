@@ -323,6 +323,7 @@ def extract_graph_from_OpenAI(model_version,
     graph_document_list = []
     relationship_cypher_list = []
     futures=[]
+    graph_document_list_for_post_processing = {}
     logging.info(f"create relationship between source,chunk and entity nodes created from {model_version}")
     
     with ThreadPoolExecutor(max_workers=10) as executor:
@@ -338,20 +339,30 @@ def extract_graph_from_OpenAI(model_version,
                 node.id = node.id.title().replace(' ','_')
                 #replace all non alphanumeric characters and spaces with underscore
                 node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
-            #print("graph_document page content = ",graph_document[0])
             graph.add_graph_documents(graph_document)
+            graph_document_list.append(graph_document[0])
+        
+        for graph_document in graph_document_list:
+            for index, chunk in enumerate(chunks):
+                if graph_document.source.page_content == chunk.page_content:
+                    position = index+1
+                    #graph_document_list_for_post_processing.append(graph_document_list[position])
+                    graph_document_list_for_post_processing[position]=graph_document
+                    break
+        sorted_graph_document_list_for_post_processing = dict(sorted(graph_document_list_for_post_processing.items()))
+        for i, graph_document in enumerate(list(sorted_graph_document_list_for_post_processing.values())):  
             previous_chunk_id = current_chunk_id
             current_chunk_id = str(uuid.uuid1())
-            position = i+1
+            #position = i+1
             if i == 0:
                 firstChunk = True
             else:
                 firstChunk = False
-            metadata = {"position": position,"length": len(graph_document[0].source.page_content)}
-            chunk_document = Document(page_content=graph_document[0].source.page_content,metadata = metadata)
+            metadata = {"position": position,"length": len(graph_document.source.page_content)}
+            chunk_document = Document(page_content=graph_document.source.page_content,metadata = metadata)
             
-            lst_cypher_queries_chunk_relationship = create_source_chunk_entity_relationship(file_name,graph,graph_document,chunk_document,uri,userName,password,firstChunk,current_chunk_id,previous_chunk_id)
-            graph_document_list.append(graph_document[0])
+            lst_cypher_queries_chunk_relationship = create_source_chunk_entity_relationship(file_name,graph,[graph_document],chunk_document,uri,userName,password,firstChunk,current_chunk_id,previous_chunk_id)
+            #graph_document_list.append(graph_document[0])
             relationship_cypher_list.extend(lst_cypher_queries_chunk_relationship)
     graph.refresh_schema()    
     return graph_document_list, relationship_cypher_list
