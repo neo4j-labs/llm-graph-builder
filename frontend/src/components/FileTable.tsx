@@ -114,7 +114,6 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded, onInspect }) => {
       id: 'inspect',
       cell: (info) => (
         <>
-          {' '}
           <IconButton
             aria-label='Toggle settings'
             size='large'
