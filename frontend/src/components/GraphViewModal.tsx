@@ -249,8 +249,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           }
         })
         .catch((error: any) => {
+          setLoading(false)
           setStatus('danger');
-          setStatusMessage(error);
+          setStatusMessage(error.message);
         });
     }
   }, [open, graphType]);

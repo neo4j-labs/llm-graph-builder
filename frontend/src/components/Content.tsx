@@ -239,7 +239,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               Generate Graph
             </Button>
             <Button
-              loading={filesData.some((f) => f?.status === 'Processing')}
               disabled={disableCheckGraph || !filesData.some((f) => f?.status === 'Completed')}
               onClick={handleGraphView}
               className='mr-0.5'
