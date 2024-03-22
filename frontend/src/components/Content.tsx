@@ -239,14 +239,18 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               Generate Graph
             </Button>
             <Button
-              loading={filesData.some((f) => f?.status === 'Processing')}
               disabled={disableCheckGraph || !filesData.some((f) => f?.status === 'Completed')}
               onClick={handleGraphView}
               className='mr-0.5'
             >
               Show Graph
             </Button>
-            <Button href={openGraphUrl} target='_blank' disabled={disableCheckGraph} className='ml-0.5'>
+            <Button
+              href={openGraphUrl}
+              target='_blank'
+              disabled={disableCheckGraph || !filesData.some((f) => f?.status === 'Completed')}
+              className='ml-0.5'
+            >
               Open Graph
             </Button>
             <Button
