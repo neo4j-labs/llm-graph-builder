@@ -173,8 +173,8 @@ async def chat_bot(uri=Form(None),
                           userName=Form(None),
                           password=Form(None),
                           question=Form(None),
-                          model=Form(None)):
-    result = await asyncio.to_thread(QA_RAG,uri=uri,userName=userName,password=password,model_version=model,question=question)
+                          session_id=Form(None)):
+    result = await asyncio.to_thread(QA_RAG,uri=uri,userName=userName,password=password,question=question,session_id=session_id)
     return result
 
 @app.post("/connect")

@@ -1,4 +1,4 @@
-import { DataGrid, DataGridComponents, StatusIndicator } from '@neo4j-ndl/react';
+import { DataGrid, DataGridComponents, IconButton, StatusIndicator } from '@neo4j-ndl/react';
 import { useEffect, useState } from 'react';
 import React from 'react';
 import {
@@ -15,9 +15,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { getFileFromLocal, statusCheck } from '../utils/Utils';
 import { SourceNode, CustomFile, FileTableProps } from '../types';
 import { useCredentials } from '../context/UserCredentials';
+import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
 import CustomAlert from './Alert';
 
-const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus }) => {
+const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
   const { filesData, setFiles, setFilesData, model } = useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
@@ -111,6 +112,25 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       header: () => <span>Duration (s)</span>,
       footer: (info) => info.column.id,
     }),
+    columnHelper.accessor((row) => row.status, {
+      id: 'inspect',
+      cell: (info) => (
+        <>
+          {' '}
+          <IconButton
+            aria-label='Toggle settings'
+            size='large'
+            disabled={statusCheck(info.getValue()) !== 'success'}
+            clean
+            onClick={() => onInspect(info.row.original.name)}
+          >
+            <MagnifyingGlassCircleIconSolid />
+          </IconButton>
+        </>
+      ),
+      header: () => <span>View</span>,
+      footer: (info) => info.column.id,
+    }),
   ];
 
   useEffect(() => {
@@ -118,6 +138,9 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       try {
         setIsLoading(true);
         const res: any = await getSourceNodes(userCredentials);
+        if (!res.data) {
+          throw new Error('Please check backend connection');
+        }
         if (res.data.status !== 'Failed') {
           const prefiles: any[] = [];
           if (res.data.data.length) {

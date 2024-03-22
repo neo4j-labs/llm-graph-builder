@@ -15,7 +15,7 @@ const updateGraphAPI = async (userCredentials: any) => {
     });
     return response;
   } catch (error) {
-    console.log('Error uploading file:', error);
+    console.log('Error updating the graph:', error);
     throw error;
   }
 };
