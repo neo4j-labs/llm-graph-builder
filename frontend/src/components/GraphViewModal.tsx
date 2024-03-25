@@ -20,7 +20,7 @@ RETURN nodes, rels`;
 const pureDocument = `
 MATCH (d:Document {status:'Completed'}) 
 WITH d ORDER BY d.createdAt DESC 
-LIMIT 10
+LIMIT 5
 MATCH docs=(d)<-[:PART_OF]-(c:Chunk)
 WITH docs,
 collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } as chain, 
@@ -34,7 +34,7 @@ RETURN nodes, rels
 const docEntitiesGraph = `
 MATCH (d:Document {status:'Completed'}) 
 WITH d ORDER BY d.createdAt DESC 
-LIMIT 10
+LIMIT 5
 MATCH docs=(d)<-[:PART_OF]-(c:Chunk)
 WITH docs, collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)--(:!Chunk) RETURN p } as entities,
 collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } as chain, 
@@ -47,7 +47,7 @@ RETURN nodes, rels`;
 const knowledgeGraph = `
 MATCH (d:Document {status:'Completed'}) 
 WITH d ORDER BY d.createdAt DESC 
-LIMIT 10
+LIMIT 5
 MATCH (d)<-[:PART_OF]-(c:Chunk)
 WITH 
 collect { OPTIONAL MATCH p=(c)-[:HAS_ENTITY]->(e)--(:!Chunk) RETURN p } as entities
@@ -172,7 +172,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               }
             });
 
-            const newNodes = neo4jNodes.map((n:any) => {
+            const newNodes = neo4jNodes.map((n: any) => {
               return {
                 id: n.elementId,
                 size: getSize(n),

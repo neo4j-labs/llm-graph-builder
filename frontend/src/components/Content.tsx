@@ -245,7 +245,12 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             >
               Show Graph
             </Button>
-            <Button href={openGraphUrl} target='_blank' disabled={disableCheckGraph} className='ml-0.5'>
+            <Button
+              href={openGraphUrl}
+              target='_blank'
+              disabled={disableCheckGraph || !filesData.some((f) => f?.status === 'Completed')}
+              className='ml-0.5'
+            >
               Open Graph
             </Button>
             <Button
