@@ -8,6 +8,8 @@ interface FileContextType {
   setFilesData: Dispatch<SetStateAction<CustomFile[]>>;
   model: string;
   setModel: Dispatch<SetStateAction<string>>;
+  graphType: string;
+  setGraphType: Dispatch<SetStateAction<string>>;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
 interface FileContextProviderProps {
@@ -17,6 +19,7 @@ const FileContextProvider: React.FC<FileContextProviderProps> = ({ children }) =
   const [files, setFiles] = useState<File[] | []>([]);
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
   const [model, setModel] = useState<string>('OpenAI GPT 3.5');
+  const [graphType, setGraphType] = useState<string>('Knowledge Graph Entities');
   const value: FileContextType = {
     files,
     filesData,
@@ -24,6 +27,8 @@ const FileContextProvider: React.FC<FileContextProviderProps> = ({ children }) =
     setFilesData,
     model,
     setModel,
+    graphType,
+    setGraphType,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };
