@@ -297,7 +297,7 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
         return create_api_response(job_status,message=message,error=error_message,file_source=source_type)  
 
 def get_gcs_bucket_files_info(gcs_bucket_name, gcs_bucket_folder):
-    credentials = service_account.Credentials.from_service_account_file('../data/gcloud_credentails.json')
+    credentials = service_account.Credentials.from_service_account_file(os.environ['GOOGLE_CLOUD_KEYFILE'])
     storage_client = storage.Client(credentials=credentials)
     file_name=''
     try:
