@@ -35,6 +35,7 @@ fonttools==4.49.0
 frozenlist==1.4.1
 fsspec==2024.2.0
 greenlet==3.0.3
+grpcio==1.62.1
 google-api-core
 google-cloud-storage
 h11==0.14.0
