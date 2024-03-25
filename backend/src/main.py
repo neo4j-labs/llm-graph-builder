@@ -13,9 +13,7 @@ from langchain_community.document_loaders import S3DirectoryLoader
 import boto3
 from urllib.parse import urlparse,parse_qs
 import os
-
 from tempfile import NamedTemporaryFile
-
 import re
 from langchain_community.document_loaders import YoutubeLoader
 from langchain_community.document_loaders import WikipediaLoader
@@ -23,9 +21,11 @@ import warnings
 from pytube import YouTube
 from youtube_transcript_api import YouTubeTranscriptApi 
 import sys
-
+from google.cloud import storage
+from google.oauth2 import service_account
+from langchain_community.document_loaders import GCSFileLoader
 warnings.filterwarnings("ignore")
-
+import json
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 # from langchain.document_loaders import S3FileLoader
@@ -40,7 +40,7 @@ def update_exception_db(graph_obj,file_name,exp_msg):
     logging.error(f"Error in updating document node status as failed: {error_message}")
     raise Exception(error_message)
 
-def create_source_node(graph_obj,file_name,file_size,file_type,source,model,url=None,aws_access_key_id=None):
+def create_source_node(graph_obj,file_name,file_size,file_type,source,model,url=None,aws_access_key_id=None, gcs_bucket_name=None, gcs_bucket_folder=None):
   try:   
     current_time = datetime.now()
     job_status = "New"
@@ -49,10 +49,12 @@ def create_source_node(graph_obj,file_name,file_size,file_type,source,model,url=
                     d.status = $st, d.url = $url, d.awsAccessKeyId = $awsacc_key_id, 
                     d.fileSource = $f_source, d.createdAt = $c_at, d.updatedAt = $u_at, 
                     d.processingTime = $pt, d.errorMessage = $e_message, d.nodeCount= $n_count, 
-                    d.relationshipCount = $r_count, d.model= $model""",
+                    d.relationshipCount = $r_count, d.model= $model, d.gcsBucket=$gcs_bucket, 
+                    d.gcsBucketFolder= $gcs_bucket_folder""",
                     {"fn":file_name, "fs":file_size, "ft":file_type, "st":job_status, "url":url,
                      "awsacc_key_id":aws_access_key_id, "f_source":source, "c_at":current_time,
-                     "u_at":current_time, "pt":0, "e_message":'', "n_count":0, "r_count":0, "model":model})
+                     "u_at":current_time, "pt":0, "e_message":'', "n_count":0, "r_count":0, "model":model,
+                     "gcs_bucket": gcs_bucket_name, "gcs_bucket_folder": gcs_bucket_folder})
   except Exception as e:
     error_message = str(e)
     update_exception_db(graph_obj,file_name,error_message)
@@ -160,7 +162,7 @@ def check_url_source(url):
       logging.error(f"Error in recognize URL: {e}")  
       raise Exception(e)
   
-def create_source_node_graph_url(uri, userName, password ,model, source_url=None, db_name=None,wiki_query:List[str]=None,aws_access_key_id=None,aws_secret_access_key=None):
+def create_source_node_graph_url(uri, userName, password ,model, source_url=None, db_name=None,wiki_query:List[str]=None,aws_access_key_id=None,aws_secret_access_key=None, gcs_bucket_name=None, gcs_bucket_folder=None):
     """
       Creates a source node in Neo4jGraph and sets properties.
       
@@ -257,6 +259,33 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
                     error_message = str(e) 
                     return create_api_response(job_status,message="SUnable to create source node for Wikipedia source",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count) 
            return create_api_response(job_status,message="Source Node created successfully",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count)   
+        
+        elif gcs_bucket_name:
+          success_count=0
+          Failed_count=0
+          file_type='pdf'
+          source_type='gcs bucket'
+          aws_access_key_id=''
+          job_status = 'Completed'
+          try:
+              lst_file_metadata= get_gcs_bucket_files_info(gcs_bucket_name, gcs_bucket_folder)
+              for file_metadata in lst_file_metadata :
+                file_name = file_metadata['fileName']
+                file_size = file_metadata['fileSize']
+                source_url = file_metadata['url']
+                gcs_bucket = file_metadata['gcsBucket']
+                gcs_bucket_folder = file_metadata['gcsBucket Folder']
+                create_source_node(graph,file_name,file_size,file_type,source_type,model,source_url,aws_access_key_id, gcs_bucket, gcs_bucket_folder)
+                success_count+=1
+          except Exception as e:
+              file_name = file_metadata['fileName']
+              job_status = "Failed"
+              Failed_count+=1
+              error_message = str(e) 
+              return create_api_response(job_status,message=f"Unable to create source node for GCS Bucket file = {file_name}",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count) 
+          return create_api_response(job_status,message="Source Node created successfully",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count)   
+        
+          
         else:
            job_status = "Failed"
            return create_api_response(job_status,message='Invalid URL')
@@ -267,6 +296,37 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
         logging.exception(f'Exception Stack trace:')
         return create_api_response(job_status,message=message,error=error_message,file_source=source_type)  
 
+def get_gcs_bucket_files_info(gcs_bucket_name, gcs_bucket_folder):
+    credentials = service_account.Credentials.from_service_account_file('../data/gcloud_credentails.json')
+    storage_client = storage.Client(credentials=credentials)
+    file_name=''
+    try:
+      bucket = storage_client.bucket(gcs_bucket_name.strip())
+      if bucket.exists():
+        blobs = storage_client.list_blobs(gcs_bucket_name.strip(), prefix=gcs_bucket_folder if gcs_bucket_folder else '')
+        lst_file_metadata=[]
+        for blob in blobs:
+          if blob.content_type == 'application/pdf':
+            file_name = blob.name.split('/')[-1]
+            file_size = blob.size
+            source_url= blob.media_link
+            gcs_bucket = gcs_bucket_name
+            lst_file_metadata.append({'fileName':file_name,'fileSize':file_size,'url':source_url, 'gcsBucket': gcs_bucket, 'gcsBucket Folder':gcs_bucket_folder if gcs_bucket_folder else ''}) 
+        return lst_file_metadata
+      else:
+        file_name=''
+        job_status = "Failed"
+        message=f"{gcs_bucket_name} : Bucket does not exist. Please provide valid GCS bucket name"
+        return create_api_response(job_status,message=message)
+    except Exception as e:
+      job_status = "Failed"
+      message="Unable to create source node for gcs bucket files"
+      error_message = str(e)
+      logging.error(f"Unable to create source node for gcs bucket file {file_name}")
+      logging.exception(f'Exception Stack trace: {error_message}')
+      return create_api_response(job_status,message=message,error=error_message,file_name=file_name)
+       
+    
 def get_youtube_transcript(youtube_id):
   transcript_dict = YouTubeTranscriptApi.get_transcript(youtube_id)
   transcript=''
@@ -309,7 +369,7 @@ def get_s3_pdf_content(s3_url,aws_access_key_id=None,aws_secret_access_key=None)
         raise Exception(e)
 
 
-def extract_graph_from_file(uri, userName, password, model, db_name=None, file=None,source_url=None,aws_access_key_id=None,aws_secret_access_key=None,wiki_query=None,max_sources=None):
+def extract_graph_from_file(uri, userName, password, model, db_name=None, file=None,source_url=None,aws_access_key_id=None,aws_secret_access_key=None,wiki_query=None,max_sources=None, gcs_bucket_name=None, gcs_bucket_folder=None, gcs_blob_filename=None):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -339,6 +399,9 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
       
     elif wiki_query:  
         file_name, file_key, pages = get_documents_from_Wikipedia(wiki_query)
+    
+    elif gcs_bucket_name and gcs_blob_filename:
+       file_name, file_key, pages = get_documents_from_gcs(gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename)
       
     elif source_type =='s3 bucket':
       if(aws_access_key_id==None or aws_secret_access_key==None):
@@ -505,6 +568,21 @@ def get_documents_from_Wikipedia(wiki_query:str):
     logging.error(f"Failed To Process Wikipedia Query: {file_name}")
     logging.exception(f'Exception Stack trace: {error_message}')
     return create_api_response(job_status,message=message,error=error_message,file_name=file_name)    
+
+def get_documents_from_gcs(gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename):
+  blob_name=''
+  if gcs_bucket_folder.endswith('/'):
+    blob_name = gcs_bucket_folder+gcs_blob_filename
+  else:
+     blob_name = gcs_bucket_folder+'/'+gcs_blob_filename  
+  key_file = os.environ['GOOGLE_CLOUD_KEYFILE']
+  jsonFile = open(key_file)
+  data = json.load(jsonFile)   
+  loader = GCSFileLoader(project_name=data['project_id'], bucket=gcs_bucket_name, blob=blob_name)
+  pages = loader.load()
+  file_name = gcs_blob_filename
+  file_key = gcs_blob_filename
+  return file_name, file_key, pages
 
 def get_source_list_from_graph(uri,userName,password,db_name=None):
   """
