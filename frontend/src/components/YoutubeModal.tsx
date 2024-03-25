@@ -48,7 +48,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         });
         if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
-          setStatusMessage(apiResponse.data.data ?? apiResponse?.message);
+          setStatusMessage(apiResponse?.data.message);
           setTimeout(() => {
             setStatus('unknown');
             reset();
@@ -60,40 +60,42 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
 
           const copiedFilesData = [...filesData];
           const copiedFiles = [...files];
-          const filedataIndex = copiedFilesData.findIndex(
-            (filedataitem) => filedataitem?.name === apiResponse.data.file_name.fileName
-          );
-          const fileIndex = copiedFiles.findIndex(
-            (filedataitem) => filedataitem?.name === apiResponse.data.file_name.fileName
-          );
-          if (filedataIndex == -1) {
-            copiedFilesData.unshift({
-              name: apiResponse.data.file_name.fileName,
-              size: apiResponse.data.file_name.fileSize ?? 0,
-              source_url: apiResponse.data.file_name.url,
-              ...defaultValues,
-            });
-          } else {
-            const tempFileData = copiedFilesData[filedataIndex];
-            copiedFilesData.splice(filedataIndex, 1);
-            copiedFilesData.unshift({
-              ...tempFileData,
-              status: defaultValues.status,
-              NodesCount: defaultValues.NodesCount,
-              relationshipCount: defaultValues.relationshipCount,
-              processing: defaultValues.processing,
-              model: defaultValues.model,
-              fileSource: defaultValues.fileSource,
-            });
-          }
-          if (fileIndex == -1) {
-            //@ts-ignore
-            copiedFiles.unshift(null);
-          } else {
-            const tempFile = copiedFiles[filedataIndex];
-            copiedFiles.splice(fileIndex, 1);
-            copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
-          }
+          apiResponse?.data?.file_name?.forEach((item) => {
+            const filedataIndex = copiedFilesData.findIndex(
+              (filedataitem) => filedataitem?.name === item.fileName
+            );
+            const fileIndex = copiedFiles.findIndex(
+              (filedataitem) => filedataitem?.name === item.fileName
+            );
+            if (filedataIndex == -1) {
+              copiedFilesData.unshift({
+                name: item.fileName,
+                size: item.fileSize ?? 0,
+                source_url: item.url,
+                ...defaultValues,
+              });
+            } else {
+              const tempFileData = copiedFilesData[filedataIndex];
+              copiedFilesData.splice(filedataIndex, 1);
+              copiedFilesData.unshift({
+                ...tempFileData,
+                status: defaultValues.status,
+                NodesCount: defaultValues.NodesCount,
+                relationshipCount: defaultValues.relationshipCount,
+                processing: defaultValues.processing,
+                model: defaultValues.model,
+                fileSource: defaultValues.fileSource,
+              });
+            }
+            if (fileIndex == -1) {
+              //@ts-ignore
+              copiedFiles.unshift(null);
+            } else {
+              const tempFile = copiedFiles[filedataIndex];
+              copiedFiles.splice(fileIndex, 1);
+              copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
+            }
+          })
           setFilesData(copiedFilesData);
           setFiles(copiedFiles);
           reset();
