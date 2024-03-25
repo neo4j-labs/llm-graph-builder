@@ -10,6 +10,7 @@ import { getFileFromLocal } from '../utils/Utils';
 
 const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [bucketName, setbucketName] = useState<string>('');
+  const [folderName, setFolderName] = useState<string>('');
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
@@ -26,84 +27,87 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       relationshipCount: 0,
       type: 'TEXT',
       model: model,
-      fileSource: 'youtube',
+      fileSource: 'gcs bucket',
     };
 
     if (!bucketName) {
       setStatus('danger');
-      setStatusMessage('Please Fill the Valid YouTube link');
+      setStatusMessage('Please Fill the Bucket Name');
       setTimeout(() => {
         setStatus('unknown');
       }, 5000);
     } else {
-    //   try {
-    //     setStatus('info');
-    //     setStatusMessage('Loading...');
-    //     const apiResponse = await urlScanAPI({
-    //       urlParam: bucketName,
-    //       userCredentials,
-    //       model,
-    //       accessKey: '',
-    //       secretKey: '',
-    //     });
-    //     if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
-    //       setStatus('danger');
-    //       setStatusMessage(apiResponse.data.data ?? apiResponse?.message);
-    //       setTimeout(() => {
-    //         setStatus('unknown');
-    //         reset();
-    //         hideModal();
-    //       }, 5000);
-    //     } else {
-    //       setStatus('success');
-    //       setStatusMessage(`Successfully Created Source Nodes for Link`);
-
-    //       const copiedFilesData = [...filesData];
-    //       const copiedFiles = [...files];
-    //       const filedataIndex = copiedFilesData.findIndex(
-    //         (filedataitem) => filedataitem?.name === apiResponse.data.file_name.fileName
-    //       );
-    //       const fileIndex = copiedFiles.findIndex(
-    //         (filedataitem) => filedataitem?.name === apiResponse.data.file_name.fileName
-    //       );
-    //       if (filedataIndex == -1) {
-    //         copiedFilesData.unshift({
-    //           name: apiResponse.data.file_name.fileName,
-    //           size: apiResponse.data.file_name.fileSize ?? 0,
-    //           source_url: apiResponse.data.file_name.url,
-    //           ...defaultValues,
-    //         });
-    //       } else {
-    //         const tempFileData = copiedFilesData[filedataIndex];
-    //         copiedFilesData.splice(filedataIndex, 1);
-    //         copiedFilesData.unshift({
-    //           ...tempFileData,
-    //           status: defaultValues.status,
-    //           NodesCount: defaultValues.NodesCount,
-    //           relationshipCount: defaultValues.relationshipCount,
-    //           processing: defaultValues.processing,
-    //           model: defaultValues.model,
-    //           fileSource: defaultValues.fileSource,
-    //         });
-    //       }
-    //       if (fileIndex == -1) {
-    //         //@ts-ignore
-    //         copiedFiles.unshift(null);
-    //       } else {
-    //         const tempFile = copiedFiles[filedataIndex];
-    //         copiedFiles.splice(fileIndex, 1);
-    //         copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
-    //       }
-    //       setFilesData(copiedFilesData);
-    //       setFiles(copiedFiles);
-    //       reset();
-    //     }
-    //   } catch (error) {
-    //     setStatus('danger');
-    //     setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
-    //   }
+      try {
+        setStatus('info');
+        setStatusMessage('Loading...');
+        const apiResponse = await urlScanAPI({
+          userCredentials,
+          model,
+          accessKey: '',
+          secretKey: '',
+          gcs_bucket_name: bucketName,
+          gcs_bucket_folder: folderName
+        });
+        console.log({ apiResponse })
+        if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
+          setStatus('danger');
+          setStatusMessage(apiResponse?.data?.message);
+          setTimeout(() => {
+            setStatus('unknown');
+            reset();
+            hideModal();
+          }, 5000);
+        } else {
+          setStatus('success');
+          setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
+          const copiedFilesData = [...filesData];
+          const copiedFiles = [...files];
+          apiResponse?.data?.file_name?.forEach((item: any) => {
+            const filedataIndex = copiedFilesData.findIndex(
+              (filedataitem) => filedataitem?.name === item.fileName
+            );
+            const fileIndex = copiedFiles.findIndex(
+              (filedataitem) => filedataitem?.name === item.fileName
+            );
+            if (filedataIndex == -1) {
+              copiedFilesData.unshift({
+                name: item.fileName,
+                size: item.fileSize ?? 0,
+                gcsBucket: item.gcsBucket,
+                gcsBucketFolder: item.gcsBucketFolder,
+                ...defaultValues,
+              });
+            } else {
+              const tempFileData = copiedFilesData[filedataIndex];
+              copiedFilesData.splice(filedataIndex, 1);
+              copiedFilesData.unshift({
+                ...tempFileData,
+                status: defaultValues.status,
+                NodesCount: defaultValues.NodesCount,
+                relationshipCount: defaultValues.relationshipCount,
+                processing: defaultValues.processing,
+                model: defaultValues.model,
+                fileSource: defaultValues.fileSource,
+              });
+            }
+            if (fileIndex == -1) {
+              //@ts-ignore
+              copiedFiles.unshift(null);
+            } else {
+              const tempFile = copiedFiles[filedataIndex];
+              copiedFiles.splice(fileIndex, 1);
+              copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
+            }
+          })
+          setFilesData(copiedFilesData);
+          setFiles(copiedFiles);
+          reset();
+        }
+      } catch (error) {
+        setStatus('danger');
+        setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
+      }
     }
-
     setTimeout(() => {
       setStatus('unknown');
       hideModal();
@@ -136,6 +140,18 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           required
           onChange={(e) => {
             setbucketName(e.target.value);
+          }}
+        />
+        <TextInput
+          id='url'
+          value={folderName}
+          disabled={false}
+          label='Folder Name'
+          placeholder=''
+          isOptional={true}
+          fluid
+          onChange={(e) => {
+            setFolderName(e.target.value);
           }}
         />
       </div>

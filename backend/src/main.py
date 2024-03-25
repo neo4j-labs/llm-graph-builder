@@ -232,7 +232,7 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
               aws_access_key_id=''
               job_status = "Completed"
               create_source_node(graph,file_name,file_size,file_type,source_type,model,source_url,aws_access_key_id)
-              return create_api_response(job_status,file_name={'fileName':file_name,'fileSize':file_size,'url':source_url})
+              return create_api_response(job_status,file_name=[{'fileName':file_name,'fileSize':file_size,'url':source_url}])
           
         elif wiki_query:
            success_count=0
