@@ -274,7 +274,7 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
                 file_size = file_metadata['fileSize']
                 source_url = file_metadata['url']
                 gcs_bucket = file_metadata['gcsBucket']
-                gcs_bucket_folder = file_metadata['gcsBucket Folder']
+                gcs_bucket_folder = file_metadata['gcsBucketFolder']
                 create_source_node(graph,file_name,file_size,file_type,source_type,model,source_url,aws_access_key_id, gcs_bucket, gcs_bucket_folder)
                 success_count+=1
           except Exception as e:
@@ -311,7 +311,7 @@ def get_gcs_bucket_files_info(gcs_bucket_name, gcs_bucket_folder):
             file_size = blob.size
             source_url= blob.media_link
             gcs_bucket = gcs_bucket_name
-            lst_file_metadata.append({'fileName':file_name,'fileSize':file_size,'url':source_url, 'gcsBucket': gcs_bucket, 'gcsBucket Folder':gcs_bucket_folder if gcs_bucket_folder else ''}) 
+            lst_file_metadata.append({'fileName':file_name,'fileSize':file_size,'url':source_url, 'gcsBucket': gcs_bucket, 'gcsBucketFolder':gcs_bucket_folder if gcs_bucket_folder else ''}) 
         return lst_file_metadata
       else:
         file_name=''
