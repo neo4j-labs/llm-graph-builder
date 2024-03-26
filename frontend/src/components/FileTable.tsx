@@ -140,30 +140,38 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded, onInspect }) => {
         }
         if (res.data.status !== 'Failed') {
           const prefiles: any[] = [];
-          res.data.data.forEach((item: SourceNode) => {
-            if (item.fileName != undefined) {
-              prefiles.push({
-                name: item.fileName,
-                size: item.fileSize ?? 0,
-                type: item?.fileType?.toUpperCase() ?? 'None',
-                NodesCount: item?.nodeCount ?? 0,
-                processing: item?.processingTime ?? 'None',
-                relationshipCount: item?.relationshipCount ?? 0,
-                status:
-                  item.fileSource == 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
-                    ? item.status
-                    : item.fileSource === 'youtube'
+          if (res.data.data.length) {
+            res.data.data.forEach((item: SourceNode) => {
+              if (item.fileName != undefined && item.fileName.length) {
+                prefiles.push({
+                  name: item.fileName,
+                  size: item.fileSize ?? 0,
+                  type: item?.fileType?.toUpperCase() ?? 'None',
+                  NodesCount: item?.nodeCount ?? 0,
+                  processing: item?.processingTime ?? 'None',
+                  relationshipCount: item?.relationshipCount ?? 0,
+                  status:
+                    item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                       ? item.status
-                      : getFileFromLocal(`${item.fileName}`) != null
-                        ? item.status
-                        : 'N/A',
-                model: item?.model ?? model,
-                id: uuidv4(),
-                source_url: item.url != 'None' && item?.url != '' ? item.url : '',
-                fileSource: item.fileSource ?? 'None',
-              });
-            }
-          });
+                      : item.fileSource === 'local file' && getFileFromLocal(`${item.fileName}`) != null
+                      ? item.status
+                      : item.status === 'Completed' || item.status === 'Failed'
+                      ? item.status
+                      : item.fileSource == 'Wikipedia' ||
+                        item.fileSource == 'youtube' ||
+                        item.fileSource == 'gcs bucket'
+                      ? item.status
+                      : 'N/A',
+                  model: item?.model ?? model,
+                  id: uuidv4(),
+                  source_url: item.url != 'None' && item?.url != '' ? item.url : '',
+                  fileSource: item.fileSource ?? 'None',
+                  max_limit: item.max_limit,
+                  query_source: item?.query_source,
+                });
+              }
+            });
+          }
           setIsLoading(false);
           setFilesData(prefiles);
           const prefetchedFiles: any[] = [];

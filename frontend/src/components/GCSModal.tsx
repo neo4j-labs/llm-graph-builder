@@ -17,6 +17,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const { setFiles, setFilesData, model, filesData, files } = useFileContext();
   const reset = () => {
     setbucketName('');
+    setFolderName('');
   };
   const submitHandler = async () => {
     const defaultValues: CustomFile = {
@@ -46,9 +47,8 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           accessKey: '',
           secretKey: '',
           gcs_bucket_name: bucketName,
-          gcs_bucket_folder: folderName
+          gcs_bucket_folder: folderName,
         });
-        console.log({ apiResponse })
         if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
           setStatusMessage(apiResponse?.data?.message);
@@ -63,12 +63,8 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           const copiedFilesData = [...filesData];
           const copiedFiles = [...files];
           apiResponse?.data?.file_name?.forEach((item: any) => {
-            const filedataIndex = copiedFilesData.findIndex(
-              (filedataitem) => filedataitem?.name === item.fileName
-            );
-            const fileIndex = copiedFiles.findIndex(
-              (filedataitem) => filedataitem?.name === item.fileName
-            );
+            const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
+            const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === item.fileName);
             if (filedataIndex == -1) {
               copiedFilesData.unshift({
                 name: item.fileName,
@@ -98,7 +94,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               copiedFiles.splice(fileIndex, 1);
               copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
             }
-          })
+          });
           setFilesData(copiedFilesData);
           setFiles(copiedFiles);
           reset();
