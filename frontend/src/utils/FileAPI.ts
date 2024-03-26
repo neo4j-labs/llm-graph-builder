@@ -18,6 +18,7 @@ export const extractAPI = async (
   file: any,
   model: string,
   userCredentials: any,
+  source_type: string,
   source_url?: any,
   aws_access_key_id?: any,
   aws_secret_access_key?: any,
@@ -30,7 +31,7 @@ export const extractAPI = async (
   const method: Method = 'post';
   const commonParams: UserCredentials = userCredentials;
   let additionalParams: ExtractParams;
-  if (source_url?.length) {
+  if (source_type === 's3 bucket') {
     additionalParams = { model, source_url, aws_secret_access_key, aws_access_key_id };
   } else if (wiki_query?.length) {
     additionalParams = { model, wiki_query };
