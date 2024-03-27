@@ -85,10 +85,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           filesData[uid].source_url,
           localStorage.getItem('accesskey'),
           localStorage.getItem('secretkey'),
-          filesData[uid].wiki_query ?? '',
+          filesData[uid].name ?? '',
           filesData[uid].gcsBucket ?? '',
-          filesData[uid].gcsBucketFolder ?? '',
-          filesData[uid].name ?? ''
+          filesData[uid].gcsBucketFolder ?? ''
         );
         if (apiResponse?.status === 'Failed') {
           setShowAlert(true);
@@ -104,11 +103,11 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               return curfile;
             })
           );
-          throw new Error(apiResponse?.message);
+          throw new Error(JSON.stringify({ message: apiResponse.message, fileName: apiResponse.file_name }));
         } else {
           setFilesData((prevfiles) => {
             return prevfiles.map((curfile) => {
-              if (curfile.name == apiResponse.data.fileName) {
+              if (curfile.name == apiResponse?.data?.fileName) {
                 const apiRes = apiResponse?.data;
                 return {
                   ...curfile,
@@ -124,20 +123,36 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           });
         }
       } catch (err: any) {
-        console.log(err);
-        setShowAlert(true);
-        setErrorMessage(err.message);
-        setFilesData((prevfiles) =>
-          prevfiles.map((curfile, idx) => {
-            if (idx == uid) {
-              return {
-                ...curfile,
-                status: 'Failed',
-              };
-            }
-            return curfile;
-          })
-        );
+        if (err?.name === 'AxiosError') {
+          setShowAlert(true);
+          setErrorMessage(err.message);
+          setFilesData((prevfiles) =>
+            prevfiles.map((curfile, idx) => {
+              if (idx == uid) {
+                return {
+                  ...curfile,
+                  status: 'Failed',
+                };
+              }
+              return curfile;
+            })
+          );
+        } else {
+          setShowAlert(true);
+          const errordetail = JSON.parse(err.message);
+          setErrorMessage(errordetail.message);
+          setFilesData((prevfiles) =>
+            prevfiles.map((curfile) => {
+              if (curfile.name == errordetail.fileName) {
+                return {
+                  ...curfile,
+                  status: 'Failed',
+                };
+              }
+              return curfile;
+            })
+          );
+        }
       }
     }
   };
