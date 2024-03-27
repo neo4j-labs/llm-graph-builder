@@ -64,10 +64,12 @@ async def create_source_knowledge_graph_url(
     max_limit=Form(5),
     query_source=Form(None),
     wiki_query=Form(None),
-    model=Form(None)
+    model=Form(None),
+    gcs_bucket_name=Form(None),
+    gcs_bucket_folder=Form(None)
 ):
     return create_source_node_graph_url(
-        uri, userName, password, model, source_url, database, wiki_query, aws_access_key_id, aws_secret_access_key
+        uri, userName, password, model, source_url, database, wiki_query, aws_access_key_id, aws_secret_access_key,gcs_bucket_name, gcs_bucket_folder
     )
 
 
@@ -84,6 +86,10 @@ async def extract_knowledge_graph_from_file(
     aws_secret_access_key=Form(None),
     wiki_query=Form(None),
     max_sources=Form(None),
+    gcs_bucket_name=Form(None),
+    gcs_bucket_folder=Form(None),
+    gcs_blob_filename=Form(None)
+    
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
@@ -128,7 +134,7 @@ async def extract_knowledge_graph_from_file(
             max_sources=max_sources,
         )
     elif wiki_query:
-         return await asyncio.to_thread(
+        return await asyncio.to_thread(
             extract_graph_from_file,
             uri,
             userName,
@@ -137,6 +143,19 @@ async def extract_knowledge_graph_from_file(
             database,
             wiki_query=wiki_query
         )
+    elif gcs_bucket_name:
+        return await asyncio.to_thread(
+            extract_graph_from_file,
+            uri,
+            userName,
+            password,
+            model,
+            database,
+            gcs_bucket_name = gcs_bucket_name,
+            gcs_bucket_folder = gcs_bucket_folder,
+            gcs_blob_filename = gcs_blob_filename
+        )
+             
             
     else:
         return {"job_status": "Failure", "error": "No file found"}

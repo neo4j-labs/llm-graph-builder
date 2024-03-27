@@ -84,7 +84,10 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           filesData[uid].source_url,
           localStorage.getItem('accesskey'),
           localStorage.getItem('secretkey'),
-          filesData[uid].wiki_query ?? ''
+          filesData[uid].wiki_query ?? '',
+          filesData[uid].gcsBucket??'',
+          filesData[uid].gcsBucketFolder??'',
+          filesData[uid].name??''
         );
         if (apiResponse?.status === 'Failed') {
           setShowAlert(true);

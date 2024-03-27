@@ -21,7 +21,10 @@ export const extractAPI = async (
   source_url?: any,
   aws_access_key_id?: any,
   aws_secret_access_key?: any,
-  wiki_query?: string
+  wiki_query?: string,
+  gcs_bucket_name?: string,
+  gcs_bucket_folder?: string,
+  gcs_blob_filename?: string
 ): Promise<any> => {
   const urlExtract = `${url()}/extract`;
   const method: Method = 'post';
@@ -31,6 +34,8 @@ export const extractAPI = async (
     additionalParams = { model, source_url, aws_secret_access_key, aws_access_key_id };
   } else if (wiki_query?.length) {
     additionalParams = { model, wiki_query };
+  } else if (gcs_bucket_name?.length && gcs_blob_filename?.length) {
+    additionalParams = { model, gcs_blob_filename, gcs_bucket_folder, gcs_bucket_name };
   } else {
     additionalParams = { file, model };
   }
