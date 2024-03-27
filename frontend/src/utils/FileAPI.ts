@@ -35,7 +35,7 @@ export const extractAPI = async (
     additionalParams = { model, source_url, aws_secret_access_key, aws_access_key_id };
   } else if (wiki_query?.length) {
     additionalParams = { model, wiki_query };
-  } else if (gcs_bucket_name?.length && gcs_blob_filename?.length) {
+  } else if (source_type==="gcs bucket") {
     additionalParams = { model, gcs_blob_filename, gcs_bucket_folder, gcs_bucket_name };
   } else {
     additionalParams = { file, model };
