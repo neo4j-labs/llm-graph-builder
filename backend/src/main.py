@@ -500,7 +500,7 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
         "model" : model
     }
     logging.info(f'Response from extract API : {output}')
-    return create_api_response("Success",data=output)
+    return create_api_response("Success",data=output,file_name=file_name)
       
   except Exception as e:
       job_status = "Failed"
