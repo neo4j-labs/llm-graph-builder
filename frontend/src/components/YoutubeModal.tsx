@@ -61,12 +61,8 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           const copiedFilesData = [...filesData];
           const copiedFiles = [...files];
           apiResponse?.data?.file_name?.forEach((item) => {
-            const filedataIndex = copiedFilesData.findIndex(
-              (filedataitem) => filedataitem?.name === item.fileName
-            );
-            const fileIndex = copiedFiles.findIndex(
-              (filedataitem) => filedataitem?.name === item.fileName
-            );
+            const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
+            const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === item.fileName);
             if (filedataIndex == -1) {
               copiedFilesData.unshift({
                 name: item.fileName,
@@ -95,7 +91,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               copiedFiles.splice(fileIndex, 1);
               copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
             }
-          })
+          });
           setFilesData(copiedFilesData);
           setFiles(copiedFiles);
           reset();

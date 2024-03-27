@@ -46,18 +46,18 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
         setStatus('success');
         if (apiResponse?.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
-          setStatusMessage('Please Fill The Valid Credentials' ?? apiResponse?.message);
+          setStatusMessage(apiResponse?.data?.message);
           setTimeout(() => {
-            hideModal();
             setStatus('unknown');
             reset();
+            hideModal();
           }, 5000);
           return;
         }
         setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Wikipedia Sources`);
         const copiedFilesData: CustomFile[] = [...filesData];
         const copiedFiles: File[] = [...files];
-        apiResponse?.data.file_name.forEach((item: any) => {
+        apiResponse?.data?.file_name?.forEach((item: any) => {
           const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
           const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
           if (filedataIndex == -1) {
