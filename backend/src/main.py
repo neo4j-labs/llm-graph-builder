@@ -81,7 +81,7 @@ def create_source_node_graph_local_file(uri, userName, password, file, model, db
     source = 'local file'
     graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
     create_source_node(graph,file_name,file_size,file_type,source,model)
-    return create_api_response("Success",message="Source Node created successfully",file_source=source)
+    return create_api_response("Success",message="Source Node created successfully",file_source=source, file_name=file_name)
   except Exception as e:
     job_status = "Failed"
     message = "Unable to create source node"
@@ -178,6 +178,7 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
         Success or Failed message of node creation
     """
     try:
+        file_name =''
         graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
         if source_url:
           source_type,youtube_url = check_url_source(source_url)
@@ -211,7 +212,7 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
               if err_flag==1:
                 job_status = "Failed"
                 message="Unable to create source node for s3 bucket files"
-                return create_api_response(job_status,message=message,error=error_message,success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket')  
+                return create_api_response(job_status,message=message,error=error_message,success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket',file_name=lst_s3_file_name)  
               return create_api_response("Success",message="Source Node created successfully",success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket',file_name=lst_s3_file_name)
           elif source_type == 'youtube':
               source_url= youtube_url
@@ -225,7 +226,7 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
                 message = f"Youtube transcript is not available for : {file_name}"
                 error_message = str(e)
                 logging.exception(f'Exception Stack trace:')
-                return create_api_response(job_status,message=message,error=error_message,file_source=source_type)
+                return create_api_response(job_status,message=message,error=error_message,file_source=source_type,file_name=file_name )
               else:  
                 file_size=sys.getsizeof(transcript)
               file_type='text'
@@ -294,7 +295,7 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
         message = "Unable to create source node with given url"
         error_message = str(e)
         logging.exception(f'Exception Stack trace:')
-        return create_api_response(job_status,message=message,error=error_message,file_source=source_type)  
+        return create_api_response(job_status,message=message,error=error_message,file_source=source_type, file_name=file_name)  
 
 def get_gcs_bucket_files_info(gcs_bucket_name, gcs_bucket_folder):
     credentials = service_account.Credentials.from_service_account_file(os.environ['GOOGLE_CLOUD_KEYFILE'])
@@ -424,7 +425,7 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
         message = 'Pdf content or Youtube transcript is not available'
         logging.error(f"Pdf content or Youtube transcript is not available")
         update_exception_db(graph,file_name,message)
-        return create_api_response(job_status,message=message)
+        return create_api_response(job_status,message=message,file_name=file_name)
         
     update_node_prop = "SET d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}',d.status = '{}', d.errorMessage = '{}',d.nodeCount= {}, d.relationshipCount = {}, d.model = '{}'"
     # pages = loader.load_and_split()
@@ -497,7 +498,7 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
         "model" : model
     }
     logging.info(f'Response from extract API : {output}')
-    return create_api_response("Success",data=output)
+    return create_api_response("Success",data=output,file_name=file_name)
       
   except Exception as e:
       job_status = "Failed"
