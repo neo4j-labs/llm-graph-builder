@@ -23,6 +23,7 @@ from youtube_transcript_api import YouTubeTranscriptApi
 import sys
 from google.cloud import storage
 from google.oauth2 import service_account
+import google.auth 
 from langchain_community.document_loaders import GCSFileLoader
 warnings.filterwarnings("ignore")
 import json
@@ -298,8 +299,9 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
         return create_api_response(job_status,message=message,error=error_message,file_source=source_type, file_name=file_name)  
 
 def get_gcs_bucket_files_info(gcs_bucket_name, gcs_bucket_folder):
-    credentials = service_account.Credentials.from_service_account_file(os.environ['GOOGLE_CLOUD_KEYFILE'])
-    storage_client = storage.Client(credentials=credentials)
+    #credentials = service_account.Credentials.from_service_account_file(os.environ['GOOGLE_CLOUD_KEYFILE'])
+    #storage_client = storage.Client(credentials=credentials)
+    storage_client = storage.Client()
     file_name=''
     try:
       bucket = storage_client.bucket(gcs_bucket_name.strip())
@@ -498,7 +500,7 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
         "model" : model
     }
     logging.info(f'Response from extract API : {output}')
-    return create_api_response("Success",data=output,file_name=file_name)
+    return create_api_response("Success",data=output)
       
   except Exception as e:
       job_status = "Failed"
@@ -580,10 +582,9 @@ def get_documents_from_gcs(gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename
       blob_name = gcs_bucket_folder+'/'+gcs_blob_filename 
   else:
       blob_name = gcs_blob_filename  
-  key_file = os.environ['GOOGLE_CLOUD_KEYFILE']
-  jsonFile = open(key_file)
-  data = json.load(jsonFile)   
-  loader = GCSFileLoader(project_name=data['project_id'], bucket=gcs_bucket_name, blob=blob_name)
+  credentials, project_id = google.auth.default()
+  logging.info(f"GCS project_id : {project_id}")   
+  loader = GCSFileLoader(project_name=project_id, bucket=gcs_bucket_name, blob=blob_name)
   pages = loader.load()
   file_name = gcs_blob_filename
   file_key = gcs_blob_filename
