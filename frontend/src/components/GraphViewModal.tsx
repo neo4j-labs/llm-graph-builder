@@ -1,9 +1,11 @@
-import { Banner, Button, Dialog, LoadingSpinner, Radio } from '@neo4j-ndl/react';
+import { Banner, Button, Checkbox, Dialog, LoadingSpinner } from '@neo4j-ndl/react';
 import { useEffect, useRef, useState } from 'react';
 import { GraphViewModalProps } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL, { NvlOptions } from '@neo4j-nvl/core';
 import { driver } from '../utils/Driver';
+
+type GraphType = 'Document' | 'Chunks' | 'Entities';
 
 const uniqueElementsForDocQuery = `
 // Finds a document with chunks & entities. Transforms path objects to return a list of unique nodes and relationships.
@@ -18,20 +20,20 @@ WITH  nodes, collect(DISTINCT rel) as rels
 RETURN nodes, rels`;
 
 const pureDocument = `
-MATCH (d:Document {status:'Completed'}) 
-WITH d ORDER BY d.createdAt DESC 
+MATCH docs = (d:Document {status:'Completed'}) 
+WITH docs, d ORDER BY d.createdAt DESC 
 LIMIT 5
-MATCH docs=(d)<-[:PART_OF]-(c:Chunk)
-WITH docs,
+OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
+WITH docs, chunks,
 collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } as chain, 
-collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } as chunks
-WITH [docs] +chain + chunks as paths 
+collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } as similiar
+WITH [docs] + [chunks] + chain + similiar as paths 
 CALL { WITH paths UNWIND paths AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }
 CALL { WITH paths UNWIND paths AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) as rels }
 RETURN nodes, rels
  `;
 
-const docEntitiesGraph = `
+const entities = `
 MATCH (d:Document {status:'Completed'}) 
 WITH d ORDER BY d.createdAt DESC 
 LIMIT 5
@@ -46,19 +48,39 @@ RETURN nodes, rels`;
 
 const knowledgeGraph = `
 MATCH (d:Document {status:'Completed'}) 
-WITH d ORDER BY d.createdAt DESC 
+WITH d ORDER BY d.createdAt DESC
 LIMIT 5
 MATCH (d)<-[:PART_OF]-(c:Chunk)
 WITH 
-collect { OPTIONAL MATCH p=(c)-[:HAS_ENTITY]->(e)--(:!Chunk) RETURN p } as entities
+collect { OPTIONAL MATCH (c)-[:HAS_ENTITY]->(e), p=(e)--(:!Chunk) RETURN p } as entities
 CALL { WITH entities UNWIND entities AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }
 CALL { WITH entities UNWIND entities AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) as rels }
 RETURN nodes, rels`;
 
+const singleQuery = `MATCH docs = (d:Document {status:'Completed'}) 
+// WHERE d.fileName = $fileName
+WITH docs, d ORDER BY d.createdAt DESC 
+LIMIT 5
+OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
+WITH [] 
+// if documents:
+ + [docs] // documents
+// if chunks:
++ [chunks] // documents with chunks
++ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
++ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
++ collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)--(:!Chunk) RETURN p } // chunks and entities
+// if entites and not chunks:
++ collect { MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)--(:!Chunk) RETURN p } // only entities
+AS paths
+CALL { WITH paths UNWIND paths AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }
+CALL { WITH paths UNWIND paths AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) as rels }
+RETURN nodes, rels`;
+
 const queryMap: any = {
-  'Document Structure': pureDocument,
-  'Document & Knowledge Graph': docEntitiesGraph,
-  'Knowledge Graph Entities': knowledgeGraph,
+  'Document': pureDocument,
+  'Chunks': entities,
+  'Entities': knowledgeGraph,
 };
 
 const colors = [
@@ -115,25 +137,31 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   setGraphViewOpen,
   viewPoint,
 }) => {
+  // const divRef = useRef<HTMLDivElement>(null);
   const nvlRef = useRef<NVL>(null);
   const [nodes, setNodes] = useState<any[]>([]);
   const [relationships, setRelationships] = useState([]);
-  const [graphType, setGraphType] = useState<string>('Knowledge Graph Entities');
+  const [graphType, setGraphType] = useState<string>('Document');
   const [loading, setLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<'unknown' | 'success' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
 
-  const handleRadioChange = (e: any) => {
-    if (e.target.checked) {
-      setGraphType(e.target.value);
-    }
+  const handleCheckboxChange = (graph: GraphType) => {
+    // const currentIndex = graphType.indexOf(graph);
+    // const newGraphSelected = [...graphType];
+    // if (currentIndex === -1) {
+    //   newGraphSelected.push(graph);
+    // } else {
+    //   newGraphSelected.splice(currentIndex, 1);
+    // }
+    setGraphType(graph);
   };
 
   useEffect(() => {
     return () => {
       //@ts-ignore
       nvlRef.current?.destroy();
-      setGraphType('Knowledge Graph Entities');
+      setGraphType('Document');
     };
   }, []);
 
@@ -267,18 +295,33 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   };
 
   const nvlOptions: NvlOptions = {
-    allowDynamicMinZoom: false,
+    allowDynamicMinZoom: true,
     disableWebGL: true,
     maxZoom: 3,
     minZoom: 0.05,
     relationshipThreshold: 0.55,
     selectionBehaviour: 'single',
     useWebGL: false,
-    instanceId: 'inspect-preview',
+    instanceId: 'graph-preview',
   };
 
   const headerTitle =
     viewPoint !== 'showGraphView' ? `Inspect Generated Graph from ${inspectedName}` : 'Generated Graph';
+
+  const handleZoomToFit = () => {
+    nvlRef.current?.fit(
+      nodes.map((node) => node.id),
+      {},
+    );
+  };
+
+  const nvlCallbacks = {
+    onLayoutComputing(isComputing: boolean) {
+      if (!isComputing) {
+        handleZoomToFit();
+      }
+    },
+  };
 
   return (
     <>
@@ -286,31 +329,22 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         <Dialog.Header id='form-dialog-title'>{headerTitle}</Dialog.Header>
         {viewPoint === 'showGraphView' && (
           <div style={{ display: 'flex', gap: '10px' }}>
-            <Radio
-              name='graphRadio'
-              checked={graphType === 'Knowledge Graph Entities'}
-              label='Knowledge Graph Entities'
-              value='Knowledge Graph Entities'
-              onChange={handleRadioChange}
-            />
-            <Radio
-              name='graphRadio'
-              checked={graphType === 'Document Structure'}
-              label='Document Structure'
-              onChange={handleRadioChange}
-              value='Document Structure'
-            />
-            <Radio
-              name='graphRadio'
-              checked={graphType === 'Document & Knowledge Graph'}
-              label='Document & Knowledge Graph'
-              value='Document & Knowledge Graph'
-              onChange={handleRadioChange}
-            />
+            <Checkbox
+              checked={graphType.includes('Document')}
+              label='Document'
+              onChange={() => handleCheckboxChange('Document')} />
+            <Checkbox
+              checked={graphType.includes('Entities')}
+              label='Entities'
+              onChange={() => handleCheckboxChange('Entities')} />
+            <Checkbox
+              checked={graphType.includes('Chunks')}
+              label='Chunks'
+              onChange={() => handleCheckboxChange('Chunks')} />
           </div>
         )}
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
-          <div style={{ width: '100%', height: '600px' }}>
+          <div style={{ height: '600px', border: '1px solid red' }}>
             {loading && (
               <div className='my-40 flex items-center justify-center'>
                 <LoadingSpinner size='large' />
@@ -328,11 +362,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               </div>
             )}
             <InteractiveNvlWrapper
-              ref={nvlRef}
               nodes={nodes}
               rels={relationships}
               nvlOptions={nvlOptions}
+              ref={nvlRef}
               mouseEventCallbacks={{ ...mouseEventCallbacks }}
+              interactionOptions={{
+                selectOnClick: true,
+              }}
+              nvlCallbacks={nvlCallbacks}
             />
           </div>
 
