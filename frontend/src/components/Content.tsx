@@ -81,10 +81,14 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           file,
           filesData[uid].model,
           userCredentials,
+          filesData[uid].fileSource,
           filesData[uid].source_url,
           localStorage.getItem('accesskey'),
           localStorage.getItem('secretkey'),
-          filesData[uid].wiki_query ?? ''
+          filesData[uid].wiki_query ?? '',
+          filesData[uid].gcsBucket ?? '',
+          filesData[uid].gcsBucketFolder ?? '',
+          filesData[uid].name ?? ''
         );
         if (apiResponse?.status === 'Failed') {
           setShowAlert(true);
@@ -103,8 +107,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           throw new Error(apiResponse?.message);
         } else {
           setFilesData((prevfiles) => {
-            return prevfiles.map((curfile, idx) => {
-              if (idx == uid) {
+            return prevfiles.map((curfile) => {
+              if (curfile.name == apiResponse.data.fileName) {
                 const apiRes = apiResponse?.data;
                 return {
                   ...curfile,

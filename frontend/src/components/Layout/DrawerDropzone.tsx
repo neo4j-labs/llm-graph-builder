@@ -9,12 +9,15 @@ import { DrawerProps } from '../../types';
 import YouTubeButton from '../YoutubeButton';
 import YoutubeModal from '../YoutubeModal';
 import WikipediaModal from '../WikipediaModal';
+import GCSButton from '../GCSButton';
+import GCSModal from '../GCSModal';
 
 const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
   const [showModal, setshowModal] = useState<boolean>(false);
   const [showWikiepediaModal, setShowWikiepediaModal] = useState<boolean>(false);
   const [showYoutubeModal, setShowYoutubeModal] = useState<boolean>(false);
+  const [showGCSModal, setShowGCSModal] = useState<boolean>(false);
 
   useEffect(() => {
     async function getHealthStatus() {
@@ -45,6 +48,12 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   };
   const openYoutubeModal = () => {
     setShowYoutubeModal(true);
+  };
+  const openGCSModal = () => {
+    setShowGCSModal(true);
+  };
+  const hideGCSModal = () => {
+    setShowGCSModal(false);
   };
   return (
     <div
@@ -91,9 +100,11 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                       <Wikipedia openModal={openWikipediaModal} />
                       <WikipediaModal hideModal={closeWikipediaModal} open={showWikiepediaModal} />
                     </div>
-                    <Flex gap='8' className='s3Container outline-dashed outline-2 outline-offset-2 outline-gray-100 '>
+                    <Flex className='s3Container outline-dashed outline-2 outline-offset-2 outline-gray-100 '>
                       <S3Component openModal={openModal} />
                       <S3Modal hideModal={hideModal} open={showModal} />
+                      <GCSButton openModal={openGCSModal} />
+                      <GCSModal open={showGCSModal} hideModal={hideGCSModal} />
                     </Flex>
                   </Flex>
                 )}

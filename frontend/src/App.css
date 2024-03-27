@@ -104,7 +104,6 @@
   justify-content: center;
   cursor: pointer;
   flex-direction: column;
-  padding-block: 10px;
 }
 
 .brandimg {
@@ -151,4 +150,8 @@
     background: #FFF;
     box-shadow: -12px 0 #FFF, 12px 0 rgb(var(--theme-palette-primary-bg-strong));
   }
+}
+.ndl-dropzone > div{
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
 }

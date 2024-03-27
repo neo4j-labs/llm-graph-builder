@@ -10,6 +10,8 @@ export interface CustomFile extends Partial<globalThis.File> {
   fileSource: string;
   source_url?: string;
   wiki_query?: string;
+  gcsBucket?: string;
+  gcsBucketFolder?: string;
 }
 
 export interface OptionType {
@@ -32,6 +34,9 @@ export type ExtractParams = {
   aws_secret_access_key?: string;
   max_sources?: number;
   wiki_query?: string;
+  gcs_bucket_name?: string;
+  gcs_bucket_folder?: string;
+  gcs_blob_filename?: string;
 } & { [key: string]: any };
 
 export type UploadParams = {

@@ -116,7 +116,6 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       id: 'inspect',
       cell: (info) => (
         <>
-          {' '}
           <IconButton
             aria-label='Toggle settings'
             size='large'
@@ -156,11 +155,13 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   status:
                     item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                       ? item.status
-                      : item.fileSource === 'youtube'
+                      : item.fileSource === 'local file' && getFileFromLocal(`${item.fileName}`) != null
                       ? item.status
-                      : getFileFromLocal(`${item.fileName}`) != null
+                      : item.status === 'Completed' || item.status === 'Failed'
                       ? item.status
-                      : item.status === 'Completed'
+                      : item.fileSource == 'Wikipedia' ||
+                        item.fileSource == 'youtube' ||
+                        item.fileSource == 'gcs bucket'
                       ? item.status
                       : 'N/A',
                   model: item?.model ?? model,
