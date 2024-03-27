@@ -139,7 +139,7 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded, onInspect }) => {
           throw new Error('Please check backend connection');
         }
         if (res.data.status !== 'Failed') {
-          const prefiles: any[] = [];
+          const prefiles: CustomFile[] = [];
           if (res.data.data.length) {
             res.data.data.forEach((item: SourceNode) => {
               if (item.fileName != undefined && item.fileName.length) {
@@ -166,6 +166,8 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded, onInspect }) => {
                   id: uuidv4(),
                   source_url: item.url != 'None' && item?.url != '' ? item.url : '',
                   fileSource: item.fileSource ?? 'None',
+                  gcsBucket:item?.gcsBucket,
+                  gcsBucketFolder:item?.gcsBucketFolder
                 });
               }
             });
