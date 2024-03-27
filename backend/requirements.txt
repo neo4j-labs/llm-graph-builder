@@ -54,10 +54,10 @@ jsonpatch==1.33
 jsonpath-python==1.0.6
 jsonpointer==2.4
 kiwisolver==1.4.5
-langchain==0.1.12
-langchain-community==0.0.28
-langchain-core==0.1.32
-langchain-experimental==0.0.54
+langchain==0.1.13
+langchain-community==0.0.29
+langchain-core==0.1.33
+langchain-experimental==0.0.55
 langchain-openai==0.0.8
 langchain-text-splitters==0.0.1
 langdetect==1.0.9
