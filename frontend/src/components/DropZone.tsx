@@ -74,7 +74,6 @@ const DropZone: FunctionComponent = () => {
 
   const fileUpload = async (file: File, uid: number) => {
     if (filesData[uid]?.status == 'None' && isClicked) {
-      const apirequests = [];
       try {
         setIsLoading(true);
         setFilesData((prevfiles) =>
@@ -88,49 +87,56 @@ const DropZone: FunctionComponent = () => {
             return curfile;
           })
         );
-
         const apiResponse = await uploadAPI(file, userCredentials, model);
-        apirequests.push(apiResponse);
-        const results = await Promise.allSettled(apirequests);
-        results.forEach((apiRes) => {
-          if (apiRes.status === 'fulfilled' && apiRes.value) {
-            if (apiRes?.value?.status === 'Failed') {
-              throw new Error(apiRes?.value?.message);
-            } else {
-              setFilesData((prevfiles) =>
-                prevfiles.map((curfile, idx) => {
-                  if (idx == uid) {
-                    return {
-                      ...curfile,
-                      status: 'New',
-                    };
-                  }
-                  return curfile;
-                })
-              );
-              setIsClicked(false);
-            }
-          }
-        });
+        if (apiResponse?.status === 'Failed') {
+          throw new Error(JSON.stringify({ message: apiResponse.message, fileName: apiResponse.file_name }));
+        } else {
+          setFilesData((prevfiles) =>
+            prevfiles.map((curfile) => {
+              if (curfile.name === apiResponse?.file_name) {
+                return {
+                  ...curfile,
+                  status: 'New',
+                };
+              }
+              return curfile;
+            })
+          );
+        }
         setIsClicked(false);
         setIsLoading(false);
       } catch (err: any) {
-        setIsLoading(false);
-        setIsClicked(false);
-        setShowAlert(true);
-        setErrorMessage(err.message);
-        setFilesData((prevfiles) =>
-          prevfiles.map((curfile, idx) => {
-            if (idx == uid) {
-              return {
-                ...curfile,
-                status: 'Failed',
-                type: curfile.type?.split('/')[1]?.toUpperCase() ?? 'PDF',
-              };
-            }
-            return curfile;
-          })
-        );
+        if (err?.name === 'AxiosError') {
+          setShowAlert(true);
+          setErrorMessage(err.message);
+          setFilesData((prevfiles) =>
+            prevfiles.map((curfile, idx) => {
+              if (idx == uid) {
+                return {
+                  ...curfile,
+                  status: 'Failed',
+                };
+              }
+              return curfile;
+            })
+          );
+        } else {
+          setShowAlert(true);
+          const errordetail = JSON.parse(err.message);
+          setErrorMessage(errordetail.message);
+          setFilesData((prevfiles) =>
+            prevfiles.map((curfile) => {
+              if (curfile.name == errordetail.fileName) {
+                return {
+                  ...curfile,
+                  status: 'Failed',
+                  type: curfile.type?.split('/')[1]?.toUpperCase() ?? 'PDF',
+                };
+              }
+              return curfile;
+            })
+          );
+        }
       }
     }
   };

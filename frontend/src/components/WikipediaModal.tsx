@@ -29,9 +29,9 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
       NodesCount: 0,
       id: uuidv4(),
       relationshipCount: 0,
-      type: 'text',
+      type: 'TEXT',
       model: model,
-      fileSource: 'wikipedia',
+      fileSource: 'Wikipedia',
     };
     if (wikiQuery.length) {
       try {

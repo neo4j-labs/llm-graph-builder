@@ -176,7 +176,7 @@ export default function Chatbot(props: ChatbotProps) {
             fluid
             onChange={handleInputChange}
           />
-          <Button type='submit' loading={loading}>
+          <Button type='submit' disabled={loading}>
             Submit
           </Button>
         </form>
