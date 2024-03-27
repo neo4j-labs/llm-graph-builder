@@ -19,7 +19,6 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   const [showYoutubeModal, setShowYoutubeModal] = useState<boolean>(false);
   const [showGCSModal, setShowGCSModal] = useState<boolean>(false);
 
-
   useEffect(() => {
     async function getHealthStatus() {
       try {
@@ -51,11 +50,11 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
     setShowYoutubeModal(true);
   };
   const openGCSModal = () => {
-    setShowGCSModal(true)
-  }
+    setShowGCSModal(true);
+  };
   const hideGCSModal = () => {
-    setShowGCSModal(false)
-  }
+    setShowGCSModal(false);
+  };
   return (
     <div
       style={{
