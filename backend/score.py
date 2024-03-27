@@ -154,7 +154,7 @@ async def extract_knowledge_graph_from_file(
              
             
     else:
-        return {"job_status": "Failure", "error": "No file found"}
+        return {"status": "Failed", "error": "No file found"}
     
 
 @app.get("/sources_list")

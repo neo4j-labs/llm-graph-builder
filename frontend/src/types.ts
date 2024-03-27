@@ -89,8 +89,6 @@ export interface SourceNode {
   url?: string;
   awsAccessKeyId?: string;
   fileSource: string;
-  gcsBucket?: string;
-  gcsBucketFolder?: string;
 }
 export interface SideNavProps {
   openDrawer: () => void;

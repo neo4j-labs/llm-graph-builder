@@ -172,8 +172,6 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded, onInspect }) => {
                   id: uuidv4(),
                   source_url: item.url != 'None' && item?.url != '' ? item.url : '',
                   fileSource: item.fileSource ?? 'None',
-                  gcsBucket: item?.gcsBucket,
-                  gcsBucketFolder: item?.gcsBucketFolder,
                 });
               }
             });

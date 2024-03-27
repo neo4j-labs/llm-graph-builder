@@ -89,7 +89,7 @@ const DropZone: FunctionComponent = () => {
         );
         const apiResponse = await uploadAPI(file, userCredentials, model);
         if (apiResponse?.status === 'Failed') {
-          throw new Error(`message:${apiResponse.message},fileName:${apiResponse.file_name}`);
+          throw new Error(JSON.stringify({ message: apiResponse.message, fileName: apiResponse.file_name }));
         } else {
           setFilesData((prevfiles) =>
             prevfiles.map((curfile) => {
@@ -106,8 +106,6 @@ const DropZone: FunctionComponent = () => {
         setIsClicked(false);
         setIsLoading(false);
       } catch (err: any) {
-        const errorMessage = err.message;
-        const messageMatch = errorMessage.match(/message:(.*),fileName:(.*)/);
         if (err?.name === 'AxiosError') {
           setShowAlert(true);
           setErrorMessage(err.message);
@@ -123,13 +121,12 @@ const DropZone: FunctionComponent = () => {
             })
           );
         } else {
-          const message = messageMatch[1].trim();
-          const fileName = messageMatch[2].trim();
           setShowAlert(true);
-          setErrorMessage(message);
+          const errordetail = JSON.parse(err.message);
+          setErrorMessage(errordetail.message);
           setFilesData((prevfiles) =>
             prevfiles.map((curfile) => {
-              if (curfile.name == fileName) {
+              if (curfile.name == errordetail.fileName) {
                 return {
                   ...curfile,
                   status: 'Failed',
