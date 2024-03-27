@@ -151,6 +151,10 @@ async def extract_knowledge_graph_from_file(
             gcs_bucket_folder = gcs_bucket_folder,
             gcs_blob_filename = gcs_blob_filename
         )
+             
+            
+    else:
+        return {"job_status": "Failure", "error": "No file found"}
     
 
 @app.get("/sources_list")
