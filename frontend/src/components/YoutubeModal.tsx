@@ -1,5 +1,5 @@
 import { TextInput } from '@neo4j-ndl/react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { urlScanAPI } from '../services/URLScan';
@@ -14,9 +14,6 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
   const { setFiles, setFilesData, model, filesData, files } = useFileContext();
-  const reset = () => {
-    setYoutubeURL('');
-  };
   const submitHandler = async () => {
     const defaultValues: CustomFile = {
       processing: 0,
@@ -28,7 +25,6 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       model: model,
       fileSource: 'youtube',
     };
-
     if (!youtubeURL) {
       setStatus('danger');
       setStatusMessage('Please Fill the Valid YouTube link');
@@ -51,13 +47,12 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           setStatusMessage(apiResponse?.data.message);
           setTimeout(() => {
             setStatus('unknown');
-            reset();
+            setYoutubeURL('');
             hideModal();
           }, 5000);
         } else {
           setStatus('success');
           setStatusMessage(`Successfully Created Source Nodes for Link`);
-
           const copiedFilesData = [...filesData];
           const copiedFiles = [...files];
           apiResponse?.data?.file_name?.forEach((item) => {
@@ -94,7 +89,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           });
           setFilesData(copiedFilesData);
           setFiles(copiedFiles);
-          reset();
+          setYoutubeURL('');
         }
       } catch (error) {
         setStatus('danger');
@@ -107,11 +102,11 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       hideModal();
     }, 5000);
   };
-  const onClose = () => {
+  const onClose = useCallback(() => {
+    setYoutubeURL('');
     hideModal();
-    reset();
     setStatus('unknown');
-  };
+  }, []);
   return (
     <CustomModal
       open={open}
@@ -122,7 +117,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       status={status}
       submitLabel='Submit'
     >
-      <div style={{ width: '100%', display: 'inline-block' }}>
+      <div className='w-full inline-block'>
         <TextInput
           id='url'
           value={youtubeURL}

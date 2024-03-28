@@ -229,66 +229,36 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
   return (
     <>
-      <Dialog
-        modalProps={{
-          className: 'h-[90%]',
-          id: 'default-menu',
-        }}
-        size='unset'
-        open={open}
-        aria-labelledby='form-dialog-title'
-        disableCloseButton={false}
-        onClose={() => setGraphViewOpen(false)}
-      >
-        <Dialog.Header id='form-dialog-title'>
-          {headerTitle}
-          {viewPoint === 'showGraphView' ? (
-            <div className='flex gap-5 mt-2 justify-between'>
-              <div className='flex gap-5'>
-                <Checkbox
-                  checked={graphType.includes('Document')}
-                  label='Document'
-                  disabled={graphType.includes('Document') && graphType.length === 1}
-                  onChange={() => handleCheckboxChange('Document')}
-                />
-                <Checkbox
-                  checked={graphType.includes('Entities')}
-                  label='Entities'
-                  disabled={graphType.includes('Entities') && graphType.length === 1}
-                  onChange={() => handleCheckboxChange('Entities')}
-                />
-                <Checkbox
-                  checked={graphType.includes('Chunks')}
-                  label='Chunks'
-                  disabled={graphType.includes('Chunks') && graphType.length === 1}
-                  onChange={() => handleCheckboxChange('Chunks')}
-                />
-              </div>
-
-              <div>
-                <LimitDropdown onSelect={handleDropdownChange} isDisabled={false} />
-              </div>
-            </div>
-          ) : (
-            <div className='flex gap-5'>
-              <Checkbox
-                checked={graphType.includes('Document')}
-                label='Document'
-                disabled={graphType.includes('Document') && graphType.length === 1}
-                onChange={() => handleCheckboxChange('Document')}
-              />
-              <Checkbox
-                checked={graphType.includes('Entities')}
-                label='Entities'
-                disabled={graphType.includes('Entities') && graphType.length === 1}
-                onChange={() => handleCheckboxChange('Entities')}
-              />
-            </div>
-          )}
-        </Dialog.Header>
-        <Dialog.Content className='n-flex n-flex-col n-gap-token-4 w-full h-full'>
-          <div className='bg-palette-neutral-bg-default relative h-full w-full overflow-hidden'>
-            {loading ? (
+      <Dialog size='unset' open={open} aria-labelledby='form-dialog-title' disableCloseButton>
+        <Dialog.Header id='form-dialog-title'>{headerTitle}</Dialog.Header>
+        {viewPoint === 'showGraphView' && (
+          <div className='flex gap-2.5'>
+            <Radio
+              name='graphRadio'
+              checked={graphType === 'Knowledge Graph Entities'}
+              label='Knowledge Graph Entities'
+              value='Knowledge Graph Entities'
+              onChange={handleRadioChange}
+            />
+            <Radio
+              name='graphRadio'
+              checked={graphType === 'Document Structure'}
+              label='Document Structure'
+              onChange={handleRadioChange}
+              value='Document Structure'
+            />
+            <Radio
+              name='graphRadio'
+              checked={graphType === 'Document & Knowledge Graph'}
+              label='Document & Knowledge Graph'
+              value='Document & Knowledge Graph'
+              onChange={handleRadioChange}
+            />
+          </div>
+        )}
+        <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
+          <div className='w-full h-[600px]'>
+            {loading && (
               <div className='my-40 flex items-center justify-center'>
                 <LoadingSpinner size='large' />
               </div>

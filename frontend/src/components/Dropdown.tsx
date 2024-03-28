@@ -1,5 +1,6 @@
 import { Dropdown } from '@neo4j-ndl/react';
 import { DropdownProps, OptionType } from '../types';
+import { useMemo } from 'react';
 
 const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
   const handleChange = (selectedOption: OptionType | null | void) => {
@@ -8,7 +9,7 @@ const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
   const allOptions = ['LLM Model', 'Diffbot'];
   return (
     <>
-      <div style={{ width: '170px' }}>
+      <div style={{ width: '150px' }}>
         <Dropdown
           type='select'
           aria-label='A selection dropdown'

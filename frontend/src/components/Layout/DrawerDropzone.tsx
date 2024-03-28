@@ -1,6 +1,6 @@
 import { Drawer, Flex, StatusIndicator, Typography } from '@neo4j-ndl/react';
 import DropZone from '../DropZone';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { healthStatus } from '../../services/HealthStatus';
 import S3Component from '../S3Bucket';
 import S3Modal from '../S3Modal';
@@ -31,39 +31,32 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
     getHealthStatus();
   }, []);
 
-  const openModal = () => {
+  const openModal = useCallback(() => {
     setshowModal(true);
-  };
-  const hideModal = () => {
+  }, []);
+  const hideModal = useCallback(() => {
     setshowModal(false);
-  };
-  const openWikipediaModal = () => {
+  }, []);
+  const openWikipediaModal = useCallback(() => {
     setShowWikiepediaModal(true);
-  };
-  const closeWikipediaModal = () => {
+  }, []);
+  const closeWikipediaModal = useCallback(() => {
     setShowWikiepediaModal(false);
-  };
-  const hideYoutubeModal = () => {
+  }, []);
+  const hideYoutubeModal = useCallback(() => {
     setShowYoutubeModal(false);
-  };
-  const openYoutubeModal = () => {
+  }, []);
+  const openYoutubeModal = useCallback(() => {
     setShowYoutubeModal(true);
-  };
-  const openGCSModal = () => {
+  }, []);
+  const openGCSModal = useCallback(() => {
     setShowGCSModal(true);
-  };
-  const hideGCSModal = () => {
+  }, []);
+  const hideGCSModal = useCallback(() => {
     setShowGCSModal(false);
-  };
+  }, []);
   return (
-    <div
-      style={{
-        display: 'flex',
-        minHeight: '650px',
-        overflow: 'hidden',
-        position: 'relative',
-      }}
-    >
+    <div className='flex min-h-[650px] overflow-hidden relative'>
       <Drawer
         expanded={isExpanded}
         isResizeable={false}
@@ -72,15 +65,12 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
         closeable={false}
         key={'leftdrawer'}
       >
-        <Drawer.Body style={{ overflow: 'hidden', height: 'intial' }}>
+        <Drawer.Body className='!overflow-hidden' style={{ height: 'intial' }}>
           <div className='flex h-full flex-col'>
             <div className='relative h-full'>
               <div className='flex flex-col h-full'>
                 <div className='mx-6 flex flex-none items-center justify-between pb-6 '>
-                  <Typography
-                    variant='body-medium'
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
+                  <Typography variant='body-medium' className='flex items-center content-center'>
                     <Typography variant='body-medium'>
                       {!isBackendConnected ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
                     </Typography>

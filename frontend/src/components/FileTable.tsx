@@ -1,5 +1,5 @@
 import { DataGrid, DataGridComponents, IconButton, StatusIndicator } from '@neo4j-ndl/react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import React from 'react';
 import {
   useReactTable,
@@ -28,109 +28,116 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
 
-  const sourceFind = (name: any) => {
-    return filesData.find((f) => {
-      return f.name === name;
-    });
-  };
-  const columns = [
-    columnHelper.accessor((row) => row.name, {
-      id: 'name',
-      cell: (info) => {
-        const sourceFindVal = sourceFind(info.getValue());
-        return (
-          <div className='textellipsis'>
-            <span
-              title={
-                sourceFindVal?.fileSource === 's3 bucket'
-                  ? sourceFindVal?.source_url
-                  : sourceFindVal?.fileSource === 'youtube'
-                  ? sourceFindVal?.source_url
-                  : info.getValue()
-              }
-            >
-              {info.getValue()}
-            </span>
+  const sourceFind = useCallback(
+    (name: any) => {
+      return filesData.find((f) => {
+        return f.name === name;
+      });
+    },
+    [filesData]
+  );
+
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor((row) => row.name, {
+        id: 'name',
+        cell: (info) => {
+          const sourceFindVal = sourceFind(info.getValue());
+          return (
+            <div className='textellipsis'>
+              <span
+                title={
+                  sourceFindVal?.fileSource === 's3 bucket'
+                    ? sourceFindVal?.source_url
+                    : sourceFindVal?.fileSource === 'youtube'
+                    ? sourceFindVal?.source_url
+                    : info.getValue()
+                }
+              >
+                {info.getValue()}
+              </span>
+            </div>
+          );
+        },
+        header: () => <span>Name</span>,
+        footer: (info) => info.column.id,
+      }),
+      columnHelper.accessor((row) => row.status, {
+        id: 'status',
+        cell: (info) => (
+          <div>
+            <StatusIndicator type={statusCheck(info.getValue())} />
+            <i>{info.getValue()}</i>
           </div>
-        );
-      },
-      header: () => <span>Name</span>,
-      footer: (info) => info.column.id,
-    }),
-    columnHelper.accessor((row) => row.status, {
-      id: 'status',
-      cell: (info) => (
-        <div>
-          <StatusIndicator type={statusCheck(info.getValue())} />
-          <i>{info.getValue()}</i>
-        </div>
-      ),
-      header: () => <span>Status</span>,
-      footer: (info) => info.column.id,
-      filterFn: 'statusFilter' as any,
-      size: 200,
-    }),
-    columnHelper.accessor((row) => row.size, {
-      id: 'fileSize',
-      cell: (info: any) => <i>{(info?.getValue() / 1000)?.toFixed(2)}</i>,
-      header: () => <span>Size (KB)</span>,
-      footer: (info) => info.column.id,
-    }),
-    columnHelper.accessor((row) => row.type, {
-      id: 'fileType',
-      cell: (info) => <i>{info.getValue()}</i>,
-      header: () => <span>Type</span>,
-      footer: (info) => info.column.id,
-    }),
-    columnHelper.accessor((row) => row.fileSource, {
-      id: 'source',
-      cell: (info) => <i>{info.getValue()}</i>,
-      header: () => <span>Source</span>,
-      footer: (info) => info.column.id,
-    }),
-    columnHelper.accessor((row) => row.model, {
-      id: 'model',
-      cell: (info) => <i>{info.getValue()}</i>,
-      header: () => <span>Model</span>,
-      footer: (info) => info.column.id,
-    }),
-    columnHelper.accessor((row) => row.NodesCount, {
-      id: 'NodesCount',
-      cell: (info) => <i>{info.getValue()}</i>,
-      header: () => <span>Nodes</span>,
-      footer: (info) => info.column.id,
-    }),
-    columnHelper.accessor((row) => row.relationshipCount, {
-      id: 'relationshipCount',
-      cell: (info) => <i>{info.getValue()}</i>,
-      header: () => <span>Relations</span>,
-      footer: (info) => info.column.id,
-    }),
-    columnHelper.accessor((row) => row.processing, {
-      id: 'processing',
-      cell: (info) => <i>{info.getValue()}</i>,
-      header: () => <span>Duration (s)</span>,
-      footer: (info) => info.column.id,
-    }),
-    columnHelper.accessor((row) => row.status, {
-      id: 'inspect',
-      cell: (info) => (
-        <>
-          <IconButton
-            aria-label='Toggle settings'
-            size='large'
-            disabled={statusCheck(info.getValue()) !== 'success'}
-            clean
-            onClick={() => onInspect(info.row.original.name)}
-          >
-            <MagnifyingGlassCircleIconSolid />
-          </IconButton>
-        </>
-      ),
-      header: () => <span>View</span>,
-      footer: (info) => info.column.id,
-    }),
-  ];
+        ),
+        header: () => <span>Status</span>,
+        footer: (info) => info.column.id,
+        filterFn: 'statusFilter' as any,
+        size: 200,
+      }),
+      columnHelper.accessor((row) => row.size, {
+        id: 'fileSize',
+        cell: (info: any) => <i>{(info?.getValue() / 1000)?.toFixed(2)}</i>,
+        header: () => <span>Size (KB)</span>,
+        footer: (info) => info.column.id,
+      }),
+      columnHelper.accessor((row) => row.type, {
+        id: 'fileType',
+        cell: (info) => <i>{info.getValue()}</i>,
+        header: () => <span>Type</span>,
+        footer: (info) => info.column.id,
+      }),
+      columnHelper.accessor((row) => row.fileSource, {
+        id: 'source',
+        cell: (info) => <i>{info.getValue()}</i>,
+        header: () => <span>Source</span>,
+        footer: (info) => info.column.id,
+      }),
+      columnHelper.accessor((row) => row.model, {
+        id: 'model',
+        cell: (info) => <i>{info.getValue()}</i>,
+        header: () => <span>Model</span>,
+        footer: (info) => info.column.id,
+      }),
+      columnHelper.accessor((row) => row.NodesCount, {
+        id: 'NodesCount',
+        cell: (info) => <i>{info.getValue()}</i>,
+        header: () => <span>Nodes</span>,
+        footer: (info) => info.column.id,
+      }),
+      columnHelper.accessor((row) => row.relationshipCount, {
+        id: 'relationshipCount',
+        cell: (info) => <i>{info.getValue()}</i>,
+        header: () => <span>Relations</span>,
+        footer: (info) => info.column.id,
+      }),
+      columnHelper.accessor((row) => row.processing, {
+        id: 'processing',
+        cell: (info) => <i>{info.getValue()}</i>,
+        header: () => <span>Duration (s)</span>,
+        footer: (info) => info.column.id,
+      }),
+      columnHelper.accessor((row) => row.status, {
+        id: 'inspect',
+        cell: (info) => (
+          <>
+            <IconButton
+              aria-label='Toggle settings'
+              size='large'
+              disabled={statusCheck(info.getValue()) !== 'success'}
+              clean
+              onClick={() => onInspect(info.row.original.name)}
+            >
+              <MagnifyingGlassCircleIconSolid />
+            </IconButton>
+          </>
+        ),
+        header: () => <span>View</span>,
+        footer: (info) => info.column.id,
+      }),
+    ],
+    []
+  );
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -168,8 +175,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   id: uuidv4(),
                   source_url: item.url != 'None' && item?.url != '' ? item.url : '',
                   fileSource: item.fileSource ?? 'None',
-                  gcsBucket:item?.gcsBucket,
-                  gcsBucketFolder:item?.gcsBucketFolder
+                  gcsBucket: item?.gcsBucket,
+                  gcsBucketFolder: item?.gcsBucketFolder,
                 });
               }
             });
@@ -239,7 +246,6 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
   useEffect(() => {
     const listener = (e: any) => {
       setcurrentOuterHeight(e.currentTarget.outerHeight);
-      // setcurrentOuterWidth(e.currentTarget.outerWidth);
       table.setPageSize(Math.floor((e.currentTarget.outerHeight - 402) / 45));
     };
     window.addEventListener('resize', listener);
