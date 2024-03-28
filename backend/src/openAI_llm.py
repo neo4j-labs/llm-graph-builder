@@ -366,3 +366,27 @@ def extract_graph_from_OpenAI(model_version,
             relationship_cypher_list.extend(lst_cypher_queries_chunk_relationship)
     graph.refresh_schema()    
     return graph_document_list, relationship_cypher_list
+
+def get_graph_from_OpenAI(model_version,graph,chunks):
+    futures=[]
+    graph_document_list=[]
+    llm = ChatOpenAI(model= model_version, temperature=0)
+    llm_transformer = LLMGraphTransformer(llm=llm)
+    
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        for chunk_document in chunks:
+            futures.append(executor.submit(llm_transformer.convert_to_graph_documents,[chunk_document]))   
+        
+        for i, future in enumerate(concurrent.futures.as_completed(futures)):
+            graph_document = future.result()
+            for node in graph_document[0].nodes:
+                node.id = node.id.title().replace(' ','_')
+                #replace all non alphanumeric characters and spaces with underscore
+                node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
+            graph_document_list.append(graph_document[0])
+        
+        graph.add_graph_documents(graph_document_list)
+    return  graph_document_list           
+        
+    
+    

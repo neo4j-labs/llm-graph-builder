@@ -114,10 +114,7 @@ async def extract_knowledge_graph_from_file(
             password,
             model,
             database,
-            file=file,
-            source_url=None,
-            wiki_query=wiki_query,
-            max_sources=max_sources,
+            file=file
         )
     elif source_url:
         return await asyncio.to_thread(
@@ -155,10 +152,6 @@ async def extract_knowledge_graph_from_file(
             gcs_bucket_folder = gcs_bucket_folder,
             gcs_blob_filename = gcs_blob_filename
         )
-             
-            
-    else:
-        return {"job_status": "Failure", "error": "No file found"}
     
 
 @app.get("/sources_list")
