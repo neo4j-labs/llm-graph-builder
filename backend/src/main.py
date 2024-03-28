@@ -8,6 +8,8 @@ from langchain_text_splitters import TokenTextSplitter
 from tqdm import tqdm
 from src.diffbot_transformer import extract_graph_from_diffbot
 from src.openAI_llm import extract_graph_from_OpenAI
+from src.create_chunks import CreateChunksofDocument
+from src.generate_graphDocuments import generate_graphDocuments
 from typing import List
 from langchain_community.document_loaders import S3DirectoryLoader
 import boto3
@@ -441,9 +443,13 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
           text = text.replace(j, '')
       pages[i]=Document(page_content=str(text))
     logging.info("Break down file into chunks")
-    chunks = file_into_chunks(pages)
+    #chunks = file_into_chunks(pages)
+    create_chunks_obj = CreateChunksofDocument(pages, graph, file_name)
+    chunks = create_chunks_obj.split_file_into_chunks()
     
     logging.info("Get graph document list from models")
+    graph_documents =  generate_graphDocuments(model, graph, chunks) 
+    
     if model == 'Diffbot' :
       graph_documents, cypher_list = extract_graph_from_diffbot(graph,chunks,file_name,uri,userName,password)
       
