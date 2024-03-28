@@ -157,3 +157,5 @@ export interface GraphViewModalProps {
   setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
   viewPoint: string;
 }
+
+export type GraphType = 'Document' | 'Chunks' | 'Entities';
