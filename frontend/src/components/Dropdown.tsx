@@ -5,18 +5,18 @@ const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
   };
-  const allOptions = ['OpenAI GPT 3.5', 'Diffbot'];
+  const allOptions = ['LLM Model', 'Diffbot'];
   return (
     <>
-      <div style={{ width: '150px' }}>
+      <div style={{ width: '170px' }}>
         <Dropdown
           type='select'
           aria-label='A selection dropdown'
           selectProps={{
             onChange: handleChange,
             options: allOptions.map((option) => ({ label: option, value: option })),
-            placeholder: 'Select Model',
-            defaultValue: { label: 'OpenAI GPT 3.5', value: 'OpenAI GPT 3.5' },
+            placeholder: 'Select LLM Model',
+            defaultValue: { label: 'LLM Model', value: 'LLM Model' },
             menuPlacement: 'auto',
             isDisabled,
           }}
