@@ -102,7 +102,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               return curfile;
             })
           );
-          throw new Error(JSON.stringify({ message: apiResponse.message, fileName: apiResponse.file_name }));
+          throw new Error(`message:${apiResponse.message},fileName:${apiResponse.file_name}`);
         } else {
           setFilesData((prevfiles) => {
             return prevfiles.map((curfile) => {
@@ -122,6 +122,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           });
         }
       } catch (err: any) {
+        const errorMessage = err.message;
+        const messageMatch = errorMessage.match(/message:(.*),fileName:(.*)/);
         if (err?.name === 'AxiosError') {
           setShowAlert(true);
           setErrorMessage(err.message);
@@ -137,12 +139,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             })
           );
         } else {
+          const message = messageMatch[1].trim();
+          const fileName = messageMatch[2].trim();
           setShowAlert(true);
-          const errordetail = JSON.parse(err.message);
-          setErrorMessage(errordetail.message);
+          setErrorMessage(message);
           setFilesData((prevfiles) =>
             prevfiles.map((curfile) => {
-              if (curfile.name == errordetail.fileName) {
+              if (curfile.name == fileName) {
                 return {
                   ...curfile,
                   status: 'Failed',

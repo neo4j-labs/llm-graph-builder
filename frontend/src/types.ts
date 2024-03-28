@@ -1,7 +1,7 @@
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 
 export interface CustomFile extends Partial<globalThis.File> {
-  processing: number|string;
+  processing: number | string;
   status: string;
   NodesCount: number;
   id: string;

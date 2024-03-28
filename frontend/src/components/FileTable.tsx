@@ -1,5 +1,5 @@
-import { DataGrid, DataGridComponents, IconButton, StatusIndicator, TextLink } from '@neo4j-ndl/react';
-import { useEffect, useMemo, useState } from 'react';
+import { DataGrid, DataGridComponents, IconButton, StatusIndicator } from '@neo4j-ndl/react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import React from 'react';
 import {
   useReactTable,
@@ -26,19 +26,29 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded, onInspect }) => {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
 
+  const sourceFind = useCallback(
+    (name: any) => {
+      return filesData.find((f) => {
+        return f.name === name;
+      });
+    },
+    [filesData]
+  );
+
   const columns = useMemo(
     () => [
       columnHelper.accessor((row) => row.name, {
         id: 'name',
         cell: (info) => {
+          const sourceFindVal = sourceFind(info.getValue());
           return (
             <div className='textellipsis'>
               <span
                 title={
-                  info.row.original?.fileSource === 's3 bucket'
-                    ? info.row.original?.source_url
-                    : info.row.original?.fileSource === 'youtube'
-                    ? info.row.original?.source_url
+                  sourceFindVal?.fileSource === 's3 bucket'
+                    ? sourceFindVal?.source_url
+                    : sourceFindVal?.fileSource === 'youtube'
+                    ? sourceFindVal?.source_url
                     : info.getValue()
                 }
               >
@@ -77,16 +87,7 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded, onInspect }) => {
       }),
       columnHelper.accessor((row) => row.fileSource, {
         id: 'source',
-        cell: (info) => {
-          if (info.row.original.fileSource === 'youtube' || info.row.original.fileSource === 'Wikipedia') {
-            return (
-              <TextLink externalLink href={info.row.original.source_url}>
-                {info.getValue()}
-              </TextLink>
-            );
-          } 
-          return <i>{info.getValue()}</i>;
-        },
+        cell: (info) => <i>{info.getValue()}</i>,
         header: () => <span>Source</span>,
         footer: (info) => info.column.id,
       }),
@@ -172,8 +173,8 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded, onInspect }) => {
                   id: uuidv4(),
                   source_url: item.url != 'None' && item?.url != '' ? item.url : '',
                   fileSource: item.fileSource ?? 'None',
-                  gcsBucket:item?.gcsBucket,
-                  gcsBucketFolder:item?.gcsBucketFolder
+                  gcsBucket: item?.gcsBucket,
+                  gcsBucketFolder: item?.gcsBucketFolder,
                 });
               }
             });

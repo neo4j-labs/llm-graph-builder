@@ -6,10 +6,10 @@ const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
   };
-  const allOptions = ['LLM Model', 'Diffbot'];
+  const allOptions = useMemo(() => ['OpenAI GPT 3.5', 'Diffbot'], []);
   return (
     <>
-      <div style={{ width: '170px' }}>
+      <div className='w-[150px]'>
         <Dropdown
           type='select'
           aria-label='A selection dropdown'
