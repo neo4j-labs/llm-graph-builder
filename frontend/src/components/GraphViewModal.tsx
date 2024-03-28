@@ -285,7 +285,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       <Dialog size='unset' open={open} aria-labelledby='form-dialog-title' disableCloseButton>
         <Dialog.Header id='form-dialog-title'>{headerTitle}</Dialog.Header>
         {viewPoint === 'showGraphView' && (
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div className='flex gap-2.5'>
             <Radio
               name='graphRadio'
               checked={graphType === 'Knowledge Graph Entities'}
@@ -310,7 +310,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           </div>
         )}
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
-          <div style={{ width: '100%', height: '600px' }}>
+          <div className='w-full h-[600px]'>
             {loading && (
               <div className='my-40 flex items-center justify-center'>
                 <LoadingSpinner size='large' />

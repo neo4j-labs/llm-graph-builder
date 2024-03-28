@@ -21,8 +21,8 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [loading, setLoading] = useState<boolean>(false);
-
   const [port, setPort] = useState<string>(localStorage.getItem('port') ?? '7687');
+
   const submitConnection = async () => {
     const connectionURI = `${selectedProtocol}://${hostname}:${port}`;
     setUserCredentials({ uri: connectionURI, userName: username, password: password, database: database });
@@ -73,10 +73,10 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
                 options: protocols.map((option) => ({ label: option, value: option })),
                 value: { label: selectedProtocol, value: selectedProtocol },
               }}
-              style={{ width: '25%', display: 'inline-block' }}
+              className='connectionmodal__protocal__input'
               fluid
             />
-            <div style={{ marginLeft: '2.5%', width: '55%', marginRight: '2.5%', display: 'inline-block' }}>
+            <div className='connectionmodal__hostname__input'>
               <TextInput
                 id='url'
                 value={hostname}
@@ -87,7 +87,7 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
                 onChange={(e) => setHostname(e.target.value)}
               />
             </div>
-            <div style={{ width: '15%', display: 'inline-block' }}>
+            <div className='connectionmodal__port__input'>
               <TextInput
                 id='port'
                 value={port}
@@ -110,7 +110,7 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
             onChange={(e) => setDatabase(e.target.value)}
           />
           <div className='n-flex n-flex-row n-flex-wrap'>
-            <div style={{ width: '48.5%', marginRight: '1.5%', display: 'inline-block' }}>
+            <div className='connectionmodal__input'>
               <TextInput
                 id='username'
                 value={username}
@@ -121,7 +121,7 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
                 onChange={(e) => setUsername(e.target.value)}
               />
             </div>
-            <div style={{ width: '48.5%', marginLeft: '1.5%', display: 'inline-block' }}>
+            <div className='connectionmodal__input'>
               <TextInput
                 id='password'
                 value={password}

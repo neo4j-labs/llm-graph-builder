@@ -1,4 +1,4 @@
-import gcslogo from '../assets/images/gcs.jfif';
+import gcslogo from '../assets/images/gcs.webp';
 import { DataComponentProps } from '../types';
 import CustomButton from './CustomButton';
 const GCSButton: React.FC<DataComponentProps> = ({ openModal }) => {

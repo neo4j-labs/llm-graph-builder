@@ -151,7 +151,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       setStatus={setStatus}
       submitLabel='Submit'
     >
-      <div style={{ width: '100%', display: 'inline-block' }}>
+      <div className='w-full inline-block'>
         <TextInput
           id='url'
           value={bucketUrl}
