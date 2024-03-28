@@ -1,14 +1,15 @@
 import { Dropdown } from '@neo4j-ndl/react';
 import { DropdownProps, OptionType } from '../types';
+import { useMemo } from 'react';
 
 const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
   };
-  const allOptions = ['OpenAI GPT 3.5', 'Diffbot'];
+  const allOptions = useMemo(() => ['OpenAI GPT 3.5', 'Diffbot'], []);
   return (
     <>
-      <div style={{ width: '150px' }}>
+      <div className='w-[150px]'>
         <Dropdown
           type='select'
           aria-label='A selection dropdown'

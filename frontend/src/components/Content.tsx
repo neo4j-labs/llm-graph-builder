@@ -103,7 +103,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               return curfile;
             })
           );
-          throw new Error(JSON.stringify({ message: apiResponse.message, fileName: apiResponse.file_name }));
+          throw new Error(`message:${apiResponse.message},fileName:${apiResponse.file_name}`);
         } else {
           setFilesData((prevfiles) => {
             return prevfiles.map((curfile) => {
@@ -123,6 +123,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           });
         }
       } catch (err: any) {
+        const errorMessage = err.message;
+        const messageMatch = errorMessage.match(/message:(.*),fileName:(.*)/);
         if (err?.name === 'AxiosError') {
           setShowAlert(true);
           setErrorMessage(err.message);
@@ -138,12 +140,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             })
           );
         } else {
+          const message = messageMatch[1].trim();
+          const fileName = messageMatch[2].trim();
           setShowAlert(true);
-          const errordetail = JSON.parse(err.message);
-          setErrorMessage(errordetail.message);
+          setErrorMessage(message);
           setFilesData((prevfiles) =>
             prevfiles.map((curfile) => {
-              if (curfile.name == errordetail.fileName) {
+              if (curfile.name == fileName) {
                 return {
                   ...curfile,
                   status: 'Failed',
@@ -198,16 +201,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
 
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
-        <Flex className='w-full' alignItems='center' justifyContent='space-between' style={{ flexFlow: 'row' }}>
+        <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>
           <ConnectionModal
             open={openConnection}
             setOpenConnection={setOpenConnection}
             setConnectionStatus={setConnectionStatus}
           />
-          <Typography
-            variant='body-medium'
-            style={{ display: 'flex', padding: '20px', alignItems: 'center', justifyContent: 'center' }}
-          >
+          <Typography variant='body-medium' className='connectionstatus__container'>
             <Typography variant='body-medium'>
               {!connectionStatus ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
             </Typography>
@@ -242,13 +242,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             setViewPoint('tableView');
           }}
         ></FileTable>
-        <Flex
-          className='w-full p-2.5 absolute bottom-4'
-          justifyContent='space-between'
-          style={{ flexFlow: 'row', marginTop: '5px', alignSelf: 'flex-start' }}
-        >
+        <Flex className='w-full p-2.5 absolute bottom-4 flex-row mt-1.5 self-start' justifyContent='space-between'>
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
-          <Flex flexDirection='row' gap='4' style={{ alignSelf: 'flex-end' }}>
+          <Flex flexDirection='row' gap='4' className='self-end'>
             <Button
               loading={filesData.some((f) => f?.status === 'Processing')}
               disabled={disableCheck}

@@ -6,35 +6,28 @@ import { Typography, IconButton, Button } from '@neo4j-ndl/react';
 export default function Header({ themeMode, toggleTheme }: { themeMode: string; toggleTheme: () => void }) {
   return (
     <div
-      className='n-bg-palette-neutral-bg-weak'
-      style={{ padding: '4px', borderBottom: '2px solid rgb(var(--theme-palette-neutral-border-weak))' }}
+      className='n-bg-palette-neutral-bg-weak p-1'
+      style={{ borderBottom: '2px solid rgb(var(--theme-palette-neutral-border-weak))' }}
     >
       <nav
-        className='flex items-center justify-between'
+        className='flex items-center justify-between flex-row'
         role='navigation'
         data-testid='navigation'
         id='navigation'
         aria-label='main navigation'
-        style={{ display: 'flex', flexDirection: 'row' }}
       >
-        <section
-          className='flex w-1/3 shrink-0 grow-0'
-          style={{ display: 'flex', minWidth: `200px`, flexGrow: 1, alignItems: 'center' }}
-        >
+        <section className='flex w-1/3 shrink-0 grow-0 items-center grow min-w-[200px]'>
           <Typography variant='h6' component='a' href='#app-bar-with-responsive-menu' sx={{}}>
             <img
               src={themeMode === 'dark' ? Neo4jLogoBW : Neo4jLogoColor}
-              style={{ height: '32px', minHeight: '32px', minWidth: '32px' }}
+              className='h-8 min-h-8 min-w-8'
               alt='Neo4j Logo'
             />
           </Typography>
         </section>
-        <section className='items-center justify-end w-1/3 grow-0 flex' style={{ flexGrow: 0 }}>
+        <section className='items-center justify-end w-1/3 grow-0 flex'>
           <div>
-            <div
-              className='inline-flex gap-x-1'
-              style={{ display: 'flex', flexGrow: 0, alignItems: 'center', gap: '4px' }}
-            >
+            <div className='inline-flex gap-x-1 flex grow-0 items-center gap-1'>
               <Button href='https://github.com/neo4j-labs/llm-graph-builder/issues' fill='outlined' target='_blank'>
                 Github Issues
               </Button>
