@@ -1,135 +1,18 @@
-import { Banner, Button, Checkbox, Dialog, LoadingSpinner } from '@neo4j-ndl/react';
+import { Banner, Checkbox, Dialog, IconButtonArray, LoadingSpinner } from '@neo4j-ndl/react';
 import { useEffect, useRef, useState } from 'react';
-import { GraphViewModalProps } from '../types';
+import { GraphType, GraphViewModalProps } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL, { NvlOptions } from '@neo4j-nvl/core';
 import { driver } from '../utils/Driver';
-
-type GraphType = 'Document' | 'Chunks' | 'Entities';
-
-const uniqueElementsForDocQuery = `
-// Finds a document with chunks & entities. Transforms path objects to return a list of unique nodes and relationships.
-MATCH p=(n:Document)<-[:PART_OF]-(:Chunk)-[:HAS_ENTITY]-()-[*0..1]-()
-WHERE n.fileName = $document_name
-WITH nodes(p) as nodes, relationships(p) as rels
-UNWIND nodes as node
-WITH  collect(DISTINCT node) as nodes, collect(rels) as relslist
-UNWIND relslist as rels
-UNWIND rels as rel
-WITH  nodes, collect(DISTINCT rel) as rels
-RETURN nodes, rels`;
-
-const pureDocument = `
-MATCH docs = (d:Document {status:'Completed'}) 
-WITH docs, d ORDER BY d.createdAt DESC 
-LIMIT 5
-OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
-WITH docs, chunks,
-collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } as chain, 
-collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } as similiar
-WITH [docs] + [chunks] + chain + similiar as paths 
-CALL { WITH paths UNWIND paths AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }
-CALL { WITH paths UNWIND paths AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) as rels }
-RETURN nodes, rels
- `;
-
-const entities = `
-MATCH (d:Document {status:'Completed'}) 
-WITH d ORDER BY d.createdAt DESC 
-LIMIT 5
-MATCH docs=(d)<-[:PART_OF]-(c:Chunk)
-WITH docs, collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)--(:!Chunk) RETURN p } as entities,
-collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } as chain, 
-collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } as chunks
-WITH entities + chain + chunks + [docs] as paths 
-CALL { WITH paths UNWIND paths AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }
-CALL { WITH paths UNWIND paths AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) as rels }
-RETURN nodes, rels`;
-
-const knowledgeGraph = `
-MATCH (d:Document {status:'Completed'}) 
-WITH d ORDER BY d.createdAt DESC
-LIMIT 5
-MATCH (d)<-[:PART_OF]-(c:Chunk)
-WITH 
-collect { OPTIONAL MATCH (c)-[:HAS_ENTITY]->(e), p=(e)--(:!Chunk) RETURN p } as entities
-CALL { WITH entities UNWIND entities AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }
-CALL { WITH entities UNWIND entities AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) as rels }
-RETURN nodes, rels`;
-
-const singleQuery = `MATCH docs = (d:Document {status:'Completed'}) 
-// WHERE d.fileName = $fileName
-WITH docs, d ORDER BY d.createdAt DESC 
-LIMIT 5
-OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
-WITH [] 
-// if documents:
- + [docs] // documents
-// if chunks:
-+ [chunks] // documents with chunks
-+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
-+ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
-+ collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)--(:!Chunk) RETURN p } // chunks and entities
-// if entites and not chunks:
-+ collect { MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)--(:!Chunk) RETURN p } // only entities
-AS paths
-CALL { WITH paths UNWIND paths AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }
-CALL { WITH paths UNWIND paths AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) as rels }
-RETURN nodes, rels`;
-
-const queryMap: any = {
-  'Document': pureDocument,
-  'Chunks': entities,
-  'Entities': knowledgeGraph,
-};
-
-const colors = [
-  '#588c7e',
-  '#f2e394',
-  '#f2ae72',
-  '#d96459',
-  '#5b9aa0',
-  '#d6d4e0',
-  '#b8a9c9',
-  '#622569',
-  '#ddd5af',
-  '#d9ad7c',
-  '#a2836e',
-  '#674d3c',
-];
-
-const getNodeCaption = (node: any) => {
-  if (node.properties.name) {
-    return node.properties.name;
-  }
-  if (node.properties.text) {
-    return node.properties.text;
-  }
-  if (node.properties.fileName) {
-    return node.properties.fileName;
-  }
-  return node.elementId;
-};
-
-const getIcon = (node: any) => {
-  if (node.labels[0] == 'Document') {
-    return 'paginate-filter-text.svg';
-  }
-  if (node.labels[0] == 'Chunk') {
-    return 'paragraph-left-align.svg';
-  }
-  return undefined;
-};
-
-const getSize = (node: any) => {
-  if (node.labels[0] == 'Document') {
-    return 40;
-  }
-  if (node.labels[0] == 'Chunk') {
-    return 30;
-  }
-  return undefined;
-};
+import {
+  FitToScreenIcon,
+  MagnifyingGlassMinusIconOutline,
+  MagnifyingGlassPlusIconOutline,
+} from '@neo4j-ndl/react/icons';
+import ButtonWithToolTip from './ButtonWithToolTip';
+import { constructDocQuery, constructQuery, getNodeCaption, getSize } from '../utils/Utils';
+import { colors, entities, knowledgeGraph, document } from '../utils/Constants';
+import LimitDropdown from './LimitDropdown';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -137,31 +20,41 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   setGraphViewOpen,
   viewPoint,
 }) => {
-  // const divRef = useRef<HTMLDivElement>(null);
   const nvlRef = useRef<NVL>(null);
   const [nodes, setNodes] = useState<any[]>([]);
   const [relationships, setRelationships] = useState([]);
-  const [graphType, setGraphType] = useState<string>('Document');
+  const [graphType, setGraphType] = useState<GraphType[]>(['Entities']);
   const [loading, setLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<'unknown' | 'success' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
+  const [docLimit, setDocLimit] = useState<string>('5');
 
   const handleCheckboxChange = (graph: GraphType) => {
-    // const currentIndex = graphType.indexOf(graph);
-    // const newGraphSelected = [...graphType];
-    // if (currentIndex === -1) {
-    //   newGraphSelected.push(graph);
-    // } else {
-    //   newGraphSelected.splice(currentIndex, 1);
-    // }
-    setGraphType(graph);
+    const currentIndex = graphType.indexOf(graph);
+    const newGraphSelected = [...graphType];
+    if (currentIndex === -1) {
+      newGraphSelected.push(graph);
+    } else {
+      newGraphSelected.splice(currentIndex, 1);
+    }
+    setGraphType(newGraphSelected);
+  };
+
+  const queryMap: any = {
+    Document: document,
+    Chunks: knowledgeGraph,
+    Entities: entities,
   };
 
   useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      handleZoomToFit();
+    }, 1000);
     return () => {
       //@ts-ignore
       nvlRef.current?.destroy();
-      setGraphType('Document');
+      setGraphType(['Entities']);
+      clearTimeout(timeoutId);
     };
   }, []);
 
@@ -171,9 +64,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setRelationships([]);
       let queryToRun = '';
       if (viewPoint === 'tableView') {
-        queryToRun = uniqueElementsForDocQuery;
+        const newQuery: any = graphType.map((option) => queryMap[option]).join(' ');
+        queryToRun = constructDocQuery(newQuery);
       } else {
-        queryToRun = queryMap[graphType];
+        const newQuery: any = graphType.map((option) => queryMap[option]).join(' ');
+        queryToRun = constructQuery(newQuery, docLimit);
       }
 
       const session = driver.session();
@@ -206,8 +101,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 size: getSize(n),
                 captionAlign: 'bottom',
                 captionHtml: <b>Test</b>,
-                iconAlign: 'bottom',
-                icon: getIcon(n),
                 caption: getNodeCaption(n),
                 color: scheme[n.labels[0]],
               };
@@ -246,10 +139,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 return {
                   id: g.elementId,
                   size: getSize(g),
-                  captionAlign: 'bottom',
+                  captionAlign: 'top',
                   captionHtml: <b>Test</b>,
-                  iconAlign: 'bottom',
-                  icon: getIcon(g),
                   caption: getNodeCaption(g),
                   color: scheme[g.labels[0]],
                 };
@@ -282,7 +173,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           setStatusMessage(error.message);
         });
     }
-  }, [open, graphType]);
+  }, [open, graphType, docLimit]);
 
   // If the modal is closed, render nothing
   if (!open) {
@@ -303,6 +194,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     selectionBehaviour: 'single',
     useWebGL: false,
     instanceId: 'graph-preview',
+    initialZoom: 0,
   };
 
   const headerTitle =
@@ -311,7 +203,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const handleZoomToFit = () => {
     nvlRef.current?.fit(
       nodes.map((node) => node.id),
-      {},
+      {}
     );
   };
 
@@ -323,34 +215,84 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     },
   };
 
+  const handleZoomIn = () => {
+    nvlRef.current?.setZoom(nvlRef.current.getScale() * 1.3);
+  };
+
+  const handleZoomOut = () => {
+    nvlRef.current?.setZoom(nvlRef.current.getScale() * 0.7);
+  };
+
+  const handleDropdownChange = (option: any) => {
+    setDocLimit(option.value);
+  };
+
   return (
     <>
-      <Dialog size='unset' open={open} aria-labelledby='form-dialog-title' disableCloseButton>
-        <Dialog.Header id='form-dialog-title'>{headerTitle}</Dialog.Header>
-        {viewPoint === 'showGraphView' && (
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Checkbox
-              checked={graphType.includes('Document')}
-              label='Document'
-              onChange={() => handleCheckboxChange('Document')} />
-            <Checkbox
-              checked={graphType.includes('Entities')}
-              label='Entities'
-              onChange={() => handleCheckboxChange('Entities')} />
-            <Checkbox
-              checked={graphType.includes('Chunks')}
-              label='Chunks'
-              onChange={() => handleCheckboxChange('Chunks')} />
-          </div>
-        )}
-        <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
-          <div style={{ height: '600px', border: '1px solid red' }}>
-            {loading && (
+      <Dialog
+        modalProps={{
+          className: 'h-[90%]',
+          id: 'default-menu',
+        }}
+        size='unset'
+        open={open}
+        aria-labelledby='form-dialog-title'
+        disableCloseButton={false}
+        onClose={() => setGraphViewOpen(false)}
+      >
+        <Dialog.Header id='form-dialog-title'>
+          {headerTitle}
+          {viewPoint === 'showGraphView' ? (
+            <div className='flex gap-5 mt-2 justify-between'>
+              <div className='flex gap-5'>
+                <Checkbox
+                  checked={graphType.includes('Document')}
+                  label='Document'
+                  disabled={graphType.includes('Document') && graphType.length === 1}
+                  onChange={() => handleCheckboxChange('Document')}
+                />
+                <Checkbox
+                  checked={graphType.includes('Entities')}
+                  label='Entities'
+                  disabled={graphType.includes('Entities') && graphType.length === 1}
+                  onChange={() => handleCheckboxChange('Entities')}
+                />
+                <Checkbox
+                  checked={graphType.includes('Chunks')}
+                  label='Chunks'
+                  disabled={graphType.includes('Chunks') && graphType.length === 1}
+                  onChange={() => handleCheckboxChange('Chunks')}
+                />
+              </div>
+
+              <div>
+                <LimitDropdown onSelect={handleDropdownChange} isDisabled={false} />
+              </div>
+            </div>
+          ) : (
+            <div className='flex gap-5'>
+              <Checkbox
+                checked={graphType.includes('Document')}
+                label='Document'
+                disabled={graphType.includes('Document') && graphType.length === 1}
+                onChange={() => handleCheckboxChange('Document')}
+              />
+              <Checkbox
+                checked={graphType.includes('Entities')}
+                label='Entities'
+                disabled={graphType.includes('Entities') && graphType.length === 1}
+                onChange={() => handleCheckboxChange('Entities')}
+              />
+            </div>
+          )}
+        </Dialog.Header>
+        <Dialog.Content className='n-flex n-flex-col n-gap-token-4 w-full h-full'>
+          <div className='bg-palette-neutral-bg-default relative h-full w-full overflow-hidden'>
+            {loading ? (
               <div className='my-40 flex items-center justify-center'>
                 <LoadingSpinner size='large' />
               </div>
-            )}
-            {status !== 'unknown' && (
+            ) : status !== 'unknown' ? (
               <div className='my-40 flex items-center justify-center'>
                 <Banner
                   name='graph banner'
@@ -360,23 +302,33 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                   type={status}
                 />
               </div>
+            ) : (
+              <>
+                <InteractiveNvlWrapper
+                  nodes={nodes}
+                  rels={relationships}
+                  nvlOptions={nvlOptions}
+                  ref={nvlRef}
+                  mouseEventCallbacks={{ ...mouseEventCallbacks }}
+                  interactionOptions={{
+                    selectOnClick: true,
+                  }}
+                  nvlCallbacks={nvlCallbacks}
+                />
+                <IconButtonArray orientation='vertical' floating className='absolute bottom-4 right-4'>
+                  <ButtonWithToolTip text='Zoom in' onClick={handleZoomIn}>
+                    <MagnifyingGlassPlusIconOutline />
+                  </ButtonWithToolTip>
+                  <ButtonWithToolTip text='Zoom out' onClick={handleZoomOut}>
+                    <MagnifyingGlassMinusIconOutline />
+                  </ButtonWithToolTip>
+                  <ButtonWithToolTip text='Zoom to fit' onClick={handleZoomToFit}>
+                    <FitToScreenIcon />
+                  </ButtonWithToolTip>
+                </IconButtonArray>
+              </>
             )}
-            <InteractiveNvlWrapper
-              nodes={nodes}
-              rels={relationships}
-              nvlOptions={nvlOptions}
-              ref={nvlRef}
-              mouseEventCallbacks={{ ...mouseEventCallbacks }}
-              interactionOptions={{
-                selectOnClick: true,
-              }}
-              nvlCallbacks={nvlCallbacks}
-            />
           </div>
-
-          <Dialog.Actions className='mt-2 mb-2'>
-            <Button onClick={() => setGraphViewOpen(false)}>Close</Button>
-          </Dialog.Actions>
         </Dialog.Content>
       </Dialog>
     </>
