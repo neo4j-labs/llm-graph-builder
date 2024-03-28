@@ -41,4 +41,3 @@ def get_documents_from_youtube(url):
       error_message = str(e)
       logging.exception(f'Exception in reading transcript from youtube:{error_message}')
       raise Exception(error_message)  
-
