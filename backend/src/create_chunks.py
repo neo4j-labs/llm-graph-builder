@@ -5,7 +5,6 @@ from langchain_openai import OpenAIEmbeddings
 from typing import List
 import logging
 import hashlib
-import os
 
 logging.basicConfig(format="%(asctime)s - %(message)s", level="INFO")
 
@@ -56,30 +55,17 @@ class CreateChunksofDocument:
                 page_content=chunk.page_content, metadata=metadata
             )
             #create embedding
-            isEmbedding = os.getenv('IS_EMBEDDING')
             embeddings_model = OpenAIEmbeddings()
             embeddings = embeddings_model.embed_query(chunk_document.page_content)
-
+            
             # create chunk nodes
-            if isEmbedding.upper() == "TRUE":
-                self.graph.query("""MERGE(c:Chunk {id : $id}) SET c.text = $pg_content, c.position = $position, c.length = $length, c.embedding = $embeddings
-                    """,
-                    {
-                        "id": current_chunk_id,
-                        "pg_content": chunk_document.page_content,
-                        "position": position,
-                        "length": chunk_document.metadata["length"],
-                        "embedding" : embeddings
-                    }
-                )
-            else:
-                self.graph.query("""MERGE(c:Chunk {id : $id}) SET c.text = $pg_content, c.position = $position, 
-                    c.length = $length
-                    """,
-                    {"id":current_chunk_id,"pg_content":chunk_document.page_content, "position": position,
-                     "length": chunk.metadata['length']
-                    })
-                
+            self.graph.query("""MERGE(c:Chunk {id : $id}) SET c.text = $pg_content, c.position = $position, 
+            c.length = $length
+            """,
+            {"id":current_chunk_id,"pg_content":chunk_document.page_content, "position": position,
+                "length": chunk.metadata['length']
+            })
+            
             #create PART_OF realtion between chunk and Document node
             self.graph.query(
                 """MATCH(d:Document {fileName : $f_name}) ,(c:Chunk {id : $chunk_id}) 
