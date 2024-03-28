@@ -1,7 +1,7 @@
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 
 export interface CustomFile extends Partial<globalThis.File> {
-  processing: number;
+  processing: number | string;
   status: string;
   NodesCount: number;
   id: string;
@@ -84,6 +84,8 @@ export interface SourceNode {
   url?: string;
   awsAccessKeyId?: string;
   fileSource: string;
+  gcsBucket?: string;
+  gcsBucketFolder?: string;
 }
 
 export interface SideNavProps {

@@ -1,5 +1,5 @@
 import { TextInput } from '@neo4j-ndl/react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { urlScanAPI } from '../services/URLScan';
@@ -109,11 +109,11 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       hideModal();
     }, 5000);
   };
-  const onClose = () => {
+  const onClose = useCallback(() => {
     hideModal();
     reset();
     setStatus('unknown');
-  };
+  }, []);
   return (
     <CustomModal
       open={open}
@@ -124,7 +124,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       status={status}
       submitLabel='Submit'
     >
-      <div style={{ width: '100%', display: 'inline-block' }}>
+      <div className='w-full inline-block'>
         <TextInput
           id='url'
           value={bucketName}
