@@ -90,3 +90,12 @@ def create_source_chunk_entity_relationship(source_file_name :str,
     # dict['relationships_created_in_chunk'] = len(graph_document[0].relationships)
 
     # print(f'dictionary object include nodes and content {dict}')
+
+def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_document : Document, current_chunk_id):
+    chunk_node_id_set = 'id:"{}"'
+    for node in graph_document[0].nodes:
+        node_id = node.id
+        #Below query is also unable to change as parametrize because we can't make parameter of Label or node type
+        #https://neo4j.com/docs/cypher-manual/current/syntax/parameters/
+
+        graph.query('MATCH(c:Chunk {'+chunk_node_id_set.format(current_chunk_id)+'}), (n:'+ node.type +'{ id: "'+node_id+'"}) MERGE (c)-[:HAS_ENTITY]->(n)')

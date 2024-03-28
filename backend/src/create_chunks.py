@@ -1,16 +1,18 @@
 from langchain_text_splitters import TokenTextSplitter
 from langchain.docstore.document import Document
 from langchain_community.graphs import Neo4jGraph
+from langchain_openai import OpenAIEmbeddings
 from typing import List
 import logging
 import hashlib
+import os
 
 logging.basicConfig(format="%(asctime)s - %(message)s", level="INFO")
 
 
 class CreateChunksofDocument:
-    def __init__(self, pages: List[Document], graph: Neo4jGraph, file_name: str):
-        self.pages = pages
+    def __init__(self, pages_content: str, graph: Neo4jGraph, file_name: str):
+        self.pages_content = pages_content
         self.graph = graph
         self.file_name = file_name
 
@@ -25,21 +27,21 @@ class CreateChunksofDocument:
             A list of chunks each of which is a langchain Document.
         """
         logging.info("Split file into smaller chunks")
-        full_document_content = ""
-        for page in self.pages:
-            full_document_content += page.page_content
+        # full_document_content = ""
+        # for page in self.pages:
+        #     full_document_content += page.page_content
         full_document = Document(
-            page_content=full_document_content, metadata=self.pages[0].metadata
+            page_content = self.pages_content
         )
         text_splitter = TokenTextSplitter(chunk_size=200, chunk_overlap=20)
         chunks = text_splitter.split_documents([full_document])
-        self.create_relation_between_chunks(chunks)
-        return chunks
+        lst_chunks = self.create_relation_between_chunks(chunks)
+        return lst_chunks
 
-    def create_relation_between_chunks(self, chunks: List[Document]):
+    def create_relation_between_chunks(self, chunks: List[Document])->list:
         logging.info("creating FIRST_CHUNK and NEXT_CHUNK relationships between chunks")
         current_chunk_id = ""
-
+        lst_chunks_including_hash = []
         for i, chunk in enumerate(chunks):
             page_content_sha1 = hashlib.sha1(chunk.page_content.encode())
             previous_chunk_id = current_chunk_id
@@ -53,17 +55,31 @@ class CreateChunksofDocument:
             chunk_document = Document(
                 page_content=chunk.page_content, metadata=metadata
             )
+            #create embedding
+            isEmbedding = os.getenv('IS_EMBEDDING')
+            embeddings_model = OpenAIEmbeddings()
+            embeddings = embeddings_model.embed_query(chunk_document.page_content)
 
             # create chunk nodes
-            self.graph.query(
-                """MERGE (:Chunk {id: $chunk_id, text: $chunk_content, position: $position, length: $length})""",
-                {
-                    "chunk_id": current_chunk_id,
-                    "chunk_content": chunk_document.page_content,
-                    "position": position,
-                    "length": chunk_document.metadata["length"],
-                },
-            )
+            if isEmbedding.upper() == "TRUE":
+                self.graph.query("""MERGE(c:Chunk {id : $id}) SET c.text = $pg_content, c.position = $position, c.length = $length, c.embedding = $embeddings
+                    """,
+                    {
+                        "id": current_chunk_id,
+                        "pg_content": chunk_document.page_content,
+                        "position": position,
+                        "length": chunk_document.metadata["length"],
+                        "embedding" : embeddings
+                    }
+                )
+            else:
+                self.graph.query("""MERGE(c:Chunk {id : $id}) SET c.text = $pg_content, c.position = $position, 
+                    c.length = $length
+                    """,
+                    {"id":current_chunk_id,"pg_content":chunk_document.page_content, "position": position,
+                     "length": chunk.metadata['length']
+                    })
+                
             #create PART_OF realtion between chunk and Document node
             self.graph.query(
                 """MATCH(d:Document {fileName : $f_name}) ,(c:Chunk {id : $chunk_id}) 
@@ -89,3 +105,5 @@ class CreateChunksofDocument:
                         "current_chunk_id": current_chunk_id,
                     },
                 )
+            lst_chunks_including_hash.append({'chunk_id': current_chunk_id, 'chunk_doc': chunk})
+        return lst_chunks_including_hash
