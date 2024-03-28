@@ -18,6 +18,8 @@ from src.document_sources.gcs_bucket import *
 from src.document_sources.s3_bucket import *
 from src.document_sources.wikipedia import *
 from src.document_sources.youtube import *
+from src.shared.common_fn import check_url_source
+from src.make_relationships import merge_relationship_between_chunk_and_entites
 from typing import List
 from langchain_community.document_loaders import S3DirectoryLoader
 import boto3
@@ -73,34 +75,6 @@ def create_source_node_graph_local_file(uri, userName, password, file, model, db
     error_message = str(e)
     logging.error(f"Error in creating document node: {error_message}")
     return create_api_response(job_status, message=message,error=error_message,file_source=obj_source_node.source,file_name=obj_source_node.file_name)
-
-   
-def check_url_source(url):
-    try:
-      logging.info(f"incoming URL: {url}")
-      if "youtu" in url:
-        youtube_url = create_youtube_url(url)
-        logging.info(youtube_url)
-      else:
-        youtube_url=''
-
-      youtube_id_regex = re.search(r"v=([a-zA-Z0-9_-]+)", youtube_url)
-      if url.startswith('s3://'):
-        source ='s3 bucket'
-        
-      elif youtube_url.startswith("https://www.youtube.com/watch?") and youtube_id_regex is not None:
-        if len(youtube_id_regex.group(1)) == 11:
-            source = 'youtube'
-            #re.match('^(https?:\/\/)?(www\.|m\.)?youtube\.com\/(c\/[^\/\?]+\/|channel\/[^\/\?]+\/|user\/[^\/\?]+\/)?(watch\?v=[^&\s]+|embed\/[^\/\?]+|[^\/\?]+)(&[^?\s]*)?$',url) :
-        else :
-          source = 'Invalid'
-      else:
-        source = 'Invalid'
-      
-      return source,youtube_url
-    except Exception as e:
-      logging.error(f"Error in recognize URL: {e}")  
-      raise Exception(e)
   
 def create_source_node_graph_url(uri, userName, password ,model, source_url=None, db_name=None,wiki_query:List[str]=None,aws_access_key_id=None,aws_secret_access_key=None, gcs_bucket_name=None, gcs_bucket_folder=None):
     """
@@ -313,6 +287,7 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
         
     # update_node_prop = "SET d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}',d.status = '{}', d.errorMessage = '{}',d.nodeCount= {}, d.relationshipCount = {}, d.model = '{}'"
     # pages = loader.load_and_split()
+    full_document_content = ""
     bad_chars = ['"', "\n", "'"]
     for i in range(0,len(pages)):
       text = pages[i].page_content
@@ -322,28 +297,32 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
         else:
           text = text.replace(j, '')
       pages[i]=Document(page_content=str(text))
+      full_document_content += text
     logging.info("Break down file into chunks")
     #chunks = file_into_chunks(pages)
-    create_chunks_obj = CreateChunksofDocument(pages, graph, file_name)
-    chunks = create_chunks_obj.split_file_into_chunks()
+    
+    create_chunks_obj = CreateChunksofDocument(full_document_content, graph, file_name)
+    lst_chunks = create_chunks_obj.split_file_into_chunks()
     
     logging.info("Get graph document list from models")
-    graph_documents =  generate_graphDocuments(model, graph, chunks) 
+    graph_documents =  generate_graphDocuments(model, graph, lst_chunks[0].chunk_doc) 
+
+    merge_relationship_between_chunk_and_entites(graph,graph_document,lst_chunks[0].chunk_id)
     
-    if model == 'Diffbot' :
-      graph_documents, cypher_list = extract_graph_from_diffbot(graph,chunks,file_name,uri,userName,password)
+    # if model == 'Diffbot' :
+    #   graph_documents, cypher_list = extract_graph_from_diffbot(graph,chunks,file_name,uri,userName,password)
       
-    elif model == 'OpenAI GPT 3.5':
-      model_version = 'gpt-3.5-turbo-16k'
-      graph_documents, cypher_list = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
+    # elif model == 'OpenAI GPT 3.5':
+    #   model_version = 'gpt-3.5-turbo-16k'
+    #   graph_documents, cypher_list = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
       
-    elif model == 'OpenAI GPT 4':
-      model_version = 'gpt-4-0125-preview' 
-      graph_documents, cypher_list = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
+    # elif model == 'OpenAI GPT 4':
+    #   model_version = 'gpt-4-0125-preview' 
+    #   graph_documents, cypher_list = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
               
     #create relation between chunks (FIRST_CHUNK and NEXT_CHUNK)
-    for query in cypher_list:
-       graph.query(query)
+    # for query in cypher_list:
+    #    graph.query(query)
 
     distinct_nodes = set()
     relations = []

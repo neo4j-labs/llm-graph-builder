@@ -61,8 +61,6 @@ async def create_source_knowledge_graph_url(
     database=Form(None),
     aws_access_key_id=Form(None),
     aws_secret_access_key=Form(None),
-    max_limit=Form(5),
-    query_source=Form(None),
     wiki_query=Form(None),
     model=Form(None),
     gcs_bucket_name=Form(None),
