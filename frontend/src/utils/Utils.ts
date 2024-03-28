@@ -78,3 +78,53 @@ export const statusCheck = (status: string) => {
       return 'unknown';
   }
 };
+
+export const constructQuery = (queryTochange: string, docLimit: string) => {
+  return `MATCH docs = (d:Document {status:'Completed'}) 
+  WITH docs, d ORDER BY d.createdAt DESC 
+  LIMIT ${docLimit}
+  OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
+  WITH [] 
+  ${queryTochange}
+  AS paths
+  CALL { WITH paths UNWIND paths AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }
+  CALL { WITH paths UNWIND paths AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) as rels }
+  RETURN nodes, rels`;
+};
+
+export const constructDocQuery = (queryTochange: string) => {
+  return `
+MATCH docs = (d:Document {status:'Completed'}) 
+WHERE d.fileName = $document_name
+WITH docs, d ORDER BY d.createdAt DESC 
+OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
+WITH [] 
+${queryTochange}
+AS paths
+CALL { WITH paths UNWIND paths AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }
+CALL { WITH paths UNWIND paths AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) as rels }
+RETURN nodes, rels`;
+};
+
+export const getSize = (node: any) => {
+  if (node.labels[0] == 'Document') {
+    return 40;
+  }
+  if (node.labels[0] == 'Chunk') {
+    return 30;
+  }
+  return undefined;
+};
+
+export const getNodeCaption = (node: any) => {
+  if (node.properties.name) {
+    return node.properties.name;
+  }
+  if (node.properties.text) {
+    return node.properties.text;
+  }
+  if (node.properties.fileName) {
+    return node.properties.fileName;
+  }
+  return node.elementId;
+};

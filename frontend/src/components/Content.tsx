@@ -140,6 +140,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             })
           );
         } else {
+
           const message = messageMatch[1].trim();
           const fileName = messageMatch[2].trim();
           setShowAlert(true);
@@ -178,7 +179,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     setShowAlert(false);
   };
 
-  const openGraphUrl = ` https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=${
+  const openGraphUrl = `https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=${
     userCredentials?.userName
   }@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port') ?? '7687'}&search=Show+me+a+graph`;
 

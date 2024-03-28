@@ -16,8 +16,8 @@ const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
           selectProps={{
             onChange: handleChange,
             options: allOptions.map((option) => ({ label: option, value: option })),
-            placeholder: 'Select Model',
-            defaultValue: { label: 'OpenAI GPT 3.5', value: 'OpenAI GPT 3.5' },
+            placeholder: 'Select LLM Model',
+            defaultValue: { label: 'LLM Model', value: 'LLM Model' },
             menuPlacement: 'auto',
             isDisabled,
           }}
