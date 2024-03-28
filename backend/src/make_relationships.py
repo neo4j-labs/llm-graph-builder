@@ -99,3 +99,17 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
         #https://neo4j.com/docs/cypher-manual/current/syntax/parameters/
 
         graph.query('MATCH(c:Chunk {'+chunk_node_id_set.format(current_chunk_id)+'}), (n:'+ node.type +'{ id: "'+node_id+'"}) MERGE (c)-[:HAS_ENTITY]->(n)')
+
+def merge_chunk_embedding(graph, chunk_id, chunk_doc):
+    #create embedding
+    isEmbedding = os.getenv('IS_EMBEDDING')
+    embeddings_model = OpenAIEmbeddings()
+    embeddings = embeddings_model.embed_query(chunk_doc.page_content)
+    if isEmbedding.upper() == "TRUE":
+        graph.query("""MERGE(c:Chunk {id : $id}) SET c.embedding = $embeddings
+            """,
+            {
+                "id": chunk_id,
+                "embedding" : embeddings
+            }
+        )

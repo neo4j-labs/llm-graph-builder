@@ -19,7 +19,7 @@ from src.document_sources.s3_bucket import *
 from src.document_sources.wikipedia import *
 from src.document_sources.youtube import *
 from src.shared.common_fn import check_url_source
-from src.make_relationships import merge_relationship_between_chunk_and_entites
+from src.make_relationships import *
 from typing import List
 from langchain_community.document_loaders import S3DirectoryLoader
 import boto3
@@ -309,6 +309,8 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
 
     merge_relationship_between_chunk_and_entites(graph,graph_document,lst_chunks[0].chunk_id)
     
+    #create embedding and update chunk node with embedding
+    merge_chunk_embedding( graph, lst_chunks[0].chunk_id, lst_chunks[0].chunk_doc)
     # if model == 'Diffbot' :
     #   graph_documents, cypher_list = extract_graph_from_diffbot(graph,chunks,file_name,uri,userName,password)
       
