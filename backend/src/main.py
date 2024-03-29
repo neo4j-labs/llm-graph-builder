@@ -13,7 +13,7 @@ from src.graphDB_dataAccess import graphDBdataAccess
 from src.api_response import create_api_response
 from src.document_sources.local_file import get_documents_from_file
 from src.entities.source_node import sourceNode
-from src.generate_graphDocuments import generate_graphDocuments
+from src.generate_graphDocuments_from_llm import generate_graphDocuments
 from src.document_sources.gcs_bucket import *
 from src.document_sources.s3_bucket import *
 from src.document_sources.wikipedia import *
@@ -303,9 +303,12 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
     
     create_chunks_obj = CreateChunksofDocument(full_document_content, graph, file_name)
     lst_chunks = create_chunks_obj.split_file_into_chunks()
-    
     logging.info("Get graph document list from models")
-    graph_documents =  generate_graphDocuments(model, graph, lst_chunks[0].chunk_doc) 
+    
+    chunks=[]
+    for chunk in lst_chunks:
+      chunks.append(chunk['chunk_doc'])
+    graph_documents =  generate_graphDocuments(model, graph, chunks) 
 
     merge_relationship_between_chunk_and_entites(graph,graph_document,lst_chunks[0].chunk_id)
     
