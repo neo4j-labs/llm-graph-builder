@@ -23,7 +23,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from typing import List
 from langchain_core.pydantic_v1 import BaseModel, Field
 import google.auth 
-
+from langchain_community.graphs.graph_document import Node
 
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
@@ -245,7 +245,7 @@ class GeminiLLMGraphTransformer:
 
 def get_graph_from_Gemini(model_version,
                             graph: Neo4jGraph,
-                            chunks: List[Document]):
+                            lst_chunks: List):
     """
         Extract graph from OpenAI and store it in database. 
         This is a wrapper for extract_and_store_graph
@@ -261,7 +261,7 @@ def get_graph_from_Gemini(model_version,
     futures = []
     graph_document_list = []
     location = "us-central1"
-    redentials, project_id = google.auth.default()
+    credentials, project_id = google.auth.default()
     vertexai.init(project=project_id, location=location)
     llm = ChatVertexAI(model_name=model_version,
                     convert_system_message_to_human=True,
@@ -270,11 +270,19 @@ def get_graph_from_Gemini(model_version,
     llm_transformer = GeminiLLMGraphTransformer(llm=llm)
     
     with ThreadPoolExecutor(max_workers=10) as executor:
-        for chunk_document in chunks:
-            futures.append(executor.submit(llm_transformer.convert_to_graph_documents,[chunk_document]))   
+        for chunk in lst_chunks:
+            futures.append(executor.submit(llm_transformer.convert_to_graph_documents,[chunk['chunk_doc']]))   
         
         for i, future in enumerate(concurrent.futures.as_completed(futures)):
             graph_document = future.result()
+            unique_nodes=set()
+            for single_rel in graph_document[0].relationships:
+                unique_nodes.add((single_rel.source.id, single_rel.source.type))
+                unique_nodes.add((single_rel.target.id, single_rel.target.type))  
+                
+            nodes = [Node(id=id, type=type) for id,type in unique_nodes]        
+            graph_document[0].nodes=list(nodes)
+
             for node in graph_document[0].nodes:
                 node.id = node.id.title().replace(' ','_')
                 #replace all non alphanumeric characters and spaces with underscore
@@ -282,4 +290,5 @@ def get_graph_from_Gemini(model_version,
             graph_document_list.append(graph_document[0])
         
         graph.add_graph_documents(graph_document_list)
+    logging.info(graph_document_list)    
     return  graph_document_list
