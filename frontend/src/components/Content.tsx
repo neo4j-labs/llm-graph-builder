@@ -140,7 +140,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             })
           );
         } else {
-
           const message = messageMatch[1].trim();
           const fileName = messageMatch[2].trim();
           setShowAlert(true);
