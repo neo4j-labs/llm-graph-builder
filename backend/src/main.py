@@ -305,42 +305,24 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
     lst_chunks = create_chunks_obj.split_file_into_chunks()
     logging.info("Get graph document list from models")
     
-    chunks=[]
-    for chunk in lst_chunks:
-      chunks.append(chunk['chunk_doc'])
-    graph_documents =  generate_graphDocuments(model, graph, chunks) 
-
-    merge_relationship_between_chunk_and_entites(graph,graph_document,lst_chunks[0].chunk_id)
+    graph_documents_chunk_chunk_Id =  generate_graphDocuments(model, graph, lst_chunks)
+    # print(f'list of all things: {graph_documents_chunk_chunk_Id}')
+    merge_relationship_between_chunk_and_entites(graph, graph_documents_chunk_chunk_Id)
     
     #create embedding and update chunk node with embedding
-    merge_chunk_embedding( graph, lst_chunks[0].chunk_id, lst_chunks[0].chunk_doc)
-    # if model == 'Diffbot' :
-    #   graph_documents, cypher_list = extract_graph_from_diffbot(graph,chunks,file_name,uri,userName,password)
-      
-    # elif model == 'OpenAI GPT 3.5':
-    #   model_version = 'gpt-3.5-turbo-16k'
-    #   graph_documents, cypher_list = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
-      
-    # elif model == 'OpenAI GPT 4':
-    #   model_version = 'gpt-4-0125-preview' 
-    #   graph_documents, cypher_list = extract_graph_from_OpenAI(model_version,graph,chunks,file_name,uri,userName,password)
-              
-    #create relation between chunks (FIRST_CHUNK and NEXT_CHUNK)
-    # for query in cypher_list:
-    #    graph.query(query)
+    merge_chunk_embedding( graph, graph_documents_chunk_chunk_Id, file_name)
 
     distinct_nodes = set()
     relations = []
-
-    for graph_document in graph_documents:
+    for graph_document in graph_documents_chunk_chunk_Id:
       #get distinct nodes
-      for node in graph_document.nodes:
+      for node in graph_document['graph_doc'].nodes:
             node_id = node.id
             node_type= node.type
             if (node_id, node_type) not in distinct_nodes:
               distinct_nodes.add((node_id, node_type))
       #get all relations
-      for relation in graph_document.relationships:
+      for relation in graph_document['graph_doc'].relationships:
             relations.append(relation.type)
       
     nodes_created = len(distinct_nodes)
@@ -380,7 +362,7 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
       message="Failed To Process File or OpenAI Unable To Parse Content"
       error_message = str(e)
       logging.error(f"file failed in process: {file_name}")
-      graphDb_data_Access.update_exception_db(graph,file_name,error_message)
+      graphDb_data_Access.update_exception_db(file_name,error_message)
       logging.exception(f'Exception Stack trace: {error_message}')
       return create_api_response(job_status,message=message,error=error_message,file_name=file_name)
  

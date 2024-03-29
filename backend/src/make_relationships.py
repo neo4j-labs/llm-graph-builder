@@ -91,25 +91,33 @@ def create_source_chunk_entity_relationship(source_file_name :str,
 
     # print(f'dictionary object include nodes and content {dict}')
 
-def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_document : Document, current_chunk_id):
+def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_documents_chunk_chunk_Id : list):
     chunk_node_id_set = 'id:"{}"'
-    for node in graph_document[0].nodes:
-        node_id = node.id
-        #Below query is also unable to change as parametrize because we can't make parameter of Label or node type
-        #https://neo4j.com/docs/cypher-manual/current/syntax/parameters/
+    for graph_doc_chunk_id in graph_documents_chunk_chunk_Id:
+        for node in graph_doc_chunk_id['graph_doc'].nodes:
+            node_id = node.id
+            #Below query is also unable to change as parametrize because we can't make parameter of Label or node type
+            #https://neo4j.com/docs/cypher-manual/current/syntax/parameters/
 
-        graph.query('MATCH(c:Chunk {'+chunk_node_id_set.format(current_chunk_id)+'}), (n:'+ node.type +'{ id: "'+node_id+'"}) MERGE (c)-[:HAS_ENTITY]->(n)')
+            graph.query('MATCH(c:Chunk {'+chunk_node_id_set.format(graph_doc_chunk_id['chunk_id'])+'}) MERGE (n:'+ node.type +'{ id: "'+node_id+'"}) MERGE (c)-[:HAS_ENTITY]->(n)')
 
-def merge_chunk_embedding(graph, chunk_id, chunk_doc):
+def merge_chunk_embedding(graph, graph_documents_chunk_chunk_Id, file_name):
     #create embedding
     isEmbedding = os.getenv('IS_EMBEDDING')
     embeddings_model = OpenAIEmbeddings()
-    embeddings = embeddings_model.embed_query(chunk_doc.page_content)
-    if isEmbedding.upper() == "TRUE":
-        graph.query("""MERGE(c:Chunk {id : $id}) SET c.embedding = $embeddings
-            """,
-            {
-                "id": chunk_id,
-                "embedding" : embeddings
-            }
-        )
+    
+    for row in graph_documents_chunk_chunk_Id:
+        # for graph_document in row['graph_doc']:
+        embeddings = embeddings_model.embed_query(row['graph_doc'].source.page_content)
+        # print(f'Embedding list {embeddings}')
+        if isEmbedding.upper() == "TRUE":
+            graph.query("""MATCH (d:Document {fileName : $fileName})
+                           MERGE (c:Chunk {id:$chunkId}) SET c.embedding = $embeddings 
+                           MERGE (c)-[:PART_OF]->(d)
+                        """,
+                        {
+                            "fileName" : file_name,
+                            "chunkId": row['chunk_id'],
+                            "embeddings" : embeddings
+                        }
+                        )
