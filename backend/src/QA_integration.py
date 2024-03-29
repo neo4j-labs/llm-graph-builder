@@ -117,17 +117,19 @@ def QA_RAG(uri,userName,password,question,session_id):
             llm=llm, chain_type="stuff", retriever=neo_db.as_retriever(search_kwargs={'k': 3,"score_threshold": 0.5}), return_source_documents=True
         )
 
-        graph = Neo4jGraph(
-            url=uri,
-            username=userName,
-            password=password
-        )
         vector_res=vector_embed_results(qa,question)
         print('Response from Vector embeddings')
         print(vector_res)
-        cypher_res= cypher_results(graph,question)
-        print('Response from CypherQAChain')
-        print(cypher_res)
+
+        # Disable Cypher Chain QA
+        # graph = Neo4jGraph(
+        #     url=uri,
+        #     username=userName,
+        #     password=password
+        # )
+        # cypher_res= cypher_results(graph,question)
+        # print('Response from CypherQAChain')
+        # print(cypher_res)
 
         chat_summary=get_chat_history(llm,uri,userName,password,session_id)
 
@@ -140,10 +142,11 @@ def QA_RAG(uri,userName,password,question,session_id):
         Given the user's query: {question}, provide a meaningful and efficient answer based
         on the insights derived from the following data:
         chat_summary:{chat_summary}
-        Structured information: {cypher_res.get('result','')}.
+        Structured information:  .
         Unstructured information: {vector_res.get('result','')}.
 
-        """
+        """ 
+
         print(final_prompt)
         response = llm.predict(final_prompt)
         ai_message=response
