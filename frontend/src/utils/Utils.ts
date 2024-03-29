@@ -126,5 +126,14 @@ export const getNodeCaption = (node: any) => {
   if (node.properties.fileName) {
     return node.properties.fileName;
   }
-  return node.elementId;
+  return node.properties.id;
+};
+export const getIcon = (node: any) => {
+  if (node.labels[0] == 'Document') {
+    return 'paginate-filter-text.svg';
+  }
+  if (node.labels[0] == 'Chunk') {
+    return 'paragraph-left-align.svg';
+  }
+  return undefined;
 };
