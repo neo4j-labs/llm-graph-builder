@@ -1,5 +1,5 @@
-import { DataGrid, DataGridComponents, IconButton, StatusIndicator } from '@neo4j-ndl/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DataGrid, DataGridComponents, IconButton, StatusIndicator, TextLink } from '@neo4j-ndl/react';
+import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
 import {
   useReactTable,
@@ -28,29 +28,19 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
 
-  const sourceFind = useCallback(
-    (name: any) => {
-      return filesData.find((f) => {
-        return f.name === name;
-      });
-    },
-    [filesData]
-  );
-
   const columns = useMemo(
     () => [
       columnHelper.accessor((row) => row.name, {
         id: 'name',
         cell: (info) => {
-          const sourceFindVal = sourceFind(info.getValue());
           return (
             <div className='textellipsis'>
               <span
                 title={
-                  sourceFindVal?.fileSource === 's3 bucket'
-                    ? sourceFindVal?.source_url
-                    : sourceFindVal?.fileSource === 'youtube'
-                    ? sourceFindVal?.source_url
+                  info.row.original?.fileSource === 's3 bucket'
+                    ? info.row.original?.source_url
+                    : info.row.original?.fileSource === 'youtube'
+                    ? info.row.original?.source_url
                     : info.getValue()
                 }
               >
@@ -89,7 +79,16 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       }),
       columnHelper.accessor((row) => row.fileSource, {
         id: 'source',
-        cell: (info) => <i>{info.getValue()}</i>,
+        cell: (info) => {
+          if (info.row.original.fileSource === 'youtube' || info.row.original.fileSource === 'Wikipedia') {
+            return (
+              <TextLink externalLink href={info.row.original.source_url}>
+                {info.getValue()}
+              </TextLink>
+            );
+          } 
+          return <i>{info.getValue()}</i>;
+        },
         header: () => <span>Source</span>,
         footer: (info) => info.column.id,
       }),
