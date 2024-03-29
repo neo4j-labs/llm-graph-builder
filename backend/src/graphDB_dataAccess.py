@@ -57,7 +57,7 @@ class graphDBdataAccess:
                         )
         except Exception as e:
             error_message = str(e)
-            self.update_exception_db(self,file_name,error_message)
+            self.update_exception_db(self.file_name,error_message)
             raise Exception(error_message)
     
     def get_source_list(self):

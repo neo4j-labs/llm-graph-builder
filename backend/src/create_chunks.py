@@ -50,20 +50,18 @@ class CreateChunksofDocument:
                 firstChunk = True
             else:
                 firstChunk = False
-            metadata = {"position": position, "length": len(chunk.page_content)}
+            print("chunk length = ", len(chunk.page_content))    
+            metadata = {"position": position,"length": len(chunk.page_content)}
             chunk_document = Document(
                 page_content=chunk.page_content, metadata=metadata
             )
-            #create embedding
-            embeddings_model = OpenAIEmbeddings()
-            embeddings = embeddings_model.embed_query(chunk_document.page_content)
             
             # create chunk nodes
             self.graph.query("""MERGE(c:Chunk {id : $id}) SET c.text = $pg_content, c.position = $position, 
             c.length = $length
             """,
             {"id":current_chunk_id,"pg_content":chunk_document.page_content, "position": position,
-                "length": chunk.metadata['length']
+                "length": chunk_document.metadata["length"]
             })
             
             #create PART_OF realtion between chunk and Document node
