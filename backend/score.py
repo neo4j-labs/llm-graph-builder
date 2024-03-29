@@ -1,12 +1,14 @@
 from fastapi import FastAPI, File, UploadFile, Form
-import uvicorn
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
+from src.QA_integration import *
+from src.entities.user_credential import user_credential
+import uvicorn
 import asyncio
 import base64
-from src.QA_integration import *
+
 
 
 def healthy_condition():
@@ -61,8 +63,6 @@ async def create_source_knowledge_graph_url(
     database=Form(None),
     aws_access_key_id=Form(None),
     aws_secret_access_key=Form(None),
-    max_limit=Form(5),
-    query_source=Form(None),
     wiki_query=Form(None),
     model=Form(None),
     gcs_bucket_name=Form(None),
@@ -89,7 +89,6 @@ async def extract_knowledge_graph_from_file(
     gcs_bucket_name=Form(None),
     gcs_bucket_folder=Form(None),
     gcs_blob_filename=Form(None)
-    
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a

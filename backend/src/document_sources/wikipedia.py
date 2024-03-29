@@ -1,6 +1,6 @@
 import logging
 from langchain_community.document_loaders import WikipediaLoader
-from ..main import create_api_response
+from src.api_response import create_api_response
 
 def get_documents_from_Wikipedia(wiki_query:str):
   try:

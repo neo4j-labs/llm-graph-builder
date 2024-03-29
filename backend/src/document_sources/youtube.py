@@ -3,6 +3,7 @@ from pytube import YouTube
 from youtube_transcript_api import YouTubeTranscriptApi 
 import logging
 from urllib.parse import urlparse,parse_qs
+import re
 
 def get_youtube_transcript(youtube_id):
   transcript_dict = YouTubeTranscriptApi.get_transcript(youtube_id)
@@ -41,4 +42,3 @@ def get_documents_from_youtube(url):
       error_message = str(e)
       logging.exception(f'Exception in reading transcript from youtube:{error_message}')
       raise Exception(error_message)  
-
