@@ -10,7 +10,7 @@ import {
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
 import ButtonWithToolTip from './ButtonWithToolTip';
-import { constructDocQuery, constructQuery, getNodeCaption, getSize } from '../utils/Utils';
+import { constructDocQuery, constructQuery, getIcon, getNodeCaption, getSize } from '../utils/Utils';
 import { colors, entities, knowledgeGraph, document } from '../utils/Constants';
 import { ArrowSmallRightIconOutline } from '@neo4j-ndl/react/icons';
 
@@ -117,10 +117,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 return {
                   id: g.elementId,
                   size: getSize(g),
-                  captionAlign: 'top',
+                  captionAlign: 'bottom',
+                  iconAlign: 'bottom',
                   captionHtml: <b>Test</b>,
                   caption: getNodeCaption(g),
                   color: scheme[g.labels[0]],
+                  icon: getIcon(g)
                 };
               });
               return totalNodes;
@@ -187,6 +189,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 captionAlign: 'bottom',
                 captionHtml: <b>Test</b>,
                 caption: getNodeCaption(n),
+                iconAlign: 'bottom',
+                icon: getIcon(n),
                 color: scheme[n.labels[0]],
               };
             });
