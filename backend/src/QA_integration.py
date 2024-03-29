@@ -30,29 +30,29 @@ def vector_embed_results(qa,question):
     
     return vector_res
 
-def cypher_results(graph,question):
-    cypher_res={}
-    try:
-        graph.refresh_schema()
-        cypher_chain = GraphCypherQAChain.from_llm(
-            graph=graph,
-            cypher_llm=ChatOpenAI(temperature=0, model=model_version),
-            qa_llm=ChatOpenAI(temperature=0, model=model_version),
-            validate_cypher=True, # Validate relationship directions
-            verbose=True,
-            top_k=2
-        )
-        try:
-            cypher_res=cypher_chain.invoke({"query": question})
-        except:
-            cypher_res={}
+# def cypher_results(graph,question):
+#     cypher_res={}
+#     try:
+#         graph.refresh_schema()
+#         cypher_chain = GraphCypherQAChain.from_llm(
+#             graph=graph,
+#             cypher_llm=ChatOpenAI(temperature=0, model=model_version),
+#             qa_llm=ChatOpenAI(temperature=0, model=model_version),
+#             validate_cypher=True, # Validate relationship directions
+#             verbose=True,
+#             top_k=2
+#         )
+#         try:
+#             cypher_res=cypher_chain.invoke({"query": question})
+#         except:
+#             cypher_res={}
         
-    except Exception as e:
-      error_message = str(e)
-      logging.exception(f'Exception in CypherQAChain in QA component:{error_message}')
-    #   raise Exception(error_message)
+#     except Exception as e:
+#       error_message = str(e)
+#       logging.exception(f'Exception in CypherQAChain in QA component:{error_message}')
+#     #   raise Exception(error_message)
 
-    return cypher_res
+#     return cypher_res
     
 def save_chat_history(uri,userName,password,session_id,user_message,ai_message):
     try:
