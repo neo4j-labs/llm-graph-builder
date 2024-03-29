@@ -49,8 +49,7 @@ class CreateChunksofDocument:
             if i == 0:
                 firstChunk = True
             else:
-                firstChunk = False
-            print("chunk length = ", len(chunk.page_content))    
+                firstChunk = False  
             metadata = {"position": position,"length": len(chunk.page_content)}
             chunk_document = Document(
                 page_content=chunk.page_content, metadata=metadata

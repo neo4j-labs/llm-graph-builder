@@ -187,6 +187,7 @@ class GeminiLLMGraphTransformer:
             #     nodes = [map_to_base_node(node) for node in raw_schema.nodes]
             # else:
             #     nodes = []
+            nodes =[]
             if raw_schema.relationships:
                 relationships = [
                     map_to_base_relationship(rel) for rel in raw_schema.relationships
@@ -257,9 +258,10 @@ def get_graph_from_Gemini(model_version,
         Returns: 
             List of langchain GraphDocument - used to generate graph
     """
-    logging.info(f"Get grapgDocuments from {model_version}")
+    logging.info(f"Get graphDocuments from {model_version}")
     futures = []
     graph_document_list = []
+    lst_chunk_chunkId_document=[]
     location = "us-central1"
     credentials, project_id = google.auth.default()
     vertexai.init(project=project_id, location=location)
@@ -289,6 +291,11 @@ def get_graph_from_Gemini(model_version,
                 node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
             graph_document_list.append(graph_document[0])
         
+        for graph_document in graph_document_list:
+            for index, chunk in enumerate(lst_chunks):
+                if graph_document.source.page_content == chunk['chunk_doc'].page_content:
+                    position = index+1
+                    lst_chunk_chunkId_document.append({'position':position,'graph_doc':graph_document,'chunk_id':chunk['chunk_id']})
+                    break
         graph.add_graph_documents(graph_document_list)
-    logging.info(graph_document_list)    
-    return  graph_document_list
+    return  lst_chunk_chunkId_document
