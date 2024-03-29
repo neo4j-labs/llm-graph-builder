@@ -28,3 +28,14 @@ def check_url_source(url):
     except Exception as e:
       logging.error(f"Error in recognize URL: {e}")  
       raise Exception(e)
+
+
+def get_chunk_and_graphDocument(graph_document_list, lst_chunks):
+  lst_chunk_chunkId_document=[]
+  for graph_document in graph_document_list:
+            for index, chunk in enumerate(lst_chunks):
+                if graph_document.source.page_content == chunk['chunk_doc'].page_content:
+                    position = index+1
+                    lst_chunk_chunkId_document.append({'position':position,'graph_doc':graph_document,'chunk_id':chunk['chunk_id']})
+                    break 
+  return lst_chunk_chunkId_document                   

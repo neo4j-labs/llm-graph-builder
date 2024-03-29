@@ -18,7 +18,7 @@ from src.document_sources.gcs_bucket import *
 from src.document_sources.s3_bucket import *
 from src.document_sources.wikipedia import *
 from src.document_sources.youtube import *
-from src.shared.common_fn import check_url_source
+from src.shared.common_fn import *
 from src.make_relationships import *
 from typing import List
 from langchain_community.document_loaders import S3DirectoryLoader
@@ -305,16 +305,20 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
     lst_chunks = create_chunks_obj.split_file_into_chunks()
     logging.info("Get graph document list from models")
     
-    graph_documents_chunk_chunk_Id =  generate_graphDocuments(model, graph, lst_chunks)
-    # print(f'list of all things: {graph_documents_chunk_chunk_Id}')
-    merge_relationship_between_chunk_and_entites(graph, graph_documents_chunk_chunk_Id)
+    chunks=[]
+    for chunk in lst_chunks:
+      chunks.append(chunk['chunk_doc'])
+      
+    graph_documents =  generate_graphDocuments(model, graph, chunks)
+    chunks_and_graphDocuments_list = get_chunk_and_graphDocument(graph_documents, lst_chunks)
+    merge_relationship_between_chunk_and_entites(graph, chunks_and_graphDocuments_list)
     
     #create embedding and update chunk node with embedding
-    merge_chunk_embedding( graph, graph_documents_chunk_chunk_Id, file_name)
+    merge_chunk_embedding( graph, chunks_and_graphDocuments_list, file_name)
 
     distinct_nodes = set()
     relations = []
-    for graph_document in graph_documents_chunk_chunk_Id:
+    for graph_document in chunks_and_graphDocuments_list:
       #get distinct nodes
       for node in graph_document['graph_doc'].nodes:
             node_id = node.id

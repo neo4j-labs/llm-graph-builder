@@ -367,18 +367,15 @@ def extract_graph_from_OpenAI(model_version,
     graph.refresh_schema()    
     return graph_document_list, relationship_cypher_list
 
-def get_graph_from_OpenAI(model_version,graph,lst_chunks):
+def get_graph_from_OpenAI(model_version, graph, chunks:List):
     futures=[]
     graph_document_list=[]
     llm = ChatOpenAI(model= model_version, temperature=0)
     llm_transformer = LLMGraphTransformer(llm=llm)
-
-    # graph_document_list_for_post_processing = {}
-    lst_chunk_chunkId_document = []
     
     with ThreadPoolExecutor(max_workers=10) as executor:
-        for chunk in lst_chunks:
-            futures.append(executor.submit(llm_transformer.convert_to_graph_documents,[chunk['chunk_doc']]))   
+        for chunk in chunks:
+            futures.append(executor.submit(llm_transformer.convert_to_graph_documents,[chunk]))   
         
         for i, future in enumerate(concurrent.futures.as_completed(futures)):
             graph_document = future.result()
@@ -388,20 +385,8 @@ def get_graph_from_OpenAI(model_version,graph,lst_chunks):
                 node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
             graph_document_list.append(graph_document[0])
 
-        for graph_document in graph_document_list:
-            for index, chunk in enumerate(lst_chunks):
-                if graph_document.source.page_content == chunk['chunk_doc'].page_content:
-                    position = index+1
-                    #graph_document_list_for_post_processing.append(graph_document_list[position])
-                    lst_chunk_chunkId_document.append({'position':position,'graph_doc':graph_document,'chunk_id':chunk['chunk_id']})
-                    # graph_document_list_for_post_processing[position]=graph_document
-                    # graph_document_list_for_post_processing['chunk_id']=chunk['chunk_id']
-                    # graph_document_list_for_post_processing[position]=graph_document
-                    break
-        # sorted_graph_document_list_for_post_processing = dict(sorted(graph_document_list_for_post_processing.items()))
-        
-        graph.add_graph_documents(graph_document_list)
-    return  lst_chunk_chunkId_document        
+    graph.add_graph_documents(graph_document_list)
+    return  graph_document_list        
         
     
     

@@ -246,7 +246,7 @@ class GeminiLLMGraphTransformer:
 
 def get_graph_from_Gemini(model_version,
                             graph: Neo4jGraph,
-                            lst_chunks: List):
+                            chunks: List):
     """
         Extract graph from OpenAI and store it in database. 
         This is a wrapper for extract_and_store_graph
@@ -265,6 +265,12 @@ def get_graph_from_Gemini(model_version,
     location = "us-central1"
     credentials, project_id = google.auth.default()
     vertexai.init(project=project_id, location=location)
+    
+    # combined_chunk_document_list=[]
+    # combined_chunks = ["".join(document.page_content for document in documents[i:i+2]) for i in range(0, len(documents),2)]
+    # for i in range(len(combined_chunks)):
+    #     combined_chunk_document_list.append(Document(page_content=combined_chunks[i]))
+        
     llm = ChatVertexAI(model_name=model_version,
                     convert_system_message_to_human=True,
                     temperature=0
@@ -272,8 +278,8 @@ def get_graph_from_Gemini(model_version,
     llm_transformer = GeminiLLMGraphTransformer(llm=llm)
     
     with ThreadPoolExecutor(max_workers=10) as executor:
-        for chunk in lst_chunks:
-            futures.append(executor.submit(llm_transformer.convert_to_graph_documents,[chunk['chunk_doc']]))   
+        for chunk in chunks:
+            futures.append(executor.submit(llm_transformer.convert_to_graph_documents,[chunk]))   
         
         for i, future in enumerate(concurrent.futures.as_completed(futures)):
             graph_document = future.result()
@@ -291,11 +297,5 @@ def get_graph_from_Gemini(model_version,
                 node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
             graph_document_list.append(graph_document[0])
         
-        for graph_document in graph_document_list:
-            for index, chunk in enumerate(lst_chunks):
-                if graph_document.source.page_content == chunk['chunk_doc'].page_content:
-                    position = index+1
-                    lst_chunk_chunkId_document.append({'position':position,'graph_doc':graph_document,'chunk_id':chunk['chunk_id']})
-                    break
-        graph.add_graph_documents(graph_document_list)
-    return  lst_chunk_chunkId_document
+    graph.add_graph_documents(graph_document_list)
+    return  graph_document_list
