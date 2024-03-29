@@ -33,9 +33,9 @@ class graphDBdataAccess:
                             d.gcsBucketFolder= $gcs_bucket_folder""",
                             {"fn":obj_source_node.file_name, "fs":obj_source_node.file_size, "ft":obj_source_node.file_type, "st":job_status, 
                             "url":obj_source_node.url,
-                            "awsacc_key_id":obj_source_node.aws_access_key_id, "f_source":obj_source_node.source, "c_at":obj_source_node.created_at,
+                            "awsacc_key_id":obj_source_node.awsAccessKeyId, "f_source":obj_source_node.file_source, "c_at":obj_source_node.created_at,
                             "u_at":obj_source_node.created_at, "pt":0, "e_message":'', "n_count":0, "r_count":0, "model":obj_source_node.model,
-                            "gcs_bucket": obj_source_node.gcs_bucket_name, "gcs_bucket_folder": obj_source_node.gcs_bucket_folder})
+                            "gcs_bucket": obj_source_node.gcsBucket, "gcs_bucket_folder": obj_source_node.gcsBucketFolder})
         except Exception as e:
             error_message = str(e)
             self.update_exception_db(self, obj_source_node.file_name, error_message)

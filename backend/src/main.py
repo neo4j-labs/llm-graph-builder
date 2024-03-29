@@ -1,13 +1,8 @@
-from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.graphs import Neo4jGraph
 from langchain.docstore.document import Document
 from dotenv import load_dotenv
 from datetime import datetime
 import logging
-from langchain_text_splitters import TokenTextSplitter
-from tqdm import tqdm
-from src.diffbot_transformer import extract_graph_from_diffbot
-from src.openAI_llm import extract_graph_from_OpenAI
 from src.create_chunks import CreateChunksofDocument
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.api_response import create_api_response
@@ -21,24 +16,13 @@ from src.document_sources.youtube import *
 from src.shared.common_fn import *
 from src.make_relationships import *
 from typing import List
-from langchain_community.document_loaders import S3DirectoryLoader
-import boto3
-from urllib.parse import urlparse,parse_qs
-import os
-from tempfile import NamedTemporaryFile
 import re
-from langchain_community.document_loaders import YoutubeLoader
 from langchain_community.document_loaders import WikipediaLoader
 import warnings
 from pytube import YouTube
-from youtube_transcript_api import YouTubeTranscriptApi 
 import sys
-from google.cloud import storage
-from google.oauth2 import service_account
-import google.auth 
-from langchain_community.document_loaders import GCSFileLoader
 warnings.filterwarnings("ignore")
-import json
+
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
@@ -270,7 +254,6 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
       else:
         logging.info("Insert in S3 Block")
         file_name, file_key, pages = get_documents_from_s3(source_url, aws_access_key_id, aws_secret_access_key)
-        logging.info(f"filename {file_name} file_key: {file_key} pages:{pages}  ")
     elif source_type =='youtube':
         file_name, file_key, pages = get_documents_from_youtube(source_url)
     

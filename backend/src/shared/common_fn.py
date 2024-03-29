@@ -1,6 +1,6 @@
 import logging
 from src.document_sources.youtube import create_youtube_url
-
+import re
 
 def check_url_source(url):
     try:
@@ -31,6 +31,7 @@ def check_url_source(url):
 
 
 def get_chunk_and_graphDocument(graph_document_list, lst_chunks):
+  logging.info("creating list of chunks and graph documents in get_chunk_and_graphDocument func")
   lst_chunk_chunkId_document=[]
   for graph_document in graph_document_list:
             for index, chunk in enumerate(lst_chunks):
