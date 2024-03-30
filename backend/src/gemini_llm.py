@@ -1,13 +1,11 @@
 from langchain_community.graphs import Neo4jGraph
 from dotenv import load_dotenv
 from langchain.schema import Document
-from src.make_relationships import create_source_chunk_entity_relationship
 import logging
 import re
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 from typing import List
-import uuid
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 from langchain_google_vertexai import ChatVertexAI
 import vertexai

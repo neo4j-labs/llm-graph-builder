@@ -1,7 +1,6 @@
 from langchain_text_splitters import TokenTextSplitter
 from langchain.docstore.document import Document
 from langchain_community.graphs import Neo4jGraph
-from langchain_openai import OpenAIEmbeddings
 from typing import List
 import logging
 import hashlib
