@@ -8,12 +8,17 @@ import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
 import { getFileFromLocal } from '../utils/Utils';
 
-const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
-  const [youtubeURL, setYoutubeURL] = useState<string>('');
+const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
+  const [bucketName, setbucketName] = useState<string>('');
+  const [folderName, setFolderName] = useState<string>('');
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
   const { setFiles, setFilesData, model, filesData, files } = useFileContext();
+  const reset = () => {
+    setbucketName('');
+    setFolderName('');
+  };
   const submitHandler = async () => {
     const defaultValues: CustomFile = {
       processing: 0,
@@ -23,11 +28,12 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       relationshipCount: 0,
       type: 'TEXT',
       model: model,
-      fileSource: 'youtube',
+      fileSource: 'gcs bucket',
     };
-    if (!youtubeURL) {
+
+    if (!bucketName) {
       setStatus('danger');
-      setStatusMessage('Please Fill the Valid YouTube link');
+      setStatusMessage('Please Fill the Bucket Name');
       setTimeout(() => {
         setStatus('unknown');
       }, 5000);
@@ -36,33 +42,35 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatus('info');
         setStatusMessage('Loading...');
         const apiResponse = await urlScanAPI({
-          urlParam: youtubeURL,
           userCredentials,
           model,
           accessKey: '',
           secretKey: '',
+          gcs_bucket_name: bucketName,
+          gcs_bucket_folder: folderName,
         });
         if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
-          setStatusMessage(apiResponse?.data.message);
+          setStatusMessage(apiResponse?.data?.message);
           setTimeout(() => {
             setStatus('unknown');
-            setYoutubeURL('');
+            reset();
             hideModal();
           }, 5000);
         } else {
           setStatus('success');
-          setStatusMessage(`Successfully Created Source Nodes for Link`);
+          setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
           const copiedFilesData = [...filesData];
           const copiedFiles = [...files];
-          apiResponse?.data?.file_name?.forEach((item) => {
+          apiResponse?.data?.file_name?.forEach((item: any) => {
             const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
             const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === item.fileName);
             if (filedataIndex == -1) {
               copiedFilesData.unshift({
                 name: item.fileName,
                 size: item.fileSize ?? 0,
-                source_url: item.url,
+                gcsBucket: item.gcsBucket,
+                gcsBucketFolder: item.gcsBucketFolder,
                 ...defaultValues,
               });
             } else {
@@ -89,22 +97,21 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           });
           setFilesData(copiedFilesData);
           setFiles(copiedFiles);
-          setYoutubeURL('');
+          reset();
         }
       } catch (error) {
         setStatus('danger');
         setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
       }
     }
-
     setTimeout(() => {
       setStatus('unknown');
       hideModal();
     }, 5000);
   };
   const onClose = useCallback(() => {
-    setYoutubeURL('');
     hideModal();
+    reset();
     setStatus('unknown');
   }, []);
   return (
@@ -120,19 +127,31 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       <div className='w-full inline-block'>
         <TextInput
           id='url'
-          value={youtubeURL}
+          value={bucketName}
           disabled={false}
-          label='Youtube Link'
-          placeholder='https://www.youtube.com/watch?v=2W9HM1xBibo'
+          label='Bucket Name'
+          placeholder=''
           autoFocus
           fluid
           required
           onChange={(e) => {
-            setYoutubeURL(e.target.value);
+            setbucketName(e.target.value);
+          }}
+        />
+        <TextInput
+          id='url'
+          value={folderName}
+          disabled={false}
+          label='Folder Name'
+          placeholder=''
+          isOptional={true}
+          fluid
+          onChange={(e) => {
+            setFolderName(e.target.value);
           }}
         />
       </div>
     </CustomModal>
   );
 };
-export default YoutubeModal;
+export default GCSModal;

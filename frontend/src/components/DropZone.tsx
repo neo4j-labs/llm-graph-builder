@@ -74,7 +74,6 @@ const DropZone: FunctionComponent = () => {
 
   const fileUpload = async (file: File, uid: number) => {
     if (filesData[uid]?.status == 'None' && isClicked) {
-      const apirequests = [];
       try {
         setIsLoading(true);
         setFilesData((prevfiles) =>
@@ -88,49 +87,59 @@ const DropZone: FunctionComponent = () => {
             return curfile;
           })
         );
-
         const apiResponse = await uploadAPI(file, userCredentials, model);
-        apirequests.push(apiResponse);
-        const results = await Promise.allSettled(apirequests);
-        results.forEach((apiRes) => {
-          if (apiRes.status === 'fulfilled' && apiRes.value) {
-            if (apiRes?.value?.status === 'Failed') {
-              throw new Error(apiRes?.value?.error);
-            } else {
-              setFilesData((prevfiles) =>
-                prevfiles.map((curfile, idx) => {
-                  if (idx == uid) {
-                    return {
-                      ...curfile,
-                      status: 'New',
-                    };
-                  }
-                  return curfile;
-                })
-              );
-              setIsClicked(false);
-            }
-          }
-        });
+        if (apiResponse?.status === 'Failed') {
+          throw new Error(`message:${apiResponse.message},fileName:${apiResponse.file_name}`);
+        } else {
+          setFilesData((prevfiles) =>
+            prevfiles.map((curfile) => {
+              if (curfile.name === apiResponse?.file_name) {
+                return {
+                  ...curfile,
+                  status: 'New',
+                };
+              }
+              return curfile;
+            })
+          );
+        }
         setIsClicked(false);
         setIsLoading(false);
       } catch (err: any) {
-        setIsLoading(false);
-        setIsClicked(false);
-        setShowAlert(true);
-        setErrorMessage(err.message);
-        setFilesData((prevfiles) =>
-          prevfiles.map((curfile, idx) => {
-            if (idx == uid) {
-              return {
-                ...curfile,
-                status: 'Failed',
-                type: curfile.type?.split('/')[1]?.toUpperCase() ?? 'PDF',
-              };
-            }
-            return curfile;
-          })
-        );
+        const errorMessage = err.message;
+        const messageMatch = errorMessage.match(/message:(.*),fileName:(.*)/);
+        if (err?.name === 'AxiosError') {
+          setShowAlert(true);
+          setErrorMessage(err.message);
+          setFilesData((prevfiles) =>
+            prevfiles.map((curfile, idx) => {
+              if (idx == uid) {
+                return {
+                  ...curfile,
+                  status: 'Failed',
+                };
+              }
+              return curfile;
+            })
+          );
+        } else {
+          const message = messageMatch[1].trim();
+          const fileName = messageMatch[2].trim();
+          setShowAlert(true);
+          setErrorMessage(message);
+          setFilesData((prevfiles) =>
+            prevfiles.map((curfile) => {
+              if (curfile.name == fileName) {
+                return {
+                  ...curfile,
+                  status: 'Failed',
+                  type: curfile.type?.split('/')[1]?.toUpperCase() ?? 'PDF',
+                };
+              }
+              return curfile;
+            })
+          );
+        }
       }
     }
   };
@@ -156,6 +165,13 @@ const DropZone: FunctionComponent = () => {
           accept: { 'application/pdf': ['.pdf'] },
           onDrop: (f: Partial<globalThis.File>[]) => {
             onDropHandler(f);
+          },
+          maxSize: 15000000,
+          onDropRejected: (e) => {
+            if (e.length) {
+              setShowAlert(true);
+              setErrorMessage(`Failed To Upload, File is larger than 15MB`);
+            }
           },
         }}
       />

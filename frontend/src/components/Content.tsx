@@ -9,15 +9,20 @@ import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { extractAPI } from '../utils/FileAPI';
 import { ContentProps } from '../types';
+import { updateGraphAPI } from '../services/UpdateGraph';
+import GraphViewModal from './GraphViewModal';
 
-const Content: React.FC<ContentProps> = ({ isExpanded }) => {
+const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
+  const [openGraphView, setOpenGraphView] = useState<boolean>(false);
+  const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials } = useCredentials();
   const { filesData, files, setFilesData, setModel, model } = useFileContext();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
+  const [viewPoint, setViewPoint] = useState<string>('tableView');
 
   useEffect(() => {
     if (!init) {
@@ -28,10 +33,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
           uri: neo4jConnection.uri,
           userName: neo4jConnection.user,
           password: neo4jConnection.password,
+          database: neo4jConnection.database,
         });
-        setDriver(neo4jConnection.uri, neo4jConnection.user, neo4jConnection.password).then((isSuccessful: boolean) => {
-          setConnectionStatus(isSuccessful);
-        });
+        setDriver(neo4jConnection.uri, neo4jConnection.user, neo4jConnection.password, neo4jConnection.database).then(
+          (isSuccessful: boolean) => {
+            setConnectionStatus(isSuccessful);
+          }
+        );
       } else {
         setOpenConnection(true);
       }
@@ -47,7 +55,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
     });
   }, [model]);
 
-  const disableCheck = !files.length;
+  const disableCheck = !files.length || !filesData.some((f) => f.status === 'New');
+
+  const disableCheckGraph = !files.length;
 
   const handleDropdownChange = (option: any) => {
     setModel(option.value);
@@ -55,7 +65,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
 
   const extractData = async (file: File, uid: number) => {
     if (filesData[uid]?.status == 'New') {
-      const apirequests = [];
       try {
         setFilesData((prevfiles) =>
           prevfiles.map((curfile, idx) => {
@@ -72,76 +81,96 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
           file,
           filesData[uid].model,
           userCredentials,
+          filesData[uid].fileSource,
           filesData[uid].source_url,
           localStorage.getItem('accesskey'),
-          localStorage.getItem('secretkey')
+          localStorage.getItem('secretkey'),
+          filesData[uid].name ?? '',
+          filesData[uid].gcsBucket ?? '',
+          filesData[uid].gcsBucketFolder ?? ''
         );
-        apirequests.push(apiResponse);
-        const results = await Promise.allSettled(apirequests);
-        results.forEach(async (apiRes) => {
-          if (apiRes.status === 'fulfilled' && apiRes.value) {
-            if (apiRes?.value?.status === 'Failed') {
-              console.log('Error', apiRes?.value);
-              setShowAlert(true);
-              setErrorMessage(apiRes?.value?.error);
-              setFilesData((prevfiles) =>
-                prevfiles.map((curfile, idx) => {
-                  if (idx == uid) {
-                    return {
-                      ...curfile,
-                      status: 'Failed',
-                    };
-                  }
-                  return curfile;
-                })
-              );
-              throw new Error(apiRes?.value?.error);
-            } else {
-              setFilesData((prevfiles) => {
-                return prevfiles.map((curfile, idx) => {
-                  if (idx == uid) {
-                    const apiResponse = apiRes?.value?.data;
-                    return {
-                      ...curfile,
-                      processing: apiResponse?.processingTime?.toFixed(2),
-                      status: apiResponse?.status,
-                      NodesCount: apiResponse?.nodeCount,
-                      relationshipCount: apiResponse?.relationshipCount,
-                      model: apiResponse?.model,
-                    };
-                  }
-                  return curfile;
-                });
-              });
-            }
-          }
-        });
+        if (apiResponse?.status === 'Failed') {
+          setShowAlert(true);
+          setErrorMessage(apiResponse?.message);
+          setFilesData((prevfiles) =>
+            prevfiles.map((curfile, idx) => {
+              if (idx == uid) {
+                return {
+                  ...curfile,
+                  status: 'Failed',
+                };
+              }
+              return curfile;
+            })
+          );
+          throw new Error(`message:${apiResponse.message},fileName:${apiResponse.file_name}`);
+        } else {
+          setFilesData((prevfiles) => {
+            return prevfiles.map((curfile) => {
+              if (curfile.name == apiResponse?.data?.fileName) {
+                const apiRes = apiResponse?.data;
+                return {
+                  ...curfile,
+                  processing: apiRes?.processingTime?.toFixed(2),
+                  status: apiRes?.status,
+                  NodesCount: apiRes?.nodeCount,
+                  relationshipCount: apiRes?.relationshipCount,
+                  model: apiRes?.model,
+                };
+              }
+              return curfile;
+            });
+          });
+        }
       } catch (err: any) {
-        console.log(err);
-        setShowAlert(true);
-        setErrorMessage(err.message);
-        setFilesData((prevfiles) =>
-          prevfiles.map((curfile, idx) => {
-            if (idx == uid) {
-              return {
-                ...curfile,
-                status: 'Failed',
-              };
-            }
-            return curfile;
-          })
-        );
+        const errorMessage = err.message;
+        const messageMatch = errorMessage.match(/message:(.*),fileName:(.*)/);
+        if (err?.name === 'AxiosError') {
+          setShowAlert(true);
+          setErrorMessage(err.message);
+          setFilesData((prevfiles) =>
+            prevfiles.map((curfile, idx) => {
+              if (idx == uid) {
+                return {
+                  ...curfile,
+                  status: 'Failed',
+                };
+              }
+              return curfile;
+            })
+          );
+        } else {
+          const message = messageMatch[1].trim();
+          const fileName = messageMatch[2].trim();
+          setShowAlert(true);
+          setErrorMessage(message);
+          setFilesData((prevfiles) =>
+            prevfiles.map((curfile) => {
+              if (curfile.name == fileName) {
+                return {
+                  ...curfile,
+                  status: 'Failed',
+                };
+              }
+              return curfile;
+            })
+          );
+        }
       }
     }
   };
 
-  const handleGenerateGraph = () => {
+  const handleGenerateGraph = async () => {
+    const data = [];
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
-        if (filesData[i].status === 'New') {
-          extractData(files[i], i);
+        if (filesData[i]?.status === 'New') {
+          data.push(extractData(files[i], i));
         }
       }
+      Promise.allSettled(data).then(async (_) => {
+        await updateGraphAPI(userCredentials);
+      });
     }
   };
 
@@ -149,21 +178,36 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
     setShowAlert(false);
   };
 
-  const classNameCheck = isExpanded ? 'contentWithExpansion' : 'contentWithNoExpansion';
+  const openGraphUrl = `https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=${
+    userCredentials?.userName
+  }@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port') ?? '7687'}&search=Show+me+a+graph`;
+
+  const classNameCheck =
+    isExpanded && showChatBot
+      ? 'contentWithBothDrawers'
+      : isExpanded
+      ? 'contentWithExpansion'
+      : showChatBot
+      ? 'contentWithChatBot'
+      : 'contentWithNoExpansion';
+
+  const handleGraphView = () => {
+    setOpenGraphView(true);
+    setViewPoint('showGraphView');
+  };
+
   return (
     <>
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
+
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
-        <Flex className='w-full' alignItems='center' justifyContent='space-between' style={{ flexFlow: 'row' }}>
+        <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>
           <ConnectionModal
             open={openConnection}
             setOpenConnection={setOpenConnection}
             setConnectionStatus={setConnectionStatus}
           />
-          <Typography
-            variant='body-medium'
-            style={{ display: 'flex', padding: '20px', alignItems: 'center', justifyContent: 'center' }}
-          >
+          <Typography variant='body-medium' className='connectionstatus__container'>
             <Typography variant='body-medium'>
               {!connectionStatus ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
             </Typography>
@@ -174,28 +218,72 @@ const Content: React.FC<ContentProps> = ({ isExpanded }) => {
               Connect to Neo4j
             </Button>
           ) : (
-            <Button className='mr-2.5' onClick={() => disconnect().then(() => setConnectionStatus(false))}>
+            <Button
+              className='mr-2.5'
+              onClick={() =>
+                disconnect().then(() => {
+                  setConnectionStatus(false);
+                  localStorage.removeItem('neo4j.connection');
+                  setUserCredentials({ uri: '', password: '', userName: '', database: '' });
+                })
+              }
+            >
               Disconnect
             </Button>
           )}
         </Flex>
-        <FileTable isExpanded={isExpanded}></FileTable>
-        <Flex
-          className='w-full p-2.5 absolute bottom-4'
-          justifyContent='space-between'
-          style={{ flexFlow: 'row', marginTop: '5px' }}
-        >
+        <FileTable
+          isExpanded={isExpanded}
+          connectionStatus={connectionStatus}
+          setConnectionStatus={setConnectionStatus}
+          onInspect={(name) => {
+            setInspectedName(name);
+            setOpenGraphView(true);
+            setViewPoint('tableView');
+          }}
+        ></FileTable>
+        <Flex className='w-full p-2.5 absolute bottom-4 flex-row mt-1.5 self-start' justifyContent='space-between'>
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
-          <Button
-            loading={filesData.some((f) => f?.status === 'Processing')}
-            disabled={disableCheck}
-            onClick={handleGenerateGraph}
-            className='mr-0.5'
-          >
-            Generate Graph
-          </Button>
+          <Flex flexDirection='row' gap='4' className='self-end'>
+            <Button
+              loading={filesData.some((f) => f?.status === 'Processing')}
+              disabled={disableCheck}
+              onClick={handleGenerateGraph}
+              className='mr-0.5'
+            >
+              Generate Graph
+            </Button>
+            <Button
+              disabled={disableCheckGraph || !filesData.some((f) => f?.status === 'Completed')}
+              onClick={handleGraphView}
+              className='mr-0.5'
+            >
+              Show Graph
+            </Button>
+            <Button
+              href={openGraphUrl}
+              target='_blank'
+              disabled={disableCheckGraph || !filesData.some((f) => f?.status === 'Completed')}
+              className='ml-0.5'
+            >
+              Open Graph
+            </Button>
+            <Button
+              onClick={() => {
+                openChatBot();
+              }}
+            >
+              Q&A Chat
+            </Button>
+          </Flex>
         </Flex>
       </div>
+      <GraphViewModal
+        inspectedName={inspectedName}
+        open={openGraphView}
+        setGraphViewOpen={setOpenGraphView}
+        viewPoint={viewPoint}
+      />
     </>
   );
 };
