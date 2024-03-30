@@ -50,9 +50,6 @@ greenlet==3.0.3
 grpc-google-iam-v1==0.13.0
 grpcio==1.62.1
 google-ai-generativelanguage
-google-api-core
-google-cloud-storage
-google-auth
 grpcio-status==1.62.1
 h11==0.14.0
 httpcore==1.0.4
