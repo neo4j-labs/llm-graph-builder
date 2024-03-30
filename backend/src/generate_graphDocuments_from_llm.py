@@ -1,5 +1,4 @@
 from langchain_community.graphs import Neo4jGraph
-from langchain.docstore.document import Document
 from src.diffbot_transformer import get_graph_from_diffbot
 from src.openAI_llm import get_graph_from_OpenAI
 from src.gemini_llm import get_graph_from_Gemini
