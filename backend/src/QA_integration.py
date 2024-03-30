@@ -8,7 +8,6 @@ from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
 import logging
 from langchain_community.chat_message_histories import Neo4jChatMessageHistory
-import asyncio
 load_dotenv()
 
 openai_api_key = os.environ.get('OPENAI_API_KEY')

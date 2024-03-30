@@ -3,7 +3,6 @@ from pytube import YouTube
 from youtube_transcript_api import YouTubeTranscriptApi 
 import logging
 from urllib.parse import urlparse,parse_qs
-import re
 
 def get_youtube_transcript(youtube_id):
   transcript_dict = YouTubeTranscriptApi.get_transcript(youtube_id)

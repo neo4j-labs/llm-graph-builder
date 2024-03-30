@@ -2,8 +2,7 @@ from langchain_community.document_loaders import S3DirectoryLoader
 import logging
 import boto3
 import os
-from urllib.parse import urlparse,parse_qs
-from ..main import create_api_response
+from urllib.parse import urlparse
 
 def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
   try:
