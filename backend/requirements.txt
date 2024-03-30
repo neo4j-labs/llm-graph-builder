@@ -36,6 +36,7 @@ frozenlist==1.4.1
 fsspec==2024.2.0
 greenlet==3.0.3
 grpcio==1.62.1
+google-ai-generativelanguage
 google-api-core
 google-cloud-storage
 google-auth
@@ -55,6 +56,8 @@ jsonpath-python==1.0.6
 jsonpointer==2.4
 kiwisolver==1.4.5
 langchain==0.1.13
+langchain-google-genai==0.0.11
+langchain-google-vertexai==0.1.2
 langchain-community==0.0.29
 langchain-core==0.1.33
 langchain-experimental==0.0.55
