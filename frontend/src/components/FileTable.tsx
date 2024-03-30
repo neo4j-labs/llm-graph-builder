@@ -144,10 +144,10 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded, onInspect }) => {
         if (!res.data) {
           throw new Error('Please check backend connection');
         }
-        if (res.data.status !== 'Failed') {
+        if (res.data.data.status !== 'Failed') {
           const prefiles: CustomFile[] = [];
-          if (res.data.data.length) {
-            res.data.data.forEach((item: SourceNode) => {
+          if (res.data.data.data.length) {
+            res.data.data.data.forEach((item: SourceNode) => {
               if (item.fileName != undefined && item.fileName.length) {
                 prefiles.push({
                   name: item.fileName,
@@ -181,7 +181,8 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded, onInspect }) => {
           setIsLoading(false);
           setFilesData(prefiles);
           const prefetchedFiles: any[] = [];
-          res.data.data.forEach((item: any) => {
+          console.log("res.data.data.data",res.data.data.data)
+          res.data.data.data.forEach((item: any) => {
             const localFile = getFileFromLocal(`${item.fileName}`);
             if (item.fileName != undefined && item.fileName.length) {
               if (localFile != null) {
