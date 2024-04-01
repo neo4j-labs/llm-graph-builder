@@ -107,7 +107,7 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
                     graphDb_data_Access = graphDBdataAccess(graph)
                     graphDb_data_Access.create_source_node(obj_source_node)
                     success_count+=1
-                    lst_s3_file_name.append({'fileName':file_name.split('/')[-1],'fileSize':file_size,'url':s3_file_path})
+                    lst_s3_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url})
 
                   except Exception as e:
                     err_flag=1
@@ -131,15 +131,14 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
               obj_source_node.file_name = YouTube(obj_source_node.url).title
               transcript= get_youtube_transcript(match.group(1))
               if transcript==None or len(transcript)==0:
-                file_size = 0
                 job_status = "Failed"
-                message = f"Youtube transcript is not available for : {file_name}"
+                message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
                 error_message = str(e)
                 logging.exception(f'Exception Stack trace:')
-                return create_api_response(job_status,message=message,error=error_message,file_source=source_type,file_name=file_name )
+                return create_api_response(job_status,message=message,error=error_message,file_source=source_type,file_name=obj_source_node.file_name )
               else:  
                 obj_source_node.file_size = sys.getsizeof(transcript)
-            
+              job_status = "Completed"
               graphDb_data_Access = graphDBdataAccess(graph)
               graphDb_data_Access.create_source_node(obj_source_node)
               return create_api_response(job_status,file_name=[{'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url}])
