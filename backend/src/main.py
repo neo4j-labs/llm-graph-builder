@@ -94,8 +94,10 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
               Failed_count=0
               
               for file_info in files_info:
+                  file_name=file_info['file_key'] 
+                  # s3_file_path=str(source_url+file_name)
                   obj_source_node = sourceNode()
-                  obj_source_node.file_name = file_info['file_key'].split('/')[-1]
+                  obj_source_node.file_name = file_name.split('/')[-1]
                   obj_source_node.file_type = 'pdf'
                   obj_source_node.file_size = file_info['file_size_bytes']
                   obj_source_node.file_source = source_type
@@ -150,10 +152,12 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
            queries =  wiki_query.split(',')
            for query in queries:
               logging.info(f"Creating source node for {query.strip()}")
+              source_type = 'text'
+              job_status = 'Completed'
               pages = WikipediaLoader(query=query.strip(), load_max_docs=1, load_all_available_meta=True).load()
               obj_source_node = sourceNode()
               obj_source_node.file_name = query.strip()
-              obj_source_node.file_type = 'text'
+              obj_source_node.file_type = source_type
               obj_source_node.file_source = 'Wikipedia'
               obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
               obj_source_node.model = model
