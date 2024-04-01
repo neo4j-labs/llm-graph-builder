@@ -27,7 +27,7 @@
 .contentWithExpansion {
   width: calc(-360px + 100dvw);
   height: calc(100dvh - 60px);
-  padding: 3;
+  padding: 3px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -38,7 +38,7 @@
 .contentWithBothDrawers {
   width: calc(-721px + 100dvw);
   height: calc(100dvh - 60px);
-  padding: 3;
+  padding: 3px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -49,7 +49,7 @@
 .contentWithChatBot {
   width: calc(-385px + 100dvw);
   height: calc(100dvh - 60px);
-  padding: 3;
+  padding: 3px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -60,7 +60,7 @@
 .contentWithNoExpansion {
   width: calc(100% - 64px);
   height: calc(100dvh - 60px);
-  padding: 3;
+  padding: 3px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -104,12 +104,11 @@
   justify-content: center;
   cursor: pointer;
   flex-direction: column;
-  padding-block: 10px;
 }
 
 .brandimg {
-  width: 70px;
-  height: 70px;
+  width: 65px;
+  height: 65px;
   object-fit: contain;
 }
 
@@ -151,4 +150,44 @@
     background: #FFF;
     box-shadow: -12px 0 #FFF, 12px 0 rgb(var(--theme-palette-primary-bg-strong));
   }
+}
+
+.ndl-dropzone>div {
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+.chatBotContainer {
+  scrollbar-width: thin;
+  overflow-x: hidden;
+}
+
+.connectionmodal__input {
+  width: 48.5%;
+  margin-right: 1.5%;
+  display: inline-block;
+}
+
+.connectionmodal__port__input {
+  width: 15%;
+  display: inline-block;
+}
+
+.connectionmodal__hostname__input {
+  margin-left: 2.5%;
+  width: 55%;
+  margin-right: 2.5%;
+  display: inline-block;
+}
+
+.connectionmodal__protocal__input {
+  width: 25%;
+  display: inline-block
+}
+
+.connectionstatus__container {
+  display: flex;
+  padding: 20px;
+  align-items: center;
+  justify-content: center;
 }

@@ -1,7 +1,7 @@
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 
 export interface CustomFile extends Partial<globalThis.File> {
-  processing: number;
+  processing: number | string;
   status: string;
   NodesCount: number;
   id: string;
@@ -10,6 +10,8 @@ export interface CustomFile extends Partial<globalThis.File> {
   fileSource: string;
   source_url?: string;
   wiki_query?: string;
+  gcsBucket?: string;
+  gcsBucketFolder?: string;
 }
 
 export interface OptionType {
@@ -32,6 +34,9 @@ export type ExtractParams = {
   aws_secret_access_key?: string;
   max_sources?: number;
   wiki_query?: string;
+  gcs_bucket_name?: string;
+  gcs_bucket_folder?: string;
+  gcs_blob_filename?: string;
 } & { [key: string]: any };
 
 export type UploadParams = {
@@ -79,8 +84,8 @@ export interface SourceNode {
   url?: string;
   awsAccessKeyId?: string;
   fileSource: string;
-  query_source?: string;
-  max_limit?: number;
+  gcsBucket?: string;
+  gcsBucketFolder?: string;
 }
 
 export interface SideNavProps {
@@ -154,3 +159,5 @@ export interface GraphViewModalProps {
   setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
   viewPoint: string;
 }
+
+export type GraphType = 'Document' | 'Chunks' | 'Entities';

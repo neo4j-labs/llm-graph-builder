@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import CustomModal from '../HOC/CustomModal';
 import { TextInput } from '@neo4j-ndl/react';
 import { CustomFile, WikipediaModalTypes } from '../types';
@@ -14,14 +14,12 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const { setFiles, setFilesData, model, filesData, files } = useFileContext();
   const { userCredentials } = useCredentials();
-  const onClose = () => {
+  const onClose = useCallback(() => {
     hideModal();
-    reset();
-    setStatus('unknown');
-  };
-  const reset = () => {
     setwikiQuery('');
-  };
+    setStatus('unknown');
+  }, []);
+
   const submitHandler = async () => {
     const defaultValues: CustomFile = {
       processing: 0,
@@ -29,9 +27,9 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
       NodesCount: 0,
       id: uuidv4(),
       relationshipCount: 0,
-      type: 'text',
+      type: 'TEXT',
       model: model,
-      fileSource: 'wikipedia',
+      fileSource: 'Wikipedia',
     };
     if (wikiQuery.length) {
       try {
@@ -46,18 +44,18 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
         setStatus('success');
         if (apiResponse?.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
-          setStatusMessage('Please Fill The Valid Credentials' ?? apiResponse?.message);
+          setStatusMessage(apiResponse?.data?.message);
           setTimeout(() => {
-            hideModal();
             setStatus('unknown');
-            reset();
+            setwikiQuery('');
+            hideModal();
           }, 5000);
           return;
         }
         setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Wikipedia Sources`);
         const copiedFilesData: CustomFile[] = [...filesData];
         const copiedFiles: File[] = [...files];
-        apiResponse?.data.file_name.forEach((item: any) => {
+        apiResponse?.data?.file_name?.forEach((item: any) => {
           const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
           const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
           if (filedataIndex == -1) {
@@ -65,6 +63,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
               name: item.fileName,
               size: item.fileSize,
               wiki_query: item.fileName,
+              source_url:item.url,
               ...defaultValues,
             });
           } else {
@@ -91,7 +90,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
         });
         setFilesData(copiedFilesData);
         setFiles(copiedFiles);
-        reset();
+        setwikiQuery('');
       } catch (error) {
         setStatus('danger');
         setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
@@ -119,7 +118,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
       status={status}
       submitLabel='Submit'
     >
-      <div style={{ width: '100%', display: 'inline-block' }}>
+      <div className='w-full inline-block'>
         <TextInput
           id='url'
           value={wikiQuery}

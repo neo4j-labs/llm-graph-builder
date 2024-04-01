@@ -35,6 +35,16 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   };
 
   const submitHandler = async (url: string) => {
+    const defaultValues: CustomFile = {
+      processing: 0,
+      status: 'New',
+      NodesCount: 0,
+      id: uuidv4(),
+      relationshipCount: 0,
+      type: 'PDF',
+      model: model,
+      fileSource: 's3 bucket',
+    };
     if (url && url[url.length - 1] != '/') {
       setBucketUrl((prev) => {
         return prev + '/';
@@ -62,7 +72,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatus('success');
         if (apiResponse?.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
-          setStatusMessage('Please Fill The Valid Credentials' ?? apiResponse?.message);
+          setStatusMessage('Please Fill The Valid Credentials');
           setTimeout(() => {
             hideModal();
             setStatus('unknown');
@@ -71,19 +81,9 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           return;
         }
         setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
-        const defaultValues: CustomFile = {
-          processing: 0,
-          status: 'New',
-          NodesCount: 0,
-          id: uuidv4(),
-          relationshipCount: 0,
-          type: 'PDF',
-          model: model,
-          fileSource: 's3 bucket',
-        };
         const copiedFilesData: CustomFile[] = [...filesData];
         const copiedFiles: File[] = [...files];
-        apiResponse?.data.file_name.forEach((item: S3File) => {
+        apiResponse?.data?.file_name?.forEach((item: S3File) => {
           const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
           const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
           if (filedataIndex == -1) {
@@ -151,7 +151,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       setStatus={setStatus}
       submitLabel='Submit'
     >
-      <div style={{ width: '100%', display: 'inline-block' }}>
+      <div className='w-full inline-block'>
         <TextInput
           id='url'
           value={bucketUrl}
