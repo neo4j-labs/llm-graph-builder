@@ -144,6 +144,7 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded, onInspect }) => {
         if (!res.data) {
           throw new Error('Please check backend connection');
         }
+        console.log({res})
         if (res.data.status !== 'Failed') {
           const prefiles: CustomFile[] = [];
           if (res.data.data.length) {
