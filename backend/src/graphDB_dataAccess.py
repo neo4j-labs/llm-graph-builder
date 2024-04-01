@@ -74,18 +74,10 @@ class graphDBdataAccess:
         sorting the list by the last updated date. 
         """
         logging.info("Get existing files list from graph")
-        try:
-            # graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-            query = "MATCH(d:Document) RETURN d ORDER BY d.updatedAt DESC"
-            result = self.graph.query(query)
-            list_of_json_objects = [entry['d'] for entry in result]
-            return create_api_response("Success",data=list_of_json_objects)
-        except Exception as e:
-            job_status = "Failed"
-            message="Unable to fetch source list"
-            error_message = str(e)
-            logging.exception(f'Exception:{error_message}')
-            return create_api_response(job_status,message=message,error=error_message)
+        query = "MATCH(d:Document) RETURN d ORDER BY d.updatedAt DESC"
+        result = self.graph.query(query)
+        list_of_json_objects = [entry['d'] for entry in result]
+        return list_of_json_objects
         
     def update_KNN_graph(self):
         """
