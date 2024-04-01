@@ -1,3 +1,4 @@
+import { AxiosResponse } from 'axios';
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 
 export interface CustomFile extends Partial<globalThis.File> {
@@ -108,7 +109,7 @@ export interface FileTableProps {
   isExpanded: boolean;
   connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
-  onInspect: (id: any) => void;
+  onInspect: (id: string) => void;
 }
 
 export interface CustomModalProps {
@@ -161,3 +162,35 @@ export interface GraphViewModalProps {
 }
 
 export type GraphType = 'Document' | 'Chunks' | 'Entities';
+
+export interface fileName {
+  fileName: string;
+  fileSize: number;
+  url: string;
+  gcsBucket?: string;
+  gcsBucketFolder?: string;
+}
+export interface URLSCAN_RESPONSE {
+  status: string;
+  success_count?: number;
+  Failed_count?: number;
+  message: string;
+  file_name?: fileName[];
+  error?: string;
+  file_source?: string;
+  data?: any;
+}
+
+export interface ServerResponse extends Partial<AxiosResponse> {
+  data: URLSCAN_RESPONSE;
+}
+export interface ScanProps {
+  urlParam?: string;
+  userCredentials?: any;
+  model?: string;
+  accessKey?: string;
+  secretKey?: string;
+  wikiquery?: string;
+  gcs_bucket_name?: string;
+  gcs_bucket_folder?: string;
+}

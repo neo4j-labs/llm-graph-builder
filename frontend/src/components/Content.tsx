@@ -8,7 +8,7 @@ import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { extractAPI } from '../utils/FileAPI';
-import { ContentProps } from '../types';
+import { ContentProps, OptionType } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './GraphViewModal';
 
@@ -59,8 +59,10 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
   const disableCheckGraph = !files.length;
 
-  const handleDropdownChange = (option: any) => {
-    setModel(option.value);
+  const handleDropdownChange = (option: OptionType | null | void) => {
+    if (option?.value) {
+      setModel(option?.value);
+    }
   };
 
   const extractData = async (file: File, uid: number) => {
@@ -165,7 +167,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
         if (filesData[i]?.status === 'New') {
-          data.push(extractData(files[i], i));
+          data.push(extractData(files[i] as File, i));
         }
       }
       Promise.allSettled(data).then(async (_) => {
@@ -178,18 +180,17 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     setShowAlert(false);
   };
 
-  const openGraphUrl = `https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=${
-    userCredentials?.userName
-  }@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port') ?? '7687'}&search=Show+me+a+graph`;
+  const openGraphUrl = `https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=${userCredentials?.userName
+    }@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port') ?? '7687'}&search=Show+me+a+graph`;
 
   const classNameCheck =
     isExpanded && showChatBot
       ? 'contentWithBothDrawers'
       : isExpanded
-      ? 'contentWithExpansion'
-      : showChatBot
-      ? 'contentWithChatBot'
-      : 'contentWithNoExpansion';
+        ? 'contentWithExpansion'
+        : showChatBot
+          ? 'contentWithChatBot'
+          : 'contentWithNoExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);

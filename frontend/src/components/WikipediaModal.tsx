@@ -54,7 +54,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
         }
         setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Wikipedia Sources`);
         const copiedFilesData: CustomFile[] = [...filesData];
-        const copiedFiles: File[] = [...files];
+        const copiedFiles: (File|null)[] = [...files];
         apiResponse?.data?.file_name?.forEach((item: any) => {
           const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
           const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
@@ -84,7 +84,9 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
           } else {
             const tempFile = copiedFiles[filedataIndex];
             copiedFiles.splice(fileIndex, 1);
-            copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
+            if (tempFile) {
+              copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
+            }
           }
         });
         setFilesData(copiedFilesData);
