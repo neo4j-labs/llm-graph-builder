@@ -29,10 +29,18 @@ export default function Header({ themeMode, toggleTheme }: { themeMode: string; 
         </section>
         <section className='items-center justify-end w-1/3 grow-0 flex'>
           <div>
-            <div className='inline-flex gap-x-1 flex grow-0 items-center gap-1'>
-              <Button href='https://github.com/neo4j-labs/llm-graph-builder/issues' fill='outlined' target='_blank'>
-                Github Issues
-              </Button>
+            <div
+              className='inline-flex gap-x-1'
+              style={{ display: 'flex', flexGrow: 0, alignItems: 'center', gap: '4px' }}
+            >
+              <ButtonWithToolTip
+                ishrefButton={true}
+                href='https://github.com/neo4j-labs/llm-graph-builder/issues'
+                target='_blank'
+                text={'GitHub Issues'}
+              >
+                <CodeBracketIconOutline className='n-size-token-7' />
+              </ButtonWithToolTip>
               <IconButton aria-label='Toggle Dark mode' clean size='large' onClick={toggleTheme}>
                 {themeMode === 'dark' ? (
                   <span role='img' aria-label='sun'>
@@ -47,7 +55,6 @@ export default function Header({ themeMode, toggleTheme }: { themeMode: string; 
               <IconButton aria-label='Toggle settings' size='large' clean>
                 <Cog8ToothIconOutline />
               </IconButton>
-
               <Typography
                 variant='subheading-large'
                 style={{

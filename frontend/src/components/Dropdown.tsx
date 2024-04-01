@@ -9,7 +9,7 @@ const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
   const allOptions = useMemo(() => ['Diffbot', 'OpenAI GPT 4'], []);
   return (
     <>
-      <div style={{ width: '150px' }}>
+      <div className='w-[150px]'>
         <Dropdown
           type='select'
           aria-label='A selection dropdown'
