@@ -74,7 +74,7 @@ class graphDBdataAccess:
         sorting the list by the last updated date. 
         """
         logging.info("Get existing files list from graph")
-        query = "MATCH(d:Document) RETURN d ORDER BY d.updatedAt DESC"
+        query = "MATCH(d:Document) WHERE d.fileName IS NOT NULL RETURN d ORDER BY d.updatedAt DESC"
         result = self.graph.query(query)
         list_of_json_objects = [entry['d'] for entry in result]
         return list_of_json_objects
