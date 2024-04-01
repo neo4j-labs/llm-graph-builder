@@ -55,7 +55,6 @@ export default function Header({ themeMode, toggleTheme }: { themeMode: string; 
               <IconButton aria-label='Toggle settings' size='large' clean>
                 <Cog8ToothIconOutline />
               </IconButton>
-
               <Typography
                 variant='subheading-large'
                 style={{
