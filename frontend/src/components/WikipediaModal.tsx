@@ -63,6 +63,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
               name: item.fileName,
               size: item.fileSize,
               wiki_query: item.fileName,
+              source_url:item.url,
               ...defaultValues,
             });
           } else {
