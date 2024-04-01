@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { urlScanAPI } from '../services/URLScan';
-import { CustomFile, S3ModalProps } from '../types';
+import { CustomFile, S3ModalProps, fileName } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
 import { getFileFromLocal } from '../utils/Utils';
@@ -62,7 +62,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
           const copiedFilesData = [...filesData];
           const copiedFiles = [...files];
-          apiResponse?.data?.file_name?.forEach((item: any) => {
+          apiResponse?.data?.file_name?.forEach((item: fileName) => {
             const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
             const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === item.fileName);
             if (filedataIndex == -1) {
@@ -92,7 +92,9 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             } else {
               const tempFile = copiedFiles[filedataIndex];
               copiedFiles.splice(fileIndex, 1);
-              copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
+              if (tempFile) {
+                copiedFiles.unshift(getFileFromLocal(tempFile?.name) ?? tempFile);
+              }
             }
           });
           setFilesData(copiedFilesData);

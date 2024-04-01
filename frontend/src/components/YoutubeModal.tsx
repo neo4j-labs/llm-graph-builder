@@ -84,7 +84,9 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             } else {
               const tempFile = copiedFiles[filedataIndex];
               copiedFiles.splice(fileIndex, 1);
-              copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
+              if (tempFile) {
+                copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
+              }
             }
           });
           setFilesData(copiedFilesData);

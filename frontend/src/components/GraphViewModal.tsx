@@ -54,7 +54,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
     setIndividualGraphType(newGraphSelected);
   };
-  const queryMap: any = {
+  const queryMap: { Document: string, Chunks: string, Entities: string } = {
     Document: document,
     Chunks: knowledgeGraph,
     Entities: entities,
@@ -83,7 +83,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setNodes([]);
       setRelationships([]);
       let queryToRun = '';
-      const newQuery: any = graphType.map((option) => queryMap[option]).join(' ');
+      const newQuery: string = graphType.map((option) => queryMap[option]).join(' ');
       queryToRun = constructQuery(newQuery, documentNo);
       const session = driver.session();
       setLoading(true);
