@@ -191,8 +191,8 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
                 obj_source_node.file_size = file_metadata['fileSize']
                 obj_source_node.url = file_metadata['url']
                 obj_source_node.file_source = 'gcs bucket'
-                obj_source_node.gcs_bucket = gcs_bucket_name
-                obj_source_node.gcs_bucket_folder = gcs_bucket_folder
+                obj_source_node.gcsBucket = gcs_bucket_name
+                obj_source_node.gcsBucketFolder = gcs_bucket_folder
                 obj_source_node.created_at = datetime.now()
 
                 graphDb_data_Access = graphDBdataAccess(graph)
