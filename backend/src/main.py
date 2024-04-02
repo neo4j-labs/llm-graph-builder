@@ -60,7 +60,7 @@ def create_source_node_graph_local_file(uri, userName, password, file, model, db
     logging.error(f"Error in creating document node: {error_message}")
     return create_api_response(job_status, message=message,error=error_message,file_source=obj_source_node.source,file_name=obj_source_node.file_name)
   
-def create_source_node_graph_url(uri, userName, password ,model, source_url=None, db_name=None,wiki_query:List[str]=None,aws_access_key_id=None,aws_secret_access_key=None, gcs_bucket_name=None, gcs_bucket_folder=None):
+def create_source_node_graph_url(uri, userName, password ,model, source_url=None, db_name=None, wiki_query:str=None, aws_access_key_id=None,aws_secret_access_key=None, gcs_bucket_name=None, gcs_bucket_folder=None):
     """
       Creates a source node in Neo4jGraph and sets properties.
       
@@ -155,16 +155,19 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
               source_type = 'text'
               job_status = 'Completed'
               pages = WikipediaLoader(query=query.strip(), load_max_docs=1, load_all_available_meta=True).load()
-              obj_source_node = sourceNode()
-              obj_source_node.file_name = query.strip()
-              obj_source_node.file_type = source_type
-              obj_source_node.file_source = 'Wikipedia'
-              obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
-              obj_source_node.model = model
-              obj_source_node.url = pages[0].metadata['source']
-              obj_source_node.created_at = datetime.now()
-              obj_source_node.status = 'New'
               try:
+                if not pages:
+                   Failed_count+=1
+                   continue
+                obj_source_node = sourceNode()
+                obj_source_node.file_name = query.strip()
+                obj_source_node.file_type = source_type
+                obj_source_node.file_source = 'Wikipedia'
+                obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
+                obj_source_node.model = model
+                obj_source_node.url = pages[0].metadata['source']
+                obj_source_node.created_at = datetime.now()
+                obj_source_node.status = 'New'
                 graphDb_data_Access = graphDBdataAccess(graph)
                 graphDb_data_Access.create_source_node(obj_source_node)
                 success_count+=1
@@ -271,9 +274,17 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
         logging.error(f"Pdf content or Youtube transcript is not available")
         graphDb_data_Access.update_exception_db(file_name,message)
         return create_api_response(job_status,message=message,file_name=file_name)
-        
-    # update_node_prop = "SET d.createdAt ='{}', d.updatedAt = '{}', d.processingTime = '{}',d.status = '{}', d.errorMessage = '{}',d.nodeCount= {}, d.relationshipCount = {}, d.model = '{}'"
-    # pages = loader.load_and_split()
+
+    obj_source_node = sourceNode()
+    status = "Processing"
+    obj_source_node.file_name = file_name
+    obj_source_node.status = status
+    obj_source_node.created_at = start_time
+    obj_source_node.updated_at = start_time
+    logging.info(file_name)
+    logging.info(obj_source_node)
+    graphDb_data_Access.update_source_node(obj_source_node)
+    
     full_document_content = ""
     bad_chars = ['"', "\n", "'"]
     for i in range(0,len(pages)):
@@ -334,7 +345,6 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
     obj_source_node.node_count = nodes_created
     obj_source_node.relationship_count = relationships_created
 
-    graphDb_data_Access = graphDBdataAccess(graph)
     graphDb_data_Access.update_source_node(obj_source_node)
 
     output = {
