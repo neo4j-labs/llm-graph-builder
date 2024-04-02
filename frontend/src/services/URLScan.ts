@@ -2,7 +2,6 @@ import axios from 'axios';
 import { url } from '../utils/Utils';
 import { ScanProps, ServerResponse } from '../types';
 
-
 const urlScanAPI = async (props: ScanProps) => {
   try {
     const formData = new FormData();

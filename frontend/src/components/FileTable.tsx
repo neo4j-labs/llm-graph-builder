@@ -8,7 +8,7 @@ import {
   ColumnFiltersState,
   getFilteredRowModel,
   getPaginationRowModel,
-  CellContext
+  CellContext,
 } from '@tanstack/react-table';
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
@@ -40,8 +40,8 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded, onInspect }) => {
                   info.row.original?.fileSource === 's3 bucket'
                     ? info.row.original?.source_url
                     : info.row.original?.fileSource === 'youtube'
-                      ? info.row.original?.source_url
-                      : info.getValue()
+                    ? info.row.original?.source_url
+                    : info.getValue()
                 }
               >
                 {info.getValue()}
@@ -166,14 +166,14 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded, onInspect }) => {
                     item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                       ? item.status
                       : item.fileSource === 'local file' && getFileFromLocal(`${item.fileName}`) != null
-                        ? item.status
-                        : item.status === 'Completed' || item.status === 'Failed'
-                          ? item.status
-                          : item.fileSource == 'Wikipedia' ||
-                            item.fileSource == 'youtube' ||
-                            item.fileSource == 'gcs bucket'
-                            ? item.status
-                            : 'N/A',
+                      ? item.status
+                      : item.status === 'Completed' || item.status === 'Failed'
+                      ? item.status
+                      : item.fileSource == 'Wikipedia' ||
+                        item.fileSource == 'youtube' ||
+                        item.fileSource == 'gcs bucket'
+                      ? item.status
+                      : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
                   source_url: item.url != 'None' && item?.url != '' ? item.url : '',
@@ -187,8 +187,8 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded, onInspect }) => {
           }
           setIsLoading(false);
           setFilesData(prefiles);
-          const prefetchedFiles:(File|null)[]=[];
-          res.data.data.forEach((item:SourceNode) => {
+          const prefetchedFiles: (File | null)[] = [];
+          res.data.data.forEach((item: SourceNode) => {
             const localFile = getFileFromLocal(`${item.fileName}`);
             if (item.fileName != undefined && item.fileName.length) {
               if (localFile != null) {
@@ -248,7 +248,7 @@ const FileTable: React.FC<ContentProps> = ({ isExpanded, onInspect }) => {
   });
 
   useEffect(() => {
-    const listener = (e:any) => {
+    const listener = (e: any) => {
       setcurrentOuterHeight(e.currentTarget.outerHeight);
       table.setPageSize(Math.floor((e.currentTarget.outerHeight - 402) / 45));
     };
