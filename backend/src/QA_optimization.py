@@ -37,7 +37,7 @@ class ParallelComponent:
     async def execute(self):
         tasks = [
             self._vector_embed_results(),
-            self._cypher_results(),
+            # self._cypher_results(), ## Disabled call for cypher_results
             self._get_chat_history()
         ]
         return await asyncio.gather(*tasks)
@@ -113,8 +113,6 @@ class ParallelComponent:
             #   raise Exception(error_message)
         print("Cypher QA duration",datetime.now()-t)
         return cypher_res
-
-
 
     async def _get_chat_history(self):
         try:
@@ -195,9 +193,12 @@ async def main(uri,userName,password,question,session_id):
     parallel_component = ParallelComponent(uri, userName, password, question, session_id)
     f_results=await parallel_component.execute()
     print(f_results)
+    # f_vector_result=f_results[0]['result']
+    # f_cypher_result=f_results[1].get('result','')
+    # f_chat_summary=f_results[2]['result']
     f_vector_result=f_results[0]['result']
-    f_cypher_result=f_results[1].get('result','')
-    f_chat_summary=f_results[2]['result']
+    f_cypher_result = "" # Passing Empty string for cypher_result 
+    f_chat_summary=f_results[1]['result']
     print(f_vector_result)
     print(f_cypher_result)
     print(f_chat_summary)

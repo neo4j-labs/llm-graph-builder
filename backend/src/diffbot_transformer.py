@@ -53,3 +53,13 @@ def extract_graph_from_diffbot(graph: Neo4jGraph,
            
     graph.refresh_schema()
     return graph_document_list, relationship_cypher_list
+
+
+def get_graph_from_diffbot(graph,chunks):
+    diffbot_api_key = os.environ.get('DIFFBOT_API_KEY')
+    diffbot_nlp = DiffbotGraphTransformer(diffbot_api_key=diffbot_api_key)
+    graph_documents = diffbot_nlp.convert_to_graph_documents(chunks)
+    graph.add_graph_documents(graph_documents)
+    return graph_documents
+
+    
