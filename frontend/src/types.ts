@@ -28,11 +28,11 @@ export type UserCredentials = {
 } & { [key: string]: any };
 
 export type ExtractParams = {
-  file?: string;
+  file?: File;
   model: string;
   source_url?: string;
-  aws_access_key_id?: string;
-  aws_secret_access_key?: string;
+  aws_access_key_id?: string | null;
+  aws_secret_access_key?: string | null;
   max_sources?: number;
   wiki_query?: string;
   gcs_bucket_name?: string;
@@ -41,7 +41,7 @@ export type ExtractParams = {
 } & { [key: string]: any };
 
 export type UploadParams = {
-  file: string;
+  file: File;
   model: string;
 } & { [key: string]: any };
 
@@ -126,7 +126,7 @@ export interface CustomModalProps {
 export interface CommonButtonProps {
   openModal: () => void;
   wrapperclassName?: string;
-  logo: any;
+  logo: string;
   title: string;
   className?: string;
 }
@@ -186,7 +186,7 @@ export interface ServerResponse extends Partial<AxiosResponse> {
 }
 export interface ScanProps {
   urlParam?: string;
-  userCredentials?: any;
+  userCredentials: UserCredentials | null;
   model?: string;
   accessKey?: string;
   secretKey?: string;

@@ -79,7 +79,6 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               });
             }
             if (fileIndex == -1) {
-              //@ts-ignore
               copiedFiles.unshift(null);
             } else {
               const tempFile = copiedFiles[filedataIndex];
