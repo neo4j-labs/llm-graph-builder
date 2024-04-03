@@ -1,36 +1,6 @@
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import { url } from '../utils/Utils';
-interface fileName {
-  fileName: string;
-  fileSize: number;
-  url: string;
-  gcsBucket?: string;
-  gcsBucketFolder?: string;
-}
-interface URLSCAN_RESPONSE {
-  status: string;
-  success_count?: number;
-  Failed_count?: number;
-  message: string;
-  file_name?: fileName[];
-  error?: string;
-  file_source?: string;
-  data?: any;
-}
-
-interface ServerResponse extends Partial<AxiosResponse> {
-  data: URLSCAN_RESPONSE;
-}
-interface ScanProps {
-  urlParam?: string;
-  userCredentials?: any;
-  model?: string;
-  accessKey?: string;
-  secretKey?: string;
-  wikiquery?: string;
-  gcs_bucket_name?: string;
-  gcs_bucket_folder?: string;
-}
+import { ScanProps, ServerResponse } from '../types';
 
 const urlScanAPI = async (props: ScanProps) => {
   try {

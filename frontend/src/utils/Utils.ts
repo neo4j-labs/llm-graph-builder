@@ -1,3 +1,5 @@
+import { Node } from '@neo4j-nvl/core';
+
 // Get the Url
 export const url = () => {
   let url = window.location.href.replace('5173', '8000');
@@ -12,7 +14,7 @@ export const validation = (url: string) => {
   return url.trim() != '' && /^s3:\/\/([^/]+)\/?$/.test(url) != false;
 };
 
-export const fileToBase64 = (file: any) => {
+export const fileToBase64 = (file: File): Promise<string | ArrayBuffer | null> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -22,17 +24,17 @@ export const fileToBase64 = (file: any) => {
 };
 
 // Save file to local storage
-export const saveFileToLocal = async (file: any) => {
+export const saveFileToLocal = async (file: File) => {
   try {
-    const base64String: any = await fileToBase64(file);
-    localStorage.setItem(`${file.name}`, base64String);
+    const base64String: string | ArrayBuffer | null = await fileToBase64(file);
+    localStorage.setItem(`${file.name}`, base64String as string);
     console.log('File saved to local storage');
   } catch (error) {
     console.error('Error saving file to local storage:', error);
   }
 };
 
-export const base64ToFile = (base64String: any, fileName: any) => {
+export const base64ToFile = (base64String: string, fileName: string) => {
   const byteCharacters = atob(base64String.split(',')[1]);
   const byteArrays = [];
   for (let offset = 0; offset < byteCharacters.length; offset += 512) {
