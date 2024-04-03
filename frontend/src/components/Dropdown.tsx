@@ -15,7 +15,7 @@ const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
           aria-label='A selection dropdown'
           selectProps={{
             onChange: handleChange,
-            options: allOptions.map((option) => ({ label: option === "Gemini Pro" ? "LLM" : option, value: option })),
+            options: allOptions.map((option) => ({ label: option === 'Gemini Pro' ? 'LLM' : option, value: option })),
             placeholder: 'Select LLM Model',
             defaultValue: { label: 'LLM', value: 'Gemini Pro' },
             menuPlacement: 'auto',

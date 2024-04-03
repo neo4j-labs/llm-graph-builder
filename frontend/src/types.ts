@@ -1,3 +1,4 @@
+import { AxiosResponse } from 'axios';
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 
 export interface CustomFile extends Partial<globalThis.File> {
@@ -27,11 +28,11 @@ export type UserCredentials = {
 } & { [key: string]: any };
 
 export type ExtractParams = {
-  file?: string;
+  file?: File;
   model: string;
   source_url?: string;
-  aws_access_key_id?: string;
-  aws_secret_access_key?: string;
+  aws_access_key_id?: string | null;
+  aws_secret_access_key?: string | null;
   max_sources?: number;
   wiki_query?: string;
   gcs_bucket_name?: string;
@@ -40,7 +41,7 @@ export type ExtractParams = {
 } & { [key: string]: any };
 
 export type UploadParams = {
-  file: string;
+  file: File;
   model: string;
 } & { [key: string]: any };
 
@@ -108,7 +109,7 @@ export interface FileTableProps {
   isExpanded: boolean;
   connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
-  onInspect: (id: any) => void;
+  onInspect: (id: string) => void;
 }
 
 export interface CustomModalProps {
@@ -125,7 +126,7 @@ export interface CustomModalProps {
 export interface CommonButtonProps {
   openModal: () => void;
   wrapperclassName?: string;
-  logo: any;
+  logo: string;
   title: string;
   className?: string;
 }
@@ -161,3 +162,35 @@ export interface GraphViewModalProps {
 }
 
 export type GraphType = 'Document' | 'Chunks' | 'Entities';
+
+export interface fileName {
+  fileName: string;
+  fileSize: number;
+  url: string;
+  gcsBucket?: string;
+  gcsBucketFolder?: string;
+}
+export interface URLSCAN_RESPONSE {
+  status: string;
+  success_count?: number;
+  Failed_count?: number;
+  message: string;
+  file_name?: fileName[];
+  error?: string;
+  file_source?: string;
+  data?: any;
+}
+
+export interface ServerResponse extends Partial<AxiosResponse> {
+  data: URLSCAN_RESPONSE;
+}
+export interface ScanProps {
+  urlParam?: string;
+  userCredentials: UserCredentials | null;
+  model?: string;
+  accessKey?: string;
+  secretKey?: string;
+  wikiquery?: string;
+  gcs_bucket_name?: string;
+  gcs_bucket_folder?: string;
+}

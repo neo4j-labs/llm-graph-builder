@@ -20,7 +20,7 @@ export const setDriver = async (connectionURI: string, username: string, passwor
 
 export const disconnect = async () => {
   try {
-    driver.close();
+    await driver.close();
     return true;
   } catch (err: any) {
     console.error(`Disconnection error\n${err}\nCause: ${err.cause}`);
