@@ -1,6 +1,7 @@
 from langchain_community.graphs import Neo4jGraph
 from dotenv import load_dotenv
 from langchain.schema import Document
+import json
 import logging
 import re
 import concurrent.futures
@@ -18,7 +19,7 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain.pydantic_v1 import BaseModel
 from langchain_google_vertexai import ChatVertexAI
 from langchain_core.prompts import ChatPromptTemplate
-from typing import List
+from typing import List, Dict
 from langchain_core.pydantic_v1 import BaseModel, Field
 import google.auth 
 from langchain_community.graphs.graph_document import Node
@@ -150,6 +151,44 @@ def map_to_base_relationship(rel: Any) -> Relationship:
         source=source, target=target, type=rel.type.replace(" ", "_").upper()
     )
 
+def _extract_relationships(
+    raw_schema: Dict[Any, Any],
+) -> List[Relationship]:
+    # If there are validation errors
+    if not raw_schema["parsed"]:
+        try:
+            argument_json = json.loads(
+                raw_schema["raw"].additional_kwargs["tool_calls"][0]["function"][
+                    "arguments"
+                ]
+            )
+            relationships = []
+            for rel in argument_json["relationships"]:
+                # Mandatory props
+                if (
+                    not rel.get("start_node_id")
+                    or not rel.get("end_node_id")
+                    or not rel.get("type")
+                ):
+                    continue
+            relationships.append(
+                Relationship(
+                    source=Node(id=rel.get("start_node_id").title(), type=rel.get("start_node_type", "Node").capitalize()),
+                    target=Node(id=rel.get("end_node_id").title(), type=rel.get("end_node_type", "Node").capitalize()),
+                    type=rel["type"],
+                )
+             )
+        except Exception:  # If we can't parse JSON
+            return []
+    else:  # If there are no validation errors use parsed pydantic object
+        parsed_schema = raw_schema["parsed"]
+        relationships = (
+            [map_to_base_relationship(rel) for rel in parsed_schema.relationships]
+            if parsed_schema.relationships
+            else []
+        )
+    return relationships
+
 class GeminiLLMGraphTransformer: 
     def __init__(
         self,
@@ -170,7 +209,7 @@ class GeminiLLMGraphTransformer:
 
         # Define chain
         schema = create_simple_model(allowed_nodes, allowed_relationships)
-        structured_llm = llm.with_structured_output(schema)
+        structured_llm = llm.with_structured_output(schema, include_raw=True)
         self.chain = default_prompt | structured_llm
 
 
@@ -186,12 +225,7 @@ class GeminiLLMGraphTransformer:
             # else:
             #     nodes = []
             nodes =[]
-            if raw_schema.relationships:
-                relationships = [
-                    map_to_base_relationship(rel) for rel in raw_schema.relationships
-                ]
-            else:
-                relationships = []
+            relationships = _extract_relationships(raw_schema)
 
             # Strict mode filtering
             if self.strict_mode and (self.allowed_nodes or self.allowed_relationships):
