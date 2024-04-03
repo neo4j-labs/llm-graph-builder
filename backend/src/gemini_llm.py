@@ -158,7 +158,7 @@ def _extract_relationships(
     if not raw_schema["parsed"]:
         try:
             argument_json = json.loads(
-                raw_schema["raw"].additional_kwargs["tool_calls"][0]["function"][
+                raw_schema["raw"].additional_kwargs["function_call"][
                     "arguments"
                 ]
             )
@@ -323,10 +323,10 @@ def get_graph_from_Gemini(model_version,
             nodes = [Node(id=id, type=type) for id,type in unique_nodes]        
             graph_document[0].nodes=list(nodes)
 
-            for node in graph_document[0].nodes:
-                node.id = node.id.title().replace(' ','_')
+            #for node in graph_document[0].nodes:
+            #    node.id = node.id.title().replace(' ','_')
                 #replace all non alphanumeric characters and spaces with underscore
-                node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
+            #    node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
             graph_document_list.append(graph_document[0])
         
     graph.add_graph_documents(graph_document_list)
