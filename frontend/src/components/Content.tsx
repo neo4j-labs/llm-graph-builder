@@ -181,7 +181,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   };
 
   const handleOpenGraphClick = () => {
-    const bloomUrl = process.env.DEV_BLOOM_URL || process.env.PROD_BLOOM_URL;
+    const bloomUrl = process.env.BLOOM_URL;
     const connectURL = `${userCredentials?.userName}@${localStorage.getItem('hostname')}%3A${
       localStorage.getItem('port') ?? '7687'
     }`;

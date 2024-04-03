@@ -1,6 +1,5 @@
-import React, { ReactNode, createContext, useMemo, useState } from 'react';
+import { ReactNode, createContext, useMemo, useState } from 'react';
 import { NeedleThemeProvider, useMediaQuery } from '@neo4j-ndl/react';
-import QuickStarter from '../components/QuickStarter';
 
 export const ThemeWrapperContext = createContext({
   toggleColorMode: () => {},

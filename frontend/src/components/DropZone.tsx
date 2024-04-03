@@ -7,7 +7,7 @@ import { useFileContext } from '../context/UsersFiles';
 import { getFileFromLocal, saveFileToLocal } from '../utils/Utils';
 import CustomAlert from './Alert';
 import { uploadAPI } from '../utils/FileAPI';
-import { CustomFile } from '../types';
+import { CustomFile, UserCredentials } from '../types';
 
 const DropZone: FunctionComponent = () => {
   const { files, filesData, setFiles, setFilesData, model } = useFileContext();
@@ -19,7 +19,7 @@ const DropZone: FunctionComponent = () => {
 
   const onDropHandler = (f: Partial<globalThis.File>[]) => {
     setIsClicked(true);
-    f.forEach((i) => saveFileToLocal(i));
+    f.forEach((i) => saveFileToLocal(i as any));
     setIsLoading(false);
     if (f.length) {
       const defaultValues: CustomFile = {
@@ -34,7 +34,7 @@ const DropZone: FunctionComponent = () => {
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
-      const copiedFiles: File[] = [...files];
+      const copiedFiles: (File | null)[] = [...files];
 
       f.forEach((file) => {
         const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === file?.name);
@@ -64,7 +64,9 @@ const DropZone: FunctionComponent = () => {
         } else {
           const tempFile = copiedFiles[filedataIndex];
           copiedFiles.splice(fileIndex, 1);
-          copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
+          if (tempFile) {
+            copiedFiles.unshift(getFileFromLocal(tempFile.name));
+          }
         }
       });
       setFiles(copiedFiles);
@@ -87,7 +89,7 @@ const DropZone: FunctionComponent = () => {
             return curfile;
           })
         );
-        const apiResponse = await uploadAPI(file, userCredentials, model);
+        const apiResponse = await uploadAPI(file, userCredentials as UserCredentials, model);
         if (apiResponse?.status === 'Failed') {
           throw new Error(`message:${apiResponse.message},fileName:${apiResponse.file_name}`);
         } else {
@@ -149,7 +151,7 @@ const DropZone: FunctionComponent = () => {
   useEffect(() => {
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
-        fileUpload(files[i], i);
+        fileUpload(files[i] as File, i);
       }
     }
   }, [files]);
