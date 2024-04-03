@@ -38,7 +38,7 @@ frozenlist==1.4.1
 fsspec==2024.2.0
 google-api-core==2.18.0
 google-auth==2.29.0
-google-cloud-aiplatform==1.45.0
+google-cloud-aiplatform==1.46.0
 google-cloud-bigquery==3.19.0
 google-cloud-core==2.4.1
 google-cloud-resource-manager==1.12.3
