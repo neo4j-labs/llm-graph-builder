@@ -1,0 +1,40 @@
+{
+  "listMessages": [
+    {
+      "id": 1,
+      "message": "Hi, I need help with creating a Cypher query for Neo4j.",
+      "user": "user",
+      "datetime": "01/01/2024 00:00:00"
+    },
+    {
+      "id": 2,
+      "message": " Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.",
+      "user": "chatbot",
+      "datetime": "01/01/2024 00:00:00"
+    },
+    {
+      "id": 3,
+      "message": "I need to find all employees who work in the IT department.",
+      "user": "user",
+      "datetime": "01/01/2024 00:00:00"
+    },
+    {
+      "id": 4,
+      "message": "Alright, you can use the following query: `MATCH (e:Employee)-[:WORKS_IN]->(d:Department {name: 'IT'}) RETURN e.name`. This query matches nodes labeled 'Employee' related to the 'IT' department and returns their names.",
+      "user": "chatbot",
+      "datetime": "01/01/2024 00:00:00"
+    },
+    {
+      "id": 5,
+      "message": "Thanks! And how do I get the total number of such employees?",
+      "user": "user",
+      "datetime": "01/01/2024 00:00:00"
+    },
+    {
+      "id": 6,
+      "message": "To get the count, use: `MATCH (e:Employee)-[:WORKS_IN]->(d:Department {name: 'IT'}) RETURN count(e)`. This counts all the distinct 'Employee' nodes related to the 'IT' department.",
+      "user": "chatbot",
+      "datetime": "01/01/2024 00:00:00"
+    }
+  ]
+}
