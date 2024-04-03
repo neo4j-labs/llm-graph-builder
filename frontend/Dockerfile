@@ -1,7 +1,8 @@
 # Step 1: Build the React application
 FROM node:20 AS build
 ENV BACKEND_API_URL "https://devbackend-dcavk67s4a-uc.a.run.app"
-ENV BLOOM_URL "https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=neo4j%2B://"
+ENV DEV_BLOOM_URL "https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL={CONNECT_URL}&search=Show+me+a+graph"
+ENV PROD_BLOOM_URL "https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true"
 WORKDIR /app
 COPY package.json .npmrc  yarn.lock ./
 RUN yarn add @neo4j-nvl/interaction-handlers @neo4j-nvl/core @neo4j-nvl/react
