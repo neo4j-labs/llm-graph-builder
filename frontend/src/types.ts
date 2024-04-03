@@ -12,6 +12,7 @@ export interface CustomFile extends Partial<globalThis.File> {
   wiki_query?: string;
   gcsBucket?: string;
   gcsBucketFolder?: string;
+  errorMessage?: string;
 }
 
 export interface OptionType {
@@ -86,6 +87,7 @@ export interface SourceNode {
   fileSource: string;
   gcsBucket?: string;
   gcsBucketFolder?: string;
+  errorMessage?: string;
 }
 
 export interface SideNavProps {

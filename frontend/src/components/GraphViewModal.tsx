@@ -122,7 +122,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                   captionHtml: <b>Test</b>,
                   caption: getNodeCaption(g),
                   color: scheme[g.labels[0]],
-                  icon: getIcon(g)
+                  icon: getIcon(g),
                 };
               });
               return totalNodes;
@@ -292,7 +292,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               </div>
               <div className='flex gap-2'>
                 <TextInput
-                  helpText="Documents Limit"
+                  helpText='Documents Limit'
                   required
                   type='number'
                   onChange={(e) => setDocLimit(e.target.value)}
