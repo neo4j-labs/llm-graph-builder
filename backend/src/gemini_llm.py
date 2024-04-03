@@ -158,7 +158,7 @@ def _extract_relationships(
     if not raw_schema["parsed"]:
         try:
             argument_json = json.loads(
-                raw_schema["raw"].additional_kwargs["function_call"][
+                raw_schema["raw"].additional_kwargs["tool_calls"][0]["function"][
                     "arguments"
                 ]
             )
