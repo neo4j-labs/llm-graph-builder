@@ -47,7 +47,7 @@
 }
 
 .contentWithChatBot {
-  width: calc(-385px + 100dvw);
+  width: calc(-425px + 100dvw);
   height: calc(100dvh - 60px);
   padding: 3px;
   display: flex;
