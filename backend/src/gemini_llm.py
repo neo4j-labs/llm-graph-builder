@@ -25,7 +25,7 @@ import google.auth
 from langchain_community.graphs.graph_document import Node
 
 load_dotenv()
-logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
+logging.basicConfig(format='%(asctime)s - %(message)s',level='DEBUG')
 
 system_prompt = (
     "# Knowledge Graph Instructions for GPT-4\n"
