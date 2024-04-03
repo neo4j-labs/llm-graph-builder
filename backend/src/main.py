@@ -283,7 +283,7 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
     obj_source_node.updated_at = start_time
     logging.info(file_name)
     logging.info(obj_source_node)
-    graphDb_data_Access.update_source_node(obj_source_node)
+    # graphDb_data_Access.update_source_node(obj_source_node)
     
     full_document_content = ""
     bad_chars = ['"', "\n", "'"]
