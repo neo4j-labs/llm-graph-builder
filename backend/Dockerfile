@@ -22,5 +22,5 @@ RUN mkdir -p /usr/local/gcloud \
 ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin
 
 CMD ["uvicorn", "score:app", "--host", "0.0.0.0", "--port", "8000"]
-CMD ["gcloud", "auth", "application-default", "login"]
+CMD ["gcloud", "auth", "application-default", "login", "--quiet"]
 
