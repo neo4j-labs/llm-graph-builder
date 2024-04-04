@@ -295,7 +295,8 @@ def get_graph_from_Gemini(model_version,
     graph_document_list = []
     lst_chunk_chunkId_document=[]
     location = "us-central1"
-    credentials, project_id = google.auth.default()
+    project = "llm-experiments-387609"                            
+    #credentials, project_id = google.auth.default()
     vertexai.init(project=project_id, location=location)
     
     # combined_chunk_document_list=[]
