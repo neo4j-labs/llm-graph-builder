@@ -56,7 +56,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
     setShowGCSModal(false);
   }, []);
 
-  const sources = process?.env?.REACT_APP_SOURCES?.split(',') || [];
+  const sources = process.env.REACT_APP_SOURCES?.split(',') || [];
 
   return (
     <div className='flex min-h-[650px] overflow-hidden relative'>
