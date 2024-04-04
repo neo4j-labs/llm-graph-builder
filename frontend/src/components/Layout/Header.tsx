@@ -55,19 +55,9 @@ export default function Header({ themeMode, toggleTheme }: { themeMode: string; 
                   </span>
                 )}
               </IconButton>
-              <IconButton aria-label='Toggle settings' size='large' clean>
+              {/* <IconButton aria-label='Toggle settings' size='large' clean>
                 <Cog8ToothIconOutline />
-              </IconButton>
-              <Typography
-                variant='subheading-large'
-                style={{
-                  ml: 'var(--space-8)',
-                  mr: 'var(--space-8)',
-                  width: '1px',
-                  height: 'var(--space-16)',
-                  backgroundColor: 'white',
-                }}
-              ></Typography>
+              </IconButton> */}
             </div>
           </div>
         </section>
