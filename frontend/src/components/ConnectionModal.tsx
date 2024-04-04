@@ -85,8 +85,7 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
                 autoFocus
                 fluid
                 onChange={(e) => setHostname(e.target.value)}
-            aria-label='Connection url'
-
+                aria-label='Connection url'
               />
             </div>
             <div className='connectionmodal__port__input'>
