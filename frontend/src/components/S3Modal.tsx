@@ -154,6 +154,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           value={bucketUrl}
           disabled={false}
           label='Bucket URL'
+          aria-label='Bucket URL'
           placeholder='s3://data.neo4j.com/pdf/'
           autoFocus
           fluid
@@ -172,6 +173,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           value={accessKey}
           disabled={false}
           label='Access Key'
+          aria-label='Access Key'
           className='w-full'
           placeholder=''
           fluid
@@ -186,6 +188,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           value={secretKey}
           disabled={false}
           label='Secret Key'
+          aria-label='Secret Key'
           className='w-full'
           placeholder=''
           fluid

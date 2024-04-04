@@ -131,6 +131,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           value={bucketName}
           disabled={false}
           label='Bucket Name'
+          aria-label='Bucket Name'
           placeholder=''
           autoFocus
           fluid
@@ -144,6 +145,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           value={folderName}
           disabled={false}
           label='Folder Name'
+          aria-label='Folder Name'
           placeholder=''
           isOptional={true}
           fluid

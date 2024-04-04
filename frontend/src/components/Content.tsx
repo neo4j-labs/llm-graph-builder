@@ -250,7 +250,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             setViewPoint('tableView');
           }}
         ></FileTable>
-        <Flex className='w-full p-2.5 absolute bottom-4 flex-row mt-1.5 self-start' justifyContent='space-between'>
+        <Flex className='w-full p-2.5 absolute bottom-4 mt-1.5 self-start' justifyContent='space-between' flexDirection='row'>
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <Button

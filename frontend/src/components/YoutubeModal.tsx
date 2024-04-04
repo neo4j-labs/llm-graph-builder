@@ -124,6 +124,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           value={youtubeURL}
           disabled={false}
           label='Youtube Link'
+          aria-label='Youtube Link'
           placeholder='https://www.youtube.com/watch?v=2W9HM1xBibo'
           autoFocus
           fluid

@@ -171,6 +171,7 @@ export default function Chatbot(props: ChatbotProps) {
         <form onSubmit={handleSubmit} className='flex gap-2.5 w-full'>
           <TextInput
             className='n-bg-palette-neutral-bg-default flex-grow-7 w-full'
+            aria-label='chatbot-input'
             type='text'
             value={inputMessage}
             fluid

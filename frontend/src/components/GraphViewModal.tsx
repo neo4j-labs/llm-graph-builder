@@ -12,7 +12,7 @@ import {
 } from '@neo4j-ndl/react/icons';
 import ButtonWithToolTip from './ButtonWithToolTip';
 import { constructDocQuery, constructQuery, getIcon, getNodeCaption, getSize } from '../utils/Utils';
-import { colors, entities, knowledgeGraph, document } from '../utils/Constants';
+import { colors, entities, chunks, document, docEntities, docChunks, chunksEntities, docChunkEntities } from '../utils/Constants';
 import { ArrowSmallRightIconOutline } from '@neo4j-ndl/react/icons';
 
 type Scheme = Record<string, string>;
@@ -34,7 +34,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<'unknown' | 'success' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
-  const [docLimit, setDocLimit] = useState<string>('5');
+  const [docLimit, setDocLimit] = useState<string>('1');
 
   const handleCheckboxChange = (graph: GraphType) => {
     const currentIndex = graphType.indexOf(graph);
@@ -57,10 +57,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
     setIndividualGraphType(newGraphSelected);
   };
-  const queryMap: { Document: string; Chunks: string; Entities: string } = {
+  const queryMap: { Document: string; Chunks: string; Entities: string, DocEntities: string, DocChunks: string, ChunksEntities: string, DocChunkEntities: string } = {
     Document: document,
-    Chunks: knowledgeGraph,
+    Chunks: chunks,
     Entities: entities,
+    DocEntities: docEntities,
+    DocChunks: docChunks,
+    ChunksEntities: chunksEntities,
+    DocChunkEntities: docChunkEntities
   };
   const handleZoomToFit = () => {
     nvlRef.current?.fit(
@@ -85,8 +89,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setNodes([]);
       setRelationships([]);
       let queryToRun = '';
-      const newQuery: string = graphType.map((option) => queryMap[option]).join('\n');
-      queryToRun = constructQuery(newQuery, documentNo);
+      // const newQuery: string = graphType.map((option) => queryMap[option]).join('');
+      const newCheck: string = graphType.length === 3 ? queryMap['DocChunkEntities'] : (graphType.includes('Entities') && graphType.includes('Chunks')) ? queryMap['ChunksEntities']
+        : (graphType.includes('Entities') && graphType.includes('Document')) ? queryMap['DocEntities']
+          : (graphType.includes('Document') && graphType.includes('Chunks')) ? queryMap['DocChunks']
+            : (graphType.includes('Entities') && graphType.length === 1) ? queryMap['Entities']
+              : (graphType.includes('Chunks') && graphType.length === 1) ? queryMap['Chunks']
+                : queryMap['Document'];
+      queryToRun = constructQuery(newCheck, documentNo);
       const session = driver.session();
       setLoading(true);
       session
@@ -297,10 +307,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                   helpText='Documents Limit'
                   required
                   type='number'
+                  aria-label='Document Limit'
                   onChange={(e) => setDocLimit(e.target.value)}
                   value={docLimit}
                 ></TextInput>
-                <IconButton onClick={() => setDocumentNo(docLimit)}>
+                <IconButton  aria-label="refresh-btn" onClick={() => setDocumentNo(docLimit)}>
                   <ArrowSmallRightIconOutline className='n-size-token-7' />
                 </IconButton>
               </div>

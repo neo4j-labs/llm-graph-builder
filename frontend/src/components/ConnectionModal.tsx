@@ -85,6 +85,8 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
                 autoFocus
                 fluid
                 onChange={(e) => setHostname(e.target.value)}
+            aria-label='Connection url'
+
               />
             </div>
             <div className='connectionmodal__port__input'>
@@ -93,6 +95,7 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
                 value={port}
                 disabled={false}
                 label='Port'
+                aria-label='Port'
                 placeholder='7687'
                 fluid
                 onChange={(e) => setPort(e.target.value)}
@@ -104,6 +107,7 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
             value={database}
             disabled={false}
             label='Database'
+            aria-label='Database'
             placeholder='neo4j'
             fluid
             required
@@ -116,6 +120,7 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
                 value={username}
                 disabled={false}
                 label='Username'
+                aria-label='Username'
                 placeholder='neo4j'
                 fluid
                 onChange={(e) => setUsername(e.target.value)}
@@ -127,6 +132,7 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
                 value={password}
                 disabled={false}
                 label='Password'
+                aria-label='Password'
                 type='password'
                 fluid
                 onChange={(e) => setPassword(e.target.value)}
