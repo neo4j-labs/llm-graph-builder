@@ -58,7 +58,11 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         cell: (info) => (
           <div>
             <StatusIndicator type={statusCheck(info.getValue())} />
-            <i>{info.getValue()}</i>
+            {info.row.original?.status === 'Failed' ? (
+              <span title={info.row.original?.errorMessage}>{info.getValue()}</span>
+            ) : (
+              <i>{info.getValue()}</i>
+            )}
           </div>
         ),
         header: () => <span>Status</span>,
@@ -177,6 +181,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   fileSource: item.fileSource ?? 'None',
                   gcsBucket: item?.gcsBucket,
                   gcsBucketFolder: item?.gcsBucketFolder,
+                  errorMessage: item?.errorMessage,
                 });
               }
             });

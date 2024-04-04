@@ -180,9 +180,15 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     setShowAlert(false);
   };
 
-  const openGraphUrl = `https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=${
-    userCredentials?.userName
-  }@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port') ?? '7687'}&search=Show+me+a+graph`;
+  const handleOpenGraphClick = () => {
+    const bloomUrl = process.env.BLOOM_URL;
+    const connectURL = `${userCredentials?.userName}@${localStorage.getItem('hostname')}%3A${
+      localStorage.getItem('port') ?? '7687'
+    }`;
+    const encodedURL = encodeURIComponent(connectURL);
+    const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
+    window.open(replacedUrl, '_blank');
+  };
 
   const classNameCheck =
     isExpanded && showChatBot
@@ -263,8 +269,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               Show Graph
             </Button>
             <Button
-              href={openGraphUrl}
-              target='_blank'
+              onClick={handleOpenGraphClick}
               disabled={disableCheckGraph || !filesData.some((f) => f?.status === 'Completed')}
               className='ml-0.5'
             >

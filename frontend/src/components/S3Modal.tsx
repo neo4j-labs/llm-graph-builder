@@ -65,7 +65,6 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           accessKey: accessKey,
           secretKey: secretKey,
         });
-        console.log('response', apiResponse);
         setStatus('success');
         if (apiResponse?.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
