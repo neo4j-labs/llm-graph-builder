@@ -1,6 +1,6 @@
 # Step 1: Build the React application
 FROM node:20 AS build
-ENV BACKEND_API_URL "https://devbackend-dcavk67s4a-uc.a.run.app"
+ENV BACKEND_API_URL "https://devbackend-new-dcavk67s4a-uc.a.run.app"
 #ENV BLOOM_URL "https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL={CONNECT_URL}&search=Show+me+a+graph"
 ENV BLOOM_URL "https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true"
 ENV REACT_APP_SOURCES 'local,wikipedia,s3,gcs'
