@@ -1,8 +1,7 @@
 export const document = `+ [docs]`;
 
 export const knowledgeGraph = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
-+ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
-+ collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)--(:!Chunk) RETURN p }`;
++ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks`;
 
 export const entities = `+ collect { MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)--(:!Chunk) RETURN p }`;
 
