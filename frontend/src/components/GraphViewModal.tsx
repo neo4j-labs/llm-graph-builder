@@ -85,7 +85,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setNodes([]);
       setRelationships([]);
       let queryToRun = '';
-      const newQuery: string = graphType.map((option) => queryMap[option]).join(' ');
+      const newQuery: string = graphType.map((option) => queryMap[option]).join('\n');
       queryToRun = constructQuery(newQuery, documentNo);
       const session = driver.session();
       setLoading(true);
@@ -163,7 +163,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setfileNodes([]);
       setFileRelationships([]);
       if (viewPoint === 'tableView') {
-        const newQuery: string = individualGraphType.map((option) => queryMap[option]).join(' ');
+        const newQuery: string = individualGraphType.map((option) => queryMap[option]).join('\n');
         const queryToRun = constructDocQuery(newQuery);
         setLoading(true);
         const session = driver.session();
