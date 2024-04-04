@@ -8,12 +8,12 @@ export const entities = `+ collect { MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)--
 export const docEntities = `+ [docs] 
 + collect { MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)--(:!Chunk) RETURN p }`;
 
-export const docChunks =`+ [chunks] // documents with chunks
+export const docChunks = `+ [chunks] // documents with chunks
 + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
 + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
 + [docs]`;
 
-export const chunksEntities= `// if chunks:
+export const chunksEntities = `// if chunks:
 + [chunks] // documents with chunks
 + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
 + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
@@ -28,7 +28,6 @@ export const docChunkEntities = `// if documents:
 + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
 //chunks with entities
 + collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)--(:!Chunk) RETURN p }`;
-
 
 export const colors = [
   '#588c7e',
