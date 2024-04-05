@@ -3,7 +3,6 @@ import Neo4jLogoColor from '../../logo-color.svg';
 import {
   MoonIconOutline,
   SunIconOutline,
-  Cog8ToothIconOutline,
   CodeBracketSquareIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { Typography, IconButton } from '@neo4j-ndl/react';
