@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
+from langchain_google_vertexai import VertexAIEmbeddings
 import logging
 from langchain_community.chat_message_histories import Neo4jChatMessageHistory
 load_dotenv()
@@ -100,9 +101,9 @@ def QA_RAG(uri,userName,password,question,session_id):
         WITH d, apoc.text.join(collect(node.text),"\n----\n") as text, avg(score) as score
         RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)} as metadata
         """
-
+        embedding_model = os.getenv('EMBEDDING_MODEL')
         neo_db=Neo4jVector.from_existing_index(
-                embedding=OpenAIEmbeddings(),
+                embedding = VertexAIEmbeddings(model_name=embedding_model),
                 url=uri,
                 username=userName,
                 password=password,
