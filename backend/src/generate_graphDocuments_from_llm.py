@@ -10,7 +10,7 @@ logging.basicConfig(format="%(asctime)s - %(message)s", level="INFO")
 
 def generate_graphDocuments(model: str, graph: Neo4jGraph, chunks: List):
     if model == "Diffbot":
-        graph_documents = get_graph_from_diffbot(graph, chunks)
+        graph_documents_chunk_chunk_Id = get_graph_from_diffbot(graph, chunks)
 
     elif model == "OpenAI GPT 3.5":
         model_version = "gpt-3.5-turbo-16k"

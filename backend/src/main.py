@@ -360,7 +360,7 @@ def extract_graph_from_file(uri, userName, password, model, db_name=None, file=N
       
   except Exception as e:
       job_status = "Failed"
-      message="Failed To Process File or OpenAI Unable To Parse Content"
+      message="Failed To Process File or Gemini Pro Unable To Parse Content"
       error_message = str(e)
       logging.error(f"file failed in process: {file_name}")
       graphDb_data_Access.update_exception_db(file_name,error_message)
