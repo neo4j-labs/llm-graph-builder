@@ -2,6 +2,7 @@ from langchain_community.graphs import Neo4jGraph
 from langchain.docstore.document import Document
 from langchain_community.vectorstores.neo4j_vector import Neo4jVector
 from langchain_openai import OpenAIEmbeddings
+from langchain_google_vertexai import VertexAIEmbeddings
 import logging
 import os
 import uuid
@@ -104,7 +105,8 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
 def merge_chunk_embedding(graph, graph_documents_chunk_chunk_Id, file_name):
     #create embedding
     isEmbedding = os.getenv('IS_EMBEDDING')
-    embeddings_model = OpenAIEmbeddings()
+    embedding_model = os.getenv('EMBEDDING_MODEL')
+    embeddings_model = VertexAIEmbeddings(model_name=embedding_model)
     
     for row in graph_documents_chunk_chunk_Id:
         # for graph_document in row['graph_doc']:
@@ -121,3 +123,10 @@ def merge_chunk_embedding(graph, graph_documents_chunk_chunk_Id, file_name):
                             "embeddings" : embeddings
                         }
                         )
+            #create vector index on chunk embedding
+            graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
+                            OPTIONS {indexConfig: {
+                            `vector.dimensions`: 768,
+                            `vector.similarity_function`: 'cosine'
+                            }}
+                        """)
