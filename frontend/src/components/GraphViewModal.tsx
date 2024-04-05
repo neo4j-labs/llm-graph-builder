@@ -118,7 +118,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       session
         .run(queryToRun, { document_name: inspectedName })
         .then((results) => {
-          if (results.records && results.records.length > 0) {
+          // If this doc exists in the graph, the result length will be one.
+          if (results.records.length > 1) {
             // @ts-ignore
             const neo4jNodes = results.records.map((f) => f._fields[0]);
             // @ts-ignore
