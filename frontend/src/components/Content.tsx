@@ -8,7 +8,7 @@ import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { extractAPI } from '../utils/FileAPI';
-import { ContentProps } from '../types';
+import { ContentProps, OptionType, UserCredentials } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './GraphViewModal';
 
@@ -22,7 +22,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const { filesData, files, setFilesData, setModel, model } = useFileContext();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
-  const [viewPoint, setViewPoint] = useState<string>('tableView');
+  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
 
   useEffect(() => {
     if (!init) {
@@ -59,8 +59,10 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
   const disableCheckGraph = !files.length;
 
-  const handleDropdownChange = (option: any) => {
-    setModel(option.value);
+  const handleDropdownChange = (option: OptionType | null | void) => {
+    if (option?.value) {
+      setModel(option?.value);
+    }
   };
 
   const extractData = async (file: File, uid: number) => {
@@ -80,7 +82,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         const apiResponse = await extractAPI(
           file,
           filesData[uid].model,
-          userCredentials,
+          userCredentials as UserCredentials,
           filesData[uid].fileSource,
           filesData[uid].source_url,
           localStorage.getItem('accesskey'),
@@ -160,16 +162,16 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     }
   };
 
-  const handleGenerateGraph = async () => {
+  const handleGenerateGraph = () => {
     const data = [];
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
         if (filesData[i]?.status === 'New') {
-          data.push(extractData(files[i], i));
+          data.push(extractData(files[i] as File, i));
         }
       }
       Promise.allSettled(data).then(async (_) => {
-        await updateGraphAPI(userCredentials);
+        await updateGraphAPI(userCredentials as UserCredentials);
       });
     }
   };
@@ -178,9 +180,15 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     setShowAlert(false);
   };
 
-  const openGraphUrl = `https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=${
-    userCredentials?.userName
-  }@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port') ?? '7687'}&search=Show+me+a+graph`;
+  const handleOpenGraphClick = () => {
+    const bloomUrl = process.env.BLOOM_URL;
+    const connectURL = `${userCredentials?.userName}@${localStorage.getItem('hostname')}%3A${
+      localStorage.getItem('port') ?? '7687'
+    }`;
+    const encodedURL = encodeURIComponent(connectURL);
+    const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
+    window.open(replacedUrl, '_blank');
+  };
 
   const classNameCheck =
     isExpanded && showChatBot
@@ -242,7 +250,11 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             setViewPoint('tableView');
           }}
         ></FileTable>
-        <Flex className='w-full p-2.5 absolute bottom-4 flex-row mt-1.5 self-start' justifyContent='space-between'>
+        <Flex
+          className='w-full p-2.5 absolute bottom-4 mt-1.5 self-start'
+          justifyContent='space-between'
+          flexDirection='row'
+        >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <Button
@@ -261,8 +273,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               Show Graph
             </Button>
             <Button
-              href={openGraphUrl}
-              target='_blank'
+              onClick={handleOpenGraphClick}
               disabled={disableCheckGraph || !filesData.some((f) => f?.status === 'Completed')}
               className='ml-0.5'
             >

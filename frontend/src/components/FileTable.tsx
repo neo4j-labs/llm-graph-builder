@@ -8,12 +8,13 @@ import {
   ColumnFiltersState,
   getFilteredRowModel,
   getPaginationRowModel,
+  CellContext,
 } from '@tanstack/react-table';
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { getFileFromLocal, statusCheck } from '../utils/Utils';
-import { SourceNode, CustomFile, FileTableProps } from '../types';
+import { SourceNode, CustomFile, FileTableProps, UserCredentials } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
 import CustomAlert from './Alert';
@@ -57,7 +58,11 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         cell: (info) => (
           <div>
             <StatusIndicator type={statusCheck(info.getValue())} />
-            <i>{info.getValue()}</i>
+            {info.row.original?.status === 'Failed' ? (
+              <span title={info.row.original?.errorMessage}>{info.getValue()}</span>
+            ) : (
+              <i>{info.getValue()}</i>
+            )}
           </div>
         ),
         header: () => <span>Status</span>,
@@ -67,7 +72,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       }),
       columnHelper.accessor((row) => row.size, {
         id: 'fileSize',
-        cell: (info: any) => <i>{(info?.getValue() / 1000)?.toFixed(2)}</i>,
+        cell: (info: CellContext<CustomFile, string>) => <i>{(parseInt(info?.getValue()) / 1000)?.toFixed(2)}</i>,
         header: () => <span>Size (KB)</span>,
         footer: (info) => info.column.id,
       }),
@@ -86,7 +91,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                 {info.getValue()}
               </TextLink>
             );
-          } 
+          }
           return <i>{info.getValue()}</i>;
         },
         header: () => <span>Source</span>,
@@ -125,7 +130,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
               size='large'
               disabled={statusCheck(info.getValue()) !== 'success'}
               clean
-              onClick={() => onInspect(info.row.original.name)}
+              onClick={() => onInspect(info?.row?.original?.name as string)}
             >
               <MagnifyingGlassCircleIconSolid />
             </IconButton>
@@ -142,11 +147,10 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     const fetchFiles = async () => {
       try {
         setIsLoading(true);
-        const res: any = await getSourceNodes(userCredentials);
+        const res = await getSourceNodes(userCredentials as UserCredentials);
         if (!res.data) {
           throw new Error('Please check backend connection');
         }
-        console.log({res})
         if (res.data.status !== 'Failed') {
           const prefiles: CustomFile[] = [];
           if (res.data.data.length) {
@@ -177,14 +181,15 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   fileSource: item.fileSource ?? 'None',
                   gcsBucket: item?.gcsBucket,
                   gcsBucketFolder: item?.gcsBucketFolder,
+                  errorMessage: item?.errorMessage,
                 });
               }
             });
           }
           setIsLoading(false);
           setFilesData(prefiles);
-          const prefetchedFiles: any[] = [];
-          res.data.data.forEach((item: any) => {
+          const prefetchedFiles: (File | null)[] = [];
+          res.data.data.forEach((item: SourceNode) => {
             const localFile = getFileFromLocal(`${item.fileName}`);
             if (item.fileName != undefined && item.fileName.length) {
               if (localFile != null) {
@@ -196,7 +201,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
           });
           setFiles(prefetchedFiles);
         } else {
-          throw new Error(res.data.error);
+          throw new Error(res?.data?.error);
         }
         setIsLoading(false);
       } catch (error: any) {

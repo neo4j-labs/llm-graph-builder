@@ -44,7 +44,6 @@ class graphDBdataAccess:
     def update_source_node(self, obj_source_node:sourceNode):
         try:
             processed_time = obj_source_node.updated_at - obj_source_node.created_at
-            job_status = "Completed"
             logging.info("Update source node properties")
             self.graph.query("""MERGE(d:Document {fileName :$fn}) SET d.status = $st, d.createdAt = $c_at, 
                             d.updatedAt = $u_at, d.processingTime = $pt, d.nodeCount= $n_count, 

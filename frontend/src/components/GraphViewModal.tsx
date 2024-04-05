@@ -4,6 +4,7 @@ import { GraphType, GraphViewModalProps } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL, { NvlOptions } from '@neo4j-nvl/core';
 import { driver } from '../utils/Driver';
+import type { Node, Relationship } from '@neo4j-nvl/core';
 import {
   FitToScreenIcon,
   MagnifyingGlassMinusIconOutline,
@@ -11,8 +12,19 @@ import {
 } from '@neo4j-ndl/react/icons';
 import ButtonWithToolTip from './ButtonWithToolTip';
 import { constructDocQuery, constructQuery, getIcon, getNodeCaption, getSize } from '../utils/Utils';
-import { colors, entities, knowledgeGraph, document } from '../utils/Constants';
+import {
+  colors,
+  entities,
+  chunks,
+  document,
+  docEntities,
+  docChunks,
+  chunksEntities,
+  docChunkEntities,
+} from '../utils/Constants';
 import { ArrowSmallRightIconOutline } from '@neo4j-ndl/react/icons';
+
+type Scheme = Record<string, string>;
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -21,17 +33,17 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   viewPoint,
 }) => {
   const nvlRef = useRef<NVL>(null);
-  const [nodes, setNodes] = useState<any[]>([]);
-  const [relationships, setRelationships] = useState([]);
-  const [fileNodes, setfileNodes] = useState<any[]>([]);
-  const [filerelationships, setFileRelationships] = useState<any[]>([]);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [relationships, setRelationships] = useState<Relationship[]>([]);
+  const [fileNodes, setfileNodes] = useState<Node[]>([]);
+  const [filerelationships, setFileRelationships] = useState<Relationship[]>([]);
   const [graphType, setGraphType] = useState<GraphType[]>(['Entities']);
-  const [documentNo, setDocumentNo] = useState<string>('5');
+  const [documentNo, setDocumentNo] = useState<string>('1');
   const [individualGraphType, setIndividualGraphType] = useState<GraphType[]>(['Entities']);
   const [loading, setLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<'unknown' | 'success' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
-  const [docLimit, setDocLimit] = useState<string>('5');
+  const [docLimit, setDocLimit] = useState<string>('1');
 
   const handleCheckboxChange = (graph: GraphType) => {
     const currentIndex = graphType.indexOf(graph);
@@ -54,10 +66,22 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
     setIndividualGraphType(newGraphSelected);
   };
-  const queryMap: any = {
+  const queryMap: {
+    Document: string;
+    Chunks: string;
+    Entities: string;
+    DocEntities: string;
+    DocChunks: string;
+    ChunksEntities: string;
+    DocChunkEntities: string;
+  } = {
     Document: document,
-    Chunks: knowledgeGraph,
+    Chunks: chunks,
     Entities: entities,
+    DocEntities: docEntities,
+    DocChunks: docChunks,
+    ChunksEntities: chunksEntities,
+    DocChunkEntities: docChunkEntities,
   };
   const handleZoomToFit = () => {
     nvlRef.current?.fit(
@@ -70,7 +94,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       handleZoomToFit();
     }, 1000);
     return () => {
-      //@ts-ignore
       nvlRef.current?.destroy();
       setGraphType(['Entities']);
       setIndividualGraphType(['Entities']);
@@ -83,8 +106,21 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setNodes([]);
       setRelationships([]);
       let queryToRun = '';
-      const newQuery: any = graphType.map((option) => queryMap[option]).join(' ');
-      queryToRun = constructQuery(newQuery, documentNo);
+      const newCheck: string =
+        graphType.length === 3
+          ? queryMap.DocChunkEntities
+          : graphType.includes('Entities') && graphType.includes('Chunks')
+          ? queryMap.ChunksEntities
+          : graphType.includes('Entities') && graphType.includes('Document')
+          ? queryMap.DocEntities
+          : graphType.includes('Document') && graphType.includes('Chunks')
+          ? queryMap.DocChunks
+          : graphType.includes('Entities') && graphType.length === 1
+          ? queryMap.Entities
+          : graphType.includes('Chunks') && graphType.length === 1
+          ? queryMap.Chunks
+          : queryMap.Document;
+      queryToRun = constructQuery(newCheck, documentNo);
       const session = driver.session();
       setLoading(true);
       session
@@ -92,14 +128,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         .then((results) => {
           // If this doc exists in the graph, the result length will be one.
           if (results.records.length > 1) {
-            //@ts-ignore
+            console.log(results.records);
+            // @ts-ignore
             const neo4jNodes = results.records.map((f) => f._fields[0]);
-            //@ts-ignore
+            // @ts-ignore
             const neo4jRels = results.records.map((f) => f._fields[1]);
 
             // Infer color schema dynamically
             let iterator = 0;
-            const scheme: any = {};
+            const scheme: Scheme = {};
 
             neo4jNodes.forEach((node) => {
               const labels = node.map((f: any) => f.labels);
@@ -122,7 +159,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                   captionHtml: <b>Test</b>,
                   caption: getNodeCaption(g),
                   color: scheme[g.labels[0]],
-                  icon: getIcon(g)
+                  icon: getIcon(g),
                 };
               });
               return totalNodes;
@@ -160,22 +197,21 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setfileNodes([]);
       setFileRelationships([]);
       if (viewPoint === 'tableView') {
-        const newQuery: any = individualGraphType.map((option) => queryMap[option]).join(' ');
+        const newQuery: string = individualGraphType.map((option) => queryMap[option]).join('\n');
         const queryToRun = constructDocQuery(newQuery);
         setLoading(true);
         const session = driver.session();
         session
           .run(queryToRun, { document_name: inspectedName })
           .then((results) => {
-            //@ts-ignore
+            // @ts-ignore
             const neo4jNodes = results.records[0]._fields[0];
-            //@ts-ignore
+            // @ts-ignore
             const neo4jRels = results.records[0]._fields[1];
             // Infer color schema dynamically
             let iterator = 0;
-            const scheme: any = {};
-            //@ts-ignore
-            neo4jNodes.forEach((node) => {
+            const scheme: Scheme = {};
+            neo4jNodes.forEach((node: { labels: any[] }) => {
               const label = node.labels[0];
               if (scheme[label] == undefined) {
                 scheme[label] = colors[iterator % colors.length];
@@ -292,13 +328,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               </div>
               <div className='flex gap-2'>
                 <TextInput
-                  helpText="Documents Limit"
+                  helpText='Documents Limit'
                   required
                   type='number'
+                  aria-label='Document Limit'
                   onChange={(e) => setDocLimit(e.target.value)}
                   value={docLimit}
                 ></TextInput>
-                <IconButton onClick={() => setDocumentNo(docLimit)}>
+                <IconButton aria-label='refresh-btn' onClick={() => setDocumentNo(docLimit)}>
                   <ArrowSmallRightIconOutline className='n-size-token-7' />
                 </IconButton>
               </div>

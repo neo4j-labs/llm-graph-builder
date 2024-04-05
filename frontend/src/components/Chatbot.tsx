@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button, Widget, Typography, Avatar, TextInput } from '@neo4j-ndl/react';
 import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
-import { ChatbotProps } from '../types';
+import { ChatbotProps, UserCredentials } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import chatBotAPI from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
@@ -80,7 +80,7 @@ export default function Chatbot(props: ChatbotProps) {
       setLoading(true);
       setInputMessage('');
       simulateTypingEffect(' ');
-      const chatresponse = await chatBotAPI(userCredentials, inputMessage, sessionId);
+      const chatresponse = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId);
       chatbotReply = chatresponse?.data?.message;
       simulateTypingEffect(chatbotReply);
       setLoading(false);
@@ -171,6 +171,7 @@ export default function Chatbot(props: ChatbotProps) {
         <form onSubmit={handleSubmit} className='flex gap-2.5 w-full'>
           <TextInput
             className='n-bg-palette-neutral-bg-default flex-grow-7 w-full'
+            aria-label='chatbot-input'
             type='text'
             value={inputMessage}
             fluid

@@ -1,6 +1,6 @@
 import { TextInput } from '@neo4j-ndl/react';
 import React, { useState } from 'react';
-import { CustomFile, S3ModalProps } from '../types';
+import { CustomFile, S3ModalProps, UserCredentials } from '../types';
 import { urlScanAPI } from '../services/URLScan';
 import { useCredentials } from '../context/UserCredentials';
 import { getFileFromLocal, validation } from '../utils/Utils';
@@ -23,9 +23,6 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const { userCredentials } = useCredentials();
   const { setFiles, setFilesData, model, filesData, files } = useFileContext();
 
-  const changeHandler = (e: any) => {
-    setBucketUrl(e.target.value);
-  };
   const reset = () => {
     setBucketUrl('');
     setAccessKey('');
@@ -47,7 +44,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     };
     if (url && url[url.length - 1] != '/') {
       setBucketUrl((prev) => {
-        return prev + '/';
+        return `${prev}/`;
       });
       setValid(validation(bucketUrl) && isFocused);
     }
@@ -63,12 +60,11 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatusMessage('Scanning...');
         const apiResponse = await urlScanAPI({
           urlParam: url,
-          userCredentials: userCredentials,
+          userCredentials: userCredentials as UserCredentials,
           model: model,
           accessKey: accessKey,
           secretKey: secretKey,
         });
-        console.log('response', apiResponse);
         setStatus('success');
         if (apiResponse?.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
@@ -82,7 +78,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         }
         setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
         const copiedFilesData: CustomFile[] = [...filesData];
-        const copiedFiles: File[] = [...files];
+        const copiedFiles: (File | null)[] = [...files];
         apiResponse?.data?.file_name?.forEach((item: S3File) => {
           const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
           const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
@@ -107,12 +103,13 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             });
           }
           if (fileIndex == -1) {
-            //@ts-ignore
             copiedFiles.unshift(null);
           } else {
             const tempFile = copiedFiles[filedataIndex];
             copiedFiles.splice(fileIndex, 1);
-            copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
+            if (tempFile) {
+              copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
+            }
           }
         });
         setFilesData(copiedFilesData);
@@ -157,6 +154,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           value={bucketUrl}
           disabled={false}
           label='Bucket URL'
+          aria-label='Bucket URL'
           placeholder='s3://data.neo4j.com/pdf/'
           autoFocus
           fluid
@@ -165,7 +163,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           onBlur={() => setValid(validation(bucketUrl) && isFocused)}
           onChange={(e) => {
             setisFocused(true);
-            changeHandler(e);
+            setBucketUrl(e.target.value);
           }}
         />
       </div>
@@ -175,6 +173,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           value={accessKey}
           disabled={false}
           label='Access Key'
+          aria-label='Access Key'
           className='w-full'
           placeholder=''
           fluid
@@ -189,6 +188,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           value={secretKey}
           disabled={false}
           label='Secret Key'
+          aria-label='Secret Key'
           className='w-full'
           placeholder=''
           fluid

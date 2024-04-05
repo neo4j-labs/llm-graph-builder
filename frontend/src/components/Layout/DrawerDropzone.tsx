@@ -55,6 +55,9 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   const hideGCSModal = useCallback(() => {
     setShowGCSModal(false);
   }, []);
+
+  const sources = process.env.REACT_APP_SOURCES?.split(',') || [];
+
   return (
     <div className='flex min-h-[650px] overflow-hidden relative'>
       <Drawer
@@ -90,12 +93,24 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                       <Wikipedia openModal={openWikipediaModal} />
                       <WikipediaModal hideModal={closeWikipediaModal} open={showWikiepediaModal} />
                     </div>
-                    <Flex className='s3Container outline-dashed outline-2 outline-offset-2 outline-gray-100 '>
-                      <S3Component openModal={openModal} />
-                      <S3Modal hideModal={hideModal} open={showModal} />
-                      <GCSButton openModal={openGCSModal} />
-                      <GCSModal open={showGCSModal} hideModal={hideGCSModal} />
-                    </Flex>
+                    {sources.includes('s3') || sources.includes('gcs') ? (
+                      <Flex className='s3Container outline-dashed outline-2 outline-offset-2 outline-gray-100 '>
+                        {sources.includes('s3') && (
+                          <>
+                            <S3Component openModal={openModal} />
+                            <S3Modal hideModal={hideModal} open={showModal} />{' '}
+                          </>
+                        )}
+                        {sources.includes('gcs') && (
+                          <>
+                            <GCSButton openModal={openGCSModal} />
+                            <GCSModal open={showGCSModal} hideModal={hideGCSModal} />
+                          </>
+                        )}
+                      </Flex>
+                    ) : (
+                      <></>
+                    )}
                   </Flex>
                 )}
               </div>
