@@ -21,8 +21,6 @@ from langchain_community.document_loaders import WikipediaLoader
 import warnings
 from pytube import YouTube
 import sys
-from langchain.globals import set_debug
-set_debug(True)
 warnings.filterwarnings("ignore")
 
 load_dotenv()

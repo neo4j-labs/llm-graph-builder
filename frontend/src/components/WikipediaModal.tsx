@@ -52,7 +52,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
           }, 5000);
           return;
         }
-        setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Wikipedia Sources`);
+        setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} and Failed for ${apiResponse.data.Failed_count} Wikipedia Sources`); 
         const copiedFilesData: CustomFile[] = [...filesData];
         const copiedFiles: (File | null)[] = [...files];
         apiResponse?.data?.file_name?.forEach((item: fileName) => {
