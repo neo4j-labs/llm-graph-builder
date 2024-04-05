@@ -8,7 +8,8 @@ from src.entities.user_credential import user_credential
 import uvicorn
 import asyncio
 import base64
-
+from langserve import add_routes
+from langchain_google_vertexai import ChatVertexAI
 
 
 def healthy_condition():
@@ -30,6 +31,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+add_routes(app,ChatVertexAI(), path="/vertexai")
+
 app.add_api_route("/health", health([healthy_condition, healthy]))
 
 @app.post("/sources")

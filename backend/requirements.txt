@@ -38,7 +38,7 @@ frozenlist==1.4.1
 fsspec==2024.2.0
 google-api-core==2.18.0
 google-auth==2.29.0
-google-cloud-aiplatform==1.45.0
+google-cloud-aiplatform==1.46.0
 google-cloud-bigquery==3.19.0
 google-cloud-core==2.4.1
 google-cloud-resource-manager==1.12.3
@@ -78,6 +78,8 @@ langchain-text-splitters==0.0.1
 langdetect==1.0.9
 langsmith==0.1.31
 layoutparser==0.3.4
+langserve
+langchain-cli
 lxml==5.1.0
 MarkupSafe==2.1.5
 marshmallow==3.20.2

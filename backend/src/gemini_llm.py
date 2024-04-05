@@ -25,7 +25,7 @@ import google.auth
 from langchain_community.graphs.graph_document import Node
 
 load_dotenv()
-logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
+logging.basicConfig(format='%(asctime)s - %(message)s',level='DEBUG')
 
 system_prompt = (
     "# Knowledge Graph Instructions for GPT-4\n"
@@ -295,7 +295,12 @@ def get_graph_from_Gemini(model_version,
     graph_document_list = []
     lst_chunk_chunkId_document=[]
     location = "us-central1"
+    #project_id = "llm-experiments-387609"                            
     credentials, project_id = google.auth.default()
+    if hasattr(credentials, "service_account_email"):
+      logging.info(credentials.service_account_email)
+    else:
+        logging.info("WARNING: no service account credential. User account credential?")                           
     vertexai.init(project=project_id, location=location)
     
     # combined_chunk_document_list=[]
