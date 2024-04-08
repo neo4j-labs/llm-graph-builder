@@ -53,10 +53,20 @@ async def create_source_knowledge_graph(
     Returns:
          'Source' Node creation in Neo4j database
     """
-    result = await asyncio.to_thread(
-        create_source_node_graph_local_file, uri, userName, password, file, model, database
-    )
-    return result
+    try:
+        result = await asyncio.to_thread(
+            create_source_node_graph_local_file, uri, userName, password, file, model, database
+        )
+        return create_api_response("Success",message="Source Node created successfully",file_source=result.file_source, file_name=result.file_name)
+    except Exception as e:
+        obj_source_node = sourceNode()
+        job_status = "Failed"
+        message = "Unable to create source node"
+        error_message = str(e)
+        logging.error(f"Error in creating document node: {error_message}")
+        #update exception in source node
+        obj_source_node.update_exception_db(file.filename, error_message)
+        return create_api_response(job_status, message=message,error=error_message,file_source='local file',file_name=file.filename)
 
 @app.post("/url/scan")
 async def create_source_knowledge_graph_url(
@@ -71,10 +81,30 @@ async def create_source_knowledge_graph_url(
     model=Form(None),
     gcs_bucket_name=Form(None),
     gcs_bucket_folder=Form(None)
-):
-    return create_source_node_graph_url(
-        uri, userName, password, model, source_url, database, wiki_query, aws_access_key_id, aws_secret_access_key,gcs_bucket_name, gcs_bucket_folder
-    )
+    ):
+    try:
+        if aws_access_key_id and aws_secret_access_key:
+            return create_source_node_graph_url_s3(
+                uri, userName, password, model, database, source_url, aws_access_key_id, aws_secret_access_key
+            )
+        elif:
+            return create_source_node_graph_url_gcs(
+                uri, userName, password, model, database, source_url, gcs_bucket_name, gcs_bucket_folder
+            )
+        elif:
+            return create_source_node_graph_url_youtube(
+                uri, userName, password, model, database, source_url
+            )
+        elif:
+            return create_source_node_graph_url_wikipedia(
+                uri, userName, password, model, database, wiki_query
+            )
+    except Exception as e:
+        job_status = "Failed"
+        message = "Unable to create source node with given url"
+        error_message = str(e)
+        logging.exception(f'Exception Stack trace:')
+        return create_api_response(job_status,message=message,error=error_message,file_source=source_type, file_name=file_name)  
 
 
 @app.post("/extract")

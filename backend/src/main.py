@@ -40,25 +40,19 @@ def create_source_node_graph_local_file(uri, userName, password, file, model, db
    Returns: 
    	 Success or Failed message of node creation
   """
-  try:
-    obj_source_node = sourceNode()
-    obj_source_node.file_name = file.filename
-    obj_source_node.file_type = file.filename.split('.')[1]
-    obj_source_node.file_size = file.size
-    obj_source_node.file_source = 'local file'
-    obj_source_node.model = model
-    obj_source_node.created_at = datetime.now()
-    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-    graphDb_data_Access = graphDBdataAccess(graph)
-     
-    graphDb_data_Access.create_source_node(obj_source_node)
-    return create_api_response("Success",message="Source Node created successfully",file_source=obj_source_node.file_source, file_name=obj_source_node.file_name)
-  except Exception as e:
-    job_status = "Failed"
-    message = "Unable to create source node"
-    error_message = str(e)
-    logging.error(f"Error in creating document node: {error_message}")
-    return create_api_response(job_status, message=message,error=error_message,file_source=obj_source_node.source,file_name=obj_source_node.file_name)
+  obj_source_node = sourceNode()
+  obj_source_node.file_name = file.filename
+  obj_source_node.file_type = file.filename.split('.')[1]
+  obj_source_node.file_size = file.size
+  obj_source_node.file_source = 'local file'
+  obj_source_node.model = model
+  obj_source_node.created_at = datetime.now()
+  graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+  graphDb_data_Access = graphDBdataAccess(graph)
+    
+  graphDb_data_Access.create_source_node(obj_source_node)
+  return obj_source_node
+  
   
 def create_source_node_graph_url(uri, userName, password ,model, source_url=None, db_name=None, wiki_query:str=None, aws_access_key_id=None,aws_secret_access_key=None, gcs_bucket_name=None, gcs_bucket_folder=None):
     """
@@ -75,150 +69,145 @@ def create_source_node_graph_url(uri, userName, password ,model, source_url=None
       Returns: 
         Success or Failed message of node creation
     """
-    try:
-        file_name =''
-        graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-        if source_url:
-          source_type,youtube_url = check_url_source(source_url)
-          logging.info(f"source type URL:{source_type}")
-          if source_type == "s3 bucket":
-              lst_s3_file_name = []
-              files_info = get_s3_files_info(source_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
-              if isinstance(files_info,dict):
-                return files_info
-              elif len(files_info)==0:
-                return create_api_response('Failed',success_count=0,Failed_count=0,message='No pdf files found.')  
-              logging.info(f'files info : {files_info}')
-              err_flag=0
-              success_count=0
-              Failed_count=0
-              
-              for file_info in files_info:
-                  file_name=file_info['file_key'] 
-                  # s3_file_path=str(source_url+file_name)
-                  obj_source_node = sourceNode()
-                  obj_source_node.file_name = file_name.split('/')[-1]
-                  obj_source_node.file_type = 'pdf'
-                  obj_source_node.file_size = file_info['file_size_bytes']
-                  obj_source_node.file_source = source_type
-                  obj_source_node.model = model
-                  obj_source_node.url = str(source_url+file_name)
-                  obj_source_node.awsAccessKeyId = aws_access_key_id
-                  obj_source_node.created_at = datetime.now()
-                  try:
-                    graphDb_data_Access = graphDBdataAccess(graph)
-                    graphDb_data_Access.create_source_node(obj_source_node)
-                    success_count+=1
-                    lst_s3_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url})
-
-                  except Exception as e:
-                    err_flag=1
-                    Failed_count+=1
-                    error_message = str(e)
-              if err_flag==1:
-                job_status = "Failed"
-                message="Unable to create source node for s3 bucket files"
-                return create_api_response(job_status,message=message,error=error_message,success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket',file_name=lst_s3_file_name)  
-              return create_api_response("Success",message="Source Node created successfully",success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket',file_name=lst_s3_file_name)
-          elif source_type == 'youtube':
-              obj_source_node = sourceNode()
-              obj_source_node.file_type = 'text'
-              obj_source_node.file_source = source_type
-              obj_source_node.model = model
-              obj_source_node.url = youtube_url
-              obj_source_node.created_at = datetime.now()
-              # source_url= youtube_url
-              match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
-              logging.info(f"match value{match}")
-              obj_source_node.file_name = YouTube(obj_source_node.url).title
-              transcript= get_youtube_transcript(match.group(1))
-              if transcript==None or len(transcript)==0:
-                job_status = "Failed"
-                message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
-                error_message = str(e)
-                logging.exception(f'Exception Stack trace:')
-                return create_api_response(job_status,message=message,error=error_message,file_source=source_type,file_name=obj_source_node.file_name )
-              else:  
-                obj_source_node.file_size = sys.getsizeof(transcript)
-              job_status = "Completed"
-              graphDb_data_Access = graphDBdataAccess(graph)
-              graphDb_data_Access.create_source_node(obj_source_node)
-              return create_api_response(job_status,file_name=[{'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url}])
-          
-        elif wiki_query:
-           success_count=0
-           Failed_count=0
-           lst_file_metadata=[]
-           queries =  wiki_query.split(',')
-           for query in queries:
-              logging.info(f"Creating source node for {query.strip()}")
-              source_type = 'text'
-              job_status = 'Completed'
-              pages = WikipediaLoader(query=query.strip(), load_max_docs=1, load_all_available_meta=True).load()
-              try:
-                if not pages:
-                   Failed_count+=1
-                   continue
-                obj_source_node = sourceNode()
-                obj_source_node.file_name = query.strip()
-                obj_source_node.file_type = source_type
-                obj_source_node.file_source = 'Wikipedia'
-                obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
-                obj_source_node.model = model
-                obj_source_node.url = pages[0].metadata['source']
-                obj_source_node.created_at = datetime.now()
-                obj_source_node.status = 'New'
-                graphDb_data_Access = graphDBdataAccess(graph)
-                graphDb_data_Access.create_source_node(obj_source_node)
-                success_count+=1
-                lst_file_metadata.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url})
-              except Exception as e:
-                job_status = "Failed"
-                Failed_count+=1
-                error_message = str(e) 
-                return create_api_response(job_status,message="Unable to create source node for Wikipedia source",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count) 
-           return create_api_response(job_status,message="Source Node created successfully",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count)   
-        
-        elif gcs_bucket_name:
+    
+    file_name =''
+    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+    if source_url:
+      source_type,youtube_url = check_url_source(source_url)
+      logging.info(f"source type URL:{source_type}")
+      if source_type == "s3 bucket":
+          lst_s3_file_name = []
+          files_info = get_s3_files_info(source_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
+          if isinstance(files_info,dict):
+            return files_info
+          elif len(files_info)==0:
+            return create_api_response('Failed',success_count=0,Failed_count=0,message='No pdf files found.')  
+          logging.info(f'files info : {files_info}')
+          err_flag=0
           success_count=0
           Failed_count=0
-          file_type='pdf'
-          source_type='gcs bucket'
-          aws_access_key_id=''
-          job_status = 'Completed'
-          try:
-              lst_file_metadata= get_gcs_bucket_files_info(gcs_bucket_name, gcs_bucket_folder)
-              for file_metadata in lst_file_metadata :
-                obj_source_node = sourceNode()
-                obj_source_node.file_name = file_metadata['fileName']
-                obj_source_node.file_size = file_metadata['fileSize']
-                obj_source_node.url = file_metadata['url']
-                obj_source_node.file_source = 'gcs bucket'
-                obj_source_node.gcsBucket = gcs_bucket_name
-                obj_source_node.gcsBucketFolder = gcs_bucket_folder
-                obj_source_node.created_at = datetime.now()
-
+          
+          for file_info in files_info:
+              file_name=file_info['file_key'] 
+              # s3_file_path=str(source_url+file_name)
+              obj_source_node = sourceNode()
+              obj_source_node.file_name = file_name.split('/')[-1]
+              obj_source_node.file_type = 'pdf'
+              obj_source_node.file_size = file_info['file_size_bytes']
+              obj_source_node.file_source = source_type
+              obj_source_node.model = model
+              obj_source_node.url = str(source_url+file_name)
+              obj_source_node.awsAccessKeyId = aws_access_key_id
+              obj_source_node.created_at = datetime.now()
+              try:
                 graphDb_data_Access = graphDBdataAccess(graph)
                 graphDb_data_Access.create_source_node(obj_source_node)
                 success_count+=1
+                lst_s3_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url})
+
+              except Exception as e:
+                err_flag=1
+                Failed_count+=1
+                error_message = str(e)
+          if err_flag==1:
+            job_status = "Failed"
+            message="Unable to create source node for s3 bucket files"
+            return create_api_response(job_status,message=message,error=error_message,success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket',file_name=lst_s3_file_name)  
+          return create_api_response("Success",message="Source Node created successfully",success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket',file_name=lst_s3_file_name)
+      elif source_type == 'youtube':
+          obj_source_node = sourceNode()
+          obj_source_node.file_type = 'text'
+          obj_source_node.file_source = source_type
+          obj_source_node.model = model
+          obj_source_node.url = youtube_url
+          obj_source_node.created_at = datetime.now()
+          # source_url= youtube_url
+          match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
+          logging.info(f"match value{match}")
+          obj_source_node.file_name = YouTube(obj_source_node.url).title
+          transcript= get_youtube_transcript(match.group(1))
+          if transcript==None or len(transcript)==0:
+            job_status = "Failed"
+            message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
+            error_message = str(e)
+            logging.exception(f'Exception Stack trace:')
+            return create_api_response(job_status,message=message,error=error_message,file_source=source_type,file_name=obj_source_node.file_name )
+          else:  
+            obj_source_node.file_size = sys.getsizeof(transcript)
+          job_status = "Completed"
+          graphDb_data_Access = graphDBdataAccess(graph)
+          graphDb_data_Access.create_source_node(obj_source_node)
+          return create_api_response(job_status,file_name=[{'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url}])
+      
+    elif wiki_query:
+        success_count=0
+        Failed_count=0
+        lst_file_metadata=[]
+        queries =  wiki_query.split(',')
+        for query in queries:
+          logging.info(f"Creating source node for {query.strip()}")
+          source_type = 'text'
+          job_status = 'Completed'
+          pages = WikipediaLoader(query=query.strip(), load_max_docs=1, load_all_available_meta=True).load()
+          try:
+            if not pages:
+                Failed_count+=1
+                continue
+            obj_source_node = sourceNode()
+            obj_source_node.file_name = query.strip()
+            obj_source_node.file_type = source_type
+            obj_source_node.file_source = 'Wikipedia'
+            obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
+            obj_source_node.model = model
+            obj_source_node.url = pages[0].metadata['source']
+            obj_source_node.created_at = datetime.now()
+            obj_source_node.status = 'New'
+            graphDb_data_Access = graphDBdataAccess(graph)
+            graphDb_data_Access.create_source_node(obj_source_node)
+            success_count+=1
+            lst_file_metadata.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url})
           except Exception as e:
-              file_name = file_metadata['fileName']
-              job_status = "Failed"
-              Failed_count+=1
-              error_message = str(e) 
-              return create_api_response(job_status,message=f"Unable to create source node for GCS Bucket file = {file_name}",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count) 
-          return create_api_response(job_status,message="Source Node created successfully",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count)   
-        
-          
-        else:
-           job_status = "Failed"
-           return create_api_response(job_status,message='Invalid URL')
-    except Exception as e:
+            job_status = "Failed"
+            Failed_count+=1
+            error_message = str(e) 
+            return create_api_response(job_status,message="Unable to create source node for Wikipedia source",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count) 
+        return create_api_response(job_status,message="Source Node created successfully",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count)   
+    
+    elif gcs_bucket_name:
+      success_count=0
+      Failed_count=0
+      file_type='pdf'
+      source_type='gcs bucket'
+      aws_access_key_id=''
+      job_status = 'Completed'
+      try:
+          lst_file_metadata= get_gcs_bucket_files_info(gcs_bucket_name, gcs_bucket_folder)
+          for file_metadata in lst_file_metadata :
+            obj_source_node = sourceNode()
+            obj_source_node.file_name = file_metadata['fileName']
+            obj_source_node.file_size = file_metadata['fileSize']
+            obj_source_node.url = file_metadata['url']
+            obj_source_node.file_source = 'gcs bucket'
+            obj_source_node.gcsBucket = gcs_bucket_name
+            obj_source_node.gcsBucketFolder = gcs_bucket_folder
+            obj_source_node.created_at = datetime.now()
+
+            graphDb_data_Access = graphDBdataAccess(graph)
+            graphDb_data_Access.create_source_node(obj_source_node)
+            success_count+=1
+      except Exception as e:
+          file_name = file_metadata['fileName']
+          job_status = "Failed"
+          Failed_count+=1
+          error_message = str(e) 
+          return create_api_response(job_status,message=f"Unable to create source node for GCS Bucket file = {file_name}",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count) 
+      return create_api_response(job_status,message="Source Node created successfully",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count)   
+    
+      
+    else:
         job_status = "Failed"
-        message = "Unable to create source node with given url"
-        error_message = str(e)
-        logging.exception(f'Exception Stack trace:')
-        return create_api_response(job_status,message=message,error=error_message,file_source=source_type, file_name=file_name)  
+        return create_api_response(job_status,message='Invalid URL')
+    
 
 
 def extract_graph_from_file(uri, userName, password, model, db_name=None, file=None,source_url=None,aws_access_key_id=None,aws_secret_access_key=None,wiki_query=None,max_sources=None, gcs_bucket_name=None, gcs_bucket_folder=None, gcs_blob_filename=None):
