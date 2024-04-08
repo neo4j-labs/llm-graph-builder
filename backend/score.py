@@ -10,7 +10,7 @@ import asyncio
 import base64
 from langserve import add_routes
 from langchain_google_vertexai import ChatVertexAI
-
+from src.api_response import create_api_response
 
 def healthy_condition():
     output = {"healthy": True}
@@ -201,8 +201,17 @@ async def connect(uri=Form(None),
                           userName=Form(None),
                           password=Form(None),
                           database=Form(None)):
-    result = await asyncio.to_thread(connection_check,uri,userName,password,database)
-    return result
+    try:   
+        result = await asyncio.to_thread(connection_check,uri,userName,password,database)
+        return result
+    except Exception as e:
+        job_status = "Failed"
+        message="Connection Failed"
+        error_message = str(e)
+        logging.info(message)
+        logging.exception(f'Exception:{error_message}')
+        return create_api_response(job_status,message=message,error=error_message)
+
 
 def decode_password(pwd):
     sample_string_bytes = base64.b64decode(pwd)
