@@ -52,8 +52,141 @@ def create_source_node_graph_local_file(uri, userName, password, file, model, db
     
   graphDb_data_Access.create_source_node(obj_source_node)
   return obj_source_node
-  
-  
+
+def create_source_node_graph_url_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, source_type):
+    file_name =''
+    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+
+    lst_s3_file_name = []
+    files_info = get_s3_files_info(source_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
+    if len(files_info)==0:
+      raise Exception('No pdf files found.')
+      # return create_api_response('Failed',success_count=0,Failed_count=0,message='No pdf files found.')  
+    logging.info(f'files info : {files_info}')
+    err_flag=0
+    success_count=0
+    Failed_count=0
+    
+    for file_info in files_info:
+        file_name=file_info['file_key'] 
+        obj_source_node = sourceNode()
+        obj_source_node.file_name = file_name.split('/')[-1]
+        obj_source_node.file_type = 'pdf'
+        obj_source_node.file_size = file_info['file_size_bytes']
+        obj_source_node.file_source = source_type
+        obj_source_node.model = model
+        obj_source_node.url = str(source_url+file_name)
+        obj_source_node.awsAccessKeyId = aws_access_key_id
+        obj_source_node.created_at = datetime.now()
+        try:
+          graphDb_data_Access = graphDBdataAccess(graph)
+          graphDb_data_Access.create_source_node(obj_source_node)
+          success_count+=1
+          lst_s3_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url})
+
+        except Exception as e:
+          err_flag=1
+          Failed_count+=1
+          error_message = str(e)
+    if err_flag==1:
+      job_status = "Failed"
+      message="Unable to create source node for s3 bucket files"
+      return create_api_response(job_status,message=message,error=error_message,success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket',file_name=lst_s3_file_name)  
+    return create_api_response("Success",message="Source Node created successfully",success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket',file_name=lst_s3_file_name)
+
+def create_source_node_graph_url_gcs(uri, userName, password, database, model, source_url, gcs_bucket_name, gcs_bucket_folder, source_type):
+
+    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+    success_count=0
+    Failed_count=0
+    job_status = 'Completed'
+    
+    lst_file_metadata= get_gcs_bucket_files_info(gcs_bucket_name, gcs_bucket_folder)
+    for file_metadata in lst_file_metadata :
+      obj_source_node = sourceNode()
+      obj_source_node.file_name = file_metadata['fileName']
+      obj_source_node.file_size = file_metadata['fileSize']
+      obj_source_node.url = file_metadata['url']
+      obj_source_node.file_source = source_type
+      obj_source_node.file_type = 'pdf'
+      obj_source_node.gcsBucket = gcs_bucket_name
+      obj_source_node.gcsBucketFolder = gcs_bucket_folder
+      obj_source_node.created_at = datetime.now()
+      try:
+          graphDb_data_Access = graphDBdataAccess(graph)
+          graphDb_data_Access.create_source_node(obj_source_node)
+          success_count+=1
+      except Exception as e:
+        file_name = file_metadata['fileName']
+        job_status = "Failed"
+        Failed_count+=1
+        error_message = str(e) 
+        return create_api_response(job_status,message=f"Unable to create source node for GCS Bucket file = {file_name}",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count) 
+    return create_api_response(job_status,message="Source Node created successfully",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count)   
+
+def create_source_node_graph_url_youtube(uri, userName, password, database, model, source_url, source_type):
+    
+    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+    source_type,youtube_url = check_url_source(source_url)
+
+    obj_source_node = sourceNode()
+    obj_source_node.file_type = 'text'
+    obj_source_node.file_source = source_type
+    obj_source_node.model = model
+    obj_source_node.url = youtube_url
+    obj_source_node.created_at = datetime.now()
+    # source_url= youtube_url
+    match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
+    logging.info(f"match value{match}")
+    obj_source_node.file_name = YouTube(obj_source_node.url).title
+    transcript= get_youtube_transcript(match.group(1))
+    if transcript==None or len(transcript)==0:
+      job_status = "Failed"
+      message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
+      raise Exception(message)
+    else:  
+      obj_source_node.file_size = sys.getsizeof(transcript)
+    job_status = "Completed"
+    graphDb_data_Access = graphDBdataAccess(graph)
+    graphDb_data_Access.create_source_node(obj_source_node)
+    return obj_source_node.file_name
+
+def create_source_node_graph_url_wikipedia(uri, userName, password, database, model, wiki_query, source_type): 
+    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+    success_count=0
+    Failed_count=0
+    lst_file_metadata=[]
+    queries =  wiki_query.split(',')
+    for query in queries:
+      logging.info(f"Creating source node for {query.strip()}")
+      pages = WikipediaLoader(query=query.strip(), load_max_docs=1, load_all_available_meta=True).load()
+      try:
+        if not pages:
+          Failed_count+=1
+          continue
+        obj_source_node = sourceNode()
+        obj_source_node.file_name = query.strip()
+        obj_source_node.file_type = 'text'
+        obj_source_node.file_source = source_type
+        obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
+        obj_source_node.model = model
+        obj_source_node.url = pages[0].metadata['source']
+        obj_source_node.created_at = datetime.now()
+        obj_source_node.status = 'New'
+        graphDb_data_Access = graphDBdataAccess(graph)
+        graphDb_data_Access.create_source_node(obj_source_node)
+        success_count+=1
+        lst_file_metadata.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'status:Success'})
+      except Exception as e:
+        job_status = "Failed"
+        Failed_count+=1
+        error_message = str(e)
+        lst_file_metadata.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'status:Failed'})
+        continue
+        # return create_api_response(job_status,message="Unable to create source node for Wikipedia source",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count) 
+    # return create_api_response(job_status,message="Source Node created successfully",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count)   
+    return lst_file_metadata
+
 def create_source_node_graph_url(uri, userName, password ,model, source_url=None, db_name=None, wiki_query:str=None, aws_access_key_id=None,aws_secret_access_key=None, gcs_bucket_name=None, gcs_bucket_folder=None):
     """
       Creates a source node in Neo4jGraph and sets properties.
