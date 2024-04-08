@@ -92,10 +92,10 @@ export const constructQuery = (queryTochange: string, docLimit: string) => {
   RETURN nodes, rels`;
 };
 
-export const constructDocQuery = (queryTochange: string) => {
+export const constructDocQuery = (queryTochange: string, inspectedName: string) => {
   return `
 MATCH docs = (d:Document {status:'Completed'}) 
-WHERE d.fileName = $document_name
+WHERE d.fileName = '${inspectedName}'
 WITH docs, d ORDER BY d.createdAt DESC 
 OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
 WITH [] 
