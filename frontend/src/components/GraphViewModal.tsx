@@ -102,7 +102,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   }, []);
 
   useEffect(() => {
-    if (open) {
+    if (open && viewPoint === 'showGraphView') {
       setNodes([]);
       setRelationships([]);
       let queryToRun = '';
@@ -193,58 +193,72 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   }, [open, graphType, documentNo]);
 
   useEffect(() => {
-    if (open) {
+    if (open && viewPoint === 'tableView') {
       setfileNodes([]);
       setFileRelationships([]);
-      if (viewPoint === 'tableView') {
-        const newQuery: string = individualGraphType.map((option) => queryMap[option]).join('\n');
-        const queryToRun = constructDocQuery(newQuery);
-        setLoading(true);
-        const session = driver.session();
-        session
-          .run(queryToRun, { document_name: inspectedName })
-          .then((results) => {
-            // @ts-ignore
-            const neo4jNodes = results.records[0]._fields[0];
-            // @ts-ignore
-            const neo4jRels = results.records[0]._fields[1];
-            // Infer color schema dynamically
-            let iterator = 0;
-            const scheme: Scheme = {};
-            neo4jNodes.forEach((node: { labels: any[] }) => {
-              const label = node.labels[0];
+      const newQuery: string = individualGraphType.map((option) => queryMap[option]).join('\n');
+      const queryToRun = constructDocQuery(newQuery, inspectedName);
+      console.log(queryToRun);
+      setLoading(true);
+      const session = driver.session();
+      session
+        .run(queryToRun)
+        .then((results) => {
+          // @ts-ignore
+          const neo4jNodes = results.records.map((f) => f._fields[0]);
+          // @ts-ignore
+          const neo4jRels = results.records.map((f) => f._fields[1]);
+          // Infer color schema dynamically
+          let iterator = 0;
+          const scheme: Scheme = {};
+          neo4jNodes.forEach((node) => {
+            const labels = node.map((f: any) => f.labels);
+
+            labels.forEach((label: any) => {
               if (scheme[label] == undefined) {
                 scheme[label] = colors[iterator % colors.length];
                 iterator += 1;
               }
             });
-            const newNodes = neo4jNodes.map((n: any) => {
+          });
+          const newNodes = neo4jNodes.map((n) => {
+            const totalNodes = n.map((g: any) => {
               return {
-                id: n.elementId,
-                size: getSize(n),
+                id: g.elementId,
+                size: getSize(g),
                 captionAlign: 'bottom',
-                captionHtml: <b>Test</b>,
-                caption: getNodeCaption(n),
                 iconAlign: 'bottom',
-                icon: getIcon(n),
-                color: scheme[n.labels[0]],
+                captionHtml: <b>Test</b>,
+                caption: getNodeCaption(g),
+                color: scheme[g.labels[0]],
+                icon: getIcon(g),
               };
             });
-            const newRels: any = neo4jRels.map(
-              (r: { elementId: any; startNodeElementId: any; endNodeElementId: any; type: any }) => {
-                return { id: r.elementId, from: r.startNodeElementId, to: r.endNodeElementId, caption: r.type };
-              }
-            );
-            setfileNodes(newNodes);
-            setFileRelationships(newRels);
-            setLoading(false);
-          })
-          .catch((error) => {
-            setLoading(false);
-            setStatus('danger');
-            setStatusMessage(error.message);
+            return totalNodes;
           });
-      }
+          const finalNodes = newNodes.flat();
+          const newRels: any = neo4jRels.map((r: any) => {
+            const totalRels = r.map((relations: any) => {
+              return {
+                id: relations.elementId,
+                from: relations.startNodeElementId,
+                to: relations.endNodeElementId,
+                caption: relations.type,
+              };
+            });
+            return totalRels;
+          });
+          const finalRels = newRels.flat();
+          console.log('hello final rels', finalRels);
+          setfileNodes(finalNodes);
+          setFileRelationships(finalRels);
+          setLoading(false);
+        })
+        .catch((error) => {
+          setLoading(false);
+          setStatus('danger');
+          setStatusMessage(error.message);
+        });
     }
   }, [open, individualGraphType]);
 
@@ -288,6 +302,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const handleZoomOut = () => {
     nvlRef.current?.setZoom(nvlRef.current.getScale() * 0.7);
   };
+
+  console.log('table nodes', fileNodes);
+  console.log('table rels', filerelationships);
 
   return (
     <>
