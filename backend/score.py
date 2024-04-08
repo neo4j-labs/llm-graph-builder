@@ -80,31 +80,37 @@ async def create_source_knowledge_graph_url(
     wiki_query=Form(None),
     model=Form(None),
     gcs_bucket_name=Form(None),
-    gcs_bucket_folder=Form(None)
+    gcs_bucket_folder=Form(None),
+    source_type=Form(None)
     ):
     try:
-        if aws_access_key_id and aws_secret_access_key:
-            return create_source_node_graph_url_s3(
-                uri, userName, password, model, database, source_url, aws_access_key_id, aws_secret_access_key
+        job_status = "Completed"
+        if source_type == 's3 bucket' and aws_access_key_id and aws_secret_access_key:
+            result = create_source_node_graph_url_s3(
+                uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, source_type
             )
-        elif:
-            return create_source_node_graph_url_gcs(
-                uri, userName, password, model, database, source_url, gcs_bucket_name, gcs_bucket_folder
+            return create_api_response(job_status,file_name=result.file_name)
+        elif source_type == 'gcs bucket':
+            result = create_source_node_graph_url_gcs(
+                uri, userName, password, database, model, source_url, gcs_bucket_name, gcs_bucket_folder, source_type
             )
-        elif:
-            return create_source_node_graph_url_youtube(
-                uri, userName, password, model, database, source_url
+            return create_api_response(job_status,file_name=result.file_name)
+        elif source_type == 'youtube':
+            result = create_source_node_graph_url_youtube(
+                uri, userName, password, database, model, source_url, source_type
             )
-        elif:
-            return create_source_node_graph_url_wikipedia(
-                uri, userName, password, model, database, wiki_query
+            return create_api_response(job_status,file_name=result.file_name)
+        elif source_type == 'Wikipedia':
+            result = create_source_node_graph_url_wikipedia(
+                uri, userName, password, database, model, wiki_query, source_type
             )
+            return create_api_response(job_status,file_name=result.file_name)
     except Exception as e:
         job_status = "Failed"
-        message = "Unable to create source node with given url"
+        message = "Unable to create source node for source type: {source_type} and source: {source_url}{wiki_query}"
         error_message = str(e)
         logging.exception(f'Exception Stack trace:')
-        return create_api_response(job_status,message=message,error=error_message,file_source=source_type, file_name=file_name)  
+        return create_api_response(job_status,message=message,error=error_message,file_source=source_type)
 
 
 @app.post("/extract")
