@@ -108,13 +108,6 @@ class graphDBdataAccess:
         Returns:
         Returns a status of connection from NEO4j is success or failure
         """
-        try:
-            if self.graph:
-                return create_api_response("Success",message="Connection Successful")   
-        except Exception as e:
-            job_status = "Failed"
-            message="Connection Failed"
-            error_message = str(e)
-            logging.exception(f'Exception:{error_message}')
-            return create_api_response(job_status,message=message,error=error_message)
+        if self.graph:
+            return create_api_response("Success",message="Connection Successful")   
         
