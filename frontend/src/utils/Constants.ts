@@ -1,33 +1,29 @@
 export const document = `+ [docs]`;
 
-export const chunks = `+ [chunks] + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
+export const chunks = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
 + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks`;
 
 export const entities = `+ collect { OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!Chunk) RETURN p }`;
 
 export const docEntities = `+ [docs] 
-+ collect { OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!Chunk) RETURN p }`;
++ collect { MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)--(:!Chunk) RETURN p }`;
 
-export const docChunks = `+ [chunks] // documents with chunks
+export const docChunks = `+[chunks]
++collect {MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p} //first chunk
 + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
-+ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
-+ [docs]`;
++ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunk`;
 
-export const chunksEntities = `// if chunks:
-+ [chunks] // documents with chunks
+export const chunksEntities = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
++ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
+//chunks with entities
++ collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
+
+export const docChunkEntities = `+[chunks]
++collect {MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p} //first chunk
 + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
 + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
 //chunks with entities
-+ collect { OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!Chunk) RETURN p }`;
-
-export const docChunkEntities = `// if documents:
-+ [docs] // documents
-// if chunks:
-+ [chunks] // documents with chunks
-+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
-+ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
-//chunks with entities
-+ collect { OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!Chunk) RETURN p }`;
++ collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
 
 export const colors = [
   '#588c7e',
