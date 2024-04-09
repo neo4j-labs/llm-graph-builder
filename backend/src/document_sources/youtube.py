@@ -31,12 +31,8 @@ def get_documents_from_youtube(url):
                                                       translation = "en",
                                                       add_video_info=True)
       pages = youtube_loader.load()
-      # match = re.search(r"v=([a-zA-Z0-9_-]+)", url)
-      # youtube_id=match.group(1)
-      # file_name=youtube_id
       file_name = YouTube(url).title
-      file_key=file_name
-      return file_name, file_key, pages
+      return file_name, pages
     except Exception as e:
       error_message = str(e)
       logging.exception(f'Exception in reading transcript from youtube:{error_message}')

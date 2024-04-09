@@ -175,7 +175,7 @@ export interface fileName {
 export interface URLSCAN_RESPONSE {
   status: string;
   success_count?: number;
-  Failed_count?: number;
+  failed_count?: number;
   message: string;
   file_name?: fileName[];
   error?: string;

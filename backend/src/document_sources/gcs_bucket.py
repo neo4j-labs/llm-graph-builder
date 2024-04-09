@@ -53,6 +53,5 @@ def get_documents_from_gcs(gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename
   loader = GCSFileLoader(project_name=project_id, bucket=gcs_bucket_name, blob=blob_name)
   pages = loader.load()
   file_name = gcs_blob_filename
-  file_key = gcs_blob_filename
-  return file_name, file_key, pages  
+  return file_name, pages  
        
