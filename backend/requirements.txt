@@ -158,7 +158,7 @@ unstructured-client
 unstructured-inference
 unstructured.pytesseract
 urllib3
-uvicorn==0.29.0
+uvicorn
 wikipedia==1.4.0
 wrapt==1.16.0
 yarl==1.9.4
