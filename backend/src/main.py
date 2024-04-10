@@ -339,19 +339,17 @@ def create_source_node_graph_url_wikipedia(uri, userName, password, db_name, mod
 #         return create_api_response(job_status,message='Invalid URL')
     
 def extract_graph_from_file_local_file(uri, userName, password, model, db_name, file):
-  graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
   
   file_name, pages = get_documents_from_file(file)
   if pages==None or len(pages)==0:
     raise Exception('Pdf content is not available for file : {file_name}')
 
-  return processing_source(file_name, pages, graph)
+  return processing_source(uri, userName, password, model, db_name, file_name, pages)
 
 def extract_graph_from_file_s3(uri, userName, password, model, db_name,source_url, aws_access_key_id, aws_secret_access_key):
-  graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
 
   if(aws_access_key_id==None or aws_secret_access_key==None):
-    raise Exception('Please provide AWS access and secret keys'))
+    raise Exception('Please provide AWS access and secret keys')
   else:
     logging.info("Insert in S3 Block")
     file_name, pages = get_documents_from_s3(source_url, aws_access_key_id, aws_secret_access_key)
@@ -359,40 +357,35 @@ def extract_graph_from_file_s3(uri, userName, password, model, db_name,source_ur
   if pages==None or len(pages)==0:
     raise Exception('Pdf content is not available for file : {file_name}')
 
-  return processing_source(file_name, pages, graph)
+  return processing_source(uri, userName, password, model, db_name, file_name, pages)
 
 def extract_graph_from_file_youtube(uri, userName, password, model, db_name,source_url):
-  graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-
+  
   source_type, youtube_url = check_url_source(source_url)
   file_name, pages = get_documents_from_youtube(source_url)
 
   if pages==None or len(pages)==0:
     raise Exception('Youtube transcript is not available for file : {file_name}')
 
-  return processing_source(file_name, pages, graph)
+  return processing_source(uri, userName, password, model, db_name, file_name, pages)
 
 def extract_graph_from_file_Wikipedia(uri, userName, password, model, db_name, wiki_query, max_sources):
-  graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
 
   file_name, pages = get_documents_from_Wikipedia(wiki_query)
-
   if pages==None or len(pages)==0:
     raise Exception('Wikipedia page is not available for file : {file_name}')
 
-  return processing_source(file_name, pages, graph)
+  return processing_source(uri, userName, password, model, db_name, file_name, pages)
 
 def extract_graph_from_file_gcs(uri, userName, password, model, db_name, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename):
-  graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
 
   file_name, pages = get_documents_from_gcs(gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename)
-
   if pages==None or len(pages)==0:
     raise Exception('Pdf content is not available for file : {file_name}')
 
-   return processing_source(file_name, pages, graph)
+  return processing_source(uri, userName, password, model, db_name, file_name, pages, model)
 
-def processing_source(file_name, pages, graph):
+def processing_source(uri, userName, password, model, db_name, file_name, pages):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -410,8 +403,8 @@ def processing_source(file_name, pages, graph):
   """
   try:
     start_time = datetime.now()
+    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)  
     graphDb_data_Access = graphDBdataAccess(graph)
-    
     obj_source_node = sourceNode()
     status = "Processing"
     obj_source_node.file_name = file_name
@@ -471,7 +464,7 @@ def processing_source(file_name, pages, graph):
     error_message =""
 
     obj_source_node = sourceNode()
-    obj_source_node.file_name = file_key.split('/')[-1]
+    obj_source_node.file_name = file_name
     obj_source_node.status = job_status
     obj_source_node.created_at = start_time
     obj_source_node.updated_at = end_time
@@ -481,9 +474,9 @@ def processing_source(file_name, pages, graph):
     obj_source_node.relationship_count = relationships_created
 
     graphDb_data_Access.update_source_node(obj_source_node)
-    logging.info(f'Response from extract API : {output}')
+    logging.info(f'file:{file_name} extraction has been completed')
 
-    return output = {
+    return {
         "fileName": file_name,
         "nodeCount": nodes_created,
         "relationshipCount": relationships_created,

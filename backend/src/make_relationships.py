@@ -111,7 +111,7 @@ def merge_chunk_embedding(graph, graph_documents_chunk_chunk_Id, file_name):
     for row in graph_documents_chunk_chunk_Id:
         # for graph_document in row['graph_doc']:
         embeddings = embeddings_model.embed_query(row['graph_doc'].source.page_content)
-        logging.info(f'Embedding list {embeddings}')
+        # logging.info(f'Embedding list {embeddings}')
         if isEmbedding.upper() == "TRUE":
             logging.info('embedding update')
             graph.query("""MATCH (d:Document {fileName : $fileName})
