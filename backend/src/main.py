@@ -427,15 +427,15 @@ def processing_source(uri, userName, password, model, db_name, file_name, pages)
       full_document_content += text
     logging.info("Break down file into chunks")
     create_chunks_obj = CreateChunksofDocument(full_document_content, graph, file_name)
-    lst_chunks = create_chunks_obj.split_file_into_chunks()
-
+    chunks = create_chunks_obj.split_file_into_chunks()
     logging.info("Get graph document list from models")
-    
-    chunks=[]
-    for chunk in lst_chunks:
-      chunks.append(chunk['chunk_doc'])
-      
     graph_documents =  generate_graphDocuments(model, graph, chunks)
+    logging.info("create relationship between chunks")
+    lst_chunks = create_relation_between_chunks(graph,file_name,chunks)
+    # chunks=[]
+    # for chunk in lst_chunks_including_hash:
+    #   chunks.append(chunk['chunk_doc'])
+      
     chunks_and_graphDocuments_list = get_chunk_and_graphDocument(graph_documents, lst_chunks)
     merge_relationship_between_chunk_and_entites(graph, chunks_and_graphDocuments_list)
     
