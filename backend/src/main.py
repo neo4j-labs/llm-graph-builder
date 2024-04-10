@@ -217,23 +217,58 @@ def create_source_node_graph_url_wikipedia(uri, userName, password, db_name, mod
 #           success_count=0
 #           Failed_count=0
           
-#           for file_info in files_info:
-#               file_name=file_info['file_key'] 
-#               # s3_file_path=str(source_url+file_name)
-#               obj_source_node = sourceNode()
-#               obj_source_node.file_name = file_name.split('/')[-1]
-#               obj_source_node.file_type = 'pdf'
-#               obj_source_node.file_size = file_info['file_size_bytes']
-#               obj_source_node.file_source = source_type
-#               obj_source_node.model = model
-#               obj_source_node.url = str(source_url+file_name)
-#               obj_source_node.awsAccessKeyId = aws_access_key_id
-#               obj_source_node.created_at = datetime.now()
-#               try:
-#                 graphDb_data_Access = graphDBdataAccess(graph)
-#                 graphDb_data_Access.create_source_node(obj_source_node)
-#                 success_count+=1
-#                 lst_s3_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url})
+        elif wiki_query:
+           success_count=0
+           Failed_count=0
+           lst_file_metadata=[]
+           queries =  wiki_query.split(',')
+           for query in queries:
+              logging.info(f"Creating source node for {query.strip()}")
+              source_type = 'text'
+              job_status = 'Completed'
+              pages = WikipediaLoader(query=query.strip(), load_max_docs=1, load_all_available_meta=True).load()
+              try:
+                if not pages:
+                   Failed_count+=1
+                   continue
+                obj_source_node = sourceNode()
+                obj_source_node.file_name = query.strip()
+                obj_source_node.file_type = source_type
+                obj_source_node.file_source = 'Wikipedia'
+                obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
+                obj_source_node.model = model
+                obj_source_node.url = pages[0].metadata['source']
+                obj_source_node.created_at = datetime.now()
+                obj_source_node.status = 'New'
+                graphDb_data_Access = graphDBdataAccess(graph)
+                graphDb_data_Access.create_source_node(obj_source_node)
+                success_count+=1
+                lst_file_metadata.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url})
+              except Exception as e:
+                job_status = "Failed"
+                Failed_count+=1
+                error_message = str(e) 
+                return create_api_response(job_status,message="Unable to create source node for Wikipedia source",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count) 
+           return create_api_response(job_status,message="Source Node created successfully",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count)   
+        
+        elif gcs_bucket_name:
+          success_count=0
+          Failed_count=0
+          file_type='pdf'
+          source_type='gcs bucket'
+          aws_access_key_id=''
+          job_status = 'Completed'
+          try:
+              lst_file_metadata= get_gcs_bucket_files_info(gcs_bucket_name, gcs_bucket_folder)
+              for file_metadata in lst_file_metadata :
+                obj_source_node = sourceNode()
+                obj_source_node.file_name = file_metadata['fileName']
+                obj_source_node.file_size = file_metadata['fileSize']
+                obj_source_node.url = file_metadata['url']
+                obj_source_node.file_source = 'gcs bucket'
+                obj_source_node.gcsBucket = gcs_bucket_name
+                obj_source_node.gcsBucketFolder = file_metadata['gcsBucketFolder']
+                obj_source_node.created_at = datetime.now()
 
 #               except Exception as e:
 #                 err_flag=1
