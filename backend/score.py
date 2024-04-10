@@ -84,7 +84,6 @@ async def create_source_knowledge_graph_url(
     source_type=Form(None)
     ):
     try:
-        job_status = "Completed"
         if source_type == 's3 bucket' and aws_access_key_id and aws_secret_access_key:
             lst_file_name,success_count,failed_count = create_source_node_graph_url_s3(
                 uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, source_type
@@ -156,25 +155,25 @@ async def extract_knowledge_graph_from_file(
         elif source_type == 's3 bucket' and source_url:
             result = await asyncio.to_thread(
                 extract_graph_from_file_s3, uri, userName, password, model, database,
-                source_url=source_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
+                source_url, aws_access_key_id, aws_secret_access_key)
 
         elif source_type == 'youtube' and source_url:
             result = await asyncio.to_thread(
-                extract_graph_from_file_youtube, uri, userName, password, model, database,source_url=source_url)
+                extract_graph_from_file_youtube, uri, userName, password, model, databast, source_url)
 
         elif source_type == 'Wikipedia' and wiki_query:
             result = await asyncio.to_thread(
-                extract_graph_from_file_Wikipedia, uri, userName, password, model, database, wiki_query=wiki_query)
+                extract_graph_from_file_Wikipedia, uri, userName, password, model, database, wiki_query, max_sources)
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
             result = await asyncio.to_thread(
                 extract_graph_from_file_gcs, uri, userName, password, model, database, 
-                gcs_bucket_name = gcs_bucket_name, gcs_bucket_folder = gcs_bucket_folder, gcs_blob_filename = gcs_blob_filename)
+                gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename)
 
         else:
             return {"status": "Failed", "error": "No file found"}
-
-        return create_api_response("Success",data=result)
+        
+        return create_api_response('Success',data=result)
     except Exception as e:
       message=f"Failed To Process File or LLM Unable To Parse Content"
       job_status = "Failed"
@@ -190,9 +189,9 @@ async def get_source_list(uri:str, userName:str, password:str, database:str=None
     try:
         decoded_password = decode_password(password)
         if " " in uri:
-        uri= uri.replace(" ","+")
-        result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
-        return create_api_response("Success",data=list_of_json_objects)
+            uri= uri.replace(" ","+")
+            result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
+            return create_api_response("Success",data=result)
     except Exception as e:
         job_status = "Failed"
         message="Unable to fetch source list"
@@ -208,7 +207,7 @@ async def update_similarity_graph(uri=Form(None), userName=Form(None), password=
     try:
         result = await asyncio.to_thread(update_graph,uri,userName,password,database)
         logging.info(f"result : {result}")
-        return create_api_response('Completed',message='Updated KNN Graph',data=result)
+        return create_api_response('Success',message='Updated KNN Graph',data=result)
     except Exception as e:
         job_status = "Failed"
         message="Unable to update KNN Graph"
@@ -220,7 +219,7 @@ async def update_similarity_graph(uri=Form(None), userName=Form(None), password=
 async def chat_bot(uri=Form(None), userName=Form(None), password=Form(None), question=Form(None), session_id=Form(None)):
     try:
         result = await asyncio.to_thread(QA_RAG,uri=uri,userName=userName,password=password,question=question,session_id=session_id)
-        return result
+        return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
         message="Unable to get chat response"
@@ -232,7 +231,7 @@ async def chat_bot(uri=Form(None), userName=Form(None), password=Form(None), que
 async def connect(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
     try:
         result = await asyncio.to_thread(connection_check,uri,userName,password,database)
-        return create_api_response('Completed',message=result)
+        return create_api_response('Success',message=result)
     except Exception as e:
         job_status = "Failed"
         message="Connection failed to connect Neo4j database"

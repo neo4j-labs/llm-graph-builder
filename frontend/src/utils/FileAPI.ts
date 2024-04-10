@@ -27,19 +27,19 @@ export const extractAPI = async (
   gcs_bucket_folder?: string
 ): Promise<any> => {
   const urlExtract = `${url()}/extract`;
-  const method: Method = 'post';
+  const method: Method = 'post'; 
   const commonParams: UserCredentials = userCredentials;
   let additionalParams: ExtractParams;
   if (source_type === 's3 bucket') {
-    additionalParams = { model, source_url, aws_secret_access_key, aws_access_key_id };
+    additionalParams = { model, source_url, aws_secret_access_key, aws_access_key_id, source_type };
   } else if (source_type === 'Wikipedia') {
-    additionalParams = { model, wiki_query: file_name };
+    additionalParams = { model, wiki_query: file_name, source_type };
   } else if (source_type === 'gcs bucket') {
-    additionalParams = { model, gcs_blob_filename: file_name, gcs_bucket_folder, gcs_bucket_name };
+    additionalParams = { model, gcs_blob_filename: file_name, gcs_bucket_folder, gcs_bucket_name, source_type };
   } else if (source_type === 'youtube') {
-    additionalParams = { model, source_url };
+    additionalParams = { model, source_url, source_type };
   } else {
-    additionalParams = { model, file };
+    additionalParams = { model, file, source_type };
   }
   const response = await apiCall(urlExtract, method, commonParams, additionalParams);
   return response;
