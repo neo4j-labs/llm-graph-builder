@@ -159,7 +159,7 @@ async def extract_knowledge_graph_from_file(
 
         elif source_type == 'youtube' and source_url:
             result = await asyncio.to_thread(
-                extract_graph_from_file_youtube, uri, userName, password, model, databast, source_url)
+                extract_graph_from_file_youtube, uri, userName, password, model, database, source_url)
 
         elif source_type == 'Wikipedia' and wiki_query:
             result = await asyncio.to_thread(
@@ -169,9 +169,6 @@ async def extract_knowledge_graph_from_file(
             result = await asyncio.to_thread(
                 extract_graph_from_file_gcs, uri, userName, password, model, database, 
                 gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename)
-
-        else:
-            return {"status": "Failed", "error": "No file found"}
         
         return create_api_response('Success',data=result)
     except Exception as e:
