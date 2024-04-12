@@ -439,8 +439,8 @@ def processing_source(uri, userName, password, model, db_name, file_name, pages)
     chunks_and_graphDocuments_list = get_chunk_and_graphDocument(graph_documents, lst_chunks)
     merge_relationship_between_chunk_and_entites(graph, chunks_and_graphDocuments_list)
     
-    #create embedding and update chunk node with embedding
-    merge_chunk_embedding( graph, chunks_and_graphDocuments_list, file_name)
+    #create vector index and update chunk node with embedding
+    update_embedding_create_vector_index( graph, chunks_and_graphDocuments_list, file_name)
 
     distinct_nodes = set()
     relations = []

@@ -3,6 +3,7 @@ from langchain.docstore.document import Document
 from langchain_community.vectorstores.neo4j_vector import Neo4jVector
 from langchain_openai import OpenAIEmbeddings
 from langchain_google_vertexai import VertexAIEmbeddings
+from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 import logging
 from typing import List
 import os
@@ -21,15 +22,35 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
 
             graph.query('MATCH(c:Chunk {'+chunk_node_id_set.format(graph_doc_chunk_id['chunk_id'])+'}) MERGE (n:'+ node.type +'{ id: "'+node_id+'"}) MERGE (c)-[:HAS_ENTITY]->(n)')
 
-def merge_chunk_embedding(graph, graph_documents_chunk_chunk_Id, file_name):
+def load_embedding_model(embedding_model_name: str):
+    if embedding_model_name == "openai":
+        embeddings = OpenAIEmbeddings()
+        dimension = 1536
+        logging.info("Embedding: Using OpenAI")
+    elif embedding_model_name == "vertexai":        
+        embeddings = VertexAIEmbeddings(
+            model="textembedding-gecko@003"
+        )
+        dimension = 768
+        logging.info("Embedding: Using Vertex AI Embeddings")
+    else:
+        embeddings = SentenceTransformerEmbeddings(
+            model_name="all-MiniLM-L6-v2"#, cache_folder="/embedding_model"
+        )
+        dimension = 384
+        logging.info("Embedding: Using SentenceTransformer")
+    return embeddings, dimension
+
+def update_embedding_create_vector_index(graph, graph_documents_chunk_chunk_Id, file_name):
     #create embedding
     isEmbedding = os.getenv('IS_EMBEDDING')
     embedding_model = os.getenv('EMBEDDING_MODEL')
-    embeddings_model = VertexAIEmbeddings(model_name=embedding_model)
     
+    embeddings, dimension = load_embedding_model(embedding_model)
+    logging.info(f'embedding model:{embeddings} and dimesion:{dimension}')
     for row in graph_documents_chunk_chunk_Id:
         # for graph_document in row['graph_doc']:
-        embeddings = embeddings_model.embed_query(row['graph_doc'].source.page_content)
+        embeddings_arr = embeddings.embed_query(row['graph_doc'].source.page_content)
         # logging.info(f'Embedding list {embeddings}')
         if isEmbedding.upper() == "TRUE":
             logging.info('embedding update')
@@ -40,16 +61,20 @@ def merge_chunk_embedding(graph, graph_documents_chunk_chunk_Id, file_name):
                         {
                             "fileName" : file_name,
                             "chunkId": row['chunk_id'],
-                            "embeddings" : embeddings
+                            "embeddings" : embeddings_arr
                         }
                         )
             #create vector index on chunk embedding
             graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
                             OPTIONS {indexConfig: {
-                            `vector.dimensions`: 768,
+                            `vector.dimensions`: $dimensions,
                             `vector.similarity_function`: 'cosine'
                             }}
-                        """)
+                        """,
+                        {
+                            "dimensions" : dimension
+                        }
+                        )
 
 def create_relation_between_chunks(graph, file_name, chunks: List[Document])->list:
     logging.info("creating FIRST_CHUNK and NEXT_CHUNK relationships between chunks")
