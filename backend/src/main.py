@@ -106,7 +106,7 @@ def create_source_node_graph_url_gcs(uri, userName, password, db_name, model, so
       obj_source_node.file_source = source_type
       obj_source_node.file_type = 'pdf'
       obj_source_node.gcsBucket = gcs_bucket_name
-      obj_source_node.gcsBucketFolder = gcs_bucket_folder
+      obj_source_node.gcsBucketFolder = file_metadata['gcsBucketFolder']
       obj_source_node.created_at = datetime.now()
       try:
           graphDb_data_Access = graphDBdataAccess(graph)
