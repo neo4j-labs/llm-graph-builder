@@ -28,8 +28,8 @@ docstring_parser==0.16
 effdet==0.4.1
 emoji==2.10.1
 exceptiongroup==1.2.0
-fastapi==0.110.0
-fastapi-health==0.4.0
+fastapi
+fastapi-health
 filelock==3.13.1
 filetype==1.2.0
 flatbuffers==23.5.26
