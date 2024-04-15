@@ -9,8 +9,8 @@ from src.shared.common_fn import get_combined_chunks
 
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
-def get_graph_from_diffbot(graph,lst_chunks:List):
-    combined_chunk_document_list = get_combined_chunks(lst_chunks)
+def get_graph_from_diffbot(graph,chunkId_chunkDoc_list:List):
+    combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
     diffbot_api_key = os.environ.get('DIFFBOT_API_KEY')
     diffbot_nlp = DiffbotGraphTransformer(diffbot_api_key=diffbot_api_key)
     graph_documents = diffbot_nlp.convert_to_graph_documents(combined_chunk_document_list)
