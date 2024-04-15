@@ -3,7 +3,6 @@ import ConnectionModal from './ConnectionModal';
 import LlmDropdown from './Dropdown';
 import FileTable from './FileTable';
 import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
-import { setDriver, disconnect } from '../utils/Driver';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
@@ -13,39 +12,15 @@ import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './GraphViewModal';
 
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
-  const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
-  const { setUserCredentials, userCredentials } = useCredentials();
+  const { setUserCredentials, userCredentials, driver } = useCredentials();
   const { filesData, files, setFilesData, setModel, model } = useFileContext();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
-
-  useEffect(() => {
-    if (!init) {
-      let session = localStorage.getItem('neo4j.connection');
-      if (session) {
-        let neo4jConnection = JSON.parse(session);
-        setUserCredentials({
-          uri: neo4jConnection.uri,
-          userName: neo4jConnection.user,
-          password: neo4jConnection.password,
-          database: neo4jConnection.database,
-        });
-        setDriver(neo4jConnection.uri, neo4jConnection.user, neo4jConnection.password, neo4jConnection.database).then(
-          (isSuccessful: boolean) => {
-            setConnectionStatus(isSuccessful);
-          }
-        );
-      } else {
-        setOpenConnection(true);
-      }
-      setInit(true);
-    }
-  }, []);
 
   useEffect(() => {
     setFilesData((prevfiles) => {
@@ -182,9 +157,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
-    const connectURL = `${userCredentials?.userName}@${localStorage.getItem('hostname')}%3A${
-      localStorage.getItem('port') ?? '7687'
-    }`;
+    const connectURL = `${userCredentials?.userName}@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port') ?? '7687'
+      }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -194,15 +168,22 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     isExpanded && showChatBot
       ? 'contentWithBothDrawers'
       : isExpanded
-      ? 'contentWithExpansion'
-      : showChatBot
-      ? 'contentWithChatBot'
-      : 'contentWithNoExpansion';
+        ? 'contentWithExpansion'
+        : showChatBot
+          ? 'contentWithChatBot'
+          : 'contentWithNoExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
     setViewPoint('showGraphView');
   };
+
+  const disconnect = () => {
+    driver?.close();
+    setConnectionStatus(false);
+    localStorage.removeItem('password');
+    setUserCredentials({ uri: '', password: '', userName: '', database: '' });
+  }
 
   return (
     <>
@@ -228,13 +209,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           ) : (
             <Button
               className='mr-2.5'
-              onClick={() =>
-                disconnect().then(() => {
-                  setConnectionStatus(false);
-                  localStorage.removeItem('neo4j.connection');
-                  setUserCredentials({ uri: '', password: '', userName: '', database: '' });
-                })
-              }
+              onClick={disconnect}
             >
               Disconnect
             </Button>

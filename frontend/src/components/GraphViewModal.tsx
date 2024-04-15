@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { GraphType, GraphViewModalProps } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL, { NvlOptions } from '@neo4j-nvl/core';
-import { driver } from '../utils/Driver';
+// import { driver } from '../utils/Driver';
 import type { Node, Relationship } from '@neo4j-nvl/core';
 import {
   FitToScreenIcon,
@@ -23,6 +23,7 @@ import {
   docChunkEntities,
 } from '../utils/Constants';
 import { ArrowSmallRightIconOutline } from '@neo4j-ndl/react/icons';
+import { useCredentials } from '../context/UserCredentials';
 
 type Scheme = Record<string, string>;
 
@@ -41,6 +42,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [status, setStatus] = useState<'unknown' | 'success' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [docLimit, setDocLimit] = useState<string>('3');
+  const { driver } = useCredentials();
 
   const handleCheckboxChange = (graph: GraphType) => {
     const currentIndex = graphType.indexOf(graph);
@@ -96,16 +98,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         graphType.length === 3
           ? queryMap.DocChunkEntities
           : graphType.includes('Entities') && graphType.includes('Chunks')
-          ? queryMap.ChunksEntities
-          : graphType.includes('Entities') && graphType.includes('Document')
-          ? queryMap.DocEntities
-          : graphType.includes('Document') && graphType.includes('Chunks')
-          ? queryMap.DocChunks
-          : graphType.includes('Entities') && graphType.length === 1
-          ? queryMap.Entities
-          : graphType.includes('Chunks') && graphType.length === 1
-          ? queryMap.Chunks
-          : queryMap.Document;
+            ? queryMap.ChunksEntities
+            : graphType.includes('Entities') && graphType.includes('Document')
+              ? queryMap.DocEntities
+              : graphType.includes('Document') && graphType.includes('Chunks')
+                ? queryMap.DocChunks
+                : graphType.includes('Entities') && graphType.length === 1
+                  ? queryMap.Entities
+                  : graphType.includes('Chunks') && graphType.length === 1
+                    ? queryMap.Chunks
+                    : queryMap.Document;
       if (viewPoint === 'showGraphView') {
         queryToRun = constructQuery(newCheck, documentNo);
         console.log('inside If QueryToRun', queryToRun);
@@ -113,10 +115,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         queryToRun = constructDocQuery(newCheck, inspectedName);
         console.log('outside QueryToRun', queryToRun);
       }
-      const session = driver.session();
+      const session = driver?.session();
       setLoading(true);
-      session
-        .run(queryToRun, { document_name: inspectedName })
+      session?.run(queryToRun, { document_name: inspectedName })
         .then((results) => {
           if (results.records && results.records.length > 0) {
             // @ts-ignore

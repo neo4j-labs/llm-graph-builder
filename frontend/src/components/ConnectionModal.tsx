@@ -3,6 +3,8 @@ import { useState } from 'react';
 import connectAPI from '../services/ConnectAPI';
 import { useCredentials } from '../context/UserCredentials';
 import { ConnectionModalProps } from '../types';
+import { initialiseDriver } from '../utils/Driver';
+import { Driver } from 'neo4j-driver';
 
 const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
   open,
@@ -17,7 +19,7 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
   const [database, setDatabase] = useState<string>(localStorage.getItem('database') ?? 'neo4j');
   const [username, setUsername] = useState<string>(localStorage.getItem('username') ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
-  const { setUserCredentials } = useCredentials();
+  const { setUserCredentials,setDriver } = useCredentials();
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [loading, setLoading] = useState<boolean>(false);
@@ -36,6 +38,7 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
       setOpenConnection(false);
       setConnectionStatus(true);
       setStatusMessage(response.data.message);
+      driverSetting(connectionURI, username, password);
     } else {
       setStatus('danger');
       setStatusMessage(response.data.error);
@@ -47,6 +50,18 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
     }
     setLoading(false);
   };
+
+  const driverSetting = (connectionURI:string, username:string, password:string) => {
+    initialiseDriver(connectionURI, username, password).then((driver: Driver) => {
+      if (driver) {
+        setConnectionStatus(true);
+        setDriver(driver)
+      }
+      else {
+        setConnectionStatus(false);
+      }
+    })
+  }
 
   const isDisabled = !username || !hostname || !password;
   return (
