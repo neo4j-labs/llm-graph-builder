@@ -9,14 +9,14 @@ type Props = {
 interface ContextProps {
   userCredentials: UserCredentials | null;
   setUserCredentials: (UserCredentials: UserCredentials) => void;
-  driver : Driver | null;
+  driver: Driver | null;
   setDriver: Dispatch<SetStateAction<Driver | null>>;
 }
 export const UserConnection = createContext<ContextProps>({
   userCredentials: null,
   setUserCredentials: () => null,
   driver: null,
-  setDriver:()=> null
+  setDriver: () => null,
 });
 export const useCredentials = () => {
   const userCredentials = useContext(UserConnection);
@@ -28,8 +28,8 @@ const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
   const value = {
     userCredentials,
     setUserCredentials,
-    driver, 
-    setDriver
+    driver,
+    setDriver,
   };
   return <UserConnection.Provider value={value}>{props.children}</UserConnection.Provider>;
 };
