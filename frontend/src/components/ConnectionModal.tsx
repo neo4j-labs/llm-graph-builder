@@ -4,7 +4,7 @@ import connectAPI from '../services/ConnectAPI';
 import { useCredentials } from '../context/UserCredentials';
 
 interface Message {
-  type: 'success' | 'info' | 'warning' | 'danger' | 'neutral';
+  type: 'success' | 'info' | 'warning' | 'danger' | 'unknown';
   content: string;
 }
 
@@ -12,25 +12,18 @@ interface ConnectionModalProps {
   open: boolean;
   setOpenConnection: Dispatch<SetStateAction<boolean>>;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
-  message?: Message;
 }
 
-export default function ConnectionModal({
-  open,
-  setOpenConnection,
-  setConnectionStatus,
-  message,
-}: ConnectionModalProps) {
+export default function ConnectionModal({ open, setOpenConnection, setConnectionStatus }: ConnectionModalProps) {
   const protocols = ['neo4j', 'neo4j+s', 'neo4j+ssc', 'bolt', 'bolt+s', 'bolt+ssc'];
   const [protocol, setProtocol] = useState<string>(localStorage.getItem('selectedProtocol') ?? 'neo4j+s');
-  const [URI, setURI] = useState<string>(localStorage.getItem('hostname') ?? 'localhost');
-  const [port, setPort] = useState<number>(7687);
+  const [URI, setURI] = useState<string>(localStorage.getItem('uri') ?? '');
+  const [port, setPort] = useState<string>(localStorage.getItem('port') ?? '7687');
   const [database, setDatabase] = useState<string>(localStorage.getItem('database') ?? 'neo4j');
   const [username, setUsername] = useState<string>(localStorage.getItem('username') ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
-  const [connectionMessage, setMessage] = useState<Message | null>(null);
+  const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
   const { setUserCredentials } = useCredentials();
-
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const parseAndSetURI = (uri: string) => {
@@ -39,7 +32,7 @@ export default function ConnectionModal({
     setURI(uriHost);
     const uriProtocol = uriParts.pop() || protocol;
     setProtocol(uriProtocol);
-    const uriPort = Number(uriParts.pop()) || port;
+    const uriPort = uriParts.pop() || port;
     setPort(uriPort);
   };
 
@@ -53,25 +46,31 @@ export default function ConnectionModal({
     setIsLoading(true);
     if (files.length) {
       const [file] = files;
+      try {
+        if (file.text && file.size !== 0) {
+          const text = await file.text();
+          const lines = text.split(/\r?\n/);
+          const configObject = lines.reduce((acc: Record<string, string>, line: string) => {
+            if (line.startsWith('#') || line.trim() === '') {
+              return acc;
+            }
 
-      if (file.text) {
-        const text = await file.text();
-        const lines = text.split(/\r?\n/);
-        const configObject = lines.reduce((acc: Record<string, string>, line: string) => {
-          if (line.startsWith('#') || line.trim() === '') {
+            const [key, value] = line.split('=');
+            if (['NEO4J_URI', 'NEO4J_USERNAME', 'NEO4J_PASSWORD', 'NEO4J_DATABASE'].includes(key)) {
+              acc[key] = value;
+            }
             return acc;
-          }
-
-          const [key, value] = line.split('=');
-          if (['NEO4J_URI', 'NEO4J_USERNAME', 'NEO4J_PASSWORD', 'NEO4J_DATABASE'].includes(key)) {
-            acc[key] = value;
-          }
-          return acc;
-        }, {});
-        parseAndSetURI(configObject.NEO4J_URI);
-        setUsername(configObject.NEO4J_USERNAME);
-        setPassword(configObject.NEO4J_PASSWORD);
-        setDatabase(configObject.NEO4J_DATABASE);
+          }, {});
+          parseAndSetURI(configObject.NEO4J_URI);
+          setUsername(configObject.NEO4J_USERNAME);
+          setPassword(configObject.NEO4J_PASSWORD);
+          setDatabase(configObject.NEO4J_DATABASE);
+        }
+        else {
+          setMessage({ type: 'danger', content: 'Please drop a valid file' });
+        }
+      } catch (err: any) {
+        setMessage({ type: 'danger', content: err.message });
       }
     }
     setIsLoading(false);
@@ -79,37 +78,58 @@ export default function ConnectionModal({
 
   const submitConnection = async () => {
     const connectionURI = `${protocol}://${URI}${URI.split(':')[1] ? '' : `:${port}`}`;
+    setUserCredentials({ uri: connectionURI, userName: username, password: password, database: database });
     setIsLoading(true);
-    await connectAPI(connectionURI, username, password, database).then((isSuccessful: any) => {
-      if (isSuccessful?.data?.status === 'Success') {
-        setOpenConnection(false);
+    await connectAPI(connectionURI, username, password, database).then((response: any) => {
+      if (response?.data?.status === 'Success') {
         setConnectionStatus(true);
-        setMessage(isSuccessful.data.message);
-      } else {
-        setOpenConnection(false);
         setMessage({
-          type: 'danger',
-          content: 'Connection failed, please check the developer console logs for more informations',
+          type: 'success',
+          content: response.data.message,
         });
+        setOpenConnection(false);
+      } else {
+        setMessage({ type: 'danger', content: response.data.error });
+        setConnectionStatus(false);
+        setOpenConnection(true);
         setPassword('');
-        setTimeout(() => {
-          setMessage({
-            type: 'neutral',
-            content: '',
-          });
-        }, 5000);
       }
       setIsLoading(false);
+      setTimeout(() => {
+        setMessage({ type: 'unknown', content: '' });
+        setPassword('');
+      }, 3000);
     });
   };
 
+  const onClose = () => {
+    setMessage({ type: 'unknown', content: '' });
+  };
+
+  const isDisabled = !username || !URI || !password;
+
   return (
     <>
-      <Dialog size='small' open={open} aria-labelledby='form-dialog-title' disableCloseButton>
+      <Dialog
+        size='small'
+        open={open}
+        aria-labelledby='form-dialog-title'
+        onClose={() => {
+          setOpenConnection(false);
+          setMessage({ type: 'unknown', content: '' });
+        }}
+      >
         <Dialog.Header id='form-dialog-title'>Connect to Neo4j</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
-          {message && <Banner type={message.type}>{message.content}</Banner>}
-          {connectionMessage && <Banner type={connectionMessage.type}>{connectionMessage.content}</Banner>}
+          {connectionMessage?.type !== 'unknown' && (
+            <Banner
+              name='Connection Modal'
+              closeable
+              onClose={onClose}
+              type={connectionMessage?.type}
+              description={connectionMessage?.content}
+            ></Banner>
+          )}
           <div className='n-flex max-h-44'>
             <Dropzone
               isTesting={false}
@@ -123,13 +143,11 @@ export default function ConnectionModal({
                 maxSize: 500,
                 onDropRejected: (e) => {
                   if (e.length) {
-                    // eslint-disable-next-line no-console
-                    console.log(`Failed To Upload, File is larger than 500 bytes`);
+                    setMessage({ type: 'danger', content: 'Failed To Upload, File is larger than 500 bytes' });
                   }
                 },
               }}
             />
-            {isLoading && <div>Loading...</div>}
           </div>
           <div className='n-flex n-flex-row n-flex-wrap'>
             <Dropdown
@@ -156,7 +174,7 @@ export default function ConnectionModal({
                 fluid
                 onChange={(e) => setURI(e.target.value)}
                 onPaste={(e) => handleHostPasteChange(e)}
-                aria-label='Connection hostname'
+                aria-label='Connection URI'
               />
             </div>
           </div>
@@ -199,7 +217,9 @@ export default function ConnectionModal({
               />
             </div>
           </div>
-          <Button onClick={() => submitConnection()}>Submit</Button>
+          <Button loading={isLoading} disabled={isDisabled} onClick={() => submitConnection()}>
+            Submit
+          </Button>
         </Dialog.Content>
       </Dialog>
     </>
