@@ -74,7 +74,7 @@ KNN_MIN_SCORE = ""\
    	 userName: Username to use for graph creation ( if None will use username from config file )
    	 password: Password to use for graph creation ( if None will use password from config file )
    	 file: File object containing the PDF file path to be used
-   	 model: Type of model to use ('OpenAI GPT 3.5' or 'OpenAI GPT 4')
+   	 model: Type of model to use ('Gemini Pro' or 'Diffbot')
    
      Returns: 
    	 Json response to API with fileName, nodeCount, relationshipCount, processingTime, 

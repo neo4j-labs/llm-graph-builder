@@ -23,6 +23,9 @@ from typing import List, Dict
 from langchain_core.pydantic_v1 import BaseModel, Field
 import google.auth 
 from langchain_community.graphs.graph_document import Node
+from src.shared.common_fn import get_combined_chunks
+import time
+from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
 
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='DEBUG')
@@ -278,7 +281,7 @@ class GeminiLLMGraphTransformer:
 
 def get_graph_from_Gemini(model_version,
                             graph: Neo4jGraph,
-                            chunks: List):
+                            chunkId_chunkDoc_list: List):
     """
         Extract graph from OpenAI and store it in database. 
         This is a wrapper for extract_and_store_graph
@@ -303,19 +306,23 @@ def get_graph_from_Gemini(model_version,
         logging.info("WARNING: no service account credential. User account credential?")                           
     vertexai.init(project=project_id, location=location)
     
-    # combined_chunk_document_list=[]
-    # combined_chunks = ["".join(document.page_content for document in documents[i:i+2]) for i in range(0, len(documents),2)]
-    # for i in range(len(combined_chunks)):
-    #     combined_chunk_document_list.append(Document(page_content=combined_chunks[i]))
-        
+    combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
+     
     llm = ChatVertexAI(model_name=model_version,
                     convert_system_message_to_human=True,
-                    temperature=0
+                    temperature=0,
+                    safety_settings={
+                        HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE, 
+                        HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE, 
+                        HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE, 
+                        HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE, 
+                        HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                    }
                 )
     llm_transformer = GeminiLLMGraphTransformer(llm=llm)
     
     with ThreadPoolExecutor(max_workers=10) as executor:
-        for chunk in chunks:
+        for chunk in combined_chunk_document_list:
             futures.append(executor.submit(llm_transformer.convert_to_graph_documents,[chunk]))   
         
         for i, future in enumerate(concurrent.futures.as_completed(futures)):
@@ -333,6 +340,11 @@ def get_graph_from_Gemini(model_version,
                 # replace all non alphanumeric characters and spaces with underscore
                node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
             graph_document_list.append(graph_document[0])
+            
+            #Sleep for 1 sec after 4 requestes are processed. 
+            # Todo: Remove this code block when Gemini rate limit is increased 
+            if i % 4 == 0 :
+                time.sleep(1)
         
     graph.add_graph_documents(graph_document_list)
     return  graph_document_list
