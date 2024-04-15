@@ -2,7 +2,7 @@ import axios from 'axios';
 import { url } from '../utils/Utils';
 import { UserCredentials } from '../types';
 
-const chatBotAPI = async (userCredentials: UserCredentials, question: string, session_id: string) => {
+const chatBotAPI = async (userCredentials: UserCredentials, question: string, session_id: string,model:string) => {
   try {
     const formData = new FormData();
     formData.append('uri', userCredentials?.uri ?? '');
@@ -11,6 +11,7 @@ const chatBotAPI = async (userCredentials: UserCredentials, question: string, se
     formData.append('password', userCredentials?.password ?? '');
     formData.append('question', question);
     formData.append('session_id', session_id);
+    formData.append('model',model)
     const response = await axios.post(`${url()}/chat_bot`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
