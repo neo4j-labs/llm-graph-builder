@@ -106,7 +106,7 @@ def create_source_node_graph_url_gcs(uri, userName, password, db_name, model, so
       obj_source_node.file_source = source_type
       obj_source_node.file_type = 'pdf'
       obj_source_node.gcsBucket = gcs_bucket_name
-      obj_source_node.gcsBucketFolder = gcs_bucket_folder
+      obj_source_node.gcsBucketFolder = file_metadata['gcsBucketFolder']
       obj_source_node.created_at = datetime.now()
       try:
           graphDb_data_Access = graphDBdataAccess(graph)
@@ -436,8 +436,8 @@ def processing_source(uri, userName, password, model, db_name, file_name, pages)
     chunks_and_graphDocuments_list = get_chunk_and_graphDocument(graph_documents, lst_chunks)
     merge_relationship_between_chunk_and_entites(graph, chunks_and_graphDocuments_list)
     
-    #create embedding and update chunk node with embedding
-    merge_chunk_embedding( graph, chunks_and_graphDocuments_list, file_name)
+    #create vector index and update chunk node with embedding
+    update_embedding_create_vector_index( graph, chunks_and_graphDocuments_list, file_name)
 
     distinct_nodes = set()
     relations = []

@@ -1,6 +1,6 @@
 import { Button, Dialog, TextInput, Dropdown, Banner } from '@neo4j-ndl/react';
 import { useState } from 'react';
-import { setDriver } from '../utils/Driver';
+import connectAPI from '../services/ConnectAPI';
 import { useCredentials } from '../context/UserCredentials';
 import { ConnectionModalProps } from '../types';
 
@@ -31,15 +31,16 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
     localStorage.setItem('database', database);
     localStorage.setItem('selectedProtocol', selectedProtocol);
     setLoading(true);
-    const status = await setDriver(connectionURI, username, password, database);
-    if (status === 'success') {
+    const response = await connectAPI(connectionURI, username, password, database);
+    if (response.data.status === 'Success') {
       setOpenConnection(false);
       setConnectionStatus(true);
-      setStatusMessage('');
+      setStatusMessage(response.data.message);
     } else {
       setStatus('danger');
-      setStatusMessage(status);
+      setStatusMessage(response.data.error);
       setConnectionStatus(false);
+      setPassword('');
       setTimeout(() => {
         setStatus('unknown');
       }, 5000);
