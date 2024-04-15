@@ -279,7 +279,7 @@ class GeminiLLMGraphTransformer:
 
 def get_graph_from_Gemini(model_version,
                             graph: Neo4jGraph,
-                            lst_chunks: List):
+                            chunkId_chunkDoc_list: List):
     """
         Extract graph from OpenAI and store it in database. 
         This is a wrapper for extract_and_store_graph
@@ -304,7 +304,7 @@ def get_graph_from_Gemini(model_version,
         logging.info("WARNING: no service account credential. User account credential?")                           
     vertexai.init(project=project_id, location=location)
     
-    combined_chunk_document_list = get_combined_chunks(lst_chunks)
+    combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
      
     llm = ChatVertexAI(model_name=model_version,
                     convert_system_message_to_human=True,

@@ -28,11 +28,11 @@ from src.shared.common_fn import get_combined_chunks
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
-def get_graph_from_OpenAI(model_version, graph, lst_chunks:List):
+def get_graph_from_OpenAI(model_version, graph, chunkId_chunkDoc_list:List):
     futures=[]
     graph_document_list=[]
         
-    combined_chunk_document_list = get_combined_chunks(lst_chunks)
+    combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
     
     llm = ChatOpenAI(model= model_version, temperature=0)
     llm_transformer = LLMGraphTransformer(llm=llm)
