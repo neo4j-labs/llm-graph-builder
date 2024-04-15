@@ -2,6 +2,9 @@ import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone } from '@neo4j-nd
 import { Dispatch, SetStateAction, useState } from 'react';
 import connectAPI from '../services/ConnectAPI';
 import { useCredentials } from '../context/UserCredentials';
+import { ConnectionModalProps } from '../types';
+import { initialiseDriver } from '../utils/Driver';
+import { Driver } from 'neo4j-driver';
 
 interface Message {
   type: 'success' | 'info' | 'warning' | 'danger' | 'unknown';
@@ -22,92 +25,51 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
   const [database, setDatabase] = useState<string>(localStorage.getItem('database') ?? 'neo4j');
   const [username, setUsername] = useState<string>(localStorage.getItem('username') ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
-  const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
-  const { setUserCredentials } = useCredentials();
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  const parseAndSetURI = (uri: string) => {
-    const uriParts = uri.split('://');
-    const uriHost = uriParts.pop() || URI;
-    setURI(uriHost);
-    const uriProtocol = uriParts.pop() || protocol;
-    setProtocol(uriProtocol);
-    const uriPort = uriParts.pop() || port;
-    setPort(uriPort);
-  };
-
-  const handleHostPasteChange: React.ClipboardEventHandler<HTMLInputElement> = (event) => {
-    event.clipboardData.items[0]?.getAsString((value) => {
-      parseAndSetURI(value);
-    });
-  };
-
-  const onDropHandler = async (files: Partial<globalThis.File>[]) => {
-    setIsLoading(true);
-    if (files.length) {
-      const [file] = files;
-      try {
-        if (file.text && file.size !== 0) {
-          const text = await file.text();
-          const lines = text.split(/\r?\n/);
-          const configObject = lines.reduce((acc: Record<string, string>, line: string) => {
-            if (line.startsWith('#') || line.trim() === '') {
-              return acc;
-            }
-
-            const [key, value] = line.split('=');
-            if (['NEO4J_URI', 'NEO4J_USERNAME', 'NEO4J_PASSWORD', 'NEO4J_DATABASE'].includes(key)) {
-              acc[key] = value;
-            }
-            return acc;
-          }, {});
-          parseAndSetURI(configObject.NEO4J_URI);
-          setUsername(configObject.NEO4J_USERNAME);
-          setPassword(configObject.NEO4J_PASSWORD);
-          setDatabase(configObject.NEO4J_DATABASE);
-        }
-        else {
-          setMessage({ type: 'danger', content: 'Please drop a valid file' });
-        }
-      } catch (err: any) {
-        setMessage({ type: 'danger', content: err.message });
-      }
-    }
-    setIsLoading(false);
-  };
+  const { setUserCredentials,setDriver } = useCredentials();
+  const [statusMessage, setStatusMessage] = useState<string>('');
+  const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [port, setPort] = useState<string>(localStorage.getItem('port') ?? '7687');
 
   const submitConnection = async () => {
-    const connectionURI = `${protocol}://${URI}${URI.split(':')[1] ? '' : `:${port}`}`;
+    const connectionURI = `${selectedProtocol}://${hostname}:${port}`;
     setUserCredentials({ uri: connectionURI, userName: username, password: password, database: database });
-    setIsLoading(true);
-    await connectAPI(connectionURI, username, password, database).then((response: any) => {
-      if (response?.data?.status === 'Success') {
-        setConnectionStatus(true);
-        setMessage({
-          type: 'success',
-          content: response.data.message,
-        });
-        setOpenConnection(false);
-      } else {
-        setMessage({ type: 'danger', content: response.data.error });
-        setConnectionStatus(false);
-        setOpenConnection(true);
-        setPassword('');
-      }
-      setIsLoading(false);
+    localStorage.setItem('username', username);
+    localStorage.setItem('hostname', hostname);
+    localStorage.setItem('database', database);
+    localStorage.setItem('selectedProtocol', selectedProtocol);
+    setLoading(true);
+    const response = await connectAPI(connectionURI, username, password, database);
+    if (response.data.status === 'Success') {
+      setOpenConnection(false);
+      setConnectionStatus(true);
+      setStatusMessage(response.data.message);
+      driverSetting(connectionURI, username, password);
+    } else {
+      setStatus('danger');
+      setStatusMessage(response.data.error);
+      setConnectionStatus(false);
+      setPassword('');
       setTimeout(() => {
-        setMessage({ type: 'unknown', content: '' });
-        setPassword('');
-      }, 3000);
-    });
+        setStatus('unknown');
+      }, 5000);
+    }
+    setLoading(false);
   };
 
-  const onClose = () => {
-    setMessage({ type: 'unknown', content: '' });
-  };
+  const driverSetting = (connectionURI:string, username:string, password:string) => {
+    initialiseDriver(connectionURI, username, password).then((driver: Driver) => {
+      if (driver) {
+        setConnectionStatus(true);
+        setDriver(driver)
+      }
+      else {
+        setConnectionStatus(false);
+      }
+    })
+  }
 
-  const isDisabled = !username || !URI || !password;
-
+  const isDisabled = !username || !hostname || !password;
   return (
     <>
       <Dialog
