@@ -217,7 +217,9 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         If you don't know the answer, just say that you don't know, don't try to make up an answer.
 
         if the answer is generated from the additional Unstructured Information please mention the Document source : {vector_res.get('source', '')} at the end the message
-        and Finally I only want a straightforward answer.
+        and if it is a general reply please dont mention the source. 
+        
+        Finally I only want a straightforward answer.
         """
 
         print(final_prompt)
