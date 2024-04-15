@@ -7,6 +7,7 @@ import { ChatbotProps, UserCredentials } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import chatBotAPI from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
+import { useFileContext } from '../context/UsersFiles';
 
 export default function Chatbot(props: ChatbotProps) {
   const { messages: listMessages, setMessages: setListMessages } = props;
@@ -14,6 +15,7 @@ export default function Chatbot(props: ChatbotProps) {
   const formattedTextStyle = { color: 'rgb(var(--theme-palette-discovery-bg-strong))' };
   const [loading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
+  const {model}=useFileContext()
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
 
@@ -80,7 +82,7 @@ export default function Chatbot(props: ChatbotProps) {
       setLoading(true);
       setInputMessage('');
       simulateTypingEffect(' ');
-      const chatresponse = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId);
+      const chatresponse = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId,model);
       chatbotReply = chatresponse?.data?.message;
       simulateTypingEffect(chatbotReply);
       setLoading(false);
