@@ -23,18 +23,22 @@ from concurrent.futures import ThreadPoolExecutor
 import threading
 import uuid
 from langchain_experimental.graph_transformers import LLMGraphTransformer
+from src.shared.common_fn import get_combined_chunks
 
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
-def get_graph_from_OpenAI(model_version, graph, chunks:List):
+def get_graph_from_OpenAI(model_version, graph, chunkId_chunkDoc_list:List):
     futures=[]
     graph_document_list=[]
+        
+    combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
+    
     llm = ChatOpenAI(model= model_version, temperature=0)
     llm_transformer = LLMGraphTransformer(llm=llm)
     
     with ThreadPoolExecutor(max_workers=10) as executor:
-        for chunk in chunks:
+        for chunk in combined_chunk_document_list:
             futures.append(executor.submit(llm_transformer.convert_to_graph_documents,[chunk]))   
         
         for i, future in enumerate(concurrent.futures.as_completed(futures)):
@@ -43,8 +47,7 @@ def get_graph_from_OpenAI(model_version, graph, chunks:List):
                 node.id = node.id.title().replace(' ','_')
                 #replace all non alphanumeric characters and spaces with underscore
                 node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
-            graph_document_list.append(graph_document[0])
-
+            graph_document_list.append(graph_document[0])    
     graph.add_graph_documents(graph_document_list)
     return  graph_document_list        
         

@@ -13,6 +13,7 @@ import hashlib
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
 def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_documents_chunk_chunk_Id : list):
+    logging.info("Create HAS_ENTITY relationship between chunks and entities")
     chunk_node_id_set = 'id:"{}"'
     for graph_doc_chunk_id in graph_documents_chunk_chunk_Id:
         for node in graph_doc_chunk_id['graph_doc'].nodes:
@@ -53,7 +54,7 @@ def update_embedding_create_vector_index(graph, graph_documents_chunk_chunk_Id, 
         embeddings_arr = embeddings.embed_query(row['graph_doc'].source.page_content)
         # logging.info(f'Embedding list {embeddings}')
         if isEmbedding.upper() == "TRUE":
-            logging.info('embedding update')
+            logging.info(f"update embedding for {row['chunk_id']}")
             graph.query("""MATCH (d:Document {fileName : $fileName})
                            MERGE (c:Chunk {id:$chunkId}) SET c.embedding = $embeddings 
                            MERGE (c)-[:PART_OF]->(d)

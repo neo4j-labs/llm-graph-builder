@@ -169,9 +169,6 @@ async def extract_knowledge_graph_from_file(
             result = await asyncio.to_thread(
                 extract_graph_from_file_gcs, uri, userName, password, model, database, 
                 gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename)
-
-        else:
-            return {"status": "Failed", "error": "No file found"}
         
         return create_api_response('Success',data=result)
     except Exception as e:
