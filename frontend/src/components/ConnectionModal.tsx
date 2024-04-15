@@ -25,7 +25,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
   const [database, setDatabase] = useState<string>(localStorage.getItem('database') ?? 'neo4j');
   const [username, setUsername] = useState<string>(localStorage.getItem('username') ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
-  const { setUserCredentials,setDriver } = useCredentials();
+  const { setUserCredentials, setDriver } = useCredentials();
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [loading, setLoading] = useState<boolean>(false);
@@ -57,17 +57,16 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
     setLoading(false);
   };
 
-  const driverSetting = (connectionURI:string, username:string, password:string) => {
+  const driverSetting = (connectionURI: string, username: string, password: string) => {
     initialiseDriver(connectionURI, username, password).then((driver: Driver) => {
       if (driver) {
         setConnectionStatus(true);
-        setDriver(driver)
-      }
-      else {
+        setDriver(driver);
+      } else {
         setConnectionStatus(false);
       }
-    })
-  }
+    });
+  };
 
   const isDisabled = !username || !hostname || !password;
   return (
