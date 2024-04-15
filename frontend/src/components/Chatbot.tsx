@@ -83,7 +83,7 @@ export default function Chatbot(props: ChatbotProps) {
       setInputMessage('');
       simulateTypingEffect(' ');
       const chatresponse = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId,model);
-      chatbotReply = chatresponse?.data?.message;
+      chatbotReply = chatresponse?.data?.data?.message;
       simulateTypingEffect(chatbotReply);
       setLoading(false);
     } catch (error) {
