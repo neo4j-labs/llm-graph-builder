@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
 import { CustomFile } from '../types';
-import { defaultLLM} from '../utils/Constants';
+import { defaultLLM } from '../utils/Constants';
 
 interface FileContextType {
   files: (File | null)[] | [];

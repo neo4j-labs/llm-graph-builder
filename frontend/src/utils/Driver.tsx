@@ -1,6 +1,6 @@
 import neo4j, { Driver } from 'neo4j-driver';
 
-export const initialiseDriver = async (connectionURI: string, username: string, password: string, database:string) => {
+export const initialiseDriver = async (connectionURI: string, username: string, password: string, database: string) => {
   try {
     const driver: Driver = neo4j.driver(connectionURI, neo4j.auth.basic(username, password));
     const serverInfo = await driver.getServerInfo();
