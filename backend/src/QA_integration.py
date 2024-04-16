@@ -13,6 +13,8 @@ import logging
 from langchain_community.chat_message_histories import Neo4jChatMessageHistory
 from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 from src.shared.common_fn import load_embedding_model
+import re
+
 load_dotenv()
 
 openai_api_key = os.environ.get('OPENAI_API_KEY')
@@ -143,7 +145,18 @@ def get_chat_history(llm,uri,userName,password,session_id):
         error_message = str(e)
         logging.exception(f'Exception in retrieving chat history:{error_message}')
         # raise Exception(error_message)
-        return ''
+        return '' 
+
+def extract_and_remove_source(message):
+    pattern = r'\[Source: ([^\]]+)\]'
+    sources = re.findall(pattern, message)
+    new_message = re.sub(pattern, '', message).strip()
+    # return new_message,sources[0] if sources else None
+    response = {
+        "message" : new_message, 
+        "sources" : [sources[0] if sources else None]
+    }
+    return response
 
 def QA_RAG(uri,model,userName,password,question,session_id):
     try:
@@ -217,7 +230,8 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         - If the context is relevant, use it to inform your answer.
         - If no relevant context is provided, answer based on general knowledge.
         - Clearly state if you do not know the answer; do not speculate or invent information.
-        - If the answer is derived from provided unstructured information, mention the document sources: {vector_res.get('source', '')}.
+        - If the answer is derived from provided unstructured information, mention the document sources: {vector_res.get('source', '')}. Please give it in below format 
+          Source Format : [Source: source1,source2]
         - Verify the accuracy of any information from the unstructured data before responding.
         - Ensure answers are straightforward and context-aware.
         Note: This task involves synthesizing information from previous interactions and available data to ensure accurate and relevant responses. 
@@ -226,16 +240,24 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         print(final_prompt)
         response = llm.predict(final_prompt)
         print(response)
+
         ai_message=response
         user_message=question
         save_chat_history(uri,userName,password,session_id,user_message,ai_message)
 
+        # response = extract_and_remove_source(response)
+        # print(extract_and_remove_source(response))
+        print(response)
         res={"session_id":session_id,"message":response,"user":"chatbot"}
         return res
     except Exception as e:
       error_message = str(e)
       logging.exception(f'Exception in in QA component:{error_message}')
-    #   raise Exception(error_message)
+    #   response = {
+    #     "message" : "Something went wrong", 
+    #     "sources" : []
+    #     }
+    #   raise Exception(error_message)  
       return {"session_id":session_id,"message":"Something went wrong","user":"chatbot"}
 
  
