@@ -2,6 +2,8 @@ import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone } from '@neo4j-nd
 import { Dispatch, SetStateAction, useState } from 'react';
 import connectAPI from '../services/ConnectAPI';
 import { useCredentials } from '../context/UserCredentials';
+import { initialiseDriver } from '../utils/Driver';
+import { Driver } from 'neo4j-driver';
 
 interface Message {
   type: 'success' | 'info' | 'warning' | 'danger' | 'unknown';
@@ -15,15 +17,32 @@ interface ConnectionModalProps {
 }
 
 export default function ConnectionModal({ open, setOpenConnection, setConnectionStatus }: ConnectionModalProps) {
+
+  let prefilledconnection = localStorage.getItem('neo4j.connection');
+  let initialuri;
+  let initialdb;
+  let initialusername;
+  let initialport;
+  let initialprotocol;
+  if (prefilledconnection) {
+    let parsedcontent = JSON.parse(prefilledconnection)
+    let urisplit = parsedcontent?.uri?.split("://")
+    initialuri = urisplit[1];
+    initialdb = parsedcontent?.database;
+    initialusername = parsedcontent?.user
+    initialport = initialuri.split(":")[1]
+    initialprotocol = urisplit[0]
+  }
+  
   const protocols = ['neo4j', 'neo4j+s', 'neo4j+ssc', 'bolt', 'bolt+s', 'bolt+ssc'];
-  const [protocol, setProtocol] = useState<string>(localStorage.getItem('selectedProtocol') ?? 'neo4j+s');
-  const [URI, setURI] = useState<string>(localStorage.getItem('uri') ?? '');
-  const [port, setPort] = useState<string>(localStorage.getItem('port') ?? '7687');
-  const [database, setDatabase] = useState<string>(localStorage.getItem('database') ?? 'neo4j');
-  const [username, setUsername] = useState<string>(localStorage.getItem('username') ?? 'neo4j');
+  const [protocol, setProtocol] = useState<string>(initialprotocol ?? 'neo4j+s');
+  const [URI, setURI] = useState<string>(initialuri ?? '');
+  const [port, setPort] = useState<string>(initialport ?? '7687');
+  const [database, setDatabase] = useState<string>(initialdb ?? 'neo4j');
+  const [username, setUsername] = useState<string>(initialusername ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
-  const { setUserCredentials } = useCredentials();
+  const { setUserCredentials, setDriver } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const parseAndSetURI = (uri: string) => {
@@ -65,8 +84,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
           setUsername(configObject.NEO4J_USERNAME);
           setPassword(configObject.NEO4J_PASSWORD);
           setDatabase(configObject.NEO4J_DATABASE);
-        }
-        else {
+        } else {
           setMessage({ type: 'danger', content: 'Please drop a valid file' });
         }
       } catch (err: any) {
@@ -87,18 +105,30 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
           type: 'success',
           content: response.data.message,
         });
+        driverSetting(connectionURI, username, password, database);
         setOpenConnection(false);
       } else {
         setMessage({ type: 'danger', content: response.data.error });
-        setConnectionStatus(false);
         setOpenConnection(true);
         setPassword('');
+        setConnectionStatus(false);
       }
       setIsLoading(false);
       setTimeout(() => {
         setMessage({ type: 'unknown', content: '' });
         setPassword('');
       }, 3000);
+    });
+  };
+
+  const driverSetting = (connectionURI: string, username: string, password: string, database: string) => {
+    initialiseDriver(connectionURI, username, password, database).then((driver: Driver) => {
+      if (driver) {
+        setConnectionStatus(true);
+        setDriver(driver);
+      } else {
+        setConnectionStatus(false);
+      }
     });
   };
 
