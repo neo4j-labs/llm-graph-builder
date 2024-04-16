@@ -149,13 +149,19 @@ def get_chat_history(llm,uri,userName,password,session_id):
 
 def extract_and_remove_source(message):
     pattern = r'\[Source: ([^\]]+)\]'
-    sources = re.findall(pattern, message)
-    new_message = re.sub(pattern, '', message).strip()
-    # return new_message,sources[0] if sources else None
-    response = {
-        "message" : new_message, 
-        "sources" : [sources[0] if sources else None]
-    }
+    if "Source" in message:
+        sources_string = re.search(pattern, message).group(1)
+        sources = [source.strip().strip("'") for source in sources_string.split(',')]
+        new_message = re.sub(pattern, '', message).strip()
+        response = {
+            "message" : new_message,
+            "sources" : sources
+        }
+    else:
+        response = {
+            "message" : message,
+            "sources" : []
+        }
     return response
 
 def QA_RAG(uri,model,userName,password,question,session_id):
@@ -177,7 +183,7 @@ def QA_RAG(uri,model,userName,password,question,session_id):
                 index_name="vector",
                 retrieval_query=retrieval_query,
             )
-        model = "Gemini Pro"
+        # model = "Gemini Pro"
         llm = get_llm(model = model)
 
         qa = RetrievalQA.from_chain_type(
@@ -222,7 +228,8 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         Response Requirements:
         - Provide concise and direct answers.
         - Utilize chat history and any provided unstructured data to understand the context and deliver relevant responses.
-        - Acknowledge previous interactions in responses, even for simple greetings.
+        - Please respond to simple greetings and Acknowledge previous interactions in responses.
+
         User Input: {question}
         Chat History Summary: {chat_summary}
         Additional Unstructured Information: {vector_res.get('result', '')}
@@ -231,21 +238,21 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         - If no relevant context is provided, answer based on general knowledge.
         - Clearly state if you do not know the answer; do not speculate or invent information.
         - If the answer is derived from provided unstructured information, mention the document sources: {vector_res.get('source', '')}. Please give it in below format 
-          Source Format : [Source: source1,source2]
+          [Source: source1,source2]
         - Verify the accuracy of any information from the unstructured data before responding.
         - Ensure answers are straightforward and context-aware.
-        Note: This task involves synthesizing information from previous interactions and available data to ensure accurate and relevant responses. 
+        Note: This task involves synthesizing information from previous interactions and available data and your general knowledge to ensure accurate and relevant responses. 
         """
 
         print(final_prompt)
         response = llm.predict(final_prompt)
-        print(response)
+        # print(response)
 
         ai_message=response
         user_message=question
         save_chat_history(uri,userName,password,session_id,user_message,ai_message)
 
-        # response = extract_and_remove_source(response)
+        response = extract_and_remove_source(response)
         # print(extract_and_remove_source(response))
         print(response)
         res={"session_id":session_id,"message":response,"user":"chatbot"}
@@ -253,11 +260,11 @@ def QA_RAG(uri,model,userName,password,question,session_id):
     except Exception as e:
       error_message = str(e)
       logging.exception(f'Exception in in QA component:{error_message}')
-    #   response = {
-    #     "message" : "Something went wrong", 
-    #     "sources" : []
-    #     }
+      response = {
+        "message" : "Something went wrong", 
+        "sources" : []
+        }
     #   raise Exception(error_message)  
-      return {"session_id":session_id,"message":"Something went wrong","user":"chatbot"}
+      return {"session_id":session_id,"message":response,"user":"chatbot"}
 
  
