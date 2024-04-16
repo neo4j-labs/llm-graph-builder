@@ -88,7 +88,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
           type: 'success',
           content: response.data.message,
         });
-        driverSetting(connectionURI, username, password);
+        driverSetting(connectionURI, username, password, database);
         setOpenConnection(false);
       } else {
         setMessage({ type: 'danger', content: response.data.error });
@@ -104,8 +104,8 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
     });
   };
 
-  const driverSetting = (connectionURI: string, username: string, password: string) => {
-    initialiseDriver(connectionURI, username, password).then((driver: Driver) => {
+  const driverSetting = (connectionURI: string, username: string, password: string, database:string) => {
+    initialiseDriver(connectionURI, username, password, database).then((driver: Driver) => {
       if (driver) {
         setConnectionStatus(true);
         setDriver(driver);

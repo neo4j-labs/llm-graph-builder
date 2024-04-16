@@ -10,17 +10,49 @@ import { extractAPI } from '../utils/FileAPI';
 import { ContentProps, OptionType, UserCredentials } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './GraphViewModal';
+import { initialiseDriver } from '../utils/Driver';
+import Driver from 'neo4j-driver/types/driver';
 
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
+  const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
-  const { setUserCredentials, userCredentials, driver } = useCredentials();
+  const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
   const { filesData, files, setFilesData, setModel, model } = useFileContext();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
+
+
+  useEffect(() => {
+    if (!init) {
+      let session = localStorage.getItem('neo4j.connection');
+      if (session) {
+        let neo4jConnection = JSON.parse(session);
+        setUserCredentials({
+          uri: neo4jConnection.uri,
+          userName: neo4jConnection.user,
+          password: neo4jConnection.password,
+          database: neo4jConnection.database,
+        });
+        initialiseDriver(neo4jConnection.uri, neo4jConnection.user, neo4jConnection.password, neo4jConnection.database).then(
+          (driver: Driver) => {
+            if (driver) {
+              setConnectionStatus(true);
+              setDriver(driver);
+            } else {
+              setConnectionStatus(false);
+            }
+          }
+        );
+      } else {
+        setOpenConnection(true);
+      }
+      setInit(true);
+    }
+  }, []);
 
   useEffect(() => {
     setFilesData((prevfiles) => {
@@ -157,9 +189,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
-    const connectURL = `${userCredentials?.userName}@${localStorage.getItem('URI')}%3A${
-      localStorage.getItem('port') ?? '7687'
-    }`;
+    const connectURL = `${userCredentials?.userName}@${localStorage.getItem('URI')}%3A${localStorage.getItem('port') ?? '7687'
+      }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -169,10 +200,10 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     isExpanded && showChatBot
       ? 'contentWithBothDrawers'
       : isExpanded
-      ? 'contentWithExpansion'
-      : showChatBot
-      ? 'contentWithChatBot'
-      : 'contentWithNoExpansion';
+        ? 'contentWithExpansion'
+        : showChatBot
+          ? 'contentWithChatBot'
+          : 'contentWithNoExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
