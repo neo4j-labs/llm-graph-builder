@@ -252,19 +252,18 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         user_message=question
         save_chat_history(uri,userName,password,session_id,user_message,ai_message)
 
-        response = extract_and_remove_source(response)
+        reponse = extract_and_remove_source(response)
+        message = reponse["message"]
+        sources = reponse["sources"]
         # print(extract_and_remove_source(response))
         print(response)
-        res={"session_id":session_id,"message":response,"user":"chatbot"}
+        res={"session_id":session_id,"message":message,"sources":sources,"user":"chatbot"}
         return res
     except Exception as e:
       error_message = str(e)
       logging.exception(f'Exception in in QA component:{error_message}')
-      response = {
-        "message" : "Something went wrong", 
-        "sources" : []
-        }
+      message = "Something went wrong"
+      sources = []
     #   raise Exception(error_message)  
-      return {"session_id":session_id,"message":response,"user":"chatbot"}
+      return {"session_id":session_id,"message":message,"sources":sources,"user":"chatbot"}
 
- 
