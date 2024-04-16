@@ -21,8 +21,7 @@ class graphDBdataAccess:
             raise Exception(error_message)
         
     def create_source_node(self, obj_source_node:sourceNode):
-        try:   
-            
+        try:
             job_status = "New"
             logging.info("create source node as file name if not exist")
             self.graph.query("""MERGE(d:Document {fileName :$fn}) SET d.fileSize = $fs, d.fileType = $ft ,
@@ -82,21 +81,15 @@ class graphDBdataAccess:
         """
         Update the graph node with SIMILAR relationship where embedding scrore match
         """
-        try:   
-            knn_min_score = os.environ.get('KNN_MIN_SCORE')
-            # graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-            result = self.graph.query("""MATCH (c:Chunk)
-                                    WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
-                                    CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score
-                                    WHERE node <> c and score >= $score MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score
-                                """,
-                                {"score":knn_min_score}
-                                )
-            logging.info(f"result : {result}")
-        except Exception as e:
-            error_message = str(e)
-            logging.exception(f'Exception in update KNN graph:{error_message}')
-            raise Exception(error_message)
+        knn_min_score = os.environ.get('KNN_MIN_SCORE')
+        result = self.graph.query("""MATCH (c:Chunk)
+                                WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
+                                CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score
+                                WHERE node <> c and score >= $score MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score
+                            """,
+                            {"score":knn_min_score}
+                            )
+            
         
     def connection_check(self):
         """
@@ -109,5 +102,5 @@ class graphDBdataAccess:
         Returns a status of connection from NEO4j is success or failure
         """
         if self.graph:
-            return create_api_response("Success",message="Connection Successful")   
+            return "Connection Successful"
         

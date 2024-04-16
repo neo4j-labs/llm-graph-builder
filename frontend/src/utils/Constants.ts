@@ -14,6 +14,7 @@ export const docChunks = `+[chunks]
 + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunk`;
 
 export const chunksEntities = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
+
 + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
 //chunks with entities
 + collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;

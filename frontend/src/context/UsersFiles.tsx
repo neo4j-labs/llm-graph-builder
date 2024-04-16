@@ -18,7 +18,7 @@ interface FileContextProviderProps {
 const FileContextProvider: React.FC<FileContextProviderProps> = ({ children }) => {
   const [files, setFiles] = useState<(File | null)[] | []>([]);
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
-  const [model, setModel] = useState<string>('OpenAI GPT 4');
+  const [model, setModel] = useState<string>('Gemini Pro');
   const [graphType, setGraphType] = useState<string>('Knowledge Graph Entities');
   const value: FileContextType = {
     files,

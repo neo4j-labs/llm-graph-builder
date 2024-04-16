@@ -157,7 +157,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
-    const connectURL = `${userCredentials?.userName}@${localStorage.getItem('hostname')}%3A${
+    const connectURL = `${userCredentials?.userName}@${localStorage.getItem('URI')}%3A${
       localStorage.getItem('port') ?? '7687'
     }`;
     const encodedURL = encodeURIComponent(connectURL);
