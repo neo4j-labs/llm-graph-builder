@@ -164,7 +164,7 @@ def QA_RAG(uri,model,userName,password,question,session_id):
                 index_name="vector",
                 retrieval_query=retrieval_query,
             )
-
+        model = "Gemini Pro"
         llm = get_llm(model = model)
 
         qa = RetrievalQA.from_chain_type(
@@ -205,21 +205,22 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         # """ 
 
         final_prompt = f"""
-        You are an AI-powered question-answering agent. Utilize your capabilities to access and process information from multiple sources.
+        You are an AI-powered question-answering agent. Utilize your AI capabilities to provide accurate and context-aware responses to user queries by processing information from multiple sources.
+        Response Requirements:
+        - Provide concise and direct answers.
+        - Utilize chat history and any provided unstructured data to understand the context and deliver relevant responses.
+        - Acknowledge previous interactions in responses, even for simple greetings.
         User Input: {question}
-        Response Requirements: Provide a concise and direct answer. Use the chat history and any provided unstructured data to understand the context and deliver relevant responses. 
-        Even if the user's input is a simple greeting, respond in a context-aware manner that acknowledges previous interactions.
-        
         Chat History Summary: {chat_summary}
         Additional Unstructured Information: {vector_res.get('result', '')}
-
-        Additionally if the provided context does not contain any information please provide an answer on your own based on your knowledge.
-        If you don't know the answer, just say that you don't know, don't try to make up an answer.
-
-        if the answer is generated from the additional Unstructured Information please mention the Document source : {vector_res.get('source', '')} at the end the message
-        and if it is a general reply please dont mention the source. 
-        
-        Finally I only want a straightforward answer.
+        Instructions:
+        - If the context is relevant, use it to inform your answer.
+        - If no relevant context is provided, answer based on general knowledge.
+        - Clearly state if you do not know the answer; do not speculate or invent information.
+        - If the answer is derived from provided unstructured information, mention the document sources: {vector_res.get('source', '')}.
+        - Verify the accuracy of any information from the unstructured data before responding.
+        - Ensure answers are straightforward and context-aware.
+        Note: This task involves synthesizing information from previous interactions and available data to ensure accurate and relevant responses. 
         """
 
         print(final_prompt)
