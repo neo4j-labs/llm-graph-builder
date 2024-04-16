@@ -25,7 +25,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [showAlert, setShowAlert] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
 
-
   useEffect(() => {
     if (!init) {
       let session = localStorage.getItem('neo4j.connection');
@@ -37,16 +36,19 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           password: neo4jConnection.password,
           database: neo4jConnection.database,
         });
-        initialiseDriver(neo4jConnection.uri, neo4jConnection.user, neo4jConnection.password, neo4jConnection.database).then(
-          (driver: Driver) => {
-            if (driver) {
-              setConnectionStatus(true);
-              setDriver(driver);
-            } else {
-              setConnectionStatus(false);
-            }
+        initialiseDriver(
+          neo4jConnection.uri,
+          neo4jConnection.user,
+          neo4jConnection.password,
+          neo4jConnection.database
+        ).then((driver: Driver) => {
+          if (driver) {
+            setConnectionStatus(true);
+            setDriver(driver);
+          } else {
+            setConnectionStatus(false);
           }
-        );
+        });
       } else {
         setOpenConnection(true);
       }
@@ -189,8 +191,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
-    const connectURL = `${userCredentials?.userName}@${localStorage.getItem('URI')}%3A${localStorage.getItem('port') ?? '7687'
-      }`;
+    const connectURL = `${userCredentials?.userName}@${localStorage.getItem('URI')}%3A${
+      localStorage.getItem('port') ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -200,10 +203,10 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     isExpanded && showChatBot
       ? 'contentWithBothDrawers'
       : isExpanded
-        ? 'contentWithExpansion'
-        : showChatBot
-          ? 'contentWithChatBot'
-          : 'contentWithNoExpansion';
+      ? 'contentWithExpansion'
+      : showChatBot
+      ? 'contentWithChatBot'
+      : 'contentWithNoExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);

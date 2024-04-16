@@ -17,7 +17,6 @@ interface ConnectionModalProps {
 }
 
 export default function ConnectionModal({ open, setOpenConnection, setConnectionStatus }: ConnectionModalProps) {
-
   let prefilledconnection = localStorage.getItem('neo4j.connection');
   let initialuri;
   let initialdb;
@@ -25,15 +24,15 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
   let initialport;
   let initialprotocol;
   if (prefilledconnection) {
-    let parsedcontent = JSON.parse(prefilledconnection)
-    let urisplit = parsedcontent?.uri?.split("://")
+    let parsedcontent = JSON.parse(prefilledconnection);
+    let urisplit = parsedcontent?.uri?.split('://');
     initialuri = urisplit[1];
     initialdb = parsedcontent?.database;
-    initialusername = parsedcontent?.user
-    initialport = initialuri.split(":")[1]
-    initialprotocol = urisplit[0]
+    initialusername = parsedcontent?.user;
+    initialport = initialuri.split(':')[1];
+    initialprotocol = urisplit[0];
   }
-  
+
   const protocols = ['neo4j', 'neo4j+s', 'neo4j+ssc', 'bolt', 'bolt+s', 'bolt+ssc'];
   const [protocol, setProtocol] = useState<string>(initialprotocol ?? 'neo4j+s');
   const [URI, setURI] = useState<string>(initialuri ?? '');
