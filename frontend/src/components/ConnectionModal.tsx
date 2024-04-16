@@ -17,12 +17,29 @@ interface ConnectionModalProps {
 }
 
 export default function ConnectionModal({ open, setOpenConnection, setConnectionStatus }: ConnectionModalProps) {
+
+  let prefilledconnection = localStorage.getItem('neo4j.connection');
+  let initialuri;
+  let initialdb;
+  let initialusername;
+  let initialport;
+  let initialprotocol;
+  if (prefilledconnection) {
+    let parsedcontent = JSON.parse(prefilledconnection)
+    let urisplit = parsedcontent?.uri?.split("://")
+    initialuri = urisplit[1];
+    initialdb = parsedcontent?.database;
+    initialusername = parsedcontent?.user
+    initialport = initialuri.split(":")[1]
+    initialprotocol = urisplit[0]
+  }
+  
   const protocols = ['neo4j', 'neo4j+s', 'neo4j+ssc', 'bolt', 'bolt+s', 'bolt+ssc'];
-  const [protocol, setProtocol] = useState<string>(localStorage.getItem('selectedProtocol') ?? 'neo4j+s');
-  const [URI, setURI] = useState<string>(localStorage.getItem('uri') ?? '');
-  const [port, setPort] = useState<string>(localStorage.getItem('port') ?? '7687');
-  const [database, setDatabase] = useState<string>(localStorage.getItem('database') ?? 'neo4j');
-  const [username, setUsername] = useState<string>(localStorage.getItem('username') ?? 'neo4j');
+  const [protocol, setProtocol] = useState<string>(initialprotocol ?? 'neo4j+s');
+  const [URI, setURI] = useState<string>(initialuri ?? '');
+  const [port, setPort] = useState<string>(initialport ?? '7687');
+  const [database, setDatabase] = useState<string>(initialdb ?? 'neo4j');
+  const [username, setUsername] = useState<string>(initialusername ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
   const { setUserCredentials, setDriver } = useCredentials();
@@ -104,7 +121,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
     });
   };
 
-  const driverSetting = (connectionURI: string, username: string, password: string, database:string) => {
+  const driverSetting = (connectionURI: string, username: string, password: string, database: string) => {
     initialiseDriver(connectionURI, username, password, database).then((driver: Driver) => {
       if (driver) {
         setConnectionStatus(true);
