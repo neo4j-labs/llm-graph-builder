@@ -2,6 +2,8 @@ import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone } from '@neo4j-nd
 import { Dispatch, SetStateAction, useState } from 'react';
 import connectAPI from '../services/ConnectAPI';
 import { useCredentials } from '../context/UserCredentials';
+import { initialiseDriver } from '../utils/Driver';
+import { Driver } from 'neo4j-driver';
 
 interface Message {
   type: 'success' | 'info' | 'warning' | 'danger' | 'unknown';
@@ -23,7 +25,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
   const [username, setUsername] = useState<string>(localStorage.getItem('username') ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
-  const { setUserCredentials } = useCredentials();
+  const { setUserCredentials, setDriver } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const parseAndSetURI = (uri: string) => {
@@ -65,8 +67,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
           setUsername(configObject.NEO4J_USERNAME);
           setPassword(configObject.NEO4J_PASSWORD);
           setDatabase(configObject.NEO4J_DATABASE);
-        }
-        else {
+        } else {
           setMessage({ type: 'danger', content: 'Please drop a valid file' });
         }
       } catch (err: any) {
@@ -87,18 +88,30 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
           type: 'success',
           content: response.data.message,
         });
+        driverSetting(connectionURI, username, password);
         setOpenConnection(false);
       } else {
         setMessage({ type: 'danger', content: response.data.error });
-        setConnectionStatus(false);
         setOpenConnection(true);
         setPassword('');
+        setConnectionStatus(false);
       }
       setIsLoading(false);
       setTimeout(() => {
         setMessage({ type: 'unknown', content: '' });
         setPassword('');
       }, 3000);
+    });
+  };
+
+  const driverSetting = (connectionURI: string, username: string, password: string) => {
+    initialiseDriver(connectionURI, username, password).then((driver: Driver) => {
+      if (driver) {
+        setConnectionStatus(true);
+        setDriver(driver);
+      } else {
+        setConnectionStatus(false);
+      }
     });
   };
 

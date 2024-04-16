@@ -39,7 +39,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
           userCredentials: userCredentials as UserCredentials,
           model: model,
           wikiquery: wikiQuery,
-          source_type:'Wikipedia',
+          source_type: 'Wikipedia',
         });
         console.log('response', apiResponse);
         setStatus('success');

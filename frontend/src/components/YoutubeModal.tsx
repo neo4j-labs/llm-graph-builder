@@ -41,7 +41,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           model,
           accessKey: '',
           secretKey: '',
-          source_type:'youtube',
+          source_type: 'youtube',
         });
         if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
