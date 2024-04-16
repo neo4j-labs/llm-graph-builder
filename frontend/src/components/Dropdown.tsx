@@ -6,7 +6,7 @@ const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
   };
-  const allOptions = useMemo(() => ['Diffbot', 'Gemini Pro'], []);
+  const allOptions = useMemo(() => ['Diffbot', 'Gemini Pro','OpenAI GPT 3.5','OpenAI GPT 4'], []);
   return (
     <>
       <div className='w-[150px]'>
@@ -15,9 +15,9 @@ const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
           aria-label='A selection dropdown'
           selectProps={{
             onChange: handleChange,
-            options: allOptions.map((option) => ({ label: option === 'Gemini Pro' ? 'LLM' : option, value: option })),
+            options: allOptions.map((option) => ({ label:  option, value: option })),
             placeholder: 'Select LLM Model',
-            defaultValue: { label: 'LLM', value: 'Gemini Pro' },
+            defaultValue: { label: 'OpenAI GPT 4', value: 'OpenAI GPT 4' },
             menuPlacement: 'auto',
             isDisabled,
           }}
