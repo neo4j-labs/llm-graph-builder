@@ -48,7 +48,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           secretKey: '',
           gcs_bucket_name: bucketName,
           gcs_bucket_folder: folderName,
-          source_type:'gcs bucket',
+          source_type: 'gcs bucket',
         });
         if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');

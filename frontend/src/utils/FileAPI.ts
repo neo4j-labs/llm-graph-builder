@@ -27,7 +27,7 @@ export const extractAPI = async (
   gcs_bucket_folder?: string
 ): Promise<any> => {
   const urlExtract = `${url()}/extract`;
-  const method: Method = 'post'; 
+  const method: Method = 'post';
   const commonParams: UserCredentials = userCredentials;
   let additionalParams: ExtractParams;
   if (source_type === 's3 bucket') {
