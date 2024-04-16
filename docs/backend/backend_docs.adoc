@@ -1,0 +1,126 @@
+= LLM Knowledge Graph Builder Backend
+
+== API Reference
+
+=== /connect : 
+
+Overview:
+
+Connect with Neo4j database
+
+API Parameters :
+....
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name
+....
+Response :
+....
+{
+    "status": "Success",
+    "message": "Connection Successful"
+}
+....
+
+
+=== /sources :
+
+Overview :
+
+Create Document node for local file upload
+
+API Parameters :
+....
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name
+file= File uploaded from device, 
+model= LLM model 
+....
+Response :
+....
+{
+    "status": "Success",
+    "message": "Source Node created successfully",
+    "file_source": "local file",
+    "file_name": "<Uploaded File Name>"
+}
+....
+
+
+=== /url/scan :
+
+Overview:
+
+Create Document node for other sources - s3 bucket, gcs bucket, wikipedia and youtube url.
+
+API Parameters :
+....
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name
+model= LLM model,
+source_url= <s3 bucket url or youtube url> ,
+aws_access_key_id= AWS access key,
+aws_secret_access_key= AWS secret key,
+wiki_query= Wikipedia query sources,
+gcs_bucket_name= GCS bucket name,
+gcs_bucket_folder= GCS bucket folder,
+source_type= s3 bucket/ gcs bucket/ youtube/ Wikipedia as source
+....
+Response :
+....
+{
+    "status": "Success",
+    "message": "Source Node created successfully",
+    "file_source": "local file",
+    "file_name": "<Uploaded File Name>"
+}
+....
+
+
+=== /extract :
+    This API is responsible for -
+    ** Reading the content of source provided in the form of langchain Document object from respective langchain loaders 
+    ** Dividing the document into multiple chunks, and make below relations - 
+    *** PART_OF - relation from Document node to all chunk nodes 
+    *** FIRST_CHUNK - relation from document node to first chunk node
+    *** NEXT_CHUNK - relation from a chunk pointing to next chunk of the document.
+    *** HAS_ENTITY - relation between chunk node and entities extracted from LLM.
+    ** Extracting nodes and relations in the form of GraphDocument from respective LLM.
+    ** Update embedding of chunks and create vector  index. 
+     
+=== /sources_list :
+List all sources (Document nodes) present in Neo4j graph database. 
+
+=== /update_similarity_graph :
+
+=== /chat_bot :
+
+
+
+* Implementation
+
+** For multiple sources of content - 
+
+*** Local file - User can upload pdf file from their device.
+
+*** s3 bucket - User passes the bucket name and all the pdf files inside subfolders will also be listed. 
+
+*** GCS bucket - User passes gcs bucket name and folder name, all the pdf files under that folder and its subfolders will be listed and if folder name is not passed by user, all the pdf files under the bucket and its subfolders will also be listed. 
+
+*** Wikipedia - Comma seprated values passed by user are checked if present in Wikipedia
+
+*** Youtube - Youtube video transcript is processed and if no transcript is available then respective error is thrown.
+
+== Decisions
+
+* Process only 1st page of Wikipedia
+* Split document content into chunks of size 200 and overlap of 20
+* Configurable elements -
+** Number of chunks to combine
+** Generate Embedding 
+** Embedding model
