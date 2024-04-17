@@ -1,10 +1,20 @@
-import { Banner, Checkbox, Dialog, IconButton, IconButtonArray, LoadingSpinner, TextInput } from '@neo4j-ndl/react';
+import {
+  Banner,
+  Checkbox,
+  Dialog,
+  Flex,
+  IconButton,
+  IconButtonArray,
+  LoadingSpinner,
+  TextInput,
+} from '@neo4j-ndl/react';
 import { useEffect, useRef, useState } from 'react';
 import { GraphType, GraphViewModalProps } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL, { NvlOptions } from '@neo4j-nvl/core';
 // import { driver } from '../utils/Driver';
 import type { Node, Relationship } from '@neo4j-nvl/core';
+
 import {
   FitToScreenIcon,
   MagnifyingGlassMinusIconOutline,
@@ -43,6 +53,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [docLimit, setDocLimit] = useState<string>('3');
   const { driver } = useCredentials();
+  const [scheme, setScheme] = useState<Scheme>({});
 
   const handleCheckboxChange = (graph: GraphType) => {
     const currentIndex = graphType.indexOf(graph);
@@ -98,21 +109,21 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         graphType.length === 3
           ? queryMap.DocChunkEntities
           : graphType.includes('Entities') && graphType.includes('Chunks')
-          ? queryMap.ChunksEntities
-          : graphType.includes('Entities') && graphType.includes('Document')
-          ? queryMap.DocEntities
-          : graphType.includes('Document') && graphType.includes('Chunks')
-          ? queryMap.DocChunks
-          : graphType.includes('Entities') && graphType.length === 1
-          ? queryMap.Entities
-          : graphType.includes('Chunks') && graphType.length === 1
-          ? queryMap.Chunks
-          : queryMap.Document;
+            ? queryMap.ChunksEntities
+            : graphType.includes('Entities') && graphType.includes('Document')
+              ? queryMap.DocEntities
+              : graphType.includes('Document') && graphType.includes('Chunks')
+                ? queryMap.DocChunks
+                : graphType.includes('Entities') && graphType.length === 1
+                  ? queryMap.Entities
+                  : graphType.includes('Chunks') && graphType.length === 1
+                    ? queryMap.Chunks
+                    : queryMap.Document;
       if (viewPoint === 'showGraphView') {
         queryToRun = constructQuery(newCheck, documentNo);
         console.log('inside If QueryToRun', queryToRun);
       } else {
-        queryToRun = constructDocQuery(newCheck, inspectedName);
+        queryToRun = constructDocQuery(newCheck);
         console.log('outside QueryToRun', queryToRun);
       }
       const session = driver?.session();
@@ -128,19 +139,17 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
             // Infer color schema dynamically
             let iterator = 0;
-            const scheme: Scheme = {};
+            const schemeVal: Scheme = {};
 
             neo4jNodes.forEach((node) => {
               const labels = node.map((f: any) => f.labels);
-
               labels.forEach((label: any) => {
-                if (scheme[label] == undefined) {
-                  scheme[label] = colors[iterator % colors.length];
+                if (schemeVal[label] == undefined) {
+                  schemeVal[label] = colors[iterator % colors.length];
                   iterator += 1;
                 }
               });
             });
-
             const newNodes = neo4jNodes.map((n) => {
               const totalNodes = n.map((g: any) => {
                 return {
@@ -149,8 +158,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                   captionAlign: 'bottom',
                   iconAlign: 'bottom',
                   captionHtml: <b>Test</b>,
-                  caption: getNodeCaption(g),
-                  color: scheme[g.labels[0]],
+                  caption: `${g.labels}: ${getNodeCaption(g)}`,
+                  color: scheme[g.labels],
                   icon: getIcon(g),
                 };
               });
@@ -171,6 +180,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             const finalRels = newRels.flat();
             setNodes(finalNodes);
             setRelationships(finalRels);
+            setScheme(schemeVal);
             setLoading(false);
             console.log('nodes', nodes);
             console.log('relations', relationships);
@@ -299,28 +309,45 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               </div>
             ) : (
               <>
-                <InteractiveNvlWrapper
-                  nodes={nodes}
-                  rels={relationships}
-                  nvlOptions={nvlOptions}
-                  ref={nvlRef}
-                  mouseEventCallbacks={{ ...mouseEventCallbacks }}
-                  interactionOptions={{
-                    selectOnClick: true,
-                  }}
-                  nvlCallbacks={nvlCallbacks}
-                />
-                <IconButtonArray orientation='vertical' floating className='absolute bottom-4 right-4'>
-                  <ButtonWithToolTip text='Zoom in' onClick={handleZoomIn}>
-                    <MagnifyingGlassPlusIconOutline />
-                  </ButtonWithToolTip>
-                  <ButtonWithToolTip text='Zoom out' onClick={handleZoomOut}>
-                    <MagnifyingGlassMinusIconOutline />
-                  </ButtonWithToolTip>
-                  <ButtonWithToolTip text='Zoom to fit' onClick={handleZoomToFit}>
-                    <FitToScreenIcon />
-                  </ButtonWithToolTip>
-                </IconButtonArray>
+                <Flex
+                  flexDirection='row'
+                  justifyContent='space-between'
+                  style={{ height: '100%', padding: '20px' }}
+
+                >
+                  <div style={{ display: 'flex', flex: '0.2', flexWrap: 'wrap', padding: '15px', gap: '8px', backgroundColor: 'white', height: 'max-content' }}>
+                    {Object.keys(scheme).map((key) => (
+                      <div className='legend' key={scheme.key} style={{ backgroundColor: `${scheme[key]}` }}>
+                        {scheme.key}
+                        {key}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ flex: '0.8' }}>
+                    <InteractiveNvlWrapper
+                      nodes={nodes}
+                      rels={relationships}
+                      nvlOptions={nvlOptions}
+                      ref={nvlRef}
+                      mouseEventCallbacks={{ ...mouseEventCallbacks }}
+                      interactionOptions={{
+                        selectOnClick: true,
+                      }}
+                      nvlCallbacks={nvlCallbacks}
+                    />
+                    <IconButtonArray orientation='vertical' floating className='absolute bottom-4 right-4'>
+                      <ButtonWithToolTip text='Zoom in' onClick={handleZoomIn}>
+                        <MagnifyingGlassPlusIconOutline />
+                      </ButtonWithToolTip>
+                      <ButtonWithToolTip text='Zoom out' onClick={handleZoomOut}>
+                        <MagnifyingGlassMinusIconOutline />
+                      </ButtonWithToolTip>
+                      <ButtonWithToolTip text='Zoom to fit' onClick={handleZoomToFit}>
+                        <FitToScreenIcon />
+                      </ButtonWithToolTip>
+                    </IconButtonArray>
+                  </div>
+                </Flex>
               </>
             )}
           </div>
