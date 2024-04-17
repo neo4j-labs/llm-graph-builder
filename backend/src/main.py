@@ -436,15 +436,13 @@ def processing_source(uri, userName, password, model, db_name, file_name, pages)
     create_chunks_obj = CreateChunksofDocument(full_document_content, graph, file_name)
     chunks = create_chunks_obj.split_file_into_chunks()
     chunkId_chunkDoc_list = create_relation_between_chunks(graph,file_name,chunks)
-    
+    #create vector index and update chunk node with embedding
+    update_embedding_create_vector_index( graph, chunkId_chunkDoc_list, file_name)
     logging.info("Get graph document list from models")
     graph_documents =  generate_graphDocuments(model, graph, chunkId_chunkDoc_list)
    
     chunks_and_graphDocuments_list = get_chunk_and_graphDocument(graph_documents, chunkId_chunkDoc_list)
     merge_relationship_between_chunk_and_entites(graph, chunks_and_graphDocuments_list)
-    
-    #create vector index and update chunk node with embedding
-    update_embedding_create_vector_index( graph, chunks_and_graphDocuments_list, file_name)
 
     distinct_nodes = set()
     relations = []
@@ -568,7 +566,6 @@ def upload_file(uri, userName, password, db_name, model, chunk, chunk_number:int
   
   with open(chunk_file_path, "wb") as chunk_file:
       chunk_file.write(chunk.file.read())
-  logging.info(f"Chunk {chunk_number}/{total_chunks} saved")
 
   if int(chunk_number) == int(total_chunks):
       # If this is the last chunk, merge all chunks into a single file
@@ -586,4 +583,5 @@ def upload_file(uri, userName, password, db_name, model, chunk, chunk_number:int
       graphDb_data_Access = graphDBdataAccess(graph)
         
       graphDb_data_Access.create_source_node(obj_source_node)
-      logging.info("Source Node created Successfully")
+      return "Source Node created Successfully"
+  return f"Chunk {chunk_number}/{total_chunks} saved"
