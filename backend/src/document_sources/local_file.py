@@ -4,7 +4,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from langchain_community.document_loaders import PyPDFLoader
 
-def get_documents_from_file(file):
+def get_documents_from_file_by_bytes(file):
     file_name = file.filename
     logging.info(f"get_documents_from_file called for filename = {file_name}")
     suffix = Path(file.filename).suffix
