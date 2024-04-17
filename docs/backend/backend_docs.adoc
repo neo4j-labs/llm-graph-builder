@@ -181,14 +181,36 @@ database= Neo4j database name
 ....
 {
     "status": "Success",
-    "data": {
-        "fileName": <PDF File Name/ Wikipedia Query string/ Youtube video title>,
-        "nodeCount": <No. Nodes extracted from LLM>,
-        "relationshipCount": <No. of relations extracted from LLM>,
-        "processingTime": <Total time taken by application to give response>,
-        "status": "Completed",
-        "model": <LLM Model choosen by User>
-    }
+    "data": [
+        {
+            "fileName": "About Amazon.pdf",
+            "fileSize": 163931,
+            "errorMessage": "",
+            "fileSource": "local file",
+            "nodeCount": 62,
+            "model": "OpenAI GPT 4",
+            "fileType": "pdf",
+            "processingTime": 122.71,
+            "relationshipCount": 187,
+            "status": "Completed",
+            "updatedAt": {
+                "_DateTime__date": {
+                    "_Date__ordinal": 738993,
+                    "_Date__year": 2024,
+                    "_Date__month": 4,
+                    "_Date__day": 17
+                },
+                "_DateTime__time": {
+                    "_Time__ticks": 28640715768000,
+                    "_Time__hour": 7,
+                    "_Time__minute": 57,
+                    "_Time__second": 20,
+                    "_Time__nanosecond": 715768000,
+                    "_Time__tzinfo": null
+                }
+            }
+        }
+    ]
 }
 ....
 
