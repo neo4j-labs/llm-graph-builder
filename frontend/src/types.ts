@@ -139,8 +139,8 @@ export interface messages {
   message: string;
   user: string;
   datetime: string;
-  isTyping?: boolean
-  sources?:string[]
+  isTyping?: boolean;
+  sources?: string[];
 }
 
 export type ChatbotProps = {
