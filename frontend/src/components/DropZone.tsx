@@ -197,6 +197,7 @@ const DropZone: FunctionComponent = () => {
             if (curfile.name == file.name) {
               return {
                 ...curfile,
+                status:"New",
                 uploadprogess: 100,
               };
             }
