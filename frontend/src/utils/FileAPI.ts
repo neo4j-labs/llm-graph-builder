@@ -16,7 +16,6 @@ export const uploadAPI = async (file: File, userCredentials: UserCredentials, mo
 
 // Extract call
 export const extractAPI = async (
-  file: File,
   model: string,
   userCredentials: UserCredentials,
   source_type: string,
@@ -40,12 +39,7 @@ export const extractAPI = async (
   } else if (source_type === 'youtube') {
     additionalParams = { model, source_url, source_type };
   } else {
-    if (file.size > chunkSize) {
-      additionalParams = { model, source_type, file_name };
-    } else {
-      additionalParams = { model, file, source_type };
-    }
-
+    additionalParams = { model, source_type, file_name };
   }
   const response = await apiCall(urlExtract, method, commonParams, additionalParams);
   return response;
