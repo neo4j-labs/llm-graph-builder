@@ -16,6 +16,7 @@ export interface CustomFile extends Partial<globalThis.File> {
   gcsBucket?: string;
   gcsBucketFolder?: string;
   errorMessage?: string;
+  uploadprogess?:number
 }
 
 export interface OptionType {
@@ -95,8 +96,10 @@ export interface SourceNode {
   url?: string;
   awsAccessKeyId?: string;
   fileSource: string;
-  query_source?: string;
-  max_limit?: number;
+  gcsBucket?: string;
+  gcsBucketFolder?: string;
+  errorMessage?: string;
+  uploadprogress?:number;
 }
 export interface SideNavProps {
   openDrawer: () => void;

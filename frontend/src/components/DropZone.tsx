@@ -5,10 +5,10 @@ import Loader from '../utils/Loader';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
-import { getFileFromLocal, saveFileToLocal, url } from '../utils/Utils';
 import CustomAlert from './Alert';
 import { CustomFile, alertState } from '../types';
 import { chunkSize } from '../utils/Constants';
+import { getFileFromLocal, url } from '../utils/Utils';
 
 const DropZone: FunctionComponent = () => {
   const { files, filesData, setFiles, setFilesData, model } = useFileContext();
@@ -24,7 +24,6 @@ const DropZone: FunctionComponent = () => {
 
   const onDropHandler = (f: Partial<globalThis.File>[]) => {
     setIsClicked(true);
-    f.forEach((i) => saveFileToLocal(i as any));
     setSelectedFiles(f.map((f) => f as File));
     setIsLoading(false);
     if (f.length) {
@@ -104,14 +103,9 @@ const DropZone: FunctionComponent = () => {
     let start = 0;
     let end = chunkSize;
     const uploadNextChunk = async () => {
-      console.log({
-        end,
-        'filesize': file.size
-      })
       if (chunkNumber <= totalChunks) {
         const chunk = file.slice(start, end);
         console.log({ chunkNumber })
-        console.log("chunk size", chunk.size)
         const formData = new FormData();
         formData.append('file', chunk);
         formData.append('chunkNumber', chunkNumber.toString());
@@ -152,7 +146,7 @@ const DropZone: FunctionComponent = () => {
                 if (curfile.name == file.name) {
                   return {
                     ...curfile,
-                    uploadprogess: (chunkNumber + 1) * chunkProgressIncrement,
+                    uploadprogess: (chunkNumber) * chunkProgressIncrement,
                   };
                 }
                 return curfile;
@@ -165,11 +159,6 @@ const DropZone: FunctionComponent = () => {
             } else {
               end = file.size + 1;
             }
-            setalertDetails({
-              showAlert: true,
-              alertType: 'info',
-              alertMessage: `Chunk ${chunkNumber}/${totalChunks} uploaded successfully`,
-            });
             uploadNextChunk();
           }
         } catch (error) {

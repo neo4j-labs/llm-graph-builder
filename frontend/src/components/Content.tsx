@@ -12,7 +12,7 @@ import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './GraphViewModal';
 import { initialiseDriver } from '../utils/Driver';
 import Driver from 'neo4j-driver/types/driver';
-import { chunkSize } from '../utils/Constants';
+
 
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -75,7 +75,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     }
   };
 
-  const extractData = async (file: File, uid: number) => {
+  const extractData = async (uid: number) => {
     if (filesData[uid]?.status == 'New') {
       try {
         setFilesData((prevfiles) =>
@@ -90,7 +90,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           })
         );
         const apiResponse = await extractAPI(
-          file,
           filesData[uid].model,
           userCredentials as UserCredentials,
           filesData[uid].fileSource,
@@ -177,7 +176,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     if (files.length > 0) {
       for (let i = 0; i < files.length; i++) {
         if (filesData[i]?.status === 'New') {
-          data.push(extractData(files[i] as File, i));
+          data.push(extractData(i));
         }
       }
       Promise.allSettled(data).then(async (_) => {
@@ -192,9 +191,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
-    const connectURL = `${userCredentials?.userName}@${localStorage.getItem('URI')}%3A${
-      localStorage.getItem('port') ?? '7687'
-    }`;
+    const connectURL = `${userCredentials?.userName}@${localStorage.getItem('URI')}%3A${localStorage.getItem('port') ?? '7687'
+      }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -204,10 +202,10 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     isExpanded && showChatBot
       ? 'contentWithBothDrawers'
       : isExpanded
-      ? 'contentWithExpansion'
-      : showChatBot
-      ? 'contentWithChatBot'
-      : 'contentWithNoExpansion';
+        ? 'contentWithExpansion'
+        : showChatBot
+          ? 'contentWithChatBot'
+          : 'contentWithNoExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
