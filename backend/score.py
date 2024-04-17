@@ -151,7 +151,7 @@ async def extract_knowledge_graph_from_file(
     try:
         if source_type == 'local file':
             return await asyncio.to_thread(
-                extract_graph_from_file_local_file, uri, userName, password, model, database, file=file, file_name)
+                extract_graph_from_file_local_file, uri, userName, password, model, database,file_name, file=file )
 
         elif source_type == 's3 bucket' and source_url:
             result = await asyncio.to_thread(

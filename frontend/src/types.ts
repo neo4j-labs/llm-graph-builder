@@ -42,6 +42,7 @@ export type ExtractParams = {
   gcs_bucket_folder?: string;
   gcs_blob_filename?: string;
   source_type?: string;
+  file_name?:string
 } & { [key: string]: any };
 
 export type UploadParams = {

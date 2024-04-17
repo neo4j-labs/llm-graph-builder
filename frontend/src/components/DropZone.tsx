@@ -173,6 +173,7 @@ const DropZone: FunctionComponent = () => {
             uploadNextChunk();
           }
         } catch (error) {
+          setIsLoading(false)
           setalertDetails({
             showAlert: true,
             alertType: 'error',

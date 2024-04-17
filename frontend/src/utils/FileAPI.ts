@@ -2,6 +2,7 @@ import { Method } from 'axios';
 import { url } from './Utils';
 import { UserCredentials, ExtractParams, UploadParams } from '../types';
 import { apiCall } from '../services/CommonAPI';
+import { chunkSize } from './Constants';
 
 // Upload Call
 export const uploadAPI = async (file: File, userCredentials: UserCredentials, model: string): Promise<any> => {
@@ -39,7 +40,12 @@ export const extractAPI = async (
   } else if (source_type === 'youtube') {
     additionalParams = { model, source_url, source_type };
   } else {
-    additionalParams = { model, file, source_type };
+    if (file.size > chunkSize) {
+      additionalParams = { model, source_type, file_name };
+    } else {
+      additionalParams = { model, file, source_type };
+    }
+
   }
   const response = await apiCall(urlExtract, method, commonParams, additionalParams);
   return response;
