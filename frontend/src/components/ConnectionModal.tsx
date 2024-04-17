@@ -80,9 +80,9 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
             return acc;
           }, {});
           parseAndSetURI(configObject.NEO4J_URI);
-          setUsername(configObject.NEO4J_USERNAME);
-          setPassword(configObject.NEO4J_PASSWORD);
-          setDatabase(configObject.NEO4J_DATABASE);
+          setUsername(configObject.NEO4J_USERNAME ?? 'neo4j');
+          setPassword(configObject.NEO4J_PASSWORD ?? '');
+          setDatabase(configObject.NEO4J_DATABASE ?? 'neo4j');
         } else {
           setMessage({ type: 'danger', content: 'Please drop a valid file' });
         }
