@@ -149,12 +149,14 @@ export default function Chatbot(props: ChatbotProps) {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
-                    }`}
+                  className={`p-4 self-start ${
+                    chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                  }`}
                 >
                   <div
-                    className={`${loading && index === listMessages.length - 1 && chat.user == 'chatbot' ? 'loader' : ''
-                      }`}
+                    className={`${
+                      loading && index === listMessages.length - 1 && chat.user == 'chatbot' ? 'loader' : ''
+                    }`}
                   >
                     {chat.message.split(/`(.+?)`/).map((part, index) =>
                       index % 2 === 1 ? (
@@ -172,9 +174,13 @@ export default function Chatbot(props: ChatbotProps) {
                       <div className={`flex ${chat.sources?.length > 1 ? 'flex-col' : 'flex-row justify-end'} gap-1`}>
                         {chat.sources.map((link) => (
                           <div className='text-right'>
-                            {link.startsWith("http") || link.startsWith("https") ? <TextLink href={link} externalLink={true}>
-                              Source
-                            </TextLink> : <Typography variant='body-small'>{link}</Typography>}
+                            {link.startsWith('http') || link.startsWith('https') ? (
+                              <TextLink href={link} externalLink={true}>
+                                Source
+                              </TextLink>
+                            ) : (
+                              <Typography variant='body-small'>{link}</Typography>
+                            )}
                           </div>
                         ))}
                       </div>
