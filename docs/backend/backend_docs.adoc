@@ -4,18 +4,18 @@
 
 === /connect : 
 
-Overview:
+**Overview:**
 
 Connect with Neo4j database
 
-API Parameters :
+**API Parameters :**
 ....
 uri=Neo4j uri, 
 userName= Neo4j db username, 
 password= Neo4j db password, 
 database= Neo4j database name
 ....
-Response :
+**Response :**
 ....
 {
     "status": "Success",
@@ -26,11 +26,11 @@ Response :
 
 === /sources :
 
-Overview :
+**Overview :**
 
 Create Document node for local file upload
 
-API Parameters :
+**API Parameters :**
 ....
 uri=Neo4j uri, 
 userName= Neo4j db username, 
@@ -39,7 +39,7 @@ database= Neo4j database name
 file= File uploaded from device, 
 model= LLM model 
 ....
-Response :
+**Response :**
 ....
 {
     "status": "Success",
@@ -52,11 +52,11 @@ Response :
 
 === /url/scan :
 
-Overview:
+**Overview:**
 
 Create Document node for other sources - s3 bucket, gcs bucket, wikipedia and youtube url.
 
-API Parameters :
+**API Parameters :**
 ....
 uri=Neo4j uri, 
 userName= Neo4j db username, 
@@ -69,52 +69,133 @@ aws_secret_access_key= AWS secret key,
 wiki_query= Wikipedia query sources,
 gcs_bucket_name= GCS bucket name,
 gcs_bucket_folder= GCS bucket folder,
-source_type= s3 bucket/ gcs bucket/ youtube/ Wikipedia as source
+source_type= s3 bucket/ gcs bucket/ youtube/ Wikipedia as source type
 ....
-Response :
+**Response :**
 ....
 {
     "status": "Success",
-    "message": "Source Node created successfully",
-    "file_source": "local file",
-    "file_name": "<Uploaded File Name>"
+    "success_count": 2,
+    "failed_count": 0,
+    "message": "Source Node created successfully for source type: Wikipedia and source: Albert Einstein,  neo4j",
+    "file_name": [
+        {
+            "fileName": "Albert Einstein",
+            "fileSize": 8074,
+            "url": "https://en.wikipedia.org/wiki/Albert_Einstein",
+            "status": "Success"
+        }
+    ]
 }
 ....
 
 
 === /extract :
-    This API is responsible for -
-    ** Reading the content of source provided in the form of langchain Document object from respective langchain loaders 
-    ** Dividing the document into multiple chunks, and make below relations - 
-    *** PART_OF - relation from Document node to all chunk nodes 
-    *** FIRST_CHUNK - relation from document node to first chunk node
-    *** NEXT_CHUNK - relation from a chunk pointing to next chunk of the document.
-    *** HAS_ENTITY - relation between chunk node and entities extracted from LLM.
-    ** Extracting nodes and relations in the form of GraphDocument from respective LLM.
-    ** Update embedding of chunks and create vector  index. 
-     
-=== /sources_list :
-List all sources (Document nodes) present in Neo4j graph database. 
 
-=== /update_similarity_graph :
+**Overview :**
 
-=== /chat_bot :
+This API is responsible for -
+
+** Reading the content of source provided in the form of langchain Document object from respective langchain loaders 
+
+** Dividing the document into multiple chunks, and make below relations - 
+*** PART_OF - relation from Document node to all chunk nodes 
+*** FIRST_CHUNK - relation from document node to first chunk node
+*** NEXT_CHUNK - relation from a chunk pointing to next chunk of the document.
+*** HAS_ENTITY - relation between chunk node and entities extracted from LLM.
+
+** Extracting nodes and relations in the form of GraphDocument from respective LLM.
+
+** Update embedding of chunks and create vector index.
+
+** Update K-Nearest Neighbors graph for similar chunks.
 
 
-
-* Implementation
+**Implementation :**
 
 ** For multiple sources of content - 
 
 *** Local file - User can upload pdf file from their device.
 
-*** s3 bucket - User passes the bucket name and all the pdf files inside subfolders will also be listed. 
+*** s3 bucket - User passes the bucket url and all the pdf files inside folders and subfolders will  listed. 
 
-*** GCS bucket - User passes gcs bucket name and folder name, all the pdf files under that folder and its subfolders will be listed and if folder name is not passed by user, all the pdf files under the bucket and its subfolders will also be listed. 
+*** GCS bucket - User passes gcs bucket name and folder name, all the pdf files under that folder and its subfolders will be listed and if folder name is not passed by user, all the pdf files under the bucket and its subfolders will be listed. 
 
-*** Wikipedia - Comma seprated values passed by user are checked if present in Wikipedia
+*** Wikipedia - Wikipedia content is rendered (if exist) for comma seprated values passed by user. 
 
 *** Youtube - Youtube video transcript is processed and if no transcript is available then respective error is thrown.
+
+* Langchain's LLMGraphTransformer library is used to get nodes and relations in the form of GraphDocument from LLMs. User and System prompts, LLM chain, graphDocument schema are defined in the library itself.
+
+* SentenceTransformer embeddingds are used by default, also embeddings are made configurable to use either OpenAIEmbeddings or VertexAIEmbeddings.
+
+* Vector index is created in databse on embeddingds created for chunks.
+
+**API Parameters :**
+....
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name
+model= LLM model,
+file = File uploaded from device
+source_url= <s3 bucket url or youtube url> ,
+aws_access_key_id= AWS access key,
+aws_secret_access_key= AWS secret key,
+wiki_query= Wikipedia query sources,
+gcs_bucket_name= GCS bucket name,
+gcs_bucket_folder= GCS bucket folder,
+gcs_blob_filename = GCS file name
+source_type= local file/ s3 bucket/ gcs bucket/ youtube/ Wikipedia as source
+....
+**Response :**
+....
+{
+    "status": "Success",
+    "data": {
+        "fileName": <PDF File Name/ Wikipedia Query string/ Youtube video title>,
+        "nodeCount": <No. Nodes extracted from LLM>,
+        "relationshipCount": <No. of relations extracted from LLM>,
+        "processingTime": <Total time taken by application to give response>,
+        "status": "Completed",
+        "model": <LLM Model choosen by User>
+    }
+}
+....
+
+     
+=== /sources_list :
+
+**Overview :**
+
+List all sources (Document nodes) present in Neo4j graph database.
+
+**API Parameters :**
+....
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name
+....
+**Response :**
+....
+{
+    "status": "Success",
+    "data": {
+        "fileName": <PDF File Name/ Wikipedia Query string/ Youtube video title>,
+        "nodeCount": <No. Nodes extracted from LLM>,
+        "relationshipCount": <No. of relations extracted from LLM>,
+        "processingTime": <Total time taken by application to give response>,
+        "status": "Completed",
+        "model": <LLM Model choosen by User>
+    }
+}
+....
+
+
+=== /update_similarity_graph :
+
+=== /chat_bot :
 
 == Decisions
 
@@ -122,5 +203,5 @@ List all sources (Document nodes) present in Neo4j graph database.
 * Split document content into chunks of size 200 and overlap of 20
 * Configurable elements -
 ** Number of chunks to combine
-** Generate Embedding 
+** Generate Embedding or not 
 ** Embedding model
