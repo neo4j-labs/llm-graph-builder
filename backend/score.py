@@ -131,7 +131,8 @@ async def extract_knowledge_graph_from_file(
     gcs_bucket_name=Form(None),
     gcs_bucket_folder=Form(None),
     gcs_blob_filename=Form(None),
-    source_type=Form(None)
+    source_type=Form(None),
+    file_name=Form(None)
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
@@ -150,7 +151,7 @@ async def extract_knowledge_graph_from_file(
     try:
         if source_type == 'local file':
             return await asyncio.to_thread(
-                extract_graph_from_file_local_file, uri, userName, password, model, database, file=file)
+                extract_graph_from_file_local_file, uri, userName, password, model, database, file=file, file_name)
 
         elif source_type == 's3 bucket' and source_url:
             result = await asyncio.to_thread(
@@ -235,6 +236,20 @@ async def connect(uri=Form(None), userName=Form(None), password=Form(None), data
         error_message = str(e)
         logging.exception(f'Connection failed to connect Neo4j database:{error_message}')
         return create_api_response(job_status,message=message,error=error_message)
+
+@app.post("/upload")
+async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber=Form(None), totalChunks=Form(None), 
+                                        originalname=Form(None), model=Form(None), uri=Form(None), userName=Form(None), 
+                                        password=Form(None), database=Form(None)):
+    try:
+        result = await asyncio.to_thread(upload_file,uri,userName,password,database,model,file,chunkNumber,totalChunks,originalname)
+        return create_api_response('Success',message='File uploaded and source node created successfully')
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to upload large file into chunks or saving the chunks"
+        error_message = str(e)
+        logging.info(message)
+        logging.exception(f'Exception:{error_message}')
 
 def decode_password(pwd):
     sample_string_bytes = base64.b64decode(pwd)

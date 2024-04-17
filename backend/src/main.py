@@ -338,9 +338,15 @@ def create_source_node_graph_url_wikipedia(uri, userName, password, db_name, mod
 #         job_status = "Failed"
 #         return create_api_response(job_status,message='Invalid URL')
     
-def extract_graph_from_file_local_file(uri, userName, password, model, db_name, file):
-  
-  file_name, pages = get_documents_from_file(file)
+def extract_graph_from_file_local_file(uri, userName, password, model, db_name, file, fileName):
+  if file:
+    file_name, pages = get_documents_from_file_by_bytes(file)
+  else
+    logging.info(f'Process large file name :{fileName}')
+    merged_file_path = os.path.join(os.path.join(os.path.dirname(__file__), "merged_files"),fileName)
+    logging.info(f'Large File path:{merged_file_path}')
+    file_name, pages = get_documents_from_file_by_path(merged_file_path,fileName):
+
   if pages==None or len(pages)==0:
     raise Exception('Pdf content is not available for file : {file_name}')
 
@@ -531,3 +537,52 @@ def connection_check(uri,userName,password,db_name):
   graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
   graph_DB_dataAccess = graphDBdataAccess(graph)
   return graph_DB_dataAccess.connection_check()
+
+def merge_chunks(file_name, total_chunks):
+  
+  chunk_dir = os.path.join(os.path.dirname(__file__), "chunks")
+  merged_file_path = os.path.join(os.path.dirname(__file__), "merged_files")
+
+  if not os.path.exists(merged_file_path):
+      os.mkdir(merged_file_path)
+
+  with open(os.path.join(merged_file_path, file_name), "wb") as write_stream:
+      for i in range(1,total_chunks+1):
+          chunk_file_path = os.path.join(chunk_dir, f"{file_name}_part_{i}")
+          with open(chunk_file_path, "rb") as chunk_file:
+              shutil.copyfileobj(chunk_file, write_stream)
+          os.unlink(chunk_file_path)  # Delete the individual chunk file after merging
+  logging.info("Chunks merged successfully and return file size")
+  file_size = os.path.getsize(os.path.join(merged_file_path, file_name))
+  return file_size
+  
+
+def upload_file(uri, userName, password, db_name, model, chunk, chunk_number:int, total_chunks:int, originalname):
+  chunk_dir = os.path.join(os.path.dirname(__file__), "chunks")  # Directory to save chunks
+  if not os.path.exists(chunk_dir):
+      os.mkdir(chunk_dir)
+  chunk_file_name = originalname.split('.')[0]
+  chunk_file_path = os.path.join(chunk_dir, f"{originalname}_part_{chunk_number}")
+  logging.info(f'Chunk File Path: {chunk_file_path}')
+  
+  with open(chunk_file_path, "wb") as chunk_file:
+      chunk_file.write(chunk.file.read())
+  logging.info(f"Chunk {chunk_number}/{total_chunks} saved")
+
+  if int(chunk_number) == int(total_chunks):
+      # If this is the last chunk, merge all chunks into a single file
+      file_size = merge_chunks(originalname, int(total_chunks))
+      logging.info("File merged successfully")
+
+      obj_source_node = sourceNode()
+      obj_source_node.file_name = originalname
+      obj_source_node.file_type = 'pdf'
+      obj_source_node.file_size = file_size
+      obj_source_node.file_source = 'local file'
+      obj_source_node.model = model
+      obj_source_node.created_at = datetime.now()
+      graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+      graphDb_data_Access = graphDBdataAccess(graph)
+        
+      graphDb_data_Access.create_source_node(obj_source_node)
+      logging.info("Source Node created Successfully")
