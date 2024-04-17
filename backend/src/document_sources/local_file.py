@@ -14,3 +14,9 @@ def get_documents_from_file(file):
         loader = PyPDFLoader(str(tmp_path))
         pages = loader.load_and_split()
     return file_name, pages
+
+def get_documents_from_file_by_path(file_path,file_name):
+
+    loader = PyPDFLoader(file_path)
+    pages = loader.load_and_split()
+    return file_name,file_key,pages

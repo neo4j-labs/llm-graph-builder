@@ -81,16 +81,19 @@ class graphDBdataAccess:
         """
         Update the graph node with SIMILAR relationship where embedding scrore match
         """
+        index = self.graph.query("""show indexes yield * where type = 'VECTOR' and name = 'vector'""")
+        logging.info(f'show index vector: {index}')
         knn_min_score = os.environ.get('KNN_MIN_SCORE')
-        result = self.graph.query("""MATCH (c:Chunk)
-                                WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
-                                CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score
-                                WHERE node <> c and score >= $score MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score
-                            """,
-                            {"score":knn_min_score}
-                            )
+        if index is not None:
+            result = self.graph.query("""MATCH (c:Chunk)
+                                    WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
+                                    CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score
+                                    WHERE node <> c and score >= $score MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score
+                                """,
+                                {"score":knn_min_score}
+                                )
+            logging.info(f"result : {result}")
             
-        
     def connection_check(self):
         """
         Args:
