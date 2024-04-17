@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
 import { CustomFile } from '../types';
+import { defaultLLM } from '../utils/Constants';
 
 interface FileContextType {
   files: (File | null)[] | [];
@@ -18,7 +19,7 @@ interface FileContextProviderProps {
 const FileContextProvider: React.FC<FileContextProviderProps> = ({ children }) => {
   const [files, setFiles] = useState<(File | null)[] | []>([]);
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
-  const [model, setModel] = useState<string>('Gemini Pro');
+  const [model, setModel] = useState<string>(defaultLLM);
   const [graphType, setGraphType] = useState<string>('Knowledge Graph Entities');
   const value: FileContextType = {
     files,

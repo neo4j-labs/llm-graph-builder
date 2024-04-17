@@ -39,7 +39,7 @@ export type ExtractParams = {
   gcs_bucket_name?: string;
   gcs_bucket_folder?: string;
   gcs_blob_filename?: string;
-  source_type?:string;
+  source_type?: string;
 } & { [key: string]: any };
 
 export type UploadParams = {
@@ -191,5 +191,5 @@ export interface ScanProps {
   wikiquery?: string;
   gcs_bucket_name?: string;
   gcs_bucket_folder?: string;
-  source_type?: string
+  source_type?: string;
 }

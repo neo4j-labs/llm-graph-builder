@@ -1,104 +1,209 @@
-import { Button, Dialog, TextInput, Dropdown, Banner } from '@neo4j-ndl/react';
-import { useState } from 'react';
+import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone } from '@neo4j-ndl/react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import connectAPI from '../services/ConnectAPI';
 import { useCredentials } from '../context/UserCredentials';
-import { ConnectionModalProps } from '../types';
+import { initialiseDriver } from '../utils/Driver';
+import { Driver } from 'neo4j-driver';
 
-const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
-  open,
-  setOpenConnection,
-  setConnectionStatus,
-}) => {
+interface Message {
+  type: 'success' | 'info' | 'warning' | 'danger' | 'unknown';
+  content: string;
+}
+
+interface ConnectionModalProps {
+  open: boolean;
+  setOpenConnection: Dispatch<SetStateAction<boolean>>;
+  setConnectionStatus: Dispatch<SetStateAction<boolean>>;
+}
+
+export default function ConnectionModal({ open, setOpenConnection, setConnectionStatus }: ConnectionModalProps) {
+  let prefilledconnection = localStorage.getItem('neo4j.connection');
+  let initialuri;
+  let initialdb;
+  let initialusername;
+  let initialport;
+  let initialprotocol;
+  if (prefilledconnection) {
+    let parsedcontent = JSON.parse(prefilledconnection);
+    let urisplit = parsedcontent?.uri?.split('://');
+    initialuri = urisplit[1];
+    initialdb = parsedcontent?.database;
+    initialusername = parsedcontent?.user;
+    initialport = initialuri.split(':')[1];
+    initialprotocol = urisplit[0];
+  }
+
   const protocols = ['neo4j', 'neo4j+s', 'neo4j+ssc', 'bolt', 'bolt+s', 'bolt+ssc'];
-  const [selectedProtocol, setSelectedProtocol] = useState<string>(
-    localStorage.getItem('selectedProtocol') ?? 'neo4j+s'
-  );
-  const [hostname, setHostname] = useState<string>(localStorage.getItem('hostname') ?? '');
-  const [database, setDatabase] = useState<string>(localStorage.getItem('database') ?? 'neo4j');
-  const [username, setUsername] = useState<string>(localStorage.getItem('username') ?? 'neo4j');
+  const [protocol, setProtocol] = useState<string>(initialprotocol ?? 'neo4j+s');
+  const [URI, setURI] = useState<string>(initialuri ?? '');
+  const [port, setPort] = useState<string>(initialport ?? '7687');
+  const [database, setDatabase] = useState<string>(initialdb ?? 'neo4j');
+  const [username, setUsername] = useState<string>(initialusername ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
-  const { setUserCredentials } = useCredentials();
-  const [statusMessage, setStatusMessage] = useState<string>('');
-  const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
-  const [loading, setLoading] = useState<boolean>(false);
-  const [port, setPort] = useState<string>(localStorage.getItem('port') ?? '7687');
+  const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
+  const { setUserCredentials, setDriver } = useCredentials();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const submitConnection = async () => {
-    const connectionURI = `${selectedProtocol}://${hostname}:${port}`;
-    setUserCredentials({ uri: connectionURI, userName: username, password: password, database: database });
-    localStorage.setItem('username', username);
-    localStorage.setItem('hostname', hostname);
-    localStorage.setItem('database', database);
-    localStorage.setItem('selectedProtocol', selectedProtocol);
-    setLoading(true);
-    const response = await connectAPI(connectionURI, username, password, database);
-    if (response.data.status === 'Success') {
-      setOpenConnection(false);
-      setConnectionStatus(true);
-      setStatusMessage(response.data.message);
-    } else {
-      setStatus('danger');
-      setStatusMessage(response.data.error);
-      setConnectionStatus(false);
-      setPassword('');
-      setTimeout(() => {
-        setStatus('unknown');
-      }, 5000);
-    }
-    setLoading(false);
+  const parseAndSetURI = (uri: string) => {
+    const uriParts = uri.split('://');
+    const uriHost = uriParts.pop() || URI;
+    setURI(uriHost);
+    const uriProtocol = uriParts.pop() || protocol;
+    setProtocol(uriProtocol);
+    const uriPort = uriParts.pop() || port;
+    setPort(uriPort);
   };
 
-  const isDisabled = !username || !hostname || !password;
+  const handleHostPasteChange: React.ClipboardEventHandler<HTMLInputElement> = (event) => {
+    event.clipboardData.items[0]?.getAsString((value) => {
+      parseAndSetURI(value);
+    });
+  };
+
+  const onDropHandler = async (files: Partial<globalThis.File>[]) => {
+    setIsLoading(true);
+    if (files.length) {
+      const [file] = files;
+      try {
+        if (file.text && file.size !== 0) {
+          const text = await file.text();
+          const lines = text.split(/\r?\n/);
+          const configObject = lines.reduce((acc: Record<string, string>, line: string) => {
+            if (line.startsWith('#') || line.trim() === '') {
+              return acc;
+            }
+
+            const [key, value] = line.split('=');
+            if (['NEO4J_URI', 'NEO4J_USERNAME', 'NEO4J_PASSWORD', 'NEO4J_DATABASE'].includes(key)) {
+              acc[key] = value;
+            }
+            return acc;
+          }, {});
+          parseAndSetURI(configObject.NEO4J_URI);
+          setUsername(configObject.NEO4J_USERNAME);
+          setPassword(configObject.NEO4J_PASSWORD);
+          setDatabase(configObject.NEO4J_DATABASE);
+        } else {
+          setMessage({ type: 'danger', content: 'Please drop a valid file' });
+        }
+      } catch (err: any) {
+        setMessage({ type: 'danger', content: err.message });
+      }
+    }
+    setIsLoading(false);
+  };
+
+  const submitConnection = async () => {
+    const connectionURI = `${protocol}://${URI}${URI.split(':')[1] ? '' : `:${port}`}`;
+    setUserCredentials({ uri: connectionURI, userName: username, password: password, database: database });
+    setIsLoading(true);
+    await connectAPI(connectionURI, username, password, database).then((response: any) => {
+      if (response?.data?.status === 'Success') {
+        setConnectionStatus(true);
+        setMessage({
+          type: 'success',
+          content: response.data.message,
+        });
+        driverSetting(connectionURI, username, password, database);
+        setOpenConnection(false);
+      } else {
+        setMessage({ type: 'danger', content: response.data.error });
+        setOpenConnection(true);
+        setPassword('');
+        setConnectionStatus(false);
+      }
+      setIsLoading(false);
+      setTimeout(() => {
+        setMessage({ type: 'unknown', content: '' });
+        setPassword('');
+      }, 3000);
+    });
+  };
+
+  const driverSetting = (connectionURI: string, username: string, password: string, database: string) => {
+    initialiseDriver(connectionURI, username, password, database).then((driver: Driver) => {
+      if (driver) {
+        setConnectionStatus(true);
+        setDriver(driver);
+      } else {
+        setConnectionStatus(false);
+      }
+    });
+  };
+
+  const onClose = () => {
+    setMessage({ type: 'unknown', content: '' });
+  };
+
+  const isDisabled = !username || !URI || !password;
+
   return (
     <>
-      <Dialog size='small' open={open} aria-labelledby='form-dialog-title' disableCloseButton>
+      <Dialog
+        size='small'
+        open={open}
+        aria-labelledby='form-dialog-title'
+        onClose={() => {
+          setOpenConnection(false);
+          setMessage({ type: 'unknown', content: '' });
+        }}
+      >
         <Dialog.Header id='form-dialog-title'>Connect to Neo4j</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
-          {status !== 'unknown' && (
+          {connectionMessage?.type !== 'unknown' && (
             <Banner
-              name='connection banner'
+              name='Connection Modal'
               closeable
-              description={statusMessage}
-              onClose={() => setStatus('unknown')}
-              type={status}
-            />
+              onClose={onClose}
+              type={connectionMessage?.type}
+              description={connectionMessage?.content}
+            ></Banner>
           )}
+          <div className='n-flex max-h-44'>
+            <Dropzone
+              isTesting={false}
+              customTitle={<>Drop your env file here</>}
+              className='n-p-6 end-0 top-0 w-full h-full'
+              acceptedFileExtensions={['.txt', '.env']}
+              dropZoneOptions={{
+                onDrop: (f: Partial<globalThis.File>[]) => {
+                  onDropHandler(f);
+                },
+                maxSize: 500,
+                onDropRejected: (e) => {
+                  if (e.length) {
+                    setMessage({ type: 'danger', content: 'Failed To Upload, File is larger than 500 bytes' });
+                  }
+                },
+              }}
+            />
+          </div>
           <div className='n-flex n-flex-row n-flex-wrap'>
             <Dropdown
               id='protocol'
               label='Protocol'
               type='select'
+              size='medium'
               disabled={false}
               selectProps={{
-                onChange: (newValue) => newValue && setSelectedProtocol(newValue.value),
+                onChange: (newValue) => newValue && setProtocol(newValue.value),
                 options: protocols.map((option) => ({ label: option, value: option })),
-                value: { label: selectedProtocol, value: selectedProtocol },
+                value: { label: protocol, value: protocol },
               }}
-              className='connectionmodal__protocal__input'
+              className='w-1/4 inline-block'
               fluid
             />
-            <div className='connectionmodal__hostname__input'>
+            <div className='ml-[5%] w-[70%] inline-block'>
               <TextInput
                 id='url'
-                value={hostname}
+                value={URI}
                 disabled={false}
-                label='Connection URL'
+                label='URI'
                 autoFocus
                 fluid
-                onChange={(e) => setHostname(e.target.value)}
-                aria-label='Connection url'
-              />
-            </div>
-            <div className='connectionmodal__port__input'>
-              <TextInput
-                id='port'
-                value={port}
-                disabled={false}
-                label='Port'
-                aria-label='Port'
-                placeholder='7687'
-                fluid
-                onChange={(e) => setPort(e.target.value)}
+                onChange={(e) => setURI(e.target.value)}
+                onPaste={(e) => handleHostPasteChange(e)}
+                aria-label='Connection URI'
               />
             </div>
           </div>
@@ -112,9 +217,10 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
             fluid
             required
             onChange={(e) => setDatabase(e.target.value)}
+            className='w-full'
           />
-          <div className='n-flex n-flex-row n-flex-wrap'>
-            <div className='connectionmodal__input'>
+          <div className='n-flex n-flex-row n-flex-wrap mb-2'>
+            <div className='w-[48.5%] mr-1.5 inline-block'>
               <TextInput
                 id='username'
                 value={username}
@@ -126,36 +232,25 @@ const ConnectionModal: React.FunctionComponent<ConnectionModalProps> = ({
                 onChange={(e) => setUsername(e.target.value)}
               />
             </div>
-            <div className='connectionmodal__input'>
+            <div className='w-[48.5%] ml-[1.5%] inline-block'>
               <TextInput
                 id='password'
                 value={password}
                 disabled={false}
                 label='Password'
                 aria-label='Password'
+                placeholder='password'
                 type='password'
                 fluid
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
           </div>
-          <Dialog.Actions className='mt-6 mb-2'>
-            <Button
-              color='neutral'
-              fill='outlined'
-              onClick={() => {
-                setOpenConnection(false);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button loading={loading} disabled={isDisabled} onClick={() => submitConnection()}>
-              Submit
-            </Button>
-          </Dialog.Actions>
+          <Button loading={isLoading} disabled={isDisabled} onClick={() => submitConnection()}>
+            Submit
+          </Button>
         </Dialog.Content>
       </Dialog>
     </>
   );
-};
-export default ConnectionModal;
+}
