@@ -50,16 +50,16 @@ def get_llm(model : str):
         model_version = 'gemini-pro' 
         logging.info(f"Chat Model: Gemini , Model Version : {model_version}")
         llm = ChatVertexAI(model_name=model_version,
-                convert_system_message_to_human=True,
-                temperature=0,
-                safety_settings={
-                    HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE, 
-                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE, 
-                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE, 
-                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE, 
-                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-                }
-            )
+                        #    max_output_tokens=1000,
+                           convert_system_message_to_human=True,
+                           temperature=0,
+                           safety_settings={
+                               HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE, 
+                               HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                               HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE, 
+                               HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE, 
+                               HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                               })
     else: 
         ## for model == "OpenAI GPT 4" or model == "Diffbot" 
         model_version = "gpt-4-0125-preview"
@@ -173,7 +173,6 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)} as metadata
         """
         embedding_model = os.getenv('EMBEDDING_MODEL')
-        # embedding_model = "vertexai"
         embedding_function, _ = load_embedding_model(embedding_model)
         neo_db=Neo4jVector.from_existing_index(
                 embedding = embedding_function,
@@ -225,27 +224,24 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         # """ 
 
         final_prompt = f"""
-        You are an AI-powered question-answering agent. Utilize your AI capabilities to provide accurate and context-aware responses to user queries by processing information from multiple sources.
-        Response Requirements:
-        - Provide concise and direct answers to the User Input.
-        - Utilize chat history and any provided unstructured data to understand the context and deliver relevant responses.
-        - Please respond to simple greetings and Acknowledge previous interactions in responses.
+            You are an AI-powered question-answering agent tasked with providing accurate and direct responses to user queries. Utilize information from the chat history, current user input, and relevant unstructured data effectively.
 
-        User Input: {question}
-        Chat History Summary: {chat_summary}
-        Additional Unstructured Information: {vector_res.get('result', '')}
-        Instructions:
-        - If the context is relevant, use it to inform your answer.
-        - If no relevant context is provided, answer based on general knowledge.
-        - Clearly state if you do not know the answer; do not speculate or invent information.
-        - If the answer is derived from provided unstructured information, mention the document sources: {vector_res.get('source', '')}. Please give it in below format 
-          [Source: source1,source2]
-        - Verify the accuracy of any information from the unstructured data before responding.
-        - Ensure answers are straightforward and context-aware.
-        Note: This task involves synthesizing information from previous interactions and available data and your general knowledge to ensure accurate and relevant responses. 
-        """
+            Response Requirements:
+            - Deliver concise and direct answers to the user's query without headers unless requested.
+            - Acknowledge and utilize relevant previous interactions based on the chat history summary.
+            - Respond to initial greetings appropriately, but avoid including a greeting in subsequent responses unless the chat is restarted or significantly paused.
+            - Clearly state if an answer is unknown; avoid speculating.
+
+            Instructions:
+            - Prioritize directly answering the User Input: {question}.
+            - Use the Chat History Summary: {chat_summary} to provide context-aware responses.
+            - Refer to Additional Unstructured Information: {vector_res.get('result', '')} only if it directly relates to the query.
+            - Cite sources clearly when using unstructured data in your response [Sources: {vector_res.get('source', '')}]. Please give it in below format [Source: source1,source2]
+            Ensure that answers are straightforward and context-aware, focusing on being relevant and concise.
+        """ 
 
         print(final_prompt)
+        llm = get_llm(model = model)
         response = llm.predict(final_prompt)
         # print(response)
 
