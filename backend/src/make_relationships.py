@@ -42,16 +42,16 @@ def load_embedding_model(embedding_model_name: str):
         logging.info("Embedding: Using SentenceTransformer")
     return embeddings, dimension
 
-def update_embedding_create_vector_index(graph, graph_documents_chunk_chunk_Id, file_name):
+def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name):
     #create embedding
     isEmbedding = os.getenv('IS_EMBEDDING')
     embedding_model = os.getenv('EMBEDDING_MODEL')
     
     embeddings, dimension = load_embedding_model(embedding_model)
     logging.info(f'embedding model:{embeddings} and dimesion:{dimension}')
-    for row in graph_documents_chunk_chunk_Id:
+    for row in chunkId_chunkDoc_list:
         # for graph_document in row['graph_doc']:
-        embeddings_arr = embeddings.embed_query(row['graph_doc'].source.page_content)
+        embeddings_arr = embeddings.embed_query(row['chunk_doc'].page_content)
         # logging.info(f'Embedding list {embeddings}')
         if isEmbedding.upper() == "TRUE":
             logging.info(f"update embedding for {row['chunk_id']}")
@@ -65,7 +65,7 @@ def update_embedding_create_vector_index(graph, graph_documents_chunk_chunk_Id, 
                             "embeddings" : embeddings_arr
                         }
                         )
-            #create vector index on chunk embedding
+            logging.info('create vector index on chunk embedding')
             graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
                             OPTIONS {indexConfig: {
                             `vector.dimensions`: $dimensions,
