@@ -3,7 +3,6 @@ import ConnectionModal from './ConnectionModal';
 import LlmDropdown from './Dropdown';
 import FileTable from './FileTable';
 import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
-import { setDriver, disconnect } from '../utils/Driver';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
@@ -11,6 +10,8 @@ import { extractAPI } from '../utils/FileAPI';
 import { ContentProps, OptionType, UserCredentials } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './GraphViewModal';
+import { initialiseDriver } from '../utils/Driver';
+import Driver from 'neo4j-driver/types/driver';
 
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -18,7 +19,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
-  const { setUserCredentials, userCredentials } = useCredentials();
+  const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
   const { filesData, files, setFilesData, setModel, model } = useFileContext();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
@@ -35,11 +36,19 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           password: neo4jConnection.password,
           database: neo4jConnection.database,
         });
-        setDriver(neo4jConnection.uri, neo4jConnection.user, neo4jConnection.password, neo4jConnection.database).then(
-          (isSuccessful: boolean) => {
-            setConnectionStatus(isSuccessful);
+        initialiseDriver(
+          neo4jConnection.uri,
+          neo4jConnection.user,
+          neo4jConnection.password,
+          neo4jConnection.database
+        ).then((driver: Driver) => {
+          if (driver) {
+            setConnectionStatus(true);
+            setDriver(driver);
+          } else {
+            setConnectionStatus(false);
           }
-        );
+        });
       } else {
         setOpenConnection(true);
       }
@@ -204,6 +213,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     setViewPoint('showGraphView');
   };
 
+  const disconnect = () => {
+    driver?.close();
+    setConnectionStatus(false);
+    localStorage.removeItem('password');
+    setUserCredentials({ uri: '', password: '', userName: '', database: '' });
+  };
+
   return (
     <>
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
@@ -226,16 +242,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               Connect to Neo4j
             </Button>
           ) : (
-            <Button
-              className='mr-2.5'
-              onClick={() =>
-                disconnect().then(() => {
-                  setConnectionStatus(false);
-                  localStorage.removeItem('neo4j.connection');
-                  setUserCredentials({ uri: '', password: '', userName: '', database: '' });
-                })
-              }
-            >
+            <Button className='mr-2.5' onClick={disconnect}>
               Disconnect
             </Button>
           )}

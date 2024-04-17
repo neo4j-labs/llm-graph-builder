@@ -11,6 +11,6 @@ def get_documents_from_file(file):
     with NamedTemporaryFile(delete=True, suffix=suffix) as tmp:
         shutil.copyfileobj(file.file, tmp)
         tmp_path = Path(tmp.name)
-        loader = PyPDFLoader(tmp_path)
+        loader = PyPDFLoader(str(tmp_path))
         pages = loader.load_and_split()
     return file_name, pages

@@ -64,7 +64,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           model: model,
           accessKey: accessKey,
           secretKey: secretKey,
-          source_type:'s3 bucket',
+          source_type: 's3 bucket',
         });
         setStatus('success');
         if (apiResponse?.data.status == 'Failed' || !apiResponse.data) {
