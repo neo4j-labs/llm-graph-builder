@@ -227,7 +227,7 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         final_prompt = f"""
         You are an AI-powered question-answering agent. Utilize your AI capabilities to provide accurate and context-aware responses to user queries by processing information from multiple sources.
         Response Requirements:
-        - Provide concise and direct answers.
+        - Provide concise and direct answers to the User Input.
         - Utilize chat history and any provided unstructured data to understand the context and deliver relevant responses.
         - Please respond to simple greetings and Acknowledge previous interactions in responses.
 
