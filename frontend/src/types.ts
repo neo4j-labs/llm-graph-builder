@@ -1,5 +1,7 @@
+import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { AxiosResponse } from 'axios';
 import { Dispatch, ReactNode, SetStateAction } from 'react';
+import { OverridableStringUnion } from '@mui/types';
 
 export interface CustomFile extends Partial<globalThis.File> {
   processing: number | string;
@@ -58,8 +60,8 @@ export interface CustomAlertProps {
   open: boolean;
   handleClose: () => void;
   alertMessage: string;
+  severity?: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined;
 }
-
 export interface DataComponentProps {
   openModal: () => void;
 }
@@ -198,3 +200,8 @@ export interface ScanProps {
   gcs_bucket_folder?: string;
   source_type?: string;
 }
+export type alertState = {
+  showAlert: boolean;
+  alertType: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined;
+  alertMessage: string;
+};

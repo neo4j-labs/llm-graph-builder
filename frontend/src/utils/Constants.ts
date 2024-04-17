@@ -49,3 +49,4 @@ export const defaultLLM = llms?.includes('OpenAI GPT 4')
   : llms?.includes('Gemini Pro')
   ? 'Gemini Pro'
   : 'Diffbot';
+  export const chunkSize = 5 * 1024 * 1024;
