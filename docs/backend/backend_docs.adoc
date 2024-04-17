@@ -125,11 +125,11 @@ This API is responsible for -
 
 *** Youtube - Youtube video transcript is processed and if no transcript is available then respective error is thrown.
 
-* Langchain's LLMGraphTransformer library is used to get nodes and relations in the form of GraphDocument from LLMs. User and System prompts, LLM chain, graphDocument schema are defined in the library itself.
+** Langchain's LLMGraphTransformer library is used to get nodes and relations in the form of GraphDocument from LLMs. User and System prompts, LLM chain, graphDocument schema are defined in the library itself.
 
-* SentenceTransformer embeddingds are used by default, also embeddings are made configurable to use either OpenAIEmbeddings or VertexAIEmbeddings.
+** SentenceTransformer embeddingds are used by default, also embeddings are made configurable to use either OpenAIEmbeddings or VertexAIEmbeddings.
 
-* Vector index is created in databse on embeddingds created for chunks.
+** Vector index is created in databse on embeddingds created for chunks.
 
 **API Parameters :**
 ....
