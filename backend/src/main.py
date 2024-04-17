@@ -6,7 +6,7 @@ import logging
 from src.create_chunks import CreateChunksofDocument
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.api_response import create_api_response
-from src.document_sources.local_file import get_documents_from_file
+from src.document_sources.local_file import get_documents_from_file_by_bytes,get_documents_from_file_by_path
 from src.entities.source_node import sourceNode
 from src.generate_graphDocuments_from_llm import generate_graphDocuments
 from src.document_sources.gcs_bucket import *
@@ -21,6 +21,7 @@ from langchain_community.document_loaders import WikipediaLoader
 import warnings
 from pytube import YouTube
 import sys
+import shutil
 warnings.filterwarnings("ignore")
 
 load_dotenv()
@@ -338,14 +339,14 @@ def create_source_node_graph_url_wikipedia(uri, userName, password, db_name, mod
 #         job_status = "Failed"
 #         return create_api_response(job_status,message='Invalid URL')
     
-def extract_graph_from_file_local_file(uri, userName, password, model, db_name, file, fileName):
+def extract_graph_from_file_local_file(uri, userName, password, model, db_name, fileName,file ):
   if file:
     file_name, pages = get_documents_from_file_by_bytes(file)
-  else
+  else:
     logging.info(f'Process large file name :{fileName}')
     merged_file_path = os.path.join(os.path.join(os.path.dirname(__file__), "merged_files"),fileName)
     logging.info(f'Large File path:{merged_file_path}')
-    file_name, pages = get_documents_from_file_by_path(merged_file_path,fileName):
+    file_name, pages = get_documents_from_file_by_path(merged_file_path,fileName)
 
   if pages==None or len(pages)==0:
     raise Exception('Pdf content is not available for file : {file_name}')
