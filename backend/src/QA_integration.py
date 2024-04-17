@@ -149,8 +149,9 @@ def get_chat_history(llm,uri,userName,password,session_id):
 
 def extract_and_remove_source(message):
     pattern = r'\[Source: ([^\]]+)\]'
-    if "Source" in message:
-        sources_string = re.search(pattern, message).group(1)
+    match = re.search(pattern, message)
+    if match:
+        sources_string = match.group(1)
         sources = [source.strip().strip("'") for source in sources_string.split(',')]
         new_message = re.sub(pattern, '', message).strip()
         response = {
