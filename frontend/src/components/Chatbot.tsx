@@ -31,7 +31,7 @@ export default function Chatbot(props: ChatbotProps) {
     }
   }, []);
 
-  const simulateTypingEffect = (responseText: string, index = 0) => {
+  const simulateTypingEffect = (responseText: string, index = 0,sources:[string]) => {
     if (index < responseText.length) {
       const nextIndex = index + 1;
       const currentTypedText = responseText.substring(0, nextIndex);
@@ -41,7 +41,7 @@ export default function Chatbot(props: ChatbotProps) {
         if (responseText.length <= 1) {
           setListMessages((msgs) => [
             ...msgs,
-            { id: Date.now(), user: 'chatbot', message: currentTypedText, datetime: datetime, isTyping: true },
+            { id: Date.now(), user: 'chatbot', message: currentTypedText, datetime: datetime, isTyping: true,sources },
           ]);
         } else {
           setListMessages((msgs) => {
@@ -51,6 +51,7 @@ export default function Chatbot(props: ChatbotProps) {
             lastmsg.message = currentTypedText;
             lastmsg.datetime = datetime;
             lastmsg.isTyping = true;
+            lastmsg.sources=sources
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -62,7 +63,7 @@ export default function Chatbot(props: ChatbotProps) {
       } else {
         setListMessages((msgs) => msgs.map((msg) => (msg.isTyping ? { ...msg, message: currentTypedText } : msg)));
       }
-      setTimeout(() => simulateTypingEffect(responseText, nextIndex), 20);
+      setTimeout(() => simulateTypingEffect(responseText, nextIndex,sources), 20);
     } else {
       setListMessages((msgs) => msgs.map((msg) => (msg.isTyping ? { ...msg, isTyping: false } : msg)));
     }
@@ -76,20 +77,20 @@ export default function Chatbot(props: ChatbotProps) {
     const date = new Date();
     let chatbotReply;
     const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-    const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime };
+    const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime,sources:[''] };
     setListMessages((listMessages) => [...listMessages, userMessage]);
     try {
       setLoading(true);
       setInputMessage('');
-      simulateTypingEffect(' ');
+      simulateTypingEffect(' ',0,['']);
       const chatresponse = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId,model);
       chatbotReply = chatresponse?.data?.data?.message;
-      simulateTypingEffect(chatbotReply);
+      simulateTypingEffect(chatbotReply,0,chatresponse.data.sources);
       setLoading(false);
     } catch (error) {
       chatbotReply = "Oops! It seems we couldn't retrieve the answer. Please try again later";
       setInputMessage('');
-      simulateTypingEffect(chatbotReply);
+      simulateTypingEffect(chatbotReply,0,['']);
       setLoading(false);
     }
   };
