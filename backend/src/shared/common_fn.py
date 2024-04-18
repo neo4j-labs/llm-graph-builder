@@ -1,6 +1,7 @@
 import logging
 from src.document_sources.youtube import create_youtube_url
 from langchain.docstore.document import Document
+from langchain_community.graphs import Neo4jGraph
 import re
 import os
 
@@ -57,3 +58,6 @@ def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
                   
   return lst_chunk_chunkId_document  
                  
+def create_graph_database_connection(uri, userName, password, database):
+  graph = Neo4jGraph(url=uri, database=database, username=userName, password=password)
+  return graph
