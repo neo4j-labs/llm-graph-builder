@@ -47,8 +47,22 @@ def get_llm(model : str):
     
     elif model == "Gemini Pro" :
         # model_version = "gemini-1.0-pro"
-        model_version = 'gemini-pro' 
+        model_version = 'gemini-1.0-pro-001' 
         logging.info(f"Chat Model: Gemini , Model Version : {model_version}")
+        llm = ChatVertexAI(model_name=model_version,
+                        #    max_output_tokens=100,
+                           convert_system_message_to_human=True,
+                           temperature=0,
+                           safety_settings={
+                               HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE, 
+                               HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                               HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE, 
+                               HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE, 
+                               HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                               })
+    elif model == "Gemini 1.5 Pro" :
+        model_version = "gemini-1.5-pro-preview-0409"
+        logging.info(f"Chat Model: Gemini 1.5 , Model Version : {model_version}")
         llm = ChatVertexAI(model_name=model_version,
                         #    max_output_tokens=100,
                            convert_system_message_to_human=True,
