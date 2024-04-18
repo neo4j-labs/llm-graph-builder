@@ -129,7 +129,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const session = driver?.session();
       setLoading(true);
       session
-        ?.run(queryToRun, { document_name: inspectedName })
+        ?.run(queryToRun, { 'document_name': inspectedName })
         .then((results) => {
           if (results.records && results.records.length > 0) {
             // @ts-ignore
@@ -238,6 +238,13 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const handleZoomOut = () => {
     nvlRef.current?.setZoom(nvlRef.current.getScale() * 0.7);
   };
+
+  const onClose=()=>{
+    setStatus('unknown');
+    setStatusMessage('');
+    setGraphViewOpen(false)
+  }
+
   return (
     <>
       <Dialog
@@ -249,7 +256,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         open={open}
         aria-labelledby='form-dialog-title'
         disableCloseButton={false}
-        onClose={() => setGraphViewOpen(false)}
+        onClose={onClose}
       >
         <Dialog.Header id='form-dialog-title'>
           {headerTitle}
