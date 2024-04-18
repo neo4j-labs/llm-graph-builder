@@ -13,7 +13,7 @@ import {
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
-import {statusCheck } from '../utils/Utils';
+import { statusCheck } from '../utils/Utils';
 import { SourceNode, CustomFile, FileTableProps, UserCredentials } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
@@ -74,17 +74,29 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       columnHelper.accessor((row) => row.uploadprogess, {
         id: 'uploadprogess',
         cell: (info: CellContext<CustomFile, string>) => {
-          if (parseInt(info.getValue()) === 100) {
-            return <Typography variant='body-medium'><StatusIndicator type="success" />Uploaded</Typography>
-          } else if (info.row.original?.status === "Uploading") {
-            return <CustomProgressBar value={parseInt(info?.getValue())}></CustomProgressBar>
-          } else if (info.row.original?.status === "New") {
-            return <Typography variant='body-medium'><StatusIndicator type="info" />Not Started</Typography>
-          } else if (info.row.original?.status === "Failed") {
-            return <Typography variant='body-medium'><StatusIndicator type="danger" />NA</Typography>
-          } else {
-            return <Typography variant='body-medium'><StatusIndicator type="info" />Uploaded</Typography>
+          if (parseInt(info.getValue()) === 100 || info.row.original?.status === 'New') {
+            return (
+              <Typography variant='body-medium'>
+                <StatusIndicator type='success' />
+                Uploaded
+              </Typography>
+            );
+          } else if (info.row.original?.status === 'Uploading') {
+            return <CustomProgressBar value={parseInt(info?.getValue())}></CustomProgressBar>;
+          } else if (info.row.original?.status === 'Failed') {
+            return (
+              <Typography variant='body-medium'>
+                <StatusIndicator type='danger' />
+                NA
+              </Typography>
+            );
           }
+          return (
+            <Typography variant='body-medium'>
+              <StatusIndicator type='success' />
+              Uploaded
+            </Typography>
+          );
         },
         header: () => <span>Upload Progress</span>,
         footer: (info) => info.column.id,
@@ -186,14 +198,14 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                     item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                       ? item.status
                       : item.fileSource === 'local file'
-                      ? item.status
-                      : item.status === 'Completed' || item.status === 'Failed'
-                      ? item.status
-                      : item.fileSource == 'Wikipedia' ||
-                        item.fileSource == 'youtube' ||
-                        item.fileSource == 'gcs bucket'
-                      ? item.status
-                      : 'N/A',
+                        ? item.status
+                        : item.status === 'Completed' || item.status === 'Failed'
+                          ? item.status
+                          : item.fileSource == 'Wikipedia' ||
+                            item.fileSource == 'youtube' ||
+                            item.fileSource == 'gcs bucket'
+                            ? item.status
+                            : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
                   source_url: item.url != 'None' && item?.url != '' ? item.url : '',
@@ -201,7 +213,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   gcsBucket: item?.gcsBucket,
                   gcsBucketFolder: item?.gcsBucketFolder,
                   errorMessage: item?.errorMessage,
-                  uploadprogess: item?.uploadprogress ?? 0
+                  uploadprogess: item?.uploadprogress ?? 0,
                 });
               }
             });
@@ -264,8 +276,6 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       window.removeEventListener('resize', listener);
     };
   }, []);
-
-
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     table.getColumn('status')?.setFilterValue(e.target.checked);

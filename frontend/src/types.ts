@@ -16,7 +16,7 @@ export interface CustomFile extends Partial<globalThis.File> {
   gcsBucket?: string;
   gcsBucketFolder?: string;
   errorMessage?: string;
-  uploadprogess?:number
+  uploadprogess?: number;
 }
 
 export interface OptionType {
@@ -43,7 +43,7 @@ export type ExtractParams = {
   gcs_bucket_folder?: string;
   gcs_blob_filename?: string;
   source_type?: string;
-  file_name?:string
+  file_name?: string;
 } & { [key: string]: any };
 
 export type UploadParams = {
@@ -94,7 +94,7 @@ export interface SourceNode {
   gcsBucket?: string;
   gcsBucketFolder?: string;
   errorMessage?: string;
-  uploadprogress?:number;
+  uploadprogress?: number;
 }
 
 export interface SideNavProps {

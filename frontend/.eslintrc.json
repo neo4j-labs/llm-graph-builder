@@ -101,12 +101,7 @@
       "no-octal-escape": "error",
       "no-param-reassign": "off", // Off for v1
       "no-path-concat": "error",
-      "no-plusplus": [
-        "error",
-        {
-          "allowForLoopAfterthoughts": true
-        }
-      ],
+      "no-plusplus": "off",
       "no-proto": "off", // Off for v1
       "no-restricted-globals": "error",
       "no-return-assign": "error",
@@ -154,7 +149,7 @@
       "prefer-spread": "warn",
       "prefer-template": "warn",
       "radix": "off", // Off for v1
-      "require-atomic-updates": "error",
+      "require-atomic-updates": "off",
       "require-await": "warn", // Warn for v1
       "sort-keys": "off",
       "spaced-comment": [

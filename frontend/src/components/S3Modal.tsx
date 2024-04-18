@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { CustomFile, S3ModalProps, UserCredentials } from '../types';
 import { urlScanAPI } from '../services/URLScan';
 import { useCredentials } from '../context/UserCredentials';
-import { getFileFromLocal, validation } from '../utils/Utils';
+import { validation } from '../utils/Utils';
 import { useFileContext } from '../context/UsersFiles';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
@@ -21,7 +21,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [isFocused, setisFocused] = useState<boolean>(false);
   const [isValid, setValid] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
-  const { setFiles, setFilesData, model, filesData, files } = useFileContext();
+  const { setFilesData, model, filesData } = useFileContext();
 
   const reset = () => {
     setBucketUrl('');
@@ -79,10 +79,8 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         }
         setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
         const copiedFilesData: CustomFile[] = [...filesData];
-        const copiedFiles: (File | null)[] = [...files];
         apiResponse?.data?.file_name?.forEach((item: S3File) => {
           const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
-          const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
           if (filedataIndex == -1) {
             copiedFilesData.unshift({
               name: item.fileName,
@@ -103,18 +101,8 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               fileSource: defaultValues.fileSource,
             });
           }
-          if (fileIndex == -1) {
-            copiedFiles.unshift(null);
-          } else {
-            const tempFile = copiedFiles[filedataIndex];
-            copiedFiles.splice(fileIndex, 1);
-            if (tempFile) {
-              copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
-            }
-          }
         });
         setFilesData(copiedFilesData);
-        setFiles(copiedFiles);
         reset();
       } catch (error) {
         setStatus('danger');

@@ -3,7 +3,6 @@ import CustomModal from '../HOC/CustomModal';
 import { TextInput } from '@neo4j-ndl/react';
 import { CustomFile, UserCredentials, WikipediaModalTypes, fileName } from '../types';
 import { useFileContext } from '../context/UsersFiles';
-import { getFileFromLocal } from '../utils/Utils';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
 import { urlScanAPI } from '../services/URLScan';
@@ -12,7 +11,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
   const [wikiQuery, setwikiQuery] = useState<string>('');
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
-  const { setFiles, setFilesData, model, filesData, files } = useFileContext();
+  const { setFilesData, model, filesData } = useFileContext();
   const { userCredentials } = useCredentials();
   const onClose = useCallback(() => {
     hideModal();
@@ -68,10 +67,8 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
         }
 
         const copiedFilesData: CustomFile[] = [...filesData];
-        const copiedFiles: (File | null)[] = [...files];
         apiResponse?.data?.file_name?.forEach((item: fileName) => {
           const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
-          const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
           if (filedataIndex == -1) {
             copiedFilesData.unshift({
               name: item.fileName,
@@ -93,18 +90,8 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
               fileSource: defaultValues.fileSource,
             });
           }
-          if (fileIndex == -1) {
-            copiedFiles.unshift(null);
-          } else {
-            const tempFile = copiedFiles[filedataIndex];
-            copiedFiles.splice(fileIndex, 1);
-            if (tempFile) {
-              copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
-            }
-          }
         });
         setFilesData(copiedFilesData);
-        setFiles(copiedFiles);
         setwikiQuery('');
       } catch (error) {
         setStatus('danger');
