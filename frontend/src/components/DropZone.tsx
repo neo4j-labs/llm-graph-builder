@@ -194,12 +194,13 @@ const DropZone: FunctionComponent = () => {
 
   return (
     <>
-      <CustomAlert
+      {alertDetails.showAlert&&<CustomAlert
         open={alertDetails.showAlert}
         handleClose={handleClose}
         severity={alertDetails.alertType}
         alertMessage={alertDetails.alertMessage}
-      />
+      />}
+      
       <Dropzone
         loadingComponent={isLoading && <Loader />}
         isTesting={true}
