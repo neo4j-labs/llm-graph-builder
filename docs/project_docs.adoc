@@ -65,7 +65,7 @@ NUMBER_OF_CHUNKS_TO_COMBINE = ""
 ....
 
 == Architecture
-image::project architecture.png[Archirecture diagram, 300, align='left']
+image::project architecture.png[Archirecture diagram, 600, align='left']
 
 == Development
 
