@@ -50,7 +50,7 @@ def get_llm(model : str):
         model_version = 'gemini-pro' 
         logging.info(f"Chat Model: Gemini , Model Version : {model_version}")
         llm = ChatVertexAI(model_name=model_version,
-                        #    max_output_tokens=1000,
+                        #    max_output_tokens=100,
                            convert_system_message_to_human=True,
                            temperature=0,
                            safety_settings={
@@ -236,7 +236,7 @@ def QA_RAG(uri,model,userName,password,question,session_id):
             - Prioritize directly answering the User Input: {question}.
             - Use the Chat History Summary: {chat_summary} to provide context-aware responses.
             - Refer to Additional Unstructured Information: {vector_res.get('result', '')} only if it directly relates to the query.
-            - Cite sources clearly when using unstructured data in your response [Sources: {vector_res.get('source', '')}]. Please give it in below format [Source: source1,source2]
+            - Cite sources clearly when using unstructured data in your response [Sources: {vector_res.get('source', '')}]. The SOurce must be printed at the last in the format [Source: source1,source2]
             Ensure that answers are straightforward and context-aware, focusing on being relevant and concise.
         """ 
 
