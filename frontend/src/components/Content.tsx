@@ -13,7 +13,6 @@ import GraphViewModal from './GraphViewModal';
 import { initialiseDriver } from '../utils/Driver';
 import Driver from 'neo4j-driver/types/driver';
 
-
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
@@ -21,7 +20,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
-  const { filesData, files, setFilesData, setModel, model } = useFileContext();
+  const { filesData, setFilesData, setModel, model } = useFileContext();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
@@ -65,9 +64,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     });
   }, [model]);
 
-  const disableCheck = !files.length || !filesData.some((f) => f.status === 'New');
-
-  const disableCheckGraph = !files.length;
+  const disableCheck = !filesData.some((f) => f.status === 'New');
 
   const handleDropdownChange = (option: OptionType | null | void) => {
     if (option?.value) {
@@ -173,8 +170,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
   const handleGenerateGraph = () => {
     const data = [];
-    if (files.length > 0) {
-      for (let i = 0; i < files.length; i++) {
+    if (filesData.length > 0) {
+      for (let i = 0; i < filesData.length; i++) {
         if (filesData[i]?.status === 'New') {
           data.push(extractData(i));
         }
@@ -191,8 +188,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
-    const connectURL = `${userCredentials?.userName}@${localStorage.getItem('URI')}%3A${localStorage.getItem('port') ?? '7687'
-      }`;
+    const connectURL = `${userCredentials?.userName}@${localStorage.getItem('URI')}%3A${
+      localStorage.getItem('port') ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -202,10 +200,10 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     isExpanded && showChatBot
       ? 'contentWithBothDrawers'
       : isExpanded
-        ? 'contentWithExpansion'
-        : showChatBot
-          ? 'contentWithChatBot'
-          : 'contentWithNoExpansion';
+      ? 'contentWithExpansion'
+      : showChatBot
+      ? 'contentWithChatBot'
+      : 'contentWithNoExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -272,7 +270,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               Generate Graph
             </Button>
             <Button
-              disabled={disableCheckGraph || !filesData.some((f) => f?.status === 'Completed')}
+              disabled={!filesData.some((f) => f?.status === 'Completed')}
               onClick={handleGraphView}
               className='mr-0.5'
             >
@@ -280,7 +278,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             </Button>
             <Button
               onClick={handleOpenGraphClick}
-              disabled={disableCheckGraph || !filesData.some((f) => f?.status === 'Completed')}
+              disabled={!filesData.some((f) => f?.status === 'Completed')}
               className='ml-0.5'
             >
               Open Graph

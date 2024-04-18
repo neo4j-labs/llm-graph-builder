@@ -8,10 +8,10 @@ import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { CustomFile, alertState } from '../types';
 import { chunkSize } from '../utils/Constants';
-import { getFileFromLocal, url } from '../utils/Utils';
+import { url } from '../utils/Utils';
 
 const DropZone: FunctionComponent = () => {
-  const { files, filesData, setFiles, setFilesData, model } = useFileContext();
+  const { filesData, setFilesData, model } = useFileContext();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isClicked, setIsClicked] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
@@ -36,14 +36,13 @@ const DropZone: FunctionComponent = () => {
         type: 'PDF',
         model: model,
         fileSource: 'local file',
+        uploadprogess: 0,
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
-      const copiedFiles: (File | null)[] = [...files];
 
       f.forEach((file) => {
         const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === file?.name);
-        const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === file?.name);
         if (filedataIndex == -1) {
           copiedFilesData.unshift({
             name: file.name,
@@ -64,17 +63,7 @@ const DropZone: FunctionComponent = () => {
             fileSource: defaultValues.fileSource,
           });
         }
-        if (fileIndex == -1) {
-          copiedFiles.unshift(file as File);
-        } else {
-          const tempFile = copiedFiles[filedataIndex];
-          copiedFiles.splice(fileIndex, 1);
-          if (tempFile) {
-            copiedFiles.unshift(getFileFromLocal(tempFile.name));
-          }
-        }
       });
-      setFiles(copiedFiles);
       setFilesData(copiedFilesData);
     }
   };
@@ -105,7 +94,7 @@ const DropZone: FunctionComponent = () => {
     const uploadNextChunk = async () => {
       if (chunkNumber <= totalChunks) {
         const chunk = file.slice(start, end);
-        console.log({ chunkNumber })
+        console.log({ chunkNumber });
         const formData = new FormData();
         formData.append('file', chunk);
         formData.append('chunkNumber', chunkNumber.toString());
@@ -128,15 +117,11 @@ const DropZone: FunctionComponent = () => {
           })
         );
         try {
-          const apiResponse = await axios.post(
-            `${url()}/upload`,
-            formData,
-            {
-              headers: {
-                'Content-Type': 'multipart/form-data',
-              },
-            }
-          );
+          const apiResponse = await axios.post(`${url()}/upload`, formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
           console.log(apiResponse.data);
           if (apiResponse?.data.status === 'Failed') {
             throw new Error(`message:${apiResponse.data.message},fileName:${apiResponse.data.file_name}`);
@@ -146,7 +131,7 @@ const DropZone: FunctionComponent = () => {
                 if (curfile.name == file.name) {
                   return {
                     ...curfile,
-                    uploadprogess: (chunkNumber) * chunkProgressIncrement,
+                    uploadprogess: chunkNumber * chunkProgressIncrement,
                   };
                 }
                 return curfile;
@@ -155,14 +140,14 @@ const DropZone: FunctionComponent = () => {
             chunkNumber++;
             start = end;
             if (start + chunkSize < file.size) {
-              end = start + chunkSize
+              end = start + chunkSize;
             } else {
               end = file.size + 1;
             }
             uploadNextChunk();
           }
         } catch (error) {
-          setIsLoading(false)
+          setIsLoading(false);
           setalertDetails({
             showAlert: true,
             alertType: 'error',
@@ -187,7 +172,7 @@ const DropZone: FunctionComponent = () => {
             if (curfile.name == file.name) {
               return {
                 ...curfile,
-                status:"New",
+                status: 'New',
                 uploadprogess: 100,
               };
             }
