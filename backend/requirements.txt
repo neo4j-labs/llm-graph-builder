@@ -38,7 +38,7 @@ frozenlist==1.4.1
 fsspec==2024.2.0
 google-api-core==2.18.0
 google-auth==2.29.0
-google-cloud-aiplatform==1.46.0
+google-cloud-aiplatform
 google-cloud-bigquery==3.19.0
 google-cloud-core==2.4.1
 google-cloud-resource-manager==1.12.3
@@ -164,4 +164,4 @@ wrapt==1.16.0
 yarl==1.9.4
 youtube-transcript-api==0.6.2
 zipp==3.17.0
-sentence-transformers==2.6.1
+sentence-transformers
