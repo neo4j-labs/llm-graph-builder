@@ -39,6 +39,9 @@ export const colors = [
   '#d9ad7c',
   '#a2836e',
   '#674d3c',
+  '#d7b69f',
+  '#00ffff',
+  '##8eb9ff',
 ];
 export const llms =
   process.env?.LLM_MODELS?.trim() != ''

@@ -12,7 +12,6 @@ import { useEffect, useRef, useState } from 'react';
 import { GraphType, GraphViewModalProps } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL, { NvlOptions } from '@neo4j-nvl/core';
-// import { driver } from '../utils/Driver';
 import type { Node, Relationship } from '@neo4j-nvl/core';
 
 import {
@@ -109,27 +108,27 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         graphType.length === 3
           ? queryMap.DocChunkEntities
           : graphType.includes('Entities') && graphType.includes('Chunks')
-            ? queryMap.ChunksEntities
-            : graphType.includes('Entities') && graphType.includes('Document')
-              ? queryMap.DocEntities
-              : graphType.includes('Document') && graphType.includes('Chunks')
-                ? queryMap.DocChunks
-                : graphType.includes('Entities') && graphType.length === 1
-                  ? queryMap.Entities
-                  : graphType.includes('Chunks') && graphType.length === 1
-                    ? queryMap.Chunks
-                    : queryMap.Document;
+          ? queryMap.ChunksEntities
+          : graphType.includes('Entities') && graphType.includes('Document')
+          ? queryMap.DocEntities
+          : graphType.includes('Document') && graphType.includes('Chunks')
+          ? queryMap.DocChunks
+          : graphType.includes('Entities') && graphType.length === 1
+          ? queryMap.Entities
+          : graphType.includes('Chunks') && graphType.length === 1
+          ? queryMap.Chunks
+          : queryMap.Document;
       if (viewPoint === 'showGraphView') {
         queryToRun = constructQuery(newCheck, documentNo);
-        console.log('inside If QueryToRun', queryToRun);
+        console.log('showGraph', queryToRun);
       } else {
         queryToRun = constructDocQuery(newCheck);
-        console.log('outside QueryToRun', queryToRun);
+        console.log('table', queryToRun);
       }
       const session = driver?.session();
       setLoading(true);
       session
-        ?.run(queryToRun, { 'document_name': inspectedName })
+        ?.run(queryToRun, { document_name: inspectedName })
         .then((results) => {
           if (results.records && results.records.length > 0) {
             // @ts-ignore
@@ -159,7 +158,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                   iconAlign: 'bottom',
                   captionHtml: <b>Test</b>,
                   caption: `${g.labels}: ${getNodeCaption(g)}`,
-                  color: scheme[g.labels],
+                  color: scheme[g.labels[0]],
                   icon: getIcon(g),
                 };
               });
@@ -239,11 +238,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     nvlRef.current?.setZoom(nvlRef.current.getScale() * 0.7);
   };
 
-  const onClose=()=>{
+  const onClose = () => {
     setStatus('unknown');
     setStatusMessage('');
-    setGraphViewOpen(false)
-  }
+    setGraphViewOpen(false);
+  };
 
   return (
     <>
@@ -316,16 +315,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               </div>
             ) : (
               <>
-                <Flex
-                  flexDirection='row'
-                  justifyContent='space-between'
-                  style={{ height: '100%', padding: '20px' }}
-
-                >
-                  <div style={{ display: 'flex', flex: '0.2', flexWrap: 'wrap', padding: '15px', gap: '8px', backgroundColor: 'white', height: 'max-content' }}>
+                <Flex flexDirection='row' justifyContent='space-between' style={{ height: '100%', padding: '20px' }}>
+                  <div className='legend_div'>
                     {Object.keys(scheme).map((key) => (
                       <div className='legend' key={scheme.key} style={{ backgroundColor: `${scheme[key]}` }}>
-                        {scheme.key}
                         {key}
                       </div>
                     ))}
