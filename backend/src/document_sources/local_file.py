@@ -19,7 +19,7 @@ def get_documents_from_file_by_path(file_path,file_name):
     file_path = Path(file_path)
     if file_path.exists():
         logging.info(f'file {file_name} processing')
-        loader = PyPDFLoader(file_path)
+        loader = PyPDFLoader(str(file_path))
         pages = loader.load_and_split()
     else:
         logging.info(f'File {file_name} does not exist')
