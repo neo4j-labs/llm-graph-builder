@@ -20,8 +20,12 @@ def generate_graphDocuments(model: str, graph: Neo4jGraph, chunkId_chunkDoc_list
         model_version = "gpt-4-0125-preview"
         graph_documents = get_graph_from_OpenAI(model_version, graph, chunkId_chunkDoc_list)
     
-    elif model == "Gemini Pro" :
-        model_version = "gemini-1.0-pro"
+    elif model == "Gemini 1.0 Pro" :
+        model_version = "gemini-1.0-pro-001"
+        graph_documents = get_graph_from_Gemini(model_version, graph, chunkId_chunkDoc_list)
+
+    elif model == "Gemini 1.5 Pro" :
+        model_version = "gemini-1.5-pro-preview-0409"
         graph_documents = get_graph_from_Gemini(model_version, graph, chunkId_chunkDoc_list)
 
     logging.info(f"graph_documents = {len(graph_documents)}")
