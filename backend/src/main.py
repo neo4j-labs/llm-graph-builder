@@ -6,7 +6,7 @@ import logging
 from src.create_chunks import CreateChunksofDocument
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.api_response import create_api_response
-from src.document_sources.local_file import get_documents_from_file_by_bytes,get_documents_from_file_by_path
+from src.document_sources.local_file import get_documents_from_file_by_path
 from src.entities.source_node import sourceNode
 from src.generate_graphDocuments_from_llm import generate_graphDocuments
 from src.document_sources.gcs_bucket import *
@@ -23,41 +23,39 @@ from pytube import YouTube
 import sys
 import shutil
 warnings.filterwarnings("ignore")
-
+from pathlib import Path
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
-def create_source_node_graph_local_file(uri, userName, password, file, model, db_name=None):
-  """
-   Creates a source node in Neo4jGraph and sets properties.
+# def create_source_node_graph_local_file(uri, userName, password, file, model, db_name=None):
+#   """
+#    Creates a source node in Neo4jGraph and sets properties.
    
-   Args:
-   	 uri: URI of Graph Service to connect to
-     db_name: database name to connect
-   	 userName: Username to connect to Graph Service with ( default : None )
-   	 password: Password to connect to Graph Service with ( default : None )
-   	 file: File object with information about file to be added
+#    Args:
+#    	 uri: URI of Graph Service to connect to
+#      db_name: database name to connect
+#    	 userName: Username to connect to Graph Service with ( default : None )
+#    	 password: Password to connect to Graph Service with ( default : None )
+#    	 file: File object with information about file to be added
    
-   Returns: 
-   	 Success or Failed message of node creation
-  """
-  obj_source_node = sourceNode()
-  obj_source_node.file_name = file.filename
-  obj_source_node.file_type = file.filename.split('.')[1]
-  obj_source_node.file_size = file.size
-  obj_source_node.file_source = 'local file'
-  obj_source_node.model = model
-  obj_source_node.created_at = datetime.now()
-  graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-  graphDb_data_Access = graphDBdataAccess(graph)
+#    Returns: 
+#    	 Success or Failed message of node creation
+#   """
+#   obj_source_node = sourceNode()
+#   obj_source_node.file_name = file.filename
+#   obj_source_node.file_type = file.filename.split('.')[1]
+#   obj_source_node.file_size = file.size
+#   obj_source_node.file_source = 'local file'
+#   obj_source_node.model = model
+#   obj_source_node.created_at = datetime.now()
+#   graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+#   graphDb_data_Access = graphDBdataAccess(graph)
     
-  graphDb_data_Access.create_source_node(obj_source_node)
-  return obj_source_node
+#   graphDb_data_Access.create_source_node(obj_source_node)
+#   return obj_source_node
 
-def create_source_node_graph_url_s3(uri, userName, password, db_name, model, source_url, aws_access_key_id, aws_secret_access_key, source_type):
-    file_name =''
-    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-
+def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type):
+    
     lst_file_name = []
     files_info = get_s3_files_info(source_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
     if len(files_info)==0:
@@ -90,13 +88,11 @@ def create_source_node_graph_url_s3(uri, userName, password, db_name, model, sou
           lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Failed'})
     return lst_file_name,success_count,failed_count
 
-def create_source_node_graph_url_gcs(uri, userName, password, db_name, model, source_url, gcs_bucket_name, gcs_bucket_folder, source_type):
+def create_source_node_graph_url_gcs(graph, model, source_url, gcs_bucket_name, gcs_bucket_folder, source_type):
 
-    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
     success_count=0
     failed_count=0
     lst_file_name = []
-    # job_status = 'Completed'
     
     lst_file_metadata= get_gcs_bucket_files_info(gcs_bucket_name, gcs_bucket_folder)
     for file_metadata in lst_file_metadata :
@@ -115,16 +111,12 @@ def create_source_node_graph_url_gcs(uri, userName, password, db_name, model, so
           success_count+=1
           lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Success'})
       except Exception as e:
-        # file_name = file_metadata['fileName']
-        # job_status = "Failed"
         failed_count+=1
-        # error_message = str(e)
         lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Failed'})
     return lst_file_name,success_count,failed_count
 
-def create_source_node_graph_url_youtube(uri, userName, password, db_name, model, source_url, source_type):
+def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     
-    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
     source_type,youtube_url = check_url_source(source_url)
     success_count=0
     failed_count=0
@@ -153,8 +145,8 @@ def create_source_node_graph_url_youtube(uri, userName, password, db_name, model
     success_count+=1
     return lst_file_name,success_count,failed_count
 
-def create_source_node_graph_url_wikipedia(uri, userName, password, db_name, model, wiki_query, source_type): 
-    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type):
+  
     success_count=0
     failed_count=0
     lst_file_name=[]
@@ -184,176 +176,20 @@ def create_source_node_graph_url_wikipedia(uri, userName, password, db_name, mod
         # error_message = str(e)
         lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'status':'Failed'})
     return lst_file_name,success_count,failed_count
+    
+def extract_graph_from_file_local_file(graph, model, fileName):
 
-# def create_source_node_graph_url(uri, userName, password ,model, source_url=None, db_name=None, wiki_query:str=None, aws_access_key_id=None,aws_secret_access_key=None, gcs_bucket_name=None, gcs_bucket_folder=None):
-#     """
-#       Creates a source node in Neo4jGraph and sets properties.
-      
-#       Args:
-#         uri: URI of Graph Service to connect to
-#         db_name: db_name is database name to connect to graph db
-#         userName: Username to connect to Graph Service with ( default : None )
-#         password: Password to connect to Graph Service with ( default : None )
-#         s3_url: s3 url for the bucket to fetch pdf files from
-#         aws_access_key_id: Aws access key id credentials (default : None)
-#         aws_secret_access_key: Aws secret access key credentials (default : None)
-#       Returns: 
-#         Success or Failed message of node creation
-#     """
-    
-#     file_name =''
-#     graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-#     if source_url:
-#       source_type,youtube_url = check_url_source(source_url)
-#       logging.info(f"source type URL:{source_type}")
-#       if source_type == "s3 bucket":
-#           lst_s3_file_name = []
-#           files_info = get_s3_files_info(source_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
-#           if isinstance(files_info,dict):
-#             return files_info
-#           elif len(files_info)==0:
-#             return create_api_response('Failed',success_count=0,Failed_count=0,message='No pdf files found.')  
-#           logging.info(f'files info : {files_info}')
-#           err_flag=0
-#           success_count=0
-#           Failed_count=0
-          
-#           for file_info in files_info:
-#               file_name=file_info['file_key'] 
-#               # s3_file_path=str(source_url+file_name)
-#               obj_source_node = sourceNode()
-#               obj_source_node.file_name = file_name.split('/')[-1]
-#               obj_source_node.file_type = 'pdf'
-#               obj_source_node.file_size = file_info['file_size_bytes']
-#               obj_source_node.file_source = source_type
-#               obj_source_node.model = model
-#               obj_source_node.url = str(source_url+file_name)
-#               obj_source_node.awsAccessKeyId = aws_access_key_id
-#               obj_source_node.created_at = datetime.now()
-#               try:
-#                 graphDb_data_Access = graphDBdataAccess(graph)
-#                 graphDb_data_Access.create_source_node(obj_source_node)
-#                 success_count+=1
-#                 lst_s3_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url})
-
-#               except Exception as e:
-#                 err_flag=1
-#                 Failed_count+=1
-#                 error_message = str(e)
-#           if err_flag==1:
-#             job_status = "Failed"
-#             message="Unable to create source node for s3 bucket files"
-#             return create_api_response(job_status,message=message,error=error_message,success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket',file_name=lst_s3_file_name)  
-#           return create_api_response("Success",message="Source Node created successfully",success_count=success_count,Failed_count=Failed_count,file_source='s3 bucket',file_name=lst_s3_file_name)
-#       elif source_type == 'youtube':
-#           obj_source_node = sourceNode()
-#           obj_source_node.file_type = 'text'
-#           obj_source_node.file_source = source_type
-#           obj_source_node.model = model
-#           obj_source_node.url = youtube_url
-#           obj_source_node.created_at = datetime.now()
-#           # source_url= youtube_url
-#           match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
-#           logging.info(f"match value{match}")
-#           obj_source_node.file_name = YouTube(obj_source_node.url).title
-#           transcript= get_youtube_transcript(match.group(1))
-#           if transcript==None or len(transcript)==0:
-#             job_status = "Failed"
-#             message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
-#             error_message = str(e)
-#             logging.exception(f'Exception Stack trace:')
-#             return create_api_response(job_status,message=message,error=error_message,file_source=source_type,file_name=obj_source_node.file_name )
-#           else:  
-#             obj_source_node.file_size = sys.getsizeof(transcript)
-#           job_status = "Completed"
-#           graphDb_data_Access = graphDBdataAccess(graph)
-#           graphDb_data_Access.create_source_node(obj_source_node)
-#           return create_api_response(job_status,file_name=[{'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url}])
-      
-#     elif wiki_query:
-#         success_count=0
-#         Failed_count=0
-#         lst_file_metadata=[]
-#         queries =  wiki_query.split(',')
-#         for query in queries:
-#           logging.info(f"Creating source node for {query.strip()}")
-#           source_type = 'text'
-#           job_status = 'Completed'
-#           pages = WikipediaLoader(query=query.strip(), load_max_docs=1, load_all_available_meta=True).load()
-#           try:
-#             if not pages:
-#                 Failed_count+=1
-#                 continue
-#             obj_source_node = sourceNode()
-#             obj_source_node.file_name = query.strip()
-#             obj_source_node.file_type = source_type
-#             obj_source_node.file_source = 'Wikipedia'
-#             obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
-#             obj_source_node.model = model
-#             obj_source_node.url = pages[0].metadata['source']
-#             obj_source_node.created_at = datetime.now()
-#             obj_source_node.status = 'New'
-#             graphDb_data_Access = graphDBdataAccess(graph)
-#             graphDb_data_Access.create_source_node(obj_source_node)
-#             success_count+=1
-#             lst_file_metadata.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url})
-#           except Exception as e:
-#             job_status = "Failed"
-#             Failed_count+=1
-#             error_message = str(e) 
-#             return create_api_response(job_status,message="Unable to create source node for Wikipedia source",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count) 
-#         return create_api_response(job_status,message="Source Node created successfully",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count)   
-    
-#     elif gcs_bucket_name:
-#       success_count=0
-#       Failed_count=0
-#       file_type='pdf'
-#       source_type='gcs bucket'
-#       aws_access_key_id=''
-#       job_status = 'Completed'
-#       try:
-#           lst_file_metadata= get_gcs_bucket_files_info(gcs_bucket_name, gcs_bucket_folder)
-#           for file_metadata in lst_file_metadata :
-#             obj_source_node = sourceNode()
-#             obj_source_node.file_name = file_metadata['fileName']
-#             obj_source_node.file_size = file_metadata['fileSize']
-#             obj_source_node.url = file_metadata['url']
-#             obj_source_node.file_source = 'gcs bucket'
-#             obj_source_node.gcsBucket = gcs_bucket_name
-#             obj_source_node.gcsBucketFolder = gcs_bucket_folder
-#             obj_source_node.created_at = datetime.now()
-
-#             graphDb_data_Access = graphDBdataAccess(graph)
-#             graphDb_data_Access.create_source_node(obj_source_node)
-#             success_count+=1
-#       except Exception as e:
-#           file_name = file_metadata['fileName']
-#           job_status = "Failed"
-#           Failed_count+=1
-#           error_message = str(e) 
-#           return create_api_response(job_status,message=f"Unable to create source node for GCS Bucket file = {file_name}",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count) 
-#       return create_api_response(job_status,message="Source Node created successfully",file_name=lst_file_metadata, success_count=success_count, Failed_count=Failed_count)   
-    
-      
-#     else:
-#         job_status = "Failed"
-#         return create_api_response(job_status,message='Invalid URL')
-    
-def extract_graph_from_file_local_file(uri, userName, password, model, db_name, fileName,file ):
-  if file:
-    file_name, pages = get_documents_from_file_by_bytes(file)
-  else:
-    logging.info(f'Process large file name :{fileName}')
-    merged_file_path = os.path.join(os.path.join(os.path.dirname(__file__), "merged_files"),fileName)
-    logging.info(f'Large File path:{merged_file_path}')
-    file_name, pages = get_documents_from_file_by_path(merged_file_path,fileName)
+  logging.info(f'Process file name :{fileName}')
+  merged_file_path = os.path.join(os.path.join(os.path.dirname(__file__), "merged_files"),fileName)
+  logging.info(f'File path:{merged_file_path}')
+  file_name, pages = get_documents_from_file_by_path(merged_file_path,fileName)
 
   if pages==None or len(pages)==0:
     raise Exception('Pdf content is not available for file : {file_name}')
 
-  return processing_source(uri, userName, password, model, db_name, file_name, pages)
+  return processing_source(graph, model, file_name, pages, merged_file_path)
 
-def extract_graph_from_file_s3(uri, userName, password, model, db_name,source_url, aws_access_key_id, aws_secret_access_key):
+def extract_graph_from_file_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key):
 
   if(aws_access_key_id==None or aws_secret_access_key==None):
     raise Exception('Please provide AWS access and secret keys')
@@ -364,9 +200,9 @@ def extract_graph_from_file_s3(uri, userName, password, model, db_name,source_ur
   if pages==None or len(pages)==0:
     raise Exception('Pdf content is not available for file : {file_name}')
 
-  return processing_source(uri, userName, password, model, db_name, file_name, pages)
+  return processing_source(graph, model, file_name, pages)
 
-def extract_graph_from_file_youtube(uri, userName, password, model, db_name,source_url):
+def extract_graph_from_file_youtube(graph, model, source_url):
   
   source_type, youtube_url = check_url_source(source_url)
   file_name, pages = get_documents_from_youtube(source_url)
@@ -374,25 +210,25 @@ def extract_graph_from_file_youtube(uri, userName, password, model, db_name,sour
   if pages==None or len(pages)==0:
     raise Exception('Youtube transcript is not available for file : {file_name}')
 
-  return processing_source(uri, userName, password, model, db_name, file_name, pages)
+  return processing_source(graph, model, file_name, pages)
 
-def extract_graph_from_file_Wikipedia(uri, userName, password, model, db_name, wiki_query, max_sources):
+def extract_graph_from_file_Wikipedia(graph, model, wiki_query, max_sources):
 
   file_name, pages = get_documents_from_Wikipedia(wiki_query)
   if pages==None or len(pages)==0:
     raise Exception('Wikipedia page is not available for file : {file_name}')
 
-  return processing_source(uri, userName, password, model, db_name, file_name, pages)
+  return processing_source(graph, model, file_name, pages)
 
-def extract_graph_from_file_gcs(uri, userName, password, model, db_name, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename):
+def extract_graph_from_file_gcs(graph, model, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename):
 
   file_name, pages = get_documents_from_gcs(gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename)
   if pages==None or len(pages)==0:
     raise Exception('Pdf content is not available for file : {file_name}')
 
-  return processing_source(uri, userName, password, model, db_name, file_name, pages)
+  return processing_source(graph, model, file_name, pages)
 
-def processing_source(uri, userName, password, model, db_name, file_name, pages):
+def processing_source(graph, model, file_name, pages, merged_file_path=None):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -408,93 +244,92 @@ def processing_source(uri, userName, password, model, db_name, file_name, pages)
    	 Json response to API with fileName, nodeCount, relationshipCount, processingTime, 
      status and model as attributes.
   """
-  try:
-    start_time = datetime.now()
-    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)  
-    graphDb_data_Access = graphDBdataAccess(graph)
-    obj_source_node = sourceNode()
-    status = "Processing"
-    obj_source_node.file_name = file_name
-    obj_source_node.status = status
-    obj_source_node.created_at = start_time
-    obj_source_node.updated_at = start_time
-    logging.info(file_name)
-    logging.info(obj_source_node)
-    # graphDb_data_Access.update_source_node(obj_source_node)
+  start_time = datetime.now()
+  graphDb_data_Access = graphDBdataAccess(graph)
+  obj_source_node = sourceNode()
+  status = "Processing"
+  obj_source_node.file_name = file_name
+  obj_source_node.status = status
+  obj_source_node.created_at = start_time
+  obj_source_node.updated_at = start_time
+  logging.info(file_name)
+  logging.info(obj_source_node)
+  # graphDb_data_Access.update_source_node(obj_source_node)
+  
+  full_document_content = ""
+  bad_chars = ['"', "\n", "'"]
+  for i in range(0,len(pages)):
+    text = pages[i].page_content
+    for j in bad_chars:
+      if j == '\n':
+        text = text.replace(j, ' ')
+      else:
+        text = text.replace(j, '')
+    full_document_content += text
+  logging.info("Break down file into chunks")
+  create_chunks_obj = CreateChunksofDocument(full_document_content, graph, file_name)
+  chunks = create_chunks_obj.split_file_into_chunks()
+  chunkId_chunkDoc_list = create_relation_between_chunks(graph,file_name,chunks)
+  #create vector index and update chunk node with embedding
+  update_embedding_create_vector_index( graph, chunkId_chunkDoc_list, file_name)
+  logging.info("Get graph document list from models")
+  graph_documents =  generate_graphDocuments(model, graph, chunkId_chunkDoc_list)
+  
+  chunks_and_graphDocuments_list = get_chunk_and_graphDocument(graph_documents, chunkId_chunkDoc_list)
+  merge_relationship_between_chunk_and_entites(graph, chunks_and_graphDocuments_list)
+
+  distinct_nodes = set()
+  relations = []
+  for graph_document in chunks_and_graphDocuments_list:
+    #get distinct nodes
+    for node in graph_document['graph_doc'].nodes:
+          node_id = node.id
+          node_type= node.type
+          if (node_id, node_type) not in distinct_nodes:
+            distinct_nodes.add((node_id, node_type))
+    #get all relations
+    for relation in graph_document['graph_doc'].relationships:
+          relations.append(relation.type)
     
-    full_document_content = ""
-    bad_chars = ['"', "\n", "'"]
-    for i in range(0,len(pages)):
-      text = pages[i].page_content
-      for j in bad_chars:
-        if j == '\n':
-          text = text.replace(j, ' ')
-        else:
-          text = text.replace(j, '')
-      full_document_content += text
-    logging.info("Break down file into chunks")
-    create_chunks_obj = CreateChunksofDocument(full_document_content, graph, file_name)
-    chunks = create_chunks_obj.split_file_into_chunks()
-    chunkId_chunkDoc_list = create_relation_between_chunks(graph,file_name,chunks)
-    #create vector index and update chunk node with embedding
-    update_embedding_create_vector_index( graph, chunkId_chunkDoc_list, file_name)
-    logging.info("Get graph document list from models")
-    graph_documents =  generate_graphDocuments(model, graph, chunkId_chunkDoc_list)
-   
-    chunks_and_graphDocuments_list = get_chunk_and_graphDocument(graph_documents, chunkId_chunkDoc_list)
-    merge_relationship_between_chunk_and_entites(graph, chunks_and_graphDocuments_list)
+  nodes_created = len(distinct_nodes)
+  relationships_created = len(relations)  
+  
+  end_time = datetime.now()
+  processed_time = end_time - start_time
+  job_status = "Completed"
+  error_message =""
 
-    distinct_nodes = set()
-    relations = []
-    for graph_document in chunks_and_graphDocuments_list:
-      #get distinct nodes
-      for node in graph_document['graph_doc'].nodes:
-            node_id = node.id
-            node_type= node.type
-            if (node_id, node_type) not in distinct_nodes:
-              distinct_nodes.add((node_id, node_type))
-      #get all relations
-      for relation in graph_document['graph_doc'].relationships:
-            relations.append(relation.type)
-      
-    nodes_created = len(distinct_nodes)
-    relationships_created = len(relations)  
+  obj_source_node = sourceNode()
+  obj_source_node.file_name = file_name
+  obj_source_node.status = job_status
+  obj_source_node.created_at = start_time
+  obj_source_node.updated_at = end_time
+  obj_source_node.model = model
+  obj_source_node.processing_time = processed_time
+  obj_source_node.node_count = nodes_created
+  obj_source_node.relationship_count = relationships_created
+
+  graphDb_data_Access.update_source_node(obj_source_node)
+  logging.info(f'file:{file_name} extraction has been completed')
+
+  if merged_file_path is not None:
+    file_path = Path(merged_file_path)
+    if file_path.exists():
+      file_path.unlink()
+      logging.info(f'file {file_name} delete successfully')
+    else:
+      logging.info(f'file {file_name} does not exist')
+  else:
+    logging.info(f'File Path is None i.e. source type other than local file')
     
-    end_time = datetime.now()
-    processed_time = end_time - start_time
-    job_status = "Completed"
-    error_message =""
-
-    obj_source_node = sourceNode()
-    obj_source_node.file_name = file_name
-    obj_source_node.status = job_status
-    obj_source_node.created_at = start_time
-    obj_source_node.updated_at = end_time
-    obj_source_node.model = model
-    obj_source_node.processing_time = processed_time
-    obj_source_node.node_count = nodes_created
-    obj_source_node.relationship_count = relationships_created
-
-    graphDb_data_Access.update_source_node(obj_source_node)
-    logging.info(f'file:{file_name} extraction has been completed')
-
-    return {
-        "fileName": file_name,
-        "nodeCount": nodes_created,
-        "relationshipCount": relationships_created,
-        "processingTime": round(processed_time.total_seconds(),2),
-        "status" : job_status,
-        "model" : model
-    }
-  except Exception as e:
-      message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content"
-      logging.info(message)
-      error_message = str(e)
-      graphDb_data_Access.update_exception_db(file_name,error_message)
-      logging.exception(f'Exception Stack trace: {error_message}')
-      raise Exception(error_message)
- 
-
+  return {
+      "fileName": file_name,
+      "nodeCount": nodes_created,
+      "relationshipCount": relationships_created,
+      "processingTime": round(processed_time.total_seconds(),2),
+      "status" : job_status,
+      "model" : model
+  }
 
 def get_source_list_from_graph(uri,userName,password,db_name=None):
   """
