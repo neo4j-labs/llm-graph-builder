@@ -390,7 +390,7 @@ def extract_graph_from_file_gcs(uri, userName, password, model, db_name, gcs_buc
   if pages==None or len(pages)==0:
     raise Exception('Pdf content is not available for file : {file_name}')
 
-  return processing_source(uri, userName, password, model, db_name, file_name, pages, model)
+  return processing_source(uri, userName, password, model, db_name, file_name, pages)
 
 def processing_source(uri, userName, password, model, db_name, file_name, pages):
   """
