@@ -48,6 +48,7 @@ const DropZone: FunctionComponent = () => {
             name: file.name,
             type: file.type,
             size: file.size,
+            uploadprogess:(file.size&& file?.size<chunkSize)?100:0,
             ...defaultValues,
           });
         } else {
