@@ -12,6 +12,7 @@ import base64
 from langserve import add_routes
 from langchain_google_vertexai import ChatVertexAI
 from src.api_response import create_api_response
+from src.graphDB_dataAccess import graphDBdataAccess
 
 def healthy_condition():
     output = {"healthy": True}
