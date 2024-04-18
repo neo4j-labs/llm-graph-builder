@@ -191,3 +191,27 @@
   align-items: center;
   justify-content: center;
 }
+
+.legend_div {
+  display: flex;
+  flex: 0.2;
+  flex-wrap: wrap;
+  padding: 15px;
+  gap: 8px;
+  background-color: #ffff;
+  height: max-content
+}
+
+.legend {
+  display: inline-block;
+  min-width: 0px;
+  cursor: pointer;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0;
+  line-height: 1.25rem;
+  width: max-content;
+  height: 30px
+}
