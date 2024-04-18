@@ -46,7 +46,7 @@ export const colors = [
 export const llms =
   process.env?.LLM_MODELS?.trim() != ''
     ? process.env.LLM_MODELS?.split(',')
-    : ['Diffbot', 'Gemini 1.0 Pro', 'OpenAI GPT 3.5', 'OpenAI GPT 4','Gemini 1.5 Pro'];
+    : ['Diffbot', 'Gemini 1.0 Pro', 'OpenAI GPT 3.5', 'OpenAI GPT 4', 'Gemini 1.5 Pro'];
 export const defaultLLM = llms?.includes('OpenAI GPT 4')
   ? 'OpenAI GPT 4'
   : llms?.includes('Gemini 1.0 Pro')

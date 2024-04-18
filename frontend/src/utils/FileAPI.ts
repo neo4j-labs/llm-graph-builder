@@ -30,13 +30,20 @@ export const extractAPI = async (
   const commonParams: UserCredentials = userCredentials;
   let additionalParams: ExtractParams;
   if (source_type === 's3 bucket') {
-    additionalParams = { model, source_url, aws_secret_access_key, aws_access_key_id, source_type,file_name };
+    additionalParams = { model, source_url, aws_secret_access_key, aws_access_key_id, source_type, file_name };
   } else if (source_type === 'Wikipedia') {
-    additionalParams = { model, wiki_query: file_name, source_type,file_name };
+    additionalParams = { model, wiki_query: file_name, source_type, file_name };
   } else if (source_type === 'gcs bucket') {
-    additionalParams = { model, gcs_blob_filename: file_name, gcs_bucket_folder, gcs_bucket_name, source_type,file_name };
+    additionalParams = {
+      model,
+      gcs_blob_filename: file_name,
+      gcs_bucket_folder,
+      gcs_bucket_name,
+      source_type,
+      file_name,
+    };
   } else if (source_type === 'youtube') {
-    additionalParams = { model, source_url, source_type,file_name };
+    additionalParams = { model, source_url, source_type, file_name };
   } else {
     additionalParams = { model, source_type, file_name };
   }

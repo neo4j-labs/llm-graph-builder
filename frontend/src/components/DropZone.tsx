@@ -48,7 +48,7 @@ const DropZone: FunctionComponent = () => {
             name: file.name,
             type: file.type,
             size: file.size,
-            uploadprogess:(file.size&& file?.size<chunkSize)?100:0,
+            uploadprogess: file.size && file?.size < chunkSize ? 100 : 0,
             ...defaultValues,
           });
         } else {
@@ -195,13 +195,15 @@ const DropZone: FunctionComponent = () => {
 
   return (
     <>
-      {alertDetails.showAlert&&<CustomAlert
-        open={alertDetails.showAlert}
-        handleClose={handleClose}
-        severity={alertDetails.alertType}
-        alertMessage={alertDetails.alertMessage}
-      />}
-      
+      {alertDetails.showAlert && (
+        <CustomAlert
+          open={alertDetails.showAlert}
+          handleClose={handleClose}
+          severity={alertDetails.alertType}
+          alertMessage={alertDetails.alertMessage}
+        />
+      )}
+
       <Dropzone
         loadingComponent={isLoading && <Loader />}
         isTesting={true}
