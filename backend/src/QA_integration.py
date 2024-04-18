@@ -7,12 +7,79 @@ from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
 from langchain_google_vertexai import VertexAIEmbeddings
+from langchain_google_vertexai import ChatVertexAI
+from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
 import logging
 from langchain_community.chat_message_histories import Neo4jChatMessageHistory
+from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
+from src.shared.common_fn import load_embedding_model
+import re
+
 load_dotenv()
 
 openai_api_key = os.environ.get('OPENAI_API_KEY')
-model_version='gpt-4-0125-preview'
+
+
+# def get_embedding_function(embedding_model_name: str):
+#     if embedding_model_name == "openai":
+#         embedding_function = OpenAIEmbeddings()
+#         dimension = 1536
+#         logging.info(f"Embedding: Using OpenAI Embeddings , Dimension:{dimension}")
+#     elif embedding_model_name == "vertexai":        
+#         embedding_function = VertexAIEmbeddings(
+#             model_name="textembedding-gecko@003"
+#         )
+#         dimension = 768
+#         logging.info(f"Embedding: Using Vertex AI Embeddings , Dimension:{dimension}")
+#     else:
+#         embedding_function = SentenceTransformerEmbeddings(
+#             model_name="all-MiniLM-L6-v2"#, cache_folder="/embedding_model"
+#         )
+#         dimension = 384
+#         logging.info(f"Embedding: Using SentenceTransformer , Dimension:{dimension}")
+#     return embedding_function
+
+def get_llm(model : str):
+    if model == "OpenAI GPT 3.5":
+        model_version = "gpt-3.5-turbo-16k"
+        logging.info(f"Chat Model: GPT 3.5, Model Version : {model_version}")
+        llm = ChatOpenAI(model= model_version, temperature=0)
+    
+    elif model == "Gemini Pro" :
+        # model_version = "gemini-1.0-pro"
+        model_version = 'gemini-1.0-pro-001' 
+        logging.info(f"Chat Model: Gemini , Model Version : {model_version}")
+        llm = ChatVertexAI(model_name=model_version,
+                        #    max_output_tokens=100,
+                           convert_system_message_to_human=True,
+                           temperature=0,
+                           safety_settings={
+                               HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE, 
+                               HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                               HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE, 
+                               HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE, 
+                               HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                               })
+    elif model == "Gemini 1.5 Pro" :
+        model_version = "gemini-1.5-pro-preview-0409"
+        logging.info(f"Chat Model: Gemini 1.5 , Model Version : {model_version}")
+        llm = ChatVertexAI(model_name=model_version,
+                        #    max_output_tokens=100,
+                           convert_system_message_to_human=True,
+                           temperature=0,
+                           safety_settings={
+                               HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE, 
+                               HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                               HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE, 
+                               HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE, 
+                               HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                               })
+    else: 
+        ## for model == "OpenAI GPT 4" or model == "Diffbot" 
+        model_version = "gpt-4-0125-preview"
+        logging.info(f"Chat Model: GPT 4, Model Version : {model_version}")
+        llm = ChatOpenAI(model= model_version, temperature=0)
+    return llm
 
 def vector_embed_results(qa,question):
     vector_res={}
@@ -92,9 +159,27 @@ def get_chat_history(llm,uri,userName,password,session_id):
         error_message = str(e)
         logging.exception(f'Exception in retrieving chat history:{error_message}')
         # raise Exception(error_message)
-        return ''
+        return '' 
 
-def QA_RAG(uri,userName,password,question,session_id):
+def extract_and_remove_source(message):
+    pattern = r'\[Source: ([^\]]+)\]'
+    match = re.search(pattern, message)
+    if match:
+        sources_string = match.group(1)
+        sources = [source.strip().strip("'") for source in sources_string.split(',')]
+        new_message = re.sub(pattern, '', message).strip()
+        response = {
+            "message" : new_message,
+            "sources" : sources
+        }
+    else:
+        response = {
+            "message" : message,
+            "sources" : []
+        }
+    return response
+
+def QA_RAG(uri,model,userName,password,question,session_id):
     try:
         retrieval_query="""
         MATCH (node)-[:PART_OF]->(d:Document)
@@ -102,8 +187,9 @@ def QA_RAG(uri,userName,password,question,session_id):
         RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)} as metadata
         """
         embedding_model = os.getenv('EMBEDDING_MODEL')
+        embedding_function, _ = load_embedding_model(embedding_model)
         neo_db=Neo4jVector.from_existing_index(
-                embedding = VertexAIEmbeddings(model_name=embedding_model),
+                embedding = embedding_function,
                 url=uri,
                 username=userName,
                 password=password,
@@ -111,10 +197,14 @@ def QA_RAG(uri,userName,password,question,session_id):
                 index_name="vector",
                 retrieval_query=retrieval_query,
             )
-        llm = ChatOpenAI(model= model_version, temperature=0)
+        # model = "Gemini Pro"
+        llm = get_llm(model = model)
 
         qa = RetrievalQA.from_chain_type(
-            llm=llm, chain_type="stuff", retriever=neo_db.as_retriever(search_kwargs={'k': 3,"score_threshold": 0.5}), return_source_documents=True
+            llm=llm, 
+            chain_type="stuff", 
+            retriever=neo_db.as_retriever(search_kwargs={'k': 3,"score_threshold": 0.5}),
+            return_source_documents=True
         )
 
         vector_res=vector_embed_results(qa,question)
@@ -133,32 +223,58 @@ def QA_RAG(uri,userName,password,question,session_id):
 
         chat_summary=get_chat_history(llm,uri,userName,password,session_id)
 
-        final_prompt = f"""You are a helpful question-answering agent. Your task is to analyze
-        and synthesize information from two sources: the top result from a similarity search
-        (unstructured information) and relevant data from a graph database (structured information). 
-        If structured information fails to find an answer then use the answer from unstructured information 
-        and vice versa. I only want a straightforward answer without mentioning from which source you got the answer. You are also receiving 
-        a chat history of the earlier conversation. You should be able to understand the context from the chat history and answer the question.
-        Given the user's query: {question}, provide a meaningful and efficient answer based
-        on the insights derived from the following data:
-        chat_summary:{chat_summary}
-        Structured information:  .
-        Unstructured information: {vector_res.get('result','')}.
 
+        # final_prompt = f"""You are a helpful question-answering agent. Your task is to analyze
+        # and synthesize information from two sources: the top result from a similarity search
+        # (unstructured information) and relevant data from a graph database (structured information). 
+        # If structured information fails to find an answer then use the answer from unstructured information 
+        # and vice versa. I only want a straightforward answer without mentioning from which source you got the answer. You are also receiving 
+        # a chat history of the earlier conversation. You should be able to understand the context from the chat history and answer the question.
+        # Given the user's query: {question}, provide a meaningful and efficient answer based
+        # on the insights derived from the following data:
+        # chat_summary:{chat_summary}
+        # Structured information:  .
+        # Unstructured information: {vector_res.get('result','')}.
+        # """ 
+
+        final_prompt = f"""
+            You are an AI-powered question-answering agent tasked with providing accurate and direct responses to user queries. Utilize information from the chat history, current user input, and relevant unstructured data effectively.
+
+            Response Requirements:
+            - Deliver concise and direct answers to the user's query without headers unless requested.
+            - Acknowledge and utilize relevant previous interactions based on the chat history summary.
+            - Respond to initial greetings appropriately, but avoid including a greeting in subsequent responses unless the chat is restarted or significantly paused.
+            - Clearly state if an answer is unknown; avoid speculating.
+
+            Instructions:
+            - Prioritize directly answering the User Input: {question}.
+            - Use the Chat History Summary: {chat_summary} to provide context-aware responses.
+            - Refer to Additional Unstructured Information: {vector_res.get('result', '')} only if it directly relates to the query.
+            - Cite sources clearly when using unstructured data in your response [Sources: {vector_res.get('source', '')}]. The Source must be printed only at the last in the format [Source: source1,source2]
+            Ensure that answers are straightforward and context-aware, focusing on being relevant and concise.
         """ 
 
         print(final_prompt)
+        llm = get_llm(model = model)
         response = llm.predict(final_prompt)
+        # print(response)
+
         ai_message=response
         user_message=question
         save_chat_history(uri,userName,password,session_id,user_message,ai_message)
 
-        res={"session_id":session_id,"message":response,"user":"chatbot"}
+        reponse = extract_and_remove_source(response)
+        message = reponse["message"]
+        sources = reponse["sources"]
+        # print(extract_and_remove_source(response))
+        print(response)
+        res={"session_id":session_id,"message":message,"sources":sources,"user":"chatbot"}
         return res
     except Exception as e:
       error_message = str(e)
       logging.exception(f'Exception in in QA component:{error_message}')
-    #   raise Exception(error_message)
-      return {"session_id":session_id,"message":"Something went wrong","user":"chatbot"}
+      message = "Something went wrong"
+      sources = []
+    #   raise Exception(error_message)  
+      return {"session_id":session_id,"message":message,"sources":sources,"user":"chatbot"}
 
- 

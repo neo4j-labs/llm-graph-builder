@@ -140,16 +140,11 @@ export interface messages {
   user: string;
   datetime: string;
   isTyping?: boolean;
+  sources?: string[];
 }
 
 export type ChatbotProps = {
-  messages: {
-    id: number;
-    user: string;
-    message: string;
-    datetime: string;
-    isTyping?: boolean;
-  }[];
+  messages: messages[];
   setMessages: Dispatch<SetStateAction<messages[]>>;
 };
 export interface WikipediaModalTypes {
