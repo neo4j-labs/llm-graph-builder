@@ -1,10 +1,8 @@
 import os
 import logging
 from google.cloud import storage
-from google.oauth2 import service_account
 import google.auth 
 from langchain_community.document_loaders import GCSFileLoader
-from ..main import create_api_response
 
 def get_gcs_bucket_files_info(gcs_bucket_name, gcs_bucket_folder):
     #credentials = service_account.Credentials.from_service_account_file(os.environ['GOOGLE_CLOUD_KEYFILE'])
@@ -19,7 +17,6 @@ def get_gcs_bucket_files_info(gcs_bucket_name, gcs_bucket_folder):
         for blob in blobs:
           if blob.content_type == 'application/pdf':
             folder_name, file_name = os.path.split(blob.name)
-            #file_name = blob.name.split('/')[-1]
             file_size = blob.size
             source_url= blob.media_link
             gcs_bucket = gcs_bucket_name
@@ -27,16 +24,13 @@ def get_gcs_bucket_files_info(gcs_bucket_name, gcs_bucket_folder):
         return lst_file_metadata
       else:
         file_name=''
-        job_status = "Failed"
         message=f"{gcs_bucket_name} : Bucket does not exist. Please provide valid GCS bucket name"
-        return create_api_response(job_status,message=message)
+        raise Exception(message)
     except Exception as e:
-      job_status = "Failed"
-      message="Unable to create source node for gcs bucket files"
       error_message = str(e)
       logging.error(f"Unable to create source node for gcs bucket file {file_name}")
       logging.exception(f'Exception Stack trace: {error_message}')
-      return create_api_response(job_status,message=message,error=error_message,file_name=file_name)
+      raise Exception(error_message)
 
 
 def get_documents_from_gcs(gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename):
