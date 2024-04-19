@@ -219,6 +219,41 @@ database= Neo4j database name
 
 === /chat_bot :
 
+**Overview :**
+
+The API responsible for a chatbot system designed to leverage multiple AI models and a Neo4j graph database, providing answers to user queries. It interacts with AI models from OpenAI and Google's Vertex AI and utilizes embedding models to enhance the retrieval of relevant information.
+
+**Components :** 
+ 
+** Embedding Models - Includes OpenAI Embeddings, VertexAI Embeddings, and SentenceTransformer Embeddings to support vector-based query operations.
+** AI Models - OpenAI GPT 3.5, GPT 4, Gemini Pro and Gemini 1.5 Pro can be configured for the chatbot backend to generate responses and process natural language.
+** Graph Database (Neo4jGraph) - Manages interactions with the Neo4j database, retrieving, and storing conversation histories.
+** Response Generation - Utilizes Vector Embeddings from the Neo4j database, chat history, and the knowledge base of the LLM used.
+
+**API Parameters :**
+....
+
+uri= Neo4j uri
+userName= Neo4j database username
+password= Neo4j database password
+model= LLM model
+question= User query for the chatbot
+session_id= Session ID used to maintain the history of chats during the user's connection
+
+....
+
+**Response :**
+....
+{
+  "status": "Success",
+  "data": {
+    "session_id": "312dd183-4c14-437c-8b2f-8144e5eac646",
+    "message": "Hello! How can I assist you today?",
+    "sources": [],
+    "user": "chatbot"
+  }
+....
+
 == Decisions
 
 * Process only 1st page of Wikipedia
