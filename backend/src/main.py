@@ -1,11 +1,9 @@
 from langchain_community.graphs import Neo4jGraph
-from langchain.docstore.document import Document
 from dotenv import load_dotenv
 from datetime import datetime
 import logging
 from src.create_chunks import CreateChunksofDocument
 from src.graphDB_dataAccess import graphDBdataAccess
-from src.api_response import create_api_response
 from src.document_sources.local_file import get_documents_from_file_by_path
 from src.entities.source_node import sourceNode
 from src.generate_graphDocuments_from_llm import generate_graphDocuments
@@ -15,7 +13,6 @@ from src.document_sources.wikipedia import *
 from src.document_sources.youtube import *
 from src.shared.common_fn import *
 from src.make_relationships import *
-from typing import List
 import re
 from langchain_community.document_loaders import WikipediaLoader
 import warnings
@@ -27,40 +24,13 @@ from pathlib import Path
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
-# def create_source_node_graph_local_file(uri, userName, password, file, model, db_name=None):
-#   """
-#    Creates a source node in Neo4jGraph and sets properties.
-   
-#    Args:
-#    	 uri: URI of Graph Service to connect to
-#      db_name: database name to connect
-#    	 userName: Username to connect to Graph Service with ( default : None )
-#    	 password: Password to connect to Graph Service with ( default : None )
-#    	 file: File object with information about file to be added
-   
-#    Returns: 
-#    	 Success or Failed message of node creation
-#   """
-#   obj_source_node = sourceNode()
-#   obj_source_node.file_name = file.filename
-#   obj_source_node.file_type = file.filename.split('.')[1]
-#   obj_source_node.file_size = file.size
-#   obj_source_node.file_source = 'local file'
-#   obj_source_node.model = model
-#   obj_source_node.created_at = datetime.now()
-#   graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-#   graphDb_data_Access = graphDBdataAccess(graph)
-    
-#   graphDb_data_Access.create_source_node(obj_source_node)
-#   return obj_source_node
-
 def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type):
     
     lst_file_name = []
     files_info = get_s3_files_info(source_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
     if len(files_info)==0:
       raise Exception('No pdf files found.')
-      # return create_api_response('Failed',success_count=0,Failed_count=0,message='No pdf files found.')  
+
     logging.info(f'files info : {files_info}')
     success_count=0
     failed_count=0
@@ -88,7 +58,7 @@ def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id,
           lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Failed'})
     return lst_file_name,success_count,failed_count
 
-def create_source_node_graph_url_gcs(graph, model, source_url, gcs_bucket_name, gcs_bucket_folder, source_type):
+def create_source_node_graph_url_gcs(graph, model, gcs_bucket_name, gcs_bucket_folder, source_type):
 
     success_count=0
     failed_count=0
@@ -101,6 +71,7 @@ def create_source_node_graph_url_gcs(graph, model, source_url, gcs_bucket_name, 
       obj_source_node.file_size = file_metadata['fileSize']
       obj_source_node.url = file_metadata['url']
       obj_source_node.file_source = source_type
+      obj_source_node.model = model
       obj_source_node.file_type = 'pdf'
       obj_source_node.gcsBucket = gcs_bucket_name
       obj_source_node.gcsBucketFolder = file_metadata['gcsBucketFolder']
@@ -117,7 +88,7 @@ def create_source_node_graph_url_gcs(graph, model, source_url, gcs_bucket_name, 
 
 def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     
-    source_type,youtube_url = check_url_source(source_url)
+    youtube_url = check_url_source(source_url)
     success_count=0
     failed_count=0
     lst_file_name = []
@@ -127,18 +98,17 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     obj_source_node.model = model
     obj_source_node.url = youtube_url
     obj_source_node.created_at = datetime.now()
-    # source_url= youtube_url
+
     match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
     logging.info(f"match value{match}")
     obj_source_node.file_name = YouTube(obj_source_node.url).title
     transcript= get_youtube_transcript(match.group(1))
     if transcript==None or len(transcript)==0:
-      # job_status = "Failed"
       message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
       raise Exception(message)
     else:  
       obj_source_node.file_size = sys.getsizeof(transcript)
-    # job_status = "Completed"
+    
     graphDb_data_Access = graphDBdataAccess(graph)
     graphDb_data_Access.create_source_node(obj_source_node)
     lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Success'})
@@ -171,9 +141,7 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
         success_count+=1
         lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'status':'Success'})
       except Exception as e:
-        # job_status = "Failed"
         failed_count+=1
-        # error_message = str(e)
         lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'status':'Failed'})
     return lst_file_name,success_count,failed_count
     
@@ -204,7 +172,6 @@ def extract_graph_from_file_s3(graph, model, source_url, aws_access_key_id, aws_
 
 def extract_graph_from_file_youtube(graph, model, source_url):
   
-  source_type, youtube_url = check_url_source(source_url)
   file_name, pages = get_documents_from_youtube(source_url)
 
   if pages==None or len(pages)==0:
@@ -349,16 +316,15 @@ def get_source_list_from_graph(uri,userName,password,db_name=None):
   graph_DB_dataAccess = graphDBdataAccess(graph)
   return graph_DB_dataAccess.get_source_list()
 
-def update_graph(uri,userName,password,db_name):
+def update_graph(graph):
   """
   Update the graph node with SIMILAR relationship where embedding scrore match
   """
-  graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
   graph_DB_dataAccess = graphDBdataAccess(graph)
   return graph_DB_dataAccess.update_KNN_graph()
 
   
-def connection_check(uri,userName,password,db_name):
+def connection_check(graph):
   """
   Args:
     uri: URI of the graph to extract
@@ -368,7 +334,6 @@ def connection_check(uri,userName,password,db_name):
   Returns:
    Returns a status of connection from NEO4j is success or failure
  """
-  graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
   graph_DB_dataAccess = graphDBdataAccess(graph)
   return graph_DB_dataAccess.connection_check()
 
@@ -391,11 +356,11 @@ def merge_chunks(file_name, total_chunks):
   return file_size
   
 
-def upload_file(uri, userName, password, db_name, model, chunk, chunk_number:int, total_chunks:int, originalname):
+def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname):
   chunk_dir = os.path.join(os.path.dirname(__file__), "chunks")  # Directory to save chunks
   if not os.path.exists(chunk_dir):
       os.mkdir(chunk_dir)
-  chunk_file_name = originalname.split('.')[0]
+  
   chunk_file_path = os.path.join(chunk_dir, f"{originalname}_part_{chunk_number}")
   logging.info(f'Chunk File Path: {chunk_file_path}')
   
@@ -414,7 +379,6 @@ def upload_file(uri, userName, password, db_name, model, chunk, chunk_number:int
       obj_source_node.file_source = 'local file'
       obj_source_node.model = model
       obj_source_node.created_at = datetime.now()
-      graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
       graphDb_data_Access = graphDBdataAccess(graph)
         
       graphDb_data_Access.create_source_node(obj_source_node)

@@ -86,13 +86,17 @@ async def create_source_knowledge_graph_url(
     source_type=Form(None)
     ):
     try:
+        if source_url is not None:
+            source = source_url
+        else:
+            source = wiki_query
+            
         graph = create_graph_database_connection(uri, userName, password, database)
-        graphDb_data_Access = graphDBdataAccess(graph)
         if source_type == 's3 bucket' and aws_access_key_id and aws_secret_access_key:
             lst_file_name,success_count,failed_count = create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type
             )
         elif source_type == 'gcs bucket':
-            lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, source_url, gcs_bucket_name, gcs_bucket_folder, source_type
+            lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, gcs_bucket_name, gcs_bucket_folder, source_type
             )
         elif source_type == 'youtube':
             lst_file_name,success_count,failed_count = create_source_node_graph_url_youtube(graph, model, source_url, source_type
@@ -102,11 +106,6 @@ async def create_source_knowledge_graph_url(
             )
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
-
-        if source_url is not None:
-            source = source_url
-        else:
-            source = wiki_query
 
         message = f"Source Node created successfully for source type: {source_type} and source: {source}"
         return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name)    
@@ -207,7 +206,8 @@ async def update_similarity_graph(uri=Form(None), userName=Form(None), password=
     Calls 'update_graph' which post the query to update the similiar nodes in the graph
     """
     try:
-        result = await asyncio.to_thread(update_graph,uri,userName,password,database)
+        graph = create_graph_database_connection(uri, userName, password, database)
+        result = await asyncio.to_thread(update_graph, graph)
         logging.info(f"result : {result}")
         return create_api_response('Success',message='Updated KNN Graph',data=result)
     except Exception as e:
@@ -220,8 +220,6 @@ async def update_similarity_graph(uri=Form(None), userName=Form(None), password=
 @app.post("/chat_bot")
 async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password=Form(None), question=Form(None), session_id=Form(None)):
     try:
-        # model=Form(None),
-        # model = "Gemini Pro"
         result = await asyncio.to_thread(QA_RAG,uri=uri,model=model,userName=userName,password=password,question=question,session_id=session_id)
         return create_api_response('Success',data=result)
     except Exception as e:
@@ -234,7 +232,8 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
 @app.post("/connect")
 async def connect(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
     try:
-        result = await asyncio.to_thread(connection_check,uri,userName,password,database)
+        graph = create_graph_database_connection(uri, userName, password, database)
+        result = await asyncio.to_thread(connection_check, graph)
         return create_api_response('Success',message=result)
     except Exception as e:
         job_status = "Failed"
@@ -248,7 +247,8 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
                                         originalname=Form(None), model=Form(None), uri=Form(None), userName=Form(None), 
                                         password=Form(None), database=Form(None)):
     try:
-        result = await asyncio.to_thread(upload_file,uri,userName,password,database,model,file,chunkNumber,totalChunks,originalname)
+        graph = create_graph_database_connection(uri, userName, password, database)
+        result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname)
         return create_api_response('Success', message=result)
     except Exception as e:
         job_status = "Failed"
