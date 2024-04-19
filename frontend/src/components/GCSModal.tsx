@@ -3,12 +3,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { urlScanAPI } from '../services/URLScan';
-import { CustomFileBase, GCSModalProps, fileName, nonoautherror } from '../types';
+import { CustomFile, S3ModalProps, fileName } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
-import { useGoogleLogin } from '@react-oauth/google';
-import { useAlertContext } from '../context/Alert';
-import { buttonCaptions } from '../utils/Constants';
 
 const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) => {
   const [bucketName, setbucketName] = useState<string>('');
@@ -17,21 +14,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
-  const { showAlert } = useAlertContext();
-
   const { setFilesData, model, filesData } = useFileContext();
-
-  const defaultValues: CustomFileBase = {
-    processing: 0,
-    status: 'New',
-    NodesCount: 0,
-    relationshipCount: 0,
-    type: 'TEXT',
-    model: model,
-    fileSource: 'gcs bucket',
-    processingProgress: undefined,
-  };
-
   const reset = () => {
     setbucketName('');
     setFolderName('');
@@ -73,8 +56,6 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
           gcs_bucket_name: bucketName,
           gcs_bucket_folder: folderName,
           source_type: 'gcs bucket',
-          gcs_project_id: projectId,
-          access_token: codeResponse.access_token,
         });
         if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
           showAlert('error', apiResponse?.data?.message);
@@ -83,7 +64,36 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
             reset();
             hideModal();
           }, 5000);
-          return;
+        } else {
+          setStatus('success');
+          setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
+          const copiedFilesData = [...filesData];
+          apiResponse?.data?.file_name?.forEach((item: fileName) => {
+            const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
+            if (filedataIndex == -1) {
+              copiedFilesData.unshift({
+                name: item.fileName,
+                size: item.fileSize ?? 0,
+                gcsBucket: item.gcsBucket,
+                gcsBucketFolder: item.gcsBucketFolder,
+                ...defaultValues,
+              });
+            } else {
+              const tempFileData = copiedFilesData[filedataIndex];
+              copiedFilesData.splice(filedataIndex, 1);
+              copiedFilesData.unshift({
+                ...tempFileData,
+                status: defaultValues.status,
+                NodesCount: defaultValues.NodesCount,
+                relationshipCount: defaultValues.relationshipCount,
+                processing: defaultValues.processing,
+                model: defaultValues.model,
+                fileSource: defaultValues.fileSource,
+              });
+            }
+          });
+          setFilesData(copiedFilesData);
+          reset();
         }
         showAlert('success', `Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
         const copiedFilesData = [...filesData];
@@ -205,7 +215,6 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
           disabled={false}
           label='Folder Name'
           aria-label='Folder Name'
-          helpText='Optional'
           placeholder=''
           fluid
           onChange={(e) => {

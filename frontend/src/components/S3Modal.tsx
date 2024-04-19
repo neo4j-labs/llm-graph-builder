@@ -1,6 +1,6 @@
 import { TextInput } from '@neo4j-ndl/react';
 import React, { useState } from 'react';
-import { CustomFile, CustomFileBase, S3ModalProps, UserCredentials } from '../types';
+import { CustomFile, S3ModalProps, UserCredentials } from '../types';
 import { urlScanAPI } from '../services/URLScan';
 import { useCredentials } from '../context/UserCredentials';
 import { validation } from '../utils/Utils';
@@ -43,7 +43,10 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       fileSource: 's3 bucket',
       processingProgress: undefined,
     };
-    if (url) {
+    if (url && url[url.length - 1] != '/') {
+      setBucketUrl((prev) => {
+        return `${prev}/`;
+      });
       setValid(validation(bucketUrl) && isFocused);
     }
     if (accessKey.length) {
@@ -57,11 +60,11 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatus('info');
         setStatusMessage('Scanning...');
         const apiResponse = await urlScanAPI({
-          urlParam: url.trim(),
+          urlParam: url,
           userCredentials: userCredentials as UserCredentials,
           model: model,
-          accessKey: accessKey.trim(),
-          secretKey: secretKey.trim(),
+          accessKey: accessKey,
+          secretKey: secretKey,
           source_type: 's3 bucket',
         });
         setStatus('success');

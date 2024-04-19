@@ -38,7 +38,6 @@ frozenlist==1.4.1
 fsspec==2024.2.0
 google-api-core==2.18.0
 google-auth==2.29.0
-google_auth_oauthlib
 google-cloud-aiplatform
 google-cloud-bigquery==3.19.0
 google-cloud-core==2.4.1
@@ -163,12 +162,9 @@ unstructured.pytesseract
 unstructured[all-docs]
 urllib3
 uvicorn
-gunicorn
 wikipedia==1.4.0
 wrapt==1.16.0
 yarl==1.9.4
 youtube-transcript-api==0.6.2
 zipp==3.17.0
 sentence-transformers
-google-cloud-logging==3.10.0
-PyMuPDF==1.24.5

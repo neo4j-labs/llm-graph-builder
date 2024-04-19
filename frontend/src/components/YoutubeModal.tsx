@@ -6,7 +6,6 @@ import { urlScanAPI } from '../services/URLScan';
 import { CustomFileBase, S3ModalProps } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
-import { buttonCaptions } from '../utils/Constants';
 
 const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [youtubeURL, setYoutubeURL] = useState<string>('');
@@ -51,7 +50,35 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             setYoutubeURL('');
             hideModal();
           }, 5000);
-          return;
+        } else {
+          setStatus('success');
+          setStatusMessage(`Successfully Created Source Nodes for Link`);
+          const copiedFilesData = [...filesData];
+          apiResponse?.data?.file_name?.forEach((item) => {
+            const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
+            if (filedataIndex == -1) {
+              copiedFilesData.unshift({
+                name: item.fileName,
+                size: item.fileSize ?? 0,
+                source_url: item.url,
+                ...defaultValues,
+              });
+            } else {
+              const tempFileData = copiedFilesData[filedataIndex];
+              copiedFilesData.splice(filedataIndex, 1);
+              copiedFilesData.unshift({
+                ...tempFileData,
+                status: defaultValues.status,
+                NodesCount: defaultValues.NodesCount,
+                relationshipCount: defaultValues.relationshipCount,
+                processing: defaultValues.processing,
+                model: defaultValues.model,
+                fileSource: defaultValues.fileSource,
+              });
+            }
+          });
+          setFilesData(copiedFilesData);
+          setYoutubeURL('');
         }
         setStatus('success');
         setStatusMessage(`Successfully Created Source Nodes for Link`);

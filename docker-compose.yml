@@ -49,6 +49,10 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    environment:
+      - BACKEND_API_URL=${BACKEND_API_URL-}
+      - BLOOM_URL=${BLOOM_URL}
+      - REACT_APP_SOURCES=${REACT_APP_SOURCES}
     container_name: frontend
     ports:
       - "8080:8080"

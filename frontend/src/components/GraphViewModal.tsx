@@ -1,10 +1,18 @@
-import { Banner, Checkbox, Dialog, IconButtonArray, LoadingSpinner } from '@neo4j-ndl/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { GraphType, GraphViewModalProps, Scheme, UserCredentials } from '../types';
+import {
+  Banner,
+  Checkbox,
+  Dialog,
+  Flex,
+  IconButton,
+  IconButtonArray,
+  LoadingSpinner,
+  TextInput,
+} from '@neo4j-ndl/react';
+import { useEffect, useRef, useState } from 'react';
+import { GraphType, GraphViewModalProps } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
-import NVL, { NvlOptions } from '@neo4j-nvl/base';
-import type { Node, Relationship } from '@neo4j-nvl/base';
-import { Resizable } from 're-resizable';
+import NVL, { NvlOptions } from '@neo4j-nvl/core';
+import type { Node, Relationship } from '@neo4j-nvl/core';
 
 import {
   DragIcon,
@@ -13,12 +21,21 @@ import {
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
 import ButtonWithToolTip from './ButtonWithToolTip';
-import { getIcon, getNodeCaption, getSize } from '../utils/Utils';
+import { constructDocQuery, constructQuery, getIcon, getNodeCaption, getSize } from '../utils/Utils';
+import {
+  colors,
+  entities,
+  chunks,
+  document,
+  docEntities,
+  docChunks,
+  chunksEntities,
+  docChunkEntities,
+} from '../utils/Constants';
+import { ArrowSmallRightIconOutline } from '@neo4j-ndl/react/icons';
 import { useCredentials } from '../context/UserCredentials';
-import { LegendsChip } from './LegendsChip';
-import graphQueryAPI from '../services/GraphQuery';
-import { queryMap } from '../utils/Constants';
-import { useFileContext } from '../context/UsersFiles';
+
+type Scheme = Record<string, string>;
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -31,13 +48,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const nvlRef = useRef<NVL>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [relationships, setRelationships] = useState<Relationship[]>([]);
-  const [graphType, setGraphType] = useState<GraphType[]>(['entities']);
+  const [graphType, setGraphType] = useState<GraphType[]>(['Entities']);
+  const [documentNo, setDocumentNo] = useState<string>('3');
   const [loading, setLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<'unknown' | 'success' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
-  const { userCredentials } = useCredentials();
+  const [docLimit, setDocLimit] = useState<string>('3');
+  const { driver } = useCredentials();
   const [scheme, setScheme] = useState<Scheme>({});
-  const { selectedRows } = useFileContext();
 
   const handleCheckboxChange = (graph: GraphType) => {
     const currentIndex = graphType.indexOf(graph);
@@ -50,6 +68,23 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setGraphType(newGraphSelected);
   };
 
+  const queryMap: {
+    Document: string;
+    Chunks: string;
+    Entities: string;
+    DocEntities: string;
+    DocChunks: string;
+    ChunksEntities: string;
+    DocChunkEntities: string;
+  } = {
+    Document: document,
+    Chunks: chunks,
+    Entities: entities,
+    DocEntities: docEntities,
+    DocChunks: docChunks,
+    ChunksEntities: chunksEntities,
+    DocChunkEntities: docChunkEntities,
+  };
   const handleZoomToFit = () => {
     nvlRef.current?.fit(
       nodes.map((node) => node.id),
@@ -63,7 +98,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }, 1000);
     return () => {
       nvlRef.current?.destroy();
-      setGraphType(['entities']);
+      setGraphType(['Entities']);
       clearTimeout(timeoutId);
       setScheme({});
     };
@@ -105,39 +140,99 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     if (open) {
       setNodes([]);
       setRelationships([]);
-      setLoading(true);
-      if (viewPoint === 'chatInfoView') {
-        console.log('nodes', nodeValues);
-        const { finalNodes, finalRels, schemeVal } = processGraphData(nodeValues ?? [], relationshipValues ?? []);
-        setNodes(finalNodes);
-        setRelationships(finalRels);
-        setScheme(schemeVal);
-        setLoading(false);
+      let queryToRun = '';
+      const newCheck: string =
+        graphType.length === 3
+          ? queryMap.DocChunkEntities
+          : graphType.includes('Entities') && graphType.includes('Chunks')
+          ? queryMap.ChunksEntities
+          : graphType.includes('Entities') && graphType.includes('Document')
+          ? queryMap.DocEntities
+          : graphType.includes('Document') && graphType.includes('Chunks')
+          ? queryMap.DocChunks
+          : graphType.includes('Entities') && graphType.length === 1
+          ? queryMap.Entities
+          : graphType.includes('Chunks') && graphType.length === 1
+          ? queryMap.Chunks
+          : queryMap.Document;
+      if (viewPoint === 'showGraphView') {
+        queryToRun = constructQuery(newCheck, documentNo);
+        console.log('showGraph', queryToRun);
       } else {
-        fetchData()
-          .then((result) => {
-            if (result && result.data.data.nodes.length > 0) {
-              const neoNodes = result.data.data.nodes.map((f: Node) => f);
-              const neoRels = result.data.data.relationships.map((f: Relationship) => f);
-              const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels);
-              setNodes(finalNodes);
-              setRelationships(finalRels);
-              setScheme(schemeVal);
-              setLoading(false);
-            } else {
-              setLoading(false);
-              setStatus('danger');
-              setStatusMessage(`Unable to retrieve document graph for ${inspectedName}`);
-            }
-          })
-          .catch((error: any) => {
+        queryToRun = constructDocQuery(newCheck);
+        console.log('table', queryToRun);
+      }
+      const session = driver?.session();
+      setLoading(true);
+      session
+        ?.run(queryToRun, { document_name: inspectedName })
+        .then((results) => {
+          if (results.records && results.records.length > 0) {
+            // @ts-ignore
+            const neo4jNodes = results.records.map((f) => f._fields[0]);
+            // @ts-ignore
+            const neo4jRels = results.records.map((f) => f._fields[1]);
+
+            // Infer color schema dynamically
+            let iterator = 0;
+            const schemeVal: Scheme = {};
+
+            neo4jNodes.forEach((node) => {
+              const labels = node.map((f: any) => f.labels);
+              labels.forEach((label: any) => {
+                if (schemeVal[label] == undefined) {
+                  schemeVal[label] = colors[iterator % colors.length];
+                  iterator += 1;
+                }
+              });
+            });
+            const newNodes = neo4jNodes.map((n) => {
+              const totalNodes = n.map((g: any) => {
+                return {
+                  id: g.elementId,
+                  size: getSize(g),
+                  captionAlign: 'bottom',
+                  iconAlign: 'bottom',
+                  captionHtml: <b>Test</b>,
+                  caption: `${g.labels}: ${getNodeCaption(g)}`,
+                  color: scheme[g.labels[0]],
+                  icon: getIcon(g),
+                };
+              });
+              return totalNodes;
+            });
+            const finalNodes = newNodes.flat();
+            const newRels: any = neo4jRels.map((r: any) => {
+              const totalRels = r.map((relations: any) => {
+                return {
+                  id: relations.elementId,
+                  from: relations.startNodeElementId,
+                  to: relations.endNodeElementId,
+                  caption: relations.type,
+                };
+              });
+              return totalRels;
+            });
+            const finalRels = newRels.flat();
+            setNodes(finalNodes);
+            setRelationships(finalRels);
+            setScheme(schemeVal);
+            setLoading(false);
+            console.log('nodes', nodes);
+            console.log('relations', relationships);
+          } else {
             setLoading(false);
             setStatus('danger');
-            setStatusMessage(error.message);
-          });
-      }
+            setStatusMessage('Unable to retrieve document graph for ' + inspectedName);
+          }
+        })
+        .catch((error: any) => {
+          setLoading(false);
+          setStatus('danger');
+          setStatusMessage(error.message);
+        });
     }
-  }, [open, graphType]);
+  }, [open, graphType, documentNo]);
 
   // If the modal is closed, render nothing
   if (!open) {
@@ -188,18 +283,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setStatus('unknown');
     setStatusMessage('');
     setGraphViewOpen(false);
-    setScheme({});
   };
-
-  // Legends placement
-  const legendCheck = Object.keys(scheme).sort((a, b) => {
-    if (a === 'Document' || a === 'Chunk') {
-      return -1;
-    } else if (b === 'Document' || b === 'Chunk') {
-      return 1;
-    }
-    return a.localeCompare(b);
-  });
 
   return (
     <>
@@ -219,24 +303,39 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           <div className='flex gap-5 mt-2 justify-between'>
             <div className='flex gap-5'>
               <Checkbox
-                checked={graphType.includes('document')}
+                checked={graphType.includes('Document')}
                 label='Document'
-                disabled={(graphType.includes('document') && graphType.length === 1) || loading}
-                onChange={() => handleCheckboxChange('document')}
+                disabled={graphType.includes('Document') && graphType.length === 1}
+                onChange={() => handleCheckboxChange('Document')}
               />
               <Checkbox
-                checked={graphType.includes('entities')}
+                checked={graphType.includes('Entities')}
                 label='Entities'
-                disabled={(graphType.includes('entities') && graphType.length === 1) || loading}
-                onChange={() => handleCheckboxChange('entities')}
+                disabled={graphType.includes('Entities') && graphType.length === 1}
+                onChange={() => handleCheckboxChange('Entities')}
               />
               <Checkbox
-                checked={graphType.includes('chunks')}
+                checked={graphType.includes('Chunks')}
                 label='Chunks'
-                disabled={(graphType.includes('chunks') && graphType.length === 1) || loading}
-                onChange={() => handleCheckboxChange('chunks')}
+                disabled={graphType.includes('Chunks') && graphType.length === 1}
+                onChange={() => handleCheckboxChange('Chunks')}
               />
             </div>
+            {viewPoint === 'showGraphView' && (
+              <div className='flex gap-2'>
+                <TextInput
+                  helpText='Documents Limit'
+                  required
+                  type='number'
+                  aria-label='Document Limit'
+                  onChange={(e) => setDocLimit(e.target.value)}
+                  value={docLimit}
+                ></TextInput>
+                <IconButton aria-label='refresh-btn' onClick={() => setDocumentNo(docLimit)}>
+                  <ArrowSmallRightIconOutline className='n-size-token-7' />
+                </IconButton>
+              </div>
+            )}
           </div>
         </Dialog.Header>
         <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border border-palette-neutral-border-weak'>
@@ -251,8 +350,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               </div>
             ) : (
               <>
-                <div className='flex' style={{ height: '100%' }}>
-                  <div className='bg-palette-neutral-bg-default relative' style={{ width: '100%', flex: '1' }}>
+                <Flex flexDirection='row' justifyContent='space-between' style={{ height: '100%', padding: '20px' }}>
+                  <div className='legend_div'>
+                    {Object.keys(scheme).map((key) => (
+                      <div className='legend' key={scheme.key} style={{ backgroundColor: `${scheme[key]}` }}>
+                        {key}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ flex: '0.8' }}>
                     <InteractiveNvlWrapper
                       nodes={nodes}
                       rels={relationships}
@@ -265,52 +371,18 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       nvlCallbacks={nvlCallbacks}
                     />
                     <IconButtonArray orientation='vertical' floating className='absolute bottom-4 right-4'>
-                      <IconButtonWithToolTip label='Zoomin' text='Zoom in' onClick={handleZoomIn} placement='left'>
+                      <ButtonWithToolTip text='Zoom in' onClick={handleZoomIn}>
                         <MagnifyingGlassPlusIconOutline />
-                      </IconButtonWithToolTip>
-                      <IconButtonWithToolTip label='Zoom out' text='Zoom out' onClick={handleZoomOut} placement='left'>
+                      </ButtonWithToolTip>
+                      <ButtonWithToolTip text='Zoom out' onClick={handleZoomOut}>
                         <MagnifyingGlassMinusIconOutline />
-                      </IconButtonWithToolTip>
-                      <IconButtonWithToolTip
-                        label='Zoom to fit'
-                        text='Zoom to fit'
-                        onClick={handleZoomToFit}
-                        placement='left'
-                      >
+                      </ButtonWithToolTip>
+                      <ButtonWithToolTip text='Zoom to fit' onClick={handleZoomToFit}>
                         <FitToScreenIcon />
-                      </IconButtonWithToolTip>
+                      </ButtonWithToolTip>
                     </IconButtonArray>
                   </div>
-                  <Resizable
-                    defaultSize={{
-                      width: 400,
-                      height: '100%',
-                    }}
-                    minWidth={230}
-                    maxWidth='72%'
-                    enable={{
-                      top: false,
-                      right: false,
-                      bottom: false,
-                      left: true,
-                      topRight: false,
-                      bottomRight: false,
-                      bottomLeft: false,
-                      topLeft: false,
-                    }}
-                    handleComponent={{ left: <DragIcon className='absolute top-1/2 h-6 w-6' /> }}
-                    handleClasses={{ left: 'ml-1' }}
-                  >
-                    <div className='legend_div'>
-                      <h4 className='py-4 pt-3 ml-2'>Result Overview</h4>
-                      <div className='flex gap-2 flex-wrap ml-2'>
-                        {legendCheck.map((key, index) => (
-                          <LegendsChip key={index} title={key} scheme={scheme} nodes={nodes} />
-                        ))}
-                      </div>
-                    </div>
-                  </Resizable>
-                </div>
+                </Flex>
               </>
             )}
           </div>

@@ -17,12 +17,8 @@ const urlScanAPI = async (props: ScanProps) => {
     formData.append('database', props?.userCredentials?.database ?? '');
     formData.append('userName', props?.userCredentials?.userName ?? '');
     formData.append('password', props?.userCredentials?.password ?? '');
-    if (props.source_type === 's3 bucket') {
-      formData.append('source_url', s3url ?? '');
-    } else {
-      formData.append('source_url', props?.urlParam ?? '');
-    }
-    formData.append('wiki_query', decodeURIComponent(props?.wikiquery ?? ''));
+    formData.append('source_url', props?.urlParam ?? '');
+    formData.append('wiki_query', props?.wikiquery ?? '');
     formData.append('source_type', props?.source_type ?? '');
     if (props.model != undefined) {
       formData.append('model', props?.model);

@@ -1,7 +1,6 @@
-import { createContext, useContext, useState, Dispatch, SetStateAction, FC, useEffect } from 'react';
-import { CustomFile, FileContextProviderProps, OptionType } from '../types';
+import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
+import { CustomFile } from '../types';
 import { defaultLLM } from '../utils/Constants';
-import { useCredentials } from './UserCredentials';
 
 interface FileContextType {
   files: (File | null)[] | [];
@@ -24,11 +23,10 @@ interface FileContextType {
   setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
-
-const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
-  const selectedNodeLabelstr = localStorage.getItem('selectedNodeLabels');
-  const selectedNodeRelsstr = localStorage.getItem('selectedRelationshipLabels');
-
+interface FileContextProviderProps {
+  children: ReactNode;
+}
+const FileContextProvider: React.FC<FileContextProviderProps> = ({ children }) => {
   const [files, setFiles] = useState<(File | null)[] | []>([]);
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
   const [model, setModel] = useState<string>(defaultLLM);

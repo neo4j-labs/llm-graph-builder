@@ -50,24 +50,10 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
       blob_name = gcs_bucket_folder+'/'+gcs_blob_filename 
   else:
       blob_name = gcs_blob_filename  
-  #credentials, project_id = google.auth.default()
-  logging.info(f"GCS project_id : {gcs_project_id}")  
-  #loader = GCSFileLoader(project_name=gcs_project_id, bucket=gcs_bucket_name, blob=blob_name, loader_func=load_pdf)
-  # pages = loader.load()
-  # file_name = gcs_blob_filename
-  #creds= Credentials(access_token)
-  creds= Credentials(access_token)
-  storage_client = storage.Client(project=gcs_project_id, credentials=creds)
-  bucket = storage_client.bucket(gcs_bucket_name)
-  blob = bucket.blob(blob_name) 
-  content = blob.download_as_bytes()
-  pdf_file = io.BytesIO(content)
-  pdf_reader = PdfReader(pdf_file)
-
-    # Extract text from all pages
-  text = ""
-  for page in pdf_reader.pages:
-        text += page.extract_text()
-  pages = [Document(page_content = text)]
-  return gcs_blob_filename, pages
+  credentials, project_id = google.auth.default()
+  logging.info(f"GCS project_id : {project_id}")   
+  loader = GCSFileLoader(project_name=project_id, bucket=gcs_bucket_name, blob=blob_name)
+  pages = loader.load()
+  file_name = gcs_blob_filename
+  return file_name, pages  
        

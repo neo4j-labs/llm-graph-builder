@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import CustomModal from '../HOC/CustomModal';
 import { TextInput } from '@neo4j-ndl/react';
-import { CustomFile, CustomFileBase, UserCredentials, WikipediaModalTypes, fileName } from '../types';
+import { CustomFile, UserCredentials, WikipediaModalTypes, fileName } from '../types';
 import { useFileContext } from '../context/UsersFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
@@ -46,7 +46,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
         const apiResponse = await urlScanAPI({
           userCredentials: userCredentials as UserCredentials,
           model: model,
-          wikiquery: wikiQuery.trim(),
+          wikiquery: wikiQuery,
           source_type: 'Wikipedia',
         });
         setStatus('success');
@@ -67,13 +67,13 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
         if (apiResCheck) {
           setStatus('info');
           setStatusMessage(
-            `Successfully Created Source Node for ${apiResponse.data.success_count} and Failed for ${apiResponse.data.failed_count} Wikipedia Link`
+            `Successfully Created Source Nodes for ${apiResponse.data.success_count} and Failed for ${apiResponse.data.failed_count} Wikipedia Sources`
           );
         } else if (apiResponse?.data?.success_count) {
-          setStatusMessage(`Successfully Created Source Node for ${apiResponse.data.success_count} Wikipedia Link`);
+          setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Wikipedia Sources`);
         } else {
           setStatus('danger');
-          setStatusMessage(`Failed to Create Source Node for ${apiResponse.data.failed_count} Wikipedia Link`);
+          setStatusMessage(`Failed to Create Source Nodes for ${apiResponse.data.failed_count} Wikipedia Sources`);
         }
 
         const copiedFilesData: CustomFile[] = [...filesData];
@@ -85,7 +85,6 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
               size: item.fileSize,
               wiki_query: item.fileName,
               source_url: item.url,
-              id: uuidv4(),
               ...defaultValues,
             });
           } else {
@@ -140,9 +139,9 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
           id='keyword'
           value={wikiQuery}
           disabled={false}
-          label='Wikipedia Link'
-          aria-label='Wikipedia Link'
-          placeholder='https://en.wikipedia.org/wiki/Albert_Einstein'
+          label='Wikipedia Source'
+          aria-label='Wikipedia Source'
+          placeholder='Albert Einstein ,Isaac Newton'
           autoFocus
           fluid
           required

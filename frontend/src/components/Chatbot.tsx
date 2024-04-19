@@ -1,24 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Button, Widget, Typography, Avatar, TextInput, IconButton, Modal, useCopyToClipboard } from '@neo4j-ndl/react';
-import {
-  XMarkIconOutline,
-  ClipboardDocumentIconOutline,
-  SpeakerWaveIconOutline,
-  SpeakerXMarkIconOutline,
-} from '@neo4j-ndl/react/icons';
+/* eslint-disable no-confusing-arrow */
+import { useEffect, useRef, useState } from 'react';
+import { Button, Widget, Typography, Avatar, TextInput, TextLink } from '@neo4j-ndl/react';
+import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
-import { ChatbotProps, Source, UserCredentials } from '../types';
+import { ChatbotProps, UserCredentials } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { chatBotAPI } from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../context/UsersFiles';
-import InfoModal from './InfoModal';
-import clsx from 'clsx';
-import ReactMarkdown from 'react-markdown';
-import IconButtonWithToolTip from './IconButtonToolTip';
-import { buttonCaptions, tooltips } from '../utils/Constants';
-import useSpeechSynthesis from '../hooks/useSpeech';
-import ButtonWithToolTip from './ButtonWithToolTip';
 
 const Chatbot: React.FC<ChatbotProps> = (props) => {
   const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, clear } = props;
@@ -53,19 +42,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       sessionStorage.setItem('session_id', id);
     }
   }, []);
-  const simulateTypingEffect = (
-    response: {
-      reply: string;
-      sources?: Source[];
-      model?: string;
-      chunk_ids?: string[];
-      total_tokens?: number;
-      response_time?: number;
-      speaking?: boolean;
-      copying?: boolean;
-    },
-    index = 0
-  ) => {
+
+  const simulateTypingEffect = (response: { reply: string; sources?: [string] }, index = 0) => {
     if (index < response.reply.length) {
       const nextIndex = index + 1;
       const currentTypedText = response.reply.substring(0, nextIndex);
@@ -80,15 +58,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
               user: 'chatbot',
               message: currentTypedText,
               datetime: datetime,
-              isTyping: false,
-              isLoading: true,
+              isTyping: true,
               sources: response?.sources,
-              model: response?.model,
-              chunks: response?.chunk_ids,
-              total_tokens: response.total_tokens,
-              response_time: response?.response_time,
-              speaking: false,
-              copying: false,
             },
           ]);
         } else {
@@ -99,14 +70,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
             lastmsg.message = currentTypedText;
             lastmsg.datetime = datetime;
             lastmsg.isTyping = true;
-            lastmsg.isLoading = false;
             lastmsg.sources = response?.sources;
-            lastmsg.model = response?.model;
-            lastmsg.chunk_ids = response?.chunk_ids;
-            lastmsg.total_tokens = response?.total_tokens;
-            lastmsg.response_time = response?.response_time;
-            lastmsg.speaking = false;
-            lastmsg.copying = false;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -142,30 +106,15 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
     try {
       setInputMessage('');
       simulateTypingEffect({ reply: ' ' });
-      const chatbotAPI = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
-      const chatresponse = chatbotAPI?.response;
-      console.log('api', chatresponse);
+      const chatresponse = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
       chatbotReply = chatresponse?.data?.data?.message;
-      chatSources = chatresponse?.data?.data?.info.sources;
-      chatModel = chatresponse?.data?.data?.info.model;
-      chatChunks = chatresponse?.data?.data?.info.chunkids;
-      chatTokensUsed = chatresponse?.data?.data?.info.total_tokens;
-      chatTimeTaken = chatresponse?.data?.data?.info.response_time;
-      const finalbotReply = {
-        reply: chatbotReply,
-        sources: chatSources,
-        model: chatModel,
-        chunk_ids: chatChunks,
-        total_tokens: chatTokensUsed,
-        response_time: chatTimeTaken,
-        speaking: false,
-        copying: false,
-      };
-      simulateTypingEffect(finalbotReply);
+      simulateTypingEffect({ reply: chatbotReply, sources: chatresponse?.data?.data?.sources });
+      setLoading(false);
     } catch (error) {
       chatbotReply = "Oops! It seems we couldn't retrieve the answer. Please try again later";
       setInputMessage('');
       simulateTypingEffect({ reply: chatbotReply });
+      setLoading(false);
     }
   };
   const scrollToBottom = () => {
@@ -277,76 +226,23 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                   >
                     <ReactMarkdown>{chat.message}</ReactMarkdown>
                   </div>
-                  <div>
-                    <div>
-                      <Typography variant='body-small' className='pt-2 font-bold'>
-                        {chat.datetime}
-                      </Typography>
-                    </div>
-                    {chat.user === 'chatbot' &&
-                      chat.id !== 2 &&
-                      chat.sources?.length !== 0 &&
-                      !chat.isLoading &&
-                      !chat.isTyping && (
-                        <div className='flex inline-block'>
-                          <ButtonWithToolTip
-                            className='w-4 h-4 inline-block p-6 mt-1.5'
-                            fill='text'
-                            placement='top'
-                            clean
-                            text='Retrieval Information'
-                            label='Retrieval Information'
-                            disabled={chat.isTyping || chat.isLoading}
-                            onClick={() => {
-                              setModelModal(chat.model ?? '');
-                              setSourcesModal(chat.sources ?? []);
-                              setResponseTime(chat.response_time ?? 0);
-                              setChunkModal(chat.chunk_ids ?? []);
-                              setTokensUsed(chat.total_tokens ?? 0);
-                              setShowInfoModal(true);
-                            }}
-                          >
-                            {' '}
-                            {buttonCaptions.details}
-                          </ButtonWithToolTip>
-                          <IconButtonWithToolTip
-                            label='copy text'
-                            placement='top'
-                            clean
-                            text={chat.copying ? tooltips.copied : tooltips.copy}
-                            onClick={() => handleCopy(chat.message, chat.id)}
-                            disabled={chat.isTyping || chat.isLoading}
-                          >
-                            <ClipboardDocumentIconOutline className='w-4 h-4 inline-block' />
-                          </IconButtonWithToolTip>
-                          {copyMessageId === chat.id && (
-                            <>
-                              <span className='pt-4 text-xs'>Copied!</span>
-                              <span style={{ display: 'none' }}>{value}</span>
-                            </>
-                          )}
-                          <IconButtonWithToolTip
-                            placement='top'
-                            clean
-                            onClick={() => {
-                              if (chat.speaking) {
-                                handleCancel(chat.id);
-                              } else {
-                                handleSpeak(chat.message, chat.id);
-                              }
-                            }}
-                            text={chat.speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
-                            disabled={listMessages.some((msg) => msg.speaking && msg.id !== chat.id)}
-                            label={chat.speaking ? 'stop speaking' : 'text to speech'}
-                          >
-                            {chat.speaking ? (
-                              <SpeakerXMarkIconOutline className='w-4 h-4 inline-block' />
+                  <div className='text-right align-bottom pt-3'>
+                    <Typography variant='body-small'>{chat.datetime}</Typography>
+                    {chat?.sources?.length ? (
+                      <div className={`flex ${chat.sources?.length > 1 ? 'flex-col' : 'flex-row justify-end'} gap-1`}>
+                        {chat.sources.map((link) => (
+                          <div className='text-right'>
+                            {link.startsWith('http') || link.startsWith('https') ? (
+                              <TextLink href={link} externalLink={true}>
+                                Source
+                              </TextLink>
                             ) : (
-                              <SpeakerWaveIconOutline className='w-4 h-4 inline-block' />
+                              <Typography variant='body-small'>{link}</Typography>
                             )}
-                          </IconButtonWithToolTip>
-                        </div>
-                      )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 </Widget>
               </div>

@@ -1,14 +1,4 @@
-import {
-  Checkbox,
-  DataGrid,
-  DataGridComponents,
-  Flex,
-  IconButton,
-  ProgressBar,
-  StatusIndicator,
-  TextLink,
-  Typography,
-} from '@neo4j-ndl/react';
+import { DataGrid, DataGridComponents, IconButton, StatusIndicator, TextLink, Typography } from '@neo4j-ndl/react';
 import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
 import {
@@ -19,28 +9,19 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   CellContext,
-  Table,
-  Row,
 } from '@tanstack/react-table';
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { statusCheck } from '../utils/Utils';
-import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, alertStateType } from '../types';
+import { SourceNode, CustomFile, FileTableProps, UserCredentials } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
 import CustomAlert from './Alert';
 import CustomProgressBar from './CustomProgressBar';
-import subscribe from '../services/PollingAPI';
-import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
-import useServerSideEvent from '../hooks/useSse';
-import { AxiosError } from 'axios';
-import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
-import cancelAPI from '../services/CancelAPI';
-import IconButtonWithToolTip from './IconButtonToolTip';
 
 const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
-  const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows } = useFileContext();
+  const { filesData, setFilesData, model } = useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -135,76 +116,16 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       }),
       columnHelper.accessor((row) => row.status, {
         id: 'status',
-        cell: (info) => {
-          if (info.getValue() != 'Processing') {
-            return (
-              <div
-                className='cellClass'
-                title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
-              >
-                <StatusIndicator type={statusCheck(info.getValue())} />
-                {info.getValue()}
-              </div>
-            );
-          } else if (info.getValue() === 'Processing' && info.row.original.processingProgress === undefined) {
-            return (
-              <div className='cellClass'>
-                <StatusIndicator type={statusCheck(info.getValue())} />
-                <i>Processing</i>
-                <div className='mx-1'>
-                  <IconButton
-                    size='medium'
-                    title='cancel the processing job'
-                    aria-label='cancel job button'
-                    clean
-                    disabled={info.row.original.processingStatus}
-                    onClick={() => {
-                      cancelHandler(
-                        info.row.original.name as string,
-                        info.row.original.id as string,
-                        info.row.original.fileSource as string
-                      );
-                    }}
-                  >
-                    <XMarkIconOutline />
-                  </IconButton>
-                </div>
-              </div>
-            );
-          } else if (
-            info.getValue() === 'Processing' &&
-            info.row.original.processingProgress != undefined &&
-            info.row.original.processingProgress < 100
-          ) {
-            return (
-              <div className='cellClass'>
-                <ProgressBar
-                  heading='Processing '
-                  size='small'
-                  value={info.row.original.processingProgress}
-                ></ProgressBar>
-                <div className='mx-1'>
-                  <IconButton
-                    size='medium'
-                    title='cancel the processing job'
-                    aria-label='cancel job button'
-                    clean
-                    disabled={info.row.original.processingStatus}
-                    onClick={() => {
-                      cancelHandler(
-                        info.row.original.name as string,
-                        info.row.original.id as string,
-                        info.row.original.fileSource as string
-                      );
-                    }}
-                  >
-                    <XMarkIconOutline />
-                  </IconButton>
-                </div>
-              </div>
-            );
-          }
-        },
+        cell: (info) => (
+          <div>
+            <StatusIndicator type={statusCheck(info.getValue())} />
+            {info.row.original?.status === 'Failed' ? (
+              <span title={info.row.original?.errorMessage}>{info.getValue()}</span>
+            ) : (
+              <i>{info.getValue()}</i>
+            )}
+          </div>
+        ),
         header: () => <span>Status</span>,
         footer: (info) => info.column.id,
         filterFn: 'statusFilter' as any,
@@ -237,7 +158,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
             </Typography>
           );
         },
-        header: () => <span>Upload Status</span>,
+        header: () => <span>Upload Progress</span>,
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.size, {
@@ -262,12 +183,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
               </Flex>
             );
           }
-          return (
-            <div>
-              <span>{info.row.original.fileSource} / </span>
-              <span>{info.row.original.type}</span>
-            </div>
-          );
+          return <i>{info.getValue()}</i>;
         },
         header: () => <span>Source/Type</span>,
         footer: (info) => info.column.id,
@@ -362,66 +278,12 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   gcsBucketFolder: item?.gcsBucketFolder,
                   errorMessage: item?.errorMessage,
                   uploadprogess: item?.uploadprogress ?? 0,
-                  google_project_id: item?.gcsProjectId,
-                  language: item.language ?? '',
-                  processingProgress:
-                    item.processed_chunk != undefined &&
-                    item.total_chunks != undefined &&
-                    !isNaN(Math.floor((item.processed_chunk / item.total_chunks) * 100))
-                      ? Math.floor((item.processed_chunk / item.total_chunks) * 100)
-                      : undefined,
-                  total_pages: item.total_pages ?? 0,
-                  access_token: item.access_token ?? '',
                 });
               }
             });
           }
           setIsLoading(false);
           setFilesData(prefiles);
-          res.data.data.forEach((item) => {
-            if (
-              item.status === 'Processing' &&
-              item.fileName != undefined &&
-              userCredentials &&
-              userCredentials.database &&
-              item.total_pages
-            ) {
-              if (item?.total_pages < 20) {
-                subscribe(
-                  item.fileName,
-                  userCredentials?.uri,
-                  userCredentials?.userName,
-                  userCredentials?.database,
-                  userCredentials?.password,
-                  updatestatus,
-                  updateProgress
-                ).catch((error: AxiosError) => {
-                  // @ts-ignore
-                  const errorfile = decodeURI(error.config.url.split('?')[0].split('/').at(-1));
-                  setFilesData((prevfiles) => {
-                    return prevfiles.map((curfile) => {
-                      if (curfile.name == errorfile) {
-                        return {
-                          ...curfile,
-                          status: 'Failed',
-                        };
-                      }
-                      return curfile;
-                    });
-                  });
-                });
-              } else {
-                triggerStatusUpdateAPI(
-                  item.fileName,
-                  userCredentials.uri,
-                  userCredentials.userName,
-                  userCredentials.password,
-                  userCredentials.database,
-                  updateStatusForLargeFiles
-                );
-              }
-            }
-          });
         } else {
           throw new Error(res?.data?.error);
         }
@@ -435,6 +297,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         setIsLoading(false);
         setConnectionStatus(false);
         setFilesData([]);
+        setShowAlert(true);
+        console.log(error);
       }
     };
     if (connectionStatus) {

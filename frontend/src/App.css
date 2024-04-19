@@ -58,8 +58,8 @@
 }
 
 .contentWithChatBot {
-  width: calc(-550px + 100dvw);
-  height: calc(100dvh - 58px);
+  width: calc(-425px + 100dvw);
+  height: calc(100dvh - 60px);
   padding: 3px;
   display: flex;
   flex-direction: column;
@@ -202,20 +202,16 @@
   padding: 20px;
   align-items: flex-start;
   justify-content: center;
-  flex-direction: column;
 }
 
 .legend_div {
+  display: flex;
+  flex: 0.2;
   flex-wrap: wrap;
-  flex: 1;
   padding: 15px;
+  gap: 8px;
   background-color: #ffff;
-  scrollbar-width: thin;
-  max-height: 100%;
-  overflow-y: auto;
-  height: 100%;
-  z-index: 1;
-  box-shadow: -2px 0px 6px #e7e7e7;
+  height: max-content
 }
 
 .legend {
@@ -223,45 +219,11 @@
   min-width: 0px;
   cursor: pointer;
   border-radius: 12px;
-  padding: 5px 8px;
+  padding: 2px 8px;
   font-size: var(--font-size-label);
   font-weight: var(--font-weight-bold);
   letter-spacing: 0;
   line-height: 1.25rem;
   width: max-content;
-  height: 30px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.ndl-widget-content>div {
-  overflow-wrap: break-word
-}
-
-.cellClass {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-}
-
-.ndl-type-checkbox,
-.ndl-label-before>span {
-  font-weight: 600;
-  font-size: larger;
-}
-
-.ndl-upload-img-wrapper {
-  background: url("./assets/images/dropzone.svg");
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.ndl-dropzone .ndl-dropzone-header {
-  row-gap: 0 !important;
-}
-
-.ndl-status-indicator{
-  margin-bottom: 0px !important;
+  height: 30px
 }

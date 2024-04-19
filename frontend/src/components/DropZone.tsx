@@ -1,23 +1,21 @@
 import axios from 'axios';
-import { Dropzone, Flex, Typography } from '@neo4j-ndl/react';
+import { Dropzone } from '@neo4j-ndl/react';
 import React, { useState, useEffect, FunctionComponent } from 'react';
 import Loader from '../utils/Loader';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
-import { CustomFile, CustomFileBase, UploadResponse, alertStateType } from '../types';
-import { buttonCaptions, chunkSize } from '../utils/Constants';
+import { CustomFile, alertState } from '../types';
+import { chunkSize } from '../utils/Constants';
 import { url } from '../utils/Utils';
-import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
-import IconButtonWithToolTip from './IconButtonToolTip';
 
 const DropZone: FunctionComponent = () => {
   const { filesData, setFilesData, model } = useFileContext();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isClicked, setIsClicked] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
-  const [alertDetails, setalertDetails] = React.useState<alertStateType>({
+  const [alertDetails, setalertDetails] = React.useState<alertState>({
     showAlert: false,
     alertType: 'error',
     alertMessage: '',
@@ -37,7 +35,6 @@ const DropZone: FunctionComponent = () => {
         model: model,
         fileSource: 'local file',
         uploadprogess: 0,
-        processingProgress: undefined,
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
@@ -51,7 +48,6 @@ const DropZone: FunctionComponent = () => {
             type: `${file.name.substring(file.name.lastIndexOf('.') + 1, file.name.length).toUpperCase()}`,
             size: file.size,
             uploadprogess: file.size && file?.size < chunkSize ? 100 : 0,
-            id: uuidv4(),
             ...defaultValues,
           });
         } else {
@@ -99,6 +95,7 @@ const DropZone: FunctionComponent = () => {
     const uploadNextChunk = async () => {
       if (chunkNumber <= totalChunks) {
         const chunk = file.slice(start, end);
+        console.log({ chunkNumber });
         const formData = new FormData();
         formData.append('file', chunk);
         formData.append('chunkNumber', chunkNumber.toString());
@@ -121,29 +118,15 @@ const DropZone: FunctionComponent = () => {
           })
         );
         try {
-          const apiResponse = await axios.post<UploadResponse>(`${url()}/upload`, formData, {
+          const apiResponse = await axios.post(`${url()}/upload`, formData, {
             headers: {
               'Content-Type': 'multipart/form-data',
             },
           });
-
+          console.log(apiResponse.data);
           if (apiResponse?.data.status === 'Failed') {
             throw new Error(`message:${apiResponse.data.message},fileName:${apiResponse.data.file_name}`);
           } else {
-            if (apiResponse.data.data) {
-              setFilesData((prevfiles) =>
-                prevfiles.map((curfile) => {
-                  if (curfile.name == file.name) {
-                    return {
-                      ...curfile,
-                      uploadprogess: chunkNumber * chunkProgressIncrement,
-                      total_pages: apiResponse.data.data.total_pages,
-                    };
-                  }
-                  return curfile;
-                })
-              );
-            }
             setFilesData((prevfiles) =>
               prevfiles.map((curfile) => {
                 if (curfile.name == file.name) {
@@ -177,7 +160,7 @@ const DropZone: FunctionComponent = () => {
                 return {
                   ...curfile,
                   status: 'Failed',
-                  type: `${file.name.substring(file.name.lastIndexOf('.') + 1, file.name.length).toUpperCase()}`,
+                  type: curfile.type?.split('/')[1]?.toUpperCase() ?? 'PDF',
                 };
               }
               return curfile;
@@ -227,16 +210,7 @@ const DropZone: FunctionComponent = () => {
         className='!bg-none'
         supportedFilesDescription={'Supports: PDF Files'}
         dropZoneOptions={{
-          accept: {
-            'application/pdf': ['.pdf'],
-            'image/*': ['.jpeg', '.jpg', '.png', '.svg'],
-            'text/html': ['.html'],
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-            'text/plain': ['.txt'],
-            'application/vnd.ms-powerpoint': ['.pptx'],
-            'application/vnd.ms-excel': ['.xls'],
-            'text/markdown': ['.md'],
-          },
+          // accept: { 'application/pdf': ['.pdf'] },
           onDrop: (f: Partial<globalThis.File>[]) => {
             onDropHandler(f);
           },
