@@ -203,3 +203,10 @@ export type alertState = {
   alertType: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined;
   alertMessage: string;
 };
+
+export type Scheme = Record<string, string>;
+
+export interface LegendChipProps {
+  scheme: Scheme;
+  title: string,
+}

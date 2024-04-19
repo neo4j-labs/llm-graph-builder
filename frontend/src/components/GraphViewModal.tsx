@@ -9,7 +9,7 @@ import {
   TextInput,
 } from '@neo4j-ndl/react';
 import { useEffect, useRef, useState } from 'react';
-import { GraphType, GraphViewModalProps } from '../types';
+import { GraphType, GraphViewModalProps, Scheme } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL, { NvlOptions } from '@neo4j-nvl/core';
 import type { Node, Relationship } from '@neo4j-nvl/core';
@@ -33,8 +33,7 @@ import {
 } from '../utils/Constants';
 import { ArrowSmallRightIconOutline } from '@neo4j-ndl/react/icons';
 import { useCredentials } from '../context/UserCredentials';
-
-type Scheme = Record<string, string>;
+import { LegendsChip } from './LegendsChip';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -108,16 +107,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         graphType.length === 3
           ? queryMap.DocChunkEntities
           : graphType.includes('Entities') && graphType.includes('Chunks')
-          ? queryMap.ChunksEntities
-          : graphType.includes('Entities') && graphType.includes('Document')
-          ? queryMap.DocEntities
-          : graphType.includes('Document') && graphType.includes('Chunks')
-          ? queryMap.DocChunks
-          : graphType.includes('Entities') && graphType.length === 1
-          ? queryMap.Entities
-          : graphType.includes('Chunks') && graphType.length === 1
-          ? queryMap.Chunks
-          : queryMap.Document;
+            ? queryMap.ChunksEntities
+            : graphType.includes('Entities') && graphType.includes('Document')
+              ? queryMap.DocEntities
+              : graphType.includes('Document') && graphType.includes('Chunks')
+                ? queryMap.DocChunks
+                : graphType.includes('Entities') && graphType.length === 1
+                  ? queryMap.Entities
+                  : graphType.includes('Chunks') && graphType.length === 1
+                    ? queryMap.Chunks
+                    : queryMap.Document;
       if (viewPoint === 'showGraphView') {
         queryToRun = constructQuery(newCheck, documentNo);
         console.log('showGraph', queryToRun);
@@ -142,6 +141,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
             neo4jNodes.forEach((node) => {
               const labels = node.map((f: any) => f.labels);
+
               labels.forEach((label: any) => {
                 if (schemeVal[label] == undefined) {
                   schemeVal[label] = colors[iterator % colors.length];
@@ -149,6 +149,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 }
               });
             });
+
             const newNodes = neo4jNodes.map((n) => {
               const totalNodes = n.map((g: any) => {
                 return {
@@ -158,7 +159,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                   iconAlign: 'bottom',
                   captionHtml: <b>Test</b>,
                   caption: `${g.labels}: ${getNodeCaption(g)}`,
-                  color: scheme[g.labels[0]],
+                  color: schemeVal[g.labels[0]],
                   icon: getIcon(g),
                 };
               });
@@ -196,6 +197,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         });
     }
   }, [open, graphType, documentNo]);
+
+  const labelsLength = Object.keys(scheme).length;
 
   // If the modal is closed, render nothing
   if (!open) {
@@ -243,6 +246,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setStatusMessage('');
     setGraphViewOpen(false);
   };
+
+  const heightCheck = labelsLength > 80 ? '100%' : 'max-content';
+  const overflowCheck = labelsLength > 80 ? 'scroll' : 'hidden';
 
   return (
     <>
@@ -297,8 +303,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             )}
           </div>
         </Dialog.Header>
-        <Dialog.Content className='n-flex n-flex-col n-gap-token-4 w-full h-full'>
-          <div className='bg-palette-neutral-bg-default relative h-full w-full overflow-hidden'>
+        <Dialog.Content className='n-flex n-flex-col n-gap-token-4 w-full h-[95%]'>
+          <div className='bg-palette-neutral-bg-default relative h-[95%] w-full overflow-hidden'>
             {loading ? (
               <div className='my-40 flex items-center justify-center'>
                 <LoadingSpinner size='large' />
@@ -316,11 +322,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             ) : (
               <>
                 <Flex flexDirection='row' justifyContent='space-between' style={{ height: '100%', padding: '20px' }}>
-                  <div className='legend_div'>
+                  <div className='legend_div' style={{ height: heightCheck, overflowY: overflowCheck }}>
                     {Object.keys(scheme).map((key) => (
-                      <div className='legend' key={scheme.key} style={{ backgroundColor: `${scheme[key]}` }}>
-                        {key}
-                      </div>
+                      <LegendsChip key={key} title={key} scheme={scheme} />
                     ))}
                   </div>
                   <div style={{ flex: '0.8' }}>

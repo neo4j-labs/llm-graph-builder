@@ -98,19 +98,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           filesData[uid].gcsBucketFolder ?? ''
         );
         if (apiResponse?.status === 'Failed') {
-          setShowAlert(true);
-          setErrorMessage(apiResponse?.message);
-          setFilesData((prevfiles) =>
-            prevfiles.map((curfile, idx) => {
-              if (idx == uid) {
-                return {
-                  ...curfile,
-                  status: 'Failed',
-                };
-              }
-              return curfile;
-            })
-          );
           throw new Error(`message:${apiResponse.message},fileName:${apiResponse.file_name}`);
         } else {
           setFilesData((prevfiles) => {

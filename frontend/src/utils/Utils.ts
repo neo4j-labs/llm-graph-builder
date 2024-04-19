@@ -84,6 +84,7 @@ export const constructQuery = (queryTochange: string, docLimit: string) => {
   WITH docs, d ORDER BY d.createdAt DESC 
   LIMIT ${docLimit}
   OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
+  WITH * LIMIT 100
   WITH [] 
   ${queryTochange}
   AS paths
@@ -98,6 +99,7 @@ MATCH docs = (d:Document {status:'Completed'})
 WHERE d.fileName = $document_name
 WITH docs, d ORDER BY d.createdAt DESC 
 OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
+WITH * LIMIT 100
 WITH [] 
 ${queryTochange}
 AS paths
