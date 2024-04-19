@@ -1,12 +1,17 @@
-import { LegendChipProps } from "../types"
-import { colors } from "../utils/Constants";
+import { useMemo } from 'react';
+import { LegendChipProps } from '../types';
+import { colors } from '../utils/Constants';
 
-export const LegendsChip: React.FunctionComponent<LegendChipProps> = ({ scheme, title }) => {
-    const count = Object.keys(scheme).filter((nodeTitle) => nodeTitle === title);
-    const showCount = Object.keys(scheme).length <= colors.length;
-    return (
-        <div className='legend' key={scheme.key} style={{ backgroundColor: `${scheme[title]}` }}>
-            {title}{showCount && count.length}
-        </div>
-    )
-}
+export const LegendsChip: React.FunctionComponent<LegendChipProps> = ({ scheme, title, nodes }) => {
+  const showCount = useMemo(() => Object.keys(scheme).length <= colors.length, []);
+  const chunkcount = useMemo(
+    () => [...new Set(nodes?.filter((n) => n?.labels?.includes(title)).map((i) => i.caption))].length,
+    []
+  );
+  return (
+    <div className='legend' key={scheme.key} style={{ backgroundColor: `${scheme[title]}` }}>
+      {title}
+      {showCount && chunkcount && `(${chunkcount})`}
+    </div>
+  );
+};

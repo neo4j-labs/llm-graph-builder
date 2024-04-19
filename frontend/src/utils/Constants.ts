@@ -53,7 +53,7 @@ export const colors = [
   '#6867ad',
   '#ad6777',
   '#9d8a9c',
-  '#eaf71d'
+  '#eaf71d',
 ];
 
 export const llms =
@@ -63,6 +63,6 @@ export const llms =
 export const defaultLLM = llms?.includes('OpenAI GPT 4')
   ? 'OpenAI GPT 4'
   : llms?.includes('Gemini 1.0 Pro')
-    ? 'Gemini 1.0 Pro'
-    : 'Diffbot';
+  ? 'Gemini 1.0 Pro'
+  : 'Diffbot';
 export const chunkSize = 5 * 1024 * 1024;

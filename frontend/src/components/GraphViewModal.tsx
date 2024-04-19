@@ -9,7 +9,7 @@ import {
   TextInput,
 } from '@neo4j-ndl/react';
 import { useEffect, useRef, useState } from 'react';
-import { GraphType, GraphViewModalProps, Scheme } from '../types';
+import { GraphType, GraphViewModalProps, LabelCount, Scheme } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL, { NvlOptions } from '@neo4j-nvl/core';
 import type { Node, Relationship } from '@neo4j-nvl/core';
@@ -95,6 +95,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       nvlRef.current?.destroy();
       setGraphType(['Entities']);
       clearTimeout(timeoutId);
+      setScheme({});
     };
   }, []);
 
@@ -107,16 +108,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         graphType.length === 3
           ? queryMap.DocChunkEntities
           : graphType.includes('Entities') && graphType.includes('Chunks')
-            ? queryMap.ChunksEntities
-            : graphType.includes('Entities') && graphType.includes('Document')
-              ? queryMap.DocEntities
-              : graphType.includes('Document') && graphType.includes('Chunks')
-                ? queryMap.DocChunks
-                : graphType.includes('Entities') && graphType.length === 1
-                  ? queryMap.Entities
-                  : graphType.includes('Chunks') && graphType.length === 1
-                    ? queryMap.Chunks
-                    : queryMap.Document;
+          ? queryMap.ChunksEntities
+          : graphType.includes('Entities') && graphType.includes('Document')
+          ? queryMap.DocEntities
+          : graphType.includes('Document') && graphType.includes('Chunks')
+          ? queryMap.DocChunks
+          : graphType.includes('Entities') && graphType.length === 1
+          ? queryMap.Entities
+          : graphType.includes('Chunks') && graphType.length === 1
+          ? queryMap.Chunks
+          : queryMap.Document;
       if (viewPoint === 'showGraphView') {
         queryToRun = constructQuery(newCheck, documentNo);
         console.log('showGraph', queryToRun);
@@ -138,11 +139,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             // Infer color schema dynamically
             let iterator = 0;
             const schemeVal: Scheme = {};
-
+            let labels: string[] = [];
             neo4jNodes.forEach((node) => {
-              const labels = node.map((f: any) => f.labels);
-
-              labels.forEach((label: any) => {
+              labels = node.map((f: any) => f.labels);
+              labels.forEach((label: string) => {
                 if (schemeVal[label] == undefined) {
                   schemeVal[label] = colors[iterator % colors.length];
                   iterator += 1;
@@ -158,9 +158,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                   captionAlign: 'bottom',
                   iconAlign: 'bottom',
                   captionHtml: <b>Test</b>,
-                  caption: `${g.labels}: ${getNodeCaption(g)}`,
+                  caption: getNodeCaption(g),
                   color: schemeVal[g.labels[0]],
                   icon: getIcon(g),
+                  labels: g.labels,
                 };
               });
               return totalNodes;
@@ -178,12 +179,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               return totalRels;
             });
             const finalRels = newRels.flat();
+            console.log(finalNodes.filter((n) => n.caption.includes('Chunk')));
             setNodes(finalNodes);
             setRelationships(finalRels);
             setScheme(schemeVal);
             setLoading(false);
-            console.log('nodes', nodes);
-            console.log('relations', relationships);
           } else {
             setLoading(false);
             setStatus('danger');
@@ -245,10 +245,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setStatus('unknown');
     setStatusMessage('');
     setGraphViewOpen(false);
+    setScheme({});
   };
 
   const heightCheck = labelsLength > 80 ? '100%' : 'max-content';
   const overflowCheck = labelsLength > 80 ? 'scroll' : 'hidden';
+  console.log({ labelsLength });
 
   return (
     <>
@@ -324,10 +326,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 <Flex flexDirection='row' justifyContent='space-between' style={{ height: '100%', padding: '20px' }}>
                   <div className='legend_div' style={{ height: heightCheck, overflowY: overflowCheck }}>
                     {Object.keys(scheme).map((key) => (
-                      <LegendsChip key={key} title={key} scheme={scheme} />
+                      <LegendsChip key={key} title={key} scheme={scheme} nodes={nodes} />
                     ))}
                   </div>
-                  <div style={{ flex: '0.8' }}>
+                  <div style={{ flex: '0.7' }}>
                     <InteractiveNvlWrapper
                       nodes={nodes}
                       rels={relationships}

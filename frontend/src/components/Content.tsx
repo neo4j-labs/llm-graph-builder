@@ -98,7 +98,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           filesData[uid].gcsBucketFolder ?? ''
         );
         if (apiResponse?.status === 'Failed') {
-          throw new Error(`message:${apiResponse.message},fileName:${apiResponse.file_name}`);
+          throw new Error(
+            `error:${apiResponse.message},message:${apiResponse.message},fileName:${apiResponse.file_name}`
+          );
         } else {
           setFilesData((prevfiles) => {
             return prevfiles.map((curfile) => {
@@ -119,7 +121,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         }
       } catch (err: any) {
         const errorMessage = err.message;
-        const messageMatch = errorMessage.match(/message:(.*),fileName:(.*)/);
+        const messageMatch = errorMessage.match(/message:(.*),fileName:(.*),error:(.*)/);
         if (err?.name === 'AxiosError') {
           setShowAlert(true);
           setErrorMessage(err.message);
@@ -137,6 +139,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         } else {
           const message = messageMatch[1].trim();
           const fileName = messageMatch[2].trim();
+          const errorMessage = messageMatch[3].trim();
           setShowAlert(true);
           setErrorMessage(message);
           setFilesData((prevfiles) =>
@@ -145,6 +148,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                 return {
                   ...curfile,
                   status: 'Failed',
+                  errorMessage,
                 };
               }
               return curfile;

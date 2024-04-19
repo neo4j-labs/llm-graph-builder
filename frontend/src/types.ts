@@ -2,6 +2,7 @@ import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { AxiosResponse } from 'axios';
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 import { OverridableStringUnion } from '@mui/types';
+import type { Node } from '@neo4j-nvl/core';
 
 export interface CustomFile extends Partial<globalThis.File> {
   processing: number | string;
@@ -205,8 +206,12 @@ export type alertState = {
 };
 
 export type Scheme = Record<string, string>;
-
+export type LabelCount = Record<string, number>;
+interface NodeType extends Partial<Node> {
+  labels?: string[];
+}
 export interface LegendChipProps {
   scheme: Scheme;
-  title: string,
+  title: string;
+  nodes: NodeType[];
 }
