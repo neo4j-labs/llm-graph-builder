@@ -213,90 +213,102 @@ def processing_source(graph, model, file_name, pages, merged_file_path=None):
   """
   start_time = datetime.now()
   graphDb_data_Access = graphDBdataAccess(graph)
-  obj_source_node = sourceNode()
-  status = "Processing"
-  obj_source_node.file_name = file_name
-  obj_source_node.status = status
-  obj_source_node.created_at = start_time
-  obj_source_node.updated_at = start_time
-  logging.info(file_name)
-  logging.info(obj_source_node)
-  # graphDb_data_Access.update_source_node(obj_source_node)
+
+  query = """
+          MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status
+          """
+  param = {"file_name" : file_name}
+  result = graphDb_data_Access.execute_query(query, param)
+
+  if result[0]['Status'] == 'New':
   
-  full_document_content = ""
-  bad_chars = ['"', "\n", "'"]
-  for i in range(0,len(pages)):
-    text = pages[i].page_content
-    for j in bad_chars:
-      if j == '\n':
-        text = text.replace(j, ' ')
+    obj_source_node = sourceNode()
+    status = "Processing"
+    obj_source_node.file_name = file_name
+    obj_source_node.status = status
+    obj_source_node.created_at = start_time
+    obj_source_node.updated_at = start_time
+    obj_source_node.model = model
+    logging.info(file_name)
+    logging.info(obj_source_node)
+    graphDb_data_Access.update_source_node(obj_source_node)
+    logging.info('Update the status as Processing')
+    full_document_content = ""
+    bad_chars = ['"', "\n", "'"]
+    for i in range(0,len(pages)):
+      text = pages[i].page_content
+      for j in bad_chars:
+        if j == '\n':
+          text = text.replace(j, ' ')
+        else:
+          text = text.replace(j, '')
+      full_document_content += text
+    logging.info("Break down file into chunks")
+    create_chunks_obj = CreateChunksofDocument(full_document_content, graph, file_name)
+    chunks = create_chunks_obj.split_file_into_chunks()
+    chunkId_chunkDoc_list = create_relation_between_chunks(graph,file_name,chunks)
+    #create vector index and update chunk node with embedding
+    update_embedding_create_vector_index( graph, chunkId_chunkDoc_list, file_name)
+    logging.info("Get graph document list from models")
+    graph_documents =  generate_graphDocuments(model, graph, chunkId_chunkDoc_list)
+    
+    chunks_and_graphDocuments_list = get_chunk_and_graphDocument(graph_documents, chunkId_chunkDoc_list)
+    merge_relationship_between_chunk_and_entites(graph, chunks_and_graphDocuments_list)
+
+    distinct_nodes = set()
+    relations = []
+    for graph_document in chunks_and_graphDocuments_list:
+      #get distinct nodes
+      for node in graph_document['graph_doc'].nodes:
+            node_id = node.id
+            node_type= node.type
+            if (node_id, node_type) not in distinct_nodes:
+              distinct_nodes.add((node_id, node_type))
+      #get all relations
+      for relation in graph_document['graph_doc'].relationships:
+            relations.append(relation.type)
+      
+    nodes_created = len(distinct_nodes)
+    relationships_created = len(relations)  
+    
+    end_time = datetime.now()
+    processed_time = end_time - start_time
+    job_status = "Completed"
+
+    obj_source_node = sourceNode()
+    obj_source_node.file_name = file_name
+    obj_source_node.status = job_status
+    obj_source_node.created_at = start_time
+    obj_source_node.updated_at = end_time
+    obj_source_node.model = model
+    obj_source_node.processing_time = processed_time
+    obj_source_node.node_count = nodes_created
+    obj_source_node.relationship_count = relationships_created
+
+    graphDb_data_Access.update_source_node(obj_source_node)
+    logging.info('Updated the nodeCount and relCount properties in Docuemnt node')
+    logging.info(f'file:{file_name} extraction has been completed')
+
+    if merged_file_path is not None:
+      file_path = Path(merged_file_path)
+      if file_path.exists():
+        file_path.unlink()
+        logging.info(f'file {file_name} delete successfully')
       else:
-        text = text.replace(j, '')
-    full_document_content += text
-  logging.info("Break down file into chunks")
-  create_chunks_obj = CreateChunksofDocument(full_document_content, graph, file_name)
-  chunks = create_chunks_obj.split_file_into_chunks()
-  chunkId_chunkDoc_list = create_relation_between_chunks(graph,file_name,chunks)
-  #create vector index and update chunk node with embedding
-  update_embedding_create_vector_index( graph, chunkId_chunkDoc_list, file_name)
-  logging.info("Get graph document list from models")
-  graph_documents =  generate_graphDocuments(model, graph, chunkId_chunkDoc_list)
-  
-  chunks_and_graphDocuments_list = get_chunk_and_graphDocument(graph_documents, chunkId_chunkDoc_list)
-  merge_relationship_between_chunk_and_entites(graph, chunks_and_graphDocuments_list)
-
-  distinct_nodes = set()
-  relations = []
-  for graph_document in chunks_and_graphDocuments_list:
-    #get distinct nodes
-    for node in graph_document['graph_doc'].nodes:
-          node_id = node.id
-          node_type= node.type
-          if (node_id, node_type) not in distinct_nodes:
-            distinct_nodes.add((node_id, node_type))
-    #get all relations
-    for relation in graph_document['graph_doc'].relationships:
-          relations.append(relation.type)
-    
-  nodes_created = len(distinct_nodes)
-  relationships_created = len(relations)  
-  
-  end_time = datetime.now()
-  processed_time = end_time - start_time
-  job_status = "Completed"
-  error_message =""
-
-  obj_source_node = sourceNode()
-  obj_source_node.file_name = file_name
-  obj_source_node.status = job_status
-  obj_source_node.created_at = start_time
-  obj_source_node.updated_at = end_time
-  obj_source_node.model = model
-  obj_source_node.processing_time = processed_time
-  obj_source_node.node_count = nodes_created
-  obj_source_node.relationship_count = relationships_created
-
-  graphDb_data_Access.update_source_node(obj_source_node)
-  logging.info(f'file:{file_name} extraction has been completed')
-
-  if merged_file_path is not None:
-    file_path = Path(merged_file_path)
-    if file_path.exists():
-      file_path.unlink()
-      logging.info(f'file {file_name} delete successfully')
+        logging.info(f'file {file_name} does not exist')
     else:
-      logging.info(f'file {file_name} does not exist')
+      logging.info(f'File Path is None i.e. source type other than local file')
+      
+    return {
+        "fileName": file_name,
+        "nodeCount": nodes_created,
+        "relationshipCount": relationships_created,
+        "processingTime": round(processed_time.total_seconds(),2),
+        "status" : job_status,
+        "model" : model
+    }
   else:
-    logging.info(f'File Path is None i.e. source type other than local file')
-    
-  return {
-      "fileName": file_name,
-      "nodeCount": nodes_created,
-      "relationshipCount": relationships_created,
-      "processingTime": round(processed_time.total_seconds(),2),
-      "status" : job_status,
-      "model" : model
-  }
+     logging.info('File does not process because it\'s already in Processing status')
 
 def get_source_list_from_graph(uri,userName,password,db_name=None):
   """
