@@ -1,13 +1,9 @@
 from langchain_community.graphs import Neo4jGraph
 from langchain.docstore.document import Document
-from langchain_community.vectorstores.neo4j_vector import Neo4jVector
-from langchain_openai import OpenAIEmbeddings
-from langchain_google_vertexai import VertexAIEmbeddings
-from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
+from src.shared.common_fn import load_embedding_model
 import logging
 from typing import List
 import os
-import uuid
 import hashlib
 
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
@@ -22,25 +18,6 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
             #https://neo4j.com/docs/cypher-manual/current/syntax/parameters/
 
             graph.query('MATCH(c:Chunk {'+chunk_node_id_set.format(graph_doc_chunk_id['chunk_id'])+'}) MERGE (n:'+ node.type +'{ id: "'+node_id+'"}) MERGE (c)-[:HAS_ENTITY]->(n)')
-
-def load_embedding_model(embedding_model_name: str):
-    if embedding_model_name == "openai":
-        embeddings = OpenAIEmbeddings()
-        dimension = 1536
-        logging.info("Embedding: Using OpenAI")
-    elif embedding_model_name == "vertexai":        
-        embeddings = VertexAIEmbeddings(
-            model="textembedding-gecko@003"
-        )
-        dimension = 768
-        logging.info("Embedding: Using Vertex AI Embeddings")
-    else:
-        embeddings = SentenceTransformerEmbeddings(
-            model_name="all-MiniLM-L6-v2"#, cache_folder="/embedding_model"
-        )
-        dimension = 384
-        logging.info("Embedding: Using SentenceTransformer")
-    return embeddings, dimension
 
 def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name):
     #create embedding
