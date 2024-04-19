@@ -12,53 +12,6 @@ export const validation = (url: string) => {
   return url.trim() != '' && /^s3:\/\/([^/]+)\/?$/.test(url) != false;
 };
 
-export const fileToBase64 = (file: File): Promise<string | ArrayBuffer | null> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = (error) => reject(error);
-  });
-};
-
-// Save file to local storage
-export const saveFileToLocal = async (file: File) => {
-  try {
-    const base64String: string | ArrayBuffer | null = await fileToBase64(file);
-    localStorage.setItem(`${file.name}`, base64String as string);
-    console.log('File saved to local storage');
-  } catch (error) {
-    console.error('Error saving file to local storage:', error);
-  }
-};
-
-export const base64ToFile = (base64String: string, fileName: string) => {
-  const byteCharacters = atob(base64String.split(',')[1]);
-  const byteArrays = [];
-  for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-    const slice = byteCharacters.slice(offset, offset + 512);
-    const byteNumbers = new Array(slice.length);
-    for (let i = 0; i < slice.length; i++) {
-      byteNumbers[i] = slice.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    byteArrays.push(byteArray);
-  }
-  const file = new File(byteArrays, fileName, { type: 'application/pdf' });
-  return file;
-};
-
-// Retrieve file from local storage
-export const getFileFromLocal = (filename: string) => {
-  const base64String = localStorage.getItem(filename);
-  if (base64String) {
-    const file = base64ToFile(base64String, filename);
-    console.log('File fetched from local storage:', file);
-    return file;
-  }
-  return null;
-};
-
 // Status indicator icons to status column
 export const statusCheck = (status: string) => {
   switch (status) {
@@ -84,6 +37,7 @@ export const constructQuery = (queryTochange: string, docLimit: string) => {
   WITH docs, d ORDER BY d.createdAt DESC 
   LIMIT ${docLimit}
   OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
+  WITH * LIMIT 100
   WITH [] 
   ${queryTochange}
   AS paths
@@ -98,6 +52,7 @@ MATCH docs = (d:Document {status:'Completed'})
 WHERE d.fileName = $document_name
 WITH docs, d ORDER BY d.createdAt DESC 
 OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
+WITH * LIMIT 100
 WITH [] 
 ${queryTochange}
 AS paths

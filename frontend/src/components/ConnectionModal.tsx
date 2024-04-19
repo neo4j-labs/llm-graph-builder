@@ -74,7 +74,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
             }
 
             const [key, value] = line.split('=');
-            if (['NEO4J_URI', 'NEO4J_USERNAME', 'NEO4J_PASSWORD', 'NEO4J_DATABASE'].includes(key)) {
+            if (['NEO4J_URI', 'NEO4J_USERNAME', 'NEO4J_PASSWORD', 'NEO4J_DATABASE', 'NEO4J_PORT'].includes(key)) {
               acc[key] = value;
             }
             return acc;
@@ -83,6 +83,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
           setUsername(configObject.NEO4J_USERNAME ?? 'neo4j');
           setPassword(configObject.NEO4J_PASSWORD ?? '');
           setDatabase(configObject.NEO4J_DATABASE ?? 'neo4j');
+          setPort(configObject.NEO4J_PORT ?? '7687');
         } else {
           setMessage({ type: 'danger', content: 'Please drop a valid file' });
         }
@@ -95,7 +96,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
 
   const submitConnection = async () => {
     const connectionURI = `${protocol}://${URI}${URI.split(':')[1] ? '' : `:${port}`}`;
-    setUserCredentials({ uri: connectionURI, userName: username, password: password, database: database });
+    setUserCredentials({ uri: connectionURI, userName: username, password: password, database: database, port: port });
     setIsLoading(true);
     await connectAPI(connectionURI, username, password, database).then((response: any) => {
       if (response?.data?.status === 'Success') {
