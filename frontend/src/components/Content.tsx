@@ -3,14 +3,15 @@ import ConnectionModal from './ConnectionModal';
 import LlmDropdown from './Dropdown';
 import FileTable from './FileTable';
 import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
-import { setDriver, disconnect } from '../utils/Driver';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { extractAPI } from '../utils/FileAPI';
-import { ContentProps } from '../types';
+import { ContentProps, OptionType, UserCredentials } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './GraphViewModal';
+import { initialiseDriver } from '../utils/Driver';
+import Driver from 'neo4j-driver/types/driver';
 
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -18,11 +19,11 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
-  const { setUserCredentials, userCredentials } = useCredentials();
-  const { filesData, files, setFilesData, setModel, model } = useFileContext();
+  const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
+  const { filesData, setFilesData, setModel, model } = useFileContext();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
-  const [viewPoint, setViewPoint] = useState<string>('tableView');
+  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
 
   useEffect(() => {
     if (!init) {
@@ -35,11 +36,19 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           password: neo4jConnection.password,
           database: neo4jConnection.database,
         });
-        setDriver(neo4jConnection.uri, neo4jConnection.user, neo4jConnection.password, neo4jConnection.database).then(
-          (isSuccessful: boolean) => {
-            setConnectionStatus(isSuccessful);
+        initialiseDriver(
+          neo4jConnection.uri,
+          neo4jConnection.user,
+          neo4jConnection.password,
+          neo4jConnection.database
+        ).then((driver: Driver) => {
+          if (driver) {
+            setConnectionStatus(true);
+            setDriver(driver);
+          } else {
+            setConnectionStatus(false);
           }
-        );
+        });
       } else {
         setOpenConnection(true);
       }
@@ -55,15 +64,15 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     });
   }, [model]);
 
-  const disableCheck = !files.length || !filesData.some((f) => f.status === 'New');
+  const disableCheck = !filesData.some((f) => f.status === 'New');
 
-  const disableCheckGraph = !files.length;
-
-  const handleDropdownChange = (option: any) => {
-    setModel(option.value);
+  const handleDropdownChange = (option: OptionType | null | void) => {
+    if (option?.value) {
+      setModel(option?.value);
+    }
   };
 
-  const extractData = async (file: File, uid: number) => {
+  const extractData = async (uid: number) => {
     if (filesData[uid]?.status == 'New') {
       try {
         setFilesData((prevfiles) =>
@@ -78,9 +87,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           })
         );
         const apiResponse = await extractAPI(
-          file,
           filesData[uid].model,
-          userCredentials,
+          userCredentials as UserCredentials,
           filesData[uid].fileSource,
           filesData[uid].source_url,
           localStorage.getItem('accesskey'),
@@ -160,16 +168,16 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     }
   };
 
-  const handleGenerateGraph = async () => {
+  const handleGenerateGraph = () => {
     const data = [];
-    if (files.length > 0) {
-      for (let i = 0; i < files.length; i++) {
+    if (filesData.length > 0) {
+      for (let i = 0; i < filesData.length; i++) {
         if (filesData[i]?.status === 'New') {
-          data.push(extractData(files[i], i));
+          data.push(extractData(i));
         }
       }
       Promise.allSettled(data).then(async (_) => {
-        await updateGraphAPI(userCredentials);
+        await updateGraphAPI(userCredentials as UserCredentials);
       });
     }
   };
@@ -178,9 +186,15 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     setShowAlert(false);
   };
 
-  const openGraphUrl = `https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL=${
-    userCredentials?.userName
-  }@${localStorage.getItem('hostname')}%3A${localStorage.getItem('port') ?? '7687'}&search=Show+me+a+graph`;
+  const handleOpenGraphClick = () => {
+    const bloomUrl = process.env.BLOOM_URL;
+    const connectURL = `${userCredentials?.userName}@${localStorage.getItem('URI')}%3A${
+      localStorage.getItem('port') ?? '7687'
+    }`;
+    const encodedURL = encodeURIComponent(connectURL);
+    const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
+    window.open(replacedUrl, '_blank');
+  };
 
   const classNameCheck =
     isExpanded && showChatBot
@@ -194,6 +208,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const handleGraphView = () => {
     setOpenGraphView(true);
     setViewPoint('showGraphView');
+  };
+
+  const disconnect = () => {
+    driver?.close();
+    setConnectionStatus(false);
+    localStorage.removeItem('password');
+    setUserCredentials({ uri: '', password: '', userName: '', database: '' });
   };
 
   return (
@@ -218,16 +239,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               Connect to Neo4j
             </Button>
           ) : (
-            <Button
-              className='mr-2.5'
-              onClick={() =>
-                disconnect().then(() => {
-                  setConnectionStatus(false);
-                  localStorage.removeItem('neo4j.connection');
-                  setUserCredentials({ uri: '', password: '', userName: '', database: '' });
-                })
-              }
-            >
+            <Button className='mr-2.5' onClick={disconnect}>
               Disconnect
             </Button>
           )}
@@ -242,7 +254,11 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             setViewPoint('tableView');
           }}
         ></FileTable>
-        <Flex className='w-full p-2.5 absolute bottom-4 flex-row mt-1.5 self-start' justifyContent='space-between'>
+        <Flex
+          className='w-full p-2.5 absolute bottom-4 mt-1.5 self-start'
+          justifyContent='space-between'
+          flexDirection='row'
+        >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <Button
@@ -254,16 +270,15 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               Generate Graph
             </Button>
             <Button
-              disabled={disableCheckGraph || !filesData.some((f) => f?.status === 'Completed')}
+              disabled={!filesData.some((f) => f?.status === 'Completed')}
               onClick={handleGraphView}
               className='mr-0.5'
             >
               Show Graph
             </Button>
             <Button
-              href={openGraphUrl}
-              target='_blank'
-              disabled={disableCheckGraph || !filesData.some((f) => f?.status === 'Completed')}
+              onClick={handleOpenGraphClick}
+              disabled={!filesData.some((f) => f?.status === 'Completed')}
               className='ml-0.5'
             >
               Open Graph

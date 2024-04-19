@@ -1,11 +1,14 @@
 import Neo4jLogoBW from '../../logo.svg';
 import Neo4jLogoColor from '../../logo-color.svg';
-import { MoonIconOutline, SunIconOutline, Cog8ToothIconOutline } from '@neo4j-ndl/react/icons';
+import { MoonIconOutline, SunIconOutline, CodeBracketSquareIconOutline } from '@neo4j-ndl/react/icons';
 import { Typography, IconButton } from '@neo4j-ndl/react';
-import { CodeBracketIconOutline } from '@neo4j-ndl/react/icons';
 import ButtonWithToolTip from '../ButtonWithToolTip';
 
 export default function Header({ themeMode, toggleTheme }: { themeMode: string; toggleTheme: () => void }) {
+  const handleGitClick = () => {
+    window.open('https://github.com/neo4j-labs/llm-graph-builder/issues', '_blank');
+  };
+
   return (
     <div
       className='n-bg-palette-neutral-bg-weak p-1'
@@ -33,13 +36,8 @@ export default function Header({ themeMode, toggleTheme }: { themeMode: string; 
               className='inline-flex gap-x-1'
               style={{ display: 'flex', flexGrow: 0, alignItems: 'center', gap: '4px' }}
             >
-              <ButtonWithToolTip
-                ishrefButton={true}
-                href='https://github.com/neo4j-labs/llm-graph-builder/issues'
-                target='_blank'
-                text={'GitHub Issues'}
-              >
-                <CodeBracketIconOutline className='n-size-token-7' />
+              <ButtonWithToolTip onClick={handleGitClick} text={'GitHub Issues'} size='large' clean>
+                <CodeBracketSquareIconOutline />
               </ButtonWithToolTip>
               <IconButton aria-label='Toggle Dark mode' clean size='large' onClick={toggleTheme}>
                 {themeMode === 'dark' ? (
@@ -52,19 +50,9 @@ export default function Header({ themeMode, toggleTheme }: { themeMode: string; 
                   </span>
                 )}
               </IconButton>
-              <IconButton aria-label='Toggle settings' size='large' clean>
+              {/* <IconButton aria-label='Toggle settings' size='large' clean>
                 <Cog8ToothIconOutline />
-              </IconButton>
-              <Typography
-                variant='subheading-large'
-                style={{
-                  ml: 'var(--space-8)',
-                  mr: 'var(--space-8)',
-                  width: '1px',
-                  height: 'var(--space-16)',
-                  backgroundColor: 'white',
-                }}
-              ></Typography>
+              </IconButton> */}
             </div>
           </div>
         </section>

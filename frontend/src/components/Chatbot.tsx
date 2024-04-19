@@ -1,12 +1,13 @@
 /* eslint-disable no-confusing-arrow */
 import { useEffect, useRef, useState } from 'react';
-import { Button, Widget, Typography, Avatar, TextInput } from '@neo4j-ndl/react';
+import { Button, Widget, Typography, Avatar, TextInput, TextLink } from '@neo4j-ndl/react';
 import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
-import { ChatbotProps } from '../types';
+import { ChatbotProps, UserCredentials } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import chatBotAPI from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
+import { useFileContext } from '../context/UsersFiles';
 
 export default function Chatbot(props: ChatbotProps) {
   const { messages: listMessages, setMessages: setListMessages } = props;
@@ -14,6 +15,7 @@ export default function Chatbot(props: ChatbotProps) {
   const formattedTextStyle = { color: 'rgb(var(--theme-palette-discovery-bg-strong))' };
   const [loading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
+  const { model } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
 
@@ -29,17 +31,24 @@ export default function Chatbot(props: ChatbotProps) {
     }
   }, []);
 
-  const simulateTypingEffect = (responseText: string, index = 0) => {
-    if (index < responseText.length) {
+  const simulateTypingEffect = (response: { reply: string; sources?: [string] }, index = 0) => {
+    if (index < response.reply.length) {
       const nextIndex = index + 1;
-      const currentTypedText = responseText.substring(0, nextIndex);
+      const currentTypedText = response.reply.substring(0, nextIndex);
       if (index === 0) {
         const date = new Date();
         const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-        if (responseText.length <= 1) {
+        if (response.reply.length <= 1) {
           setListMessages((msgs) => [
             ...msgs,
-            { id: Date.now(), user: 'chatbot', message: currentTypedText, datetime: datetime, isTyping: true },
+            {
+              id: Date.now(),
+              user: 'chatbot',
+              message: currentTypedText,
+              datetime: datetime,
+              isTyping: true,
+              sources: response?.sources,
+            },
           ]);
         } else {
           setListMessages((msgs) => {
@@ -49,6 +58,7 @@ export default function Chatbot(props: ChatbotProps) {
             lastmsg.message = currentTypedText;
             lastmsg.datetime = datetime;
             lastmsg.isTyping = true;
+            lastmsg.sources = response?.sources;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -60,7 +70,7 @@ export default function Chatbot(props: ChatbotProps) {
       } else {
         setListMessages((msgs) => msgs.map((msg) => (msg.isTyping ? { ...msg, message: currentTypedText } : msg)));
       }
-      setTimeout(() => simulateTypingEffect(responseText, nextIndex), 20);
+      setTimeout(() => simulateTypingEffect(response, nextIndex), 20);
     } else {
       setListMessages((msgs) => msgs.map((msg) => (msg.isTyping ? { ...msg, isTyping: false } : msg)));
     }
@@ -79,15 +89,15 @@ export default function Chatbot(props: ChatbotProps) {
     try {
       setLoading(true);
       setInputMessage('');
-      simulateTypingEffect(' ');
-      const chatresponse = await chatBotAPI(userCredentials, inputMessage, sessionId);
-      chatbotReply = chatresponse?.data?.message;
-      simulateTypingEffect(chatbotReply);
+      simulateTypingEffect({ reply: ' ' });
+      const chatresponse = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
+      chatbotReply = chatresponse?.data?.data?.message;
+      simulateTypingEffect({ reply: chatbotReply, sources: chatresponse?.data?.data?.sources });
       setLoading(false);
     } catch (error) {
       chatbotReply = "Oops! It seems we couldn't retrieve the answer. Please try again later";
       setInputMessage('');
-      simulateTypingEffect(chatbotReply);
+      simulateTypingEffect({ reply: chatbotReply });
       setLoading(false);
     }
   };
@@ -160,6 +170,21 @@ export default function Chatbot(props: ChatbotProps) {
                   </div>
                   <div className='text-right align-bottom pt-3'>
                     <Typography variant='body-small'>{chat.datetime}</Typography>
+                    {chat?.sources?.length ? (
+                      <div className={`flex ${chat.sources?.length > 1 ? 'flex-col' : 'flex-row justify-end'} gap-1`}>
+                        {chat.sources.map((link) => (
+                          <div className='text-right'>
+                            {link.startsWith('http') || link.startsWith('https') ? (
+                              <TextLink href={link} externalLink={true}>
+                                Source
+                              </TextLink>
+                            ) : (
+                              <Typography variant='body-small'>{link}</Typography>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 </Widget>
               </div>
@@ -171,6 +196,7 @@ export default function Chatbot(props: ChatbotProps) {
         <form onSubmit={handleSubmit} className='flex gap-2.5 w-full'>
           <TextInput
             className='n-bg-palette-neutral-bg-default flex-grow-7 w-full'
+            aria-label='chatbot-input'
             type='text'
             value={inputMessage}
             fluid

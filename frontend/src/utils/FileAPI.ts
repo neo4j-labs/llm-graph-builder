@@ -4,7 +4,7 @@ import { UserCredentials, ExtractParams, UploadParams } from '../types';
 import { apiCall } from '../services/CommonAPI';
 
 // Upload Call
-export const uploadAPI = async (file: any, userCredentials: any, model: string): Promise<any> => {
+export const uploadAPI = async (file: File, userCredentials: UserCredentials, model: string): Promise<any> => {
   const urlUpload = `${url()}/sources`;
   const method: Method = 'post';
   const commonParams: UserCredentials = userCredentials;
@@ -15,13 +15,12 @@ export const uploadAPI = async (file: any, userCredentials: any, model: string):
 
 // Extract call
 export const extractAPI = async (
-  file: any,
   model: string,
-  userCredentials: any,
+  userCredentials: UserCredentials,
   source_type: string,
-  source_url?: any,
-  aws_access_key_id?: any,
-  aws_secret_access_key?: any,
+  source_url?: string,
+  aws_access_key_id?: string | null,
+  aws_secret_access_key?: string | null,
   file_name?: string,
   gcs_bucket_name?: string,
   gcs_bucket_folder?: string
@@ -31,15 +30,22 @@ export const extractAPI = async (
   const commonParams: UserCredentials = userCredentials;
   let additionalParams: ExtractParams;
   if (source_type === 's3 bucket') {
-    additionalParams = { model, source_url, aws_secret_access_key, aws_access_key_id };
+    additionalParams = { model, source_url, aws_secret_access_key, aws_access_key_id, source_type, file_name };
   } else if (source_type === 'Wikipedia') {
-    additionalParams = { model, wiki_query: file_name };
+    additionalParams = { model, wiki_query: file_name, source_type, file_name };
   } else if (source_type === 'gcs bucket') {
-    additionalParams = { model, gcs_blob_filename: file_name, gcs_bucket_folder, gcs_bucket_name };
+    additionalParams = {
+      model,
+      gcs_blob_filename: file_name,
+      gcs_bucket_folder,
+      gcs_bucket_name,
+      source_type,
+      file_name,
+    };
   } else if (source_type === 'youtube') {
-    additionalParams = { model, source_url };
+    additionalParams = { model, source_url, source_type, file_name };
   } else {
-    additionalParams = { model, file };
+    additionalParams = { model, source_type, file_name };
   }
   const response = await apiCall(urlExtract, method, commonParams, additionalParams);
   return response;

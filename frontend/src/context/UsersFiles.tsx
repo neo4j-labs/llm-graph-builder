@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
 import { CustomFile } from '../types';
+import { defaultLLM } from '../utils/Constants';
 
 interface FileContextType {
-  files: File[] | [];
+  files: (File | null)[] | [];
   filesData: CustomFile[] | [];
-  setFiles: Dispatch<SetStateAction<File[]>>;
+  setFiles: Dispatch<SetStateAction<(File | null)[]>>;
   setFilesData: Dispatch<SetStateAction<CustomFile[]>>;
   model: string;
   setModel: Dispatch<SetStateAction<string>>;
@@ -16,9 +17,9 @@ interface FileContextProviderProps {
   children: ReactNode;
 }
 const FileContextProvider: React.FC<FileContextProviderProps> = ({ children }) => {
-  const [files, setFiles] = useState<File[] | []>([]);
+  const [files, setFiles] = useState<(File | null)[] | []>([]);
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
-  const [model, setModel] = useState<string>('Gemini Pro');
+  const [model, setModel] = useState<string>(defaultLLM);
   const [graphType, setGraphType] = useState<string>('Knowledge Graph Entities');
   const value: FileContextType = {
     files,

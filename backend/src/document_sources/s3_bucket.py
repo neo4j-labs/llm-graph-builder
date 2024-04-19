@@ -68,9 +68,9 @@ def get_documents_from_s3(s3_url, aws_access_key_id, aws_secret_access_key):
       response=s3.head_object(Bucket=bucket,Key=file_key)
       file_size=response['ContentLength']
       
-      logging.info(f'bucket : {bucket},  file key : {file_key},  file size : {file_size}')
+      logging.info(f'bucket : {bucket},file_name:{file_name},  file key : {file_key},  file size : {file_size}')
       pages=get_s3_pdf_content(s3_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
-      return file_name,file_key,pages
+      return file_name,pages
     except Exception as e:
       error_message = str(e)
       logging.exception(f'Exception in reading content from S3:{error_message}')

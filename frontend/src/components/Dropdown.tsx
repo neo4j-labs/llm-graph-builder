@@ -1,12 +1,14 @@
 import { Dropdown } from '@neo4j-ndl/react';
 import { DropdownProps, OptionType } from '../types';
 import { useMemo } from 'react';
+import { defaultLLM, llms } from '../utils/Constants';
 
 const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
   };
-  const allOptions = useMemo(() => ['Diffbot', 'Gemini Pro'], []);
+  const allOptions = useMemo(() => llms, []);
+
   return (
     <>
       <div className='w-[150px]'>
@@ -15,9 +17,9 @@ const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
           aria-label='A selection dropdown'
           selectProps={{
             onChange: handleChange,
-            options: allOptions.map((option) => ({ label: option === "Gemini Pro" ? "LLM" : option, value: option })),
+            options: allOptions?.map((option) => ({ label: option, value: option })),
             placeholder: 'Select LLM Model',
-            defaultValue: { label: 'LLM', value: 'Gemini Pro' },
+            defaultValue: { label: defaultLLM, value: defaultLLM },
             menuPlacement: 'auto',
             isDisabled,
           }}

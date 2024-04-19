@@ -1,4 +1,7 @@
+import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
+import { AxiosResponse } from 'axios';
 import { Dispatch, ReactNode, SetStateAction } from 'react';
+import { OverridableStringUnion } from '@mui/types';
 
 export interface CustomFile extends Partial<globalThis.File> {
   processing: number | string;
@@ -12,6 +15,8 @@ export interface CustomFile extends Partial<globalThis.File> {
   wiki_query?: string;
   gcsBucket?: string;
   gcsBucketFolder?: string;
+  errorMessage?: string;
+  uploadprogess?: number;
 }
 
 export interface OptionType {
@@ -27,20 +32,22 @@ export type UserCredentials = {
 } & { [key: string]: any };
 
 export type ExtractParams = {
-  file?: string;
+  file?: File;
   model: string;
   source_url?: string;
-  aws_access_key_id?: string;
-  aws_secret_access_key?: string;
+  aws_access_key_id?: string | null;
+  aws_secret_access_key?: string | null;
   max_sources?: number;
   wiki_query?: string;
   gcs_bucket_name?: string;
   gcs_bucket_folder?: string;
   gcs_blob_filename?: string;
+  source_type?: string;
+  file_name?: string;
 } & { [key: string]: any };
 
 export type UploadParams = {
-  file: string;
+  file: File;
   model: string;
 } & { [key: string]: any };
 
@@ -55,8 +62,8 @@ export interface CustomAlertProps {
   open: boolean;
   handleClose: () => void;
   alertMessage: string;
+  severity?: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined;
 }
-
 export interface DataComponentProps {
   openModal: () => void;
 }
@@ -86,6 +93,8 @@ export interface SourceNode {
   fileSource: string;
   gcsBucket?: string;
   gcsBucketFolder?: string;
+  errorMessage?: string;
+  uploadprogress?: number;
 }
 
 export interface SideNavProps {
@@ -108,7 +117,7 @@ export interface FileTableProps {
   isExpanded: boolean;
   connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
-  onInspect: (id: any) => void;
+  onInspect: (id: string) => void;
 }
 
 export interface CustomModalProps {
@@ -125,7 +134,7 @@ export interface CustomModalProps {
 export interface CommonButtonProps {
   openModal: () => void;
   wrapperclassName?: string;
-  logo: any;
+  logo: string;
   title: string;
   className?: string;
 }
@@ -136,16 +145,11 @@ export interface messages {
   user: string;
   datetime: string;
   isTyping?: boolean;
+  sources?: string[];
 }
 
 export type ChatbotProps = {
-  messages: {
-    id: number;
-    user: string;
-    message: string;
-    datetime: string;
-    isTyping?: boolean;
-  }[];
+  messages: messages[];
   setMessages: Dispatch<SetStateAction<messages[]>>;
 };
 export interface WikipediaModalTypes {
@@ -161,3 +165,41 @@ export interface GraphViewModalProps {
 }
 
 export type GraphType = 'Document' | 'Chunks' | 'Entities';
+
+export interface fileName {
+  fileName: string;
+  fileSize: number;
+  url: string;
+  gcsBucket?: string;
+  gcsBucketFolder?: string;
+}
+export interface URLSCAN_RESPONSE {
+  status: string;
+  success_count?: number;
+  failed_count?: number;
+  message: string;
+  file_name?: fileName[];
+  error?: string;
+  file_source?: string;
+  data?: any;
+}
+
+export interface ServerResponse extends Partial<AxiosResponse> {
+  data: URLSCAN_RESPONSE;
+}
+export interface ScanProps {
+  urlParam?: string;
+  userCredentials: UserCredentials | null;
+  model?: string;
+  accessKey?: string;
+  secretKey?: string;
+  wikiquery?: string;
+  gcs_bucket_name?: string;
+  gcs_bucket_folder?: string;
+  source_type?: string;
+}
+export type alertState = {
+  showAlert: boolean;
+  alertType: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined;
+  alertMessage: string;
+};

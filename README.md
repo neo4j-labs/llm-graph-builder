@@ -74,7 +74,7 @@ KNN_MIN_SCORE = ""\
    	 userName: Username to use for graph creation ( if None will use username from config file )
    	 password: Password to use for graph creation ( if None will use password from config file )
    	 file: File object containing the PDF file path to be used
-   	 model: Type of model to use ('OpenAI GPT 3.5' or 'OpenAI GPT 4')
+   	 model: Type of model to use ('Gemini Pro' or 'Diffbot')
    
      Returns: 
    	 Json response to API with fileName, nodeCount, relationshipCount, processingTime, 
@@ -114,7 +114,7 @@ KNN_MIN_SCORE = ""\
 https://github.com/neo4j-labs/llm-graph-builder/assets/121786590/b725a503-6ade-46d2-9e70-61d57443c311
 
 ## Links
- The Public [ Google cloud Run URL](https://staging-frontend-dcavk67s4a-uc.a.run.app/).
+ The Public [ Google cloud Run URL](https://devfrontend-dcavk67s4a-uc.a.run.app).
  [Workspace URL](https://workspace-preview.neo4j.io/workspace)
 
 

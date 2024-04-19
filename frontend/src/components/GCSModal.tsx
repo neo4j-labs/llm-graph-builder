@@ -3,10 +3,9 @@ import { useCallback, useState } from 'react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { urlScanAPI } from '../services/URLScan';
-import { CustomFile, S3ModalProps } from '../types';
+import { CustomFile, S3ModalProps, fileName } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
-import { getFileFromLocal } from '../utils/Utils';
 
 const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [bucketName, setbucketName] = useState<string>('');
@@ -14,7 +13,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
-  const { setFiles, setFilesData, model, filesData, files } = useFileContext();
+  const { setFilesData, model, filesData } = useFileContext();
   const reset = () => {
     setbucketName('');
     setFolderName('');
@@ -48,6 +47,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           secretKey: '',
           gcs_bucket_name: bucketName,
           gcs_bucket_folder: folderName,
+          source_type: 'gcs bucket',
         });
         if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
@@ -61,10 +61,8 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           setStatus('success');
           setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
           const copiedFilesData = [...filesData];
-          const copiedFiles = [...files];
-          apiResponse?.data?.file_name?.forEach((item: any) => {
+          apiResponse?.data?.file_name?.forEach((item: fileName) => {
             const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
-            const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === item.fileName);
             if (filedataIndex == -1) {
               copiedFilesData.unshift({
                 name: item.fileName,
@@ -86,17 +84,8 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
                 fileSource: defaultValues.fileSource,
               });
             }
-            if (fileIndex == -1) {
-              //@ts-ignore
-              copiedFiles.unshift(null);
-            } else {
-              const tempFile = copiedFiles[filedataIndex];
-              copiedFiles.splice(fileIndex, 1);
-              copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
-            }
           });
           setFilesData(copiedFilesData);
-          setFiles(copiedFiles);
           reset();
         }
       } catch (error) {
@@ -130,6 +119,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           value={bucketName}
           disabled={false}
           label='Bucket Name'
+          aria-label='Bucket Name'
           placeholder=''
           autoFocus
           fluid
@@ -143,6 +133,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           value={folderName}
           disabled={false}
           label='Folder Name'
+          aria-label='Folder Name'
           placeholder=''
           isOptional={true}
           fluid
