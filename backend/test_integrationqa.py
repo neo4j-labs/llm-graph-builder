@@ -36,6 +36,12 @@ def extract_graph_from_file_local_file_test():
     print(local_file_result)
     logging.info("Info:  ")
 
+    try:
+        assert local_file_result['status'] == 'Completed'
+        print("Success")
+    except AssertionError as e:
+        print("Fail: ", e)
+
 
 
 #   Check for Wikipedia file to be success
@@ -44,11 +50,9 @@ def extract_graph_from_Wikipedia(uri, userName, password, model,database):
     wikiresult =  extract_graph_from_file_Wikipedia(
              graph,
             model,
-            'Japan',
+            'Einstein',
             1)
 
-   # print(result)
-    
     logging.info("Info: Wikipedia test done")
     print(wikiresult)
     
@@ -75,9 +79,6 @@ def get_documents_from_Wikipedia(wiki_query:str):
     job_status = "Failed"
     message="Failed To Process Wikipedia Query"
     error_message = str(e)
-    #logging.error(f"Failed To Process Wikipedia Query: {file_name}")
-    #logging.exception(f'Exception Stack trace: {error_message}')
-    #return create_api_response(job_status,message=message,error=error_message,file_name=file_name)
     print(error_message)
       
   
@@ -191,10 +192,6 @@ def extract_graph_from_file_test_s3(uri, userName, password, model, database):
 #       logging.exception(f'Exception in reading content from S3:{error_message}')
 #       raise Exception(error_message) 
 
-
-
-
-
 if __name__ == "__main__":
 
     extract_graph_from_file_local_file_test()
@@ -205,6 +202,3 @@ if __name__ == "__main__":
     #extract_graph_from_youtube_video_fail(uri, userName, password, model, database)
     extract_graph_from_file_test_gcs(uri, userName, password, model, database)
     extract_graph_from_file_test_s3(uri, userName, password, model, database)
-    #extract_graph_from_file_local_file_test(uri, userName, password, model,database)
-    
-    
