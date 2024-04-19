@@ -17,7 +17,6 @@ def get_gcs_bucket_files_info(gcs_bucket_name, gcs_bucket_folder):
         for blob in blobs:
           if blob.content_type == 'application/pdf':
             folder_name, file_name = os.path.split(blob.name)
-            #file_name = blob.name.split('/')[-1]
             file_size = blob.size
             source_url= blob.media_link
             gcs_bucket = gcs_bucket_name
@@ -25,7 +24,6 @@ def get_gcs_bucket_files_info(gcs_bucket_name, gcs_bucket_folder):
         return lst_file_metadata
       else:
         file_name=''
-        job_status = "Failed"
         message=f"{gcs_bucket_name} : Bucket does not exist. Please provide valid GCS bucket name"
         raise Exception(message)
     except Exception as e:
