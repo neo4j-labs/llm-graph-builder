@@ -163,3 +163,5 @@ temp.pdf
 google-cloud-sdk
 google-cloud-cli-469.0.0-linux-x86_64.tar.gz
 /data/llm-experiments-387609-c73d512ca3b1.json
+/backend/src/merged_files
+/backend/src/chunks

@@ -61,8 +61,6 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
       ? process.env.REACT_APP_SOURCES?.split(',') || []
       : process.env.REACT_APP_SOURCES;
 
-  console.log('sources', sources);
-
   return (
     <div className='flex min-h-[650px] overflow-hidden relative'>
       <Drawer

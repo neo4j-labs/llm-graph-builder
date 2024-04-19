@@ -39,4 +39,17 @@ export const colors = [
   '#d9ad7c',
   '#a2836e',
   '#674d3c',
+  '#d7b69f',
+  '#00ffff',
+  '##8eb9ff',
 ];
+export const llms =
+  process.env?.LLM_MODELS?.trim() != ''
+    ? process.env.LLM_MODELS?.split(',')
+    : ['Diffbot', 'Gemini 1.0 Pro', 'OpenAI GPT 3.5', 'OpenAI GPT 4', 'Gemini 1.5 Pro'];
+export const defaultLLM = llms?.includes('OpenAI GPT 4')
+  ? 'OpenAI GPT 4'
+  : llms?.includes('Gemini 1.0 Pro')
+  ? 'Gemini 1.0 Pro'
+  : 'Diffbot';
+export const chunkSize = 5 * 1024 * 1024;
