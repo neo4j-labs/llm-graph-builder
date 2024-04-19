@@ -179,7 +179,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               return totalRels;
             });
             const finalRels = newRels.flat();
-            console.log(finalNodes.filter((n) => n.caption.includes('Chunk')));
             setNodes(finalNodes);
             setRelationships(finalRels);
             setScheme(schemeVal);
@@ -250,7 +249,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
   const heightCheck = labelsLength > 80 ? '100%' : 'max-content';
   const overflowCheck = labelsLength > 80 ? 'scroll' : 'hidden';
-  console.log({ labelsLength });
 
   return (
     <>

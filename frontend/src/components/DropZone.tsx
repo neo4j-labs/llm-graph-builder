@@ -123,7 +123,6 @@ const DropZone: FunctionComponent = () => {
               'Content-Type': 'multipart/form-data',
             },
           });
-          console.log(apiResponse.data);
           if (apiResponse?.data.status === 'Failed') {
             throw new Error(`message:${apiResponse.data.message},fileName:${apiResponse.data.file_name}`);
           } else {
