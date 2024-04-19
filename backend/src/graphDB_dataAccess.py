@@ -21,8 +21,7 @@ class graphDBdataAccess:
             raise Exception(error_message)
         
     def create_source_node(self, obj_source_node:sourceNode):
-        try:   
-            
+        try:
             job_status = "New"
             logging.info("create source node as file name if not exist")
             self.graph.query("""MERGE(d:Document {fileName :$fn}) SET d.fileSize = $fs, d.fileType = $ft ,
@@ -82,9 +81,11 @@ class graphDBdataAccess:
         """
         Update the graph node with SIMILAR relationship where embedding scrore match
         """
-        try:   
-            knn_min_score = os.environ.get('KNN_MIN_SCORE')
-            # graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+        index = self.graph.query("""show indexes yield * where type = 'VECTOR' and name = 'vector'""")
+        # logging.info(f'show index vector: {index}')
+        knn_min_score = os.environ.get('KNN_MIN_SCORE')
+        if index[0]['name'] == 'vector':
+            logging.info('update KNN graph')
             result = self.graph.query("""MATCH (c:Chunk)
                                     WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
                                     CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score
@@ -93,11 +94,7 @@ class graphDBdataAccess:
                                 {"score":knn_min_score}
                                 )
             logging.info(f"result : {result}")
-        except Exception as e:
-            error_message = str(e)
-            logging.exception(f'Exception in update KNN graph:{error_message}')
-            raise Exception(error_message)
-        
+            
     def connection_check(self):
         """
         Args:
@@ -108,13 +105,6 @@ class graphDBdataAccess:
         Returns:
         Returns a status of connection from NEO4j is success or failure
         """
-        try:
-            if self.graph:
-                return create_api_response("Success",message="Connection Successful")   
-        except Exception as e:
-            job_status = "Failed"
-            message="Connection Failed"
-            error_message = str(e)
-            logging.exception(f'Exception:{error_message}')
-            return create_api_response(job_status,message=message,error=error_message)
+        if self.graph:
+            return "Connection Successful"
         

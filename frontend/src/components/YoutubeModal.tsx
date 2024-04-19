@@ -6,14 +6,13 @@ import { urlScanAPI } from '../services/URLScan';
 import { CustomFile, S3ModalProps } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
-import { getFileFromLocal } from '../utils/Utils';
 
 const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [youtubeURL, setYoutubeURL] = useState<string>('');
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
-  const { setFiles, setFilesData, model, filesData, files } = useFileContext();
+  const { setFilesData, model, filesData } = useFileContext();
   const submitHandler = async () => {
     const defaultValues: CustomFile = {
       processing: 0,
@@ -41,6 +40,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           model,
           accessKey: '',
           secretKey: '',
+          source_type: 'youtube',
         });
         if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
@@ -54,10 +54,8 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           setStatus('success');
           setStatusMessage(`Successfully Created Source Nodes for Link`);
           const copiedFilesData = [...filesData];
-          const copiedFiles = [...files];
           apiResponse?.data?.file_name?.forEach((item) => {
             const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
-            const fileIndex = copiedFiles.findIndex((filedataitem) => filedataitem?.name === item.fileName);
             if (filedataIndex == -1) {
               copiedFilesData.unshift({
                 name: item.fileName,
@@ -78,18 +76,8 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
                 fileSource: defaultValues.fileSource,
               });
             }
-            if (fileIndex == -1) {
-              copiedFiles.unshift(null);
-            } else {
-              const tempFile = copiedFiles[filedataIndex];
-              copiedFiles.splice(fileIndex, 1);
-              if (tempFile) {
-                copiedFiles.unshift(getFileFromLocal(tempFile.name) ?? tempFile);
-              }
-            }
           });
           setFilesData(copiedFilesData);
-          setFiles(copiedFiles);
           setYoutubeURL('');
         }
       } catch (error) {

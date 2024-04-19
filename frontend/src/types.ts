@@ -1,5 +1,7 @@
+import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { AxiosResponse } from 'axios';
 import { Dispatch, ReactNode, SetStateAction } from 'react';
+import { OverridableStringUnion } from '@mui/types';
 
 export interface CustomFile extends Partial<globalThis.File> {
   processing: number | string;
@@ -14,6 +16,7 @@ export interface CustomFile extends Partial<globalThis.File> {
   gcsBucket?: string;
   gcsBucketFolder?: string;
   errorMessage?: string;
+  uploadprogess?: number;
 }
 
 export interface OptionType {
@@ -39,6 +42,8 @@ export type ExtractParams = {
   gcs_bucket_name?: string;
   gcs_bucket_folder?: string;
   gcs_blob_filename?: string;
+  source_type?: string;
+  file_name?: string;
 } & { [key: string]: any };
 
 export type UploadParams = {
@@ -57,8 +62,8 @@ export interface CustomAlertProps {
   open: boolean;
   handleClose: () => void;
   alertMessage: string;
+  severity?: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined;
 }
-
 export interface DataComponentProps {
   openModal: () => void;
 }
@@ -89,6 +94,7 @@ export interface SourceNode {
   gcsBucket?: string;
   gcsBucketFolder?: string;
   errorMessage?: string;
+  uploadprogress?: number;
 }
 
 export interface SideNavProps {
@@ -139,16 +145,11 @@ export interface messages {
   user: string;
   datetime: string;
   isTyping?: boolean;
+  sources?: string[];
 }
 
 export type ChatbotProps = {
-  messages: {
-    id: number;
-    user: string;
-    message: string;
-    datetime: string;
-    isTyping?: boolean;
-  }[];
+  messages: messages[];
   setMessages: Dispatch<SetStateAction<messages[]>>;
 };
 export interface WikipediaModalTypes {
@@ -175,7 +176,7 @@ export interface fileName {
 export interface URLSCAN_RESPONSE {
   status: string;
   success_count?: number;
-  Failed_count?: number;
+  failed_count?: number;
   message: string;
   file_name?: fileName[];
   error?: string;
@@ -195,4 +196,10 @@ export interface ScanProps {
   wikiquery?: string;
   gcs_bucket_name?: string;
   gcs_bucket_folder?: string;
+  source_type?: string;
 }
+export type alertState = {
+  showAlert: boolean;
+  alertType: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined;
+  alertMessage: string;
+};

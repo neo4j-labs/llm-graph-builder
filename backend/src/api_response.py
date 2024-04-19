@@ -1,6 +1,6 @@
 
 
-def create_api_response(status,success_count=None,Failed_count=None, data=None, error=None,message=None,file_source=None,file_name=None):
+def create_api_response(status,success_count=None,failed_count=None, data=None, error=None,message=None,file_source=None,file_name=None):
     """
     Create a response to be sent to the API. This is a helper function to create a JSON response that can be sent to the API.
     
@@ -9,7 +9,7 @@ def create_api_response(status,success_count=None,Failed_count=None, data=None, 
         data: The data that was returned by the API call.
         error: The error that was returned by the API call.
         success_count: Number of files successfully processed.
-        Failed_count: Number of files failed to process.
+        failed_count: Number of files failed to process.
     Returns: 
       A dictionary containing the status data and error if any
     """
@@ -25,7 +25,7 @@ def create_api_response(status,success_count=None,Failed_count=None, data=None, 
     
     if success_count is not None:
       response['success_count']=success_count
-      response['Failed_count']=Failed_count
+      response['failed_count']=failed_count
     
     if message is not None:
       response['message']=message

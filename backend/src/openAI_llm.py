@@ -16,362 +16,458 @@ from langchain.chains.openai_functions import (
 from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 from datetime import datetime
-from src.make_relationships import create_source_chunk_entity_relationship
 import logging
 import re
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 import threading
 import uuid
-from langchain_experimental.graph_transformers import LLMGraphTransformer
+#from langchain_experimental.graph_transformers import LLMGraphTransformer
+from src.shared.common_fn import get_combined_chunks
 
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
-class Property(BaseModel):
-  """A single property consisting of key and value"""
-  key: str = Field(..., description="key")
-  value: str = Field(..., description="value")
+import asyncio
+import json
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, cast
 
-class Node(BaseNode):
-    properties: Optional[List[Property]] = Field(
-        None, description="List of node properties")
+from langchain_community.graphs.graph_document import GraphDocument, Node, Relationship
+from langchain_core.documents import Document
+from langchain_core.language_models import BaseLanguageModel
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.pydantic_v1 import BaseModel, Field
 
-class Relationship(BaseRelationship):
-    properties: Optional[List[Property]] = Field(
-        None, description="List of relationship properties"
-    )
-class KnowledgeGraph(BaseModel):
-    """Generate a knowledge graph with entities and relationships."""
-    nodes: List[Node] = Field(
-        ..., description="List of nodes in the knowledge graph")
-    rels: List[Relationship] = Field(
-        ..., description="List of relationships in the knowledge graph"
-    )
-  
-    
-def format_property_key(s: str) -> str: 
+system_prompt = (
+    "# Knowledge Graph Instructions for GPT-4\n"
+    "## 1. Overview\n"
+    "You are a top-tier algorithm designed for extracting information in structured "
+    "formats to build a knowledge graph.\n"
+    "Try to capture as much information from the text as possible without "
+    "sacrifing accuracy. Do not add any information that is not explicitly "
+    "mentioned in the text\n"
+    "- **Nodes** represent entities and concepts.\n"
+    "- The aim is to achieve simplicity and clarity in the knowledge graph, making it\n"
+    "accessible for a vast audience.\n"
+    "## 2. Labeling Nodes\n"
+    "- **Consistency**: Ensure you use available types for node labels.\n"
+    "Ensure you use basic or elementary types for node labels.\n"
+    "- For example, when you identify an entity representing a person, "
+    "always label it as **'person'**. Avoid using more specific terms "
+    "like 'mathematician' or 'scientist'"
+    "  - **Node IDs**: Never utilize integers as node IDs. Node IDs should be "
+    "names or human-readable identifiers found in the text.\n"
+    "- **Relationships** represent connections between entities or concepts.\n"
+    "Ensure consistency and generality in relationship types when constructing "
+    "knowledge graphs. Instead of using specific and momentary types "
+    "such as 'BECAME_PROFESSOR', use more general and timeless relationship types "
+    "like 'PROFESSOR'. Make sure to use general and timeless relationship types!\n"
+    "## 3. Coreference Resolution\n"
+    "- **Maintain Entity Consistency**: When extracting entities, it's vital to "
+    "ensure consistency.\n"
+    'If an entity, such as "John Doe", is mentioned multiple times in the text '
+    'but is referred to by different names or pronouns (e.g., "Joe", "he"),'
+    "always use the most complete identifier for that entity throughout the "
+    'knowledge graph. In this example, use "John Doe" as the entity ID.\n'
+    "Remember, the knowledge graph should be coherent and easily understandable, "
+    "so maintaining consistency in entity references is crucial.\n"
+    "## 4. Strict Compliance\n"
+    "Adhere to the rules strictly. Non-compliance will result in termination."
+)
+
+default_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            system_prompt,
+        ),
+        (
+            "human",
+            (
+                "Tip: Make sure to answer in the correct format and do "
+                "not include any explanations. "
+                "Use the given format to extract information from the "
+                "following input: {input}"
+            ),
+        ),
+    ]
+)
+
+
+def optional_enum_field(
+    enum_values: Optional[List[str]] = None,
+    description: str = "",
+    is_rel: bool = False,
+    **field_kwargs: Any,
+) -> Any:
+    """Utility function to conditionally create a field with an enum constraint."""
+    if enum_values:
+        return Field(
+            ...,
+            enum=enum_values,
+            description=f"{description}. Available options are {enum_values}",
+            **field_kwargs,
+        )
+    else:
+        node_info = (
+            "Ensure you use basic or elementary types for node labels.\n"
+            "For example, when you identify an entity representing a person, "
+            "always label it as **'Person'**. Avoid using more specific terms "
+            "like 'Mathematician' or 'Scientist'"
+        )
+        rel_info = (
+            "Instead of using specific and momentary types such as "
+            "'BECAME_PROFESSOR', use more general and timeless relationship types like "
+            "'PROFESSOR'. However, do not sacrifice any accuracy for generality"
+        )
+        additional_info = rel_info if is_rel else node_info
+        return Field(..., description=description + additional_info, **field_kwargs)
+
+
+class _Graph(BaseModel):
+    nodes: Optional[List]
+    relationships: Optional[List]
+
+
+def create_simple_model(
+    node_labels: Optional[List[str]] = None, rel_types: Optional[List[str]] = None
+) -> Type[_Graph]:
     """
-     Formats a property key to make it easier to read. 
-     This is used to ensure that the keys are consistent across the server
-     
-     Args:
-     	 s: The string to format.
-     
-     Returns: 
-     	 The formatted string or the original string if there was no
+    Simple model allows to limit node and/or relationship types.
+    Doesn't have any node or relationship properties.
     """
-    
-    words = s.split()
-    logging.debug("Returns the word if words is not empty.")
-    if not words:
-        return s
-    first_word = words[0].lower()
-    capitalized_words = [word.capitalize() for word in words[1:]]
-    return "".join([first_word] + capitalized_words)
+
+    class SimpleNode(BaseModel):
+        """Represents a node in a graph with associated properties."""
+
+        id: str = Field(description="Name or human-readable unique identifier.")
+        type: str = optional_enum_field(
+            node_labels, description="The type or label of the node."
+        )
+
+    class SimpleRelationship(BaseModel):
+        """Represents a directed relationship between two nodes in a graph."""
+
+        source_node_id: str = Field(
+            description="Name or human-readable unique identifier of source node"
+        )
+        source_node_type: str = optional_enum_field(
+            node_labels, description="The type or label of the source node."
+        )
+        target_node_id: str = Field(
+            description="Name or human-readable unique identifier of target node"
+        )
+        target_node_type: str = optional_enum_field(
+            node_labels, description="The type or label of the target node."
+        )
+        type: str = optional_enum_field(
+            rel_types, description="The type of the relationship.", is_rel=True
+        )
+
+    class DynamicGraph(_Graph):
+        """Represents a graph document consisting of nodes and relationships."""
+
+        nodes: Optional[List[SimpleNode]] = Field(description="List of nodes")
+        relationships: Optional[List[SimpleRelationship]] = Field(
+            description="List of relationships"
+        )
+
+    return DynamicGraph
 
 
-def props_to_dict(props) -> dict:
-    """
-     Convert properties to a dictionary. 
-     This is used to convert a list of : class : ` Property ` objects to a dictionary
-     
-     Args:
-     	 props: List of : class : ` Property ` objects
-     
-     Returns: 
-     	 Dictionary of property keys and values or an empty dictionary
-    """
-    properties = {}
-    if not props:
-      return properties
-    for p in props:
-        properties[format_property_key(p.key)] = p.value
-    return properties
+def map_to_base_node(node: Any) -> Node:
+    """Map the SimpleNode to the base Node."""
+    return Node(id=node.id, type=node.type)
 
 
-def map_to_base_node(node: Node) -> BaseNode:
-    """
-     Map KnowledgeGraph Node to the Base Node. 
-     This is used to generate Cypher statements that are derived from the knowledge graph
-     
-     Args:
-     	 node: The node to be mapped
-     
-     Returns: 
-     	 A mapping of the KnowledgeGraph Node to the BaseNode
-    """
-    properties = props_to_dict(node.properties) if node.properties else {}
-    properties["name"] = node.id.title().replace(' ','_')
-    #replace all non alphanumeric characters and spaces with underscore
-    node_type = re.sub(r'[^\w]+', '_', node.type.capitalize())
-    return BaseNode(
-        id=node.id.title().replace(' ','_'), type=node_type, properties=properties
-    )
+def map_to_base_relationship(rel: Any) -> Relationship:
+    """Map the SimpleRelationship to the base Relationship."""
+    source = Node(id=rel.source_node_id, type=rel.source_node_type)
+    target = Node(id=rel.target_node_id, type=rel.target_node_type)
+    return Relationship(source=source, target=target, type=rel.type)
 
 
-def map_to_base_relationship(rel: Relationship) -> BaseRelationship:
-    """
-     Map KnowledgeGraph relationships to the base Relationship. 
-    
-     Args:
-     	 rel: The relationship to be mapped
-     
-     Returns: 
-     	 The mapped : class : ` BaseRelationship ` 
-    """
-    source = map_to_base_node(rel.source)
-    target = map_to_base_node(rel.target)
-    properties = props_to_dict(rel.properties) if rel.properties else {}
-    return BaseRelationship(
-        source=source, target=target, type=rel.type, properties=properties
-    )  
+def _parse_and_clean_json(
+    argument_json: Dict[str, Any],
+) -> Tuple[List[Node], List[Relationship]]:
+    nodes = []
+    for node in argument_json["nodes"]:
+        if not node.get("id"):  # Id is mandatory, skip this node
+            continue
+        nodes.append(
+            Node(
+                id=node["id"],
+                type=node.get("type"),
+            )
+        )
+    relationships = []
+    for rel in argument_json["relationships"]:
+        # Mandatory props
+        if (
+            not rel.get("source_node_id")
+            or not rel.get("target_node_id")
+            or not rel.get("type")
+        ):
+            continue
+
+        # Node type copying if needed from node list
+        if not rel.get("source_node_type"):
+            try:
+                rel["source_node_type"] = [
+                    el.get("type")
+                    for el in argument_json["nodes"]
+                    if el["id"] == rel["source_node_id"]
+                ][0]
+            except IndexError:
+                rel["source_node_type"] = None
+        if not rel.get("target_node_type"):
+            try:
+                rel["target_node_type"] = [
+                    el.get("type")
+                    for el in argument_json["nodes"]
+                    if el["id"] == rel["target_node_id"]
+                ][0]
+            except IndexError:
+                rel["target_node_type"] = None
+
+        source_node = Node(
+            id=rel["source_node_id"],
+            type=rel["source_node_type"],
+        )
+        target_node = Node(
+            id=rel["target_node_id"],
+            type=rel["target_node_type"],
+        )
+        relationships.append(
+            Relationship(
+                source=source_node,
+                target=target_node,
+                type=rel["type"],
+            )
+        )
+    return nodes, relationships
 
 
-def get_extraction_chain(
-    model_version,
-    allowed_nodes: Optional[List[str]] = None,
-    allowed_rels: Optional[List[str]] = None
-    ):
-    
-    llm = ChatOpenAI(model= model_version, temperature=0)
-    """
-    Get a chain of nodes and relationships to extract from GPT. 
-    This is an interactive function that prompts the user to select which nodes and relationships 
-    to extract from the Knowledge Graph and returns them as a list of Node objects.
-    
+def _format_nodes(nodes: List[Node]) -> List[Node]:
+    return [
+        Node(
+            id=el.id.title() if isinstance(el.id, str) else el.id,
+            type=el.type.capitalize(),
+        )
+        for el in nodes
+    ]
+
+
+def _format_relationships(rels: List[Relationship]) -> List[Relationship]:
+    return [
+        Relationship(
+            source=_format_nodes([el.source])[0],
+            target=_format_nodes([el.target])[0],
+            type=el.type.replace(" ", "_").upper(),
+        )
+        for el in rels
+    ]
+
+
+def _convert_to_graph_document(
+    raw_schema: Dict[Any, Any],
+) -> Tuple[List[Node], List[Relationship]]:
+    # If there are validation errors
+    if not raw_schema["parsed"]:
+        try:
+            try:  # OpenAI type response
+                argument_json = json.loads(
+                    raw_schema["raw"].additional_kwargs["tool_calls"][0]["function"][
+                        "arguments"
+                    ]
+                )
+            except Exception:  # Google type response
+                argument_json = json.loads(
+                    raw_schema["raw"].additional_kwargs["function_call"]["arguments"]
+                )
+
+            nodes, relationships = _parse_and_clean_json(argument_json)
+        except Exception:  # If we can't parse JSON
+            return ([], [])
+    else:  # If there are no validation errors use parsed pydantic object
+        parsed_schema: _Graph = raw_schema["parsed"]
+        nodes = (
+            [map_to_base_node(node) for node in parsed_schema.nodes]
+            if parsed_schema.nodes
+            else []
+        )
+
+        relationships = (
+            [map_to_base_relationship(rel) for rel in parsed_schema.relationships]
+            if parsed_schema.relationships
+            else []
+        )
+    # Title / Capitalize
+    return _format_nodes(nodes), _format_relationships(relationships)
+
+
+class LLMGraphTransformer:
+    """Transform documents into graph-based documents using a LLM.
+
+    It allows specifying constraints on the types of nodes and relationships to include
+    in the output graph. The class doesn't support neither extract and node or
+    relationship properties
+
     Args:
-     	 Optional allowed_nodes: A list of node IDs to be considered for extraction. 
-         Optional allowed_rels: A list of relationships to be considered for extraction. 
-         
-         If None ( default ) all nodes are considered. If a list of strings is provided only nodes that match the string will be considered.
+        llm (BaseLanguageModel): An instance of a language model supporting structured
+          output.
+        allowed_nodes (List[str], optional): Specifies which node types are
+          allowed in the graph. Defaults to an empty list, allowing all node types.
+        allowed_relationships (List[str], optional): Specifies which relationship types
+          are allowed in the graph. Defaults to an empty list, allowing all relationship
+          types.
+        prompt (Optional[ChatPromptTemplate], optional): The prompt to pass to
+          the LLM with additional instructions.
+        strict_mode (bool, optional): Determines whether the transformer should apply
+          filtering to strictly adhere to `allowed_nodes` and `allowed_relationships`.
+          Defaults to True.
+
+    Example:
+        .. code-block:: python
+            from langchain_experimental.graph_transformers import LLMGraphTransformer
+            from langchain_core.documents import Document
+            from langchain_openai import ChatOpenAI
+
+            llm=ChatOpenAI(temperature=0)
+            transformer = LLMGraphTransformer(
+                llm=llm,
+                allowed_nodes=["Person", "Organization"])
+
+            doc = Document(page_content="Elon Musk is suing OpenAI")
+            graph_documents = transformer.convert_to_graph_documents([doc])
     """
-    
-    prompt = ChatPromptTemplate.from_messages(
-        [(
-          "system",
-          f"""# Knowledge Graph Instructions for GPT-4
-## 1. Overview
-You are a top-tier algorithm designed for extracting information in structured formats to build a knowledge graph.
-- **Nodes** represent entities and concepts. They're akin to Wikipedia nodes.
-- The aim is to achieve simplicity and clarity in the knowledge graph, making it accessible for a vast audience.
-## 2. Labeling Nodes
-- **Consistency**: Ensure you use basic or elementary types for node labels.
-  - For example, when you identify an entity representing a person, always label it as **"person"**. Avoid using more specific terms like "mathematician" or "scientist".
-- **Node IDs**: Never utilize integers as node IDs. Node IDs should be names or human-readable identifiers found in the text.
-{'- **Allowed Node Labels:**' + ", ".join(allowed_nodes) if allowed_nodes else ""}
-{'- **Allowed Relationship Types**:' + ", ".join(allowed_rels) if allowed_rels else ""}
-## 3. Handling Numerical Data and Dates
-- Numerical data, like age or other related information, should be incorporated as attributes or properties of the respective nodes.
-- **No Separate Nodes for Dates/Numbers**: Do not create separate nodes for dates or numerical values. Always attach them as attributes or properties of nodes.
-- **Property Format**: Properties must be in a key-value format.
-- **Quotation Marks**: Never use escaped single or double quotes within property values.
-- **Naming Convention**: Use camelCase for property keys, e.g., `birthDate`.
-## 4. Coreference Resolution
-- **Maintain Entity Consistency**: When extracting entities, it's vital to ensure consistency.
-If an entity, such as "John Doe", is mentioned multiple times in the text but is referred to by different names or pronouns (e.g., "Joe", "he"),
-always use the most complete identifier for that entity throughout the knowledge graph. In this example, use "John Doe" as the entity ID.
-Remember, the knowledge graph should be coherent and easily understandable, so maintaining consistency in entity references is crucial.
-## 5. Strict Compliance
-- **Not allowed Values** : Do not use 'Source' as label for any node and 'RELATIONSHIP' as relationship type for any relationships in graph.
-- **Colon values** : You may encounter colon(:) in content (example: Time references, description of title after heading). Please 
-treat them as text and do not treat them as dictionaries. For example, if time "10:00" is mentioned, considered it as part of text 
-content, not as data structure.
-Adhere to the rules strictly. Non-compliance will result in termination.
-          """),
-            ("human", "Use the given format to extract information from the following input: {input}"),
-            ("human", "Tip: Make sure to answer in the correct format"),
-        ])
-    return create_structured_output_chain(KnowledgeGraph, llm, prompt, verbose=False)
 
+    def __init__(
+        self,
+        llm: BaseLanguageModel,
+        allowed_nodes: List[str] = [],
+        allowed_relationships: List[str] = [],
+        prompt: ChatPromptTemplate = default_prompt,
+        strict_mode: bool = True,
+    ) -> None:
+        if not hasattr(llm, "with_structured_output"):
+            raise ValueError(
+                "The specified LLM does not support the 'with_structured_output'. "
+                "Please ensure you are using an LLM that supports this feature."
+            )
+        self.allowed_nodes = allowed_nodes
+        self.allowed_relationships = allowed_relationships
+        self.strict_mode = strict_mode
 
-def extract_and_store_graph(
-    model_version,
-    graph: Neo4jGraph,
-    document: Document,
-    file_name: str,
-    uri: str,
-    userName:str,
-    password:str,
-    firstChunk:bool,
-    current_chunk_id:uuid,
-    previous_chunk_id:uuid,
-    nodes:Optional[List[str]] = None,
-    rels:Optional[List[str]]=None) -> None:
-    
-    """
-     This is a wrapper around OpenAI functions to perform the extraction and 
-     store the result into a Neo4jGraph.
-     
-     Args:
-        model_version: LLM model version
-        graph: Neo4j graph to store the data into
-        document: Langchain document to extract data from
-        file_name (str): file name of input source
-        uri: URI of the graph to extract
-        userName: Username to use for graph creation ( if None will use username from config file )
-        password: Password to use for graph creation ( if None will use password from config file )
-        firstChunk : It's bool value to create FIRST_CHUNK AND NEXT_CHUNK relationship between chunk and document node.
-        current_chunk_id : Unique id of chunk
-        previous_chunk_id : Unique id of previous chunk
-        nodes: List of nodes to extract ( default : None )
-        rels: List of relationships to extract ( default : None )
-     
-     Returns: 
-     	 The GraphDocument that was extracted and stored into the Neo4jgraph
-    """
-    logging.info(f"Processing chunk in thread: {threading.current_thread().name}")
-    extract_chain = get_extraction_chain(model_version,nodes, rels)
-    data = extract_chain.invoke(document.page_content)['function']
+        # Define chain
+        schema = create_simple_model(allowed_nodes, allowed_relationships)
+        structured_llm = llm.with_structured_output(schema, include_raw=True)
+        self.chain = prompt | structured_llm
 
-    for rel in data.rels:  
-        if rel.type.casefold() == 'relationship'.casefold():
-            rel.type = 'relation'
-        
-    graph_document = [GraphDocument(
-      nodes = [map_to_base_node(node) for node in data.nodes],
-      relationships = [map_to_base_relationship(rel) for rel in data.rels],
-      source = document
-    )]   
+    def process_response(self, document: Document) -> GraphDocument:
+        """
+        Processes a single document, transforming it into a graph document using
+        an LLM based on the model's schema and constraints.
+        """
+        text = document.page_content
+        raw_schema = self.chain.invoke({"input": text})
+        raw_schema = cast(Dict[Any, Any], raw_schema)
+        nodes, relationships = _convert_to_graph_document(raw_schema)
 
-    graph.add_graph_documents(graph_document)
-    lst_cypher_queries_chunk_relationship = create_source_chunk_entity_relationship(file_name,graph,graph_document,document,uri,userName,password,firstChunk,current_chunk_id,
-    previous_chunk_id)
-    return graph_document, lst_cypher_queries_chunk_relationship
- 
-    
-# def extract_graph_from_OpenAI(model_version,
-#                             graph: Neo4jGraph,
-#                             chunks: List[Document],
-#                             file_name : str,
-#                             uri : str,
-#                             userName : str,
-#                             password : str):
-#     """
-#         Extract graph from OpenAI and store it in database. 
-#         This is a wrapper for extract_and_store_graph
-                                
-#         Args:
-#             model_version : identify the model of LLM
-#             graph: Neo4jGraph to be extracted.
-#             chunks: List of chunk documents created from input file
-#             file_name (str) : file name of input source
-#             uri: URI of the graph to extract
-#             userName: Username to use for graph creation ( if None will use username from config file )
-#             password: Password to use for graph creation ( if None will use password from config file )    
-#         Returns: 
-#             List of langchain GraphDocument - used to generate graph
-#     """
-#     openai_api_key = os.environ.get('OPENAI_API_KEY')
-#     graph_document_list = []
-#     relationship_cypher_list = []
-#     futures=[]
-#     logging.info(f"create relationship between source,chunk and entity nodes created from {model_version}")
-    
-#     with ThreadPoolExecutor(max_workers=10) as executor:
-#         current_chunk_id= ''
-#         for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
-#             previous_chunk_id = current_chunk_id
-#             current_chunk_id = str(uuid.uuid1())
-#             position = i+1
-#             if i == 0:
-#                 firstChunk = True
-#             else:
-#                 firstChunk = False
-#             metadata = {"position": position,"length": len(chunk_document.page_content)}
-#             chunk_document = Document(page_content=chunk_document.page_content,metadata = metadata)
-            
-#             futures.append(executor.submit(extract_and_store_graph,model_version,graph,chunk_document,file_name,uri,userName,password,firstChunk,current_chunk_id,previous_chunk_id))   
-#         for future in concurrent.futures.as_completed(futures):
-#             graph_document,lst_cypher_queries_chunk_relationship = future.result()
-            
-#             graph_document_list.append(graph_document[0])
-#             relationship_cypher_list.extend(lst_cypher_queries_chunk_relationship)
-        
-#     return graph_document_list, relationship_cypher_list
+        # Strict mode filtering
+        if self.strict_mode and (self.allowed_nodes or self.allowed_relationships):
+            if self.allowed_nodes:
+                lower_allowed_nodes = [el.lower() for el in self.allowed_nodes]
+                nodes = [
+                    node for node in nodes if node.type.lower() in lower_allowed_nodes
+                ]
+                relationships = [
+                    rel
+                    for rel in relationships
+                    if rel.source.type.lower() in lower_allowed_nodes
+                    and rel.target.type.lower() in lower_allowed_nodes
+                ]
+            if self.allowed_relationships:
+                relationships = [
+                    rel
+                    for rel in relationships
+                    if rel.type.lower()
+                    in [el.lower() for el in self.allowed_relationships]
+                ]
 
-def extract_graph_from_OpenAI(model_version,
-                            graph: Neo4jGraph,
-                            chunks: List[Document],
-                            file_name : str,
-                            uri : str,
-                            userName : str,
-                            password : str):
-    """
-        Extract graph from OpenAI and store it in database. 
-        This is a wrapper for extract_and_store_graph
-                                
+        return GraphDocument(nodes=nodes, relationships=relationships, source=document)
+
+    def convert_to_graph_documents(
+        self, documents: Sequence[Document]
+    ) -> List[GraphDocument]:
+        """Convert a sequence of documents into graph documents.
+
         Args:
-            model_version : identify the model of LLM
-            graph: Neo4jGraph to be extracted.
-            chunks: List of chunk documents created from input file
-            file_name (str) : file name of input source
-            uri: URI of the graph to extract
-            userName: Username to use for graph creation ( if None will use username from config file )
-            password: Password to use for graph creation ( if None will use password from config file )    
-        Returns: 
-            List of langchain GraphDocument - used to generate graph
-    """
-    
-    llm = ChatOpenAI(model= model_version, temperature=0)
-    llm_transformer = LLMGraphTransformer(llm=llm)
-    
-    openai_api_key = os.environ.get('OPENAI_API_KEY')
-    graph_document_list = []
-    relationship_cypher_list = []
-    futures=[]
-    graph_document_list_for_post_processing = {}
-    logging.info(f"create relationship between source,chunk and entity nodes created from {model_version}")
-    
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        current_chunk_id= ''
-        # for i, chunk_document in tqdm(enumerate(chunks), total=len(chunks)):
-        #     futures.append(executor.submit(llm_transformer.convert_to_graph_documents,[chunk_document]))   
-        for chunk_document in chunks:
-            futures.append(executor.submit(llm_transformer.convert_to_graph_documents,[chunk_document]))   
-        
-        for i, future in enumerate(concurrent.futures.as_completed(futures)):
-            graph_document = future.result()
-            for node in graph_document[0].nodes:
-                node.id = node.id.title().replace(' ','_')
-                #replace all non alphanumeric characters and spaces with underscore
-                node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
-            graph.add_graph_documents(graph_document)
-            graph_document_list.append(graph_document[0])
-        
-        for graph_document in graph_document_list:
-            for index, chunk in enumerate(chunks):
-                if graph_document.source.page_content == chunk.page_content:
-                    position = index+1
-                    #graph_document_list_for_post_processing.append(graph_document_list[position])
-                    graph_document_list_for_post_processing[position]=graph_document
-                    break
-        sorted_graph_document_list_for_post_processing = dict(sorted(graph_document_list_for_post_processing.items()))
-        for i, graph_document in enumerate(list(sorted_graph_document_list_for_post_processing.values())):  
-            previous_chunk_id = current_chunk_id
-            current_chunk_id = str(uuid.uuid1())
-            #position = i+1
-            if i == 0:
-                firstChunk = True
-            else:
-                firstChunk = False
-            metadata = {"position": position,"length": len(graph_document.source.page_content)}
-            chunk_document = Document(page_content=graph_document.source.page_content,metadata = metadata)
-            
-            lst_cypher_queries_chunk_relationship = create_source_chunk_entity_relationship(file_name,graph,[graph_document],chunk_document,uri,userName,password,firstChunk,current_chunk_id,previous_chunk_id)
-            #graph_document_list.append(graph_document[0])
-            relationship_cypher_list.extend(lst_cypher_queries_chunk_relationship)
-    graph.refresh_schema()    
-    return graph_document_list, relationship_cypher_list
+            documents (Sequence[Document]): The original documents.
+            **kwargs: Additional keyword arguments.
 
-def get_graph_from_OpenAI(model_version, graph, chunks:List):
+        Returns:
+            Sequence[GraphDocument]: The transformed documents as graphs.
+        """
+        return [self.process_response(document) for document in documents]
+
+    async def aprocess_response(self, document: Document) -> GraphDocument:
+        """
+        Asynchronously processes a single document, transforming it into a
+        graph document.
+        """
+        text = document.page_content
+        raw_schema = await self.chain.ainvoke({"input": text})
+        raw_schema = cast(Dict[Any, Any], raw_schema)
+        nodes, relationships = _convert_to_graph_document(raw_schema)
+
+        if self.strict_mode and (self.allowed_nodes or self.allowed_relationships):
+            if self.allowed_nodes:
+                lower_allowed_nodes = [el.lower() for el in self.allowed_nodes]
+                nodes = [
+                    node for node in nodes if node.type.lower() in lower_allowed_nodes
+                ]
+                relationships = [
+                    rel
+                    for rel in relationships
+                    if rel.source.type.lower() in lower_allowed_nodes
+                    and rel.target.type.lower() in lower_allowed_nodes
+                ]
+            if self.allowed_relationships:
+                relationships = [
+                    rel
+                    for rel in relationships
+                    if rel.type.lower()
+                    in [el.lower() for el in self.allowed_relationships]
+                ]
+
+        return GraphDocument(nodes=nodes, relationships=relationships, source=document)
+
+    async def aconvert_to_graph_documents(
+        self, documents: Sequence[Document]
+    ) -> List[GraphDocument]:
+        """
+        Asynchronously convert a sequence of documents into graph documents.
+        """
+        tasks = [
+            asyncio.create_task(self.aprocess_response(document))
+            for document in documents
+        ]
+        results = await asyncio.gather(*tasks)
+        return results
+
+
+def get_graph_from_OpenAI(model_version, graph, chunkId_chunkDoc_list:List):
     futures=[]
     graph_document_list=[]
+        
+    combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
+    
     llm = ChatOpenAI(model= model_version, temperature=0)
     llm_transformer = LLMGraphTransformer(llm=llm)
     
     with ThreadPoolExecutor(max_workers=10) as executor:
-        for chunk in chunks:
+        for chunk in combined_chunk_document_list:
             futures.append(executor.submit(llm_transformer.convert_to_graph_documents,[chunk]))   
         
         for i, future in enumerate(concurrent.futures.as_completed(futures)):
@@ -380,8 +476,7 @@ def get_graph_from_OpenAI(model_version, graph, chunks:List):
                 node.id = node.id.title().replace(' ','_')
                 #replace all non alphanumeric characters and spaces with underscore
                 node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
-            graph_document_list.append(graph_document[0])
-
+            graph_document_list.append(graph_document[0])    
     graph.add_graph_documents(graph_document_list)
     return  graph_document_list        
         
