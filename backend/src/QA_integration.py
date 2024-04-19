@@ -181,9 +181,15 @@ def extract_and_remove_source(message):
 
 def QA_RAG(uri,model,userName,password,question,session_id):
     try:
+        # retrieval_query="""
+        # MATCH (node)-[:PART_OF]->(d:Document)
+        # WITH d, apoc.text.join(collect(node.text),"\n----\n") as text, avg(score) as score
+        # RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)} as metadata
+        # """
         retrieval_query="""
+        WITH node, score, apoc.text.join([ (node)-[:HAS_ENTITY]->(e) | head(labels(e)) + ": "+ e.id],", ") as entities
         MATCH (node)-[:PART_OF]->(d:Document)
-        WITH d, apoc.text.join(collect(node.text),"\n----\n") as text, avg(score) as score
+        WITH d, apoc.text.join(collect(node.text + "\n" + entities),"\n----\n") as text, avg(score) as score
         RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)} as metadata
         """
         embedding_model = os.getenv('EMBEDDING_MODEL')
