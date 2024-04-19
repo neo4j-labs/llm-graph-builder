@@ -35,6 +35,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           userName: neo4jConnection.user,
           password: neo4jConnection.password,
           database: neo4jConnection.database,
+          port: neo4jConnection.uri.split(':')[2],
         });
         initialiseDriver(
           neo4jConnection.uri,
@@ -98,20 +99,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           filesData[uid].gcsBucketFolder ?? ''
         );
         if (apiResponse?.status === 'Failed') {
-          setShowAlert(true);
-          setErrorMessage(apiResponse?.message);
-          setFilesData((prevfiles) =>
-            prevfiles.map((curfile, idx) => {
-              if (idx == uid) {
-                return {
-                  ...curfile,
-                  status: 'Failed',
-                };
-              }
-              return curfile;
-            })
+          throw new Error(
+            `error:${apiResponse.message},message:${apiResponse.message},fileName:${apiResponse.file_name}`
           );
-          throw new Error(`message:${apiResponse.message},fileName:${apiResponse.file_name}`);
         } else {
           setFilesData((prevfiles) => {
             return prevfiles.map((curfile) => {
@@ -132,7 +122,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         }
       } catch (err: any) {
         const errorMessage = err.message;
-        const messageMatch = errorMessage.match(/message:(.*),fileName:(.*)/);
+        const messageMatch = errorMessage.match(/message:(.*),fileName:(.*),error:(.*)/);
         if (err?.name === 'AxiosError') {
           setShowAlert(true);
           setErrorMessage(err.message);
@@ -150,6 +140,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         } else {
           const message = messageMatch[1].trim();
           const fileName = messageMatch[2].trim();
+          const errorMessage = messageMatch[3].trim();
           setShowAlert(true);
           setErrorMessage(message);
           setFilesData((prevfiles) =>
@@ -158,6 +149,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                 return {
                   ...curfile,
                   status: 'Failed',
+                  errorMessage,
                 };
               }
               return curfile;
@@ -188,9 +180,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
-    const connectURL = `${userCredentials?.userName}@${localStorage.getItem('URI')}%3A${
-      localStorage.getItem('port') ?? '7687'
-    }`;
+    const connectURL = `${userCredentials?.userName}@${userCredentials?.uri}%3A${userCredentials?.port ?? '7687'}`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');

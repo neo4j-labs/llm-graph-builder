@@ -172,8 +172,8 @@ export default function Chatbot(props: ChatbotProps) {
                     <Typography variant='body-small'>{chat.datetime}</Typography>
                     {chat?.sources?.length ? (
                       <div className={`flex ${chat.sources?.length > 1 ? 'flex-col' : 'flex-row justify-end'} gap-1`}>
-                        {chat.sources.map((link) => (
-                          <div className='text-right'>
+                        {chat.sources.map((link, index) => (
+                          <div className='text-right' key={index}>
                             {link.startsWith('http') || link.startsWith('https') ? (
                               <TextLink href={link} externalLink={true}>
                                 Source
