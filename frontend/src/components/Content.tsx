@@ -35,7 +35,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           userName: neo4jConnection.user,
           password: neo4jConnection.password,
           database: neo4jConnection.database,
-          port: neo4jConnection.uri.split(':')[2]
+          port: neo4jConnection.uri.split(':')[2],
         });
         initialiseDriver(
           neo4jConnection.uri,
@@ -180,10 +180,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
-    console.log('user', userCredentials );
-    const connectURL = `${userCredentials?.userName}@${userCredentials?.uri}%3A${
-      userCredentials?.port ?? '7687'
-    }`;
+    const connectURL = `${userCredentials?.userName}@${userCredentials?.uri}%3A${userCredentials?.port ?? '7687'}`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');

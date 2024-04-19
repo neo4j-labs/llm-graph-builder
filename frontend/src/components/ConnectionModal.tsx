@@ -74,7 +74,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
             }
 
             const [key, value] = line.split('=');
-            if (['NEO4J_URI', 'NEO4J_USERNAME', 'NEO4J_PASSWORD', 'NEO4J_DATABASE','NEO4J_PORT'].includes(key)) {
+            if (['NEO4J_URI', 'NEO4J_USERNAME', 'NEO4J_PASSWORD', 'NEO4J_DATABASE', 'NEO4J_PORT'].includes(key)) {
               acc[key] = value;
             }
             return acc;
@@ -96,7 +96,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
 
   const submitConnection = async () => {
     const connectionURI = `${protocol}://${URI}${URI.split(':')[1] ? '' : `:${port}`}`;
-    setUserCredentials({ uri: connectionURI, userName: username, password: password, database: database, port:port });
+    setUserCredentials({ uri: connectionURI, userName: username, password: password, database: database, port: port });
     setIsLoading(true);
     await connectAPI(connectionURI, username, password, database).then((response: any) => {
       if (response?.data?.status === 'Success') {

@@ -9,7 +9,7 @@ import {
   TextInput,
 } from '@neo4j-ndl/react';
 import { useEffect, useRef, useState } from 'react';
-import { GraphType, GraphViewModalProps, LabelCount, Scheme } from '../types';
+import { GraphType, GraphViewModalProps, Scheme } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL, { NvlOptions } from '@neo4j-nvl/core';
 import type { Node, Relationship } from '@neo4j-nvl/core';
@@ -108,16 +108,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         graphType.length === 3
           ? queryMap.DocChunkEntities
           : graphType.includes('Entities') && graphType.includes('Chunks')
-          ? queryMap.ChunksEntities
-          : graphType.includes('Entities') && graphType.includes('Document')
-          ? queryMap.DocEntities
-          : graphType.includes('Document') && graphType.includes('Chunks')
-          ? queryMap.DocChunks
-          : graphType.includes('Entities') && graphType.length === 1
-          ? queryMap.Entities
-          : graphType.includes('Chunks') && graphType.length === 1
-          ? queryMap.Chunks
-          : queryMap.Document;
+            ? queryMap.ChunksEntities
+            : graphType.includes('Entities') && graphType.includes('Document')
+              ? queryMap.DocEntities
+              : graphType.includes('Document') && graphType.includes('Chunks')
+                ? queryMap.DocChunks
+                : graphType.includes('Entities') && graphType.length === 1
+                  ? queryMap.Entities
+                  : graphType.includes('Chunks') && graphType.length === 1
+                    ? queryMap.Chunks
+                    : queryMap.Document;
       if (viewPoint === 'showGraphView') {
         queryToRun = constructQuery(newCheck, documentNo);
         console.log('showGraph', queryToRun);
