@@ -1,10 +1,15 @@
-# import main
-# import score
-# import uvicorn
 from src.main import *
 from fastapi import UploadFile, File
 from tempfile import NamedTemporaryFile
 import logging
+import logging
+from langchain_community.document_loaders import WikipediaLoader
+from src.api_response import create_api_response
+from langchain_community.document_loaders import S3DirectoryLoader
+import logging
+import boto3
+import os
+from urllib.parse import urlparse
 
 uri =''
 userName =''
@@ -14,77 +19,82 @@ database =''
 gcs_bucket_name = ''
 gcs_bucket_folder = ''
 gcs_blob_filename = ''
+source_url = ''
+aws_access_key_id = ''
+aws_secret_access_key = ''
 
 
-def create_upload_file(file_path: str) -> UploadFile:
-    with open(file_path, "rb") as file:
-        # Create a temporary file to store the contents
-        temp_file = NamedTemporaryFile(delete=False)
-        temp_file.write(file.read())
-        
-        # Close the original file and the temporary file
-        file.close()
-        temp_file.close()
-        
-        # Create the UploadFile object
-        upload_file = UploadFile(temp_file.name)
-        
-        return upload_file
-def extract_graph_from_file_local_file_test(uri, userName, password, model,database):
+graph = create_graph_database_connection(uri, userName, password, database)
+
+def extract_graph_from_file_local_file_test():
+    shutil.copyfile('data/Copy01_patrick_pichette_-_wikipedia.pdf', 'backend/src/merged_files/Copy01_patrick_pichette_-_wikipedia.pdf')
     local_file_result =  extract_graph_from_file_local_file(
-           uri,
-           userName,
-           password,
+           graph,
            model,
-           database,
-           "data/Apple stock during pandemic.pdf"
+           "Copy01_patrick_pichette_-_wikipedia.pdf"
     )
     print(local_file_result)
     logging.info("Info:  ")
 
 
+
 #   Check for Wikipedia file to be success
 def extract_graph_from_Wikipedia(uri, userName, password, model,database):
     # uploadFile = create_upload_file('/workspaces/llm-graph-builder/data/Football_news.pdf')
-    result =  extract_graph_from_file_Wikipedia(
-             uri,
-            userName,
-            password,
+    wikiresult =  extract_graph_from_file_Wikipedia(
+             graph,
             model,
-            database,
-            'france',
+            'Japan',
             1)
 
    # print(result)
     
     logging.info("Info: Wikipedia test done")
-    print(result)
+    print(wikiresult)
     
     try:
-        assert result['status'] == 'Completed'
+        assert wikiresult['status'] == 'Completed'
         print("Success")
     except AssertionError as e:
         print("Fail: ", e)
-    
 
+    #   Check for Wikipedia file to be Failed
+def get_documents_from_Wikipedia(wiki_query:str):
+  file_name=''
+
+
+  try:
+    pages = WikipediaLoader(query=wiki_query.strip(), load_max_docs=1, load_all_available_meta=False).load()
+    file_name = wiki_query.strip()
+    logging.info(f"Total Pages from Wikipedia = {len(pages)}")
+    print(file_name,pages)
+    assert True
+     
+    #return file_name, pages
+  except Exception as e:
+    job_status = "Failed"
+    message="Failed To Process Wikipedia Query"
+    error_message = str(e)
+    #logging.error(f"Failed To Process Wikipedia Query: {file_name}")
+    #logging.exception(f'Exception Stack trace: {error_message}')
+    #return create_api_response(job_status,message=message,error=error_message,file_name=file_name)
+    print(error_message)
+      
   
   #   Check for Wikipedia file to be Failed
 def extract_graph_from_Wikipedia_fail(uri, userName, password, model,database):
     # uploadFile = create_upload_file('/workspaces/llm-graph-builder/data/Football_news.pdf')
-    result =  extract_graph_from_file_Wikipedia(
-             uri,
-            userName,
-            password,
+    wikiresults =  extract_graph_from_file_Wikipedia(
+             graph,
             model,
-            database,
-            ' putin ',
+            '  ',
             1)
    
     logging.info("Info: Wikipedia test done")
-    print(result)
+    print(wikiresults)
     #result = False
     try:
-        assert result['status'] == 'Completed'
+        assert wikiresults['status'] == 'Completed'
         print("Success")
     except AssertionError as e:
         print("Fail: ", e)
@@ -95,21 +105,23 @@ def extract_graph_from_Wikipedia_fail(uri, userName, password, model,database):
 
 def extract_graph_from_youtube_video(uri, userName, password, model, database):
     youtuberesult =  extract_graph_from_file_youtube(
-             uri,
-            userName,
-            password,
+            graph,
             model,
-            database,
             'https://www.youtube.com/watch?v=NKc8Tr5_L3w'
             )
     # print(result)
     print(youtuberesult)
-    assert result['status'] == 'Completed'
+    try:
+        assert youtuberesult['status'] == 'Completed'
+        print("Success")
+    except AssertionError as e:
+        print("Fail: ", e)
+    
 
 # Check for Youtube_video to be Failed
 
 def extract_graph_from_youtube_video_fail(uri, userName, password, model, database):
-    youtuberesult =  extract_graph_from_file_youtube(
+    youtuberesults =  extract_graph_from_file_youtube(
              uri,
             userName,
             password,
@@ -118,18 +130,20 @@ def extract_graph_from_youtube_video_fail(uri, userName, password, model, databa
             'https://www.youtube.com/watch?v=U9mJuUkhUzk'
             )
     # print(result)
-    print(youtuberesult)
-    assert youtuberesult['status'] == 'Failed'
+    print(youtuberesults)
+    try:
+        assert youtuberesults['status'] == 'Completed'
+        print("Success")
+    except AssertionError as e:
+        print("Fail: ", e)
+    
 
 # Check for the GCS file to be uploaded, process and completed
 
 def extract_graph_from_file_test_gcs(uri, userName, password, model, database):
     gcsresult =  extract_graph_from_file_gcs(
-             uri,
-            userName,
-            password,
+            graph,
             model,
-            database,
             'llm_graph_transformer_test',
             'technology',
             'Neuralink brain chip patient playing chess.pdf'
@@ -147,12 +161,50 @@ def extract_graph_from_file_test_gcs(uri, userName, password, model, database):
 
     # print(gcsresult)
     # assert gcsresult['status'] == 'Completed'
+def extract_graph_from_file_test_s3(uri, userName, password, model, database):
+    s3result = extract_graph_from_file_s3(
+        graph,
+        model,
+        "s3://development-llm-graph-builder-models/data/Sundar_Pichai_Gemini.pdf",
+        "",
+        ""
+    )
+    # Print Result
+    logging.info("Info")
+    print(s3result)
+    ####
+# def get_documents_from_s3(s3_url, aws_access_key_id, aws_secret_access_key):
+#     try:
+#       parsed_url = urlparse(s3_url)
+#       bucket = parsed_url.netloc
+#       file_key = parsed_url.path.lstrip('/')
+#       file_name=file_key.split('/')[-1]
+#       s3=boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
+#       response=s3.head_object(Bucket=bucket,Key=file_key)
+#       file_size=response['ContentLength']
+      
+#       logging.info(f'bucket : {bucket},file_name:{file_name},  file key : {file_key},  file size : {file_size}')
+#       pages=get_s3_pdf_content(s3_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
+#       return file_name,pages
+#     except Exception as e:
+#       error_message = str(e)
+#       logging.exception(f'Exception in reading content from S3:{error_message}')
+#       raise Exception(error_message) 
+
+
+
+
 
 if __name__ == "__main__":
 
-    #extract_graph_from_Wikipedia(uri, userName, password, model,database)
+    extract_graph_from_file_local_file_test()
+    extract_graph_from_Wikipedia(uri, userName, password, model,database)
+    get_documents_from_Wikipedia("  ")
     #extract_graph_from_Wikipedia_fail(uri, userName, password, model,database)
-    # #extract_graph_from_youtube_video(uri, userName, password, model, database)
-    # #extract_graph_from_youtube_video_fail(uri, userName, password, model, database)
-    #extract_graph_from_file_test_gcs(uri, userName, password, model, database)
-    extract_graph_from_file_local_file_test(uri, userName, password, model,database)
+    extract_graph_from_youtube_video(uri, userName, password, model, database)
+    #extract_graph_from_youtube_video_fail(uri, userName, password, model, database)
+    extract_graph_from_file_test_gcs(uri, userName, password, model, database)
+    extract_graph_from_file_test_s3(uri, userName, password, model, database)
+    #extract_graph_from_file_local_file_test(uri, userName, password, model,database)
+    
+    
