@@ -220,7 +220,7 @@ def processing_source(graph, model, file_name, pages, merged_file_path=None):
   param = {"file_name" : file_name}
   result = graphDb_data_Access.execute_query(query, param)
 
-  if result[0]['Status'] == 'New':
+  if result[0]['Status'] != 'Processing':
   
     obj_source_node = sourceNode()
     status = "Processing"
