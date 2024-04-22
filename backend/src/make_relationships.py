@@ -50,6 +50,7 @@ def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name
         embeddings_arr = embeddings.embed_query(row['chunk_doc'].page_content)
         # logging.info(f'Embedding list {embeddings}')
         if isEmbedding.upper() == "TRUE":
+
             data_for_query.append({
                 "chunkId": row['chunk_id'],
                 "embeddings": embeddings_arr
@@ -65,6 +66,7 @@ def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name
             #             }
             #             )
             # logging.info('create vector index on chunk embedding')
+
             graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
                             OPTIONS {indexConfig: {
                             `vector.dimensions`: $dimensions,
