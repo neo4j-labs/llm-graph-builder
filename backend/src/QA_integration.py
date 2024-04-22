@@ -23,9 +23,7 @@ load_dotenv()
 openai_api_key = os.environ.get('OPENAI_API_KEY')
 
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
-print("Loding Model")
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
-print("Model Done")
 
 
 RETRIEVAL_QUERY = """
