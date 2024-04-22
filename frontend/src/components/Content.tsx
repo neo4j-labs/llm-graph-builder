@@ -180,7 +180,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
-    const connectURL = `${userCredentials?.userName}@${userCredentials?.uri}%3A${userCredentials?.port ?? '7687'}`;
+    const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
+    console.log('uri', uriCoded);
+    const connectURL = `${userCredentials?.userName}@${uriCoded}%3A${userCredentials?.port ?? '7687'}`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
