@@ -108,16 +108,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         graphType.length === 3
           ? queryMap.DocChunkEntities
           : graphType.includes('Entities') && graphType.includes('Chunks')
-            ? queryMap.ChunksEntities
-            : graphType.includes('Entities') && graphType.includes('Document')
-              ? queryMap.DocEntities
-              : graphType.includes('Document') && graphType.includes('Chunks')
-                ? queryMap.DocChunks
-                : graphType.includes('Entities') && graphType.length === 1
-                  ? queryMap.Entities
-                  : graphType.includes('Chunks') && graphType.length === 1
-                    ? queryMap.Chunks
-                    : queryMap.Document;
+          ? queryMap.ChunksEntities
+          : graphType.includes('Entities') && graphType.includes('Document')
+          ? queryMap.DocEntities
+          : graphType.includes('Document') && graphType.includes('Chunks')
+          ? queryMap.DocChunks
+          : graphType.includes('Entities') && graphType.length === 1
+          ? queryMap.Entities
+          : graphType.includes('Chunks') && graphType.length === 1
+          ? queryMap.Chunks
+          : queryMap.Document;
       if (viewPoint === 'showGraphView') {
         queryToRun = constructQuery(newCheck, documentNo);
         console.log('showGraph', queryToRun);
