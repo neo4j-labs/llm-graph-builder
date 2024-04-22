@@ -42,7 +42,7 @@ def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name
                             "embeddings" : embeddings_arr
                         }
                         )
-            logging.info('create vector index on chunk embedding')
+            logging.info(f'create vector index on chunk embedding for file_name: {file_name}')
             graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
                             OPTIONS {indexConfig: {
                             `vector.dimensions`: $dimensions,

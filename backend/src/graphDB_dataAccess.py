@@ -91,7 +91,7 @@ class graphDBdataAccess:
                                     CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score
                                     WHERE node <> c and score >= $score MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score
                                 """,
-                                {"score":knn_min_score}
+                                {"score":float(knn_min_score)}
                                 )
             logging.info(f"result : {result}")
             
@@ -107,4 +107,6 @@ class graphDBdataAccess:
         """
         if self.graph:
             return "Connection Successful"
-        
+
+    def execute_query(self, query, param):
+        return self.graph.query(query, param)

@@ -252,7 +252,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <Button
-              loading={filesData.some((f) => f?.status === 'Processing')}
+              // loading={filesData.some((f) => f?.status === 'Processing')}
               disabled={disableCheck}
               onClick={handleGenerateGraph}
               className='mr-0.5'
