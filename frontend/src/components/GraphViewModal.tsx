@@ -22,7 +22,6 @@ import {
 import ButtonWithToolTip from './ButtonWithToolTip';
 import { constructDocQuery, constructQuery, getIcon, getNodeCaption, getSize } from '../utils/Utils';
 import {
-  colors,
   entities,
   chunks,
   document,
@@ -34,6 +33,7 @@ import {
 import { ArrowSmallRightIconOutline } from '@neo4j-ndl/react/icons';
 import { useCredentials } from '../context/UserCredentials';
 import { LegendsChip } from './LegendsChip';
+import { calcWordColor } from '@neo4j-devtools/word-color';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -108,16 +108,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         graphType.length === 3
           ? queryMap.DocChunkEntities
           : graphType.includes('Entities') && graphType.includes('Chunks')
-          ? queryMap.ChunksEntities
-          : graphType.includes('Entities') && graphType.includes('Document')
-          ? queryMap.DocEntities
-          : graphType.includes('Document') && graphType.includes('Chunks')
-          ? queryMap.DocChunks
-          : graphType.includes('Entities') && graphType.length === 1
-          ? queryMap.Entities
-          : graphType.includes('Chunks') && graphType.length === 1
-          ? queryMap.Chunks
-          : queryMap.Document;
+            ? queryMap.ChunksEntities
+            : graphType.includes('Entities') && graphType.includes('Document')
+              ? queryMap.DocEntities
+              : graphType.includes('Document') && graphType.includes('Chunks')
+                ? queryMap.DocChunks
+                : graphType.includes('Entities') && graphType.length === 1
+                  ? queryMap.Entities
+                  : graphType.includes('Chunks') && graphType.length === 1
+                    ? queryMap.Chunks
+                    : queryMap.Document;
       if (viewPoint === 'showGraphView') {
         queryToRun = constructQuery(newCheck, documentNo);
       } else {
@@ -140,9 +140,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             let labels: string[] = [];
             neo4jNodes.forEach((node) => {
               labels = node.map((f: any) => f.labels);
-              labels.forEach((label: string) => {
+              labels.forEach((label: any) => {
                 if (schemeVal[label] == undefined) {
-                  schemeVal[label] = colors[iterator % colors.length];
+                  schemeVal[label] = calcWordColor(label[0]);
                   iterator += 1;
                 }
               });
@@ -248,6 +248,20 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const heightCheck = labelsLength > 80 ? '100%' : 'max-content';
   const overflowCheck = labelsLength > 80 ? 'scroll' : 'hidden';
 
+
+  // Legends placement
+  const legendCheck = Object.keys(scheme).sort((a, b) => {
+    if (a === 'Document' || a === "Chunk") {
+      return -1;
+    }
+    else if (b === 'Document' || b === 'Chunk') {
+      return 1;
+    }
+    else { return a.localeCompare(b) }
+  });
+
+
+
   return (
     <>
       <Dialog
@@ -321,8 +335,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               <>
                 <Flex flexDirection='row' justifyContent='space-between' style={{ height: '100%', padding: '20px' }}>
                   <div className='legend_div' style={{ height: heightCheck, overflowY: overflowCheck }}>
-                    {Object.keys(scheme).map((key) => (
-                      <LegendsChip key={key} title={key} scheme={scheme} nodes={nodes} />
+                    {legendCheck.map((key, index) => (
+                      <LegendsChip key={index} title={key} scheme={scheme} nodes={nodes} />
                     ))}
                   </div>
                   <div style={{ flex: '0.7' }}>
