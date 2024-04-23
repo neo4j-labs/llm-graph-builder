@@ -108,16 +108,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         graphType.length === 3
           ? queryMap.DocChunkEntities
           : graphType.includes('Entities') && graphType.includes('Chunks')
-            ? queryMap.ChunksEntities
-            : graphType.includes('Entities') && graphType.includes('Document')
-              ? queryMap.DocEntities
-              : graphType.includes('Document') && graphType.includes('Chunks')
-                ? queryMap.DocChunks
-                : graphType.includes('Entities') && graphType.length === 1
-                  ? queryMap.Entities
-                  : graphType.includes('Chunks') && graphType.length === 1
-                    ? queryMap.Chunks
-                    : queryMap.Document;
+          ? queryMap.ChunksEntities
+          : graphType.includes('Entities') && graphType.includes('Document')
+          ? queryMap.DocEntities
+          : graphType.includes('Document') && graphType.includes('Chunks')
+          ? queryMap.DocChunks
+          : graphType.includes('Entities') && graphType.length === 1
+          ? queryMap.Entities
+          : graphType.includes('Chunks') && graphType.length === 1
+          ? queryMap.Chunks
+          : queryMap.Document;
       if (viewPoint === 'showGraphView') {
         queryToRun = constructQuery(newCheck, documentNo);
       } else {
@@ -248,19 +248,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const heightCheck = labelsLength > 80 ? '100%' : 'max-content';
   const overflowCheck = labelsLength > 80 ? 'scroll' : 'hidden';
 
-
   // Legends placement
   const legendCheck = Object.keys(scheme).sort((a, b) => {
-    if (a === 'Document' || a === "Chunk") {
+    if (a === 'Document' || a === 'Chunk') {
       return -1;
-    }
-    else if (b === 'Document' || b === 'Chunk') {
+    } else if (b === 'Document' || b === 'Chunk') {
       return 1;
     }
-    else { return a.localeCompare(b) }
+    return a.localeCompare(b);
   });
-
-
 
   return (
     <>
