@@ -21,8 +21,8 @@ export interface CustomFile extends Partial<globalThis.File> {
 }
 
 export interface OptionType {
-  value: string;
-  label: string;
+  readonly value: string;
+  readonly label: string;
 }
 
 export type UserCredentials = {
@@ -214,4 +214,7 @@ export interface LegendChipProps {
   scheme: Scheme;
   title: string;
   nodes: NodeType[];
+}
+export interface FileContextProviderProps {
+  children: ReactNode;
 }
