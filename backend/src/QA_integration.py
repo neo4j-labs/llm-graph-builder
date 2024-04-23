@@ -24,6 +24,7 @@ openai_api_key = os.environ.get('OPENAI_API_KEY')
 
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
+CHAT_MAX_TOKENS = 2000
 
 
 RETRIEVAL_QUERY = """
@@ -51,7 +52,7 @@ Ensure that answers are straightforward and context-aware, focusing on being rel
 """
 
 
-def get_llm(model: str) -> Any:
+def get_llm(model: str,max_tokens=1000) -> Any:
     """Retrieve the specified language model based on the model name."""
 
     model_versions = {
@@ -70,6 +71,7 @@ def get_llm(model: str) -> Any:
             llm = ChatVertexAI(
                 model_name=model_version,
                 convert_system_message_to_human=True,
+                max_tokens=max_tokens,
                 temperature=0,
                 safety_settings={
                     HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE, 
@@ -80,7 +82,7 @@ def get_llm(model: str) -> Any:
                 }
             )
         else:
-            llm = ChatOpenAI(model=model_version, temperature=0)
+            llm = ChatOpenAI(model=model_version, temperature=0,max_tokens=max_tokens)
         return llm
 
     else:
@@ -169,6 +171,7 @@ def extract_and_remove_source(message):
 
 def QA_RAG(uri,model,userName,password,question,session_id):
     logging.info(f"QA_RAG called at {datetime.now()}")
+    # model = "Gemini Pro"
     try:
         qa_rag_start_time = time.time()
 
@@ -183,11 +186,11 @@ def QA_RAG(uri,model,userName,password,question,session_id):
             retrieval_query=RETRIEVAL_QUERY,
         )
         
-        llm = get_llm(model=model)
+        llm = get_llm(model=model,max_tokens=CHAT_MAX_TOKENS)
         qa = RetrievalQA.from_chain_type(
             llm=llm,
             chain_type="stuff",
-            retriever=neo_db.as_retriever(search_kwargs={'k': 3, "score_threshold": 0.5}),
+            retriever=neo_db.as_retriever(search_kwargs={'k': 3, "score_threshold": 0.7}),
             return_source_documents=True
         )
 
@@ -198,11 +201,13 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         vector_res = vector_embed_results(qa, question)
         vector_time = time.time() - start_time
         logging.info(f"Vector response obtained in {vector_time:.2f} seconds")
+        print(vector_res)
         
         start_time = time.time()
         chat_summary = get_chat_history(llm, uri, userName, password, session_id)
         chat_history_time = time.time() - start_time
         logging.info(f"Chat history summarized in {chat_history_time:.2f} seconds")
+        print(chat_summary)
         
         formatted_prompt = FINAL_PROMPT.format(
             question=question,
@@ -210,8 +215,10 @@ def QA_RAG(uri,model,userName,password,question,session_id):
             vector_result=vector_res.get('result', ''),
             sources=vector_res.get('source', '')
         )
-        
+        print(formatted_prompt)
+
         start_time = time.time()
+        # llm = get_llm(model=model,embedding=False)
         response = llm.predict(formatted_prompt)
         predict_time = time.time() - start_time
         logging.info(f"Response predicted in {predict_time:.2f} seconds")
@@ -227,6 +234,9 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         message = response_data["message"]
         sources = response_data["sources"]
         
+        print(f"message : {message}")
+        print(f"sources : {sources}")
+
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
         return {
@@ -239,7 +249,7 @@ def QA_RAG(uri,model,userName,password,question,session_id):
     except Exception as e:
         logging.exception(f"Exception in QA component at {datetime.now()}: {str(e)}")
         return {"session_id": session_id, 
-        "message": "Something went wrong", 
+        "message": "Something went wrong",
         "sources": [], 
         "user": "chatbot"}
 
