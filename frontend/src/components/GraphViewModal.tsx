@@ -120,10 +120,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           : queryMap.Document;
       if (viewPoint === 'showGraphView') {
         queryToRun = constructQuery(newCheck, documentNo);
-        console.log('showGraph', queryToRun);
       } else {
         queryToRun = constructDocQuery(newCheck);
-        console.log('table', queryToRun);
       }
       const session = driver?.session();
       setLoading(true);
