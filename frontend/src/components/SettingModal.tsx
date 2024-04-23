@@ -1,4 +1,4 @@
-import { Button, Dialog, Dropdown } from '@neo4j-ndl/react';
+import { Button, Checkbox, Dialog, Dropdown } from '@neo4j-ndl/react';
 import { OnChangeValue } from 'react-select';
 import { NODES_OPTIONS, RELATION_OPTIONS } from '../utils/Constants';
 import { OptionType } from '../types';
@@ -26,7 +26,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
             options: NODES_OPTIONS,
             onChange: onChangenodes,
           }}
-          type='select'
+          type='creatable'
         />
         <Dropdown
           helpText='You can select more than one values'
@@ -41,15 +41,20 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
             options: RELATION_OPTIONS,
             onChange: onChangerels,
           }}
-          type='select'
+          type='creatable'
         />
-        <Button
-          disabled={!selectedNodes.length || !selectedRels.length}
-          className='mt-2'
-          onClick={() => console.log({ selectedNodes, selectedRels })}
-        >
-          Submit
-        </Button>
+        <div>
+          <Checkbox label='Use Existing Schema' onClick={function Ha() {}} />
+        </div>
+        <div className='n-size-full n-flex n-flex-col n-items-end n-justify-center n-rounded-md n-bg-palette-neutral-bg-weak n-box-border'>
+          <Button
+            disabled={!selectedNodes.length || !selectedRels.length}
+            className='mt-2'
+            onClick={() => console.log({ selectedNodes, selectedRels })}
+          >
+            Submit
+          </Button>
+        </div>
       </Dialog.Content>
     </Dialog>
   );
