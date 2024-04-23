@@ -179,8 +179,13 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               return totalRels;
             });
             const finalRels = newRels.flat();
-            setNodes(finalNodes);
-            setRelationships(finalRels);
+            if (finalNodes.length !== 0 && finalRels !== 0) {
+              setNodes(finalNodes);
+              setRelationships(finalRels);
+            } else {
+              setStatus('danger');
+              setStatusMessage('Unable to retrieve document graph for ' + inspectedName);
+            }
             setScheme(schemeVal);
             setLoading(false);
           } else {
