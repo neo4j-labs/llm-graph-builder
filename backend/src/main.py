@@ -396,3 +396,12 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
       graphDb_data_Access.create_source_node(obj_source_node)
       return "Source Node created Successfully"
   return f"Chunk {chunk_number}/{total_chunks} saved"
+
+def get_labels_and_relationtypes(graph):
+  query = """
+          CALL db.labels() yield label WITH collect(label) as labels 
+          CALL db.relationshipTypes() yield relationshipType 
+          RETURN labels, collect(relationshipType) as relationshipTypes
+          """
+  graphDb_data_Access = graphDBdataAccess(graph)
+  return graphDb_data_Access.execute_query(query)

@@ -108,5 +108,5 @@ class graphDBdataAccess:
         if self.graph:
             return "Connection Successful"
 
-    def execute_query(self, query, param):
+    def execute_query(self, query, param=None):
         return self.graph.query(query, param)
