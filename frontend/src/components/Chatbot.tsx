@@ -8,6 +8,7 @@ import { useCredentials } from '../context/UserCredentials';
 import chatBotAPI from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../context/UsersFiles';
+import { extractPdfFileName } from '../utils/Utils';
 
 export default function Chatbot(props: ChatbotProps) {
   const { messages: listMessages, setMessages: setListMessages } = props;
@@ -172,17 +173,23 @@ export default function Chatbot(props: ChatbotProps) {
                     <Typography variant='body-small'>{chat.datetime}</Typography>
                     {chat?.sources?.length ? (
                       <div className={`flex ${chat.sources?.length > 1 ? 'flex-col' : 'flex-row justify-end'} gap-1`}>
-                        {chat.sources.map((link, index) => (
-                          <div className='text-right' key={index}>
-                            {link.startsWith('http') || link.startsWith('https') ? (
-                              <TextLink href={link} externalLink={true}>
-                                Source
-                              </TextLink>
-                            ) : (
-                              <Typography variant='body-small'>{link}</Typography>
-                            )}
-                          </div>
-                        ))}
+                        {chat.sources.map((link, index) => {
+                          return (
+                            <div className='text-right' key={index}>
+                              {link.includes('storage.googleapis.com') ? (
+                                <Typography variant='body-small'>GCS : {extractPdfFileName(link)}</Typography>
+                              ) : link.startsWith('http') || link.startsWith('https') ? (
+                                <TextLink href={link} externalLink={true}>
+                                  Source
+                                </TextLink>
+                              ) : link.startsWith('s3') ? (
+                                <Typography variant='body-small'>S3 File: {link.split('/').at(-1)}</Typography>
+                              ) : (
+                                <Typography variant='body-small'>{link}</Typography>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     ) : null}
                   </div>
