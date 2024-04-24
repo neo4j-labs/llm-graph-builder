@@ -12,7 +12,7 @@ def check_url_source(url):
     try:
       
       logging.info(f"incoming URL: {url}")
-      if re.match('^(https?:\/\/)?(www\.|m\.)?youtube\.com\/(c\/[^\/\?]+\/|channel\/[^\/\?]+\/|user\/[^\/\?]+\/)?(watch\?v=[^&\s]+|embed\/[^\/\?]+|[^\/\?]+)(&[^?\s]*)?$',url):
+      if re.match('(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?',url):
         youtube_url = create_youtube_url(url)
         logging.info(youtube_url)
       else:
