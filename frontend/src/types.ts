@@ -45,6 +45,8 @@ export type ExtractParams = {
   gcs_blob_filename?: string;
   source_type?: string;
   file_name?: string;
+  allowedNodes?: string[];
+  allowedRelationship?: string[];
 } & { [key: string]: any };
 
 export type UploadParams = {
