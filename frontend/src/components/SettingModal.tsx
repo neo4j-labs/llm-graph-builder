@@ -1,6 +1,5 @@
 import { Button, Checkbox, Dialog, Dropdown } from '@neo4j-ndl/react';
 import { OnChangeValue } from 'react-select';
-import { NODES_OPTIONS, RELATION_OPTIONS } from '../utils/Constants';
 import { OptionType, UserCredentials } from '../types';
 import { useFileContext } from '../context/UsersFiles';
 import { getNodeLabelsAndRelTypes } from '../services/GetNodeLabelsRelTypes';
@@ -12,8 +11,8 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
   const { userCredentials } = useCredentials();
   const onChangenodes = (selectedOptions: OnChangeValue<OptionType, true>) => setSelectedNodes(selectedOptions);
   const onChangerels = (selectedOptions: OnChangeValue<OptionType, true>) => setSelectedRels(selectedOptions);
-  const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>(NODES_OPTIONS);
-  const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>(RELATION_OPTIONS);
+  const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>([]);
+  const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
 
   useEffect(() => {
     const getOptions = async () => {
@@ -38,7 +37,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
       setSelectedNodes([]);
       setSelectedRels([]);
     }
-  }, []);
+  }, [nodeLabelOptions, relationshipTypeOptions]);
 
   return (
     <Dialog size='medium' open={open} aria-labelledby='form-dialog-title' onClose={onClose}>
