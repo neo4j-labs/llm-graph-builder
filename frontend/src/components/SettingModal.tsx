@@ -15,29 +15,34 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
   const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
 
   useEffect(() => {
-    const getOptions = async () => {
-      try {
-        const response = await getNodeLabelsAndRelTypes(userCredentials as UserCredentials);
-        const nodelabels = response.data.data[0].labels.slice(0, 20).map((l) => ({ value: l, label: l }));
-        const reltypes = response.data.data[0].relationshipTypes.slice(0, 20).map((t) => ({ value: t, label: t }));
-        setnodeLabelOptions(nodelabels);
-        setrelationshipTypeOptions(reltypes);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    getOptions();
-  }, []);
-
-  const clickHandler: ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
-    if (e.target.checked) {
-      setSelectedNodes(nodeLabelOptions);
-      setSelectedRels(relationshipTypeOptions);
-    } else {
-      setSelectedNodes([]);
-      setSelectedRels([]);
+    if (userCredentials) {
+      const getOptions = async () => {
+        try {
+          const response = await getNodeLabelsAndRelTypes(userCredentials as UserCredentials);
+          const nodelabels = response.data.data[0].labels.slice(0, 20).map((l) => ({ value: l, label: l }));
+          const reltypes = response.data.data[0].relationshipTypes.slice(0, 20).map((t) => ({ value: t, label: t }));
+          setnodeLabelOptions(nodelabels);
+          setrelationshipTypeOptions(reltypes);
+        } catch (error) {
+          console.log(error);
+        }
+      };
+      getOptions();
     }
-  }, [nodeLabelOptions, relationshipTypeOptions]);
+  }, [userCredentials]);
+
+  const clickHandler: ChangeEventHandler<HTMLInputElement> = useCallback(
+    (e) => {
+      if (e.target.checked) {
+        setSelectedNodes(nodeLabelOptions);
+        setSelectedRels(relationshipTypeOptions);
+      } else {
+        setSelectedNodes([]);
+        setSelectedRels([]);
+      }
+    },
+    [nodeLabelOptions, relationshipTypeOptions]
+  );
 
   return (
     <Dialog size='medium' open={open} aria-labelledby='form-dialog-title' onClose={onClose}>
