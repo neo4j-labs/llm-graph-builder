@@ -13,6 +13,7 @@ from langserve import add_routes
 from langchain_google_vertexai import ChatVertexAI
 from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
+from typing import List
 
 def healthy_condition():
     output = {"healthy": True}
@@ -133,8 +134,8 @@ async def extract_knowledge_graph_from_file(
     gcs_blob_filename=Form(None),
     source_type=Form(None),
     file_name=Form(None),
-    allowedNodes=List(str),
-    allowedRelationship=List(str)
+    allowedNodes=List[str],
+    allowedRelationship=List[str]
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
