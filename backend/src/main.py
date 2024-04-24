@@ -145,7 +145,7 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
         lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'status':'Failed'})
     return lst_file_name,success_count,failed_count
     
-def extract_graph_from_file_local_file(graph, model, fileName):
+def extract_graph_from_file_local_file(graph, model, fileName, allowedNodes, allowedRelationship):
 
   logging.info(f'Process file name :{fileName}')
   merged_file_path = os.path.join(os.path.join(os.path.dirname(__file__), "merged_files"),fileName)
@@ -155,9 +155,9 @@ def extract_graph_from_file_local_file(graph, model, fileName):
   if pages==None or len(pages)==0:
     raise Exception('Pdf content is not available for file : {file_name}')
 
-  return processing_source(graph, model, file_name, pages, merged_file_path)
+  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, merged_file_path)
 
-def extract_graph_from_file_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key):
+def extract_graph_from_file_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, allowedNodes, allowedRelationship):
 
   if(aws_access_key_id==None or aws_secret_access_key==None):
     raise Exception('Please provide AWS access and secret keys')
@@ -168,34 +168,34 @@ def extract_graph_from_file_s3(graph, model, source_url, aws_access_key_id, aws_
   if pages==None or len(pages)==0:
     raise Exception('Pdf content is not available for file : {file_name}')
 
-  return processing_source(graph, model, file_name, pages)
+  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
-def extract_graph_from_file_youtube(graph, model, source_url):
+def extract_graph_from_file_youtube(graph, model, source_url, allowedNodes, allowedRelationship):
   
   file_name, pages = get_documents_from_youtube(source_url)
 
   if pages==None or len(pages)==0:
     raise Exception('Youtube transcript is not available for file : {file_name}')
 
-  return processing_source(graph, model, file_name, pages)
+  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
-def extract_graph_from_file_Wikipedia(graph, model, wiki_query, max_sources):
+def extract_graph_from_file_Wikipedia(graph, model, wiki_query, max_sources, allowedNodes, allowedRelationship):
 
   file_name, pages = get_documents_from_Wikipedia(wiki_query)
   if pages==None or len(pages)==0:
     raise Exception('Wikipedia page is not available for file : {file_name}')
 
-  return processing_source(graph, model, file_name, pages)
+  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
-def extract_graph_from_file_gcs(graph, model, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename):
+def extract_graph_from_file_gcs(graph, model, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship):
 
   file_name, pages = get_documents_from_gcs(gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename)
   if pages==None or len(pages)==0:
     raise Exception('Pdf content is not available for file : {file_name}')
 
-  return processing_source(graph, model, file_name, pages)
+  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
-def processing_source(graph, model, file_name, pages, merged_file_path=None):
+def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, merged_file_path=None):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -250,7 +250,7 @@ def processing_source(graph, model, file_name, pages, merged_file_path=None):
     #create vector index and update chunk node with embedding
     update_embedding_create_vector_index( graph, chunkId_chunkDoc_list, file_name)
     logging.info("Get graph document list from models")
-    graph_documents =  generate_graphDocuments(model, graph, chunkId_chunkDoc_list)
+    graph_documents =  generate_graphDocuments(model, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
     
     chunks_and_graphDocuments_list = get_chunk_and_graphDocument(graph_documents, chunkId_chunkDoc_list)
     merge_relationship_between_chunk_and_entites(graph, chunks_and_graphDocuments_list)

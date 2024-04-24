@@ -132,7 +132,9 @@ async def extract_knowledge_graph_from_file(
     gcs_bucket_folder=Form(None),
     gcs_blob_filename=Form(None),
     source_type=Form(None),
-    file_name=Form(None)
+    file_name=Form(None),
+    allowedNodes=Form(None),
+    allowedRelationship=Form(None)
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
@@ -153,23 +155,23 @@ async def extract_knowledge_graph_from_file(
         graphDb_data_Access = graphDBdataAccess(graph)
         if source_type == 'local file':
             result = await asyncio.to_thread(
-                extract_graph_from_file_local_file, graph, model, file_name)
+                extract_graph_from_file_local_file, graph, model, file_name, allowedNodes, allowedRelationship)
 
         elif source_type == 's3 bucket' and source_url:
             result = await asyncio.to_thread(
-                extract_graph_from_file_s3, graph, model, source_url, aws_access_key_id, aws_secret_access_key)
+                extract_graph_from_file_s3, graph, model, source_url, aws_access_key_id, aws_secret_access_key, allowedNodes, allowedRelationship)
 
         elif source_type == 'youtube' and source_url:
             result = await asyncio.to_thread(
-                extract_graph_from_file_youtube, graph, model, source_url)
+                extract_graph_from_file_youtube, graph, model, source_url, allowedNodes, allowedRelationship)
 
         elif source_type == 'Wikipedia' and wiki_query:
             result = await asyncio.to_thread(
-                extract_graph_from_file_Wikipedia, graph, model, wiki_query, max_sources)
+                extract_graph_from_file_Wikipedia, graph, model, wiki_query, max_sources, allowedNodes, allowedRelationship)
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
             result = await asyncio.to_thread(
-                extract_graph_from_file_gcs, graph, model, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename)
+                extract_graph_from_file_gcs, graph, model, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
         
