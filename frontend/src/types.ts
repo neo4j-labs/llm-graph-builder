@@ -218,3 +218,19 @@ export interface LegendChipProps {
 export interface FileContextProviderProps {
   children: ReactNode;
 }
+export interface labelsAndTypes {
+  labels: string[];
+  relationshipTypes: string[];
+}
+export interface ServerData {
+  data: labelsAndTypes[];
+  status: string;
+  error?: string;
+  message?: string;
+}
+export interface SourceListServerData {
+  data: SourceNode[];
+  status: string;
+  error?: string;
+  message?: string;
+}
