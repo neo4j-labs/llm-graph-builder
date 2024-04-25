@@ -5,6 +5,7 @@ ENV BACKEND_API_URL "https://dev-backend-dcavk67s4a-uc.a.run.app"
 ENV BLOOM_URL "https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true"
 ENV REACT_APP_SOURCES ""
 ENV LLM_MODELS ""
+ENV ENV "PROD"
 WORKDIR /app
 COPY package.json .npmrc  yarn.lock ./
 RUN yarn add @neo4j-nvl/interaction-handlers @neo4j-nvl/core @neo4j-nvl/react

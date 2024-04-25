@@ -76,27 +76,37 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
             <div className='relative h-full'>
               <div className='flex flex-col h-full'>
                 <div className='mx-6 flex flex-none items-center justify-between pb-6 '>
-                  <Typography variant='body-medium' className='flex items-center content-center'>
-                    <Typography variant='body-medium'>
-                      {!isBackendConnected ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
+                  {process.env.ENV != 'PROD' && (
+                    <Typography variant='body-medium' className='flex items-center content-center'>
+                      <Typography variant='body-medium'>
+                        {!isBackendConnected ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
+                      </Typography>
+                      <span>Backend connection status</span>
                     </Typography>
-                    <span>Backend connection status</span>
-                  </Typography>
+                  )}
                 </div>
                 {isBackendConnected && sources.length === 0 ? (
                   <Flex gap='6' className='h-full'>
-                    <div className='px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 imageBg'>
+                    <div
+                      className={`px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 imageBg ${
+                        process.env.ENV === 'PROD' ? 'mt-2' : ''
+                      }`}
+                    >
                       <DropZone />
                     </div>
-                    <div className='outline-dashed imageBg'>
+                    <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
                       <YouTubeButton openModal={openYoutubeModal} />
                       <YoutubeModal hideModal={hideYoutubeModal} open={showYoutubeModal} />
                     </div>
-                    <div className='outline-dashed imageBg'>
+                    <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
                       <Wikipedia openModal={openWikipediaModal} />
                       <WikipediaModal hideModal={closeWikipediaModal} open={showWikiepediaModal} />
                     </div>
-                    <Flex className='s3Container outline-dashed outline-2 outline-offset-2 outline-gray-100 '>
+                    <Flex
+                      className={`s3Container outline-dashed outline-2 outline-offset-2 outline-gray-100 ${
+                        process.env.ENV === 'PROD' ? 'w-[245px]' : ''
+                      }`}
+                    >
                       <>
                         <S3Component openModal={openModal} />
                         <S3Modal hideModal={hideModal} open={showModal} />
