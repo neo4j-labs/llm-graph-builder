@@ -96,16 +96,14 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                       <Wikipedia openModal={openWikipediaModal} />
                       <WikipediaModal hideModal={closeWikipediaModal} open={showWikiepediaModal} />
                     </div>
-                    <Flex className='s3Container outline-dashed outline-2 outline-offset-2 outline-gray-100 '>
-                      <>
-                        <S3Component openModal={openModal} />
-                        <S3Modal hideModal={hideModal} open={showModal} />
-                      </>
-                      <>
-                        <GCSButton openModal={openGCSModal} />
-                        <GCSModal open={showGCSModal} hideModal={hideGCSModal} />
-                      </>
-                    </Flex>
+                    <div className='outline-dashed imageBg'>
+                      <S3Component openModal={openModal} />
+                      <S3Modal hideModal={hideModal} open={showModal} />
+                    </div>
+                    <div className='outline-dashed imageBg'>
+                      <GCSButton openModal={openGCSModal} />
+                      <GCSModal open={showGCSModal} hideModal={hideGCSModal} />
+                    </div>
                   </Flex>
                 ) : (
                   <Flex gap='6' className='h-full'>
@@ -127,20 +125,20 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                       </div>
                     )}
                     {sources.includes('s3') || sources.includes('gcs') ? (
-                      <Flex className='s3Container outline-dashed outline-2 outline-offset-2 outline-gray-100 '>
+                      <>
                         {sources.includes('s3') && (
-                          <>
+                          <div className='outline-dashed imageBg'>
                             <S3Component openModal={openModal} />
                             <S3Modal hideModal={hideModal} open={showModal} />{' '}
-                          </>
+                          </div>
                         )}
                         {sources.includes('gcs') && (
-                          <>
+                          <div className='outline-dashed imageBg'>
                             <GCSButton openModal={openGCSModal} />
                             <GCSModal open={showGCSModal} hideModal={hideGCSModal} />
-                          </>
+                          </div>
                         )}
-                      </Flex>
+                      </>
                     ) : (
                       <></>
                     )}
