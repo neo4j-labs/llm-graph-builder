@@ -2,8 +2,10 @@ from langchain_community.vectorstores.neo4j_vector import Neo4jVector
 from langchain.chains import GraphCypherQAChain
 from langchain.graphs import Neo4jGraph
 import os
+
 from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
+from langchain.chains import RetrievalQAWithSourcesChain
 from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
 from langchain_google_vertexai import VertexAIEmbeddings
@@ -24,7 +26,7 @@ openai_api_key = os.environ.get('OPENAI_API_KEY')
 
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
-CHAT_MAX_TOKENS = 2000
+CHAT_MAX_TOKENS = 1000
 
 
 RETRIEVAL_QUERY = """
@@ -35,19 +37,21 @@ RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fil
 """
 
 FINAL_PROMPT = """
-You are an AI-powered question-answering agent tasked with providing accurate and direct responses to user queries. Utilize information from the chat history, current user input, and relevant unstructured data effectively.
+As an AI-powered question-answering agent, your task is to provide accurate and succinct responses to user queries. Utilize information from the chat history, user input, and relevant sources effectively.
 
 Response Requirements:
-- Deliver concise and direct answers to the user's query without headers unless requested.
-- Acknowledge and utilize relevant previous interactions based on the chat history summary.
-- Respond to initial greetings appropriately, but avoid including a greeting in subsequent responses unless the chat is restarted or significantly paused.
-- Clearly state if an answer is unknown; avoid speculating.
+- Directly answer the user's query in a concise manner without using headers unless specifically requested.
+- Use chat history summary to provide context-aware responses and acknowledge relevant past interactions.
+- Respond appropriately to initial greetings but omit greetings in subsequent responses unless the conversation is restarted or there's a significant pause.
+- For specific inquiries, rely on the chat history and relevant information {vector_result}. Avoid making assumptions or creating unfounded details.
+- If the answer is unknown, state this clearly without speculation.
 
 Instructions:
-- Prioritize directly answering the User Input: {question}.
-- Use the Chat History Summary: {chat_summary} to provide context-aware responses.
-- Refer to Additional Unstructured Information: {vector_result} only if it directly relates to the query.
-- Cite sources clearly when using unstructured data in your response [Sources: {sources}]. The Source must be printed only at the last in the format [Source: source1,source2]
+- Prioritize responding to the User Input: {question}.
+- Utilize the Chat History Summary: {chat_summary} to ensure responses are informed by previous interactions.
+- Reference Relevant Information: {vector_result} only if it directly pertains to the user's query.
+- Ensure sources are cited clearly when Relevant Information is used in your response. List sources at the end in the format [Source: source1,source2]. Remove any duplicate sources.
+
 Ensure that answers are straightforward and context-aware, focusing on being relevant and concise.
 """
 
@@ -98,6 +102,9 @@ def vector_embed_results(qa,question):
         for i in result["source_documents"]:
             list_source_docs.append(i.metadata['source'])
             vector_res['source']=list_source_docs
+        # result = qa({"question":question},return_only_outputs=True)
+        # vector_res['result'] = result.get("answer")
+        # vector_res["source"] = result.get("sources")
     except Exception as e:
       error_message = str(e)
       logging.exception(f'Exception in vector embedding in QA component:{error_message}')
@@ -193,6 +200,10 @@ def QA_RAG(uri,model,userName,password,question,session_id):
             retriever=neo_db.as_retriever(search_kwargs={'k': 3, "score_threshold": 0.7}),
             return_source_documents=True
         )
+        # qa = RetrievalQAWithSourcesChain.from_chain_type(
+        #     llm=llm,
+        #     chain_type="stuff",
+        #     retriever=neo_db.as_retriever(search_kwargs={'k': 3, "score_threshold": 0.7}))
 
         db_setup_time = time.time() - start_time
         logging.info(f"DB Setup completed in {db_setup_time:.2f} seconds")
@@ -248,8 +259,9 @@ def QA_RAG(uri,model,userName,password,question,session_id):
 
     except Exception as e:
         logging.exception(f"Exception in QA component at {datetime.now()}: {str(e)}")
+        error_message = type(e).__name__
         return {"session_id": session_id, 
-        "message": "Something went wrong",
+        "message": f"Something went wrong, Caught an exception : {error_message}",
         "sources": [], 
         "user": "chatbot"}
 
