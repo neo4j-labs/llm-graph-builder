@@ -36,7 +36,7 @@
 }
 
 .contentWithBothDrawers {
-  width: calc(-721px + 100dvw);
+  width: calc(-786px + 100dvw);
   height: calc(100dvh - 60px);
   padding: 3px;
   display: flex;
@@ -47,7 +47,7 @@
 }
 
 .contentWithChatBot {
-  width: calc(-425px + 100dvw);
+  width: calc(-475px + 100dvw);
   height: calc(100dvh - 60px);
   padding: 3px;
   display: flex;
@@ -214,4 +214,11 @@
   line-height: 1.25rem;
   width: max-content;
   height: 30px
+}
+
+.chatBotContainer>div {
+  max-width: 370px;
+}
+.ndl-widget-content>div{
+  overflow-wrap: break-word
 }
