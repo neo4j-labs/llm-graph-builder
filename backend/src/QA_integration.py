@@ -261,7 +261,7 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         logging.exception(f"Exception in QA component at {datetime.now()}: {str(e)}")
         error_message = type(e).__name__
         return {"session_id": session_id, 
-        "message": f"Something went wrong, Caught an exception : {error_message}",
+        "message": "Something went wrong",# Caught an exception : {error_message}",
         "sources": [], 
         "user": "chatbot"}
 
