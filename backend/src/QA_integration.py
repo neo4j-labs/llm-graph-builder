@@ -51,10 +51,8 @@ Instructions:
 - Utilize the Chat History Summary: {chat_summary} to ensure responses are informed by previous interactions.
 - Reference Relevant Information: {vector_result} only if it directly pertains to the user's query.
 - Ensure sources are cited clearly when Relevant Information is used in your response. List sources at the end in the format [Source: source1,source2]. Remove any duplicate sources.
-
 Ensure that answers are straightforward and context-aware, focusing on being relevant and concise.
 """
-
 
 def get_llm(model: str,max_tokens=1000) -> Any:
     """Retrieve the specified language model based on the model name."""
@@ -218,8 +216,7 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         chat_summary = get_chat_history(llm, uri, userName, password, session_id)
         chat_history_time = time.time() - start_time
         logging.info(f"Chat history summarized in {chat_history_time:.2f} seconds")
-        print(chat_summary)
-        
+        print(chat_summary)        
         formatted_prompt = FINAL_PROMPT.format(
             question=question,
             chat_summary=chat_summary,
@@ -247,7 +244,6 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         
         print(f"message : {message}")
         print(f"sources : {sources}")
-
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
         return {
