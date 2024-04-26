@@ -2,8 +2,10 @@ from langchain_community.vectorstores.neo4j_vector import Neo4jVector
 from langchain.chains import GraphCypherQAChain
 from langchain.graphs import Neo4jGraph
 import os
+
 from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
+from langchain.chains import RetrievalQAWithSourcesChain
 from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
 from langchain_google_vertexai import VertexAIEmbeddings
@@ -24,6 +26,7 @@ openai_api_key = os.environ.get('OPENAI_API_KEY')
 
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
+CHAT_MAX_TOKENS = 1000
 
 
 RETRIEVAL_QUERY = """
@@ -34,24 +37,24 @@ RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fil
 """
 
 FINAL_PROMPT = """
-You are an AI-powered question-answering agent tasked with providing accurate and direct responses to user queries. Utilize information from the chat history, current user input, and relevant unstructured data effectively.
+As an AI-powered question-answering agent, your task is to provide accurate and succinct responses to user queries. Utilize information from the chat history, user input, and relevant sources effectively.
 
 Response Requirements:
-- Deliver concise and direct answers to the user's query without headers unless requested.
-- Acknowledge and utilize relevant previous interactions based on the chat history summary.
-- Respond to initial greetings appropriately, but avoid including a greeting in subsequent responses unless the chat is restarted or significantly paused.
-- Clearly state if an answer is unknown; avoid speculating.
+- Directly answer the user's query in a concise manner without using headers unless specifically requested.
+- Use chat history summary to provide context-aware responses and acknowledge relevant past interactions.
+- Respond appropriately to initial greetings but omit greetings in subsequent responses unless the conversation is restarted or there's a significant pause.
+- For specific inquiries, rely on the chat history and relevant information {vector_result}. Avoid making assumptions or creating unfounded details.
+- If the answer is unknown, state this clearly without speculation.
 
 Instructions:
-- Prioritize directly answering the User Input: {question}.
-- Use the Chat History Summary: {chat_summary} to provide context-aware responses.
-- Refer to Additional Unstructured Information: {vector_result} only if it directly relates to the query.
-- Cite sources clearly when using unstructured data in your response [Sources: {sources}]. The Source must be printed only at the last in the format [Source: source1,source2]
+- Prioritize responding to the User Input: {question}.
+- Utilize the Chat History Summary: {chat_summary} to ensure responses are informed by previous interactions.
+- Reference Relevant Information: {vector_result} only if it directly pertains to the user's query.
+- Ensure sources are cited clearly when Relevant Information is used in your response. List sources at the end in the format [Source: source1,source2]. Remove any duplicate sources.
 Ensure that answers are straightforward and context-aware, focusing on being relevant and concise.
 """
 
-
-def get_llm(model: str) -> Any:
+def get_llm(model: str,max_tokens=1000) -> Any:
     """Retrieve the specified language model based on the model name."""
 
     model_versions = {
@@ -70,6 +73,7 @@ def get_llm(model: str) -> Any:
             llm = ChatVertexAI(
                 model_name=model_version,
                 convert_system_message_to_human=True,
+                max_tokens=max_tokens,
                 temperature=0,
                 safety_settings={
                     HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE, 
@@ -80,7 +84,7 @@ def get_llm(model: str) -> Any:
                 }
             )
         else:
-            llm = ChatOpenAI(model=model_version, temperature=0)
+            llm = ChatOpenAI(model=model_version, temperature=0,max_tokens=max_tokens)
         return llm
 
     else:
@@ -96,6 +100,9 @@ def vector_embed_results(qa,question):
         for i in result["source_documents"]:
             list_source_docs.append(i.metadata['source'])
             vector_res['source']=list_source_docs
+        # result = qa({"question":question},return_only_outputs=True)
+        # vector_res['result'] = result.get("answer")
+        # vector_res["source"] = result.get("sources")
     except Exception as e:
       error_message = str(e)
       logging.exception(f'Exception in vector embedding in QA component:{error_message}')
@@ -169,6 +176,7 @@ def extract_and_remove_source(message):
 
 def QA_RAG(uri,model,userName,password,question,session_id):
     logging.info(f"QA_RAG called at {datetime.now()}")
+    # model = "Gemini Pro"
     try:
         qa_rag_start_time = time.time()
 
@@ -183,13 +191,17 @@ def QA_RAG(uri,model,userName,password,question,session_id):
             retrieval_query=RETRIEVAL_QUERY,
         )
         
-        llm = get_llm(model=model)
+        llm = get_llm(model=model,max_tokens=CHAT_MAX_TOKENS)
         qa = RetrievalQA.from_chain_type(
             llm=llm,
             chain_type="stuff",
-            retriever=neo_db.as_retriever(search_kwargs={'k': 3, "score_threshold": 0.5}),
+            retriever=neo_db.as_retriever(search_kwargs={'k': 3, "score_threshold": 0.7}),
             return_source_documents=True
         )
+        # qa = RetrievalQAWithSourcesChain.from_chain_type(
+        #     llm=llm,
+        #     chain_type="stuff",
+        #     retriever=neo_db.as_retriever(search_kwargs={'k': 3, "score_threshold": 0.7}))
 
         db_setup_time = time.time() - start_time
         logging.info(f"DB Setup completed in {db_setup_time:.2f} seconds")
@@ -198,20 +210,23 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         vector_res = vector_embed_results(qa, question)
         vector_time = time.time() - start_time
         logging.info(f"Vector response obtained in {vector_time:.2f} seconds")
+        print(vector_res)
         
         start_time = time.time()
         chat_summary = get_chat_history(llm, uri, userName, password, session_id)
         chat_history_time = time.time() - start_time
         logging.info(f"Chat history summarized in {chat_history_time:.2f} seconds")
-        
+        print(chat_summary)        
         formatted_prompt = FINAL_PROMPT.format(
             question=question,
             chat_summary=chat_summary,
             vector_result=vector_res.get('result', ''),
             sources=vector_res.get('source', '')
         )
-        
+        print(formatted_prompt)
+
         start_time = time.time()
+        # llm = get_llm(model=model,embedding=False)
         response = llm.predict(formatted_prompt)
         predict_time = time.time() - start_time
         logging.info(f"Response predicted in {predict_time:.2f} seconds")
@@ -227,6 +242,8 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         message = response_data["message"]
         sources = response_data["sources"]
         
+        print(f"message : {message}")
+        print(f"sources : {sources}")
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
         return {
@@ -238,8 +255,9 @@ def QA_RAG(uri,model,userName,password,question,session_id):
 
     except Exception as e:
         logging.exception(f"Exception in QA component at {datetime.now()}: {str(e)}")
+        error_message = type(e).__name__
         return {"session_id": session_id, 
-        "message": "Something went wrong", 
+        "message": "Something went wrong",# Caught an exception : {error_message}",
         "sources": [], 
         "user": "chatbot"}
 
