@@ -215,3 +215,10 @@
   width: max-content;
   height: 30px
 }
+
+.chatBotContainer>div {
+  max-width: 370px;
+}
+.ndl-widget-content>div{
+  overflow-wrap: break-word
+}

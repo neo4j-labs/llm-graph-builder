@@ -151,8 +151,9 @@ export default function Chatbot(props: ChatbotProps) {
                   header=''
                   isElevated={true}
                   className={`p-4 self-start ${
-                    chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                    chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong max-w-[315px]' : 'n-bg-palette-primary-bg-weak max-w-[305px]'
                   }`}
+                
                 >
                   <div
                     className={`${
