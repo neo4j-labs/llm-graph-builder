@@ -20,7 +20,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
-  const { filesData, setFilesData, setModel, model } = useFileContext();
+  const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels } = useFileContext();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
@@ -96,7 +96,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           localStorage.getItem('secretkey'),
           filesData[uid].name ?? '',
           filesData[uid].gcsBucket ?? '',
-          filesData[uid].gcsBucketFolder ?? ''
+          filesData[uid].gcsBucketFolder ?? '',
+          selectedNodes.map((l) => l.value),
+          selectedRels.map((t) => t.value)
         );
         if (apiResponse?.status === 'Failed') {
           throw new Error(
