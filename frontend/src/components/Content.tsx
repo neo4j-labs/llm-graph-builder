@@ -13,6 +13,7 @@ import GraphViewModal from './GraphViewModal';
 import { initialiseDriver } from '../utils/Driver';
 import Driver from 'neo4j-driver/types/driver';
 import { url } from '../utils/Utils';
+import { json } from 'node:stream/consumers';
 
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -139,9 +140,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         );
 
         if (apiResponse?.status === 'Failed') {
-          throw new Error(
-            `error:${apiResponse.message},message:${apiResponse.message},fileName:${apiResponse.file_name},name:customerror`
-          );
+          let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
+          throw new Error(JSON.stringify(errorobj));
         } else if (filesize != undefined && filesize < 10000000) {
           setFilesData((prevfiles) => {
             return prevfiles.map((curfile) => {
@@ -161,13 +161,12 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           });
         }
       } catch (err: any) {
-        const errorMessage = err.message;
-        const messageMatch = errorMessage.match(/message:(.*),fileName:(.*),error:(.*),name:(.*)/);
-        const name = messageMatch[4].trim();
-        if (name === 'customerror') {
-          const message = messageMatch[1].trim();
-          const fileName = messageMatch[2].trim();
-          const errorMessage = messageMatch[3].trim();
+        const error = JSON.parse(err.message);
+        if (Object.keys(error).includes('fileName')) {
+          const message = error.message;
+          const fileName = error.fileName;
+          const errorMessage = error.message;
+          console.log({ message, fileName, errorMessage });
           setShowAlert(true);
           setErrorMessage(message);
           setFilesData((prevfiles) =>
