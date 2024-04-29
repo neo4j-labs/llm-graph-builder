@@ -110,3 +110,10 @@ class graphDBdataAccess:
 
     def execute_query(self, query, param=None):
         return self.graph.query(query, param)
+
+    def get_current_status_document_node(self, file_name):
+        query = """
+                MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount
+                """
+        param = {"file_name" : file_name}
+        return self.execute_query(query, param)
