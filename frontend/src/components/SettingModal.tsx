@@ -79,15 +79,6 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
         <div>
           <Checkbox label='Use Existing Schema' onChange={(e) => clickHandler(e)} />
         </div>
-        <div className='n-size-full n-flex n-flex-col n-items-end n-justify-center n-rounded-md n-bg-palette-neutral-bg-weak n-box-border'>
-          <Button
-            disabled={!selectedNodes.length || !selectedRels.length}
-            className='mt-2'
-            onClick={() => console.log({ selectedNodes, selectedRels })}
-          >
-            Submit
-          </Button>
-        </div>
       </Dialog.Content>
     </Dialog>
   );
