@@ -95,7 +95,11 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           if (userCredentials?.password) {
             encodedstr = btoa(userCredentials?.password);
           }
-          const eventSource = new EventSource(`${url()}/update_extract_status/${filesData[uid].name}?url=${userCredentials?.uri}&userName=${userCredentials?.userName}&password=${encodedstr}&database=${userCredentials?.database}`);
+          const eventSource = new EventSource(
+            `${url()}/update_extract_status/${filesData[uid].name}?url=${userCredentials?.uri}&userName=${
+              userCredentials?.userName
+            }&password=${encodedstr}&database=${userCredentials?.database}`
+          );
           eventSource.onmessage = (event) => {
             console.log(event.data);
             const eventResponse = JSON.parse(event.data);
@@ -159,7 +163,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       } catch (err: any) {
         const errorMessage = err.message;
         const messageMatch = errorMessage.match(/message:(.*),fileName:(.*),error:(.*),name:(.*)/);
-        const name = messageMatch[4].trim()
+        const name = messageMatch[4].trim();
         if (name === 'customerror') {
           const message = messageMatch[1].trim();
           const fileName = messageMatch[2].trim();
@@ -204,8 +208,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -215,10 +220,10 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     isExpanded && showChatBot
       ? 'contentWithBothDrawers'
       : isExpanded
-        ? 'contentWithExpansion'
-        : showChatBot
-          ? 'contentWithChatBot'
-          : 'contentWithNoExpansion';
+      ? 'contentWithExpansion'
+      : showChatBot
+      ? 'contentWithChatBot'
+      : 'contentWithNoExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
