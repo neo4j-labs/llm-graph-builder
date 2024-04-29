@@ -8,6 +8,7 @@ import UserCredentialsWrapper from '../context/UserCredentials';
 const QuickStarter: React.FunctionComponent = () => {
   const themeUtils = React.useContext(ThemeWrapperContext);
   const [themeMode, setThemeMode] = useState<string>(themeUtils.colorMode);
+  const [showSettingsModal, setshowSettingsModal] = useState<boolean>(false);
 
   const toggleColorMode = () => {
     setThemeMode((prevThemeMode) => {
@@ -15,12 +16,17 @@ const QuickStarter: React.FunctionComponent = () => {
     });
     themeUtils.toggleColorMode();
   };
-
+  const openSettingsModal = () => {
+    setshowSettingsModal(true);
+  };
+  const closeSettingModal = () => {
+    setshowSettingsModal(false);
+  };
   return (
     <FileContextProvider>
       <UserCredentialsWrapper>
-        <Header themeMode={themeMode} toggleTheme={toggleColorMode} />
-        <PageLayout />
+        <Header themeMode={themeMode} toggleTheme={toggleColorMode} openSettingsModal={openSettingsModal} />
+        <PageLayout isSettingPanelExpanded={showSettingsModal} closeSettingModal={closeSettingModal} />
       </UserCredentialsWrapper>
     </FileContextProvider>
   );
