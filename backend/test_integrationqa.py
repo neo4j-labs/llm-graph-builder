@@ -34,10 +34,12 @@ def extract_graph_from_file_local_file_test():
            "Copy01_patrick_pichette_-_wikipedia.pdf"
     )
     print(local_file_result)
+    print(local_file_result['nodeCount'])
     logging.info("Info:  ")
+    
 
     try:
-        assert local_file_result['status'] == 'Completed'
+        assert local_file_result['status'] == 'Completed' and local_file_result['nodeCount']>30 and local_file_result['relationshipCount']>20
         print("Success")
     except AssertionError as e:
         print("Fail: ", e)
@@ -57,10 +59,10 @@ def extract_graph_from_Wikipedia(uri, userName, password, model,database):
     print(wikiresult)
     
     try:
-        assert wikiresult['status'] == 'Completed'
+        assert wikiresult['status'] == 'Completed' and wikiresult['nodeCount']>35 and wikiresult['relationshipCount']>30
         print("Success")
     except AssertionError as e:
-        print("Fail: ", e)
+        print("Fail ", e)
 
     #   Check for Wikipedia file to be Failed
 def get_documents_from_Wikipedia(wiki_query:str):
@@ -111,9 +113,10 @@ def extract_graph_from_youtube_video(uri, userName, password, model, database):
             'https://www.youtube.com/watch?v=NKc8Tr5_L3w'
             )
     # print(result)
+    logging.info("Info: Youtube Video test done")
     print(youtuberesult)
     try:
-        assert youtuberesult['status'] == 'Completed'
+        assert youtuberesult['status'] == 'Completed' and youtuberesult['nodeCount']>60 and youtuberesult['relationshipCount']>50
         print("Success")
     except AssertionError as e:
         print("Fail: ", e)
@@ -155,7 +158,7 @@ def extract_graph_from_file_test_gcs(uri, userName, password, model, database):
     print(gcsresult)
     
     try:
-        assert gcsresult['status'] == 'Completed'
+        assert gcsresult['status'] == 'Completed' and gcsresult['nodeCount']>50 and gcsresult['relationshipCount']>40
         print("Success")
     except AssertionError as e:
         print("Fail: ", e)
@@ -194,11 +197,11 @@ def extract_graph_from_file_test_s3(uri, userName, password, model, database):
 
 if __name__ == "__main__":
 
-    extract_graph_from_file_local_file_test()
-    extract_graph_from_Wikipedia(uri, userName, password, model,database)
-    get_documents_from_Wikipedia("  ")
-    #extract_graph_from_Wikipedia_fail(uri, userName, password, model,database)
-    extract_graph_from_youtube_video(uri, userName, password, model, database)
-    #extract_graph_from_youtube_video_fail(uri, userName, password, model, database)
-    extract_graph_from_file_test_gcs(uri, userName, password, model, database)
-    extract_graph_from_file_test_s3(uri, userName, password, model, database)
+        extract_graph_from_file_local_file_test()
+        extract_graph_from_Wikipedia(uri, userName, password, model,database)
+        get_documents_from_Wikipedia("  ")
+        extract_graph_from_Wikipedia_fail(uri, userName, password, model,database)
+        extract_graph_from_youtube_video(uri, userName, password, model, database)
+        #extract_graph_from_youtube_video_fail(uri, userName, password, model, database)
+        extract_graph_from_file_test_gcs(uri, userName, password, model, database)
+        #extract_graph_from_file_test_s3(uri, userName, password, model, database)
