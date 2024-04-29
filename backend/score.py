@@ -13,6 +13,7 @@ from langserve import add_routes
 from langchain_google_vertexai import ChatVertexAI
 from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
+from src.graph_query import get_graph_results
 
 def healthy_condition():
     output = {"healthy": True}
@@ -227,6 +228,18 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
         message="Unable to get chat response"
         error_message = str(e)
         logging.exception(f'Exception in chat bot:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+
+@app.post("/graph_query")
+async def graph_query(uri=Form(None),userName=Form(None), password=Form(None), query_type=Form(None), session_id=Form(None),doc_limit=Form(None),document_name=Form(None)):
+    try:
+        result = await asyncio.to_thread(get_graph_results,uri=uri,username=userName,password=password,query_type=query_type,session_id=session_id,doc_limit=doc_limit,document_name=document_name)
+        return create_api_response('Success',data=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to get graph query response"
+        error_message = str(e)
+        logging.exception(f'Exception in graph query:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
 
 @app.post("/connect")
