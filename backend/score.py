@@ -1,5 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, Form
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
@@ -13,6 +13,8 @@ from langserve import add_routes
 from langchain_google_vertexai import ChatVertexAI
 from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
+from sse_starlette.sse import EventSourceResponse
+import json
 from typing import List
 
 def healthy_condition():
@@ -277,6 +279,36 @@ def decode_password(pwd):
     sample_string_bytes = base64.b64decode(pwd)
     decoded_password = sample_string_bytes.decode("utf-8")
     return decoded_password
+
+@app.get("/update_extract_status/{file_name}")
+async def update_extract_status(request:Request, file_name, url, userName, password, database):
+    async def generate():
+        status = ''
+        decoded_password = decode_password(password)
+        if " " in url:
+            uri= url.replace(" ","+")
+        while True:
+            if await request.is_disconnected():
+                logging.info("Request disconnected")
+                break
+            #get the current status of document node
+            graph = create_graph_database_connection(uri, userName, decoded_password, database)
+            graphDb_data_Access = graphDBdataAccess(graph)
+            result = graphDb_data_Access.get_current_status_document_node(file_name)
+            if result is not None:
+                status = json.dumps({'fileName':file_name, 
+                'status':result[0]['Status'],
+                'processingTime':result[0]['processingTime'],
+                'nodeCount':result[0]['nodeCount'],
+                'relationshipCount':result[0]['relationshipCount'],
+                'model':result[0]['model']
+                })
+            else:
+                status = json.dumps({'fileName':file_name, 'status':'Failed'})
+            yield status
+    
+    return EventSourceResponse(generate(),ping=60)
+
     
 if __name__ == "__main__":
     uvicorn.run(app)

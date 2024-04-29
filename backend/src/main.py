@@ -214,11 +214,7 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
   start_time = datetime.now()
   graphDb_data_Access = graphDBdataAccess(graph)
 
-  query = """
-          MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status
-          """
-  param = {"file_name" : file_name}
-  result = graphDb_data_Access.execute_query(query, param)
+  result = graphDb_data_Access.get_current_status_document_node(file_name)
 
   if result[0]['Status'] != 'Processing':
   
