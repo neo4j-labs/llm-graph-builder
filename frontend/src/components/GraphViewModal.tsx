@@ -9,7 +9,7 @@ import {
   TextInput,
 } from '@neo4j-ndl/react';
 import { useEffect, useRef, useState } from 'react';
-import { GraphType, GraphViewModalProps } from '../types';
+import { GraphType, GraphViewModalProps, Scheme } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL, { NvlOptions } from '@neo4j-nvl/core';
 import type { Node, Relationship } from '@neo4j-nvl/core';
@@ -22,7 +22,6 @@ import {
 import ButtonWithToolTip from './ButtonWithToolTip';
 import { constructDocQuery, constructQuery, getIcon, getNodeCaption, getSize } from '../utils/Utils';
 import {
-  colors,
   entities,
   chunks,
   document,
@@ -33,8 +32,8 @@ import {
 } from '../utils/Constants';
 import { ArrowSmallRightIconOutline } from '@neo4j-ndl/react/icons';
 import { useCredentials } from '../context/UserCredentials';
-
-type Scheme = Record<string, string>;
+import { LegendsChip } from './LegendsChip';
+import { calcWordColor } from '@neo4j-devtools/word-color';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -96,6 +95,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       nvlRef.current?.destroy();
       setGraphType(['Entities']);
       clearTimeout(timeoutId);
+      setScheme({});
     };
   }, []);
 
@@ -120,10 +120,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           : queryMap.Document;
       if (viewPoint === 'showGraphView') {
         queryToRun = constructQuery(newCheck, documentNo);
-        console.log('showGraph', queryToRun);
       } else {
         queryToRun = constructDocQuery(newCheck);
-        console.log('table', queryToRun);
       }
       const session = driver?.session();
       setLoading(true);
@@ -139,16 +137,17 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             // Infer color schema dynamically
             let iterator = 0;
             const schemeVal: Scheme = {};
-
+            let labels: string[] = [];
             neo4jNodes.forEach((node) => {
-              const labels = node.map((f: any) => f.labels);
+              labels = node.map((f: any) => f.labels);
               labels.forEach((label: any) => {
                 if (schemeVal[label] == undefined) {
-                  schemeVal[label] = colors[iterator % colors.length];
+                  schemeVal[label] = calcWordColor(label[0]);
                   iterator += 1;
                 }
               });
             });
+
             const newNodes = neo4jNodes.map((n) => {
               const totalNodes = n.map((g: any) => {
                 return {
@@ -157,9 +156,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                   captionAlign: 'bottom',
                   iconAlign: 'bottom',
                   captionHtml: <b>Test</b>,
-                  caption: `${g.labels}: ${getNodeCaption(g)}`,
-                  color: scheme[g.labels[0]],
+                  caption: getNodeCaption(g),
+                  color: schemeVal[g.labels[0]],
                   icon: getIcon(g),
+                  labels: g.labels,
                 };
               });
               return totalNodes;
@@ -181,8 +181,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             setRelationships(finalRels);
             setScheme(schemeVal);
             setLoading(false);
-            console.log('nodes', nodes);
-            console.log('relations', relationships);
           } else {
             setLoading(false);
             setStatus('danger');
@@ -196,6 +194,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         });
     }
   }, [open, graphType, documentNo]);
+
+  const labelsLength = Object.keys(scheme).length;
 
   // If the modal is closed, render nothing
   if (!open) {
@@ -242,7 +242,21 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setStatus('unknown');
     setStatusMessage('');
     setGraphViewOpen(false);
+    setScheme({});
   };
+
+  const heightCheck = labelsLength > 80 ? '100%' : 'max-content';
+  const overflowCheck = labelsLength > 80 ? 'scroll' : 'hidden';
+
+  // Legends placement
+  const legendCheck = Object.keys(scheme).sort((a, b) => {
+    if (a === 'Document' || a === 'Chunk') {
+      return -1;
+    } else if (b === 'Document' || b === 'Chunk') {
+      return 1;
+    }
+    return a.localeCompare(b);
+  });
 
   return (
     <>
@@ -297,8 +311,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             )}
           </div>
         </Dialog.Header>
-        <Dialog.Content className='n-flex n-flex-col n-gap-token-4 w-full h-full'>
-          <div className='bg-palette-neutral-bg-default relative h-full w-full overflow-hidden'>
+        <Dialog.Content className='n-flex n-flex-col n-gap-token-4 w-full h-[95%]'>
+          <div className='bg-palette-neutral-bg-default relative h-[95%] w-full overflow-hidden'>
             {loading ? (
               <div className='my-40 flex items-center justify-center'>
                 <LoadingSpinner size='large' />
@@ -316,14 +330,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             ) : (
               <>
                 <Flex flexDirection='row' justifyContent='space-between' style={{ height: '100%', padding: '20px' }}>
-                  <div className='legend_div'>
-                    {Object.keys(scheme).map((key) => (
-                      <div className='legend' key={scheme.key} style={{ backgroundColor: `${scheme[key]}` }}>
-                        {key}
-                      </div>
+                  <div className='legend_div' style={{ height: heightCheck, overflowY: overflowCheck }}>
+                    {legendCheck.map((key, index) => (
+                      <LegendsChip key={index} title={key} scheme={scheme} nodes={nodes} />
                     ))}
                   </div>
-                  <div style={{ flex: '0.8' }}>
+                  <div style={{ flex: '0.7' }}>
                     <InteractiveNvlWrapper
                       nodes={nodes}
                       rels={relationships}

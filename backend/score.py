@@ -110,10 +110,10 @@ async def create_source_knowledge_graph_url(
         message = f"Source Node created successfully for source type: {source_type} and source: {source}"
         return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name)    
     except Exception as e:
-        message = f"Unable to create source node for source type: {source_type} and source: {source}"
-        error_message = str(e)
+        error_message = str(e)[:80]
+        message = f" Unable to create source node for source type: {source_type} and source: {source}"
         logging.exception(f'Exception Stack trace:')
-        return create_api_response('Failed',message=message,error=error_message,file_source=source_type)
+        return create_api_response('Failed',message=message + error_message,error=error_message,file_source=source_type)
 
 
 @app.post("/extract")
@@ -175,12 +175,12 @@ async def extract_knowledge_graph_from_file(
         
         return create_api_response('Success', data=result)
     except Exception as e:
-        message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content"
+        message=f" Failed To Process File:{file_name} or LLM Unable To Parse Content"
         logging.info(message)
-        error_message = str(e)
+        error_message = str(e)[:100]
         graphDb_data_Access.update_exception_db(file_name,error_message)
         logging.exception(f'Exception Stack trace: {error_message}')
-        return create_api_response('Failed', message=message, error=error_message, file_name = file_name)
+        return create_api_response('Failed', message=message + error_message, error=error_message, file_name = file_name)
 
 @app.get("/sources_list")
 async def get_source_list(uri:str, userName:str, password:str, database:str=None):
@@ -253,6 +253,19 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
     except Exception as e:
         job_status = "Failed"
         message="Unable to upload large file into chunks or saving the chunks"
+        error_message = str(e)
+        logging.info(message)
+        logging.exception(f'Exception:{error_message}')
+
+@app.post("/schema")
+async def get_structured_schema(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        result = await asyncio.to_thread(get_labels_and_relationtypes, graph)
+        return create_api_response('Success', data=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to get the labels and relationtypes from neo4j database"
         error_message = str(e)
         logging.info(message)
         logging.exception(f'Exception:{error_message}')

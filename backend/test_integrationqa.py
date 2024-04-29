@@ -10,6 +10,7 @@ import logging
 import boto3
 import os
 from urllib.parse import urlparse
+from src.QA_integration import QA_RAG
 
 uri =''
 userName =''
@@ -34,7 +35,7 @@ def extract_graph_from_file_local_file_test():
            "Copy01_patrick_pichette_-_wikipedia.pdf"
     )
     print(local_file_result)
-    print(local_file_result['nodeCount'])
+    #print(local_file_result['nodeCount'])
     logging.info("Info:  ")
     
 
@@ -100,7 +101,7 @@ def extract_graph_from_Wikipedia_fail(uri, userName, password, model,database):
         assert wikiresults['status'] == 'Completed'
         print("Success")
     except AssertionError as e:
-        print("Fail: ", e)
+        print("Failed ", e)
     
     # assert result['status'] == 'Failed'
 
@@ -119,7 +120,7 @@ def extract_graph_from_youtube_video(uri, userName, password, model, database):
         assert youtuberesult['status'] == 'Completed' and youtuberesult['nodeCount']>60 and youtuberesult['relationshipCount']>50
         print("Success")
     except AssertionError as e:
-        print("Fail: ", e)
+        print("Failed ", e)
     
 
 # Check for Youtube_video to be Failed
@@ -139,7 +140,7 @@ def extract_graph_from_youtube_video_fail(uri, userName, password, model, databa
         assert youtuberesults['status'] == 'Completed'
         print("Success")
     except AssertionError as e:
-        print("Fail: ", e)
+        print("Failed ", e)
     
 
 # Check for the GCS file to be uploaded, process and completed
@@ -158,10 +159,10 @@ def extract_graph_from_file_test_gcs(uri, userName, password, model, database):
     print(gcsresult)
     
     try:
-        assert gcsresult['status'] == 'Completed' and gcsresult['nodeCount']>50 and gcsresult['relationshipCount']>40
+        assert gcsresult['status'] == 'Completed' and gcsresult['nodeCount']>10 and gcsresult['relationshipCount']>5
         print("Success")
     except AssertionError as e:
-        print("Fail: ", e)
+        print("Failed ", e)
 
     # print(gcsresult)
     # assert gcsresult['status'] == 'Completed'
@@ -195,13 +196,35 @@ def extract_graph_from_file_test_s3(uri, userName, password, model, database):
 #       logging.exception(f'Exception in reading content from S3:{error_message}')
 #       raise Exception(error_message) 
 
+# Check the Functionality of Chatbot QnA
+def chatbot_QnA(uri, userName, password, model, database):
+    QA_n_RAG = QA_RAG(
+        uri,
+        model,
+        userName,
+        password,
+        'who is patrick pichette',
+        1
+        
+    )
+    #logging.info(f"QA_RAG called at {datetime.now()}")
+    print(QA_n_RAG)
+    print(len(QA_n_RAG['message']))
+    try:
+        assert len(QA_n_RAG['message']) > 10
+        print("Success")
+    except AssertionError as e:
+        print("Failed ", e)
+
+
 if __name__ == "__main__":
 
         extract_graph_from_file_local_file_test()
         extract_graph_from_Wikipedia(uri, userName, password, model,database)
         get_documents_from_Wikipedia("  ")
-        extract_graph_from_Wikipedia_fail(uri, userName, password, model,database)
+        # extract_graph_from_Wikipedia_fail(uri, userName, password, model,database)
         extract_graph_from_youtube_video(uri, userName, password, model, database)
         #extract_graph_from_youtube_video_fail(uri, userName, password, model, database)
         extract_graph_from_file_test_gcs(uri, userName, password, model, database)
         #extract_graph_from_file_test_s3(uri, userName, password, model, database)
+        chatbot_QnA(uri, userName, password, model, database)

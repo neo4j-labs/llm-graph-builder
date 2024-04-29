@@ -40,7 +40,6 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
           wikiquery: wikiQuery,
           source_type: 'Wikipedia',
         });
-        console.log('response', apiResponse);
         setStatus('success');
         if (apiResponse?.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');

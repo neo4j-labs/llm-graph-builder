@@ -36,7 +36,7 @@
 }
 
 .contentWithBothDrawers {
-  width: calc(-721px + 100dvw);
+  width: calc(-786px + 100dvw);
   height: calc(100dvh - 60px);
   padding: 3px;
   display: flex;
@@ -47,7 +47,7 @@
 }
 
 .contentWithChatBot {
-  width: calc(-425px + 100dvw);
+  width: calc(-475px + 100dvw);
   height: calc(100dvh - 60px);
   padding: 3px;
   display: flex;
@@ -194,12 +194,12 @@
 
 .legend_div {
   display: flex;
-  flex: 0.2;
+  flex: 0.3;
   flex-wrap: wrap;
   padding: 15px;
   gap: 8px;
   background-color: #ffff;
-  height: max-content
+  scrollbar-width: thin;
 }
 
 .legend {
@@ -207,11 +207,24 @@
   min-width: 0px;
   cursor: pointer;
   border-radius: 12px;
-  padding: 2px 8px;
+  padding: 5px 8px;
   font-size: var(--font-size-label);
   font-weight: var(--font-weight-bold);
   letter-spacing: 0;
   line-height: 1.25rem;
   width: max-content;
   height: 30px
+}
+
+.chatBotContainer>div {
+  max-width: 370px;
+}
+.ndl-widget-content>div{
+  overflow-wrap: break-word
+}
+.cellClass{
+  width: 100%; 
+  height: 100%;
+  display: flex;
+  align-items: center;
 }
