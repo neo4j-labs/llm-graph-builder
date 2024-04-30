@@ -56,7 +56,7 @@ def get_graphDB_driver(uri, username, password):
     except Exception as e:
         error_message = f"graph_query module: Failed to connect to the database at {uri}."
         logging.error(error_message, exc_info=True)
-        raise Exception(error_message) from e  # Reraising the exception with the module name and URI included.
+        # raise Exception(error_message) from e 
 
 
 def get_cypher_query(query_map, query_type, document_name):
@@ -231,7 +231,7 @@ def get_graph_results(uri, username, password, session_id, query_type, doc_limit
         driver = get_graphDB_driver(uri, username, password)
         query = get_cypher_query(QUERY_MAP, query_type, document_name)
         records, summary , keys = execute_query(driver, query, int(doc_limit), document_name)
-        logging.info(summary.query)
+        # logging.info(summary.query)
         output = {
             "nodes": extract_node_elements(records),
             "relationships": extract_relationships(records)
