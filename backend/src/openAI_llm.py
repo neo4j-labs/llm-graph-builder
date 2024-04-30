@@ -477,7 +477,7 @@ def get_graph_from_OpenAI(model_version, graph, chunkId_chunkDoc_list, allowedNo
                 #replace all non alphanumeric characters and spaces with underscore
                 node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
             graph_document_list.append(graph_document[0])    
-    graph.add_graph_documents(graph_document_list)
+    graph.add_graph_documents(graph_document_list, baseEntityLabel=True)
     return  graph_document_list        
         
     

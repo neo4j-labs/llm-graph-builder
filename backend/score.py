@@ -1,5 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, Form
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
@@ -13,6 +13,8 @@ from langserve import add_routes
 from langchain_google_vertexai import ChatVertexAI
 from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
+from sse_starlette.sse import EventSourceResponse
+import json
 from typing import List
 
 def healthy_condition():
@@ -111,10 +113,10 @@ async def create_source_knowledge_graph_url(
         message = f"Source Node created successfully for source type: {source_type} and source: {source}"
         return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name)    
     except Exception as e:
-        message = f"Unable to create source node for source type: {source_type} and source: {source}"
-        error_message = str(e)
+        error_message = str(e)[:80]
+        message = f" Unable to create source node for source type: {source_type} and source: {source}"
         logging.exception(f'Exception Stack trace:')
-        return create_api_response('Failed',message=message,error=error_message,file_source=source_type)
+        return create_api_response('Failed',message=message + error_message,error=error_message,file_source=source_type)
 
 
 @app.post("/extract")
@@ -178,12 +180,12 @@ async def extract_knowledge_graph_from_file(
         
         return create_api_response('Success', data=result)
     except Exception as e:
-        message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content"
+        message=f" Failed To Process File:{file_name} or LLM Unable To Parse Content"
         logging.info(message)
-        error_message = str(e)
+        error_message = str(e)[:100]
         graphDb_data_Access.update_exception_db(file_name,error_message)
         logging.exception(f'Exception Stack trace: {error_message}')
-        return create_api_response('Failed', message=message, error=error_message, file_name = file_name)
+        return create_api_response('Failed', message=message + error_message, error=error_message, file_name = file_name)
 
 @app.get("/sources_list")
 async def get_source_list(uri:str, userName:str, password:str, database:str=None):
@@ -277,6 +279,36 @@ def decode_password(pwd):
     sample_string_bytes = base64.b64decode(pwd)
     decoded_password = sample_string_bytes.decode("utf-8")
     return decoded_password
+
+@app.get("/update_extract_status/{file_name}")
+async def update_extract_status(request:Request, file_name, url, userName, password, database):
+    async def generate():
+        status = ''
+        decoded_password = decode_password(password)
+        if " " in url:
+            uri= url.replace(" ","+")
+        while True:
+            if await request.is_disconnected():
+                logging.info("Request disconnected")
+                break
+            #get the current status of document node
+            graph = create_graph_database_connection(uri, userName, decoded_password, database)
+            graphDb_data_Access = graphDBdataAccess(graph)
+            result = graphDb_data_Access.get_current_status_document_node(file_name)
+            if result is not None:
+                status = json.dumps({'fileName':file_name, 
+                'status':result[0]['Status'],
+                'processingTime':result[0]['processingTime'],
+                'nodeCount':result[0]['nodeCount'],
+                'relationshipCount':result[0]['relationshipCount'],
+                'model':result[0]['model']
+                })
+            else:
+                status = json.dumps({'fileName':file_name, 'status':'Failed'})
+            yield status
+    
+    return EventSourceResponse(generate(),ping=60)
+
     
 if __name__ == "__main__":
     uvicorn.run(app)
