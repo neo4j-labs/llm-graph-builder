@@ -208,7 +208,7 @@ def extract_relationships(records):
     except Exception as e:
         logging.error("graph_query module: An error occurred while extracting relationships from records", exc_info=True)
 
-def get_graph_results(uri, username, password, session_id, query_type, doc_limit=10, document_name=None):
+def get_graph_results(uri, username, password, session_id, query_type, doc_limit, document_name=None):
     """
     Retrieves graph data by executing a specified Cypher query using credentials and parameters provided.
     Processes the results to extract nodes and relationships and packages them in a structured output.
@@ -226,11 +226,12 @@ def get_graph_results(uri, username, password, session_id, query_type, doc_limit
     dict: Contains the session ID, user-defined messages with nodes and relationships, and the user module identifier.
     """
     try:
+        logging.info(f"URI: {uri}, Username: {username}, Password: {password}, Session ID: {session_id}, Query Type: {query_type}, Document Limit: {doc_limit}, Document Name: {document_name}")
         logging.info(f"Starting graph query process for session {session_id}")
         driver = get_graphDB_driver(uri, username, password)
         query = get_cypher_query(QUERY_MAP, query_type, document_name)
-        records, _, _ = execute_query(driver, query, doc_limit, document_name)
-        
+        records, summary , keys = execute_query(driver, query, int(doc_limit), document_name)
+        logging.info(summary.query)
         output = {
             "nodes": extract_node_elements(records),
             "relationships": extract_relationships(records)

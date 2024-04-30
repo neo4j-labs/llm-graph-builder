@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import FastAPI, File, UploadFile, Form, Query
 from fastapi import FastAPI
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
@@ -230,16 +230,67 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
         logging.exception(f'Exception in chat bot:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
 
-@app.post("/graph_query")
-async def graph_query(uri=Form(None),userName=Form(None), password=Form(None), query_type=Form(None), session_id=Form(None),doc_limit=Form(None),document_name=Form(None)):
+@app.get("/graph_query")
+async def graph_query(
+    uri: str = Query(None, description="The URI for the graph database."),
+    userName: str = Query(None, description="The username for authentication."),
+    password: str = Query(None, description="The password for authentication."),
+    query_type: str = Query(None, description="The type of query."),
+    session_id: str = Query(None, description="The session identifier."),
+    doc_limit: int = Query(None, description="Limit on the number of documents to retrieve."),
+    document_name: str = Query(None, description="The name of the document to query.")
+):
     try:
-        result = await asyncio.to_thread(get_graph_results,uri=uri,username=userName,password=password,query_type=query_type,session_id=session_id,doc_limit=doc_limit,document_name=document_name)
-        return create_api_response('Success',data=result)
+        decoded_password = decode_password(password)
+        # decoded_password = password
+        if " " in uri:
+            uri= uri.replace(" ","+")
+            result = await asyncio.to_thread(
+                get_graph_results,
+                uri=uri,
+                username=userName,
+                password=decoded_password,
+                query_type=query_type,
+                session_id=session_id,
+                doc_limit=doc_limit,
+                document_name=document_name
+            )
+            return create_api_response('Success', data=result)
     except Exception as e:
         job_status = "Failed"
-        message="Unable to get graph query response"
+        message = "Unable to get graph query response"
         error_message = str(e)
-        logging.exception(f'Exception in graph query:{error_message}')
+        logging.exception(f'Exception in graph query: {error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+
+
+@app.post("/graph_query")
+async def graph_query(
+    uri: str = Form(None),
+    userName: str = Form(None),
+    password: str = Form(None),
+    query_type: str = Form(None),
+    session_id: str = Form(None),
+    doc_limit: int = Form(None),
+    document_name: str = Form(None)
+):
+    try:
+        result = await asyncio.to_thread(
+            get_graph_results,
+            uri=uri,
+            username=userName,
+            password=password,
+            query_type=query_type,
+            session_id=session_id,
+            doc_limit=doc_limit,
+            document_name=document_name
+        )
+        return create_api_response('Success', data=result)
+    except Exception as e:
+        job_status = "Failed"
+        message = "Unable to get graph query response"
+        error_message = str(e)
+        logging.exception(f'Exception in graph query: {error_message}')
         return create_api_response(job_status, message=message, error=error_message)
 
 @app.post("/connect")
