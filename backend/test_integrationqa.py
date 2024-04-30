@@ -53,7 +53,7 @@ def extract_graph_from_Wikipedia(uri, userName, password, model,database):
     wikiresult =  extract_graph_from_file_Wikipedia(
              graph,
             model,
-            'Einstein',
+            'Microsoft Azure',
             1)
 
     logging.info("Info: Wikipedia test done")
