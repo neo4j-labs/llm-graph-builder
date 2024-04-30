@@ -28,6 +28,7 @@ aws_secret_access_key = ''
 graph = create_graph_database_connection(uri, userName, password, database)
 
 def extract_graph_from_file_local_file_test():
+    
     shutil.copyfile('data/Copy01_patrick_pichette_-_wikipedia.pdf', 'backend/src/merged_files/Copy01_patrick_pichette_-_wikipedia.pdf')
     local_file_result =  extract_graph_from_file_local_file(
            graph,

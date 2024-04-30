@@ -66,3 +66,33 @@ export const defaultLLM = llms?.includes('OpenAI GPT 4')
   ? 'Gemini 1.0 Pro'
   : 'Diffbot';
 export const chunkSize = 5 * 1024 * 1024;
+
+export const NODES_OPTIONS = [
+  {
+    label: 'Person',
+    value: 'Person',
+  },
+  {
+    label: 'Organization',
+    value: 'Organization',
+  },
+  {
+    label: 'Event',
+    value: 'Event',
+  },
+];
+
+export const RELATION_OPTIONS = [
+  {
+    label: 'WORKS_AT',
+    value: 'WORKS_AT',
+  },
+  {
+    label: 'IS_CEO',
+    value: 'IS_CEO',
+  },
+  {
+    label: 'HOSTS_EVENT',
+    value: 'HOSTS_EVENT',
+  },
+];

@@ -1,10 +1,23 @@
 import Neo4jLogoBW from '../../logo.svg';
 import Neo4jLogoColor from '../../logo-color.svg';
-import { MoonIconOutline, SunIconOutline, CodeBracketSquareIconOutline } from '@neo4j-ndl/react/icons';
+import {
+  MoonIconOutline,
+  SunIconOutline,
+  CodeBracketSquareIconOutline,
+  Cog8ToothIconOutline,
+} from '@neo4j-ndl/react/icons';
 import { Typography, IconButton } from '@neo4j-ndl/react';
 import ButtonWithToolTip from '../ButtonWithToolTip';
 
-export default function Header({ themeMode, toggleTheme }: { themeMode: string; toggleTheme: () => void }) {
+export default function Header({
+  themeMode,
+  toggleTheme,
+  openSettingsModal,
+}: {
+  themeMode: string;
+  toggleTheme: () => void;
+  openSettingsModal: () => void;
+}) {
   const handleGitClick = () => {
     window.open('https://github.com/neo4j-labs/llm-graph-builder/issues', '_blank');
   };
@@ -50,9 +63,9 @@ export default function Header({ themeMode, toggleTheme }: { themeMode: string; 
                   </span>
                 )}
               </IconButton>
-              {/* <IconButton aria-label='Toggle settings' size='large' clean>
+              <IconButton aria-label='Toggle settings' size='large' clean onClick={openSettingsModal}>
                 <Cog8ToothIconOutline />
-              </IconButton> */}
+              </IconButton>
             </div>
           </div>
         </section>
