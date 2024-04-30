@@ -10,8 +10,14 @@ logging.basicConfig(format="%(asctime)s - %(message)s", level="INFO")
 
 def generate_graphDocuments(model: str, graph: Neo4jGraph, chunkId_chunkDoc_list: List, allowedNodes, allowedRelationship):
     
-    allowedNodes = allowedNodes.split(',')
-    allowedRelationship = allowedRelationship.split(',')
+    if  allowedNodes is None or allowedNodes=="":
+        allowedNodes = allowedNodes.split(',')
+    else:
+        allowedNodes =[]    
+    if  allowedRelationship is None or allowedRelationship=="":   
+        allowedRelationship = allowedRelationship.split(',')
+    else:
+        allowedRelationship=[]    
     logging.info(f"allowedNodes: {allowedNodes}, allowedRelationship: {allowedRelationship}")
     
     if model == "Diffbot":
