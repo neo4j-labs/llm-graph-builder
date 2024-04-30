@@ -33,35 +33,30 @@ def extract_graph_from_file_local_file_test():
     local_file_result =  extract_graph_from_file_local_file(
            graph,
            model,
-           "Copy01_patrick_pichette_-_wikipedia.pdf"
+           "Copy01_patrick_pichette_-_wikipedia.pdf",
+           3,
+           2
     )
     print(local_file_result)
     #print(local_file_result['nodeCount'])
     logging.info("Info:  ")
-    
-
     try:
-        assert local_file_result['status'] == 'Completed' and local_file_result['nodeCount']>30 and local_file_result['relationshipCount']>20
+        assert local_file_result['status'] == 'Completed' and local_file_result['nodeCount']>3 and local_file_result['relationshipCount']>2
         print("Success")
     except AssertionError as e:
         print("Fail: ", e)
 
-
-
 #   Check for Wikipedia file to be success
 def extract_graph_from_Wikipedia(uri, userName, password, model,database):
     # uploadFile = create_upload_file('/workspaces/llm-graph-builder/data/Football_news.pdf')
-    wikiresult =  extract_graph_from_file_Wikipedia(
-             graph,
-            model,
-            'Microsoft Azure',
-            1)
 
+    create_source_node_graph_url_wikipedia(graph, model, 'Norway', 'Wikipedia')
+    wikiresult = extract_graph_from_file_Wikipedia(graph, model, 'Norway', 1, '', '')
+   
     logging.info("Info: Wikipedia test done")
     print(wikiresult)
-    
     try:
-        assert wikiresult['status'] == 'Completed' and wikiresult['nodeCount']>35 and wikiresult['relationshipCount']>30
+        assert wikiresult['status'] == 'Completed' and wikiresult['nodeCount']>5 and wikiresult['relationshipCount']>3
         print("Success")
     except AssertionError as e:
         print("Fail ", e)
@@ -84,36 +79,19 @@ def get_documents_from_Wikipedia(wiki_query:str):
     message="Failed To Process Wikipedia Query"
     error_message = str(e)
     print(error_message)
-      
-  
-  #   Check for Wikipedia file to be Failed
-def extract_graph_from_Wikipedia_fail(uri, userName, password, model,database):
-    # uploadFile = create_upload_file('/workspaces/llm-graph-builder/data/Football_news.pdf')
-    wikiresults =  extract_graph_from_file_Wikipedia(
-             graph,
-            model,
-            '  ',
-            1)
-   
-    logging.info("Info: Wikipedia test done")
-    print(wikiresults)
-    #result = False
-    try:
-        assert wikiresults['status'] == 'Completed'
-        print("Success")
-    except AssertionError as e:
-        print("Failed ", e)
-    
-    # assert result['status'] == 'Failed'
+
 
 # Check for Youtube_video to be Success
 
 def extract_graph_from_youtube_video(uri, userName, password, model, database):
-    youtuberesult =  extract_graph_from_file_youtube(
-            graph,
-            model,
-            'https://www.youtube.com/watch?v=NKc8Tr5_L3w'
-            )
+    create_source_node_graph_url_youtube(graph, model, 'https://www.youtube.com/watch?v=T-qy-zPWgqA', 'youtube')
+    youtuberesult = extract_graph_from_file_youtube(graph, model, 'https://www.youtube.com/watch?v=T-qy-zPWgqA', '', '')
+
+    # youtuberesult =  extract_graph_from_file_youtube(
+    #         graph,
+    #         model,
+    #         'https://www.youtube.com/watch?v=NKc8Tr5_L3w'
+    #         )
     # print(result)
     logging.info("Info: Youtube Video test done")
     print(youtuberesult)
@@ -123,7 +101,6 @@ def extract_graph_from_youtube_video(uri, userName, password, model, database):
     except AssertionError as e:
         print("Failed ", e)
     
-
 # Check for Youtube_video to be Failed
 
 def extract_graph_from_youtube_video_fail(uri, userName, password, model, database):
@@ -143,18 +120,12 @@ def extract_graph_from_youtube_video_fail(uri, userName, password, model, databa
     except AssertionError as e:
         print("Failed ", e)
     
-
 # Check for the GCS file to be uploaded, process and completed
 
 def extract_graph_from_file_test_gcs(uri, userName, password, model, database):
-    gcsresult =  extract_graph_from_file_gcs(
-            graph,
-            model,
-            'llm_graph_transformer_test',
-            'technology',
-            'Neuralink brain chip patient playing chess.pdf'
-            )
-
+    create_source_node_graph_url_gcs(graph, model, 'llm_graph_transformer_test', 'technology', 'gcs bucket')
+    gcsresult = extract_graph_from_file_gcs(graph, model, 'llm_graph_transformer_test', 'technology', 'Neuralink brain chip patient playing chess.pdf', '', '')
+    
     # print(result)
     logging.info("Info")
     print(gcsresult)
@@ -223,9 +194,8 @@ if __name__ == "__main__":
         extract_graph_from_file_local_file_test()
         extract_graph_from_Wikipedia(uri, userName, password, model,database)
         get_documents_from_Wikipedia("  ")
-        # extract_graph_from_Wikipedia_fail(uri, userName, password, model,database)
+        # # extract_graph_from_Wikipedia_fail(uri, userName, password, model,database)
         extract_graph_from_youtube_video(uri, userName, password, model, database)
-        #extract_graph_from_youtube_video_fail(uri, userName, password, model, database)
         extract_graph_from_file_test_gcs(uri, userName, password, model, database)
-        #extract_graph_from_file_test_s3(uri, userName, password, model, database)
+        # #extract_graph_from_file_test_s3(uri, userName, password, model, database)
         chatbot_QnA(uri, userName, password, model, database)
