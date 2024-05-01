@@ -42,8 +42,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   info.row.original?.fileSource === 's3 bucket'
                     ? info.row.original?.source_url
                     : info.row.original?.fileSource === 'youtube'
-                      ? info.row.original?.source_url
-                      : info.getValue()
+                    ? info.row.original?.source_url
+                    : info.getValue()
                 }
               >
                 {info.getValue()}
@@ -57,7 +57,10 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       columnHelper.accessor((row) => row.status, {
         id: 'status',
         cell: (info) => (
-          <div className='cellClass' title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}>
+          <div
+            className='cellClass'
+            title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
+          >
             <StatusIndicator type={statusCheck(info.getValue())} />
             <i>{info.getValue()}</i>
           </div>
@@ -194,14 +197,14 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                     item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                       ? item.status
                       : item.fileSource === 'local file'
-                        ? item.status
-                        : item.status === 'Completed' || item.status === 'Failed'
-                          ? item.status
-                          : item.fileSource == 'Wikipedia' ||
-                            item.fileSource == 'youtube' ||
-                            item.fileSource == 'gcs bucket'
-                            ? item.status
-                            : 'N/A',
+                      ? item.status
+                      : item.status === 'Completed' || item.status === 'Failed'
+                      ? item.status
+                      : item.fileSource == 'Wikipedia' ||
+                        item.fileSource == 'youtube' ||
+                        item.fileSource == 'gcs bucket'
+                      ? item.status
+                      : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
                   source_url: item.url != 'None' && item?.url != '' ? item.url : '',

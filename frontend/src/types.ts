@@ -21,8 +21,8 @@ export interface CustomFile extends Partial<globalThis.File> {
 }
 
 export interface OptionType {
-  value: string;
-  label: string;
+  readonly value: string;
+  readonly label: string;
 }
 
 export type UserCredentials = {
@@ -45,6 +45,8 @@ export type ExtractParams = {
   gcs_blob_filename?: string;
   source_type?: string;
   file_name?: string;
+  allowedNodes?: string[];
+  allowedRelationship?: string[];
 } & { [key: string]: any };
 
 export type UploadParams = {
@@ -214,4 +216,23 @@ export interface LegendChipProps {
   scheme: Scheme;
   title: string;
   nodes: NodeType[];
+}
+export interface FileContextProviderProps {
+  children: ReactNode;
+}
+export interface labelsAndTypes {
+  labels: string[];
+  relationshipTypes: string[];
+}
+export interface ServerData {
+  data: labelsAndTypes[];
+  status: string;
+  error?: string;
+  message?: string;
+}
+export interface SourceListServerData {
+  data: SourceNode[];
+  status: string;
+  error?: string;
+  message?: string;
 }

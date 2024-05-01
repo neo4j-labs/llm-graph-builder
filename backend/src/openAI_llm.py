@@ -457,14 +457,14 @@ class LLMGraphTransformer:
         return results
 
 
-def get_graph_from_OpenAI(model_version, graph, chunkId_chunkDoc_list:List):
+def get_graph_from_OpenAI(model_version, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship):
     futures=[]
     graph_document_list=[]
         
     combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
     
     llm = ChatOpenAI(model= model_version, temperature=0)
-    llm_transformer = LLMGraphTransformer(llm=llm)
+    llm_transformer = LLMGraphTransformer(llm=llm, allowed_nodes=allowedNodes, allowed_relationships=allowedRelationship)
     
     with ThreadPoolExecutor(max_workers=10) as executor:
         for chunk in combined_chunk_document_list:
@@ -477,7 +477,7 @@ def get_graph_from_OpenAI(model_version, graph, chunkId_chunkDoc_list:List):
                 #replace all non alphanumeric characters and spaces with underscore
                 node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
             graph_document_list.append(graph_document[0])    
-    graph.add_graph_documents(graph_document_list)
+    graph.add_graph_documents(graph_document_list, baseEntityLabel=True)
     return  graph_document_list        
         
     
