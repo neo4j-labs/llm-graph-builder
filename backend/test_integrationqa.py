@@ -61,9 +61,9 @@ def test_graph_from_Wikipedia():
     wiki_query = 'Norway'
     source_type = 'Wikipedia'
     create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type)
-    wikiresult = extract_graph_from_file_Wikipedia(graph, model, wiki_query, 1, '', '')    
+    wikiresult = extract_graph_from_file_Wikipedia(graph, model, wiki_query, 1, ',', ',')
     logging.info("Info: Wikipedia test done")
-    print()
+    print(wikiresult)
     try:
         assert wikiresult['status'] == 'Completed' and wikiresult['nodeCount']>5 and wikiresult['relationshipCount']>3
         print("Success")
@@ -86,7 +86,7 @@ def test_graph_from_youtube_video():
     source_type = 'youtube'
 
     create_source_node_graph_url_youtube(graph, model,url , source_type)
-    youtuberesult = extract_graph_from_file_youtube(graph, model, url, '', '')
+    youtuberesult = extract_graph_from_file_youtube(graph, model, url, ',', ',')
 
     logging.info("Info: Youtube Video test done")
     print(youtuberesult)
@@ -121,7 +121,7 @@ def test_graph_from_file_test_gcs():
     source_type ='gcs bucket'
     file_name = 'Neuralink brain chip patient playing chess.pdf'
     create_source_node_graph_url_gcs(graph, model, bucket_name, folder_name, source_type)
-    gcsresult = extract_graph_from_file_gcs(graph, model, bucket_name, folder_name, file_name, '', '')
+    gcsresult = extract_graph_from_file_gcs(graph, model, bucket_name, folder_name, file_name, ',', ',')
     
     logging.info("Info")
     print(gcsresult)
@@ -171,13 +171,13 @@ if __name__ == "__main__":
     # test_graph_from_file_local_file() # local file Success Test Case
     # test_graph_from_file_local_file_failed() # local file Failed Test Case
 
-    test_graph_from_Wikipedia() # Wikipedia Success Test Case
+    # test_graph_from_Wikipedia() # Wikipedia Success Test Case
     # test_graph_from_Wikipedia_failed() # Wikipedia Failed Test Case
 
     # test_graph_from_youtube_video() # Youtube Success Test Case
     # test_graph_from_youtube_video_failed # Failed Test case
 
-    # test_graph_from_file_test_gcs() # GCS Success Test Case
+    test_graph_from_file_test_gcs() # GCS Success Test Case
     # test_graph_from_file_test_gcs_failed() # GCS Failed Test Case
 
     # test_graph_from_file_test_s3_failed() # S3 Failed Test Case
