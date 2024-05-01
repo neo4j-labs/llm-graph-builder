@@ -1,4 +1,4 @@
-import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone } from '@neo4j-ndl/react';
+import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone, Typography, TextLink } from '@neo4j-ndl/react';
 import { Dispatch, SetStateAction, useState } from 'react';
 import connectAPI from '../services/ConnectAPI';
 import { useCredentials } from '../context/UserCredentials';
@@ -151,6 +151,11 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
       >
         <Dialog.Header id='form-dialog-title'>Connect to Neo4j</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
+          <Typography variant='body-medium' className='mb-4'>
+            <TextLink externalLink href='https://console.neo4j.io/'>
+              Don't have a Neo4j instance? Start for free today 
+            </TextLink>
+          </Typography>
           {connectionMessage?.type !== 'unknown' && (
             <Banner
               name='Connection Modal'
