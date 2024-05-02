@@ -12,6 +12,8 @@ import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './GraphViewModal';
 import { initialiseDriver } from '../utils/Driver';
 import Driver from 'neo4j-driver/types/driver';
+import { url } from '../utils/Utils';
+import { json } from 'node:stream/consumers';
 
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -75,6 +77,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
   const extractData = async (uid: number) => {
     if (filesData[uid]?.status == 'New') {
+      const filesize = filesData[uid].size;
       try {
         setFilesData((prevfiles) =>
           prevfiles.map((curfile, idx) => {
@@ -87,6 +90,41 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             return curfile;
           })
         );
+
+        if (filesize != undefined && filesize > 10000000) {
+          let encodedstr;
+          if (userCredentials?.password) {
+            encodedstr = btoa(userCredentials?.password);
+          }
+          const eventSource = new EventSource(
+            `${url()}/update_extract_status/${filesData[uid].name}?url=${userCredentials?.uri}&userName=${
+              userCredentials?.userName
+            }&password=${encodedstr}&database=${userCredentials?.database}`
+          );
+          eventSource.onmessage = (event) => {
+            console.log(event.data);
+            const eventResponse = JSON.parse(event.data);
+            if (eventResponse.status === 'Completed') {
+              setFilesData((prevfiles) => {
+                return prevfiles.map((curfile) => {
+                  if (curfile.name == eventResponse.fileName) {
+                    return {
+                      ...curfile,
+                      status: eventResponse.status,
+                      NodesCount: eventResponse?.nodeCount,
+                      relationshipCount: eventResponse?.relationshipCount,
+                      model: eventResponse?.model,
+                      processing: eventResponse?.processingTime?.toFixed(2),
+                    };
+                  }
+                  return curfile;
+                });
+              });
+              eventSource.close();
+            }
+          };
+        }
+
         const apiResponse = await extractAPI(
           filesData[uid].model,
           userCredentials as UserCredentials,
@@ -100,11 +138,11 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           selectedNodes.map((l) => l.value),
           selectedRels.map((t) => t.value)
         );
+
         if (apiResponse?.status === 'Failed') {
-          throw new Error(
-            `error:${apiResponse.message},message:${apiResponse.message},fileName:${apiResponse.file_name}`
-          );
-        } else {
+          let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
+          throw new Error(JSON.stringify(errorobj));
+        } else if (filesize != undefined && filesize < 10000000) {
           setFilesData((prevfiles) => {
             return prevfiles.map((curfile) => {
               if (curfile.name == apiResponse?.data?.fileName) {
@@ -123,26 +161,12 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           });
         }
       } catch (err: any) {
-        const errorMessage = err.message;
-        const messageMatch = errorMessage.match(/message:(.*),fileName:(.*),error:(.*)/);
-        if (err?.name === 'AxiosError') {
-          setShowAlert(true);
-          setErrorMessage(err.message);
-          setFilesData((prevfiles) =>
-            prevfiles.map((curfile, idx) => {
-              if (idx == uid) {
-                return {
-                  ...curfile,
-                  status: 'Failed',
-                };
-              }
-              return curfile;
-            })
-          );
-        } else {
-          const message = messageMatch[1].trim();
-          const fileName = messageMatch[2].trim();
-          const errorMessage = messageMatch[3].trim();
+        const error = JSON.parse(err.message);
+        if (Object.keys(error).includes('fileName')) {
+          const message = error.message;
+          const fileName = error.fileName;
+          const errorMessage = error.message;
+          console.log({ message, fileName, errorMessage });
           setShowAlert(true);
           setErrorMessage(message);
           setFilesData((prevfiles) =>

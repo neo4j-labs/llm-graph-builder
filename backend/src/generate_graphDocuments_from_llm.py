@@ -20,6 +20,7 @@ def generate_graphDocuments(model: str, graph: Neo4jGraph, chunkId_chunkDoc_list
         allowedRelationship = allowedRelationship.split(',')
     
     logging.info(f"allowedNodes: {allowedNodes}, allowedRelationship: {allowedRelationship}")
+
     
     if model == "Diffbot":
         graph_documents = get_graph_from_diffbot(graph, chunkId_chunkDoc_list)

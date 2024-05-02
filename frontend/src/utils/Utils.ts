@@ -96,3 +96,13 @@ export const getIcon = (node: any) => {
   }
   return undefined;
 };
+export function extractPdfFileName(url: string): string {
+  const splitUrl = url.split('/');
+  const encodedFileName = splitUrl[splitUrl.length - 1].split('?')[0];
+  const decodedFileName = decodeURIComponent(encodedFileName);
+  if (decodedFileName.includes('/')) {
+    const splitedstr = decodedFileName.split('/');
+    return splitedstr[splitedstr.length - 1];
+  }
+  return decodedFileName;
+}

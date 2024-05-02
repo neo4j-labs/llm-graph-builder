@@ -5,11 +5,15 @@ import logging
 from urllib.parse import urlparse,parse_qs
 
 def get_youtube_transcript(youtube_id):
-  transcript_dict = YouTubeTranscriptApi.get_transcript(youtube_id)
-  transcript=''
-  for td in transcript_dict:
-    transcript += ''.join(td['text'])
-  return transcript
+  try:
+    transcript_dict = YouTubeTranscriptApi.get_transcript(youtube_id)
+    transcript=''
+    for td in transcript_dict:
+      transcript += ''.join(td['text'])
+    return transcript
+  except Exception as e:
+    message = f"Youtube transcript is not available for youtube Id: {youtube_id}"
+    raise Exception(message)
 
 
 def create_youtube_url(url):

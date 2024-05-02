@@ -57,13 +57,12 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       columnHelper.accessor((row) => row.status, {
         id: 'status',
         cell: (info) => (
-          <div>
+          <div
+            className='cellClass'
+            title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
+          >
             <StatusIndicator type={statusCheck(info.getValue())} />
-            {info.row.original?.status === 'Failed' ? (
-              <span title={info.row.original?.errorMessage}>{info.getValue()}</span>
-            ) : (
-              <i>{info.getValue()}</i>
-            )}
+            <i>{info.getValue()}</i>
           </div>
         ),
         header: () => <span>Status</span>,

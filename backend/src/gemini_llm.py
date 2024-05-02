@@ -528,5 +528,5 @@ def get_graph_from_Gemini(model_version,
             if i % 4 == 0 :
                 time.sleep(1)
         
-    graph.add_graph_documents(graph_document_list)
+    graph.add_graph_documents(graph_document_list, baseEntityLabel=True)
     return  graph_document_list
