@@ -220,16 +220,17 @@ def QA_RAG(graph,model,question,session_id):
         logging.info(f"DB Setup completed in {db_setup_time:.2f} seconds")
         
         start_time = time.time()
+        chat_summary = get_chat_history(llm,graph,session_id)
+        chat_history_time = time.time() - start_time
+        logging.info(f"Chat history summarized in {chat_history_time:.2f} seconds")
+        print(chat_summary)
+
+        start_time = time.time()
         vector_res = vector_embed_results(qa, question)
         vector_time = time.time() - start_time
         logging.info(f"Vector response obtained in {vector_time:.2f} seconds")
         print(vector_res)
         
-        start_time = time.time()
-        chat_summary = get_chat_history(llm,graph,session_id)
-        chat_history_time = time.time() - start_time
-        logging.info(f"Chat history summarized in {chat_history_time:.2f} seconds")
-        print(chat_summary)        
         formatted_prompt = FINAL_PROMPT.format(
             question=question,
             chat_summary=chat_summary,

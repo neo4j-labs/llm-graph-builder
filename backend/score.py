@@ -223,9 +223,9 @@ async def update_similarity_graph(uri=Form(None), userName=Form(None), password=
         return create_api_response(job_status, message=message, error=error_message)
         
 @app.post("/chat_bot")
-async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password=Form(None), question=Form(None), session_id=Form(None)):
+async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password=Form(None), database=Form(None),question=Form(None), session_id=Form(None)):
     try:
-        database = "neo4j"
+        # database = "neo4j"
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,session_id=session_id)
         return create_api_response('Success',data=result)
