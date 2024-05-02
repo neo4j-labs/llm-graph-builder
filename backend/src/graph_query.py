@@ -208,7 +208,7 @@ def extract_relationships(records):
     except Exception as e:
         logging.error("graph_query module: An error occurred while extracting relationships from records", exc_info=True)
 
-def get_graph_results(uri, username, password, session_id, query_type, doc_limit, document_name=None):
+def get_graph_results(uri, username, password, query_type, doc_limit, document_name=None):
     """
     Retrieves graph data by executing a specified Cypher query using credentials and parameters provided.
     Processes the results to extract nodes and relationships and packages them in a structured output.
@@ -217,7 +217,6 @@ def get_graph_results(uri, username, password, session_id, query_type, doc_limit
     uri (str): The URI for the Neo4j database.
     username (str): The username for authentication.
     password (str): The password for authentication.
-    session_id (str): A unique identifier for the session.
     query_type (str): The type of query to be executed.
     doc_limit (int, optional): The limit on the number of documents to retrieve if no specific document name is provided. Default is 10.
     document_name (str, optional): The name of the document to specifically query for, if any. Default is None.
@@ -226,8 +225,8 @@ def get_graph_results(uri, username, password, session_id, query_type, doc_limit
     dict: Contains the session ID, user-defined messages with nodes and relationships, and the user module identifier.
     """
     try:
-        logging.info(f"URI: {uri}, Username: {username}, Password: {password}, Session ID: {session_id}, Query Type: {query_type}, Document Limit: {doc_limit}, Document Name: {document_name}")
-        logging.info(f"Starting graph query process for session {session_id}")
+        logging.info(f"URI: {uri}, Username: {username}, Password: {password}, Query Type: {query_type}, Document Limit: {doc_limit}, Document Name: {document_name}")
+        logging.info(f"Starting graph query process")
         driver = get_graphDB_driver(uri, username, password)
         query = get_cypher_query(QUERY_MAP, query_type, document_name)
         records, summary , keys = execute_query(driver, query, int(doc_limit), document_name)
@@ -238,25 +237,15 @@ def get_graph_results(uri, username, password, session_id, query_type, doc_limit
         }
 
         result = {
-            "session_id": session_id,
             "message": output,
             "user": "graph_query"
         }
 
-        logging.info(f"Query process completed successfully for session {session_id}")
+        logging.info(f"Query process completed successfully")
         return result
     except Exception as e:
-        logging.error(f"graph_query module: An error occurred in get_graph_results for session {session_id}. Error: {str(e)}")
-        # output = {
-        #     "nodes": [],
-        #     "relationships": []}
-        # result = {
-        #     "session_id": session_id,
-        #     "message": output,
-        #     "user": "graph_query"
-        #     }
-        # return result
-        raise Exception(f"graph_query module: An error occurred in get_graph_results for session {session_id}. Please check the logs for more details.") from e
+        logging.error(f"graph_query module: An error occurred in get_graph_results. Error: {str(e)}")
+        raise Exception(f"graph_query module: An error occurred in get_graph_results. Please check the logs for more details.") from e
 
 
 
