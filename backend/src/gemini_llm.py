@@ -517,16 +517,15 @@ def get_graph_from_Gemini(model_version,
             # nodes = [Node(id=id, type=type) for id,type in unique_nodes]        
             # graph_document[0].nodes=list(nodes)
 
-            for node in graph_document[0].nodes:
-               node.id = node.id.title().replace(' ','_')
-                # replace all non alphanumeric characters and spaces with underscore
-               node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
+#            for node in graph_document[0].nodes:
+#               node.id = node.id.title().replace(' ','_')
+#                # replace all non alphanumeric characters and spaces with underscore
+#               node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
             graph_document_list.append(graph_document[0])
             
             #Sleep for 1 sec after 4 requestes are processed. 
             # Todo: Remove this code block when Gemini rate limit is increased 
-            if i % 4 == 0 :
-                time.sleep(1)
+            # if i % 4 == 0 :
+            #     time.sleep(1)
         
-    graph.add_graph_documents(graph_document_list, baseEntityLabel=True)
     return  graph_document_list
