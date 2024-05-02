@@ -26,6 +26,7 @@ import { useCredentials } from '../context/UserCredentials';
 import { LegendsChip } from './LegendsChip';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import graphQueryAPI from '../services/GraphQuery';
+import { queryMap } from '../utils/Constants';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -36,7 +37,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const nvlRef = useRef<NVL>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [relationships, setRelationships] = useState<Relationship[]>([]);
-  const [graphType, setGraphType] = useState<GraphType[]>(['Entities']);
+  const [graphType, setGraphType] = useState<GraphType[]>(['entities']);
   const [documentNo, setDocumentNo] = useState<string>('3');
   const [loading, setLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<'unknown' | 'success' | 'danger'>('unknown');
@@ -44,6 +45,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [docLimit, setDocLimit] = useState<string>('3');
   const { userCredentials } = useCredentials();
   const [scheme, setScheme] = useState<Scheme>({});
+
+  console.log('graphType', graphType);
 
   const handleCheckboxChange = (graph: GraphType) => {
     const currentIndex = graphType.indexOf(graph);
@@ -69,19 +72,36 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }, 1000);
     return () => {
       nvlRef.current?.destroy();
-      setGraphType(['Entities']);
+      setGraphType(['entities']);
       clearTimeout(timeoutId);
       setScheme({});
     };
   }, []);
 
+  const graphQuery: string =
+    graphType.length === 3
+      ? queryMap.DocChunkEntities
+      : graphType.includes('entities') && graphType.includes('chunks')
+      ? queryMap.ChunksEntities
+      : graphType.includes('entities') && graphType.includes('document')
+      ? queryMap.DocEntities
+      : graphType.includes('document') && graphType.includes('chunks')
+      ? queryMap.DocChunks
+      : graphType.includes('entities') && graphType.length === 1
+      ? queryMap.Entities
+      : graphType.includes('chunks') && graphType.length === 1
+      ? queryMap.Chunks
+      : queryMap.Document;
+
   const fetchData = async () => {
     try {
-      return await graphQueryAPI(userCredentials as UserCredentials, graphType, inspectedName, docLimit);
+      return await graphQueryAPI(userCredentials as UserCredentials, graphQuery, inspectedName, docLimit);
     } catch (error: any) {
       console.log(error);
     }
   };
+
+  console.log('newQuery', graphQuery);
 
   useEffect(() => {
     if (open) {
@@ -91,9 +111,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       fetchData()
         .then((result) => {
           if (result && result.data) {
-            console.log('result', result);
-            const neoNodes = result.data.map((f: Node) => f);
-            const neoRels = result.data.map((f: Relationship) => f);
+            console.log('result', result.data.data.message);
+            const neoNodes = result.data.data.message.nodes.map((f: Node) => f);
+            const neoRels = result.data.data.message.relationships.map((f: Relationship) => f);
 
             console.log('neoNodes', neoNodes);
             // Infer color schema dynamically
@@ -233,22 +253,22 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           <div className='flex gap-5 mt-2 justify-between'>
             <div className='flex gap-5'>
               <Checkbox
-                checked={graphType.includes('Document')}
+                checked={graphType.includes('document')}
                 label='Document'
-                disabled={graphType.includes('Document') && graphType.length === 1}
-                onChange={() => handleCheckboxChange('Document')}
+                disabled={graphType.includes('document') && graphType.length === 1}
+                onChange={() => handleCheckboxChange('document')}
               />
               <Checkbox
-                checked={graphType.includes('Entities')}
+                checked={graphType.includes('entities')}
                 label='Entities'
-                disabled={graphType.includes('Entities') && graphType.length === 1}
-                onChange={() => handleCheckboxChange('Entities')}
+                disabled={graphType.includes('entities') && graphType.length === 1}
+                onChange={() => handleCheckboxChange('entities')}
               />
               <Checkbox
-                checked={graphType.includes('Chunks')}
+                checked={graphType.includes('chunks')}
                 label='Chunks'
-                disabled={graphType.includes('Chunks') && graphType.length === 1}
-                onChange={() => handleCheckboxChange('Chunks')}
+                disabled={graphType.includes('chunks') && graphType.length === 1}
+                onChange={() => handleCheckboxChange('chunks')}
               />
             </div>
             {viewPoint === 'showGraphView' && (
