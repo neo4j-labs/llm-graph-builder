@@ -93,9 +93,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       ? queryMap.Chunks
       : queryMap.Document;
 
+  // API Call to fetch the queried Data
   const fetchData = async () => {
     try {
-      return await graphQueryAPI(userCredentials as UserCredentials, graphQuery, inspectedName, docLimit);
+      const nodeRelationshipData =
+        viewPoint === 'showGraphView'
+          ? await graphQueryAPI(userCredentials as UserCredentials, graphQuery, '', docLimit)
+          : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, inspectedName, '0');
+      return nodeRelationshipData;
     } catch (error: any) {
       console.log(error);
     }
