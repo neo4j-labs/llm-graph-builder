@@ -2,6 +2,7 @@ from score import *
 from src.main import *
 import logging
 from src.QA_integration import QA_RAG
+from langserve import add_routes
 import asyncio
 
 uri =''
@@ -25,13 +26,13 @@ def test_graph_from_file_local_file():
     graphDb_data_Access = graphDBdataAccess(graph)
     graphDb_data_Access.create_source_node(obj_source_node)
 
-    local_file_result =  extract_graph_from_file_local_file(graph, model, file_name, '', '')
+    local_file_result =  extract_graph_from_file_local_file(graph, model, file_name, ',', ',')
 
     print(local_file_result)
     
     logging.info("Info:  ")
     try:
-        assert local_file_result['status'] == 'Completed' and local_file_result['nodeCount']>3 and local_file_result['relationshipCount']>2
+        assert local_file_result['status'] == 'Completed' and local_file_result['nodeCount']>5 and local_file_result['relationshipCount']>10
         print("Success")
     except AssertionError as e:
         print("Fail: ", e)
@@ -49,7 +50,7 @@ def test_graph_from_file_local_file_failed():
         graphDb_data_Access = graphDBdataAccess(graph)
         graphDb_data_Access.create_source_node(obj_source_node)
 
-        local_file_result =  extract_graph_from_file_local_file(graph, model, file_name, '', '')
+        local_file_result =  extract_graph_from_file_local_file(graph, model, file_name, ',', ',')
 
         print(local_file_result)
     except AssertionError as e:
@@ -65,7 +66,7 @@ def test_graph_from_Wikipedia():
     logging.info("Info: Wikipedia test done")
     print(wikiresult)
     try:
-        assert wikiresult['status'] == 'Completed' and wikiresult['nodeCount']>5 and wikiresult['relationshipCount']>3
+        assert wikiresult['status'] == 'Completed' and wikiresult['nodeCount']>10 and wikiresult['relationshipCount']>15
         print("Success")
     except AssertionError as e:
         print("Fail ", e)
@@ -103,7 +104,7 @@ def test_graph_from_youtube_video_failed():
     source_type = 'youtube'
 
     create_source_node_graph_url_youtube(graph, model,url , source_type)
-    youtuberesult = extract_graph_from_file_youtube(graph, model, url, '', '')
+    youtuberesult = extract_graph_from_file_youtube(graph, model, url, ',', ',')
     # print(result)
     print(youtuberesult)
     try:
@@ -168,18 +169,18 @@ def test_chatbot_QnA():
 
 if __name__ == "__main__":
 
-    # test_graph_from_file_local_file() # local file Success Test Case
-    # test_graph_from_file_local_file_failed() # local file Failed Test Case
+        test_graph_from_file_local_file() # local file Success Test Case
+        #test_graph_from_file_local_file_failed() # local file Failed Test Case
 
-    # test_graph_from_Wikipedia() # Wikipedia Success Test Case
-    # test_graph_from_Wikipedia_failed() # Wikipedia Failed Test Case
+        test_graph_from_Wikipedia() # Wikipedia Success Test Case
+        #test_graph_from_Wikipedia_failed() # Wikipedia Failed Test Case
 
-    # test_graph_from_youtube_video() # Youtube Success Test Case
-    # test_graph_from_youtube_video_failed # Failed Test case
+        test_graph_from_youtube_video() # Youtube Success Test Case
+        #test_graph_from_youtube_video_failed # Failed Test case
 
-    test_graph_from_file_test_gcs() # GCS Success Test Case
-    # test_graph_from_file_test_gcs_failed() # GCS Failed Test Case
+        test_graph_from_file_test_gcs() # GCS Success Test Case
+        #test_graph_from_file_test_gcs_failed() # GCS Failed Test Case
 
-    # test_graph_from_file_test_s3_failed() # S3 Failed Test Case
-    
-    # test_chatbot_QnA(uri, userName, password, model, database)
+        #test_graph_from_file_test_s3_failed() # S3 Failed Test Case
+        #uri, userName, password, model, database
+        test_chatbot_QnA()
