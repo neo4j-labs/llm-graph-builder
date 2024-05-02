@@ -5,6 +5,8 @@ from langchain_google_vertexai import VertexAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from langchain.docstore.document import Document
 from langchain_community.graphs import Neo4jGraph
+from langchain_community.graphs.graph_document import GraphDocument
+from typing import List
 import re
 import os
 
@@ -67,4 +69,7 @@ def load_embedding_model(embedding_model_name: str):
         dimension = 384
         logging.info(f"Embedding: Using SentenceTransformer , Dimension:{dimension}")
     return embeddings, dimension
+
+def save_graphDocuments_in_neo4j(graph:Neo4jGraph, graph_document_list:List[GraphDocument]):
+  graph.add_graph_documents(graph_document_list, baseEntityLabel=True)  
                  

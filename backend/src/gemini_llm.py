@@ -525,8 +525,7 @@ def get_graph_from_Gemini(model_version,
             
             #Sleep for 1 sec after 4 requestes are processed. 
             # Todo: Remove this code block when Gemini rate limit is increased 
-            if i % 4 == 0 :
-                time.sleep(1)
+            # if i % 4 == 0 :
+            #     time.sleep(1)
         
-    graph.add_graph_documents(graph_document_list, baseEntityLabel=True)
     return  graph_document_list
