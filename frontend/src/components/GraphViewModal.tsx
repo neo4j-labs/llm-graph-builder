@@ -9,7 +9,7 @@ import {
   TextInput,
 } from '@neo4j-ndl/react';
 import { useEffect, useRef, useState } from 'react';
-import { GraphType, GraphViewModalProps, Scheme } from '../types';
+import { GraphType, GraphViewModalProps, Scheme, UserCredentials } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL, { NvlOptions } from '@neo4j-nvl/core';
 import type { Node, Relationship } from '@neo4j-nvl/core';
@@ -20,20 +20,12 @@ import {
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
 import ButtonWithToolTip from './ButtonWithToolTip';
-import { constructDocQuery, constructQuery, getIcon, getNodeCaption, getSize } from '../utils/Utils';
-import {
-  entities,
-  chunks,
-  document,
-  docEntities,
-  docChunks,
-  chunksEntities,
-  docChunkEntities,
-} from '../utils/Constants';
+import { getIcon, getNodeCaption, getSize } from '../utils/Utils';
 import { ArrowSmallRightIconOutline } from '@neo4j-ndl/react/icons';
 import { useCredentials } from '../context/UserCredentials';
 import { LegendsChip } from './LegendsChip';
 import { calcWordColor } from '@neo4j-devtools/word-color';
+import graphQueryAPI from '../services/GraphQuery';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -50,7 +42,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [status, setStatus] = useState<'unknown' | 'success' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [docLimit, setDocLimit] = useState<string>('3');
-  const { driver } = useCredentials();
+  const { userCredentials } = useCredentials();
   const [scheme, setScheme] = useState<Scheme>({});
 
   const handleCheckboxChange = (graph: GraphType) => {
@@ -64,29 +56,13 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setGraphType(newGraphSelected);
   };
 
-  const queryMap: {
-    Document: string;
-    Chunks: string;
-    Entities: string;
-    DocEntities: string;
-    DocChunks: string;
-    ChunksEntities: string;
-    DocChunkEntities: string;
-  } = {
-    Document: document,
-    Chunks: chunks,
-    Entities: entities,
-    DocEntities: docEntities,
-    DocChunks: docChunks,
-    ChunksEntities: chunksEntities,
-    DocChunkEntities: docChunkEntities,
-  };
   const handleZoomToFit = () => {
     nvlRef.current?.fit(
       nodes.map((node) => node.id),
       {}
     );
   };
+
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       handleZoomToFit();
@@ -99,84 +75,64 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     };
   }, []);
 
+  const fetchData = async () => {
+    try {
+      return await graphQueryAPI(userCredentials as UserCredentials, graphType, inspectedName, docLimit);
+    } catch (error: any) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     if (open) {
       setNodes([]);
       setRelationships([]);
-      let queryToRun = '';
-      const newCheck: string =
-        graphType.length === 3
-          ? queryMap.DocChunkEntities
-          : graphType.includes('Entities') && graphType.includes('Chunks')
-          ? queryMap.ChunksEntities
-          : graphType.includes('Entities') && graphType.includes('Document')
-          ? queryMap.DocEntities
-          : graphType.includes('Document') && graphType.includes('Chunks')
-          ? queryMap.DocChunks
-          : graphType.includes('Entities') && graphType.length === 1
-          ? queryMap.Entities
-          : graphType.includes('Chunks') && graphType.length === 1
-          ? queryMap.Chunks
-          : queryMap.Document;
-      if (viewPoint === 'showGraphView') {
-        queryToRun = constructQuery(newCheck, documentNo);
-      } else {
-        queryToRun = constructDocQuery(newCheck);
-      }
-      const session = driver?.session();
       setLoading(true);
-      session
-        ?.run(queryToRun, { document_name: inspectedName })
-        .then((results) => {
-          if (results.records && results.records.length > 0) {
-            // @ts-ignore
-            const neo4jNodes = results.records.map((f) => f._fields[0]);
-            // @ts-ignore
-            const neo4jRels = results.records.map((f) => f._fields[1]);
+      fetchData()
+        .then((result) => {
+          if (result && result.data) {
+            console.log('result', result);
+            const neoNodes = result.data.map((f: Node) => f);
+            const neoRels = result.data.map((f: Relationship) => f);
 
+            console.log('neoNodes', neoNodes);
             // Infer color schema dynamically
             let iterator = 0;
             const schemeVal: Scheme = {};
             let labels: string[] = [];
-            neo4jNodes.forEach((node) => {
-              labels = node.map((f: any) => f.labels);
-              labels.forEach((label: any) => {
-                if (schemeVal[label] == undefined) {
-                  schemeVal[label] = calcWordColor(label[0]);
-                  iterator += 1;
-                }
-              });
+            labels = neoNodes.map((f: any) => f.labels);
+            labels.forEach((label: any) => {
+              if (schemeVal[label] == undefined) {
+                schemeVal[label] = calcWordColor(label[0]);
+                iterator += 1;
+              }
             });
 
-            const newNodes = neo4jNodes.map((n) => {
-              const totalNodes = n.map((g: any) => {
-                return {
-                  id: g.elementId,
-                  size: getSize(g),
-                  captionAlign: 'bottom',
-                  iconAlign: 'bottom',
-                  captionHtml: <b>Test</b>,
-                  caption: getNodeCaption(g),
-                  color: schemeVal[g.labels[0]],
-                  icon: getIcon(g),
-                  labels: g.labels,
-                };
-              });
-              return totalNodes;
+            const newNodes: Node[] = neoNodes.map((g: any) => {
+              return {
+                id: g.element_id,
+                size: getSize(g),
+                captionAlign: 'bottom',
+                iconAlign: 'bottom',
+                captionHtml: <b>Test</b>,
+                caption: getNodeCaption(g),
+                color: schemeVal[g.labels[0]],
+                icon: getIcon(g),
+                labels: g.labels,
+              };
             });
             const finalNodes = newNodes.flat();
-            const newRels: any = neo4jRels.map((r: any) => {
-              const totalRels = r.map((relations: any) => {
-                return {
-                  id: relations.elementId,
-                  from: relations.startNodeElementId,
-                  to: relations.endNodeElementId,
-                  caption: relations.type,
-                };
-              });
-              return totalRels;
+            // console.log('finalNodes', finalNodes);
+            const newRels: Relationship[] = neoRels.map((relations: any) => {
+              return {
+                id: relations.element_id,
+                from: relations.start_node_element_id,
+                to: relations.end_node_element_id,
+                caption: relations.type,
+              };
             });
             const finalRels = newRels.flat();
+            // console.log('finalRels', finalRels);
             setNodes(finalNodes);
             setRelationships(finalRels);
             setScheme(schemeVal);
@@ -201,6 +157,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   if (!open) {
     return <></>;
   }
+
   const mouseEventCallbacks = {
     onPan: true,
     onZoom: true,
@@ -303,6 +260,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                   aria-label='Document Limit'
                   onChange={(e) => setDocLimit(e.target.value)}
                   value={docLimit}
+                  min={1}
                 ></TextInput>
                 <IconButton aria-label='refresh-btn' onClick={() => setDocumentNo(docLimit)}>
                   <ArrowSmallRightIconOutline className='n-size-token-7' />
