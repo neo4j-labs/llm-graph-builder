@@ -1,11 +1,10 @@
-
-import { Checkbox, Dialog, Dropdown } from '@neo4j-ndl/react';
+import { Button, Dialog, Dropdown } from '@neo4j-ndl/react';
 import { OnChangeValue } from 'react-select';
 import { OptionType, UserCredentials } from '../types';
 import { useFileContext } from '../context/UsersFiles';
 import { getNodeLabelsAndRelTypes } from '../services/GetNodeLabelsRelTypes';
 import { useCredentials } from '../context/UserCredentials';
-import { ChangeEventHandler, useCallback, useEffect, useState } from 'react';
+import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
 
 export default function SettingsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels } = useFileContext();
@@ -32,18 +31,10 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
     }
   }, [userCredentials]);
 
-  const clickHandler: ChangeEventHandler<HTMLInputElement> = useCallback(
-    (e) => {
-      if (e.target.checked) {
-        setSelectedNodes(nodeLabelOptions);
-        setSelectedRels(relationshipTypeOptions);
-      } else {
-        setSelectedNodes([]);
-        setSelectedRels([]);
-      }
-    },
-    [nodeLabelOptions, relationshipTypeOptions]
-  );
+  const clickHandler: MouseEventHandler<HTMLButtonElement> = useCallback(() => {
+    setSelectedNodes(nodeLabelOptions);
+    setSelectedRels(relationshipTypeOptions);
+  }, [nodeLabelOptions, relationshipTypeOptions]);
 
   return (
     <Dialog size='medium' open={open} aria-labelledby='form-dialog-title' onClose={onClose}>
@@ -78,7 +69,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
           type='creatable'
         />
         <div>
-          <Checkbox label='Use Existing Schema' onChange={(e) => clickHandler(e)} />
+          <Button onClick={clickHandler}>Use Existing Schema</Button>
         </div>
       </Dialog.Content>
     </Dialog>
