@@ -1,5 +1,4 @@
 
-import { Button, Checkbox, Dialog, Dropdown } from '@neo4j-ndl/react';
 import { Checkbox, Dialog, Dropdown } from '@neo4j-ndl/react';
 import { OnChangeValue } from 'react-select';
 import { OptionType, UserCredentials } from '../types';
