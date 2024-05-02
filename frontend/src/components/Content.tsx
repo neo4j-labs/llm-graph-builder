@@ -238,7 +238,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   return (
     <>
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
-
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>
           <ConnectionModal
