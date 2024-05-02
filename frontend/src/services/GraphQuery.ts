@@ -16,7 +16,7 @@ const graphQueryAPI = async (
     formData.append('password', userCredentials?.password ?? '');
     formData.append('query_type', JSON.stringify(query_type) ?? 'Entities');
     formData.append('document_name', document_name);
-    formData.append('document_name', doc_limit);
+    formData.append('doc_limit', doc_limit);
     const response = await axios.post(`${url()}/graph_query`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
