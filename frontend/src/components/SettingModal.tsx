@@ -44,10 +44,6 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
           helpText='You can select more than one values'
           label='Node Labels'
           selectProps={{
-            defaultValue: {
-              label: 'Person',
-              value: 'Person',
-            },
             isClearable: true,
             isMulti: true,
             options: nodeLabelOptions,
