@@ -136,8 +136,8 @@ async def extract_knowledge_graph_from_file(
     gcs_blob_filename=Form(None),
     source_type=Form(None),
     file_name=Form(None),
-    allowedNodes=Form(str),
-    allowedRelationship=Form(str)
+    allowedNodes=Form(None),
+    allowedRelationship=Form(None)
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
