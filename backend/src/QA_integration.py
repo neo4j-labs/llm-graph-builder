@@ -29,32 +29,32 @@ EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
 CHAT_MAX_TOKENS = 1000
 
 
-RETRIEVAL_QUERY = """
-WITH node, score, apoc.text.join([ (node)-[:HAS_ENTITY]->(e) | head(labels(e)) + ": "+ e.id],", ") as entities
-MATCH (node)-[:PART_OF]->(d:Document)
-WITH d, apoc.text.join(collect(node.text + "\n" + entities),"\n----\n") as text, avg(score) as score
-RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)} as metadata
-"""
-
 # RETRIEVAL_QUERY = """
-# WITH node as chunk, score
-# MATCH (chunk)-[:PART_OF]->(d:Document)
-# CALL { WITH chunk
-# MATCH (chunk)-[:HAS_ENTITY]->(e) 
-# MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,3}(:!Chunk&!Document) 
-# UNWIND rels as r
-# RETURN collect(distinct r) as rels
-# }
-# WITH d, collect(distinct chunk) as chunks, avg(score) as score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels
-# WITH d, score, 
-# [c in chunks | c.text] as texts,  
-# [r in rels | coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ startNode(r).id + " "+ type(r) + " " + coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + endNode(r).id] as entities
-# WITH d, score,
-# apoc.text.join(texts,"\n----\n") +
-# apoc.text.join(entities,"\n")
-# as text, entities
-# RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), entities:entities} as metadata
+# WITH node, score, apoc.text.join([ (node)-[:HAS_ENTITY]->(e) | head(labels(e)) + ": "+ e.id],", ") as entities
+# MATCH (node)-[:PART_OF]->(d:Document)
+# WITH d, apoc.text.join(collect(node.text + "\n" + entities),"\n----\n") as text, avg(score) as score
+# RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)} as metadata
 # """
+
+RETRIEVAL_QUERY = """
+WITH node as chunk, score
+MATCH (chunk)-[:PART_OF]->(d:Document)
+CALL { WITH chunk
+MATCH (chunk)-[:HAS_ENTITY]->(e) 
+MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,3}(:!Chunk&!Document) 
+UNWIND rels as r
+RETURN collect(distinct r) as rels
+}
+WITH d, collect(distinct chunk) as chunks, avg(score) as score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels
+WITH d, score, 
+[c in chunks | c.text] as texts,  
+[r in rels | coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ startNode(r).id + " "+ type(r) + " " + coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + endNode(r).id] as entities
+WITH d, score,
+apoc.text.join(texts,"\n----\n") +
+apoc.text.join(entities,"\n")
+as text, entities
+RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), entities:entities} as metadata
+"""
 
 FINAL_PROMPT = """
 As an AI-powered question-answering agent, your task is to provide accurate and succinct responses to user queries. Utilize information from the chat history, user input, and relevant sources effectively.
@@ -71,7 +71,7 @@ Instructions:
 - Utilize the Chat History Summary: {chat_summary} to ensure responses are informed by previous interactions.
 - Reference Relevant Information: {vector_result} only if it directly pertains to the user's query.
 - Ensure sources are cited clearly when Relevant Information is used in your response. List sources at the end in the format [Source: source1,source2]. Remove any duplicate sources.
-Ensure that answers are straightforward, summarized and context-aware, focusing on being relevant and concise.
+Ensure that answers are straightforward and context-aware, focusing on being relevant and concise.
 """
 
 def get_llm(model: str,max_tokens=1000) -> Any:
