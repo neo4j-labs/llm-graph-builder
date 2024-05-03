@@ -9,7 +9,7 @@ const OverflowContainer: FC<props> = ({ children, className = '' }) => {
   useEffect(() => {
     const container = containerRef.current;
     if (container) {
-      if (container.scrollHeight > container.clientHeight) {
+      if (container.clientHeight>440) {
         setOverflowing(true);
       } else {
         setOverflowing(false);
@@ -20,7 +20,7 @@ const OverflowContainer: FC<props> = ({ children, className = '' }) => {
     <div
       ref={containerRef}
       style={{
-        maxHeight: overflowing ? '100%' : 'max-content',
+        height: overflowing ? '100%' : 'max-content',
         overflowY: overflowing ? 'auto' : 'hidden',
       }}
       className={className}
