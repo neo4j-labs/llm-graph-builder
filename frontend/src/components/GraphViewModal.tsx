@@ -196,8 +196,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
   }, [open, graphType, documentNo]);
 
-  const labelsLength = Object.keys(scheme).length;
-
   // If the modal is closed, render nothing
   if (!open) {
     return <></>;
@@ -245,9 +243,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setGraphViewOpen(false);
     setScheme({});
   };
-
-  const heightCheck = labelsLength > 80 ? '100%' : 'max-content';
-  const overflowCheck = labelsLength > 80 ? 'scroll' : 'hidden';
 
   // Legends placement
   const legendCheck = Object.keys(scheme).sort((a, b) => {

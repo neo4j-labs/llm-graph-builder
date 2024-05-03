@@ -298,7 +298,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               disabled={!filesData.some((f) => f?.status === 'Completed')}
               className='ml-0.5'
             >
-              Open Graph
+              Open Graph with Bloom
             </Button>
             <Button
               onClick={() => {
