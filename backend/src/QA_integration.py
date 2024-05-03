@@ -29,11 +29,31 @@ EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
 CHAT_MAX_TOKENS = 1000
 
 
+# RETRIEVAL_QUERY = """
+# WITH node, score, apoc.text.join([ (node)-[:HAS_ENTITY]->(e) | head(labels(e)) + ": "+ e.id],", ") as entities
+# MATCH (node)-[:PART_OF]->(d:Document)
+# WITH d, apoc.text.join(collect(node.text + "\n" + entities),"\n----\n") as text, avg(score) as score
+# RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)} as metadata
+# """
+
 RETRIEVAL_QUERY = """
-WITH node, score, apoc.text.join([ (node)-[:HAS_ENTITY]->(e) | head(labels(e)) + ": "+ e.id],", ") as entities
-MATCH (node)-[:PART_OF]->(d:Document)
-WITH d, apoc.text.join(collect(node.text + "\n" + entities),"\n----\n") as text, avg(score) as score
-RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)} as metadata
+WITH node as chunk, score
+MATCH (chunk)-[:PART_OF]->(d:Document)
+CALL { WITH chunk
+MATCH (chunk)-[:HAS_ENTITY]->(e) 
+MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,3}(:!Chunk&!Document) 
+UNWIND rels as r
+RETURN collect(distinct r) as rels
+}
+WITH d, collect(distinct chunk) as chunks, avg(score) as score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels
+WITH d, score, 
+[c in chunks | c.text] as texts,  
+[r in rels | coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ startNode(r).id + " "+ type(r) + " " + coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + endNode(r).id] as entities
+WITH d, score,
+apoc.text.join(texts,"\n----\n") +
+apoc.text.join(entities,"\n")
+as text, entities
+RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), entities:entities} as metadata
 """
 
 FINAL_PROMPT = """
@@ -43,7 +63,7 @@ Response Requirements:
 - Directly answer the user's query in a concise manner without using headers unless specifically requested.
 - Use chat history summary to provide context-aware responses and acknowledge relevant past interactions.
 - Respond appropriately to initial greetings but omit greetings in subsequent responses unless the conversation is restarted or there's a significant pause.
-- For specific inquiries, rely on the chat history and relevant information {vector_result}. Avoid making assumptions or creating unfounded details.
+- For specific inquiries, rely on the chat history and relevant information. Avoid making assumptions or creating unfounded details.
 - If the answer is unknown, state this clearly without speculation.
 
 Instructions:
@@ -110,13 +130,11 @@ def vector_embed_results(qa,question):
     
     return vector_res
     
-def save_chat_history(uri,userName,password,session_id,user_message,ai_message):
+def save_chat_history(graph,session_id,user_message,ai_message):
     try:
         history = Neo4jChatMessageHistory(
-        url=uri,
-        username=userName,
-        password=password,
-        session_id=session_id
+            graph=graph,
+            session_id=session_id
         )
         history.add_user_message(user_message)
         history.add_ai_message(ai_message)
@@ -125,13 +143,11 @@ def save_chat_history(uri,userName,password,session_id,user_message,ai_message):
         error_message = str(e)
         logging.exception(f'Exception in saving chat history:{error_message}')
     
-def get_chat_history(llm, uri, user_name, password, session_id):
+def get_chat_history(llm, graph, session_id):
     """Retrieves and summarizes the chat history for a given session."""
     try:
         history = Neo4jChatMessageHistory(
-            url=uri,
-            username=user_name,
-            password=password,
+            graph=graph,
             session_id=session_id
         )
         
@@ -174,7 +190,7 @@ def extract_and_remove_source(message):
     return response
 
 
-def QA_RAG(uri,model,userName,password,question,session_id):
+def QA_RAG(graph,model,question,session_id):
     logging.info(f"QA_RAG called at {datetime.now()}")
     # model = "Gemini Pro"
     try:
@@ -183,12 +199,9 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         start_time = time.time()
         neo_db = Neo4jVector.from_existing_index(
             embedding=EMBEDDING_FUNCTION,
-            url=uri,
-            username=userName,
-            password=password,
-            database="neo4j",
             index_name="vector",
             retrieval_query=RETRIEVAL_QUERY,
+            graph=graph
         )
         
         llm = get_llm(model=model,max_tokens=CHAT_MAX_TOKENS)
@@ -207,16 +220,17 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         logging.info(f"DB Setup completed in {db_setup_time:.2f} seconds")
         
         start_time = time.time()
+        chat_summary = get_chat_history(llm,graph,session_id)
+        chat_history_time = time.time() - start_time
+        logging.info(f"Chat history summarized in {chat_history_time:.2f} seconds")
+        print(chat_summary)
+
+        start_time = time.time()
         vector_res = vector_embed_results(qa, question)
         vector_time = time.time() - start_time
         logging.info(f"Vector response obtained in {vector_time:.2f} seconds")
         print(vector_res)
         
-        start_time = time.time()
-        chat_summary = get_chat_history(llm, uri, userName, password, session_id)
-        chat_history_time = time.time() - start_time
-        logging.info(f"Chat history summarized in {chat_history_time:.2f} seconds")
-        print(chat_summary)        
         formatted_prompt = FINAL_PROMPT.format(
             question=question,
             chat_summary=chat_summary,
@@ -234,7 +248,7 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         start_time = time.time()
         ai_message = response
         user_message = question
-        save_chat_history(uri, userName, password, session_id, user_message, ai_message)
+        save_chat_history(graph, session_id, user_message, ai_message)
         chat_history_save = time.time() - start_time
         logging.info(f"Chat History saved in {chat_history_save:.2f} seconds")
         
