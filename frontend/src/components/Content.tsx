@@ -253,7 +253,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           </Typography>
           {!connectionStatus ? (
             <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
-              Connect to Neo4j Aura
+              Connect to Neo4j
             </Button>
           ) : (
             <Button className='mr-2.5' onClick={disconnect}>
