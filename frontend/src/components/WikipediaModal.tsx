@@ -124,8 +124,8 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
           id='url'
           value={wikiQuery}
           disabled={false}
-          label='Wikipedia Source'
-          aria-label='Wikipedia Source'
+          label='Wikipedia Keywords'
+          aria-label='Wikipedia Keywords'
           placeholder='Albert Einstein ,Isaac Newton'
           autoFocus
           fluid
