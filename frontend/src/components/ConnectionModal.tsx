@@ -153,7 +153,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
           <Typography variant='body-medium' className='mb-4'>
             <TextLink externalLink href='https://console.neo4j.io/'>
-              Don't have a Neo4j instance? Start for free today 
+              Don't have a Neo4j instance? Start for free today
             </TextLink>
           </Typography>
           {connectionMessage?.type !== 'unknown' && (

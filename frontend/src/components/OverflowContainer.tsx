@@ -9,7 +9,7 @@ const OverflowContainer: FC<props> = ({ children, className = '' }) => {
   useEffect(() => {
     const container = containerRef.current;
     if (container) {
-      if (container.clientHeight>440) {
+      if (container.clientHeight > 440) {
         setOverflowing(true);
       } else {
         setOverflowing(false);
