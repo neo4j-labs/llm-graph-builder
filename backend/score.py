@@ -86,7 +86,8 @@ async def create_source_knowledge_graph_url(
     model=Form(None),
     gcs_bucket_name=Form(None),
     gcs_bucket_folder=Form(None),
-    source_type=Form(None)
+    source_type=Form(None),
+    gcs_auth_config_file: UploadFile = File(...)
     ):
     try:
         if source_url is not None:
@@ -99,7 +100,7 @@ async def create_source_knowledge_graph_url(
             lst_file_name,success_count,failed_count = create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type
             )
         elif source_type == 'gcs bucket':
-            lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, gcs_bucket_name, gcs_bucket_folder, source_type
+            lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, gcs_auth_config_file, gcs_bucket_name, gcs_bucket_folder, source_type
             )
         elif source_type == 'youtube':
             lst_file_name,success_count,failed_count = create_source_node_graph_url_youtube(graph, model, source_url, source_type
@@ -131,6 +132,7 @@ async def extract_knowledge_graph_from_file(
     aws_secret_access_key=Form(None),
     wiki_query=Form(None),
     max_sources=Form(None),
+    gcs_project_id=Form(None),
     gcs_bucket_name=Form(None),
     gcs_bucket_folder=Form(None),
     gcs_blob_filename=Form(None),
@@ -174,7 +176,7 @@ async def extract_knowledge_graph_from_file(
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
             result = await asyncio.to_thread(
-                extract_graph_from_file_gcs, graph, model, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship)
+                extract_graph_from_file_gcs, graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
         
