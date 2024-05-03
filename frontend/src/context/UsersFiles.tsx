@@ -23,8 +23,8 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
   const [model, setModel] = useState<string>(defaultLLM);
   const [graphType, setGraphType] = useState<string>('Knowledge Graph Entities');
-  const [selectedNodes, setSelectedNodes] = useState<readonly OptionType[]>([NODES_OPTIONS[0]]);
-  const [selectedRels, setSelectedRels] = useState<readonly OptionType[]>([RELATION_OPTIONS[0]]);
+  const [selectedNodes, setSelectedNodes] = useState<readonly OptionType[]>([]);
+  const [selectedRels, setSelectedRels] = useState<readonly OptionType[]>([]);
   const value: FileContextType = {
     files,
     filesData,
