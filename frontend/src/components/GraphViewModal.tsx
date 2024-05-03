@@ -121,8 +121,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           : queryMap.Document;
       if (viewPoint === 'showGraphView') {
         queryToRun = constructQuery(newCheck, documentNo);
+        console.log('query', queryToRun)
       } else {
         queryToRun = constructDocQuery(newCheck);
+        console.log('query in', queryToRun)
       }
       const session = driver?.session();
       setLoading(true);
@@ -132,6 +134,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           if (results.records && results.records.length > 0) {
             // @ts-ignore
             const neo4jNodes = results.records.map((f) => f._fields[0]);
+            console.log('noe', neo4jNodes);
             // @ts-ignore
             const neo4jRels = results.records.map((f) => f._fields[1]);
 
@@ -140,10 +143,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             const schemeVal: Scheme = {};
             let labels: string[] = [];
             neo4jNodes.forEach((node) => {
-              labels = node.map((f: any) => f.labels);
+              labels = node.map((f: any) => f.labels).map((arr:any) => arr[0]);
               labels.forEach((label: any) => {
                 if (schemeVal[label] == undefined) {
-                  schemeVal[label] = calcWordColor(label[0]);
+                  schemeVal[label] = calcWordColor(label);
                   iterator += 1;
                 }
               });
