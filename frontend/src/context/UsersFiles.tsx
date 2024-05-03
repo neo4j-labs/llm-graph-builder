@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, Dispatch, SetStateAction, FC } from 'react';
 import { CustomFile, FileContextProviderProps, OptionType } from '../types';
-import { NODES_OPTIONS, RELATION_OPTIONS, defaultLLM } from '../utils/Constants';
+import { defaultLLM } from '../utils/Constants';
 
 interface FileContextType {
   files: (File | null)[] | [];
