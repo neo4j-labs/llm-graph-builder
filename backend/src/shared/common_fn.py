@@ -82,5 +82,6 @@ def load_embedding_model(embedding_model_name: str):
     return embeddings, dimension
 
 def save_graphDocuments_in_neo4j(graph:Neo4jGraph, graph_document_list:List[GraphDocument]):
-  graph.add_graph_documents(graph_document_list, baseEntityLabel=True)  
+  # graph.add_graph_documents(graph_document_list, baseEntityLabel=True)
+  graph.add_graph_documents(graph_document_list)
                  
