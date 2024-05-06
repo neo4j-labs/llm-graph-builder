@@ -34,6 +34,7 @@ import { ArrowSmallRightIconOutline } from '@neo4j-ndl/react/icons';
 import { useCredentials } from '../context/UserCredentials';
 import { LegendsChip } from './LegendsChip';
 import { calcWordColor } from '@neo4j-devtools/word-color';
+import OverflowContainer from './OverflowContainer';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -120,8 +121,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           : queryMap.Document;
       if (viewPoint === 'showGraphView') {
         queryToRun = constructQuery(newCheck, documentNo);
+        console.log('query', queryToRun);
       } else {
         queryToRun = constructDocQuery(newCheck);
+        console.log('query in', queryToRun);
       }
       const session = driver?.session();
       setLoading(true);
@@ -131,6 +134,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           if (results.records && results.records.length > 0) {
             // @ts-ignore
             const neo4jNodes = results.records.map((f) => f._fields[0]);
+            console.log('noe', neo4jNodes);
             // @ts-ignore
             const neo4jRels = results.records.map((f) => f._fields[1]);
 
@@ -139,10 +143,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             const schemeVal: Scheme = {};
             let labels: string[] = [];
             neo4jNodes.forEach((node) => {
-              labels = node.map((f: any) => f.labels);
+              labels = node.map((f: any) => f.labels).map((arr: any) => arr[0]);
               labels.forEach((label: any) => {
                 if (schemeVal[label] == undefined) {
-                  schemeVal[label] = calcWordColor(label[0]);
+                  schemeVal[label] = calcWordColor(label);
                   iterator += 1;
                 }
               });
@@ -195,8 +199,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
   }, [open, graphType, documentNo]);
 
-  const labelsLength = Object.keys(scheme).length;
-
   // If the modal is closed, render nothing
   if (!open) {
     return <></>;
@@ -244,9 +246,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setGraphViewOpen(false);
     setScheme({});
   };
-
-  const heightCheck = labelsLength > 80 ? '100%' : 'max-content';
-  const overflowCheck = labelsLength > 80 ? 'scroll' : 'hidden';
 
   // Legends placement
   const legendCheck = Object.keys(scheme).sort((a, b) => {
@@ -330,11 +329,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             ) : (
               <>
                 <Flex flexDirection='row' justifyContent='space-between' style={{ height: '100%', padding: '20px' }}>
-                  <div className='legend_div' style={{ height: heightCheck, overflowY: overflowCheck }}>
+                  <OverflowContainer className='legend_div'>
                     {legendCheck.map((key, index) => (
                       <LegendsChip key={index} title={key} scheme={scheme} nodes={nodes} />
                     ))}
-                  </div>
+                  </OverflowContainer>
                   <div style={{ flex: '0.7' }}>
                     <InteractiveNvlWrapper
                       nodes={nodes}

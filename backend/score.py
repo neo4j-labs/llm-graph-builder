@@ -136,8 +136,8 @@ async def extract_knowledge_graph_from_file(
     gcs_blob_filename=Form(None),
     source_type=Form(None),
     file_name=Form(None),
-    allowedNodes=Form(str),
-    allowedRelationship=Form(str)
+    allowedNodes=Form(None),
+    allowedRelationship=Form(None)
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
@@ -303,7 +303,9 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                 'processingTime':result[0]['processingTime'],
                 'nodeCount':result[0]['nodeCount'],
                 'relationshipCount':result[0]['relationshipCount'],
-                'model':result[0]['model']
+                'model':result[0]['model'],
+                'total_chunks':result[0]['total_chunks'],
+                'total_pages':result[0]['total_pages']
                 })
             else:
                 status = json.dumps({'fileName':file_name, 'status':'Failed'})

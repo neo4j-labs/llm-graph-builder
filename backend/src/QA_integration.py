@@ -149,8 +149,7 @@ def get_chat_history(llm, history):
         # history = Neo4jChatMessageHistory(
         #     graph=graph,
         #     session_id=session_id
-        # )
-        
+        # )        
         chat_history = history.messages
         
         if not chat_history:
@@ -200,7 +199,7 @@ def clear_chat_history(graph,session_id):
             "message": "The chat History is cleared", 
             "user": "chatbot"
             }
-    
+  
 def QA_RAG(graph,model,question,session_id):
     logging.info(f"QA_RAG called at {datetime.now()}")
     # model = "Gemini Pro"

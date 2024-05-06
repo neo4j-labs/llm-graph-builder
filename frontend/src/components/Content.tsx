@@ -13,7 +13,6 @@ import GraphViewModal from './GraphViewModal';
 import { initialiseDriver } from '../utils/Driver';
 import Driver from 'neo4j-driver/types/driver';
 import { url } from '../utils/Utils';
-import { json } from 'node:stream/consumers';
 
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -239,7 +238,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   return (
     <>
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
-
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>
           <ConnectionModal
@@ -300,7 +298,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               disabled={!filesData.some((f) => f?.status === 'Completed')}
               className='ml-0.5'
             >
-              Open Graph
+              Open Graph with Bloom
             </Button>
             <Button
               onClick={() => {
