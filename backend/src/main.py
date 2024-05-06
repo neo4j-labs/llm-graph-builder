@@ -88,7 +88,7 @@ def create_source_node_graph_url_gcs(graph, model, gcs_bucket_name, gcs_bucket_f
 
 def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     
-    youtube_url = check_url_source(source_url)
+    youtube_url = check_url_source(source_type=source_type, yt_url=source_url)
     success_count=0
     failed_count=0
     lst_file_name = []
@@ -120,8 +120,9 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
     success_count=0
     failed_count=0
     lst_file_name=[]
-    queries =  wiki_query.split(',')
-    for query in queries:
+    queries_list =  wiki_query.split(',')
+    wiki_query_ids = check_url_source(source_type=source_type, queries_list=queries_list)
+    for query in wiki_query_ids:
       logging.info(f"Creating source node for {query.strip()}")
       pages = WikipediaLoader(query=query.strip(), load_max_docs=1, load_all_available_meta=True).load()
       try:

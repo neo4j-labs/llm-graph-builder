@@ -10,17 +10,28 @@ from typing import List
 import re
 import os
 
-def check_url_source(url):
+def check_url_source(source_type, yt_url:str=None, queries_list:List[str]=None):
     try:
+      logging.info(f"incoming URL: {yt_url}")
+      if source_type == 'youtube':
+        if re.match('(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?',yt_url.strip()):
+          youtube_url = create_youtube_url(yt_url.strip())
+          logging.info(youtube_url)
+          return youtube_url
+        else:
+          raise Exception('Incoming URL is not youtube URL')
       
-      logging.info(f"incoming URL: {url}")
-      if re.match('(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?',url):
-        youtube_url = create_youtube_url(url)
-        logging.info(youtube_url)
-      else:
-        raise Exception('Incoming URL is not youtube URL')
-        
-      return youtube_url
+      elif  source_type == 'Wikipedia':
+        wiki_query_ids=[]
+        wikipedia_url_regex = r'^https?://(?:en\.wikipedia\.org/wiki/)?([A-Za-z0-9_\-]+)$'
+        for wiki_url in queries_list:
+          match = re.match(wikipedia_url_regex, wiki_url.strip())
+          if match:
+            wiki_query_ids.append(match.group(1))
+          else :  
+             wiki_query_ids.append(wiki_url.strip())
+        logging.info(f"wikipedia query ids = {wiki_query_ids}")     
+        return wiki_query_ids     
     except Exception as e:
       logging.error(f"Error in recognize URL: {e}")
       raise Exception(e)
