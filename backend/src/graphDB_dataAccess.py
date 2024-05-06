@@ -46,11 +46,12 @@ class graphDBdataAccess:
             logging.info("Update source node properties")
             self.graph.query("""MERGE(d:Document {fileName :$fn}) SET d.status = $st, d.createdAt = $c_at, 
                             d.updatedAt = $u_at, d.processingTime = $pt, d.nodeCount= $n_count, 
-                            d.relationshipCount = $r_count, d.model= $model
+                            d.relationshipCount = $r_count, d.model= $model, d.total_pages = $t_pages, d.total_chunks = $t_chunks
                         """,
                         {"fn":obj_source_node.file_name, "st":obj_source_node.status, "c_at":obj_source_node.created_at,
                         "u_at":obj_source_node.updated_at, "pt":round(processed_time.total_seconds(),2), "e_message":'',
-                        "n_count":obj_source_node.node_count, "r_count":obj_source_node.relationship_count, "model":obj_source_node.model
+                        "n_count":obj_source_node.node_count, "r_count":obj_source_node.relationship_count, "model":obj_source_node.model,
+                        "t_pages":obj_source_node.total_pages, "t_chunks":obj_source_node.total_chunks
                         }
                         )
         except Exception as e:
@@ -113,7 +114,9 @@ class graphDBdataAccess:
 
     def get_current_status_document_node(self, file_name):
         query = """
-                MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount
+                MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, 
+                d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount,
+                d.total_pages AS total_pages, d.total_chunks AS total_chunks
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
