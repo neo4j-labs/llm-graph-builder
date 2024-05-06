@@ -154,7 +154,7 @@ def extract_graph_from_file_local_file(graph, model, fileName, allowedNodes, all
   file_name, pages = get_documents_from_file_by_path(merged_file_path,fileName)
 
   if pages==None or len(pages)==0:
-    raise Exception('Pdf content is not available for file : {file_name}')
+    raise Exception(f'Pdf content is not available for file : {file_name}')
 
   return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, merged_file_path)
 
@@ -167,7 +167,7 @@ def extract_graph_from_file_s3(graph, model, source_url, aws_access_key_id, aws_
     file_name, pages = get_documents_from_s3(source_url, aws_access_key_id, aws_secret_access_key)
 
   if pages==None or len(pages)==0:
-    raise Exception('Pdf content is not available for file : {file_name}')
+    raise Exception(f'Pdf content is not available for file : {file_name}')
 
   return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
@@ -176,7 +176,7 @@ def extract_graph_from_file_youtube(graph, model, source_url, allowedNodes, allo
   file_name, pages = get_documents_from_youtube(source_url)
 
   if pages==None or len(pages)==0:
-    raise Exception('Youtube transcript is not available for file : {file_name}')
+    raise Exception(f'Youtube transcript is not available for file : {file_name}')
 
   return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
@@ -184,7 +184,7 @@ def extract_graph_from_file_Wikipedia(graph, model, wiki_query, max_sources, all
 
   file_name, pages = get_documents_from_Wikipedia(wiki_query)
   if pages==None or len(pages)==0:
-    raise Exception('Wikipedia page is not available for file : {file_name}')
+    raise Exception(f'Wikipedia page is not available for file : {file_name}')
 
   return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
@@ -192,7 +192,7 @@ def extract_graph_from_file_gcs(graph, model, gcs_bucket_name, gcs_bucket_folder
 
   file_name, pages = get_documents_from_gcs(gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename)
   if pages==None or len(pages)==0:
-    raise Exception('Pdf content is not available for file : {file_name}')
+    raise Exception(f'Pdf content is not available for file : {file_name}')
 
   return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
@@ -216,21 +216,9 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
   graphDb_data_Access = graphDBdataAccess(graph)
 
   result = graphDb_data_Access.get_current_status_document_node(file_name)
-
-  if result[0]['Status'] != 'Processing':
   
-    obj_source_node = sourceNode()
-    status = "Processing"
-    obj_source_node.file_name = file_name
-    obj_source_node.status = status
-    obj_source_node.created_at = start_time
-    obj_source_node.updated_at = start_time
-    obj_source_node.model = model
-    logging.info(file_name)
-    logging.info(obj_source_node)
-    graphDb_data_Access.update_source_node(obj_source_node)
-    logging.info('Update the status as Processing')
-    full_document_content = ""
+  if result[0]['Status'] != 'Processing':
+    
     bad_chars = ['"', "\n", "'"]
     for i in range(0,len(pages)):
       text = pages[i].page_content
@@ -239,10 +227,27 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
           text = text.replace(j, ' ')
         else:
           text = text.replace(j, '')
-      full_document_content += text
+      pages[i]=Document(page_content=str(text))
+      
     logging.info("Break down file into chunks")
-    create_chunks_obj = CreateChunksofDocument(full_document_content, graph, file_name)
+    
+    create_chunks_obj = CreateChunksofDocument(pages, graph, file_name)
     chunks = create_chunks_obj.split_file_into_chunks()
+
+    obj_source_node = sourceNode()
+    status = "Processing"
+    obj_source_node.file_name = file_name
+    obj_source_node.status = status
+    obj_source_node.created_at = start_time
+    obj_source_node.updated_at = start_time
+    obj_source_node.total_pages = len(pages)
+    obj_source_node.total_chunks = len(chunks)
+    obj_source_node.model = model
+    logging.info(file_name)
+    logging.info(obj_source_node)
+    graphDb_data_Access.update_source_node(obj_source_node)
+    logging.info('Update the status as Processing')
+
     chunkId_chunkDoc_list = create_relation_between_chunks(graph,file_name,chunks)
     #create vector index and update chunk node with embedding
     update_embedding_create_vector_index( graph, chunkId_chunkDoc_list, file_name)
@@ -281,6 +286,8 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     obj_source_node.model = model
     obj_source_node.processing_time = processed_time
     obj_source_node.node_count = nodes_created
+    obj_source_node.total_pages = len(pages)
+    obj_source_node.total_chunks = len(chunks)
     obj_source_node.relationship_count = relationships_created
 
     graphDb_data_Access.update_source_node(obj_source_node)
