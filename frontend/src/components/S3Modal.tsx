@@ -119,7 +119,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     setTimeout(() => {
       setStatus('unknown');
       hideModal();
-    }, 5000);
+    }, 500);
   };
   const onClose = () => {
     hideModal();
