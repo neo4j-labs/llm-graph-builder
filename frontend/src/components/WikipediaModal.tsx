@@ -37,7 +37,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
         const apiResponse = await urlScanAPI({
           userCredentials: userCredentials as UserCredentials,
           model: model,
-          wikiquery: wikiQuery,
+          wikiquery: wikiQuery.trim(),
           source_type: 'Wikipedia',
         });
         setStatus('success');
