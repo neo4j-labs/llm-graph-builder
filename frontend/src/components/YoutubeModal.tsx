@@ -35,7 +35,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatus('info');
         setStatusMessage('Loading...');
         const apiResponse = await urlScanAPI({
-          urlParam: youtubeURL,
+          urlParam: youtubeURL.trim(),
           userCredentials,
           model,
           accessKey: '',
