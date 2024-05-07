@@ -279,8 +279,9 @@ def QA_RAG(graph,model,question,session_id):
             "session_id": session_id, 
             "message": message, 
             "sources": sources,
-            "info": f"""Metadata : 
-            RETRIEVAL_QUERY : {RETRIEVAL_QUERY}""",
+            "info": f"""Metadata :
+                sources : {sources}
+                RETRIEVAL_QUERY : {RETRIEVAL_QUERY}""",
             "user": "chatbot"
             }
 
