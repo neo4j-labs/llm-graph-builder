@@ -146,73 +146,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     }
   }, []);
 
-  useEffect(() => {
-    const pendingfilesstr = localStorage.getItem('pendingfiles');
-    const neo4jconnection = localStorage.getItem('neo4j.connection');
-    if (pendingfilesstr && neo4jconnection) {
-      const pendingfiles = JSON.parse(pendingfilesstr);
-      const credentials = JSON.parse(neo4jconnection);
-      if (pendingfiles.length) {
-        pendingfiles.forEach((element: string) => {
-          let encodedstr;
-          if (credentials?.password) {
-            encodedstr = btoa(credentials?.password);
-          }
-          const eventSource = new EventSource(
-            `${url()}/update_extract_status/${element}?url=${credentials?.uri}&userName=${
-              credentials?.user
-            }&password=${encodedstr}&database=${credentials?.database}`
-          );
-          eventSource.onmessage = (event) => {
-            const eventResponse = JSON.parse(event.data);
-            if (eventResponse.status === 'Completed') {
-              setFilesData((prevfiles) => {
-                return prevfiles.map((curfile) => {
-                  if (curfile.name == eventResponse.fileName) {
-                    return {
-                      ...curfile,
-                      status: eventResponse.status,
-                      NodesCount: eventResponse?.nodeCount,
-                      relationshipCount: eventResponse?.relationshipCount,
-                      model: eventResponse?.model,
-                      processing: eventResponse?.processingTime?.toFixed(2),
-                    };
-                  }
-                  return curfile;
-                });
-              });
-              const pendingfilesstr = localStorage.getItem('pendingfiles');
-              if (pendingfilesstr) {
-                const pendingfiles: string[] = JSON.parse(pendingfilesstr);
-                for (let index = 0; index < pendingfiles.length; index++) {
-                  if (pendingfiles[index] === eventResponse.fileName) {
-                    console.log(pendingfiles[index]);
-                    pendingfiles.splice(index, 1);
-                  }
-                }
-                localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
-              }
-              eventSource.close();
-            } else {
-              const pendingfilestr = localStorage.getItem('pendingfiles');
-              if (pendingfilestr) {
-                const pendingfiles = JSON.parse(pendingfilestr);
-                const isfilepresent = pendingfiles.findIndex((a: string) => a === eventResponse.fileName);
-                if (isfilepresent == -1) {
-                  pendingfiles.push(eventResponse.fileName);
-                  localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
-                }
-              } else {
-                const pendingfiles = [eventResponse.fileName];
-                localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
-              }
-            }
-          };
-        });
-      }
-    }
-  }, []);
-
   const disableCheck = !filesData.some((f) => f.status === 'New');
 
   const handleDropdownChange = (option: OptionType | null | void) => {
@@ -244,7 +177,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           }
           let alertShowed = false;
           const eventSource = new EventSource(
-            `${url()}/update_extract_status/${filesData[uid].name}?url=${userCredentials?.uri}&userName=${userCredentials?.userName
+            `${url()}/update_extract_status/${filesData[uid].name}?url=${userCredentials?.uri}&userName=${
+              userCredentials?.userName
             }&password=${encodedstr}&database=${userCredentials?.database}`
           );
           eventSource.onmessage = (event) => {
@@ -391,8 +325,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -402,10 +337,10 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     isExpanded && showChatBot
       ? 'contentWithBothDrawers'
       : isExpanded
-        ? 'contentWithExpansion'
-        : showChatBot
-          ? 'contentWithChatBot'
-          : 'contentWithNoExpansion';
+      ? 'contentWithExpansion'
+      : showChatBot
+      ? 'contentWithChatBot'
+      : 'contentWithNoExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -440,7 +375,11 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             <span className='h6 px-1'>Neo4j connection</span>
             <Typography variant='body-medium'>
               {!connectionStatus ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
-              {connectionStatus ? <span className='n-body-small'>{userCredentials?.uri}</span> : <span className='n-body-small'>Not Connected</span>}
+              {connectionStatus ? (
+                <span className='n-body-small'>{userCredentials?.uri}</span>
+              ) : (
+                <span className='n-body-small'>Not Connected</span>
+              )}
             </Typography>
           </div>
 
