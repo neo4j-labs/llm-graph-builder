@@ -84,4 +84,3 @@ export const queryMap: {
   DocChunkEntities: 'docChunkEntities',
 };
 
-export const resultOverview = 'Result overview';

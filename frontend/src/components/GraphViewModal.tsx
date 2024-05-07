@@ -318,7 +318,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                     </IconButtonArray>
                   </div>
                   <div className='legend_div'>
-                    <h4 className='py-4 pt-3'>{resultOverview}</h4>
+                    <h4 className='py-4 pt-3'>Result Overview</h4>
                     <div className='flex gap-2 flex-wrap'>
                       {legendCheck.map((key, index) => (
                         <LegendsChip key={index} title={key} scheme={scheme} nodes={nodes} />
