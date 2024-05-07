@@ -313,6 +313,26 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
     
     return EventSourceResponse(generate(),ping=60)
 
+@app.post("/delete_document_and_entities")
+async def delete_document_and_entities(uri=Form(None), 
+                                       userName=Form(None), 
+                                       password=Form(None), 
+                                       database=Form(None), 
+                                       filename=Form(None),
+                                       source_type=Form(None)):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        result = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filename, source_type)
+        message = f"Deleted document {filename} from {source_type} with its entities from database"
+        return create_api_response('Success',message=message)
+    except Exception as e:
+        job_status = "Failed"
+        message=f"Unable to delete document {filename}"
+        error_message = str(e)
+        logging.exception(f'{message}:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+
     
 if __name__ == "__main__":
     uvicorn.run(app)
