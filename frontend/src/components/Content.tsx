@@ -96,8 +96,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             encodedstr = btoa(userCredentials?.password);
           }
           const eventSource = new EventSource(
-            `${url()}/update_extract_status/${filesData[uid].name}?url=${userCredentials?.uri}&userName=${
-              userCredentials?.userName
+            `${url()}/update_extract_status/${filesData[uid].name}?url=${userCredentials?.uri}&userName=${userCredentials?.userName
             }&password=${encodedstr}&database=${userCredentials?.database}`
           );
           eventSource.onmessage = (event) => {
@@ -206,9 +205,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
-      userCredentials?.port ?? '7687'
-    }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
+      }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -218,10 +216,10 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     isExpanded && showChatBot
       ? 'contentWithBothDrawers'
       : isExpanded
-      ? 'contentWithExpansion'
-      : showChatBot
-      ? 'contentWithChatBot'
-      : 'contentWithNoExpansion';
+        ? 'contentWithExpansion'
+        : showChatBot
+          ? 'contentWithChatBot'
+          : 'contentWithNoExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -245,15 +243,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             setOpenConnection={setOpenConnection}
             setConnectionStatus={setConnectionStatus}
           />
-          <Typography variant='body-medium' className='connectionstatus__container'>
+          <div className='connectionstatus__container'>
+            <span className='h6 px-1'>Neo4j connection</span>
             <Typography variant='body-medium'>
               {!connectionStatus ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
+              {connectionStatus ? <span className='n-body-small'>{userCredentials?.uri}</span> : <span className='n-body-small'>Not Connected</span>}
             </Typography>
-            <div>
-              <span> Neo4j connection</span>
-              {connectionStatus && <div className='n-body-small'>connected to : {userCredentials?.uri}</div>}
-            </div>
-          </Typography>
+          </div>
 
           {!connectionStatus ? (
             <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
