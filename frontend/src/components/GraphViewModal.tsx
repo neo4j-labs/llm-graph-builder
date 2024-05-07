@@ -17,7 +17,7 @@ import { useCredentials } from '../context/UserCredentials';
 import { LegendsChip } from './LegendsChip';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import graphQueryAPI from '../services/GraphQuery';
-import { queryMap, resultOverview } from '../utils/Constants';
+import { queryMap } from '../utils/Constants';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
