@@ -35,7 +35,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatus('info');
         setStatusMessage('Loading...');
         const apiResponse = await urlScanAPI({
-          urlParam: youtubeURL,
+          urlParam: youtubeURL.trim(),
           userCredentials,
           model,
           accessKey: '',
@@ -50,6 +50,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             setYoutubeURL('');
             hideModal();
           }, 5000);
+          return;
         } else {
           setStatus('success');
           setStatusMessage(`Successfully Created Source Nodes for Link`);
@@ -85,11 +86,10 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
       }
     }
-
     setTimeout(() => {
       setStatus('unknown');
       hideModal();
-    }, 5000);
+    }, 500);
   };
   const onClose = useCallback(() => {
     setYoutubeURL('');

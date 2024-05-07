@@ -5,9 +5,11 @@ import {
   SunIconOutline,
   CodeBracketSquareIconOutline,
   Cog8ToothIconOutline,
+  InformationCircleIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { Typography, IconButton } from '@neo4j-ndl/react';
 import ButtonWithToolTip from '../ButtonWithToolTip';
+import { useCallback } from 'react';
 
 export default function Header({
   themeMode,
@@ -18,9 +20,9 @@ export default function Header({
   toggleTheme: () => void;
   openSettingsModal: () => void;
 }) {
-  const handleGitClick = () => {
-    window.open('https://github.com/neo4j-labs/llm-graph-builder/issues', '_blank');
-  };
+  const handleURLClick = useCallback((url: string) => {
+    window.open(url, '_blank');
+  }, []);
 
   return (
     <div
@@ -49,7 +51,21 @@ export default function Header({
               className='inline-flex gap-x-1'
               style={{ display: 'flex', flexGrow: 0, alignItems: 'center', gap: '4px' }}
             >
-              <ButtonWithToolTip onClick={handleGitClick} text={'GitHub Issues'} size='large' clean>
+              <ButtonWithToolTip
+                text='Documentation'
+                onClick={() => handleURLClick('https://neo4j.com/labs/genai-ecosystem/llm-graph-builder')}
+                size='large'
+                clean
+              >
+                <InformationCircleIconOutline className='n-size-token-7' />
+              </ButtonWithToolTip>
+
+              <ButtonWithToolTip
+                onClick={() => handleURLClick('https://github.com/neo4j-labs/llm-graph-builder/issues')}
+                text={'GitHub Issues'}
+                size='large'
+                clean
+              >
                 <CodeBracketSquareIconOutline />
               </ButtonWithToolTip>
               <IconButton aria-label='Toggle Dark mode' clean size='large' onClick={toggleTheme}>

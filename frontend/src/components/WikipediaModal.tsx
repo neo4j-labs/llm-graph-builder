@@ -107,7 +107,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
     setTimeout(() => {
       setStatus('unknown');
       hideModal();
-    }, 5000);
+    }, 500);
   };
   return (
     <CustomModal
