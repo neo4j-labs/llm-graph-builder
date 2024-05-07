@@ -249,8 +249,12 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             <Typography variant='body-medium'>
               {!connectionStatus ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
             </Typography>
-            Neo4j connection
+            <div>
+              <span> Neo4j connection</span>
+              {connectionStatus && <div className='n-body-small'>connected to : {userCredentials?.uri}</div>}
+            </div>
           </Typography>
+
           {!connectionStatus ? (
             <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
               Connect to Neo4j
