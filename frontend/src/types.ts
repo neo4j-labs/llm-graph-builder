@@ -165,7 +165,7 @@ export interface WikipediaModalTypes {
   viewPoint: string;
 }
 
-export type GraphType = 'Document' | 'Chunks' | 'Entities';
+export type GraphType = 'document' | 'chunks' | 'entities';
 
 export interface fileName {
   fileName: string;
