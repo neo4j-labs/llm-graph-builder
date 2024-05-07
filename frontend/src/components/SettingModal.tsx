@@ -67,7 +67,13 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
           type='creatable'
         />
         <div>
-          <Button onClick={clickHandler}>Use Existing Schema</Button>
+          <Button
+            title={!nodeLabelOptions.length && !relationshipTypeOptions.length ? `No Labels Found in the Database` : ''}
+            disabled={!nodeLabelOptions.length && !relationshipTypeOptions.length}
+            onClick={clickHandler}
+          >
+            Use Existing Schema
+          </Button>
         </div>
       </Dialog.Content>
     </Dialog>
