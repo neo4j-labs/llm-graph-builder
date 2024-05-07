@@ -274,8 +274,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       } catch (err: any) {
         const error = JSON.parse(err.message);
         if (Object.keys(error).includes('fileName')) {
-          const message = error.message;
-          const fileName = error.fileName;
+          const { message } = error;
+          const { fileName } = error;
           const errorMessage = error.message;
           console.log({ message, fileName, errorMessage });
           setalertDetails({
