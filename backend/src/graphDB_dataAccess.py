@@ -131,7 +131,7 @@ class graphDBdataAccess:
             WITH docs, d ORDER BY d.createdAt DESC 
             CALL { WITH d
                 OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
-                RETURN chunks, c LIMIT 50
+                RETURN chunks
             }
             WITH [] 
             + [docs] 

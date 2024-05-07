@@ -58,37 +58,36 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             hideModal();
           }, 5000);
           return;
-        } else {
-          setStatus('success');
-          setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
-          const copiedFilesData = [...filesData];
-          apiResponse?.data?.file_name?.forEach((item: fileName) => {
-            const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
-            if (filedataIndex == -1) {
-              copiedFilesData.unshift({
-                name: item.fileName,
-                size: item.fileSize ?? 0,
-                gcsBucket: item.gcsBucket,
-                gcsBucketFolder: item.gcsBucketFolder,
-                ...defaultValues,
-              });
-            } else {
-              const tempFileData = copiedFilesData[filedataIndex];
-              copiedFilesData.splice(filedataIndex, 1);
-              copiedFilesData.unshift({
-                ...tempFileData,
-                status: defaultValues.status,
-                NodesCount: defaultValues.NodesCount,
-                relationshipCount: defaultValues.relationshipCount,
-                processing: defaultValues.processing,
-                model: defaultValues.model,
-                fileSource: defaultValues.fileSource,
-              });
-            }
-          });
-          setFilesData(copiedFilesData);
-          reset();
         }
+        setStatus('success');
+        setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
+        const copiedFilesData = [...filesData];
+        apiResponse?.data?.file_name?.forEach((item: fileName) => {
+          const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
+          if (filedataIndex == -1) {
+            copiedFilesData.unshift({
+              name: item.fileName,
+              size: item.fileSize ?? 0,
+              gcsBucket: item.gcsBucket,
+              gcsBucketFolder: item.gcsBucketFolder,
+              ...defaultValues,
+            });
+          } else {
+            const tempFileData = copiedFilesData[filedataIndex];
+            copiedFilesData.splice(filedataIndex, 1);
+            copiedFilesData.unshift({
+              ...tempFileData,
+              status: defaultValues.status,
+              NodesCount: defaultValues.NodesCount,
+              relationshipCount: defaultValues.relationshipCount,
+              processing: defaultValues.processing,
+              model: defaultValues.model,
+              fileSource: defaultValues.fileSource,
+            });
+          }
+        });
+        setFilesData(copiedFilesData);
+        reset();
       } catch (error) {
         setStatus('danger');
         setStatusMessage('Some Error Occurred or Please Check your Instance Connection');

@@ -1,3 +1,5 @@
+from fastapi import FastAPI, File, UploadFile, Form, Query
+from fastapi import FastAPI
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi import FastAPI, Request
 from fastapi_health import health
@@ -13,6 +15,7 @@ from langserve import add_routes
 from langchain_google_vertexai import ChatVertexAI
 from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
+from src.graph_query import get_graph_results
 from sse_starlette.sse import EventSourceResponse
 import json
 from typing import List
@@ -234,6 +237,34 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
         message="Unable to get chat response"
         error_message = str(e)
         logging.exception(f'Exception in chat bot:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+
+
+@app.post("/graph_query")
+async def graph_query(
+    uri: str = Form(None),
+    userName: str = Form(None),
+    password: str = Form(None),
+    query_type: str = Form(None),
+    doc_limit: int = Form(None),
+    document_name: str = Form(None)
+):
+    try:
+        result = await asyncio.to_thread(
+            get_graph_results,
+            uri=uri,
+            username=userName,
+            password=password,
+            query_type=query_type,
+            doc_limit=doc_limit,
+            document_name=document_name
+        )
+        return create_api_response('Success', data=result)
+    except Exception as e:
+        job_status = "Failed"
+        message = "Unable to get graph query response"
+        error_message = str(e)
+        logging.exception(f'Exception in graph query: {error_message}')
         return create_api_response(job_status, message=message, error=error_message)
 
 @app.post("/connect")

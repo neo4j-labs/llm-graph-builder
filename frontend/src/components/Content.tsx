@@ -146,73 +146,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     }
   }, []);
 
-  useEffect(() => {
-    const pendingfilesstr = localStorage.getItem('pendingfiles');
-    const neo4jconnection = localStorage.getItem('neo4j.connection');
-    if (pendingfilesstr && neo4jconnection) {
-      const pendingfiles = JSON.parse(pendingfilesstr);
-      const credentials = JSON.parse(neo4jconnection);
-      if (pendingfiles.length) {
-        pendingfiles.forEach((element: string) => {
-          let encodedstr;
-          if (credentials?.password) {
-            encodedstr = btoa(credentials?.password);
-          }
-          const eventSource = new EventSource(
-            `${url()}/update_extract_status/${element}?url=${credentials?.uri}&userName=${
-              credentials?.user
-            }&password=${encodedstr}&database=${credentials?.database}`
-          );
-          eventSource.onmessage = (event) => {
-            const eventResponse = JSON.parse(event.data);
-            if (eventResponse.status === 'Completed') {
-              setFilesData((prevfiles) => {
-                return prevfiles.map((curfile) => {
-                  if (curfile.name == eventResponse.fileName) {
-                    return {
-                      ...curfile,
-                      status: eventResponse.status,
-                      NodesCount: eventResponse?.nodeCount,
-                      relationshipCount: eventResponse?.relationshipCount,
-                      model: eventResponse?.model,
-                      processing: eventResponse?.processingTime?.toFixed(2),
-                    };
-                  }
-                  return curfile;
-                });
-              });
-              const pendingfilesstr = localStorage.getItem('pendingfiles');
-              if (pendingfilesstr) {
-                const pendingfiles: string[] = JSON.parse(pendingfilesstr);
-                for (let index = 0; index < pendingfiles.length; index++) {
-                  if (pendingfiles[index] === eventResponse.fileName) {
-                    console.log(pendingfiles[index]);
-                    pendingfiles.splice(index, 1);
-                  }
-                }
-                localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
-              }
-              eventSource.close();
-            } else {
-              const pendingfilestr = localStorage.getItem('pendingfiles');
-              if (pendingfilestr) {
-                const pendingfiles = JSON.parse(pendingfilestr);
-                const isfilepresent = pendingfiles.findIndex((a: string) => a === eventResponse.fileName);
-                if (isfilepresent == -1) {
-                  pendingfiles.push(eventResponse.fileName);
-                  localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
-                }
-              } else {
-                const pendingfiles = [eventResponse.fileName];
-                localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
-              }
-            }
-          };
-        });
-      }
-    }
-  }, []);
-
   const disableCheck = !filesData.some((f) => f.status === 'New');
 
   const handleDropdownChange = (option: OptionType | null | void) => {
@@ -341,8 +274,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       } catch (err: any) {
         const error = JSON.parse(err.message);
         if (Object.keys(error).includes('fileName')) {
-          const message = error.message;
-          const fileName = error.fileName;
+          const { message } = error;
+          const { fileName } = error;
           const errorMessage = error.message;
           console.log({ message, fileName, errorMessage });
           setalertDetails({
@@ -438,12 +371,18 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             setOpenConnection={setOpenConnection}
             setConnectionStatus={setConnectionStatus}
           />
-          <Typography variant='body-medium' className='connectionstatus__container'>
+          <div className='connectionstatus__container'>
+            <span className='h6 px-1'>Neo4j connection</span>
             <Typography variant='body-medium'>
               {!connectionStatus ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
+              {connectionStatus ? (
+                <span className='n-body-small'>{userCredentials?.uri}</span>
+              ) : (
+                <span className='n-body-small'>Not Connected</span>
+              )}
             </Typography>
-            Neo4j connection
-          </Typography>
+          </div>
+
           {!connectionStatus ? (
             <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
               Connect to Neo4j

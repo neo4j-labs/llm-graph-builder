@@ -51,36 +51,35 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             hideModal();
           }, 5000);
           return;
-        } else {
-          setStatus('success');
-          setStatusMessage(`Successfully Created Source Nodes for Link`);
-          const copiedFilesData = [...filesData];
-          apiResponse?.data?.file_name?.forEach((item) => {
-            const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
-            if (filedataIndex == -1) {
-              copiedFilesData.unshift({
-                name: item.fileName,
-                size: item.fileSize ?? 0,
-                source_url: item.url,
-                ...defaultValues,
-              });
-            } else {
-              const tempFileData = copiedFilesData[filedataIndex];
-              copiedFilesData.splice(filedataIndex, 1);
-              copiedFilesData.unshift({
-                ...tempFileData,
-                status: defaultValues.status,
-                NodesCount: defaultValues.NodesCount,
-                relationshipCount: defaultValues.relationshipCount,
-                processing: defaultValues.processing,
-                model: defaultValues.model,
-                fileSource: defaultValues.fileSource,
-              });
-            }
-          });
-          setFilesData(copiedFilesData);
-          setYoutubeURL('');
         }
+        setStatus('success');
+        setStatusMessage(`Successfully Created Source Nodes for Link`);
+        const copiedFilesData = [...filesData];
+        apiResponse?.data?.file_name?.forEach((item) => {
+          const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
+          if (filedataIndex == -1) {
+            copiedFilesData.unshift({
+              name: item.fileName,
+              size: item.fileSize ?? 0,
+              source_url: item.url,
+              ...defaultValues,
+            });
+          } else {
+            const tempFileData = copiedFilesData[filedataIndex];
+            copiedFilesData.splice(filedataIndex, 1);
+            copiedFilesData.unshift({
+              ...tempFileData,
+              status: defaultValues.status,
+              NodesCount: defaultValues.NodesCount,
+              relationshipCount: defaultValues.relationshipCount,
+              processing: defaultValues.processing,
+              model: defaultValues.model,
+              fileSource: defaultValues.fileSource,
+            });
+          }
+        });
+        setFilesData(copiedFilesData);
+        setYoutubeURL('');
       } catch (error) {
         setStatus('danger');
         setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
@@ -96,6 +95,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     hideModal();
     setStatus('unknown');
   }, []);
+
   return (
     <CustomModal
       open={open}
