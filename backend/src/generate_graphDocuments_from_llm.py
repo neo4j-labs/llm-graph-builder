@@ -11,14 +11,14 @@ logging.basicConfig(format="%(asctime)s - %(message)s", level="INFO")
 def generate_graphDocuments(model: str, graph: Neo4jGraph, chunkId_chunkDoc_list: List, allowedNodes, allowedRelationship):
     
     if  allowedNodes is None or allowedNodes=="":
-        allowedNodes = allowedNodes.split(',')
+        allowedNodes =[]
     else:
-        allowedNodes =[]    
-    
+        allowedNodes = allowedNodes.split(',')    
     if  allowedRelationship is None or allowedRelationship=="":   
-        allowedRelationship = allowedRelationship.split(',')
+        allowedRelationship=[]
     else:
-        allowedRelationship=[]    
+        allowedRelationship = allowedRelationship.split(',')
+    
     logging.info(f"allowedNodes: {allowedNodes}, allowedRelationship: {allowedRelationship}")
 
     

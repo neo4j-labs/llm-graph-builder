@@ -472,12 +472,11 @@ def get_graph_from_OpenAI(model_version, graph, chunkId_chunkDoc_list, allowedNo
         
         for i, future in enumerate(concurrent.futures.as_completed(futures)):
             graph_document = future.result()
-            for node in graph_document[0].nodes:
-                node.id = node.id.title().replace(' ','_')
-                #replace all non alphanumeric characters and spaces with underscore
-                node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
+#            for node in graph_document[0].nodes:
+#                node.id = node.id.title().replace(' ','_')
+#                #replace all non alphanumeric characters and spaces with underscore
+#                node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
             graph_document_list.append(graph_document[0])    
-    graph.add_graph_documents(graph_document_list, baseEntityLabel=True)
     return  graph_document_list        
         
     

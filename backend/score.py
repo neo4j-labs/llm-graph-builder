@@ -139,8 +139,8 @@ async def extract_knowledge_graph_from_file(
     gcs_blob_filename=Form(None),
     source_type=Form(None),
     file_name=Form(None),
-    allowedNodes=Form(str),
-    allowedRelationship=Form(str)
+    allowedNodes=Form(None),
+    allowedRelationship=Form(None)
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
@@ -226,9 +226,11 @@ async def update_similarity_graph(uri=Form(None), userName=Form(None), password=
         return create_api_response(job_status, message=message, error=error_message)
         
 @app.post("/chat_bot")
-async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password=Form(None), question=Form(None), session_id=Form(None)):
+async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password=Form(None), database=Form(None),question=Form(None), session_id=Form(None)):
     try:
-        result = await asyncio.to_thread(QA_RAG,uri=uri,model=model,userName=userName,password=password,question=question,session_id=session_id)
+        # database = "neo4j"
+        graph = create_graph_database_connection(uri, userName, password, database)
+        result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,session_id=session_id)
         return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
@@ -332,7 +334,9 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                 'processingTime':result[0]['processingTime'],
                 'nodeCount':result[0]['nodeCount'],
                 'relationshipCount':result[0]['relationshipCount'],
-                'model':result[0]['model']
+                'model':result[0]['model'],
+                'total_chunks':result[0]['total_chunks'],
+                'total_pages':result[0]['total_pages']
                 })
             else:
                 status = json.dumps({'fileName':file_name, 'status':'Failed'})

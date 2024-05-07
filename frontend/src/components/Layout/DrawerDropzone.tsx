@@ -75,7 +75,11 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
           <div className='flex h-full flex-col'>
             <div className='relative h-full'>
               <div className='flex flex-col h-full'>
-                <div className='mx-6 flex flex-none items-center justify-between pb-6 '>
+                <div
+                  className={`mx-6 flex flex-none items-center justify-between ${
+                    process.env.ENV != 'PROD' ? 'pb-6' : ''
+                  }`}
+                >
                   {process.env.ENV != 'PROD' && (
                     <Typography variant='body-medium' className='flex items-center content-center'>
                       <Typography variant='body-medium'>

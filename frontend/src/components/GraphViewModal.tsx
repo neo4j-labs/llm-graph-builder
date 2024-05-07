@@ -27,6 +27,7 @@ import { LegendsChip } from './LegendsChip';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import graphQueryAPI from '../services/GraphQuery';
 import { queryMap } from '../utils/Constants';
+import OverflowContainer from './OverflowContainer';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -176,8 +177,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
   }, [open, graphType, documentNo]);
 
-  const labelsLength = Object.keys(scheme).length;
-
   // If the modal is closed, render nothing
   if (!open) {
     return <></>;
@@ -226,9 +225,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setGraphViewOpen(false);
     setScheme({});
   };
-
-  const heightCheck = labelsLength > 80 ? '100%' : 'max-content';
-  const overflowCheck = labelsLength > 80 ? 'scroll' : 'hidden';
 
   // Legends placement
   const legendCheck = Object.keys(scheme).sort((a, b) => {
@@ -313,11 +309,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             ) : (
               <>
                 <Flex flexDirection='row' justifyContent='space-between' style={{ height: '100%', padding: '20px' }}>
-                  <div className='legend_div' style={{ height: heightCheck, overflowY: overflowCheck }}>
+                  <OverflowContainer className='legend_div'>
                     {legendCheck.map((key, index) => (
                       <LegendsChip key={index} title={key} scheme={scheme} nodes={nodes} />
                     ))}
-                  </div>
+                  </OverflowContainer>
                   <div style={{ flex: '0.7' }}>
                     <InteractiveNvlWrapper
                       nodes={nodes}
