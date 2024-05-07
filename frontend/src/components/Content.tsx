@@ -81,6 +81,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           if (credentials?.password) {
             encodedstr = btoa(credentials?.password);
           }
+          let alertShown = false;
           const eventSource = new EventSource(
             `${url()}/update_extract_status/${element}?url=${credentials?.uri}&userName=${
               credentials?.user
@@ -118,12 +119,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               eventSource.close();
             } else {
               const minutes = Math.floor((perchunksecond * eventResponse.total_chunks) / 60);
-              if (eventResponse.status === 'Processing') {
+              if (eventResponse.status === 'Processing' && !alertShown) {
                 setalertDetails({
                   showAlert: true,
                   alertType: 'info',
                   alertMessage: `${eventResponse.fileName} will take approx ${minutes} Min`,
                 });
+                alertShown = true;
               }
               const pendingfilestr = localStorage.getItem('pendingfiles');
               if (pendingfilestr) {
@@ -173,13 +175,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           if (userCredentials?.password) {
             encodedstr = btoa(userCredentials?.password);
           }
+          let alertShowed = false;
           const eventSource = new EventSource(
             `${url()}/update_extract_status/${filesData[uid].name}?url=${userCredentials?.uri}&userName=${
               userCredentials?.userName
             }&password=${encodedstr}&database=${userCredentials?.database}`
           );
           eventSource.onmessage = (event) => {
-            console.log(event.data);
             const eventResponse = JSON.parse(event.data);
             if (eventResponse.status === 'Completed') {
               setFilesData((prevfiles) => {
@@ -210,12 +212,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               eventSource.close();
             } else {
               const minutes = Math.floor((perchunksecond * eventResponse.total_chunks) / 60);
-              if (eventResponse.status === 'Processing') {
+              if (eventResponse.status === 'Processing' && !alertShowed) {
                 setalertDetails({
                   showAlert: true,
                   alertType: 'info',
                   alertMessage: `${eventResponse.fileName} will take approx ${minutes} Min`,
                 });
+                alertShowed = true;
               }
               const pendingfilestr = localStorage.getItem('pendingfiles');
               if (pendingfilestr) {
