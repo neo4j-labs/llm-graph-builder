@@ -1,12 +1,4 @@
-import {
-  Banner,
-  Checkbox,
-  Dialog,
-  IconButton,
-  IconButtonArray,
-  LoadingSpinner,
-  TextInput,
-} from '@neo4j-ndl/react';
+import { Banner, Checkbox, Dialog, IconButton, IconButtonArray, LoadingSpinner, TextInput } from '@neo4j-ndl/react';
 import { useEffect, useRef, useState } from 'react';
 import { GraphType, GraphViewModalProps, Scheme, UserCredentials } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
@@ -25,7 +17,7 @@ import { useCredentials } from '../context/UserCredentials';
 import { LegendsChip } from './LegendsChip';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import graphQueryAPI from '../services/GraphQuery';
-import { queryMap } from '../utils/Constants';
+import { queryMap, resultOverview } from '../utils/Constants';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -326,7 +318,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                     </IconButtonArray>
                   </div>
                   <div className='legend_div'>
-                    <h4 className='py-4 pt-3'>Legend</h4>
+                    <h4 className='py-4 pt-3'>{resultOverview}</h4>
                     <div className='flex gap-2 flex-wrap'>
                       {legendCheck.map((key, index) => (
                         <LegendsChip key={index} title={key} scheme={scheme} nodes={nodes} />
