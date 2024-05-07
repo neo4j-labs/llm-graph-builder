@@ -2,6 +2,7 @@ from langchain_community.graphs import Neo4jGraph
 from src.diffbot_transformer import get_graph_from_diffbot
 from src.openAI_llm import get_graph_from_OpenAI
 from src.gemini_llm import get_graph_from_Gemini
+from src.groq_llama3_llm import get_graph_from_Groq_Llama3
 from typing import List
 import logging
 
@@ -40,6 +41,10 @@ def generate_graphDocuments(model: str, graph: Neo4jGraph, chunkId_chunkDoc_list
     elif model == "Gemini 1.5 Pro" :
         model_version = "gemini-1.5-pro-preview-0409"
         graph_documents = get_graph_from_Gemini(model_version, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
+
+    elif model == "Groq Llama3-70b" :
+        model_version = "llama3-70b-8192"
+        graph_documents = get_graph_from_Groq_Llama3(model_version, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
 
     logging.info(f"graph_documents = {len(graph_documents)}")
     return graph_documents
