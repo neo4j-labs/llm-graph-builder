@@ -231,15 +231,12 @@ def get_graph_results(uri, username, password, query_type, doc_limit, document_n
         query = get_cypher_query(QUERY_MAP, query_type, document_name)
         records, summary , keys = execute_query(driver, query, int(doc_limit), document_name)
         # logging.info(summary.query)
-        output = {
+        print(query)
+        result = {
             "nodes": extract_node_elements(records),
             "relationships": extract_relationships(records)
         }
 
-        result = {
-            "message": output,
-            "user": "graph_query"
-        }
 
         logging.info(f"Query process completed successfully")
         return result

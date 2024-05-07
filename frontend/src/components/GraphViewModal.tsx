@@ -2,7 +2,6 @@ import {
   Banner,
   Checkbox,
   Dialog,
-  Flex,
   IconButton,
   IconButtonArray,
   LoadingSpinner,
@@ -27,7 +26,6 @@ import { LegendsChip } from './LegendsChip';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import graphQueryAPI from '../services/GraphQuery';
 import { queryMap } from '../utils/Constants';
-import OverflowContainer from './OverflowContainer';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -46,8 +44,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [docLimit, setDocLimit] = useState<string>('3');
   const { userCredentials } = useCredentials();
   const [scheme, setScheme] = useState<Scheme>({});
-
-  console.log('graphType', graphType);
 
   const handleCheckboxChange = (graph: GraphType) => {
     const currentIndex = graphType.indexOf(graph);
@@ -107,8 +103,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
   };
 
-  console.log('newQuery', graphQuery);
-
   useEffect(() => {
     if (open) {
       setNodes([]);
@@ -116,23 +110,23 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setLoading(true);
       fetchData()
         .then((result) => {
-          if (result && result.data) {
-            console.log('result', result.data.data.message);
-            const neoNodes = result.data.data.message.nodes.map((f: Node) => f);
-            const neoRels = result.data.data.message.relationships.map((f: Relationship) => f);
-
-            console.log('neoNodes', neoNodes);
+          if (result && result.data.data.nodes.length > 0) {
+            console.log('result', result);
+            const neoNodes = result.data.data.nodes.map((f: Node) => f);
+            const neoRels = result.data.data.relationships.map((f: Relationship) => f);
             // Infer color schema dynamically
             let iterator = 0;
             const schemeVal: Scheme = {};
             let labels: string[] = [];
             labels = neoNodes.map((f: any) => f.labels);
             labels.forEach((label: any) => {
+              console.log('label', labels);
               if (schemeVal[label] == undefined) {
                 schemeVal[label] = calcWordColor(label[0]);
                 iterator += 1;
               }
             });
+            console.log('scheme', schemeVal);
 
             const newNodes: Node[] = neoNodes.map((g: any) => {
               return {
@@ -148,7 +142,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               };
             });
             const finalNodes = newNodes.flat();
-            // console.log('finalNodes', finalNodes);
             const newRels: Relationship[] = neoRels.map((relations: any) => {
               return {
                 id: relations.element_id,
@@ -158,7 +151,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               };
             });
             const finalRels = newRels.flat();
-            // console.log('finalRels', finalRels);
             setNodes(finalNodes);
             setRelationships(finalRels);
             setScheme(schemeVal);
@@ -166,7 +158,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           } else {
             setLoading(false);
             setStatus('danger');
-            setStatusMessage('Unable to retrieve document graph for ' + inspectedName);
+            setStatusMessage(`Unable to retrieve document graph for ${inspectedName}`);
           }
         })
         .catch((error: any) => {
@@ -283,15 +275,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                   value={docLimit}
                   min={1}
                 ></TextInput>
-                <IconButton aria-label='refresh-btn' onClick={() => setDocumentNo(docLimit)}>
+                <IconButton disabled={docLimit === ''} aria-label='refresh-btn' onClick={() => setDocumentNo(docLimit)}>
                   <ArrowSmallRightIconOutline className='n-size-token-7' />
                 </IconButton>
               </div>
             )}
           </div>
         </Dialog.Header>
-        <Dialog.Content className='n-flex n-flex-col n-gap-token-4 w-full h-[95%]'>
-          <div className='bg-palette-neutral-bg-default relative h-[95%] w-full overflow-hidden'>
+        <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border border-palette-neutral-border-weak'>
+          <div className='bg-white relative w-full h-full max-h-full'>
             {loading ? (
               <div className='my-40 flex items-center justify-center'>
                 <LoadingSpinner size='large' />
@@ -308,13 +300,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               </div>
             ) : (
               <>
-                <Flex flexDirection='row' justifyContent='space-between' style={{ height: '100%', padding: '20px' }}>
-                  <OverflowContainer className='legend_div'>
-                    {legendCheck.map((key, index) => (
-                      <LegendsChip key={index} title={key} scheme={scheme} nodes={nodes} />
-                    ))}
-                  </OverflowContainer>
-                  <div style={{ flex: '0.7' }}>
+                <div className='flex' style={{ height: '100%' }}>
+                  <div className='bg-palette-neutral-bg-default relative' style={{ width: '100%', flex: '1' }}>
                     <InteractiveNvlWrapper
                       nodes={nodes}
                       rels={relationships}
@@ -338,7 +325,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       </ButtonWithToolTip>
                     </IconButtonArray>
                   </div>
-                </Flex>
+                  <div className='legend_div'>
+                    <h4 className='py-4 pt-3'>Legend</h4>
+                    <div className='flex gap-2 flex-wrap'>
+                      {legendCheck.map((key, index) => (
+                        <LegendsChip key={index} title={key} scheme={scheme} nodes={nodes} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </>
             )}
           </div>
