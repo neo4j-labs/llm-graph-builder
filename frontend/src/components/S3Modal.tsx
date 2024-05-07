@@ -59,11 +59,11 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatus('info');
         setStatusMessage('Scanning...');
         const apiResponse = await urlScanAPI({
-          urlParam: url,
+          urlParam: url.trim(),
           userCredentials: userCredentials as UserCredentials,
           model: model,
-          accessKey: accessKey,
-          secretKey: secretKey,
+          accessKey: accessKey.trim(),
+          secretKey: secretKey.trim(),
           source_type: 's3 bucket',
         });
         setStatus('success');
@@ -119,7 +119,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     setTimeout(() => {
       setStatus('unknown');
       hideModal();
-    }, 5000);
+    }, 500);
   };
   const onClose = () => {
     hideModal();

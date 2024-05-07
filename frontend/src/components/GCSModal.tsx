@@ -57,6 +57,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             reset();
             hideModal();
           }, 5000);
+          return;
         } else {
           setStatus('success');
           setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
@@ -96,7 +97,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     setTimeout(() => {
       setStatus('unknown');
       hideModal();
-    }, 5000);
+    }, 500);
   };
   const onClose = useCallback(() => {
     hideModal();
