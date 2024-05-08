@@ -120,3 +120,29 @@ class graphDBdataAccess:
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
+    
+    def delete_file_from_graph(self, filenames:str, source_types:str):
+        filename_list = filenames.split(',')
+        source_types_list = source_types.split(',')
+        query=""" 
+            UNWIND $filename_list AS filename
+            UNWIND $source_types_list AS source_type
+            MATCH docs = (d:Document {fileName: filename, fileSource: source_type}) 
+            WITH docs, d ORDER BY d.createdAt DESC 
+            CALL { WITH d
+                OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
+                RETURN chunks
+            }
+            WITH [] 
+            + [docs] 
+            + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } 
+            + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } 
+            + collect { OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!Chunk) RETURN p} AS paths
+            CALL { WITH paths UNWIND paths AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }
+            WITH nodes
+            UNWIND nodes as n
+            DETACH DELETE n
+            """
+        param = {"filename_list" : filename_list, "source_types_list": source_types_list}
+        logging.info(f"Deleting document '{filename_list}' from '{source_types_list}' with their entities from database")
+        return self.execute_query(query, param)    
