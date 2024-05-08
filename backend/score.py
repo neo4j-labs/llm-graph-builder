@@ -324,7 +324,7 @@ async def delete_document_and_entities(uri=Form(None),
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         result = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filenames, source_types)
-        message = f"Deleted document '{filenames}' from '{source_types}' with their entities from database"
+        message = f"Deleted document '{filenames}' with their entities from database"
         return create_api_response('Success',message=message)
     except Exception as e:
         job_status = "Failed"

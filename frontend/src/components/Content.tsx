@@ -13,6 +13,8 @@ import GraphViewModal from './GraphViewModal';
 import { initialiseDriver } from '../utils/Driver';
 import Driver from 'neo4j-driver/types/driver';
 import { url } from '../utils/Utils';
+import deleteAPI from '../services/deleteFiles';
+import DeletePopUp from './DeletePopUp';
 
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -21,8 +23,12 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
-  const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels } = useFileContext();
+  const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels, rowSelection, setRowSelection } =
+    useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
+  const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
+  const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
+
   const [alertDetails, setalertDetails] = useState<alertState>({
     showAlert: false,
     alertType: 'error',
@@ -354,6 +360,58 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
   };
 
+  const deleteFileClickHandler: React.MouseEventHandler<HTMLButtonElement> = () => {
+    if (Object.keys(rowSelection).length) {
+      setshowDeletePopUp(true);
+    } else {
+      setalertDetails({
+        showAlert: true,
+        alertMessage: 'Please Select a file for deletion',
+        alertType: 'info',
+      });
+    }
+  };
+
+  const handleDeleteFiles = async () => {
+    try {
+      setdeleteLoading(true);
+      const response = await deleteAPI(userCredentials as UserCredentials, rowSelection);
+      setdeleteLoading(false);
+      if (response.data.status == 'Success') {
+        setalertDetails({
+          showAlert: true,
+          alertMessage: response.data.message,
+          alertType: 'success',
+        });
+        const keys = Object.keys(rowSelection);
+        const filenames = keys.map((str) => str.split(',')[0]);
+        filenames.forEach((name) => {
+          setFilesData((prev) => prev.filter((f) => f.name != name));
+        });
+        setRowSelection({});
+      } else {
+        let errorobj = { error: response.data.error, message: response.data.message };
+        throw new Error(JSON.stringify(errorobj));
+      }
+      console.log(response);
+      setshowDeletePopUp(false);
+    } catch (err) {
+      if (err instanceof Error) {
+        const error = JSON.parse(err.message);
+        const { message } = error;
+        const errorMessage = error.message;
+        console.log({ message, errorMessage });
+        setalertDetails({
+          showAlert: true,
+          alertType: 'error',
+          alertMessage: message,
+        });
+        console.log(err);
+      }
+    }
+    setshowDeletePopUp(false);
+  };
+
   return (
     <>
       {alertDetails.showAlert && (
@@ -363,6 +421,15 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           handleClose={handleClose}
           alertMessage={alertDetails.alertMessage}
         />
+      )}
+      {showDeletePopUp && (
+        <DeletePopUp
+          open={showDeletePopUp}
+          no_of_files={Object.keys(rowSelection).length}
+          deleteHandler={handleDeleteFiles}
+          deleteCloseHandler={() => setshowDeletePopUp(false)}
+          loading={deleteLoading}
+        ></DeletePopUp>
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>
@@ -411,7 +478,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <Button
-              // loading={filesData.some((f) => f?.status === 'Processing')}
               disabled={disableCheck}
               onClick={handleGenerateGraph}
               className='mr-0.5'
@@ -431,6 +497,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               className='ml-0.5'
             >
               Open Graph with Bloom
+            </Button>
+            <Button onClick={deleteFileClickHandler} className='ml-0.5' disabled={!filesData.length}>
+              Delete Files
             </Button>
             <Button
               onClick={() => {

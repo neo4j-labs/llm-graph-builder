@@ -77,4 +77,3 @@ export const queryMap: {
   ChunksEntities: 'chunksEntities',
   DocChunkEntities: 'docChunkEntities',
 };
-
