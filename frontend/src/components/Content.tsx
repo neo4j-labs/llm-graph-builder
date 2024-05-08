@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import ConnectionModal from './ConnectionModal';
 import LlmDropdown from './Dropdown';
 import FileTable from './FileTable';
@@ -359,6 +359,50 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     localStorage.removeItem('password');
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
   };
+  const selectedfileslength = useMemo(() => Object.keys(rowSelection).length, [rowSelection]);
+  const deleteFileClickHandler: React.MouseEventHandler<HTMLButtonElement> = () => {
+    setshowDeletePopUp(true);
+  };
+
+  const handleDeleteFiles = async () => {
+    try {
+      setdeleteLoading(true);
+      const response = await deleteAPI(userCredentials as UserCredentials, rowSelection);
+      setdeleteLoading(false);
+      if (response.data.status == 'Success') {
+        setalertDetails({
+          showAlert: true,
+          alertMessage: response.data.message,
+          alertType: 'success',
+        });
+        const keys = Object.keys(rowSelection);
+        const filenames = keys.map((str) => str.split(',')[0]);
+        filenames.forEach((name) => {
+          setFilesData((prev) => prev.filter((f) => f.name != name));
+        });
+        setRowSelection({});
+      } else {
+        let errorobj = { error: response.data.error, message: response.data.message };
+        throw new Error(JSON.stringify(errorobj));
+      }
+      console.log(response);
+      setshowDeletePopUp(false);
+    } catch (err) {
+      if (err instanceof Error) {
+        const error = JSON.parse(err.message);
+        const { message } = error;
+        const errorMessage = error.message;
+        console.log({ message, errorMessage });
+        setalertDetails({
+          showAlert: true,
+          alertType: 'error',
+          alertMessage: message,
+        });
+        console.log(err);
+      }
+    }
+    setshowDeletePopUp(false);
+  };
 
   const deleteFileClickHandler: React.MouseEventHandler<HTMLButtonElement> = () => {
     if (Object.keys(rowSelection).length) {
@@ -425,7 +469,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       {showDeletePopUp && (
         <DeletePopUp
           open={showDeletePopUp}
-          no_of_files={Object.keys(rowSelection).length}
+          no_of_files={selectedfileslength}
           deleteHandler={handleDeleteFiles}
           deleteCloseHandler={() => setshowDeletePopUp(false)}
           loading={deleteLoading}
@@ -499,6 +543,14 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               Open Graph with Bloom
             </Button>
             <Button onClick={deleteFileClickHandler} className='ml-0.5' disabled={!filesData.length}>
+              Delete Files
+            </Button>
+            <Button
+              onClick={deleteFileClickHandler}
+              className='ml-0.5'
+              title={!selectedfileslength ? 'please select a file' : ''}
+              disabled={!selectedfileslength}
+            >
               Delete Files
             </Button>
             <Button
