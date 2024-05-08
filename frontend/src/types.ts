@@ -236,3 +236,9 @@ export interface SourceListServerData {
   error?: string;
   message?: string;
 }
+
+export interface ChatInfoModalProps {
+  hideModal: () => void;
+  open: boolean;
+  info: string;
+}

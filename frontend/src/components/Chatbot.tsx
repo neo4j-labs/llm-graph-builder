@@ -1,6 +1,7 @@
 /* eslint-disable no-confusing-arrow */
-import { useEffect, useRef, useState } from 'react';
-import { Button, Widget, Typography, Avatar, TextInput, TextLink } from '@neo4j-ndl/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Button, Widget, Typography, Avatar, TextInput, TextLink, IconButton } from '@neo4j-ndl/react';
+import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
 import { ChatbotProps, UserCredentials } from '../types';
@@ -9,6 +10,7 @@ import chatBotAPI from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../context/UsersFiles';
 import { extractPdfFileName } from '../utils/Utils';
+import ChatInfoModal from './ChatInfoModal';
 
 export default function Chatbot(props: ChatbotProps) {
   const { messages: listMessages, setMessages: setListMessages } = props;
@@ -19,6 +21,8 @@ export default function Chatbot(props: ChatbotProps) {
   const { model } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
+  const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
+  const [infoMessage, setInfoMessage] = useState<string>('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
@@ -94,6 +98,7 @@ export default function Chatbot(props: ChatbotProps) {
       const chatresponse = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
       chatbotReply = chatresponse?.data?.data?.message;
       simulateTypingEffect({ reply: chatbotReply, sources: chatresponse?.data?.data?.sources });
+      setInfoMessage(chatresponse?.data?.data?.info);
       setLoading(false);
     } catch (error) {
       chatbotReply = "Oops! It seems we couldn't retrieve the answer. Please try again later";
@@ -110,6 +115,15 @@ export default function Chatbot(props: ChatbotProps) {
   useEffect(() => {
     scrollToBottom();
   }, [listMessages]);
+
+  const openInfoModal = useCallback(() => {
+    console.log('new');
+    setShowInfoModal(true);
+  }, []);
+
+  const hideInfoModal = useCallback(() => {
+    setShowInfoModal(false);
+  }, []);
 
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
@@ -194,6 +208,20 @@ export default function Chatbot(props: ChatbotProps) {
                         })}
                       </div>
                     ) : null}
+                    {chat.user === 'chatbot' && chat.id !== 2 && (
+                      <div className='flex gap-1'>
+                        <IconButton
+                          className='infoIcon'
+                          clean
+                          aria-label='Information Icon'
+                          onClick={openInfoModal}
+                          disabled={loading}
+                        >
+                          <InformationCircleIconOutline className='w-4 h-4 inline-block n-text-palette-success-text' />
+                        </IconButton>
+                        <ChatInfoModal open={showInfoModal} hideModal={hideInfoModal} info={infoMessage} />
+                      </div>
+                    )}
                   </div>
                 </Widget>
               </div>
