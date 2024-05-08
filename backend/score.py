@@ -44,38 +44,6 @@ add_routes(app,ChatVertexAI(), path="/vertexai")
 
 app.add_api_route("/health", health([healthy_condition, healthy]))
 
-# @app.post("/sources")
-# async def create_source_knowledge_graph(
-#     uri=Form(None), userName=Form(None), password=Form(None), file: UploadFile = File(...), model=Form(),database=Form(None), 
-# ):
-#     """
-#     Calls 'create_source_node_graph' function in a new thread to create
-#     source node in Neo4jGraph when a new file is uploaded.
-
-#     Args:
-#          uri: URI of Graph Service to connect to
-#          userName: Username to connect to Graph Service with ( default : None )
-#          password: Password to connect to Graph Service with ( default : None )
-#          file: File object containing the PDF file
-
-#     Returns:
-#          'Source' Node creation in Neo4j database
-#     """
-#     try:
-#         result = await asyncio.to_thread(
-#             create_source_node_graph_local_file, uri, userName, password, file, model, database
-#         )
-#         return create_api_response("Success",message="Source Node created successfully",file_source=result.file_source, file_name=result.file_name)
-#     except Exception as e:
-#         # obj_source_node = sourceNode()
-#         job_status = "Failed"
-#         message = "Unable to create source node"
-#         error_message = str(e)
-#         logging.error(f"Error in creating document node: {error_message}")
-#         #update exception in source node
-#         # obj_source_node.update_exception_db(file.filename, error_message)
-#         return create_api_response(job_status, message=message,error=error_message,file_source='local file',file_name=file.filename)
-
 @app.post("/url/scan")
 async def create_source_knowledge_graph_url(
     uri=Form(None),
@@ -116,10 +84,10 @@ async def create_source_knowledge_graph_url(
         message = f"Source Node created successfully for source type: {source_type} and source: {source}"
         return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name)    
     except Exception as e:
-        error_message = str(e)[:80]
+        error_message = str(e)
         message = f" Unable to create source node for source type: {source_type} and source: {source}"
         logging.exception(f'Exception Stack trace:')
-        return create_api_response('Failed',message=message + error_message,error=error_message,file_source=source_type)
+        return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=source_type)
 
 
 @app.post("/extract")
@@ -180,15 +148,15 @@ async def extract_knowledge_graph_from_file(
                 extract_graph_from_file_gcs, graph, model, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
-        
-        return create_api_response('Success', data=result)
+        logging.info(result)
+        return create_api_response('Success', data=result, file_source= source_type)
     except Exception as e:
         message=f" Failed To Process File:{file_name} or LLM Unable To Parse Content"
-        logging.info(message)
-        error_message = str(e)[:100]
+        error_message = str(e)
         graphDb_data_Access.update_exception_db(file_name,error_message)
+        logging.error({'message':message,'error_message':error_message, 'file_name': file_name,'status':'Failed'}, stack_info=True)
         logging.exception(f'Exception Stack trace: {error_message}')
-        return create_api_response('Failed', message=message + error_message, error=error_message, file_name = file_name)
+        return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = file_name)
 
 @app.get("/sources_list")
 async def get_source_list(uri:str, userName:str, password:str, database:str=None):
@@ -272,6 +240,7 @@ async def connect(uri=Form(None), userName=Form(None), password=Form(None), data
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(connection_check, graph)
+        logging.info({'uri':uri,'status':result})
         return create_api_response('Success',message=result)
     except Exception as e:
         job_status = "Failed"
