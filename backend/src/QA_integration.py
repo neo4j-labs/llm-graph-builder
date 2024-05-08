@@ -105,11 +105,11 @@ def get_llm(model: str,max_tokens=1000) -> Any:
             )
         else:
             llm = ChatOpenAI(model=model_version, temperature=0,max_tokens=max_tokens)
-        return llm
+        return llm,model_version
 
     else:
         logging.error(f"Unsupported model: {model}")
-        return None
+        return None,None
 
 def vector_embed_results(qa,question):
     vector_res={}
@@ -219,7 +219,7 @@ def QA_RAG(graph,model,question,session_id):
             session_id=session_id
         )
         
-        llm = get_llm(model=model,max_tokens=CHAT_MAX_TOKENS)
+        llm,model_version = get_llm(model=model,max_tokens=CHAT_MAX_TOKENS)
         qa = RetrievalQA.from_chain_type(
             llm=llm,
             chain_type="stuff",
@@ -278,21 +278,25 @@ def QA_RAG(graph,model,question,session_id):
         return {
             "session_id": session_id, 
             "message": message, 
-            "sources": sources,
-            "info": f"""Metadata :
-                sources : {sources}
-                RETRIEVAL_QUERY : {RETRIEVAL_QUERY}""",
+            "info": {
+                "sources": sources,
+                "model":model_version,
+                "entities":[]
+            },
             "user": "chatbot"
             }
 
     except Exception as e:
         logging.exception(f"Exception in QA component at {datetime.now()}: {str(e)}")
         error_name = type(e).__name__
-        return {"session_id": session_id, 
-        "message": "Something went wrong",
-        "sources": [],
-        "info": f"Caught an exception {error_name} :- {str(e)}",
-        "user": "chatbot"}
+        return {
+            "session_id": session_id, 
+            "message": "Something went wrong",
+            "info": {
+                "sources": [],
+                "error": f"{error_name} :- {str(e)}"
+            },
+            "user": "chatbot"}
     
 
 
