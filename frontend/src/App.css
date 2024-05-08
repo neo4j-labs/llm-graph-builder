@@ -188,7 +188,7 @@
 .connectionstatus__container {
   display: flex;
   padding: 20px;
-  align-items: start;
+  align-items: flex-start;
   justify-content: center;
   flex-direction: column;
 }
