@@ -492,9 +492,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             >
               Open Graph with Bloom
             </Button>
-            <Button onClick={deleteFileClickHandler} className='ml-0.5' disabled={!filesData.length}>
-              Delete Files
-            </Button>
             <Button
               onClick={deleteFileClickHandler}
               className='ml-0.5'
