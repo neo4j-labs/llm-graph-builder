@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState,useMemo } from 'react';
 import ConnectionModal from './ConnectionModal';
 import LlmDropdown from './Dropdown';
 import FileTable from './FileTable';
@@ -359,9 +359,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     localStorage.removeItem('password');
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
   };
-
+  const selectedfileslength = useMemo(() => Object.keys(rowSelection).length, [rowSelection]);
   const deleteFileClickHandler: React.MouseEventHandler<HTMLButtonElement> = () => {
-    if (Object.keys(rowSelection).length) {
+    if (selectedfileslength) {
       setshowDeletePopUp(true);
     } else {
       setalertDetails({
@@ -425,7 +425,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       {showDeletePopUp && (
         <DeletePopUp
           open={showDeletePopUp}
-          no_of_files={Object.keys(rowSelection).length}
+          no_of_files={selectedfileslength}
           deleteHandler={handleDeleteFiles}
           deleteCloseHandler={() => setshowDeletePopUp(false)}
           loading={deleteLoading}
@@ -477,11 +477,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
-            <Button
-              disabled={disableCheck}
-              onClick={handleGenerateGraph}
-              className='mr-0.5'
-            >
+            <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
               Generate Graph
             </Button>
             <Button
@@ -498,7 +494,12 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             >
               Open Graph with Bloom
             </Button>
-            <Button onClick={deleteFileClickHandler} className='ml-0.5' disabled={!filesData.length}>
+            <Button
+              onClick={deleteFileClickHandler}
+              className='ml-0.5'
+              title={!selectedfileslength ? 'please select a file' : ''}
+              disabled={!selectedfileslength}
+            >
               Delete Files
             </Button>
             <Button
