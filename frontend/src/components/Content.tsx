@@ -1,4 +1,4 @@
-import { useEffect, useState,useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import ConnectionModal from './ConnectionModal';
 import LlmDropdown from './Dropdown';
 import FileTable from './FileTable';
@@ -361,15 +361,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   };
   const selectedfileslength = useMemo(() => Object.keys(rowSelection).length, [rowSelection]);
   const deleteFileClickHandler: React.MouseEventHandler<HTMLButtonElement> = () => {
-    if (selectedfileslength) {
-      setshowDeletePopUp(true);
-    } else {
-      setalertDetails({
-        showAlert: true,
-        alertMessage: 'Please Select a file for deletion',
-        alertType: 'info',
-      });
-    }
+    setshowDeletePopUp(true);
   };
 
   const handleDeleteFiles = async () => {
