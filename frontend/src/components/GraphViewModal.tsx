@@ -2,8 +2,8 @@ import { Banner, Checkbox, Dialog, IconButton, IconButtonArray, LoadingSpinner, 
 import { useEffect, useRef, useState } from 'react';
 import { GraphType, GraphViewModalProps, Scheme, UserCredentials } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
-import NVL, { NvlOptions } from '@neo4j-nvl/core';
-import type { Node, Relationship } from '@neo4j-nvl/core';
+import NVL, { NvlOptions } from '@neo4j-nvl/base';
+import type { Node, Relationship } from '@neo4j-nvl/base';
 
 import {
   FitToScreenIcon,
@@ -71,16 +71,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.length === 3
       ? queryMap.DocChunkEntities
       : graphType.includes('entities') && graphType.includes('chunks')
-      ? queryMap.ChunksEntities
-      : graphType.includes('entities') && graphType.includes('document')
-      ? queryMap.DocEntities
-      : graphType.includes('document') && graphType.includes('chunks')
-      ? queryMap.DocChunks
-      : graphType.includes('entities') && graphType.length === 1
-      ? queryMap.Entities
-      : graphType.includes('chunks') && graphType.length === 1
-      ? queryMap.Chunks
-      : queryMap.Document;
+        ? queryMap.ChunksEntities
+        : graphType.includes('entities') && graphType.includes('document')
+          ? queryMap.DocEntities
+          : graphType.includes('document') && graphType.includes('chunks')
+            ? queryMap.DocChunks
+            : graphType.includes('entities') && graphType.length === 1
+              ? queryMap.Entities
+              : graphType.includes('chunks') && graphType.length === 1
+                ? queryMap.Chunks
+                : queryMap.Document;
 
   // API Call to fetch the queried Data
   const fetchData = async () => {
@@ -178,7 +178,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     maxZoom: 3,
     minZoom: 0.05,
     relationshipThreshold: 0.55,
-    selectionBehaviour: 'single',
     useWebGL: false,
     instanceId: 'graph-preview',
     initialZoom: 0,
