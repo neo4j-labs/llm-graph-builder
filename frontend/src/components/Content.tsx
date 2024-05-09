@@ -421,10 +421,10 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     setshowDeletePopUp(true);
   };
 
-  const handleDeleteFiles = async () => {
+  const handleDeleteFiles = async (deleteEntities: boolean) => {
     try {
       setdeleteLoading(true);
-      const response = await deleteAPI(userCredentials as UserCredentials, rowSelection);
+      const response = await deleteAPI(userCredentials as UserCredentials, rowSelection, deleteEntities);
       setdeleteLoading(false);
       if (response.data.status == 'Success') {
         setalertDetails({
@@ -475,7 +475,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         <DeletePopUp
           open={showDeletePopUp}
           no_of_files={selectedfileslength}
-          deleteHandler={handleDeleteFiles}
+          deleteHandler={(delentities: boolean) => handleDeleteFiles(delentities)}
           deleteCloseHandler={() => setshowDeletePopUp(false)}
           loading={deleteLoading}
         ></DeletePopUp>
