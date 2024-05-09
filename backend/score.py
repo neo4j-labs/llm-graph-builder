@@ -87,8 +87,10 @@ async def create_source_knowledge_graph_url(
     gcs_bucket_name=Form(None),
     gcs_bucket_folder=Form(None),
     source_type=Form(None),
-    gcs_auth_config_file: UploadFile = File(...)
+    gcs_project_id=Form(None)
     ):
+    
+    logging.info(f"uri: {uri}  username:{userName}   password: {password}  database:{database}   model:{model}  gcs bucket:{gcs_bucket_name}   gcs folder:{gcs_bucket_folder}   gcs project:{gcs_project_id}   source_type:{source_type}")
     try:
         if source_url is not None:
             source = source_url
@@ -100,7 +102,7 @@ async def create_source_knowledge_graph_url(
             lst_file_name,success_count,failed_count = create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type
             )
         elif source_type == 'gcs bucket':
-            lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, gcs_auth_config_file, gcs_bucket_name, gcs_bucket_folder, source_type
+            lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, source_type
             )
         elif source_type == 'youtube':
             lst_file_name,success_count,failed_count = create_source_node_graph_url_youtube(graph, model, source_url, source_type
@@ -313,6 +315,37 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
     
     return EventSourceResponse(generate(),ping=60)
 
+from fastapi.responses import RedirectResponse, HTMLResponse
+@app.get('/')
+async def index():
+    return HTMLResponse('''<h1>GCS bucket demo</h1>
+                        <form action="/url/scan" method="post">
+                            <label>URI: </label>
+                            <input type="text" name="uri" required>
+                            </br>
+                            <label>Username: </label>
+                            <input type="text" name="userName" required>
+                            </br>
+                            <label>password: </label>
+                            <input type="text" name="password" required>
+                            </br>
+                            <label>database: </label>
+                            <input type="text" name="database" required>
+                            </br>
+                            <label>source_type: </label>
+                            <input type="text" name="source_type" required>
+                            </br>
+                            <label>model: </label>
+                            <input type="text" name="model" required>
+                            </br>
+                            <label>GCP Project ID: </label>
+                            <input type="text" name="gcs_project_id" required>
+                            </br>
+                            <label>gcs_bucket_name: </label>
+                            <input type="text" name="gcs_bucket_name" required>
+                            </br>
+                            <input type="submit" value="Submit">
+                        </form>''')
     
 if __name__ == "__main__":
     uvicorn.run(app)

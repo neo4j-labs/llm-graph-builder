@@ -4,12 +4,13 @@ from google.cloud import storage
 import google.auth 
 from langchain_community.document_loaders import GCSFileLoader
 from google_auth_oauthlib.flow import InstalledAppFlow
+import google_auth_oauthlib.flow
 import json
 
-def get_gcs_bucket_files_info(gcs_auth_config_file, gcs_bucket_name, gcs_bucket_folder):
+def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder):
     #credentials = service_account.Credentials.from_service_account_file(os.environ['GOOGLE_CLOUD_KEYFILE'])
     #storage_client = storage.Client(credentials=credentials)
-    project_id, creds = gcloud_OAuth_login(gcs_auth_config_file)
+    project_id, creds = gcloud_OAuth_login(gcs_project_id)
     storage_client = storage.Client(project=project_id, credentials=creds)
     file_name=''
     try:
@@ -54,27 +55,55 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
   file_name = gcs_blob_filename
   return file_name, pages  
 
-def gcloud_OAuth_login(gcs_auth_config_file):
+def gcloud_OAuth_login(gcs_project_id):
 
   # user json config from google oauth
-  tmp_file_path = f"/tmp/{gcs_auth_config_file.filename}"
-  logging.info(f"tmp_file_path : {tmp_file_path}")
-  with open(tmp_file_path, "wb") as temp_file:
-    temp_file.write(gcs_auth_config_file.file.read())
+  # gcs_auth_config_file=""
+  # tmp_file_path = f"/tmp/{gcs_auth_config_file.filename}"
+  # logging.info(f"tmp_file_path : {tmp_file_path}")
+  # with open(tmp_file_path, "wb") as temp_file:
+  #   temp_file.write(gcs_auth_config_file.file.read())
     
-  client_secrets_file = '../backend/src/config.json'
-  logging.info(f"gcs_auth_config_file filename = {gcs_auth_config_file.filename}")
-  flow = InstalledAppFlow.from_client_secrets_file(
-      tmp_file_path,
-      scopes=['https://www.googleapis.com/auth/devstorage.read_only']
-  )
+  # client_secrets_file = '../backend/src/config.json'
+  # logging.info(f"gcs_auth_config_file filename = {gcs_auth_config_file.filename}")
+  
+  GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+  GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
+  REDIRECT_URI = 'http://localhost:8000/oauth2callback'
+  SCOPES = ['https://www.googleapis.com/auth/devstorage.read_only']
+  
+  oauth_config = {
+    "web": {
+        "client_id": GOOGLE_CLIENT_ID,
+        "client_secret": GOOGLE_CLIENT_SECRET,
+        "redirect_uris": [REDIRECT_URI],
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token"
+     }
+  }
+  
+  # flow = InstalledAppFlow.from_client_secrets_file(
+  #     tmp_file_path,
+  #     scopes=['https://www.googleapis.com/auth/devstorage.read_only']
+  # )
+  flow = InstalledAppFlow.from_client_config(oauth_config, scopes=SCOPES)
+  # flow = google_auth_oauthlib.flow.Flow.from_client_config(oauth_config, scopes=SCOPES)
+  # flow.redirect_uri = REDIRECT_URI
+  # authorization_url, state = flow.authorization_url(access_type='offline', include_granted_scopes='true')
+  # print(f"authorization_url = {authorization_url}")
+  # print(f"state = {state}")
+  #creds = flow.fetch_token(authorization_response=str(authorization_url))
+  flow.redirect_uri=REDIRECT_URI
+  creds = flow.run_local_server(port=0)
+  print(f"creds = {creds}")
   # auth_url, _ = flow.authorization_url()
   # logging.info(f"auth url = {auth_url}")
 
   #creds = flow.run_local_server(port=0)
-  creds = flow.run_local_server(port=0)
-  client_file = open(tmp_file_path)
-  data = json.load(client_file)
-  project_id = data['installed']['project_id']
+  # creds = flow.run_local_server(port=0)
+  # client_file = open(tmp_file_path)
+  # data = json.load(client_file)
+  # project_id = data['installed']['project_id']
+  project_id = "persistent-genai"
   return project_id, creds
        
