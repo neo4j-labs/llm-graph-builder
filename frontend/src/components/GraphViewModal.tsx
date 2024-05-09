@@ -71,16 +71,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.length === 3
       ? queryMap.DocChunkEntities
       : graphType.includes('entities') && graphType.includes('chunks')
-        ? queryMap.ChunksEntities
-        : graphType.includes('entities') && graphType.includes('document')
-          ? queryMap.DocEntities
-          : graphType.includes('document') && graphType.includes('chunks')
-            ? queryMap.DocChunks
-            : graphType.includes('entities') && graphType.length === 1
-              ? queryMap.Entities
-              : graphType.includes('chunks') && graphType.length === 1
-                ? queryMap.Chunks
-                : queryMap.Document;
+      ? queryMap.ChunksEntities
+      : graphType.includes('entities') && graphType.includes('document')
+      ? queryMap.DocEntities
+      : graphType.includes('document') && graphType.includes('chunks')
+      ? queryMap.DocChunks
+      : graphType.includes('entities') && graphType.length === 1
+      ? queryMap.Entities
+      : graphType.includes('chunks') && graphType.length === 1
+      ? queryMap.Chunks
+      : queryMap.Document;
 
   // API Call to fetch the queried Data
   const fetchData = async () => {
