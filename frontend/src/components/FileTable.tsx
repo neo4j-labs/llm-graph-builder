@@ -1,4 +1,12 @@
-import { DataGrid, DataGridComponents, IconButton, StatusIndicator, TextLink, Typography } from '@neo4j-ndl/react';
+import {
+  Checkbox,
+  DataGrid,
+  DataGridComponents,
+  IconButton,
+  StatusIndicator,
+  TextLink,
+  Typography,
+} from '@neo4j-ndl/react';
 import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
 import {
@@ -9,6 +17,8 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   CellContext,
+  Table,
+  Row
 } from '@tanstack/react-table';
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
@@ -21,7 +31,7 @@ import CustomAlert from './Alert';
 import CustomProgressBar from './CustomProgressBar';
 
 const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
-  const { filesData, setFilesData, model } = useFileContext();
+  const { filesData, setFilesData, model, rowSelection, setRowSelection } = useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -32,6 +42,29 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
 
   const columns = useMemo(
     () => [
+      {
+        id: 'select',
+        header: ({ table }: { table: Table<CustomFile> }) => (
+          <Checkbox
+            aria-label='header-checkbox'
+            checked={table.getIsAllRowsSelected()}
+            onChange={table.getToggleAllRowsSelectedHandler()}
+          />
+        ),
+        cell: ({ row }:{row:Row<CustomFile>}) => {
+          console.log(row.getIsSelected());
+          return (
+            <div className='px-1'>
+              <Checkbox
+                aria-label='row-checkbox'
+                checked={row.getIsSelected()}
+                disabled={!row.getCanSelect()}
+                onChange={row.getToggleSelectedHandler()}
+              />
+            </div>
+          );
+        },
+      },
       columnHelper.accessor((row) => row.name, {
         id: 'name',
         cell: (info) => {
@@ -255,7 +288,9 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     },
     state: {
       columnFilters,
+      rowSelection,
     },
+    onRowSelectionChange: setRowSelection,
     filterFns: {
       statusFilter: (row, columnId, filterValue) => {
         return filterValue ? row.original[columnId] === 'New' : row.original[columnId];
@@ -263,6 +298,9 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     },
     enableGlobalFilter: false,
     autoResetPageIndex: false,
+    enableRowSelection: true,
+    enableMultiRowSelection: true,
+    getRowId: (row) => `${row.name},${row.fileSource}`,
   });
 
   useEffect(() => {

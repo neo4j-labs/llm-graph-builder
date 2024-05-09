@@ -15,6 +15,8 @@ interface FileContextType {
   setSelectedNodes: Dispatch<SetStateAction<readonly OptionType[]>>;
   selectedRels: readonly OptionType[];
   setSelectedRels: Dispatch<SetStateAction<readonly OptionType[]>>;
+  rowSelection: Record<string, boolean>;
+  setRowSelection: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
@@ -25,6 +27,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [graphType, setGraphType] = useState<string>('Knowledge Graph Entities');
   const [selectedNodes, setSelectedNodes] = useState<readonly OptionType[]>([]);
   const [selectedRels, setSelectedRels] = useState<readonly OptionType[]>([]);
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const value: FileContextType = {
     files,
     filesData,
@@ -38,6 +41,8 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setSelectedRels,
     selectedNodes,
     setSelectedNodes,
+    rowSelection,
+    setRowSelection,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };
