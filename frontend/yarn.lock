@@ -987,7 +987,7 @@
 
 "@neo4j-nvl/base@^0.3.1":
   version "0.3.1"
-  resolved "https://registry.npmjs.org/@neo4j-nvl/base/-/base-0.3.1.tgz"
+  resolved "https://registry.yarnpkg.com/@neo4j-nvl/base/-/base-0.3.1.tgz#d38f3fa0925828194463975310a7cac2717d7e22"
   integrity sha512-bI9a0nY4ACrvSXS9tpuqf7oQ1U+/3Ooen/2FefcnXYsHd0Fmk71wDj0Ia1BMPQ6JetDkc/Vj8GrexLxuk0UzUA==
   dependencies:
     "@neo4j-nvl/layout-workers" "^0.3.1"
@@ -1024,7 +1024,7 @@
 
 "@neo4j-nvl/react@^0.3.1":
   version "0.3.1"
-  resolved "https://registry.npmjs.org/@neo4j-nvl/react/-/react-0.3.1.tgz"
+  resolved "https://registry.yarnpkg.com/@neo4j-nvl/react/-/react-0.3.1.tgz#bb29ec2f3400d6188206b281d28d5902ad785999"
   integrity sha512-OYkar+MAcfyfuGvNN+66ubIyVMpquxbgMAdgnnlMUxGeYjfL3WQ7/nshooK+wHJXLicPfOL77ZeLTSLERI9f3Q==
   dependencies:
     "@neo4j-nvl/base" "^0.3.1"
