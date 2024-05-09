@@ -21,15 +21,14 @@ const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }
   const [clearHistoryData, setClearHistoryData] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
 
-  console.log(messages);
-
   const deleteOnClick = async () => {
     try {
       const response = await clearChatAPI(userCredentials as UserCredentials, sessionStorage.getItem('session_id') ?? '')
-      console.log('res', response?.data?.message);
-      if(response.data.status === 'success'){
+      console.log('res', response);
+      if(response.data.status === 'Success'){
         setClearHistoryData(true);
       }
+      setClearHistoryData(false);
     }
     catch (error) {
       console.log(error);
@@ -50,7 +49,6 @@ const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }
         }
       }}
       key={'rightdrawer'}
-      style={{ border: '1px solid ' }}
     >
       <ButtonWithToolTip
         text='Clear Chat history'

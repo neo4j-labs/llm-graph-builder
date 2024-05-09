@@ -4,7 +4,7 @@ import { Button, Widget, Typography, Avatar, TextInput, TextLink, IconButton } f
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
-import { ChatbotProps, Info, UserCredentials } from '../types';
+import { ChatbotProps, Info, UserCredentials, messages } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { chatBotAPI } from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
@@ -23,6 +23,15 @@ export default function Chatbot(props: ChatbotProps) {
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
   const [infoMessage, setInfoMessage] = useState<Info | null>(null);
+  const [activeChat, setActiveChat] = useState<messages>(
+    {
+      id:0,
+      message: '',
+      user: 'chatBot',
+      datetime: '',
+      isTyping?: false,
+      sources?: []
+    });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
@@ -36,8 +45,6 @@ export default function Chatbot(props: ChatbotProps) {
       sessionStorage.setItem('session_id', id);
     }
   }, []);
-
-  console.log('clear', props.clear);
 
   const simulateTypingEffect = (response: { reply: string; sources?: [string] }, index = 0) => {
     if (index < response.reply.length) {
@@ -84,12 +91,13 @@ export default function Chatbot(props: ChatbotProps) {
     }
   };
 
+  let date = new Date();
+
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     if (!inputMessage.trim()) {
       return;
     }
-    const date = new Date();
     let chatbotReply;
     const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
     const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime };
@@ -102,6 +110,7 @@ export default function Chatbot(props: ChatbotProps) {
       chatbotReply = chatresponse?.data?.data?.message;
       simulateTypingEffect({ reply: chatbotReply, sources: chatresponse?.data?.data?.sources });
       const chatInfo = chatresponse?.data.data.info;
+      console.log('chatInfo', chatresponse?.data.data);
       setInfoMessage(chatInfo);
       setLoading(false);
     } catch (error) {
@@ -111,7 +120,6 @@ export default function Chatbot(props: ChatbotProps) {
       setLoading(false);
     }
   };
-  console.log('hello',);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -129,6 +137,23 @@ export default function Chatbot(props: ChatbotProps) {
   const hideInfoModal = useCallback(() => {
     setShowInfoModal(false);
   }, []);
+
+  useEffect(() => {
+    if (props.clear) {
+      console.log(listMessages[0]);
+      setListMessages([{
+        datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
+        id: 2,
+        message: " Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.",
+        sources: ['https://neo4j.com/'],
+        user: "chatbot"
+      }]);
+    }
+  }, [props.clear])
+
+  const element = () => {
+    const found = listMessages.find((element) => element.id === );
+  }
 
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
