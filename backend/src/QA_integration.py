@@ -124,6 +124,10 @@ def vector_embed_results(qa,question):
                 entities.add(entiti)
         vector_res['source']=list(sources)
         vector_res['entities'] = list(entities)
+        if len( vector_res['entities']) > 10:
+            vector_res['entities'] =  vector_res['entities'][:10]
+            
+
 
         # list_source_docs=[]
         # for i in result["source_documents"]:
