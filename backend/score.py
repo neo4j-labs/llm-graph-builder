@@ -319,12 +319,14 @@ async def delete_document_and_entities(uri=Form(None),
                                        password=Form(None), 
                                        database=Form(None), 
                                        filenames=Form(None),
-                                       source_types=Form(None)):
+                                       source_types=Form(None),
+                                       deleteEntities=Form(None)):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
-        result = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filenames, source_types)
-        message = f"Deleted document '{filenames}' with their entities from database"
+        result, files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filenames, source_types, deleteEntities)
+        entities_count = result[0]['deletedEntities'] if 'deletedEntities' in result[0] else 0
+        message = f"Deleted {files_list_size} documents with {entities_count} entities from database"
         return create_api_response('Success',message=message)
     except Exception as e:
         job_status = "Failed"

@@ -195,13 +195,13 @@
 
 .legend_div {
   flex-wrap: wrap;
-  flex:1;
+  flex: 1;
   padding: 15px;
   background-color: #ffff;
   scrollbar-width: thin;
   max-height: 100%;
   overflow-y: auto;
-  height:100%;
+  height: 100%;
   max-width: 20%;
   z-index: 1;
   box-shadow: -2px 0px 6px #e7e7e7;
@@ -224,12 +224,20 @@
 .chatBotContainer>div {
   max-width: 370px;
 }
-.ndl-widget-content>div{
+
+.ndl-widget-content>div {
   overflow-wrap: break-word
 }
-.cellClass{
-  width: 100%; 
+
+.cellClass {
+  width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
+}
+
+.ndl-type-checkbox,
+.ndl-label-before>span {
+  font-weight: 600;
+  font-size: larger;
 }
