@@ -182,6 +182,25 @@ def get_chat_history(llm, history):
         logging.exception(f"Exception in retrieving chat history: {e}")
         return "" 
 
+def clear_chat_history(graph, session_id):
+
+    try:
+        logging.info(f"Clearing chat history for session ID: {session_id}")
+        history = Neo4jChatMessageHistory(
+            graph=graph,
+            session_id=session_id
+        )
+        history.clear()
+        logging.info("Chat history cleared successfully")
+
+        return {
+            "session_id": session_id,
+            "message": "The chat history is cleared",
+            "user": "chatbot"
+        }
+    except Exception as e:
+        logging.exception(f"Error occurred while clearing chat history for session ID {session_id}: {e}")
+
 def extract_and_remove_source(message):
     pattern = r'\[Source: ([^\]]+)\]'
     match = re.search(pattern, message)

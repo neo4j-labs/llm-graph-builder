@@ -283,9 +283,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               <div className='my-40 flex items-center justify-center'>
                 <Banner
                   name='graph banner'
-                  closeable
                   description={statusMessage}
-                  onClose={() => setStatus('unknown')}
                   type={status}
                 />
               </div>

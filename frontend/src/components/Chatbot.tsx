@@ -4,9 +4,9 @@ import { Button, Widget, Typography, Avatar, TextInput, TextLink, IconButton } f
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
-import { ChatbotProps, UserCredentials } from '../types';
+import { ChatbotProps, Info, UserCredentials } from '../types';
 import { useCredentials } from '../context/UserCredentials';
-import chatBotAPI from '../services/QnaAPI';
+import { chatBotAPI } from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../context/UsersFiles';
 import { extractPdfFileName } from '../utils/Utils';
@@ -22,7 +22,7 @@ export default function Chatbot(props: ChatbotProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
-  const [infoMessage, setInfoMessage] = useState<string>('');
+  const [infoMessage, setInfoMessage] = useState<Info | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
@@ -32,9 +32,12 @@ export default function Chatbot(props: ChatbotProps) {
     if (!sessionStorage.getItem('session_id')) {
       const id = uuidv4();
       setSessionId(id);
+      console.log('id', id);
       sessionStorage.setItem('session_id', id);
     }
   }, []);
+
+  console.log('clear', props.clear);
 
   const simulateTypingEffect = (response: { reply: string; sources?: [string] }, index = 0) => {
     if (index < response.reply.length) {
@@ -98,7 +101,8 @@ export default function Chatbot(props: ChatbotProps) {
       const chatresponse = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
       chatbotReply = chatresponse?.data?.data?.message;
       simulateTypingEffect({ reply: chatbotReply, sources: chatresponse?.data?.data?.sources });
-      setInfoMessage(chatresponse?.data?.data?.info);
+      const chatInfo = chatresponse?.data.data.info;
+      setInfoMessage(chatInfo);
       setLoading(false);
     } catch (error) {
       chatbotReply = "Oops! It seems we couldn't retrieve the answer. Please try again later";
@@ -107,6 +111,7 @@ export default function Chatbot(props: ChatbotProps) {
       setLoading(false);
     }
   };
+  console.log('hello',);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -164,16 +169,14 @@ export default function Chatbot(props: ChatbotProps) {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${
-                    chat.user === 'chatbot'
-                      ? 'n-bg-palette-neutral-bg-strong max-w-[315px]'
-                      : 'n-bg-palette-primary-bg-weak max-w-[305px]'
-                  }`}
+                  className={`p-4 self-start ${chat.user === 'chatbot'
+                    ? 'n-bg-palette-neutral-bg-strong max-w-[315px]'
+                    : 'n-bg-palette-primary-bg-weak max-w-[305px]'
+                    }`}
                 >
                   <div
-                    className={`${
-                      loading && index === listMessages.length - 1 && chat.user == 'chatbot' ? 'loader' : ''
-                    }`}
+                    className={`${loading && index === listMessages.length - 1 && chat.user == 'chatbot' ? 'loader' : ''
+                      }`}
                   >
                     {chat.message.split(/`(.+?)`/).map((part, index) =>
                       index % 2 === 1 ? (
@@ -219,7 +222,15 @@ export default function Chatbot(props: ChatbotProps) {
                         >
                           <InformationCircleIconOutline className='w-4 h-4 inline-block n-text-palette-success-text' />
                         </IconButton>
-                        <ChatInfoModal open={showInfoModal} hideModal={hideInfoModal} info={infoMessage} />
+                        <ChatInfoModal key={index} open={showInfoModal} hideModal={hideInfoModal} >
+                          <ul><li>Model: {infoMessage?.model}</li>
+                            <li>Sources: {infoMessage?.sources.join(', ')}</li>
+                            <li>Entities: <ul>{infoMessage?.entities.map((entity, index) => (
+                              <li key={index}>{entity}</li>
+                            ))}</ul>
+                            </li>
+                          </ul>
+                        </ChatInfoModal>
                       </div>
                     )}
                   </div>

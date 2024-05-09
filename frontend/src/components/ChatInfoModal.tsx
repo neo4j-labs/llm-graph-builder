@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { ChatInfoModalProps } from '../types';
 import { Dialog } from '@neo4j-ndl/react';
 
-const ChatInfoModal: React.FC<ChatInfoModalProps> = ({ hideModal, open, info }) => {
+const ChatInfoModal: React.FC<ChatInfoModalProps> = ({ hideModal, open, children }) => {
   const onClose = useCallback(() => {
     hideModal();
   }, []);
@@ -16,8 +16,11 @@ const ChatInfoModal: React.FC<ChatInfoModalProps> = ({ hideModal, open, info }) 
       onClose={onClose}
       open={open}
       type='info'
+      size='small'
     >
-      <Dialog.Content>{info}</Dialog.Content>
+      <Dialog.Content style={{height:'400px'}}>
+        {children}
+      </Dialog.Content>
     </Dialog>
   );
 };

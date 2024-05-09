@@ -154,6 +154,7 @@ export interface messages {
 export type ChatbotProps = {
   messages: messages[];
   setMessages: Dispatch<SetStateAction<messages[]>>;
+  clear: boolean;
 };
 export interface WikipediaModalTypes {
   hideModal: () => void;
@@ -237,8 +238,14 @@ export interface SourceListServerData {
   message?: string;
 }
 
+export interface Info {
+  sources: [];
+  model: string;
+  entities:[]
+}
+
 export interface ChatInfoModalProps {
   hideModal: () => void;
   open: boolean;
-  info: string;
+  children: ReactNode;
 }
