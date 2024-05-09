@@ -14,7 +14,6 @@ def get_graph_from_diffbot(graph,chunkId_chunkDoc_list:List):
     diffbot_api_key = os.environ.get('DIFFBOT_API_KEY')
     diffbot_nlp = DiffbotGraphTransformer(diffbot_api_key=diffbot_api_key)
     graph_documents = diffbot_nlp.convert_to_graph_documents(combined_chunk_document_list)
-    graph.add_graph_documents(graph_documents, baseEntityLabel=True)
     return graph_documents
 
     

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import ConnectionModal from './ConnectionModal';
 import LlmDropdown from './Dropdown';
 import FileTable from './FileTable';
@@ -7,13 +7,14 @@ import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { extractAPI } from '../utils/FileAPI';
-import { ContentProps, OptionType, UserCredentials } from '../types';
+import { ContentProps, OptionType, UserCredentials, alertState } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './GraphViewModal';
 import { initialiseDriver } from '../utils/Driver';
 import Driver from 'neo4j-driver/types/driver';
 import { url } from '../utils/Utils';
-import { json } from 'node:stream/consumers';
+import deleteAPI from '../services/deleteFiles';
+import DeletePopUp from './DeletePopUp';
 
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -22,10 +23,17 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
-  const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels } = useFileContext();
-  const [errorMessage, setErrorMessage] = useState<string>('');
-  const [showAlert, setShowAlert] = useState<boolean>(false);
+  const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels, rowSelection, setRowSelection } =
+    useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
+  const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
+  const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
+
+  const [alertDetails, setalertDetails] = useState<alertState>({
+    showAlert: false,
+    alertType: 'error',
+    alertMessage: '',
+  });
 
   useEffect(() => {
     if (!init) {
@@ -66,6 +74,112 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       });
     });
   }, [model]);
+  const perchunksecond = parseInt(process.env.TIME_PER_CHUNK as string);
+  useEffect(() => {
+    const pendingfilesstr = localStorage.getItem('pendingfiles');
+    const neo4jconnection = localStorage.getItem('neo4j.connection');
+    if (pendingfilesstr && neo4jconnection) {
+      const pendingfiles = JSON.parse(pendingfilesstr);
+      const credentials = JSON.parse(neo4jconnection);
+      if (pendingfiles.length) {
+        pendingfiles.forEach((element: string) => {
+          let encodedstr;
+          if (credentials?.password) {
+            encodedstr = btoa(credentials?.password);
+          }
+          let alertShown = false;
+          const eventSource = new EventSource(
+            `${url()}/update_extract_status/${element}?url=${credentials?.uri}&userName=${
+              credentials?.user
+            }&password=${encodedstr}&database=${credentials?.database}`
+          );
+          eventSource.onmessage = (event) => {
+            const eventResponse = JSON.parse(event.data);
+            if (eventResponse.status === 'Completed') {
+              setFilesData((prevfiles) => {
+                return prevfiles.map((curfile) => {
+                  if (curfile.name == eventResponse.fileName) {
+                    return {
+                      ...curfile,
+                      status: eventResponse.status,
+                      NodesCount: eventResponse?.nodeCount,
+                      relationshipCount: eventResponse?.relationshipCount,
+                      model: eventResponse?.model,
+                      processing: eventResponse?.processingTime?.toFixed(2),
+                    };
+                  }
+                  return curfile;
+                });
+              });
+              const pendingfilesstr = localStorage.getItem('pendingfiles');
+              if (pendingfilesstr) {
+                const pendingfiles: string[] = JSON.parse(pendingfilesstr);
+                for (let index = 0; index < pendingfiles.length; index++) {
+                  if (pendingfiles[index] === eventResponse.fileName) {
+                    console.log(pendingfiles[index]);
+                    pendingfiles.splice(index, 1);
+                  }
+                }
+                localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
+              }
+              eventSource.close();
+            } else if (eventResponse.status == 'Failed') {
+              const pendingfilesstr = localStorage.getItem('pendingfiles');
+              if (pendingfilesstr) {
+                const pendingfiles: string[] = JSON.parse(pendingfilesstr);
+                for (let index = 0; index < pendingfiles.length; index++) {
+                  if (pendingfiles[index] === eventResponse.fileName) {
+                    console.log(pendingfiles[index]);
+                    pendingfiles.splice(index, 1);
+                  }
+                }
+                localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
+              }
+              setFilesData((prevfiles) => {
+                return prevfiles.map((curfile) => {
+                  if (curfile.name == eventResponse.fileName) {
+                    return {
+                      ...curfile,
+                      status: eventResponse.status,
+                    };
+                  }
+                  return curfile;
+                });
+              });
+              setalertDetails({
+                showAlert: true,
+                alertType: 'error',
+                alertMessage: `${eventResponse.fileName} Failed to Process`,
+              });
+              eventSource.close();
+            } else {
+              const minutes = Math.floor((perchunksecond * eventResponse.total_chunks) / 60);
+              if (eventResponse.status === 'Processing' && !alertShown) {
+                setalertDetails({
+                  showAlert: true,
+                  alertType: 'info',
+                  alertMessage: `${eventResponse.fileName} will take approx ${minutes} Min`,
+                });
+                alertShown = true;
+              }
+              const pendingfilestr = localStorage.getItem('pendingfiles');
+              if (pendingfilestr) {
+                const pendingfiles = JSON.parse(pendingfilestr);
+                const isfilepresent = pendingfiles.findIndex((a: string) => a === eventResponse.fileName);
+                if (isfilepresent == -1) {
+                  pendingfiles.push(eventResponse.fileName);
+                  localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
+                }
+              } else {
+                const pendingfiles = [eventResponse.fileName];
+                localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
+              }
+            }
+          };
+        });
+      }
+    }
+  }, []);
 
   const disableCheck = !filesData.some((f) => f.status === 'New');
 
@@ -96,13 +210,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           if (userCredentials?.password) {
             encodedstr = btoa(userCredentials?.password);
           }
+          let alertShowed = false;
           const eventSource = new EventSource(
             `${url()}/update_extract_status/${filesData[uid].name}?url=${userCredentials?.uri}&userName=${
               userCredentials?.userName
             }&password=${encodedstr}&database=${userCredentials?.database}`
           );
           eventSource.onmessage = (event) => {
-            console.log(event.data);
             const eventResponse = JSON.parse(event.data);
             if (eventResponse.status === 'Completed') {
               setFilesData((prevfiles) => {
@@ -120,7 +234,67 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                   return curfile;
                 });
               });
+              const pendingfilesstr = localStorage.getItem('pendingfiles');
+              if (pendingfilesstr) {
+                const pendingfiles = JSON.parse(pendingfilesstr);
+                for (let index = 0; index < pendingfiles.length; index++) {
+                  if (pendingfiles[index] === eventResponse.fileName) {
+                    pendingfiles.splice(index, 1);
+                  }
+                }
+                localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
+              }
               eventSource.close();
+            } else if (eventResponse.status == 'Failed') {
+              const pendingfilesstr = localStorage.getItem('pendingfiles');
+              if (pendingfilesstr) {
+                const pendingfiles: string[] = JSON.parse(pendingfilesstr);
+                for (let index = 0; index < pendingfiles.length; index++) {
+                  if (pendingfiles[index] === eventResponse.fileName) {
+                    pendingfiles.splice(index, 1);
+                  }
+                }
+                localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
+              }
+              setFilesData((prevfiles) => {
+                return prevfiles.map((curfile) => {
+                  if (curfile.name == eventResponse.fileName) {
+                    return {
+                      ...curfile,
+                      status: eventResponse.status,
+                    };
+                  }
+                  return curfile;
+                });
+              });
+              setalertDetails({
+                showAlert: true,
+                alertType: 'error',
+                alertMessage: `${eventResponse.fileName} Failed to process`,
+              });
+              eventSource.close();
+            } else {
+              const minutes = Math.floor((perchunksecond * eventResponse.total_chunks) / 60);
+              if (eventResponse.status === 'Processing' && !alertShowed) {
+                setalertDetails({
+                  showAlert: true,
+                  alertType: 'info',
+                  alertMessage: `${eventResponse.fileName} will take approx ${minutes} Min`,
+                });
+                alertShowed = true;
+              }
+              const pendingfilestr = localStorage.getItem('pendingfiles');
+              if (pendingfilestr) {
+                const pendingfiles = JSON.parse(pendingfilestr);
+                const isfilepresent = pendingfiles.findIndex((a: string) => a === eventResponse.fileName);
+                if (isfilepresent == -1) {
+                  pendingfiles.push(eventResponse.fileName);
+                  localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
+                }
+              } else {
+                const pendingfiles = [eventResponse.fileName];
+                localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
+              }
             }
           };
         }
@@ -163,12 +337,15 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       } catch (err: any) {
         const error = JSON.parse(err.message);
         if (Object.keys(error).includes('fileName')) {
-          const message = error.message;
-          const fileName = error.fileName;
+          const { message } = error;
+          const { fileName } = error;
           const errorMessage = error.message;
           console.log({ message, fileName, errorMessage });
-          setShowAlert(true);
-          setErrorMessage(message);
+          setalertDetails({
+            showAlert: true,
+            alertType: 'error',
+            alertMessage: message,
+          });
           setFilesData((prevfiles) =>
             prevfiles.map((curfile) => {
               if (curfile.name == fileName) {
@@ -201,7 +378,11 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   };
 
   const handleClose = () => {
-    setShowAlert(false);
+    setalertDetails({
+      showAlert: false,
+      alertType: 'info',
+      alertMessage: '',
+    });
   };
 
   const handleOpenGraphClick = () => {
@@ -235,11 +416,70 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     localStorage.removeItem('password');
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
   };
+  const selectedfileslength = useMemo(() => Object.keys(rowSelection).length, [rowSelection]);
+  const deleteFileClickHandler: React.MouseEventHandler<HTMLButtonElement> = () => {
+    setshowDeletePopUp(true);
+  };
+
+  const handleDeleteFiles = async () => {
+    try {
+      setdeleteLoading(true);
+      const response = await deleteAPI(userCredentials as UserCredentials, rowSelection);
+      setdeleteLoading(false);
+      if (response.data.status == 'Success') {
+        setalertDetails({
+          showAlert: true,
+          alertMessage: response.data.message,
+          alertType: 'success',
+        });
+        const keys = Object.keys(rowSelection);
+        const filenames = keys.map((str) => str.split(',')[0]);
+        filenames.forEach((name) => {
+          setFilesData((prev) => prev.filter((f) => f.name != name));
+        });
+        setRowSelection({});
+      } else {
+        let errorobj = { error: response.data.error, message: response.data.message };
+        throw new Error(JSON.stringify(errorobj));
+      }
+      console.log(response);
+      setshowDeletePopUp(false);
+    } catch (err) {
+      if (err instanceof Error) {
+        const error = JSON.parse(err.message);
+        const { message } = error;
+        const errorMessage = error.message;
+        console.log({ message, errorMessage });
+        setalertDetails({
+          showAlert: true,
+          alertType: 'error',
+          alertMessage: message,
+        });
+        console.log(err);
+      }
+    }
+    setshowDeletePopUp(false);
+  };
 
   return (
     <>
-      <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
-
+      {alertDetails.showAlert && (
+        <CustomAlert
+          severity={alertDetails.alertType}
+          open={alertDetails.showAlert}
+          handleClose={handleClose}
+          alertMessage={alertDetails.alertMessage}
+        />
+      )}
+      {showDeletePopUp && (
+        <DeletePopUp
+          open={showDeletePopUp}
+          no_of_files={selectedfileslength}
+          deleteHandler={handleDeleteFiles}
+          deleteCloseHandler={() => setshowDeletePopUp(false)}
+          loading={deleteLoading}
+        ></DeletePopUp>
+      )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>
           <ConnectionModal
@@ -247,12 +487,18 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             setOpenConnection={setOpenConnection}
             setConnectionStatus={setConnectionStatus}
           />
-          <Typography variant='body-medium' className='connectionstatus__container'>
+          <div className='connectionstatus__container'>
+            <span className='h6 px-1'>Neo4j connection</span>
             <Typography variant='body-medium'>
               {!connectionStatus ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
+              {connectionStatus ? (
+                <span className='n-body-small'>{userCredentials?.uri}</span>
+              ) : (
+                <span className='n-body-small'>Not Connected</span>
+              )}
             </Typography>
-            Neo4j connection
-          </Typography>
+          </div>
+
           {!connectionStatus ? (
             <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
               Connect to Neo4j
@@ -280,12 +526,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
-            <Button
-              // loading={filesData.some((f) => f?.status === 'Processing')}
-              disabled={disableCheck}
-              onClick={handleGenerateGraph}
-              className='mr-0.5'
-            >
+            <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
               Generate Graph
             </Button>
             <Button
@@ -300,7 +541,15 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               disabled={!filesData.some((f) => f?.status === 'Completed')}
               className='ml-0.5'
             >
-              Open Graph
+              Open Graph with Bloom
+            </Button>
+            <Button
+              onClick={deleteFileClickHandler}
+              className='ml-0.5'
+              title={!selectedfileslength ? 'please select a file' : ''}
+              disabled={!selectedfileslength}
+            >
+              Delete Files
             </Button>
             <Button
               onClick={() => {

@@ -46,11 +46,12 @@ class graphDBdataAccess:
             logging.info("Update source node properties")
             self.graph.query("""MERGE(d:Document {fileName :$fn}) SET d.status = $st, d.createdAt = $c_at, 
                             d.updatedAt = $u_at, d.processingTime = $pt, d.nodeCount= $n_count, 
-                            d.relationshipCount = $r_count, d.model= $model
+                            d.relationshipCount = $r_count, d.model= $model, d.total_pages = $t_pages, d.total_chunks = $t_chunks
                         """,
                         {"fn":obj_source_node.file_name, "st":obj_source_node.status, "c_at":obj_source_node.created_at,
                         "u_at":obj_source_node.updated_at, "pt":round(processed_time.total_seconds(),2), "e_message":'',
-                        "n_count":obj_source_node.node_count, "r_count":obj_source_node.relationship_count, "model":obj_source_node.model
+                        "n_count":obj_source_node.node_count, "r_count":obj_source_node.relationship_count, "model":obj_source_node.model,
+                        "t_pages":obj_source_node.total_pages, "t_chunks":obj_source_node.total_chunks
                         }
                         )
         except Exception as e:
@@ -113,7 +114,35 @@ class graphDBdataAccess:
 
     def get_current_status_document_node(self, file_name):
         query = """
-                MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount
+                MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, 
+                d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount,
+                d.total_pages AS total_pages, d.total_chunks AS total_chunks
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
+    
+    def delete_file_from_graph(self, filenames:str, source_types:str):
+        filename_list = filenames.split(',')
+        source_types_list = source_types.split(',')
+        query=""" 
+            UNWIND $filename_list AS filename
+            UNWIND $source_types_list AS source_type
+            MATCH docs = (d:Document {fileName: filename, fileSource: source_type}) 
+            WITH docs, d ORDER BY d.createdAt DESC 
+            CALL { WITH d
+                OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
+                RETURN chunks
+            }
+            WITH [] 
+            + [docs] 
+            + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } 
+            + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } 
+            + collect { OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!Chunk) RETURN p} AS paths
+            CALL { WITH paths UNWIND paths AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }
+            WITH nodes
+            UNWIND nodes as n
+            DETACH DELETE n
+            """
+        param = {"filename_list" : filename_list, "source_types_list": source_types_list}
+        logging.info(f"Deleting document '{filename_list}' from '{source_types_list}' with their entities from database")
+        return self.execute_query(query, param)    

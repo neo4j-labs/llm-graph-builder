@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, Dispatch, SetStateAction, FC } from 'react';
 import { CustomFile, FileContextProviderProps, OptionType } from '../types';
-import { NODES_OPTIONS, RELATION_OPTIONS, defaultLLM } from '../utils/Constants';
+import { defaultLLM } from '../utils/Constants';
 
 interface FileContextType {
   files: (File | null)[] | [];
@@ -15,6 +15,8 @@ interface FileContextType {
   setSelectedNodes: Dispatch<SetStateAction<readonly OptionType[]>>;
   selectedRels: readonly OptionType[];
   setSelectedRels: Dispatch<SetStateAction<readonly OptionType[]>>;
+  rowSelection: Record<string, boolean>;
+  setRowSelection: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
@@ -23,8 +25,9 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
   const [model, setModel] = useState<string>(defaultLLM);
   const [graphType, setGraphType] = useState<string>('Knowledge Graph Entities');
-  const [selectedNodes, setSelectedNodes] = useState<readonly OptionType[]>([NODES_OPTIONS[0]]);
-  const [selectedRels, setSelectedRels] = useState<readonly OptionType[]>([RELATION_OPTIONS[0]]);
+  const [selectedNodes, setSelectedNodes] = useState<readonly OptionType[]>([]);
+  const [selectedRels, setSelectedRels] = useState<readonly OptionType[]>([]);
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const value: FileContextType = {
     files,
     filesData,
@@ -38,6 +41,8 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setSelectedRels,
     selectedNodes,
     setSelectedNodes,
+    rowSelection,
+    setRowSelection,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };
