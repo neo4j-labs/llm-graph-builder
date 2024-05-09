@@ -116,10 +116,20 @@ def vector_embed_results(qa,question):
     try:
         result = qa({"query": question})
         vector_res['result']=result.get("result")
-        list_source_docs=[]
-        for i in result["source_documents"]:
-            list_source_docs.append(i.metadata['source'])
-            vector_res['source']=list_source_docs
+        sources = set()
+        entities = set()
+        for document in result["source_documents"]:
+            sources.add(document.metadata["source"])
+            for entiti in document.metadata["entities"]:
+                entities.add(entiti)
+        vector_res['source']=list(sources)
+        vector_res['entities'] = list(entities)
+
+        # list_source_docs=[]
+        # for i in result["source_documents"]:
+        #     list_source_docs.append(i.metadata['source'])
+        #     vector_res['source']=list_source_docs
+        
         # result = qa({"question":question},return_only_outputs=True)
         # vector_res['result'] = result.get("answer")
         # vector_res["source"] = result.get("sources")
@@ -281,7 +291,7 @@ def QA_RAG(graph,model,question,session_id):
             "info": {
                 "sources": sources,
                 "model":model_version,
-                "entities":[]
+                "entities":vector_res["entities"]
             },
             "user": "chatbot"
             }
