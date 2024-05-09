@@ -18,7 +18,7 @@ import {
   getPaginationRowModel,
   CellContext,
   Table,
-  Row
+  Row,
 } from '@tanstack/react-table';
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
@@ -51,7 +51,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
             onChange={table.getToggleAllRowsSelectedHandler()}
           />
         ),
-        cell: ({ row }:{row:Row<CustomFile>}) => {
+        cell: ({ row }: { row: Row<CustomFile> }) => {
           console.log(row.getIsSelected());
           return (
             <div className='px-1'>
