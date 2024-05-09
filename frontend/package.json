@@ -15,6 +15,7 @@
     "@mui/material": "^5.15.10",
     "@mui/styled-engine": "^5.15.9",
     "@neo4j-devtools/word-color": "^0.0.8",
+    "@neo4j-ndl/react": "^2.13.7",
     "@neo4j-nvl/base": "^0.3.1",
     "@neo4j-nvl/react": "^0.3.1",
     "@types/uuid": "^9.0.7",

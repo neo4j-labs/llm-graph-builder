@@ -49,10 +49,10 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
             aria-label='header-checkbox'
             checked={table.getIsAllRowsSelected()}
             onChange={table.getToggleAllRowsSelectedHandler()}
+            title='select all rows for deletion'
           />
         ),
         cell: ({ row }: { row: Row<CustomFile> }) => {
-          console.log(row.getIsSelected());
           return (
             <div className='px-1'>
               <Checkbox
@@ -60,6 +60,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                 checked={row.getIsSelected()}
                 disabled={!row.getCanSelect()}
                 onChange={row.getToggleSelectedHandler()}
+                title='select row for deletion'
               />
             </div>
           );
