@@ -18,7 +18,7 @@ export default function DeletePopUp({
   return (
     <Dialog onClose={deleteCloseHandler} open={open}>
       <Dialog.Content>
-        <Typography variant='subheading-small'>
+        <Typography variant='subheading-large'>
           This Action Will Delete {no_of_files} {no_of_files > 1 ? 'Files' : 'File'}{' '}
           {deleteEntities ? 'and associated entities' : ''}
         </Typography>

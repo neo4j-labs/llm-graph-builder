@@ -17,7 +17,7 @@ const deleteAPI = async (
     formData.append('userName', userCredentials?.userName ?? '');
     formData.append('password', userCredentials?.password ?? '');
     // @ts-ignore
-    formData.append('deleteEntites', deleteEntities);
+    formData.append('deleteEntities', deleteEntities);
     // @ts-ignore
     formData.append('filenames', filenames);
     // @ts-ignore
