@@ -11,8 +11,8 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { GraphType, GraphViewModalProps, Scheme } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
-import NVL, { NvlOptions } from '@neo4j-nvl/core';
-import type { Node, Relationship } from '@neo4j-nvl/core';
+import NVL, { NvlOptions } from '@neo4j-nvl/base';
+import type { Node, Relationship } from '@neo4j-nvl/base';
 
 import {
   FitToScreenIcon,
