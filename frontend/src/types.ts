@@ -149,6 +149,8 @@ export interface messages {
   datetime: string;
   isTyping?: boolean;
   sources?: string[];
+  model?: string;
+  entities?:string[];
 }
 
 export type ChatbotProps = {
@@ -238,14 +240,19 @@ export interface SourceListServerData {
   message?: string;
 }
 
-export interface Info {
-  sources: [];
+export interface Info  extends Partial<messages> {
+  sources: string[];
   model: string;
-  entities:[]
+  entities:string[];
 }
 
 export interface ChatInfoModalProps {
   hideModal: () => void;
   open: boolean;
   children: ReactNode;
+}
+
+
+export interface chatInfoMessage  {
+  activeChat: Info
 }

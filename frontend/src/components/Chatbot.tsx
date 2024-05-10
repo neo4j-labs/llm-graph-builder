@@ -4,16 +4,17 @@ import { Button, Widget, Typography, Avatar, TextInput, TextLink, IconButton } f
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
-import { ChatbotProps, Info, UserCredentials, messages } from '../types';
+import { ChatbotProps, UserCredentials, chatInfoMessage } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { chatBotAPI } from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../context/UsersFiles';
 import { extractPdfFileName } from '../utils/Utils';
 import ChatInfoModal from './ChatInfoModal';
+import ListComp from './List';
 
 export default function Chatbot(props: ChatbotProps) {
-  const { messages: listMessages, setMessages: setListMessages } = props;
+  const { messages: listMessages, setMessages: setListMessages, clear } = props;
   const [inputMessage, setInputMessage] = useState('');
   const formattedTextStyle = { color: 'rgb(var(--theme-palette-discovery-bg-strong))' };
   const [loading, setLoading] = useState<boolean>(false);
@@ -22,16 +23,9 @@ export default function Chatbot(props: ChatbotProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
-  const [infoMessage, setInfoMessage] = useState<Info | null>(null);
-  const [activeChat, setActiveChat] = useState<messages>(
-    {
-      id:0,
-      message: '',
-      user: 'chatBot',
-      datetime: '',
-      isTyping?: false,
-      sources?: []
-    });
+  const [activeChat, setActiveChat] = useState<chatInfoMessage>(
+    { activeChat: { 'sources': [], 'entities': [], 'model': '' } }
+  );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
@@ -46,7 +40,7 @@ export default function Chatbot(props: ChatbotProps) {
     }
   }, []);
 
-  const simulateTypingEffect = (response: { reply: string; sources?: [string] }, index = 0) => {
+  const simulateTypingEffect = (response: { reply: string; entities?: [string]; model?: string; sources?: [string] }, index = 0) => {
     if (index < response.reply.length) {
       const nextIndex = index + 1;
       const currentTypedText = response.reply.substring(0, nextIndex);
@@ -63,6 +57,8 @@ export default function Chatbot(props: ChatbotProps) {
               datetime: datetime,
               isTyping: true,
               sources: response?.sources,
+              entities: response?.entities,
+              model: response?.model,
             },
           ]);
         } else {
@@ -74,6 +70,8 @@ export default function Chatbot(props: ChatbotProps) {
             lastmsg.datetime = datetime;
             lastmsg.isTyping = true;
             lastmsg.sources = response?.sources;
+            lastmsg.entities = response?.entities;
+            lastmsg.model = response?.model;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -109,9 +107,6 @@ export default function Chatbot(props: ChatbotProps) {
       const chatresponse = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
       chatbotReply = chatresponse?.data?.data?.message;
       simulateTypingEffect({ reply: chatbotReply, sources: chatresponse?.data?.data?.sources });
-      const chatInfo = chatresponse?.data.data.info;
-      console.log('chatInfo', chatresponse?.data.data);
-      setInfoMessage(chatInfo);
       setLoading(false);
     } catch (error) {
       chatbotReply = "Oops! It seems we couldn't retrieve the answer. Please try again later";
@@ -129,8 +124,8 @@ export default function Chatbot(props: ChatbotProps) {
     scrollToBottom();
   }, [listMessages]);
 
-  const openInfoModal = useCallback(() => {
-    console.log('new');
+  const openInfoModal = useCallback((activeChat: chatInfoMessage) => {
+    setActiveChat(activeChat)
     setShowInfoModal(true);
   }, []);
 
@@ -139,7 +134,7 @@ export default function Chatbot(props: ChatbotProps) {
   }, []);
 
   useEffect(() => {
-    if (props.clear) {
+    if (clear) {
       console.log(listMessages[0]);
       setListMessages([{
         datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
@@ -150,10 +145,6 @@ export default function Chatbot(props: ChatbotProps) {
       }]);
     }
   }, [props.clear])
-
-  const element = () => {
-    const found = listMessages.find((element) => element.id === );
-  }
 
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
@@ -242,19 +233,13 @@ export default function Chatbot(props: ChatbotProps) {
                           className='infoIcon'
                           clean
                           aria-label='Information Icon'
-                          onClick={openInfoModal}
+                          onClick={() => { openInfoModal({ activeChat: { 'sources': chat?.sources as string[], 'entities': chat.entities as string[], 'model': chat.model as string } }) }}
                           disabled={loading}
                         >
                           <InformationCircleIconOutline className='w-4 h-4 inline-block n-text-palette-success-text' />
                         </IconButton>
                         <ChatInfoModal key={index} open={showInfoModal} hideModal={hideInfoModal} >
-                          <ul><li>Model: {infoMessage?.model}</li>
-                            <li>Sources: {infoMessage?.sources.join(', ')}</li>
-                            <li>Entities: <ul>{infoMessage?.entities.map((entity, index) => (
-                              <li key={index}>{entity}</li>
-                            ))}</ul>
-                            </li>
-                          </ul>
+                          <ListComp activeChat={activeChat} />
                         </ChatInfoModal>
                       </div>
                     )}
