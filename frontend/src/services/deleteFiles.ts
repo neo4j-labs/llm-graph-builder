@@ -22,7 +22,7 @@ const deleteAPI = async (
     formData.append('filenames', filenames);
     if (localStorage.getItem('pendingifiles')) {
       // @ts-ignore
-      const files = JSON.parse(localStorage.getItem('pendingifiles'));
+      const files = JSON.parse(localStorage.getItem('pendingfiles'));
       for (let i = 0; i < filenames.length; i++) {
         if (files[i] == filenames[i]) {
           files.splice(i, 1);
