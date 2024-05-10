@@ -242,3 +242,9 @@
     width: 15px;
   }
 }
+
+.ndl-type-checkbox,
+.ndl-label-before>span {
+  font-weight: 600;
+  font-size: larger;
+}

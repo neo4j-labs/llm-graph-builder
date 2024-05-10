@@ -18,7 +18,7 @@ import {
   getPaginationRowModel,
   CellContext,
   Table,
-  Row
+  Row,
 } from '@tanstack/react-table';
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
@@ -49,21 +49,25 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
             aria-label='header-checkbox'
             checked={table.getIsAllRowsSelected()}
             onChange={table.getToggleAllRowsSelectedHandler()}
+            title='select all rows for deletion'
           />
         ),
-        cell: ({ row }:{row:Row<CustomFile>}) => {
-          console.log(row.getIsSelected());
+        cell: ({ row }: { row: Row<CustomFile> }) => {
           return (
             <div className='px-1'>
               <Checkbox
                 aria-label='row-checkbox'
                 checked={row.getIsSelected()}
-                disabled={!row.getCanSelect()}
+                disabled={
+                  !row.getCanSelect() || row.original.status === 'Uploading' || row.original.status === 'Processing'
+                }
                 onChange={row.getToggleSelectedHandler()}
+                title='select row for deletion'
               />
             </div>
           );
         },
+        size: 80,
       },
       columnHelper.accessor((row) => row.name, {
         id: 'name',

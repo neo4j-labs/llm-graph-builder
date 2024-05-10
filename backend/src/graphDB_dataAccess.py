@@ -121,28 +121,39 @@ class graphDBdataAccess:
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
     
-    def delete_file_from_graph(self, filenames:str, source_types:str):
+    def delete_file_from_graph(self, filenames:str, source_types:str, deleteEntities:str):
         filename_list = filenames.split(',')
         source_types_list = source_types.split(',')
-        query=""" 
-            UNWIND $filename_list AS filename
-            UNWIND $source_types_list AS source_type
-            MATCH docs = (d:Document {fileName: filename, fileSource: source_type}) 
-            WITH docs, d ORDER BY d.createdAt DESC 
-            CALL { WITH d
-                OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
-                RETURN chunks
-            }
-            WITH [] 
-            + [docs] 
-            + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } 
-            + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } 
-            + collect { OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!Chunk) RETURN p} AS paths
-            CALL { WITH paths UNWIND paths AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }
-            WITH nodes
-            UNWIND nodes as n
-            DETACH DELETE n
+        query_to_delete_document=""" 
+           MATCH (d:Document) where d.fileName in $filename_list and d.fileSource in $source_types_list
+            with collect(d) as documents 
+            unwind documents as d
+            optional match (d)<-[:PART_OF]-(c:Chunk) 
+            detach delete c, d
+            return count(*) as deletedChunks
             """
+        query_to_delete_document_and_entities=""" 
+            MATCH (d:Document) where d.fileName in $filename_list and d.fileSource in $source_types_list
+            with collect(d) as documents 
+            unwind documents as d
+            optional match (d)<-[:PART_OF]-(c:Chunk)
+            // if delete-entities checkbox is set
+            call { with  c, documents
+                match (c)-[:HAS_ENTITY]->(e)
+                // belongs to another document
+                where not exists {  (d2)<-[:PART_OF]-()-[:HAS_ENTITY]->(e) WHERE NOT d2 IN documents }
+                detach delete e
+                return count(*) as entities
+            } 
+            detach delete c, d
+            return sum(entities) as deletedEntities, count(*) as deletedChunks
+            """    
         param = {"filename_list" : filename_list, "source_types_list": source_types_list}
-        logging.info(f"Deleting document '{filename_list}' from '{source_types_list}' with their entities from database")
-        return self.execute_query(query, param)    
+        if deleteEntities == "true":
+            result = self.execute_query(query_to_delete_document_and_entities, param)
+            logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' from database")
+        else :
+            result = self.execute_query(query_to_delete_document, param)    
+            logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' with their entities from database")
+        
+        return result, len(filename_list)    

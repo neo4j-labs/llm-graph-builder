@@ -123,6 +123,35 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                 localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
               }
               eventSource.close();
+            } else if (eventResponse.status == 'Failed') {
+              const pendingfilesstr = localStorage.getItem('pendingfiles');
+              if (pendingfilesstr) {
+                const pendingfiles: string[] = JSON.parse(pendingfilesstr);
+                for (let index = 0; index < pendingfiles.length; index++) {
+                  if (pendingfiles[index] === eventResponse.fileName) {
+                    console.log(pendingfiles[index]);
+                    pendingfiles.splice(index, 1);
+                  }
+                }
+                localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
+              }
+              setFilesData((prevfiles) => {
+                return prevfiles.map((curfile) => {
+                  if (curfile.name == eventResponse.fileName) {
+                    return {
+                      ...curfile,
+                      status: eventResponse.status,
+                    };
+                  }
+                  return curfile;
+                });
+              });
+              setalertDetails({
+                showAlert: true,
+                alertType: 'error',
+                alertMessage: `${eventResponse.fileName} Failed to Process`,
+              });
+              eventSource.close();
             } else {
               const minutes = Math.floor((perchunksecond * eventResponse.total_chunks) / 60);
               if (eventResponse.status === 'Processing' && !alertShown) {
@@ -146,6 +175,22 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                 localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
               }
             }
+          };
+          eventSource.onerror = (event) => {
+            // @ts-ignore
+            const errorfile = decodeURI(event?.target?.url?.split('?')[0].split('/').at(-1));
+            const pendingfilesstr = localStorage.getItem('pendingfiles');
+            if (pendingfilesstr) {
+              const pendingfiles: string[] = JSON.parse(pendingfilesstr);
+              for (let index = 0; index < pendingfiles.length; index++) {
+                if (pendingfiles[index] === errorfile) {
+                  console.log(pendingfiles[index]);
+                  pendingfiles.splice(index, 1);
+                }
+              }
+              localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
+            }
+            // localStorage.removeItem('pendingFiles')
           };
         });
       }
@@ -216,6 +261,34 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                 localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
               }
               eventSource.close();
+            } else if (eventResponse.status == 'Failed') {
+              const pendingfilesstr = localStorage.getItem('pendingfiles');
+              if (pendingfilesstr) {
+                const pendingfiles: string[] = JSON.parse(pendingfilesstr);
+                for (let index = 0; index < pendingfiles.length; index++) {
+                  if (pendingfiles[index] === eventResponse.fileName) {
+                    pendingfiles.splice(index, 1);
+                  }
+                }
+                localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
+              }
+              setFilesData((prevfiles) => {
+                return prevfiles.map((curfile) => {
+                  if (curfile.name == eventResponse.fileName) {
+                    return {
+                      ...curfile,
+                      status: eventResponse.status,
+                    };
+                  }
+                  return curfile;
+                });
+              });
+              setalertDetails({
+                showAlert: true,
+                alertType: 'error',
+                alertMessage: `${eventResponse.fileName} Failed to process`,
+              });
+              eventSource.close();
             } else {
               const minutes = Math.floor((perchunksecond * eventResponse.total_chunks) / 60);
               if (eventResponse.status === 'Processing' && !alertShowed) {
@@ -239,6 +312,22 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                 localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
               }
             }
+          };
+          eventSource.onerror = (event) => {
+            // @ts-ignore
+            const errorfile = decodeURI(event?.target?.url?.split('?')[0].split('/').at(-1));
+            const pendingfilesstr = localStorage.getItem('pendingfiles');
+            if (pendingfilesstr) {
+              const pendingfiles: string[] = JSON.parse(pendingfilesstr);
+              for (let index = 0; index < pendingfiles.length; index++) {
+                if (pendingfiles[index] === errorfile) {
+                  console.log(pendingfiles[index]);
+                  pendingfiles.splice(index, 1);
+                }
+              }
+              localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
+            }
+            // localStorage.removeItem('pendingFiles')
           };
         }
 
@@ -364,10 +453,10 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     setshowDeletePopUp(true);
   };
 
-  const handleDeleteFiles = async () => {
+  const handleDeleteFiles = async (deleteEntities: boolean) => {
     try {
       setdeleteLoading(true);
-      const response = await deleteAPI(userCredentials as UserCredentials, rowSelection);
+      const response = await deleteAPI(userCredentials as UserCredentials, rowSelection, deleteEntities);
       setdeleteLoading(false);
       if (response.data.status == 'Success') {
         setalertDetails({
@@ -404,8 +493,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     setshowDeletePopUp(false);
   };
 
-
-
   return (
     <>
       {alertDetails.showAlert && (
@@ -420,7 +507,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         <DeletePopUp
           open={showDeletePopUp}
           no_of_files={selectedfileslength}
-          deleteHandler={handleDeleteFiles}
+          deleteHandler={(delentities: boolean) => handleDeleteFiles(delentities)}
           deleteCloseHandler={() => setshowDeletePopUp(false)}
           loading={deleteLoading}
         ></DeletePopUp>
@@ -471,11 +558,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
-            <Button
-              disabled={disableCheck}
-              onClick={handleGenerateGraph}
-              className='mr-0.5'
-            >
+            <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
               Generate Graph
             </Button>
             <Button

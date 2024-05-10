@@ -71,16 +71,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.length === 3
       ? queryMap.DocChunkEntities
       : graphType.includes('entities') && graphType.includes('chunks')
-        ? queryMap.ChunksEntities
-        : graphType.includes('entities') && graphType.includes('document')
-          ? queryMap.DocEntities
-          : graphType.includes('document') && graphType.includes('chunks')
-            ? queryMap.DocChunks
-            : graphType.includes('entities') && graphType.length === 1
-              ? queryMap.Entities
-              : graphType.includes('chunks') && graphType.length === 1
-                ? queryMap.Chunks
-                : queryMap.Document;
+      ? queryMap.ChunksEntities
+      : graphType.includes('entities') && graphType.includes('document')
+      ? queryMap.DocEntities
+      : graphType.includes('document') && graphType.includes('chunks')
+      ? queryMap.DocChunks
+      : graphType.includes('entities') && graphType.length === 1
+      ? queryMap.Entities
+      : graphType.includes('chunks') && graphType.length === 1
+      ? queryMap.Chunks
+      : queryMap.Document;
 
   // API Call to fetch the queried Data
   const fetchData = async () => {
@@ -239,19 +239,19 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               <Checkbox
                 checked={graphType.includes('document')}
                 label='Document'
-                disabled={graphType.includes('document') && graphType.length === 1}
+                disabled={(graphType.includes('document') && graphType.length === 1) || loading}
                 onChange={() => handleCheckboxChange('document')}
               />
               <Checkbox
                 checked={graphType.includes('entities')}
                 label='Entities'
-                disabled={graphType.includes('entities') && graphType.length === 1}
+                disabled={(graphType.includes('entities') && graphType.length === 1) || loading}
                 onChange={() => handleCheckboxChange('entities')}
               />
               <Checkbox
                 checked={graphType.includes('chunks')}
                 label='Chunks'
-                disabled={graphType.includes('chunks') && graphType.length === 1}
+                disabled={(graphType.includes('chunks') && graphType.length === 1) || loading}
                 onChange={() => handleCheckboxChange('chunks')}
               />
             </div>
