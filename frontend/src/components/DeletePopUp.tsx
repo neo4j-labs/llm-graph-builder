@@ -38,9 +38,6 @@ export default function DeletePopUp({
         </div>
       </Dialog.Content>
       <Dialog.Actions className='mt-3'>
-        <Button color='neutral' fill='outlined' onClick={deleteCloseHandler} size='large'>
-          Cancel
-        </Button>
         <Button onClick={() => deleteHandler(deleteEntities)} size='large' loading={loading}>
           Continue
         </Button>
