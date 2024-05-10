@@ -165,3 +165,4 @@ yarl==1.9.4
 youtube-transcript-api==0.6.2
 zipp==3.17.0
 sentence-transformers
+google-cloud-logging==3.10.0
