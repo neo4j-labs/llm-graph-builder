@@ -31,7 +31,7 @@ import CustomAlert from './Alert';
 import CustomProgressBar from './CustomProgressBar';
 
 const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
-  const { filesData, setFilesData, model, rowSelection, setRowSelection } = useFileContext();
+  const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows } = useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -44,20 +44,33 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     () => [
       {
         id: 'select',
-        header: ({ table }: { table: Table<CustomFile> }) => (
-          <Checkbox
-            aria-label='header-checkbox'
-            checked={table.getIsAllRowsSelected()}
-            onChange={table.getToggleAllRowsSelectedHandler()}
-            title='select all rows for deletion'
-          />
-        ),
+        header: ({ table }: { table: Table<CustomFile> }) => {
+          const processingcheck = table
+            .getRowModel()
+            .rows.map((i) => i.original.status)
+            .includes('Processing');
+          return (
+            <Checkbox
+              aria-label='header-checkbox'
+              checked={table.getIsAllRowsSelected()}
+              onChange={table.getToggleAllRowsSelectedHandler()}
+              disabled={processingcheck}
+              title={
+                processingcheck
+                  ? `Files are still processing please select individual checkbox for deletion`
+                  : 'select all rows for deletion'
+              }
+            />
+          );
+        },
         cell: ({ row }: { row: Row<CustomFile> }) => {
           return (
             <div className='px-1'>
               <Checkbox
                 aria-label='row-checkbox'
-                checked={row.getIsSelected()}
+                checked={
+                  row.getIsSelected() && row.original.status != 'Uploading' && row.original.status != 'Processing'
+                }
                 disabled={
                   !row.getCanSelect() || row.original.status === 'Uploading' || row.original.status === 'Processing'
                 }
@@ -304,7 +317,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     autoResetPageIndex: false,
     enableRowSelection: true,
     enableMultiRowSelection: true,
-    getRowId: (row) => `${row.name},${row.fileSource}`,
+    getRowId: (row) => `${row.name},${row.fileSource},${row.status}`,
   });
 
   useEffect(() => {
@@ -325,7 +338,9 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
   const handleClose = () => {
     setShowAlert(false);
   };
-
+  useEffect(() => {
+    setSelectedRows(table.getSelectedRowModel().rows.map((i) => i.id));
+  }, [table.getSelectedRowModel()]);
   return (
     <>
       <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />

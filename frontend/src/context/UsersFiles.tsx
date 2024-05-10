@@ -17,6 +17,8 @@ interface FileContextType {
   setSelectedRels: Dispatch<SetStateAction<readonly OptionType[]>>;
   rowSelection: Record<string, boolean>;
   setRowSelection: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  selectedRows: string[];
+  setSelectedRows: React.Dispatch<React.SetStateAction<string[]>>;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
@@ -28,6 +30,8 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [selectedNodes, setSelectedNodes] = useState<readonly OptionType[]>([]);
   const [selectedRels, setSelectedRels] = useState<readonly OptionType[]>([]);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+
   const value: FileContextType = {
     files,
     filesData,
@@ -43,6 +47,8 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setSelectedNodes,
     rowSelection,
     setRowSelection,
+    selectedRows,
+    setSelectedRows,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

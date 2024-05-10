@@ -2,15 +2,10 @@ import axios from 'axios';
 import { url } from '../utils/Utils';
 import { UserCredentials } from '../types';
 
-const deleteAPI = async (
-  userCredentials: UserCredentials,
-  selectedFiles: Record<string, boolean>,
-  deleteEntities: boolean
-) => {
+const deleteAPI = async (userCredentials: UserCredentials, selectedFiles: string[], deleteEntities: boolean) => {
   try {
-    const keys = Object.keys(selectedFiles);
-    const filenames = keys.map((str) => str.split(',')[0]);
-    const source_types = keys.map((str) => str.split(',')[1]);
+    const filenames = selectedFiles.map((str) => str.split(',')[0]);
+    const source_types = selectedFiles.map((str) => str.split(',')[1]);
     const formData = new FormData();
     formData.append('uri', userCredentials?.uri ?? '');
     formData.append('database', userCredentials?.database ?? '');
