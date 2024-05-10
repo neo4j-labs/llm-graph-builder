@@ -15,7 +15,6 @@ import Driver from 'neo4j-driver/types/driver';
 import { url } from '../utils/Utils';
 import deleteAPI from '../services/deleteFiles';
 import DeletePopUp from './DeletePopUp';
-import { split } from 'postcss/lib/list';
 
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
