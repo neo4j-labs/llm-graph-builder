@@ -15,7 +15,6 @@ const ChatInfoModal: React.FC<ChatInfoModalProps> = ({ hideModal, open, children
       }}
       onClose={onClose}
       open={open}
-      type='info'
       size='small'
     >
       <Dialog.Content style={{height:'400px'}}>

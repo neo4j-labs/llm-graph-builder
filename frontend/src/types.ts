@@ -150,7 +150,7 @@ export interface messages {
   isTyping?: boolean;
   sources?: string[];
   model?: string;
-  entities?:string[];
+  entities?: string[];
 }
 
 export type ChatbotProps = {
@@ -240,10 +240,10 @@ export interface SourceListServerData {
   message?: string;
 }
 
-export interface Info  extends Partial<messages> {
+export interface Info extends Partial<messages> {
   sources: string[];
   model: string;
-  entities:string[];
+  entities: string[];
 }
 
 export interface ChatInfoModalProps {
@@ -253,6 +253,13 @@ export interface ChatInfoModalProps {
 }
 
 
-export interface chatInfoMessage  {
-  activeChat: Info
+export interface chatInfoMessage {
+  id: number;
+  message: string;
+  user: string;
+  datetime: string;
+  isTyping?: boolean;
+  sources?: string[];
+  model?: string;
+  entities?: string[];
 }

@@ -23,9 +23,7 @@ export default function Chatbot(props: ChatbotProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
-  const [activeChat, setActiveChat] = useState<chatInfoMessage>(
-    { activeChat: { 'sources': [], 'entities': [], 'model': '' } }
-  );
+  const [activeChat, setActiveChat] = useState<chatInfoMessage | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
@@ -97,6 +95,9 @@ export default function Chatbot(props: ChatbotProps) {
       return;
     }
     let chatbotReply;
+    let chatSources;
+    let chatModel;
+    let chatEntities;
     const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
     const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime };
     setListMessages((listMessages) => [...listMessages, userMessage]);
@@ -106,7 +107,10 @@ export default function Chatbot(props: ChatbotProps) {
       simulateTypingEffect({ reply: ' ' });
       const chatresponse = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
       chatbotReply = chatresponse?.data?.data?.message;
-      simulateTypingEffect({ reply: chatbotReply, sources: chatresponse?.data?.data?.sources });
+      chatSources = chatresponse?.data?.data?.info.sources;
+      chatModel = chatresponse?.data?.data?.info.model;
+      chatEntities = chatresponse?.data?.data?.info.entities;
+      simulateTypingEffect({ reply: chatbotReply, entities: chatEntities, model: chatModel, sources: chatSources });
       setLoading(false);
     } catch (error) {
       chatbotReply = "Oops! It seems we couldn't retrieve the answer. Please try again later";
@@ -135,7 +139,6 @@ export default function Chatbot(props: ChatbotProps) {
 
   useEffect(() => {
     if (clear) {
-      console.log(listMessages[0]);
       setListMessages([{
         datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
         id: 2,
@@ -144,7 +147,9 @@ export default function Chatbot(props: ChatbotProps) {
         user: "chatbot"
       }]);
     }
-  }, [props.clear])
+  }, [clear])
+
+  console.log('activeChat', activeChat);
 
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
@@ -233,13 +238,14 @@ export default function Chatbot(props: ChatbotProps) {
                           className='infoIcon'
                           clean
                           aria-label='Information Icon'
-                          onClick={() => { openInfoModal({ activeChat: { 'sources': chat?.sources as string[], 'entities': chat.entities as string[], 'model': chat.model as string } }) }}
+                          onClick={() => { openInfoModal(chat) }}
                           disabled={loading}
                         >
                           <InformationCircleIconOutline className='w-4 h-4 inline-block n-text-palette-success-text' />
                         </IconButton>
                         <ChatInfoModal key={index} open={showInfoModal} hideModal={hideInfoModal} >
                           <ListComp activeChat={activeChat} />
+                          {/* {chat.map((index, element) => { return <ListComp activeChat={activeChat} /> })} */}
                         </ChatInfoModal>
                       </div>
                     )}
