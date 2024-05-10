@@ -42,10 +42,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       model: model,
       fileSource: 's3 bucket',
     };
-    if (url && url[url.length - 1] != '/') {
-      setBucketUrl((prev) => {
-        return `${prev}/`;
-      });
+    if (url) {
       setValid(validation(bucketUrl) && isFocused);
     }
     if (accessKey.length) {
@@ -158,7 +155,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       </div>
       <div className='flex justify-between items-center w-full gap-4 mt-3'>
         <TextInput
-          id='url'
+          id='access key'
           value={accessKey}
           disabled={false}
           label='Access Key'
@@ -173,7 +170,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           }}
         />
         <TextInput
-          id='url'
+          id='secret key'
           value={secretKey}
           disabled={false}
           label='Secret Key'

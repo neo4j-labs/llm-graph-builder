@@ -121,7 +121,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
     >
       <div className='w-full inline-block'>
         <TextInput
-          id='url'
+          id='keyword'
           value={wikiQuery}
           disabled={false}
           label='Wikipedia Keywords'
