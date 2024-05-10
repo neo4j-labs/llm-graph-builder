@@ -239,19 +239,19 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               <Checkbox
                 checked={graphType.includes('document')}
                 label='Document'
-                disabled={graphType.includes('document') && graphType.length === 1}
+                disabled={(graphType.includes('document') && graphType.length === 1) || loading}
                 onChange={() => handleCheckboxChange('document')}
               />
               <Checkbox
                 checked={graphType.includes('entities')}
                 label='Entities'
-                disabled={graphType.includes('entities') && graphType.length === 1}
+                disabled={(graphType.includes('entities') && graphType.length === 1) || loading}
                 onChange={() => handleCheckboxChange('entities')}
               />
               <Checkbox
                 checked={graphType.includes('chunks')}
                 label='Chunks'
-                disabled={graphType.includes('chunks') && graphType.length === 1}
+                disabled={(graphType.includes('chunks') && graphType.length === 1) || loading}
                 onChange={() => handleCheckboxChange('chunks')}
               />
             </div>
