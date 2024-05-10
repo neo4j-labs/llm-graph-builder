@@ -23,8 +23,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
-  const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels, rowSelection, setRowSelection } =
-    useFileContext();
+  const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels, selectedRows } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
@@ -448,7 +447,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     localStorage.removeItem('password');
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
   };
-  const selectedfileslength = useMemo(() => Object.keys(rowSelection).length, [rowSelection]);
+  const selectedfileslength = useMemo(() => selectedRows.length, [selectedRows]);
   const deleteFileClickHandler: React.MouseEventHandler<HTMLButtonElement> = () => {
     setshowDeletePopUp(true);
   };
@@ -456,7 +455,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const handleDeleteFiles = async (deleteEntities: boolean) => {
     try {
       setdeleteLoading(true);
-      const response = await deleteAPI(userCredentials as UserCredentials, rowSelection, deleteEntities);
+      const response = await deleteAPI(userCredentials as UserCredentials, selectedRows, deleteEntities);
       setdeleteLoading(false);
       if (response.data.status == 'Success') {
         setalertDetails({
@@ -464,12 +463,10 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           alertMessage: response.data.message,
           alertType: 'success',
         });
-        const keys = Object.keys(rowSelection);
-        const filenames = keys.map((str) => str.split(',')[0]);
+        const filenames = selectedRows.map((str) => str.split(',')[0]);
         filenames.forEach((name) => {
           setFilesData((prev) => prev.filter((f) => f.name != name));
         });
-        setRowSelection({});
       } else {
         let errorobj = { error: response.data.error, message: response.data.message };
         throw new Error(JSON.stringify(errorobj));
@@ -578,7 +575,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             <Button
               onClick={deleteFileClickHandler}
               className='ml-0.5'
-              title={!selectedfileslength ? 'please select a file' : ''}
+              title={!selectedfileslength ? 'please select a file' : 'File is still under process'}
               disabled={!selectedfileslength}
             >
               Delete Files
