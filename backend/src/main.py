@@ -310,7 +310,8 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
         "relationshipCount": relationships_created,
         "processingTime": round(processed_time.total_seconds(),2),
         "status" : job_status,
-        "model" : model
+        "model" : model,
+        "success_count" : 1
     }
   else:
      logging.info('File does not process because it\'s already in Processing status')
