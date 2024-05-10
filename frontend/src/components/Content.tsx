@@ -15,6 +15,7 @@ import Driver from 'neo4j-driver/types/driver';
 import { url } from '../utils/Utils';
 import deleteAPI from '../services/deleteFiles';
 import DeletePopUp from './DeletePopUp';
+import { split } from 'postcss/lib/list';
 
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -176,6 +177,22 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               }
             }
           };
+          eventSource.onerror = (event) => {
+            // @ts-ignore
+            const errorfile = decodeURI(event?.target?.url?.split('?')[0].split('/').at(-1));
+            const pendingfilesstr = localStorage.getItem('pendingfiles');
+            if (pendingfilesstr) {
+              const pendingfiles: string[] = JSON.parse(pendingfilesstr);
+              for (let index = 0; index < pendingfiles.length; index++) {
+                if (pendingfiles[index] === errorfile) {
+                  console.log(pendingfiles[index]);
+                  pendingfiles.splice(index, 1);
+                }
+              }
+              localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
+            }
+            // localStorage.removeItem('pendingFiles')
+          };
         });
       }
     }
@@ -296,6 +313,22 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                 localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
               }
             }
+          };
+          eventSource.onerror = (event) => {
+            // @ts-ignore
+            const errorfile = decodeURI(event?.target?.url?.split('?')[0].split('/').at(-1));
+            const pendingfilesstr = localStorage.getItem('pendingfiles');
+            if (pendingfilesstr) {
+              const pendingfiles: string[] = JSON.parse(pendingfilesstr);
+              for (let index = 0; index < pendingfiles.length; index++) {
+                if (pendingfiles[index] === errorfile) {
+                  console.log(pendingfiles[index]);
+                  pendingfiles.splice(index, 1);
+                }
+              }
+              localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
+            }
+            // localStorage.removeItem('pendingFiles')
           };
         }
 

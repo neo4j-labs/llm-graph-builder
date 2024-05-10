@@ -58,13 +58,16 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
               <Checkbox
                 aria-label='row-checkbox'
                 checked={row.getIsSelected()}
-                disabled={!row.getCanSelect()||row.original.status==='Uploading'||row.original.status==="Processing"}
+                disabled={
+                  !row.getCanSelect() || row.original.status === 'Uploading' || row.original.status === 'Processing'
+                }
                 onChange={row.getToggleSelectedHandler()}
                 title='select row for deletion'
               />
             </div>
           );
         },
+        size: 80,
       },
       columnHelper.accessor((row) => row.name, {
         id: 'name',

@@ -1,4 +1,4 @@
-import { Button, Dialog, Switch, Typography } from '@neo4j-ndl/react';
+import { Button, Checkbox, Dialog, Typography } from '@neo4j-ndl/react';
 import { useState } from 'react';
 
 export default function DeletePopUp({
@@ -23,9 +23,9 @@ export default function DeletePopUp({
           {deleteEntities ? 'and associated entities' : ''}
         </Typography>
         <div className='mt-1'>
-          <Switch
+          <Checkbox
             label='Delete Entities'
-            labelBefore={true}
+            onClick={function Ua() {}}
             checked={deleteEntities}
             onChange={(e) => {
               if (e.target.checked) {

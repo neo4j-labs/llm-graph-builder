@@ -20,6 +20,16 @@ const deleteAPI = async (
     formData.append('deleteEntities', deleteEntities);
     // @ts-ignore
     formData.append('filenames', filenames);
+    if (localStorage.getItem('pendingifiles')) {
+      // @ts-ignore
+      const files = JSON.parse(localStorage.getItem('pendingifiles'));
+      for (let i = 0; i < filenames.length; i++) {
+        if (files[i] == filenames[i]) {
+          files.splice(i, 1);
+        }
+      }
+      localStorage.setItem('pendingfiles', JSON.stringify(files));
+    }
     // @ts-ignore
     formData.append('source_types', source_types);
     const response = await axios.post(`${url()}/delete_document_and_entities`, formData);
