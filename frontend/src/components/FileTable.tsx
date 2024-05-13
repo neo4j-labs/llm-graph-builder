@@ -24,11 +24,12 @@ import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { statusCheck } from '../utils/Utils';
-import { SourceNode, CustomFile, FileTableProps, UserCredentials } from '../types';
+import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
 import CustomAlert from './Alert';
 import CustomProgressBar from './CustomProgressBar';
+import subscribe from '../services/PollingAPI';
 
 const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows } = useFileContext();
@@ -269,6 +270,23 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
           }
           setIsLoading(false);
           setFilesData(prefiles);
+          res.data.data.forEach((item) => {
+            if (item.status === 'Processing' && item?.fileSize < 10000000 && item.fileName != undefined) {
+              if (userCredentials && userCredentials.database) {
+                const promiseArry = [];
+                promiseArry.push(
+                  subscribe(
+                    item.fileName,
+                    userCredentials?.uri,
+                    userCredentials?.userName,
+                    userCredentials?.database,
+                    userCredentials?.password,
+                    updatestatus
+                  )
+                );
+              }
+            }
+          });
         } else {
           throw new Error(res?.data?.error);
         }
@@ -288,6 +306,28 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       setFilesData([]);
     }
   }, [connectionStatus]);
+
+  function updatestatus(i: statusupdate) {
+    const { file_name } = i;
+    const { fileName, nodeCount, relationshipCount, processingTime, model, status } = file_name;
+    if (fileName && nodeCount != null && relationshipCount != null && processingTime && model && status) {
+      setFilesData((prevfiles) =>
+        prevfiles.map((curfile) => {
+          if (curfile.name == fileName) {
+            return {
+              ...curfile,
+              status: status,
+              NodesCount: nodeCount,
+              relationshipCount: relationshipCount,
+              model: model,
+              processing: processingTime?.toFixed(2),
+            };
+          }
+          return curfile;
+        })
+      );
+    }
+  }
 
   const pageSizeCalculation = Math.floor((currentOuterHeight - 402) / 45);
 
