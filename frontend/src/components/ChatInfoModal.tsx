@@ -11,13 +11,13 @@ const ChatInfoModal: React.FC<ChatInfoModalProps> = ({ hideModal, open, children
     <Dialog
       modalProps={{
         className: 'w-full',
-        id: 'default-menu',
+        id: 'Chat-info-modal',
       }}
       onClose={onClose}
       open={open}
       size='small'
     >
-      <Dialog.Content style={{height:'400px'}}>
+      <Dialog.Content>
         {children}
       </Dialog.Content>
     </Dialog>

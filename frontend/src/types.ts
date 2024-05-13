@@ -240,12 +240,6 @@ export interface SourceListServerData {
   message?: string;
 }
 
-export interface Info extends Partial<messages> {
-  sources: string[];
-  model: string;
-  entities: string[];
-}
-
 export interface ChatInfoModalProps {
   hideModal: () => void;
   open: boolean;
@@ -253,12 +247,7 @@ export interface ChatInfoModalProps {
 }
 
 
-export interface chatInfoMessage {
-  id: number;
-  message: string;
-  user: string;
-  datetime: string;
-  isTyping?: boolean;
+export interface chatInfoMessage extends Partial<messages> {
   sources?: string[];
   model?: string;
   entities?: string[];

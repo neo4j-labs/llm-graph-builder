@@ -160,7 +160,7 @@ export default function Chatbot(props: ChatbotProps) {
               <div
                 ref={messagesEndRef}
                 key={chat.id}
-                className={`flex gap-2.5 items-end ${chat.user === 'chatbot' ? 'flex-row' : 'flex-row-reverse'} `}
+                className={`flex gap-2.5 ${chat.user === 'chatbot' ? 'flex-row' : 'flex-row-reverse'} `}
               >
                 <div className='w-8 h-8'>
                   {chat.user === 'chatbot' ? (
@@ -209,8 +209,8 @@ export default function Chatbot(props: ChatbotProps) {
                       )
                     )}
                   </div>
-                  <div className='text-right align-bottom pt-3'>
-                    <Typography variant='body-small'>{chat.datetime}</Typography>
+                  <div style={{ border: '1px solid red' }}>
+                    <div><Typography variant='body-small'>{new Date(chat.datetime).toLocaleTimeString()}</Typography></div>                    
                     {chat?.sources?.length ? (
                       <div className={`flex ${chat.sources?.length > 1 ? 'flex-col' : 'flex-row justify-end'} gap-1`}>
                         {chat.sources.map((link, index) => {
@@ -233,7 +233,7 @@ export default function Chatbot(props: ChatbotProps) {
                       </div>
                     ) : null}
                     {chat.user === 'chatbot' && chat.id !== 2 && (
-                      <div className='flex gap-1'>
+                      <div className='flex'>
                         <IconButton
                           className='infoIcon'
                           clean
@@ -244,8 +244,7 @@ export default function Chatbot(props: ChatbotProps) {
                           <InformationCircleIconOutline className='w-4 h-4 inline-block n-text-palette-success-text' />
                         </IconButton>
                         <ChatInfoModal key={index} open={showInfoModal} hideModal={hideInfoModal} >
-                          <ListComp activeChat={activeChat} />
-                          {/* {chat.map((index, element) => { return <ListComp activeChat={activeChat} /> })} */}
+                          <ListComp sources={activeChat?.sources} entities={activeChat?.entities} model={activeChat?.model} />
                         </ChatInfoModal>
                       </div>
                     )}

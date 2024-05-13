@@ -1,7 +1,7 @@
 import { chatInfoMessage } from '../types';
 
-const ListComp: React.FC<chatInfoMessage> = (props) => {
-  const { sources, entities, model } = props?.activeChat;
+const ListComp: React.FC<chatInfoMessage> = (info) => {
+  const { sources, entities, model } = info;
   return (
     <>
       <ul>
@@ -10,7 +10,7 @@ const ListComp: React.FC<chatInfoMessage> = (props) => {
         <li>
           <strong>Entities: </strong>{' '}
           <ul>
-            {entities?.map((entity: [], index: number) => (
+            {entities?.map((entity: string, index: number) => (
               <li key={index}>{entity}</li>
             ))}
           </ul>

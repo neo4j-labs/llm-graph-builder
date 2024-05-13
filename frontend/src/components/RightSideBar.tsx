@@ -28,7 +28,6 @@ const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }
       if(response.data.status === 'Success'){
         setClearHistoryData(true);
       }
-      setClearHistoryData(false);
     }
     catch (error) {
       console.log(error);
@@ -53,10 +52,11 @@ const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }
       <ButtonWithToolTip
         text='Clear Chat history'
         onClick={deleteOnClick}
-        size='large'
+        size='medium'
         clean
+        placement='right'
       >
-        <ArchiveBoxXMarkIconOutline className="n-size-token-7" />
+        <ArchiveBoxXMarkIconOutline className="n-size-token-7"  style={{padding: '2px'}}/>
       </ButtonWithToolTip>
       <Drawer.Body className='!overflow-y-hidden'>
         <Chatbot messages={messages} setMessages={setMessages} clear={clearHistoryData}></Chatbot>
