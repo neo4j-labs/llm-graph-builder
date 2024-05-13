@@ -22,6 +22,7 @@ class graphDBdataAccess:
         
     def create_source_node(self, obj_source_node:sourceNode):
         try:
+            logging.info(f"creating source node for {obj_source_node.file_name}")
             job_status = "New"
             logging.info("create source node as file name if not exist")
             self.graph.query("""MERGE(d:Document {fileName :$fn}) SET d.fileSize = $fs, d.fileType = $ft ,
@@ -37,6 +38,7 @@ class graphDBdataAccess:
                             "gcs_bucket": obj_source_node.gcsBucket, "gcs_bucket_folder": obj_source_node.gcsBucketFolder, "gcs_project_id":obj_source_node.gcsProjectId})
         except Exception as e:
             error_message = str(e)
+            logging.info(f"error_message = {error_message}")
             self.update_exception_db(self, obj_source_node.file_name, error_message)
             raise Exception(error_message)
         

@@ -15,7 +15,12 @@ from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
 from sse_starlette.sse import EventSourceResponse
 import json
-from typing import List
+from typing import List, Mapping
+from fastapi.responses import RedirectResponse, HTMLResponse
+from starlette.middleware.sessions import SessionMiddleware
+import google_auth_oauthlib.flow
+from google.oauth2.credentials import Credentials
+import os
 
 def healthy_condition():
     output = {"healthy": True}
@@ -40,6 +45,24 @@ app.add_middleware(
 add_routes(app,ChatVertexAI(), path="/vertexai")
 
 app.add_api_route("/health", health([healthy_condition, healthy]))
+
+app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
+
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
+REDIRECT_URI = 'http://localhost:8000/oauth2callback'
+
+SCOPES = ['https://www.googleapis.com/auth/devstorage.read_only']
+
+oauth_config = {
+    "web": {
+        "client_id": GOOGLE_CLIENT_ID,
+        "client_secret": GOOGLE_CLIENT_SECRET,
+        "redirect_uris": [REDIRECT_URI],
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token"
+    }
+}
 
 # @app.post("/sources")
 # async def create_source_knowledge_graph(
@@ -75,6 +98,7 @@ app.add_api_route("/health", health([healthy_condition, healthy]))
 
 @app.post("/url/scan")
 async def create_source_knowledge_graph_url(
+    request: Request,
     uri=Form(None),
     userName=Form(None),
     password=Form(None),
@@ -102,8 +126,10 @@ async def create_source_knowledge_graph_url(
             lst_file_name,success_count,failed_count = create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type
             )
         elif source_type == 'gcs bucket':
-            lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, source_type
-            )
+            request.session['graph'] = graph
+            return RedirectResponse(url=f'/authorize/{model}/{gcs_project_id}/{gcs_bucket_name}/{gcs_bucket_folder}/{source_type}/{source}', status_code=303)
+            # lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, source_type
+            # )
         elif source_type == 'youtube':
             lst_file_name,success_count,failed_count = create_source_node_graph_url_youtube(graph, model, source_url, source_type
             )
@@ -315,34 +341,83 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
     
     return EventSourceResponse(generate(),ping=60)
 
-from fastapi.responses import RedirectResponse, HTMLResponse
+
+@app.get('/authorize/{model}/{gcs_project_id}/{gcs_bucket_name}/{gcs_bucket_folder}/{source_type}/{source}')
+async def authorize(request: Request, model:str, gcs_project_id:str, gcs_bucket_name:str, gcs_bucket_folder:str, source_type:str, source:str):
+    #request.session['graph'] = graph
+    request.session['model'] = model
+    request.session['gcs_project_id'] = gcs_project_id
+    request.session['gcs_bucket_name'] = gcs_bucket_name
+    request.session['gcs_bucket_folder'] = gcs_bucket_folder
+    request.session['source_type'] = source_type
+    request.session['source'] = source
+    logging.info(f"{gcs_project_id}/{gcs_bucket_name}/{gcs_bucket_folder}")
+    flow = google_auth_oauthlib.flow.Flow.from_client_config(oauth_config, scopes=SCOPES)
+    flow.redirect_uri = REDIRECT_URI
+    authorization_url, state = flow.authorization_url(access_type='offline', include_granted_scopes='true')
+    print(f"authorization_url = {authorization_url}")
+    print(f"state = {state}")
+    request.session['state'] = state
+    return RedirectResponse(url=authorization_url)
+
+@app.get('/oauth2callback')
+async def oauth2callback(request: Request):
+    state = request.session['state']
+    flow = google_auth_oauthlib.flow.Flow.from_client_config(oauth_config, scopes=SCOPES, state=state)
+    flow.redirect_uri = REDIRECT_URI
+    print(f"request.url = {request.url}")
+    flow.fetch_token(authorization_response=str(request.url))
+    print(f"creds = {flow.credentials}")
+    #request.session['credentials'] = credentials_to_dict(flow.credentials)
+    request.session['credentials'] = credentials_to_dict(flow.credentials)
+    return RedirectResponse(url='/list_buckets')
+
+@app.get('/list_buckets')
+async def list_buckets(request: Request):
+    print("Inside list_buckets")
+  
+    lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(request.session['graph'], 
+                                                                                    request.session['model'], 
+                                                                                    request.session['gcs_project_id'], 
+                                                                                    request.session['gcs_bucket_name'], 
+                                                                                    request.session['gcs_bucket_folder'] if request.session['gcs_bucket_folder'] != 'None' else "", 
+                                                                                    request.session['source_type'],
+                                                                                    Credentials(**request.session['credentials']))
+    return lst_file_name,success_count,failed_count 
+    # message = f"Source Node created successfully for source type: {request.session['source_type']} and source: {request.session['source']}"
+    # return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name)   
+        
+def credentials_to_dict(credentials):
+    return {'token': credentials.token, 'refresh_token': credentials.refresh_token, 'token_uri': credentials.token_uri, 'client_id': credentials.client_id, 'client_secret': credentials.client_secret, 'scopes': credentials.scopes}
+
+
 @app.get('/')
 async def index():
     return HTMLResponse('''<h1>GCS bucket demo</h1>
                         <form action="/url/scan" method="post">
                             <label>URI: </label>
-                            <input type="text" name="uri" required>
+                            <input type="text" name="uri" value="neo4j+s://73b760b4.databases.neo4j.io" required>
                             </br>
                             <label>Username: </label>
-                            <input type="text" name="userName" required>
+                            <input type="text" name="userName" value="neo4j" required>
                             </br>
                             <label>password: </label>
-                            <input type="text" name="password" required>
+                            <input type="text" name="password" value="HqwAzfG83XwcEQ-mvEG4yNpcRTHMpsgZaYW3qIGJh2I" required>
                             </br>
                             <label>database: </label>
-                            <input type="text" name="database" required>
+                            <input type="text" name="database" value="neo4j" required>
                             </br>
                             <label>source_type: </label>
-                            <input type="text" name="source_type" required>
+                            <input type="text" name="source_type" value="gcs bucket" required>
                             </br>
                             <label>model: </label>
-                            <input type="text" name="model" required>
+                            <input type="text" name="model" value="OpenAI GPT 3.5" required>
                             </br>
                             <label>GCP Project ID: </label>
-                            <input type="text" name="gcs_project_id" required>
+                            <input type="text" name="gcs_project_id" value="persistent-genai" required>
                             </br>
                             <label>gcs_bucket_name: </label>
-                            <input type="text" name="gcs_bucket_name" required>
+                            <input type="text" name="gcs_bucket_name" value="llm_graph_genai_project" required>
                             </br>
                             <input type="submit" value="Submit">
                         </form>''')

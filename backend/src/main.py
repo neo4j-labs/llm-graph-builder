@@ -58,13 +58,13 @@ def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id,
           lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Failed'})
     return lst_file_name,success_count,failed_count
 
-def create_source_node_graph_url_gcs(graph, model, gcs_auth_config_file, gcs_bucket_name, gcs_bucket_folder, source_type):
+def create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, source_type, credentials):
 
     success_count=0
     failed_count=0
     lst_file_name = []
     
-    lst_file_metadata= get_gcs_bucket_files_info(gcs_auth_config_file, gcs_bucket_name, gcs_bucket_folder)
+    lst_file_metadata= get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, credentials)
     for file_metadata in lst_file_metadata :
       obj_source_node = sourceNode()
       obj_source_node.file_name = file_metadata['fileName']
@@ -77,12 +77,17 @@ def create_source_node_graph_url_gcs(graph, model, gcs_auth_config_file, gcs_buc
       obj_source_node.gcsBucketFolder = file_metadata['gcsBucketFolder']
       obj_source_node.gcsProjectId = file_metadata['gcsProjectId']
       obj_source_node.created_at = datetime.now()
+      logging.info(f"lst_file_metadata in create_source_node_graph_url_gcs = {lst_file_metadata}")
       try:
           graphDb_data_Access = graphDBdataAccess(graph)
+          logging.info(f"obj_source_node = {obj_source_node}")
+          logging.info(f"creating soyrce node method called !!")
           graphDb_data_Access.create_source_node(obj_source_node)
+          logging.info("Updating success count")
           success_count+=1
           lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Success'})
       except Exception as e:
+        logging.info(f"Updating failed count because of error message: {e}")
         failed_count+=1
         lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Failed'})
     return lst_file_name,success_count,failed_count

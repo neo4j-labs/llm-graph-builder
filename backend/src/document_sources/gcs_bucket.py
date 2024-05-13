@@ -7,11 +7,12 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 import google_auth_oauthlib.flow
 import json
 
-def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder):
+def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, creds):
     #credentials = service_account.Credentials.from_service_account_file(os.environ['GOOGLE_CLOUD_KEYFILE'])
     #storage_client = storage.Client(credentials=credentials)
-    project_id, creds = gcloud_OAuth_login(gcs_project_id)
-    storage_client = storage.Client(project=project_id, credentials=creds)
+    #project_id, creds = gcloud_OAuth_login(gcs_project_id)
+    logging.info(f"gcs_project_id={gcs_project_id}, gcs_bucket_name={gcs_bucket_name}, gcs_bucket_folder={gcs_bucket_folder}, creds={creds}")
+    storage_client = storage.Client(project=gcs_project_id, credentials=creds)
     file_name=''
     try:
       bucket = storage_client.bucket(gcs_bucket_name.strip())
@@ -24,9 +25,10 @@ def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder
             file_size = blob.size
             source_url= blob.media_link
             gcs_bucket = gcs_bucket_name
+            print(f"filename = {file_name}")
             lst_file_metadata.append({'fileName':file_name,'fileSize':file_size,'url':source_url, 
                                       'gcsBucket': gcs_bucket, 'gcsBucketFolder':folder_name if folder_name else '',
-                                      'gcsProjectId': project_id}) 
+                                      'gcsProjectId': gcs_project_id}) 
         return lst_file_metadata
       else:
         file_name=''
