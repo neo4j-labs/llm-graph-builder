@@ -24,12 +24,14 @@ import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { statusCheck } from '../utils/Utils';
-import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate } from '../types';
+import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, alertState } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
 import CustomAlert from './Alert';
 import CustomProgressBar from './CustomProgressBar';
 import subscribe from '../services/PollingAPI';
+import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
+import useServerSideEvent from '../hooks/useSse';
 
 const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows } = useFileContext();
@@ -38,8 +40,28 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
-  const [errorMessage, setErrorMessage] = useState<string>('');
-  const [showAlert, setShowAlert] = useState<boolean>(false);
+  const [alertDetails, setalertDetails] = useState<alertState>({
+    showAlert: false,
+    alertType: 'error',
+    alertMessage: '',
+  });
+  const { updateStatusForLargeFiles, serverSideErrorHandler } = useServerSideEvent(
+    (min, fileName) => {
+      setalertDetails({
+        showAlert: true,
+        alertType: 'info',
+        alertMessage: `${fileName} will take approx ${min} Min`,
+      });
+      localStorage.setItem('alertShown', JSON.stringify(true));
+    },
+    (fileName) => {
+      setalertDetails({
+        showAlert: true,
+        alertType: 'error',
+        alertMessage: `${fileName} Failed to process`,
+      });
+    }
+  );
 
   const columns = useMemo(
     () => [
@@ -93,8 +115,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   info.row.original?.fileSource === 's3 bucket'
                     ? info.row.original?.source_url
                     : info.row.original?.fileSource === 'youtube'
-                    ? info.row.original?.source_url
-                    : info.getValue()
+                      ? info.row.original?.source_url
+                      : info.getValue()
                 }
               >
                 {info.getValue()}
@@ -248,14 +270,14 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                     item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                       ? item.status
                       : item.fileSource === 'local file'
-                      ? item.status
-                      : item.status === 'Completed' || item.status === 'Failed'
-                      ? item.status
-                      : item.fileSource == 'Wikipedia' ||
-                        item.fileSource == 'youtube' ||
-                        item.fileSource == 'gcs bucket'
-                      ? item.status
-                      : 'N/A',
+                        ? item.status
+                        : item.status === 'Completed' || item.status === 'Failed'
+                          ? item.status
+                          : item.fileSource == 'Wikipedia' ||
+                            item.fileSource == 'youtube' ||
+                            item.fileSource == 'gcs bucket'
+                            ? item.status
+                            : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
                   source_url: item.url != 'None' && item?.url != '' ? item.url : '',
@@ -271,18 +293,25 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
           setIsLoading(false);
           setFilesData(prefiles);
           res.data.data.forEach((item) => {
-            if (item.status === 'Processing' && item?.fileSize < 10000000 && item.fileName != undefined) {
-              if (userCredentials && userCredentials.database) {
-                const promiseArry = [];
-                promiseArry.push(
-                  subscribe(
-                    item.fileName,
-                    userCredentials?.uri,
-                    userCredentials?.userName,
-                    userCredentials?.database,
-                    userCredentials?.password,
-                    updatestatus
-                  )
+            if (item.status === 'Processing' && item.fileName != undefined && userCredentials && userCredentials.database) {
+              if (item?.fileSize < 10000000) {
+                subscribe(
+                  item.fileName,
+                  userCredentials?.uri,
+                  userCredentials?.userName,
+                  userCredentials?.database,
+                  userCredentials?.password,
+                  updatestatus
+                );
+              } else {
+                triggerStatusUpdateAPI(
+                  item.fileName,
+                  userCredentials.uri,
+                  userCredentials.userName,
+                  userCredentials.password,
+                  userCredentials.database,
+                  updateStatusForLargeFiles,
+                  serverSideErrorHandler
                 );
               }
             }
@@ -292,11 +321,14 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         }
         setIsLoading(false);
       } catch (error: any) {
-        setErrorMessage(error.message);
+        setalertDetails({
+          showAlert: true,
+          alertType: 'error',
+          alertMessage: error.message,
+        });
         setIsLoading(false);
         setConnectionStatus(false);
         setFilesData([]);
-        setShowAlert(true);
         console.log(error);
       }
     };
@@ -376,14 +408,22 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
   };
   const classNameCheck = isExpanded ? 'fileTableWithExpansion' : `filetable`;
   const handleClose = () => {
-    setShowAlert(false);
+    setalertDetails((prev) => ({ ...prev, showAlert: false }));
+    localStorage.setItem('alertShown', JSON.stringify(true));
   };
   useEffect(() => {
     setSelectedRows(table.getSelectedRowModel().rows.map((i) => i.id));
   }, [table.getSelectedRowModel()]);
   return (
     <>
-      <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
+      {alertDetails.showAlert && (
+        <CustomAlert
+          open={alertDetails.showAlert}
+          handleClose={handleClose}
+          severity={alertDetails.alertType}
+          alertMessage={alertDetails.alertMessage}
+        />
+      )}
       {filesData ? (
         <>
           <div className='flex items-center p-5 self-start gap-2'>

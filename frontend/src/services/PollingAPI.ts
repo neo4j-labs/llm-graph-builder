@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { url } from '../utils/Utils';
 import { PollingAPI_Response, statusupdate } from '../types';
-interface a {}
+
 export default async function subscribe(
   fileName: string,
   uri: string,
