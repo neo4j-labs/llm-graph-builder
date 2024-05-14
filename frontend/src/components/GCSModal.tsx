@@ -115,7 +115,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     >
       <div className='w-full inline-block'>
         <TextInput
-          id='url'
+          id='bucketname'
           value={bucketName}
           disabled={false}
           label='Bucket Name'
@@ -129,7 +129,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           }}
         />
         <TextInput
-          id='url'
+          id='foldername'
           value={folderName}
           disabled={false}
           label='Folder Name'

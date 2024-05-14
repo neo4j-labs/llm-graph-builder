@@ -29,7 +29,7 @@ export type UserCredentials = {
   uri: string;
   userName: string;
   password: string;
-  database?: string;
+  database: string;
 } & { [key: string]: any };
 
 export type ExtractParams = {
@@ -180,6 +180,7 @@ export interface fileName {
   url: string;
   gcsBucket?: string;
   gcsBucketFolder?: string;
+  status?: string;
 }
 export interface URLSCAN_RESPONSE {
   status: string;
@@ -191,7 +192,29 @@ export interface URLSCAN_RESPONSE {
   file_source?: string;
   data?: any;
 }
-
+export interface statusAPI {
+  status: string;
+  message: string;
+  file_name?: fileName;
+}
+export interface statusupdate {
+  status: string;
+  message: string;
+  file_name: fileStatus;
+}
+export interface fileStatus {
+  fileName: string;
+  status: string;
+  processingTime: number | null;
+  nodeCount: number | null;
+  relationshipCount: number | null;
+  model: string;
+  total_chunks?: number | null;
+  total_pages?: number | null;
+}
+export interface PollingAPI_Response extends Partial<AxiosResponse> {
+  data: statusupdate;
+}
 export interface ServerResponse extends Partial<AxiosResponse> {
   data: URLSCAN_RESPONSE;
 }
@@ -252,4 +275,15 @@ export interface chatInfoMessage extends Partial<Messages> {
   sources?: string[];
   model?: string;
   entities?: string[];
+}
+
+export interface eventResponsetypes {
+  fileName: string;
+  status: string;
+  processingTime: number;
+  nodeCount: number;
+  relationshipCount: number;
+  model: string;
+  total_chunks: number | null;
+  total_pages: number | null;
 }
