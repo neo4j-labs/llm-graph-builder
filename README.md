@@ -61,8 +61,8 @@ NEO4J_PASSWORD = ""\
 AWS_ACCESS_KEY_ID =  ""\
 AWS_SECRET_ACCESS_KEY = ""\
 EMBEDDING_MODEL = ""\
-IS_EMBEDDING = "TRUE"
-KNN_MIN_SCORE = ""\
+IS_EMBEDDING = "TRUE"\
+KNN_MIN_SCORE = ""
 
 ## Setting up Enviournment Variables For Frontend Configuration
 
