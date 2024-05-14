@@ -87,6 +87,8 @@ async def create_source_knowledge_graph_url(
             return create_api_response('Failed',message='source_type is other than accepted source')
 
         message = f"Source Node created successfully for source type: {source_type} and source: {source}"
+        josn_obj = {'api_name':'url_scan','db_url':uri,'url_scanned_file':lst_file_name}
+        logger.log_struct(josn_obj)
         return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name)    
     except Exception as e:
         error_message = str(e)
@@ -153,17 +155,15 @@ async def extract_knowledge_graph_from_file(
                 extract_graph_from_file_gcs, graph, model, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
-        
-        
-        logging.info(json.dumps(result))
+        result['db_url'] = uri
+        result['api_name'] = 'extract'
         logger.log_struct(result)
         return create_api_response('Success', data=result, file_source= source_type)
     except Exception as e:
         message=f" Failed To Process File:{file_name} or LLM Unable To Parse Content"
         error_message = str(e)
         graphDb_data_Access.update_exception_db(file_name,error_message)
-        josn_obj = {'message':message,'error_message':error_message, 'file_name': file_name,'status':'Failed','url':uri,'failed_count':1, 'source_type': source_type}
-        logging.error(json.dumps(josn_obj))
+        josn_obj = {'message':message,'error_message':error_message, 'file_name': file_name,'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type}
         logger.log_struct(josn_obj)
         logging.exception(f'File Failed in extraction: {josn_obj}')
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = file_name)
@@ -178,6 +178,8 @@ async def get_source_list(uri:str, userName:str, password:str, database:str=None
         if " " in uri:
             uri= uri.replace(" ","+")
             result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
+            josn_obj = {'api_name':'sources_list','db_url':uri}
+            logger.log_struct(josn_obj)
             return create_api_response("Success",data=result)
     except Exception as e:
         job_status = "Failed"
@@ -195,6 +197,8 @@ async def update_similarity_graph(uri=Form(None), userName=Form(None), password=
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(update_graph, graph)
         logging.info(f"result : {result}")
+        josn_obj = {'api_name':'update_similarity_graph','db_url':uri}
+        logger.log_struct(josn_obj)
         return create_api_response('Success',message='Updated KNN Graph',data=result)
     except Exception as e:
         job_status = "Failed"
@@ -209,6 +213,8 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
         # database = "neo4j"
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,session_id=session_id)
+        josn_obj = {'api_name':'chat_bot','db_url':uri}
+        logger.log_struct(josn_obj)
         return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
@@ -237,6 +243,8 @@ async def graph_query(
             doc_limit=doc_limit,
             document_name=document_name
         )
+        josn_obj = {'api_name':'graph_query','db_url':uri}
+        logger.log_struct(josn_obj)
         return create_api_response('Success', data=result)
     except Exception as e:
         job_status = "Failed"
@@ -250,8 +258,7 @@ async def connect(uri=Form(None), userName=Form(None), password=Form(None), data
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(connection_check, graph)
-        logging.info(json.dumps({'uri':uri,'status':result}))
-        josn_obj = {'uri':uri,'status':result, 'count':1}
+        josn_obj = {'api_name':'connect','db_url':uri,'status':result, 'count':1}
         logger.log_struct(josn_obj)
         return create_api_response('Success',message=result)
     except Exception as e:
@@ -268,6 +275,8 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname)
+        josn_obj = {'api_name':'upload','db_url':uri}
+        logger.log_struct(josn_obj)
         return create_api_response('Success', message=result)
     except Exception as e:
         job_status = "Failed"
@@ -281,6 +290,8 @@ async def get_structured_schema(uri=Form(None), userName=Form(None), password=Fo
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(get_labels_and_relationtypes, graph)
+        josn_obj = {'api_name':'schema','db_url':uri}
+        logger.log_struct(josn_obj)
         return create_api_response('Success', data=result)
     except Exception as e:
         job_status = "Failed"
@@ -339,6 +350,8 @@ async def delete_document_and_entities(uri=Form(None),
         result, files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filenames, source_types, deleteEntities)
         entities_count = result[0]['deletedEntities'] if 'deletedEntities' in result[0] else 0
         message = f"Deleted {files_list_size} documents with {entities_count} entities from database"
+        josn_obj = {'api_name':'delete_document_and_entities','db_url':uri}
+        logger.log_struct(josn_obj)
         return create_api_response('Success',message=message)
     except Exception as e:
         job_status = "Failed"
