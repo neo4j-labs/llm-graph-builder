@@ -360,6 +360,37 @@ async def delete_document_and_entities(uri=Form(None),
         logging.exception(f'{message}:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
 
+@app.get('/document_status/{file_name}')
+async def get_document_status(file_name, url, userName, password, database):
+    decoded_password = decode_password(password)
+   
+    try:
+        if " " in url:
+            uri= url.replace(" ","+")
+        else:
+            uri=url
+        graph = create_graph_database_connection(uri, userName, decoded_password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        result = graphDb_data_Access.get_current_status_document_node(file_name)
+        if result is not None:
+            status = {'fileName':file_name, 
+                'status':result[0]['Status'],
+                'processingTime':result[0]['processingTime'],
+                'nodeCount':result[0]['nodeCount'],
+                'relationshipCount':result[0]['relationshipCount'],
+                'model':result[0]['model'],
+                'total_chunks':result[0]['total_chunks'],
+                'total_pages':result[0]['total_pages']
+                }
+        else:
+            status = {'fileName':file_name, 'status':'Failed'}
+        return create_api_response('Success',message="",file_name=status)
+    except Exception as e:
+        message=f"Unable to get the document status"
+        error_message = str(e)
+        logging.exception(f'{message}:{error_message}')
+        return create_api_response('Failed',message=message)
+    
     
 if __name__ == "__main__":
     uvicorn.run(app)

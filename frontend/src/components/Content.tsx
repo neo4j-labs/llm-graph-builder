@@ -12,9 +12,10 @@ import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './GraphViewModal';
 import { initialiseDriver } from '../utils/Driver';
 import Driver from 'neo4j-driver/types/driver';
-import { url } from '../utils/Utils';
 import deleteAPI from '../services/deleteFiles';
 import DeletePopUp from './DeletePopUp';
+import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
+import useServerSideEvent from '../hooks/useSse';
 
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -27,12 +28,28 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
-
   const [alertDetails, setalertDetails] = useState<alertState>({
     showAlert: false,
     alertType: 'error',
     alertMessage: '',
   });
+  const { updateStatusForLargeFiles, serverSideErrorHandler } = useServerSideEvent(
+    (min, fileName) => {
+      setalertDetails({
+        showAlert: true,
+        alertType: 'info',
+        alertMessage: `${fileName} will take approx ${min} Min`,
+      });
+      localStorage.setItem('alertShown', JSON.stringify(true));
+    },
+    (fileName) => {
+      setalertDetails({
+        showAlert: true,
+        alertType: 'error',
+        alertMessage: `${fileName} Failed to process`,
+      });
+    }
+  );
 
   useEffect(() => {
     if (!init) {
@@ -53,6 +70,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           neo4jConnection.database
         ).then((driver: Driver) => {
           if (driver) {
+            localStorage.setItem('alertShown', JSON.stringify(false));
             setConnectionStatus(true);
             setDriver(driver);
           } else {
@@ -73,128 +91,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       });
     });
   }, [model]);
-  const perchunksecond = parseInt(process.env.TIME_PER_CHUNK as string);
-  useEffect(() => {
-    const pendingfilesstr = localStorage.getItem('pendingfiles');
-    const neo4jconnection = localStorage.getItem('neo4j.connection');
-    if (pendingfilesstr && neo4jconnection) {
-      const pendingfiles = JSON.parse(pendingfilesstr);
-      const credentials = JSON.parse(neo4jconnection);
-      if (pendingfiles.length) {
-        pendingfiles.forEach((element: string) => {
-          let encodedstr;
-          if (credentials?.password) {
-            encodedstr = btoa(credentials?.password);
-          }
-          let alertShown = false;
-          const eventSource = new EventSource(
-            `${url()}/update_extract_status/${element}?url=${credentials?.uri}&userName=${
-              credentials?.user
-            }&password=${encodedstr}&database=${credentials?.database}`
-          );
-          eventSource.onmessage = (event) => {
-            const eventResponse = JSON.parse(event.data);
-            if (eventResponse.status === 'Completed') {
-              setFilesData((prevfiles) => {
-                return prevfiles.map((curfile) => {
-                  if (curfile.name == eventResponse.fileName) {
-                    return {
-                      ...curfile,
-                      status: eventResponse.status,
-                      NodesCount: eventResponse?.nodeCount,
-                      relationshipCount: eventResponse?.relationshipCount,
-                      model: eventResponse?.model,
-                      processing: eventResponse?.processingTime?.toFixed(2),
-                    };
-                  }
-                  return curfile;
-                });
-              });
-              const pendingfilesstr = localStorage.getItem('pendingfiles');
-              if (pendingfilesstr) {
-                const pendingfiles: string[] = JSON.parse(pendingfilesstr);
-                for (let index = 0; index < pendingfiles.length; index++) {
-                  if (pendingfiles[index] === eventResponse.fileName) {
-                    console.log(pendingfiles[index]);
-                    pendingfiles.splice(index, 1);
-                  }
-                }
-                localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
-              }
-              eventSource.close();
-            } else if (eventResponse.status == 'Failed') {
-              const pendingfilesstr = localStorage.getItem('pendingfiles');
-              if (pendingfilesstr) {
-                const pendingfiles: string[] = JSON.parse(pendingfilesstr);
-                for (let index = 0; index < pendingfiles.length; index++) {
-                  if (pendingfiles[index] === eventResponse.fileName) {
-                    console.log(pendingfiles[index]);
-                    pendingfiles.splice(index, 1);
-                  }
-                }
-                localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
-              }
-              setFilesData((prevfiles) => {
-                return prevfiles.map((curfile) => {
-                  if (curfile.name == eventResponse.fileName) {
-                    return {
-                      ...curfile,
-                      status: eventResponse.status,
-                    };
-                  }
-                  return curfile;
-                });
-              });
-              setalertDetails({
-                showAlert: true,
-                alertType: 'error',
-                alertMessage: `${eventResponse.fileName} Failed to Process`,
-              });
-              eventSource.close();
-            } else {
-              const minutes = Math.floor((perchunksecond * eventResponse.total_chunks) / 60);
-              if (eventResponse.status === 'Processing' && !alertShown) {
-                setalertDetails({
-                  showAlert: true,
-                  alertType: 'info',
-                  alertMessage: `${eventResponse.fileName} will take approx ${minutes} Min`,
-                });
-                alertShown = true;
-              }
-              const pendingfilestr = localStorage.getItem('pendingfiles');
-              if (pendingfilestr) {
-                const pendingfiles = JSON.parse(pendingfilestr);
-                const isfilepresent = pendingfiles.findIndex((a: string) => a === eventResponse.fileName);
-                if (isfilepresent == -1) {
-                  pendingfiles.push(eventResponse.fileName);
-                  localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
-                }
-              } else {
-                const pendingfiles = [eventResponse.fileName];
-                localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
-              }
-            }
-          };
-          eventSource.onerror = (event) => {
-            // @ts-ignore
-            const errorfile = decodeURI(event?.target?.url?.split('?')[0].split('/').at(-1));
-            const pendingfilesstr = localStorage.getItem('pendingfiles');
-            if (pendingfilesstr) {
-              const pendingfiles: string[] = JSON.parse(pendingfilesstr);
-              for (let index = 0; index < pendingfiles.length; index++) {
-                if (pendingfiles[index] === errorfile) {
-                  console.log(pendingfiles[index]);
-                  pendingfiles.splice(index, 1);
-                }
-              }
-              localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
-            }
-            // localStorage.removeItem('pendingFiles')
-          };
-        });
-      }
-    }
-  }, []);
 
   const disableCheck = !filesData.some((f) => f.status === 'New');
 
@@ -221,113 +117,18 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         );
 
         if (filesize != undefined && filesize > 10000000) {
-          let encodedstr;
-          if (userCredentials?.password) {
-            encodedstr = btoa(userCredentials?.password);
+          if (filesData[uid].name != undefined && userCredentials != null) {
+            const name = filesData[uid].name;
+            triggerStatusUpdateAPI(
+              name as string,
+              userCredentials?.uri,
+              userCredentials?.userName,
+              userCredentials?.password,
+              userCredentials?.database,
+              updateStatusForLargeFiles,
+              serverSideErrorHandler
+            );
           }
-          let alertShowed = false;
-          const eventSource = new EventSource(
-            `${url()}/update_extract_status/${filesData[uid].name}?url=${userCredentials?.uri}&userName=${
-              userCredentials?.userName
-            }&password=${encodedstr}&database=${userCredentials?.database}`
-          );
-          eventSource.onmessage = (event) => {
-            const eventResponse = JSON.parse(event.data);
-            if (eventResponse.status === 'Completed') {
-              setFilesData((prevfiles) => {
-                return prevfiles.map((curfile) => {
-                  if (curfile.name == eventResponse.fileName) {
-                    return {
-                      ...curfile,
-                      status: eventResponse.status,
-                      NodesCount: eventResponse?.nodeCount,
-                      relationshipCount: eventResponse?.relationshipCount,
-                      model: eventResponse?.model,
-                      processing: eventResponse?.processingTime?.toFixed(2),
-                    };
-                  }
-                  return curfile;
-                });
-              });
-              const pendingfilesstr = localStorage.getItem('pendingfiles');
-              if (pendingfilesstr) {
-                const pendingfiles = JSON.parse(pendingfilesstr);
-                for (let index = 0; index < pendingfiles.length; index++) {
-                  if (pendingfiles[index] === eventResponse.fileName) {
-                    pendingfiles.splice(index, 1);
-                  }
-                }
-                localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
-              }
-              eventSource.close();
-            } else if (eventResponse.status == 'Failed') {
-              const pendingfilesstr = localStorage.getItem('pendingfiles');
-              if (pendingfilesstr) {
-                const pendingfiles: string[] = JSON.parse(pendingfilesstr);
-                for (let index = 0; index < pendingfiles.length; index++) {
-                  if (pendingfiles[index] === eventResponse.fileName) {
-                    pendingfiles.splice(index, 1);
-                  }
-                }
-                localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
-              }
-              setFilesData((prevfiles) => {
-                return prevfiles.map((curfile) => {
-                  if (curfile.name == eventResponse.fileName) {
-                    return {
-                      ...curfile,
-                      status: eventResponse.status,
-                    };
-                  }
-                  return curfile;
-                });
-              });
-              setalertDetails({
-                showAlert: true,
-                alertType: 'error',
-                alertMessage: `${eventResponse.fileName} Failed to process`,
-              });
-              eventSource.close();
-            } else {
-              const minutes = Math.floor((perchunksecond * eventResponse.total_chunks) / 60);
-              if (eventResponse.status === 'Processing' && !alertShowed) {
-                setalertDetails({
-                  showAlert: true,
-                  alertType: 'info',
-                  alertMessage: `${eventResponse.fileName} will take approx ${minutes} Min`,
-                });
-                alertShowed = true;
-              }
-              const pendingfilestr = localStorage.getItem('pendingfiles');
-              if (pendingfilestr) {
-                const pendingfiles = JSON.parse(pendingfilestr);
-                const isfilepresent = pendingfiles.findIndex((a: string) => a === eventResponse.fileName);
-                if (isfilepresent == -1) {
-                  pendingfiles.push(eventResponse.fileName);
-                  localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
-                }
-              } else {
-                const pendingfiles = [eventResponse.fileName];
-                localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
-              }
-            }
-          };
-          eventSource.onerror = (event) => {
-            // @ts-ignore
-            const errorfile = decodeURI(event?.target?.url?.split('?')[0].split('/').at(-1));
-            const pendingfilesstr = localStorage.getItem('pendingfiles');
-            if (pendingfilesstr) {
-              const pendingfiles: string[] = JSON.parse(pendingfilesstr);
-              for (let index = 0; index < pendingfiles.length; index++) {
-                if (pendingfiles[index] === errorfile) {
-                  console.log(pendingfiles[index]);
-                  pendingfiles.splice(index, 1);
-                }
-              }
-              localStorage.setItem('pendingfiles', JSON.stringify(pendingfiles));
-            }
-            // localStorage.removeItem('pendingFiles')
-          };
         }
 
         const apiResponse = await extractAPI(
