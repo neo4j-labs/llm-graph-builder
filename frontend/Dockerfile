@@ -1,8 +1,8 @@
 # Step 1: Build the React application
 FROM node:20 AS build
-ENV BACKEND_API_URL "https://dev-backend-dcavk67s4a-uc.a.run.app"
-#ENV BLOOM_URL "https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph"
-ENV BLOOM_URL "https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true"
+ENV BACKEND_API_URL "https://staging-backend-dcavk67s4a-uc.a.run.app"
+#ENV BLOOM_URL "https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL={CONNECT_URL}&search=Show+me+a+graph"
+ENV BLOOM_URL "https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true"
 ENV REACT_APP_SOURCES ""
 ENV LLM_MODELS ""
 ENV TIME_PER_CHUNK 4
