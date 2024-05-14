@@ -95,7 +95,6 @@
   background-color: rgb(var(--theme-palette-neutral-bg-strong));
   width: 36px !important;
   height: 36px !important;
-  right: 5px !important;
 }
 
 .custombutton {
@@ -223,6 +222,7 @@
 
 .chatBotContainer>div {
   max-width: 370px;
+  scrollbar-gutter: stable;
 }
 
 .ndl-widget-content>div {
@@ -234,13 +234,6 @@
   height: 100%;
   display: flex;
   align-items: center;
-}
-
-.infoIcon div {
-  ndl-icon {
-    height: 30px;
-    width: 15px;
-  }
 }
 
 .ndl-type-checkbox,

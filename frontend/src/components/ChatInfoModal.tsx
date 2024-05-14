@@ -17,9 +17,7 @@ const ChatInfoModal: React.FC<ChatInfoModalProps> = ({ hideModal, open, children
       open={open}
       size='small'
     >
-      <Dialog.Content>
-        {children}
-      </Dialog.Content>
+      <Dialog.Content>{children}</Dialog.Content>
     </Dialog>
   );
 };

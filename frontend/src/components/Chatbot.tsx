@@ -1,6 +1,6 @@
 /* eslint-disable no-confusing-arrow */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Widget, Typography, Avatar, TextInput, TextLink, IconButton } from '@neo4j-ndl/react';
+import { Button, Widget, Typography, Avatar, TextInput, IconButton, TextLink } from '@neo4j-ndl/react';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
@@ -9,15 +9,15 @@ import { useCredentials } from '../context/UserCredentials';
 import { chatBotAPI } from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../context/UsersFiles';
-import { extractPdfFileName } from '../utils/Utils';
 import ChatInfoModal from './ChatInfoModal';
 import ListComp from './List';
+import { extractPdfFileName } from '../utils/Utils';
 
 export default function Chatbot(props: ChatbotProps) {
-  const { messages: listMessages, setMessages: setListMessages, clear } = props;
+  const { messages: listMessages, setMessages: setListMessages, isLoading } = props;
   const [inputMessage, setInputMessage] = useState('');
   const formattedTextStyle = { color: 'rgb(var(--theme-palette-discovery-bg-strong))' };
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
   const { model } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -38,7 +38,10 @@ export default function Chatbot(props: ChatbotProps) {
     }
   }, []);
 
-  const simulateTypingEffect = (response: { reply: string; entities?: [string]; model?: string; sources?: [string] }, index = 0) => {
+  const simulateTypingEffect = (
+    response: { reply: string; entities?: [string]; model?: string; sources?: [string] },
+    index = 0
+  ) => {
     if (index < response.reply.length) {
       const nextIndex = index + 1;
       const currentTypedText = response.reply.substring(0, nextIndex);
@@ -53,10 +56,11 @@ export default function Chatbot(props: ChatbotProps) {
               user: 'chatbot',
               message: currentTypedText,
               datetime: datetime,
-              isTyping: true,
+              isTyping: false,
               sources: response?.sources,
               entities: response?.entities,
               model: response?.model,
+              isLoading: true,
             },
           ]);
         } else {
@@ -70,6 +74,7 @@ export default function Chatbot(props: ChatbotProps) {
             lastmsg.sources = response?.sources;
             lastmsg.entities = response?.entities;
             lastmsg.model = response?.model;
+            lastmsg.isLoading = false;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -100,9 +105,8 @@ export default function Chatbot(props: ChatbotProps) {
     let chatEntities;
     const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
     const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime };
-    setListMessages((listMessages) => [...listMessages, userMessage]);
+    setListMessages([...listMessages, userMessage]);
     try {
-      setLoading(true);
       setInputMessage('');
       simulateTypingEffect({ reply: ' ' });
       const chatresponse = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
@@ -111,12 +115,10 @@ export default function Chatbot(props: ChatbotProps) {
       chatModel = chatresponse?.data?.data?.info.model;
       chatEntities = chatresponse?.data?.data?.info.entities;
       simulateTypingEffect({ reply: chatbotReply, entities: chatEntities, model: chatModel, sources: chatSources });
-      setLoading(false);
     } catch (error) {
       chatbotReply = "Oops! It seems we couldn't retrieve the answer. Please try again later";
       setInputMessage('');
       simulateTypingEffect({ reply: chatbotReply });
-      setLoading(false);
     }
   };
 
@@ -129,7 +131,7 @@ export default function Chatbot(props: ChatbotProps) {
   }, [listMessages]);
 
   const openInfoModal = useCallback((activeChat: chatInfoMessage) => {
-    setActiveChat(activeChat)
+    setActiveChat(activeChat);
     setShowInfoModal(true);
   }, []);
 
@@ -138,22 +140,12 @@ export default function Chatbot(props: ChatbotProps) {
   }, []);
 
   useEffect(() => {
-    if (clear) {
-      setListMessages([{
-        datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
-        id: 2,
-        message: " Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.",
-        sources: ['https://neo4j.com/'],
-        user: "chatbot"
-      }]);
-    }
-  }, [clear])
-
-  console.log('activeChat', activeChat);
+    setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
+  }, [listMessages]);
 
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
-      <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer'>
+      <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3'>
         <Widget className='n-bg-palette-neutral-bg-weak' header='' isElevated={false}>
           <div className='flex flex-col gap-4 gap-y-4'>
             {listMessages.map((chat, index) => (
@@ -190,14 +182,18 @@ export default function Chatbot(props: ChatbotProps) {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${chat.user === 'chatbot'
-                    ? 'n-bg-palette-neutral-bg-strong max-w-[315px]'
-                    : 'n-bg-palette-primary-bg-weak max-w-[305px]'
-                    }`}
+                  className={`p-4 self-start ${
+                    chat.user === 'chatbot'
+                      ? 'n-bg-palette-neutral-bg-strong max-w-[315px]'
+                      : 'n-bg-palette-primary-bg-weak max-w-[305px]'
+                  }`}
                 >
                   <div
-                    className={`${loading && index === listMessages.length - 1 && chat.user == 'chatbot' ? 'loader' : ''
-                      }`}
+                    className={`${
+                      listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
+                        ? 'loader'
+                        : ''
+                    }`}
                   >
                     {chat.message.split(/`(.+?)`/).map((part, index) =>
                       index % 2 === 1 ? (
@@ -209,8 +205,12 @@ export default function Chatbot(props: ChatbotProps) {
                       )
                     )}
                   </div>
-                  <div style={{ border: '1px solid red' }}>
-                    <div><Typography variant='body-small'>{new Date(chat.datetime).toLocaleTimeString()}</Typography></div>                    
+                  <div>
+                    <div>
+                      <Typography variant='body-small' className='pt-2 font-bold'>
+                        {new Date(chat.datetime).toLocaleTimeString()}
+                      </Typography>
+                    </div>
                     {chat?.sources?.length ? (
                       <div className={`flex ${chat.sources?.length > 1 ? 'flex-col' : 'flex-row justify-end'} gap-1`}>
                         {chat.sources.map((link, index) => {
@@ -232,19 +232,25 @@ export default function Chatbot(props: ChatbotProps) {
                         })}
                       </div>
                     ) : null}
-                    {chat.user === 'chatbot' && chat.id !== 2 && (
+                    {((chat.user === 'chatbot' && chat.id !== 2) || chat.isLoading) && (
                       <div className='flex'>
                         <IconButton
                           className='infoIcon'
                           clean
                           aria-label='Information Icon'
-                          onClick={() => { openInfoModal(chat) }}
-                          disabled={loading}
+                          onClick={() => {
+                            openInfoModal(chat);
+                          }}
+                          disabled={chat.isTyping || chat.isLoading}
                         >
                           <InformationCircleIconOutline className='w-4 h-4 inline-block n-text-palette-success-text' />
                         </IconButton>
-                        <ChatInfoModal key={index} open={showInfoModal} hideModal={hideInfoModal} >
-                          <ListComp sources={activeChat?.sources} entities={activeChat?.entities} model={activeChat?.model} />
+                        <ChatInfoModal key={index} open={showInfoModal} hideModal={hideInfoModal}>
+                          <ListComp
+                            sources={activeChat?.sources}
+                            entities={activeChat?.entities}
+                            model={activeChat?.model}
+                          />
                         </ChatInfoModal>
                       </div>
                     )}

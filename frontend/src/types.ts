@@ -142,7 +142,7 @@ export interface CommonButtonProps {
   className?: string;
 }
 
-export interface messages {
+export interface Messages {
   id: number;
   message: string;
   user: string;
@@ -151,11 +151,13 @@ export interface messages {
   sources?: string[];
   model?: string;
   entities?: string[];
+  isLoading?: boolean;
 }
 
 export type ChatbotProps = {
-  messages: messages[];
-  setMessages: Dispatch<SetStateAction<messages[]>>;
+  messages: Messages[];
+  setMessages: Dispatch<SetStateAction<Messages[]>>;
+  isLoading: boolean;
   clear: boolean;
 };
 export interface WikipediaModalTypes {
@@ -246,8 +248,7 @@ export interface ChatInfoModalProps {
   children: ReactNode;
 }
 
-
-export interface chatInfoMessage extends Partial<messages> {
+export interface chatInfoMessage extends Partial<Messages> {
   sources?: string[];
   model?: string;
   entities?: string[];

@@ -2,7 +2,12 @@ import axios from 'axios';
 import { url } from '../utils/Utils';
 import { UserCredentials } from '../types';
 
-export const chatBotAPI = async (userCredentials: UserCredentials, question: string, session_id: string, model: string) => {
+export const chatBotAPI = async (
+  userCredentials: UserCredentials,
+  question: string,
+  session_id: string,
+  model: string
+) => {
   try {
     const formData = new FormData();
     formData.append('uri', userCredentials?.uri ?? '');
@@ -43,4 +48,3 @@ export const clearChatAPI = async (userCredentials: UserCredentials, session_id:
     throw error;
   }
 };
-
