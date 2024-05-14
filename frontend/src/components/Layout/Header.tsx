@@ -56,6 +56,7 @@ export default function Header({
                 onClick={() => handleURLClick('https://neo4j.com/labs/genai-ecosystem/llm-graph-builder')}
                 size='large'
                 clean
+                placement='left'
               >
                 <InformationCircleIconOutline className='n-size-token-7' />
               </ButtonWithToolTip>

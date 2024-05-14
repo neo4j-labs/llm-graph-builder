@@ -253,6 +253,19 @@ async def graph_query(
         logging.exception(f'Exception in graph query: {error_message}')
         return create_api_response(job_status, message=message, error=error_message)
 
+@app.post("/clear_chat_bot")
+async def clear_chat_bot(uri=Form(None),userName=Form(None), password=Form(None), database=Form(None), session_id=Form(None)):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        result = await asyncio.to_thread(clear_chat_history,graph=graph,session_id=session_id)
+        return create_api_response('Success',data=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to clear chat History"
+        error_message = str(e)
+        logging.exception(f'Exception in chat bot:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+
 @app.post("/connect")
 async def connect(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
     try:
