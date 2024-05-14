@@ -46,11 +46,12 @@ class graphDBdataAccess:
             logging.info("Update source node properties")
             self.graph.query("""MERGE(d:Document {fileName :$fn}) SET d.status = $st, d.createdAt = $c_at, 
                             d.updatedAt = $u_at, d.processingTime = $pt, d.nodeCount= $n_count, 
-                            d.relationshipCount = $r_count, d.model= $model
+                            d.relationshipCount = $r_count, d.model= $model, d.total_pages = $t_pages, d.total_chunks = $t_chunks
                         """,
                         {"fn":obj_source_node.file_name, "st":obj_source_node.status, "c_at":obj_source_node.created_at,
                         "u_at":obj_source_node.updated_at, "pt":round(processed_time.total_seconds(),2), "e_message":'',
-                        "n_count":obj_source_node.node_count, "r_count":obj_source_node.relationship_count, "model":obj_source_node.model
+                        "n_count":obj_source_node.node_count, "r_count":obj_source_node.relationship_count, "model":obj_source_node.model,
+                        "t_pages":obj_source_node.total_pages, "t_chunks":obj_source_node.total_chunks
                         }
                         )
         except Exception as e:
@@ -91,7 +92,7 @@ class graphDBdataAccess:
                                     CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score
                                     WHERE node <> c and score >= $score MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score
                                 """,
-                                {"score":knn_min_score}
+                                {"score":float(knn_min_score)}
                                 )
             logging.info(f"result : {result}")
             
@@ -107,4 +108,52 @@ class graphDBdataAccess:
         """
         if self.graph:
             return "Connection Successful"
+
+    def execute_query(self, query, param=None):
+        return self.graph.query(query, param)
+
+    def get_current_status_document_node(self, file_name):
+        query = """
+                MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, 
+                d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount,
+                d.total_pages AS total_pages, d.total_chunks AS total_chunks
+                """
+        param = {"file_name" : file_name}
+        return self.execute_query(query, param)
+    
+    def delete_file_from_graph(self, filenames:str, source_types:str, deleteEntities:str):
+        filename_list = filenames.split(',')
+        source_types_list = source_types.split(',')
+        query_to_delete_document=""" 
+           MATCH (d:Document) where d.fileName in $filename_list and d.fileSource in $source_types_list
+            with collect(d) as documents 
+            unwind documents as d
+            optional match (d)<-[:PART_OF]-(c:Chunk) 
+            detach delete c, d
+            return count(*) as deletedChunks
+            """
+        query_to_delete_document_and_entities=""" 
+            MATCH (d:Document) where d.fileName in $filename_list and d.fileSource in $source_types_list
+            with collect(d) as documents 
+            unwind documents as d
+            optional match (d)<-[:PART_OF]-(c:Chunk)
+            // if delete-entities checkbox is set
+            call { with  c, documents
+                match (c)-[:HAS_ENTITY]->(e)
+                // belongs to another document
+                where not exists {  (d2)<-[:PART_OF]-()-[:HAS_ENTITY]->(e) WHERE NOT d2 IN documents }
+                detach delete e
+                return count(*) as entities
+            } 
+            detach delete c, d
+            return sum(entities) as deletedEntities, count(*) as deletedChunks
+            """    
+        param = {"filename_list" : filename_list, "source_types_list": source_types_list}
+        if deleteEntities == "true":
+            result = self.execute_query(query_to_delete_document_and_entities, param)
+            logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' from database")
+        else :
+            result = self.execute_query(query_to_delete_document, param)    
+            logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' with their entities from database")
         
+        return result, len(filename_list)    

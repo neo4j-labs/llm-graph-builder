@@ -123,7 +123,6 @@ const DropZone: FunctionComponent = () => {
               'Content-Type': 'multipart/form-data',
             },
           });
-          console.log(apiResponse.data);
           if (apiResponse?.data.status === 'Failed') {
             throw new Error(`message:${apiResponse.data.message},fileName:${apiResponse.data.file_name}`);
           } else {
@@ -208,8 +207,9 @@ const DropZone: FunctionComponent = () => {
         loadingComponent={isLoading && <Loader />}
         isTesting={true}
         className='bg-none'
+        supportedFilesDescription={'Supports: PDF Files'}
         dropZoneOptions={{
-          // accept: { 'application/pdf': ['.pdf'] },
+          accept: { 'application/pdf': ['.pdf'] },
           onDrop: (f: Partial<globalThis.File>[]) => {
             onDropHandler(f);
           },

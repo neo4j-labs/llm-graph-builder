@@ -1,17 +1,11 @@
 import axios from 'axios';
 import { url } from '../utils/Utils';
-import { SourceNode, UserCredentials } from '../types';
-interface ServerData {
-  data: SourceNode[];
-  status: string;
-  error?: string;
-  message?: string;
-}
+import { SourceListServerData, UserCredentials } from '../types';
 
 export const getSourceNodes = async (userCredentials: UserCredentials) => {
   try {
     const encodedstr = btoa(userCredentials.password);
-    const response = await axios.get<ServerData>(
+    const response = await axios.get<SourceListServerData>(
       `${url()}/sources_list?uri=${userCredentials.uri}&database=${userCredentials.database}&userName=${
         userCredentials.userName
       }&password=${encodedstr}`

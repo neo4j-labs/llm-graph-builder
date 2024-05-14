@@ -1,4 +1,4 @@
-import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone } from '@neo4j-ndl/react';
+import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone, Typography, TextLink } from '@neo4j-ndl/react';
 import { Dispatch, SetStateAction, useState } from 'react';
 import connectAPI from '../services/ConnectAPI';
 import { useCredentials } from '../context/UserCredentials';
@@ -74,7 +74,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
             }
 
             const [key, value] = line.split('=');
-            if (['NEO4J_URI', 'NEO4J_USERNAME', 'NEO4J_PASSWORD', 'NEO4J_DATABASE'].includes(key)) {
+            if (['NEO4J_URI', 'NEO4J_USERNAME', 'NEO4J_PASSWORD', 'NEO4J_DATABASE', 'NEO4J_PORT'].includes(key)) {
               acc[key] = value;
             }
             return acc;
@@ -83,6 +83,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
           setUsername(configObject.NEO4J_USERNAME ?? 'neo4j');
           setPassword(configObject.NEO4J_PASSWORD ?? '');
           setDatabase(configObject.NEO4J_DATABASE ?? 'neo4j');
+          setPort(configObject.NEO4J_PORT ?? '7687');
         } else {
           setMessage({ type: 'danger', content: 'Please drop a valid file' });
         }
@@ -95,7 +96,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
 
   const submitConnection = async () => {
     const connectionURI = `${protocol}://${URI}${URI.split(':')[1] ? '' : `:${port}`}`;
-    setUserCredentials({ uri: connectionURI, userName: username, password: password, database: database });
+    setUserCredentials({ uri: connectionURI, userName: username, password: password, database: database, port: port });
     setIsLoading(true);
     await connectAPI(connectionURI, username, password, database).then((response: any) => {
       if (response?.data?.status === 'Success') {
@@ -125,6 +126,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
       if (driver) {
         setConnectionStatus(true);
         setDriver(driver);
+        localStorage.setItem('alertShown', JSON.stringify(false));
       } else {
         setConnectionStatus(false);
       }
@@ -150,6 +152,11 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
       >
         <Dialog.Header id='form-dialog-title'>Connect to Neo4j</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
+          <Typography variant='body-medium' className='mb-4'>
+            <TextLink externalLink href='https://console.neo4j.io/'>
+              Don't have a Neo4j instance? Start for free today
+            </TextLink>
+          </Typography>
           {connectionMessage?.type !== 'unknown' && (
             <Banner
               name='Connection Modal'
@@ -247,7 +254,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
             </div>
           </div>
           <Button loading={isLoading} disabled={isDisabled} onClick={() => submitConnection()}>
-            Submit
+            Connect
           </Button>
         </Dialog.Content>
       </Dialog>

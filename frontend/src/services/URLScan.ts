@@ -5,11 +5,19 @@ import { ScanProps, ServerResponse } from '../types';
 const urlScanAPI = async (props: ScanProps) => {
   try {
     const formData = new FormData();
+    let s3url: string = '';
+    if (props.source_type === 's3 bucket' && !props.urlParam?.endsWith('/')) {
+      s3url = props?.urlParam + '/';
+    }
     formData.append('uri', props?.userCredentials?.uri ?? '');
     formData.append('database', props?.userCredentials?.database ?? '');
     formData.append('userName', props?.userCredentials?.userName ?? '');
     formData.append('password', props?.userCredentials?.password ?? '');
-    formData.append('source_url', props?.urlParam ?? '');
+    if (props.source_type === 's3 bucket') {
+      formData.append('source_url', s3url ?? '');
+    } else {
+      formData.append('source_url', props?.urlParam ?? '');
+    }
     formData.append('wiki_query', props?.wikiquery ?? '');
     formData.append('source_type', props?.source_type ?? '');
     if (props.model != undefined) {

@@ -2,6 +2,7 @@ import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { AxiosResponse } from 'axios';
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 import { OverridableStringUnion } from '@mui/types';
+import type { Node } from '@neo4j-nvl/base';
 
 export interface CustomFile extends Partial<globalThis.File> {
   processing: number | string;
@@ -20,15 +21,15 @@ export interface CustomFile extends Partial<globalThis.File> {
 }
 
 export interface OptionType {
-  value: string;
-  label: string;
+  readonly value: string;
+  readonly label: string;
 }
 
 export type UserCredentials = {
   uri: string;
   userName: string;
   password: string;
-  database?: string;
+  database: string;
 } & { [key: string]: any };
 
 export type ExtractParams = {
@@ -44,6 +45,8 @@ export type ExtractParams = {
   gcs_blob_filename?: string;
   source_type?: string;
   file_name?: string;
+  allowedNodes?: string[];
+  allowedRelationship?: string[];
 } & { [key: string]: any };
 
 export type UploadParams = {
@@ -164,7 +167,7 @@ export interface GraphViewModalProps {
   viewPoint: string;
 }
 
-export type GraphType = 'Document' | 'Chunks' | 'Entities';
+export type GraphType = 'document' | 'chunks' | 'entities';
 
 export interface fileName {
   fileName: string;
@@ -172,6 +175,7 @@ export interface fileName {
   url: string;
   gcsBucket?: string;
   gcsBucketFolder?: string;
+  status?: string;
 }
 export interface URLSCAN_RESPONSE {
   status: string;
@@ -183,7 +187,29 @@ export interface URLSCAN_RESPONSE {
   file_source?: string;
   data?: any;
 }
-
+export interface statusAPI {
+  status: string;
+  message: string;
+  file_name?: fileName;
+}
+export interface statusupdate {
+  status: string;
+  message: string;
+  file_name: fileStatus;
+}
+export interface fileStatus {
+  fileName: string;
+  status: string;
+  processingTime: number | null;
+  nodeCount: number | null;
+  relationshipCount: number | null;
+  model: string;
+  total_chunks?: number | null;
+  total_pages?: number | null;
+}
+export interface PollingAPI_Response extends Partial<AxiosResponse> {
+  data: statusupdate;
+}
 export interface ServerResponse extends Partial<AxiosResponse> {
   data: URLSCAN_RESPONSE;
 }
@@ -203,3 +229,43 @@ export type alertState = {
   alertType: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined;
   alertMessage: string;
 };
+
+export type Scheme = Record<string, string>;
+export type LabelCount = Record<string, number>;
+interface NodeType extends Partial<Node> {
+  labels?: string[];
+}
+export interface LegendChipProps {
+  scheme: Scheme;
+  title: string;
+  nodes: NodeType[];
+}
+export interface FileContextProviderProps {
+  children: ReactNode;
+}
+export interface labelsAndTypes {
+  labels: string[];
+  relationshipTypes: string[];
+}
+export interface ServerData {
+  data: labelsAndTypes[];
+  status: string;
+  error?: string;
+  message?: string;
+}
+export interface SourceListServerData {
+  data: SourceNode[];
+  status: string;
+  error?: string;
+  message?: string;
+}
+export interface eventResponsetypes {
+  fileName: string;
+  status: string;
+  processingTime: number;
+  nodeCount: number;
+  relationshipCount: number;
+  model: string;
+  total_chunks: number | null;
+  total_pages: number | null;
+}

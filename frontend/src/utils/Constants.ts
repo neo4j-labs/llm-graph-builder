@@ -3,7 +3,7 @@ export const document = `+ [docs]`;
 export const chunks = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
 + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks`;
 
-export const entities = `+ collect { OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!Chunk) RETURN p }`;
+export const entities = `+ collect { OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!Chunk) RETURN p}`;
 
 export const docEntities = `+ [docs] 
 + collect { MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)--(:!Chunk) RETURN p }`;
@@ -25,24 +25,6 @@ export const docChunkEntities = `+[chunks]
 + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
 //chunks with entities
 + collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
-
-export const colors = [
-  '#588c7e',
-  '#f2e394',
-  '#f2ae72',
-  '#d96459',
-  '#5b9aa0',
-  '#d6d4e0',
-  '#b8a9c9',
-  '#622569',
-  '#ddd5af',
-  '#d9ad7c',
-  '#a2836e',
-  '#674d3c',
-  '#d7b69f',
-  '#00ffff',
-  '##8eb9ff',
-];
 export const llms =
   process.env?.LLM_MODELS?.trim() != ''
     ? process.env.LLM_MODELS?.split(',')
@@ -53,3 +35,51 @@ export const defaultLLM = llms?.includes('OpenAI GPT 4')
   ? 'Gemini 1.0 Pro'
   : 'Diffbot';
 export const chunkSize = 5 * 1024 * 1024;
+
+export const NODES_OPTIONS = [
+  {
+    label: 'Person',
+    value: 'Person',
+  },
+  {
+    label: 'Organization',
+    value: 'Organization',
+  },
+  {
+    label: 'Event',
+    value: 'Event',
+  },
+];
+
+export const RELATION_OPTIONS = [
+  {
+    label: 'WORKS_AT',
+    value: 'WORKS_AT',
+  },
+  {
+    label: 'IS_CEO',
+    value: 'IS_CEO',
+  },
+  {
+    label: 'HOSTS_EVENT',
+    value: 'HOSTS_EVENT',
+  },
+];
+
+export const queryMap: {
+  Document: string;
+  Chunks: string;
+  Entities: string;
+  DocEntities: string;
+  DocChunks: string;
+  ChunksEntities: string;
+  DocChunkEntities: string;
+} = {
+  Document: 'document',
+  Chunks: 'chunks',
+  Entities: 'entities',
+  DocEntities: 'docEntities',
+  DocChunks: 'docChunks',
+  ChunksEntities: 'chunksEntities',
+  DocChunkEntities: 'docChunkEntities',
+};

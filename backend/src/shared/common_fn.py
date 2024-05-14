@@ -5,34 +5,35 @@ from langchain_google_vertexai import VertexAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from langchain.docstore.document import Document
 from langchain_community.graphs import Neo4jGraph
+from langchain_community.graphs.graph_document import GraphDocument
+from typing import List
 import re
 import os
 
-def check_url_source(url):
+def check_url_source(source_type, yt_url:str=None, queries_list:List[str]=None):
     try:
-      logging.info(f"incoming URL: {url}")
-      if "youtu" in url:
-        youtube_url = create_youtube_url(url)
-        logging.info(youtube_url)
-      else:
-        youtube_url=''
-
-      youtube_id_regex = re.search(r"v=([a-zA-Z0-9_-]+)", youtube_url)
-      if url.startswith('s3://'):
-        source ='s3 bucket'
-        
-      elif youtube_url.startswith("https://www.youtube.com/watch?") and youtube_id_regex is not None:
-        if len(youtube_id_regex.group(1)) == 11:
-            source = 'youtube'
-            #re.match('^(https?:\/\/)?(www\.|m\.)?youtube\.com\/(c\/[^\/\?]+\/|channel\/[^\/\?]+\/|user\/[^\/\?]+\/)?(watch\?v=[^&\s]+|embed\/[^\/\?]+|[^\/\?]+)(&[^?\s]*)?$',url) :
-        else :
-          source = 'Invalid'
-      else:
-        source = 'Invalid'
+      logging.info(f"incoming URL: {yt_url}")
+      if source_type == 'youtube':
+        if re.match('(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?',yt_url.strip()):
+          youtube_url = create_youtube_url(yt_url.strip())
+          logging.info(youtube_url)
+          return youtube_url
+        else:
+          raise Exception('Incoming URL is not youtube URL')
       
-      return source,youtube_url
+      elif  source_type == 'Wikipedia':
+        wiki_query_ids=[]
+        wikipedia_url_regex = r'^https?://(?:en\.wikipedia\.org/wiki/)?([A-Za-z0-9_\-]+)$'
+        for wiki_url in queries_list:
+          match = re.match(wikipedia_url_regex, wiki_url.strip())
+          if match:
+            wiki_query_ids.append(match.group(1))
+          else :  
+             wiki_query_ids.append(wiki_url.strip())
+        logging.info(f"wikipedia query ids = {wiki_query_ids}")     
+        return wiki_query_ids     
     except Exception as e:
-      logging.error(f"Error in recognize URL: {e}")  
+      logging.error(f"Error in recognize URL: {e}")
       raise Exception(e)
 
 def get_combined_chunks(chunkId_chunkDoc_list):
@@ -50,12 +51,7 @@ def get_combined_chunks(chunkId_chunkDoc_list):
 def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
   logging.info("creating list of chunks and graph documents in get_chunk_and_graphDocument func")
   lst_chunk_chunkId_document=[]
-  for graph_document in graph_document_list:
-            # for index, chunk in enumerate(chunkId_chunkDoc_list):
-            #     if graph_document.source.page_content == chunk['chunk_doc'].page_content:
-            #         position = index+1
-            #         lst_chunk_chunkId_document.append({'position':position,'graph_doc':graph_document,'chunk_id':chunk['chunk_id']})
-            #         break 
+  for graph_document in graph_document_list:            
           for chunk_id in graph_document.source.metadata['combined_chunk_ids'] :
             lst_chunk_chunkId_document.append({'graph_doc':graph_document,'chunk_id':chunk_id})
                   
@@ -84,4 +80,8 @@ def load_embedding_model(embedding_model_name: str):
         dimension = 384
         logging.info(f"Embedding: Using SentenceTransformer , Dimension:{dimension}")
     return embeddings, dimension
+
+def save_graphDocuments_in_neo4j(graph:Neo4jGraph, graph_document_list:List[GraphDocument]):
+  # graph.add_graph_documents(graph_document_list, baseEntityLabel=True)
+  graph.add_graph_documents(graph_document_list)
                  
