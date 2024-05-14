@@ -145,17 +145,23 @@ export interface CommonButtonProps {
   title: string;
   className?: string;
 }
-export interface messages {
+
+export interface Messages {
   id: number;
   message: string;
   user: string;
   datetime: string;
   isTyping?: boolean;
   sources?: string[];
+  model?: string;
+  entities?: string[];
+  isLoading?: boolean;
 }
 export type ChatbotProps = {
-  messages: messages[];
-  setMessages: Dispatch<SetStateAction<messages[]>>;
+  messages: Messages[];
+  setMessages: Dispatch<SetStateAction<Messages[]>>;
+  isLoading: boolean;
+  clear: boolean;
 };
 export interface WikipediaModalTypes {
   hideModal: () => void;
@@ -257,6 +263,19 @@ export interface SourceListServerData {
   error?: string;
   message?: string;
 }
+
+export interface ChatInfoModalProps {
+  hideModal: () => void;
+  open: boolean;
+  children: ReactNode;
+}
+
+export interface chatInfoMessage extends Partial<Messages> {
+  sources?: string[];
+  model?: string;
+  entities?: string[];
+}
+
 export interface eventResponsetypes {
   fileName: string;
   status: string;

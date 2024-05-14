@@ -96,6 +96,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   };
 
   useEffect(() => {
+    setDocLimit(docLimit === '' ? '3' : docLimit);
     if (open) {
       setNodes([]);
       setRelationships([]);
@@ -286,13 +287,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               </div>
             ) : status !== 'unknown' ? (
               <div className='my-40 flex items-center justify-center'>
-                <Banner
-                  name='graph banner'
-                  closeable
-                  description={statusMessage}
-                  onClose={() => setStatus('unknown')}
-                  type={status}
-                />
+                <Banner name='graph banner' description={statusMessage} type={status} />
               </div>
             ) : (
               <>
