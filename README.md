@@ -64,6 +64,16 @@ EMBEDDING_MODEL = ""\
 IS_EMBEDDING = "TRUE"
 KNN_MIN_SCORE = ""\
 
+## Setting up Enviournment Variables For Frontend Configuration
+
+Create .env file in the frontend root folder and update the following env variables.\
+BACKEND_API_URL=""\
+BLOOM_URL=""\
+REACT_APP_SOURCES=""\
+LLM_MODELS=""\
+ENV=""\
+TIME_PER_CHUNK=\
+
 ## Functions/Modules
 
 #### extract_graph_from_file(uri, userName, password, file_path, model):
