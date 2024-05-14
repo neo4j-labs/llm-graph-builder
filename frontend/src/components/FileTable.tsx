@@ -46,7 +46,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     alertType: 'error',
     alertMessage: '',
   });
-  const { updateStatusForLargeFiles } = useServerSideEvent(
+  const { updateStatusForLargeFiles, serverSideErrorHandler } = useServerSideEvent(
     (min, fileName) => {
       setalertDetails({
         showAlert: true,
@@ -330,7 +330,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   userCredentials.userName,
                   userCredentials.password,
                   userCredentials.database,
-                  updateStatusForLargeFiles
+                  updateStatusForLargeFiles,
+                  serverSideErrorHandler
                 );
               }
             }

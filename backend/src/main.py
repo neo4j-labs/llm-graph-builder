@@ -145,7 +145,7 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
         lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'status':'Failed'})
     return lst_file_name,success_count,failed_count
     
-def extract_graph_from_file_local_file(graph, model, fileName, merged_file_path, allowedNodes, allowedRelationship):
+def extract_graph_from_file_local_file(graph, model, fileName, allowedNodes, allowedRelationship):
 
   logging.info(f'Process file name :{fileName}')
   file_name, pages = get_documents_from_file_by_path(merged_file_path,fileName)
@@ -291,9 +291,15 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     logging.info('Updated the nodeCount and relCount properties in Docuemnt node')
     logging.info(f'file:{file_name} extraction has been completed')
 
-    # merged_file_path have value only when file uploaded from local
     if merged_file_path is not None:
-      delete_uploaded_local_file(merged_file_path, file_name)
+      file_path = Path(merged_file_path)
+      if file_path.exists():
+        file_path.unlink()
+        logging.info(f'file {file_name} delete successfully')
+      else:
+        logging.info(f'file {file_name} does not exist')
+    else:
+      logging.info(f'File Path is None i.e. source type other than local file')
       
     return {
         "fileName": file_name,
@@ -362,8 +368,8 @@ def merge_chunks(file_name, total_chunks, chunk_dir, merged_dir):
   return file_size
   
 
-def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname, chunk_dir, merged_dir):
-  # chunk_dir = os.path.join(os.path.dirname(__file__), "chunks")  # Directory to save chunks
+def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname):
+  chunk_dir = os.path.join(os.path.dirname(__file__), "chunks")  # Directory to save chunks
   if not os.path.exists(chunk_dir):
       os.mkdir(chunk_dir)
   

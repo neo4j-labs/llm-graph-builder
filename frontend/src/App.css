@@ -222,7 +222,6 @@
 
 .chatBotContainer>div {
   max-width: 370px;
-  scrollbar-gutter: stable;
 }
 
 .ndl-widget-content>div {

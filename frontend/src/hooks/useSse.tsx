@@ -44,7 +44,12 @@ export default function useServerSideEvent(
     }
   }
 
+  const serverSideErrorHandler = (filename: string) => {
+    errorHandler(filename);
+  };
+
   return {
     updateStatusForLargeFiles,
+    serverSideErrorHandler,
   };
 }

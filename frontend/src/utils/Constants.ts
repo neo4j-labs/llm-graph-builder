@@ -19,6 +19,13 @@ export const chunksEntities = `// if chunks:
 + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
 //chunks with entities
 + collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
+
+export const docChunkEntities = `+[chunks]
++collect {MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p} //first chunk
++ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
++ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
+//chunks with entities
++ collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
 export const llms =
   process.env?.LLM_MODELS?.trim() != ''
     ? process.env.LLM_MODELS?.split(',')

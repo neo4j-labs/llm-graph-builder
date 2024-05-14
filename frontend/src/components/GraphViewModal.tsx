@@ -101,17 +101,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setNodes([]);
       setRelationships([]);
       setLoading(true);
-      session
-        ?.run(queryToRun, { document_name: inspectedName })
-        .then((results) => {
-          // If this doc exists in the graph, the result length will be one.
-          if (results.records.length > 1) {
-            // @ts-ignore
-            const neo4jNodes = results.records.map((f) => f._fields[0]);
-            console.log('noe', neo4jNodes);
-            // @ts-ignore
-            const neo4jRels = results.records.map((f) => f._fields[1]);
-
+      fetchData()
+        .then((result) => {
+          if (result && result.data.data.nodes.length > 0) {
+            console.log('result', result);
+            const neoNodes = result.data.data.nodes.map((f: Node) => f);
+            const neoRels = result.data.data.relationships.map((f: Relationship) => f);
             // Infer color schema dynamically
             let iterator = 0;
             const schemeVal: Scheme = {};
