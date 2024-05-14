@@ -253,7 +253,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
             </div>
           </div>
           <Button loading={isLoading} disabled={isDisabled} onClick={() => submitConnection()}>
-            Submit
+            Connect
           </Button>
         </Dialog.Content>
       </Dialog>

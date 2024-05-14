@@ -35,7 +35,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatus('info');
         setStatusMessage('Loading...');
         const apiResponse = await urlScanAPI({
-          urlParam: youtubeURL,
+          urlParam: youtubeURL.trim(),
           userCredentials,
           model,
           accessKey: '',
@@ -50,52 +50,52 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             setYoutubeURL('');
             hideModal();
           }, 5000);
-        } else {
-          setStatus('success');
-          setStatusMessage(`Successfully Created Source Nodes for Link`);
-          const copiedFilesData = [...filesData];
-          apiResponse?.data?.file_name?.forEach((item) => {
-            const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
-            if (filedataIndex == -1) {
-              copiedFilesData.unshift({
-                name: item.fileName,
-                size: item.fileSize ?? 0,
-                source_url: item.url,
-                ...defaultValues,
-              });
-            } else {
-              const tempFileData = copiedFilesData[filedataIndex];
-              copiedFilesData.splice(filedataIndex, 1);
-              copiedFilesData.unshift({
-                ...tempFileData,
-                status: defaultValues.status,
-                NodesCount: defaultValues.NodesCount,
-                relationshipCount: defaultValues.relationshipCount,
-                processing: defaultValues.processing,
-                model: defaultValues.model,
-                fileSource: defaultValues.fileSource,
-              });
-            }
-          });
-          setFilesData(copiedFilesData);
-          setYoutubeURL('');
+          return;
         }
+        setStatus('success');
+        setStatusMessage(`Successfully Created Source Nodes for Link`);
+        const copiedFilesData = [...filesData];
+        apiResponse?.data?.file_name?.forEach((item) => {
+          const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
+          if (filedataIndex == -1) {
+            copiedFilesData.unshift({
+              name: item.fileName,
+              size: item.fileSize ?? 0,
+              source_url: item.url,
+              ...defaultValues,
+            });
+          } else {
+            const tempFileData = copiedFilesData[filedataIndex];
+            copiedFilesData.splice(filedataIndex, 1);
+            copiedFilesData.unshift({
+              ...tempFileData,
+              status: defaultValues.status,
+              NodesCount: defaultValues.NodesCount,
+              relationshipCount: defaultValues.relationshipCount,
+              processing: defaultValues.processing,
+              model: defaultValues.model,
+              fileSource: defaultValues.fileSource,
+            });
+          }
+        });
+        setFilesData(copiedFilesData);
+        setYoutubeURL('');
       } catch (error) {
         setStatus('danger');
         setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
       }
     }
-
     setTimeout(() => {
       setStatus('unknown');
       hideModal();
-    }, 5000);
+    }, 500);
   };
   const onClose = useCallback(() => {
     setYoutubeURL('');
     hideModal();
     setStatus('unknown');
   }, []);
+
   return (
     <CustomModal
       open={open}

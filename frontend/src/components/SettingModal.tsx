@@ -19,10 +19,12 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
       const getOptions = async () => {
         try {
           const response = await getNodeLabelsAndRelTypes(userCredentials as UserCredentials);
-          const nodelabels = response.data.data[0].labels.slice(0, 20).map((l) => ({ value: l, label: l }));
-          const reltypes = response.data.data[0].relationshipTypes.slice(0, 20).map((t) => ({ value: t, label: t }));
-          setnodeLabelOptions(nodelabels);
-          setrelationshipTypeOptions(reltypes);
+          if (response.data.data.length) {
+            const nodelabels = response.data.data[0].labels.slice(0, 20).map((l) => ({ value: l, label: l }));
+            const reltypes = response.data.data[0].relationshipTypes.slice(0, 20).map((t) => ({ value: t, label: t }));
+            setnodeLabelOptions(nodelabels);
+            setrelationshipTypeOptions(reltypes);
+          }
         } catch (error) {
           console.log(error);
         }
@@ -44,10 +46,6 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
           helpText='You can select more than one values'
           label='Node Labels'
           selectProps={{
-            defaultValue: {
-              label: 'Person',
-              value: 'Person',
-            },
             isClearable: true,
             isMulti: true,
             options: nodeLabelOptions,
@@ -69,7 +67,13 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
           type='creatable'
         />
         <div>
-          <Button onClick={clickHandler}>Use Existing Schema</Button>
+          <Button
+            title={!nodeLabelOptions.length && !relationshipTypeOptions.length ? `No Labels Found in the Database` : ''}
+            disabled={!nodeLabelOptions.length && !relationshipTypeOptions.length}
+            onClick={clickHandler}
+          >
+            Use Existing Schema
+          </Button>
         </div>
       </Dialog.Content>
     </Dialog>

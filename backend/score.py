@@ -1,3 +1,5 @@
+from fastapi import FastAPI, File, UploadFile, Form, Query
+from fastapi import FastAPI
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi import FastAPI, Request
 from fastapi_health import health
@@ -13,6 +15,7 @@ from langserve import add_routes
 from langchain_google_vertexai import ChatVertexAI
 from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
+from src.graph_query import get_graph_results
 from sse_starlette.sse import EventSourceResponse
 import json
 from typing import List, Mapping
@@ -21,6 +24,12 @@ from starlette.middleware.sessions import SessionMiddleware
 import google_auth_oauthlib.flow
 from google.oauth2.credentials import Credentials
 import os
+from typing import List
+from google.cloud import logging as gclogger
+
+logging_client = gclogger.Client()
+logger_name = "llm_experiments_metrics" # Saved in the google cloud logs
+logger = logging_client.logger(logger_name)
 
 def healthy_condition():
     output = {"healthy": True}
@@ -143,12 +152,14 @@ async def create_source_knowledge_graph_url(
             return create_api_response('Failed',message='source_type is other than accepted source')
 
         message = f"Source Node created successfully for source type: {source_type} and source: {source}"
+        josn_obj = {'api_name':'url_scan','db_url':uri,'url_scanned_file':lst_file_name}
+        logger.log_struct(josn_obj)
         return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name)    
     except Exception as e:
-        error_message = str(e)[:80]
+        error_message = str(e)
         message = f" Unable to create source node for source type: {source_type} and source: {source}"
         logging.exception(f'Exception Stack trace:')
-        return create_api_response('Failed',message=message + error_message,error=error_message,file_source=source_type)
+        return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=source_type)
 
 
 @app.post("/extract")
@@ -210,15 +221,18 @@ async def extract_knowledge_graph_from_file(
                 extract_graph_from_file_gcs, graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
-        
-        return create_api_response('Success', data=result)
+        result['db_url'] = uri
+        result['api_name'] = 'extract'
+        logger.log_struct(result)
+        return create_api_response('Success', data=result, file_source= source_type)
     except Exception as e:
         message=f" Failed To Process File:{file_name} or LLM Unable To Parse Content"
-        logging.info(message)
-        error_message = str(e)[:100]
+        error_message = str(e)
         graphDb_data_Access.update_exception_db(file_name,error_message)
-        logging.exception(f'Exception Stack trace: {error_message}')
-        return create_api_response('Failed', message=message + error_message, error=error_message, file_name = file_name)
+        josn_obj = {'message':message,'error_message':error_message, 'file_name': file_name,'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type}
+        logger.log_struct(josn_obj)
+        logging.exception(f'File Failed in extraction: {josn_obj}')
+        return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = file_name)
 
 @app.get("/sources_list")
 async def get_source_list(uri:str, userName:str, password:str, database:str=None):
@@ -230,6 +244,8 @@ async def get_source_list(uri:str, userName:str, password:str, database:str=None
         if " " in uri:
             uri= uri.replace(" ","+")
             result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
+            josn_obj = {'api_name':'sources_list','db_url':uri}
+            logger.log_struct(josn_obj)
             return create_api_response("Success",data=result)
     except Exception as e:
         job_status = "Failed"
@@ -247,6 +263,8 @@ async def update_similarity_graph(uri=Form(None), userName=Form(None), password=
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(update_graph, graph)
         logging.info(f"result : {result}")
+        josn_obj = {'api_name':'update_similarity_graph','db_url':uri}
+        logger.log_struct(josn_obj)
         return create_api_response('Success',message='Updated KNN Graph',data=result)
     except Exception as e:
         job_status = "Failed"
@@ -261,6 +279,8 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
         # database = "neo4j"
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,session_id=session_id)
+        josn_obj = {'api_name':'chat_bot','db_url':uri}
+        logger.log_struct(josn_obj)
         return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
@@ -269,11 +289,43 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
         logging.exception(f'Exception in chat bot:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
 
+
+@app.post("/graph_query")
+async def graph_query(
+    uri: str = Form(None),
+    userName: str = Form(None),
+    password: str = Form(None),
+    query_type: str = Form(None),
+    doc_limit: int = Form(None),
+    document_name: str = Form(None)
+):
+    try:
+        result = await asyncio.to_thread(
+            get_graph_results,
+            uri=uri,
+            username=userName,
+            password=password,
+            query_type=query_type,
+            doc_limit=doc_limit,
+            document_name=document_name
+        )
+        josn_obj = {'api_name':'graph_query','db_url':uri}
+        logger.log_struct(josn_obj)
+        return create_api_response('Success', data=result)
+    except Exception as e:
+        job_status = "Failed"
+        message = "Unable to get graph query response"
+        error_message = str(e)
+        logging.exception(f'Exception in graph query: {error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+
 @app.post("/connect")
 async def connect(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(connection_check, graph)
+        josn_obj = {'api_name':'connect','db_url':uri,'status':result, 'count':1}
+        logger.log_struct(josn_obj)
         return create_api_response('Success',message=result)
     except Exception as e:
         job_status = "Failed"
@@ -289,6 +341,8 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname)
+        josn_obj = {'api_name':'upload','db_url':uri}
+        logger.log_struct(josn_obj)
         return create_api_response('Success', message=result)
     except Exception as e:
         job_status = "Failed"
@@ -302,6 +356,8 @@ async def get_structured_schema(uri=Form(None), userName=Form(None), password=Fo
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(get_labels_and_relationtypes, graph)
+        josn_obj = {'api_name':'schema','db_url':uri}
+        logger.log_struct(josn_obj)
         return create_api_response('Success', data=result)
     except Exception as e:
         job_status = "Failed"
@@ -336,7 +392,9 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                 'processingTime':result[0]['processingTime'],
                 'nodeCount':result[0]['nodeCount'],
                 'relationshipCount':result[0]['relationshipCount'],
-                'model':result[0]['model']
+                'model':result[0]['model'],
+                'total_chunks':result[0]['total_chunks'],
+                'total_pages':result[0]['total_pages']
                 })
             else:
                 status = json.dumps({'fileName':file_name, 'status':'Failed'})
@@ -354,6 +412,30 @@ async def authorize(request: Request, model:str, gcs_project_id:str, gcs_bucket_
     request.session['gcs_bucket_folder'] = gcs_bucket_folder
     request.session['source_type'] = source_type
     request.session['source'] = source
+@app.post("/delete_document_and_entities")
+async def delete_document_and_entities(uri=Form(None), 
+                                       userName=Form(None), 
+                                       password=Form(None), 
+                                       database=Form(None), 
+                                       filenames=Form(None),
+                                       source_types=Form(None),
+                                       deleteEntities=Form(None)):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        result, files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filenames, source_types, deleteEntities)
+        entities_count = result[0]['deletedEntities'] if 'deletedEntities' in result[0] else 0
+        message = f"Deleted {files_list_size} documents with {entities_count} entities from database"
+        josn_obj = {'api_name':'delete_document_and_entities','db_url':uri}
+        logger.log_struct(josn_obj)
+        return create_api_response('Success',message=message)
+    except Exception as e:
+        job_status = "Failed"
+        message=f"Unable to delete document {filenames}"
+        error_message = str(e)
+        logging.exception(f'{message}:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+
     
     flow = google_auth_oauthlib.flow.Flow.from_client_config(oauth_config, scopes=SCOPES)
     flow.redirect_uri = REDIRECT_URI

@@ -2,7 +2,7 @@ import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { AxiosResponse } from 'axios';
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 import { OverridableStringUnion } from '@mui/types';
-import type { Node } from '@neo4j-nvl/core';
+import type { Node } from '@neo4j-nvl/base';
 
 export interface CustomFile extends Partial<globalThis.File> {
   processing: number | string;
@@ -167,7 +167,7 @@ export interface GraphViewModalProps {
   viewPoint: string;
 }
 
-export type GraphType = 'Document' | 'Chunks' | 'Entities';
+export type GraphType = 'document' | 'chunks' | 'entities';
 
 export interface fileName {
   fileName: string;
