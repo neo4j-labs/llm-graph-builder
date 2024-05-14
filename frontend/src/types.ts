@@ -200,6 +200,7 @@ export interface ScanProps {
   gcs_bucket_name?: string;
   gcs_bucket_folder?: string;
   source_type?: string;
+  gcs_project_id?: string;
 }
 export type alertState = {
   showAlert: boolean;

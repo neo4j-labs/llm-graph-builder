@@ -35,6 +35,9 @@ const urlScanAPI = async (props: ScanProps) => {
     if (props?.gcs_bucket_folder) {
       formData.append('gcs_bucket_folder', props.gcs_bucket_folder);
     }
+    if (props?.gcs_project_id) {
+      formData.append('gcs_project_id', props.gcs_project_id);
+    }
 
     const response: ServerResponse = await axios.post(`${url()}/url/scan`, formData, {
       headers: {

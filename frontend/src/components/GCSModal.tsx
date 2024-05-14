@@ -6,10 +6,12 @@ import { urlScanAPI } from '../services/URLScan';
 import { CustomFile, S3ModalProps, fileName } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
+import { GoogleLogin } from '@react-oauth/google';
 
 const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [bucketName, setbucketName] = useState<string>('');
   const [folderName, setFolderName] = useState<string>('');
+  const [projectId, setprojectId] = useState<string>('');
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
@@ -18,6 +20,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     setbucketName('');
     setFolderName('');
   };
+
   const submitHandler = async () => {
     const defaultValues: CustomFile = {
       processing: 0,
@@ -30,7 +33,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       fileSource: 'gcs bucket',
     };
 
-    if (!bucketName) {
+    if (bucketName.trim() === '' || projectId.trim() === '') {
       setStatus('danger');
       setStatusMessage('Please Fill the Bucket Name');
       setTimeout(() => {
@@ -48,6 +51,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           gcs_bucket_name: bucketName,
           gcs_bucket_folder: folderName,
           source_type: 'gcs bucket',
+          gcs_project_id: projectId,
         });
         if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
@@ -114,8 +118,30 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       submitLabel='Submit'
     >
       <div className='w-full inline-block'>
+        <GoogleLogin
+          onSuccess={(credentialResponse) => {
+            console.log(credentialResponse);
+          }}
+          onError={() => {
+            console.log('Login Failed');
+          }}
+        />
         <TextInput
-          id='bucketname'
+          id='project id'
+          value={projectId}
+          disabled={false}
+          label='Project ID'
+          aria-label='Project ID'
+          placeholder=''
+          autoFocus
+          fluid
+          required
+          onChange={(e) => {
+            setprojectId(e.target.value);
+          }}
+        ></TextInput>
+        <TextInput
+          id='url'
           value={bucketName}
           disabled={false}
           label='Bucket Name'
