@@ -72,7 +72,7 @@ BLOOM_URL=""\
 REACT_APP_SOURCES=""\
 LLM_MODELS=""\
 ENV=""\
-TIME_PER_CHUNK=\
+TIME_PER_CHUNK=
 
 ## Functions/Modules
 
