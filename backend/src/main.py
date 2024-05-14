@@ -80,14 +80,10 @@ def create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_na
       logging.info(f"lst_file_metadata in create_source_node_graph_url_gcs = {lst_file_metadata}")
       try:
           graphDb_data_Access = graphDBdataAccess(graph)
-          logging.info(f"obj_source_node = {obj_source_node}")
-          logging.info(f"creating soyrce node method called !!")
           graphDb_data_Access.create_source_node(obj_source_node)
-          logging.info("Updating success count")
           success_count+=1
           lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Success'})
       except Exception as e:
-        logging.info(f"Updating failed count because of error message: {e}")
         failed_count+=1
         lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Failed'})
     return lst_file_name,success_count,failed_count

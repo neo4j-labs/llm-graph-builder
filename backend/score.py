@@ -126,7 +126,10 @@ async def create_source_knowledge_graph_url(
             lst_file_name,success_count,failed_count = create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type
             )
         elif source_type == 'gcs bucket':
-            request.session['graph'] = graph
+            request.session['uri'] = uri
+            request.session['userName'] = userName
+            request.session['password'] = password
+            request.session['database'] = database
             return RedirectResponse(url=f'/authorize/{model}/{gcs_project_id}/{gcs_bucket_name}/{gcs_bucket_folder}/{source_type}/{source}', status_code=303)
             # lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, source_type
             # )
@@ -351,12 +354,10 @@ async def authorize(request: Request, model:str, gcs_project_id:str, gcs_bucket_
     request.session['gcs_bucket_folder'] = gcs_bucket_folder
     request.session['source_type'] = source_type
     request.session['source'] = source
-    logging.info(f"{gcs_project_id}/{gcs_bucket_name}/{gcs_bucket_folder}")
+    
     flow = google_auth_oauthlib.flow.Flow.from_client_config(oauth_config, scopes=SCOPES)
     flow.redirect_uri = REDIRECT_URI
     authorization_url, state = flow.authorization_url(access_type='offline', include_granted_scopes='true')
-    print(f"authorization_url = {authorization_url}")
-    print(f"state = {state}")
     request.session['state'] = state
     return RedirectResponse(url=authorization_url)
 
@@ -365,18 +366,16 @@ async def oauth2callback(request: Request):
     state = request.session['state']
     flow = google_auth_oauthlib.flow.Flow.from_client_config(oauth_config, scopes=SCOPES, state=state)
     flow.redirect_uri = REDIRECT_URI
-    print(f"request.url = {request.url}")
     flow.fetch_token(authorization_response=str(request.url))
-    print(f"creds = {flow.credentials}")
     #request.session['credentials'] = credentials_to_dict(flow.credentials)
     request.session['credentials'] = credentials_to_dict(flow.credentials)
     return RedirectResponse(url='/list_buckets')
 
 @app.get('/list_buckets')
 async def list_buckets(request: Request):
-    print("Inside list_buckets")
-  
-    lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(request.session['graph'], 
+
+    graph = create_graph_database_connection(request.session['uri'], request.session['userName'], request.session['password'], request.session['database'])
+    lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, 
                                                                                     request.session['model'], 
                                                                                     request.session['gcs_project_id'], 
                                                                                     request.session['gcs_bucket_name'], 
@@ -390,37 +389,5 @@ async def list_buckets(request: Request):
 def credentials_to_dict(credentials):
     return {'token': credentials.token, 'refresh_token': credentials.refresh_token, 'token_uri': credentials.token_uri, 'client_id': credentials.client_id, 'client_secret': credentials.client_secret, 'scopes': credentials.scopes}
 
-
-@app.get('/')
-async def index():
-    return HTMLResponse('''<h1>GCS bucket demo</h1>
-                        <form action="/url/scan" method="post">
-                            <label>URI: </label>
-                            <input type="text" name="uri" value="neo4j+s://73b760b4.databases.neo4j.io" required>
-                            </br>
-                            <label>Username: </label>
-                            <input type="text" name="userName" value="neo4j" required>
-                            </br>
-                            <label>password: </label>
-                            <input type="text" name="password" value="HqwAzfG83XwcEQ-mvEG4yNpcRTHMpsgZaYW3qIGJh2I" required>
-                            </br>
-                            <label>database: </label>
-                            <input type="text" name="database" value="neo4j" required>
-                            </br>
-                            <label>source_type: </label>
-                            <input type="text" name="source_type" value="gcs bucket" required>
-                            </br>
-                            <label>model: </label>
-                            <input type="text" name="model" value="OpenAI GPT 3.5" required>
-                            </br>
-                            <label>GCP Project ID: </label>
-                            <input type="text" name="gcs_project_id" value="persistent-genai" required>
-                            </br>
-                            <label>gcs_bucket_name: </label>
-                            <input type="text" name="gcs_bucket_name" value="llm_graph_genai_project" required>
-                            </br>
-                            <input type="submit" value="Submit">
-                        </form>''')
-    
 if __name__ == "__main__":
     uvicorn.run(app)
