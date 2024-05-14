@@ -19,11 +19,12 @@ export default async function subscribe(
     `${url()}/document_status/${fileName}?url=${uri}&userName=${username}&password=${encodedstr}&database=${database}`
   );
   if (response.data?.file_name?.status == 'Processing') {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     await subscribe(fileName, uri, username, database, password, datahandler);
   } else if (response.status != 200) {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    await subscribe(fileName, uri, username, database, password, datahandler);
+    throw new Error(
+      JSON.stringify({ fileName, message: `Failed To Process ${fileName} or LLM Unable To Parse Content` })
+    );
   } else {
     datahandler(response.data);
   }

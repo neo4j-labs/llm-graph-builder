@@ -32,6 +32,7 @@ import CustomProgressBar from './CustomProgressBar';
 import subscribe from '../services/PollingAPI';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
+import { AxiosError } from 'axios';
 
 const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows } = useFileContext();
@@ -115,8 +116,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   info.row.original?.fileSource === 's3 bucket'
                     ? info.row.original?.source_url
                     : info.row.original?.fileSource === 'youtube'
-                      ? info.row.original?.source_url
-                      : info.getValue()
+                    ? info.row.original?.source_url
+                    : info.getValue()
                 }
               >
                 {info.getValue()}
@@ -270,14 +271,14 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                     item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                       ? item.status
                       : item.fileSource === 'local file'
-                        ? item.status
-                        : item.status === 'Completed' || item.status === 'Failed'
-                          ? item.status
-                          : item.fileSource == 'Wikipedia' ||
-                            item.fileSource == 'youtube' ||
-                            item.fileSource == 'gcs bucket'
-                            ? item.status
-                            : 'N/A',
+                      ? item.status
+                      : item.status === 'Completed' || item.status === 'Failed'
+                      ? item.status
+                      : item.fileSource == 'Wikipedia' ||
+                        item.fileSource == 'youtube' ||
+                        item.fileSource == 'gcs bucket'
+                      ? item.status
+                      : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
                   source_url: item.url != 'None' && item?.url != '' ? item.url : '',
@@ -293,7 +294,12 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
           setIsLoading(false);
           setFilesData(prefiles);
           res.data.data.forEach((item) => {
-            if (item.status === 'Processing' && item.fileName != undefined && userCredentials && userCredentials.database) {
+            if (
+              item.status === 'Processing' &&
+              item.fileName != undefined &&
+              userCredentials &&
+              userCredentials.database
+            ) {
               if (item?.fileSize < 10000000) {
                 subscribe(
                   item.fileName,
@@ -302,7 +308,21 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   userCredentials?.database,
                   userCredentials?.password,
                   updatestatus
-                );
+                ).catch((error: AxiosError) => {
+                  // @ts-ignore
+                  const errorfile = decodeURI(error.config.url.split('?')[0].split('/').at(-1));
+                  setFilesData((prevfiles) => {
+                    return prevfiles.map((curfile) => {
+                      if (curfile.name == errorfile) {
+                        return {
+                          ...curfile,
+                          status: 'Failed',
+                        };
+                      }
+                      return curfile;
+                    });
+                  });
+                });
               } else {
                 triggerStatusUpdateAPI(
                   item.fileName,
