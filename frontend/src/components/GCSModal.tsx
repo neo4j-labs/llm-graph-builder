@@ -22,8 +22,8 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     flow: 'auth-code',
     onSuccess: async (codeResponse) => {
       console.log(codeResponse);
-      const tokens = await axios.post('backendapi', codeResponse.code)
-      console.log(tokens);
+      // const tokens = await axios.post('backendapi', codeResponse.code)
+      // console.log(tokens);
     },
     onError: errorResponse => console.log(errorResponse),
     scope: 'https://www.googleapis.com/auth/devstorage.read_only'
