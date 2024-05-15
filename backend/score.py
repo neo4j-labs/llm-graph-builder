@@ -20,10 +20,9 @@ from sse_starlette.sse import EventSourceResponse
 import json
 from typing import List
 from google.cloud import logging as gclogger
+from src.logger import CustomLogger
 
-logging_client = gclogger.Client()
-logger_name = "llm_experiments_metrics" # Saved in the google cloud logs
-logger = logging_client.logger(logger_name)
+logger = CustomLogger()
 
 def healthy_condition():
     output = {"healthy": True}
@@ -45,7 +44,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-add_routes(app,ChatVertexAI(), path="/vertexai")
+is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "True").lower() in ("true", "1", "yes")
+if is_gemini_enabled:
+    add_routes(app,ChatVertexAI(), path="/vertexai")
 
 app.add_api_route("/health", health([healthy_condition, healthy]))
 

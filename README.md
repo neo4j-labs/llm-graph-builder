@@ -5,6 +5,19 @@ Files can be uploaded from local machine or S3 bucket and then LLM model can be 
 
 ### Getting started
 
+:warning: 
+For the backend, if you want to run the LLM KG Builder locally, and don't need the GCP/VertexAI integration, make sure to have the following set in your ENV file :
+
+```env
+GEMINI_ENABLED = False
+GCP_LOG_METRICS_ENABLED = False
+```
+
+And for the frontend, make sure to export your local backend URL before running docker-compose by having the BACKEND_API_URL set in your ENV file :
+```env
+BACKEND_API_URL="http://localhost:8000"
+```
+
 1. Run Docker Compose to build and start all components:
     ```bash
     docker-compose up --build
