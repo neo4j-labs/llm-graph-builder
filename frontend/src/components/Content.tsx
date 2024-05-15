@@ -33,7 +33,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     alertType: 'error',
     alertMessage: '',
   });
-  const { updateStatusForLargeFiles, serverSideErrorHandler } = useServerSideEvent(
+  const { updateStatusForLargeFiles } = useServerSideEvent(
     (min, fileName) => {
       setalertDetails({
         showAlert: true,
@@ -125,8 +125,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               userCredentials?.userName,
               userCredentials?.password,
               userCredentials?.database,
-              updateStatusForLargeFiles,
-              serverSideErrorHandler
+              updateStatusForLargeFiles
             );
           }
         }
