@@ -6,7 +6,7 @@ import { urlScanAPI } from '../services/URLScan';
 import { CustomFile, S3ModalProps, fileName } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
-import { GoogleLogin, useGoogleLogin } from '@react-oauth/google';
+import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 
 const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
@@ -22,8 +22,8 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     flow: 'auth-code',
     onSuccess: async (codeResponse) => {
       console.log(codeResponse);
-      // const tokens = await axios.post('backendapi', codeResponse.code)
-      // console.log(tokens);
+      const tokens = await axios.post('https://supreme-space-funicular-p56j6v56pr627r6j-3001.app.github.dev/auth/google', { code: codeResponse.code })
+      console.log(tokens);
     },
     onError: errorResponse => console.log(errorResponse),
     scope: 'https://www.googleapis.com/auth/devstorage.read_only'
