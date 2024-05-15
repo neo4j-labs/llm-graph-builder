@@ -6,7 +6,8 @@ import { urlScanAPI } from '../services/URLScan';
 import { CustomFile, S3ModalProps, fileName } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin, useGoogleLogin } from '@react-oauth/google';
+import axios from 'axios';
 
 const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [bucketName, setbucketName] = useState<string>('');
@@ -16,6 +17,18 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
   const { setFilesData, model, filesData } = useFileContext();
+
+  const googleLogin = useGoogleLogin({
+    flow: 'auth-code',
+    onSuccess: async (codeResponse) => {
+      console.log(codeResponse);
+      const tokens = await axios.post('backendapi', codeResponse.code)
+      console.log(tokens);
+    },
+    onError: errorResponse => console.log(errorResponse),
+    scope: 'https://www.googleapis.com/auth/devstorage.read_only'
+
+  });
   const reset = () => {
     setbucketName('');
     setFolderName('');
@@ -32,7 +45,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       model: model,
       fileSource: 'gcs bucket',
     };
-
+    googleLogin()
     if (bucketName.trim() === '' || projectId.trim() === '') {
       setStatus('danger');
       setStatusMessage('Please Fill the Bucket Name');
@@ -118,14 +131,14 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       submitLabel='Submit'
     >
       <div className='w-full inline-block'>
-        <GoogleLogin
+        {/* <GoogleLogin
           onSuccess={(credentialResponse) => {
             console.log(credentialResponse);
           }}
           onError={() => {
             console.log('Login Failed');
           }}
-        />
+        /> */}
         <TextInput
           id='project id'
           value={projectId}
