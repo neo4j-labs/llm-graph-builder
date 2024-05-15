@@ -208,7 +208,7 @@ export default function Chatbot(props: ChatbotProps) {
                   <div>
                     <div>
                       <Typography variant='body-small' className='pt-2 font-bold'>
-                        {new Date(chat.datetime).toLocaleTimeString()}
+                        {chat.datetime}
                       </Typography>
                     </div>
                     {chat?.sources?.length ? (
