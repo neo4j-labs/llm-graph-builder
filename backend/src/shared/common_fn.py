@@ -9,6 +9,7 @@ from langchain_community.graphs.graph_document import GraphDocument
 from typing import List
 import re
 import os
+from pathlib import Path
 
 def check_url_source(source_type, yt_url:str=None, queries_list:List[str]=None):
     try:
@@ -84,4 +85,9 @@ def load_embedding_model(embedding_model_name: str):
 def save_graphDocuments_in_neo4j(graph:Neo4jGraph, graph_document_list:List[GraphDocument]):
   # graph.add_graph_documents(graph_document_list, baseEntityLabel=True)
   graph.add_graph_documents(graph_document_list)
-                 
+
+def delete_uploaded_local_file(merged_file_path, file_name):
+  file_path = Path(merged_file_path)
+  if file_path.exists():
+    file_path.unlink()
+    logging.info(f'file {file_name} deleted successfully')
