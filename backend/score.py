@@ -23,6 +23,8 @@ from google.cloud import logging as gclogger
 from src.logger import CustomLogger
 
 logger = CustomLogger()
+CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
+MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
 
 def healthy_condition():
     output = {"healthy": True}
@@ -136,8 +138,10 @@ async def extract_knowledge_graph_from_file(
         graph = create_graph_database_connection(uri, userName, password, database)   
         graphDb_data_Access = graphDBdataAccess(graph)
         if source_type == 'local file':
+            merged_file_path = os.path.join(MERGED_DIR,file_name)
+            logging.info(f'File path:{merged_file_path}')
             result = await asyncio.to_thread(
-                extract_graph_from_file_local_file, graph, model, file_name, allowedNodes, allowedRelationship)
+                extract_graph_from_file_local_file, graph, model, file_name, merged_file_path, allowedNodes, allowedRelationship)
 
         elif source_type == 's3 bucket' and source_url:
             result = await asyncio.to_thread(
@@ -161,9 +165,11 @@ async def extract_knowledge_graph_from_file(
         logger.log_struct(result)
         return create_api_response('Success', data=result, file_source= source_type)
     except Exception as e:
-        message=f" Failed To Process File:{file_name} or LLM Unable To Parse Content"
+        message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content "
         error_message = str(e)
         graphDb_data_Access.update_exception_db(file_name,error_message)
+        if source_type == 'local file':
+            delete_uploaded_local_file(merged_file_path, file_name)
         josn_obj = {'message':message,'error_message':error_message, 'file_name': file_name,'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type}
         logger.log_struct(josn_obj)
         logging.exception(f'File Failed in extraction: {josn_obj}')
@@ -288,7 +294,7 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
                                         password=Form(None), database=Form(None)):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
-        result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname)
+        result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, CHUNK_DIR, MERGED_DIR)
         josn_obj = {'api_name':'upload','db_url':uri}
         logger.log_struct(josn_obj)
         return create_api_response('Success', message=result)
