@@ -147,7 +147,6 @@ timm==0.9.12
 tokenizers==0.15.2
 tqdm==4.66.2
 transformers==4.37.1
-triton==2.2.0
 types-protobuf
 types-requests
 typing-inspect==0.9.0
