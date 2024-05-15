@@ -42,7 +42,9 @@ const ListComp: React.FC<chatInfoMessage> = (info) => {
           <strong>Entities: </strong>{' '}
           <ul>
             {entities?.map((entity: string, index: number) => (
-              <li key={index}>{entity}</li>
+              <li key={index} className='text-ellipsis whitespace-normal overflow-hidden list'>
+                <span title={entity}>{entity}</span>
+              </li>
             ))}
           </ul>
         </li>
