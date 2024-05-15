@@ -126,6 +126,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
       if (driver) {
         setConnectionStatus(true);
         setDriver(driver);
+        localStorage.setItem('alertShown', JSON.stringify(false));
       } else {
         setConnectionStatus(false);
       }

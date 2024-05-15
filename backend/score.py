@@ -319,6 +319,19 @@ async def graph_query(
         logging.exception(f'Exception in graph query: {error_message}')
         return create_api_response(job_status, message=message, error=error_message)
 
+@app.post("/clear_chat_bot")
+async def clear_chat_bot(uri=Form(None),userName=Form(None), password=Form(None), database=Form(None), session_id=Form(None)):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        result = await asyncio.to_thread(clear_chat_history,graph=graph,session_id=session_id)
+        return create_api_response('Success',data=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to clear chat History"
+        error_message = str(e)
+        logging.exception(f'Exception in chat bot:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+
 @app.post("/connect")
 async def connect(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
     try:
@@ -436,6 +449,37 @@ async def delete_document_and_entities(uri=Form(None),
         logging.exception(f'{message}:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
 
+@app.get('/document_status/{file_name}')
+async def get_document_status(file_name, url, userName, password, database):
+    decoded_password = decode_password(password)
+   
+    try:
+        if " " in url:
+            uri= url.replace(" ","+")
+        else:
+            uri=url
+        graph = create_graph_database_connection(uri, userName, decoded_password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        result = graphDb_data_Access.get_current_status_document_node(file_name)
+        if result is not None:
+            status = {'fileName':file_name, 
+                'status':result[0]['Status'],
+                'processingTime':result[0]['processingTime'],
+                'nodeCount':result[0]['nodeCount'],
+                'relationshipCount':result[0]['relationshipCount'],
+                'model':result[0]['model'],
+                'total_chunks':result[0]['total_chunks'],
+                'total_pages':result[0]['total_pages']
+                }
+        else:
+            status = {'fileName':file_name, 'status':'Failed'}
+        return create_api_response('Success',message="",file_name=status)
+    except Exception as e:
+        message=f"Unable to get the document status"
+        error_message = str(e)
+        logging.exception(f'{message}:{error_message}')
+        return create_api_response('Failed',message=message)
+    
     
     flow = google_auth_oauthlib.flow.Flow.from_client_config(oauth_config, scopes=SCOPES)
     flow.redirect_uri = REDIRECT_URI

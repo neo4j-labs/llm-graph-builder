@@ -61,8 +61,18 @@ NEO4J_PASSWORD = ""\
 AWS_ACCESS_KEY_ID =  ""\
 AWS_SECRET_ACCESS_KEY = ""\
 EMBEDDING_MODEL = ""\
-IS_EMBEDDING = "TRUE"
-KNN_MIN_SCORE = ""\
+IS_EMBEDDING = "TRUE"\
+KNN_MIN_SCORE = ""
+
+## Setting up Enviournment Variables For Frontend Configuration
+
+Create .env file in the frontend root folder and update the following env variables.\
+BACKEND_API_URL=""\
+BLOOM_URL=""\
+REACT_APP_SOURCES=""\
+LLM_MODELS=""\
+ENV=""\
+TIME_PER_CHUNK=
 
 ## Functions/Modules
 
