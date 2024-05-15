@@ -13,7 +13,7 @@ export function triggerStatusUpdateAPI(
     encodedstr = btoa(password);
   }
   const eventSource = new EventSource(
-    `${url()}/update_extract_statu/${name}?url=${uri}&userName=${username}&password=${encodedstr}&database=${database}`
+    `${url()}/update_extract_status/${name}?url=${uri}&userName=${username}&password=${encodedstr}&database=${database}`
   );
   eventSource.onmessage = (event) => {
     const eventResponse = JSON.parse(event.data);
