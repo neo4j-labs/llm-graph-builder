@@ -21,7 +21,7 @@
 }
 
 .filetable .ndl-div-table {
-  width: 100% !important;
+  width: max-content !important;
 }
 
 .contentWithExpansion {
