@@ -36,7 +36,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     alertType: 'error',
     alertMessage: '',
   });
-  const { updateStatusForLargeFiles, serverSideErrorHandler } = useServerSideEvent(
+  const { updateStatusForLargeFiles } = useServerSideEvent(
     (min, fileName) => {
       setalertDetails({
         showAlert: true,
@@ -201,6 +201,81 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             return curfile;
           })
         );
+
+        if (filesize != undefined && filesize > 10000000) {
+          if (filesData[uid].name != undefined && userCredentials != null) {
+            const name = filesData[uid].name;
+            triggerStatusUpdateAPI(
+              name as string,
+              userCredentials?.uri,
+              userCredentials?.userName,
+              userCredentials?.password,
+              userCredentials?.database,
+              updateStatusForLargeFiles
+            );
+          }
+        }
+
+        const apiResponse = await extractAPI(
+          filesData[uid].model,
+          userCredentials as UserCredentials,
+          filesData[uid].fileSource,
+          filesData[uid].source_url,
+          localStorage.getItem('accesskey'),
+          localStorage.getItem('secretkey'),
+          filesData[uid].name ?? '',
+          filesData[uid].gcsBucket ?? '',
+          filesData[uid].gcsBucketFolder ?? '',
+          selectedNodes.map((l) => l.value),
+          selectedRels.map((t) => t.value)
+        );
+
+        if (apiResponse?.status === 'Failed') {
+          let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
+          throw new Error(JSON.stringify(errorobj));
+        } else if (filesize != undefined && filesize < 10000000) {
+          setFilesData((prevfiles) => {
+            return prevfiles.map((curfile) => {
+              if (curfile.name == apiResponse?.data?.fileName) {
+                const apiRes = apiResponse?.data;
+                return {
+                  ...curfile,
+                  processing: apiRes?.processingTime?.toFixed(2),
+                  status: apiRes?.status,
+                  NodesCount: apiRes?.nodeCount,
+                  relationshipCount: apiRes?.relationshipCount,
+                  model: apiRes?.model,
+                };
+              }
+              return curfile;
+            });
+          });
+        }
+      } catch (err: any) {
+        const error = JSON.parse(err.message);
+        if (Object.keys(error).includes('fileName')) {
+          const { message } = error;
+          const { fileName } = error;
+          const errorMessage = error.message;
+          console.log({ message, fileName, errorMessage });
+          setalertDetails({
+            showAlert: true,
+            alertType: 'error',
+            alertMessage: message,
+          });
+          setFilesData((prevfiles) =>
+            prevfiles.map((curfile) => {
+              if (curfile.name == fileName) {
+                return {
+                  ...curfile,
+                  status: 'Failed',
+                  errorMessage,
+                };
+              }
+              return curfile;
+            })
+          );
+        }
       }
     }
   };

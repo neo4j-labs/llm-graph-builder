@@ -263,6 +263,19 @@ export interface SourceListServerData {
   error?: string;
   message?: string;
 }
+
+export interface ChatInfoModalProps {
+  hideModal: () => void;
+  open: boolean;
+  children: ReactNode;
+}
+
+export interface chatInfoMessage extends Partial<Messages> {
+  sources?: string[];
+  model?: string;
+  entities?: string[];
+}
+
 export interface eventResponsetypes {
   fileName: string;
   status: string;

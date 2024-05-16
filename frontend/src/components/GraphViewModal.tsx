@@ -101,6 +101,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials]);
 
   useEffect(() => {
+    setDocLimit(docLimit === '' ? '3' : docLimit);
     if (open) {
       setNodes([]);
       setRelationships([]);
@@ -221,6 +222,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     return a.localeCompare(b);
   });
 
+  // const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const value = e.target.value;
+  //   const validateInput = value === '' || Number(value) < 1 ? '3' : value;
+  //   setDocLimit(validateInput);
+  // }
   return (
     <>
       <Dialog

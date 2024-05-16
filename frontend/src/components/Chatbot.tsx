@@ -9,6 +9,8 @@ import { useCredentials } from '../context/UserCredentials';
 import { chatBotAPI } from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../context/UsersFiles';
+import ChatInfoModal from './ChatInfoModal';
+import ListComp from './List';
 import { extractPdfFileName } from '../utils/Utils';
 
 export default function Chatbot(props: ChatbotProps) {
@@ -31,6 +33,7 @@ export default function Chatbot(props: ChatbotProps) {
     if (!sessionStorage.getItem('session_id')) {
       const id = uuidv4();
       setSessionId(id);
+      console.log('id', id);
       sessionStorage.setItem('session_id', id);
     }
   }, []);
@@ -142,7 +145,7 @@ export default function Chatbot(props: ChatbotProps) {
 
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
-      <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer'>
+      <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3'>
         <Widget className='n-bg-palette-neutral-bg-weak' header='' isElevated={false}>
           <div className='flex flex-col gap-4 gap-y-4'>
             {listMessages.map((chat, index) => (

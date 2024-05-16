@@ -5,6 +5,7 @@ import { chatInfoMessage } from '../types';
 const ListComp: React.FC<chatInfoMessage> = (info) => {
   const { sources, entities, model } = info;
 
+  console.log('sources', sources);
   return (
     <>
       <ul>
