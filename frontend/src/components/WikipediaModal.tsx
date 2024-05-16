@@ -37,10 +37,9 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
         const apiResponse = await urlScanAPI({
           userCredentials: userCredentials as UserCredentials,
           model: model,
-          wikiquery: wikiQuery,
+          wikiquery: wikiQuery.trim(),
           source_type: 'Wikipedia',
         });
-        console.log('response', apiResponse);
         setStatus('success');
         if (apiResponse?.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
@@ -108,7 +107,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
     setTimeout(() => {
       setStatus('unknown');
       hideModal();
-    }, 5000);
+    }, 500);
   };
   return (
     <CustomModal
@@ -122,11 +121,11 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
     >
       <div className='w-full inline-block'>
         <TextInput
-          id='url'
+          id='keyword'
           value={wikiQuery}
           disabled={false}
-          label='Wikipedia Source'
-          aria-label='Wikipedia Source'
+          label='Wikipedia Keywords'
+          aria-label='Wikipedia Keywords'
           placeholder='Albert Einstein ,Isaac Newton'
           autoFocus
           fluid

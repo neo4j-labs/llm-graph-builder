@@ -460,7 +460,9 @@ class LLMGraphTransformer:
 
 def get_graph_from_Gemini(model_version,
                             graph: Neo4jGraph,
-                            chunkId_chunkDoc_list: List):
+                            chunkId_chunkDoc_list: List, 
+                            allowedNodes, 
+                            allowedRelationship):
     """
         Extract graph from OpenAI and store it in database. 
         This is a wrapper for extract_and_store_graph
@@ -498,7 +500,7 @@ def get_graph_from_Gemini(model_version,
                         HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
                     }
                 )
-    llm_transformer = LLMGraphTransformer(llm=llm)
+    llm_transformer = LLMGraphTransformer(llm=llm, allowed_nodes=allowedNodes, allowed_relationships=allowedRelationship)
     
     with ThreadPoolExecutor(max_workers=10) as executor:
         for chunk in combined_chunk_document_list:
@@ -515,16 +517,15 @@ def get_graph_from_Gemini(model_version,
             # nodes = [Node(id=id, type=type) for id,type in unique_nodes]        
             # graph_document[0].nodes=list(nodes)
 
-            for node in graph_document[0].nodes:
-               node.id = node.id.title().replace(' ','_')
-                # replace all non alphanumeric characters and spaces with underscore
-               node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
+#            for node in graph_document[0].nodes:
+#               node.id = node.id.title().replace(' ','_')
+#                # replace all non alphanumeric characters and spaces with underscore
+#               node.type = re.sub(r'[^\w]+', '_', node.type.capitalize())
             graph_document_list.append(graph_document[0])
             
             #Sleep for 1 sec after 4 requestes are processed. 
             # Todo: Remove this code block when Gemini rate limit is increased 
-            if i % 4 == 0 :
-                time.sleep(1)
+            # if i % 4 == 0 :
+            #     time.sleep(1)
         
-    graph.add_graph_documents(graph_document_list)
     return  graph_document_list

@@ -3,8 +3,15 @@ import Content from '../Content';
 import SideNav from './SideNav';
 import { useState } from 'react';
 import RightSideBar from '../RightSideBar';
+import SettingsModal from '../SettingModal';
 
-export default function PageLayout() {
+export default function PageLayout({
+  isSettingPanelExpanded,
+  closeSettingModal,
+}: {
+  isSettingPanelExpanded: boolean;
+  closeSettingModal: () => void;
+}) {
   const [isExpanded, setIsexpanded] = useState<boolean>(true);
   const [showChatBot, setShowChatBot] = useState<boolean>(false);
 
@@ -20,6 +27,7 @@ export default function PageLayout() {
         }}
       />
       <DrawerDropzone isExpanded={isExpanded} />
+      <SettingsModal open={isSettingPanelExpanded} onClose={closeSettingModal} />
       <Content
         openChatBot={() => {
           setShowChatBot(true);

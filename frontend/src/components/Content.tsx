@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import ConnectionModal from './ConnectionModal';
 import LlmDropdown from './Dropdown';
 import FileTable from './FileTable';
@@ -7,11 +7,15 @@ import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { extractAPI } from '../utils/FileAPI';
-import { ContentProps, OptionType, UserCredentials } from '../types';
+import { ContentProps, OptionType, UserCredentials, alertState } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './GraphViewModal';
 import { initialiseDriver } from '../utils/Driver';
 import Driver from 'neo4j-driver/types/driver';
+import deleteAPI from '../services/deleteFiles';
+import DeletePopUp from './DeletePopUp';
+import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
+import useServerSideEvent from '../hooks/useSse';
 
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -20,10 +24,32 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
-  const { filesData, setFilesData, setModel, model } = useFileContext();
-  const [errorMessage, setErrorMessage] = useState<string>('');
-  const [showAlert, setShowAlert] = useState<boolean>(false);
+  const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels, selectedRows } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
+  const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
+  const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
+  const [alertDetails, setalertDetails] = useState<alertState>({
+    showAlert: false,
+    alertType: 'error',
+    alertMessage: '',
+  });
+  const { updateStatusForLargeFiles } = useServerSideEvent(
+    (min, fileName) => {
+      setalertDetails({
+        showAlert: true,
+        alertType: 'info',
+        alertMessage: `${fileName} will take approx ${min} Min`,
+      });
+      localStorage.setItem('alertShown', JSON.stringify(true));
+    },
+    (fileName) => {
+      setalertDetails({
+        showAlert: true,
+        alertType: 'error',
+        alertMessage: `${fileName} Failed to process`,
+      });
+    }
+  );
 
   useEffect(() => {
     if (!init) {
@@ -35,6 +61,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           userName: neo4jConnection.user,
           password: neo4jConnection.password,
           database: neo4jConnection.database,
+          port: neo4jConnection.uri.split(':')[2],
         });
         initialiseDriver(
           neo4jConnection.uri,
@@ -43,6 +70,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           neo4jConnection.database
         ).then((driver: Driver) => {
           if (driver) {
+            localStorage.setItem('alertShown', JSON.stringify(false));
             setConnectionStatus(true);
             setDriver(driver);
           } else {
@@ -74,6 +102,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
   const extractData = async (uid: number) => {
     if (filesData[uid]?.status == 'New') {
+      const filesize = filesData[uid].size;
       try {
         setFilesData((prevfiles) =>
           prevfiles.map((curfile, idx) => {
@@ -86,6 +115,21 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             return curfile;
           })
         );
+
+        if (filesize != undefined && filesize > 10000000) {
+          if (filesData[uid].name != undefined && userCredentials != null) {
+            const name = filesData[uid].name;
+            triggerStatusUpdateAPI(
+              name as string,
+              userCredentials?.uri,
+              userCredentials?.userName,
+              userCredentials?.password,
+              userCredentials?.database,
+              updateStatusForLargeFiles
+            );
+          }
+        }
+
         const apiResponse = await extractAPI(
           filesData[uid].model,
           userCredentials as UserCredentials,
@@ -95,24 +139,15 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           localStorage.getItem('secretkey'),
           filesData[uid].name ?? '',
           filesData[uid].gcsBucket ?? '',
-          filesData[uid].gcsBucketFolder ?? ''
+          filesData[uid].gcsBucketFolder ?? '',
+          selectedNodes.map((l) => l.value),
+          selectedRels.map((t) => t.value)
         );
+
         if (apiResponse?.status === 'Failed') {
-          setShowAlert(true);
-          setErrorMessage(apiResponse?.message);
-          setFilesData((prevfiles) =>
-            prevfiles.map((curfile, idx) => {
-              if (idx == uid) {
-                return {
-                  ...curfile,
-                  status: 'Failed',
-                };
-              }
-              return curfile;
-            })
-          );
-          throw new Error(`message:${apiResponse.message},fileName:${apiResponse.file_name}`);
-        } else {
+          let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
+          throw new Error(JSON.stringify(errorobj));
+        } else if (filesize != undefined && filesize < 10000000) {
           setFilesData((prevfiles) => {
             return prevfiles.map((curfile) => {
               if (curfile.name == apiResponse?.data?.fileName) {
@@ -131,33 +166,24 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           });
         }
       } catch (err: any) {
-        const errorMessage = err.message;
-        const messageMatch = errorMessage.match(/message:(.*),fileName:(.*)/);
-        if (err?.name === 'AxiosError') {
-          setShowAlert(true);
-          setErrorMessage(err.message);
-          setFilesData((prevfiles) =>
-            prevfiles.map((curfile, idx) => {
-              if (idx == uid) {
-                return {
-                  ...curfile,
-                  status: 'Failed',
-                };
-              }
-              return curfile;
-            })
-          );
-        } else {
-          const message = messageMatch[1].trim();
-          const fileName = messageMatch[2].trim();
-          setShowAlert(true);
-          setErrorMessage(message);
+        const error = JSON.parse(err.message);
+        if (Object.keys(error).includes('fileName')) {
+          const { message } = error;
+          const { fileName } = error;
+          const errorMessage = error.message;
+          console.log({ message, fileName, errorMessage });
+          setalertDetails({
+            showAlert: true,
+            alertType: 'error',
+            alertMessage: message,
+          });
           setFilesData((prevfiles) =>
             prevfiles.map((curfile) => {
               if (curfile.name == fileName) {
                 return {
                   ...curfile,
                   status: 'Failed',
+                  errorMessage,
                 };
               }
               return curfile;
@@ -183,13 +209,18 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   };
 
   const handleClose = () => {
-    setShowAlert(false);
+    setalertDetails({
+      showAlert: false,
+      alertType: 'info',
+      alertMessage: '',
+    });
   };
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
-    const connectURL = `${userCredentials?.userName}@${localStorage.getItem('URI')}%3A${
-      localStorage.getItem('port') ?? '7687'
+    const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
     }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
@@ -216,11 +247,68 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     localStorage.removeItem('password');
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
   };
+  const selectedfileslength = useMemo(() => selectedRows.length, [selectedRows]);
+  const deleteFileClickHandler: React.MouseEventHandler<HTMLButtonElement> = () => {
+    setshowDeletePopUp(true);
+  };
+
+  const handleDeleteFiles = async (deleteEntities: boolean) => {
+    try {
+      setdeleteLoading(true);
+      const response = await deleteAPI(userCredentials as UserCredentials, selectedRows, deleteEntities);
+      setdeleteLoading(false);
+      if (response.data.status == 'Success') {
+        setalertDetails({
+          showAlert: true,
+          alertMessage: response.data.message,
+          alertType: 'success',
+        });
+        const filenames = selectedRows.map((str) => str.split(',')[0]);
+        filenames.forEach((name) => {
+          setFilesData((prev) => prev.filter((f) => f.name != name));
+        });
+      } else {
+        let errorobj = { error: response.data.error, message: response.data.message };
+        throw new Error(JSON.stringify(errorobj));
+      }
+      console.log(response);
+      setshowDeletePopUp(false);
+    } catch (err) {
+      if (err instanceof Error) {
+        const error = JSON.parse(err.message);
+        const { message } = error;
+        const errorMessage = error.message;
+        console.log({ message, errorMessage });
+        setalertDetails({
+          showAlert: true,
+          alertType: 'error',
+          alertMessage: message,
+        });
+        console.log(err);
+      }
+    }
+    setshowDeletePopUp(false);
+  };
 
   return (
     <>
-      <CustomAlert open={showAlert} handleClose={handleClose} alertMessage={errorMessage} />
-
+      {alertDetails.showAlert && (
+        <CustomAlert
+          severity={alertDetails.alertType}
+          open={alertDetails.showAlert}
+          handleClose={handleClose}
+          alertMessage={alertDetails.alertMessage}
+        />
+      )}
+      {showDeletePopUp && (
+        <DeletePopUp
+          open={showDeletePopUp}
+          no_of_files={selectedfileslength}
+          deleteHandler={(delentities: boolean) => handleDeleteFiles(delentities)}
+          deleteCloseHandler={() => setshowDeletePopUp(false)}
+          loading={deleteLoading}
+        ></DeletePopUp>
+      )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>
           <ConnectionModal
@@ -228,12 +316,18 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             setOpenConnection={setOpenConnection}
             setConnectionStatus={setConnectionStatus}
           />
-          <Typography variant='body-medium' className='connectionstatus__container'>
+          <div className='connectionstatus__container'>
+            <span className='h6 px-1'>Neo4j connection</span>
             <Typography variant='body-medium'>
               {!connectionStatus ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
+              {connectionStatus ? (
+                <span className='n-body-small'>{userCredentials?.uri}</span>
+              ) : (
+                <span className='n-body-small'>Not Connected</span>
+              )}
             </Typography>
-            Neo4j connection
-          </Typography>
+          </div>
+
           {!connectionStatus ? (
             <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
               Connect to Neo4j
@@ -261,12 +355,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
-            <Button
-              loading={filesData.some((f) => f?.status === 'Processing')}
-              disabled={disableCheck}
-              onClick={handleGenerateGraph}
-              className='mr-0.5'
-            >
+            <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
               Generate Graph
             </Button>
             <Button
@@ -281,7 +370,15 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               disabled={!filesData.some((f) => f?.status === 'Completed')}
               className='ml-0.5'
             >
-              Open Graph
+              Open Graph with Bloom
+            </Button>
+            <Button
+              onClick={deleteFileClickHandler}
+              className='ml-0.5'
+              title={!selectedfileslength ? 'please select a file' : 'File is still under process'}
+              disabled={!selectedfileslength}
+            >
+              Delete Files
             </Button>
             <Button
               onClick={() => {
