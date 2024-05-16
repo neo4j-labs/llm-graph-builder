@@ -89,7 +89,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         },
         cell: ({ row }: { row: Row<CustomFile> }) => {
           return (
-            <div className='px-1'>
+            <div>
               <Checkbox
                 aria-label='row-checkbox'
                 checked={
