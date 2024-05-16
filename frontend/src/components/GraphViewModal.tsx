@@ -1,12 +1,4 @@
-import {
-  Banner,
-  Checkbox,
-  Dialog,
-  IconButton,
-  IconButtonArray,
-  LoadingSpinner,
-  TextInput,
-} from '@neo4j-ndl/react';
+import { Banner, Checkbox, Dialog, IconButton, IconButtonArray, LoadingSpinner, TextInput } from '@neo4j-ndl/react';
 import { useEffect, useRef, useState } from 'react';
 import { GraphType, GraphViewModalProps, Scheme, UserCredentials } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
