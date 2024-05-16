@@ -158,7 +158,6 @@ export type ChatbotProps = {
   messages: Messages[];
   setMessages: Dispatch<SetStateAction<Messages[]>>;
   isLoading: boolean;
-  clear: boolean;
 };
 export interface WikipediaModalTypes {
   hideModal: () => void;

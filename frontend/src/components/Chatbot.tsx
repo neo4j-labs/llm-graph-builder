@@ -1,16 +1,13 @@
 /* eslint-disable no-confusing-arrow */
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Widget, Typography, Avatar, TextInput, IconButton, TextLink } from '@neo4j-ndl/react';
-import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
+import {useEffect, useRef, useState } from 'react';
+import { Button, Widget, Typography, Avatar, TextInput, TextLink } from '@neo4j-ndl/react';
 import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
-import { ChatbotProps, UserCredentials, chatInfoMessage } from '../types';
+import { ChatbotProps, UserCredentials } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { chatBotAPI } from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../context/UsersFiles';
-import ChatInfoModal from './ChatInfoModal';
-import ListComp from './List';
 import { extractPdfFileName } from '../utils/Utils';
 
 export default function Chatbot(props: ChatbotProps) {
@@ -22,8 +19,6 @@ export default function Chatbot(props: ChatbotProps) {
   const { model } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
-  const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
-  const [activeChat, setActiveChat] = useState<chatInfoMessage | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
@@ -130,15 +125,6 @@ export default function Chatbot(props: ChatbotProps) {
     scrollToBottom();
   }, [listMessages]);
 
-  const openInfoModal = useCallback((activeChat: chatInfoMessage) => {
-    setActiveChat(activeChat);
-    setShowInfoModal(true);
-  }, []);
-
-  const hideInfoModal = useCallback(() => {
-    setShowInfoModal(false);
-  }, []);
-
   useEffect(() => {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
   }, [listMessages]);
@@ -232,28 +218,6 @@ export default function Chatbot(props: ChatbotProps) {
                         })}
                       </div>
                     ) : null}
-                    {((chat.user === 'chatbot' && chat.id !== 2) || chat.isLoading) && (
-                      <div className='flex'>
-                        <IconButton
-                          className='infoIcon'
-                          clean
-                          aria-label='Information Icon'
-                          onClick={() => {
-                            openInfoModal(chat);
-                          }}
-                          disabled={chat.isTyping || chat.isLoading}
-                        >
-                          <InformationCircleIconOutline className='w-4 h-4 inline-block n-text-palette-success-text' />
-                        </IconButton>
-                        <ChatInfoModal key={index} open={showInfoModal} hideModal={hideInfoModal}>
-                          <ListComp
-                            sources={activeChat?.sources}
-                            entities={activeChat?.entities}
-                            model={activeChat?.model}
-                          />
-                        </ChatInfoModal>
-                      </div>
-                    )}
                   </div>
                 </Widget>
               </div>
