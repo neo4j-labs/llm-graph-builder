@@ -6,8 +6,12 @@ const urlScanAPI = async (props: ScanProps) => {
   try {
     const formData = new FormData();
     let s3url: string = '';
-    if (props.source_type === 's3 bucket' && !props.urlParam?.endsWith('/')) {
-      s3url = props?.urlParam + '/';
+    if (props.source_type === 's3 bucket') {
+      if (!props.urlParam?.endsWith('/')) {
+        s3url = props?.urlParam + '/';
+      } else {
+        s3url = props?.urlParam
+      }
     }
     formData.append('uri', props?.userCredentials?.uri ?? '');
     formData.append('database', props?.userCredentials?.database ?? '');
