@@ -105,6 +105,7 @@ def get_llm(model: str,max_tokens=1000) -> Any:
             )
         else:
             llm = ChatOpenAI(model=model_version, temperature=0,max_tokens=max_tokens)
+
         return llm,model_version
 
     else:
@@ -116,6 +117,7 @@ def vector_embed_results(qa,question):
     try:
         result = qa({"query": question})
         vector_res['result']=result.get("result")
+
         sources = set()
         entities = set()
         for document in result["source_documents"]:
@@ -131,7 +133,7 @@ def vector_embed_results(qa,question):
         # for i in result["source_documents"]:
         #     list_source_docs.append(i.metadata['source'])
         #     vector_res['source']=list_source_docs
-        
+
         # result = qa({"question":question},return_only_outputs=True)
         # vector_res['result'] = result.get("answer")
         # vector_res["source"] = result.get("sources")
@@ -157,6 +159,7 @@ def save_chat_history(history,user_message,ai_message):
     
 def get_chat_history(llm, history):
     """Retrieves and summarizes the chat history for a given session."""
+
     try:
         # history = Neo4jChatMessageHistory(
         #     graph=graph,
@@ -201,6 +204,7 @@ def clear_chat_history(graph, session_id):
     except Exception as e:
         logging.exception(f"Error occurred while clearing chat history for session ID {session_id}: {e}")
 
+
 def extract_and_remove_source(message):
     pattern = r'\[Source: ([^\]]+)\]'
     match = re.search(pattern, message)
@@ -237,6 +241,7 @@ def QA_RAG(graph,model,question,session_id):
     try:
         qa_rag_start_time = time.time()
 
+
         start_time = time.time()
         neo_db = Neo4jVector.from_existing_index(
             embedding=EMBEDDING_FUNCTION,
@@ -251,6 +256,7 @@ def QA_RAG(graph,model,question,session_id):
         )
         
         llm,model_version = get_llm(model=model,max_tokens=CHAT_MAX_TOKENS)
+
         qa = RetrievalQA.from_chain_type(
             llm=llm,
             chain_type="stuff",

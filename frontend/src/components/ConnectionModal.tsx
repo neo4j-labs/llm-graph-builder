@@ -169,7 +169,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
           <div className='n-flex max-h-44'>
             <Dropzone
               isTesting={false}
-              customTitle={<>Drop your env file here</>}
+              customTitle={<>Drop your neo4j credentials file here</>}
               className='n-p-6 end-0 top-0 w-full h-full'
               acceptedFileExtensions={['.txt', '.env']}
               dropZoneOptions={{

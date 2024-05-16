@@ -272,7 +272,6 @@ async def clear_chat_bot(uri=Form(None),userName=Form(None), password=Form(None)
         error_message = str(e)
         logging.exception(f'Exception in chat bot:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
-
 @app.post("/connect")
 async def connect(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
     try:
