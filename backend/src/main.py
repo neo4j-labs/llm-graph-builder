@@ -244,17 +244,14 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     logging.info(obj_source_node)
     graphDb_data_Access.update_source_node(obj_source_node)
     logging.info('Update the status as Processing')
-
-    chunkId_chunkDoc_list = create_relation_between_chunks(graph,file_name,chunks)
-    #create vector index and update chunk node with embedding
-    update_embedding_create_vector_index( graph, chunkId_chunkDoc_list, file_name)
-    logging.info("Get graph document list from models")
-    graph_documents =  generate_graphDocuments(model, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
-    save_graphDocuments_in_neo4j(graph, graph_documents)
+    update_graph_chunk_processed = int(os.environ.get('UPDATE_GRAPH_CHUNKS_PROCESSED'))
+    selected_chunks = [Document]
+    graph_documents=[]
+    for i in range(0, len(chunks), int(update_graph_chunk_processed)):
+      selected_chunks.append(chunks[i:i+20])
+      graph_document = processing_chunks(selected_chunks,graph,file_name,model,allowedNodes,allowedRelationship)
+      graph_documents.append(graph_document)
     
-    chunks_and_graphDocuments_list = get_chunk_and_graphDocument(graph_documents, chunkId_chunkDoc_list)
-    merge_relationship_between_chunk_and_entites(graph, chunks_and_graphDocuments_list)
-
     distinct_nodes = set()
     relations = []
     for graph_document in graph_documents:
@@ -307,6 +304,17 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     }
   else:
      logging.info('File does not process because it\'s already in Processing status')
+
+def processing_chunks(chunks,graph,file_name,model,allowedNodes,allowedRelationship)-> List[GraphDocument]:
+  chunkId_chunkDoc_list = create_relation_between_chunks(graph,file_name,chunks)
+  #create vector index and update chunk node with embedding
+  update_embedding_create_vector_index( graph, chunkId_chunkDoc_list, file_name)
+  logging.info("Get graph document list from models")
+  graph_documents =  generate_graphDocuments(model, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
+  save_graphDocuments_in_neo4j(graph, graph_documents)
+  chunks_and_graphDocuments_list = get_chunk_and_graphDocument(graph_documents, chunkId_chunkDoc_list)
+  merge_relationship_between_chunk_and_entites(graph, chunks_and_graphDocuments_list)
+  return graph_documents
 
 def get_source_list_from_graph(uri,userName,password,db_name=None):
   """
