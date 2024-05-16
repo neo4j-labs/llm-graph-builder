@@ -21,7 +21,7 @@
 }
 
 .filetable .ndl-div-table {
-  width: 100% !important;
+  width: max-content !important;
 }
 
 .contentWithExpansion {
@@ -240,4 +240,15 @@
 .ndl-label-before>span {
   font-weight: 600;
   font-size: larger;
+}
+
+.table-header-cell, .table-cell{
+ display: flex;
+ align-items: center;
+ padding: 8px;
+}
+
+.column-width-80{
+  width: 80px;
+  flex:0 0 80px;
 }

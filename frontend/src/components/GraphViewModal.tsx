@@ -103,7 +103,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       fetchData()
         .then((result) => {
           if (result && result.data.data.nodes.length > 0) {
-            console.log('result', result);
             const neoNodes = result.data.data.nodes.map((f: Node) => f);
             const neoRels = result.data.data.relationships.map((f: Relationship) => f);
             // Infer color schema dynamically
@@ -112,13 +111,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             let labels: string[] = [];
             labels = neoNodes.map((f: any) => f.labels);
             labels.forEach((label: any) => {
-              console.log('label', labels);
               if (schemeVal[label] == undefined) {
                 schemeVal[label] = calcWordColor(label[0]);
                 iterator += 1;
               }
             });
-            console.log('scheme', schemeVal);
 
             const newNodes: Node[] = neoNodes.map((g: any) => {
               return {
@@ -219,6 +216,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     return a.localeCompare(b);
   });
 
+  // const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const value = e.target.value;
+  //   const validateInput = value === '' || Number(value) < 1 ? '3' : value;
+  //   setDocLimit(validateInput);
+  // }
+
   return (
     <>
       <Dialog
@@ -262,7 +265,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                   required
                   type='number'
                   aria-label='Document Limit'
-                  onChange={(e) => setDocLimit(e.target.value)}
+                  onChange={(e) =>
+                    setDocLimit(e.target.value === '' || Number(e.target.value) < 1 ? '3' : e.target.value)
+                  }
                   value={docLimit}
                   min={1}
                 ></TextInput>
