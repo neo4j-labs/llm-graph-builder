@@ -6,8 +6,7 @@ export function triggerStatusUpdateAPI(
   username: string,
   password: string,
   database: string,
-  datahandler: (i: eventResponsetypes) => void,
-  errorHandler?: (filename: string) => void
+  datahandler: (i: eventResponsetypes) => void
 ) {
   let encodedstr;
   if (password) {
@@ -23,14 +22,6 @@ export function triggerStatusUpdateAPI(
       eventSource.close();
     } else {
       datahandler(eventResponse);
-    }
-  };
-  eventSource.onerror = (event) => {
-    console.log(event);
-    // @ts-ignore
-    const errorfile = decodeURI(event?.target?.url?.split('?')[0].split('/').at(-1));
-    if (errorHandler) {
-      errorHandler(errorfile);
     }
   };
 }

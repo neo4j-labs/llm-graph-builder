@@ -46,7 +46,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     alertType: 'error',
     alertMessage: '',
   });
-  const { updateStatusForLargeFiles, serverSideErrorHandler } = useServerSideEvent(
+  const { updateStatusForLargeFiles } = useServerSideEvent(
     (min, fileName) => {
       setalertDetails({
         showAlert: true,
@@ -89,7 +89,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         },
         cell: ({ row }: { row: Row<CustomFile> }) => {
           return (
-            <div>
+            <div className='px-1'>
               <Checkbox
                 aria-label='row-checkbox'
                 checked={
@@ -330,8 +330,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   userCredentials.userName,
                   userCredentials.password,
                   userCredentials.database,
-                  updateStatusForLargeFiles,
-                  serverSideErrorHandler
+                  updateStatusForLargeFiles
                 );
               }
             }

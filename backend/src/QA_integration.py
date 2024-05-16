@@ -105,21 +105,35 @@ def get_llm(model: str,max_tokens=1000) -> Any:
             )
         else:
             llm = ChatOpenAI(model=model_version, temperature=0,max_tokens=max_tokens)
-        return llm
+
+        return llm,model_version
 
     else:
         logging.error(f"Unsupported model: {model}")
-        return None
+        return None,None
 
 def vector_embed_results(qa,question):
     vector_res={}
     try:
         result = qa({"query": question})
         vector_res['result']=result.get("result")
-        list_source_docs=[]
-        for i in result["source_documents"]:
-            list_source_docs.append(i.metadata['source'])
-            vector_res['source']=list_source_docs
+
+        sources = set()
+        entities = set()
+        for document in result["source_documents"]:
+            sources.add(document.metadata["source"])
+            for entiti in document.metadata["entities"]:
+                entities.add(entiti)
+        vector_res['source']=list(sources)
+        vector_res['entities'] = list(entities)
+        if len( vector_res['entities']) > 5:
+            vector_res['entities'] =  vector_res['entities'][:5]
+            
+        # list_source_docs=[]
+        # for i in result["source_documents"]:
+        #     list_source_docs.append(i.metadata['source'])
+        #     vector_res['source']=list_source_docs
+
         # result = qa({"question":question},return_only_outputs=True)
         # vector_res['result'] = result.get("answer")
         # vector_res["source"] = result.get("sources")
@@ -145,6 +159,7 @@ def save_chat_history(history,user_message,ai_message):
     
 def get_chat_history(llm, history):
     """Retrieves and summarizes the chat history for a given session."""
+
     try:
         # history = Neo4jChatMessageHistory(
         #     graph=graph,
@@ -169,6 +184,26 @@ def get_chat_history(llm, history):
     except Exception as e:
         logging.exception(f"Exception in retrieving chat history: {e}")
         return "" 
+
+def clear_chat_history(graph, session_id):
+
+    try:
+        logging.info(f"Clearing chat history for session ID: {session_id}")
+        history = Neo4jChatMessageHistory(
+            graph=graph,
+            session_id=session_id
+        )
+        history.clear()
+        logging.info("Chat history cleared successfully")
+
+        return {
+            "session_id": session_id,
+            "message": "The chat history is cleared",
+            "user": "chatbot"
+        }
+    except Exception as e:
+        logging.exception(f"Error occurred while clearing chat history for session ID {session_id}: {e}")
+
 
 def extract_and_remove_source(message):
     pattern = r'\[Source: ([^\]]+)\]'
@@ -206,6 +241,7 @@ def QA_RAG(graph,model,question,session_id):
     try:
         qa_rag_start_time = time.time()
 
+
         start_time = time.time()
         neo_db = Neo4jVector.from_existing_index(
             embedding=EMBEDDING_FUNCTION,
@@ -219,7 +255,8 @@ def QA_RAG(graph,model,question,session_id):
             session_id=session_id
         )
         
-        llm = get_llm(model=model,max_tokens=CHAT_MAX_TOKENS)
+        llm,model_version = get_llm(model=model,max_tokens=CHAT_MAX_TOKENS)
+
         qa = RetrievalQA.from_chain_type(
             llm=llm,
             chain_type="stuff",
@@ -278,20 +315,25 @@ def QA_RAG(graph,model,question,session_id):
         return {
             "session_id": session_id, 
             "message": message, 
-            "sources": sources,
-            "info": f"""Metadata : 
-            RETRIEVAL_QUERY : {RETRIEVAL_QUERY}""",
+            "info": {
+                "sources": sources,
+                "model":model_version,
+                "entities":vector_res["entities"]
+            },
             "user": "chatbot"
             }
 
     except Exception as e:
         logging.exception(f"Exception in QA component at {datetime.now()}: {str(e)}")
         error_name = type(e).__name__
-        return {"session_id": session_id, 
-        "message": "Something went wrong",
-        "sources": [],
-        "info": f"Caught an exception {error_name} :- {str(e)}",
-        "user": "chatbot"}
+        return {
+            "session_id": session_id, 
+            "message": "Something went wrong",
+            "info": {
+                "sources": [],
+                "error": f"{error_name} :- {str(e)}"
+            },
+            "user": "chatbot"}
     
 
 

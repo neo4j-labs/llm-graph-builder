@@ -20,7 +20,6 @@ from pytube import YouTube
 import sys
 import shutil
 warnings.filterwarnings("ignore")
-from pathlib import Path
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
@@ -146,13 +145,11 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
         lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'status':'Failed'})
     return lst_file_name,success_count,failed_count
     
-def extract_graph_from_file_local_file(graph, model, fileName, allowedNodes, allowedRelationship):
+def extract_graph_from_file_local_file(graph, model, fileName, merged_file_path, allowedNodes, allowedRelationship):
 
   logging.info(f'Process file name :{fileName}')
-  merged_file_path = os.path.join(os.path.join(os.path.dirname(__file__), "merged_files"),fileName)
-  logging.info(f'File path:{merged_file_path}')
   file_name, pages = get_documents_from_file_by_path(merged_file_path,fileName)
-
+  
   if pages==None or len(pages)==0:
     raise Exception(f'Pdf content is not available for file : {file_name}')
 
@@ -294,15 +291,10 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     logging.info('Updated the nodeCount and relCount properties in Docuemnt node')
     logging.info(f'file:{file_name} extraction has been completed')
 
+
+    # merged_file_path have value only when file uploaded from local
     if merged_file_path is not None:
-      file_path = Path(merged_file_path)
-      if file_path.exists():
-        file_path.unlink()
-        logging.info(f'file {file_name} delete successfully')
-      else:
-        logging.info(f'file {file_name} does not exist')
-    else:
-      logging.info(f'File Path is None i.e. source type other than local file')
+      delete_uploaded_local_file(merged_file_path, file_name)
       
     return {
         "fileName": file_name,
@@ -355,27 +347,25 @@ def connection_check(graph):
   graph_DB_dataAccess = graphDBdataAccess(graph)
   return graph_DB_dataAccess.connection_check()
 
-def merge_chunks(file_name, total_chunks):
-  
-  chunk_dir = os.path.join(os.path.dirname(__file__), "chunks")
-  merged_file_path = os.path.join(os.path.dirname(__file__), "merged_files")
+def merge_chunks(file_name, total_chunks, chunk_dir, merged_dir):
 
-  if not os.path.exists(merged_file_path):
-      os.mkdir(merged_file_path)
+  if not os.path.exists(merged_dir):
+      os.mkdir(merged_dir)
 
-  with open(os.path.join(merged_file_path, file_name), "wb") as write_stream:
+  with open(os.path.join(merged_dir, file_name), "wb") as write_stream:
       for i in range(1,total_chunks+1):
           chunk_file_path = os.path.join(chunk_dir, f"{file_name}_part_{i}")
           with open(chunk_file_path, "rb") as chunk_file:
               shutil.copyfileobj(chunk_file, write_stream)
           os.unlink(chunk_file_path)  # Delete the individual chunk file after merging
   logging.info("Chunks merged successfully and return file size")
-  file_size = os.path.getsize(os.path.join(merged_file_path, file_name))
+  file_size = os.path.getsize(os.path.join(merged_dir, file_name))
   return file_size
   
 
-def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname):
-  chunk_dir = os.path.join(os.path.dirname(__file__), "chunks")  # Directory to save chunks
+
+def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname, chunk_dir, merged_dir):
+  # chunk_dir = os.path.join(os.path.dirname(__file__), "chunks")  # Directory to save chunks
   if not os.path.exists(chunk_dir):
       os.mkdir(chunk_dir)
   
@@ -387,7 +377,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
 
   if int(chunk_number) == int(total_chunks):
       # If this is the last chunk, merge all chunks into a single file
-      file_size = merge_chunks(originalname, int(total_chunks))
+      file_size = merge_chunks(originalname, int(total_chunks), chunk_dir, merged_dir)
       logging.info("File merged successfully")
 
       obj_source_node = sourceNode()
