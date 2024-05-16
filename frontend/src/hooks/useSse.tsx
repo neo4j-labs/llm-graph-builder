@@ -43,8 +43,8 @@ export default function useServerSideEvent(
       errorHandler(fileName);
     }
   }
-
   return {
     updateStatusForLargeFiles,
+
   };
 }

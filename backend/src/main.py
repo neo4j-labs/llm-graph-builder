@@ -291,6 +291,7 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     logging.info('Updated the nodeCount and relCount properties in Docuemnt node')
     logging.info(f'file:{file_name} extraction has been completed')
 
+
     # merged_file_path have value only when file uploaded from local
     if merged_file_path is not None:
       delete_uploaded_local_file(merged_file_path, file_name)
@@ -361,6 +362,7 @@ def merge_chunks(file_name, total_chunks, chunk_dir, merged_dir):
   file_size = os.path.getsize(os.path.join(merged_dir, file_name))
   return file_size
   
+
 
 def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname, chunk_dir, merged_dir):
   # chunk_dir = os.path.join(os.path.dirname(__file__), "chunks")  # Directory to save chunks
