@@ -174,8 +174,9 @@ export interface Messages {
   sources?: string[];
 }
 export type ChatbotProps = {
-  messages: messages[];
-  setMessages: Dispatch<SetStateAction<messages[]>>;
+  messages: Messages[];
+  setMessages: Dispatch<SetStateAction<Messages[]>>;
+  isLoading: boolean;
 };
 export interface WikipediaModalTypes {
   hideModal: () => void;

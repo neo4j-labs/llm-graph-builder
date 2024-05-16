@@ -1,5 +1,5 @@
 /* eslint-disable no-confusing-arrow */
-import { useEffect, useRef, useState } from 'react';
+import {useEffect, useRef, useState } from 'react';
 import { Button, Widget, Typography, Avatar, TextInput, TextLink } from '@neo4j-ndl/react';
 import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
@@ -8,6 +8,7 @@ import { useCredentials } from '../context/UserCredentials';
 import { chatBotAPI } from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../context/UsersFiles';
+import { extractPdfFileName } from '../utils/Utils';
 
 const Chatbot: React.FC<ChatbotProps> = (props) => {
   const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, clear } = props;
@@ -17,20 +18,6 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const { model } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
-  const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
-  const [sourcesModal, setSourcesModal] = useState<Source[]>([]);
-  const [modelModal, setModelModal] = useState<string>('');
-  const [responseTime, setResponseTime] = useState<number>(0);
-  const [chunkModal, setChunkModal] = useState<string[]>([]);
-  const [tokensUsed, setTokensUsed] = useState<number>(0);
-  const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
-
-  const [value, copy] = useCopyToClipboard();
-  const { speak, cancel } = useSpeechSynthesis({
-    onEnd: () => {
-      setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
-    },
-  });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
