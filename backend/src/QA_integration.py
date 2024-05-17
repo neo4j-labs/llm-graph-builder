@@ -41,47 +41,89 @@ openai_api_key = os.environ.get('OPENAI_API_KEY')
 #         logging.info(f"Embedding: Using SentenceTransformer , Dimension:{dimension}")
 #     return embedding_function
 
-def get_llm(model : str):
-    if model == "OpenAI GPT 3.5":
-        model_version = "gpt-3.5-turbo-16k"
-        logging.info(f"Chat Model: GPT 3.5, Model Version : {model_version}")
-        llm = ChatOpenAI(model= model_version, temperature=0)
-    
-    elif model == "Gemini Pro" :
-        # model_version = "gemini-1.0-pro"
-        model_version = 'gemini-1.0-pro-001' 
-        logging.info(f"Chat Model: Gemini , Model Version : {model_version}")
-        llm = ChatVertexAI(model_name=model_version,
-                        #    max_output_tokens=100,
-                           convert_system_message_to_human=True,
-                           temperature=0,
-                           safety_settings={
-                               HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE, 
-                               HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                               HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE, 
-                               HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE, 
-                               HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-                               })
-    elif model == "Gemini 1.5 Pro" :
-        model_version = "gemini-1.5-pro-preview-0409"
-        logging.info(f"Chat Model: Gemini 1.5 , Model Version : {model_version}")
-        llm = ChatVertexAI(model_name=model_version,
-                        #    max_output_tokens=100,
-                           convert_system_message_to_human=True,
-                           temperature=0,
-                           safety_settings={
-                               HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE, 
-                               HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                               HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE, 
-                               HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE, 
-                               HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-                               })
-    else: 
-        ## for model == "OpenAI GPT 4" or model == "Diffbot" 
-        model_version = "gpt-4-0125-preview"
-        logging.info(f"Chat Model: GPT 4, Model Version : {model_version}")
-        llm = ChatOpenAI(model= model_version, temperature=0)
-    return llm
+# RETRIEVAL_QUERY = """
+# WITH node, score, apoc.text.join([ (node)-[:HAS_ENTITY]->(e) | head(labels(e)) + ": "+ e.id],", ") as entities
+# MATCH (node)-[:PART_OF]->(d:Document)
+# WITH d, apoc.text.join(collect(node.text + "\n" + entities),"\n----\n") as text, avg(score) as score
+# RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)} as metadata
+# """
+
+RETRIEVAL_QUERY = """
+WITH node as chunk, score
+MATCH (chunk)-[:PART_OF]->(d:Document)
+CALL { WITH chunk
+MATCH (chunk)-[:HAS_ENTITY]->(e) 
+MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,3}(:!Chunk&!Document) 
+UNWIND rels as r
+RETURN collect(distinct r) as rels
+}
+WITH d, collect(distinct chunk) as chunks, avg(score) as score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels
+WITH d, score, 
+[c in chunks | c.text] as texts,  
+[r in rels | coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ startNode(r).id + " "+ type(r) + " " + coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + endNode(r).id] as entities
+WITH d, score,
+apoc.text.join(texts,"\n----\n") +
+apoc.text.join(entities,"\n")
+as text, entities
+RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), entities:entities} as metadata
+"""
+
+FINAL_PROMPT = """
+You are an AI-powered question-answering agent tasked with providing accurate and direct responses to user queries. Utilize information from the chat history, current user input, and Relevant Information effectively.
+
+Response Requirements:
+- Deliver concise and direct answers to the user's query without headers unless requested.
+- Acknowledge and utilize relevant previous interactions based on the chat history summary.
+- Respond to initial greetings appropriately, but avoid including a greeting in subsequent responses unless the chat is restarted or significantly paused.
+- For non-general questions, strive to provide answers using chat history and Relevant Information ONLY do not Hallucinate.
+- Clearly state if an answer is unknown; avoid speculating.
+
+Instructions:
+- Prioritize directly answering the User Input: {question}.
+- Use the Chat History Summary: {chat_summary} to provide context-aware responses.
+- Refer to Relevant Information: {vector_result} only if it directly relates to the query.
+- Cite sources clearly when using Relevant Information in your response [Sources: {sources}] without fail. The Source must be printed only at the last in the format [Source: source1,source2] . Duplicate sources should be removed.
+Ensure that answers are straightforward and context-aware, focusing on being relevant and concise.
+"""
+
+def get_llm(model: str,max_tokens=1000) -> Any:
+    """Retrieve the specified language model based on the model name."""
+
+    model_versions = {
+        "OpenAI GPT 3.5": "gpt-3.5-turbo-16k",
+        "Gemini Pro": "gemini-1.0-pro-001",
+        "Gemini 1.5 Pro": "gemini-1.5-pro-preview-0409",
+        "OpenAI GPT 4": "gpt-4-0125-preview",
+        "Diffbot" : "gpt-4-0125-preview",
+        "OpenAI GPT 4o":"gpt-4o"
+         }
+
+    if model in model_versions:
+        model_version = model_versions[model]
+        logging.info(f"Chat Model: {model}, Model Version: {model_version}")
+        
+        if "Gemini" in model:
+            llm = ChatVertexAI(
+                model_name=model_version,
+                convert_system_message_to_human=True,
+                max_tokens=max_tokens,
+                temperature=0,
+                safety_settings={
+                    HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE, 
+                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE, 
+                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE, 
+                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE
+                }
+            )
+        else:
+            llm = ChatOpenAI(model=model_version, temperature=0,max_tokens=max_tokens)
+
+        return llm,model_version
+
+    else:
+        logging.error(f"Unsupported model: {model}")
+        return None,None
 
 def vector_embed_results(qa,question):
     vector_res={}
