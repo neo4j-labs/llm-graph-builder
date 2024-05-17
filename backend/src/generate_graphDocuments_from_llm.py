@@ -29,8 +29,8 @@ def generate_graphDocuments(model: str, graph: Neo4jGraph, chunkId_chunkDoc_list
         model_version = "gpt-3.5-turbo-16k"
         graph_documents = get_graph_from_OpenAI(model_version, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
 
-    elif model == "OpenAI GPT 4":
-        model_version = "gpt-4-0125-preview"
+    elif model == "OpenAI GPT 4o":
+        model_version = "gpt-4o"
         graph_documents = get_graph_from_OpenAI(model_version, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
     
     elif model == "Gemini 1.0 Pro" :
@@ -38,7 +38,7 @@ def generate_graphDocuments(model: str, graph: Neo4jGraph, chunkId_chunkDoc_list
         graph_documents = get_graph_from_Gemini(model_version, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
 
     elif model == "Gemini 1.5 Pro" :
-        model_version = "gemini-1.5-pro-preview-0409"
+        model_version = "gemini-1.5-pro-preview-0514"
         graph_documents = get_graph_from_Gemini(model_version, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
 
     logging.info(f"graph_documents = {len(graph_documents)}")
