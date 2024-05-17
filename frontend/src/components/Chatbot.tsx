@@ -1,5 +1,5 @@
 /* eslint-disable no-confusing-arrow */
-import {useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button, Widget, Typography, Avatar, TextInput, TextLink } from '@neo4j-ndl/react';
 import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
