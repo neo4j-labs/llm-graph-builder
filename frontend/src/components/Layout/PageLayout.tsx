@@ -40,6 +40,9 @@ export default function PageLayout({
           setShowChatBot(false);
         }}
         showChatBot={showChatBot}
+        openChatBot={() => {
+          setShowChatBot(true);
+        }}
       ></RightSideBar>
     </div>
   );

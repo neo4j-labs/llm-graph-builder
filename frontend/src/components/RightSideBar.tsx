@@ -1,18 +1,19 @@
-import { Drawer, LoadingSpinner } from '@neo4j-ndl/react';
+import { Drawer, LoadingSpinner, Modal } from '@neo4j-ndl/react';
 import Chatbot from './Chatbot';
 import chatbotmessages from '../assets/ChatbotMessages.json';
 import { useState } from 'react';
 import { UserCredentials, Messages } from '../types';
-import { ExpandIcon, ShrinkIcon, TrashIconOutline } from '@neo4j-ndl/react/icons';
-import ButtonWithToolTip from './ButtonWithToolTip';
 import { clearChatAPI } from '../services/QnaAPI';
 import { useCredentials } from '../context/UserCredentials';
+import { createPortal } from 'react-dom';
+import IconsPlacement from './Layout/Icons';
 
 interface RightSideBarProps {
   showChatBot: boolean;
   closeChatBot: () => void;
+  openChatBot: () => void;
 }
-const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }) => {
+const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot, openChatBot }) => {
   const date = new Date();
   const formattedDateTime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
   const [messages, setMessages] = useState<Messages[]>([
@@ -27,13 +28,17 @@ const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }
   const deleteOnClick = async () => {
     try {
       setClearHistoryData(true);
-      const response = await clearChatAPI(userCredentials as UserCredentials, sessionStorage.getItem('session_id') ?? '');
+      const response = await clearChatAPI(
+        userCredentials as UserCredentials,
+        sessionStorage.getItem('session_id') ?? ''
+      );
       if (response.data.status === 'Success') {
         setMessages([
           {
             datetime: formattedDateTime,
             id: 2,
-            message: ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
+            message:
+              ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
             sources: ['https://neo4j.com/'],
             user: 'chatbot',
           },
@@ -46,77 +51,82 @@ const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }
     }
   };
 
-  const toggleFullscreen = () => {
+  const toggleToSmallScreen = () => {
     setIsFullScreen(!isFullScreen);
-    alert('hello')
+    closeChatBot();
   };
 
-  // const toggleFullscreen = () => {
-  //   setIsFullScreen(!isFullScreen);
-  //   const chatbotWindow = window.open(
-  //     '',
-  //     '_blank',
-  //     'width=600,height=600,top=100,left=100'
-  //   );
-  //   if (chatbotWindow) {
-  //     chatbotWindow.document.write(``);
-  //     chatbotWindow.document.close();
-  //   }
-  // };
+  const toggleToFullScreen = () => {
+    setIsFullScreen(!isFullScreen);
+    openChatBot();
+  };
 
   return (
-    <Drawer
-      expanded={showChatBot}
-      isResizeable={false}
-      type='push'
-      closeable={true}
-      position='right'
-      onExpandedChange={(expanded) => {
-        if (!expanded) {
-          closeChatBot();
-        }
-      }}
-      key='rightdrawer'
-      className='grow'
-    >
-      <div className='inline-flex gap-x-1' style={{ display: 'flex', flexGrow: 0, alignItems: 'center', gap: '6px' }}>
-        <ButtonWithToolTip
-          text='Clear Chat history'
-          onClick={deleteOnClick}
-          size='medium'
-          clean
-          placement='bottom'
-          disabled={messages.length === 1}
-        >
-          <TrashIconOutline className='n-size-token-7' style={{ padding: '2px' }} />
-        </ButtonWithToolTip>
-        <ButtonWithToolTip
-          text='Toggle minimize frame'
-          onClick={toggleFullscreen}
-          size='medium'
-          clean
-          placement='right'
-        >
-          {isFullScreen ? (
-            <ShrinkIcon className="text-palette-neutral-text-weak h-5 w-5" />
+    <>
+      <Drawer
+        expanded={showChatBot}
+        isResizeable={false}
+        type='push'
+        position='right'
+        key='rightdrawer'
+        className='grow'
+        closeable={false}
+      >
+        <IconsPlacement
+          closeChatBot={closeChatBot}
+          deleteOnClick={deleteOnClick}
+          messages={messages}
+          isFullscreen={isFullScreen}
+          toggleToSmallScreen={toggleToSmallScreen}
+        />
+        <Drawer.Body className='!overflow-y-hidden !px-0'>
+          {clearHistoryData ? (
+            <LoadingSpinner size='large' className='top-72 left-52' />
           ) : (
-            <ExpandIcon className="text-palette-neutral-text-weak h-5 w-5" />
+            <Chatbot
+              messages={messages}
+              setMessages={setMessages}
+              clear={clearHistoryData}
+              isLoading={getIsLoading(messages)}
+            />
           )}
-        </ButtonWithToolTip>
-      </div>
-      <Drawer.Body className='!overflow-y-hidden !px-0'>
-        {clearHistoryData ? (
-          <LoadingSpinner size='large' className='top-72 left-52' />
-        ) : (
-          <Chatbot
-            messages={messages}
-            setMessages={setMessages}
-            clear={clearHistoryData}
-            isLoading={getIsLoading(messages)}
-          />
+        </Drawer.Body>
+      </Drawer>
+      {isFullScreen &&
+        createPortal(
+          <Modal
+            modalProps={{
+              id: 'Chatbot',
+              className: 'n-p-token-4 n-bg-neutral-10 n-rounded-lg',
+            }}
+            onClose={toggleToFullScreen}
+            open={isFullScreen}
+            size='unset'
+          >
+            {clearHistoryData ? (
+              <LoadingSpinner size='large' className='top-72 left-52' />
+            ) : (
+              <>
+                <IconsPlacement
+                  closeChatBot={toggleToFullScreen}
+                  deleteOnClick={deleteOnClick}
+                  messages={messages}
+                  isFullscreen={isFullScreen}
+                  toggleToFullScreen={toggleToFullScreen}
+                />
+                <Chatbot
+                  messages={messages}
+                  setMessages={setMessages}
+                  clear={clearHistoryData}
+                  isLoading={getIsLoading(messages)}
+                  fullScreen={isFullScreen}
+                />
+              </>
+            )}
+          </Modal>,
+          document.body
         )}
-      </Drawer.Body>
-    </Drawer>
+    </>
   );
 };
 export default RightSideBar;
