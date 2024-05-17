@@ -34,11 +34,7 @@ const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }
       className='grow'
     >
       <Drawer.Body className='!overflow-y-hidden !px-0'>
-        <Chatbot
-          messages={messages}
-          setMessages={setMessages}
-          isLoading={getIsLoading(messages)}
-        ></Chatbot>
+        <Chatbot messages={messages} setMessages={setMessages} isLoading={getIsLoading(messages)}></Chatbot>
       </Drawer.Body>
     </Drawer>
   );
