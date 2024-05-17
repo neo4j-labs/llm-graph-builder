@@ -240,14 +240,11 @@
   font-weight: 600;
   font-size: larger;
 }
-
-.table-header-cell, .table-cell{
- display: flex;
- align-items: center;
- padding: 8px;
+.ndl-upload-img-wrapper{
+  background: url("./assets/images/dropzone.svg");
+  background-repeat: no-repeat;
+  background-position: center;
 }
-
-.column-width-80{
-  width: 80px;
-  flex:0 0 80px;
+.ndl-dropzone .ndl-dropzone-header{
+  row-gap: 0 !important;
 }
