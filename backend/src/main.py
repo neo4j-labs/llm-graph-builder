@@ -79,10 +79,10 @@ def create_source_node_graph_url_gcs(graph, model, gcs_bucket_name, gcs_bucket_f
           graphDb_data_Access = graphDBdataAccess(graph)
           graphDb_data_Access.create_source_node(obj_source_node)
           success_count+=1
-          lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Success'})
+          lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Success', 'gcsBucketName': gcs_bucket_name, 'gcsBucketFolder':obj_source_node.gcsBucketFolder})
       except Exception as e:
         failed_count+=1
-        lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Failed'})
+        lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Failed', 'gcsBucketName': gcs_bucket_name, 'gcsBucketFolder':obj_source_node.gcsBucketFolder})
     return lst_file_name,success_count,failed_count
 
 def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
