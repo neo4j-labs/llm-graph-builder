@@ -15,7 +15,6 @@ import Driver from 'neo4j-driver/types/driver';
 import deleteAPI from '../services/deleteFiles';
 import DeletePopUp from './DeletePopUp';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
-import { CloudArrowUpIconOutline  } from '@neo4j-ndl/react/icons';
 import useServerSideEvent from '../hooks/useSse';
 
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
@@ -335,9 +334,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             </Button>
           ) : (
             <Button className='mr-2.5' onClick={disconnect}>
-           
-
-<CloudArrowUpIconOutline className="n-size-token-7" />
               Disconnect
             </Button>
           )}
