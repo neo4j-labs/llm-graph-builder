@@ -159,7 +159,7 @@ export type ChatbotProps = {
   setMessages: Dispatch<SetStateAction<Messages[]>>;
   isLoading: boolean;
   clear: boolean;
-  fullScreen?: boolean;
+  fullScreen: boolean;
 };
 export interface WikipediaModalTypes {
   hideModal: () => void;

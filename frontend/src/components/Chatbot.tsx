@@ -14,7 +14,7 @@ import ListComp from './List';
 import { extractPdfFileName } from '../utils/Utils';
 
 export default function Chatbot(props: ChatbotProps) {
-  const { messages: listMessages, setMessages: setListMessages, isLoading } = props;
+  const { messages: listMessages, setMessages: setListMessages, isLoading, fullScreen } = props;
   const [inputMessage, setInputMessage] = useState('');
   const formattedTextStyle = { color: 'rgb(var(--theme-palette-discovery-bg-strong))' };
   const [loading, setLoading] = useState<boolean>(isLoading);
@@ -144,9 +144,17 @@ export default function Chatbot(props: ChatbotProps) {
   }, [listMessages]);
 
   return (
-    <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
-      <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3'>
-        <Widget className='n-bg-palette-neutral-bg-weak' header='' isElevated={false}>
+    <div
+      className={`n-bg-palette-neutral-bg-weak flex flex-col justify-between ${
+        fullScreen ? 'min-h-[700px]' : 'min-h-full'
+      } max-h-full overflow-hidden}`}
+    >
+      <div className={`flex pb-12 min-w-full ${!fullScreen && 'chatBotContainer pl-3 overflow-y-auto '}`}>
+        <Widget
+          className={`n-bg-palette-neutral-bg-weak ${fullScreen && 'w-full h-full'}`}
+          header=''
+          isElevated={false}
+        >
           <div className='flex flex-col gap-4 gap-y-4'>
             {listMessages.map((chat, index) => (
               <div
@@ -182,10 +190,11 @@ export default function Chatbot(props: ChatbotProps) {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${
+                  className={`p-4 self-start ${fullScreen && 'max-w-[55%]'}
+                  ${
                     chat.user === 'chatbot'
-                      ? 'n-bg-palette-neutral-bg-strong max-w-[315px]'
-                      : 'n-bg-palette-primary-bg-weak max-w-[305px]'
+                      ? `n-bg-palette-neutral-bg-strong ${!fullScreen && 'max-w-[315px]'}`
+                      : `n-bg-palette-primary-bg-weak ${!fullScreen && 'max-w-[305px]'}`
                   }`}
                 >
                   <div
@@ -205,7 +214,7 @@ export default function Chatbot(props: ChatbotProps) {
                       )
                     )}
                   </div>
-                  <div>
+                  <div className='text-right align-bottom pt-3'>
                     <div>
                       <Typography variant='body-small' className='pt-2 font-bold'>
                         {chat.datetime}
