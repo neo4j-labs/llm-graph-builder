@@ -1,6 +1,6 @@
 /* eslint-disable no-confusing-arrow */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Widget, Typography, Avatar, TextInput, IconButton, TextLink } from '@neo4j-ndl/react';
+import { Button, Widget, Typography, Avatar, TextInput, IconButton, TextLink, Modal } from '@neo4j-ndl/react';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
@@ -12,6 +12,7 @@ import { useFileContext } from '../context/UsersFiles';
 import ChatInfoModal from './ChatInfoModal';
 import ListComp from './List';
 import { extractPdfFileName } from '../utils/Utils';
+import RetrievalInformation from './RetrievalInformationModal';
 
 export default function Chatbot(props: ChatbotProps) {
   const { messages: listMessages, setMessages: setListMessages, isLoading } = props;
@@ -24,6 +25,10 @@ export default function Chatbot(props: ChatbotProps) {
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
   const [activeChat, setActiveChat] = useState<chatInfoMessage | null>(null);
+  const [sourcesModal, setSourcesModal] = useState<string[]>([]);
+  const [entitiesModal, setEntitiesModal] = useState<string[]>([]);
+  const [modelModal, setModelModal] = useState<string>('');
+  const [timeTaken, setTimeTaken] = useState<number>(0);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
@@ -39,7 +44,7 @@ export default function Chatbot(props: ChatbotProps) {
   }, []);
 
   const simulateTypingEffect = (
-    response: { reply: string; entities?: [string]; model?: string; sources?: [string] },
+    response: { reply: string; entities?: [string]; model?: string; sources?: [string]; timeTaken?: number },
     index = 0
   ) => {
     if (index < response.reply.length) {
@@ -60,6 +65,7 @@ export default function Chatbot(props: ChatbotProps) {
               sources: response?.sources,
               entities: response?.entities,
               model: response?.model,
+              timeTaken: response?.timeTaken,
               isLoading: true,
             },
           ]);
@@ -74,6 +80,7 @@ export default function Chatbot(props: ChatbotProps) {
             lastmsg.sources = response?.sources;
             lastmsg.entities = response?.entities;
             lastmsg.model = response?.model;
+            lastmsg.timeTaken = response?.timeTaken;
             lastmsg.isLoading = false;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
@@ -109,12 +116,14 @@ export default function Chatbot(props: ChatbotProps) {
     try {
       setInputMessage('');
       simulateTypingEffect({ reply: ' ' });
-      const chatresponse = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
+      const chatbotAPI = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
+      const chatresponse = chatbotAPI?.response;
       chatbotReply = chatresponse?.data?.data?.message;
       chatSources = chatresponse?.data?.data?.info.sources;
       chatModel = chatresponse?.data?.data?.info.model;
       chatEntities = chatresponse?.data?.data?.info.entities;
-      simulateTypingEffect({ reply: chatbotReply, entities: chatEntities, model: chatModel, sources: chatSources });
+      const chatTimeTaken = chatbotAPI.timeTaken;
+      simulateTypingEffect({ reply: chatbotReply, entities: chatEntities, model: chatModel, sources: chatSources, timeTaken: chatTimeTaken });
     } catch (error) {
       chatbotReply = "Oops! It seems we couldn't retrieve the answer. Please try again later";
       setInputMessage('');
@@ -234,17 +243,16 @@ export default function Chatbot(props: ChatbotProps) {
                     ) : null}
                     {((chat.user === 'chatbot' && chat.id !== 2) || chat.isLoading) && (
                       <div className='flex'>
-                        <IconButton
-                          className='infoIcon'
-                          clean
-                          aria-label='Information Icon'
-                          onClick={() => {
-                            openInfoModal(chat);
-                          }}
-                          disabled={chat.isTyping || chat.isLoading}
-                        >
-                          <InformationCircleIconOutline className='w-4 h-4 inline-block n-text-palette-success-text' />
-                        </IconButton>
+                        <IconButton clean aria-label="Retrieval Information"
+                                onClick={() => {
+                                  setEntitiesModal(chat.entities ?? []);
+                                  setModelModal(chat.model ?? '');
+                                  setSourcesModal(chat.sources ?? []);
+                                  setTimeTaken(chat.timeTaken ?? 0);
+                                  setShowInfoModal(true)
+                                }}>
+                                <InformationCircleIconOutline className='w-4 h-4 inline-block' />
+                              </IconButton>
                         <ChatInfoModal key={index} open={showInfoModal} hideModal={hideInfoModal}>
                           <ListComp
                             sources={activeChat?.sources}
@@ -276,6 +284,12 @@ export default function Chatbot(props: ChatbotProps) {
           </Button>
         </form>
       </div>
+      <Modal modalProps={{
+        id: 'retrieval-information',
+        className: 'n-p-token-4 n-bg-palette-neutral-bg-weak n-rounded-lg'
+      }} onClose={() => setShowInfoModal(false)} open={showInfoModal}>
+          <RetrievalInformation sources={sourcesModal} entities={entitiesModal} model={modelModal} timeTaken={timeTaken} />
+        </Modal>
     </div>
   );
 }
