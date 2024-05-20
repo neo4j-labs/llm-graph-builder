@@ -7,7 +7,7 @@ import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { extractAPI } from '../utils/FileAPI';
-import { ContentProps, OptionType, UserCredentials, alertState } from '../types';
+import { ContentProps, CustomFile, OptionType, UserCredentials, alertState } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './GraphViewModal';
 import { initialiseDriver } from '../utils/Driver';
@@ -24,7 +24,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
-  const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels, selectedRows } = useFileContext();
+  const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels, selectedRows, setSelectedRows } =
+    useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
@@ -100,106 +101,128 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     }
   };
 
-  const extractData = async (uid: number) => {
-    if (filesData[uid]?.status == 'New') {
-      const filesize = filesData[uid].size;
-      try {
-        setFilesData((prevfiles) =>
-          prevfiles.map((curfile, idx) => {
-            if (idx == uid) {
+  const extractData = async (uid: string, isselectedRows = false) => {
+    if (!isselectedRows) {
+      const fileItem = filesData.find((f) => f.id == uid);
+      if (fileItem) {
+        await extractHandler(fileItem, uid);
+      }
+    } else {
+      const fileItem = selectedRows.find((f) => JSON.parse(f).id == uid);
+      if (fileItem) {
+        await extractHandler(JSON.parse(fileItem), uid);
+      }
+    }
+  };
+
+  const extractHandler = async (fileItem: CustomFile, uid: string) => {
+    try {
+      setFilesData((prevfiles) =>
+        prevfiles.map((curfile) => {
+          if (curfile.id == uid) {
+            return {
+              ...curfile,
+              status: 'Processing',
+            };
+          }
+          return curfile;
+        })
+      );
+
+      if (fileItem.size != undefined && fileItem.size > 10000000) {
+        if (fileItem.name != undefined && userCredentials != null) {
+          const name = fileItem.name;
+          triggerStatusUpdateAPI(
+            name as string,
+            userCredentials?.uri,
+            userCredentials?.userName,
+            userCredentials?.password,
+            userCredentials?.database,
+            updateStatusForLargeFiles
+          );
+        }
+      }
+
+      const apiResponse = await extractAPI(
+        fileItem.model,
+        userCredentials as UserCredentials,
+        fileItem.fileSource,
+        fileItem.source_url,
+        localStorage.getItem('accesskey'),
+        localStorage.getItem('secretkey'),
+        fileItem.name ?? '',
+        fileItem.gcsBucket ?? '',
+        fileItem.gcsBucketFolder ?? '',
+        selectedNodes.map((l) => l.value),
+        selectedRels.map((t) => t.value)
+      );
+
+      if (apiResponse?.status === 'Failed') {
+        let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
+        throw new Error(JSON.stringify(errorobj));
+      } else if (fileItem.size != undefined && fileItem.size < 10000000) {
+        setFilesData((prevfiles) => {
+          return prevfiles.map((curfile) => {
+            if (curfile.name == apiResponse?.data?.fileName) {
+              const apiRes = apiResponse?.data;
               return {
                 ...curfile,
-                status: 'Processing',
+                processing: apiRes?.processingTime?.toFixed(2),
+                status: apiRes?.status,
+                NodesCount: apiRes?.nodeCount,
+                relationshipCount: apiRes?.relationshipCount,
+                model: apiRes?.model,
+              };
+            }
+            return curfile;
+          });
+        });
+      }
+    } catch (err: any) {
+      const error = JSON.parse(err.message);
+      if (Object.keys(error).includes('fileName')) {
+        const { message } = error;
+        const { fileName } = error;
+        const errorMessage = error.message;
+        console.log({ message, fileName, errorMessage });
+        setalertDetails({
+          showAlert: true,
+          alertType: 'error',
+          alertMessage: message,
+        });
+        setFilesData((prevfiles) =>
+          prevfiles.map((curfile) => {
+            if (curfile.name == fileName) {
+              return {
+                ...curfile,
+                status: 'Failed',
+                errorMessage,
               };
             }
             return curfile;
           })
         );
-
-        if (filesize != undefined && filesize > 10000000) {
-          if (filesData[uid].name != undefined && userCredentials != null) {
-            const name = filesData[uid].name;
-            triggerStatusUpdateAPI(
-              name as string,
-              userCredentials?.uri,
-              userCredentials?.userName,
-              userCredentials?.password,
-              userCredentials?.database,
-              updateStatusForLargeFiles
-            );
-          }
-        }
-
-        const apiResponse = await extractAPI(
-          filesData[uid].model,
-          userCredentials as UserCredentials,
-          filesData[uid].fileSource,
-          filesData[uid].source_url,
-          localStorage.getItem('accesskey'),
-          localStorage.getItem('secretkey'),
-          filesData[uid].name ?? '',
-          filesData[uid].gcsBucket ?? '',
-          filesData[uid].gcsBucketFolder ?? '',
-          selectedNodes.map((l) => l.value),
-          selectedRels.map((t) => t.value)
-        );
-
-        if (apiResponse?.status === 'Failed') {
-          let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
-          throw new Error(JSON.stringify(errorobj));
-        } else if (filesize != undefined && filesize < 10000000) {
-          setFilesData((prevfiles) => {
-            return prevfiles.map((curfile) => {
-              if (curfile.name == apiResponse?.data?.fileName) {
-                const apiRes = apiResponse?.data;
-                return {
-                  ...curfile,
-                  processing: apiRes?.processingTime?.toFixed(2),
-                  status: apiRes?.status,
-                  NodesCount: apiRes?.nodeCount,
-                  relationshipCount: apiRes?.relationshipCount,
-                  model: apiRes?.model,
-                };
-              }
-              return curfile;
-            });
-          });
-        }
-      } catch (err: any) {
-        const error = JSON.parse(err.message);
-        if (Object.keys(error).includes('fileName')) {
-          const { message } = error;
-          const { fileName } = error;
-          const errorMessage = error.message;
-          console.log({ message, fileName, errorMessage });
-          setalertDetails({
-            showAlert: true,
-            alertType: 'error',
-            alertMessage: message,
-          });
-          setFilesData((prevfiles) =>
-            prevfiles.map((curfile) => {
-              if (curfile.name == fileName) {
-                return {
-                  ...curfile,
-                  status: 'Failed',
-                  errorMessage,
-                };
-              }
-              return curfile;
-            })
-          );
-        }
       }
     }
   };
 
   const handleGenerateGraph = () => {
     const data = [];
-    if (filesData.length > 0) {
+    if (selectedfileslength) {
+      for (let i = 0; i < selectedfileslength; i++) {
+        const row = JSON.parse(selectedRows[i]);
+        if (row.status === 'New') {
+          data.push(extractData(row.id, true));
+        }
+      }
+      Promise.allSettled(data).then(async (_) => {
+        setSelectedRows([]);
+        await updateGraphAPI(userCredentials as UserCredentials);
+      });
+    } else if (filesData.length > 0) {
       for (let i = 0; i < filesData.length; i++) {
         if (filesData[i]?.status === 'New') {
-          data.push(extractData(i));
+          data.push(extractData(filesData[i].id));
         }
       }
       Promise.allSettled(data).then(async (_) => {
@@ -263,7 +286,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           alertMessage: response.data.message,
           alertType: 'success',
         });
-        const filenames = selectedRows.map((str) => str.split(',')[0]);
+        const filenames = selectedRows.map((str) => JSON.parse(str).name);
         filenames.forEach((name) => {
           setFilesData((prev) => prev.filter((f) => f.name != name));
         });
@@ -378,7 +401,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               title={!selectedfileslength ? 'please select a file' : 'File is still under process'}
               disabled={!selectedfileslength}
             >
-              Delete Files
+              Delete Files {selectedfileslength > 0 && `(${selectedfileslength})`}
             </Button>
             <Button
               onClick={() => {
