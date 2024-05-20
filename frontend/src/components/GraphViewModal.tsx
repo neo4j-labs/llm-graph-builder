@@ -18,6 +18,7 @@ import { LegendsChip } from './LegendsChip';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import graphQueryAPI from '../services/GraphQuery';
 import { queryMap } from '../utils/Constants';
+import { useFileContext } from '../context/UsersFiles';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -36,6 +37,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [docLimit, setDocLimit] = useState<string>('3');
   const { userCredentials } = useCredentials();
   const [scheme, setScheme] = useState<Scheme>({});
+  const{selectedRows}=useFileContext()
 
   const handleCheckboxChange = (graph: GraphType) => {
     const currentIndex = graphType.indexOf(graph);
@@ -87,8 +89,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     try {
       const nodeRelationshipData =
         viewPoint === 'showGraphView'
-          ? await graphQueryAPI(userCredentials as UserCredentials, graphQuery, '', docLimit)
-          : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, inspectedName, '0');
+          ? await graphQueryAPI(userCredentials as UserCredentials, graphQuery, selectedRows.map((f)=>JSON.parse(f).name), docLimit)
+          : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName], '0');
       return nodeRelationshipData;
     } catch (error: any) {
       console.log(error);

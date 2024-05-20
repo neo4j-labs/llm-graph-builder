@@ -5,7 +5,7 @@ import { UserCredentials } from '../types';
 const graphQueryAPI = async (
   userCredentials: UserCredentials,
   query_type: string,
-  document_name: string,
+  document_names: string[],
   doc_limit: string
 ) => {
   try {
@@ -15,7 +15,8 @@ const graphQueryAPI = async (
     formData.append('userName', userCredentials?.userName ?? '');
     formData.append('password', userCredentials?.password ?? '');
     formData.append('query_type', query_type ?? 'entities');
-    formData.append('document_name', document_name);
+    // @ts-ignore
+    formData.append('document_name', document_names);
     formData.append('doc_limit', doc_limit);
     const response = await axios.post(`${url()}/graph_query`, formData, {
       headers: {
