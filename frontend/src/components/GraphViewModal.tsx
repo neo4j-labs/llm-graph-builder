@@ -4,8 +4,10 @@ import { GraphType, GraphViewModalProps, Scheme, UserCredentials } from '../type
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL, { NvlOptions } from '@neo4j-nvl/base';
 import type { Node, Relationship } from '@neo4j-nvl/base';
+import { Resizable } from 're-resizable';
 
 import {
+  DragIcon,
   FitToScreenIcon,
   MagnifyingGlassMinusIconOutline,
   MagnifyingGlassPlusIconOutline,
@@ -71,16 +73,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.length === 3
       ? queryMap.DocChunkEntities
       : graphType.includes('entities') && graphType.includes('chunks')
-      ? queryMap.ChunksEntities
-      : graphType.includes('entities') && graphType.includes('document')
-      ? queryMap.DocEntities
-      : graphType.includes('document') && graphType.includes('chunks')
-      ? queryMap.DocChunks
-      : graphType.includes('entities') && graphType.length === 1
-      ? queryMap.Entities
-      : graphType.includes('chunks') && graphType.length === 1
-      ? queryMap.Chunks
-      : queryMap.Document;
+        ? queryMap.ChunksEntities
+        : graphType.includes('entities') && graphType.includes('document')
+          ? queryMap.DocEntities
+          : graphType.includes('document') && graphType.includes('chunks')
+            ? queryMap.DocChunks
+            : graphType.includes('entities') && graphType.length === 1
+              ? queryMap.Entities
+              : graphType.includes('chunks') && graphType.length === 1
+                ? queryMap.Chunks
+                : queryMap.Document;
 
   // API Call to fetch the queried Data
   const fetchData = async () => {
@@ -315,14 +317,35 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       </ButtonWithToolTip>
                     </IconButtonArray>
                   </div>
-                  <div className='legend_div'>
-                    <h4 className='py-4 pt-3'>Result Overview</h4>
-                    <div className='flex gap-2 flex-wrap'>
-                      {legendCheck.map((key, index) => (
-                        <LegendsChip key={index} title={key} scheme={scheme} nodes={nodes} />
-                      ))}
-                    </div>
-                  </div>
+                    <Resizable
+                      defaultSize={{
+                        width: 400,
+                        height: '100%',
+                      }}
+                      minWidth={230}
+                      maxWidth="72%"
+                      enable={{
+                        top: false,
+                        right: false,
+                        bottom: false,
+                        left: true,
+                        topRight: false,
+                        bottomRight: false,
+                        bottomLeft: false,
+                        topLeft: false,
+                      }}
+                      handleComponent={{ left: <DragIcon className="absolute top-1/2 h-6 w-6" /> }}
+                      handleClasses={{ left: 'ml-1' }}
+                    >
+                      <div className='legend_div'>
+                        <h4 className='py-4 pt-3 ml-2'>Result Overview</h4>
+                        <div className='flex gap-2 flex-wrap ml-2'>
+                          {legendCheck.map((key, index) => (
+                            <LegendsChip key={index} title={key} scheme={scheme} nodes={nodes} />
+                          ))}
+                        </div>
+                      </div>
+                    </Resizable>
                 </div>
               </>
             )}

@@ -201,7 +201,6 @@
   max-height: 100%;
   overflow-y: auto;
   height: 100%;
-  max-width: 20%;
   z-index: 1;
   box-shadow: -2px 0px 6px #e7e7e7;
 }
@@ -241,6 +240,7 @@
   font-weight: 600;
   font-size: larger;
 }
+<<<<<<< Updated upstream
 .ndl-upload-img-wrapper{
   background: url("./assets/images/dropzone.svg");
   background-repeat: no-repeat;
@@ -248,4 +248,9 @@
 }
 .ndl-dropzone .ndl-dropzone-header{
   row-gap: 0 !important;
+=======
+
+.ndl-status-indicator{
+  margin-bottom: 0px !important;
+>>>>>>> Stashed changes
 }
