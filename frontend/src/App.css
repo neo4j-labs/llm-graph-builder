@@ -240,7 +240,6 @@
   font-weight: 600;
   font-size: larger;
 }
-<<<<<<< Updated upstream
 .ndl-upload-img-wrapper{
   background: url("./assets/images/dropzone.svg");
   background-repeat: no-repeat;
@@ -248,9 +247,8 @@
 }
 .ndl-dropzone .ndl-dropzone-header{
   row-gap: 0 !important;
-=======
+}
 
 .ndl-status-indicator{
   margin-bottom: 0px !important;
->>>>>>> Stashed changes
 }
