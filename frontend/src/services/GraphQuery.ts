@@ -2,12 +2,7 @@ import axios from 'axios';
 import { url } from '../utils/Utils';
 import { UserCredentials } from '../types';
 
-const graphQueryAPI = async (
-  userCredentials: UserCredentials,
-  query_type: string,
-  document_names: string[],
-  doc_limit: string
-) => {
+const graphQueryAPI = async (userCredentials: UserCredentials, query_type: string, document_names: string[]) => {
   try {
     const formData = new FormData();
     formData.append('uri', userCredentials?.uri ?? '');
@@ -16,14 +11,9 @@ const graphQueryAPI = async (
     formData.append('password', userCredentials?.password ?? '');
     formData.append('query_type', query_type ?? 'entities');
 
-    if (document_names.length) {
-      // @ts-ignore
-      formData.append('document_names', document_names);
-    } else {
-      formData.append('document_names', '');
-    }
+    // @ts-ignore
+    formData.append('document_names', document_names);
 
-    formData.append('doc_limit', doc_limit);
     const response = await axios.post(`${url()}/graph_query`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

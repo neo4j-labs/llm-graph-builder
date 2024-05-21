@@ -93,8 +93,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     });
   }, [model]);
 
-  const disableCheck = !filesData.some((f) => f.status === 'New');
-
   const handleDropdownChange = (option: OptionType | null | void) => {
     if (option?.value) {
       setModel(option?.value);
@@ -273,6 +271,17 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
   };
   const selectedfileslength = useMemo(() => selectedRows.length, [selectedRows]);
+  const newFilecheck = useMemo(() => selectedRows.filter((f) => JSON.parse(f).status === 'New').length, [selectedRows]);
+  const completedfileNo = useMemo(
+    () => selectedRows.filter((f) => JSON.parse(f).status === 'Completed').length,
+    [selectedRows]
+  );
+  const dropdowncheck = useMemo(() => !filesData.some((f) => f.status === 'New'), [filesData]);
+  const disableCheck = useMemo(
+    () => (!selectedfileslength ? dropdowncheck : !newFilecheck),
+    [selectedfileslength, filesData, newFilecheck]
+  );
+
   const deleteFileClickHandler: React.MouseEventHandler<HTMLButtonElement> = () => {
     setshowDeletePopUp(true);
   };
@@ -378,25 +387,18 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           justifyContent='space-between'
           flexDirection='row'
         >
-          <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
+          <LlmDropdown onSelect={handleDropdownChange} isDisabled={dropdowncheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
-              Generate Graph{' '}
-              {selectedfileslength && !disableCheck && selectedRows.filter((f) => JSON.parse(f).status === 'New').length
-                ? `(${selectedRows.filter((f) => JSON.parse(f).status === 'New').length})`
-                : ''}
+              Generate Graph {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
             </Button>
             <Button
-              disabled={!selectedRows.some((f) => JSON.parse(f).status === 'Completed')}
+              title={`${completedfileNo < 0 ? 'please select a completed file' : ''}`}
+              disabled={completedfileNo < 0}
               onClick={handleGraphView}
               className='mr-0.5'
             >
-              Show Graph{' '}
-              {selectedfileslength &&
-              selectedRows.some((f) => JSON.parse(f).status === 'Completed') &&
-              selectedRows.filter((f) => JSON.parse(f).status === 'Completed').length
-                ? `(${selectedRows.filter((f) => JSON.parse(f).status === 'Completed').length})`
-                : ''}
+              Show Graph {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
             </Button>
             <Button
               onClick={handleOpenGraphClick}
