@@ -281,6 +281,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     () => (!selectedfileslength ? dropdowncheck : !newFilecheck),
     [selectedfileslength, filesData, newFilecheck]
   );
+  const showGraphCheck=useMemo(()=>selectedfileslength?(completedfileNo===0):true,[selectedfileslength,completedfileNo])
 
   const deleteFileClickHandler: React.MouseEventHandler<HTMLButtonElement> = () => {
     setshowDeletePopUp(true);
@@ -394,7 +395,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             </Button>
             <Button
               title={`${completedfileNo < 0 ? 'please select a completed file' : ''}`}
-              disabled={completedfileNo < 0}
+              disabled={showGraphCheck}
               onClick={handleGraphView}
               className='mr-0.5'
             >
