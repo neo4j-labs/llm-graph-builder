@@ -59,7 +59,7 @@ def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
   return lst_chunk_chunkId_document  
                  
 def create_graph_database_connection(uri, userName, password, database):
-  graph = Neo4jGraph(url=uri, database=database, username=userName, password=password)
+  graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, driver_config={'user_agent':'LLM-Graph-Builder/1.0'})
   return graph
 
 

@@ -50,7 +50,7 @@ def get_graphDB_driver(uri, username, password):
     """
     try:
         logging.info(f"Attempting to connect to the Neo4j database at {uri}")
-        driver = GraphDatabase.driver(uri, auth=(username, password))
+        driver = GraphDatabase.driver(uri, auth=(username, password), user_agent='LLM-Graph-Builder/1.0')
         logging.info("Connection successful")
         return driver
     except Exception as e:

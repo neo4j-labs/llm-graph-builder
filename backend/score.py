@@ -409,7 +409,6 @@ async def get_document_status(file_name, url, userName, password, database):
         error_message = str(e)
         logging.exception(f'{message}:{error_message}')
         return create_api_response('Failed',message=message)
-    
-    
+
 if __name__ == "__main__":
     uvicorn.run(app)
