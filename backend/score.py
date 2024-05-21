@@ -237,7 +237,8 @@ async def graph_query(
     userName: str = Form(None),
     password: str = Form(None),
     query_type: str = Form(None),
-    document_names: str = Form(None)
+    document_names: str = Form(None),
+    doc_limit: str = Form(None) 
 ):
     try:
         print(document_names)
@@ -247,7 +248,8 @@ async def graph_query(
             username=userName,
             password=password,
             query_type=query_type,
-            document_names=document_names
+            document_names=document_names,
+            doc_limit = doc_limit
         )
         josn_obj = {'api_name':'graph_query','db_url':uri}
         logger.log_struct(josn_obj)

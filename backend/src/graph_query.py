@@ -229,7 +229,7 @@ def get_completed_documents(driver):
     return documents
 
 
-def get_graph_results(uri, username, password, query_type,document_names=[]):
+def get_graph_results(uri, username, password, query_type,document_names,doc_limit):
     """
     Retrieves graph data by executing a specified Cypher query using credentials and parameters provided.
     Processes the results to extract nodes and relationships and packages them in a structured output.
@@ -245,16 +245,16 @@ def get_graph_results(uri, username, password, query_type,document_names=[]):
     dict: Contains the session ID, user-defined messages with nodes and relationships, and the user module identifier.
     """
     try:
-        DEFAULT_DOC_LIMIT = 3
         logging.info(f"URI: {uri}, Username: {username}, Password: {password}, Query Type: {query_type}, Document Name: {document_names}")
         logging.info(f"Starting graph query process")
         driver = get_graphDB_driver(uri, username, password)
         if document_names:
             document_names = document_names.split(",")
         else:
-            document_names = get_completed_documents(driver) 
-            if len(document_names) > DEFAULT_DOC_LIMIT:
-                document_names = document_names[:DEFAULT_DOC_LIMIT]
+            document_names = get_completed_documents(driver)
+            doc_limit = doc_limit if doc_limit else 3
+            if len(document_names) > int(doc_limit):
+                document_names = document_names[:int(doc_limit)]
             print(document_names)
             
         nodes = list()
@@ -268,6 +268,8 @@ def get_graph_results(uri, username, password, query_type,document_names=[]):
             nodes.extend(document_nodes)
             relationships.extend(document_relationships)
         
+        print(f"no of nodes : {len(nodes)}")
+        print(f"no of relations : {len(relationships)}")
         result = {
             "nodes": nodes,
             "relationships": relationships
