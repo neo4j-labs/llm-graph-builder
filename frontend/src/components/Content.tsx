@@ -24,8 +24,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
-  const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels, selectedRows, setSelectedRows } =
-    useFileContext();
+  const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels, selectedRows } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
@@ -270,18 +269,27 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     localStorage.removeItem('password');
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
   };
+
   const selectedfileslength = useMemo(() => selectedRows.length, [selectedRows]);
+
   const newFilecheck = useMemo(() => selectedRows.filter((f) => JSON.parse(f).status === 'New').length, [selectedRows]);
+
   const completedfileNo = useMemo(
     () => selectedRows.filter((f) => JSON.parse(f).status === 'Completed').length,
     [selectedRows]
   );
+
   const dropdowncheck = useMemo(() => !filesData.some((f) => f.status === 'New'), [filesData]);
+
   const disableCheck = useMemo(
     () => (!selectedfileslength ? dropdowncheck : !newFilecheck),
     [selectedfileslength, filesData, newFilecheck]
   );
-  const showGraphCheck=useMemo(()=>selectedfileslength?(completedfileNo===0):true,[selectedfileslength,completedfileNo])
+
+  const showGraphCheck = useMemo(
+    () => (selectedfileslength ? completedfileNo === 0 : true),
+    [selectedfileslength, completedfileNo]
+  );
 
   const deleteFileClickHandler: React.MouseEventHandler<HTMLButtonElement> = () => {
     setshowDeletePopUp(true);

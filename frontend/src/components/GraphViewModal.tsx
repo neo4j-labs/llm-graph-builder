@@ -96,7 +96,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     } catch (error: any) {
       console.log(error);
     }
-  }, [viewPoint, selectedRows, graphQuery,inspectedName,userCredentials]);
+  }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials]);
 
   useEffect(() => {
     if (open) {
