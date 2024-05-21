@@ -5,7 +5,8 @@ from fastapi import FastAPI, Request
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
-from src.QA_integration import *
+# from src.QA_integration import *
+from src.QA_integration_new import *
 from src.entities.user_credential import user_credential
 from src.shared.common_fn import *
 import uvicorn
