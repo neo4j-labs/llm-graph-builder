@@ -103,7 +103,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
   const extractData = async (uid: string, isselectedRows = false) => {
     if (!isselectedRows) {
-      console.log("Normal Extraction")
+      console.log('Normal Extraction');
       const fileItem = filesData.find((f) => f.id == uid);
       if (fileItem) {
         await extractHandler(fileItem, uid);
@@ -111,7 +111,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     } else {
       const fileItem = selectedRows.find((f) => JSON.parse(f).id == uid);
       if (fileItem) {
-        console.log("Selected Files Extraction", { fileItem: JSON.parse(fileItem) })
+        console.log('Selected Files Extraction', { fileItem: JSON.parse(fileItem) });
         await extractHandler(JSON.parse(fileItem), uid);
       }
     }
@@ -121,7 +121,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     try {
       setFilesData((prevfiles) =>
         prevfiles.map((curfile) => {
-          console.log({"fileid":curfile.id,uid})
+          console.log({ fileid: curfile.id, uid });
           if (curfile.id === uid) {
             return {
               ...curfile,
@@ -244,8 +244,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -255,10 +256,10 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     isExpanded && showChatBot
       ? 'contentWithBothDrawers'
       : isExpanded
-        ? 'contentWithExpansion'
-        : showChatBot
-          ? 'contentWithChatBot'
-          : 'contentWithNoExpansion';
+      ? 'contentWithExpansion'
+      : showChatBot
+      ? 'contentWithChatBot'
+      : 'contentWithNoExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -380,14 +381,22 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
-              Generate Graph {selectedfileslength && !disableCheck ? `(${selectedRows.length})` : ''}
+              Generate Graph{' '}
+              {selectedfileslength && !disableCheck && selectedRows.filter((f) => JSON.parse(f).status === 'New').length
+                ? `(${selectedRows.filter((f) => JSON.parse(f).status === 'New').length})`
+                : ''}
             </Button>
             <Button
-              disabled={!filesData.some((f) => f?.status === 'Completed')&&!selectedfileslength}
+              disabled={!selectedRows.some((f) => JSON.parse(f).status === 'Completed')}
               onClick={handleGraphView}
               className='mr-0.5'
             >
-              Show Graph {selectedfileslength && filesData.some((f) => f?.status === 'Completed') ? `(${selectedRows.length})` : ''}
+              Show Graph{' '}
+              {selectedfileslength &&
+              selectedRows.some((f) => JSON.parse(f).status === 'Completed') &&
+              selectedRows.filter((f) => JSON.parse(f).status === 'Completed').length
+                ? `(${selectedRows.filter((f) => JSON.parse(f).status === 'Completed').length})`
+                : ''}
             </Button>
             <Button
               onClick={handleOpenGraphClick}
