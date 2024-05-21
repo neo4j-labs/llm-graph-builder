@@ -242,9 +242,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
-      userCredentials?.port ?? '7687'
-    }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
+      }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -254,10 +253,10 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     isExpanded && showChatBot
       ? 'contentWithBothDrawers'
       : isExpanded
-      ? 'contentWithExpansion'
-      : showChatBot
-      ? 'contentWithChatBot'
-      : 'contentWithNoExpansion';
+        ? 'contentWithExpansion'
+        : showChatBot
+          ? 'contentWithChatBot'
+          : 'contentWithNoExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -379,14 +378,14 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
-              Generate Graph
+              Generate Graph {selectedfileslength ? `(${selectedRows.length})` : ''}
             </Button>
             <Button
               disabled={!filesData.some((f) => f?.status === 'Completed')}
               onClick={handleGraphView}
               className='mr-0.5'
             >
-              Show Graph
+              Show Graph {selectedfileslength ? `(${selectedRows.length})` : ''}
             </Button>
             <Button
               onClick={handleOpenGraphClick}
