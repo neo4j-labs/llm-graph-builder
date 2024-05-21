@@ -103,6 +103,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
   const extractData = async (uid: string, isselectedRows = false) => {
     if (!isselectedRows) {
+      console.log("Normal Extraction")
       const fileItem = filesData.find((f) => f.id == uid);
       if (fileItem) {
         await extractHandler(fileItem, uid);
@@ -110,6 +111,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     } else {
       const fileItem = selectedRows.find((f) => JSON.parse(f).id == uid);
       if (fileItem) {
+        console.log("Selected Files Extraction", { fileItem: JSON.parse(fileItem) })
         await extractHandler(JSON.parse(fileItem), uid);
       }
     }
@@ -119,7 +121,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     try {
       setFilesData((prevfiles) =>
         prevfiles.map((curfile) => {
-          if (curfile.id == uid) {
+          console.log({"fileid":curfile.id,uid})
+          if (curfile.id === uid) {
             return {
               ...curfile,
               status: 'Processing',
@@ -216,13 +219,12 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         }
       }
       Promise.allSettled(data).then(async (_) => {
-        setSelectedRows([]);
         await updateGraphAPI(userCredentials as UserCredentials);
       });
     } else if (filesData.length > 0) {
       for (let i = 0; i < filesData.length; i++) {
         if (filesData[i]?.status === 'New') {
-          data.push(extractData(filesData[i].id));
+          data.push(extractData(filesData[i].id as string));
         }
       }
       Promise.allSettled(data).then(async (_) => {
@@ -378,14 +380,14 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
-              Generate Graph {selectedfileslength ? `(${selectedRows.length})` : ''}
+              Generate Graph {selectedfileslength && !disableCheck ? `(${selectedRows.length})` : ''}
             </Button>
             <Button
-              disabled={!filesData.some((f) => f?.status === 'Completed')}
+              disabled={!filesData.some((f) => f?.status === 'Completed')&&!selectedfileslength}
               onClick={handleGraphView}
               className='mr-0.5'
             >
-              Show Graph {selectedfileslength ? `(${selectedRows.length})` : ''}
+              Show Graph {selectedfileslength && filesData.some((f) => f?.status === 'Completed') ? `(${selectedRows.length})` : ''}
             </Button>
             <Button
               onClick={handleOpenGraphClick}
