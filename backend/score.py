@@ -355,32 +355,6 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
     
     return EventSourceResponse(generate(),ping=60)
 
-<<<<<<< Updated upstream
-=======
-
-@app.get('/authorize/{model}/{gcs_project_id}/{gcs_bucket_name}/{gcs_bucket_folder}/{source_type}/{source}')
-async def authorize(request: Request, model:str, gcs_project_id:str, gcs_bucket_name:str, gcs_bucket_folder:str, source_type:str, source:str):
-    #request.session['graph'] = graph
-    request.session['model'] = model
-    request.session['gcs_project_id'] = gcs_project_id
-    request.session['gcs_bucket_name'] = gcs_bucket_name
-    request.session['gcs_bucket_folder'] = gcs_bucket_folder
-    request.session['source_type'] = source_type
-    request.session['source'] = source 
-    flow = google_auth_oauthlib.flow.Flow.from_client_config(oauth_config, scopes=SCOPES)
-    flow.redirect_uri = REDIRECT_URI
-    authorization_url, state = flow.authorization_url(access_type='offline', include_granted_scopes='true')
-    request.session['state'] = state
-    response =  RedirectResponse(url=authorization_url, headers={'state': request.session['state']})
-    logging.info(f"session = {request.session}")
-    response.set_cookie(key="session", value=request.session)
-    #response.set_cookie(key="session", value=r"my dummy cookie", httponly=True)
-    #logging.info(f"Cookie set = {request.cookies.get('session')}")
-    logging.info(f"Cookie set and redirecting to: {response}")
-    logging.info(f"response = {response.body}")
-    return response
-
->>>>>>> Stashed changes
 @app.post("/delete_document_and_entities")
 async def delete_document_and_entities(uri=Form(None), 
                                        userName=Form(None), 
@@ -435,46 +409,7 @@ async def get_document_status(file_name, url, userName, password, database):
         error_message = str(e)
         logging.exception(f'{message}:{error_message}')
         return create_api_response('Failed',message=message)
-<<<<<<< Updated upstream
     
     
-=======
-
-
-@app.get('/oauth2callback/{state}')
-async def oauth2callback(request: Request, state:str):
-    logging.info(f"In oauth2callback !! ")
-    my_cookie = request.cookies.get("session")
-    if my_cookie:
-       logging.info(f"Cookie = {my_cookie}")
-    else:
-       logging.info("Cookie not found")
-    #state = request.session['state']
-    flow = google_auth_oauthlib.flow.Flow.from_client_config(oauth_config, scopes=SCOPES, state=state)
-    flow.redirect_uri = REDIRECT_URI
-    flow.fetch_token(authorization_response=str(request.url))
-    #request.session['credentials'] = credentials_to_dict(flow.credentials)
-    request.session['credentials'] = credentials_to_dict(flow.credentials)
-    return RedirectResponse(url='/list_buckets')
-
-@app.get('/list_buckets')
-async def list_buckets(request: Request):
-
-    graph = create_graph_database_connection(request.session['uri'], request.session['userName'], request.session['password'], request.session['database'])
-    lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, 
-                                                                                    request.session['model'], 
-                                                                                    request.session['gcs_project_id'], 
-                                                                                    request.session['gcs_bucket_name'], 
-                                                                                    request.session['gcs_bucket_folder'] if request.session['gcs_bucket_folder'] != 'None' else "", 
-                                                                                    request.session['source_type'],
-                                                                                    Credentials(**request.session['credentials']))
-    return lst_file_name,success_count,failed_count 
-    # message = f"Source Node created successfully for source type: {request.session['source_type']} and source: {request.session['source']}"
-    # return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name)   
-        
-def credentials_to_dict(credentials):
-    return {'token': credentials.token, 'refresh_token': credentials.refresh_token, 'token_uri': credentials.token_uri, 'client_id': credentials.client_id, 'client_secret': credentials.client_secret, 'scopes': credentials.scopes}
-
->>>>>>> Stashed changes
 if __name__ == "__main__":
     uvicorn.run(app)

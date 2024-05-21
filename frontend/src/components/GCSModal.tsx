@@ -14,21 +14,6 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
   const { setFilesData, model, filesData } = useFileContext();
-<<<<<<< Updated upstream
-=======
-
-  const googleLogin = useGoogleLogin({
-    flow: 'auth-code',
-    onSuccess: async (codeResponse) => {
-      console.log(codeResponse);
-      const tokens = await axios.get('http://localhost:8000/oauth2callback')
-      console.log(tokens);
-    },
-    onError: errorResponse => console.log(errorResponse),
-    scope: 'https://www.googleapis.com/auth/devstorage.read_only'
-
-  });
->>>>>>> Stashed changes
   const reset = () => {
     setbucketName('');
     setFolderName('');
