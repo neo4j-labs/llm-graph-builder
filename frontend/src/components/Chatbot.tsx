@@ -1,17 +1,15 @@
-/* eslint-disable no-confusing-arrow */
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Widget, Typography, Avatar, TextInput, IconButton, TextLink } from '@neo4j-ndl/react';
+import { useEffect, useRef, useState } from 'react';
+import { Button, Widget, Typography, Avatar, TextInput, IconButton, TextLink, Modal } from '@neo4j-ndl/react';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
-import { ChatbotProps, UserCredentials, chatInfoMessage } from '../types';
+import { ChatbotProps, UserCredentials } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { chatBotAPI } from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../context/UsersFiles';
-import ChatInfoModal from './ChatInfoModal';
-import ListComp from './List';
 import { extractPdfFileName } from '../utils/Utils';
+import InfoModal from './InfoModal';
 
 export default function Chatbot(props: ChatbotProps) {
   const { messages: listMessages, setMessages: setListMessages, isLoading } = props;
@@ -23,7 +21,10 @@ export default function Chatbot(props: ChatbotProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
-  const [activeChat, setActiveChat] = useState<chatInfoMessage | null>(null);
+  const [sourcesModal, setSourcesModal] = useState<string[]>([]);
+  const [entitiesModal, setEntitiesModal] = useState<string[]>([]);
+  const [modelModal, setModelModal] = useState<string>('');
+  const [timeTaken, setTimeTaken] = useState<number>(0);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
@@ -39,7 +40,7 @@ export default function Chatbot(props: ChatbotProps) {
   }, []);
 
   const simulateTypingEffect = (
-    response: { reply: string; entities?: [string]; model?: string; sources?: [string] },
+    response: { reply: string; entities?: [string]; model?: string; sources?: [string]; timeTaken?: number },
     index = 0
   ) => {
     if (index < response.reply.length) {
@@ -60,6 +61,7 @@ export default function Chatbot(props: ChatbotProps) {
               sources: response?.sources,
               entities: response?.entities,
               model: response?.model,
+              timeTaken: response?.timeTaken,
               isLoading: true,
             },
           ]);
@@ -109,7 +111,8 @@ export default function Chatbot(props: ChatbotProps) {
     try {
       setInputMessage('');
       simulateTypingEffect({ reply: ' ' });
-      const chatresponse = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
+      const chatbotAPI = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
+      const chatresponse = chatbotAPI;
       chatbotReply = chatresponse?.data?.data?.message;
       chatSources = chatresponse?.data?.data?.info.sources;
       chatModel = chatresponse?.data?.data?.info.model;
@@ -129,15 +132,6 @@ export default function Chatbot(props: ChatbotProps) {
   useEffect(() => {
     scrollToBottom();
   }, [listMessages]);
-
-  const openInfoModal = useCallback((activeChat: chatInfoMessage) => {
-    setActiveChat(activeChat);
-    setShowInfoModal(true);
-  }, []);
-
-  const hideInfoModal = useCallback(() => {
-    setShowInfoModal(false);
-  }, []);
 
   useEffect(() => {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
@@ -182,18 +176,16 @@ export default function Chatbot(props: ChatbotProps) {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${
-                    chat.user === 'chatbot'
-                      ? 'n-bg-palette-neutral-bg-strong max-w-[315px]'
-                      : 'n-bg-palette-primary-bg-weak max-w-[305px]'
-                  }`}
+                  className={`p-4 self-start ${chat.user === 'chatbot'
+                    ? 'n-bg-palette-neutral-bg-strong max-w-[315px]'
+                    : 'n-bg-palette-primary-bg-weak max-w-[305px]'
+                    }`}
                 >
                   <div
-                    className={`${
-                      listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
-                        ? 'loader'
-                        : ''
-                    }`}
+                    className={`${listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
+                      ? 'loader'
+                      : ''
+                      }`}
                   >
                     {chat.message.split(/`(.+?)`/).map((part, index) =>
                       index % 2 === 1 ? (
@@ -234,24 +226,17 @@ export default function Chatbot(props: ChatbotProps) {
                     ) : null}
                     {((chat.user === 'chatbot' && chat.id !== 2) || chat.isLoading) && (
                       <div className='flex'>
-                        <IconButton
-                          className='infoIcon'
-                          clean
-                          aria-label='Information Icon'
-                          onClick={() => {
-                            openInfoModal(chat);
-                          }}
+                        <IconButton clean aria-label="Retrieval Information"
                           disabled={chat.isTyping || chat.isLoading}
-                        >
-                          <InformationCircleIconOutline className='w-4 h-4 inline-block n-text-palette-success-text' />
+                          onClick={() => {
+                            setEntitiesModal(chat.entities ?? []);
+                            setModelModal(chat.model ?? '');
+                            setSourcesModal(chat.sources ?? []);
+                            // setTimeTaken(chat.timeTaken ?? 0);
+                            setShowInfoModal(true)
+                          }}>
+                          <InformationCircleIconOutline className='w-4 h-4 inline-block' />
                         </IconButton>
-                        <ChatInfoModal key={index} open={showInfoModal} hideModal={hideInfoModal}>
-                          <ListComp
-                            sources={activeChat?.sources}
-                            entities={activeChat?.entities}
-                            model={activeChat?.model}
-                          />
-                        </ChatInfoModal>
                       </div>
                     )}
                   </div>
@@ -276,6 +261,12 @@ export default function Chatbot(props: ChatbotProps) {
           </Button>
         </form>
       </div>
+      <Modal modalProps={{
+        id: 'retrieval-information',
+        className: 'n-p-token-4 n-bg-palette-neutral-bg-weak n-rounded-lg'
+      }} onClose={() => setShowInfoModal(false)} open={showInfoModal}>
+        <InfoModal sources={sourcesModal} entities={entitiesModal} model={modelModal} />
+      </Modal>
     </div>
   );
 }
