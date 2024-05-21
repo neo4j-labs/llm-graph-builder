@@ -1,6 +1,10 @@
 import logging
 from neo4j import time 
 from neo4j import GraphDatabase
+import os
+from neo4j.debug import watch
+
+watch("neo4j")
 
 QUERY_MAP = {
     "document"          : " + [docs] ",
@@ -50,7 +54,7 @@ def get_graphDB_driver(uri, username, password):
     """
     try:
         logging.info(f"Attempting to connect to the Neo4j database at {uri}")
-        driver = GraphDatabase.driver(uri, auth=(username, password), user_agent='LLM-Graph-Builder/1.0')
+        driver = GraphDatabase.driver(uri, auth=(username, password), user_agent=os.environ.get('NEO4J_USER_AGENT'))
         logging.info("Connection successful")
         return driver
     except Exception as e:
