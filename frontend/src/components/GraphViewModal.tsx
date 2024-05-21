@@ -73,16 +73,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.length === 3
       ? queryMap.DocChunkEntities
       : graphType.includes('entities') && graphType.includes('chunks')
-      ? queryMap.ChunksEntities
-      : graphType.includes('entities') && graphType.includes('document')
-      ? queryMap.DocEntities
-      : graphType.includes('document') && graphType.includes('chunks')
-      ? queryMap.DocChunks
-      : graphType.includes('entities') && graphType.length === 1
-      ? queryMap.Entities
-      : graphType.includes('chunks') && graphType.length === 1
-      ? queryMap.Chunks
-      : queryMap.Document;
+        ? queryMap.ChunksEntities
+        : graphType.includes('entities') && graphType.includes('document')
+          ? queryMap.DocEntities
+          : graphType.includes('document') && graphType.includes('chunks')
+            ? queryMap.DocChunks
+            : graphType.includes('entities') && graphType.length === 1
+              ? queryMap.Entities
+              : graphType.includes('chunks') && graphType.length === 1
+                ? queryMap.Chunks
+                : queryMap.Document;
 
   // API Call to fetch the queried Data
   const fetchData = async () => {
@@ -90,11 +90,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === 'showGraphView'
           ? await graphQueryAPI(
-              userCredentials as UserCredentials,
-              graphQuery,
-              selectedRows.map((f) => JSON.parse(f).name),
-              docLimit
-            )
+            userCredentials as UserCredentials,
+            graphQuery,
+            selectedRows.map((f) => JSON.parse(f).name),
+            docLimit
+          )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName], '0');
       return nodeRelationshipData;
     } catch (error: any) {
@@ -265,7 +265,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 onChange={() => handleCheckboxChange('chunks')}
               />
             </div>
-            {viewPoint === 'showGraphView' && (
+            {viewPoint === 'showGraphView' && !selectedRows.length && (
               <div className='flex gap-2'>
                 <TextInput
                   helpText='Documents Limit'
