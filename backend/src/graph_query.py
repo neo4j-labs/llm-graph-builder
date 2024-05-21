@@ -255,6 +255,7 @@ def get_graph_results(uri, username, password, query_type,document_names=[]):
             document_names = get_completed_documents(driver) 
             if len(document_names) > DEFAULT_DOC_LIMIT:
                 document_names = document_names[:DEFAULT_DOC_LIMIT]
+            print(document_names)
             
         nodes = list()
         relationships = list()

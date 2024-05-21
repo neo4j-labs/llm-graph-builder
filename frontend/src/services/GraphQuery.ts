@@ -15,8 +15,14 @@ const graphQueryAPI = async (
     formData.append('userName', userCredentials?.userName ?? '');
     formData.append('password', userCredentials?.password ?? '');
     formData.append('query_type', query_type ?? 'entities');
-    // @ts-ignore
-    formData.append('document_name', document_names);
+
+    if (document_names.length) {
+      // @ts-ignore
+      formData.append('document_names', document_names);
+    } else {
+      formData.append('document_names', '');
+    }
+
     formData.append('doc_limit', doc_limit);
     const response = await axios.post(`${url()}/graph_query`, formData, {
       headers: {
