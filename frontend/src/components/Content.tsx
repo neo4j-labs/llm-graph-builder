@@ -402,7 +402,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               Generate Graph {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
             </Button>
             <Button
-              title={`${completedfileNo < 0 ? 'please select a completed file' : ''}`}
+              title='only completed files will be processed for graph visualization'
               disabled={showGraphCheck}
               onClick={handleGraphView}
               className='mr-0.5'
