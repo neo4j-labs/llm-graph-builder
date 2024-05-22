@@ -1,5 +1,5 @@
 import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone, Typography, TextLink } from '@neo4j-ndl/react';
-import { Dispatch, SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 import connectAPI from '../services/ConnectAPI';
 import { useCredentials } from '../context/UserCredentials';
 import { initialiseDriver } from '../utils/Driver';
@@ -43,6 +43,10 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
   const { setUserCredentials, setDriver } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  useEffect(()=>{
+
+  },[])
 
   const parseAndSetURI = (uri: string) => {
     const uriParts = uri.split('://');
@@ -133,11 +137,11 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
     });
   };
 
-  const onClose = () => {
+  const onClose = useCallback(() => {
     setMessage({ type: 'unknown', content: '' });
-  };
+  },[]);
 
-  const isDisabled = !username || !URI || !password;
+  const isDisabled = useMemo(()=>!username || !URI || !password,[username,URI,password]);
 
   return (
     <>
