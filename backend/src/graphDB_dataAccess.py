@@ -2,6 +2,7 @@ import logging
 import os
 from datetime import datetime
 from langchain_community.graphs import Neo4jGraph
+from src.shared.common_fn import delete_uploaded_local_file
 from src.api_response import create_api_response
 from src.entities.source_node import sourceNode
 
@@ -42,18 +43,44 @@ class graphDBdataAccess:
         
     def update_source_node(self, obj_source_node:sourceNode):
         try:
-            processed_time = obj_source_node.updated_at - obj_source_node.created_at
+
+            params = {}
+            if obj_source_node.file_name is not None and obj_source_node.file_name != '':
+                params['fileName'] = obj_source_node.file_name
+
+            if obj_source_node.status is not None and obj_source_node.status != '':
+                params['status'] = obj_source_node.status
+
+            if obj_source_node.created_at is not None:
+                params['createdAt'] = obj_source_node.created_at
+
+            if obj_source_node.updated_at is not None:
+                params['updatedAt'] = obj_source_node.updated_at
+
+            if obj_source_node.processing_time is not None and obj_source_node.processing_time != 0:
+                params['processingTime'] = round(obj_source_node.processing_time.total_seconds(),2)
+
+            if obj_source_node.node_count is not None and obj_source_node.node_count != 0:
+                params['nodeCount'] = obj_source_node.node_count
+
+            if obj_source_node.relationship_count is not None and obj_source_node.relationship_count != 0:
+                params['relationshipCount'] = obj_source_node.relationship_count
+
+            if obj_source_node.model is not None and obj_source_node.model != '':
+                params['model'] = obj_source_node.model
+
+            if obj_source_node.total_pages is not None and obj_source_node.total_pages != 0:
+                params['total_pages'] = obj_source_node.total_pages
+
+            if obj_source_node.total_chunks is not None and obj_source_node.total_chunks != 0:
+                params['total_chunks'] = obj_source_node.total_chunks
+
+            param= {"props":params}
+            
+            print(f'Base Param value 1 : {param}')
+            query = "MERGE(d:Document {fileName :$props.fileName}) SET d += $props"
             logging.info("Update source node properties")
-            self.graph.query("""MERGE(d:Document {fileName :$fn}) SET d.status = $st, d.createdAt = $c_at, 
-                            d.updatedAt = $u_at, d.processingTime = $pt, d.nodeCount= $n_count, 
-                            d.relationshipCount = $r_count, d.model= $model, d.total_pages = $t_pages, d.total_chunks = $t_chunks
-                        """,
-                        {"fn":obj_source_node.file_name, "st":obj_source_node.status, "c_at":obj_source_node.created_at,
-                        "u_at":obj_source_node.updated_at, "pt":round(processed_time.total_seconds(),2), "e_message":'',
-                        "n_count":obj_source_node.node_count, "r_count":obj_source_node.relationship_count, "model":obj_source_node.model,
-                        "t_pages":obj_source_node.total_pages, "t_chunks":obj_source_node.total_chunks
-                        }
-                        )
+            self.graph.query(query,param)
         except Exception as e:
             error_message = str(e)
             self.update_exception_db(self.file_name,error_message)
@@ -121,9 +148,14 @@ class graphDBdataAccess:
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
     
-    def delete_file_from_graph(self, filenames:str, source_types:str, deleteEntities:str):
+    def delete_file_from_graph(self, filenames:str, source_types:str, deleteEntities:str, merged_dir:str):
         filename_list = filenames.split(',')
         source_types_list = source_types.split(',')
+        for (file_name,source_type) in zip(filename_list, source_types_list):
+            merged_file_path = os.path.join(merged_dir, file_name)
+            if source_type == 'local file':
+                delete_uploaded_local_file(merged_file_path, file_name)
+
         query_to_delete_document=""" 
            MATCH (d:Document) where d.fileName in $filename_list and d.fileSource in $source_types_list
             with collect(d) as documents 

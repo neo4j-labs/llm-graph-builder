@@ -235,14 +235,13 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     status = "Processing"
     obj_source_node.file_name = file_name
     obj_source_node.status = status
-    obj_source_node.created_at = start_time
-    obj_source_node.updated_at = start_time
     obj_source_node.total_pages = len(pages)
     obj_source_node.total_chunks = len(chunks)
     obj_source_node.model = model
     logging.info(file_name)
     logging.info(obj_source_node)
     graphDb_data_Access.update_source_node(obj_source_node)
+    
     logging.info('Update the status as Processing')
     update_graph_chunk_processed = int(os.environ.get('UPDATE_GRAPH_CHUNKS_PROCESSED'))
     # selected_chunks = []
@@ -250,60 +249,24 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     node_count = 0
     rel_count = 0
     for i in range(0, len(chunks), update_graph_chunk_processed):
-      print(chunks[0])
-      # selected_chunks.append(chunks[i:i+update_graph_chunk_processed])
       selected_chunks = chunks[i:i+update_graph_chunk_processed]
       node_count,rel_count = processing_chunks(selected_chunks,graph,file_name,model,allowedNodes,allowedRelationship,node_count, rel_count)
-      # graph_documents.append(graph_document)
       end_time = datetime.now()
       processed_time = end_time - start_time
-      job_status = "In-Process"
-
+      
       obj_source_node = sourceNode()
       obj_source_node.file_name = file_name
-      obj_source_node.status = job_status
-      obj_source_node.created_at = start_time
       obj_source_node.updated_at = end_time
-      obj_source_node.model = model
       obj_source_node.processing_time = processed_time
       obj_source_node.node_count = node_count
-      obj_source_node.total_pages = len(pages)
-      obj_source_node.total_chunks = len(chunks)
       obj_source_node.relationship_count = rel_count
-
       graphDb_data_Access.update_source_node(obj_source_node)
     
-    # distinct_nodes = set()
-    # relations = []
-    # for graph_document in graph_documents:
-    #   #get distinct nodes
-    #   for node in graph_document.nodes:
-    #         node_id = node.id
-    #         node_type= node.type
-    #         if (node_id, node_type) not in distinct_nodes:
-    #           distinct_nodes.add((node_id, node_type))
-    #   #get all relations
-    #   for relation in graph_document.relationships:
-    #         relations.append(relation.type)
-      
-    # nodes_created = len(distinct_nodes)
-    # relationships_created = len(relations)  
     
-    end_time = datetime.now()
-    processed_time = end_time - start_time
     job_status = "Completed"
-
     obj_source_node = sourceNode()
     obj_source_node.file_name = file_name
     obj_source_node.status = job_status
-    obj_source_node.created_at = start_time
-    obj_source_node.updated_at = end_time
-    obj_source_node.model = model
-    obj_source_node.processing_time = processed_time
-    obj_source_node.node_count = node_count
-    obj_source_node.total_pages = len(pages)
-    obj_source_node.total_chunks = len(chunks)
-    obj_source_node.relationship_count = rel_count
 
     graphDb_data_Access.update_source_node(obj_source_node)
     logging.info('Updated the nodeCount and relCount properties in Docuemnt node')
