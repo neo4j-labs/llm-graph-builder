@@ -49,6 +49,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
   useEffect(() => {
     if (searchParams.has('connectURL')) {
       const url = searchParams.get('connectURL');
+      console.log({ url })
       parseAndSetURI(url as string, true);
       searchParams.delete('connectURL');
       setSearchParams(searchParams);
@@ -61,10 +62,17 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
     if (urlparams) {
       // @ts-ignore
       uriHost = uriParts.pop().split('@').at(-1);
+      const hostParts = uriHost.split("/")
+      if (hostParts.length == 2) {
+        console.log(hostParts)
+        setPassword(hostParts.pop() as string)
+        setURI(hostParts.pop() as string)
+      }
     } else {
       uriHost = uriParts.pop() || URI;
+      setURI(uriHost);
     }
-    setURI(uriHost);
+
     const uriProtocol = uriParts.pop() || protocol;
     setProtocol(uriProtocol);
     const uriPort = uriParts.pop() || port;
