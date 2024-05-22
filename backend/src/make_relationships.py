@@ -102,7 +102,7 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
             firstChunk = True
         else:
             firstChunk = False  
-        metadata = {"position": position,"length": len(chunk.page_content), "page_number":chunk.metadata['page_number']}
+        metadata = {"position": position,"length": len(chunk.page_content)}
         chunk_document = Document(
             page_content=chunk.page_content, metadata=metadata
         )
@@ -114,8 +114,12 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
             "length": chunk_document.metadata["length"],
             "f_name": file_name,
             "previous_id" : previous_chunk_id,
-            "page_number" : chunk.metadata['page_number']
         }
+        
+        if 'page_number' in chunk.metadata:
+            logging.info(f'page_number exist in chunk')
+            chunk_data['page_number'] = chunk.metadata['page_number']
+            
         batch_data.append(chunk_data)
         
         lst_chunks_including_hash.append({'chunk_id': current_chunk_id, 'chunk_doc': chunk})
@@ -133,8 +137,10 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
     query_to_create_chunk_and_PART_OF_relation = """
         UNWIND $batch_data AS data
         MERGE (c:Chunk {id: data.id})
-        SET c.text = data.pg_content, c.position = data.position, 
-            c.length = data.length, c.page_number = data.page_number
+        SET c.text = data.pg_content, c.position = data.position, c.length = data.length
+        WITH data, c
+        WHERE data.page_number IS NOT NULL
+        SET c.page_number = data.page_number
         WITH data, c
         MATCH (d:Document {fileName: data.f_name})
         MERGE (c)-[:PART_OF]->(d)
