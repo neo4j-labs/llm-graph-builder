@@ -4,6 +4,7 @@ import connectAPI from '../services/ConnectAPI';
 import { useCredentials } from '../context/UserCredentials';
 import { initialiseDriver } from '../utils/Driver';
 import { Driver } from 'neo4j-driver';
+import { useSearchParams } from 'react-router-dom';
 
 interface Message {
   type: 'success' | 'info' | 'warning' | 'danger' | 'unknown';
@@ -43,14 +44,26 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
   const { setUserCredentials, setDriver } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  useEffect(()=>{
+  useEffect(() => {
+    if (searchParams.has('connectURL')) {
+      const url = searchParams.get('connectURL');
+      parseAndSetURI(url as string, true);
+      searchParams.delete('connectURL');
+      setSearchParams(searchParams);
+    }
+  }, [open]);
 
-  },[])
-
-  const parseAndSetURI = (uri: string) => {
+  const parseAndSetURI = (uri: string, urlparams = false) => {
     const uriParts = uri.split('://');
-    const uriHost = uriParts.pop() || URI;
+    let uriHost: string;
+    if (urlparams) {
+      // @ts-ignore
+      uriHost = uriParts.pop().split('@').at(-1);
+    } else {
+      uriHost = uriParts.pop() || URI;
+    }
     setURI(uriHost);
     const uriProtocol = uriParts.pop() || protocol;
     setProtocol(uriProtocol);
@@ -139,9 +152,9 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
 
   const onClose = useCallback(() => {
     setMessage({ type: 'unknown', content: '' });
-  },[]);
+  }, []);
 
-  const isDisabled = useMemo(()=>!username || !URI || !password,[username,URI,password]);
+  const isDisabled = useMemo(() => !username || !URI || !password, [username, URI, password]);
 
   return (
     <>

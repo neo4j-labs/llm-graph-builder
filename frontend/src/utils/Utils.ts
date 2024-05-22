@@ -1,4 +1,4 @@
-import { Nullable } from "../types";
+import { Nullable } from '../types';
 
 // Get the Url
 export const url = () => {
@@ -108,24 +108,3 @@ export function extractPdfFileName(url: string): string {
   }
   return decodedFileName;
 }
-export const getInitialisationParameters = (
-  urlSearchParams = window.location.search,
-  urlHashParams = window.location.hash,
-) => {
-
-  let initParams: { [key: string]: Nullable<string> } = {};
-  try {
-    const arrayParam = [
-      ...new URLSearchParams(urlSearchParams),
-      ...new URLSearchParams(urlHashParams.replace(/^#/, '')),
-    ];
-    Object.keys(initParams).forEach((key) => {
-      if (initParams[key]?.trim().length === 0) {
-        initParams[key] = null;
-      }
-    });
-  } catch (exc) {
-    console.warn('Exception occured while parsing Browser URL parameters', exc);
-  }
-  return initParams;
-};

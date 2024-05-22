@@ -14,7 +14,7 @@ export default async function subscribe(
 
   const MAX_POLLING_ATTEMPTS = 10;
   let pollingAttempts = 0;
-  let delay = 2000; 
+  let delay = 2000;
 
   while (pollingAttempts < MAX_POLLING_ATTEMPTS) {
     let response: PollingAPI_Response = await axios.get(
@@ -23,17 +23,17 @@ export default async function subscribe(
 
     if (response.data?.file_name?.status === 'Processing') {
       await new Promise((resolve) => setTimeout(resolve, delay));
-      delay *= 2; 
-      pollingAttempts++; 
+      delay *= 2;
+      pollingAttempts++;
     } else if (response.status !== 200) {
       throw new Error(
         JSON.stringify({ fileName, message: `Failed To Process ${fileName} or LLM Unable To Parse Content` })
       );
     } else {
       datahandler(response.data);
-      return; 
+      return;
     }
   }
 
-  throw new Error(`Polling for ${fileName} timed out after ${MAX_POLLING_ATTEMPTS} attempts.`); 
+  throw new Error(`Polling for ${fileName} timed out after ${MAX_POLLING_ATTEMPTS} attempts.`);
 }
