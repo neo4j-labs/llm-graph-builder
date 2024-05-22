@@ -152,11 +152,13 @@ export interface Messages {
   model?: string;
   entities?: string[];
   isLoading?: boolean;
+  feedback?:string;
 }
 
 export type ChatbotProps = {
   messages: Messages[];
   setMessages: Dispatch<SetStateAction<Messages[]>>;
+  broadcastMessages?: (newMessages: Messages[]) => void;
   isLoading: boolean;
   clear: boolean;
   fullScreen: boolean;
@@ -287,4 +289,8 @@ export interface eventResponsetypes {
   model: string;
   total_chunks: number | null;
   total_pages: number | null;
+}
+
+export interface MessagesContextProviderProps {
+  children: ReactNode;
 }

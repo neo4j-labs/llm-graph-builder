@@ -1,3 +1,5 @@
+import { Messages } from "../types";
+
 // Get the Url
 export const url = () => {
   let url = window.location.href.replace('5173', '8000');
@@ -106,3 +108,28 @@ export function extractPdfFileName(url: string): string {
   }
   return decodedFileName;
 }
+
+export const getDateTime = () => {
+  const date = new Date();
+  const formattedDateTime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`
+  return formattedDateTime;
+}
+
+export const saveStateToStorage = (newMessages: Messages[], clearHistoryData: boolean) => {
+  const stateToStore = {
+    messages: newMessages,
+    clearHistoryData,
+  };
+  sessionStorage.setItem('rightSidebarState', JSON.stringify(stateToStore));
+};
+
+export const postMessageToFullscreen = (newMessages: Messages[], clearHistoryData: boolean, windowRef) => {
+  if (windowRef.current) {
+    // const state = JSON.parse(sessionStorage.getItem('rightSidebarState') || '{}');
+    const stateToStore = {
+      messages: newMessages,
+      clearHistoryData,
+    };
+    windowRef.current.postMessage({ type: 'updateState', data: stateToStore }, window.location.origin);
+  }
+};

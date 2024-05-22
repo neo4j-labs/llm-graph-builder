@@ -1,20 +1,21 @@
 /* eslint-disable no-confusing-arrow */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Widget, Typography, Avatar, TextInput, IconButton, TextLink } from '@neo4j-ndl/react';
-import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
+import { HandThumbDownIconOutline, HandThumbUpIconOutline, InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
-import { ChatbotProps, UserCredentials, chatInfoMessage } from '../types';
+import { ChatbotProps, UserCredentials, chatInfoMessage, Messages } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { chatBotAPI } from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../context/UsersFiles';
 import ChatInfoModal from './ChatInfoModal';
 import ListComp from './List';
+
 import { extractPdfFileName } from '../utils/Utils';
 
 export default function Chatbot(props: ChatbotProps) {
-  const { messages: listMessages, setMessages: setListMessages, isLoading, fullScreen } = props;
+  const { messages: listMessages, setMessages: setListMessages, broadcastMessages, isLoading, fullScreen } = props;
   const [inputMessage, setInputMessage] = useState('');
   const formattedTextStyle = { color: 'rgb(var(--theme-palette-discovery-bg-strong))' };
   const [loading, setLoading] = useState<boolean>(isLoading);
@@ -61,6 +62,7 @@ export default function Chatbot(props: ChatbotProps) {
               entities: response?.entities,
               model: response?.model,
               isLoading: true,
+              feedback: ''
             },
           ]);
         } else {
@@ -75,6 +77,7 @@ export default function Chatbot(props: ChatbotProps) {
             lastmsg.entities = response?.entities;
             lastmsg.model = response?.model;
             lastmsg.isLoading = false;
+            lastmsg.feedback = '';
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -88,7 +91,23 @@ export default function Chatbot(props: ChatbotProps) {
       }
       setTimeout(() => simulateTypingEffect(response, nextIndex), 20);
     } else {
-      setListMessages((msgs) => msgs.map((msg) => (msg.isTyping ? { ...msg, isTyping: false } : msg)));
+      setListMessages((msgs) => {
+        const newMessages = msgs.map(msg => msg.isTyping ? { ...msg, isTyping: false } : msg)
+        const sessionStateData = sessionStorage.getItem('rightSidebarState');
+        if (sessionStateData) {
+          try {
+            const parseData = JSON.parse(sessionStateData);
+            sessionStorage.setItem('rightSidebarState', JSON.stringify({ ...parseData, messages: newMessages }));
+
+          } catch {
+            sessionStorage.setItem('rightSidebarState', JSON.stringify({ messages: newMessages, clearHistoryData: null, isFullScreen: null }));
+          }
+          if(broadcastMessages) {
+            broadcastMessages(newMessages)
+          }
+        }
+        return newMessages
+      })
     }
   };
 
@@ -143,18 +162,14 @@ export default function Chatbot(props: ChatbotProps) {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
   }, [listMessages]);
 
+  const handlefeedback = (id: number, feedback: 'positive' | 'negetive') => {
+    setListMessages((msgs) => msgs.map((msg) => msg.id === id ? { ...msg, feedback } : msg));
+  }
+
   return (
-    <div
-      className={`n-bg-palette-neutral-bg-weak flex flex-col justify-between ${
-        fullScreen ? 'min-h-[700px]' : 'min-h-full'
-      } max-h-full overflow-hidden}`}
-    >
-      <div className={`flex pb-12 min-w-full ${!fullScreen && 'chatBotContainer pl-3 overflow-y-auto '}`}>
-        <Widget
-          className={`n-bg-palette-neutral-bg-weak ${fullScreen && 'w-full h-full'}`}
-          header=''
-          isElevated={false}
-        >
+    <div className={`n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'`}>
+      <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3'>
+        <Widget className='n-bg-palette-neutral-bg-weak' header='' isElevated={false}>
           <div className='flex flex-col gap-4 gap-y-4'>
             {listMessages.map((chat, index) => (
               <div
@@ -190,19 +205,16 @@ export default function Chatbot(props: ChatbotProps) {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${fullScreen && 'max-w-[55%]'}
-                  ${
-                    chat.user === 'chatbot'
-                      ? `n-bg-palette-neutral-bg-strong ${!fullScreen && 'max-w-[315px]'}`
-                      : `n-bg-palette-primary-bg-weak ${!fullScreen && 'max-w-[305px]'}`
-                  }`}
+                  className={`p-4 self-start ${chat.user === 'chatbot'
+                    ? 'n-bg-palette-neutral-bg-strong max-w-[315px]'
+                    : 'n-bg-palette-primary-bg-weak max-w-[305px]'
+                    }`}
                 >
                   <div
-                    className={`${
-                      listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
-                        ? 'loader'
-                        : ''
-                    }`}
+                    className={`${listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
+                      ? 'loader'
+                      : ''
+                      }`}
                   >
                     {chat.message.split(/`(.+?)`/).map((part, index) =>
                       index % 2 === 1 ? (
@@ -214,7 +226,7 @@ export default function Chatbot(props: ChatbotProps) {
                       )
                     )}
                   </div>
-                  <div className='text-right align-bottom pt-3'>
+                  <div>
                     <div>
                       <Typography variant='body-small' className='pt-2 font-bold'>
                         {chat.datetime}
@@ -253,6 +265,12 @@ export default function Chatbot(props: ChatbotProps) {
                           disabled={chat.isTyping || chat.isLoading}
                         >
                           <InformationCircleIconOutline className='w-4 h-4 inline-block n-text-palette-success-text' />
+                        </IconButton>
+                        <IconButton clean aria-label="Thumb Up" onClick={() => handlefeedback(chat.id, 'positive')}>
+                          <HandThumbUpIconOutline className={`w-4 h-4 inline-block n-text-palette-success-text ${chat.feedback === 'positive' && 'fill-current'}`} />
+                        </IconButton>
+                        <IconButton clean aria-label="Thumb Down" onClick={() => handlefeedback(chat.id, 'negetive')}>
+                          <HandThumbDownIconOutline className={`w-4 h-4 inline-block n-text-palette-danger-text ${chat.feedback === 'negetive' && 'fill-current'}`} />
                         </IconButton>
                         <ChatInfoModal key={index} open={showInfoModal} hideModal={hideInfoModal}>
                           <ListComp

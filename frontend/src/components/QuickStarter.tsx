@@ -2,8 +2,6 @@ import Header from './Layout/Header';
 import React, { useState } from 'react';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
 import PageLayout from './Layout/PageLayout';
-import { FileContextProvider } from '../context/UsersFiles';
-import UserCredentialsWrapper from '../context/UserCredentials';
 
 const QuickStarter: React.FunctionComponent = () => {
   const themeUtils = React.useContext(ThemeWrapperContext);
@@ -23,12 +21,9 @@ const QuickStarter: React.FunctionComponent = () => {
     setshowSettingsModal(false);
   };
   return (
-    <FileContextProvider>
-      <UserCredentialsWrapper>
-        <Header themeMode={themeMode} toggleTheme={toggleColorMode} openSettingsModal={openSettingsModal} />
-        <PageLayout isSettingPanelExpanded={showSettingsModal} closeSettingModal={closeSettingModal} />
-      </UserCredentialsWrapper>
-    </FileContextProvider>
-  );
+    <>
+      <Header themeMode={themeMode} toggleTheme={toggleColorMode} openSettingsModal={openSettingsModal} />
+      <PageLayout isSettingPanelExpanded={showSettingsModal} closeSettingModal={closeSettingModal} />
+    </>);
 };
 export default QuickStarter;
