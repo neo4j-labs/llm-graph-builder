@@ -26,8 +26,10 @@ class CreateChunksofDocument:
         logging.info("Split file into smaller chunks")
         # number_of_chunks_allowed = int(os.environ.get('NUMBER_OF_CHUNKS_ALLOWED'))
         text_splitter = TokenTextSplitter(chunk_size=200, chunk_overlap=20)
-        chunks = text_splitter.split_documents(self.pages)
-        logging.info(f'No of chunks created from document {len(chunks)}')
-        # chunks = chunks[:number_of_chunks_allowed]
-        # logging.info(f'No of chunks allowed to process {len(chunks)}')
+        # chunks = text_splitter.split_documents(self.pages)
+        chunks = []
+        for i, document in enumerate(self.pages):
+            page_number = i + 1
+            for chunk in text_splitter.split_documents([document]):
+                chunks.append(Document(page_content=chunk.page_content, metadata={'page_number':page_number}))
         return chunks
