@@ -46,7 +46,7 @@ class CreateChunksofDocument:
         logging.info("Split file into smaller chunks")
         # number_of_chunks_allowed = int(os.environ.get('NUMBER_OF_CHUNKS_ALLOWED'))
 
-        # Defind text_splitter on basis of chosen chunking strategy
+        # Define text_splitter on basis of chosen chunking strategy
         if TEXT_SPLITTER == TextSplitters(1).name:
             logging.info("Performing RecursiveCharacterTextSplitter")
             text_splitter = RecursiveCharacterTextSplitter(
@@ -66,7 +66,6 @@ class CreateChunksofDocument:
             )
         else:
             logging.info("Performing TokenTextSplitter")
-            # OPENAI_API_KEY missing error is handled already
             text_splitter = TokenTextSplitter(
                 chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP_SIZE
             )
