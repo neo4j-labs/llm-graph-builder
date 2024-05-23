@@ -235,57 +235,38 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     status = "Processing"
     obj_source_node.file_name = file_name
     obj_source_node.status = status
-    obj_source_node.created_at = start_time
-    obj_source_node.updated_at = start_time
     obj_source_node.total_pages = len(pages)
     obj_source_node.total_chunks = len(chunks)
     obj_source_node.model = model
     logging.info(file_name)
     logging.info(obj_source_node)
     graphDb_data_Access.update_source_node(obj_source_node)
+    
     logging.info('Update the status as Processing')
-
-    chunkId_chunkDoc_list = create_relation_between_chunks(graph,file_name,chunks)
-    #create vector index and update chunk node with embedding
-    update_embedding_create_vector_index( graph, chunkId_chunkDoc_list, file_name)
-    logging.info("Get graph document list from models")
-    graph_documents =  generate_graphDocuments(model, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
-    save_graphDocuments_in_neo4j(graph, graph_documents)
-    
-    chunks_and_graphDocuments_list = get_chunk_and_graphDocument(graph_documents, chunkId_chunkDoc_list)
-    merge_relationship_between_chunk_and_entites(graph, chunks_and_graphDocuments_list)
-
-    distinct_nodes = set()
-    relations = []
-    for graph_document in graph_documents:
-      #get distinct nodes
-      for node in graph_document.nodes:
-            node_id = node.id
-            node_type= node.type
-            if (node_id, node_type) not in distinct_nodes:
-              distinct_nodes.add((node_id, node_type))
-      #get all relations
-      for relation in graph_document.relationships:
-            relations.append(relation.type)
+    update_graph_chunk_processed = int(os.environ.get('UPDATE_GRAPH_CHUNKS_PROCESSED'))
+    # selected_chunks = []
+    graph_documents=[]
+    node_count = 0
+    rel_count = 0
+    for i in range(0, len(chunks), update_graph_chunk_processed):
+      selected_chunks = chunks[i:i+update_graph_chunk_processed]
+      node_count,rel_count = processing_chunks(selected_chunks,graph,file_name,model,allowedNodes,allowedRelationship,node_count, rel_count)
+      end_time = datetime.now()
+      processed_time = end_time - start_time
       
-    nodes_created = len(distinct_nodes)
-    relationships_created = len(relations)  
+      obj_source_node = sourceNode()
+      obj_source_node.file_name = file_name
+      obj_source_node.updated_at = end_time
+      obj_source_node.processing_time = processed_time
+      obj_source_node.node_count = node_count
+      obj_source_node.relationship_count = rel_count
+      graphDb_data_Access.update_source_node(obj_source_node)
     
-    end_time = datetime.now()
-    processed_time = end_time - start_time
+    
     job_status = "Completed"
-
     obj_source_node = sourceNode()
     obj_source_node.file_name = file_name
     obj_source_node.status = job_status
-    obj_source_node.created_at = start_time
-    obj_source_node.updated_at = end_time
-    obj_source_node.model = model
-    obj_source_node.processing_time = processed_time
-    obj_source_node.node_count = nodes_created
-    obj_source_node.total_pages = len(pages)
-    obj_source_node.total_chunks = len(chunks)
-    obj_source_node.relationship_count = relationships_created
 
     graphDb_data_Access.update_source_node(obj_source_node)
     logging.info('Updated the nodeCount and relCount properties in Docuemnt node')
@@ -298,8 +279,8 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
       
     return {
         "fileName": file_name,
-        "nodeCount": nodes_created,
-        "relationshipCount": relationships_created,
+        "nodeCount": node_count,
+        "relationshipCount": rel_count,
         "processingTime": round(processed_time.total_seconds(),2),
         "status" : job_status,
         "model" : model,
@@ -307,6 +288,36 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     }
   else:
      logging.info('File does not process because it\'s already in Processing status')
+
+def processing_chunks(chunks,graph,file_name,model,allowedNodes,allowedRelationship, node_count, rel_count):
+  chunkId_chunkDoc_list = create_relation_between_chunks(graph,file_name,chunks)
+  #create vector index and update chunk node with embedding
+  update_embedding_create_vector_index( graph, chunkId_chunkDoc_list, file_name)
+  logging.info("Get graph document list from models")
+  graph_documents =  generate_graphDocuments(model, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
+  save_graphDocuments_in_neo4j(graph, graph_documents)
+  chunks_and_graphDocuments_list = get_chunk_and_graphDocument(graph_documents, chunkId_chunkDoc_list)
+  merge_relationship_between_chunk_and_entites(graph, chunks_and_graphDocuments_list)
+  # return graph_documents
+  
+  distinct_nodes = set()
+  relations = []
+  for graph_document in graph_documents:
+    #get distinct nodes
+    for node in graph_document.nodes:
+          node_id = node.id
+          node_type= node.type
+          if (node_id, node_type) not in distinct_nodes:
+            distinct_nodes.add((node_id, node_type))
+  #get all relations
+  for relation in graph_document.relationships:
+        relations.append(relation.type)
+
+  node_count += len(distinct_nodes)
+  rel_count += len(relations)
+  print(f'node count internal func:{node_count}')
+  print(f'relation count internal func:{rel_count}')
+  return node_count,rel_count
 
 def get_source_list_from_graph(uri,userName,password,db_name=None):
   """

@@ -134,7 +134,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         })
       );
 
-      if (fileItem.size != undefined && fileItem.size > 10000000) {
         if (fileItem.name != undefined && userCredentials != null) {
           const name = fileItem.name;
           triggerStatusUpdateAPI(
@@ -146,7 +145,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
             updateStatusForLargeFiles
           );
         }
-      }
 
       const apiResponse = await extractAPI(
         fileItem.model,
