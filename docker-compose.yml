@@ -1,10 +1,10 @@
-version: '3'
+version: "3"
 
 services:
   backend:
-#    env_file:
-#      - path: ./backend/.env
-#        required: false
+    #    env_file:
+    #      - path: ./backend/.env
+    #        required: false
     build:
       context: ./backend
       dockerfile: Dockerfile

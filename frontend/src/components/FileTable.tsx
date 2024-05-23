@@ -136,7 +136,11 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
             title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
           >
             <StatusIndicator type={statusCheck(info.getValue())} />
-            <i>{info.getValue()}</i>
+            {info.row.original?.status === 'Failed' ? (
+              <span title={info.row.original?.errorMessage}>{info.getValue()}</span>
+            ) : (
+              <i>{info.getValue()}</i>
+            )}
           </div>
         ),
         header: () => <span>Status</span>,

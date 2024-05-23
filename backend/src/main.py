@@ -29,7 +29,6 @@ def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id,
     files_info = get_s3_files_info(source_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
     if len(files_info)==0:
       raise Exception('No pdf files found.')
-
     logging.info(f'files info : {files_info}')
     success_count=0
     failed_count=0
@@ -97,7 +96,6 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     obj_source_node.model = model
     obj_source_node.url = youtube_url
     obj_source_node.created_at = datetime.now()
-
     match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
     logging.info(f"match value{match}")
     obj_source_node.file_name = YouTube(obj_source_node.url).title

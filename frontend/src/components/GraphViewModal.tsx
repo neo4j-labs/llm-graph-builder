@@ -149,6 +149,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             setRelationships(finalRels);
             setScheme(schemeVal);
             setLoading(false);
+            console.log('nodes', nodes);
+            console.log('relations', relationships);
           } else {
             setLoading(false);
             setStatus('danger');
