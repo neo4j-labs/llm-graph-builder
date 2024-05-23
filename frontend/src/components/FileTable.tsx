@@ -356,7 +356,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     } else {
       setFilesData([]);
     }
-  }, [connectionStatus]);
+  }, [connectionStatus,userCredentials]);
 
   function updatestatus(i: statusupdate) {
     const { file_name } = i;
