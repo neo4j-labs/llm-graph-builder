@@ -287,3 +287,4 @@ export interface eventResponsetypes {
   total_chunks: number | null;
   total_pages: number | null;
 }
+export type Nullable<Type> = Type | null;

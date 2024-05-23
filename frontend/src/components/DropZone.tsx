@@ -95,7 +95,6 @@ const DropZone: FunctionComponent = () => {
     const uploadNextChunk = async () => {
       if (chunkNumber <= totalChunks) {
         const chunk = file.slice(start, end);
-        console.log({ chunkNumber });
         const formData = new FormData();
         formData.append('file', chunk);
         formData.append('chunkNumber', chunkNumber.toString());
@@ -206,7 +205,7 @@ const DropZone: FunctionComponent = () => {
       <Dropzone
         loadingComponent={isLoading && <Loader />}
         isTesting={true}
-        className='bg-none'
+        className='!bg-none'
         supportedFilesDescription={'Supports: PDF Files'}
         dropZoneOptions={{
           accept: { 'application/pdf': ['.pdf'] },
