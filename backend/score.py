@@ -1,11 +1,12 @@
 from fastapi import FastAPI, File, UploadFile, Form, Query
 from fastapi import FastAPI
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import FastAPI, File, UploadFile, Form, Body
 from fastapi import FastAPI, Request
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
-from src.QA_integration import *
+# from src.QA_integration import *
+from src.QA_integration_new import *
 from src.entities.user_credential import user_credential
 from src.shared.common_fn import *
 import uvicorn
@@ -237,18 +238,17 @@ async def graph_query(
     userName: str = Form(None),
     password: str = Form(None),
     query_type: str = Form(None),
-    doc_limit: int = Form(None),
-    document_name: str = Form(None)
+    document_names: str = Form(None),
 ):
     try:
+        print(document_names)
         result = await asyncio.to_thread(
             get_graph_results,
             uri=uri,
             username=userName,
             password=password,
             query_type=query_type,
-            doc_limit=doc_limit,
-            document_name=document_name
+            document_names=document_names
         )
         josn_obj = {'api_name':'graph_query','db_url':uri}
         logger.log_struct(josn_obj)
@@ -366,7 +366,7 @@ async def delete_document_and_entities(uri=Form(None),
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
-        result, files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filenames, source_types, deleteEntities)
+        result, files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filenames, source_types, deleteEntities, MERGED_DIR)
         entities_count = result[0]['deletedEntities'] if 'deletedEntities' in result[0] else 0
         message = f"Deleted {files_list_size} documents with {entities_count} entities from database"
         josn_obj = {'api_name':'delete_document_and_entities','db_url':uri}
@@ -409,7 +409,6 @@ async def get_document_status(file_name, url, userName, password, database):
         error_message = str(e)
         logging.exception(f'{message}:{error_message}')
         return create_api_response('Failed',message=message)
-    
-    
+
 if __name__ == "__main__":
     uvicorn.run(app)

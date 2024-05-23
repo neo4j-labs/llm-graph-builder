@@ -36,7 +36,6 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       processing: 0,
       status: 'New',
       NodesCount: 0,
-      id: uuidv4(),
       relationshipCount: 0,
       type: 'PDF',
       model: model,
@@ -83,6 +82,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               name: item.fileName,
               size: item.fileSize,
               source_url: item.url,
+              id: uuidv4(),
               ...defaultValues,
             });
           } else {
