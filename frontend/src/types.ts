@@ -9,6 +9,7 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   processing: number | string;
   status: string;
   NodesCount: number;
+  id?: string;
   relationshipCount: number;
   model: string;
   fileSource: string;
@@ -437,3 +438,4 @@ export interface SpeechArgs {
   pitch?: number;
   volume?: number;
 }
+export type Nullable<Type> = Type | null;

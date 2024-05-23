@@ -37,6 +37,16 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
     setFolderName('');
     setprojectId('');
   };
+  const submitHandler = async () => {
+    const defaultValues: CustomFile = {
+      processing: 0,
+      status: 'New',
+      NodesCount: 0,
+      relationshipCount: 0,
+      type: 'TEXT',
+      model: model,
+      fileSource: 'gcs bucket',
+    };
 
   useEffect(() => {
     if (status != 'unknown') {
@@ -85,10 +95,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
               size: item.fileSize ?? 0,
               gcsBucket: item.gcsBucketName,
               gcsBucketFolder: item.gcsBucketFolder,
-              google_project_id: item.gcsProjectId,
-              total_pages: 'N/A',
               id: uuidv4(),
-              access_token: codeResponse.access_token,
               ...defaultValues,
             });
           } else {

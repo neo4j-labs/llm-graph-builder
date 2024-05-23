@@ -32,10 +32,6 @@ class CreateChunksofDocument:
                 page_number = i + 1
                 for chunk in text_splitter.split_documents([document]):
                     chunks.append(Document(page_content=chunk.page_content, metadata={'page_number':page_number}))    
-        
-        elif 'length' in self.pages[0].metadata:
-            chunks_without_timestamps = text_splitter.split_documents(self.pages)
-            chunks = get_chunks_with_timestamps(chunks_without_timestamps, self.pages[0].metadata['source'])
         else:
             chunks = text_splitter.split_documents(self.pages)
         return chunks

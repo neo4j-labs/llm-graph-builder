@@ -24,7 +24,6 @@ export default async function subscribe(
     );
 
     if (response.data?.file_name?.status === 'Processing') {
-      progressHandler(response.data);
       await new Promise((resolve) => {
         setTimeout(resolve, currentdelay);
       });

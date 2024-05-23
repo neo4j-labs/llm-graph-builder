@@ -51,7 +51,6 @@ const DropZone: FunctionComponent = () => {
             type: `${file.name.substring(file.name.lastIndexOf('.') + 1, file.name.length).toUpperCase()}`,
             size: file.size,
             uploadprogess: file.size && file?.size < chunkSize ? 100 : 0,
-            total_pages: 0,
             id: uuidv4(),
             ...defaultValues,
           });
@@ -225,32 +224,8 @@ const DropZone: FunctionComponent = () => {
       <Dropzone
         loadingComponent={isLoading && <Loader />}
         isTesting={true}
-        className='!bg-none dropzoneContainer'
-        supportedFilesDescription={
-          <Typography variant='body-small'>
-            <Flex>
-              <span>{buttonCaptions.dropzoneSpan}</span>
-              <div className='align-self-center'>
-                <IconButtonWithToolTip
-                  label='Source info'
-                  clean
-                  text={
-                    <Typography variant='body-small'>
-                      <Flex gap='3' alignItems='flex-start'>
-                        <span>Microsoft Office (.docx, .pptx, .xls)</span>
-                        <span>PDF (.pdf)</span>
-                        <span>Images (.jpeg, .jpg, .png, .svg)</span>
-                        <span>Text (.html, .txt , .md)</span>
-                      </Flex>
-                    </Typography>
-                  }
-                >
-                  <InformationCircleIconOutline className='w-[22px] h-[22px]' />
-                </IconButtonWithToolTip>
-              </div>
-            </Flex>
-          </Typography>
-        }
+        className='!bg-none'
+        supportedFilesDescription={'Supports: PDF Files'}
         dropZoneOptions={{
           accept: {
             'application/pdf': ['.pdf'],

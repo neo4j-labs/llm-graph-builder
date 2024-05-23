@@ -85,12 +85,6 @@ class graphDBdataAccess:
             if obj_source_node.total_chunks is not None and obj_source_node.total_chunks != 0:
                 params['total_chunks'] = obj_source_node.total_chunks
 
-            if obj_source_node.is_cancelled is not None and obj_source_node.is_cancelled != False:
-                params['is_cancelled'] = obj_source_node.is_cancelled
-
-            if obj_source_node.processed_chunk is not None and obj_source_node.processed_chunk != 0:
-                params['processed_chunk'] = obj_source_node.processed_chunk
-
             param= {"props":params}
             
             print(f'Base Param value 1 : {param}')
@@ -166,15 +160,12 @@ class graphDBdataAccess:
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
     
-    def delete_file_from_graph(self, filenames, source_types, deleteEntities:str, merged_dir:str):
-        # filename_list = filenames.split(',')
-        filename_list= list(map(str.strip, json.loads(filenames)))
-        source_types_list= list(map(str.strip, json.loads(source_types)))
-        # source_types_list = source_types.split(',')
+    def delete_file_from_graph(self, filenames:str, source_types:str, deleteEntities:str, merged_dir:str):
+        filename_list = filenames.split(',')
+        source_types_list = source_types.split(',')
         for (file_name,source_type) in zip(filename_list, source_types_list):
             merged_file_path = os.path.join(merged_dir, file_name)
             if source_type == 'local file':
-                logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
                 delete_uploaded_local_file(merged_file_path, file_name)
 
         query_to_delete_document=""" 

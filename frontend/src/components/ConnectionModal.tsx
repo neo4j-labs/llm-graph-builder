@@ -2,8 +2,9 @@ import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone, Typography, Text
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 import connectAPI from '../services/ConnectAPI';
 import { useCredentials } from '../context/UserCredentials';
+import { initialiseDriver } from '../utils/Driver';
+import { Driver } from 'neo4j-driver';
 import { useSearchParams } from 'react-router-dom';
-import { buttonCaptions } from '../utils/Constants';
 
 interface Message {
   type: 'success' | 'info' | 'warning' | 'danger' | 'unknown';
@@ -54,27 +55,16 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
   }, [open]);
 
   const parseAndSetURI = (uri: string, urlparams = false) => {
-    const uriParts: string[] = uri.split('://');
-    let uriHost: string[] | string;
+    const uriParts = uri.split('://');
+    let uriHost: string;
     if (urlparams) {
       // @ts-ignore
-      uriHost = uriParts.pop().split('@');
-      // @ts-ignore
-      const hostParts = uriHost.pop()?.split('-');
-      if (hostParts != undefined) {
-        console.log(hostParts);
-        if (hostParts.length == 2) {
-          setURI(hostParts.pop() as string);
-          setDatabase(hostParts.pop() as string);
-        } else {
-          setURI(hostParts.pop() as string);
-          setDatabase('neo4j');
-        }
+      uriHost = uriParts.pop().split('@').at(-1);
+      const hostParts = uriHost.split('/');
+      if (hostParts.length == 2) {
+        setPassword(hostParts.pop() as string);
+        setURI(hostParts.pop() as string);
       }
-      const usercredentialsparts = uriHost.pop()?.split(':');
-      setPassword(usercredentialsparts?.pop() as string);
-      setUsername(usercredentialsparts?.pop() as string);
-      setProtocol(uriParts.pop() as string);
     } else {
       uriHost = uriParts.pop() || URI;
       setURI(uriHost);
@@ -153,6 +143,18 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
       setMessage({ type: 'unknown', content: '' });
       setPassword('');
     }, 3000);
+  };
+
+  const driverSetting = (connectionURI: string, username: string, password: string, database: string) => {
+    initialiseDriver(connectionURI, username, password, database).then((driver: Driver) => {
+      if (driver) {
+        setConnectionStatus(true);
+        setDriver(driver);
+        localStorage.setItem('alertShown', JSON.stringify(false));
+      } else {
+        setConnectionStatus(false);
+      }
+    });
   };
 
   const onClose = useCallback(() => {

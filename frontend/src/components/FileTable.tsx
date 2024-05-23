@@ -443,62 +443,6 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       setFilesData([]);
     }
   }, [connectionStatus, userCredentials]);
-  const cancelHandler = async (fileName: string, id: string, fileSource: string) => {
-    setFilesData((prevfiles) =>
-      prevfiles.map((curfile) => {
-        if (curfile.id === id) {
-          return {
-            ...curfile,
-            processingStatus: true,
-          };
-        }
-        return curfile;
-      })
-    );
-    try {
-      const res = await cancelAPI([fileName], [fileSource]);
-      if (res.data.status === 'Success') {
-        setFilesData((prevfiles) =>
-          prevfiles.map((curfile) => {
-            if (curfile.id === id) {
-              return {
-                ...curfile,
-                status: 'Cancelled',
-                processingStatus: false,
-              };
-            }
-            return curfile;
-          })
-        );
-      } else {
-        let errorobj = { error: res.data.error, message: res.data.message, fileName };
-        throw new Error(JSON.stringify(errorobj));
-      }
-    } catch (err) {
-      setFilesData((prevfiles) =>
-        prevfiles.map((curfile) => {
-          if (curfile.id === id) {
-            return {
-              ...curfile,
-              processingStatus: false,
-            };
-          }
-          return curfile;
-        })
-      );
-      if (err instanceof Error) {
-        const error = JSON.parse(err.message);
-        if (Object.keys(error).includes('fileName')) {
-          const { message } = error;
-          setalertDetails({
-            showAlert: true,
-            alertType: 'error',
-            alertMessage: message,
-          });
-        }
-      }
-    }
-  };
 
   function updatestatus(i: statusupdate) {
     const { file_name } = i;

@@ -118,16 +118,12 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
             "length": chunk_document.metadata["length"],
             "f_name": file_name,
             "previous_id" : previous_chunk_id,
-            "content_offset" : offset
         }
         
         if 'page_number' in chunk.metadata:
+            logging.info(f'page_number exist in chunk')
             chunk_data['page_number'] = chunk.metadata['page_number']
-         
-        if 'start_time' in chunk.metadata and 'end_time' in chunk.metadata:
-            chunk_data['start_time'] = chunk.metadata['start_time']
-            chunk_data['end_time'] = chunk.metadata['end_time'] 
-               
+            
         batch_data.append(chunk_data)
         
         lst_chunks_including_hash.append({'chunk_id': current_chunk_id, 'chunk_doc': chunk})
@@ -150,6 +146,9 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
         SET c.page_number = CASE WHEN data.page_number IS NOT NULL THEN data.page_number END,
             c.start_time = CASE WHEN data.start_time IS NOT NULL THEN data.start_time END,
             c.end_time = CASE WHEN data.end_time IS NOT NULL THEN data.end_time END
+        WITH data, c
+        WHERE data.page_number IS NOT NULL
+        SET c.page_number = data.page_number
         WITH data, c
         MATCH (d:Document {fileName: data.f_name})
         MERGE (c)-[:PART_OF]->(d)

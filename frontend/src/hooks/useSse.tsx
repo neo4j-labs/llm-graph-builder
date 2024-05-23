@@ -23,34 +23,28 @@ export default function useServerSideEvent(
     const alertShownStatus = JSON.parse(localStorage.getItem('alertShown') || 'null');
 
     if (status === 'Processing') {
-      if (fileSource === 'local file') {
-        if (alertShownStatus != null && alertShownStatus == false && total_chunks != null) {
-          const minutes = Math.floor((perpagesecond * total_pages) / 60);
-          alertHandler(minutes !== 0, minutes === 0 ? Math.floor(perpagesecond * total_pages) : minutes, fileName);
-        }
-      } else if (alertShownStatus != null && alertShownStatus == false && total_chunks != null) {
+      if (alertShownStatus != null && alertShownStatus == false && total_chunks != null) {
         const minutes = Math.floor((perchunksecond * total_chunks) / 60);
-        alertHandler(minutes !== 0, minutes === 0 ? Math.floor(perchunksecond * total_chunks) : minutes, fileName);
+        alertHandler(minutes, fileName);
       }
-      if (total_chunks) {
+      if (nodeCount && relationshipCount) {
         setFilesData((prevfiles) => {
           return prevfiles.map((curfile) => {
             if (curfile.name == fileName) {
               return {
                 ...curfile,
-                status: total_chunks === processed_chunk ? 'Completed' : status,
+                status: status,
                 NodesCount: nodeCount,
                 relationshipCount: relationshipCount,
                 model: model,
                 processing: processingTime?.toFixed(2),
-                processingProgress: Math.floor((processed_chunk / total_chunks) * 100),
               };
             }
             return curfile;
           });
         });
       }
-    } else if (status === 'Completed' || status === 'Cancelled') {
+    } else if (status === 'Completed') {
       setFilesData((prevfiles) => {
         return prevfiles.map((curfile) => {
           if (curfile.name == fileName) {

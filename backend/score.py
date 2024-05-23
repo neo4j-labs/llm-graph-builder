@@ -287,6 +287,7 @@ async def graph_query(
     document_names: str = Form(None),
 ):
     try:
+        print(document_names)
         result = await asyncio.to_thread(
             get_graph_results,
             uri=uri,
@@ -474,34 +475,6 @@ async def get_document_status(file_name, url, userName, password, database):
         error_message = str(e)
         logging.exception(f'{message}:{error_message}')
         return create_api_response('Failed',message=message)
-    
-@app.post("/cancelled_job")
-async def cancelled_job(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), filenames=Form(None), source_types=Form(None)):
-    try:
-        graph = create_graph_database_connection(uri, userName, password, database)
-        result = manually_cancelled_job(graph,filenames, source_types, MERGED_DIR)
-        
-        return create_api_response('Success',message=result)
-    except Exception as e:
-        job_status = "Failed"
-        message="Unable to cancelled the running job"
-        error_message = str(e)
-        logging.exception(f'Exception in cancelling the running job:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
-    finally:
-        close_db_connection(graph, 'cancelled_job')
-
-@app.post("/populate_graph_schema")
-async def populate_graph_schema(input_text=Form(None), model=Form(None), is_schema_description_checked=Form(None)):
-    try:
-        result = populate_graph_schema_from_text(input_text, model, is_schema_description_checked)
-        return create_api_response('Success',data=result)
-    except Exception as e:
-        job_status = "Failed"
-        message="Unable to get the schema from text"
-        error_message = str(e)
-        logging.exception(f'Exception in getting the schema from text:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
 
 if __name__ == "__main__":
     uvicorn.run(app)

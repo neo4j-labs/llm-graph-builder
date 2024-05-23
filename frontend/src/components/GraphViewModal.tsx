@@ -12,8 +12,8 @@ import {
   MagnifyingGlassMinusIconOutline,
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
-import IconButtonWithToolTip from './IconButtonToolTip';
-import { processGraphData } from '../utils/Utils';
+import ButtonWithToolTip from './ButtonWithToolTip';
+import { getIcon, getNodeCaption, getSize } from '../utils/Utils';
 import { useCredentials } from '../context/UserCredentials';
 import { LegendsChip } from './LegendsChip';
 import graphQueryAPI from '../services/GraphQuery';
@@ -94,7 +94,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               graphQuery,
               selectedRows.map((f) => JSON.parse(f).name)
             )
-          : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
+          : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName]);
       return nodeRelationshipData;
     } catch (error: any) {
       console.log(error);
@@ -102,7 +102,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials]);
 
   useEffect(() => {
-    setDocLimit(docLimit === '' ? '3' : docLimit);
     if (open) {
       setNodes([]);
       setRelationships([]);
@@ -202,11 +201,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     return a.localeCompare(b);
   });
 
-  // const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const value = e.target.value;
-  //   const validateInput = value === '' || Number(value) < 1 ? '3' : value;
-  //   setDocLimit(validateInput);
-  // }
   return (
     <>
       <Dialog
@@ -222,30 +216,28 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       >
         <Dialog.Header id='form-dialog-title'>
           {headerTitle}
-          {checkBoxView && (
-            <div className='flex gap-5 mt-2 justify-between'>
-              <div className='flex gap-5'>
-                <Checkbox
-                  checked={graphType.includes('document')}
-                  label='Document'
-                  disabled={(graphType.includes('document') && graphType.length === 1) || loading}
-                  onChange={() => handleCheckboxChange('document')}
-                />
-                <Checkbox
-                  checked={graphType.includes('entities')}
-                  label='Entities'
-                  disabled={(graphType.includes('entities') && graphType.length === 1) || loading}
-                  onChange={() => handleCheckboxChange('entities')}
-                />
-                <Checkbox
-                  checked={graphType.includes('chunks')}
-                  label='Chunks'
-                  disabled={(graphType.includes('chunks') && graphType.length === 1) || loading}
-                  onChange={() => handleCheckboxChange('chunks')}
-                />
-              </div>
+          <div className='flex gap-5 mt-2 justify-between'>
+            <div className='flex gap-5'>
+              <Checkbox
+                checked={graphType.includes('document')}
+                label='Document'
+                disabled={(graphType.includes('document') && graphType.length === 1) || loading}
+                onChange={() => handleCheckboxChange('document')}
+              />
+              <Checkbox
+                checked={graphType.includes('entities')}
+                label='Entities'
+                disabled={(graphType.includes('entities') && graphType.length === 1) || loading}
+                onChange={() => handleCheckboxChange('entities')}
+              />
+              <Checkbox
+                checked={graphType.includes('chunks')}
+                label='Chunks'
+                disabled={(graphType.includes('chunks') && graphType.length === 1) || loading}
+                onChange={() => handleCheckboxChange('chunks')}
+              />
             </div>
-          )}
+          </div>
         </Dialog.Header>
         <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border border-palette-neutral-border-weak'>
           <div className='bg-white relative w-full h-full max-h-full'>

@@ -86,8 +86,6 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
               wiki_query: item.fileName,
               source_url: item.url,
               id: uuidv4(),
-              language: item.language,
-              total_pages: 1,
               ...defaultValues,
             });
           } else {

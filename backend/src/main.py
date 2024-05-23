@@ -238,11 +238,28 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
   create_chunks_obj = CreateChunksofDocument(pages, graph)
   chunks = create_chunks_obj.split_file_into_chunks()
   
-  if result[0]['Status'] != 'Processing':      
+  if result[0]['Status'] != 'Processing':
+    
+    bad_chars = ['"', "\n", "'"]
+    for i in range(0,len(pages)):
+      text = pages[i].page_content
+      for j in bad_chars:
+        if j == '\n':
+          text = text.replace(j, ' ')
+        else:
+          text = text.replace(j, '')
+      pages[i]=Document(page_content=str(text), metadata=pages[i].metadata)
+      
+    logging.info("Break down file into chunks")
+    
+    create_chunks_obj = CreateChunksofDocument(pages, graph, file_name)
+    chunks = create_chunks_obj.split_file_into_chunks()
+
     obj_source_node = sourceNode()
     status = "Processing"
     obj_source_node.file_name = file_name
     obj_source_node.status = status
+    obj_source_node.total_pages = len(pages)
     obj_source_node.total_chunks = len(chunks)
     obj_source_node.total_pages = len(pages)
     obj_source_node.model = model
@@ -253,49 +270,28 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     logging.info('Update the status as Processing')
     update_graph_chunk_processed = int(os.environ.get('UPDATE_GRAPH_CHUNKS_PROCESSED'))
     # selected_chunks = []
-    is_cancelled_status = False
-    job_status = "Completed"
+    graph_documents=[]
     node_count = 0
     rel_count = 0
     for i in range(0, len(chunks), update_graph_chunk_processed):
-      select_chunks_upto = i+update_graph_chunk_processed
-      logging.info(f'Selected Chunks upto: {select_chunks_upto}')
-      if len(chunks) <= select_chunks_upto:
-         select_chunks_upto = len(chunks)
-      selected_chunks = chunks[i:select_chunks_upto]
-      result = graphDb_data_Access.get_current_status_document_node(file_name)
-      is_cancelled_status = result[0]['is_cancelled']
-      logging.info(f"Value of is_cancelled : {result[0]['is_cancelled']}")
-      if bool(is_cancelled_status) == True:
-         job_status = "Cancelled"
-         logging.info('Exit from running loop of processing file')
-         exit
-      else:
-        node_count,rel_count = processing_chunks(selected_chunks,graph,file_name,model,allowedNodes,allowedRelationship,node_count, rel_count)
-        end_time = datetime.now()
-        processed_time = end_time - start_time
-        
-        obj_source_node = sourceNode()
-        obj_source_node.file_name = file_name
-        obj_source_node.updated_at = end_time
-        obj_source_node.processing_time = processed_time
-        obj_source_node.node_count = node_count
-        obj_source_node.processed_chunk = select_chunks_upto
-        obj_source_node.relationship_count = rel_count
-        graphDb_data_Access.update_source_node(obj_source_node)
+      selected_chunks = chunks[i:i+update_graph_chunk_processed]
+      node_count,rel_count = processing_chunks(selected_chunks,graph,file_name,model,allowedNodes,allowedRelationship,node_count, rel_count)
+      end_time = datetime.now()
+      processed_time = end_time - start_time
+      
+      obj_source_node = sourceNode()
+      obj_source_node.file_name = file_name
+      obj_source_node.updated_at = end_time
+      obj_source_node.processing_time = processed_time
+      obj_source_node.node_count = node_count
+      obj_source_node.relationship_count = rel_count
+      graphDb_data_Access.update_source_node(obj_source_node)
     
-    result = graphDb_data_Access.get_current_status_document_node(file_name)
-    is_cancelled_status = result[0]['is_cancelled']
-    if bool(is_cancelled_status) == True:
-       logging.info(f'Is_cancelled True at the end extraction')
-       job_status = 'Cancelled'
-    logging.info(f'Job Status at the end : {job_status}')
-    end_time = datetime.now()
-    processed_time = end_time - start_time
+    
+    job_status = "Completed"
     obj_source_node = sourceNode()
     obj_source_node.file_name = file_name
     obj_source_node.status = job_status
-    obj_source_node.processing_time = processed_time
 
     graphDb_data_Access.update_source_node(obj_source_node)
     logging.info('Updated the nodeCount and relCount properties in Docuemnt node')
