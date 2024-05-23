@@ -16,6 +16,7 @@ import deleteAPI from '../services/deleteFiles';
 import DeletePopUp from './DeletePopUp';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
+import { useSearchParams } from 'react-router-dom';
 
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -28,6 +29,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
+  const [searchParams] = useSearchParams();
+
   const [alertDetails, setalertDetails] = useState<alertState>({
     showAlert: false,
     alertType: 'error',
@@ -52,7 +55,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   );
 
   useEffect(() => {
-    if (!init) {
+    if (!init && !searchParams.has('connectURL')) {
       let session = localStorage.getItem('neo4j.connection');
       if (session) {
         let neo4jConnection = JSON.parse(session);
@@ -81,6 +84,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         setOpenConnection(true);
       }
       setInit(true);
+    } else {
+      setOpenConnection(true);
     }
   }, []);
 
