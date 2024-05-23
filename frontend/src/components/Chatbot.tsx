@@ -33,7 +33,6 @@ export default function Chatbot(props: ChatbotProps) {
     if (!sessionStorage.getItem('session_id')) {
       const id = uuidv4();
       setSessionId(id);
-      console.log('id', id);
       sessionStorage.setItem('session_id', id);
     }
   }, []);

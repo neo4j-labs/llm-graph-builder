@@ -22,8 +22,11 @@
     "axios": "^1.6.5",
     "eslint-plugin-react": "^7.33.2",
     "neo4j-driver": "^5.14.0",
+    "re-resizable": "^6.9.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-router": "^6.23.1",
+    "react-router-dom": "^6.23.1",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

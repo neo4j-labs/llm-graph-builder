@@ -8,7 +8,7 @@ export interface CustomFile extends Partial<globalThis.File> {
   processing: number | string;
   status: string;
   NodesCount: number;
-  id: string;
+  id?: string;
   relationshipCount: number;
   model: string;
   fileSource: string;
@@ -178,7 +178,7 @@ export interface fileName {
   fileName: string;
   fileSize: number;
   url: string;
-  gcsBucket?: string;
+  gcsBucketName?: string;
   gcsBucketFolder?: string;
   status?: string;
 }
@@ -287,3 +287,4 @@ export interface eventResponsetypes {
   total_chunks: number | null;
   total_pages: number | null;
 }
+export type Nullable<Type> = Type | null;

@@ -10,7 +10,7 @@ const urlScanAPI = async (props: ScanProps) => {
       if (!props.urlParam?.endsWith('/')) {
         s3url = props?.urlParam + '/';
       } else {
-        s3url = props?.urlParam
+        s3url = props?.urlParam;
       }
     }
     formData.append('uri', props?.userCredentials?.uri ?? '');
