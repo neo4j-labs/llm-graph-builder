@@ -2,9 +2,9 @@ import logging
 from neo4j import time 
 from neo4j import GraphDatabase
 import os
-from neo4j.debug import watch
+# from neo4j.debug import watch
 
-watch("neo4j")
+# watch("neo4j")
 
 QUERY_MAP = {
     "document"          : " + [docs] ",
