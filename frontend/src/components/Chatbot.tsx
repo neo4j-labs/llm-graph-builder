@@ -25,6 +25,7 @@ export default function Chatbot(props: ChatbotProps) {
   const [entitiesModal, setEntitiesModal] = useState<string[]>([]);
   const [modelModal, setModelModal] = useState<string>('');
   const [timeTaken, setTimeTaken] = useState<number>(0);
+  const [chunkModal, setChunkModal] = useState<string[]>([]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
@@ -39,7 +40,7 @@ export default function Chatbot(props: ChatbotProps) {
   }, []);
 
   const simulateTypingEffect = (
-    response: { reply: string; entities?: [string]; model?: string; sources?: [string]; timeTaken?: number },
+    response: { reply: string; entities?: [string]; model?: string; sources?: [string]; timeTaken?: number;  chunks?: [string]; },
     index = 0
   ) => {
     if (index < response.reply.length) {
@@ -62,6 +63,7 @@ export default function Chatbot(props: ChatbotProps) {
               model: response?.model,
               timeTaken: response?.timeTaken,
               isLoading: true,
+              chunks: response?.chunks
             },
           ]);
         } else {
@@ -75,6 +77,7 @@ export default function Chatbot(props: ChatbotProps) {
             lastmsg.sources = response?.sources;
             lastmsg.entities = response?.entities;
             lastmsg.model = response?.model;
+            // lastmsg.timeTaken = response?.timeTaken;
             lastmsg.isLoading = false;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
@@ -104,6 +107,7 @@ export default function Chatbot(props: ChatbotProps) {
     let chatSources;
     let chatModel;
     let chatEntities;
+    let chatChunks;
     const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
     const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime };
     setListMessages([...listMessages, userMessage]);
@@ -111,12 +115,14 @@ export default function Chatbot(props: ChatbotProps) {
       setInputMessage('');
       simulateTypingEffect({ reply: ' ' });
       const chatbotAPI = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
-      const chatresponse = chatbotAPI;
+      const chatresponse = chatbotAPI?.response;
       chatbotReply = chatresponse?.data?.data?.message;
       chatSources = chatresponse?.data?.data?.info.sources;
       chatModel = chatresponse?.data?.data?.info.model;
       chatEntities = chatresponse?.data?.data?.info.entities;
-      simulateTypingEffect({ reply: chatbotReply, entities: chatEntities, model: chatModel, sources: chatSources });
+      chatChunks = chatresponse?.data?.data?.info.chunkids;
+      // const chatTimeTaken = chatbotAPI.timeTaken;
+      simulateTypingEffect({ reply: chatbotReply, entities: chatEntities, model: chatModel, sources: chatSources, chunks:chatChunks });
     } catch (error) {
       chatbotReply = "Oops! It seems we couldn't retrieve the answer. Please try again later";
       setInputMessage('');
@@ -231,7 +237,8 @@ export default function Chatbot(props: ChatbotProps) {
                             setEntitiesModal(chat.entities ?? []);
                             setModelModal(chat.model ?? '');
                             setSourcesModal(chat.sources ?? []);
-                            // setTimeTaken(chat.timeTaken ?? 0);
+                            //setTimeTaken(chat.timeTaken ?? 0);
+                            setChunkModal(chat.chunks ?? []);
                             setShowInfoModal(true)
                           }}>
                           <InformationCircleIconOutline className='w-4 h-4 inline-block' />
@@ -264,7 +271,7 @@ export default function Chatbot(props: ChatbotProps) {
         id: 'retrieval-information',
         className: 'n-p-token-4 n-bg-palette-neutral-bg-weak n-rounded-lg'
       }} onClose={() => setShowInfoModal(false)} open={showInfoModal}>
-        <InfoModal sources={sourcesModal} entities={entitiesModal} model={modelModal} />
+        <InfoModal sources={sourcesModal} entities={entitiesModal} model={modelModal} chunks={chunkModal}timeTaken={timeTaken} />
       </Modal>
     </div>
   );

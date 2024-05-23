@@ -152,6 +152,8 @@ export interface Messages {
   model?: string;
   entities?: string[];
   isLoading?: boolean;
+  timeTaken?: number;
+  chunks?: string[];
 }
 
 export type ChatbotProps = {
@@ -272,9 +274,10 @@ export interface ChatInfoModalProps {
 }
 
 export interface chatInfoMessage extends Partial<Messages> {
-  sources?: string[];
-  model?: string;
-  entities?: string[];
+  sources: string[];
+  model: string;
+  entities: string[];
+  chunks: string[];
 }
 
 export interface eventResponsetypes {
@@ -288,3 +291,5 @@ export interface eventResponsetypes {
   total_pages: number | null;
 }
 export type Nullable<Type> = Type | null;
+
+export type LabelColors = "default" | "success" | "info" | "warning" | "danger" | undefined;
