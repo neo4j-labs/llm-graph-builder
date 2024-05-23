@@ -1,5 +1,3 @@
-import { Nullable } from '../types';
-
 // Get the Url
 export const url = () => {
   let url = window.location.href.replace('5173', '8000');
