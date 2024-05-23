@@ -224,7 +224,7 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
           text = text.replace(j, ' ')
         else:
           text = text.replace(j, '')
-      pages[i]=Document(page_content=str(text))
+      pages[i]=Document(page_content=str(text), metadata=pages[i].metadata)
       
     logging.info("Break down file into chunks")
     
