@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, Form, Query
 from fastapi import FastAPI
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import FastAPI, File, UploadFile, Form, Body
 from fastapi import FastAPI, Request
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
@@ -238,18 +238,17 @@ async def graph_query(
     userName: str = Form(None),
     password: str = Form(None),
     query_type: str = Form(None),
-    doc_limit: int = Form(None),
-    document_name: str = Form(None)
+    document_names: str = Form(None),
 ):
     try:
+        print(document_names)
         result = await asyncio.to_thread(
             get_graph_results,
             uri=uri,
             username=userName,
             password=password,
             query_type=query_type,
-            doc_limit=doc_limit,
-            document_name=document_name
+            document_names=document_names
         )
         josn_obj = {'api_name':'graph_query','db_url':uri}
         logger.log_struct(josn_obj)

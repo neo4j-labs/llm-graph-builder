@@ -1,5 +1,5 @@
-import { Banner, Checkbox, Dialog, IconButton, IconButtonArray, LoadingSpinner, TextInput } from '@neo4j-ndl/react';
-import { useEffect, useRef, useState } from 'react';
+import { Banner, Checkbox, Dialog, IconButtonArray, LoadingSpinner } from '@neo4j-ndl/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { GraphType, GraphViewModalProps, Scheme, UserCredentials } from '../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL, { NvlOptions } from '@neo4j-nvl/base';
@@ -14,12 +14,12 @@ import {
 } from '@neo4j-ndl/react/icons';
 import ButtonWithToolTip from './ButtonWithToolTip';
 import { getIcon, getNodeCaption, getSize } from '../utils/Utils';
-import { ArrowSmallRightIconOutline } from '@neo4j-ndl/react/icons';
 import { useCredentials } from '../context/UserCredentials';
 import { LegendsChip } from './LegendsChip';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import graphQueryAPI from '../services/GraphQuery';
 import { queryMap } from '../utils/Constants';
+import { useFileContext } from '../context/UsersFiles';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -31,13 +31,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [nodes, setNodes] = useState<Node[]>([]);
   const [relationships, setRelationships] = useState<Relationship[]>([]);
   const [graphType, setGraphType] = useState<GraphType[]>(['entities']);
-  const [documentNo, setDocumentNo] = useState<string>('3');
   const [loading, setLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<'unknown' | 'success' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
-  const [docLimit, setDocLimit] = useState<string>('3');
   const { userCredentials } = useCredentials();
   const [scheme, setScheme] = useState<Scheme>({});
+  const { selectedRows } = useFileContext();
 
   const handleCheckboxChange = (graph: GraphType) => {
     const currentIndex = graphType.indexOf(graph);
@@ -85,20 +84,23 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       : queryMap.Document;
 
   // API Call to fetch the queried Data
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const nodeRelationshipData =
         viewPoint === 'showGraphView'
-          ? await graphQueryAPI(userCredentials as UserCredentials, graphQuery, '', docLimit)
-          : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, inspectedName, '0');
+          ? await graphQueryAPI(
+              userCredentials as UserCredentials,
+              graphQuery,
+              selectedRows.map((f) => JSON.parse(f).name)
+            )
+          : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName]);
       return nodeRelationshipData;
     } catch (error: any) {
       console.log(error);
     }
-  };
+  }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials]);
 
   useEffect(() => {
-    setDocLimit(docLimit === '' ? '3' : docLimit);
     if (open) {
       setNodes([]);
       setRelationships([]);
@@ -159,7 +161,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           setStatusMessage(error.message);
         });
     }
-  }, [open, graphType, documentNo]);
+  }, [open, graphType]);
 
   // If the modal is closed, render nothing
   if (!open) {
@@ -219,11 +221,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     return a.localeCompare(b);
   });
 
-  // const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const value = e.target.value;
-  //   const validateInput = value === '' || Number(value) < 1 ? '3' : value;
-  //   setDocLimit(validateInput);
-  // }
   return (
     <>
       <Dialog
@@ -260,24 +257,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 onChange={() => handleCheckboxChange('chunks')}
               />
             </div>
-            {viewPoint === 'showGraphView' && (
-              <div className='flex gap-2'>
-                <TextInput
-                  helpText='Documents Limit'
-                  required
-                  type='number'
-                  aria-label='Document Limit'
-                  onChange={(e) =>
-                    setDocLimit(e.target.value === '' || Number(e.target.value) < 1 ? '3' : e.target.value)
-                  }
-                  value={docLimit}
-                  min={1}
-                ></TextInput>
-                <IconButton disabled={docLimit === ''} aria-label='refresh-btn' onClick={() => setDocumentNo(docLimit)}>
-                  <ArrowSmallRightIconOutline className='n-size-token-7' />
-                </IconButton>
-              </div>
-            )}
           </div>
         </Dialog.Header>
         <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border border-palette-neutral-border-weak'>

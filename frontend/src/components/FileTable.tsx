@@ -408,7 +408,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     autoResetPageIndex: false,
     enableRowSelection: true,
     enableMultiRowSelection: true,
-    getRowId: (row) => `${row.name},${row.fileSource},${row.status}`,
+    getRowId: (row) => JSON.stringify({ ...row }),
   });
 
   useEffect(() => {

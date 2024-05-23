@@ -17,12 +17,15 @@ export default async function subscribe(
   let delay = 2000;
 
   while (pollingAttempts < MAX_POLLING_ATTEMPTS) {
+    let currentdelay = delay;
     let response: PollingAPI_Response = await axios.get(
       `${url()}/document_status/${fileName}?url=${uri}&userName=${username}&password=${encodedstr}&database=${database}`
     );
 
     if (response.data?.file_name?.status === 'Processing') {
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      await new Promise((resolve) => {
+        setTimeout(resolve, currentdelay);
+      });
       delay *= 2;
       pollingAttempts++;
     } else if (response.status !== 200) {

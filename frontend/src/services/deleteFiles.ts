@@ -4,8 +4,8 @@ import { UserCredentials } from '../types';
 
 const deleteAPI = async (userCredentials: UserCredentials, selectedFiles: string[], deleteEntities: boolean) => {
   try {
-    const filenames = selectedFiles.map((str) => str.split(',')[0]);
-    const source_types = selectedFiles.map((str) => str.split(',')[1]);
+    const filenames = selectedFiles.map((str) => JSON.parse(str).name);
+    const source_types = selectedFiles.map((str) => JSON.parse(str).fileSource);
     const formData = new FormData();
     formData.append('uri', userCredentials?.uri ?? '');
     formData.append('database', userCredentials?.database ?? '');
