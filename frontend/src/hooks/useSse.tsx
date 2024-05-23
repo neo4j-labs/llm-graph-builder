@@ -15,7 +15,6 @@ export default function useServerSideEvent(
         const minutes = Math.floor((perchunksecond * total_chunks) / 60);
         alertHandler(minutes, fileName);
       }
-      console.log(fileName)
       if (nodeCount && relationshipCount) {
         setFilesData((prevfiles) => {
           return prevfiles.map((curfile) => {
