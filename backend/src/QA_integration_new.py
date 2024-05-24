@@ -88,7 +88,7 @@ Response: "Langchain's memory management involves utilizing built-in mechanisms 
 User: "I need help with PyCaret's classification model."
 Response: "PyCaret simplifies the process of building and deploying machine learning models. For classification tasks, you can use PyCaret's setup function to prepare your data, then compare and tune models. [Sources: https://www.youtube.com/watch?v=n1stBfpGotA]"
 
-***IMPORTANT***: OUTPUT SOURCES FORMAT `[Sources: source1, source2]` AND KEEP THE SOURCE AS IT IS FROM THE CONTEXT METADATA OR ELSE YOU WILL BE TERMINATED.
+***IMPORTANT***: SOURCES MUST BE INCLUDED AND OUTPUT SOURCES FORMAT `[Sources: source1, source2]` AND KEEP THE SOURCE AS IT IS FROM THE CONTEXT METADATA OR ELSE YOU WILL BE TERMINATED.
 
 Note: This system does not generate answers based solely on internal knowledge. It answers from the information provided in the user's current and previous inputs, and from explicitly referenced external sources. Ensure that the system is capable of extracting and referencing chunk IDs from your documentation system.
 """
@@ -203,8 +203,9 @@ def format_documents(documents):
     sorted_documents = sorted_documents[:5] if len(sorted_documents) > 5 else sorted_documents
     formatted_docs = []
     for i,doc in enumerate(sorted_documents):
+        print("here")
         doc_start = f"Document start\n"
-        print(doc.metadata['source'])
+        print(f"Metadata : {doc.metadata}")
         formatted_doc = f"Content: {doc.page_content}\nMetadata:- source : {doc.metadata['source']}"
         doc_end = f"\nDocument end\n"
         final_formatted_doc = doc_start + formatted_doc + doc_end
@@ -295,10 +296,7 @@ def clear_chat_history(graph,session_id):
             }
 
 def QA_RAG(graph,model,question,session_id):
-    logging.info(f"QA_RAG called at {datetime.now()}")
     try:
-        qa_rag_start_time = time.time()
-
         start_time = time.time()
         llm,model_version = get_llm(model=model,max_tokens=CHAT_MAX_TOKENS)
         retriever = get_neo4j_retriever(graph=graph)
@@ -316,6 +314,7 @@ def QA_RAG(graph,model,question,session_id):
                 "messages":messages
             }
         )
+        print(docs)
         formatted_docs = format_documents(docs)
         doc_retrieval_time = time.time() - start_time
         print(formatted_docs)
@@ -332,6 +331,8 @@ def QA_RAG(graph,model,question,session_id):
         )
         print(f"AI response : {ai_response}")
         result = parse_ai_response(ai_response.content,docs)
+        total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
+        print(f"Total tokens : {total_tokens}")
         predict_time = time.time() - start_time
         logging.info(f"Final Response predicted in {predict_time:.2f} seconds")
 
@@ -341,15 +342,15 @@ def QA_RAG(graph,model,question,session_id):
         history_summarized_time = time.time() - start_time
         logging.info(f"Chat History summarized in {history_summarized_time:.2f} seconds")
 
-        total_call_time = time.time() - qa_rag_start_time
-        logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
         return {
             "session_id": session_id, 
             "message": result["content"], 
             "info": {
                 "sources": result["sources"],
                 "model": model_version,
-                "chunkids":result["chunkIds"]
+                "chunkids":result["chunkIds"],
+                "total_tokens": total_tokens,
+                "response_time": 0
             },
             "user": "chatbot"
             }
