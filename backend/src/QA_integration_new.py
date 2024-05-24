@@ -39,20 +39,20 @@ RETRIEVAL_QUERY = """
 WITH node as chunk, score
 MATCH (chunk)-[:PART_OF]->(d:Document)
 CALL { WITH chunk
-MATCH (chunk)-[:HAS_ENTITY]->(e) 
-MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,3}(:!Chunk&!Document) 
+MATCH (chunk)-[:HAS_ENTITY]->(e)
+MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,3}(:!Chunk&!Document)
 UNWIND rels as r
 RETURN collect(distinct r) as rels
 }
 WITH d, collect(distinct chunk) as chunks, avg(score) as score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels
-WITH d, score, 
-[c in chunks | c.text] as texts,  [c in chunks | c.id] as chunkIds,  
+WITH d, score,
+[c in chunks | c.text] as texts,  [c in chunks | c.id] as chunkIds,  [c in chunks | c.page_number] as page_numbers,
 [r in rels | coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ startNode(r).id + " "+ type(r) + " " + coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + endNode(r).id] as entities
 WITH d, score,
 apoc.text.join(texts,"\n----\n") +
 apoc.text.join(entities,"\n")
-as text, entities, chunkIds
-RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkIds:chunkIds} as metadata
+as text, entities, chunkIds, page_numbers
+RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkIds:chunkIds, page_numbers:page_numbers} as metadata
 """
 
 SYSTEM_TEMPLATE = """
@@ -88,7 +88,7 @@ Response: "Langchain's memory management involves utilizing built-in mechanisms 
 User: "I need help with PyCaret's classification model."
 Response: "PyCaret simplifies the process of building and deploying machine learning models. For classification tasks, you can use PyCaret's setup function to prepare your data, then compare and tune models. [Sources: https://www.youtube.com/watch?v=n1stBfpGotA]"
 
-***IMPORTANT***: SOURCES MUST BE INCLUDED AND OUTPUT SOURCES FORMAT `[Sources: source1, source2]` AND KEEP THE SOURCE AS IT IS FROM THE CONTEXT METADATA OR ELSE YOU WILL BE TERMINATED.
+***IMPORTANT***: SOURCES MUST BE INCLUDED AND OUTPUT SOURCES FORMAT `[Sources: source1, source2]` AND KEEP THE SOURCE AS IT IS FROM THE CONTEXT METADATA. PLEASE CROSS VERIFY THE SOURCE IN THE FINAL RESPONSE OR ELSE YOU WILL BE TERMINATED. 
 
 Note: This system does not generate answers based solely on internal knowledge. It answers from the information provided in the user's current and previous inputs, and from explicitly referenced external sources. Ensure that the system is capable of extracting and referencing chunk IDs from your documentation system.
 """
@@ -205,10 +205,10 @@ def format_documents(documents):
     for i,doc in enumerate(sorted_documents):
         print("here")
         doc_start = f"Document start\n"
-        print(f"Metadata : {doc.metadata}")
+        info = f"This is the source of this document <source> {doc.metadata['source']} <source>. Please include this in your response if you use any information from this below document\n"
         formatted_doc = f"Content: {doc.page_content}\nMetadata:- source : {doc.metadata['source']}"
         doc_end = f"\nDocument end\n"
-        final_formatted_doc = doc_start + formatted_doc + doc_end
+        final_formatted_doc = doc_start + info + formatted_doc + doc_end
         formatted_docs.append(final_formatted_doc)
     return "\n\n".join(formatted_docs)
 
@@ -243,18 +243,26 @@ def parse_ai_response(response, docs):
     for doc in docs:
         source = doc.metadata["source"]
         chunkids = doc.metadata["chunkIds"]
-        docs_metadata[source] = chunkids
+        page_numbers = doc.metadata["page_numbers"]
+        docs_metadata[source] = [chunkids,page_numbers]
     chunkids = list()
+    output_sources = list()
     for source in sources:
         if source in set(docs_metadata.keys()):
-            chunkids.extend(docs_metadata[source])
+            chunkids.extend(docs_metadata[source][0])
+            page_numbers = docs_metadata[source][1]
+            current_source = {
+                "source_name":source,
+                "page_numbers":page_numbers if len(page_numbers) > 1 and page_numbers[0] is not None else [],
+                "time_stamps":list()
+            }
+            output_sources.append(current_source)
 
     result = {
         'content': content,
-        'sources': sources,
+        'sources': output_sources,
         'chunkIds': chunkids
     }
-
     return result
 
 def summarize_messages(llm,history,stored_messages):
@@ -267,7 +275,7 @@ def summarize_messages(llm,history,stored_messages):
             MessagesPlaceholder(variable_name="chat_history"),
             (
                 "human",
-                "Summarize the above chat messages into a concise message, focusing on key points and relevant details. Highlight specific user preferences, requests, and essential context that will aid in future conversations. Exclude all introductions and extraneous information."
+                "Summarize the above chat messages into a concise message, focusing on key points and relevant details that could be useful for future conversations. Exclude all introductions and extraneous information."
             ),
         ]
     )
@@ -326,12 +334,15 @@ def QA_RAG(graph,model,question,session_id):
             {
             "messages" : messages[:-1],
             "context"  : formatted_docs,
-            "input"    : question
+            "input"    : question 
         }
         )
         print(f"AI response : {ai_response}")
         result = parse_ai_response(ai_response.content,docs)
-        total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
+        if "Gemini" in model:
+            total_tokens = ai_response.response_metadata['usage_metadata']['prompt_token_count']
+        else:    
+            total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
         print(f"Total tokens : {total_tokens}")
         predict_time = time.time() - start_time
         logging.info(f"Final Response predicted in {predict_time:.2f} seconds")
