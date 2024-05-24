@@ -99,7 +99,8 @@ async def create_source_knowledge_graph_url(
         message = f" Unable to create source node for source type: {source_type} and source: {source}"
         logging.exception(f'Exception Stack trace:')
         return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=source_type)
-
+    finally:
+            close_db_connection(graph, 'url/scan')
 
 @app.post("/extract")
 async def extract_knowledge_graph_from_file(
@@ -175,7 +176,9 @@ async def extract_knowledge_graph_from_file(
         logger.log_struct(josn_obj)
         logging.exception(f'File Failed in extraction: {josn_obj}')
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = file_name)
-
+    finally:
+            close_db_connection(graph, 'extract')
+            
 @app.get("/sources_list")
 async def get_source_list(uri:str, userName:str, password:str, database:str=None):
     """
@@ -214,7 +217,9 @@ async def update_similarity_graph(uri=Form(None), userName=Form(None), password=
         error_message = str(e)
         logging.exception(f'Exception in update KNN graph:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
-        
+    finally:
+            close_db_connection(graph, 'update_similarity_graph')
+                
 @app.post("/chat_bot")
 async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password=Form(None), database=Form(None),question=Form(None), session_id=Form(None)):
     try:
@@ -230,7 +235,8 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
         error_message = str(e)
         logging.exception(f'Exception in chat bot:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
-
+    finally:
+        close_db_connection(graph, 'chat_bot')
 
 @app.post("/graph_query")
 async def graph_query(
@@ -272,6 +278,9 @@ async def clear_chat_bot(uri=Form(None),userName=Form(None), password=Form(None)
         error_message = str(e)
         logging.exception(f'Exception in chat bot:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
+    finally:
+            close_db_connection(graph, 'clear_chat_bot')
+            
 @app.post("/connect")
 async def connect(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
     try:
@@ -303,7 +312,9 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
         error_message = str(e)
         logging.info(message)
         logging.exception(f'Exception:{error_message}')
-
+    finally:
+            close_db_connection(graph, 'upload')
+            
 @app.post("/schema")
 async def get_structured_schema(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
     try:
@@ -318,7 +329,9 @@ async def get_structured_schema(uri=Form(None), userName=Form(None), password=Fo
         error_message = str(e)
         logging.info(message)
         logging.exception(f'Exception:{error_message}')
-
+    finally:
+            close_db_connection(graph, 'schema')
+            
 def decode_password(pwd):
     sample_string_bytes = base64.b64decode(pwd)
     decoded_password = sample_string_bytes.decode("utf-8")
@@ -378,6 +391,8 @@ async def delete_document_and_entities(uri=Form(None),
         error_message = str(e)
         logging.exception(f'{message}:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
+    finally:
+            close_db_connection(graph, 'delete_document_and_entities')
 
 @app.get('/document_status/{file_name}')
 async def get_document_status(file_name, url, userName, password, database):

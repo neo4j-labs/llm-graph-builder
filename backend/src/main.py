@@ -335,6 +335,9 @@ def get_source_list_from_graph(uri,userName,password,db_name=None):
   logging.info("Get existing files list from graph")
   graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
   graph_DB_dataAccess = graphDBdataAccess(graph)
+  if not graph._driver._closed:
+      logging.info(f"closing connection for sources_list api")
+      graph._driver.close()
   return graph_DB_dataAccess.get_source_list()
 
 def update_graph(graph):
