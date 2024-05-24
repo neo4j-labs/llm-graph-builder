@@ -272,8 +272,8 @@ def get_graph_results(uri, username, password, query_type,document_names):
             nodes.extend(document_nodes)
             relationships.extend(document_relationships)
         
-        print(f"no of nodes : {len(nodes)}")
-        print(f"no of relations : {len(relationships)}")
+        logging.info(f"no of nodes : {len(nodes)}")
+        logging.info(f"no of relations : {len(relationships)}")
         result = {
             "nodes": nodes,
             "relationships": relationships
@@ -284,6 +284,8 @@ def get_graph_results(uri, username, password, query_type,document_names):
     except Exception as e:
         logging.error(f"graph_query module: An error occurred in get_graph_results. Error: {str(e)}")
         raise Exception(f"graph_query module: An error occurred in get_graph_results. Please check the logs for more details.") from e
-
+    finally:
+        logging.info("Closing connection for graph_query api")
+        driver.close()
 
 
