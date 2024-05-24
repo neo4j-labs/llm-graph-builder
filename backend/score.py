@@ -399,7 +399,8 @@ async def get_document_status(file_name, url, userName, password, database):
                 'relationshipCount':result[0]['relationshipCount'],
                 'model':result[0]['model'],
                 'total_chunks':result[0]['total_chunks'],
-                'total_pages':result[0]['total_pages']
+                'total_pages':result[0]['total_pages'],
+                'fileSize':result[0]['fileSize']
                 }
         else:
             status = {'fileName':file_name, 'status':'Failed'}
