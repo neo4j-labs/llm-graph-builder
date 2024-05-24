@@ -61,9 +61,7 @@ const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }
       key={'rightdrawer'}
       className='grow'
     >
-      <IconsPlacement closeChatBot={closeChatBot}
-        deleteOnClick={deleteOnClick}
-        messages={messages} />
+      <IconsPlacement closeChatBot={closeChatBot} deleteOnClick={deleteOnClick} messages={messages} />
       <Drawer.Body className='!overflow-y-hidden !px-0'>
         {clearHistoryData ? (
           <LoadingSpinner size='large' className='top-72 left-52' />

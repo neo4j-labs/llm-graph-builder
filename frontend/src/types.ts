@@ -152,8 +152,9 @@ export interface Messages {
   model?: string;
   entities?: string[];
   isLoading?: boolean;
-  timeTaken?: number;
-  chunks?: string[];
+  response_time?: number;
+  chunkids?: string[];
+  total_tokens?: number;
 }
 
 export type ChatbotProps = {
@@ -267,17 +268,13 @@ export interface SourceListServerData {
   message?: string;
 }
 
-export interface ChatInfoModalProps {
-  hideModal: () => void;
-  open: boolean;
-  children: ReactNode;
-}
-
 export interface chatInfoMessage extends Partial<Messages> {
   sources: string[];
   model: string;
   entities: string[];
-  chunks: string[];
+  response_time: number;
+  chunk_ids?: string[];
+  total_tokens: number;
 }
 
 export interface eventResponsetypes {
@@ -292,4 +289,9 @@ export interface eventResponsetypes {
 }
 export type Nullable<Type> = Type | null;
 
-export type LabelColors = "default" | "success" | "info" | "warning" | "danger" | undefined;
+export type LabelColors = 'default' | 'success' | 'info' | 'warning' | 'danger' | undefined;
+
+export interface HoverableLinkProps {
+  url: string;
+  children: React.ReactNode;
+}

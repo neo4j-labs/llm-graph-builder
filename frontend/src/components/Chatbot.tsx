@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button, Widget, Typography, Avatar, TextInput, IconButton, TextLink, Modal } from '@neo4j-ndl/react';
+import { Button, Widget, Typography, Avatar, TextInput, IconButton, Modal } from '@neo4j-ndl/react';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
@@ -8,7 +8,6 @@ import { useCredentials } from '../context/UserCredentials';
 import { chatBotAPI } from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../context/UsersFiles';
-import { extractPdfFileName } from '../utils/Utils';
 import InfoModal from './InfoModal';
 
 export default function Chatbot(props: ChatbotProps) {
@@ -24,8 +23,9 @@ export default function Chatbot(props: ChatbotProps) {
   const [sourcesModal, setSourcesModal] = useState<string[]>([]);
   const [entitiesModal, setEntitiesModal] = useState<string[]>([]);
   const [modelModal, setModelModal] = useState<string>('');
-  const [timeTaken, setTimeTaken] = useState<number>(0);
+  const [responseTime, setResponseTime] = useState<number>(0);
   const [chunkModal, setChunkModal] = useState<string[]>([]);
+  const [tokensUsed, setTokensUsed] = useState<number>(0);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
@@ -40,7 +40,15 @@ export default function Chatbot(props: ChatbotProps) {
   }, []);
 
   const simulateTypingEffect = (
-    response: { reply: string; entities?: [string]; model?: string; sources?: [string]; timeTaken?: number;  chunks?: [string]; },
+    response: {
+      reply: string;
+      sources?: [string];
+      model?: string;
+      chunk_ids?: [string];
+      total_tokens?: number;
+      response_time?: number;
+      entities?: [string];
+    },
     index = 0
   ) => {
     if (index < response.reply.length) {
@@ -58,12 +66,13 @@ export default function Chatbot(props: ChatbotProps) {
               message: currentTypedText,
               datetime: datetime,
               isTyping: false,
-              sources: response?.sources,
-              entities: response?.entities,
-              model: response?.model,
-              timeTaken: response?.timeTaken,
               isLoading: true,
-              chunks: response?.chunks
+              sources: response?.sources,
+              model: response?.model,
+              chunks: response?.chunk_ids,
+              total_tokens: response.total_tokens,
+              response_time: response?.response_time,
+              entities: response?.entities,
             },
           ]);
         } else {
@@ -74,11 +83,13 @@ export default function Chatbot(props: ChatbotProps) {
             lastmsg.message = currentTypedText;
             lastmsg.datetime = datetime;
             lastmsg.isTyping = true;
-            lastmsg.sources = response?.sources;
-            lastmsg.entities = response?.entities;
-            lastmsg.model = response?.model;
-            // lastmsg.timeTaken = response?.timeTaken;
             lastmsg.isLoading = false;
+            lastmsg.sources = response?.sources;
+            lastmsg.model = response?.model;
+            lastmsg.chunkids = response.chunk_ids;
+            lastmsg.total_tokens = response.total_tokens;
+            lastmsg.response_time = response?.response_time;
+            lastmsg.entities = response?.entities;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -108,6 +119,8 @@ export default function Chatbot(props: ChatbotProps) {
     let chatModel;
     let chatEntities;
     let chatChunks;
+    let chatTimeTaken;
+    let chatTokensUsed;
     const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
     const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime };
     setListMessages([...listMessages, userMessage]);
@@ -116,13 +129,23 @@ export default function Chatbot(props: ChatbotProps) {
       simulateTypingEffect({ reply: ' ' });
       const chatbotAPI = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
       const chatresponse = chatbotAPI?.response;
+      console.log('response', chatresponse.data.data.info);
       chatbotReply = chatresponse?.data?.data?.message;
       chatSources = chatresponse?.data?.data?.info.sources;
       chatModel = chatresponse?.data?.data?.info.model;
-      chatEntities = chatresponse?.data?.data?.info.entities;
       chatChunks = chatresponse?.data?.data?.info.chunkids;
-      // const chatTimeTaken = chatbotAPI.timeTaken;
-      simulateTypingEffect({ reply: chatbotReply, entities: chatEntities, model: chatModel, sources: chatSources, chunks:chatChunks });
+      chatTokensUsed = chatresponse?.data?.data?.info.total_tokens;
+      chatTimeTaken = chatresponse?.data?.data?.info.response_time;
+      chatEntities = chatresponse?.data?.data?.info.entities;
+      simulateTypingEffect({
+        reply: chatbotReply,
+        sources: chatSources,
+        model: chatModel,
+        chunk_ids: chatChunks,
+        total_tokens: chatTokensUsed,
+        response_time: chatTimeTaken,
+        entities: chatEntities,
+      });
     } catch (error) {
       chatbotReply = "Oops! It seems we couldn't retrieve the answer. Please try again later";
       setInputMessage('');
@@ -181,16 +204,18 @@ export default function Chatbot(props: ChatbotProps) {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${chat.user === 'chatbot'
-                    ? 'n-bg-palette-neutral-bg-strong max-w-[315px]'
-                    : 'n-bg-palette-primary-bg-weak max-w-[305px]'
-                    }`}
+                  className={`p-4 self-start ${
+                    chat.user === 'chatbot'
+                      ? 'n-bg-palette-neutral-bg-strong max-w-[315px]'
+                      : 'n-bg-palette-primary-bg-weak max-w-[305px]'
+                  }`}
                 >
                   <div
-                    className={`${listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
-                      ? 'loader'
-                      : ''
-                      }`}
+                    className={`${
+                      listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
+                        ? 'loader'
+                        : ''
+                    }`}
                   >
                     {chat.message.split(/`(.+?)`/).map((part, index) =>
                       index % 2 === 1 ? (
@@ -208,39 +233,22 @@ export default function Chatbot(props: ChatbotProps) {
                         {chat.datetime}
                       </Typography>
                     </div>
-                    {chat?.sources?.length ? (
-                      <div className={`flex ${chat.sources?.length > 1 ? 'flex-col' : 'flex-row justify-end'} gap-1`}>
-                        {chat.sources.map((link, index) => {
-                          return (
-                            <div className='text-right' key={index}>
-                              {link.includes('storage.googleapis.com') ? (
-                                <Typography variant='body-small'>GCS : {extractPdfFileName(link)}</Typography>
-                              ) : link.startsWith('http') || link.startsWith('https') ? (
-                                <TextLink href={link} externalLink={true}>
-                                  Source
-                                </TextLink>
-                              ) : link.startsWith('s3') ? (
-                                <Typography variant='body-small'>S3 File: {link.split('/').at(-1)}</Typography>
-                              ) : (
-                                <Typography variant='body-small'>{link}</Typography>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : null}
-                    {((chat.user === 'chatbot' && chat.id !== 2) || chat.isLoading) && (
+                    {((chat.user === 'chatbot' && chat.id !== 2 && chat.sources?.length !== 0) || chat.isLoading) && (
                       <div className='flex'>
-                        <IconButton clean aria-label="Retrieval Information"
+                        <IconButton
+                          clean
+                          aria-label='Retrieval Information'
                           disabled={chat.isTyping || chat.isLoading}
                           onClick={() => {
                             setEntitiesModal(chat.entities ?? []);
                             setModelModal(chat.model ?? '');
                             setSourcesModal(chat.sources ?? []);
-                            //setTimeTaken(chat.timeTaken ?? 0);
-                            setChunkModal(chat.chunks ?? []);
-                            setShowInfoModal(true)
-                          }}>
+                            setResponseTime(chat.response_time ?? 0);
+                            setChunkModal(chat.chunkids ?? []);
+                            setTokensUsed(chat.total_tokens ?? 0);
+                            setShowInfoModal(true);
+                          }}
+                        >
                           <InformationCircleIconOutline className='w-4 h-4 inline-block' />
                         </IconButton>
                       </div>
@@ -267,11 +275,22 @@ export default function Chatbot(props: ChatbotProps) {
           </Button>
         </form>
       </div>
-      <Modal modalProps={{
-        id: 'retrieval-information',
-        className: 'n-p-token-4 n-bg-palette-neutral-bg-weak n-rounded-lg'
-      }} onClose={() => setShowInfoModal(false)} open={showInfoModal}>
-        <InfoModal sources={sourcesModal} entities={entitiesModal} model={modelModal} chunks={chunkModal}timeTaken={timeTaken} />
+      <Modal
+        modalProps={{
+          id: 'retrieval-information',
+          className: 'n-p-token-4 n-bg-palette-neutral-bg-weak n-rounded-lg',
+        }}
+        onClose={() => setShowInfoModal(false)}
+        open={showInfoModal}
+      >
+        <InfoModal
+          sources={sourcesModal}
+          entities={entitiesModal}
+          model={modelModal}
+          chunk_ids={chunkModal}
+          response_time={responseTime}
+          total_tokens={tokensUsed}
+        />
       </Modal>
     </div>
   );
