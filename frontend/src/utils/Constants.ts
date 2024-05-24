@@ -29,12 +29,12 @@ export const llms =
   process.env?.LLM_MODELS?.trim() != ''
     ? process.env.LLM_MODELS?.split(',')
     : ['Diffbot', 'Gemini 1.0 Pro', 'OpenAI GPT 3.5', 'OpenAI GPT 4o', 'Gemini 1.5 Pro'];
-    
+
 export const defaultLLM = llms?.includes('OpenAI GPT 3.5')
   ? 'OpenAI GPT 3.5'
   : llms?.includes('Gemini 1.0 Pro')
-    ? 'Gemini 1.0 Pro'
-    : 'Diffbot';
+  ? 'Gemini 1.0 Pro'
+  : 'Diffbot';
 
 export const chunkSize = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 5 * 1024 * 1024;
 

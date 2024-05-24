@@ -23,9 +23,8 @@ interface FileContextType {
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
 const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
-  const selectedNodeLabelValues = localStorage.getItem('selectedNodeLabels')
-  const selectedNodeRelsValues = localStorage.getItem('selectedRelationshipLabels')
-
+  const selectedNodeLabelValues = localStorage.getItem('selectedNodeLabels');
+  const selectedNodeRelsValues = localStorage.getItem('selectedRelationshipLabels');
 
   const [files, setFiles] = useState<(File | null)[] | []>([]);
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
@@ -38,12 +37,12 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
 
   useEffect(() => {
     if (selectedNodeLabelValues != null) {
-      setSelectedNodes(JSON.parse(selectedNodeLabelValues))
+      setSelectedNodes(JSON.parse(selectedNodeLabelValues));
     }
     if (selectedNodeRelsValues != null) {
-      setSelectedRels(JSON.parse(selectedNodeRelsValues))
+      setSelectedRels(JSON.parse(selectedNodeRelsValues));
     }
-  }, [])
+  }, []);
 
   const value: FileContextType = {
     files,
