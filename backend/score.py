@@ -162,8 +162,9 @@ async def extract_knowledge_graph_from_file(
                 extract_graph_from_file_gcs, graph, model, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
-        result['db_url'] = uri
-        result['api_name'] = 'extract'
+        if result is not None:
+            result['db_url'] = uri
+            result['api_name'] = 'extract'
         logger.log_struct(result)
         return create_api_response('Success', data=result, file_source= source_type)
     except Exception as e:
@@ -226,7 +227,7 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
         # database = "neo4j"
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,session_id=session_id)
-        josn_obj = {'api_name':'chat_bot','db_url':uri}
+        josn_obj = {'api_name':'chat_bot','db_url':uri, 'session_id':session_id}
         logger.log_struct(josn_obj)
         return create_api_response('Success',data=result)
     except Exception as e:
@@ -247,7 +248,6 @@ async def graph_query(
     document_names: str = Form(None),
 ):
     try:
-        print(document_names)
         result = await asyncio.to_thread(
             get_graph_results,
             uri=uri,

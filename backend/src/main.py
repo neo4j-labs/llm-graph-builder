@@ -379,7 +379,7 @@ def merge_chunks(file_name, total_chunks, chunk_dir, merged_dir):
 
 
 def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname, chunk_dir, merged_dir):
-  # chunk_dir = os.path.join(os.path.dirname(__file__), "chunks")  # Directory to save chunks
+  
   if not os.path.exists(chunk_dir):
       os.mkdir(chunk_dir)
   
@@ -414,4 +414,7 @@ def get_labels_and_relationtypes(graph):
           RETURN labels, collect(relationshipType) as relationshipTypes
           """
   graphDb_data_Access = graphDBdataAccess(graph)
-  return graphDb_data_Access.execute_query(query)
+  result = graphDb_data_Access.execute_query(query)
+  if result is None:
+     result=[]
+  return result

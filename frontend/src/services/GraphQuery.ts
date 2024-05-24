@@ -12,7 +12,7 @@ const graphQueryAPI = async (userCredentials: UserCredentials, query_type: strin
     formData.append('query_type', query_type ?? 'entities');
 
     // @ts-ignore
-    formData.append('document_names', document_names);
+    formData.append('document_names',JSON.stringify(document_names));
 
     const response = await axios.post(`${url()}/graph_query`, formData, {
       headers: {
