@@ -365,10 +365,11 @@ def merge_chunks(file_name, total_chunks, chunk_dir, merged_dir):
 
   if not os.path.exists(merged_dir):
       os.mkdir(merged_dir)
-
+  logging.info(f'Merged File Path: {merged_dir}')
   with open(os.path.join(merged_dir, file_name), "wb") as write_stream:
       for i in range(1,total_chunks+1):
           chunk_file_path = os.path.join(chunk_dir, f"{file_name}_part_{i}")
+          logging.info(f'Chunk File Path While Merging Parts:{chunk_file_path}')
           with open(chunk_file_path, "rb") as chunk_file:
               shutil.copyfileobj(chunk_file, write_stream)
           os.unlink(chunk_file_path)  # Delete the individual chunk file after merging
