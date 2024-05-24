@@ -10,6 +10,10 @@ from typing import List
 import re
 import os
 from pathlib import Path
+from langchain_openai import ChatOpenAI
+from langchain_google_vertexai import ChatVertexAI
+from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
+from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransformer
 # from neo4j.debug import watch
 
 #watch("neo4j")
@@ -95,3 +99,34 @@ def delete_uploaded_local_file(merged_file_path, file_name):
   if file_path.exists():
     file_path.unlink()
     logging.info(f'file {file_name} deleted successfully')
+   
+def close_db_connection(graph, api_name):
+  if not graph._driver._closed:
+      logging.info(f"closing connection for {api_name} api")
+      graph._driver.close()   
+      
+def get_llm(model_version:str) :
+    """Retrieve the specified language model based on the model name."""
+
+    if "gemini" in model_version:
+        llm = ChatVertexAI(
+            model_name=model_version,
+            convert_system_message_to_human=True,
+            temperature=0,
+            safety_settings={
+                HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE
+            }
+        )
+    elif "gpt" in model_version:
+        llm = ChatOpenAI(api_key=os.environ.get('OPENAI_API_KEY'), 
+                         model=model_version, 
+                         temperature=0)
+    else:
+        llm = DiffbotGraphTransformer(diffbot_api_key=os.environ.get('DIFFBOT_API_KEY'))    
+    
+    return llm
+  

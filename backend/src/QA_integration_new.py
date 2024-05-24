@@ -7,7 +7,7 @@ from langchain_google_vertexai import ChatVertexAI
 from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
 import logging
 from langchain_community.chat_message_histories import Neo4jChatMessageHistory
-from src.shared.common_fn import load_embedding_model
+from src.shared.common_fn import load_embedding_model, get_llm
 import re
 from typing import Any
 from datetime import datetime
@@ -23,11 +23,9 @@ from langchain.retrievers.document_compressors import EmbeddingsFilter
 from langchain.retrievers.document_compressors import DocumentCompressorPipeline
 from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage
-
+from src.shared.constants import *
 
 load_dotenv() 
-
-openai_api_key = os.environ.get('OPENAI_API_KEY')
 
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
@@ -93,43 +91,43 @@ Response: "PyCaret simplifies the process of building and deploying machine lear
 Note: This system does not generate answers based solely on internal knowledge. It answers from the information provided in the user's current and previous inputs, and from explicitly referenced external sources. Ensure that the system is capable of extracting and referencing chunk IDs from your documentation system.
 """
 
-def get_llm(model: str,max_tokens=CHAT_MAX_TOKENS) -> Any:
-    """Retrieve the specified language model based on the model name."""
+# def get_llm(model: str,max_tokens=CHAT_MAX_TOKENS) -> Any:
+#     """Retrieve the specified language model based on the model name."""
 
-    model_versions = {
-        "OpenAI GPT 3.5": "gpt-3.5-turbo-16k",
-        "Gemini Pro": "gemini-1.0-pro-001",
-        "Gemini 1.5 Pro": "gemini-1.5-pro-preview-0409",
-        "OpenAI GPT 4": "gpt-4-0125-preview",
-        "Diffbot" : "gpt-4-0125-preview",
-        "OpenAI GPT 4o":"gpt-4o"
-         }
+#     model_versions = {
+#         "OpenAI GPT 3.5": "gpt-3.5-turbo-16k",
+#         "Gemini Pro": "gemini-1.0-pro-001",
+#         "Gemini 1.5 Pro": "gemini-1.5-pro-preview-0409",
+#         "OpenAI GPT 4": "gpt-4-0125-preview",
+#         "Diffbot" : "gpt-4-0125-preview",
+#         "OpenAI GPT 4o":"gpt-4o"
+#          }
 
-    if model in model_versions:
-        model_version = model_versions[model]
-        logging.info(f"Chat Model: {model}, Model Version: {model_version}")
+#     if model in model_versions:
+#         model_version = model_versions[model]
+#         logging.info(f"Chat Model: {model}, Model Version: {model_version}")
 
-        if "Gemini" in model:
-            llm = ChatVertexAI(
-                model_name=model_version,
-                convert_system_message_to_human=True,
-                max_tokens=max_tokens,
-                temperature=0,
-                safety_settings={
-                    HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE
-                }
-            )
-        else:
-            llm = ChatOpenAI(model=model_version, temperature=0,max_tokens=max_tokens)
-        return llm,model_version
+#         if "Gemini" in model:
+#             llm = ChatVertexAI(
+#                 model_name=model_version,
+#                 convert_system_message_to_human=True,
+#                 max_tokens=max_tokens,
+#                 temperature=0,
+#                 safety_settings={
+#                     HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
+#                     HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+#                     HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+#                     HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+#                     HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE
+#                 }
+#             )
+#         else:
+#             llm = ChatOpenAI(model=model_version, temperature=0,max_tokens=max_tokens)
+#         return llm,model_version
 
-    else:
-        logging.error(f"Unsupported model: {model}")
-        return None,None
+#     else:
+#         logging.error(f"Unsupported model: {model}")
+#         return None,None
 
 def get_neo4j_retriever(graph, index_name="vector", search_k=SEARCH_KWARG_K, score_threshold=SEARCH_KWARG_SCORE_THRESHOLD):
     try:
@@ -300,7 +298,8 @@ def QA_RAG(graph,model,question,session_id):
         qa_rag_start_time = time.time()
 
         start_time = time.time()
-        llm,model_version = get_llm(model=model,max_tokens=CHAT_MAX_TOKENS)
+        model_version = MODEL_VERSIONS[model]
+        llm = get_llm(model_version)
         retriever = get_neo4j_retriever(graph=graph)
         doc_retriever = create_document_retriever_chain(llm,retriever)
         history = create_neo4j_chat_message_history(graph,session_id )

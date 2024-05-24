@@ -23,7 +23,7 @@ from typing import List, Dict
 from langchain_core.pydantic_v1 import BaseModel, Field
 import google.auth 
 from langchain_community.graphs.graph_document import Node
-from src.shared.common_fn import get_combined_chunks
+from src.shared.common_fn import get_combined_chunks, get_llm
 import time
 from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
 
@@ -489,17 +489,7 @@ def get_graph_from_Gemini(model_version,
     
     combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
      
-    llm = ChatVertexAI(model_name=model_version,
-                    convert_system_message_to_human=True,
-                    temperature=0,
-                    safety_settings={
-                        HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE, 
-                        HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE, 
-                        HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE, 
-                        HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE, 
-                        HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-                    }
-                )
+    llm = get_llm(model_version)
     llm_transformer = LLMGraphTransformer(llm=llm, allowed_nodes=allowedNodes, allowed_relationships=allowedRelationship)
     
     with ThreadPoolExecutor(max_workers=10) as executor:
