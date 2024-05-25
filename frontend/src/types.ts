@@ -2,13 +2,13 @@ import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { AxiosResponse } from 'axios';
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 import { OverridableStringUnion } from '@mui/types';
-import type { Node } from '@neo4j-nvl/core';
+import type { Node } from '@neo4j-nvl/base';
 
 export interface CustomFile extends Partial<globalThis.File> {
   processing: number | string;
   status: string;
   NodesCount: number;
-  id: string;
+  id?: string;
   relationshipCount: number;
   model: string;
   fileSource: string;
@@ -29,7 +29,7 @@ export type UserCredentials = {
   uri: string;
   userName: string;
   password: string;
-  database?: string;
+  database: string;
 } & { [key: string]: any };
 
 export type ExtractParams = {
@@ -142,18 +142,23 @@ export interface CommonButtonProps {
   className?: string;
 }
 
-export interface messages {
+export interface Messages {
   id: number;
   message: string;
   user: string;
   datetime: string;
   isTyping?: boolean;
   sources?: string[];
+  model?: string;
+  entities?: string[];
+  isLoading?: boolean;
 }
 
 export type ChatbotProps = {
-  messages: messages[];
-  setMessages: Dispatch<SetStateAction<messages[]>>;
+  messages: Messages[];
+  setMessages: Dispatch<SetStateAction<Messages[]>>;
+  isLoading: boolean;
+  clear: boolean;
 };
 export interface WikipediaModalTypes {
   hideModal: () => void;
@@ -167,14 +172,15 @@ export interface GraphViewModalProps {
   viewPoint: string;
 }
 
-export type GraphType = 'Document' | 'Chunks' | 'Entities';
+export type GraphType = 'document' | 'chunks' | 'entities';
 
 export interface fileName {
   fileName: string;
   fileSize: number;
   url: string;
-  gcsBucket?: string;
+  gcsBucketName?: string;
   gcsBucketFolder?: string;
+  status?: string;
 }
 export interface URLSCAN_RESPONSE {
   status: string;
@@ -186,7 +192,29 @@ export interface URLSCAN_RESPONSE {
   file_source?: string;
   data?: any;
 }
-
+export interface statusAPI {
+  status: string;
+  message: string;
+  file_name?: fileName;
+}
+export interface statusupdate {
+  status: string;
+  message: string;
+  file_name: fileStatus;
+}
+export interface fileStatus {
+  fileName: string;
+  status: string;
+  processingTime: number | null;
+  nodeCount: number | null;
+  relationshipCount: number | null;
+  model: string;
+  total_chunks?: number | null;
+  total_pages?: number | null;
+}
+export interface PollingAPI_Response extends Partial<AxiosResponse> {
+  data: statusupdate;
+}
 export interface ServerResponse extends Partial<AxiosResponse> {
   data: URLSCAN_RESPONSE;
 }
@@ -236,3 +264,27 @@ export interface SourceListServerData {
   error?: string;
   message?: string;
 }
+
+export interface ChatInfoModalProps {
+  hideModal: () => void;
+  open: boolean;
+  children: ReactNode;
+}
+
+export interface chatInfoMessage extends Partial<Messages> {
+  sources?: string[];
+  model?: string;
+  entities?: string[];
+}
+
+export interface eventResponsetypes {
+  fileName: string;
+  status: string;
+  processingTime: number;
+  nodeCount: number;
+  relationshipCount: number;
+  model: string;
+  total_chunks: number | null;
+  total_pages: number | null;
+}
+export type Nullable<Type> = Type | null;

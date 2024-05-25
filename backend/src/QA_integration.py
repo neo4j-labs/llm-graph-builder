@@ -29,28 +29,48 @@ EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
 CHAT_MAX_TOKENS = 1000
 
 
+# RETRIEVAL_QUERY = """
+# WITH node, score, apoc.text.join([ (node)-[:HAS_ENTITY]->(e) | head(labels(e)) + ": "+ e.id],", ") as entities
+# MATCH (node)-[:PART_OF]->(d:Document)
+# WITH d, apoc.text.join(collect(node.text + "\n" + entities),"\n----\n") as text, avg(score) as score
+# RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)} as metadata
+# """
+
 RETRIEVAL_QUERY = """
-WITH node, score, apoc.text.join([ (node)-[:HAS_ENTITY]->(e) | head(labels(e)) + ": "+ e.id],", ") as entities
-MATCH (node)-[:PART_OF]->(d:Document)
-WITH d, apoc.text.join(collect(node.text + "\n" + entities),"\n----\n") as text, avg(score) as score
-RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)} as metadata
+WITH node as chunk, score
+MATCH (chunk)-[:PART_OF]->(d:Document)
+CALL { WITH chunk
+MATCH (chunk)-[:HAS_ENTITY]->(e) 
+MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,3}(:!Chunk&!Document) 
+UNWIND rels as r
+RETURN collect(distinct r) as rels
+}
+WITH d, collect(distinct chunk) as chunks, avg(score) as score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels
+WITH d, score, 
+[c in chunks | c.text] as texts,  
+[r in rels | coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ startNode(r).id + " "+ type(r) + " " + coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + endNode(r).id] as entities
+WITH d, score,
+apoc.text.join(texts,"\n----\n") +
+apoc.text.join(entities,"\n")
+as text, entities
+RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), entities:entities} as metadata
 """
 
 FINAL_PROMPT = """
-As an AI-powered question-answering agent, your task is to provide accurate and succinct responses to user queries. Utilize information from the chat history, user input, and relevant sources effectively.
+You are an AI-powered question-answering agent tasked with providing accurate and direct responses to user queries. Utilize information from the chat history, current user input, and Relevant Information effectively.
 
 Response Requirements:
-- Directly answer the user's query in a concise manner without using headers unless specifically requested.
-- Use chat history summary to provide context-aware responses and acknowledge relevant past interactions.
-- Respond appropriately to initial greetings but omit greetings in subsequent responses unless the conversation is restarted or there's a significant pause.
-- For specific inquiries, rely on the chat history and relevant information {vector_result}. Avoid making assumptions or creating unfounded details.
-- If the answer is unknown, state this clearly without speculation.
+- Deliver concise and direct answers to the user's query without headers unless requested.
+- Acknowledge and utilize relevant previous interactions based on the chat history summary.
+- Respond to initial greetings appropriately, but avoid including a greeting in subsequent responses unless the chat is restarted or significantly paused.
+- For non-general questions, strive to provide answers using chat history and Relevant Information ONLY do not Hallucinate.
+- Clearly state if an answer is unknown; avoid speculating.
 
 Instructions:
-- Prioritize responding to the User Input: {question}.
-- Utilize the Chat History Summary: {chat_summary} to ensure responses are informed by previous interactions.
-- Reference Relevant Information: {vector_result} only if it directly pertains to the user's query.
-- Ensure sources are cited clearly when Relevant Information is used in your response. List sources at the end in the format [Source: source1,source2]. Remove any duplicate sources.
+- Prioritize directly answering the User Input: {question}.
+- Use the Chat History Summary: {chat_summary} to provide context-aware responses.
+- Refer to Relevant Information: {vector_result} only if it directly relates to the query.
+- Cite sources clearly when using Relevant Information in your response [Sources: {sources}] without fail. The Source must be printed only at the last in the format [Source: source1,source2] . Duplicate sources should be removed.
 Ensure that answers are straightforward and context-aware, focusing on being relevant and concise.
 """
 
@@ -62,7 +82,8 @@ def get_llm(model: str,max_tokens=1000) -> Any:
         "Gemini Pro": "gemini-1.0-pro-001",
         "Gemini 1.5 Pro": "gemini-1.5-pro-preview-0409",
         "OpenAI GPT 4": "gpt-4-0125-preview",
-        "Diffbot" : "gpt-4-0125-preview"
+        "Diffbot" : "gpt-4-0125-preview",
+        "OpenAI GPT 4o":"gpt-4o"
          }
 
     if model in model_versions:
@@ -85,21 +106,35 @@ def get_llm(model: str,max_tokens=1000) -> Any:
             )
         else:
             llm = ChatOpenAI(model=model_version, temperature=0,max_tokens=max_tokens)
-        return llm
+
+        return llm,model_version
 
     else:
         logging.error(f"Unsupported model: {model}")
-        return None
+        return None,None
 
 def vector_embed_results(qa,question):
     vector_res={}
     try:
         result = qa({"query": question})
         vector_res['result']=result.get("result")
-        list_source_docs=[]
-        for i in result["source_documents"]:
-            list_source_docs.append(i.metadata['source'])
-            vector_res['source']=list_source_docs
+
+        sources = set()
+        entities = set()
+        for document in result["source_documents"]:
+            sources.add(document.metadata["source"])
+            for entiti in document.metadata["entities"]:
+                entities.add(entiti)
+        vector_res['source']=list(sources)
+        vector_res['entities'] = list(entities)
+        if len( vector_res['entities']) > 5:
+            vector_res['entities'] =  vector_res['entities'][:5]
+            
+        # list_source_docs=[]
+        # for i in result["source_documents"]:
+        #     list_source_docs.append(i.metadata['source'])
+        #     vector_res['source']=list_source_docs
+
         # result = qa({"question":question},return_only_outputs=True)
         # vector_res['result'] = result.get("answer")
         # vector_res["source"] = result.get("sources")
@@ -110,14 +145,12 @@ def vector_embed_results(qa,question):
     
     return vector_res
     
-def save_chat_history(uri,userName,password,session_id,user_message,ai_message):
+def save_chat_history(history,user_message,ai_message):
     try:
-        history = Neo4jChatMessageHistory(
-        url=uri,
-        username=userName,
-        password=password,
-        session_id=session_id
-        )
+        # history = Neo4jChatMessageHistory(
+        #     graph=graph,
+        #     session_id=session_id
+        # )
         history.add_user_message(user_message)
         history.add_ai_message(ai_message)
         logging.info(f'Successfully saved chat history')
@@ -125,16 +158,14 @@ def save_chat_history(uri,userName,password,session_id,user_message,ai_message):
         error_message = str(e)
         logging.exception(f'Exception in saving chat history:{error_message}')
     
-def get_chat_history(llm, uri, user_name, password, session_id):
+def get_chat_history(llm, history):
     """Retrieves and summarizes the chat history for a given session."""
+
     try:
-        history = Neo4jChatMessageHistory(
-            url=uri,
-            username=user_name,
-            password=password,
-            session_id=session_id
-        )
-        
+        # history = Neo4jChatMessageHistory(
+        #     graph=graph,
+        #     session_id=session_id
+        # )        
         chat_history = history.messages
         
         if not chat_history:
@@ -155,6 +186,26 @@ def get_chat_history(llm, uri, user_name, password, session_id):
         logging.exception(f"Exception in retrieving chat history: {e}")
         return "" 
 
+def clear_chat_history(graph, session_id):
+
+    try:
+        logging.info(f"Clearing chat history for session ID: {session_id}")
+        history = Neo4jChatMessageHistory(
+            graph=graph,
+            session_id=session_id
+        )
+        history.clear()
+        logging.info("Chat history cleared successfully")
+
+        return {
+            "session_id": session_id,
+            "message": "The chat history is cleared",
+            "user": "chatbot"
+        }
+    except Exception as e:
+        logging.exception(f"Error occurred while clearing chat history for session ID {session_id}: {e}")
+
+
 def extract_and_remove_source(message):
     pattern = r'\[Source: ([^\]]+)\]'
     match = re.search(pattern, message)
@@ -173,25 +224,40 @@ def extract_and_remove_source(message):
         }
     return response
 
-
-def QA_RAG(uri,model,userName,password,question,session_id):
+def clear_chat_history(graph,session_id):
+    history = Neo4jChatMessageHistory(
+        graph=graph,
+        session_id=session_id
+        )
+    history.clear()
+    return {
+            "session_id": session_id, 
+            "message": "The chat History is cleared", 
+            "user": "chatbot"
+            }
+  
+def QA_RAG(graph,model,question,session_id):
     logging.info(f"QA_RAG called at {datetime.now()}")
     # model = "Gemini Pro"
     try:
         qa_rag_start_time = time.time()
 
+
         start_time = time.time()
         neo_db = Neo4jVector.from_existing_index(
             embedding=EMBEDDING_FUNCTION,
-            url=uri,
-            username=userName,
-            password=password,
-            database="neo4j",
             index_name="vector",
             retrieval_query=RETRIEVAL_QUERY,
+            graph=graph
+        )
+
+        history = Neo4jChatMessageHistory(
+            graph=graph,
+            session_id=session_id
         )
         
-        llm = get_llm(model=model,max_tokens=CHAT_MAX_TOKENS)
+        llm,model_version = get_llm(model=model,max_tokens=CHAT_MAX_TOKENS)
+
         qa = RetrievalQA.from_chain_type(
             llm=llm,
             chain_type="stuff",
@@ -207,23 +273,24 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         logging.info(f"DB Setup completed in {db_setup_time:.2f} seconds")
         
         start_time = time.time()
+        chat_summary = get_chat_history(llm,history)
+        chat_history_time = time.time() - start_time
+        logging.info(f"Chat history summarized in {chat_history_time:.2f} seconds")
+        # print(chat_summary)
+
+        start_time = time.time()
         vector_res = vector_embed_results(qa, question)
         vector_time = time.time() - start_time
         logging.info(f"Vector response obtained in {vector_time:.2f} seconds")
-        print(vector_res)
+        # print(vector_res)
         
-        start_time = time.time()
-        chat_summary = get_chat_history(llm, uri, userName, password, session_id)
-        chat_history_time = time.time() - start_time
-        logging.info(f"Chat history summarized in {chat_history_time:.2f} seconds")
-        print(chat_summary)        
         formatted_prompt = FINAL_PROMPT.format(
             question=question,
             chat_summary=chat_summary,
             vector_result=vector_res.get('result', ''),
             sources=vector_res.get('source', '')
         )
-        print(formatted_prompt)
+        # print(formatted_prompt)
 
         start_time = time.time()
         # llm = get_llm(model=model,embedding=False)
@@ -234,7 +301,7 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         start_time = time.time()
         ai_message = response
         user_message = question
-        save_chat_history(uri, userName, password, session_id, user_message, ai_message)
+        save_chat_history(history, user_message, ai_message)
         chat_history_save = time.time() - start_time
         logging.info(f"Chat History saved in {chat_history_save:.2f} seconds")
         
@@ -249,83 +316,27 @@ def QA_RAG(uri,model,userName,password,question,session_id):
         return {
             "session_id": session_id, 
             "message": message, 
-            "sources": sources, 
+            "info": {
+                "sources": sources,
+                "model":model_version,
+                "entities":vector_res["entities"]
+            },
             "user": "chatbot"
             }
 
     except Exception as e:
         logging.exception(f"Exception in QA component at {datetime.now()}: {str(e)}")
-        error_message = type(e).__name__
-        return {"session_id": session_id, 
-        "message": "Something went wrong",# Caught an exception : {error_message}",
-        "sources": [], 
-        "user": "chatbot"}
-
-# def QA_RAG(uri,model,userName,password,question,session_id):
-#     try:
-#         neo_db=Neo4jVector.from_existing_index(
-#                 embedding = EMBEDDING_FUNCTION,
-#                 url=uri,
-#                 username=userName,
-#                 password=password,
-#                 database="neo4j",
-#                 index_name="vector",
-#                 retrieval_query=RETRIEVAL_QUERY,
-#             )
-#         llm = get_llm(model = model)
-
-#         qa = RetrievalQA.from_chain_type(
-#             llm=llm, 
-#             chain_type="stuff", 
-#             retriever=neo_db.as_retriever(search_kwargs={'k': 3,"score_threshold": 0.5}),
-#             return_source_documents=True
-#         )
-
-#         vector_res=vector_embed_results(qa,question)
-#         print('Response from Vector embeddings')
-#         print(vector_res)
-
-#         chat_summary=get_chat_history(llm,uri,userName,password,session_id)
+        error_name = type(e).__name__
+        return {
+            "session_id": session_id, 
+            "message": "Something went wrong",
+            "info": {
+                "sources": [],
+                "error": f"{error_name} :- {str(e)}"
+            },
+            "user": "chatbot"}
+    
 
 
-#         final_prompt = f"""
-#             You are an AI-powered question-answering agent tasked with providing accurate and direct responses to user queries. Utilize information from the chat history, current user input, and relevant unstructured data effectively.
 
-#             Response Requirements:
-#             - Deliver concise and direct answers to the user's query without headers unless requested.
-#             - Acknowledge and utilize relevant previous interactions based on the chat history summary.
-#             - Respond to initial greetings appropriately, but avoid including a greeting in subsequent responses unless the chat is restarted or significantly paused.
-#             - Clearly state if an answer is unknown; avoid speculating.
-
-#             Instructions:
-#             - Prioritize directly answering the User Input: {question}.
-#             - Use the Chat History Summary: {chat_summary} to provide context-aware responses.
-#             - Refer to Additional Unstructured Information: {vector_res.get('result', '')} only if it directly relates to the query.
-#             - Cite sources clearly when using unstructured data in your response [Sources: {vector_res.get('source', '')}]. The Source must be printed only at the last in the format [Source: source1,source2]
-#             Ensure that answers are straightforward and context-aware, focusing on being relevant and concise.
-#         """ 
-
-#         print(final_prompt)
-#         llm = get_llm(model = model)
-#         response = llm.predict(final_prompt)
-#         # print(response)
-
-#         ai_message=response
-#         user_message=question
-#         save_chat_history(uri,userName,password,session_id,user_message,ai_message)
-
-#         reponse = extract_and_remove_source(response)
-#         message = reponse["message"]
-#         sources = reponse["sources"]
-#         # print(extract_and_remove_source(response))
-#         print(response)
-#         res={"session_id":session_id,"message":message,"sources":sources,"user":"chatbot"}
-#         return res
-#     except Exception as e:
-#       error_message = str(e)
-#       logging.exception(f'Exception in in QA component:{error_message}')
-#       message = "Something went wrong"
-#       sources = []
-#     #   raise Exception(error_message)  
-#       return {"session_id":session_id,"message":message,"sources":sources,"user":"chatbot"}
 

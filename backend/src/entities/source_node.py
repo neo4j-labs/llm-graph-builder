@@ -17,3 +17,5 @@ class sourceNode:
     updated_at:datetime=None
     processing_time:float=None
     error_message:str=None
+    total_pages:int=None
+    total_chunks:int=None

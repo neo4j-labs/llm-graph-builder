@@ -2,6 +2,7 @@ import logging
 import os
 from datetime import datetime
 from langchain_community.graphs import Neo4jGraph
+from src.shared.common_fn import delete_uploaded_local_file
 from src.api_response import create_api_response
 from src.entities.source_node import sourceNode
 
@@ -42,17 +43,44 @@ class graphDBdataAccess:
         
     def update_source_node(self, obj_source_node:sourceNode):
         try:
-            processed_time = obj_source_node.updated_at - obj_source_node.created_at
+
+            params = {}
+            if obj_source_node.file_name is not None and obj_source_node.file_name != '':
+                params['fileName'] = obj_source_node.file_name
+
+            if obj_source_node.status is not None and obj_source_node.status != '':
+                params['status'] = obj_source_node.status
+
+            if obj_source_node.created_at is not None:
+                params['createdAt'] = obj_source_node.created_at
+
+            if obj_source_node.updated_at is not None:
+                params['updatedAt'] = obj_source_node.updated_at
+
+            if obj_source_node.processing_time is not None and obj_source_node.processing_time != 0:
+                params['processingTime'] = round(obj_source_node.processing_time.total_seconds(),2)
+
+            if obj_source_node.node_count is not None and obj_source_node.node_count != 0:
+                params['nodeCount'] = obj_source_node.node_count
+
+            if obj_source_node.relationship_count is not None and obj_source_node.relationship_count != 0:
+                params['relationshipCount'] = obj_source_node.relationship_count
+
+            if obj_source_node.model is not None and obj_source_node.model != '':
+                params['model'] = obj_source_node.model
+
+            if obj_source_node.total_pages is not None and obj_source_node.total_pages != 0:
+                params['total_pages'] = obj_source_node.total_pages
+
+            if obj_source_node.total_chunks is not None and obj_source_node.total_chunks != 0:
+                params['total_chunks'] = obj_source_node.total_chunks
+
+            param= {"props":params}
+            
+            print(f'Base Param value 1 : {param}')
+            query = "MERGE(d:Document {fileName :$props.fileName}) SET d += $props"
             logging.info("Update source node properties")
-            self.graph.query("""MERGE(d:Document {fileName :$fn}) SET d.status = $st, d.createdAt = $c_at, 
-                            d.updatedAt = $u_at, d.processingTime = $pt, d.nodeCount= $n_count, 
-                            d.relationshipCount = $r_count, d.model= $model
-                        """,
-                        {"fn":obj_source_node.file_name, "st":obj_source_node.status, "c_at":obj_source_node.created_at,
-                        "u_at":obj_source_node.updated_at, "pt":round(processed_time.total_seconds(),2), "e_message":'',
-                        "n_count":obj_source_node.node_count, "r_count":obj_source_node.relationship_count, "model":obj_source_node.model
-                        }
-                        )
+            self.graph.query(query,param)
         except Exception as e:
             error_message = str(e)
             self.update_exception_db(self.file_name,error_message)
@@ -113,7 +141,51 @@ class graphDBdataAccess:
 
     def get_current_status_document_node(self, file_name):
         query = """
-                MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount
+                MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, 
+                d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount,
+                d.total_pages AS total_pages, d.total_chunks AS total_chunks
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
+    
+    def delete_file_from_graph(self, filenames:str, source_types:str, deleteEntities:str, merged_dir:str):
+        filename_list = filenames.split(',')
+        source_types_list = source_types.split(',')
+        for (file_name,source_type) in zip(filename_list, source_types_list):
+            merged_file_path = os.path.join(merged_dir, file_name)
+            if source_type == 'local file':
+                delete_uploaded_local_file(merged_file_path, file_name)
+
+        query_to_delete_document=""" 
+           MATCH (d:Document) where d.fileName in $filename_list and d.fileSource in $source_types_list
+            with collect(d) as documents 
+            unwind documents as d
+            optional match (d)<-[:PART_OF]-(c:Chunk) 
+            detach delete c, d
+            return count(*) as deletedChunks
+            """
+        query_to_delete_document_and_entities=""" 
+            MATCH (d:Document) where d.fileName in $filename_list and d.fileSource in $source_types_list
+            with collect(d) as documents 
+            unwind documents as d
+            optional match (d)<-[:PART_OF]-(c:Chunk)
+            // if delete-entities checkbox is set
+            call { with  c, documents
+                match (c)-[:HAS_ENTITY]->(e)
+                // belongs to another document
+                where not exists {  (d2)<-[:PART_OF]-()-[:HAS_ENTITY]->(e) WHERE NOT d2 IN documents }
+                detach delete e
+                return count(*) as entities
+            } 
+            detach delete c, d
+            return sum(entities) as deletedEntities, count(*) as deletedChunks
+            """    
+        param = {"filename_list" : filename_list, "source_types_list": source_types_list}
+        if deleteEntities == "true":
+            result = self.execute_query(query_to_delete_document_and_entities, param)
+            logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' from database")
+        else :
+            result = self.execute_query(query_to_delete_document, param)    
+            logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' with their entities from database")
+        
+        return result, len(filename_list)    

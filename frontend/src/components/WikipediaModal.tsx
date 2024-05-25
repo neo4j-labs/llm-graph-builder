@@ -24,7 +24,6 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
       processing: 0,
       status: 'New',
       NodesCount: 0,
-      id: uuidv4(),
       relationshipCount: 0,
       type: 'TEXT',
       model: model,
@@ -37,7 +36,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
         const apiResponse = await urlScanAPI({
           userCredentials: userCredentials as UserCredentials,
           model: model,
-          wikiquery: wikiQuery,
+          wikiquery: wikiQuery.trim(),
           source_type: 'Wikipedia',
         });
         setStatus('success');
@@ -74,6 +73,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
               size: item.fileSize,
               wiki_query: item.fileName,
               source_url: item.url,
+              id: uuidv4(),
               ...defaultValues,
             });
           } else {
@@ -107,7 +107,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
     setTimeout(() => {
       setStatus('unknown');
       hideModal();
-    }, 5000);
+    }, 500);
   };
   return (
     <CustomModal
@@ -121,11 +121,11 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
     >
       <div className='w-full inline-block'>
         <TextInput
-          id='url'
+          id='keyword'
           value={wikiQuery}
           disabled={false}
-          label='Wikipedia Source'
-          aria-label='Wikipedia Source'
+          label='Wikipedia Keywords'
+          aria-label='Wikipedia Keywords'
           placeholder='Albert Einstein ,Isaac Newton'
           autoFocus
           fluid

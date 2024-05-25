@@ -4,6 +4,7 @@ from src.openAI_llm import get_graph_from_OpenAI
 from src.gemini_llm import get_graph_from_Gemini
 from typing import List
 import logging
+from src.shared.constants import *
 
 logging.basicConfig(format="%(asctime)s - %(message)s", level="INFO")
 
@@ -11,35 +12,25 @@ logging.basicConfig(format="%(asctime)s - %(message)s", level="INFO")
 def generate_graphDocuments(model: str, graph: Neo4jGraph, chunkId_chunkDoc_list: List, allowedNodes, allowedRelationship):
     
     if  allowedNodes is None or allowedNodes=="":
-        allowedNodes = allowedNodes.split(',')
+        allowedNodes =[]
     else:
-        allowedNodes =[]    
-    
+        allowedNodes = allowedNodes.split(',')    
     if  allowedRelationship is None or allowedRelationship=="":   
-        allowedRelationship = allowedRelationship.split(',')
+        allowedRelationship=[]
     else:
-        allowedRelationship=[]    
+        allowedRelationship = allowedRelationship.split(',')
+    
     logging.info(f"allowedNodes: {allowedNodes}, allowedRelationship: {allowedRelationship}")
 
     
     if model == "Diffbot":
         graph_documents = get_graph_from_diffbot(graph, chunkId_chunkDoc_list)
 
-    elif model == "OpenAI GPT 3.5":
-        model_version = "gpt-3.5-turbo-16k"
-        graph_documents = get_graph_from_OpenAI(model_version, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
+    elif model in OPENAI_MODELS:
+        graph_documents = get_graph_from_OpenAI(MODEL_VERSIONS[model], graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
 
-    elif model == "OpenAI GPT 4":
-        model_version = "gpt-4-0125-preview"
-        graph_documents = get_graph_from_OpenAI(model_version, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
-    
-    elif model == "Gemini 1.0 Pro" :
-        model_version = "gemini-1.0-pro-001"
-        graph_documents = get_graph_from_Gemini(model_version, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
-
-    elif model == "Gemini 1.5 Pro" :
-        model_version = "gemini-1.5-pro-preview-0409"
-        graph_documents = get_graph_from_Gemini(model_version, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
+    elif model in GEMINI_MODELS:
+        graph_documents = get_graph_from_Gemini(MODEL_VERSIONS[model], graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
 
     logging.info(f"graph_documents = {len(graph_documents)}")
     return graph_documents

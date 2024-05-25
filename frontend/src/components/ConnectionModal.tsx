@@ -1,9 +1,10 @@
-import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone } from '@neo4j-ndl/react';
-import { Dispatch, SetStateAction, useState } from 'react';
+import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone, Typography, TextLink } from '@neo4j-ndl/react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 import connectAPI from '../services/ConnectAPI';
 import { useCredentials } from '../context/UserCredentials';
 import { initialiseDriver } from '../utils/Driver';
 import { Driver } from 'neo4j-driver';
+import { useSearchParams } from 'react-router-dom';
 
 interface Message {
   type: 'success' | 'info' | 'warning' | 'danger' | 'unknown';
@@ -43,11 +44,33 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
   const { setUserCredentials, setDriver } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const parseAndSetURI = (uri: string) => {
+  useEffect(() => {
+    if (searchParams.has('connectURL')) {
+      const url = searchParams.get('connectURL');
+      parseAndSetURI(url as string, true);
+      searchParams.delete('connectURL');
+      setSearchParams(searchParams);
+    }
+  }, [open]);
+
+  const parseAndSetURI = (uri: string, urlparams = false) => {
     const uriParts = uri.split('://');
-    const uriHost = uriParts.pop() || URI;
-    setURI(uriHost);
+    let uriHost: string;
+    if (urlparams) {
+      // @ts-ignore
+      uriHost = uriParts.pop().split('@').at(-1);
+      const hostParts = uriHost.split('/');
+      if (hostParts.length == 2) {
+        setPassword(hostParts.pop() as string);
+        setURI(hostParts.pop() as string);
+      }
+    } else {
+      uriHost = uriParts.pop() || URI;
+      setURI(uriHost);
+    }
+
     const uriProtocol = uriParts.pop() || protocol;
     setProtocol(uriProtocol);
     const uriPort = uriParts.pop() || port;
@@ -126,17 +149,18 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
       if (driver) {
         setConnectionStatus(true);
         setDriver(driver);
+        localStorage.setItem('alertShown', JSON.stringify(false));
       } else {
         setConnectionStatus(false);
       }
     });
   };
 
-  const onClose = () => {
+  const onClose = useCallback(() => {
     setMessage({ type: 'unknown', content: '' });
-  };
+  }, []);
 
-  const isDisabled = !username || !URI || !password;
+  const isDisabled = useMemo(() => !username || !URI || !password, [username, URI, password]);
 
   return (
     <>
@@ -151,6 +175,11 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
       >
         <Dialog.Header id='form-dialog-title'>Connect to Neo4j</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
+          <Typography variant='body-medium' className='mb-4'>
+            <TextLink externalLink href='https://console.neo4j.io/'>
+              Don't have a Neo4j instance? Start for free today
+            </TextLink>
+          </Typography>
           {connectionMessage?.type !== 'unknown' && (
             <Banner
               name='Connection Modal'
@@ -163,7 +192,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
           <div className='n-flex max-h-44'>
             <Dropzone
               isTesting={false}
-              customTitle={<>Drop your env file here</>}
+              customTitle={<>Drop your neo4j credentials file here</>}
               className='n-p-6 end-0 top-0 w-full h-full'
               acceptedFileExtensions={['.txt', '.env']}
               dropZoneOptions={{
@@ -248,7 +277,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
             </div>
           </div>
           <Button loading={isLoading} disabled={isDisabled} onClick={() => submitConnection()}>
-            Submit
+            Connect
           </Button>
         </Dialog.Content>
       </Dialog>
