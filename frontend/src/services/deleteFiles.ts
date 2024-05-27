@@ -14,7 +14,7 @@ const deleteAPI = async (userCredentials: UserCredentials, selectedFiles: string
     // @ts-ignore
     formData.append('deleteEntities', deleteEntities);
     // @ts-ignore
-    formData.append('filenames',JSON.stringify(filenames));
+    formData.append('filenames', JSON.stringify(filenames));
     // @ts-ignore
     formData.append('source_types', JSON.stringify(source_types));
     const response = await axios.post(`${url()}/delete_document_and_entities`, formData);

@@ -63,7 +63,7 @@ def get_entities_from_chunkids(uri, username, password, chunk_ids):
     dict: A dictionary with 'nodes' and 'relationships' keys containing processed data, or an error message.
     """    
     try:
-        logging.info(f"URI: {uri}, Username: {username}, chunk_ids: {chunk_ids}")
+        logging.info(f"URI: {uri}, Username: {username},password:{password}, chunk_ids: {chunk_ids}")
         logging.info(f"Starting graph query process for chunk ids")
         chunk_ids_list = chunk_ids.split(",")
         driver = get_graphDB_driver(uri, username, password)

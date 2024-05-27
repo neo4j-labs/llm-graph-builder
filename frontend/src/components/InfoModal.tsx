@@ -1,41 +1,74 @@
-import { Box, Typography, Label, Button, TextLink } from '@neo4j-ndl/react';
+import { Box, Typography, Label, TextLink, Flex, Tabs, LoadingSpinner } from '@neo4j-ndl/react';
 import { DocumentTextIconOutline } from '@neo4j-ndl/react/icons';
 import '../styling/info.css';
 import Neo4jRetrievalLogo from '../assets/images/Neo4jRetrievalLogo.png';
 import wikipedialogo from '../assets/images/Wikipedia-logo-v2.svg';
 import youtubelogo from '../assets/images/youtube.png';
-import { LabelColors, chatInfoMessage } from '../types';
-import { useMemo } from 'react';
+import { LabelColors, UserCredentials, chatInfoMessage } from '../types';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import HoverableLink from './HoverableLink';
+import GraphViewButton from './GraphViewButton';
+import { chunkEntitiesAPI } from '../services/ChunkEntitiesInfo';
+import { useCredentials } from '../context/UserCredentials';
 
+type Entity = {
+  element_id: string;
+  labels: string[];
+  properties: {
+    id: string;
+  };
+};
+
+type GroupedEntity = {
+  texts: Set<string>;
+  color: LabelColors;
+};
 const labelColors: LabelColors[] = ['default', 'success', 'info', 'warning', 'danger', undefined];
 
-const parseEntity = (entity: string) => {
-  const [label1, text1] = entity.split(/ [A-Z_]+ /)[0].split(':');
-  const [label2, text2] = entity.split(/ [A-Z_]+ /)[1].split(':');
-  return { label1, text1, label2, text2 };
+const parseEntity = (entity: Entity) => {
+  const { labels, properties } = entity;
+  const label = labels[0];
+  const text = properties.id;
+  return { label, text };
 };
-const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, response_time, entities }) => {
-  console.log('sources inside modal', sources);
-  console.log('entities inside modal', entities);
-  console.log('model inside modal', model);
-  console.log('total tokens  inside modal', total_tokens);
-  console.log('timeTaken inside modal', response_time);
+const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, response_time, chunk_ids }) => {
+  const [activeTab, setActiveTab] = useState<number>(0);
+  const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
+  const [loading, setIsloading] = useState<boolean>(false);
+  const { userCredentials } = useCredentials();
+  const labelColourMap = useRef<{ [key: string]: LabelColors }>({});
 
-  const groupedEntities = useMemo(() => {
-    return entities?.reduce((acc, entity) => {
-      const { label1, text1, label2, text2 } = parseEntity(entity);
-      if (!acc[label1]) {
-        acc[label1] = { texts: new Set(), color: labelColors[Math.floor(Math.random() * labelColors.length)] };
-        acc[label1].texts.add(text1);
+  useEffect(() => {
+    if (activeTab === 1) {
+      setIsloading(true);
+      chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids.join(','))
+        .then((response) => {
+          setInfoEntities(response.data.data.nodes);
+          setIsloading(false);
+        })
+        .catch((error) => {
+          console.error('Error fetching entities:', error);
+          setIsloading(false);
+        });
+    }
+  }, [activeTab, chunk_ids]);
+
+  const groupedEntities = useMemo<{ [key: string]: GroupedEntity }>(() => {
+    return infoEntities.slice(0, 6).reduce((acc, entity) => {
+      const { label, text } = parseEntity(entity);
+      if (!acc[label]) {
+        const newColor = labelColourMap.current[label] ?? labelColors[Math.floor(Math.random() * labelColors.length)];
+        labelColourMap.current[label] = newColor;
+        acc[label] = { texts: new Set(), color: newColor };
       }
-      if (!acc[label2]) {
-        acc[label2] = { texts: new Set(), color: labelColors[Math.floor(Math.random() * labelColors.length)] };
-        acc[label2].texts.add(text2);
-      }
+      acc[label].texts.add(text);
       return acc;
     }, {} as Record<string, { texts: Set<string>; color: LabelColors }>);
-  }, [entities]);
+  }, [infoEntities]);
+
+  const onChangeTabs = async (e: any) => {
+    setActiveTab(e);
+  };
 
   return (
     <Box className='n-bg-palette-neutral-bg-weak p-4'>
@@ -50,102 +83,111 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
           </Typography>
         </Box>
       </Box>
-      <Typography variant='h4' className='mb-1'>
-        Sources used
-      </Typography>
-      {sources.length > 0 ? (
-        <ul className='list-none'>
-          {sources.map((link, index) => (
-            <li key={index}>
-              {link.source_name.startsWith('http') || link.source_name.startsWith('https') ? (
-                <div className='flex flex-row inline-block justiy-between items-center p8'>
-                  {link.source_name.includes('wikipedia.org') ? (
-                    <img src={wikipedialogo} width={20} height={20} className='mr-2' />
+      <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
+        <Tabs.Tab tabId={0}>Sources used</Tabs.Tab>
+        <Tabs.Tab tabId={1}>Entities used</Tabs.Tab>
+      </Tabs>
+      <Flex className='p-6'>
+        {activeTab === 0 ? (
+          sources.length > 0 ? (
+            <ul className='list-none'>
+              {sources.map((link, index) => (
+                <li key={index}>
+                  {link.source_name.startsWith('http') || link.source_name.startsWith('https') ? (
+                    <div className='flex flex-row inline-block justiy-between items-center p8'>
+                      {link.source_name.includes('wikipedia.org') ? (
+                        <img src={wikipedialogo} width={20} height={20} className='mr-2' />
+                      ) : (
+                        <img src={youtubelogo} width={20} height={20} className='mr-2' />
+                      )}
+                      <TextLink href={link.source_name} externalLink={true}>
+                        {link.source_name.includes('wikipedia.org') ? (
+                          <>
+                            <HoverableLink url={link.source_name}>
+                              <Typography variant='body-medium'>Wikipedia</Typography>
+                              <Typography variant='body-small' className='italic'>
+                                {' '}
+                                - Section {total_tokens}
+                              </Typography>
+                            </HoverableLink>
+                          </>
+                        ) : (
+                          <>
+                            <HoverableLink url={link.source_name}>
+                              <Typography variant='body-medium'>YouTube</Typography>
+                              <Typography variant='body-small' className='italic'>
+                                - 00:01:24 - 00:01:32
+                              </Typography>
+                            </HoverableLink>
+                          </>
+                        )}
+                      </TextLink>
+                    </div>
                   ) : (
-                    <img src={youtubelogo} width={20} height={20} className='mr-2' />
+                    <div className='flex flex-row inline-block justiy-between items-center'>
+                      <DocumentTextIconOutline className='n-size-token-7 mr-2' />
+                      <Typography
+                        variant='body-medium'
+                        className='text-ellipsis whitespace-nowrap max-w-[calc(100%-100px)] overflow-hidden'
+                      >
+                        {link.source_name}
+                      </Typography>
+                      {link.page_numbers.length > 0 ? (
+                        <Typography variant='body-small' className='italic'>
+                          {' '}
+                          - Page {link.page_numbers.join(', ')}
+                        </Typography>
+                      ) : (
+                        <></>
+                      )}
+                    </div>
                   )}
-                  <TextLink href={link.source_name} externalLink={true}>
-                    {link.source_name.includes('wikipedia.org') ? (
-                      <>
-                        <HoverableLink url={link.source_name}>
-                          <Typography variant='body-medium'>Wikipedia</Typography>
-                          <Typography variant='body-small' className='italic'>
-                            {' '}
-                            - Section {total_tokens}
-                          </Typography>
-                        </HoverableLink>
-                      </>
-                    ) : (
-                      <>
-                        <HoverableLink url={link.source_name}>
-                          <Typography variant='body-medium'>YouTube</Typography>
-                          <Typography variant='body-small' className='italic'>
-                            - 00:01:24 - 00:01:32
-                          </Typography>
-                        </HoverableLink>
-                      </>
-                    )}
-                  </TextLink>
-                </div>
-              ) : (
-                <div className='flex flex-row inline-block justiy-between items-center'>
-                  <DocumentTextIconOutline className='n-size-token-7 mr-2' />
-                  <Typography
-                    variant='body-medium'
-                    className='text-ellipsis whitespace-nowrap max-w-[calc(100%-100px)] overflow-hidden'
-                  >
-                    {link.source_name}
-                  </Typography>
-                  {link.page_numbers.length > 0 ? <Typography variant='body-small' className='italic'>
-                    {' '}
-                    - Page {link.page_numbers.join(', ')}
-                  </Typography> : <></>}
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <Typography variant='body-large'>No sources found</Typography>
-      )}
-      <Typography className='mt-3 mb-2' variant='h4'>
-        Entities used
-      </Typography>
-      {Object.keys(groupedEntities).length > 0 ? (
-        <ul className='list-none'>
-          {Object.keys(groupedEntities).map((label, index) => (
-            <li
-              key={index}
-              className='flex items-center mb-2'
-              style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}
-            >
-              <Label color={groupedEntities[label].color} fill='semi-filled' className='entity-label mr-2'>
-                {label}
-              </Label>
-              <Typography
-                className='entity-text'
-                variant='body-medium'
-                sx={{
-                  display: 'inline-block',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  maxWidth: 'calc(100% - 120px)',
-                }}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <Typography variant='body-large'>No sources found</Typography>
+          )
+        ) : loading ? ( // Show loader while loading
+          <Box className='flex justify-center items-center'>
+            <LoadingSpinner size='small' />
+          </Box>
+        ) : Object.keys(groupedEntities).length > 0 ? (
+          <ul className='list-none'>
+            {Object.keys(groupedEntities).map((label, index) => (
+              <li
+                key={index}
+                className='flex items-center mb-2'
+                style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}
               >
-                {Array.from(groupedEntities[label].texts).join(', ')}
-              </Typography>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <Typography variant='body-large'>No entities found</Typography>
+                <Label color={groupedEntities[label].color} fill='semi-filled' className='entity-label mr-2'>
+                  {label}
+                </Label>
+                <Typography
+                  className='entity-text'
+                  variant='body-medium'
+                  sx={{
+                    display: 'inline-block',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: 'calc(100% - 120px)',
+                  }}
+                >
+                  {Array.from(groupedEntities[label].texts).join(', ')}
+                </Typography>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <Typography variant='body-large'>No entities found</Typography>
+        )}
+      </Flex>
+      {activeTab === 1 && (
+        <Box className='button-container flex mt-2'>
+          <GraphViewButton chunk_ids={chunk_ids.join(',')} />
+        </Box>
       )}
-      <Box className='button-container flex mt-2'>
-        <Button disabled={true} className='w-[48%]'>
-          Graph View
-        </Button>
-      </Box>
     </Box>
   );
 };

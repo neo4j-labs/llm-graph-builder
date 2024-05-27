@@ -20,12 +20,14 @@ import { calcWordColor } from '@neo4j-devtools/word-color';
 import graphQueryAPI from '../services/GraphQuery';
 import { queryMap } from '../utils/Constants';
 import { useFileContext } from '../context/UsersFiles';
+import { chunkEntitiesAPI } from '../services/ChunkEntitiesInfo';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
   inspectedName,
   setGraphViewOpen,
   viewPoint,
+  chunk_ids,
 }) => {
   const nvlRef = useRef<NVL>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -93,7 +95,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               graphQuery,
               selectedRows.map((f) => JSON.parse(f).name)
             )
-          : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName]);
+          : viewPoint === 'tableView'
+          ? await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? ''])
+          : await chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids ?? '');
       return nodeRelationshipData;
     } catch (error: any) {
       console.log(error);

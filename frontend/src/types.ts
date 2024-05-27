@@ -2,7 +2,7 @@ import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { AxiosResponse } from 'axios';
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 import { OverridableStringUnion } from '@mui/types';
-import type { Node } from '@neo4j-nvl/base';
+import type { Node, Relationship } from '@neo4j-nvl/base';
 
 export interface CustomFile extends Partial<globalThis.File> {
   processing: number | string;
@@ -143,8 +143,8 @@ export interface CommonButtonProps {
 }
 
 export interface Source {
-  page_number: number;
-  source_name: string;
+  page_number: number[];
+  source_name: string[];
   time_stamps: string;
 }
 export interface Messages {
@@ -155,10 +155,9 @@ export interface Messages {
   isTyping?: boolean;
   sources?: string[];
   model?: string;
-  entities?: string[];
   isLoading?: boolean;
   response_time?: number;
-  chunkids?: string[];
+  chunk_ids?: string[];
   total_tokens?: number;
 }
 
@@ -175,9 +174,10 @@ export interface WikipediaModalTypes {
 
 export interface GraphViewModalProps {
   open: boolean;
-  inspectedName: string;
+  inspectedName?: string;
   setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
   viewPoint: string;
+  chunk_ids?: string;
 }
 
 export type GraphType = 'document' | 'chunks' | 'entities';
@@ -276,9 +276,8 @@ export interface SourceListServerData {
 export interface chatInfoMessage extends Partial<Messages> {
   sources: string[];
   model: string;
-  entities: string[];
   response_time: number;
-  chunk_ids?: string[];
+  chunk_ids: string[];
   total_tokens: number;
 }
 
@@ -300,4 +299,22 @@ export type LabelColors = 'default' | 'success' | 'info' | 'warning' | 'danger' 
 export interface HoverableLinkProps {
   url: string;
   children: React.ReactNode;
+}
+
+export interface ChunkEntitiesProps {
+  userCredentials: UserCredentials | null;
+  chunkIds: string[];
+}
+
+export interface CHATINFO_RESPONSE {
+  status: string;
+  message: string;
+  error?: string;
+  node: Node[];
+  relationships: Relationship[];
+  data?: any;
+}
+
+export interface ChatInfo_APIResponse extends Partial<AxiosResponse> {
+  data: CHATINFO_RESPONSE;
 }

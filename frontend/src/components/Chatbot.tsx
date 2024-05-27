@@ -21,7 +21,6 @@ export default function Chatbot(props: ChatbotProps) {
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
   const [sourcesModal, setSourcesModal] = useState<string[]>([]);
-  const [entitiesModal, setEntitiesModal] = useState<string[]>([]);
   const [modelModal, setModelModal] = useState<string>('');
   const [responseTime, setResponseTime] = useState<number>(0);
   const [chunkModal, setChunkModal] = useState<string[]>([]);
@@ -44,10 +43,9 @@ export default function Chatbot(props: ChatbotProps) {
       reply: string;
       sources?: [string];
       model?: string;
-      chunk_ids?: [string];
+      chunk_ids?: string[];
       total_tokens?: number;
       response_time?: number;
-      entities?: [string];
     },
     index = 0
   ) => {
@@ -72,7 +70,6 @@ export default function Chatbot(props: ChatbotProps) {
               chunks: response?.chunk_ids,
               total_tokens: response.total_tokens,
               response_time: response?.response_time,
-              entities: response?.entities,
             },
           ]);
         } else {
@@ -86,10 +83,9 @@ export default function Chatbot(props: ChatbotProps) {
             lastmsg.isLoading = false;
             lastmsg.sources = response?.sources;
             lastmsg.model = response?.model;
-            lastmsg.chunkids = response.chunk_ids;
-            lastmsg.total_tokens = response.total_tokens;
+            lastmsg.chunk_ids = response?.chunk_ids;
+            lastmsg.total_tokens = response?.total_tokens;
             lastmsg.response_time = response?.response_time;
-            lastmsg.entities = response?.entities;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -117,7 +113,6 @@ export default function Chatbot(props: ChatbotProps) {
     let chatbotReply;
     let chatSources;
     let chatModel;
-    let chatEntities;
     let chatChunks;
     let chatTimeTaken;
     let chatTokensUsed;
@@ -136,7 +131,6 @@ export default function Chatbot(props: ChatbotProps) {
       chatChunks = chatresponse?.data?.data?.info.chunkids;
       chatTokensUsed = chatresponse?.data?.data?.info.total_tokens;
       chatTimeTaken = chatresponse?.data?.data?.info.response_time;
-      chatEntities = chatresponse?.data?.data?.info.entities;
       simulateTypingEffect({
         reply: chatbotReply,
         sources: chatSources,
@@ -144,7 +138,6 @@ export default function Chatbot(props: ChatbotProps) {
         chunk_ids: chatChunks,
         total_tokens: chatTokensUsed,
         response_time: chatTimeTaken,
-        entities: chatEntities,
       });
     } catch (error) {
       chatbotReply = "Oops! It seems we couldn't retrieve the answer. Please try again later";
@@ -218,13 +211,13 @@ export default function Chatbot(props: ChatbotProps) {
                     }`}
                   >
                     {chat.message.split(/`(.+?)`/).map((part, index) =>
-                      (index % 2 === 1 ? (
+                      index % 2 === 1 ? (
                         <span key={index} style={formattedTextStyle}>
                           {part}
                         </span>
                       ) : (
                         part
-                      ))
+                      )
                     )}
                   </div>
                   <div>
@@ -240,11 +233,10 @@ export default function Chatbot(props: ChatbotProps) {
                           aria-label='Retrieval Information'
                           disabled={chat.isTyping || chat.isLoading}
                           onClick={() => {
-                            setEntitiesModal(chat.entities ?? []);
                             setModelModal(chat.model ?? '');
                             setSourcesModal(chat.sources ?? []);
                             setResponseTime(chat.response_time ?? 0);
-                            setChunkModal(chat.chunkids ?? []);
+                            setChunkModal(chat.chunk_ids ?? []);
                             setTokensUsed(chat.total_tokens ?? 0);
                             setShowInfoModal(true);
                           }}
@@ -285,7 +277,6 @@ export default function Chatbot(props: ChatbotProps) {
       >
         <InfoModal
           sources={sourcesModal}
-          entities={entitiesModal}
           model={modelModal}
           chunk_ids={chunkModal}
           response_time={responseTime}
