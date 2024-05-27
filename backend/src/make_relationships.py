@@ -117,7 +117,6 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
         }
         
         if 'page_number' in chunk.metadata:
-            logging.info(f'page_number exist in chunk')
             chunk_data['page_number'] = chunk.metadata['page_number']
             
         batch_data.append(chunk_data)

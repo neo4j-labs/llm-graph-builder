@@ -8,11 +8,7 @@ interface IconProps {
   messages: Messages[];
 }
 
-const IconsPlacement: React.FC<IconProps> = ({
-  closeChatBot,
-  deleteOnClick,
-  messages
-}) => {
+const IconsPlacement: React.FC<IconProps> = ({ closeChatBot, deleteOnClick, messages }) => {
   return (
     <div className='flex items-end justify-end'>
       <IconButton aria-label='Remove chat history' clean onClick={deleteOnClick} disabled={messages.length === 1}>

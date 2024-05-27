@@ -25,7 +25,7 @@ export const chatBotAPI = async (
     });
     const endTime = Date.now();
     const timeTaken = endTime - startTime;
-    return {response: response, timeTaken: timeTaken};
+    return { response: response, timeTaken: timeTaken };
   } catch (error) {
     console.log('Error Posting the Question:', error);
     throw error;
