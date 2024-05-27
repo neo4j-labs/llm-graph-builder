@@ -1,5 +1,5 @@
 import { Box, Typography, Label, Button, TextLink } from '@neo4j-ndl/react';
-import { ClockIconOutline, DocumentTextIconOutline } from '@neo4j-ndl/react/icons';
+import { DocumentTextIconOutline } from '@neo4j-ndl/react/icons';
 import '../styling/info.css';
 import Neo4jRetrievalLogo from '../assets/images/Neo4jRetrievalLogo.png';
 import wikipedialogo from '../assets/images/Wikipedia-logo-v2.svg';
@@ -57,17 +57,17 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
         <ul className='list-none'>
           {sources.map((link, index) => (
             <li key={index}>
-              {link.startsWith('http') || link.startsWith('https') ? (
+              {link.source_name.startsWith('http') || link.source_name.startsWith('https') ? (
                 <div className='flex flex-row inline-block justiy-between items-center p8'>
-                  {link.includes('wikipedia.org') ? (
+                  {link.source_name.includes('wikipedia.org') ? (
                     <img src={wikipedialogo} width={20} height={20} className='mr-2' />
                   ) : (
                     <img src={youtubelogo} width={20} height={20} className='mr-2' />
                   )}
-                  <TextLink href={link} externalLink={true}>
-                    {link.includes('wikipedia.org') ? (
+                  <TextLink href={link.source_name} externalLink={true}>
+                    {link.source_name.includes('wikipedia.org') ? (
                       <>
-                        <HoverableLink url={link}>
+                        <HoverableLink url={link.source_name}>
                           <Typography variant='body-medium'>Wikipedia</Typography>
                           <Typography variant='body-small' className='italic'>
                             {' '}
@@ -77,7 +77,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                       </>
                     ) : (
                       <>
-                        <HoverableLink url={link}>
+                        <HoverableLink url={link.source_name}>
                           <Typography variant='body-medium'>YouTube</Typography>
                           <Typography variant='body-small' className='italic'>
                             - 00:01:24 - 00:01:32
@@ -94,11 +94,11 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                     variant='body-medium'
                     className='text-ellipsis whitespace-nowrap max-w-[calc(100%-100px)] overflow-hidden'
                   >
-                    {link}
+                    {link.source_name}
                   </Typography>
                   <Typography variant='body-small' className='italic'>
                     {' '}
-                    - Page {Math.floor(Math.random() * 100)}
+                    - Page {link.page_numbers ? link.page_numbers.join(', ') : '1' }
                   </Typography>
                 </div>
               )}

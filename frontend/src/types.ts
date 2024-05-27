@@ -142,6 +142,11 @@ export interface CommonButtonProps {
   className?: string;
 }
 
+export interface Source {
+  page_number: number;
+  source_name: string;
+  time_stamps: string;
+}
 export interface Messages {
   id: number;
   message: string;
