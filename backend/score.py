@@ -81,7 +81,6 @@ async def create_source_knowledge_graph_url(
     access_token=Form(None)
     ):
     
-    logging.info(f"uri: {uri}  username:{userName}   password: {password}  database:{database}   model:{model}  gcs bucket:{gcs_bucket_name}   gcs folder:{gcs_bucket_folder}   gcs project:{gcs_project_id}   source_type:{source_type}")
     try:
         if source_url is not None:
             source = source_url

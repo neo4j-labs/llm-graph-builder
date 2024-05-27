@@ -1,18 +1,16 @@
 import os
 import logging
 from google.cloud import storage
-import google.auth 
 from langchain_community.document_loaders import GCSFileLoader
-from google_auth_oauthlib.flow import InstalledAppFlow
-import google_auth_oauthlib.flow
-import json
 
 def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, creds):
     storage_client = storage.Client(project=gcs_project_id, credentials=creds)
     file_name=''
     try:
       bucket = storage_client.bucket(gcs_bucket_name.strip())
-      if bucket.exists():
+      buckets_list = [bucket.name for bucket in storage_client.list_buckets()]
+
+      if bucket in buckets_list:
         blobs = storage_client.list_blobs(gcs_bucket_name.strip(), prefix=gcs_bucket_folder if gcs_bucket_folder else '')
         lst_file_metadata=[]
         for blob in blobs:
@@ -27,7 +25,8 @@ def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder
         return lst_file_metadata
       else:
         file_name=''
-        message=f"{gcs_bucket_name} : Bucket does not exist. Please provide valid GCS bucket name"
+        message=f" Bucket:{gcs_bucket_name} does not exist in Project:{gcs_project_id}. Please provide valid GCS bucket name"
+        logging.info(f"Bucket : {gcs_bucket_name} does not exist in project : {gcs_project_id}")
         raise Exception(message)
     except Exception as e:
       error_message = str(e)
