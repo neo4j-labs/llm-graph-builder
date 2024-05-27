@@ -21,7 +21,6 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     processing: 0,
     status: 'New',
     NodesCount: 0,
-    id: uuidv4(),
     relationshipCount: 0,
     type: 'TEXT',
     model: model,
@@ -71,6 +70,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               size: item.fileSize ?? 0,
               gcsBucket: item.gcsBucketName,
               gcsBucketFolder: item.gcsBucketFolder,
+              google_project_id: item.gcsProjectId,
               id: uuidv4(),
               ...defaultValues,
             });

@@ -18,6 +18,7 @@ export interface CustomFile extends Partial<globalThis.File> {
   gcsBucketFolder?: string;
   errorMessage?: string;
   uploadprogess?: number;
+  google_project_id?:string
 }
 
 export interface OptionType {
@@ -47,6 +48,7 @@ export type ExtractParams = {
   file_name?: string;
   allowedNodes?: string[];
   allowedRelationship?: string[];
+  gcs_project_id?:string
 } & { [key: string]: any };
 
 export type UploadParams = {
@@ -98,6 +100,7 @@ export interface SourceNode {
   gcsBucketFolder?: string;
   errorMessage?: string;
   uploadprogress?: number;
+  gcsProjectId?:string
 }
 
 export interface SideNavProps {
@@ -181,6 +184,7 @@ export interface fileName {
   gcsBucketName?: string;
   gcsBucketFolder?: string;
   status?: string;
+  gcsProjectId:string
 }
 export interface URLSCAN_RESPONSE {
   status: string;
