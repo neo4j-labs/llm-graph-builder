@@ -96,10 +96,10 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                   >
                     {link.source_name}
                   </Typography>
-                  <Typography variant='body-small' className='italic'>
+                  {link.page_numbers.length > 0 ? <Typography variant='body-small' className='italic'>
                     {' '}
-                    - Page {link.page_numbers ? link.page_numbers.join(', ') : '1' }
-                  </Typography>
+                    - Page {link.page_numbers.join(', ')}
+                  </Typography> : <></>}
                 </div>
               )}
             </li>
@@ -141,12 +141,9 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
       ) : (
         <Typography variant='body-large'>No entities found</Typography>
       )}
-      <Box className='button-container flex mt-2 justify-between'>
+      <Box className='button-container flex mt-2'>
         <Button disabled={true} className='w-[48%]'>
           Graph View
-        </Button>
-        <Button disabled={true} className='w-[48%]'>
-          Chunk used
         </Button>
       </Box>
     </Box>
