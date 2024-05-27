@@ -1,9 +1,9 @@
 import { TextInput } from '@neo4j-ndl/react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { urlScanAPI } from '../services/URLScan';
-import { CustomFile, S3ModalProps, fileName } from '../types';
+import { CustomFile, S3ModalProps, fileName, nonoautherror } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
 import { useGoogleLogin } from '@react-oauth/google';
@@ -32,6 +32,17 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     setFolderName('');
     setprojectId('')
   };
+
+  useEffect(() => {
+    if (status != "unknown") {
+      setTimeout(() => {
+        setStatusMessage("")
+        setStatus('unknown');
+        reset();
+        hideModal();
+      }, 5000);
+    }
+  }, [])
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (codeResponse) => {
@@ -95,9 +106,16 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
       }
     },
-    onError: (errorResponse) => console.log(errorResponse),
+    onError: (errorResponse) => {
+      setStatus("danger")
+      setStatusMessage(errorResponse.error_description ?? "Some Error Occurred or Please try signin with your google account")
+    },
     scope: 'https://www.googleapis.com/auth/devstorage.read_only',
-    onNonOAuthError: (errr) => console.log(errr)
+    onNonOAuthError: (error: nonoautherror) => {
+      console.log(error)
+      setStatus("info")
+      setStatusMessage(error.message as string)
+    }
   });
 
   const submitHandler = async () => {
