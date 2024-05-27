@@ -16,7 +16,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
   const { setFilesData, model, filesData } = useFileContext();
-  
+
   const defaultValues: CustomFile = {
     processing: 0,
     status: 'New',
@@ -31,6 +31,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const reset = () => {
     setbucketName('');
     setFolderName('');
+    setprojectId('')
   };
 
   const googleLogin = useGoogleLogin({
@@ -96,6 +97,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     },
     onError: (errorResponse) => console.log(errorResponse),
     scope: 'https://www.googleapis.com/auth/devstorage.read_only',
+    onNonOAuthError: (errr) => console.log(errr)
   });
 
   const submitHandler = async () => {
@@ -115,7 +117,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   };
   const onClose = useCallback(() => {
     hideModal();
-    // reset();
+    reset();
     setStatus('unknown');
   }, []);
   return (
