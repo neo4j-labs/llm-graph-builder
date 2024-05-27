@@ -105,6 +105,10 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatus('danger');
         setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
       }
+      setTimeout(() => {
+        setStatus('unknown');
+        hideModal();
+      }, 500);
     },
     onError: (errorResponse) => {
       setStatus("danger")
