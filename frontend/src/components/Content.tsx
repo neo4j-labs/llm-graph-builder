@@ -132,7 +132,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       );
 
       if (fileItem.name != undefined && userCredentials != null) {
-        const name = fileItem.name;
+        const { name } = fileItem;
         triggerStatusUpdateAPI(
           name as string,
           userCredentials?.uri,
