@@ -7,7 +7,6 @@ import { CustomFile, S3ModalProps, fileName } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
 import { useGoogleLogin } from '@react-oauth/google';
-import axios from 'axios';
 
 const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [bucketName, setbucketName] = useState<string>('');
@@ -17,42 +16,21 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
   const { setFilesData, model, filesData } = useFileContext();
-
-  const googleLogin = useGoogleLogin({
-    //flow: 'auth-code',
-    onSuccess: async (codeResponse) => {
-      console.log("codeResponse = ", codeResponse);
-      const tokens = await axios.get('http://localhost:8000/auth')
-      console.log("tokens = ",tokens);
-    },
-    onError: errorResponse => console.log(errorResponse),
-    scope: 'https://www.googleapis.com/auth/devstorage.read_only'
-
-  });
-  const reset = () => {
-    setbucketName('');
-    setFolderName('');
+  const defaultValues: CustomFile = {
+    processing: 0,
+    status: 'New',
+    NodesCount: 0,
+    id: uuidv4(),
+    relationshipCount: 0,
+    type: 'TEXT',
+    model: model,
+    fileSource: 'gcs bucket',
   };
 
-  const submitHandler = async () => {
-    const defaultValues: CustomFile = {
-      processing: 0,
-      status: 'New',
-      NodesCount: 0,
-      id: uuidv4(),
-      relationshipCount: 0,
-      type: 'TEXT',
-      model: model,
-      fileSource: 'gcs bucket',
-    };
-    googleLogin()
-    if (bucketName.trim() === '' || projectId.trim() === '') {
-      setStatus('danger');
-      setStatusMessage('Please Fill the Bucket Name');
-      setTimeout(() => {
-        setStatus('unknown');
-      }, 5000);
-    } else {
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (codeResponse) => {
+      console.log('codeResponse = ', codeResponse);
+      // const tokens = await axios.post(`${url()}/auth`, formData)
       try {
         setStatus('info');
         setStatusMessage('Loading...');
@@ -65,6 +43,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           gcs_bucket_folder: folderName,
           source_type: 'gcs bucket',
           gcs_project_id: projectId,
+          access_token: codeResponse.access_token,
         });
         if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
@@ -109,6 +88,24 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatus('danger');
         setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
       }
+    },
+    onError: (errorResponse) => console.log(errorResponse),
+    scope: 'https://www.googleapis.com/auth/devstorage.read_only',
+  });
+  const reset = () => {
+    setbucketName('');
+    setFolderName('');
+  };
+
+  const submitHandler = async () => {
+    if (bucketName.trim() === '' || projectId.trim() === '') {
+      setStatus('danger');
+      setStatusMessage('Please Fill the Bucket Name');
+      setTimeout(() => {
+        setStatus('unknown');
+      }, 5000);
+    } else {
+      googleLogin();
     }
     setTimeout(() => {
       setStatus('unknown');
@@ -117,7 +114,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   };
   const onClose = useCallback(() => {
     hideModal();
-    reset();
+    // reset();
     setStatus('unknown');
   }, []);
   return (
