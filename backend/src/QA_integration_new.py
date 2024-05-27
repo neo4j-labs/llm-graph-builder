@@ -263,7 +263,6 @@ def get_sources_and_chunks(sources_used, docs):
 def summarize_messages(llm,history,stored_messages):
     if len(stored_messages) == 0:
         return False
-    print(f"stored messages : {stored_messages}")
     # summarization_template = "Distill the below chat messages into a single summary message. Include as many specific details as you can."
     summarization_prompt = ChatPromptTemplate.from_messages(
         [
@@ -282,7 +281,6 @@ def summarize_messages(llm,history,stored_messages):
     history.clear()
     history.add_user_message("Our current convertaion summary till now")
     history.add_message(summary_message)
-    print(history.messages)
     return True
 
 
