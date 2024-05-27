@@ -144,7 +144,7 @@ class graphDBdataAccess:
         query = """
                 MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, 
                 d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount,
-                d.total_pages AS total_pages, d.total_chunks AS total_chunks
+                d.total_pages AS total_pages, d.total_chunks AS total_chunks , d.fileSize as fileSize
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)

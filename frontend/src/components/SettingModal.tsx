@@ -9,8 +9,14 @@ import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
 export default function SettingsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels } = useFileContext();
   const { userCredentials } = useCredentials();
-  const onChangenodes = (selectedOptions: OnChangeValue<OptionType, true>) => setSelectedNodes(selectedOptions);
-  const onChangerels = (selectedOptions: OnChangeValue<OptionType, true>) => setSelectedRels(selectedOptions);
+  const onChangenodes = (selectedOptions: OnChangeValue<OptionType, true>) => {
+    setSelectedNodes(selectedOptions);
+    localStorage.setItem('selectedNodeLabels', JSON.stringify(selectedOptions));
+  };
+  const onChangerels = (selectedOptions: OnChangeValue<OptionType, true>) => {
+    setSelectedRels(selectedOptions);
+    localStorage.setItem('selectedRelationshipLabels', JSON.stringify(selectedOptions));
+  };
   const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>([]);
   const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
 
@@ -20,8 +26,10 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
         try {
           const response = await getNodeLabelsAndRelTypes(userCredentials as UserCredentials);
           if (response.data.data.length) {
-            const nodelabels = response.data.data[0].labels.slice(0, 20).map((l) => ({ value: l, label: l }));
-            const reltypes = response.data.data[0].relationshipTypes.slice(0, 20).map((t) => ({ value: t, label: t }));
+            const nodelabels = response.data?.data[0]?.labels.slice(0, 20).map((l) => ({ value: l, label: l }));
+            const reltypes = response.data?.data[0]?.relationshipTypes
+              .slice(0, 20)
+              .map((t) => ({ value: t, label: t }));
             setnodeLabelOptions(nodelabels);
             setrelationshipTypeOptions(reltypes);
           }

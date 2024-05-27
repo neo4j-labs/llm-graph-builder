@@ -286,5 +286,6 @@ export interface eventResponsetypes {
   model: string;
   total_chunks: number | null;
   total_pages: number | null;
+  fileSize: number;
 }
 export type Nullable<Type> = Type | null;
