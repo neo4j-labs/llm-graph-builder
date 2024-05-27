@@ -1,5 +1,6 @@
 import { useFileContext } from '../context/UsersFiles';
 import { eventResponsetypes } from '../types';
+import { chunkSize } from '../utils/Constants';
 const perchunksecond = parseInt(process.env.TIME_PER_CHUNK as string);
 export default function useServerSideEvent(
   alertHandler: (minutes: number, filename: string) => void,
@@ -7,11 +8,32 @@ export default function useServerSideEvent(
 ) {
   const { setFilesData } = useFileContext();
   function updateStatusForLargeFiles(eventSourceRes: eventResponsetypes) {
-    const { fileName, nodeCount, processingTime, relationshipCount, status, total_chunks, model } = eventSourceRes;
+    const { fileName, nodeCount, processingTime, relationshipCount, status, total_chunks, model, fileSize } =
+      eventSourceRes;
     const alertShownStatus = JSON.parse(localStorage.getItem('alertShown') || 'null');
-    if (status === 'Processing' && alertShownStatus != null && alertShownStatus == false && total_chunks != null) {
-      const minutes = Math.floor((perchunksecond * total_chunks) / 60);
-      alertHandler(minutes, fileName);
+
+    if (status === 'Processing') {
+      if (alertShownStatus != null && alertShownStatus == false && total_chunks != null && fileSize > chunkSize) {
+        const minutes = Math.floor((perchunksecond * total_chunks) / 60);
+        alertHandler(minutes, fileName);
+      }
+      if (nodeCount && relationshipCount) {
+        setFilesData((prevfiles) => {
+          return prevfiles.map((curfile) => {
+            if (curfile.name == fileName) {
+              return {
+                ...curfile,
+                status: status,
+                NodesCount: nodeCount,
+                relationshipCount: relationshipCount,
+                model: model,
+                processing: processingTime?.toFixed(2),
+              };
+            }
+            return curfile;
+          });
+        });
+      }
     } else if (status === 'Completed') {
       setFilesData((prevfiles) => {
         return prevfiles.map((curfile) => {
@@ -43,13 +65,7 @@ export default function useServerSideEvent(
       errorHandler(fileName);
     }
   }
-
-  const serverSideErrorHandler = (filename: string) => {
-    errorHandler(filename);
-  };
-
   return {
     updateStatusForLargeFiles,
-    serverSideErrorHandler,
   };
 }

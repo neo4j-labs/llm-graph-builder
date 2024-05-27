@@ -16,6 +16,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
   const { setFilesData, model, filesData } = useFileContext();
+  
   const defaultValues: CustomFile = {
     processing: 0,
     status: 'New',
@@ -27,10 +28,13 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     fileSource: 'gcs bucket',
   };
 
+  const reset = () => {
+    setbucketName('');
+    setFolderName('');
+  };
+
   const googleLogin = useGoogleLogin({
     onSuccess: async (codeResponse) => {
-      console.log('codeResponse = ', codeResponse);
-      // const tokens = await axios.post(`${url()}/auth`, formData)
       try {
         setStatus('info');
         setStatusMessage('Loading...');
@@ -64,8 +68,9 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             copiedFilesData.unshift({
               name: item.fileName,
               size: item.fileSize ?? 0,
-              gcsBucket: item.gcsBucket,
+              gcsBucket: item.gcsBucketName,
               gcsBucketFolder: item.gcsBucketFolder,
+              id: uuidv4(),
               ...defaultValues,
             });
           } else {
@@ -92,10 +97,6 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     onError: (errorResponse) => console.log(errorResponse),
     scope: 'https://www.googleapis.com/auth/devstorage.read_only',
   });
-  const reset = () => {
-    setbucketName('');
-    setFolderName('');
-  };
 
   const submitHandler = async () => {
     if (bucketName.trim() === '' || projectId.trim() === '') {
@@ -128,14 +129,6 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       submitLabel='Submit'
     >
       <div className='w-full inline-block'>
-        {/* <GoogleLogin
-          onSuccess={(credentialResponse) => {
-            console.log(credentialResponse);
-          }}
-          onError={() => {
-            console.log('Login Failed');
-          }}
-        /> */}
         <TextInput
           id='project id'
           value={projectId}
@@ -151,7 +144,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           }}
         ></TextInput>
         <TextInput
-          id='url'
+          id='bucketname'
           value={bucketName}
           disabled={false}
           label='Bucket Name'

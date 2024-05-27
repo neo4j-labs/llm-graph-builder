@@ -62,7 +62,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
       : process.env.REACT_APP_SOURCES;
 
   return (
-    <div className='flex min-h-[650px] relative'>
+    <div className='flex min-h-[calc(-60px+100vh)] relative'>
       <Drawer
         expanded={isExpanded}
         isResizeable={false}

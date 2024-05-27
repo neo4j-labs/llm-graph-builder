@@ -46,7 +46,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     alertType: 'error',
     alertMessage: '',
   });
-  const { updateStatusForLargeFiles, serverSideErrorHandler } = useServerSideEvent(
+  const { updateStatusForLargeFiles } = useServerSideEvent(
     (min, fileName) => {
       setalertDetails({
         showAlert: true,
@@ -330,8 +330,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   userCredentials.userName,
                   userCredentials.password,
                   userCredentials.database,
-                  updateStatusForLargeFiles,
-                  serverSideErrorHandler
+                  updateStatusForLargeFiles
                 );
               }
             }
@@ -349,7 +348,6 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         setIsLoading(false);
         setConnectionStatus(false);
         setFilesData([]);
-        console.log(error);
       }
     };
     if (connectionStatus) {
@@ -357,7 +355,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     } else {
       setFilesData([]);
     }
-  }, [connectionStatus]);
+  }, [connectionStatus, userCredentials]);
 
   function updatestatus(i: statusupdate) {
     const { file_name } = i;
@@ -409,7 +407,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     autoResetPageIndex: false,
     enableRowSelection: true,
     enableMultiRowSelection: true,
-    getRowId: (row) => `${row.name},${row.fileSource},${row.status}`,
+    getRowId: (row) => JSON.stringify({ ...row }),
   });
 
   useEffect(() => {
