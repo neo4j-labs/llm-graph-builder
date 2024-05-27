@@ -129,7 +129,7 @@ export default function Chatbot(props: ChatbotProps) {
       simulateTypingEffect({ reply: ' ' });
       const chatbotAPI = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
       const chatresponse = chatbotAPI?.response;
-      console.log('response', chatresponse.data.data.info);
+      console.log('api response', chatresponse.data.data.info);
       chatbotReply = chatresponse?.data?.data?.message;
       chatSources = chatresponse?.data?.data?.info.sources;
       chatModel = chatresponse?.data?.data?.info.model;
@@ -218,13 +218,13 @@ export default function Chatbot(props: ChatbotProps) {
                     }`}
                   >
                     {chat.message.split(/`(.+?)`/).map((part, index) =>
-                      (index % 2 === 1 ? (
+                      index % 2 === 1 ? (
                         <span key={index} style={formattedTextStyle}>
                           {part}
                         </span>
                       ) : (
                         part
-                      ))
+                      )
                     )}
                   </div>
                   <div>

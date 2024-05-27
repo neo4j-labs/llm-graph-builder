@@ -16,12 +16,6 @@ const parseEntity = (entity: string) => {
   return { label1, text1, label2, text2 };
 };
 const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, response_time, entities }) => {
-  console.log('sources inside modal', sources);
-  console.log('entities inside modal', entities);
-  console.log('model inside modal', model);
-  console.log('total tokens  inside modal', total_tokens);
-  console.log('timeTaken inside modal', response_time);
-
   const groupedEntities = useMemo(() => {
     return entities?.reduce((acc, entity) => {
       const { label1, text1, label2, text2 } = parseEntity(entity);
@@ -44,7 +38,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
         <Box className='flex flex-col'>
           <Typography variant='h2'>Retrieval information</Typography>
           <Typography variant='body-medium' sx={{ mb: 2 }}>
-            To generate this response, in <span className='font-bold'>{response_time.toFixed(2)} seconds</span> we used{' '}
+            To generate this response, in <span className='font-bold'>{response_time} seconds</span> we used{' '}
             <span className='font-bold'>{total_tokens}</span> tokens with the model{' '}
             <span className='font-bold'>{model}</span>.
           </Typography>
@@ -96,10 +90,14 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                   >
                     {link.source_name}
                   </Typography>
-                  {link.page_numbers.length > 0 ? <Typography variant='body-small' className='italic'>
-                    {' '}
-                    - Page {link.page_numbers.join(', ')}
-                  </Typography> : <></>}
+                  {link.page_numbers.length > 0 ? (
+                    <Typography variant='body-small' className='italic'>
+                      {' '}
+                      - Page {link.page_numbers.join(', ')}
+                    </Typography>
+                  ) : (
+                    <></>
+                  )}
                 </div>
               )}
             </li>

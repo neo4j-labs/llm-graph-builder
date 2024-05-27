@@ -31,7 +31,6 @@ const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }
         userCredentials as UserCredentials,
         sessionStorage.getItem('session_id') ?? ''
       );
-      console.log('res', response);
       if (response.data.status === 'Success') {
         setMessages([
           {
