@@ -190,7 +190,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   };
 
   const headerTitle =
-    viewPoint !== 'showGraphView' ? `Inspect Generated Graph from ${inspectedName}` : 'Generated Graph';
+    viewPoint === 'showGraphView' || viewPoint === 'chatInfoView'
+      ? 'Generated Graph'
+      : `Inspect Generated Graph from ${inspectedName}`;
+
+  const checkBoxView = viewPoint !== 'chatInfoView';
 
   const nvlCallbacks = {
     onLayoutComputing(isComputing: boolean) {
@@ -240,28 +244,30 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       >
         <Dialog.Header id='form-dialog-title'>
           {headerTitle}
-          <div className='flex gap-5 mt-2 justify-between'>
-            <div className='flex gap-5'>
-              <Checkbox
-                checked={graphType.includes('document')}
-                label='Document'
-                disabled={(graphType.includes('document') && graphType.length === 1) || loading}
-                onChange={() => handleCheckboxChange('document')}
-              />
-              <Checkbox
-                checked={graphType.includes('entities')}
-                label='Entities'
-                disabled={(graphType.includes('entities') && graphType.length === 1) || loading}
-                onChange={() => handleCheckboxChange('entities')}
-              />
-              <Checkbox
-                checked={graphType.includes('chunks')}
-                label='Chunks'
-                disabled={(graphType.includes('chunks') && graphType.length === 1) || loading}
-                onChange={() => handleCheckboxChange('chunks')}
-              />
+          {checkBoxView && (
+            <div className='flex gap-5 mt-2 justify-between'>
+              <div className='flex gap-5'>
+                <Checkbox
+                  checked={graphType.includes('document')}
+                  label='Document'
+                  disabled={(graphType.includes('document') && graphType.length === 1) || loading}
+                  onChange={() => handleCheckboxChange('document')}
+                />
+                <Checkbox
+                  checked={graphType.includes('entities')}
+                  label='Entities'
+                  disabled={(graphType.includes('entities') && graphType.length === 1) || loading}
+                  onChange={() => handleCheckboxChange('entities')}
+                />
+                <Checkbox
+                  checked={graphType.includes('chunks')}
+                  label='Chunks'
+                  disabled={(graphType.includes('chunks') && graphType.length === 1) || loading}
+                  onChange={() => handleCheckboxChange('chunks')}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </Dialog.Header>
         <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border border-palette-neutral-border-weak'>
           <div className='bg-white relative w-full h-full max-h-full'>

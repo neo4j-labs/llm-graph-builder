@@ -11,7 +11,7 @@ const GraphViewButton: React.FC<GraphViewButtonProps> = ({ chunk_ids }) => {
 
   const handleGraphViewClick = () => {
     setOpenGraphView(true);
-    setViewPoint('chatInfo');
+    setViewPoint('chatInfoView');
   };
   return (
     <>
