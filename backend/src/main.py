@@ -335,6 +335,9 @@ def get_source_list_from_graph(uri,userName,password,db_name=None):
   logging.info("Get existing files list from graph")
   graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
   graph_DB_dataAccess = graphDBdataAccess(graph)
+  if not graph._driver._closed:
+      logging.info(f"closing connection for sources_list api")
+      graph._driver.close()
   return graph_DB_dataAccess.get_source_list()
 
 def update_graph(graph):
@@ -362,10 +365,11 @@ def merge_chunks(file_name, total_chunks, chunk_dir, merged_dir):
 
   if not os.path.exists(merged_dir):
       os.mkdir(merged_dir)
-
+  logging.info(f'Merged File Path: {merged_dir}')
   with open(os.path.join(merged_dir, file_name), "wb") as write_stream:
       for i in range(1,total_chunks+1):
           chunk_file_path = os.path.join(chunk_dir, f"{file_name}_part_{i}")
+          logging.info(f'Chunk File Path While Merging Parts:{chunk_file_path}')
           with open(chunk_file_path, "rb") as chunk_file:
               shutil.copyfileobj(chunk_file, write_stream)
           os.unlink(chunk_file_path)  # Delete the individual chunk file after merging
@@ -376,7 +380,7 @@ def merge_chunks(file_name, total_chunks, chunk_dir, merged_dir):
 
 
 def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname, chunk_dir, merged_dir):
-  # chunk_dir = os.path.join(os.path.dirname(__file__), "chunks")  # Directory to save chunks
+  
   if not os.path.exists(chunk_dir):
       os.mkdir(chunk_dir)
   
@@ -411,4 +415,7 @@ def get_labels_and_relationtypes(graph):
           RETURN labels, collect(relationshipType) as relationshipTypes
           """
   graphDb_data_Access = graphDBdataAccess(graph)
-  return graphDb_data_Access.execute_query(query)
+  result = graphDb_data_Access.execute_query(query)
+  if result is None:
+     result=[]
+  return result
