@@ -235,7 +235,7 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
-        result["info"]["response_time"] = total_call_time
+        result["info"]["response_time"] = round(total_call_time, 2)
         
         josn_obj = {'api_name':'chat_bot','db_url':uri}
         logger.log_struct(josn_obj)
