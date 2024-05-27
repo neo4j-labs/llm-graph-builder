@@ -1,10 +1,11 @@
 from score import *
 from src.main import *
 import logging
-from src.QA_integration import QA_RAG
+from src.QA_integration_new import QA_RAG
 from langserve import add_routes
 import asyncio
 import os
+
 
 uri =''
 userName =''
