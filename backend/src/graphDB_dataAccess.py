@@ -5,6 +5,7 @@ from langchain_community.graphs import Neo4jGraph
 from src.shared.common_fn import delete_uploaded_local_file
 from src.api_response import create_api_response
 from src.entities.source_node import sourceNode
+import json
 
 class graphDBdataAccess:
 
@@ -148,12 +149,15 @@ class graphDBdataAccess:
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
     
-    def delete_file_from_graph(self, filenames:str, source_types:str, deleteEntities:str, merged_dir:str):
-        filename_list = filenames.split(',')
-        source_types_list = source_types.split(',')
+    def delete_file_from_graph(self, filenames, source_types, deleteEntities:str, merged_dir:str):
+        # filename_list = filenames.split(',')
+        filename_list= list(map(str.strip, json.loads(filenames)))
+        source_types_list= list(map(str.strip, json.loads(source_types)))
+        # source_types_list = source_types.split(',')
         for (file_name,source_type) in zip(filename_list, source_types_list):
             merged_file_path = os.path.join(merged_dir, file_name)
             if source_type == 'local file':
+                logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
                 delete_uploaded_local_file(merged_file_path, file_name)
 
         query_to_delete_document=""" 
