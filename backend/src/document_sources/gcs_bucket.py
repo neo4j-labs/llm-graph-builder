@@ -8,9 +8,8 @@ def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder
     file_name=''
     try:
       bucket = storage_client.bucket(gcs_bucket_name.strip())
-      buckets_list = [bucket.name for bucket in storage_client.list_buckets()]
-
-      if bucket in buckets_list:
+      buckets_list = [bkt.name for bkt in storage_client.list_buckets()]
+      if bucket.name in buckets_list:
         blobs = storage_client.list_blobs(gcs_bucket_name.strip(), prefix=gcs_bucket_folder if gcs_bucket_folder else '')
         lst_file_metadata=[]
         for blob in blobs:
