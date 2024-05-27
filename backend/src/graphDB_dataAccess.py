@@ -24,9 +24,8 @@ class graphDBdataAccess:
         
     def create_source_node(self, obj_source_node:sourceNode):
         try:
-            logging.info(f"creating source node for {obj_source_node.file_name}")
             job_status = "New"
-            logging.info("create source node as file name if not exist")
+            logging.info("creating source node if does not exist")
             self.graph.query("""MERGE(d:Document {fileName :$fn}) SET d.fileSize = $fs, d.fileType = $ft ,
                             d.status = $st, d.url = $url, d.awsAccessKeyId = $awsacc_key_id, 
                             d.fileSource = $f_source, d.createdAt = $c_at, d.updatedAt = $u_at, 
