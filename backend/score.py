@@ -26,6 +26,12 @@ from google.oauth2.credentials import Credentials
 import os
 from typing import List
 from google.cloud import logging as gclogger
+import uvicorn
+from authlib.integrations.starlette_client import OAuth
+import google.auth
+from starlette.config import Config
+from authlib.integrations.starlette_client import OAuthError
+from fastapi.responses import JSONResponse
 
 logging_client = gclogger.Client()
 logger_name = "llm_experiments_metrics" # Saved in the google cloud logs
@@ -54,6 +60,7 @@ app.add_middleware(
 add_routes(app,ChatVertexAI(), path="/vertexai")
 
 app.add_api_route("/health", health([healthy_condition, healthy]))
+SessionMiddleware
 
 app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
 
@@ -139,7 +146,14 @@ async def create_source_knowledge_graph_url(
             request.session['userName'] = userName
             request.session['password'] = password
             request.session['database'] = database
-            return RedirectResponse(url=f'/authorize/{model}/{gcs_project_id}/{gcs_bucket_name}/{gcs_bucket_folder}/{source_type}/{source}', status_code=303)
+            request.session['model'] = model
+            request.session['gcs_project_id'] = gcs_project_id
+            request.session['gcs_bucket_name'] = gcs_bucket_name
+            request.session['gcs_bucket_folder'] = gcs_bucket_folder
+            request.session['source_type'] = source_type
+            request.session['source'] = source
+            #return RedirectResponse(url='/authorize', status_code=303)
+            return RedirectResponse(url='/login', status_code=303)
             # lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, source_type
             # )
         elif source_type == 'youtube':
@@ -415,16 +429,6 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
     
     return EventSourceResponse(generate(),ping=60)
 
-
-@app.get('/authorize/{model}/{gcs_project_id}/{gcs_bucket_name}/{gcs_bucket_folder}/{source_type}/{source}')
-async def authorize(request: Request, model:str, gcs_project_id:str, gcs_bucket_name:str, gcs_bucket_folder:str, source_type:str, source:str):
-    #request.session['graph'] = graph
-    request.session['model'] = model
-    request.session['gcs_project_id'] = gcs_project_id
-    request.session['gcs_bucket_name'] = gcs_bucket_name
-    request.session['gcs_bucket_folder'] = gcs_bucket_folder
-    request.session['source_type'] = source_type
-    request.session['source'] = source
 @app.post("/delete_document_and_entities")
 async def delete_document_and_entities(uri=Form(None), 
                                        userName=Form(None), 
@@ -479,17 +483,21 @@ async def get_document_status(file_name, url, userName, password, database):
         error_message = str(e)
         logging.exception(f'{message}:{error_message}')
         return create_api_response('Failed',message=message)
-    
-    
+ 
+@app.get('/authorize')
+async def authorize(request: Request):
+    #request.session['graph'] = graph
     flow = google_auth_oauthlib.flow.Flow.from_client_config(oauth_config, scopes=SCOPES)
     flow.redirect_uri = REDIRECT_URI
     authorization_url, state = flow.authorization_url(access_type='offline', include_granted_scopes='true')
     request.session['state'] = state
-    return RedirectResponse(url=authorization_url)
+    logging.info(f"session = {request.session}")
+    return RedirectResponse(url=authorization_url)    
 
 @app.get('/oauth2callback')
 async def oauth2callback(request: Request):
-    state = request.session['state']
+    logging.info(f"session in oauth2callback : {request.session}")
+    state = request.session.get('state')
     flow = google_auth_oauthlib.flow.Flow.from_client_config(oauth_config, scopes=SCOPES, state=state)
     flow.redirect_uri = REDIRECT_URI
     flow.fetch_token(authorization_response=str(request.url))
@@ -515,5 +523,77 @@ async def list_buckets(request: Request):
 def credentials_to_dict(credentials):
     return {'token': credentials.token, 'refresh_token': credentials.refresh_token, 'token_uri': credentials.token_uri, 'client_id': credentials.client_id, 'client_secret': credentials.client_secret, 'scopes': credentials.scopes}
 
+config_data = {'GOOGLE_CLIENT_ID': GOOGLE_CLIENT_ID, 'GOOGLE_CLIENT_SECRET': GOOGLE_CLIENT_SECRET}
+starlette_config = Config(environ=config_data)
+oauth = OAuth(starlette_config)
+
+oauth.register(
+    name='google',
+    client_id = GOOGLE_CLIENT_ID,
+    client_secret = GOOGLE_CLIENT_SECRET,
+    auth_uri = "https://accounts.google.com/o/oauth2/auth",
+    token_uri = "https://oauth2.googleapis.com/token",
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email profile'}
+)
+
+@app.route('/login')
+async def login(request: Request):
+    logging.info("in login")
+    redirect_uri = request.url_for('auth')  # This creates the url for our /auth endpoint
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+@app.route('/auth')
+async def auth(request:Request):
+    try:
+        logging.info("In auth")
+        token = ""
+        #access_token = await oauth.google.authorize_access_token(token)
+        graph = create_graph_database_connection("neo4j+s://73b760b4.databases.neo4j.io", "neo4j", "HqwAzfG83XwcEQ-mvEG4yNpcRTHMpsgZaYW3qIGJh2I", "neo4j")
+        lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, 
+                                                                                    "OpenAI GPT 3.5", 
+                                                                                    "persistent-genai", 
+                                                                                    "llm_graph_genai_project", 
+                                                                                    "test_folder1", 
+                                                                                    "gcs bucket",
+                                                                                    Credentials(token))
+        print(f"lst_file_name = {lst_file_name}, success_count={success_count}, failed_count={failed_count}")
+        #return lst_file_name,success_count,failed_count
+        source_type = "gcs bucket"
+        message = f"Source Node created successfully for source type: {source_type} and source:"
+        josn_obj = {'api_name':'url_scan','db_url':"neo4j+s://73b760b4.databases.neo4j.io",'url_scanned_file':lst_file_name}
+        logger.log_struct(josn_obj)
+        response_data = create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name)    
+        return JSONResponse(response_data)
+    
+        #return RedirectResponse("/url/scan") 
+
+        client = google.cloud.storage.Client(credentials=Credentials(token))
+        buckets = client.list_buckets()
+        for bucket in buckets:
+            print(bucket.name)
+        bucket = client.bucket("llm_graph_genai_project".strip())
+        if bucket.exists():
+            blobs = client.list_blobs("llm_graph_genai_project".strip(), prefix="test_folder1" if "test_folder1" else '')
+            lst_file_metadata=[]
+            for blob in blobs:
+                if blob.content_type == 'application/pdf':
+                    folder_name, file_name = os.path.split(blob.name)
+                    file_size = blob.size
+                    source_url= blob.media_link
+                    gcs_bucket = "llm_graph_genai_project"
+                    print(f"filename = {file_name}")    
+    except OAuthError as e:
+        print(f"exception block = {e}")
+    return RedirectResponse("/")
+
+# @app.route('/auth')
+# def auth(request:Request):
+#     print(f"session = {request.session}")
+#     if "user" in request.session:
+#         token = oauth.google.authorize_access_token()
+#         request.session['user'] = token['userinfo']
+#     return RedirectResponse('/') 
+           
 if __name__ == "__main__":
     uvicorn.run(app)

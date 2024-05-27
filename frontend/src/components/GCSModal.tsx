@@ -19,11 +19,11 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const { setFilesData, model, filesData } = useFileContext();
 
   const googleLogin = useGoogleLogin({
-    flow: 'auth-code',
+    //flow: 'auth-code',
     onSuccess: async (codeResponse) => {
-      console.log(codeResponse);
-      const tokens = await axios.post('https://supreme-space-funicular-p56j6v56pr627r6j-3001.app.github.dev/auth/google', { code: codeResponse.code })
-      console.log(tokens);
+      console.log("codeResponse = ", codeResponse);
+      const tokens = await axios.get('http://localhost:8000/auth')
+      console.log("tokens = ",tokens);
     },
     onError: errorResponse => console.log(errorResponse),
     scope: 'https://www.googleapis.com/auth/devstorage.read_only'
