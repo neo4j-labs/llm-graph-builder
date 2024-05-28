@@ -134,7 +134,6 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                       </Typography>
                       {link.page_numbers.length > 0 ? (
                         <Typography variant='body-small' className='italic'>
-                          {' '}
                           - Page {link.page_numbers.join(', ')}
                         </Typography>
                       ) : (

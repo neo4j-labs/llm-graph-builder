@@ -5,7 +5,6 @@ import { OverridableStringUnion } from '@mui/types';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { NonOAuthError } from '@react-oauth/google';
 
-
 export interface CustomFile extends Partial<globalThis.File> {
   processing: number | string;
   status: string;
@@ -148,8 +147,8 @@ export interface CommonButtonProps {
 }
 
 export interface Source {
-  page_number: number[];
-  source_name: string[];
+  page_numbers: number[];
+  source_name: string;
   time_stamps: string;
 }
 export interface Messages {
@@ -158,7 +157,7 @@ export interface Messages {
   user: string;
   datetime: string;
   isTyping?: boolean;
-  sources?: string[];
+  sources?: Source[];
   model?: string;
   isLoading?: boolean;
   response_time?: number;
@@ -282,7 +281,7 @@ export interface SourceListServerData {
 }
 
 export interface chatInfoMessage extends Partial<Messages> {
-  sources: string[];
+  sources: Source[];
   model: string;
   response_time: number;
   chunk_ids: string[];

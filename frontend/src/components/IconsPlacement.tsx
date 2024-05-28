@@ -12,7 +12,14 @@ interface IconProps {
 const IconsPlacement: React.FC<IconProps> = ({ closeChatBot, deleteOnClick, messages }) => {
   return (
     <div className='flex items-end justify-end'>
-      <ButtonWithToolTip text='Clear chat history' aria-label='Remove chat history' clean onClick={deleteOnClick} disabled={messages.length === 1} placement='left'>
+      <ButtonWithToolTip
+        text='Clear chat history'
+        aria-label='Remove chat history'
+        clean
+        onClick={deleteOnClick}
+        disabled={messages.length === 1}
+        placement='left'
+      >
         <TrashIconOutline />
       </ButtonWithToolTip>
       <IconButton aria-label='Remove chatbot' clean onClick={closeChatBot}>
