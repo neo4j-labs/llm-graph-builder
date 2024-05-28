@@ -11,6 +11,8 @@ import YoutubeModal from '../YoutubeModal';
 import WikipediaModal from '../WikipediaModal';
 import GCSButton from '../GCSButton';
 import GCSModal from '../GCSModal';
+import CustomAlert from '../Alert';
+import { useAlertContext } from '../../context/Alert';
 
 const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
@@ -18,6 +20,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   const [showWikiepediaModal, setShowWikiepediaModal] = useState<boolean>(false);
   const [showYoutubeModal, setShowYoutubeModal] = useState<boolean>(false);
   const [showGCSModal, setShowGCSModal] = useState<boolean>(false);
+  const { closeAlert, alertState } = useAlertContext();
 
   useEffect(() => {
     async function getHealthStatus() {
@@ -72,6 +75,14 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
         key={'leftdrawer'}
       >
         <Drawer.Body className='!overflow-hidden' style={{ height: 'intial' }}>
+          {alertState.showAlert && (
+            <CustomAlert
+              severity={alertState.alertType}
+              open={alertState.showAlert}
+              handleClose={closeAlert}
+              alertMessage={alertState.alertMessage}
+            />
+          )}
           <div className='flex h-full flex-col'>
             <div className='relative h-full'>
               <div className='flex flex-col h-full'>

@@ -24,7 +24,7 @@ import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { statusCheck } from '../utils/Utils';
-import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, alertState } from '../types';
+import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, alertStateType } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
 import CustomAlert from './Alert';
@@ -41,7 +41,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
-  const [alertDetails, setalertDetails] = useState<alertState>({
+  const [alertDetails, setalertDetails] = useState<alertStateType>({
     showAlert: false,
     alertType: 'error',
     alertMessage: '',
@@ -287,6 +287,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   gcsBucketFolder: item?.gcsBucketFolder,
                   errorMessage: item?.errorMessage,
                   uploadprogess: item?.uploadprogress ?? 0,
+                  google_project_id: item?.gcsProjectId,
                 });
               }
             });
