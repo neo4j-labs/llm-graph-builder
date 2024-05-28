@@ -177,14 +177,14 @@ if __name__ == "__main__":
             test_graph_from_file_local_file() # local file Success Test Case
             #test_graph_from_file_local_file_failed() # local file Failed Test Case
 
-            #test_graph_from_Wikipedia() # Wikipedia Success Test Case
+            test_graph_from_Wikipedia() # Wikipedia Success Test Case
             #test_graph_from_Wikipedia_failed() # Wikipedia Failed Test Case
 
-            #test_graph_from_youtube_video() # Youtube Success Test Case
+            test_graph_from_youtube_video() # Youtube Success Test Case
             #test_graph_from_youtube_video_failed # Failed Test case
 
-            #test_graph_from_file_test_gcs() # GCS Success Test Case
-            #test_chatbot_QnA()
+            test_graph_from_file_test_gcs() # GCS Success Test Case
+            test_chatbot_QnA()
 
             #test_graph_from_file_test_s3_failed() # S3 Failed Test Case
             
