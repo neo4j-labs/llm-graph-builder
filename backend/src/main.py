@@ -19,6 +19,7 @@ import warnings
 from pytube import YouTube
 import sys
 import shutil
+import json
 warnings.filterwarnings("ignore")
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
@@ -250,17 +251,23 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     rel_count = 0
     for i in range(0, len(chunks), update_graph_chunk_processed):
       selected_chunks = chunks[i:i+update_graph_chunk_processed]
-      node_count,rel_count = processing_chunks(selected_chunks,graph,file_name,model,allowedNodes,allowedRelationship,node_count, rel_count)
-      end_time = datetime.now()
-      processed_time = end_time - start_time
-      
-      obj_source_node = sourceNode()
-      obj_source_node.file_name = file_name
-      obj_source_node.updated_at = end_time
-      obj_source_node.processing_time = processed_time
-      obj_source_node.node_count = node_count
-      obj_source_node.relationship_count = rel_count
-      graphDb_data_Access.update_source_node(obj_source_node)
+      result = graphDb_data_Access.get_current_status_document_node(file_name)
+      logging.info(f"Value of is_cancelled : {result[0]['is_cancelled']}")
+      if result[0]['is_cancelled'] == True:
+         logging.info('Exit from running loop of processing file')
+         exit
+      else:
+        node_count,rel_count = processing_chunks(selected_chunks,graph,file_name,model,allowedNodes,allowedRelationship,node_count, rel_count)
+        end_time = datetime.now()
+        processed_time = end_time - start_time
+        
+        obj_source_node = sourceNode()
+        obj_source_node.file_name = file_name
+        obj_source_node.updated_at = end_time
+        obj_source_node.processing_time = processed_time
+        obj_source_node.node_count = node_count
+        obj_source_node.relationship_count = rel_count
+        graphDb_data_Access.update_source_node(obj_source_node)
     
     
     job_status = "Completed"
@@ -419,3 +426,23 @@ def get_labels_and_relationtypes(graph):
   if result is None:
      result=[]
   return result
+
+def manually_cancelled_job(graph, filenames, source_types, merged_dir):
+  
+  filename_list= list(map(str.strip, json.loads(filenames)))
+  source_types_list= list(map(str.strip, json.loads(source_types)))
+  
+  for (file_name,source_type) in zip(filename_list, source_types_list):
+      obj_source_node = sourceNode()
+      obj_source_node.file_name = file_name
+      obj_source_node.is_cancelled = True
+      obj_source_node.status = 'Completed'
+      obj_source_node.updated_at = datetime.now()
+      graphDb_data_Access = graphDBdataAccess(graph)
+      graphDb_data_Access.update_source_node(obj_source_node)
+      obj_source_node = None
+      merged_file_path = os.path.join(merged_dir, file_name)
+      if source_type == 'local file':
+          logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+          delete_uploaded_local_file(merged_file_path, file_name)
+  return "Cancelled the processing job successfully"
