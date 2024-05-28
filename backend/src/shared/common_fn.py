@@ -31,13 +31,22 @@ def check_url_source(source_type, yt_url:str=None, queries_list:List[str]=None):
       
       elif  source_type == 'Wikipedia':
         wiki_query_ids=[]
-        wikipedia_url_regex = r'^https?://(?:en\.wikipedia\.org/wiki/)?([A-Za-z0-9_\-]+)$'
+        #pattern = r"https?:\/\/([a-zA-Z0-9\.\,\_\-\/]+)\.wikipedia\.([a-zA-Z]{2,3})\/wiki\/([a-zA-Z0-9\.\,\_\-\/]+)"
+        wikipedia_url_regex = r'https?:\/\/(www\.)?en\.wikipedia\.org\/wiki\/(.*)'
+        wiki_id_pattern = r'^[a-zA-Z0-9 _\-\.\,\:\(\)\[\]\{\}\/]*$'
+        
         for wiki_url in queries_list:
-          match = re.match(wikipedia_url_regex, wiki_url.strip())
+          match = re.search(wikipedia_url_regex, wiki_url.strip())
           if match:
-            wiki_query_ids.append(match.group(1))
-          else :  
-             wiki_query_ids.append(wiki_url.strip())
+            if re.match(wiki_id_pattern, match.group(2)):
+                wiki_query_ids.append(match.group(2))
+          else : 
+            if re.match(wiki_id_pattern, wiki_url.strip()):
+                wiki_query_ids.append(wiki_url.strip())
+            else:
+                message = f"Invalid wikipedia source : {wiki_url} Please provide valid wikipedia id/url"
+                raise Exception(message) 
+
         logging.info(f"wikipedia query ids = {wiki_query_ids}")     
         return wiki_query_ids     
     except Exception as e:
