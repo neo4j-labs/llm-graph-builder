@@ -90,7 +90,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
       <Flex className='p-6'>
         {activeTab === 0 ? (
           sources.length > 0 ? (
-            <ul className='list-none'>
+            <ul className='list-class list-none'>
               {sources.map((link, index) => (
                 <li key={index}>
                   {link.source_name.startsWith('http') || link.source_name.startsWith('https') ? (
@@ -184,7 +184,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
         )}
       </Flex>
       {activeTab === 1 && (
-        <Box className='button-container flex mt-2'>
+        <Box className='button-container flex mt-2 justify-center'>
           <GraphViewButton chunk_ids={chunk_ids.join(',')} />
         </Box>
       )}
