@@ -41,7 +41,7 @@ export default function Chatbot(props: ChatbotProps) {
   const simulateTypingEffect = (
     response: {
       reply: string;
-      sources?: [string];
+      sources?: Source[];
       model?: string;
       chunk_ids?: string[];
       total_tokens?: number;
@@ -124,7 +124,6 @@ export default function Chatbot(props: ChatbotProps) {
       simulateTypingEffect({ reply: ' ' });
       const chatbotAPI = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
       const chatresponse = chatbotAPI?.response;
-      console.log('response', chatresponse.data.data.info);
       chatbotReply = chatresponse?.data?.data?.message;
       chatSources = chatresponse?.data?.data?.info.sources;
       chatModel = chatresponse?.data?.data?.info.model;

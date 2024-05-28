@@ -28,6 +28,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   setGraphViewOpen,
   viewPoint,
   chunk_ids,
+  // nodeValues,
+  // relationshipValues
 }) => {
   const nvlRef = useRef<NVL>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -74,16 +76,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.length === 3
       ? queryMap.DocChunkEntities
       : graphType.includes('entities') && graphType.includes('chunks')
-      ? queryMap.ChunksEntities
-      : graphType.includes('entities') && graphType.includes('document')
-      ? queryMap.DocEntities
-      : graphType.includes('document') && graphType.includes('chunks')
-      ? queryMap.DocChunks
-      : graphType.includes('entities') && graphType.length === 1
-      ? queryMap.Entities
-      : graphType.includes('chunks') && graphType.length === 1
-      ? queryMap.Chunks
-      : queryMap.Document;
+        ? queryMap.ChunksEntities
+        : graphType.includes('entities') && graphType.includes('document')
+          ? queryMap.DocEntities
+          : graphType.includes('document') && graphType.includes('chunks')
+            ? queryMap.DocChunks
+            : graphType.includes('entities') && graphType.length === 1
+              ? queryMap.Entities
+              : graphType.includes('chunks') && graphType.length === 1
+                ? queryMap.Chunks
+                : queryMap.Document;
 
   // API Call to fetch the queried Data
   const fetchData = useCallback(async () => {
@@ -91,10 +93,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === 'showGraphView'
           ? await graphQueryAPI(
-              userCredentials as UserCredentials,
-              graphQuery,
-              selectedRows.map((f) => JSON.parse(f).name)
-            )
+            userCredentials as UserCredentials,
+            graphQuery,
+            selectedRows.map((f) => JSON.parse(f).name)
+          )
           : viewPoint === 'tableView'
           ? await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? ''])
           : await chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids ?? '');
@@ -109,62 +111,71 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setNodes([]);
       setRelationships([]);
       setLoading(true);
-      fetchData()
-        .then((result) => {
-          if (result && result.data.data.nodes.length > 0) {
-            const neoNodes = result.data.data.nodes.map((f: Node) => f);
-            const neoRels = result.data.data.relationships.map((f: Relationship) => f);
-            // Infer color schema dynamically
-            let iterator = 0;
-            const schemeVal: Scheme = {};
-            let labels: string[] = [];
-            labels = neoNodes.map((f: any) => f.labels);
-            labels.forEach((label: any) => {
-              if (schemeVal[label] == undefined) {
-                schemeVal[label] = calcWordColor(label[0]);
-                iterator += 1;
-              }
-            });
+      // if (viewPoint === 'chatInfoView') {
+      //   console.log('nodes', nodeValues);
+      //   setNodes(nodeValues ?? []);
+      //   console.log('nodes', nodes);
+      //   setRelationships(relationshipValues ?? []);
+      //   setLoading(false);
+      // }
+      // else {
+        fetchData()
+          .then((result) => {
+            if (result && result.data.data.nodes.length > 0) {
+              const neoNodes = result.data.data.nodes.map((f: Node) => f);
+              const neoRels = result.data.data.relationships.map((f: Relationship) => f);
+              // Infer color schema dynamically
+              let iterator = 0;
+              const schemeVal: Scheme = {};
+              let labels: string[] = [];
+              labels = neoNodes.map((f: any) => f.labels);
+              labels.forEach((label: any) => {
+                if (schemeVal[label] == undefined) {
+                  schemeVal[label] = calcWordColor(label[0]);
+                  iterator += 1;
+                }
+              });
 
-            const newNodes: Node[] = neoNodes.map((g: any) => {
-              return {
-                id: g.element_id,
-                size: getSize(g),
-                captionAlign: 'bottom',
-                iconAlign: 'bottom',
-                captionHtml: <b>Test</b>,
-                caption: getNodeCaption(g),
-                color: schemeVal[g.labels[0]],
-                icon: getIcon(g),
-                labels: g.labels,
-              };
-            });
-            const finalNodes = newNodes.flat();
-            const newRels: Relationship[] = neoRels.map((relations: any) => {
-              return {
-                id: relations.element_id,
-                from: relations.start_node_element_id,
-                to: relations.end_node_element_id,
-                caption: relations.type,
-              };
-            });
-            const finalRels = newRels.flat();
-            setNodes(finalNodes);
-            setRelationships(finalRels);
-            setScheme(schemeVal);
-            setLoading(false);
-          } else {
+              const newNodes: Node[] = neoNodes.map((g: any) => {
+                return {
+                  id: g.element_id,
+                  size: getSize(g),
+                  captionAlign: 'bottom',
+                  iconAlign: 'bottom',
+                  captionHtml: <b>Test</b>,
+                  caption: getNodeCaption(g),
+                  color: schemeVal[g.labels[0]],
+                  icon: getIcon(g),
+                  labels: g.labels,
+                };
+              });
+              const finalNodes = newNodes.flat();
+              const newRels: Relationship[] = neoRels.map((relations: any) => {
+                return {
+                  id: relations.element_id,
+                  from: relations.start_node_element_id,
+                  to: relations.end_node_element_id,
+                  caption: relations.type,
+                };
+              });
+              const finalRels = newRels.flat();
+              setNodes(finalNodes);
+              setRelationships(finalRels);
+              setScheme(schemeVal);
+              setLoading(false);
+            } else {
+              setLoading(false);
+              setStatus('danger');
+              setStatusMessage(`Unable to retrieve document graph for ${inspectedName}`);
+            }
+          })
+          .catch((error: any) => {
             setLoading(false);
             setStatus('danger');
-            setStatusMessage(`Unable to retrieve document graph for ${inspectedName}`);
-          }
-        })
-        .catch((error: any) => {
-          setLoading(false);
-          setStatus('danger');
-          setStatusMessage(error.message);
-        });
-    }
+            setStatusMessage(error.message);
+          });
+      }
+    //}
   }, [open, graphType]);
 
   // If the modal is closed, render nothing

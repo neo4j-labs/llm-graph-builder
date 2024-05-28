@@ -31,7 +31,6 @@ const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }
         userCredentials as UserCredentials,
         sessionStorage.getItem('session_id') ?? ''
       );
-      console.log('res', response);
       if (response.data.status === 'Success') {
         setMessages([
           {
@@ -39,7 +38,6 @@ const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }
             id: 2,
             message:
               ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
-            sources: ['https://neo4j.com/'],
             user: 'chatbot',
           },
         ]);

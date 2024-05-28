@@ -147,9 +147,9 @@ export interface CommonButtonProps {
 }
 
 export interface Source {
-  page_numbers: number[];
+  page_numbers?: number[];
   source_name: string;
-  time_stamps: string;
+  time_stamps?: string;
 }
 export interface Messages {
   id: number;
@@ -182,6 +182,8 @@ export interface GraphViewModalProps {
   setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
   viewPoint: string;
   chunk_ids?: string;
+  nodeValues?:Node[];
+  relationshipValues?: Relationship[]
 }
 
 export type GraphType = 'document' | 'chunks' | 'entities';

@@ -10,6 +10,7 @@ import HoverableLink from './HoverableLink';
 import GraphViewButton from './GraphViewButton';
 import { chunkEntitiesAPI } from '../services/ChunkEntitiesInfo';
 import { useCredentials } from '../context/UserCredentials';
+// import type { Node, Relationship } from '@neo4j-nvl/base';
 
 type Entity = {
   element_id: string;
@@ -37,6 +38,8 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
   const [loading, setIsloading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
   const labelColourMap = useRef<{ [key: string]: LabelColors }>({});
+  // const [nodes, setNodes] = useState<Node[]>([]);
+  // const [relationships, setRelationships] = useState<Relationship[]>([]);
 
   useEffect(() => {
     if (activeTab === 1) {
@@ -44,6 +47,8 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
       chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids.join(','))
         .then((response) => {
           setInfoEntities(response.data.data.nodes);
+          // setNodes(response.data.data.nodes);
+          // setRelationships(response.data.data.relationships)
           setIsloading(false);
         })
         .catch((error) => {
@@ -77,7 +82,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
         <Box className='flex flex-col'>
           <Typography variant='h2'>Retrieval information</Typography>
           <Typography variant='body-medium' sx={{ mb: 2 }}>
-            To generate this response, in <span className='font-bold'>{response_time.toFixed(2)} seconds</span> we used{' '}
+            To generate this response, in <span className='font-bold'>{response_time} seconds</span> we used{' '}
             <span className='font-bold'>{total_tokens}</span> tokens with the model{' '}
             <span className='font-bold'>{model}</span>.
           </Typography>
@@ -132,7 +137,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                       >
                         {link.source_name}
                       </Typography>
-                      {link.page_numbers.length > 0 ? (
+                      {link.page_numbers && link.page_numbers.length > 0 ? (
                         <Typography variant='body-small' className='italic'>
                           - Page {link.page_numbers.join(', ')}
                         </Typography>
@@ -185,6 +190,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
       {activeTab === 1 && (
         <Box className='button-container flex mt-2 justify-center'>
           <GraphViewButton chunk_ids={chunk_ids.join(',')} />
+          {/* <GraphViewButton nodeValues={nodes} relationshipValues={relationships}/> */}
         </Box>
       )}
     </Box>
