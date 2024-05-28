@@ -19,6 +19,12 @@ from src.graphDB_dataAccess import graphDBdataAccess
 from src.graph_query import get_graph_results
 from sse_starlette.sse import EventSourceResponse
 import json
+from typing import List, Mapping
+from fastapi.responses import RedirectResponse, HTMLResponse
+from starlette.middleware.sessions import SessionMiddleware
+import google_auth_oauthlib.flow
+from google.oauth2.credentials import Credentials
+import os
 from typing import List
 from google.cloud import logging as gclogger
 from src.logger import CustomLogger
@@ -53,8 +59,12 @@ if is_gemini_enabled:
 
 app.add_api_route("/health", health([healthy_condition, healthy]))
 
+app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
+
+
 @app.post("/url/scan")
 async def create_source_knowledge_graph_url(
+    request: Request,
     uri=Form(None),
     userName=Form(None),
     password=Form(None),
@@ -66,8 +76,11 @@ async def create_source_knowledge_graph_url(
     model=Form(None),
     gcs_bucket_name=Form(None),
     gcs_bucket_folder=Form(None),
-    source_type=Form(None)
+    source_type=Form(None),
+    gcs_project_id=Form(None),
+    access_token=Form(None)
     ):
+    
     try:
         if source_url is not None:
             source = source_url
@@ -79,7 +92,7 @@ async def create_source_knowledge_graph_url(
             lst_file_name,success_count,failed_count = create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type
             )
         elif source_type == 'gcs bucket':
-            lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, gcs_bucket_name, gcs_bucket_folder, source_type
+            lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, source_type,Credentials(access_token)
             )
         elif source_type == 'youtube':
             lst_file_name,success_count,failed_count = create_source_node_graph_url_youtube(graph, model, source_url, source_type
@@ -99,7 +112,8 @@ async def create_source_knowledge_graph_url(
         message = f" Unable to create source node for source type: {source_type} and source: {source}"
         logging.exception(f'Exception Stack trace:')
         return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=source_type)
-
+    finally:
+            close_db_connection(graph, 'url/scan')
 
 @app.post("/extract")
 async def extract_knowledge_graph_from_file(
@@ -113,6 +127,7 @@ async def extract_knowledge_graph_from_file(
     aws_secret_access_key=Form(None),
     wiki_query=Form(None),
     max_sources=Form(None),
+    gcs_project_id=Form(None),
     gcs_bucket_name=Form(None),
     gcs_bucket_folder=Form(None),
     gcs_blob_filename=Form(None),
@@ -158,11 +173,12 @@ async def extract_knowledge_graph_from_file(
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
             result = await asyncio.to_thread(
-                extract_graph_from_file_gcs, graph, model, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship)
+                extract_graph_from_file_gcs, graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
-        result['db_url'] = uri
-        result['api_name'] = 'extract'
+        if result is not None:
+            result['db_url'] = uri
+            result['api_name'] = 'extract'
         logger.log_struct(result)
         return create_api_response('Success', data=result, file_source= source_type)
     except Exception as e:
@@ -175,7 +191,9 @@ async def extract_knowledge_graph_from_file(
         logger.log_struct(josn_obj)
         logging.exception(f'File Failed in extraction: {josn_obj}')
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = file_name)
-
+    finally:
+            close_db_connection(graph, 'extract')
+            
 @app.get("/sources_list")
 async def get_source_list(uri:str, userName:str, password:str, database:str=None):
     """
@@ -214,14 +232,16 @@ async def update_similarity_graph(uri=Form(None), userName=Form(None), password=
         error_message = str(e)
         logging.exception(f'Exception in update KNN graph:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
-        
+    finally:
+            close_db_connection(graph, 'update_similarity_graph')
+                
 @app.post("/chat_bot")
 async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password=Form(None), database=Form(None),question=Form(None), session_id=Form(None)):
     try:
         # database = "neo4j"
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,session_id=session_id)
-        josn_obj = {'api_name':'chat_bot','db_url':uri}
+        josn_obj = {'api_name':'chat_bot','db_url':uri, 'session_id':session_id}
         logger.log_struct(josn_obj)
         return create_api_response('Success',data=result)
     except Exception as e:
@@ -230,7 +250,8 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
         error_message = str(e)
         logging.exception(f'Exception in chat bot:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
-
+    finally:
+        close_db_connection(graph, 'chat_bot')
 
 @app.post("/graph_query")
 async def graph_query(
@@ -241,7 +262,6 @@ async def graph_query(
     document_names: str = Form(None),
 ):
     try:
-        print(document_names)
         result = await asyncio.to_thread(
             get_graph_results,
             uri=uri,
@@ -272,6 +292,9 @@ async def clear_chat_bot(uri=Form(None),userName=Form(None), password=Form(None)
         error_message = str(e)
         logging.exception(f'Exception in chat bot:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
+    finally:
+            close_db_connection(graph, 'clear_chat_bot')
+            
 @app.post("/connect")
 async def connect(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
     try:
@@ -303,7 +326,9 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
         error_message = str(e)
         logging.info(message)
         logging.exception(f'Exception:{error_message}')
-
+    finally:
+            close_db_connection(graph, 'upload')
+            
 @app.post("/schema")
 async def get_structured_schema(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
     try:
@@ -318,7 +343,9 @@ async def get_structured_schema(uri=Form(None), userName=Form(None), password=Fo
         error_message = str(e)
         logging.info(message)
         logging.exception(f'Exception:{error_message}')
-
+    finally:
+            close_db_connection(graph, 'schema')
+            
 def decode_password(pwd):
     sample_string_bytes = base64.b64decode(pwd)
     decoded_password = sample_string_bytes.decode("utf-8")
@@ -347,7 +374,8 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                 'relationshipCount':result[0]['relationshipCount'],
                 'model':result[0]['model'],
                 'total_chunks':result[0]['total_chunks'],
-                'total_pages':result[0]['total_pages']
+                'total_pages':result[0]['total_pages'],
+                'fileSize':result[0]['fileSize']
                 })
             else:
                 status = json.dumps({'fileName':file_name, 'status':'Failed'})
@@ -378,6 +406,8 @@ async def delete_document_and_entities(uri=Form(None),
         error_message = str(e)
         logging.exception(f'{message}:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
+    finally:
+            close_db_connection(graph, 'delete_document_and_entities')
 
 @app.get('/document_status/{file_name}')
 async def get_document_status(file_name, url, userName, password, database):
@@ -399,7 +429,8 @@ async def get_document_status(file_name, url, userName, password, database):
                 'relationshipCount':result[0]['relationshipCount'],
                 'model':result[0]['model'],
                 'total_chunks':result[0]['total_chunks'],
-                'total_pages':result[0]['total_pages']
+                'total_pages':result[0]['total_pages'],
+                'fileSize':result[0]['fileSize']
                 }
         else:
             status = {'fileName':file_name, 'status':'Failed'}
@@ -409,6 +440,6 @@ async def get_document_status(file_name, url, userName, password, database):
         error_message = str(e)
         logging.exception(f'{message}:{error_message}')
         return create_api_response('Failed',message=message)
-
+ 
 if __name__ == "__main__":
     uvicorn.run(app)

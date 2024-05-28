@@ -2,18 +2,19 @@ import { useFileContext } from '../context/UsersFiles';
 import { eventResponsetypes } from '../types';
 const perchunksecond = parseInt(process.env.TIME_PER_CHUNK as string);
 export default function useServerSideEvent(
-  alertHandler: (minutes: number, filename: string) => void,
+  alertHandler: (inMinutes:boolean,minutes: number, filename: string) => void,
   errorHandler: (filename: string) => void
 ) {
   const { setFilesData } = useFileContext();
   function updateStatusForLargeFiles(eventSourceRes: eventResponsetypes) {
-    const { fileName, nodeCount, processingTime, relationshipCount, status, total_chunks, model } = eventSourceRes;
+    const { fileName, nodeCount, processingTime, relationshipCount, status, total_chunks, model } =
+      eventSourceRes;
     const alertShownStatus = JSON.parse(localStorage.getItem('alertShown') || 'null');
 
     if (status === 'Processing') {
-      if (alertShownStatus != null && alertShownStatus == false && total_chunks != null) {
+      if (alertShownStatus != null && alertShownStatus == false && total_chunks != null ){
         const minutes = Math.floor((perchunksecond * total_chunks) / 60);
-        alertHandler(minutes, fileName);
+        alertHandler(minutes===0?false:true,minutes===0?Math.floor((perchunksecond * total_chunks)):minutes, fileName);
       }
       if (nodeCount && relationshipCount) {
         setFilesData((prevfiles) => {

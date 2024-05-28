@@ -57,13 +57,13 @@ def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id,
           lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Failed'})
     return lst_file_name,success_count,failed_count
 
-def create_source_node_graph_url_gcs(graph, model, gcs_bucket_name, gcs_bucket_folder, source_type):
+def create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, source_type, credentials):
 
     success_count=0
     failed_count=0
     lst_file_name = []
     
-    lst_file_metadata= get_gcs_bucket_files_info(gcs_bucket_name, gcs_bucket_folder)
+    lst_file_metadata= get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, credentials)
     for file_metadata in lst_file_metadata :
       obj_source_node = sourceNode()
       obj_source_node.file_name = file_metadata['fileName']
@@ -74,15 +74,19 @@ def create_source_node_graph_url_gcs(graph, model, gcs_bucket_name, gcs_bucket_f
       obj_source_node.file_type = 'pdf'
       obj_source_node.gcsBucket = gcs_bucket_name
       obj_source_node.gcsBucketFolder = file_metadata['gcsBucketFolder']
+      obj_source_node.gcsProjectId = file_metadata['gcsProjectId']
       obj_source_node.created_at = datetime.now()
+    
       try:
           graphDb_data_Access = graphDBdataAccess(graph)
           graphDb_data_Access.create_source_node(obj_source_node)
           success_count+=1
-          lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Success', 'gcsBucketName': gcs_bucket_name, 'gcsBucketFolder':obj_source_node.gcsBucketFolder})
+          lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Success', 
+                                'gcsBucketName': gcs_bucket_name, 'gcsBucketFolder':obj_source_node.gcsBucketFolder, 'gcsProjectId':obj_source_node.gcsProjectId})
       except Exception as e:
         failed_count+=1
-        lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Failed', 'gcsBucketName': gcs_bucket_name, 'gcsBucketFolder':obj_source_node.gcsBucketFolder})
+        lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Failed', 
+                              'gcsBucketName': gcs_bucket_name, 'gcsBucketFolder':obj_source_node.gcsBucketFolder, 'gcsProjectId':obj_source_node.gcsProjectId})
     return lst_file_name,success_count,failed_count
 
 def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
@@ -185,9 +189,9 @@ def extract_graph_from_file_Wikipedia(graph, model, wiki_query, max_sources, all
 
   return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
-def extract_graph_from_file_gcs(graph, model, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship):
+def extract_graph_from_file_gcs(graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship):
 
-  file_name, pages = get_documents_from_gcs(gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename)
+  file_name, pages = get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename)
   if pages==None or len(pages)==0:
     raise Exception(f'Pdf content is not available for file : {file_name}')
 
@@ -335,6 +339,9 @@ def get_source_list_from_graph(uri,userName,password,db_name=None):
   logging.info("Get existing files list from graph")
   graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
   graph_DB_dataAccess = graphDBdataAccess(graph)
+  if not graph._driver._closed:
+      logging.info(f"closing connection for sources_list api")
+      graph._driver.close()
   return graph_DB_dataAccess.get_source_list()
 
 def update_graph(graph):
@@ -362,10 +369,11 @@ def merge_chunks(file_name, total_chunks, chunk_dir, merged_dir):
 
   if not os.path.exists(merged_dir):
       os.mkdir(merged_dir)
-
+  logging.info(f'Merged File Path: {merged_dir}')
   with open(os.path.join(merged_dir, file_name), "wb") as write_stream:
       for i in range(1,total_chunks+1):
           chunk_file_path = os.path.join(chunk_dir, f"{file_name}_part_{i}")
+          logging.info(f'Chunk File Path While Merging Parts:{chunk_file_path}')
           with open(chunk_file_path, "rb") as chunk_file:
               shutil.copyfileobj(chunk_file, write_stream)
           os.unlink(chunk_file_path)  # Delete the individual chunk file after merging
@@ -376,7 +384,7 @@ def merge_chunks(file_name, total_chunks, chunk_dir, merged_dir):
 
 
 def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname, chunk_dir, merged_dir):
-  # chunk_dir = os.path.join(os.path.dirname(__file__), "chunks")  # Directory to save chunks
+  
   if not os.path.exists(chunk_dir):
       os.mkdir(chunk_dir)
   
@@ -411,4 +419,7 @@ def get_labels_and_relationtypes(graph):
           RETURN labels, collect(relationshipType) as relationshipTypes
           """
   graphDb_data_Access = graphDBdataAccess(graph)
-  return graphDb_data_Access.execute_query(query)
+  result = graphDb_data_Access.execute_query(query)
+  if result is None:
+     result=[]
+  return result
