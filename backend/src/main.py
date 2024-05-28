@@ -246,14 +246,17 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     logging.info('Update the status as Processing')
     update_graph_chunk_processed = int(os.environ.get('UPDATE_GRAPH_CHUNKS_PROCESSED'))
     # selected_chunks = []
-    graph_documents=[]
+    is_cancelled_status = False
+    job_status = "Completed"
     node_count = 0
     rel_count = 0
     for i in range(0, len(chunks), update_graph_chunk_processed):
       selected_chunks = chunks[i:i+update_graph_chunk_processed]
       result = graphDb_data_Access.get_current_status_document_node(file_name)
+      is_cancelled_status = result[0]['is_cancelled']
       logging.info(f"Value of is_cancelled : {result[0]['is_cancelled']}")
-      if result[0]['is_cancelled'] == True:
+      if is_cancelled_status == True:
+         job_status = "Cancelled"
          logging.info('Exit from running loop of processing file')
          exit
       else:
@@ -268,9 +271,7 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
         obj_source_node.node_count = node_count
         obj_source_node.relationship_count = rel_count
         graphDb_data_Access.update_source_node(obj_source_node)
-    
-    
-    job_status = "Completed"
+      
     obj_source_node = sourceNode()
     obj_source_node.file_name = file_name
     obj_source_node.status = job_status
@@ -436,7 +437,7 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir):
       obj_source_node = sourceNode()
       obj_source_node.file_name = file_name
       obj_source_node.is_cancelled = True
-      obj_source_node.status = 'Completed'
+      obj_source_node.status = 'Cancelled'
       obj_source_node.updated_at = datetime.now()
       graphDb_data_Access = graphDBdataAccess(graph)
       graphDb_data_Access.update_source_node(obj_source_node)
