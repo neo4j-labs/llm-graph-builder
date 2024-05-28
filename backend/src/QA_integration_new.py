@@ -60,13 +60,12 @@ You are an AI-powered question-answering agent. Your task is to provide accurate
 1. **Direct Answers**: Provide straightforward answers to the user's queries without headers unless requested. Avoid speculative responses.
 2. **Utilize History and Context**: Leverage relevant information from previous interactions, the current user input, and the context provided below.
 3. **No Greetings in Follow-ups**: Start with a greeting in initial interactions. Avoid greetings in subsequent responses unless there's a significant break or the chat restarts.
-4. **Source Citation**: Clearly cite your sources, picking them from the corresponding document's metadata within the context. Use the exact source names as provided in the metadata without any modifications. If no information from the context is used, do not include sources. Format: `[Sources: source1, source2]`.
-5. **Admit Unknowns**: Clearly state if an answer is unknown. Avoid making unsupported statements.
-6. **Avoid Hallucination**: Only provide information based on the context provided. Do not invent information.
-7. **Response Length**: Keep responses concise and relevant. Aim for clarity and completeness within 2-3 sentences unless more detail is requested.
-8. **Tone and Style**: Maintain a professional and informative tone. Be friendly and approachable.
-9. **Error Handling**: If a query is ambiguous or unclear, ask for clarification rather than providing a potentially incorrect answer.
-10. **Fallback Options**: If the required information is not available in the provided context, provide a polite and helpful response. Example: "I don't have that information right now. Would you like me to look it up for you?" or "I'm sorry, but I don't have that information. Is there something else I can help with?"
+4. **Admit Unknowns**: Clearly state if an answer is unknown. Avoid making unsupported statements.
+5. **Avoid Hallucination**: Only provide information based on the context provided. Do not invent information.
+6. **Response Length**: Keep responses concise and relevant. Aim for clarity and completeness within 2-3 sentences unless more detail is requested.
+7. **Tone and Style**: Maintain a professional and informative tone. Be friendly and approachable.
+8. **Error Handling**: If a query is ambiguous or unclear, ask for clarification rather than providing a potentially incorrect answer.
+9. **Fallback Options**: If the required information is not available in the provided context, provide a polite and helpful response. Example: "I don't have that information right now." or "I'm sorry, but I don't have that information. Is there something else I can help with?"
 
 ### Context:
 <context>
@@ -75,20 +74,18 @@ You are an AI-powered question-answering agent. Your task is to provide accurate
 
 ### Example Responses:
 User: Hi 
-Response: 'Hello there! How can I assist you today?'
+AI Response: 'Hello there! How can I assist you today?'
 
 User: "What is Langchain?"
-Response: "Langchain is a framework that enables the development of applications powered by large language models, such as chatbots. [Sources: Langchain_Documentation.pdf, https://en.wikipedia.org/wiki/langchain]"
+AI Response: "Langchain is a framework that enables the development of applications powered by large language models, such as chatbots."
 
 User: "Can you explain how to use memory management in Langchain?"
-Response: "Langchain's memory management involves utilizing built-in mechanisms to manage conversational context effectively, ensuring a coherent user experience. [Sources: Memory_Management_for_Chatbots.pdf]"
+AI Response: "Langchain's memory management involves utilizing built-in mechanisms to manage conversational context effectively, ensuring a coherent user experience."
 
 User: "I need help with PyCaret's classification model."
-Response: "PyCaret simplifies the process of building and deploying machine learning models. For classification tasks, you can use PyCaret's setup function to prepare your data, then compare and tune models. [Sources: https://www.youtube.com/watch?v=n1stBfpGotA]"
+AI Response: "PyCaret simplifies the process of building and deploying machine learning models. For classification tasks, you can use PyCaret's setup function to prepare your data, then compare and tune models."
 
-***IMPORTANT***: SOURCES MUST BE INCLUDED AND OUTPUT SOURCES FORMAT `[Sources: source1, source2]` AND KEEP THE SOURCE AS IT IS FROM THE CONTEXT METADATA. PLEASE CROSS VERIFY THE SOURCE IN THE FINAL RESPONSE OR ELSE YOU WILL BE TERMINATED. 
-
-Note: This system does not generate answers based solely on internal knowledge. It answers from the information provided in the user's current and previous inputs, and from explicitly referenced external sources. Ensure that the system is capable of extracting and referencing chunk IDs from your documentation system.
+Note: This system does not generate answers based solely on internal knowledge. It answers from the information provided in the user's current and previous inputs, and from explicitly referenced external sources.
 """
 
 # def get_llm(model: str,max_tokens=CHAT_MAX_TOKENS) -> Any:
@@ -200,15 +197,16 @@ def format_documents(documents):
     sorted_documents = sorted(documents, key=lambda doc: doc.state["query_similarity_score"], reverse=True)
     sorted_documents = sorted_documents[:5] if len(sorted_documents) > 5 else sorted_documents
     formatted_docs = []
+    sources = set()
     for i,doc in enumerate(sorted_documents):
         print("here")
         doc_start = f"Document start\n"
-        info = f"This is the source of this document <source> {doc.metadata['source']} <source>. Please include this in your response if you use any information from this below document\n"
-        formatted_doc = f"Content: {doc.page_content}\nMetadata:- source : {doc.metadata['source']}"
+        formatted_doc = f"Content: {doc.page_content}"
         doc_end = f"\nDocument end\n"
-        final_formatted_doc = doc_start + info + formatted_doc + doc_end
+        sources.add(doc.metadata['source'])
+        final_formatted_doc = doc_start + formatted_doc + doc_end
         formatted_docs.append(final_formatted_doc)
-    return "\n\n".join(formatted_docs)
+    return "\n\n".join(formatted_docs), sources
 
 def get_rag_chain(llm,system_template=SYSTEM_TEMPLATE):
     question_answering_prompt = ChatPromptTemplate.from_messages(
@@ -225,17 +223,17 @@ def get_rag_chain(llm,system_template=SYSTEM_TEMPLATE):
 
     return question_answering_chain
 
-def parse_ai_response(response, docs):
-    sources_pattern = r"\[Sources: ([^\]]+)\]"
-    sources = re.search(sources_pattern, response)
-    content = re.sub(sources_pattern, '', response)
-    sources = sources.group(1).split(', ') if sources else []
+def get_sources_and_chunks(sources_used, docs):
+    # sources_pattern = r"\[Sources: ([^\]]+)\]"
+    # sources = re.search(sources_pattern, response)
+    # content = re.sub(sources_pattern, '', response)
+    # sources = sources.group(1).split(', ') if sources else []
 
-    source_pattern = r"\[Source: ([^\]]+)\]"
-    source = re.search(source_pattern, response)
-    content = re.sub(source_pattern, '', content)
-    source = source.group(1).split(', ') if source else []
-    sources.extend(source)
+    # source_pattern = r"\[Source: ([^\]]+)\]"
+    # source = re.search(source_pattern, response)
+    # content = re.sub(source_pattern, '', content)
+    # source = source.group(1).split(', ') if source else []
+    # sources.extend(source)
 
     docs_metadata = dict()
     for doc in docs:
@@ -245,7 +243,7 @@ def parse_ai_response(response, docs):
         docs_metadata[source] = [chunkids,page_numbers]
     chunkids = list()
     output_sources = list()
-    for source in sources:
+    for source in sources_used:
         if source in set(docs_metadata.keys()):
             chunkids.extend(docs_metadata[source][0])
             page_numbers = docs_metadata[source][1]
@@ -257,7 +255,6 @@ def parse_ai_response(response, docs):
             output_sources.append(current_source)
 
     result = {
-        'content': content,
         'sources': output_sources,
         'chunkIds': chunkids
     }
@@ -266,7 +263,6 @@ def parse_ai_response(response, docs):
 def summarize_messages(llm,history,stored_messages):
     if len(stored_messages) == 0:
         return False
-    print(f"stored messages : {stored_messages}")
     # summarization_template = "Distill the below chat messages into a single summary message. Include as many specific details as you can."
     summarization_prompt = ChatPromptTemplate.from_messages(
         [
@@ -285,7 +281,6 @@ def summarize_messages(llm,history,stored_messages):
     history.clear()
     history.add_user_message("Our current convertaion summary till now")
     history.add_message(summary_message)
-    print(history.messages)
     return True
 
 
@@ -321,10 +316,8 @@ def QA_RAG(graph,model,question,session_id):
                 "messages":messages
             }
         )
-        print(docs)
-        formatted_docs = format_documents(docs)
+        formatted_docs,sources = format_documents(docs)
         doc_retrieval_time = time.time() - start_time
-        print(formatted_docs)
         logging.info(f"Modified question and Documents retrieved in {doc_retrieval_time:.2f} seconds")
 
         start_time = time.time()
@@ -336,13 +329,12 @@ def QA_RAG(graph,model,question,session_id):
             "input"    : question 
         }
         )
-        print(f"AI response : {ai_response}")
-        result = parse_ai_response(ai_response.content,docs)
+        result = get_sources_and_chunks(sources,docs)
+        content = ai_response.content
         if "Gemini" in model:
             total_tokens = ai_response.response_metadata['usage_metadata']['prompt_token_count']
         else:    
             total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
-        print(f"Total tokens : {total_tokens}")
         predict_time = time.time() - start_time
         logging.info(f"Final Response predicted in {predict_time:.2f} seconds")
 
@@ -354,7 +346,7 @@ def QA_RAG(graph,model,question,session_id):
 
         return {
             "session_id": session_id, 
-            "message": result["content"], 
+            "message": content, 
             "info": {
                 "sources": result["sources"],
                 "model": model_version,
@@ -377,5 +369,3 @@ def QA_RAG(graph,model,question,session_id):
                 "error": f"{error_name} :- {str(e)}"
             },
             "user": "chatbot"}
-
-
