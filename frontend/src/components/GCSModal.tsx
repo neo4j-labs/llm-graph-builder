@@ -7,6 +7,7 @@ import { CustomFile, S3ModalProps, fileName, nonoautherror } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
 import { useGoogleLogin } from '@react-oauth/google';
+import { useAlertContext } from '../context/Alert';
 
 const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [bucketName, setbucketName] = useState<string>('');
@@ -15,6 +16,8 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
+  const { showAlert } = useAlertContext();
+
   const { setFilesData, model, filesData } = useFileContext();
 
   const defaultValues: CustomFile = {
@@ -30,19 +33,19 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const reset = () => {
     setbucketName('');
     setFolderName('');
-    setprojectId('')
+    setprojectId('');
   };
 
   useEffect(() => {
-    if (status != "unknown") {
+    if (status != 'unknown') {
       setTimeout(() => {
-        setStatusMessage("")
+        setStatusMessage('');
         setStatus('unknown');
         reset();
         hideModal();
       }, 5000);
     }
-  }, [])
+  }, []);
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (codeResponse) => {
@@ -61,8 +64,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           access_token: codeResponse.access_token,
         });
         if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
-          setStatus('danger');
-          setStatusMessage(apiResponse?.data?.message);
+          showAlert('error', apiResponse?.data?.message);
           setTimeout(() => {
             setStatus('unknown');
             reset();
@@ -70,8 +72,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           }, 5000);
           return;
         }
-        setStatus('success');
-        setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
+        showAlert('success', `Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
         const copiedFilesData = [...filesData];
         apiResponse?.data?.file_name?.forEach((item: fileName) => {
           const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
@@ -102,8 +103,9 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setFilesData(copiedFilesData);
         reset();
       } catch (error) {
-        setStatus('danger');
-        setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
+        if (showAlert != undefined) {
+          showAlert('error', 'Some Error Occurred or Please Check your Instance Connection');
+        }
       }
       setTimeout(() => {
         setStatus('unknown');
@@ -111,15 +113,16 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       }, 500);
     },
     onError: (errorResponse) => {
-      setStatus("danger")
-      setStatusMessage(errorResponse.error_description ?? "Some Error Occurred or Please try signin with your google account")
+      showAlert(
+        'error',
+        errorResponse.error_description ?? 'Some Error Occurred or Please try signin with your google account'
+      );
     },
     scope: 'https://www.googleapis.com/auth/devstorage.read_only',
     onNonOAuthError: (error: nonoautherror) => {
-      console.log(error)
-      setStatus("info")
-      setStatusMessage(error.message as string)
-    }
+      console.log(error);
+      showAlert('info', error.message as string);
+    },
   });
 
   const submitHandler = async () => {

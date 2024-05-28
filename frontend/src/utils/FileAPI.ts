@@ -62,7 +62,7 @@ export const extractAPI = async (
       file_name,
       allowedNodes,
       allowedRelationship,
-      gcs_project_id
+      gcs_project_id,
     };
   } else if (source_type === 'youtube') {
     additionalParams = {
