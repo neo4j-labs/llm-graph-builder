@@ -36,11 +36,11 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     alertMessage: '',
   });
   const { updateStatusForLargeFiles } = useServerSideEvent(
-    (min, fileName) => {
+    (inMinutes, time, fileName) => {
       setalertDetails({
         showAlert: true,
         alertType: 'info',
-        alertMessage: `${fileName} will take approx ${min} Min`,
+        alertMessage: `${fileName} will take approx ${time} ${inMinutes ? 'Min' : 'Sec'}`,
       });
       localStorage.setItem('alertShown', JSON.stringify(true));
     },

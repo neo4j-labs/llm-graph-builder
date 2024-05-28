@@ -47,11 +47,11 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     alertMessage: '',
   });
   const { updateStatusForLargeFiles } = useServerSideEvent(
-    (min, fileName) => {
+    (inMinutes, time, fileName) => {
       setalertDetails({
         showAlert: true,
         alertType: 'info',
-        alertMessage: `${fileName} will take approx ${min} Min`,
+        alertMessage: `${fileName} will take approx ${time} ${inMinutes ? 'Min' : 'Sec'}`,
       });
       localStorage.setItem('alertShown', JSON.stringify(true));
     },
@@ -116,8 +116,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   info.row.original?.fileSource === 's3 bucket'
                     ? info.row.original?.source_url
                     : info.row.original?.fileSource === 'youtube'
-                    ? info.row.original?.source_url
-                    : info.getValue()
+                      ? info.row.original?.source_url
+                      : info.getValue()
                 }
               >
                 {info.getValue()}
@@ -271,14 +271,14 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                     item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                       ? item.status
                       : item.fileSource === 'local file'
-                      ? item.status
-                      : item.status === 'Completed' || item.status === 'Failed'
-                      ? item.status
-                      : item.fileSource == 'Wikipedia' ||
-                        item.fileSource == 'youtube' ||
-                        item.fileSource == 'gcs bucket'
-                      ? item.status
-                      : 'N/A',
+                        ? item.status
+                        : item.status === 'Completed' || item.status === 'Failed'
+                          ? item.status
+                          : item.fileSource == 'Wikipedia' ||
+                            item.fileSource == 'youtube' ||
+                            item.fileSource == 'gcs bucket'
+                            ? item.status
+                            : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
                   source_url: item.url != 'None' && item?.url != '' ? item.url : '',
