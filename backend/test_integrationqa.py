@@ -17,9 +17,9 @@ MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
 graph = create_graph_database_connection(uri, userName, password, database)
 
 def test_graph_from_file_local_file():
-    file_name = 'December_2023_Bolt.pdf'
+    file_name = 'About Amazon.pdf'
     #shutil.copyfile('data/Bank of America Q23.pdf', 'backend/src/merged_files/Bank of America Q23.pdf')
-    shutil.copyfile('/workspaces/llm-graph-builder/data/December_2023_Bolt.pdf', '/workspaces/llm-graph-builder/backend/merged_files/December_2023_Bolt.pdf')
+    shutil.copyfile('/workspaces/llm-graph-builder/data/About Amazon.pdf', '/workspaces/llm-graph-builder/backend/merged_files/About Amazon.pdf')
     obj_source_node = sourceNode()
     obj_source_node.file_name = file_name
     obj_source_node.file_type = 'pdf'
@@ -177,14 +177,14 @@ if __name__ == "__main__":
             test_graph_from_file_local_file() # local file Success Test Case
             #test_graph_from_file_local_file_failed() # local file Failed Test Case
 
-            test_graph_from_Wikipedia() # Wikipedia Success Test Case
+            #test_graph_from_Wikipedia() # Wikipedia Success Test Case
             #test_graph_from_Wikipedia_failed() # Wikipedia Failed Test Case
 
-            test_graph_from_youtube_video() # Youtube Success Test Case
+            #test_graph_from_youtube_video() # Youtube Success Test Case
             #test_graph_from_youtube_video_failed # Failed Test case
 
-            test_graph_from_file_test_gcs() # GCS Success Test Case
-            test_chatbot_QnA()
+            #test_graph_from_file_test_gcs() # GCS Success Test Case
+            #test_chatbot_QnA()
 
             #test_graph_from_file_test_s3_failed() # S3 Failed Test Case
             
