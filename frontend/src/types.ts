@@ -3,6 +3,8 @@ import { AxiosResponse } from 'axios';
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 import { OverridableStringUnion } from '@mui/types';
 import type { Node, Relationship } from '@neo4j-nvl/base';
+import { NonOAuthError } from '@react-oauth/google';
+
 
 export interface CustomFile extends Partial<globalThis.File> {
   processing: number | string;
@@ -18,6 +20,7 @@ export interface CustomFile extends Partial<globalThis.File> {
   gcsBucketFolder?: string;
   errorMessage?: string;
   uploadprogess?: number;
+  google_project_id?: string;
 }
 
 export interface OptionType {
@@ -47,6 +50,7 @@ export type ExtractParams = {
   file_name?: string;
   allowedNodes?: string[];
   allowedRelationship?: string[];
+  gcs_project_id?: string;
 } & { [key: string]: any };
 
 export type UploadParams = {
@@ -98,6 +102,7 @@ export interface SourceNode {
   gcsBucketFolder?: string;
   errorMessage?: string;
   uploadprogress?: number;
+  gcsProjectId?: string;
 }
 
 export interface SideNavProps {
@@ -189,6 +194,7 @@ export interface fileName {
   gcsBucketName?: string;
   gcsBucketFolder?: string;
   status?: string;
+  gcsProjectId: string;
 }
 export interface URLSCAN_RESPONSE {
   status: string;
@@ -236,8 +242,10 @@ export interface ScanProps {
   gcs_bucket_name?: string;
   gcs_bucket_folder?: string;
   source_type?: string;
+  gcs_project_id?: string;
+  access_token?: string;
 }
-export type alertState = {
+export type alertStateType = {
   showAlert: boolean;
   alertType: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined;
   alertMessage: string;
@@ -317,4 +325,8 @@ export interface CHATINFO_RESPONSE {
 
 export interface ChatInfo_APIResponse extends Partial<AxiosResponse> {
   data: CHATINFO_RESPONSE;
+}
+
+export interface nonoautherror extends NonOAuthError {
+  message?: string;
 }
