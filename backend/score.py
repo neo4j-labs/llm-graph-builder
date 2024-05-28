@@ -19,6 +19,12 @@ from src.graphDB_dataAccess import graphDBdataAccess
 from src.graph_query import get_graph_results
 from sse_starlette.sse import EventSourceResponse
 import json
+from typing import List, Mapping
+from fastapi.responses import RedirectResponse, HTMLResponse
+from starlette.middleware.sessions import SessionMiddleware
+import google_auth_oauthlib.flow
+from google.oauth2.credentials import Credentials
+import os
 from typing import List
 from google.cloud import logging as gclogger
 from src.logger import CustomLogger
@@ -53,8 +59,12 @@ if is_gemini_enabled:
 
 app.add_api_route("/health", health([healthy_condition, healthy]))
 
+app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
+
+
 @app.post("/url/scan")
 async def create_source_knowledge_graph_url(
+    request: Request,
     uri=Form(None),
     userName=Form(None),
     password=Form(None),
@@ -66,8 +76,11 @@ async def create_source_knowledge_graph_url(
     model=Form(None),
     gcs_bucket_name=Form(None),
     gcs_bucket_folder=Form(None),
-    source_type=Form(None)
+    source_type=Form(None),
+    gcs_project_id=Form(None),
+    access_token=Form(None)
     ):
+    
     try:
         if source_url is not None:
             source = source_url
@@ -79,7 +92,7 @@ async def create_source_knowledge_graph_url(
             lst_file_name,success_count,failed_count = create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type
             )
         elif source_type == 'gcs bucket':
-            lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, gcs_bucket_name, gcs_bucket_folder, source_type
+            lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, source_type,Credentials(access_token)
             )
         elif source_type == 'youtube':
             lst_file_name,success_count,failed_count = create_source_node_graph_url_youtube(graph, model, source_url, source_type
@@ -114,6 +127,7 @@ async def extract_knowledge_graph_from_file(
     aws_secret_access_key=Form(None),
     wiki_query=Form(None),
     max_sources=Form(None),
+    gcs_project_id=Form(None),
     gcs_bucket_name=Form(None),
     gcs_bucket_folder=Form(None),
     gcs_blob_filename=Form(None),
@@ -159,7 +173,7 @@ async def extract_knowledge_graph_from_file(
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
             result = await asyncio.to_thread(
-                extract_graph_from_file_gcs, graph, model, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship)
+                extract_graph_from_file_gcs, graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
         if result is not None:
@@ -426,6 +440,6 @@ async def get_document_status(file_name, url, userName, password, database):
         error_message = str(e)
         logging.exception(f'{message}:{error_message}')
         return create_api_response('Failed',message=message)
-
+ 
 if __name__ == "__main__":
     uvicorn.run(app)

@@ -18,6 +18,7 @@
     "@neo4j-ndl/react": "^2.13.7",
     "@neo4j-nvl/base": "^0.3.1",
     "@neo4j-nvl/react": "^0.3.1",
+    "@react-oauth/google": "^0.12.1",
     "@types/uuid": "^9.0.7",
     "axios": "^1.6.5",
     "eslint-plugin-react": "^7.33.2",
