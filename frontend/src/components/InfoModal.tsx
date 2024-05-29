@@ -1,74 +1,58 @@
-import { Box, Typography, Label, TextLink, Flex, Tabs, LoadingSpinner } from '@neo4j-ndl/react';
+import { Box, Typography, TextLink, Flex, Tabs, LoadingSpinner } from '@neo4j-ndl/react';
 import { DocumentTextIconOutline } from '@neo4j-ndl/react/icons';
 import '../styling/info.css';
 import Neo4jRetrievalLogo from '../assets/images/Neo4jRetrievalLogo.png';
 import wikipedialogo from '../assets/images/Wikipedia-logo-v2.svg';
 import youtubelogo from '../assets/images/youtube.png';
-import { LabelColors, UserCredentials, chatInfoMessage } from '../types';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Entity, GroupedEntity, UserCredentials, chatInfoMessage } from '../types';
+import { useEffect, useMemo, useState } from 'react';
 import HoverableLink from './HoverableLink';
 import GraphViewButton from './GraphViewButton';
 import { chunkEntitiesAPI } from '../services/ChunkEntitiesInfo';
 import { useCredentials } from '../context/UserCredentials';
-// import type { Node, Relationship } from '@neo4j-nvl/base';
+import type { Node, Relationship } from '@neo4j-nvl/base';
+import { calcWordColor } from '@neo4j-devtools/word-color';
 
-type Entity = {
-  element_id: string;
-  labels: string[];
-  properties: {
-    id: string;
-  };
-};
-
-type GroupedEntity = {
-  texts: Set<string>;
-  color: LabelColors;
-};
-const labelColors: LabelColors[] = ['default', 'success', 'info', 'warning', 'danger', undefined];
-
-const parseEntity = (entity: Entity) => {
-  const { labels, properties } = entity;
-  const label = labels[0];
-  const text = properties.id;
-  return { label, text };
-};
 const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, response_time, chunk_ids }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [loading, setIsloading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
-  const labelColourMap = useRef<{ [key: string]: LabelColors }>({});
-  // const [nodes, setNodes] = useState<Node[]>([]);
-  // const [relationships, setRelationships] = useState<Relationship[]>([]);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [relationships, setRelationships] = useState<Relationship[]>([]);
+
+  const parseEntity = (entity: Entity) => {
+    const { labels, properties } = entity;
+    const label = labels[0];
+    const text = properties.id;
+    return { label, text };
+  };
 
   useEffect(() => {
-    if (activeTab === 1) {
-      setIsloading(true);
-      chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids.join(','))
-        .then((response) => {
-          setInfoEntities(response.data.data.nodes);
-          // setNodes(response.data.data.nodes);
-          // setRelationships(response.data.data.relationships)
-          setIsloading(false);
-        })
-        .catch((error) => {
-          console.error('Error fetching entities:', error);
-          setIsloading(false);
-        });
-    }
-  }, [activeTab, chunk_ids]);
+    setIsloading(true);
+    chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids.join(','))
+      .then((response) => {
+        setInfoEntities(response.data.data.nodes);
+        setNodes(response.data.data.nodes);
+        setRelationships(response.data.data.relationships);
+        setIsloading(false);
+      })
+      .catch((error) => {
+        console.error('Error fetching entities:', error);
+        setIsloading(false);
+      });
+  }, [chunk_ids]);
 
   const groupedEntities = useMemo<{ [key: string]: GroupedEntity }>(() => {
     return infoEntities.slice(0, 6).reduce((acc, entity) => {
       const { label, text } = parseEntity(entity);
       if (!acc[label]) {
-        const newColor = labelColourMap.current[label] ?? labelColors[Math.floor(Math.random() * labelColors.length)];
-        labelColourMap.current[label] = newColor;
+        const newColor = calcWordColor(label);
         acc[label] = { texts: new Set(), color: newColor };
       }
       acc[label].texts.add(text);
       return acc;
-    }, {} as Record<string, { texts: Set<string>; color: LabelColors }>);
+    }, {} as Record<string, { texts: Set<string>; color: string }>);
   }, [infoEntities]);
 
   const onChangeTabs = async (e: any) => {
@@ -119,10 +103,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                         ) : (
                           <>
                             <HoverableLink url={link.source_name}>
-                              <Typography variant='body-medium'>YouTube</Typography>
-                              <Typography variant='body-small' className='italic'>
-                                - 00:01:24 - 00:01:32
-                              </Typography>
+                              <Typography variant='body-medium'>{link.source_name}</Typography>
                             </HoverableLink>
                           </>
                         )}
@@ -164,9 +145,9 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                 className='flex items-center mb-2'
                 style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}
               >
-                <Label color={groupedEntities[label].color} fill='semi-filled' className='entity-label mr-2'>
+                <div key={index} style={{ backgroundColor: `${groupedEntities[label].color}` }} className='legend mr-2'>
                   {label}
-                </Label>
+                </div>
                 <Typography
                   className='entity-text'
                   variant='body-medium'
@@ -189,8 +170,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
       </Flex>
       {activeTab === 1 && (
         <Box className='button-container flex mt-2 justify-center'>
-          <GraphViewButton chunk_ids={chunk_ids.join(',')} />
-          {/* <GraphViewButton nodeValues={nodes} relationshipValues={relationships}/> */}
+          <GraphViewButton nodeValues={nodes} relationshipValues={relationships} />
         </Box>
       )}
     </Box>

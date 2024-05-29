@@ -181,9 +181,8 @@ export interface GraphViewModalProps {
   inspectedName?: string;
   setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
   viewPoint: string;
-  chunk_ids?: string;
-  nodeValues?:Node[];
-  relationshipValues?: Relationship[]
+  nodeValues?: Node[];
+  relationshipValues?: Relationship[];
 }
 
 export type GraphType = 'document' | 'chunks' | 'entities';
@@ -331,3 +330,16 @@ export interface ChatInfo_APIResponse extends Partial<AxiosResponse> {
 export interface nonoautherror extends NonOAuthError {
   message?: string;
 }
+
+export type Entity = {
+  element_id: string;
+  labels: string[];
+  properties: {
+    id: string;
+  };
+};
+
+export type GroupedEntity = {
+  texts: Set<string>;
+  color: string;
+};

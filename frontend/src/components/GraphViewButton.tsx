@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { Button } from '@neo4j-ndl/react';
 import GraphViewModal from './GraphViewModal';
-// import { Node, Relationship } from '@neo4j-nvl/base';
+import { Node, Relationship } from '@neo4j-nvl/base';
 
 interface GraphViewButtonProps {
-chunk_ids: string;
-// nodeValues: Node[];
-// relationshipValues:Relationship[];
+  nodeValues?: Node[];
+  relationshipValues?: Relationship[];
 }
-const GraphViewButton: React.FC<GraphViewButtonProps> = ({ chunk_ids }) => {
+const GraphViewButton: React.FC<GraphViewButtonProps> = ({ nodeValues, relationshipValues }) => {
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
 
@@ -25,9 +24,8 @@ const GraphViewButton: React.FC<GraphViewButtonProps> = ({ chunk_ids }) => {
         open={openGraphView}
         setGraphViewOpen={setOpenGraphView}
         viewPoint={viewPoint}
-        chunk_ids={chunk_ids}
-        // nodeValues={nodeValues}
-        // relationshipValues={relationshipValues}
+        nodeValues={nodeValues}
+        relationshipValues={relationshipValues}
       />
     </>
   );
