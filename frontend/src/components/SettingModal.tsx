@@ -26,7 +26,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
         try {
           const response = await getNodeLabelsAndRelTypes(userCredentials as UserCredentials);
           if (response.data.data.length) {
-            const nodelabels = response.data?.data[0]?.labels.slice(0, 20).map((l) => ({ value: l, label: l }));
+            const nodelabels = response.data?.data[0]?.labels?.slice(0, 20).map((l) => ({ value: l, label: l }));
             const reltypes = response.data?.data[0]?.relationshipTypes
               .slice(0, 20)
               .map((t) => ({ value: t, label: t }));

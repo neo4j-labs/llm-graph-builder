@@ -3,6 +3,7 @@ import {
   DataGrid,
   DataGridComponents,
   IconButton,
+  ProgressBar,
   StatusIndicator,
   TextLink,
   Typography,
@@ -35,12 +36,7 @@ import useServerSideEvent from '../hooks/useSse';
 import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
-const FileTable: React.FC<FileTableProps> = ({
-  isExpanded,
-  connectionStatus,
-  setConnectionStatus,
-  onInspect,
-}) => {
+const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows } = useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
@@ -122,8 +118,8 @@ const FileTable: React.FC<FileTableProps> = ({
                   info.row.original?.fileSource === 's3 bucket'
                     ? info.row.original?.source_url
                     : info.row.original?.fileSource === 'youtube'
-                      ? info.row.original?.source_url
-                      : info.getValue()
+                    ? info.row.original?.source_url
+                    : info.getValue()
                 }
               >
                 {info.getValue()}
@@ -141,28 +137,62 @@ const FileTable: React.FC<FileTableProps> = ({
             className='cellClass'
             title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
           >
-            <StatusIndicator type={statusCheck(info.getValue())} />
-            <i>{info.getValue()}</i>
-            {info.getValue() === 'Processing' && (
-              <div className='mx-1'>
-                <IconButton
-                  size='medium'
-                  title='cancel the processing job'
-                  aria-label='cancel job button'
-                  clean
-                  disabled={info.row.original.processingStatus}
-                  onClick={() => {
-                    cancelHandler(
-                      info.row.original.name as string,
-                      info.row.original.id as string,
-                      info.row.original.fileSource as string
-                    )
-                  }
-                  }
-                >
-                  <XMarkIconOutline />
-                </IconButton>
-              </div>
+            {info.getValue() !== 'Processing' ? <StatusIndicator type={statusCheck(info.getValue())} /> : ''}
+            {info.getValue() !== 'Processing' ? (
+              <i>{info.getValue()}</i>
+            ) : info.row.original.processingProgress == undefined ? (
+              <>
+                <StatusIndicator type={statusCheck(info.getValue())} />
+                <i>Processing</i>
+                <div className='mx-1'>
+                  <IconButton
+                    size='medium'
+                    title='cancel the processing job'
+                    aria-label='cancel job button'
+                    clean
+                    disabled={info.row.original.processingStatus}
+                    onClick={() => {
+                      cancelHandler(
+                        info.row.original.name as string,
+                        info.row.original.id as string,
+                        info.row.original.fileSource as string
+                      );
+                    }}
+                  >
+                    <XMarkIconOutline />
+                  </IconButton>
+                </div>
+              </>
+            ) : (
+              info.getValue() === 'Processing' &&
+              info.row.original.processingProgress != undefined &&
+              info.row.original.processingProgress < 100 && (
+                <>
+                  <ProgressBar
+                    heading='Processing '
+                    size='small'
+                    value={info.row.original.processingProgress}
+                  ></ProgressBar>
+                  <div className='mx-1'>
+                    <IconButton
+                      size='medium'
+                      title='cancel the processing job'
+                      aria-label='cancel job button'
+                      clean
+                      disabled={info.row.original.processingStatus}
+                      onClick={() => {
+                        cancelHandler(
+                          info.row.original.name as string,
+                          info.row.original.id as string,
+                          info.row.original.fileSource as string
+                        );
+                      }}
+                    >
+                      <XMarkIconOutline />
+                    </IconButton>
+                  </div>
+                </>
+              )
             )}
           </div>
         ),
@@ -298,14 +328,14 @@ const FileTable: React.FC<FileTableProps> = ({
                     item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                       ? item.status
                       : item.fileSource === 'local file'
-                        ? item.status
-                        : item.status === 'Completed' || item.status === 'Failed'
-                          ? item.status
-                          : item.fileSource == 'Wikipedia' ||
-                            item.fileSource == 'youtube' ||
-                            item.fileSource == 'gcs bucket'
-                            ? item.status
-                            : 'N/A',
+                      ? item.status
+                      : item.status === 'Completed' || item.status === 'Failed'
+                      ? item.status
+                      : item.fileSource == 'Wikipedia' ||
+                        item.fileSource == 'youtube' ||
+                        item.fileSource == 'gcs bucket'
+                      ? item.status
+                      : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
                   source_url: item.url != 'None' && item?.url != '' ? item.url : '',
@@ -315,6 +345,10 @@ const FileTable: React.FC<FileTableProps> = ({
                   errorMessage: item?.errorMessage,
                   uploadprogess: item?.uploadprogress ?? 0,
                   google_project_id: item?.gcsProjectId,
+                  processingProgress:
+                    item.processed_chunk != undefined && item.total_chunks != undefined
+                      ? Math.floor((item.processed_chunk / item.total_chunks) * 100)
+                      : undefined,
                 });
               }
             });
@@ -335,7 +369,8 @@ const FileTable: React.FC<FileTableProps> = ({
                   userCredentials?.userName,
                   userCredentials?.database,
                   userCredentials?.password,
-                  updatestatus
+                  updatestatus,
+                  updateProgress
                 ).catch((error: AxiosError) => {
                   // @ts-ignore
                   const errorfile = decodeURI(error.config.url.split('?')[0].split('/').at(-1));
@@ -405,7 +440,7 @@ const FileTable: React.FC<FileTableProps> = ({
               return {
                 ...curfile,
                 status: 'Cancelled',
-                processingStatus: false
+                processingStatus: false,
               };
             }
             return curfile;
@@ -421,7 +456,7 @@ const FileTable: React.FC<FileTableProps> = ({
           if (curfile.id === id) {
             return {
               ...curfile,
-              processingStatus: false
+              processingStatus: false,
             };
           }
           return curfile;
@@ -443,8 +478,17 @@ const FileTable: React.FC<FileTableProps> = ({
 
   function updatestatus(i: statusupdate) {
     const { file_name } = i;
-    const { fileName, nodeCount, relationshipCount, processingTime, model, status } = file_name;
-    if (fileName && nodeCount != null && relationshipCount != null && processingTime && model && status) {
+    const {
+      fileName,
+      nodeCount = 0,
+      relationshipCount = 0,
+      processingTime = 0,
+      model,
+      status,
+      processed_chunk = 0,
+      total_chunks,
+    } = file_name;
+    if (fileName && total_chunks) {
       setFilesData((prevfiles) =>
         prevfiles.map((curfile) => {
           if (curfile.name == fileName) {
@@ -455,6 +499,28 @@ const FileTable: React.FC<FileTableProps> = ({
               relationshipCount: relationshipCount,
               model: model,
               processing: processingTime?.toFixed(2),
+              processingProgress: Math.floor((processed_chunk / total_chunks) * 100),
+            };
+          }
+          return curfile;
+        })
+      );
+    }
+  }
+  function updateProgress(i: statusupdate) {
+    const { file_name } = i;
+    const { fileName, nodeCount = 0, relationshipCount = 0, status, processed_chunk = 0, total_chunks } = file_name;
+    if (fileName && total_chunks) {
+      console.log({ processed_chunk, total_chunks, percentage: Math.floor((processed_chunk / total_chunks) * 100) });
+      setFilesData((prevfiles) =>
+        prevfiles.map((curfile) => {
+          if (curfile.name == fileName) {
+            return {
+              ...curfile,
+              status: status,
+              NodesCount: nodeCount,
+              relationshipCount: relationshipCount,
+              processingProgress: Math.floor((processed_chunk / total_chunks) * 100),
             };
           }
           return curfile;
