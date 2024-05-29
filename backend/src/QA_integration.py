@@ -82,7 +82,8 @@ def get_llm(model: str,max_tokens=1000) -> Any:
         "Gemini Pro": "gemini-1.0-pro-001",
         "Gemini 1.5 Pro": "gemini-1.5-pro-preview-0409",
         "OpenAI GPT 4": "gpt-4-0125-preview",
-        "Diffbot" : "gpt-4-0125-preview"
+        "Diffbot" : "gpt-4-0125-preview",
+        "OpenAI GPT 4o":"gpt-4o"
          }
 
     if model in model_versions:

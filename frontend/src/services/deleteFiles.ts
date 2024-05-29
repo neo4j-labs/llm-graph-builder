@@ -4,8 +4,8 @@ import { UserCredentials } from '../types';
 
 const deleteAPI = async (userCredentials: UserCredentials, selectedFiles: string[], deleteEntities: boolean) => {
   try {
-    const filenames = selectedFiles.map((str) => str.split(',')[0]);
-    const source_types = selectedFiles.map((str) => str.split(',')[1]);
+    const filenames = selectedFiles.map((str) => JSON.parse(str).name);
+    const source_types = selectedFiles.map((str) => JSON.parse(str).fileSource);
     const formData = new FormData();
     formData.append('uri', userCredentials?.uri ?? '');
     formData.append('database', userCredentials?.database ?? '');
@@ -14,9 +14,9 @@ const deleteAPI = async (userCredentials: UserCredentials, selectedFiles: string
     // @ts-ignore
     formData.append('deleteEntities', deleteEntities);
     // @ts-ignore
-    formData.append('filenames', filenames);
+    formData.append('filenames', JSON.stringify(filenames));
     // @ts-ignore
-    formData.append('source_types', source_types);
+    formData.append('source_types', JSON.stringify(source_types));
     const response = await axios.post(`${url()}/delete_document_and_entities`, formData);
     return response;
   } catch (error) {

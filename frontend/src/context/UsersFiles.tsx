@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, Dispatch, SetStateAction, FC } from 'react';
+import { createContext, useContext, useState, Dispatch, SetStateAction, FC, useEffect } from 'react';
 import { CustomFile, FileContextProviderProps, OptionType } from '../types';
 import { defaultLLM } from '../utils/Constants';
 
@@ -23,6 +23,9 @@ interface FileContextType {
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
 const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
+  const selectedNodeLabelValues = localStorage.getItem('selectedNodeLabels');
+  const selectedNodeRelsValues = localStorage.getItem('selectedRelationshipLabels');
+
   const [files, setFiles] = useState<(File | null)[] | []>([]);
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
   const [model, setModel] = useState<string>(defaultLLM);
@@ -31,6 +34,15 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [selectedRels, setSelectedRels] = useState<readonly OptionType[]>([]);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (selectedNodeLabelValues != null) {
+      setSelectedNodes(JSON.parse(selectedNodeLabelValues));
+    }
+    if (selectedNodeRelsValues != null) {
+      setSelectedRels(JSON.parse(selectedNodeRelsValues));
+    }
+  }, []);
 
   const value: FileContextType = {
     files,
