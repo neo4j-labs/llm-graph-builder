@@ -216,7 +216,10 @@
   letter-spacing: 0;
   line-height: 1.25rem;
   width: max-content;
-  height: 30px
+  height: 30px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .chatBotContainer>div {

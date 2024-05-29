@@ -3,10 +3,9 @@ import Chatbot from './Chatbot';
 import chatbotmessages from '../assets/ChatbotMessages.json';
 import { useState } from 'react';
 import { UserCredentials, Messages } from '../types';
-import { ArchiveBoxXMarkIconOutline } from '@neo4j-ndl/react/icons';
-import ButtonWithToolTip from './ButtonWithToolTip';
 import { clearChatAPI } from '../services/QnaAPI';
 import { useCredentials } from '../context/UserCredentials';
+import IconsPlacement from './IconsPlacement';
 
 interface RightSideBarProps {
   showChatBot: boolean;
@@ -32,7 +31,6 @@ const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }
         userCredentials as UserCredentials,
         sessionStorage.getItem('session_id') ?? ''
       );
-      console.log('res', response);
       if (response.data.status === 'Success') {
         setMessages([
           {
@@ -40,7 +38,6 @@ const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }
             id: 2,
             message:
               ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
-            sources: ['https://neo4j.com/'],
             user: 'chatbot',
           },
         ]);
@@ -57,26 +54,12 @@ const RightSideBar: React.FC<RightSideBarProps> = ({ showChatBot, closeChatBot }
       expanded={showChatBot}
       isResizeable={false}
       type='push'
-      closeable={true}
+      closeable={false}
       position='right'
-      onExpandedChange={function Ha(expanded) {
-        if (!expanded) {
-          closeChatBot();
-        }
-      }}
       key={'rightdrawer'}
       className='grow'
     >
-      <ButtonWithToolTip
-        text='Clear Chat history'
-        onClick={deleteOnClick}
-        size='medium'
-        clean
-        placement='right'
-        disabled={messages.length === 1}
-      >
-        <ArchiveBoxXMarkIconOutline className='n-size-token-7' style={{ padding: '2px' }} />
-      </ButtonWithToolTip>
+      <IconsPlacement closeChatBot={closeChatBot} deleteOnClick={deleteOnClick} messages={messages} />
       <Drawer.Body className='!overflow-y-hidden !px-0'>
         {clearHistoryData ? (
           <LoadingSpinner size='large' className='top-72 left-52' />
