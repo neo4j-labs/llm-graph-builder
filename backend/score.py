@@ -17,6 +17,7 @@ from langchain_google_vertexai import ChatVertexAI
 from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.graph_query import get_graph_results
+from src.chunkid_entities import get_entities_from_chunkids
 from sse_starlette.sse import EventSourceResponse
 import json
 from typing import List, Mapping
@@ -28,6 +29,8 @@ import os
 from typing import List
 from google.cloud import logging as gclogger
 from src.logger import CustomLogger
+from datetime import datetime
+import time
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
@@ -237,11 +240,18 @@ async def update_similarity_graph(uri=Form(None), userName=Form(None), password=
                 
 @app.post("/chat_bot")
 async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password=Form(None), database=Form(None),question=Form(None), session_id=Form(None)):
+    logging.info(f"QA_RAG called at {datetime.now()}")
+    qa_rag_start_time = time.time()
     try:
         # database = "neo4j"
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,session_id=session_id)
-        josn_obj = {'api_name':'chat_bot','db_url':uri, 'session_id':session_id}
+
+        total_call_time = time.time() - qa_rag_start_time
+        logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
+        result["info"]["response_time"] = round(total_call_time, 2)
+        
+        josn_obj = {'api_name':'chat_bot','db_url':uri}
         logger.log_struct(josn_obj)
         return create_api_response('Success',data=result)
     except Exception as e:
@@ -250,8 +260,21 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
         error_message = str(e)
         logging.exception(f'Exception in chat bot:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
-    finally:
-        close_db_connection(graph, 'chat_bot')
+
+@app.post("/chunk_entities")
+async def chunk_entities(uri=Form(None),userName=Form(None), password=Form(None), chunk_ids=Form(None)):
+    try:
+        logging.info(f"URI: {uri}, Username: {userName},password:{password}, chunk_ids: {chunk_ids}")
+        result = await asyncio.to_thread(get_entities_from_chunkids,uri=uri, username=userName, password=password, chunk_ids=chunk_ids)
+        josn_obj = {'api_name':'chunk_entities','db_url':uri}
+        logger.log_struct(josn_obj)
+        return create_api_response('Success',data=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to extract entities from chunk ids"
+        error_message = str(e)
+        logging.exception(f'Exception in chat bot:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
 
 @app.post("/graph_query")
 async def graph_query(
