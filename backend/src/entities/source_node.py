@@ -20,3 +20,4 @@ class sourceNode:
     total_pages:int=None
     total_chunks:int=None
     is_cancelled:bool=None
+    processed_chunk:int=None
