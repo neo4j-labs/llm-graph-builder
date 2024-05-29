@@ -33,14 +33,22 @@ import subscribe from '../services/PollingAPI';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { AxiosError } from 'axios';
-
-const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
+import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
+import cancelAPI from '../services/CancelAPI';
+const FileTable: React.FC<FileTableProps> = ({
+  isExpanded,
+  connectionStatus,
+  setConnectionStatus,
+  onInspect,
+}) => {
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows } = useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
+  const [disableProcessing, setdisableProcessing] = useState<Map<string, boolean>>(new Map());
+
   const [alertDetails, setalertDetails] = useState<alertState>({
     showAlert: false,
     alertType: 'error',
@@ -116,8 +124,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   info.row.original?.fileSource === 's3 bucket'
                     ? info.row.original?.source_url
                     : info.row.original?.fileSource === 'youtube'
-                    ? info.row.original?.source_url
-                    : info.getValue()
+                      ? info.row.original?.source_url
+                      : info.getValue()
                 }
               >
                 {info.getValue()}
@@ -137,6 +145,27 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
           >
             <StatusIndicator type={statusCheck(info.getValue())} />
             <i>{info.getValue()}</i>
+            {info.getValue() === 'Processing' && (
+              <div className='mx-1'>
+                <IconButton
+                  size='medium'
+                  title='cancel the processing job'
+                  aria-label='cancel job button'
+                  clean
+                  disabled={disableProcessing.get(info.row.original.id as string)}
+                  onClick={() => {
+                    cancelHandler(
+                      info.row.original.name as string,
+                      info.row.original.id as string,
+                      info.row.original.fileSource as string
+                    )
+                  }
+                  }
+                >
+                  <XMarkIconOutline />
+                </IconButton>
+              </div>
+            )}
           </div>
         ),
         header: () => <span>Status</span>,
@@ -271,14 +300,14 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                     item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                       ? item.status
                       : item.fileSource === 'local file'
-                      ? item.status
-                      : item.status === 'Completed' || item.status === 'Failed'
-                      ? item.status
-                      : item.fileSource == 'Wikipedia' ||
-                        item.fileSource == 'youtube' ||
-                        item.fileSource == 'gcs bucket'
-                      ? item.status
-                      : 'N/A',
+                        ? item.status
+                        : item.status === 'Completed' || item.status === 'Failed'
+                          ? item.status
+                          : item.fileSource == 'Wikipedia' ||
+                            item.fileSource == 'youtube' ||
+                            item.fileSource == 'gcs bucket'
+                            ? item.status
+                            : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
                   source_url: item.url != 'None' && item?.url != '' ? item.url : '',
@@ -356,6 +385,54 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       setFilesData([]);
     }
   }, [connectionStatus, userCredentials]);
+  const cancelHandler = async (fileName: string, id: string, fileSource: string) => {
+    setdisableProcessing((prev) => {
+      prev.set(id, true);
+      const copiedmap = new Map(prev)
+      return copiedmap
+    });
+    try {
+      const res = await cancelAPI([fileName], [fileSource]);
+      if (res.data.status === 'Success') {
+        setdisableProcessing((prev) => {
+          prev.delete(id);
+          const copiedmap = new Map(prev);
+          return copiedmap;
+        });
+        setFilesData((prevfiles) =>
+          prevfiles.map((curfile) => {
+            if (curfile.id === id) {
+              return {
+                ...curfile,
+                status: 'Cancelled',
+              };
+            }
+            return curfile;
+          })
+        );
+      } else {
+        let errorobj = { error: res.data.error, message: res.data.message, fileName };
+        throw new Error(JSON.stringify(errorobj));
+      }
+    } catch (err) {
+      setdisableProcessing((prev) => {
+        prev.set(id, false);
+        const copiedmap = new Map(prev);
+        return copiedmap;
+      });
+      if (err instanceof Error) {
+        const error = JSON.parse(err.message);
+        if (Object.keys(error).includes('fileName')) {
+          const { message } = error;
+          setalertDetails({
+            showAlert: true,
+            alertType: 'error',
+            alertMessage: message,
+          });
+        }
+      }
+    }
+  };
 
   function updatestatus(i: statusupdate) {
     const { file_name } = i;

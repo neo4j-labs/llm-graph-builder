@@ -252,12 +252,15 @@ export interface labelsAndTypes {
   labels: string[];
   relationshipTypes: string[];
 }
-export interface ServerData {
-  data: labelsAndTypes[];
+export interface commonserverresponse {
   status: string;
   error?: string;
   message?: string;
 }
+export interface ServerData extends Partial<commonserverresponse> {
+  data: labelsAndTypes[];
+}
+
 export interface SourceListServerData {
   data: SourceNode[];
   status: string;

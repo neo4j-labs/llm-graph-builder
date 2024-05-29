@@ -34,7 +34,7 @@ export default function useServerSideEvent(
           });
         });
       }
-    } else if (status === 'Completed') {
+    } else if (status === 'Completed' || status === 'Cancelled') {
       setFilesData((prevfiles) => {
         return prevfiles.map((curfile) => {
           if (curfile.name == fileName) {
