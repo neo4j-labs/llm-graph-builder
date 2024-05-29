@@ -79,6 +79,9 @@ class graphDBdataAccess:
             if obj_source_node.is_cancelled is not None and obj_source_node.is_cancelled != False:
                 params['is_cancelled'] = obj_source_node.is_cancelled
 
+            if obj_source_node.processed_chunk is not None and obj_source_node.processed_chunk != 0:
+                params['processed_chunk'] = obj_source_node.processed_chunk
+
             param= {"props":params}
             
             print(f'Base Param value 1 : {param}')
@@ -147,7 +150,8 @@ class graphDBdataAccess:
         query = """
                 MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, 
                 d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount,
-                d.total_pages AS total_pages, d.total_chunks AS total_chunks , d.fileSize as fileSize, d.is_cancelled as is_cancelled
+                d.total_pages AS total_pages, d.total_chunks AS total_chunks , d.fileSize as fileSize, 
+                d.is_cancelled as is_cancelled, d.processed_chunk as processed_chunk
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)

@@ -251,7 +251,10 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     node_count = 0
     rel_count = 0
     for i in range(0, len(chunks), update_graph_chunk_processed):
-      selected_chunks = chunks[i:i+update_graph_chunk_processed]
+      select_chunks_upto = i+update_graph_chunk_processed
+      if len(chunks) <= select_chunks_upto:
+         select_chunks_upto = len(chunks)
+      selected_chunks = chunks[i:select_chunks_upto]
       result = graphDb_data_Access.get_current_status_document_node(file_name)
       is_cancelled_status = result[0]['is_cancelled']
       logging.info(f"Value of is_cancelled : {result[0]['is_cancelled']}")
@@ -269,6 +272,7 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
         obj_source_node.updated_at = end_time
         obj_source_node.processing_time = processed_time
         obj_source_node.node_count = node_count
+        obj_source_node.processed_chunk = select_chunks_upto
         obj_source_node.relationship_count = rel_count
         graphDb_data_Access.update_source_node(obj_source_node)
       
