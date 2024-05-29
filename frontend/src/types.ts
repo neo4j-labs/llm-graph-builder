@@ -18,6 +18,7 @@ export interface CustomFile extends Partial<globalThis.File> {
   gcsBucketFolder?: string;
   errorMessage?: string;
   uploadprogess?: number;
+  processingStatus?:boolean;
 }
 
 export interface OptionType {

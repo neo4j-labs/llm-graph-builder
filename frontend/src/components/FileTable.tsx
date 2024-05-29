@@ -47,7 +47,6 @@ const FileTable: React.FC<FileTableProps> = ({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
-  const [disableProcessing, setdisableProcessing] = useState<Map<string, boolean>>(new Map());
 
   const [alertDetails, setalertDetails] = useState<alertState>({
     showAlert: false,
@@ -152,7 +151,7 @@ const FileTable: React.FC<FileTableProps> = ({
                   title='cancel the processing job'
                   aria-label='cancel job button'
                   clean
-                  disabled={disableProcessing.get(info.row.original.id as string)}
+                  disabled={info.row.original.processingStatus}
                   onClick={() => {
                     cancelHandler(
                       info.row.original.name as string,
@@ -386,25 +385,27 @@ const FileTable: React.FC<FileTableProps> = ({
     }
   }, [connectionStatus, userCredentials]);
   const cancelHandler = async (fileName: string, id: string, fileSource: string) => {
-    setdisableProcessing((prev) => {
-      prev.set(id, true);
-      const copiedmap = new Map(prev)
-      return copiedmap
-    });
+    setFilesData((prevfiles) =>
+      prevfiles.map((curfile) => {
+        if (curfile.id === id) {
+          return {
+            ...curfile,
+            processingStatus: true,
+          };
+        }
+        return curfile;
+      })
+    );
     try {
       const res = await cancelAPI([fileName], [fileSource]);
       if (res.data.status === 'Success') {
-        setdisableProcessing((prev) => {
-          prev.delete(id);
-          const copiedmap = new Map(prev);
-          return copiedmap;
-        });
         setFilesData((prevfiles) =>
           prevfiles.map((curfile) => {
             if (curfile.id === id) {
               return {
                 ...curfile,
                 status: 'Cancelled',
+                processingStatus: false
               };
             }
             return curfile;
@@ -415,11 +416,17 @@ const FileTable: React.FC<FileTableProps> = ({
         throw new Error(JSON.stringify(errorobj));
       }
     } catch (err) {
-      setdisableProcessing((prev) => {
-        prev.set(id, false);
-        const copiedmap = new Map(prev);
-        return copiedmap;
-      });
+      setFilesData((prevfiles) =>
+        prevfiles.map((curfile) => {
+          if (curfile.id === id) {
+            return {
+              ...curfile,
+              processingStatus: false
+            };
+          }
+          return curfile;
+        })
+      );
       if (err instanceof Error) {
         const error = JSON.parse(err.message);
         if (Object.keys(error).includes('fileName')) {
