@@ -59,9 +59,9 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
     const uriParts: string[] = uri.split('://');
     let uriHost: string[] | string;
     if (urlparams) {
-      //@ts-ignore
+      // @ts-ignore
       uriHost = uriParts.pop().split('@');
-      //@ts-ignore
+      // @ts-ignore
       const hostParts = uriHost.pop()?.split('-');
       if (hostParts != undefined) {
         console.log(hostParts);

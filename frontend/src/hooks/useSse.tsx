@@ -22,11 +22,7 @@ export default function useServerSideEvent(
     if (status === 'Processing') {
       if (alertShownStatus != null && alertShownStatus == false && total_chunks != null) {
         const minutes = Math.floor((perchunksecond * total_chunks) / 60);
-        alertHandler(
-          minutes === 0 ? false : true,
-          minutes === 0 ? Math.floor(perchunksecond * total_chunks) : minutes,
-          fileName
-        );
+        alertHandler(minutes !== 0, minutes === 0 ? Math.floor(perchunksecond * total_chunks) : minutes, fileName);
       }
       if (total_chunks) {
         setFilesData((prevfiles) => {
