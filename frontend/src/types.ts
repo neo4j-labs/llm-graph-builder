@@ -156,6 +156,7 @@ export interface Messages {
   model?: string;
   entities?: string[];
   isLoading?: boolean;
+  timeTaken?: number;
 }
 
 export type ChatbotProps = {
