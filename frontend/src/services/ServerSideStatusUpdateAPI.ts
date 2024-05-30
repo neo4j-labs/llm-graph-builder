@@ -17,7 +17,11 @@ export function triggerStatusUpdateAPI(
   );
   eventSource.onmessage = (event) => {
     const eventResponse = JSON.parse(event.data);
-    if (eventResponse.status === 'Completed' || eventResponse.status == 'Failed') {
+    if (
+      eventResponse.status === 'Completed' ||
+      eventResponse.status == 'Failed' ||
+      eventResponse.status == 'Cancelled'
+    ) {
       datahandler(eventResponse);
       eventSource.close();
     } else {

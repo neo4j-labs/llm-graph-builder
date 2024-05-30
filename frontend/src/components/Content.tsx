@@ -25,8 +25,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
-  const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels, selectedRows } = useFileContext();
-  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
+  const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels, selectedRows, setSelectedNodes, setSelectedRels } = useFileContext();
+  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
@@ -131,7 +131,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       );
 
       if (fileItem.name != undefined && userCredentials != null) {
-        const name = fileItem.name;
+        const { name } = fileItem;
         triggerStatusUpdateAPI(
           name as string,
           userCredentials?.uri,
@@ -154,7 +154,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         fileItem.gcsBucketFolder ?? '',
         selectedNodes.map((l) => l.value),
         selectedRels.map((t) => t.value),
-        fileItem.google_project_id
+        fileItem.google_project_id,
+        fileItem.language
       );
 
       if (apiResponse?.status === 'Failed') {
@@ -240,9 +241,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
-      userCredentials?.port ?? '7687'
-    }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
+      }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -252,10 +252,10 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     isExpanded && showChatBot
       ? 'contentWithBothDrawers'
       : isExpanded
-      ? 'contentWithExpansion'
-      : showChatBot
-      ? 'contentWithChatBot'
-      : 'contentWithNoExpansion';
+        ? 'contentWithExpansion'
+        : showChatBot
+          ? 'contentWithChatBot'
+          : 'contentWithNoExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -267,6 +267,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     setConnectionStatus(false);
     localStorage.removeItem('password');
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
+    setSelectedNodes([])
+    setSelectedRels([])
   };
 
   const selectedfileslength = useMemo(() => selectedRows.length, [selectedRows]);

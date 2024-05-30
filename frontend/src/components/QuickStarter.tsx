@@ -24,14 +24,14 @@ const QuickStarter: React.FunctionComponent = () => {
     setshowSettingsModal(false);
   };
   return (
-    <FileContextProvider>
-      <AlertContextWrapper>
-        <UserCredentialsWrapper>
+    <UserCredentialsWrapper>
+      <FileContextProvider>
+        <AlertContextWrapper>
           <Header themeMode={themeMode} toggleTheme={toggleColorMode} openSettingsModal={openSettingsModal} />
           <PageLayout isSettingPanelExpanded={showSettingsModal} closeSettingModal={closeSettingModal} />
-        </UserCredentialsWrapper>
-      </AlertContextWrapper>
-    </FileContextProvider>
+        </AlertContextWrapper>
+      </FileContextProvider>
+    </UserCredentialsWrapper>
   );
 };
 export default QuickStarter;

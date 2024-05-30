@@ -19,6 +19,9 @@ import warnings
 from pytube import YouTube
 import sys
 import shutil
+import urllib.parse
+import json
+
 warnings.filterwarnings("ignore")
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
@@ -91,7 +94,7 @@ def create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_na
 
 def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     
-    youtube_url = check_url_source(source_type=source_type, yt_url=source_url)
+    youtube_url, language = check_url_source(source_type=source_type, yt_url=source_url)
     success_count=0
     failed_count=0
     lst_file_name = []
@@ -124,10 +127,10 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
     failed_count=0
     lst_file_name=[]
     queries_list =  wiki_query.split(',')
-    wiki_query_ids = check_url_source(source_type=source_type, queries_list=queries_list)
-    for query in wiki_query_ids:
-      logging.info(f"Creating source node for {query.strip()}")
-      pages = WikipediaLoader(query=query.strip(), load_max_docs=1, load_all_available_meta=True).load()
+    wiki_query_ids, languages = check_url_source(source_type=source_type, queries_list=queries_list)
+    for query,language in zip(wiki_query_ids, languages):
+      logging.info(f"Creating source node for {query.strip()}, {language}")
+      pages = WikipediaLoader(query=query.strip(), lang=language, load_max_docs=1, load_all_available_meta=True).load()
       try:
         if not pages:
           failed_count+=1
@@ -138,15 +141,16 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
         obj_source_node.file_source = source_type
         obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
         obj_source_node.model = model
-        obj_source_node.url = pages[0].metadata['source']
+        obj_source_node.url = urllib.parse.unquote(pages[0].metadata['source'])
         obj_source_node.created_at = datetime.now()
+        obj_source_node.language = language
         graphDb_data_Access = graphDBdataAccess(graph)
         graphDb_data_Access.create_source_node(obj_source_node)
         success_count+=1
-        lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'status':'Success'})
+        lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'language':obj_source_node.language, 'status':'Success'})
       except Exception as e:
         failed_count+=1
-        lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'status':'Failed'})
+        lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'language':obj_source_node.language, 'status':'Failed'})
     return lst_file_name,success_count,failed_count
     
 def extract_graph_from_file_local_file(graph, model, fileName, merged_file_path, allowedNodes, allowedRelationship):
@@ -181,9 +185,9 @@ def extract_graph_from_file_youtube(graph, model, source_url, allowedNodes, allo
 
   return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
-def extract_graph_from_file_Wikipedia(graph, model, wiki_query, max_sources, allowedNodes, allowedRelationship):
+def extract_graph_from_file_Wikipedia(graph, model, wiki_query, max_sources, language, allowedNodes, allowedRelationship):
 
-  file_name, pages = get_documents_from_Wikipedia(wiki_query)
+  file_name, pages = get_documents_from_Wikipedia(wiki_query, language)
   if pages==None or len(pages)==0:
     raise Exception(f'Wikipedia page is not available for file : {file_name}')
 
@@ -249,28 +253,49 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     logging.info('Update the status as Processing')
     update_graph_chunk_processed = int(os.environ.get('UPDATE_GRAPH_CHUNKS_PROCESSED'))
     # selected_chunks = []
-    graph_documents=[]
+    is_cancelled_status = False
+    job_status = "Completed"
     node_count = 0
     rel_count = 0
     for i in range(0, len(chunks), update_graph_chunk_processed):
-      selected_chunks = chunks[i:i+update_graph_chunk_processed]
-      node_count,rel_count = processing_chunks(selected_chunks,graph,file_name,model,allowedNodes,allowedRelationship,node_count, rel_count)
-      end_time = datetime.now()
-      processed_time = end_time - start_time
-      
-      obj_source_node = sourceNode()
-      obj_source_node.file_name = file_name
-      obj_source_node.updated_at = end_time
-      obj_source_node.processing_time = processed_time
-      obj_source_node.node_count = node_count
-      obj_source_node.relationship_count = rel_count
-      graphDb_data_Access.update_source_node(obj_source_node)
+      select_chunks_upto = i+update_graph_chunk_processed
+      logging.info(f'Selected Chunks upto: {select_chunks_upto}')
+      if len(chunks) <= select_chunks_upto:
+         select_chunks_upto = len(chunks)
+      selected_chunks = chunks[i:select_chunks_upto]
+      result = graphDb_data_Access.get_current_status_document_node(file_name)
+      is_cancelled_status = result[0]['is_cancelled']
+      logging.info(f"Value of is_cancelled : {result[0]['is_cancelled']}")
+      if is_cancelled_status == True:
+         job_status = "Cancelled"
+         logging.info('Exit from running loop of processing file')
+         exit
+      else:
+        node_count,rel_count = processing_chunks(selected_chunks,graph,file_name,model,allowedNodes,allowedRelationship,node_count, rel_count)
+        end_time = datetime.now()
+        processed_time = end_time - start_time
+        
+        obj_source_node = sourceNode()
+        obj_source_node.file_name = file_name
+        obj_source_node.updated_at = end_time
+        obj_source_node.processing_time = processed_time
+        obj_source_node.node_count = node_count
+        obj_source_node.processed_chunk = select_chunks_upto
+        obj_source_node.relationship_count = rel_count
+        graphDb_data_Access.update_source_node(obj_source_node)
     
-    
-    job_status = "Completed"
+    result = graphDb_data_Access.get_current_status_document_node(file_name)
+    is_cancelled_status = result[0]['is_cancelled']
+    if is_cancelled_status == 'True':
+       logging.info(f'Is_cancelled True at the end extraction')
+       job_status = 'Cancelled'
+    logging.info(f'Job Status at the end : {job_status}')
+    end_time = datetime.now()
+    processed_time = end_time - start_time
     obj_source_node = sourceNode()
     obj_source_node.file_name = file_name
     obj_source_node.status = job_status
+    obj_source_node.processing_time = processed_time
 
     graphDb_data_Access.update_source_node(obj_source_node)
     logging.info('Updated the nodeCount and relCount properties in Docuemnt node')
@@ -423,3 +448,23 @@ def get_labels_and_relationtypes(graph):
   if result is None:
      result=[]
   return result
+
+def manually_cancelled_job(graph, filenames, source_types, merged_dir):
+  
+  filename_list= list(map(str.strip, json.loads(filenames)))
+  source_types_list= list(map(str.strip, json.loads(source_types)))
+  
+  for (file_name,source_type) in zip(filename_list, source_types_list):
+      obj_source_node = sourceNode()
+      obj_source_node.file_name = file_name
+      obj_source_node.is_cancelled = True
+      obj_source_node.status = 'Cancelled'
+      obj_source_node.updated_at = datetime.now()
+      graphDb_data_Access = graphDBdataAccess(graph)
+      graphDb_data_Access.update_source_node(obj_source_node)
+      obj_source_node = None
+      merged_file_path = os.path.join(merged_dir, file_name)
+      if source_type == 'local file':
+          logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+          delete_uploaded_local_file(merged_file_path, file_name)
+  return "Cancelled the processing job successfully"

@@ -8,7 +8,7 @@ const urlScanAPI = async (props: ScanProps) => {
     let s3url: string = '';
     if (props.source_type === 's3 bucket') {
       if (!props.urlParam?.endsWith('/')) {
-        s3url = props?.urlParam + '/';
+        s3url = `${props?.urlParam}/`;
       } else {
         s3url = props?.urlParam;
       }
@@ -22,7 +22,7 @@ const urlScanAPI = async (props: ScanProps) => {
     } else {
       formData.append('source_url', props?.urlParam ?? '');
     }
-    formData.append('wiki_query', props?.wikiquery ?? '');
+    formData.append('wiki_query', decodeURIComponent(props?.wikiquery ?? ''));
     formData.append('source_type', props?.source_type ?? '');
     if (props.model != undefined) {
       formData.append('model', props?.model);

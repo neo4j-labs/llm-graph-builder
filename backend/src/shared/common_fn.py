@@ -19,27 +19,35 @@ from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransf
 #watch("neo4j")
 
 def check_url_source(source_type, yt_url:str=None, queries_list:List[str]=None):
+    languages=[]
     try:
       logging.info(f"incoming URL: {yt_url}")
       if source_type == 'youtube':
         if re.match('(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?',yt_url.strip()):
           youtube_url = create_youtube_url(yt_url.strip())
           logging.info(youtube_url)
-          return youtube_url
+          return youtube_url,languages
         else:
           raise Exception('Incoming URL is not youtube URL')
       
       elif  source_type == 'Wikipedia':
         wiki_query_ids=[]
-        wikipedia_url_regex = r'^https?://(?:en\.wikipedia\.org/wiki/)?([A-Za-z0-9_\-]+)$'
+        #pattern = r"https?:\/\/([a-zA-Z0-9\.\,\_\-\/]+)\.wikipedia\.([a-zA-Z]{2,3})\/wiki\/([a-zA-Z0-9\.\,\_\-\/]+)"
+        wikipedia_url_regex = r'https?:\/\/(www\.)?([a-zA-Z]{2,3})\.wikipedia\.org\/wiki\/(.*)'
+        wiki_id_pattern = r'^[a-zA-Z0-9 _\-\.\,\:\(\)\[\]\{\}\/]*$'
+        
         for wiki_url in queries_list:
-          match = re.match(wikipedia_url_regex, wiki_url.strip())
+          match = re.search(wikipedia_url_regex, wiki_url.strip())
           if match:
-            wiki_query_ids.append(match.group(1))
-          else :  
-             wiki_query_ids.append(wiki_url.strip())
+                languages.append(match.group(2))
+                wiki_query_ids.append(match.group(3))
+          else : 
+                languages.append("en")
+                wiki_query_ids.append(wiki_url.strip())
+ 
+
         logging.info(f"wikipedia query ids = {wiki_query_ids}")     
-        return wiki_query_ids     
+        return wiki_query_ids, languages     
     except Exception as e:
       logging.error(f"Error in recognize URL: {e}")
       raise Exception(e)
@@ -107,7 +115,6 @@ def close_db_connection(graph, api_name):
       
 def get_llm(model_version:str) :
     """Retrieve the specified language model based on the model name."""
-
     if "gemini" in model_version:
         llm = ChatVertexAI(
             model_name=model_version,
@@ -127,6 +134,6 @@ def get_llm(model_version:str) :
                          temperature=0)
     else:
         llm = DiffbotGraphTransformer(diffbot_api_key=os.environ.get('DIFFBOT_API_KEY'))    
-    
+    logging.info(f"Model created : Model Version: {model_version}")
     return llm
   
