@@ -21,6 +21,7 @@ export interface CustomFile extends Partial<globalThis.File> {
   uploadprogess?: number;
   processingStatus?: boolean;
   google_project_id?: string;
+  language?: string;
   processingProgress?: number;
 }
 
@@ -52,6 +53,7 @@ export type ExtractParams = {
   allowedNodes?: string[];
   allowedRelationship?: string[];
   gcs_project_id?: string;
+  language?: string;
 } & { [key: string]: any };
 
 export type UploadParams = {
@@ -104,6 +106,7 @@ export interface SourceNode {
   errorMessage?: string;
   uploadprogress?: number;
   gcsProjectId?: string;
+  language?: string;
   processed_chunk?: number;
   total_chunks?: number;
 }
@@ -199,6 +202,7 @@ export interface fileName {
   gcsBucketFolder?: string;
   status?: string;
   gcsProjectId: string;
+  language?: string;
 }
 export interface URLSCAN_RESPONSE {
   status: string;

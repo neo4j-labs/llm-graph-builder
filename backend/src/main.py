@@ -19,7 +19,9 @@ import warnings
 from pytube import YouTube
 import sys
 import shutil
+import urllib.parse
 import json
+
 warnings.filterwarnings("ignore")
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
@@ -92,7 +94,7 @@ def create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_na
 
 def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     
-    youtube_url = check_url_source(source_type=source_type, yt_url=source_url)
+    youtube_url, language = check_url_source(source_type=source_type, yt_url=source_url)
     success_count=0
     failed_count=0
     lst_file_name = []
@@ -125,10 +127,10 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
     failed_count=0
     lst_file_name=[]
     queries_list =  wiki_query.split(',')
-    wiki_query_ids = check_url_source(source_type=source_type, queries_list=queries_list)
-    for query in wiki_query_ids:
-      logging.info(f"Creating source node for {query.strip()}")
-      pages = WikipediaLoader(query=query.strip(), load_max_docs=1, load_all_available_meta=True).load()
+    wiki_query_ids, languages = check_url_source(source_type=source_type, queries_list=queries_list)
+    for query,language in zip(wiki_query_ids, languages):
+      logging.info(f"Creating source node for {query.strip()}, {language}")
+      pages = WikipediaLoader(query=query.strip(), lang=language, load_max_docs=1, load_all_available_meta=True).load()
       try:
         if not pages:
           failed_count+=1
@@ -139,15 +141,16 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
         obj_source_node.file_source = source_type
         obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
         obj_source_node.model = model
-        obj_source_node.url = pages[0].metadata['source']
+        obj_source_node.url = urllib.parse.unquote(pages[0].metadata['source'])
         obj_source_node.created_at = datetime.now()
+        obj_source_node.language = language
         graphDb_data_Access = graphDBdataAccess(graph)
         graphDb_data_Access.create_source_node(obj_source_node)
         success_count+=1
-        lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'status':'Success'})
+        lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'language':obj_source_node.language, 'status':'Success'})
       except Exception as e:
         failed_count+=1
-        lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'status':'Failed'})
+        lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'language':obj_source_node.language, 'status':'Failed'})
     return lst_file_name,success_count,failed_count
     
 def extract_graph_from_file_local_file(graph, model, fileName, merged_file_path, allowedNodes, allowedRelationship):
@@ -182,9 +185,9 @@ def extract_graph_from_file_youtube(graph, model, source_url, allowedNodes, allo
 
   return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
-def extract_graph_from_file_Wikipedia(graph, model, wiki_query, max_sources, allowedNodes, allowedRelationship):
+def extract_graph_from_file_Wikipedia(graph, model, wiki_query, max_sources, language, allowedNodes, allowedRelationship):
 
-  file_name, pages = get_documents_from_Wikipedia(wiki_query)
+  file_name, pages = get_documents_from_Wikipedia(wiki_query, language)
   if pages==None or len(pages)==0:
     raise Exception(f'Wikipedia page is not available for file : {file_name}')
 
