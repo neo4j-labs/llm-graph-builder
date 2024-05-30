@@ -11,11 +11,11 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
   const { userCredentials } = useCredentials();
   const onChangenodes = (selectedOptions: OnChangeValue<OptionType, true>) => {
     setSelectedNodes(selectedOptions);
-    localStorage.setItem('selectedNodeLabels', JSON.stringify(selectedOptions));
+    localStorage.setItem('selectedNodeLabels', JSON.stringify({ 'db': userCredentials?.uri, selectedOptions }));
   };
   const onChangerels = (selectedOptions: OnChangeValue<OptionType, true>) => {
     setSelectedRels(selectedOptions);
-    localStorage.setItem('selectedRelationshipLabels', JSON.stringify(selectedOptions));
+    localStorage.setItem('selectedRelationshipLabels', JSON.stringify({ 'db': userCredentials?.uri, selectedOptions }));
   };
   const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>([]);
   const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
