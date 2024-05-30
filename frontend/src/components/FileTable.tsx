@@ -132,16 +132,20 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       }),
       columnHelper.accessor((row) => row.status, {
         id: 'status',
-        cell: (info) => (
-          <div
-            className='cellClass'
-            title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
-          >
-            {info.getValue() !== 'Processing' ? <StatusIndicator type={statusCheck(info.getValue())} /> : ''}
-            {info.getValue() !== 'Processing' ? (
-              <i>{info.getValue()}</i>
-            ) : info.row.original.processingProgress == undefined ? (
-              <>
+        cell: (info) => {
+          if (info.getValue() != 'Processing') {
+            return (
+              <div
+                className='cellClass'
+                title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
+              >
+                <StatusIndicator type={statusCheck(info.getValue())} />
+                {info.getValue()}
+              </div>
+            );
+          } else if (info.getValue() === 'Processing' && info.row.original.processingProgress === undefined) {
+            return (
+              <div className='cellClass'>
                 <StatusIndicator type={statusCheck(info.getValue())} />
                 <i>Processing</i>
                 <div className='mx-1'>
@@ -162,40 +166,42 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                     <XMarkIconOutline />
                   </IconButton>
                 </div>
-              </>
-            ) : (
-              info.getValue() === 'Processing' &&
-              info.row.original.processingProgress != undefined &&
-              info.row.original.processingProgress < 100 && (
-                <>
-                  <ProgressBar
-                    heading='Processing '
-                    size='small'
-                    value={info.row.original.processingProgress}
-                  ></ProgressBar>
-                  <div className='mx-1'>
-                    <IconButton
-                      size='medium'
-                      title='cancel the processing job'
-                      aria-label='cancel job button'
-                      clean
-                      disabled={info.row.original.processingStatus}
-                      onClick={() => {
-                        cancelHandler(
-                          info.row.original.name as string,
-                          info.row.original.id as string,
-                          info.row.original.fileSource as string
-                        );
-                      }}
-                    >
-                      <XMarkIconOutline />
-                    </IconButton>
-                  </div>
-                </>
-              )
-            )}
-          </div>
-        ),
+              </div>
+            );
+          } else if (
+            info.getValue() === 'Processing' &&
+            info.row.original.processingProgress != undefined &&
+            info.row.original.processingProgress < 100
+          ) {
+            return (
+              <div className='cellClass'>
+                <ProgressBar
+                  heading='Processing '
+                  size='small'
+                  value={info.row.original.processingProgress}
+                ></ProgressBar>
+                <div className='mx-1'>
+                  <IconButton
+                    size='medium'
+                    title='cancel the processing job'
+                    aria-label='cancel job button'
+                    clean
+                    disabled={info.row.original.processingStatus}
+                    onClick={() => {
+                      cancelHandler(
+                        info.row.original.name as string,
+                        info.row.original.id as string,
+                        info.row.original.fileSource as string
+                      );
+                    }}
+                  >
+                    <XMarkIconOutline />
+                  </IconButton>
+                </div>
+              </div>
+            );
+          }
+        },
         header: () => <span>Status</span>,
         footer: (info) => info.column.id,
         filterFn: 'statusFilter' as any,
