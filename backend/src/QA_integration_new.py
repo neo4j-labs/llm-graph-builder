@@ -24,13 +24,14 @@ from langchain.retrievers.document_compressors import DocumentCompressorPipeline
 from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage
 from src.shared.constants import *
+import json
 
 load_dotenv() 
 
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
 CHAT_MAX_TOKENS = 1000
-SEARCH_KWARG_K = 2
+SEARCH_KWARG_K = 3
 SEARCH_KWARG_SCORE_THRESHOLD = 0.7
 
 RETRIEVAL_QUERY = """
@@ -85,7 +86,9 @@ AI Response: "Langchain's memory management involves utilizing built-in mechanis
 User: "I need help with PyCaret's classification model."
 AI Response: "PyCaret simplifies the process of building and deploying machine learning models. For classification tasks, you can use PyCaret's setup function to prepare your data, then compare and tune models."
 
-Note: This system does not generate answers based solely on internal knowledge. It answers from the information provided in the user's current and previous inputs, and from explicitly referenced external sources.
+***IMPORTANT*** : Do not access or use any external knowledge or information. if the question cannot be answerd from the provided context please respond accordingly. 
+
+Note: This system does not generate answers based on its internal knowledge. It answers from the information provided in the user's current and previous inputs, and from explicitly referenced external sources in context.
 """
 
 # def get_llm(model: str,max_tokens=CHAT_MAX_TOKENS) -> Any:
@@ -126,7 +129,7 @@ Note: This system does not generate answers based solely on internal knowledge. 
 #         logging.error(f"Unsupported model: {model}")
 #         return None,None
 
-def get_neo4j_retriever(graph, index_name="vector", search_k=SEARCH_KWARG_K, score_threshold=SEARCH_KWARG_SCORE_THRESHOLD):
+def get_neo4j_retriever(graph, document_names,index_name="vector", search_k=SEARCH_KWARG_K, score_threshold=SEARCH_KWARG_SCORE_THRESHOLD):
     try:
         neo_db = Neo4jVector.from_existing_index(
             embedding=EMBEDDING_FUNCTION,
@@ -135,8 +138,13 @@ def get_neo4j_retriever(graph, index_name="vector", search_k=SEARCH_KWARG_K, sco
             graph=graph
         )
         logging.info(f"Successfully retrieved Neo4jVector index '{index_name}'")
-        retriever = neo_db.as_retriever(search_kwargs={'k': search_k, "score_threshold": score_threshold})
-        logging.info(f"Successfully created retriever for index '{index_name}' with search_k={search_k}, score_threshold={score_threshold}")
+        if document_names:
+            document_names= list(map(str.strip, json.loads(document_names)))
+            retriever = neo_db.as_retriever(search_kwargs={'k': search_k, "score_threshold": score_threshold,'filter':{'fileName': {'$in': document_names}}})
+            logging.info(f"Successfully created retriever for index '{index_name}' with search_k={search_k}, score_threshold={score_threshold} for documents {document_names}")
+        else:
+            retriever = neo_db.as_retriever(search_kwargs={'k': search_k, "score_threshold": score_threshold})
+            logging.info(f"Successfully created retriever for index '{index_name}' with search_k={search_k}, score_threshold={score_threshold}")
         return retriever
     except Exception as e:
         logging.error(f"Error retrieving Neo4jVector index '{index_name}' or creating retriever: {e}")
@@ -296,12 +304,12 @@ def clear_chat_history(graph,session_id):
             "user": "chatbot"
             }
 
-def QA_RAG(graph,model,question,session_id):
+def QA_RAG(graph,model,question,session_id,document_names):
     try:
         start_time = time.time()
         model_version = MODEL_VERSIONS[model]
         llm = get_llm(model_version)
-        retriever = get_neo4j_retriever(graph=graph)
+        retriever = get_neo4j_retriever(graph=graph,document_names=document_names)
         doc_retriever = create_document_retriever_chain(llm,retriever)
         history = create_neo4j_chat_message_history(graph,session_id )
         chat_setup_time = time.time() - start_time
@@ -316,6 +324,7 @@ def QA_RAG(graph,model,question,session_id):
                 "messages":messages
             }
         )
+        print(docs)
         formatted_docs,sources = format_documents(docs)
         doc_retrieval_time = time.time() - start_time
         logging.info(f"Modified question and Documents retrieved in {doc_retrieval_time:.2f} seconds")
