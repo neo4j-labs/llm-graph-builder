@@ -13,10 +13,9 @@ import {
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
 import ButtonWithToolTip from './ButtonWithToolTip';
-import { getIcon, getNodeCaption, getSize } from '../utils/Utils';
+import { processGraphData } from '../utils/Utils';
 import { useCredentials } from '../context/UserCredentials';
 import { LegendsChip } from './LegendsChip';
-import { calcWordColor } from '@neo4j-devtools/word-color';
 import graphQueryAPI from '../services/GraphQuery';
 import { queryMap } from '../utils/Constants';
 import { useFileContext } from '../context/UsersFiles';
@@ -26,6 +25,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   inspectedName,
   setGraphViewOpen,
   viewPoint,
+  nodeValues,
+  relationshipValues,
 }) => {
   const nvlRef = useRef<NVL>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -93,7 +94,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               graphQuery,
               selectedRows.map((f) => JSON.parse(f).name)
             )
-          : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName]);
+          : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
       console.log(error);
@@ -105,61 +106,36 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setNodes([]);
       setRelationships([]);
       setLoading(true);
-      fetchData()
-        .then((result) => {
-          if (result && result.data.data.nodes.length > 0) {
-            const neoNodes = result.data.data.nodes.map((f: Node) => f);
-            const neoRels = result.data.data.relationships.map((f: Relationship) => f);
-            // Infer color schema dynamically
-            let iterator = 0;
-            const schemeVal: Scheme = {};
-            let labels: string[] = [];
-            labels = neoNodes.map((f: any) => f.labels);
-            labels.forEach((label: any) => {
-              if (schemeVal[label] == undefined) {
-                schemeVal[label] = calcWordColor(label[0]);
-                iterator += 1;
-              }
-            });
-
-            const newNodes: Node[] = neoNodes.map((g: any) => {
-              return {
-                id: g.element_id,
-                size: getSize(g),
-                captionAlign: 'bottom',
-                iconAlign: 'bottom',
-                captionHtml: <b>Test</b>,
-                caption: getNodeCaption(g),
-                color: schemeVal[g.labels[0]],
-                icon: getIcon(g),
-                labels: g.labels,
-              };
-            });
-            const finalNodes = newNodes.flat();
-            const newRels: Relationship[] = neoRels.map((relations: any) => {
-              return {
-                id: relations.element_id,
-                from: relations.start_node_element_id,
-                to: relations.end_node_element_id,
-                caption: relations.type,
-              };
-            });
-            const finalRels = newRels.flat();
-            setNodes(finalNodes);
-            setRelationships(finalRels);
-            setScheme(schemeVal);
-            setLoading(false);
-          } else {
+      if (viewPoint === 'chatInfoView') {
+        console.log('nodes', nodeValues);
+        const { finalNodes, finalRels, schemeVal } = processGraphData(nodeValues ?? [], relationshipValues ?? []);
+        setNodes(finalNodes);
+        setRelationships(finalRels);
+        setScheme(schemeVal);
+        setLoading(false);
+      } else {
+        fetchData()
+          .then((result) => {
+            if (result && result.data.data.nodes.length > 0) {
+              const neoNodes = result.data.data.nodes.map((f: Node) => f);
+              const neoRels = result.data.data.relationships.map((f: Relationship) => f);
+              const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels);
+              setNodes(finalNodes);
+              setRelationships(finalRels);
+              setScheme(schemeVal);
+              setLoading(false);
+            } else {
+              setLoading(false);
+              setStatus('danger');
+              setStatusMessage(`Unable to retrieve document graph for ${inspectedName}`);
+            }
+          })
+          .catch((error: any) => {
             setLoading(false);
             setStatus('danger');
-            setStatusMessage(`Unable to retrieve document graph for ${inspectedName}`);
-          }
-        })
-        .catch((error: any) => {
-          setLoading(false);
-          setStatus('danger');
-          setStatusMessage(error.message);
-        });
+            setStatusMessage(error.message);
+          });
+      }
     }
   }, [open, graphType]);
 
@@ -186,7 +162,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   };
 
   const headerTitle =
-    viewPoint !== 'showGraphView' ? `Inspect Generated Graph from ${inspectedName}` : 'Generated Graph';
+    viewPoint === 'showGraphView' || viewPoint === 'chatInfoView'
+      ? 'Generated Graph'
+      : `Inspect Generated Graph from ${inspectedName}`;
+
+  const checkBoxView = viewPoint !== 'chatInfoView';
 
   const nvlCallbacks = {
     onLayoutComputing(isComputing: boolean) {
@@ -236,28 +216,30 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       >
         <Dialog.Header id='form-dialog-title'>
           {headerTitle}
-          <div className='flex gap-5 mt-2 justify-between'>
-            <div className='flex gap-5'>
-              <Checkbox
-                checked={graphType.includes('document')}
-                label='Document'
-                disabled={(graphType.includes('document') && graphType.length === 1) || loading}
-                onChange={() => handleCheckboxChange('document')}
-              />
-              <Checkbox
-                checked={graphType.includes('entities')}
-                label='Entities'
-                disabled={(graphType.includes('entities') && graphType.length === 1) || loading}
-                onChange={() => handleCheckboxChange('entities')}
-              />
-              <Checkbox
-                checked={graphType.includes('chunks')}
-                label='Chunks'
-                disabled={(graphType.includes('chunks') && graphType.length === 1) || loading}
-                onChange={() => handleCheckboxChange('chunks')}
-              />
+          {checkBoxView && (
+            <div className='flex gap-5 mt-2 justify-between'>
+              <div className='flex gap-5'>
+                <Checkbox
+                  checked={graphType.includes('document')}
+                  label='Document'
+                  disabled={(graphType.includes('document') && graphType.length === 1) || loading}
+                  onChange={() => handleCheckboxChange('document')}
+                />
+                <Checkbox
+                  checked={graphType.includes('entities')}
+                  label='Entities'
+                  disabled={(graphType.includes('entities') && graphType.length === 1) || loading}
+                  onChange={() => handleCheckboxChange('entities')}
+                />
+                <Checkbox
+                  checked={graphType.includes('chunks')}
+                  label='Chunks'
+                  disabled={(graphType.includes('chunks') && graphType.length === 1) || loading}
+                  onChange={() => handleCheckboxChange('chunks')}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </Dialog.Header>
         <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border border-palette-neutral-border-weak'>
           <div className='bg-white relative w-full h-full max-h-full'>

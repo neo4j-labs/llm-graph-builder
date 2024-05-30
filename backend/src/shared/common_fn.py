@@ -116,7 +116,6 @@ def close_db_connection(graph, api_name):
       
 def get_llm(model_version:str) :
     """Retrieve the specified language model based on the model name."""
-
     if "gemini" in model_version:
         llm = ChatVertexAI(
             model_name=model_version,
@@ -136,6 +135,6 @@ def get_llm(model_version:str) :
                          temperature=0)
     else:
         llm = DiffbotGraphTransformer(diffbot_api_key=os.environ.get('DIFFBOT_API_KEY'))    
-    
+    logging.info(f"Model created : Model Version: {model_version}")
     return llm
   

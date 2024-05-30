@@ -1,4 +1,6 @@
-import { Messages } from "../types";
+import { calcWordColor } from '@neo4j-devtools/word-color';
+import type { Node, Relationship } from '@neo4j-nvl/base';
+import { Scheme } from '../types';
 
 // Get the Url
 export const url = () => {
@@ -34,6 +36,7 @@ export const statusCheck = (status: string) => {
   }
 };
 
+// Graph Functions
 export const constructQuery = (queryTochange: string, docLimit: string) => {
   return `MATCH docs = (d:Document {status:'Completed'}) 
   WITH docs, d ORDER BY d.createdAt DESC 
@@ -89,6 +92,7 @@ export const getNodeCaption = (node: any) => {
   }
   return node.properties.id;
 };
+
 export const getIcon = (node: any) => {
   if (node.labels[0] == 'Document') {
     return 'paginate-filter-text.svg';
@@ -109,27 +113,37 @@ export function extractPdfFileName(url: string): string {
   return decodedFileName;
 }
 
-export const getDateTime = () => {
-  const date = new Date();
-  const formattedDateTime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`
-  return formattedDateTime;
-}
-
-export const saveStateToStorage = (newMessages: Messages[], clearHistoryData: boolean) => {
-  const stateToStore = {
-    messages: newMessages,
-    clearHistoryData,
-  };
-  sessionStorage.setItem('rightSidebarState', JSON.stringify(stateToStore));
-};
-
-export const postMessageToFullscreen = (newMessages: Messages[], clearHistoryData: boolean, windowRef) => {
-  if (windowRef.current) {
-    // const state = JSON.parse(sessionStorage.getItem('rightSidebarState') || '{}');
-    const stateToStore = {
-      messages: newMessages,
-      clearHistoryData,
+export const processGraphData = (neoNodes: Node[], neoRels: Relationship[]) => {
+  const schemeVal: Scheme = {};
+  let iterator = 0;
+  const labels: string[] = neoNodes.map((f: any) => f.labels);
+  labels.forEach((label: any) => {
+    if (schemeVal[label] == undefined) {
+      schemeVal[label] = calcWordColor(label[0]);
+      iterator += 1;
+    }
+  });
+  const newNodes: Node[] = neoNodes.map((g: any) => {
+    return {
+      id: g.element_id,
+      size: getSize(g),
+      captionAlign: 'bottom',
+      iconAlign: 'bottom',
+      caption: getNodeCaption(g),
+      color: schemeVal[g.labels[0]],
+      icon: getIcon(g),
+      labels: g.labels,
     };
-    windowRef.current.postMessage({ type: 'updateState', data: stateToStore }, window.location.origin);
-  }
+  });
+  const finalNodes = newNodes.flat();
+  const newRels: Relationship[] = neoRels.map((relations: any) => {
+    return {
+      id: relations.element_id,
+      from: relations.start_node_element_id,
+      to: relations.end_node_element_id,
+      caption: relations.type,
+    };
+  });
+  const finalRels = newRels.flat();
+  return { finalNodes, finalRels, schemeVal };
 };

@@ -26,7 +26,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
   const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels, selectedRows } = useFileContext();
-  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
+  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
@@ -131,7 +131,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       );
 
       if (fileItem.name != undefined && userCredentials != null) {
-        const name = fileItem.name;
+        const { name } = fileItem;
         triggerStatusUpdateAPI(
           name as string,
           userCredentials?.uri,
