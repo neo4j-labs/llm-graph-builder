@@ -19,6 +19,7 @@ import warnings
 from pytube import YouTube
 import sys
 import shutil
+import json
 warnings.filterwarnings("ignore")
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
@@ -249,28 +250,49 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     logging.info('Update the status as Processing')
     update_graph_chunk_processed = int(os.environ.get('UPDATE_GRAPH_CHUNKS_PROCESSED'))
     # selected_chunks = []
-    graph_documents=[]
+    is_cancelled_status = False
+    job_status = "Completed"
     node_count = 0
     rel_count = 0
     for i in range(0, len(chunks), update_graph_chunk_processed):
-      selected_chunks = chunks[i:i+update_graph_chunk_processed]
-      node_count,rel_count = processing_chunks(selected_chunks,graph,file_name,model,allowedNodes,allowedRelationship,node_count, rel_count)
-      end_time = datetime.now()
-      processed_time = end_time - start_time
-      
-      obj_source_node = sourceNode()
-      obj_source_node.file_name = file_name
-      obj_source_node.updated_at = end_time
-      obj_source_node.processing_time = processed_time
-      obj_source_node.node_count = node_count
-      obj_source_node.relationship_count = rel_count
-      graphDb_data_Access.update_source_node(obj_source_node)
+      select_chunks_upto = i+update_graph_chunk_processed
+      logging.info(f'Selected Chunks upto: {select_chunks_upto}')
+      if len(chunks) <= select_chunks_upto:
+         select_chunks_upto = len(chunks)
+      selected_chunks = chunks[i:select_chunks_upto]
+      result = graphDb_data_Access.get_current_status_document_node(file_name)
+      is_cancelled_status = result[0]['is_cancelled']
+      logging.info(f"Value of is_cancelled : {result[0]['is_cancelled']}")
+      if is_cancelled_status == True:
+         job_status = "Cancelled"
+         logging.info('Exit from running loop of processing file')
+         exit
+      else:
+        node_count,rel_count = processing_chunks(selected_chunks,graph,file_name,model,allowedNodes,allowedRelationship,node_count, rel_count)
+        end_time = datetime.now()
+        processed_time = end_time - start_time
+        
+        obj_source_node = sourceNode()
+        obj_source_node.file_name = file_name
+        obj_source_node.updated_at = end_time
+        obj_source_node.processing_time = processed_time
+        obj_source_node.node_count = node_count
+        obj_source_node.processed_chunk = select_chunks_upto
+        obj_source_node.relationship_count = rel_count
+        graphDb_data_Access.update_source_node(obj_source_node)
     
-    
-    job_status = "Completed"
+    result = graphDb_data_Access.get_current_status_document_node(file_name)
+    is_cancelled_status = result[0]['is_cancelled']
+    if is_cancelled_status == 'True':
+       logging.info(f'Is_cancelled True at the end extraction')
+       job_status = 'Cancelled'
+    logging.info(f'Job Status at the end : {job_status}')
+    end_time = datetime.now()
+    processed_time = end_time - start_time
     obj_source_node = sourceNode()
     obj_source_node.file_name = file_name
     obj_source_node.status = job_status
+    obj_source_node.processing_time = processed_time
 
     graphDb_data_Access.update_source_node(obj_source_node)
     logging.info('Updated the nodeCount and relCount properties in Docuemnt node')
@@ -423,3 +445,23 @@ def get_labels_and_relationtypes(graph):
   if result is None:
      result=[]
   return result
+
+def manually_cancelled_job(graph, filenames, source_types, merged_dir):
+  
+  filename_list= list(map(str.strip, json.loads(filenames)))
+  source_types_list= list(map(str.strip, json.loads(source_types)))
+  
+  for (file_name,source_type) in zip(filename_list, source_types_list):
+      obj_source_node = sourceNode()
+      obj_source_node.file_name = file_name
+      obj_source_node.is_cancelled = True
+      obj_source_node.status = 'Cancelled'
+      obj_source_node.updated_at = datetime.now()
+      graphDb_data_Access = graphDBdataAccess(graph)
+      graphDb_data_Access.update_source_node(obj_source_node)
+      obj_source_node = None
+      merged_file_path = os.path.join(merged_dir, file_name)
+      if source_type == 'local file':
+          logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+          delete_uploaded_local_file(merged_file_path, file_name)
+  return "Cancelled the processing job successfully"
