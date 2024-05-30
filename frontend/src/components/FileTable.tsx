@@ -295,7 +295,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
             <IconButton
               aria-label='Toggle settings'
               size='large'
-              disabled={statusCheck(info.getValue()) !== 'success'}
+              disabled={!(info.getValue()==='Completed'||info.getValue()=="Cancelled")}
               clean
               onClick={() => onInspect(info?.row?.original?.name as string)}
             >

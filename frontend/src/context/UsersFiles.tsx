@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, Dispatch, SetStateAction, FC, useEffect } from 'react';
 import { CustomFile, FileContextProviderProps, OptionType } from '../types';
 import { defaultLLM } from '../utils/Constants';
+import { useCredentials } from './UserCredentials';
 
 interface FileContextType {
   files: (File | null)[] | [];
@@ -23,8 +24,8 @@ interface FileContextType {
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
 const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
-  const selectedNodeLabelValues = localStorage.getItem('selectedNodeLabels');
-  const selectedNodeRelsValues = localStorage.getItem('selectedRelationshipLabels');
+  const selectedNodeLabelstr = localStorage.getItem('selectedNodeLabels');
+  const selectedNodeRelsstr = localStorage.getItem('selectedRelationshipLabels');
 
   const [files, setFiles] = useState<(File | null)[] | []>([]);
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
@@ -34,15 +35,22 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [selectedRels, setSelectedRels] = useState<readonly OptionType[]>([]);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const { userCredentials } = useCredentials()
 
   useEffect(() => {
-    if (selectedNodeLabelValues != null) {
-      setSelectedNodes(JSON.parse(selectedNodeLabelValues));
+    if (selectedNodeLabelstr != null) {
+      const selectedNodeLabel = JSON.parse(selectedNodeLabelstr)
+      if (userCredentials?.uri === selectedNodeLabel.db) {
+        setSelectedNodes(selectedNodeLabel.selectedOptions);
+      }
     }
-    if (selectedNodeRelsValues != null) {
-      setSelectedRels(JSON.parse(selectedNodeRelsValues));
+    if (selectedNodeRelsstr != null) {
+      const selectedNodeRels = JSON.parse(selectedNodeRelsstr)
+      if (userCredentials?.uri === selectedNodeRels.db) {
+        setSelectedRels(selectedNodeRels.selectedOptions);
+      }
     }
-  }, []);
+  }, [userCredentials]);
 
   const value: FileContextType = {
     files,
