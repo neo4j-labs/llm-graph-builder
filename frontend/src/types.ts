@@ -19,7 +19,9 @@ export interface CustomFile extends Partial<globalThis.File> {
   gcsBucketFolder?: string;
   errorMessage?: string;
   uploadprogess?: number;
+  processingStatus?: boolean;
   google_project_id?: string;
+  processingProgress?: number;
 }
 
 export interface OptionType {
@@ -107,6 +109,8 @@ export interface SourceNode {
   errorMessage?: string;
   uploadprogress?: number;
   gcsProjectId?: string;
+  processed_chunk?: number;
+  total_chunks?: number;
 }
 export interface SideNavProps {
   openDrawer: () => void;
@@ -218,12 +222,13 @@ export interface statusupdate {
 export interface fileStatus {
   fileName: string;
   status: string;
-  processingTime: number | null;
-  nodeCount: number | null;
-  relationshipCount: number | null;
+  processingTime?: number;
+  nodeCount?: number;
+  relationshipCount?: number;
   model: string;
-  total_chunks?: number | null;
-  total_pages?: number | null;
+  total_chunks?: number;
+  total_pages?: number;
+  processed_chunk?: number;
 }
 export interface PollingAPI_Response extends Partial<AxiosResponse> {
   data: statusupdate;
@@ -267,12 +272,15 @@ export interface labelsAndTypes {
   labels: string[];
   relationshipTypes: string[];
 }
-export interface ServerData {
-  data: labelsAndTypes[];
+export interface commonserverresponse {
   status: string;
   error?: string;
   message?: string;
 }
+export interface ServerData extends Partial<commonserverresponse> {
+  data: labelsAndTypes[];
+}
+
 export interface SourceListServerData {
   data: SourceNode[];
   status: string;
@@ -298,6 +306,7 @@ export interface eventResponsetypes {
   total_chunks: number | null;
   total_pages: number | null;
   fileSize: number;
+  processed_chunk?: number;
 }
 export type Nullable<Type> = Type | null;
 
