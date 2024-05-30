@@ -256,6 +256,7 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     rel_count = 0
     for i in range(0, len(chunks), update_graph_chunk_processed):
       select_chunks_upto = i+update_graph_chunk_processed
+      logging.info(f'Selected Chunks upto: {select_chunks_upto}')
       if len(chunks) <= select_chunks_upto:
          select_chunks_upto = len(chunks)
       selected_chunks = chunks[i:select_chunks_upto]
@@ -279,10 +280,19 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
         obj_source_node.processed_chunk = select_chunks_upto
         obj_source_node.relationship_count = rel_count
         graphDb_data_Access.update_source_node(obj_source_node)
-      
+    
+    result = graphDb_data_Access.get_current_status_document_node(file_name)
+    is_cancelled_status = result[0]['is_cancelled']
+    if is_cancelled_status == 'True':
+       logging.info(f'Is_cancelled True at the end extraction')
+       job_status = 'Cancelled'
+    logging.info(f'Job Status at the end : {job_status}')
+    end_time = datetime.now()
+    processed_time = end_time - start_time
     obj_source_node = sourceNode()
     obj_source_node.file_name = file_name
     obj_source_node.status = job_status
+    obj_source_node.processing_time = processed_time
 
     graphDb_data_Access.update_source_node(obj_source_node)
     logging.info('Updated the nodeCount and relCount properties in Docuemnt node')
