@@ -20,3 +20,6 @@ class sourceNode:
     error_message:str=None
     total_pages:int=None
     total_chunks:int=None
+    language:str=None
+    is_cancelled:bool=None
+    processed_chunk:int=None

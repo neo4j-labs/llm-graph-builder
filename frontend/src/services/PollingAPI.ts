@@ -8,7 +8,8 @@ export default async function subscribe(
   username: string,
   database: string,
   password: string,
-  datahandler: (i: statusupdate) => void
+  datahandler: (i: statusupdate) => void,
+  progressHandler: (i: statusupdate) => void
 ) {
   let encodedstr = password ? btoa(password) : '';
 
@@ -23,6 +24,7 @@ export default async function subscribe(
     );
 
     if (response.data?.file_name?.status === 'Processing') {
+      progressHandler(response.data);
       await new Promise((resolve) => {
         setTimeout(resolve, currentdelay);
       });

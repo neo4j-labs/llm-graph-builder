@@ -25,7 +25,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
-  const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels, selectedRows } = useFileContext();
+  const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels, selectedRows, setSelectedNodes, setSelectedRels } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
@@ -154,7 +154,8 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
         fileItem.gcsBucketFolder ?? '',
         selectedNodes.map((l) => l.value),
         selectedRels.map((t) => t.value),
-        fileItem.google_project_id
+        fileItem.google_project_id,
+        fileItem.language
       );
 
       if (apiResponse?.status === 'Failed') {
@@ -240,9 +241,8 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
-      userCredentials?.port ?? '7687'
-    }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
+      }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -267,6 +267,8 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     setConnectionStatus(false);
     localStorage.removeItem('password');
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
+    setSelectedNodes([])
+    setSelectedRels([])
   };
 
   const selectedfileslength = useMemo(() => selectedRows.length, [selectedRows]);

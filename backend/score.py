@@ -92,16 +92,16 @@ async def create_source_knowledge_graph_url(
             
         graph = create_graph_database_connection(uri, userName, password, database)
         if source_type == 's3 bucket' and aws_access_key_id and aws_secret_access_key:
-            lst_file_name,success_count,failed_count = create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type
+            lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_url_s3,graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type
             )
         elif source_type == 'gcs bucket':
             lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, source_type,Credentials(access_token)
             )
         elif source_type == 'youtube':
-            lst_file_name,success_count,failed_count = create_source_node_graph_url_youtube(graph, model, source_url, source_type
+            lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_url_youtube,graph, model, source_url, source_type
             )
         elif source_type == 'Wikipedia':
-            lst_file_name,success_count,failed_count = create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
+            lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_url_wikipedia,graph, model, wiki_query, source_type
             )
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
@@ -137,7 +137,8 @@ async def extract_knowledge_graph_from_file(
     source_type=Form(None),
     file_name=Form(None),
     allowedNodes=Form(None),
-    allowedRelationship=Form(None)
+    allowedRelationship=Form(None),
+    language=Form(None)
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
@@ -172,7 +173,7 @@ async def extract_knowledge_graph_from_file(
 
         elif source_type == 'Wikipedia' and wiki_query:
             result = await asyncio.to_thread(
-                extract_graph_from_file_Wikipedia, graph, model, wiki_query, max_sources, allowedNodes, allowedRelationship)
+                extract_graph_from_file_Wikipedia, graph, model, wiki_query, max_sources, language, allowedNodes, allowedRelationship)
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
             result = await asyncio.to_thread(
@@ -398,7 +399,8 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                 'model':result[0]['model'],
                 'total_chunks':result[0]['total_chunks'],
                 'total_pages':result[0]['total_pages'],
-                'fileSize':result[0]['fileSize']
+                'fileSize':result[0]['fileSize'],
+                'processed_chunk':result[0]['processed_chunk']
                 })
             else:
                 status = json.dumps({'fileName':file_name, 'status':'Failed'})
@@ -453,7 +455,8 @@ async def get_document_status(file_name, url, userName, password, database):
                 'model':result[0]['model'],
                 'total_chunks':result[0]['total_chunks'],
                 'total_pages':result[0]['total_pages'],
-                'fileSize':result[0]['fileSize']
+                'fileSize':result[0]['fileSize'],
+                'processed_chunk':result[0]['processed_chunk']
                 }
         else:
             status = {'fileName':file_name, 'status':'Failed'}
@@ -463,6 +466,22 @@ async def get_document_status(file_name, url, userName, password, database):
         error_message = str(e)
         logging.exception(f'{message}:{error_message}')
         return create_api_response('Failed',message=message)
- 
+    
+@app.post("/cancelled_job")
+async def cancelled_job(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), filenames=Form(None), source_types=Form(None)):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        result = manually_cancelled_job(graph,filenames, source_types, MERGED_DIR)
+        
+        return create_api_response('Success',message=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to cancelled the running job"
+        error_message = str(e)
+        logging.exception(f'Exception in cancelling the running job:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        close_db_connection(graph, 'cancelled_job')
+
 if __name__ == "__main__":
     uvicorn.run(app)

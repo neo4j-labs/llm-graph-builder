@@ -11,11 +11,11 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
   const { userCredentials } = useCredentials();
   const onChangenodes = (selectedOptions: OnChangeValue<OptionType, true>) => {
     setSelectedNodes(selectedOptions);
-    localStorage.setItem('selectedNodeLabels', JSON.stringify(selectedOptions));
+    localStorage.setItem('selectedNodeLabels', JSON.stringify({ 'db': userCredentials?.uri, selectedOptions }));
   };
   const onChangerels = (selectedOptions: OnChangeValue<OptionType, true>) => {
     setSelectedRels(selectedOptions);
-    localStorage.setItem('selectedRelationshipLabels', JSON.stringify(selectedOptions));
+    localStorage.setItem('selectedRelationshipLabels', JSON.stringify({ 'db': userCredentials?.uri, selectedOptions }));
   };
   const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>([]);
   const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
@@ -26,7 +26,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
         try {
           const response = await getNodeLabelsAndRelTypes(userCredentials as UserCredentials);
           if (response.data.data.length) {
-            const nodelabels = response.data?.data[0]?.labels.slice(0, 20).map((l) => ({ value: l, label: l }));
+            const nodelabels = response.data?.data[0]?.labels?.slice(0, 20).map((l) => ({ value: l, label: l }));
             const reltypes = response.data?.data[0]?.relationshipTypes
               .slice(0, 20)
               .map((t) => ({ value: t, label: t }));
