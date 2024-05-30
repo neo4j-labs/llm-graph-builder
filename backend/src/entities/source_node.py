@@ -9,6 +9,7 @@ class sourceNode:
     url:str=None
     gcsBucket:str=None
     gcsBucketFolder:str=None
+    gcsProjectId:str=None
     awsAccessKeyId:str=None
     node_count:int=None
     relationship_count:str=None

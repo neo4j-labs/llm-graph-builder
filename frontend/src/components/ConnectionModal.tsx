@@ -55,17 +55,29 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
     }
   }, [open]);
 
+
   const parseAndSetURI = (uri: string, urlparams = false) => {
-    const uriParts = uri.split('://');
-    let uriHost: string;
+    const uriParts: string[] = uri.split('://');
+    let uriHost: string[] | string;
     if (urlparams) {
-      // @ts-ignore
-      uriHost = uriParts.pop().split('@').at(-1);
-      const hostParts = uriHost.split('/');
-      if (hostParts.length == 2) {
-        setPassword(hostParts.pop() as string);
-        setURI(hostParts.pop() as string);
+      //@ts-ignore
+      uriHost = uriParts.pop().split('@');
+      //@ts-ignore
+      const hostParts = uriHost.pop()?.split('-');
+      if (hostParts != undefined) {
+        console.log(hostParts)
+        if (hostParts.length == 2) {
+          setURI(hostParts.pop() as string);
+          setDatabase(hostParts.pop() as string);
+        } else {
+          setURI(hostParts.pop() as string);
+          setDatabase('neo4j');
+        }
       }
+      const usercredentialsparts = uriHost.pop()?.split(':');
+      setPassword(usercredentialsparts?.pop() as string);
+      setUsername(usercredentialsparts?.pop() as string);
+      setProtocol(uriParts.pop() as string)
     } else {
       uriHost = uriParts.pop() || URI;
       setURI(uriHost);

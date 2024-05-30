@@ -2,7 +2,8 @@ import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { AxiosResponse } from 'axios';
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 import { OverridableStringUnion } from '@mui/types';
-import type { Node } from '@neo4j-nvl/base';
+import type { Node, Relationship } from '@neo4j-nvl/base';
+import { NonOAuthError } from '@react-oauth/google';
 
 export interface CustomFile extends Partial<globalThis.File> {
   processing: number | string;
@@ -18,6 +19,7 @@ export interface CustomFile extends Partial<globalThis.File> {
   gcsBucketFolder?: string;
   errorMessage?: string;
   uploadprogess?: number;
+  google_project_id?: string;
   language?: string;
 }
 
@@ -48,6 +50,7 @@ export type ExtractParams = {
   file_name?: string;
   allowedNodes?: string[];
   allowedRelationship?: string[];
+  gcs_project_id?: string;
   language?: string;
 } & { [key: string]: any };
 
@@ -100,6 +103,7 @@ export interface SourceNode {
   gcsBucketFolder?: string;
   errorMessage?: string;
   uploadprogress?: number;
+  gcsProjectId?: string;
   language?: string;
 }
 
@@ -145,16 +149,23 @@ export interface CommonButtonProps {
   className?: string;
 }
 
+export interface Source {
+  page_numbers?: number[];
+  source_name: string;
+  time_stamps?: string;
+}
 export interface Messages {
   id: number;
   message: string;
   user: string;
   datetime: string;
   isTyping?: boolean;
-  sources?: string[];
+  sources?: Source[];
   model?: string;
-  entities?: string[];
   isLoading?: boolean;
+  response_time?: number;
+  chunk_ids?: string[];
+  total_tokens?: number;
 }
 
 export type ChatbotProps = {
@@ -170,9 +181,11 @@ export interface WikipediaModalTypes {
 
 export interface GraphViewModalProps {
   open: boolean;
-  inspectedName: string;
+  inspectedName?: string;
   setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
   viewPoint: string;
+  nodeValues?: Node[];
+  relationshipValues?: Relationship[];
 }
 
 export type GraphType = 'document' | 'chunks' | 'entities';
@@ -184,6 +197,7 @@ export interface fileName {
   gcsBucketName?: string;
   gcsBucketFolder?: string;
   status?: string;
+  gcsProjectId: string;
   language?: string;
 }
 export interface URLSCAN_RESPONSE {
@@ -232,8 +246,10 @@ export interface ScanProps {
   gcs_bucket_name?: string;
   gcs_bucket_folder?: string;
   source_type?: string;
+  gcs_project_id?: string;
+  access_token?: string;
 }
-export type alertState = {
+export type alertStateType = {
   showAlert: boolean;
   alertType: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined;
   alertMessage: string;
@@ -269,16 +285,12 @@ export interface SourceListServerData {
   message?: string;
 }
 
-export interface ChatInfoModalProps {
-  hideModal: () => void;
-  open: boolean;
-  children: ReactNode;
-}
-
 export interface chatInfoMessage extends Partial<Messages> {
-  sources?: string[];
-  model?: string;
-  entities?: string[];
+  sources: Source[];
+  model: string;
+  response_time: number;
+  chunk_ids: string[];
+  total_tokens: number;
 }
 
 export interface eventResponsetypes {
@@ -293,3 +305,45 @@ export interface eventResponsetypes {
   fileSize: number;
 }
 export type Nullable<Type> = Type | null;
+
+export type LabelColors = 'default' | 'success' | 'info' | 'warning' | 'danger' | undefined;
+
+export interface HoverableLinkProps {
+  url: string;
+  children: React.ReactNode;
+}
+
+export interface ChunkEntitiesProps {
+  userCredentials: UserCredentials | null;
+  chunkIds: string[];
+}
+
+export interface CHATINFO_RESPONSE {
+  status: string;
+  message: string;
+  error?: string;
+  node: Node[];
+  relationships: Relationship[];
+  data?: any;
+}
+
+export interface ChatInfo_APIResponse extends Partial<AxiosResponse> {
+  data: CHATINFO_RESPONSE;
+}
+
+export interface nonoautherror extends NonOAuthError {
+  message?: string;
+}
+
+export type Entity = {
+  element_id: string;
+  labels: string[];
+  properties: {
+    id: string;
+  };
+};
+
+export type GroupedEntity = {
+  texts: Set<string>;
+  color: string;
+};
