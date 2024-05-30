@@ -154,7 +154,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         fileItem.gcsBucketFolder ?? '',
         selectedNodes.map((l) => l.value),
         selectedRels.map((t) => t.value),
-        fileItem.google_project_id
+        fileItem.google_project_id,
+        fileItem.language
       );
 
       if (apiResponse?.status === 'Failed') {

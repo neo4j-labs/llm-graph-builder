@@ -137,7 +137,8 @@ async def extract_knowledge_graph_from_file(
     source_type=Form(None),
     file_name=Form(None),
     allowedNodes=Form(None),
-    allowedRelationship=Form(None)
+    allowedRelationship=Form(None),
+    language=Form(None)
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
@@ -172,7 +173,7 @@ async def extract_knowledge_graph_from_file(
 
         elif source_type == 'Wikipedia' and wiki_query:
             result = await asyncio.to_thread(
-                extract_graph_from_file_Wikipedia, graph, model, wiki_query, max_sources, allowedNodes, allowedRelationship)
+                extract_graph_from_file_Wikipedia, graph, model, wiki_query, max_sources, language, allowedNodes, allowedRelationship)
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
             result = await asyncio.to_thread(

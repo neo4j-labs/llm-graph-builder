@@ -351,6 +351,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   errorMessage: item?.errorMessage,
                   uploadprogess: item?.uploadprogress ?? 0,
                   google_project_id: item?.gcsProjectId,
+                  language: item.language ?? '',
                   processingProgress:
                     item.processed_chunk != undefined && item.total_chunks != undefined
                       ? Math.floor((item.processed_chunk / item.total_chunks) * 100)
