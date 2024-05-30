@@ -105,9 +105,10 @@ export interface SourceNode {
 }
 
 export interface SideNavProps {
-  openDrawer: () => void;
-  closeDrawer: () => void;
   isExpanded: boolean;
+  position: 'left' | 'right';
+  toggleDrawer: () => void;
+  deleteOnClick?: () => void;
 }
 
 export interface DrawerProps {
@@ -115,7 +116,8 @@ export interface DrawerProps {
 }
 
 export interface ContentProps {
-  isExpanded: boolean;
+  isLeftExpanded: boolean;
+  isRightExpanded: boolean;
   showChatBot: boolean;
   openChatBot: () => void;
 }

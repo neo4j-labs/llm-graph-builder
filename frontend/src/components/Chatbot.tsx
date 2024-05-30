@@ -100,22 +100,24 @@ export default function Chatbot(props: ChatbotProps) {
       setTimeout(() => simulateTypingEffect(response, nextIndex), 20);
     } else {
       setListMessages((msgs) => {
-        const newMessages = msgs.map(msg => msg.isTyping ? { ...msg, isTyping: false } : msg)
+        const newMessages = msgs.map((msg) => (msg.isTyping ? { ...msg, isTyping: false } : msg));
         const sessionStateData = sessionStorage.getItem('rightSidebarState');
         if (sessionStateData) {
           try {
             const parseData = JSON.parse(sessionStateData);
             sessionStorage.setItem('rightSidebarState', JSON.stringify({ ...parseData, messages: newMessages }));
-
           } catch {
-            sessionStorage.setItem('rightSidebarState', JSON.stringify({ messages: newMessages, clearHistoryData: null, isFullScreen: null }));
+            sessionStorage.setItem(
+              'rightSidebarState',
+              JSON.stringify({ messages: newMessages, clearHistoryData: null, isFullScreen: null })
+            );
           }
-          if(broadcastMessages) {
-            broadcastMessages(newMessages)
+          if (broadcastMessages) {
+            broadcastMessages(newMessages);
           }
         }
-        return newMessages
-      })
+        return newMessages;
+      });
     }
   };
 
@@ -178,7 +180,9 @@ export default function Chatbot(props: ChatbotProps) {
   // }
 
   return (
-    <div className={`n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'`}>
+    <div
+      className={`n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'`}
+    >
       <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3'>
         <Widget className='n-bg-palette-neutral-bg-weak' header='' isElevated={false}>
           <div className='flex flex-col gap-4 gap-y-4'>
@@ -216,16 +220,18 @@ export default function Chatbot(props: ChatbotProps) {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${chat.user === 'chatbot'
-                    ? 'n-bg-palette-neutral-bg-strong max-w-[315px]'
-                    : 'n-bg-palette-primary-bg-weak max-w-[305px]'
-                    }`}
+                  className={`p-4 self-start ${
+                    chat.user === 'chatbot'
+                      ? 'n-bg-palette-neutral-bg-strong max-w-[315px]'
+                      : 'n-bg-palette-primary-bg-weak max-w-[305px]'
+                  }`}
                 >
                   <div
-                    className={`${listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
-                      ? 'loader'
-                      : ''
-                      }`}
+                    className={`${
+                      listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
+                        ? 'loader'
+                        : ''
+                    }`}
                   >
                     {chat.message.split(/`(.+?)`/).map((part, index) =>
                       index % 2 === 1 ? (
