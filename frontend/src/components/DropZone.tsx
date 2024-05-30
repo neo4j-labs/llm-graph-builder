@@ -36,6 +36,7 @@ const DropZone: FunctionComponent = () => {
         model: model,
         fileSource: 'local file',
         uploadprogess: 0,
+        processingProgress: undefined,
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
