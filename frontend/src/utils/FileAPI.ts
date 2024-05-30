@@ -25,7 +25,8 @@ export const extractAPI = async (
   gcs_bucket_name?: string,
   gcs_bucket_folder?: string,
   allowedNodes?: string[],
-  allowedRelationship?: string[]
+  allowedRelationship?: string[],
+  language?: string
 ): Promise<any> => {
   const urlExtract = `${url()}/extract`;
   const method: Method = 'post';
@@ -50,6 +51,7 @@ export const extractAPI = async (
       file_name,
       allowedNodes,
       allowedRelationship,
+      language,
     };
   } else if (source_type === 'gcs bucket') {
     additionalParams = {
