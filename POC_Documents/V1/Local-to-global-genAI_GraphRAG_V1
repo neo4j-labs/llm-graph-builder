@@ -1,0 +1,70 @@
+Graph DB Connectors and GenAI Integrations POC_v1
+
+“” This is the version v1, where main content is taken with the below paper1 and some other contents are added with other papers and blogs.””
+
+Paper1: From Local to Global: A Graph RAG Approach to
+Query-Focused Summarization
+
+“” Python-based implementation of both global and local Graph RAG
+approaches are forthcoming at https://aka.ms/graphrag.””
+
+Graph RAG approach uses the natural modularity of graphs to partition data for global summarization. It uses an LLM to build a graph-based text index in two stages:
+1.	Derive an entity knowledge graph from the source documents, 
+2.	Pre-generate community summaries for all groups of closely related entities.
+
+IT can answer such questions like “What are the main themes in the dataset?”, Basically, it is an inherently query focused summarization (QFS) task. Graph RAG approach improves the question answering over private text corpora that scales with both the generality of user questions and the quantity of source text to be indexed. Graph RAG leads to substantial improvements for both the comprehensiveness and diversity of generated answers.
+
+community descriptions provide complete coverage of the underlying graph index, and the input documents it represents. Query-focused summarization of an entire corpus is then made possible using a map-reduce approach: first using each community summary to answer the query independently and in parallel, then summarizing all relevant partial answers into a final global answer.
+
+ 
+        Figure 1: Graph RAG pipeline using an LLM-derived graph index of source document text
+
+I.  Data Ingestion:
+1.	Documents/chunks/Text Preprocessing: 
+                       To reduce document size and improve latency use text summarization for heavy documents or multi-documents with the below steps:
+                               Step1: LLM (use a specific LLM embedding to summarize documents)
+                             Step2: Knowledge graph to reduce size with entities, relationship, and their properties with subgraphs.
+Note: Above steps can be followed bidirectionally.
+
+2.	Create vector DB/Embedding/Indexing with LLM embedding.
+
+II. vector Embedding/Indexing Storage
+
+Generate KG with the embedding and store in graph DB or store the embedding in FAISS/pinecone to improve latency and accuracy.
+or
+Both the methods can be combined (KG+ vector embedding) and store DB to handle both structure and unstructured data 
+
+Generate   four communities (C0, C1, C2, C3) Graph RAG summary from the embedding/KG of the document/multi-documents/embeddings by using text summarized Map Reduced approach. 
+C0: Uses root-level community summaries (fewest in number) to answer user queries.
+C1: Uses high-level community summaries to answer queries. These are sub-communities.
+of C0, if present, otherwise C0 communities projected down.
+C2: Uses intermediate-level community summaries to answer queries. These are subcommunities of C1, if present, otherwise C1 communities projected down.
+C3: Uses low-level community summaries (greatest in number) to answer queries. These
+ are sub-communities of C2, if present, otherwise C2 communities projected down.
+                                                                                         
+Figure 2.1 Communities’ Summary                                          Figure.2.2 Communities Graph 
+ 
+Figure 3. Summarized Community Graph
+
+III. Chat Response/Architecture:
+Approaches: Multi-hope RAG, memory-based response, Head-to-Head measures.
+Head-To-Head measures can use as a performance metrics using an LLM evaluator are as follows:
+• Comprehensiveness: How much detail does the answer provide to cover all aspects and
+details of the question?
+• Diversity: How varied and rich is the answer in providing different perspectives and insights on the question?
+
+
+For a given community levels (Fig.2.2,2.2 & 3), the global answer to any user query is generated as follows:
+
+• Prepare community summaries. Community summaries are randomly shuffled and divided
+into chunks of pre-specified token size. This ensures relevant information is distributed
+across chunks, rather than concentrated (and potentially lost) in a single context window.
+
+•  Map community answers. Generate intermediate answers in parallel, one for each chunk.
+The LLM is also asked to generate a score between 0-100 indicating how helpful the generated
+answer is in answering the target question. Answers with score 0 are filtered out.
+
+• Reduce to global answer. Intermediate community answers are sorted in descending order
+of helpfulness score and iteratively added into a new context window until the token limit
+is reached. This final context is used to generate the global answer returned to the user.
+
