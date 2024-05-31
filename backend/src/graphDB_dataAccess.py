@@ -2,8 +2,10 @@ import logging
 import os
 from datetime import datetime
 from langchain_community.graphs import Neo4jGraph
+from src.shared.common_fn import delete_uploaded_local_file
 from src.api_response import create_api_response
 from src.entities.source_node import sourceNode
+import json
 
 class graphDBdataAccess:
 
@@ -13,6 +15,10 @@ class graphDBdataAccess:
     def update_exception_db(self, file_name, exp_msg):
         try:
             job_status = "Failed"
+            result = self.get_current_status_document_node(file_name)
+            is_cancelled_status = result[0]['is_cancelled']
+            if is_cancelled_status == 'True':
+                job_status = 'Cancelled'
             self.graph.query("""MERGE(d:Document {fileName :$fName}) SET d.status = $status, d.errorMessage = $error_msg""",
                             {"fName":file_name, "status":job_status, "error_msg":exp_msg})
         except Exception as e:
@@ -23,37 +29,71 @@ class graphDBdataAccess:
     def create_source_node(self, obj_source_node:sourceNode):
         try:
             job_status = "New"
-            logging.info("create source node as file name if not exist")
+            logging.info("creating source node if does not exist")
             self.graph.query("""MERGE(d:Document {fileName :$fn}) SET d.fileSize = $fs, d.fileType = $ft ,
                             d.status = $st, d.url = $url, d.awsAccessKeyId = $awsacc_key_id, 
                             d.fileSource = $f_source, d.createdAt = $c_at, d.updatedAt = $u_at, 
                             d.processingTime = $pt, d.errorMessage = $e_message, d.nodeCount= $n_count, 
                             d.relationshipCount = $r_count, d.model= $model, d.gcsBucket=$gcs_bucket, 
-                            d.gcsBucketFolder= $gcs_bucket_folder""",
+                            d.gcsBucketFolder= $gcs_bucket_folder, d.language= $language,d.gcsProjectId= $gcs_project_id,d.is_cancelled=False""",
                             {"fn":obj_source_node.file_name, "fs":obj_source_node.file_size, "ft":obj_source_node.file_type, "st":job_status, 
                             "url":obj_source_node.url,
                             "awsacc_key_id":obj_source_node.awsAccessKeyId, "f_source":obj_source_node.file_source, "c_at":obj_source_node.created_at,
                             "u_at":obj_source_node.created_at, "pt":0, "e_message":'', "n_count":0, "r_count":0, "model":obj_source_node.model,
-                            "gcs_bucket": obj_source_node.gcsBucket, "gcs_bucket_folder": obj_source_node.gcsBucketFolder})
+                            "gcs_bucket": obj_source_node.gcsBucket, "gcs_bucket_folder": obj_source_node.gcsBucketFolder, 
+                            "language":obj_source_node.language, "gcs_project_id":obj_source_node.gcsProjectId})
         except Exception as e:
             error_message = str(e)
+            logging.info(f"error_message = {error_message}")
             self.update_exception_db(self, obj_source_node.file_name, error_message)
             raise Exception(error_message)
         
     def update_source_node(self, obj_source_node:sourceNode):
         try:
-            processed_time = obj_source_node.updated_at - obj_source_node.created_at
+
+            params = {}
+            if obj_source_node.file_name is not None and obj_source_node.file_name != '':
+                params['fileName'] = obj_source_node.file_name
+
+            if obj_source_node.status is not None and obj_source_node.status != '':
+                params['status'] = obj_source_node.status
+
+            if obj_source_node.created_at is not None:
+                params['createdAt'] = obj_source_node.created_at
+
+            if obj_source_node.updated_at is not None:
+                params['updatedAt'] = obj_source_node.updated_at
+
+            if obj_source_node.processing_time is not None and obj_source_node.processing_time != 0:
+                params['processingTime'] = round(obj_source_node.processing_time.total_seconds(),2)
+
+            if obj_source_node.node_count is not None and obj_source_node.node_count != 0:
+                params['nodeCount'] = obj_source_node.node_count
+
+            if obj_source_node.relationship_count is not None and obj_source_node.relationship_count != 0:
+                params['relationshipCount'] = obj_source_node.relationship_count
+
+            if obj_source_node.model is not None and obj_source_node.model != '':
+                params['model'] = obj_source_node.model
+
+            if obj_source_node.total_pages is not None and obj_source_node.total_pages != 0:
+                params['total_pages'] = obj_source_node.total_pages
+
+            if obj_source_node.total_chunks is not None and obj_source_node.total_chunks != 0:
+                params['total_chunks'] = obj_source_node.total_chunks
+
+            if obj_source_node.is_cancelled is not None and obj_source_node.is_cancelled != False:
+                params['is_cancelled'] = obj_source_node.is_cancelled
+
+            if obj_source_node.processed_chunk is not None and obj_source_node.processed_chunk != 0:
+                params['processed_chunk'] = obj_source_node.processed_chunk
+
+            param= {"props":params}
+            
+            print(f'Base Param value 1 : {param}')
+            query = "MERGE(d:Document {fileName :$props.fileName}) SET d += $props"
             logging.info("Update source node properties")
-            self.graph.query("""MERGE(d:Document {fileName :$fn}) SET d.status = $st, d.createdAt = $c_at, 
-                            d.updatedAt = $u_at, d.processingTime = $pt, d.nodeCount= $n_count, 
-                            d.relationshipCount = $r_count, d.model= $model, d.total_pages = $t_pages, d.total_chunks = $t_chunks
-                        """,
-                        {"fn":obj_source_node.file_name, "st":obj_source_node.status, "c_at":obj_source_node.created_at,
-                        "u_at":obj_source_node.updated_at, "pt":round(processed_time.total_seconds(),2), "e_message":'',
-                        "n_count":obj_source_node.node_count, "r_count":obj_source_node.relationship_count, "model":obj_source_node.model,
-                        "t_pages":obj_source_node.total_pages, "t_chunks":obj_source_node.total_chunks
-                        }
-                        )
+            self.graph.query(query,param)
         except Exception as e:
             error_message = str(e)
             self.update_exception_db(self.file_name,error_message)
@@ -116,14 +156,23 @@ class graphDBdataAccess:
         query = """
                 MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, 
                 d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount,
-                d.total_pages AS total_pages, d.total_chunks AS total_chunks
+                d.total_pages AS total_pages, d.total_chunks AS total_chunks , d.fileSize as fileSize, 
+                d.is_cancelled as is_cancelled, d.processed_chunk as processed_chunk
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
     
-    def delete_file_from_graph(self, filenames:str, source_types:str, deleteEntities:str):
-        filename_list = filenames.split(',')
-        source_types_list = source_types.split(',')
+    def delete_file_from_graph(self, filenames, source_types, deleteEntities:str, merged_dir:str):
+        # filename_list = filenames.split(',')
+        filename_list= list(map(str.strip, json.loads(filenames)))
+        source_types_list= list(map(str.strip, json.loads(source_types)))
+        # source_types_list = source_types.split(',')
+        for (file_name,source_type) in zip(filename_list, source_types_list):
+            merged_file_path = os.path.join(merged_dir, file_name)
+            if source_type == 'local file':
+                logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+                delete_uploaded_local_file(merged_file_path, file_name)
+
         query_to_delete_document=""" 
            MATCH (d:Document) where d.fileName in $filename_list and d.fileSource in $source_types_list
             with collect(d) as documents 

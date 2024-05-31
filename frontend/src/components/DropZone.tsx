@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
-import { CustomFile, alertState } from '../types';
+import { CustomFile, alertStateType } from '../types';
 import { chunkSize } from '../utils/Constants';
 import { url } from '../utils/Utils';
 
@@ -15,7 +15,7 @@ const DropZone: FunctionComponent = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isClicked, setIsClicked] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
-  const [alertDetails, setalertDetails] = React.useState<alertState>({
+  const [alertDetails, setalertDetails] = React.useState<alertStateType>({
     showAlert: false,
     alertType: 'error',
     alertMessage: '',
@@ -31,12 +31,12 @@ const DropZone: FunctionComponent = () => {
         processing: 0,
         status: 'None',
         NodesCount: 0,
-        id: uuidv4(),
         relationshipCount: 0,
         type: 'PDF',
         model: model,
         fileSource: 'local file',
         uploadprogess: 0,
+        processingProgress: undefined,
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
@@ -49,6 +49,7 @@ const DropZone: FunctionComponent = () => {
             type: file.type,
             size: file.size,
             uploadprogess: file.size && file?.size < chunkSize ? 100 : 0,
+            id: uuidv4(),
             ...defaultValues,
           });
         } else {
@@ -95,7 +96,6 @@ const DropZone: FunctionComponent = () => {
     const uploadNextChunk = async () => {
       if (chunkNumber <= totalChunks) {
         const chunk = file.slice(start, end);
-        console.log({ chunkNumber });
         const formData = new FormData();
         formData.append('file', chunk);
         formData.append('chunkNumber', chunkNumber.toString());
@@ -206,7 +206,7 @@ const DropZone: FunctionComponent = () => {
       <Dropzone
         loadingComponent={isLoading && <Loader />}
         isTesting={true}
-        className='bg-none'
+        className='!bg-none'
         supportedFilesDescription={'Supports: PDF Files'}
         dropZoneOptions={{
           accept: { 'application/pdf': ['.pdf'] },

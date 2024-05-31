@@ -24,7 +24,6 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
       processing: 0,
       status: 'New',
       NodesCount: 0,
-      id: uuidv4(),
       relationshipCount: 0,
       type: 'TEXT',
       model: model,
@@ -74,6 +73,8 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
               size: item.fileSize,
               wiki_query: item.fileName,
               source_url: item.url,
+              id: uuidv4(),
+              language: item.language,
               ...defaultValues,
             });
           } else {
