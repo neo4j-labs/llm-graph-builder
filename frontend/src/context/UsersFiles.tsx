@@ -35,17 +35,17 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [selectedRels, setSelectedRels] = useState<readonly OptionType[]>([]);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const { userCredentials } = useCredentials()
+  const { userCredentials } = useCredentials();
 
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
-      const selectedNodeLabel = JSON.parse(selectedNodeLabelstr)
+      const selectedNodeLabel = JSON.parse(selectedNodeLabelstr);
       if (userCredentials?.uri === selectedNodeLabel.db) {
         setSelectedNodes(selectedNodeLabel.selectedOptions);
       }
     }
     if (selectedNodeRelsstr != null) {
-      const selectedNodeRels = JSON.parse(selectedNodeRelsstr)
+      const selectedNodeRels = JSON.parse(selectedNodeRelsstr);
       if (userCredentials?.uri === selectedNodeRels.db) {
         setSelectedRels(selectedNodeRels.selectedOptions);
       }

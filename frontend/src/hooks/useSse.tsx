@@ -30,7 +30,7 @@ export default function useServerSideEvent(
             if (curfile.name == fileName) {
               return {
                 ...curfile,
-                status: total_chunks===processed_chunk?'Completed':status,
+                status: total_chunks === processed_chunk ? 'Completed' : status,
                 NodesCount: nodeCount,
                 relationshipCount: relationshipCount,
                 model: model,
