@@ -177,9 +177,8 @@ export interface Messages {
 export type ChatbotProps = {
   messages: Messages[];
   setMessages: Dispatch<SetStateAction<Messages[]>>;
-  broadcastMessages?: (newMessages: Messages[]) => void;
   isLoading: boolean;
-  clear: boolean;
+  clear?: boolean;
 };
 export interface WikipediaModalTypes {
   hideModal: () => void;
@@ -359,3 +358,7 @@ export type GroupedEntity = {
   texts: Set<string>;
   color: string;
 };
+
+export interface MessagesContextProviderProps {
+  children: ReactNode;
+}

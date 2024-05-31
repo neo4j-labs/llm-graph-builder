@@ -1,9 +1,24 @@
-import React from 'react';
-import { SideNavigation } from '@neo4j-ndl/react';
-import { ArrowRightIconOutline, ArrowLeftIconOutline, TrashIconOutline } from '@neo4j-ndl/react/icons';
+import React, { useState } from 'react';
+import { Modal, SideNavigation } from '@neo4j-ndl/react';
+import { ArrowRightIconOutline, ArrowLeftIconOutline, TrashIconOutline, ExpandIcon } from '@neo4j-ndl/react/icons';
 import { SideNavProps } from '../../types';
+import Chatbot from '../Chatbot';
+import { createPortal } from 'react-dom';
+import { useMessageContext } from '../../context/UserMessages';
+import { getIsLoading } from '../../utils/Utils';
 
 const SideNav: React.FC<SideNavProps> = ({ position, toggleDrawer, isExpanded, deleteOnClick }) => {
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+  const { messages, setMessages } = useMessageContext();
+
+  console.log('messages', messages);
+
+  const handleExpandClick = () => {
+    setIsChatbotOpen(true);
+  };
+  const handleShrinkClick = () => {
+    setIsChatbotOpen(false);
+  };
   const handleClick = () => {
     toggleDrawer();
   };
@@ -16,24 +31,45 @@ const SideNav: React.FC<SideNavProps> = ({ position, toggleDrawer, isExpanded, d
             icon={
               isExpanded ? (
                 position === 'left' ? (
-                  <ArrowLeftIconOutline className='n-w-6 n-h-6' />
+                  <ArrowLeftIconOutline />
                 ) : (
-                  <ArrowRightIconOutline className='n-w-6 n-h-6' />
+                  <ArrowRightIconOutline />
                 )
               ) : position === 'left' ? (
-                <ArrowRightIconOutline className='n-w-6 n-h-6' />
+                <ArrowRightIconOutline />
               ) : (
-                <ArrowLeftIconOutline className='n-w-6 n-h-6' />
+                <ArrowLeftIconOutline />
               )
             }
           />
           {position === 'right' && (
             <>
-              <SideNavigation.Item icon={<TrashIconOutline />} onClick={deleteOnClick} />
+              <SideNavigation.Item
+                disabled={messages.length === 1}
+                icon={<TrashIconOutline className='n-size-full' onClick={deleteOnClick} />}
+              />
+              <SideNavigation.Item icon={<ExpandIcon className='n-size-full' />} onClick={handleExpandClick} />
+              {/* <SideNavigation.Item selected={isSelected} disabled={messages.length === 1} icon={<TrashIconOutline className="n-size-full" onClick={deleteOnClick} />} />
+              <SideNavigation.Item selected={isSelected} icon={<ExpandIcon className="n-size-full" />} onClick={handleExpandClick} /> */}
             </>
           )}
         </SideNavigation.List>
       </SideNavigation>
+      {isChatbotOpen &&
+        createPortal(
+          <Modal
+            modalProps={{
+              id: 'Chatbot',
+              className: 'n-p-token-4 n-bg-neutral-10 n-rounded-lg',
+            }}
+            open={isChatbotOpen}
+            onClose={handleShrinkClick}
+            size='unset'
+          >
+            <Chatbot messages={messages} setMessages={setMessages} isLoading={getIsLoading(messages)} />
+          </Modal>,
+          document.body
+        )}
     </div>
   );
 };
