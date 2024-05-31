@@ -74,6 +74,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
               wiki_query: item.fileName,
               source_url: item.url,
               id: uuidv4(),
+              language: item.language,
               ...defaultValues,
             });
           } else {

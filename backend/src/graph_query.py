@@ -2,7 +2,10 @@ import logging
 from neo4j import time 
 from neo4j import GraphDatabase
 import os
+import json
+# from neo4j.debug import watch
 
+# watch("neo4j")
 
 QUERY_MAP = {
     "document"          : " + [docs] ",
@@ -15,8 +18,8 @@ QUERY_MAP = {
 }
 
 QUERY_WITH_DOCUMENT = """
-    MATCH docs = (d:Document {{status:'Completed'}}) 
-    WHERE d.fileName = $document_name
+    MATCH docs = (d:Document) 
+    WHERE d.fileName = $document_name AND (d.status = 'Cancelled' OR d.status = 'Completed')
     WITH docs, d ORDER BY d.createdAt DESC 
     CALL {{ WITH d
       OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
@@ -29,7 +32,7 @@ QUERY_WITH_DOCUMENT = """
 """
 
 QUERY_WITHOUT_DOCUMENT = """
-    MATCH docs = (d:Document {{status:'Completed'}}) 
+    MATCH docs = (d:Document) 
     WITH docs, d ORDER BY d.createdAt DESC 
     LIMIT $doc_limit
     CALL {{ WITH d
@@ -247,7 +250,7 @@ def get_graph_results(uri, username, password, query_type,document_names):
     dict: Contains the session ID, user-defined messages with nodes and relationships, and the user module identifier.
     """
     try:
-        logging.info(f"URI: {uri}, Username: {username}, Password: {password}, Query Type: {query_type}, Document Names: {document_names}")
+        # logging.info(f"URI: {uri}, Username: {username}, Password: {password}, Query Type: {query_type}, Document Names: {document_names}")
         logging.info(f"Starting graph query process")
         driver = get_graphDB_driver(uri, username, password)
         # if document_names:
@@ -258,20 +261,22 @@ def get_graph_results(uri, username, password, query_type,document_names):
         #     if len(document_names) > int(doc_limit):
         #         document_names = document_names[:int(doc_limit)]
         #     print(document_names)
-        document_names = document_names.split(",")    
+        # document_names = document_names.split(",")    
         nodes = list()
         relationships = list()
+        document_names= list(map(str.strip, json.loads(document_names)))
         for document in document_names:
             query = get_cypher_query(QUERY_MAP, query_type, document.strip())
+            # print(query)
             records, summary , keys = execute_query(driver, query, document.strip())
-            print(query)
+            # print(query)
             document_nodes = extract_node_elements(records)
             document_relationships = extract_relationships(records)
             nodes.extend(document_nodes)
             relationships.extend(document_relationships)
         
-        print(f"no of nodes : {len(nodes)}")
-        print(f"no of relations : {len(relationships)}")
+        logging.info(f"no of nodes : {len(nodes)}")
+        logging.info(f"no of relations : {len(relationships)}")
         result = {
             "nodes": nodes,
             "relationships": relationships
@@ -282,6 +287,8 @@ def get_graph_results(uri, username, password, query_type,document_names):
     except Exception as e:
         logging.error(f"graph_query module: An error occurred in get_graph_results. Error: {str(e)}")
         raise Exception(f"graph_query module: An error occurred in get_graph_results. Please check the logs for more details.") from e
-
+    finally:
+        logging.info("Closing connection for graph_query api")
+        driver.close()
 
 

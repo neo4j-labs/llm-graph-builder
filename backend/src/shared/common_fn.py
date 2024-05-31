@@ -10,30 +10,45 @@ from typing import List
 import re
 import os
 from pathlib import Path
+from langchain_openai import ChatOpenAI
+from langchain_google_vertexai import ChatVertexAI
+from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
+from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransformer
+# from neo4j.debug import watch
+
+#watch("neo4j")
 
 
 def check_url_source(source_type, yt_url:str=None, queries_list:List[str]=None):
+    languages=[]
     try:
       logging.info(f"incoming URL: {yt_url}")
       if source_type == 'youtube':
         if re.match('(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?',yt_url.strip()):
           youtube_url = create_youtube_url(yt_url.strip())
           logging.info(youtube_url)
-          return youtube_url
+          return youtube_url,languages
         else:
           raise Exception('Incoming URL is not youtube URL')
       
       elif  source_type == 'Wikipedia':
         wiki_query_ids=[]
-        wikipedia_url_regex = r'^https?://(?:en\.wikipedia\.org/wiki/)?([A-Za-z0-9_\-]+)$'
+        #pattern = r"https?:\/\/([a-zA-Z0-9\.\,\_\-\/]+)\.wikipedia\.([a-zA-Z]{2,3})\/wiki\/([a-zA-Z0-9\.\,\_\-\/]+)"
+        wikipedia_url_regex = r'https?:\/\/(www\.)?([a-zA-Z]{2,3})\.wikipedia\.org\/wiki\/(.*)'
+        wiki_id_pattern = r'^[a-zA-Z0-9 _\-\.\,\:\(\)\[\]\{\}\/]*$'
+        
         for wiki_url in queries_list:
-          match = re.match(wikipedia_url_regex, wiki_url.strip())
+          match = re.search(wikipedia_url_regex, wiki_url.strip())
           if match:
-            wiki_query_ids.append(match.group(1))
-          else :  
-             wiki_query_ids.append(wiki_url.strip())
+                languages.append(match.group(2))
+                wiki_query_ids.append(match.group(3))
+          else : 
+                languages.append("en")
+                wiki_query_ids.append(wiki_url.strip())
+ 
+
         logging.info(f"wikipedia query ids = {wiki_query_ids}")     
-        return wiki_query_ids     
+        return wiki_query_ids, languages     
     except Exception as e:
       logging.error(f"Error in recognize URL: {e}")
       raise Exception(e)
@@ -60,8 +75,7 @@ def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
   return lst_chunk_chunkId_document  
                  
 def create_graph_database_connection(uri, userName, password, database):
-
-  graph = Neo4jGraph(url=uri, database=database, username=userName, password=password)
+  graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True)
   #driver_config={'user_agent':os.environ.get('NEO4J_USER_AGENT')}
   return graph
 
@@ -94,3 +108,33 @@ def delete_uploaded_local_file(merged_file_path, file_name):
   if file_path.exists():
     file_path.unlink()
     logging.info(f'file {file_name} deleted successfully')
+   
+def close_db_connection(graph, api_name):
+  if not graph._driver._closed:
+      logging.info(f"closing connection for {api_name} api")
+      graph._driver.close()   
+      
+def get_llm(model_version:str) :
+    """Retrieve the specified language model based on the model name."""
+    if "gemini" in model_version:
+        llm = ChatVertexAI(
+            model_name=model_version,
+            convert_system_message_to_human=True,
+            temperature=0,
+            safety_settings={
+                HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE
+            }
+        )
+    elif "gpt" in model_version:
+        llm = ChatOpenAI(api_key=os.environ.get('OPENAI_API_KEY'), 
+                         model=model_version, 
+                         temperature=0)
+    else:
+        llm = DiffbotGraphTransformer(diffbot_api_key=os.environ.get('DIFFBOT_API_KEY'))    
+    logging.info(f"Model created : Model Version: {model_version}")
+    return llm
+  

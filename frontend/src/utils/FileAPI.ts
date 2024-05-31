@@ -25,7 +25,9 @@ export const extractAPI = async (
   gcs_bucket_name?: string,
   gcs_bucket_folder?: string,
   allowedNodes?: string[],
-  allowedRelationship?: string[]
+  allowedRelationship?: string[],
+  gcs_project_id?: string,
+  language?: string
 ): Promise<any> => {
   const urlExtract = `${url()}/extract`;
   const method: Method = 'post';
@@ -50,6 +52,7 @@ export const extractAPI = async (
       file_name,
       allowedNodes,
       allowedRelationship,
+      language,
     };
   } else if (source_type === 'gcs bucket') {
     additionalParams = {
@@ -61,6 +64,7 @@ export const extractAPI = async (
       file_name,
       allowedNodes,
       allowedRelationship,
+      gcs_project_id,
     };
   } else if (source_type === 'youtube') {
     additionalParams = {

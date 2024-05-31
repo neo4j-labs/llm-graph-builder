@@ -4,6 +4,7 @@ import { ThemeWrapperContext } from '../context/ThemeWrapper';
 import PageLayout from './Layout/PageLayout';
 import { FileContextProvider } from '../context/UsersFiles';
 import UserCredentialsWrapper from '../context/UserCredentials';
+import AlertContextWrapper from '../context/Alert';
 
 const QuickStarter: React.FunctionComponent = () => {
   const themeUtils = React.useContext(ThemeWrapperContext);
@@ -23,12 +24,14 @@ const QuickStarter: React.FunctionComponent = () => {
     setshowSettingsModal(false);
   };
   return (
-    <FileContextProvider>
-      <UserCredentialsWrapper>
-        <Header themeMode={themeMode} toggleTheme={toggleColorMode} openSettingsModal={openSettingsModal} />
-        <PageLayout isSettingPanelExpanded={showSettingsModal} closeSettingModal={closeSettingModal} />
-      </UserCredentialsWrapper>
-    </FileContextProvider>
+    <UserCredentialsWrapper>
+      <FileContextProvider>
+        <AlertContextWrapper>
+          <Header themeMode={themeMode} toggleTheme={toggleColorMode} openSettingsModal={openSettingsModal} />
+          <PageLayout isSettingPanelExpanded={showSettingsModal} closeSettingModal={closeSettingModal} />
+        </AlertContextWrapper>
+      </FileContextProvider>
+    </UserCredentialsWrapper>
   );
 };
 export default QuickStarter;

@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
-import { CustomFile, alertState } from '../types';
+import { CustomFile, alertStateType } from '../types';
 import { chunkSize } from '../utils/Constants';
 import { url } from '../utils/Utils';
 
@@ -15,7 +15,7 @@ const DropZone: FunctionComponent = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isClicked, setIsClicked] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
-  const [alertDetails, setalertDetails] = React.useState<alertState>({
+  const [alertDetails, setalertDetails] = React.useState<alertStateType>({
     showAlert: false,
     alertType: 'error',
     alertMessage: '',
@@ -36,6 +36,7 @@ const DropZone: FunctionComponent = () => {
         model: model,
         fileSource: 'local file',
         uploadprogess: 0,
+        processingProgress: undefined,
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];

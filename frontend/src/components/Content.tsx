@@ -7,7 +7,7 @@ import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { extractAPI } from '../utils/FileAPI';
-import { ContentProps, CustomFile, OptionType, UserCredentials, alertState } from '../types';
+import { ContentProps, CustomFile, OptionType, UserCredentials, alertStateType } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './GraphViewModal';
 import { initialiseDriver } from '../utils/Driver';
@@ -25,23 +25,32 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
-  const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels, selectedRows } = useFileContext();
-  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
+  const {
+    filesData,
+    setFilesData,
+    setModel,
+    model,
+    selectedNodes,
+    selectedRels,
+    selectedRows,
+    setSelectedNodes,
+    setSelectedRels,
+  } = useFileContext();
+  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
-
-  const [alertDetails, setalertDetails] = useState<alertState>({
+  const [alertDetails, setalertDetails] = useState<alertStateType>({
     showAlert: false,
     alertType: 'error',
     alertMessage: '',
   });
   const { updateStatusForLargeFiles } = useServerSideEvent(
-    (min, fileName) => {
+    (inMinutes, time, fileName) => {
       setalertDetails({
         showAlert: true,
         alertType: 'info',
-        alertMessage: `${fileName} will take approx ${min} Min`,
+        alertMessage: `${fileName} will take approx ${time} ${inMinutes ? 'Min' : 'Sec'}`,
       });
       localStorage.setItem('alertShown', JSON.stringify(true));
     },
@@ -132,7 +141,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       );
 
       if (fileItem.name != undefined && userCredentials != null) {
-        const name = fileItem.name;
+        const { name } = fileItem;
         triggerStatusUpdateAPI(
           name as string,
           userCredentials?.uri,
@@ -154,7 +163,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         fileItem.gcsBucket ?? '',
         fileItem.gcsBucketFolder ?? '',
         selectedNodes.map((l) => l.value),
-        selectedRels.map((t) => t.value)
+        selectedRels.map((t) => t.value),
+        fileItem.google_project_id,
+        fileItem.language
       );
 
       if (apiResponse?.status === 'Failed') {
@@ -267,6 +278,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     setConnectionStatus(false);
     localStorage.removeItem('password');
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
+    setSelectedNodes([]);
+    setSelectedRels([]);
   };
 
   const selectedfileslength = useMemo(() => selectedRows.length, [selectedRows]);
