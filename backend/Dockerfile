@@ -11,5 +11,5 @@ RUN apt-get update \
     && pip install --no-cache-dir --upgrade -r /code/requirements.txt
     
 # CMD ["uvicorn", "score:app", "--host", "0.0.0.0", "--port", "8000","--workers", "4"]
-CMD ["gunicorn", "score:app","--workers","4","--worker-class","uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "score:app","--workers","4","--worker-class","uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "300"]
 
