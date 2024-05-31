@@ -2,11 +2,14 @@ import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { AxiosResponse } from 'axios';
 import React, { Dispatch, ReactNode, SetStateAction } from 'react';
 import { OverridableStringUnion } from '@mui/types';
+import type { Node, Relationship } from '@neo4j-nvl/base';
+import { NonOAuthError } from '@react-oauth/google';
 
 export interface CustomFileBase extends Partial<globalThis.File> {
   processing: number | string;
   status: string;
   NodesCount: number;
+  id?: string;
   relationshipCount: number;
   model: string;
   fileSource: string;
@@ -20,11 +23,6 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   google_project_id?: string;
   language?: string;
   processingProgress?: number;
-  access_token?: string;
-}
-export interface CustomFile extends CustomFileBase {
-  id: string;
-  // total_pages: number | 'N/A';
 }
 
 export interface OptionType {
@@ -61,7 +59,6 @@ export type ExtractParams = {
   allowedRelationship?: string[];
   gcs_project_id?: string;
   language?: string;
-  access_token?: string;
 } & { [key: string]: any };
 
 export type UploadParams = {
@@ -129,8 +126,6 @@ export interface SourceNode {
   language?: string;
   processed_chunk?: number;
   total_chunks?: number;
-  // total_pages?: number;
-  access_token?: string;
 }
 export interface SideNavProps {
   isExpanded: boolean;
@@ -184,7 +179,7 @@ export interface CommonButtonProps {
 export interface Source {
   page_numbers?: number[];
   source_name: string;
-  start_time?: string;
+  time_stamps?: string;
 }
 export interface Messages {
   id: number;
@@ -198,20 +193,21 @@ export interface Messages {
   response_time?: number;
   chunk_ids?: string[];
   total_tokens?: number;
-  speaking?: boolean;
-  copying?: boolean;
 }
 export type ChatbotProps = {
   messages: Messages[];
   setMessages: Dispatch<SetStateAction<Messages[]>>;
   isLoading: boolean;
-  clear?: boolean;
-  isFullScreen?: boolean;
+  clear:boolean;
 };
 export interface WikipediaModalTypes {
   hideModal: () => void;
   open: boolean;
-  inspectedName: string;
+}
+
+export interface GraphViewModalProps {
+  open: boolean;
+  inspectedName?: string;
   setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
   viewPoint: string;
   nodeValues?: Node[];
@@ -224,8 +220,11 @@ export interface fileName {
   fileName: string;
   fileSize: number;
   url: string;
-  gcsBucket?: string;
+  gcsBucketName?: string;
   gcsBucketFolder?: string;
+  status?: string;
+  gcsProjectId: string;
+  language?: string;
 }
 export interface URLSCAN_RESPONSE {
   status: string;
@@ -255,7 +254,7 @@ export interface fileStatus {
   relationshipCount?: number;
   model: string;
   total_chunks?: number;
-  // total_pages?: number;
+  total_pages?: number;
   processed_chunk?: number;
 }
 export interface PollingAPI_Response extends Partial<AxiosResponse> {
@@ -274,8 +273,10 @@ export interface ScanProps {
   gcs_bucket_name?: string;
   gcs_bucket_folder?: string;
   source_type?: string;
+  gcs_project_id?: string;
+  access_token?: string;
 }
-export type alertState = {
+export type alertStateType = {
   showAlert: boolean;
   alertType: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined;
   alertMessage: string;
@@ -305,16 +306,8 @@ export interface commonserverresponse {
   file_name?: string;
   data?: labelsAndTypes | labelsAndTypes[] | uploadData;
 }
-
-export interface ScehmaFromText extends Partial<commonserverresponse> {
-  data: labelsAndTypes;
-}
 export interface ServerData extends Partial<commonserverresponse> {
   data: labelsAndTypes[];
-}
-export interface schema {
-  nodelabels: string[];
-  relationshipTypes: string[];
 }
 
 export interface SourceListServerData {
@@ -340,10 +333,9 @@ export interface eventResponsetypes {
   relationshipCount: number;
   model: string;
   total_chunks: number | null;
-  // total_pages: number;
+  total_pages: number | null;
   fileSize: number;
   processed_chunk?: number;
-  fileSource: string;
 }
 export type Nullable<Type> = Type | null;
 
@@ -388,47 +380,3 @@ export type GroupedEntity = {
   texts: Set<string>;
   color: string;
 };
-
-export interface uploadData {
-  file_size: number;
-  // total_pages: number;
-  file_name: string;
-  message: string;
-}
-export interface UploadResponse extends Partial<commonserverresponse> {
-  data: uploadData;
-}
-export interface LargefilesProps {
-  largeFiles: CustomFile[];
-  handleToggle: (ischecked: boolean, id: string) => void;
-  checked: string[];
-}
-
-export interface MessagesContextProviderProps {
-  children: ReactNode;
-}
-
-export interface Chunk {
-  id: string;
-  position: number;
-  text: string;
-  fileName: string;
-  length: number;
-  embedding: string | null;
-  page_number?: number;
-  start_time?: string;
-  content_offset?: string;
-  url?: string;
-  fileSource: string;
-}
-
-export interface SpeechSynthesisProps {
-  onEnd?: () => void;
-}
-
-export interface SpeechArgs {
-  text?: string;
-  rate?: number;
-  pitch?: number;
-  volume?: number;
-}

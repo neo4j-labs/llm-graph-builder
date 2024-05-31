@@ -1,6 +1,6 @@
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import type { Node, Relationship } from '@neo4j-nvl/base';
-import { Messages, Scheme } from '../types';
+import { Scheme } from '../types';
 
 // Get the Url
 export const url = () => {
@@ -149,24 +149,4 @@ export const processGraphData = (neoNodes: Node[], neoRels: Relationship[]) => {
   });
   const finalRels = newRels.flat();
   return { finalNodes, finalRels, schemeVal };
-};
-
-export const getDateTime = () => {
-  const date = new Date();
-  const formattedDateTime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-  return formattedDateTime;
-};
-
-export const getIsLoading = (messages: Messages[]) => {
-  return messages.some((msg) => msg.isTyping || msg.isLoading);
-};
-export const calculateProcessingTime = (fileSizeBytes: number, processingTimePerByteSeconds: number) => {
-  const totalProcessingTimeSeconds = (fileSizeBytes / 1000) * processingTimePerByteSeconds;
-  const minutes = Math.floor(totalProcessingTimeSeconds / 60);
-  const seconds = Math.floor(totalProcessingTimeSeconds % 60);
-  return { minutes, seconds };
-};
-
-export const capitalize = (word: string): string => {
-  return `${word[0].toUpperCase()}${word.slice(1)}`;
 };

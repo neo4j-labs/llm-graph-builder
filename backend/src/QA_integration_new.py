@@ -7,7 +7,7 @@ from langchain_google_vertexai import ChatVertexAI
 from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
 import logging
 from langchain_community.chat_message_histories import Neo4jChatMessageHistory
-from src.shared.common_fn import load_embedding_model
+from src.shared.common_fn import load_embedding_model, get_llm
 import re
 from typing import Any
 from datetime import datetime
@@ -16,57 +16,56 @@ from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableBranch
 from langchain.retrievers import ContextualCompressionRetriever
+from langchain.retrievers.document_compressors import LLMChainExtractor
+from langchain.retrievers.document_compressors import LLMChainFilter
 from langchain_community.document_transformers import EmbeddingsRedundantFilter
 from langchain.retrievers.document_compressors import EmbeddingsFilter
 from langchain.retrievers.document_compressors import DocumentCompressorPipeline
 from langchain_text_splitters import TokenTextSplitter
-from langchain_core.messages import HumanMessage,AIMessage
+from langchain_core.messages import HumanMessage
 from src.shared.constants import *
 
 load_dotenv() 
 
-openai_api_key = os.environ.get('OPENAI_API_KEY')
-
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
+CHAT_MAX_TOKENS = 1000
+SEARCH_KWARG_K = 2
+SEARCH_KWARG_SCORE_THRESHOLD = 0.7
 
 RETRIEVAL_QUERY = """
 WITH node as chunk, score
 MATCH (chunk)-[:PART_OF]->(d:Document)
 CALL { WITH chunk
 MATCH (chunk)-[:HAS_ENTITY]->(e)
-MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk&!Document)
+MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,3}(:!Chunk&!Document)
 UNWIND rels as r
 RETURN collect(distinct r) as rels
 }
 WITH d, collect(distinct chunk) as chunks, avg(score) as score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels
 WITH d, score,
-[c in chunks | c.text] as texts,  [c in chunks | c.id] as chunkIds, [c in chunks | c.start_time] as start_time, [c in chunks | c.page_number] as page_numbers, [c in chunks | c.start_time] as start_times, 
+[c in chunks | c.text] as texts,  [c in chunks | c.id] as chunkIds,  [c in chunks | c.page_number] as page_numbers,
 [r in rels | coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ startNode(r).id + " "+ type(r) + " " + coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + endNode(r).id] as entities
 WITH d, score,
 apoc.text.join(texts,"\n----\n") +
 apoc.text.join(entities,"\n")
-as text, entities, chunkIds, page_numbers ,start_times
-RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkIds:chunkIds, page_numbers:page_numbers,start_times:start_times,entities:entities} as metadata
+as text, entities, chunkIds, page_numbers
+RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkIds:chunkIds, page_numbers:page_numbers} as metadata
 """
 
 SYSTEM_TEMPLATE = """
-You are an AI-powered question-answering agent. Your task is to provide accurate and comprehensive responses to user queries based on the given context, chat history, and available resources.
+You are an AI-powered question-answering agent. Your task is to provide accurate and concise responses to user queries based on the given context, chat history, and available resources.
 
 ### Response Guidelines:
-1. **Direct Answers**: Provide clear and thorough answers to the user's queries without headers unless requested. Avoid speculative responses.
+1. **Direct Answers**: Provide straightforward answers to the user's queries without headers unless requested. Avoid speculative responses.
 2. **Utilize History and Context**: Leverage relevant information from previous interactions, the current user input, and the context provided below.
 3. **No Greetings in Follow-ups**: Start with a greeting in initial interactions. Avoid greetings in subsequent responses unless there's a significant break or the chat restarts.
 4. **Admit Unknowns**: Clearly state if an answer is unknown. Avoid making unsupported statements.
 5. **Avoid Hallucination**: Only provide information based on the context provided. Do not invent information.
-6. **Response Length**: Keep responses concise and relevant. Aim for clarity and completeness within 4-5 sentences unless more detail is requested.
+6. **Response Length**: Keep responses concise and relevant. Aim for clarity and completeness within 2-3 sentences unless more detail is requested.
 7. **Tone and Style**: Maintain a professional and informative tone. Be friendly and approachable.
 8. **Error Handling**: If a query is ambiguous or unclear, ask for clarification rather than providing a potentially incorrect answer.
 9. **Fallback Options**: If the required information is not available in the provided context, provide a polite and helpful response. Example: "I don't have that information right now." or "I'm sorry, but I don't have that information. Is there something else I can help with?"
-10. **Context Availability**: If the context is empty, do not provide answers based solely on internal knowledge. Instead, respond appropriately by indicating the lack of information.
-
-
-**IMPORTANT** : DO NOT ANSWER FROM YOUR KNOWLEDGE BASE USE THE BELOW CONTEXT
 
 ### Context:
 <context>
@@ -75,24 +74,59 @@ You are an AI-powered question-answering agent. Your task is to provide accurate
 
 ### Example Responses:
 User: Hi 
-Response: 'Hello there! How can I assist you today?'
+AI Response: 'Hello there! How can I assist you today?'
 
 User: "What is Langchain?"
-AI Response: "Langchain is a framework that enables the development of applications powered by large language models, such as chatbots. It simplifies the integration of language models into various applications by providing useful tools and components."
+AI Response: "Langchain is a framework that enables the development of applications powered by large language models, such as chatbots."
 
 User: "Can you explain how to use memory management in Langchain?"
-AI Response: "Langchain's memory management involves utilizing built-in mechanisms to manage conversational context effectively. It ensures that the conversation remains coherent and relevant by maintaining the history of interactions and using it to inform responses."
+AI Response: "Langchain's memory management involves utilizing built-in mechanisms to manage conversational context effectively, ensuring a coherent user experience."
 
 User: "I need help with PyCaret's classification model."
-AI Response: "PyCaret simplifies the process of building and deploying machine learning models. For classification tasks, you can use PyCaret's setup function to prepare your data. After setup, you can compare multiple models to find the best one, and then fine-tune it for better performance."
+AI Response: "PyCaret simplifies the process of building and deploying machine learning models. For classification tasks, you can use PyCaret's setup function to prepare your data, then compare and tune models."
 
-User: "What can you tell me about the latest realtime trends in AI?"
-AI Response: "I don't have that information right now. Is there something else I can help with?"
-
-Note: This system does not generate answers based solely on internal knowledge. It answers from the information provided in the user's current and previous inputs, and from the context.
+Note: This system does not generate answers based solely on internal knowledge. It answers from the information provided in the user's current and previous inputs, and from explicitly referenced external sources.
 """
 
-def get_neo4j_retriever(graph, index_name="vector", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
+# def get_llm(model: str,max_tokens=CHAT_MAX_TOKENS) -> Any:
+#     """Retrieve the specified language model based on the model name."""
+
+#     model_versions = {
+#         "OpenAI GPT 3.5": "gpt-3.5-turbo-16k",
+#         "Gemini Pro": "gemini-1.0-pro-001",
+#         "Gemini 1.5 Pro": "gemini-1.5-pro-preview-0409",
+#         "OpenAI GPT 4": "gpt-4-0125-preview",
+#         "Diffbot" : "gpt-4-0125-preview",
+#         "OpenAI GPT 4o":"gpt-4o"
+#          }
+
+#     if model in model_versions:
+#         model_version = model_versions[model]
+#         logging.info(f"Chat Model: {model}, Model Version: {model_version}")
+
+#         if "Gemini" in model:
+#             llm = ChatVertexAI(
+#                 model_name=model_version,
+#                 convert_system_message_to_human=True,
+#                 max_tokens=max_tokens,
+#                 temperature=0,
+#                 safety_settings={
+#                     HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
+#                     HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+#                     HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+#                     HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+#                     HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE
+#                 }
+#             )
+#         else:
+#             llm = ChatOpenAI(model=model_version, temperature=0,max_tokens=max_tokens)
+#         return llm,model_version
+
+#     else:
+#         logging.error(f"Unsupported model: {model}")
+#         return None,None
+
+def get_neo4j_retriever(graph, index_name="vector", search_k=SEARCH_KWARG_K, score_threshold=SEARCH_KWARG_SCORE_THRESHOLD):
     try:
         neo_db = Neo4jVector.from_existing_index(
             embedding=EMBEDDING_FUNCTION,
@@ -121,11 +155,11 @@ def create_document_retriever_chain(llm,retriever):
 
     splitter = TokenTextSplitter(chunk_size=2000, chunk_overlap=0)
     # extractor = LLMChainExtractor.from_llm(llm)
-    # redundant_filter = EmbeddingsRedundantFilter(embeddings=EMBEDDING_FUNCTION)
-    embeddings_filter = EmbeddingsFilter(embeddings=EMBEDDING_FUNCTION, similarity_threshold=0.25)
+    redundant_filter = EmbeddingsRedundantFilter(embeddings=EMBEDDING_FUNCTION)
+    embeddings_filter = EmbeddingsFilter(embeddings=EMBEDDING_FUNCTION, similarity_threshold=0.35)
 
     pipeline_compressor = DocumentCompressorPipeline(
-        transformers=[splitter, embeddings_filter]
+        transformers=[splitter,redundant_filter, embeddings_filter]
     )
     compression_retriever = ContextualCompressionRetriever(
         base_compressor=pipeline_compressor, base_retriever=retriever
@@ -161,23 +195,17 @@ def create_neo4j_chat_message_history(graph, session_id):
 
 def format_documents(documents):
     sorted_documents = sorted(documents, key=lambda doc: doc.state["query_similarity_score"], reverse=True)
-    sorted_documents = sorted_documents[:7]
-
+    sorted_documents = sorted_documents[:5] if len(sorted_documents) > 5 else sorted_documents
     formatted_docs = []
     sources = set()
-
-    for doc in sorted_documents:
-        source = doc.metadata['source']
-        sources.add(source)
-
-        formatted_doc = (
-            "Document start\n"
-            f"This Document belongs to the source {source}\n"
-            f"Content: {doc.page_content}\n"
-            "Document end\n"
-        )
-        formatted_docs.append(formatted_doc)
-
+    for i,doc in enumerate(sorted_documents):
+        print("here")
+        doc_start = f"Document start\n"
+        formatted_doc = f"Content: {doc.page_content}"
+        doc_end = f"\nDocument end\n"
+        sources.add(doc.metadata['source'])
+        final_formatted_doc = doc_start + formatted_doc + doc_end
+        formatted_docs.append(final_formatted_doc)
     return "\n\n".join(formatted_docs), sources
 
 def get_rag_chain(llm,system_template=SYSTEM_TEMPLATE):
@@ -195,61 +223,53 @@ def get_rag_chain(llm,system_template=SYSTEM_TEMPLATE):
 
     return question_answering_chain
 
-def update_timestamps_with_min_seconds(result_dict):
-    def time_to_seconds(time_str):
-        h, m, s = map(int, time_str.split(':'))
-        return h * 3600 + m * 60 + s
-    
-    for source in result_dict.get('sources', []):
-        time_stamps = source.get('start_time', [])
-        if time_stamps:
-            seconds_list = [time_to_seconds(ts) for ts in time_stamps]
-            min_seconds = min(seconds_list)
-            source['start_time'] = min_seconds
-    
-    return result_dict
-
 def get_sources_and_chunks(sources_used, docs):
+    # sources_pattern = r"\[Sources: ([^\]]+)\]"
+    # sources = re.search(sources_pattern, response)
+    # content = re.sub(sources_pattern, '', response)
+    # sources = sources.group(1).split(', ') if sources else []
+
+    # source_pattern = r"\[Source: ([^\]]+)\]"
+    # source = re.search(source_pattern, response)
+    # content = re.sub(source_pattern, '', content)
+    # source = source.group(1).split(', ') if source else []
+    # sources.extend(source)
+
     docs_metadata = dict()
     for doc in docs:
         source = doc.metadata["source"]
         chunkids = doc.metadata["chunkIds"]
         page_numbers = doc.metadata["page_numbers"]
-        start_times = doc.metadata["start_times"]
-        docs_metadata[source] = [chunkids,page_numbers,start_times]
+        docs_metadata[source] = [chunkids,page_numbers]
     chunkids = list()
-    for source in sources:
+    output_sources = list()
+    for source in sources_used:
         if source in set(docs_metadata.keys()):
             chunkids.extend(docs_metadata[source][0])
             page_numbers = docs_metadata[source][1]
-            start_times = docs_metadata[source][2]
             current_source = {
                 "source_name":source,
                 "page_numbers":page_numbers if len(page_numbers) > 1 and page_numbers[0] is not None else [],
-                "start_time": start_times if len(start_times) > 1 and start_times[0] is not None else [],
+                "time_stamps":list()
             }
             output_sources.append(current_source)
 
     result = {
-        'content': content,
-        'sources': sources,
+        'sources': output_sources,
         'chunkIds': chunkids
     }
-
-    result = update_timestamps_with_min_seconds(result)
     return result
 
 def summarize_messages(llm,history,stored_messages):
     if len(stored_messages) == 0:
         return False
-    print(f"stored messages : {stored_messages}")
     # summarization_template = "Distill the below chat messages into a single summary message. Include as many specific details as you can."
     summarization_prompt = ChatPromptTemplate.from_messages(
         [
             MessagesPlaceholder(variable_name="chat_history"),
             (
                 "human",
-                "Summarize the above chat messages into a concise message, focusing on key points and relevant details. Highlight specific user preferences, requests, and essential context that will aid in future conversations. Exclude all introductions and extraneous information."
+                "Summarize the above chat messages into a concise message, focusing on key points and relevant details that could be useful for future conversations. Exclude all introductions and extraneous information."
             ),
         ]
     )
@@ -261,7 +281,6 @@ def summarize_messages(llm,history,stored_messages):
     history.clear()
     history.add_user_message("Our current convertaion summary till now")
     history.add_message(summary_message)
-    print(history.messages)
     return True
 
 
@@ -278,12 +297,8 @@ def clear_chat_history(graph,session_id):
             }
 
 def QA_RAG(graph,model,question,session_id):
-    logging.info(f"QA_RAG called at {datetime.now()}")
     try:
-        qa_rag_start_time = time.time()
-
         start_time = time.time()
-        print(model)
         model_version = MODEL_VERSIONS[model]
         llm = get_llm(model_version)
         retriever = get_neo4j_retriever(graph=graph)
@@ -301,51 +316,43 @@ def QA_RAG(graph,model,question,session_id):
                 "messages":messages
             }
         )
-        if docs:
-            # print(docs)
-            formatted_docs,sources = format_documents(docs)
-            
-            doc_retrieval_time = time.time() - start_time
-            logging.info(f"Modified question and Documents retrieved in {doc_retrieval_time:.2f} seconds")
+        formatted_docs,sources = format_documents(docs)
+        doc_retrieval_time = time.time() - start_time
+        logging.info(f"Modified question and Documents retrieved in {doc_retrieval_time:.2f} seconds")
 
-            start_time = time.time()
-            rag_chain = get_rag_chain(llm=llm)
-            ai_response = rag_chain.invoke(
-                {
-                "messages" : messages[:-1],
-                "context"  : formatted_docs,
-                "input"    : question 
-            }
-            )
-            result = get_sources_and_chunks(sources,docs)
-            content = ai_response.content
-            if "Gemini" in model:
-                total_tokens = ai_response.response_metadata['usage_metadata']['prompt_token_count']
-            else:    
-                total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
-            predict_time = time.time() - start_time
-            logging.info(f"Final Response predicted in {predict_time:.2f} seconds")
-        else:
-            ai_response = AIMessage(content="I couldn't find any relevant documents to answer your question.")
-            result = {"sources": [], "chunkIds": []}
-            total_tokens = 0
-            content = ai_response.content
-             
+        start_time = time.time()
+        rag_chain = get_rag_chain(llm=llm)
+        ai_response = rag_chain.invoke(
+            {
+            "messages" : messages[:-1],
+            "context"  : formatted_docs,
+            "input"    : question 
+        }
+        )
+        result = get_sources_and_chunks(sources,docs)
+        content = ai_response.content
+        if "Gemini" in model:
+            total_tokens = ai_response.response_metadata['usage_metadata']['prompt_token_count']
+        else:    
+            total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
+        predict_time = time.time() - start_time
+        logging.info(f"Final Response predicted in {predict_time:.2f} seconds")
+
         start_time = time.time()
         messages.append(ai_response)
         summarize_messages(llm,history,messages)
         history_summarized_time = time.time() - start_time
         logging.info(f"Chat History summarized in {history_summarized_time:.2f} seconds")
 
-        total_call_time = time.time() - qa_rag_start_time
-        logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
         return {
             "session_id": session_id, 
-            "message": result["content"], 
+            "message": content, 
             "info": {
                 "sources": result["sources"],
                 "model": model_version,
-                "chunkids":result["chunkIds"]
+                "chunkids":result["chunkIds"],
+                "total_tokens": total_tokens,
+                "response_time": 0
             },
             "user": "chatbot"
             }
@@ -362,5 +369,3 @@ def QA_RAG(graph,model,question,session_id):
                 "error": f"{error_name} :- {str(e)}"
             },
             "user": "chatbot"}
-
-

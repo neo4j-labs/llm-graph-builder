@@ -27,8 +27,7 @@ export const extractAPI = async (
   allowedNodes?: string[],
   allowedRelationship?: string[],
   gcs_project_id?: string,
-  language?: string,
-  access_token?: string
+  language?: string
 ): Promise<any> => {
   const urlExtract = `${url()}/extract`;
   const method: Method = 'post';
@@ -37,7 +36,15 @@ export const extractAPI = async (
   if (source_type === 's3 bucket') {
     additionalParams = { model, source_url, aws_secret_access_key, aws_access_key_id, source_type, file_name };
   } else if (source_type === 'Wikipedia') {
-    additionalParams = { model, wiki_query: file_name, source_type, file_name };
+    additionalParams = {
+      model,
+      wiki_query: file_name,
+      source_type,
+      file_name,
+      allowedNodes,
+      allowedRelationship,
+      language,
+    };
   } else if (source_type === 'gcs bucket') {
     additionalParams = {
       model,
@@ -49,7 +56,6 @@ export const extractAPI = async (
       allowedNodes,
       allowedRelationship,
       gcs_project_id,
-      access_token,
     };
   } else if (source_type === 'youtube') {
     additionalParams = { model, source_url, source_type, file_name };

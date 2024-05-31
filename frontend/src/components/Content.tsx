@@ -7,7 +7,7 @@ import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { extractAPI } from '../utils/FileAPI';
-import { ContentProps, OptionType, UserCredentials } from '../types';
+import { ContentProps, CustomFile, OptionType, UserCredentials, alertStateType } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './GraphViewModal';
 import deleteAPI from '../services/deleteFiles';
@@ -15,10 +15,6 @@ import DeletePopUp from './DeletePopUp';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
-import ConfirmationDialog from './ConfirmationDialog';
-import { buttonCaptions, largeFileSize, tooltips } from '../utils/Constants';
-import ButtonWithToolTip from './ButtonWithToolTip';
-import connectAPI from '../services/ConnectAPI';
 
 const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -26,10 +22,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
-  const { setUserCredentials, userCredentials } = useCredentials();
-  const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
-  const [extractLoading, setextractLoading] = useState<boolean>(false);
-
+  const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
   const {
     filesData,
     setFilesData,
@@ -39,7 +32,6 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     selectedRels,
     selectedRows,
     setSelectedNodes,
-    setRowSelection,
     setSelectedRels,
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
@@ -98,8 +90,6 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     });
   }, [model]);
 
-  const disableCheck = !filesData.some((f) => f.status === 'New');
-
   const handleDropdownChange = (option: OptionType | null | void) => {
     if (option?.value) {
       setModel(option?.value);
@@ -110,13 +100,11 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     if (!isselectedRows) {
       const fileItem = filesData.find((f) => f.id == uid);
       if (fileItem) {
-        setextractLoading(true);
         await extractHandler(fileItem, uid);
       }
     } else {
       const fileItem = selectedRows.find((f) => JSON.parse(f).id == uid);
       if (fileItem) {
-        setextractLoading(true);
         await extractHandler(JSON.parse(fileItem), uid);
       }
     }
@@ -135,15 +123,6 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
           return curfile;
         })
       );
-      setRowSelection((prev) => {
-        const copiedobj = { ...prev };
-        for (const key in copiedobj) {
-          if (JSON.parse(key).id == uid) {
-            copiedobj[key] = false;
-          }
-        }
-        return copiedobj;
-      });
       if (fileItem.name != undefined && userCredentials != null) {
         const { name } = fileItem;
         triggerStatusUpdateAPI(
@@ -169,14 +148,13 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
         selectedNodes.map((l) => l.value),
         selectedRels.map((t) => t.value),
         fileItem.google_project_id,
-        fileItem.language,
-        fileItem.access_token
+        fileItem.language
       );
 
       if (apiResponse?.status === 'Failed') {
         let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
         throw new Error(JSON.stringify(errorobj));
-      } else if (fileItem.size != undefined && fileItem.size < largeFileSize) {
+      } else if (fileItem.size != undefined && fileItem.size < 10000000) {
         setFilesData((prevfiles) => {
           return prevfiles.map((curfile) => {
             if (curfile.name == apiResponse?.data?.fileName) {
@@ -217,95 +195,26 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
             return curfile;
           })
         );
-        const apiResponse = await extractAPI(
-          filesData[uid].model,
-          userCredentials as UserCredentials,
-          filesData[uid].fileSource,
-          filesData[uid].source_url,
-          localStorage.getItem('accesskey'),
-          localStorage.getItem('secretkey'),
-          filesData[uid].name ?? '',
-          filesData[uid].gcsBucket ?? '',
-          filesData[uid].gcsBucketFolder ?? ''
-        );
-        if (apiResponse?.status === 'Failed') {
-          setShowAlert(true);
-          setErrorMessage(apiResponse?.message);
-          setFilesData((prevfiles) =>
-            prevfiles.map((curfile, idx) => {
-              if (idx == uid) {
-                return {
-                  ...curfile,
-                  status: 'Failed',
-                };
-              }
-              return curfile;
-            })
-          );
-          throw new Error(`message:${apiResponse.message},fileName:${apiResponse.file_name}`);
-        } else {
-          setFilesData((prevfiles) => {
-            return prevfiles.map((curfile) => {
-              if (curfile.name == apiResponse?.data?.fileName) {
-                const apiRes = apiResponse?.data;
-                return {
-                  ...curfile,
-                  processing: apiRes?.processingTime?.toFixed(2),
-                  status: apiRes?.status,
-                  NodesCount: apiRes?.nodeCount,
-                  relationshipCount: apiRes?.relationshipCount,
-                  model: apiRes?.model,
-                };
-              }
-              return curfile;
-            });
-          });
-        }
-      } catch (err: any) {
-        const errorMessage = err.message;
-        const messageMatch = errorMessage.match(/message:(.*),fileName:(.*)/);
-        if (err?.name === 'AxiosError') {
-          setShowAlert(true);
-          setErrorMessage(err.message);
-          setFilesData((prevfiles) =>
-            prevfiles.map((curfile, idx) => {
-              if (idx == uid) {
-                return {
-                  ...curfile,
-                  status: 'Failed',
-                };
-              }
-              return curfile;
-            })
-          );
-        } else {
-          const message = messageMatch[1].trim();
-          const fileName = messageMatch[2].trim();
-          setShowAlert(true);
-          setErrorMessage(message);
-          setFilesData((prevfiles) =>
-            prevfiles.map((curfile) => {
-              if (curfile.name == fileName) {
-                return {
-                  ...curfile,
-                  status: 'Failed',
-                };
-              }
-              return curfile;
-            })
-          );
-        }
       }
     }
   };
 
   const handleGenerateGraph = (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => {
     const data = [];
-    if (selectedfileslength && allowLargeFiles) {
+    if (selectedfileslength) {
       for (let i = 0; i < selectedfileslength; i++) {
         const row = JSON.parse(selectedRows[i]);
         if (row.status === 'New') {
           data.push(extractData(row.id, true));
+        }
+      }
+      Promise.allSettled(data).then(async (_) => {
+        await updateGraphAPI(userCredentials as UserCredentials);
+      });
+    } else if (filesData.length > 0) {
+      for (let i = 0; i < filesData.length; i++) {
+        if (filesData[i]?.status === 'New') {
+          data.push(extractData(filesData[i].id as string));
         }
       }
       Promise.allSettled(data).then(async (_) => {
@@ -387,20 +296,9 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     [selectedfileslength, completedfileNo]
   );
 
-  const filesForProcessing = useMemo(() => {
-    let newstatusfiles: CustomFile[] = [];
-    if (selectedRows.length) {
-      selectedRows.forEach((f) => {
-        const parsedFile: CustomFile = JSON.parse(f);
-        if (parsedFile.status === 'New') {
-          newstatusfiles.push(parsedFile);
-        }
-      });
-    } else if (filesData.length) {
-      newstatusfiles = filesData.filter((f) => f.status === 'New');
-    }
-    return newstatusfiles;
-  }, [filesData, selectedRows]);
+  const deleteFileClickHandler: React.MouseEventHandler<HTMLButtonElement> = () => {
+    setshowDeletePopUp(true);
+  };
 
   const handleDeleteFiles = async (deleteEntities: boolean) => {
     try {
@@ -529,76 +427,20 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
           justifyContent='space-between'
           flexDirection='row'
         >
-          <LlmDropdown onSelect={handleDropdownChange}  />
+          <LlmDropdown onSelect={handleDropdownChange} isDisabled={dropdowncheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
-            <ButtonWithToolTip
-              text={tooltips.generateGraph}
-              placement='top'
-              label='generate graph'
-              onClick={() => {
-                if (selectedRows.length) {
-                  let selectedLargeFiles: CustomFile[] = [];
-                  selectedRows.forEach((f) => {
-                    const parsedData: CustomFile = JSON.parse(f);
-                    if (parsedData.fileSource === 'local file') {
-                      if (
-                        typeof parsedData.size === 'number' &&
-                        parsedData.status === 'New' &&
-                        parsedData.size > largeFileSize
-                      ) {
-                        selectedLargeFiles.push(parsedData);
-                      }
-                    }
-                  });
-                  // @ts-ignore
-                  if (selectedLargeFiles.length) {
-                    setshowConfirmationModal(true);
-                    handleGenerateGraph(false, []);
-                  } else {
-                    handleGenerateGraph(true, filesData);
-                  }
-                } else if (filesData.length) {
-                  const largefiles = filesData.filter((f) => {
-                    if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
-                      return true;
-                    }
-                    return false;
-                  });
-                  const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
-                  const stringified = selectAllNewFiles.reduce((accu, f) => {
-                    const key = JSON.stringify(f);
-                    // @ts-ignore
-                    accu[key] = true;
-                    return accu;
-                  }, {});
-                  setRowSelection(stringified);
-                  if (largefiles.length) {
-                    setshowConfirmationModal(true);
-                    handleGenerateGraph(false, []);
-                  } else {
-                    handleGenerateGraph(true, filesData);
-                  }
-                }
-              }}
-              disabled={disableCheck}
-              className='mr-0.5'
-            >
-              {buttonCaptions.generateGraph}{' '}
-              {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
-            </ButtonWithToolTip>
-            <ButtonWithToolTip
-              text={tooltips.showGraph}
-              placement='top'
-              onClick={handleGraphView}
+            <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
+              Generate Graph {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
+            </Button>
+            <Button
+              title='only completed files will be processed for graph visualization'
               disabled={showGraphCheck}
+              onClick={handleGraphView}
               className='mr-0.5'
-              label='show graph'
             >
-              {buttonCaptions.showPreviewGraph} {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
-            </ButtonWithToolTip>
-            <ButtonWithToolTip
-              text={tooltips.bloomGraph}
-              placement='top'
+              Show Graph {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
+            </Button>
+            <Button
               onClick={handleOpenGraphClick}
               disabled={!filesData.some((f) => f?.status === 'Completed')}
               className='ml-0.5'
@@ -616,9 +458,15 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
               className='ml-0.5'
               label='Delete Files'
             >
-              {buttonCaptions.deleteFiles}
-              {selectedfileslength > 0 && `(${selectedfileslength})`}
-            </ButtonWithToolTip>
+              Delete Files {selectedfileslength > 0 && `(${selectedfileslength})`}
+            </Button>
+            <Button
+              onClick={() => {
+                openChatBot();
+              }}
+            >
+              Q&A Chat
+            </Button>
           </Flex>
         </Flex>
       </div>

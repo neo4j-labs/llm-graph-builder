@@ -42,7 +42,9 @@ const HoverableLink: React.FC<HoverableLinkProps> = ({ url, children }) => {
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      {children}
+      <a href={url} target='_blank' rel='noopener noreferrer'>
+        {children}
+      </a>
       {hovering && (
         <div
           className='popup'
@@ -64,7 +66,6 @@ const HoverableLink: React.FC<HoverableLinkProps> = ({ url, children }) => {
           )}
         </div>
       )}
-      <a href={url} target='_blank' rel='noopener noreferrer' />
     </div>
   );
 };

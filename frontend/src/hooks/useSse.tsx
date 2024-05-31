@@ -17,33 +17,33 @@ export default function useServerSideEvent(
       total_chunks,
       model,
       processed_chunk = 0,
-      fileSize,
     } = eventSourceRes;
     const alertShownStatus = JSON.parse(localStorage.getItem('alertShown') || 'null');
 
     if (status === 'Processing') {
       if (alertShownStatus != null && alertShownStatus == false && total_chunks != null) {
-        const { minutes, seconds } = calculateProcessingTime(fileSize, 0.2);
-        alertHandler(minutes !== 0, minutes === 0 ? seconds : minutes, fileName);
+        const minutes = Math.floor((perchunksecond * total_chunks) / 60);
+        alertHandler(minutes !== 0, minutes === 0 ? Math.floor(perchunksecond * total_chunks) : minutes, fileName);
       }
-      if (nodeCount && relationshipCount) {
+      if (total_chunks) {
         setFilesData((prevfiles) => {
           return prevfiles.map((curfile) => {
             if (curfile.name == fileName) {
               return {
                 ...curfile,
-                status: status,
+                status: total_chunks === processed_chunk ? 'Completed' : status,
                 NodesCount: nodeCount,
                 relationshipCount: relationshipCount,
                 model: model,
                 processing: processingTime?.toFixed(2),
+                processingProgress: Math.floor((processed_chunk / total_chunks) * 100),
               };
             }
             return curfile;
           });
         });
       }
-    } else if (status === 'Completed') {
+    } else if (status === 'Completed' || status === 'Cancelled') {
       setFilesData((prevfiles) => {
         return prevfiles.map((curfile) => {
           if (curfile.name == fileName) {

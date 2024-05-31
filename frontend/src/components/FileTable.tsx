@@ -26,7 +26,7 @@ import {
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
-import { statusCheck, capitalize } from '../utils/Utils';
+import { statusCheck } from '../utils/Utils';
 import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, alertStateType } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
@@ -38,16 +38,13 @@ import useServerSideEvent from '../hooks/useSse';
 import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
-import IconButtonWithToolTip from './IconButtonToolTip';
-import { largeFileSize } from '../utils/Constants';
-
 const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
   const { filesData, setFilesData, model } = useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  //const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
+  const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
   const [alertDetails, setalertDetails] = useState<alertStateType>({
     showAlert: false,
     alertType: 'error',
@@ -138,16 +135,76 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       }),
       columnHelper.accessor((row) => row.status, {
         id: 'status',
-        cell: (info) => (
-          <div>
-            <StatusIndicator type={statusCheck(info.getValue())} />
-            {info.row.original?.status === 'Failed' ? (
-              <span title={info.row.original?.errorMessage}>{info.getValue()}</span>
-            ) : (
-              <i>{info.getValue()}</i>
-            )}
-          </div>
-        ),
+        cell: (info) => {
+          if (info.getValue() != 'Processing') {
+            return (
+              <div
+                className='cellClass'
+                title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
+              >
+                <StatusIndicator type={statusCheck(info.getValue())} />
+                {info.getValue()}
+              </div>
+            );
+          } else if (info.getValue() === 'Processing' && info.row.original.processingProgress === undefined) {
+            return (
+              <div className='cellClass'>
+                <StatusIndicator type={statusCheck(info.getValue())} />
+                <i>Processing</i>
+                <div className='mx-1'>
+                  <IconButton
+                    size='medium'
+                    title='cancel the processing job'
+                    aria-label='cancel job button'
+                    clean
+                    disabled={info.row.original.processingStatus}
+                    onClick={() => {
+                      cancelHandler(
+                        info.row.original.name as string,
+                        info.row.original.id as string,
+                        info.row.original.fileSource as string
+                      );
+                    }}
+                  >
+                    <XMarkIconOutline />
+                  </IconButton>
+                </div>
+              </div>
+            );
+          } else if (
+            info.getValue() === 'Processing' &&
+            info.row.original.processingProgress != undefined &&
+            info.row.original.processingProgress < 100
+          ) {
+            return (
+              <div className='cellClass'>
+                <ProgressBar
+                  heading='Processing '
+                  size='small'
+                  value={info.row.original.processingProgress}
+                ></ProgressBar>
+                <div className='mx-1'>
+                  <IconButton
+                    size='medium'
+                    title='cancel the processing job'
+                    aria-label='cancel job button'
+                    clean
+                    disabled={info.row.original.processingStatus}
+                    onClick={() => {
+                      cancelHandler(
+                        info.row.original.name as string,
+                        info.row.original.id as string,
+                        info.row.original.fileSource as string
+                      );
+                    }}
+                  >
+                    <XMarkIconOutline />
+                  </IconButton>
+                </div>
+              </div>
+            );
+          }
+        },
         header: () => <span>Status</span>,
         footer: (info) => info.column.id,
         filterFn: 'statusFilter' as any,
@@ -247,7 +304,6 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
               placement='right'
               text='Graph'
               size='large'
-              label='Graph view'
               disabled={!(info.getValue() === 'Completed' || info.getValue() == 'Cancelled')}
               clean
               onClick={() => onInspect(info?.row?.original?.name as string)}
@@ -306,15 +362,11 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   errorMessage: item?.errorMessage,
                   uploadprogess: item?.uploadprogress ?? 0,
                   google_project_id: item?.gcsProjectId,
-                  language: item?.language ?? '',
+                  language: item.language ?? '',
                   processingProgress:
-                    item?.processed_chunk != undefined &&
-                    item?.total_chunks != undefined &&
-                    !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
-                      ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
+                    item.processed_chunk != undefined && item.total_chunks != undefined
+                      ? Math.floor((item.processed_chunk / item.total_chunks) * 100)
                       : undefined,
-                  // total_pages: item?.total_pages ?? 0,
-                  access_token: item?.access_token ?? '',
                 });
               }
             });
@@ -377,8 +429,6 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         setIsLoading(false);
         setConnectionStatus(false);
         setFilesData([]);
-        setShowAlert(true);
-        console.log(error);
       }
     };
     if (connectionStatus) {
@@ -387,6 +437,62 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       setFilesData([]);
     }
   }, [connectionStatus, userCredentials]);
+  const cancelHandler = async (fileName: string, id: string, fileSource: string) => {
+    setFilesData((prevfiles) =>
+      prevfiles.map((curfile) => {
+        if (curfile.id === id) {
+          return {
+            ...curfile,
+            processingStatus: true,
+          };
+        }
+        return curfile;
+      })
+    );
+    try {
+      const res = await cancelAPI([fileName], [fileSource]);
+      if (res.data.status === 'Success') {
+        setFilesData((prevfiles) =>
+          prevfiles.map((curfile) => {
+            if (curfile.id === id) {
+              return {
+                ...curfile,
+                status: 'Cancelled',
+                processingStatus: false,
+              };
+            }
+            return curfile;
+          })
+        );
+      } else {
+        let errorobj = { error: res.data.error, message: res.data.message, fileName };
+        throw new Error(JSON.stringify(errorobj));
+      }
+    } catch (err) {
+      setFilesData((prevfiles) =>
+        prevfiles.map((curfile) => {
+          if (curfile.id === id) {
+            return {
+              ...curfile,
+              processingStatus: false,
+            };
+          }
+          return curfile;
+        })
+      );
+      if (err instanceof Error) {
+        const error = JSON.parse(err.message);
+        if (Object.keys(error).includes('fileName')) {
+          const { message } = error;
+          setalertDetails({
+            showAlert: true,
+            alertType: 'error',
+            alertMessage: message,
+          });
+        }
+      }
+    }
+  };
 
   const cancelHandler = async (fileName: string, id: string, fileSource: string) => {
     setFilesData((prevfiles) =>
@@ -475,6 +581,27 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         })
       );
     }
+  }
+  function updateProgress(i: statusupdate) {
+    const { file_name } = i;
+    const { fileName, nodeCount = 0, relationshipCount = 0, status, processed_chunk = 0, total_chunks } = file_name;
+    if (fileName && total_chunks) {
+      console.log({ processed_chunk, total_chunks, percentage: Math.floor((processed_chunk / total_chunks) * 100) });
+      setFilesData((prevfiles) =>
+        prevfiles.map((curfile) => {
+          if (curfile.name == fileName) {
+            return {
+              ...curfile,
+              status: status,
+              NodesCount: nodeCount,
+              relationshipCount: relationshipCount,
+              processingProgress: Math.floor((processed_chunk / total_chunks) * 100),
+            };
+          }
+          return curfile;
+        })
+      );
+    }
   };
 
   const updateProgress = (i: statusupdate) => {
@@ -528,8 +655,6 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     enableRowSelection: true,
     enableMultiRowSelection: true,
     getRowId: (row) => JSON.stringify({ ...row }),
-    enableSorting: true,
-    getSortedRowModel: getSortedRowModel(),
   });
 
   useEffect(() => {

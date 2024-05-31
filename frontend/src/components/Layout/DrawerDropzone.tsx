@@ -13,7 +13,6 @@ import GCSButton from '../GCSButton';
 import GCSModal from '../GCSModal';
 import CustomAlert from '../Alert';
 import { useAlertContext } from '../../context/Alert';
-import { APP_SOURCES } from '../../utils/Constants';
 
 const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
@@ -61,9 +60,16 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   }, []);
 
   return (
-    <div className='flex min-h-[calc(-58px+100vh)] relative'>
-      <Drawer expanded={isExpanded} position='left' type='push' closeable={false}>
-        <Drawer.Body className={`!overflow-hidden !w-[294px]`} style={{ height: 'intial' }}>
+    <div className='flex min-h-[calc(-60px+100vh)] relative'>
+      <Drawer
+        expanded={isExpanded}
+        isResizeable={false}
+        position='left'
+        type='push'
+        closeable={false}
+        key={'leftdrawer'}
+      >
+        <Drawer.Body className='!overflow-hidden' style={{ height: 'intial' }}>
           {alertState.showAlert && (
             <CustomAlert
               severity={alertState.alertType}

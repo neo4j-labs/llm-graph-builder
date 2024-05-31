@@ -32,7 +32,15 @@ export const APP_SOURCES =
 export const llms =
   process.env?.LLM_MODELS?.trim() != ''
     ? process.env.LLM_MODELS?.split(',')
-    : ['diffbot', 'gpt-3.5', 'gpt-4o', 'gemini-1.0-pro', 'gemini-1.5-pro', 'groq-llama3'];
+    : ['Diffbot', 'Gemini 1.0 Pro', 'OpenAI GPT 3.5', 'OpenAI GPT 4o', 'Gemini 1.5 Pro'];
+
+export const defaultLLM = llms?.includes('OpenAI GPT 3.5')
+  ? 'OpenAI GPT 3.5'
+  : llms?.includes('Gemini 1.0 Pro')
+  ? 'Gemini 1.0 Pro'
+  : 'Diffbot';
+
+export const chunkSize = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 5 * 1024 * 1024;
 
 export const defaultLLM = llms?.includes('gpt-3.5')
   ? 'gpt-3.5'
