@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button, Widget, Typography, Avatar, TextInput, IconButton, Modal } from '@neo4j-ndl/react';
-import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
+import { InformationCircleIconOutline, XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
 import { ChatbotProps, Source, UserCredentials } from '../types';
@@ -274,6 +274,17 @@ export default function Chatbot(props: ChatbotProps) {
         onClose={() => setShowInfoModal(false)}
         open={showInfoModal}
       >
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <IconButton
+            size='large'
+            title='close pop up'
+            aria-label='close pop up'
+            clean
+            onClick={() => setShowInfoModal(false)}
+          >
+            <XMarkIconOutline />
+          </IconButton>
+        </div>
         <InfoModal
           sources={sourcesModal}
           model={modelModal}
