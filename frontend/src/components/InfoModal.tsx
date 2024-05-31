@@ -145,7 +145,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
               ))}
             </ul>
           ) : (
-            <Typography variant='body-large'>No sources found</Typography>
+            <span className='h6 text-center'>No Sources Found</span>
           )
         ) : loading ? (
           <Box className='flex justify-center items-center'>
@@ -179,14 +179,14 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
             ))}
           </ul>
         ) : (
-          <Typography variant='body-large'>No entities found</Typography>
+          <span className='h6 text-center'>No Entities Found</span>
         )}
       </Flex>
-      {activeTab === 1 && (
+      {(activeTab === 1 && nodes.length && relationships.length) ? (
         <Box className='button-container flex mt-2 justify-center'>
           <GraphViewButton nodeValues={nodes} relationshipValues={relationships} />
         </Box>
-      )}
+      ): <></>}
     </Box>
   );
 };
