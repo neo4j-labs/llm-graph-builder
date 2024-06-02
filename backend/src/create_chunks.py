@@ -70,8 +70,13 @@ class CreateChunksofDocument:
                 chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP_SIZE
             )
 
-        chunks = text_splitter.split_documents(self.pages)
-        logging.info(f"No of chunks created from document {len(chunks)}")
-        # chunks = chunks[:number_of_chunks_allowed]
-        # logging.info(f'No of chunks allowed to process {len(chunks)}')
+        
+        if 'page' in self.pages[0].metadata:
+            chunks = []
+            for i, document in enumerate(self.pages):
+                page_number = i + 1
+                for chunk in text_splitter.split_documents([document]):
+                    chunks.append(Document(page_content=chunk.page_content, metadata={'page_number':page_number}))    
+        else:
+            chunks = text_splitter.split_documents(self.pages)
         return chunks

@@ -1,9 +1,10 @@
 import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone, Typography, TextLink } from '@neo4j-ndl/react';
-import { Dispatch, SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 import connectAPI from '../services/ConnectAPI';
 import { useCredentials } from '../context/UserCredentials';
 import { initialiseDriver } from '../utils/Driver';
 import { Driver } from 'neo4j-driver';
+import { useSearchParams } from 'react-router-dom';
 
 interface Message {
   type: 'success' | 'info' | 'warning' | 'danger' | 'unknown';
@@ -43,11 +44,44 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
   const { setUserCredentials, setDriver } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const parseAndSetURI = (uri: string) => {
-    const uriParts = uri.split('://');
-    const uriHost = uriParts.pop() || URI;
-    setURI(uriHost);
+  useEffect(() => {
+    if (searchParams.has('connectURL')) {
+      const url = searchParams.get('connectURL');
+      parseAndSetURI(url as string, true);
+      searchParams.delete('connectURL');
+      setSearchParams(searchParams);
+    }
+  }, [open]);
+
+  const parseAndSetURI = (uri: string, urlparams = false) => {
+    const uriParts: string[] = uri.split('://');
+    let uriHost: string[] | string;
+    if (urlparams) {
+      // @ts-ignore
+      uriHost = uriParts.pop().split('@');
+      // @ts-ignore
+      const hostParts = uriHost.pop()?.split('-');
+      if (hostParts != undefined) {
+        console.log(hostParts);
+        if (hostParts.length == 2) {
+          setURI(hostParts.pop() as string);
+          setDatabase(hostParts.pop() as string);
+        } else {
+          setURI(hostParts.pop() as string);
+          setDatabase('neo4j');
+        }
+      }
+      const usercredentialsparts = uriHost.pop()?.split(':');
+      setPassword(usercredentialsparts?.pop() as string);
+      setUsername(usercredentialsparts?.pop() as string);
+      setProtocol(uriParts.pop() as string);
+    } else {
+      uriHost = uriParts.pop() || URI;
+      setURI(uriHost);
+    }
+
     const uriProtocol = uriParts.pop() || protocol;
     setProtocol(uriProtocol);
     const uriPort = uriParts.pop() || port;
@@ -133,11 +167,11 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
     });
   };
 
-  const onClose = () => {
+  const onClose = useCallback(() => {
     setMessage({ type: 'unknown', content: '' });
-  };
+  }, []);
 
-  const isDisabled = !username || !URI || !password;
+  const isDisabled = useMemo(() => !username || !URI || !password, [username, URI, password]);
 
   return (
     <>

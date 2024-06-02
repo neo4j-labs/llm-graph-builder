@@ -18,12 +18,16 @@
     "@neo4j-ndl/react": "^2.13.7",
     "@neo4j-nvl/base": "^0.3.1",
     "@neo4j-nvl/react": "^0.3.1",
+    "@react-oauth/google": "^0.12.1",
     "@types/uuid": "^9.0.7",
     "axios": "^1.6.5",
     "eslint-plugin-react": "^7.33.2",
     "neo4j-driver": "^5.14.0",
+    "re-resizable": "^6.9.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-router": "^6.23.1",
+    "react-router-dom": "^6.23.1",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
@@ -43,6 +47,6 @@
     "react-dropzone": "^14.2.3",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.0.2",
-    "vite": "^4.4.5"
+    "vite": "^4.5.3"
   }
 }
