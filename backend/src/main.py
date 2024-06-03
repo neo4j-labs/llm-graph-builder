@@ -266,7 +266,7 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
       result = graphDb_data_Access.get_current_status_document_node(file_name)
       is_cancelled_status = result[0]['is_cancelled']
       logging.info(f"Value of is_cancelled : {result[0]['is_cancelled']}")
-      if is_cancelled_status == True:
+      if bool(is_cancelled_status) == True:
          job_status = "Cancelled"
          logging.info('Exit from running loop of processing file')
          exit
@@ -286,7 +286,7 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     
     result = graphDb_data_Access.get_current_status_document_node(file_name)
     is_cancelled_status = result[0]['is_cancelled']
-    if is_cancelled_status == 'True':
+    if bool(is_cancelled_status) == True:
        logging.info(f'Is_cancelled True at the end extraction')
        job_status = 'Cancelled'
     logging.info(f'Job Status at the end : {job_status}')
