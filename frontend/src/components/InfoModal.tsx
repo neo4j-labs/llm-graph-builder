@@ -6,7 +6,7 @@ import wikipedialogo from '../assets/images/Wikipedia-logo-v2.svg';
 import youtubelogo from '../assets/images/youtube.png';
 import gcslogo from '../assets/images/gcs.webp';
 import s3logo from '../assets/images/s3logo.png';
-import { Chunk, Entity, GroupedEntity, UserCredentials, chatInfoMessage } from '../types';
+import { Entity, GroupedEntity, UserCredentials, chatInfoMessage } from '../types';
 import { useEffect, useMemo, useState } from 'react';
 import HoverableLink from './HoverableLink';
 import GraphViewButton from './GraphViewButton';
@@ -120,7 +120,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                         <div className='flex flex-row inline-block justiy-between items-center'>
                           <Typography
                             variant='body-medium'
-                            className='text-ellipsis whitespace-nowrap w-[calc(100%-200px)] overflow-hidden'
+                            className='text-ellipsis whitespace-nowrap max-w-[calc(100%-100px)] overflow-hidden'
                           >
                             {decodeURIComponent(link.source_name).split('/').at(-1) ?? 'S3 File'}
                           </Typography>
@@ -129,7 +129,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                         <div className='flex flex-row inline-block justiy-between items-center'>
                           <Typography
                             variant='body-medium'
-                            className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden'
+                            className='text-ellipsis whitespace-nowrap max-w-[calc(100%-100px)] overflow-hidden'
                           >
                             {decodeURIComponent(link.source_name).split('/').at(-1)?.split('?')[0] ?? 'GCS File'}
                           </Typography>
@@ -139,13 +139,18 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                           {link.source_name.includes('wikipedia.org') ? (
                             <>
                               <HoverableLink url={link.source_name}>
-                                <Typography variant='body-medium'>{link.source_name}</Typography>
+                                <Typography variant='body-medium'>Wikipedia</Typography>
+                                <Typography variant='body-small' className='italic'>
+                                  - Section {total_tokens}
+                                </Typography>
                               </HoverableLink>
                             </>
                           ) : (
-                            <HoverableLink url={link.source_name}>
-                              <Typography variant='body-medium'>{link.source_name}</Typography>
-                            </HoverableLink>
+                            <>
+                              <HoverableLink url={link.source_name}>
+                                <Typography variant='body-medium'>{link.source_name}</Typography>
+                              </HoverableLink>
+                            </>
                           )}
                         </TextLink>
                       )}
