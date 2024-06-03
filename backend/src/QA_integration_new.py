@@ -29,9 +29,6 @@ load_dotenv()
 
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
-CHAT_MAX_TOKENS = 1000
-SEARCH_KWARG_K = 2
-SEARCH_KWARG_SCORE_THRESHOLD = 0.7
 
 RETRIEVAL_QUERY = """
 WITH node as chunk, score
@@ -88,45 +85,7 @@ AI Response: "PyCaret simplifies the process of building and deploying machine l
 Note: This system does not generate answers based solely on internal knowledge. It answers from the information provided in the user's current and previous inputs, and from explicitly referenced external sources.
 """
 
-# def get_llm(model: str,max_tokens=CHAT_MAX_TOKENS) -> Any:
-#     """Retrieve the specified language model based on the model name."""
-
-#     model_versions = {
-#         "OpenAI GPT 3.5": "gpt-3.5-turbo-16k",
-#         "Gemini Pro": "gemini-1.0-pro-001",
-#         "Gemini 1.5 Pro": "gemini-1.5-pro-preview-0409",
-#         "OpenAI GPT 4": "gpt-4-0125-preview",
-#         "Diffbot" : "gpt-4-0125-preview",
-#         "OpenAI GPT 4o":"gpt-4o"
-#          }
-
-#     if model in model_versions:
-#         model_version = model_versions[model]
-#         logging.info(f"Chat Model: {model}, Model Version: {model_version}")
-
-#         if "Gemini" in model:
-#             llm = ChatVertexAI(
-#                 model_name=model_version,
-#                 convert_system_message_to_human=True,
-#                 max_tokens=max_tokens,
-#                 temperature=0,
-#                 safety_settings={
-#                     HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
-#                     HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-#                     HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-#                     HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-#                     HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE
-#                 }
-#             )
-#         else:
-#             llm = ChatOpenAI(model=model_version, temperature=0,max_tokens=max_tokens)
-#         return llm,model_version
-
-#     else:
-#         logging.error(f"Unsupported model: {model}")
-#         return None,None
-
-def get_neo4j_retriever(graph, index_name="vector", search_k=SEARCH_KWARG_K, score_threshold=SEARCH_KWARG_SCORE_THRESHOLD):
+def get_neo4j_retriever(graph, index_name="vector", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
     try:
         neo_db = Neo4jVector.from_existing_index(
             embedding=EMBEDDING_FUNCTION,
@@ -195,12 +154,12 @@ def create_neo4j_chat_message_history(graph, session_id):
 
 def format_documents(documents):
     sorted_documents = sorted(documents, key=lambda doc: doc.state["query_similarity_score"], reverse=True)
-    sorted_documents = sorted_documents[:5] if len(sorted_documents) > 5 else sorted_documents
+    sorted_documents = sorted_documents[:7] if len(sorted_documents) > 5 else sorted_documents
     formatted_docs = []
     sources = set()
     for i,doc in enumerate(sorted_documents):
-        print("here")
         doc_start = f"Document start\n"
+        doc_header = f"This Document belongs to the source {doc.metadata['source']}\n"
         formatted_doc = f"Content: {doc.page_content}"
         doc_end = f"\nDocument end\n"
         sources.add(doc.metadata['source'])
@@ -299,6 +258,7 @@ def clear_chat_history(graph,session_id):
 def QA_RAG(graph,model,question,session_id):
     try:
         start_time = time.time()
+        print(model)
         model_version = MODEL_VERSIONS[model]
         llm = get_llm(model_version)
         retriever = get_neo4j_retriever(graph=graph)
