@@ -25,7 +25,17 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
-  const { filesData, setFilesData, setModel, model, selectedNodes, selectedRels, selectedRows } = useFileContext();
+  const {
+    filesData,
+    setFilesData,
+    setModel,
+    model,
+    selectedNodes,
+    selectedRels,
+    selectedRows,
+    setSelectedNodes,
+    setSelectedRels,
+  } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
@@ -268,6 +278,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     setConnectionStatus(false);
     localStorage.removeItem('password');
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
+    setSelectedNodes([]);
+    setSelectedRels([]);
   };
 
   const selectedfileslength = useMemo(() => selectedRows.length, [selectedRows]);

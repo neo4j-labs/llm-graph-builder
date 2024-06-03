@@ -16,35 +16,33 @@ import { calcWordColor } from '@neo4j-devtools/word-color';
 const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, response_time, chunk_ids }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
-  const [loading, setIsloading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
   const [nodes, setNodes] = useState<Node[]>([]);
   const [relationships, setRelationships] = useState<Relationship[]>([]);
-
   const parseEntity = (entity: Entity) => {
     const { labels, properties } = entity;
     const label = labels[0];
     const text = properties.id;
     return { label, text };
   };
-
   useEffect(() => {
-    setIsloading(true);
+    setLoading(true);
     chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids.join(','))
       .then((response) => {
         setInfoEntities(response.data.data.nodes);
         setNodes(response.data.data.nodes);
         setRelationships(response.data.data.relationships);
-        setIsloading(false);
+        setLoading(false);
       })
       .catch((error) => {
         console.error('Error fetching entities:', error);
-        setIsloading(false);
+        setLoading(false);
       });
   }, [chunk_ids]);
 
   const groupedEntities = useMemo<{ [key: string]: GroupedEntity }>(() => {
-    return infoEntities.slice(0, 6).reduce((acc, entity) => {
+    return infoEntities.reduce((acc, entity) => {
       const { label, text } = parseEntity(entity);
       if (!acc[label]) {
         const newColor = calcWordColor(label);
@@ -55,9 +53,25 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
     }, {} as Record<string, { texts: Set<string>; color: string }>);
   }, [infoEntities]);
 
-  const onChangeTabs = async (e: any) => {
-    setActiveTab(e);
+  const onChangeTabs = (tabId: number) => {
+    setActiveTab(tabId);
   };
+
+  const labelCounts = useMemo(() => {
+    const counts: { [label: string]: number } = {};
+    infoEntities.forEach((entity) => {
+      const { labels } = entity;
+      const label = labels[0];
+      counts[label] = counts[label] ? counts[label] + 1 : 1;
+    });
+    return counts;
+  }, [infoEntities]);
+
+  const sortedLabels = useMemo(() => {
+    return Object.keys(labelCounts)
+      .slice(0, 7)
+      .sort((a, b) => labelCounts[b] - labelCounts[a]);
+  }, [labelCounts]);
 
   return (
     <Box className='n-bg-palette-neutral-bg-weak p-4'>
@@ -74,7 +88,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
       </Box>
       <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
         <Tabs.Tab tabId={0}>Sources used</Tabs.Tab>
-        <Tabs.Tab tabId={1}>Entities used</Tabs.Tab>
+        <Tabs.Tab tabId={1}>Top Entities used</Tabs.Tab>
       </Tabs>
       <Flex className='p-6'>
         {activeTab === 0 ? (
@@ -131,22 +145,22 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
               ))}
             </ul>
           ) : (
-            <Typography variant='body-large'>No sources found</Typography>
+            <span className='h6 text-center'>No Sources Found</span>
           )
-        ) : loading ? ( // Show loader while loading
+        ) : loading ? (
           <Box className='flex justify-center items-center'>
             <LoadingSpinner size='small' />
           </Box>
         ) : Object.keys(groupedEntities).length > 0 ? (
           <ul className='list-none'>
-            {Object.keys(groupedEntities).map((label, index) => (
+            {sortedLabels.map((label, index) => (
               <li
                 key={index}
                 className='flex items-center mb-2'
                 style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}
               >
                 <div key={index} style={{ backgroundColor: `${groupedEntities[label].color}` }} className='legend mr-2'>
-                  {label}
+                  {label} ({labelCounts[label]})
                 </div>
                 <Typography
                   className='entity-text'
@@ -159,20 +173,20 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                     maxWidth: 'calc(100% - 120px)',
                   }}
                 >
-                  {Array.from(groupedEntities[label].texts).join(', ')}
+                  {Array.from(groupedEntities[label].texts).slice(0, 3).join(', ')}
                 </Typography>
               </li>
             ))}
           </ul>
         ) : (
-          <Typography variant='body-large'>No entities found</Typography>
+          <span className='h6 text-center'>No Entities Found</span>
         )}
       </Flex>
-      {activeTab === 1 && (
+      {(activeTab === 1 && nodes.length && relationships.length) ? (
         <Box className='button-container flex mt-2 justify-center'>
           <GraphViewButton nodeValues={nodes} relationshipValues={relationships} />
         </Box>
-      )}
+      ): <></>}
     </Box>
   );
 };
