@@ -106,7 +106,7 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
     logging.info(f"match value{match}")
     obj_source_node.file_name = YouTube(obj_source_node.url).title
-    transcript= get_youtube_transcript(match.group(1))
+    transcript= get_youtube_combined_transcript(match.group(1))
     if transcript==None or len(transcript)==0:
       message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
       raise Exception(message)
