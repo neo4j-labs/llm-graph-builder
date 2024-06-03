@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
-import { CustomFile, alertStateType } from '../types';
+import { CustomFile, CustomFileBase, alertStateType } from '../types';
 import { chunkSize } from '../utils/Constants';
 import { url } from '../utils/Utils';
 
@@ -27,7 +27,7 @@ const DropZone: FunctionComponent = () => {
     setSelectedFiles(f.map((f) => f as File));
     setIsLoading(false);
     if (f.length) {
-      const defaultValues: CustomFile = {
+      const defaultValues: CustomFileBase  = {
         processing: 0,
         status: 'None',
         NodesCount: 0,

@@ -17,6 +17,7 @@ import DeletePopUp from './DeletePopUp';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
+import ConfirmationDialog from './ConfirmationDialog';
 
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -25,6 +26,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
+  const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
+  const [extractLoading, setextractLoading] = useState<boolean>(false);
+
   const {
     filesData,
     setFilesData,
@@ -216,9 +220,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     }
   };
 
-  const handleGenerateGraph = () => {
+  const handleGenerateGraph = (allowLargeFiles: boolean) => {
     const data = [];
-    if (selectedfileslength) {
+    if (selectedfileslength && allowLargeFiles) {
       for (let i = 0; i < selectedfileslength; i++) {
         const row = JSON.parse(selectedRows[i]);
         if (row.status === 'New') {
@@ -228,7 +232,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       Promise.allSettled(data).then(async (_) => {
         await updateGraphAPI(userCredentials as UserCredentials);
       });
-    } else if (filesData.length > 0) {
+    } else if (filesData.length > 0 && allowLargeFiles) {
+      //@ts-ignore
       for (let i = 0; i < filesData.length; i++) {
         if (filesData[i]?.status === 'New') {
           data.push(extractData(filesData[i].id as string));
@@ -352,6 +357,15 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           alertMessage={alertDetails.alertMessage}
         />
       )}
+      {showConfirmationModal && (
+        <ConfirmationDialog
+          open={showConfirmationModal}
+          largeFiles={filesData}
+          extractHandler={handleGenerateGraph}
+          onClose={() => setshowConfirmationModal(false)}
+          loading={extractLoading}
+        ></ConfirmationDialog>
+      )}
       {showDeletePopUp && (
         <DeletePopUp
           open={showDeletePopUp}
@@ -407,7 +421,35 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={dropdowncheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
-            <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
+            <Button
+              disabled={disableCheck}
+              onClick={() => {
+                if (selectedRows.length) {
+                  let selectedLargeFiles: CustomFile[] = [];
+                  selectedRows.forEach((f) => {
+                    if (JSON.parse(f).size > 10000000) {
+                      selectedLargeFiles.push(JSON.parse(f));
+                    }
+                  });
+                  if (selectedLargeFiles.length) {
+                    setshowConfirmationModal(true);
+                    handleGenerateGraph(false);
+                  } else {
+                    handleGenerateGraph(true);
+                  }
+                } else if (filesData.length) {
+                  //@ts-ignore
+                  const largefiles = filesData.filter((f) => f?.size > 10000000);
+                  if (largefiles.length) {
+                    setshowConfirmationModal(true);
+                    handleGenerateGraph(false);
+                  } else {
+                    handleGenerateGraph(true);
+                  }
+                }
+              }}
+              className='mr-0.5'
+            >
               Generate Graph {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
             </Button>
             <Button

@@ -5,11 +5,10 @@ import { OverridableStringUnion } from '@mui/types';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { NonOAuthError } from '@react-oauth/google';
 
-export interface CustomFile extends Partial<globalThis.File> {
+export interface CustomFileBase extends Partial<globalThis.File> {
   processing: number | string;
   status: string;
   NodesCount: number;
-  id?: string;
   relationshipCount: number;
   model: string;
   fileSource: string;
@@ -23,6 +22,9 @@ export interface CustomFile extends Partial<globalThis.File> {
   google_project_id?: string;
   language?: string;
   processingProgress?: number;
+}
+export interface CustomFile extends CustomFileBase {
+  id: string;
 }
 
 export interface OptionType {
