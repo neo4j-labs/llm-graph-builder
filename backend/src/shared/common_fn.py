@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 from langchain_openai import ChatOpenAI
 from langchain_google_vertexai import ChatVertexAI
+from langchain_groq import ChatGroq
 from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
 from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransformer
 # from neo4j.debug import watch
@@ -133,8 +134,14 @@ def get_llm(model_version:str) :
         llm = ChatOpenAI(api_key=os.environ.get('OPENAI_API_KEY'), 
                          model=model_version, 
                          temperature=0)
+        
+    elif "llama3" in model_version:
+        llm = ChatGroq(api_key=os.environ.get('GROQ_API_KEY'),
+                       temperature=0,
+                       model_name=model_version)
+    
     else:
         llm = DiffbotGraphTransformer(diffbot_api_key=os.environ.get('DIFFBOT_API_KEY'))    
-    logging.info(f"Model created : Model Version: {model_version}")
+    logging.info(f"Model created - Model Version: {model_version}")
     return llm
   
