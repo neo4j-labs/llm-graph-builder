@@ -15,6 +15,18 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
   const { setFilesData, model, filesData } = useFileContext();
+
+  const defaultValues: CustomFile = {
+    processing: 0,
+    status: 'New',
+    NodesCount: 0,
+    relationshipCount: 0,
+    type: 'TEXT',
+    model: model,
+    fileSource: 'gcs bucket',
+    processingProgress: undefined,
+  };
+
   const reset = () => {
     setbucketName('');
     setFolderName('');
