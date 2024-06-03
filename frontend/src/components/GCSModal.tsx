@@ -1,42 +1,55 @@
 import { TextInput } from '@neo4j-ndl/react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { urlScanAPI } from '../services/URLScan';
-import { CustomFile, S3ModalProps, fileName } from '../types';
+import { CustomFile, S3ModalProps, fileName, nonoautherror } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
+import { useGoogleLogin } from '@react-oauth/google';
+import { useAlertContext } from '../context/Alert';
 
 const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [bucketName, setbucketName] = useState<string>('');
   const [folderName, setFolderName] = useState<string>('');
+  const [projectId, setprojectId] = useState<string>('');
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
+  const { showAlert } = useAlertContext();
+
   const { setFilesData, model, filesData } = useFileContext();
+
+  const defaultValues: CustomFile = {
+    processing: 0,
+    status: 'New',
+    NodesCount: 0,
+    relationshipCount: 0,
+    type: 'TEXT',
+    model: model,
+    fileSource: 'gcs bucket',
+    processingProgress: undefined,
+  };
+
   const reset = () => {
     setbucketName('');
     setFolderName('');
+    setprojectId('');
   };
-  const submitHandler = async () => {
-    const defaultValues: CustomFile = {
-      processing: 0,
-      status: 'New',
-      NodesCount: 0,
-      id: uuidv4(),
-      relationshipCount: 0,
-      type: 'TEXT',
-      model: model,
-      fileSource: 'gcs bucket',
-    };
 
-    if (!bucketName) {
-      setStatus('danger');
-      setStatusMessage('Please Fill the Bucket Name');
+  useEffect(() => {
+    if (status != 'unknown') {
       setTimeout(() => {
+        setStatusMessage('');
         setStatus('unknown');
+        reset();
+        hideModal();
       }, 5000);
-    } else {
+    }
+  }, []);
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (codeResponse) => {
       try {
         setStatus('info');
         setStatusMessage('Loading...');
@@ -48,55 +61,85 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           gcs_bucket_name: bucketName,
           gcs_bucket_folder: folderName,
           source_type: 'gcs bucket',
+          gcs_project_id: projectId,
+          access_token: codeResponse.access_token,
         });
         if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
-          setStatus('danger');
-          setStatusMessage(apiResponse?.data?.message);
+          showAlert('error', apiResponse?.data?.message);
           setTimeout(() => {
             setStatus('unknown');
             reset();
             hideModal();
           }, 5000);
-        } else {
-          setStatus('success');
-          setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
-          const copiedFilesData = [...filesData];
-          apiResponse?.data?.file_name?.forEach((item: fileName) => {
-            const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
-            if (filedataIndex == -1) {
-              copiedFilesData.unshift({
-                name: item.fileName,
-                size: item.fileSize ?? 0,
-                gcsBucket: item.gcsBucket,
-                gcsBucketFolder: item.gcsBucketFolder,
-                ...defaultValues,
-              });
-            } else {
-              const tempFileData = copiedFilesData[filedataIndex];
-              copiedFilesData.splice(filedataIndex, 1);
-              copiedFilesData.unshift({
-                ...tempFileData,
-                status: defaultValues.status,
-                NodesCount: defaultValues.NodesCount,
-                relationshipCount: defaultValues.relationshipCount,
-                processing: defaultValues.processing,
-                model: defaultValues.model,
-                fileSource: defaultValues.fileSource,
-              });
-            }
-          });
-          setFilesData(copiedFilesData);
-          reset();
+          return;
         }
+        showAlert('success', `Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
+        const copiedFilesData = [...filesData];
+        apiResponse?.data?.file_name?.forEach((item: fileName) => {
+          const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
+          if (filedataIndex == -1) {
+            copiedFilesData.unshift({
+              name: item.fileName,
+              size: item.fileSize ?? 0,
+              gcsBucket: item.gcsBucketName,
+              gcsBucketFolder: item.gcsBucketFolder,
+              google_project_id: item.gcsProjectId,
+              id: uuidv4(),
+              ...defaultValues,
+            });
+          } else {
+            const tempFileData = copiedFilesData[filedataIndex];
+            copiedFilesData.splice(filedataIndex, 1);
+            copiedFilesData.unshift({
+              ...tempFileData,
+              status: defaultValues.status,
+              NodesCount: defaultValues.NodesCount,
+              relationshipCount: defaultValues.relationshipCount,
+              processing: defaultValues.processing,
+              model: defaultValues.model,
+              fileSource: defaultValues.fileSource,
+            });
+          }
+        });
+        setFilesData(copiedFilesData);
+        reset();
       } catch (error) {
-        setStatus('danger');
-        setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
+        if (showAlert != undefined) {
+          showAlert('error', 'Some Error Occurred or Please Check your Instance Connection');
+        }
       }
+      setTimeout(() => {
+        setStatus('unknown');
+        hideModal();
+      }, 500);
+    },
+    onError: (errorResponse) => {
+      showAlert(
+        'error',
+        errorResponse.error_description ?? 'Some Error Occurred or Please try signin with your google account'
+      );
+    },
+    scope: 'https://www.googleapis.com/auth/devstorage.read_only',
+    onNonOAuthError: (error: nonoautherror) => {
+      console.log(error);
+      showAlert('info', error.message as string);
+    },
+  });
+
+  const submitHandler = async () => {
+    if (bucketName.trim() === '' || projectId.trim() === '') {
+      setStatus('danger');
+      setStatusMessage('Please Fill the Bucket Name');
+      setTimeout(() => {
+        setStatus('unknown');
+      }, 5000);
+    } else {
+      googleLogin();
     }
     setTimeout(() => {
       setStatus('unknown');
       hideModal();
-    }, 5000);
+    }, 500);
   };
   const onClose = useCallback(() => {
     hideModal();
@@ -115,7 +158,21 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     >
       <div className='w-full inline-block'>
         <TextInput
-          id='url'
+          id='project id'
+          value={projectId}
+          disabled={false}
+          label='Project ID'
+          aria-label='Project ID'
+          placeholder=''
+          autoFocus
+          fluid
+          required
+          onChange={(e) => {
+            setprojectId(e.target.value);
+          }}
+        ></TextInput>
+        <TextInput
+          id='bucketname'
           value={bucketName}
           disabled={false}
           label='Bucket Name'
@@ -129,7 +186,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           }}
         />
         <TextInput
-          id='url'
+          id='foldername'
           value={folderName}
           disabled={false}
           label='Folder Name'

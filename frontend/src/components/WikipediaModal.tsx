@@ -24,11 +24,11 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
       processing: 0,
       status: 'New',
       NodesCount: 0,
-      id: uuidv4(),
       relationshipCount: 0,
       type: 'TEXT',
       model: model,
       fileSource: 'Wikipedia',
+      processingProgress: undefined,
     };
     if (wikiQuery.length) {
       try {
@@ -74,6 +74,8 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
               size: item.fileSize,
               wiki_query: item.fileName,
               source_url: item.url,
+              id: uuidv4(),
+              language: item.language,
               ...defaultValues,
             });
           } else {
@@ -107,7 +109,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
     setTimeout(() => {
       setStatus('unknown');
       hideModal();
-    }, 5000);
+    }, 500);
   };
   return (
     <CustomModal
@@ -121,7 +123,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
     >
       <div className='w-full inline-block'>
         <TextInput
-          id='url'
+          id='keyword'
           value={wikiQuery}
           disabled={false}
           label='Wikipedia Keywords'

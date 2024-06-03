@@ -5,6 +5,7 @@ from src.gemini_llm import get_graph_from_Gemini
 from src.groq_llama3_llm import get_graph_from_Groq_Llama3
 from typing import List
 import logging
+from src.shared.constants import *
 
 logging.basicConfig(format="%(asctime)s - %(message)s", level="INFO")
 
@@ -26,21 +27,11 @@ def generate_graphDocuments(model: str, graph: Neo4jGraph, chunkId_chunkDoc_list
     if model == "Diffbot":
         graph_documents = get_graph_from_diffbot(graph, chunkId_chunkDoc_list)
 
-    elif model == "OpenAI GPT 3.5":
-        model_version = "gpt-3.5-turbo-16k"
-        graph_documents = get_graph_from_OpenAI(model_version, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
+    elif model in OPENAI_MODELS:
+        graph_documents = get_graph_from_OpenAI(MODEL_VERSIONS[model], graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
 
-    elif model == "OpenAI GPT 4":
-        model_version = "gpt-4-0125-preview"
-        graph_documents = get_graph_from_OpenAI(model_version, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
-    
-    elif model == "Gemini 1.0 Pro" :
-        model_version = "gemini-1.0-pro-001"
-        graph_documents = get_graph_from_Gemini(model_version, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
-
-    elif model == "Gemini 1.5 Pro" :
-        model_version = "gemini-1.5-pro-preview-0409"
-        graph_documents = get_graph_from_Gemini(model_version, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
+    elif model in GEMINI_MODELS:
+        graph_documents = get_graph_from_Gemini(MODEL_VERSIONS[model], graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
 
     elif model == "Groq Llama3-70b" :
         model_version = "llama3-70b-8192"

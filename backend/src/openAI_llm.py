@@ -23,7 +23,7 @@ from concurrent.futures import ThreadPoolExecutor
 import threading
 import uuid
 #from langchain_experimental.graph_transformers import LLMGraphTransformer
-from src.shared.common_fn import get_combined_chunks
+from src.shared.common_fn import get_combined_chunks, get_llm
 
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
@@ -463,7 +463,7 @@ def get_graph_from_OpenAI(model_version, graph, chunkId_chunkDoc_list, allowedNo
         
     combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
     
-    llm = ChatOpenAI(model= model_version, temperature=0)
+    llm = get_llm(model_version)
     llm_transformer = LLMGraphTransformer(llm=llm, allowed_nodes=allowedNodes, allowed_relationships=allowedRelationship)
     
     with ThreadPoolExecutor(max_workers=10) as executor:
