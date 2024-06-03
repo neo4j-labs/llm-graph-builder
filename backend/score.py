@@ -166,19 +166,19 @@ async def extract_knowledge_graph_from_file(
 
         elif source_type == 's3 bucket' and source_url:
             result = await asyncio.to_thread(
-                extract_graph_from_file_s3, graph, model, source_url, aws_access_key_id, aws_secret_access_key, allowedNodes, allowedRelationship,is_pre_process)
+                extract_graph_from_file_s3, graph, model, source_url, aws_access_key_id, aws_secret_access_key, allowedNodes, allowedRelationship)
 
         elif source_type == 'youtube' and source_url:
             result = await asyncio.to_thread(
-                extract_graph_from_file_youtube, graph, model, source_url, allowedNodes, allowedRelationship,is_pre_process)
+                extract_graph_from_file_youtube, graph, model, source_url, allowedNodes, allowedRelationship)
 
         elif source_type == 'Wikipedia' and wiki_query:
             result = await asyncio.to_thread(
-                extract_graph_from_file_Wikipedia, graph, model, wiki_query, max_sources, language, allowedNodes, allowedRelationship,is_pre_process)
+                extract_graph_from_file_Wikipedia, graph, model, wiki_query, max_sources, language, allowedNodes, allowedRelationship)
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
             result = await asyncio.to_thread(
-                extract_graph_from_file_gcs, graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship,is_pre_process)
+                extract_graph_from_file_gcs, graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
         if result is not None:

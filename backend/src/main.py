@@ -157,13 +157,18 @@ def extract_graph_from_file_local_file(graph, model, fileName, merged_file_path,
 
   logging.info(f'Process file name :{fileName}')
   file_name, pages = get_documents_from_file_by_path(merged_file_path,fileName)
+  pdf_total_pages = pages[0].metadata['total_pages']
   
-  if pages==None or len(pages)==0:
+  if pages==None or pdf_total_pages==0:
     raise Exception(f'Pdf content is not available for file : {file_name}')
+  
+  logging.info(f'Is Pre Process Value : {is_pre_process}')
+  if bool(is_pre_process):
+    return{"fileName": file_name, "total_pages": pdf_total_pages}
 
-  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, is_pre_process, merged_file_path)
+  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, merged_file_path)
 
-def extract_graph_from_file_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, allowedNodes, allowedRelationship, is_pre_process):
+def extract_graph_from_file_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, allowedNodes, allowedRelationship):
 
   if(aws_access_key_id==None or aws_secret_access_key==None):
     raise Exception('Please provide AWS access and secret keys')
@@ -174,34 +179,34 @@ def extract_graph_from_file_s3(graph, model, source_url, aws_access_key_id, aws_
   if pages==None or len(pages)==0:
     raise Exception(f'Pdf content is not available for file : {file_name}')
 
-  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, is_pre_process)
+  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
-def extract_graph_from_file_youtube(graph, model, source_url, allowedNodes, allowedRelationship, is_pre_process):
+def extract_graph_from_file_youtube(graph, model, source_url, allowedNodes, allowedRelationship):
   
   file_name, pages = get_documents_from_youtube(source_url)
 
   if pages==None or len(pages)==0:
     raise Exception(f'Youtube transcript is not available for file : {file_name}')
 
-  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, is_pre_process)
+  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
-def extract_graph_from_file_Wikipedia(graph, model, wiki_query, max_sources, language, allowedNodes, allowedRelationship, is_pre_process):
+def extract_graph_from_file_Wikipedia(graph, model, wiki_query, max_sources, language, allowedNodes, allowedRelationship):
 
   file_name, pages = get_documents_from_Wikipedia(wiki_query, language)
   if pages==None or len(pages)==0:
     raise Exception(f'Wikipedia page is not available for file : {file_name}')
 
-  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, is_pre_process)
+  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
-def extract_graph_from_file_gcs(graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship, is_pre_process):
+def extract_graph_from_file_gcs(graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship):
 
   file_name, pages = get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename)
   if pages==None or len(pages)==0:
     raise Exception(f'Pdf content is not available for file : {file_name}')
 
-  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, is_pre_process)
+  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
-def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, is_pre_process, merged_file_path=None):
+def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, merged_file_path=None):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -233,13 +238,6 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     pages[i]=Document(page_content=str(text), metadata=pages[i].metadata)
   create_chunks_obj = CreateChunksofDocument(pages, graph, file_name)
   chunks = create_chunks_obj.split_file_into_chunks()
-  logging.info(f'Is Pre Process Value : {is_pre_process}')
-  if bool(is_pre_process):
-    return{ 
-        "fileName": file_name,
-        "total_chunks": len(chunks),
-        "total_pages": len(pages)
-        }
   
   if result[0]['Status'] != 'Processing':      
     obj_source_node = sourceNode()
