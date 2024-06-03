@@ -111,13 +111,25 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
             page_content=chunk.page_content, metadata=metadata
         )
         
-        # create chunk nodes
-        graph.query("""MERGE(c:Chunk {id : $id}) SET c.text = $pg_content, c.position = $position, 
-        c.length = $length
-        """,
-        {"id":current_chunk_id,"pg_content":chunk_document.page_content, "position": position,
-            "length": chunk_document.metadata["length"]
-        })
+        chunk_data = {
+            "id": current_chunk_id,
+            "pg_content": chunk_document.page_content,
+            "position": position,
+            "length": chunk_document.metadata["length"],
+            "f_name": file_name,
+            "previous_id" : previous_chunk_id,
+        }
+        
+        if 'page_number' in chunk.metadata:
+            chunk_data['page_number'] = chunk.metadata['page_number']
+         
+        if 'start_time' in chunk.metadata and 'end_time' in chunk.metadata:
+            chunk_data['start_time'] = chunk.metadata['start_time']
+            chunk_data['end_time'] = chunk.metadata['end_time'] 
+               
+        batch_data.append(chunk_data)
+        
+        lst_chunks_including_hash.append({'chunk_id': current_chunk_id, 'chunk_doc': chunk})
         
         #create PART_OF realtion between chunk and Document node
         graph.query(
@@ -135,14 +147,46 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
                 {"f_name": file_name, "chunk_id": current_chunk_id},
             )
         else:
-            graph.query(
-                """MATCH(pc:Chunk {id : $previous_chunk_id}) ,(cc:Chunk {id : $current_chunk_id}) 
-            MERGE (pc)-[:NEXT_CHUNK]->(cc)
-            """,
-                {
-                    "previous_chunk_id": previous_chunk_id,
-                    "current_chunk_id": current_chunk_id,
-                },
-            )
-        lst_chunks_including_hash.append({'chunk_id': current_chunk_id, 'chunk_doc': chunk})
+            relationships.append({
+                "type": "NEXT_CHUNK",
+                "previous_chunk_id": previous_chunk_id,  # ID of previous chunk
+                "current_chunk_id": current_chunk_id
+            })
+          
+    query_to_create_chunk_and_PART_OF_relation = """
+        UNWIND $batch_data AS data
+        MERGE (c:Chunk {id: data.id})
+        SET c.text = data.pg_content, c.position = data.position, c.length = data.length, c.fileName=data.f_name
+        WITH data, c
+        SET c.page_number = CASE WHEN data.page_number IS NOT NULL THEN data.page_number END,
+            c.start_time = CASE WHEN data.start_time IS NOT NULL THEN data.start_time END,
+            c.end_time = CASE WHEN data.end_time IS NOT NULL THEN data.end_time END
+        WITH data, c
+        WHERE data.page_number IS NOT NULL
+        SET c.page_number = data.page_number
+        WITH data, c
+        MATCH (d:Document {fileName: data.f_name})
+        MERGE (c)-[:PART_OF]->(d)
+    """
+    graph.query(query_to_create_chunk_and_PART_OF_relation, params={"batch_data": batch_data})
+    
+    query_to_create_FIRST_relation = """ 
+        UNWIND $relationships AS relationship
+        MATCH (d:Document {fileName: $f_name})
+        MATCH (c:Chunk {id: relationship.chunk_id})
+        FOREACH(r IN CASE WHEN relationship.type = 'FIRST_CHUNK' THEN [1] ELSE [] END |
+                MERGE (d)-[:FIRST_CHUNK]->(c))
+        """
+    graph.query(query_to_create_FIRST_relation, params={"f_name": file_name, "relationships": relationships})   
+    
+    query_to_create_NEXT_CHUNK_relation = """ 
+        UNWIND $relationships AS relationship
+        MATCH (c:Chunk {id: relationship.current_chunk_id})
+        WITH c, relationship
+        MATCH (pc:Chunk {id: relationship.previous_chunk_id})
+        FOREACH(r IN CASE WHEN relationship.type = 'NEXT_CHUNK' THEN [1] ELSE [] END |
+                MERGE (c)<-[:NEXT_CHUNK]-(pc))
+        """
+    graph.query(query_to_create_NEXT_CHUNK_relation, params={"relationships": relationships})   
+    
     return lst_chunks_including_hash
