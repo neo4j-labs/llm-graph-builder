@@ -154,7 +154,7 @@ def create_neo4j_chat_message_history(graph, session_id):
 
 def format_documents(documents):
     sorted_documents = sorted(documents, key=lambda doc: doc.state["query_similarity_score"], reverse=True)
-    sorted_documents = sorted_documents[:7] if len(sorted_documents) > 5 else sorted_documents
+    sorted_documents = sorted_documents[:7] if len(sorted_documents) > 7 else sorted_documents
     formatted_docs = []
     sources = set()
     for i,doc in enumerate(sorted_documents):
