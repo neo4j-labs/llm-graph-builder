@@ -40,6 +40,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       type: 'PDF',
       model: model,
       fileSource: 's3 bucket',
+      processingProgress: undefined,
     };
     if (url) {
       setValid(validation(bucketUrl) && isFocused);

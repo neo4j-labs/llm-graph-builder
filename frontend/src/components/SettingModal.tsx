@@ -9,6 +9,7 @@ import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
 export default function SettingsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels } = useFileContext();
   const { userCredentials } = useCredentials();
+  const [loading, setLoading] = useState<boolean>(false);
   const onChangenodes = (selectedOptions: OnChangeValue<OptionType, true>) => {
     setSelectedNodes(selectedOptions);
     localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions }));
@@ -21,10 +22,12 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
   const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
 
   useEffect(() => {
-    if (userCredentials) {
+    if (userCredentials && open) {
       const getOptions = async () => {
+        setLoading(true);
         try {
           const response = await getNodeLabelsAndRelTypes(userCredentials as UserCredentials);
+          setLoading(false);
           if (response.data.data.length) {
             const nodelabels = response.data?.data[0]?.labels?.slice(0, 20).map((l) => ({ value: l, label: l }));
             const reltypes = response.data?.data[0]?.relationshipTypes
@@ -34,12 +37,13 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
             setrelationshipTypeOptions(reltypes);
           }
         } catch (error) {
+          setLoading(false);
           console.log(error);
         }
       };
       getOptions();
     }
-  }, [userCredentials]);
+  }, [userCredentials, open]);
 
   const clickHandler: MouseEventHandler<HTMLButtonElement> = useCallback(() => {
     setSelectedNodes(nodeLabelOptions);
@@ -76,6 +80,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
         />
         <div>
           <Button
+            loading={loading}
             title={!nodeLabelOptions.length && !relationshipTypeOptions.length ? `No Labels Found in the Database` : ''}
             disabled={!nodeLabelOptions.length && !relationshipTypeOptions.length}
             onClick={clickHandler}

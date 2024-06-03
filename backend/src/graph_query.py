@@ -18,8 +18,8 @@ QUERY_MAP = {
 }
 
 QUERY_WITH_DOCUMENT = """
-    MATCH docs = (d:Document {{status:'Completed'}}) 
-    WHERE d.fileName = $document_name
+    MATCH docs = (d:Document) 
+    WHERE d.fileName = $document_name AND (d.status = 'Cancelled' OR d.status = 'Completed')
     WITH docs, d ORDER BY d.createdAt DESC 
     CALL {{ WITH d
       OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
@@ -32,7 +32,7 @@ QUERY_WITH_DOCUMENT = """
 """
 
 QUERY_WITHOUT_DOCUMENT = """
-    MATCH docs = (d:Document {{status:'Completed'}}) 
+    MATCH docs = (d:Document) 
     WITH docs, d ORDER BY d.createdAt DESC 
     LIMIT $doc_limit
     CALL {{ WITH d
@@ -267,6 +267,7 @@ def get_graph_results(uri, username, password, query_type,document_names):
         document_names= list(map(str.strip, json.loads(document_names)))
         for document in document_names:
             query = get_cypher_query(QUERY_MAP, query_type, document.strip())
+            # print(query)
             records, summary , keys = execute_query(driver, query, document.strip())
             # print(query)
             document_nodes = extract_node_elements(records)
