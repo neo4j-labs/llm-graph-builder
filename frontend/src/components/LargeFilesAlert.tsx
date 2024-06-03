@@ -1,18 +1,21 @@
-import { Avatar, Box, Checkbox, Typography } from '@neo4j-ndl/react';
+import { Box, Checkbox, Flex, Typography } from '@neo4j-ndl/react';
 import { BellAlertIconOutline, DocumentTextIconOutline } from '@neo4j-ndl/react/icons';
 import { CustomFile } from '../types';
 import { List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 import { FC } from 'react';
+import { timeperpage } from '../utils/Constants';
+import AlertIcon from './Layout/AlertIcon';
 interface LargefilesProps {
   largeFiles: CustomFile[];
-  handleToggle: (id: string) => void;
+  handleToggle: (ischecked: boolean, id: string) => void;
   checked: string[];
 }
+
 const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checked }) => {
   return (
     <Box className='n-bg-palette-neutral-bg-weak p-4'>
       <Box className='flex flex-row pb-6 items-center mb-2'>
-        <BellAlertIconOutline className='n-size-token-8' />
+        <BellAlertIconOutline  className='n-size-token-7' />
         <Box className='flex flex-col'>
           <Typography variant='h2'>Large Document Notice</Typography>
           <Typography variant='body-medium' sx={{ mb: 2 }}>
@@ -21,31 +24,39 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
           </Typography>
           <List>
             {largeFiles.map((f, i) => {
+              const minutes = Math.floor((timeperpage * f.total_pages) / 60);
               return (
                 <ListItem
                   key={i}
-                  secondaryAction={
-                    //@ts-ignore
-                    f?.size > 1000000 ? <BellAlertIconOutline /> : <></>
-                  }
                   disablePadding
                 >
-                  <ListItemButton
-                    role={undefined}
-                    onClick={() => {
-                      handleToggle(f.id);
-                    }}
-                    dense
-                  >
+                  <ListItemButton role={undefined} dense>
                     <ListItemIcon>
-                      <Checkbox checked={checked.indexOf(f.id) !== -1} tabIndex={-1} />
+                      <Checkbox
+                        aria-label='selection checkbox'
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            handleToggle(true, f.id);
+                          } else {
+                            handleToggle(false, f.id);
+                          }
+                        }}
+                        defaultChecked={checked.indexOf(f.id) !== -1}
+                        tabIndex={-1}
+                      />
                     </ListItemIcon>
                     <ListItemAvatar>
-                      <Avatar>
-                        <DocumentTextIconOutline />
-                      </Avatar>
+                      <DocumentTextIconOutline className='n-size-token-7 mr-2' />
                     </ListItemAvatar>
-                    <ListItemText primary={`${f.name}`} />
+                    <ListItemText
+                      primary={
+                        <Flex flexDirection='row'>
+                          <span>{f.name} - {Math.floor((f?.size as number) / 1000)?.toFixed(2)}KB - 
+                          {minutes === 0 ? `${timeperpage * f?.total_pages} Sec` : `${minutes} Min`}</span>
+                          <span><AlertIcon/></span>
+                        </Flex>
+                      }
+                    />
                   </ListItemButton>
                 </ListItem>
               );

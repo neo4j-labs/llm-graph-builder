@@ -289,6 +289,12 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         header: () => <span>Duration (s)</span>,
         footer: (info) => info.column.id,
       }),
+      columnHelper.accessor((row) => row.total_pages, {
+        id: 'Total pages',
+        cell: (info) => <i>{info.getValue()}</i>,
+        header: () => <span>Total pages (s)</span>,
+        footer: (info) => info.column.id,
+      }),
       columnHelper.accessor((row) => row.status, {
         id: 'inspect',
         cell: (info) => (
@@ -357,6 +363,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                     item.processed_chunk != undefined && item.total_chunks != undefined
                       ? Math.floor((item.processed_chunk / item.total_chunks) * 100)
                       : undefined,
+                  total_pages: item.total_pages ?? 0,
                 });
               }
             });

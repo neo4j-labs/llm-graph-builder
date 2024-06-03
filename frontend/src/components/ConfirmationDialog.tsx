@@ -17,12 +17,14 @@ export default function ConfirmationDialog({
   extractHandler: (allowLargeFiles: boolean) => void;
 }) {
   const [checked, setChecked] = useState<string[]>([...largeFiles.map((f) => f.id)]);
-  const handleToggle = (id: string) => () => {
-    const currentIndex = checked.indexOf(id);
+  const handleToggle = (ischecked: boolean, id: string) => {
+    console.log({ ischecked, id });
     const newChecked = [...checked];
-    if (currentIndex === -1) {
+    if (ischecked) {
       newChecked.push(id);
     } else {
+      const currentIndex = checked.findIndex((v) => v === id);
+      console.log({ currentIndex });
       newChecked.splice(currentIndex, 1);
     }
     setChecked(newChecked);
@@ -35,12 +37,12 @@ export default function ConfirmationDialog({
       </Dialog.Content>
       <Dialog.Actions className='mt-3'>
         <Button
-          color="neutral"
-          fill="outlined"
+          color='neutral'
+          fill='outlined'
           onClick={function Ua() {
-            extractHandler(false)
+            extractHandler(false);
           }}
-          size="large"
+          size='large'
         >
           Cancel
         </Button>

@@ -25,6 +25,7 @@ export interface CustomFileBase extends Partial<globalThis.File> {
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
+  total_pages: number;
 }
 
 export interface OptionType {
@@ -111,6 +112,7 @@ export interface SourceNode {
   language?: string;
   processed_chunk?: number;
   total_chunks?: number;
+  total_pages?: number;
 }
 
 export interface SideNavProps {
@@ -283,6 +285,7 @@ export interface commonserverresponse {
   status: string;
   error?: string;
   message?: string;
+  file_name?: string;
 }
 export interface ServerData extends Partial<commonserverresponse> {
   data: labelsAndTypes[];
@@ -358,3 +361,12 @@ export type GroupedEntity = {
   texts: Set<string>;
   color: string;
 };
+export interface uploadData {
+  file_size: number;
+  total_pages: number;
+  file_name: string;
+  message: string;
+}
+export interface UploadResponse extends Partial<commonserverresponse> {
+  data: uploadData;
+}

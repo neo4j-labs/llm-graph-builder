@@ -312,6 +312,21 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     setshowDeletePopUp(true);
   };
 
+  const filesForProcessing = useMemo(() => {
+    let newstatusfiles: CustomFile[] = [];
+    if (selectedRows.length) {
+      selectedRows.forEach((f) => {
+        const parsedFile: CustomFile = JSON.parse(f);
+        if (parsedFile.status === 'New') {
+          newstatusfiles.push(parsedFile);
+        }
+      });
+    } else if (filesData.length) {
+      newstatusfiles = filesData.filter((f) => f.status === 'New');
+    }
+    return newstatusfiles;
+  }, [filesData, selectedRows]);
+
   const handleDeleteFiles = async (deleteEntities: boolean) => {
     try {
       setdeleteLoading(true);
@@ -360,7 +375,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       {showConfirmationModal && (
         <ConfirmationDialog
           open={showConfirmationModal}
-          largeFiles={filesData}
+          largeFiles={filesForProcessing}
           extractHandler={handleGenerateGraph}
           onClose={() => setshowConfirmationModal(false)}
           loading={extractLoading}
@@ -427,10 +442,11 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                 if (selectedRows.length) {
                   let selectedLargeFiles: CustomFile[] = [];
                   selectedRows.forEach((f) => {
-                    if (JSON.parse(f).size > 10000000) {
+                    if (JSON.parse(f).total_pages > 20) {
                       selectedLargeFiles.push(JSON.parse(f));
                     }
                   });
+                  //@ts-ignore
                   if (selectedLargeFiles.length) {
                     setshowConfirmationModal(true);
                     handleGenerateGraph(false);
@@ -439,7 +455,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                   }
                 } else if (filesData.length) {
                   //@ts-ignore
-                  const largefiles = filesData.filter((f) => f?.size > 10000000);
+                  const largefiles = filesData.filter((f) => f?.total_pages > 20);
                   if (largefiles.length) {
                     setshowConfirmationModal(true);
                     handleGenerateGraph(false);
