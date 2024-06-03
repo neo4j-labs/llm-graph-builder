@@ -4,6 +4,8 @@ import '../styling/info.css';
 import Neo4jRetrievalLogo from '../assets/images/Neo4jRetrievalLogo.png';
 import wikipedialogo from '../assets/images/Wikipedia-logo-v2.svg';
 import youtubelogo from '../assets/images/youtube.png';
+import gcslogo from '../assets/images/gcs.webp';
+import s3logo from '../assets/images/s3logo.png';
 import { Entity, GroupedEntity, UserCredentials, chatInfoMessage } from '../types';
 import { useEffect, useMemo, useState } from 'react';
 import HoverableLink from './HoverableLink';
@@ -100,28 +102,51 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                     <div className='flex flex-row inline-block justiy-between items-center p8'>
                       {link.source_name.includes('wikipedia.org') ? (
                         <img src={wikipedialogo} width={20} height={20} className='mr-2' />
+                      ) : link.source_name.includes('storage.googleapis.com') ? (
+                        <img src={gcslogo} width={20} height={20} className='mr-2' />
+                      ) : link.source_name?.startsWith('s3://') ? (
+                        <img src={s3logo} width={20} height={20} className='mr-2' />
                       ) : (
                         <img src={youtubelogo} width={20} height={20} className='mr-2' />
                       )}
-                      <TextLink href={link.source_name} externalLink={true}>
-                        {link.source_name.includes('wikipedia.org') ? (
-                          <>
-                            <HoverableLink url={link.source_name}>
-                              <Typography variant='body-medium'>Wikipedia</Typography>
-                              <Typography variant='body-small' className='italic'>
-                                {' '}
-                                - Section {total_tokens}
-                              </Typography>
-                            </HoverableLink>
-                          </>
-                        ) : (
-                          <>
-                            <HoverableLink url={link.source_name}>
-                              <Typography variant='body-medium'>{link.source_name}</Typography>
-                            </HoverableLink>
-                          </>
-                        )}
-                      </TextLink>
+                      {link.source_name.startsWith('s3://') ? (
+                        <div className='flex flex-row inline-block justiy-between items-center'>
+                          <Typography
+                            variant='body-medium'
+                            className='text-ellipsis whitespace-nowrap max-w-[calc(100%-100px)] overflow-hidden'
+                          >
+                            {decodeURIComponent(link.source_name).split('/').at(-1) ?? 'S3 File'}
+                          </Typography>
+                        </div>
+                      ) : link.source_name.includes('storage.googleapis.com') ? (
+                        <div className='flex flex-row inline-block justiy-between items-center'>
+                          <Typography
+                            variant='body-medium'
+                            className='text-ellipsis whitespace-nowrap max-w-[calc(100%-100px)] overflow-hidden'
+                          >
+                            {decodeURIComponent(link.source_name).split('/').at(-1)?.split('?')[0] ?? 'GCS File'}
+                          </Typography>
+                        </div>
+                      ) : (
+                        <TextLink href={link.source_name} externalLink={true}>
+                          {link.source_name.includes('wikipedia.org') ? (
+                            <>
+                              <HoverableLink url={link.source_name}>
+                                <Typography variant='body-medium'>Wikipedia</Typography>
+                                <Typography variant='body-small' className='italic'>
+                                  - Section {total_tokens}
+                                </Typography>
+                              </HoverableLink>
+                            </>
+                          ) : (
+                            <>
+                              <HoverableLink url={link.source_name}>
+                                <Typography variant='body-medium'>{link.source_name}</Typography>
+                              </HoverableLink>
+                            </>
+                          )}
+                        </TextLink>
+                      )}
                     </div>
                   ) : (
                     <div className='flex flex-row inline-block justiy-between items-center'>
@@ -182,11 +207,13 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
           <span className='h6 text-center'>No Entities Found</span>
         )}
       </Flex>
-      {(activeTab === 1 && nodes.length && relationships.length) ? (
+      {activeTab === 1 && nodes.length && relationships.length ? (
         <Box className='button-container flex mt-2 justify-center'>
           <GraphViewButton nodeValues={nodes} relationshipValues={relationships} />
         </Box>
-      ): <></>}
+      ) : (
+        <></>
+      )}
     </Box>
   );
 };
