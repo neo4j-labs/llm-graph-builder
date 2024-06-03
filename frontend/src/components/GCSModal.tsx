@@ -28,6 +28,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     type: 'TEXT',
     model: model,
     fileSource: 'gcs bucket',
+    processingProgress: undefined,
   };
 
   const reset = () => {

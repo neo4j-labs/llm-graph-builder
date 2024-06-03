@@ -28,6 +28,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
       type: 'TEXT',
       model: model,
       fileSource: 'Wikipedia',
+      processingProgress: undefined,
     };
     if (wikiQuery.length) {
       try {
