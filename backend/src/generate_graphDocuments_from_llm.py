@@ -30,5 +30,8 @@ def generate_graphDocuments(model: str, graph: Neo4jGraph, chunkId_chunkDoc_list
         model_version = "gemini-1.5-pro-preview-0514"
         graph_documents = get_graph_from_Gemini(model_version, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
 
+    elif model in GROQ_MODELS :
+        graph_documents = get_graph_from_Groq_Llama3(MODEL_VERSIONS[model], graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
+
     logging.info(f"graph_documents = {len(graph_documents)}")
     return graph_documents

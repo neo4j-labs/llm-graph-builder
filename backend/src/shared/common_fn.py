@@ -8,7 +8,12 @@ from langchain_community.graphs import Neo4jGraph
 import re
 import os
 from pathlib import Path
-from neo4j.debug import watch
+from langchain_openai import ChatOpenAI
+from langchain_google_vertexai import ChatVertexAI
+from langchain_groq import ChatGroq
+from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
+from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransformer
+# from neo4j.debug import watch
 
 #watch("neo4j")
 
@@ -100,4 +105,49 @@ def load_embedding_model(embedding_model_name: str):
         dimension = 384
         logging.info(f"Embedding: Using SentenceTransformer , Dimension:{dimension}")
     return embeddings, dimension
-                 
+
+def save_graphDocuments_in_neo4j(graph:Neo4jGraph, graph_document_list:List[GraphDocument]):
+  # graph.add_graph_documents(graph_document_list, baseEntityLabel=True)
+  graph.add_graph_documents(graph_document_list)
+
+def delete_uploaded_local_file(merged_file_path, file_name):
+  file_path = Path(merged_file_path)
+  if file_path.exists():
+    file_path.unlink()
+    logging.info(f'file {file_name} deleted successfully')
+   
+def close_db_connection(graph, api_name):
+  if not graph._driver._closed:
+      logging.info(f"closing connection for {api_name} api")
+      graph._driver.close()   
+      
+def get_llm(model_version:str) :
+    """Retrieve the specified language model based on the model name."""
+    if "gemini" in model_version:
+        llm = ChatVertexAI(
+            model_name=model_version,
+            convert_system_message_to_human=True,
+            temperature=0,
+            safety_settings={
+                HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE
+            }
+        )
+    elif "gpt" in model_version:
+        llm = ChatOpenAI(api_key=os.environ.get('OPENAI_API_KEY'), 
+                         model=model_version, 
+                         temperature=0)
+        
+    elif "llama3" in model_version:
+        llm = ChatGroq(api_key=os.environ.get('GROQ_API_KEY'),
+                       temperature=0,
+                       model_name=model_version)
+    
+    else:
+        llm = DiffbotGraphTransformer(diffbot_api_key=os.environ.get('DIFFBOT_API_KEY'))    
+    logging.info(f"Model created - Model Version: {model_version}")
+    return llm
+  
