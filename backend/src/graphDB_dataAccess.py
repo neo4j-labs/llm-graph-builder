@@ -17,7 +17,7 @@ class graphDBdataAccess:
             job_status = "Failed"
             result = self.get_current_status_document_node(file_name)
             is_cancelled_status = result[0]['is_cancelled']
-            if is_cancelled_status == 'True':
+            if bool(is_cancelled_status) == True:
                 job_status = 'Cancelled'
             self.graph.query("""MERGE(d:Document {fileName :$fName}) SET d.status = $status, d.errorMessage = $error_msg""",
                             {"fName":file_name, "status":job_status, "error_msg":exp_msg})
