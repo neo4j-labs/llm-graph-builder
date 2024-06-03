@@ -23,6 +23,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       type: 'TEXT',
       model: model,
       fileSource: 'youtube',
+      processingProgress: undefined,
     };
     if (!youtubeURL) {
       setStatus('danger');
