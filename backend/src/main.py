@@ -153,7 +153,7 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
         lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'language':obj_source_node.language, 'status':'Failed'})
     return lst_file_name,success_count,failed_count
     
-def extract_graph_from_file_local_file(graph, model, fileName, merged_file_path, allowedNodes, allowedRelationship, is_pre_process):
+def extract_graph_from_file_local_file(graph, model, fileName, merged_file_path, allowedNodes, allowedRelationship):
 
   logging.info(f'Process file name :{fileName}')
   file_name, pages = get_documents_from_file_by_path(merged_file_path,fileName)
@@ -161,10 +161,6 @@ def extract_graph_from_file_local_file(graph, model, fileName, merged_file_path,
   
   if pages==None or pdf_total_pages==0:
     raise Exception(f'Pdf content is not available for file : {file_name}')
-  
-  logging.info(f'Is Pre Process Value : {is_pre_process}')
-  if bool(is_pre_process):
-    return{"fileName": file_name, "total_pages": pdf_total_pages}
 
   return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, merged_file_path)
 
@@ -396,7 +392,8 @@ def merge_chunks(file_name, total_chunks, chunk_dir, merged_dir):
   if not os.path.exists(merged_dir):
       os.mkdir(merged_dir)
   logging.info(f'Merged File Path: {merged_dir}')
-  with open(os.path.join(merged_dir, file_name), "wb") as write_stream:
+  merged_file_path = os.path.join(merged_dir, file_name)
+  with open(merged_file_path, "wb") as write_stream:
       for i in range(1,total_chunks+1):
           chunk_file_path = os.path.join(chunk_dir, f"{file_name}_part_{i}")
           logging.info(f'Chunk File Path While Merging Parts:{chunk_file_path}')
@@ -404,8 +401,10 @@ def merge_chunks(file_name, total_chunks, chunk_dir, merged_dir):
               shutil.copyfileobj(chunk_file, write_stream)
           os.unlink(chunk_file_path)  # Delete the individual chunk file after merging
   logging.info("Chunks merged successfully and return file size")
-  file_size = os.path.getsize(os.path.join(merged_dir, file_name))
-  return file_size
+  file_name, pages = get_documents_from_file_by_path(merged_file_path,file_name)
+  pdf_total_pages = pages[0].metadata['total_pages']
+  file_size = os.path.getsize(merged_file_path)
+  return file_size, pdf_total_pages
   
 
 
@@ -422,7 +421,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
 
   if int(chunk_number) == int(total_chunks):
       # If this is the last chunk, merge all chunks into a single file
-      file_size = merge_chunks(originalname, int(total_chunks), chunk_dir, merged_dir)
+      file_size, pdf_total_pages = merge_chunks(originalname, int(total_chunks), chunk_dir, merged_dir)
       logging.info("File merged successfully")
 
       obj_source_node = sourceNode()
@@ -435,7 +434,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
       graphDb_data_Access = graphDBdataAccess(graph)
         
       graphDb_data_Access.create_source_node(obj_source_node)
-      return "Source Node created Successfully"
+      return {'file_size': file_size, 'total_pages': pdf_total_pages, 'file_name': originalname, 'message':f"Chunk {chunk_number}/{total_chunks} saved"}
   return f"Chunk {chunk_number}/{total_chunks} saved"
 
 def get_labels_and_relationtypes(graph):

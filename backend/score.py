@@ -138,8 +138,7 @@ async def extract_knowledge_graph_from_file(
     file_name=Form(None),
     allowedNodes=Form(None),
     allowedRelationship=Form(None),
-    language=Form(None),
-    is_pre_process=Form(None)
+    language=Form(None)
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
@@ -162,7 +161,7 @@ async def extract_knowledge_graph_from_file(
             merged_file_path = os.path.join(MERGED_DIR,file_name)
             logging.info(f'File path:{merged_file_path}')
             result = await asyncio.to_thread(
-                extract_graph_from_file_local_file, graph, model, file_name, merged_file_path, allowedNodes, allowedRelationship,is_pre_process)
+                extract_graph_from_file_local_file, graph, model, file_name, merged_file_path, allowedNodes, allowedRelationship)
 
         elif source_type == 's3 bucket' and source_url:
             result = await asyncio.to_thread(
@@ -344,9 +343,12 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
         result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, CHUNK_DIR, MERGED_DIR)
         josn_obj = {'api_name':'upload','db_url':uri}
         logger.log_struct(josn_obj)
-        return create_api_response('Success', message=result)
+        if int(chunkNumber) == int(totalChunks):
+            return create_api_response('Success',data=result, message='Source Node Created Successfully')
+        else:
+            return create_api_response('Success', message=result)
     except Exception as e:
-        job_status = "Failed"
+        # job_status = "Failed"
         message="Unable to upload large file into chunks or saving the chunks"
         error_message = str(e)
         logging.info(message)
