@@ -7,7 +7,7 @@ import SettingsModal from '../SettingModal';
 import { clearChatAPI } from '../../services/QnaAPI';
 import { useCredentials } from '../../context/UserCredentials';
 import { UserCredentials } from '../../types';
-
+import { useMessageContext } from '../../context/UserMessages';
 export default function PageLayoutNew({
   isSettingPanelExpanded,
   closeSettingModal,
@@ -17,11 +17,13 @@ export default function PageLayoutNew({
 }) {
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(true);
   const [isRightExpanded, setIsRightExpanded] = useState<boolean>(true);
+  const [showChatBot, setShowChatBot] = useState<boolean>(false);
+  const [showDrawerChatbot, setShowDrawerChatbot] = useState<boolean>(true);
   const [clearHistoryData, setClearHistoryData] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
   const toggleLeftDrawer = () => setIsLeftExpanded(!isLeftExpanded);
   const toggleRightDrawer = () => setIsRightExpanded(!isRightExpanded);
-  const [showChatBot, setShowChatBot] = useState<boolean>(false);
+  const { messages } = useMessageContext();
 
   const deleteOnClick = async () => {
     try {
@@ -39,25 +41,29 @@ export default function PageLayoutNew({
     }
   };
   return (
-    <div style={{ maxHeight: 'calc(100vh-58px' }} className='flex overflow-hidden'>
+    <div style={{ maxHeight: 'calc(100vh - 58px)' }} className='flex overflow-hidden'>
       <SideNav isExpanded={isLeftExpanded} position='left' toggleDrawer={toggleLeftDrawer} />
       <DrawerDropzone isExpanded={isLeftExpanded} />
       <SettingsModal open={isSettingPanelExpanded} onClose={closeSettingModal} />
       <Content
-        openChatBot={() => {
-          setShowChatBot(true);
-        }}
+        openChatBot={() => setShowChatBot(true)}
         isLeftExpanded={isLeftExpanded}
         isRightExpanded={isRightExpanded}
         showChatBot={showChatBot}
       />
-
-      <DrawerChatbot isExpanded={isRightExpanded} clearHistoryData={clearHistoryData} />
+      {showDrawerChatbot && (
+        <DrawerChatbot messages={messages} isExpanded={isRightExpanded} clearHistoryData={clearHistoryData} />
+      )}
       <SideNav
+        messages={messages}
         isExpanded={isRightExpanded}
         position='right'
         toggleDrawer={toggleRightDrawer}
         deleteOnClick={deleteOnClick}
+        showDrawerChatbot={showDrawerChatbot}
+        setShowDrawerChatbot={setShowDrawerChatbot}
+        setIsRightExpanded={setIsRightExpanded}
+        clearHistoryData={clearHistoryData}
       />
     </div>
   );

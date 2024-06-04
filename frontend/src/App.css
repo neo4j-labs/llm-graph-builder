@@ -170,7 +170,9 @@
 .chatBotContainer {
   scrollbar-width: thin;
   overflow-x: hidden;
+  scrollbar-gutter: stable;
 }
+
 
 .connectionmodal__input {
   width: 48.5%;
@@ -231,11 +233,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
-}
-
-.chatBotContainer>div {
-  max-width: 370px;
-  scrollbar-gutter: stable;
 }
 
 .ndl-widget-content>div {

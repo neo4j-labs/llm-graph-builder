@@ -547,7 +547,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     onColumnFiltersChange: setColumnFilters,
     initialState: {
       pagination: {
-        pageSize: pageSizeCalculation,
+        pageSize: pageSizeCalculation < 0 ? 9 : pageSizeCalculation,
       },
     },
     state: {

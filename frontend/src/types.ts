@@ -1,6 +1,6 @@
 import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { AxiosResponse } from 'axios';
-import { Dispatch, ReactNode, SetStateAction } from 'react';
+import React, { Dispatch, ReactNode, SetStateAction } from 'react';
 import { OverridableStringUnion } from '@mui/types';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { NonOAuthError } from '@react-oauth/google';
@@ -116,6 +116,11 @@ export interface SideNavProps {
   position: 'left' | 'right';
   toggleDrawer: () => void;
   deleteOnClick?: () => void;
+  setShowDrawerChatbot?: Dispatch<SetStateAction<boolean>>;
+  showDrawerChatbot?: boolean;
+  setIsRightExpanded?: Dispatch<SetStateAction<boolean>>;
+  messages?: Messages[];
+  clearHistoryData?: boolean;
 }
 
 export interface DrawerProps {
@@ -179,6 +184,7 @@ export type ChatbotProps = {
   setMessages: Dispatch<SetStateAction<Messages[]>>;
   isLoading: boolean;
   clear?: boolean;
+  isFullScreen?: boolean;
 };
 export interface WikipediaModalTypes {
   hideModal: () => void;
