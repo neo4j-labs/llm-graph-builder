@@ -27,7 +27,7 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
           alt='alert icon'
         />
         <Box className='flex flex-col'>
-          <Typography variant='h2'>Large Document Notice</Typography>
+          <Typography variant='h3'>Large Document Notice</Typography>
           <Typography variant='body-medium' sx={{ mb: 2 }}>
             One or more of your selected documents are large and may take extra time to process. Please review the
             estimated times below
