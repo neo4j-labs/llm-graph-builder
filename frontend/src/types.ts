@@ -370,3 +370,8 @@ export interface uploadData {
 export interface UploadResponse extends Partial<commonserverresponse> {
   data: uploadData;
 }
+export interface LargefilesProps {
+  largeFiles: CustomFile[];
+  handleToggle: (ischecked: boolean, id: string) => void;
+  checked: string[];
+}

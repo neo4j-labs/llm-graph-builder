@@ -1,16 +1,12 @@
 import { Box, Checkbox, Flex, Typography } from '@neo4j-ndl/react';
 import { DocumentTextIconOutline } from '@neo4j-ndl/react/icons';
-import { CustomFile } from '../types';
+import { LargefilesProps } from '../types';
 import { List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 import { FC } from 'react';
 import { timeperpage } from '../utils/Constants';
 import BellImage from '../assets/images/Stopwatch-blue.svg';
 import AlertIcon from './Layout/AlertIcon';
-interface LargefilesProps {
-  largeFiles: CustomFile[];
-  handleToggle: (ischecked: boolean, id: string) => void;
-  checked: string[];
-}
+
 
 const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checked }) => {
   return (
