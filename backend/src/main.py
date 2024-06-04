@@ -240,7 +240,6 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     status = "Processing"
     obj_source_node.file_name = file_name
     obj_source_node.status = status
-    obj_source_node.total_pages = len(pages)
     obj_source_node.total_chunks = len(chunks)
     obj_source_node.model = model
     logging.info(file_name)
