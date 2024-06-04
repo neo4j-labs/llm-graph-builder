@@ -38,7 +38,8 @@ import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 
 const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
-  const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows } = useFileContext();
+  const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, selectedRows } =
+    useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -91,13 +92,13 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
           );
         },
         cell: ({ row }: { row: Row<CustomFile> }) => {
+          const checkedCase =
+            row.getIsSelected() && row.original.status != 'Uploading' && row.original.status != 'Processing';
           return (
             <div className='px-1'>
               <Checkbox
                 aria-label='row-checkbox'
-                checked={
-                  row.getIsSelected() && row.original.status != 'Uploading' && row.original.status != 'Processing'
-                }
+                checked={checkedCase}
                 disabled={
                   !row.getCanSelect() || row.original.status === 'Uploading' || row.original.status === 'Processing'
                 }

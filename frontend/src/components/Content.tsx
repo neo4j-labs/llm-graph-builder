@@ -120,11 +120,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     if (!isselectedRows) {
       const fileItem = filesData.find((f) => f.id == uid);
       if (fileItem) {
+        setextractLoading(true);
         await extractHandler(fileItem, uid);
       }
     } else {
       const fileItem = selectedRows.find((f) => JSON.parse(f).id == uid);
       if (fileItem) {
+        setextractLoading(true);
         await extractHandler(JSON.parse(fileItem), uid);
       }
     }
@@ -230,6 +232,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         }
       }
       Promise.allSettled(data).then(async (_) => {
+        setextractLoading(false);
         await updateGraphAPI(userCredentials as UserCredentials);
       });
     } else if (filesData.length > 0 && allowLargeFiles) {
@@ -240,6 +243,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         }
       }
       Promise.allSettled(data).then(async (_) => {
+        setextractLoading(false);
         await updateGraphAPI(userCredentials as UserCredentials);
       });
     }
