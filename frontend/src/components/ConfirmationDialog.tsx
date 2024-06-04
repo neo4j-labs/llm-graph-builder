@@ -31,7 +31,6 @@ export default function ConfirmationDialog({
   };
   return (
     <Dialog size='medium' open={open} aria-labelledby='form-dialog-title' onClose={onClose}>
-      <Dialog.Header id='form-dialog-title'>Graph Settings</Dialog.Header>
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
         <LargeFilesAlert handleToggle={handleToggle} largeFiles={largeFiles} checked={checked}></LargeFilesAlert>
       </Dialog.Content>
