@@ -39,7 +39,7 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
                             handleToggle(false, f.id);
                           }
                         }}
-                        defaultChecked={checked.indexOf(f.id) !== -1}
+                        checked={checked.indexOf(f.id) !== -1}
                         tabIndex={-1}
                       />
                     </ListItemIcon>
