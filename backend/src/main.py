@@ -429,6 +429,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
       obj_source_node.file_size = file_size
       obj_source_node.file_source = 'local file'
       obj_source_node.model = model
+      obj_source_node.total_pages = pdf_total_pages
       obj_source_node.created_at = datetime.now()
       graphDb_data_Access = graphDBdataAccess(graph)
         
