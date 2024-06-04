@@ -1,30 +1,24 @@
 from langchain_community.graphs import Neo4jGraph
 from dotenv import load_dotenv
-from langchain.schema import Document
+import os
 import logging
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 from typing import List
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 from langchain_core.documents import Document
-from typing import List
-import google.auth 
 from src.shared.common_fn import get_combined_chunks, get_llm
-from typing import List
-from langchain_core.documents import Document
-import vertexai
 
 load_dotenv()
-logging.basicConfig(format='%(asctime)s - %(message)s',level='DEBUG')
+logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
-
-def get_graph_from_Gemini(model_version,
+def get_graph_from_Groq_Llama3(model_version,
                             graph: Neo4jGraph,
                             chunkId_chunkDoc_list: List, 
                             allowedNodes, 
                             allowedRelationship):
     """
-        Extract graph from OpenAI and store it in database. 
+        Extract graph from Groq Llama3 and store it in database. 
         This is a wrapper for extract_and_store_graph
                                 
         Args:
@@ -37,17 +31,8 @@ def get_graph_from_Gemini(model_version,
     logging.info(f"Get graphDocuments from {model_version}")
     futures = []
     graph_document_list = []
-    location = "us-central1"
-    #project_id = "llm-experiments-387609"                            
-    credentials, project_id = google.auth.default()
-    if hasattr(credentials, "service_account_email"):
-      logging.info(credentials.service_account_email)
-    else:
-        logging.info("WARNING: no service account credential. User account credential?")                           
-    vertexai.init(project=project_id, location=location)
-    
     combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
-     
+    #api_key = os.environ.get('GROQ_API_KEY') 
     llm = get_llm(model_version)
     llm_transformer = LLMGraphTransformer(llm=llm, node_properties=["description"], allowed_nodes=allowedNodes, allowed_relationships=allowedRelationship)
     
@@ -59,5 +44,5 @@ def get_graph_from_Gemini(model_version,
         for i, future in enumerate(concurrent.futures.as_completed(futures)):
             graph_document = future.result()
             graph_document_list.append(graph_document[0])
-            
+           
     return  graph_document_list

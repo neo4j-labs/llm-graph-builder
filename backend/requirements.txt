@@ -74,6 +74,7 @@ langchain-community
 langchain-core
 langchain-experimental
 langchain-google-vertexai
+langchain-groq
 langchain-openai
 langchain-text-splitters==0.0.1
 langdetect==1.0.9
