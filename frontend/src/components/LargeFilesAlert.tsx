@@ -15,7 +15,7 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
   return (
     <Box className='n-bg-palette-neutral-bg-weak p-4'>
       <Box className='flex flex-row pb-6 items-center mb-2'>
-        <BellAlertIconOutline  className='n-size-token-7' />
+        <BellAlertIconOutline className='n-size-token-7' />
         <Box className='flex flex-col'>
           <Typography variant='h2'>Large Document Notice</Typography>
           <Typography variant='body-medium' sx={{ mb: 2 }}>
@@ -26,10 +26,7 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
             {largeFiles.map((f, i) => {
               const minutes = Math.floor((timeperpage * f.total_pages) / 60);
               return (
-                <ListItem
-                  key={i}
-                  disablePadding
-                >
+                <ListItem key={i} disablePadding>
                   <ListItemButton role={undefined} dense>
                     <ListItemIcon>
                       <Checkbox
@@ -51,9 +48,13 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
                     <ListItemText
                       primary={
                         <Flex flexDirection='row'>
-                          <span>{f.name} - {Math.floor((f?.size as number) / 1000)?.toFixed(2)}KB - 
-                          {minutes === 0 ? `${timeperpage * f?.total_pages} Sec` : `${minutes} Min`}</span>
-                          <span><AlertIcon/></span>
+                          <span>
+                            {f.name} - {Math.floor((f?.size as number) / 1000)?.toFixed(2)}KB -
+                            {minutes === 0 ? `${timeperpage * f?.total_pages} Sec` : `${minutes} Min`}
+                          </span>
+                          <span>
+                            <AlertIcon />
+                          </span>
                         </Flex>
                       }
                     />

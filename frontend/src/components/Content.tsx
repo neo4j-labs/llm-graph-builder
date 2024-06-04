@@ -233,7 +233,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         await updateGraphAPI(userCredentials as UserCredentials);
       });
     } else if (filesData.length > 0 && allowLargeFiles) {
-      //@ts-ignore
+      // @ts-ignore
       for (let i = 0; i < filesData.length; i++) {
         if (filesData[i]?.status === 'New') {
           data.push(extractData(filesData[i].id as string));
@@ -446,7 +446,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                       selectedLargeFiles.push(JSON.parse(f));
                     }
                   });
-                  //@ts-ignore
+                  // @ts-ignore
                   if (selectedLargeFiles.length) {
                     setshowConfirmationModal(true);
                     handleGenerateGraph(false);
@@ -454,7 +454,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                     handleGenerateGraph(true);
                   }
                 } else if (filesData.length) {
-                  //@ts-ignore
+                  // @ts-ignore
                   const largefiles = filesData.filter((f) => f?.total_pages > 20);
                   if (largefiles.length) {
                     setshowConfirmationModal(true);
