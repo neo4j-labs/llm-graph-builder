@@ -92,9 +92,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
           });
         }
       } else {
-        setListMessages((msgs) =>
-          msgs.map((msg) => (msg.isTyping ? { ...msg, message: currentTypedText } : msg))
-        );
+        setListMessages((msgs) => msgs.map((msg) => (msg.isTyping ? { ...msg, message: currentTypedText } : msg)));
       }
       setTimeout(() => simulateTypingEffect(response, nextIndex), 20);
     } else {
@@ -150,24 +148,21 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   useEffect(() => {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
   }, [listMessages]);
-  // const handlefeedback = (id: number, feedback: 'positive' | 'negetive') => {
-  //   setListMessages((msgs) => msgs.map((msg) => msg.id === id ? { ...msg, feedback } : msg));
-  // }
 
   console.log('isex', isFullScreen);
 
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
       <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3 pr-3'>
-        <Widget className='n-bg-palette-neutral-bg-weak' header='' isElevated={false}>
+        <Widget className='n-bg-palette-neutral-bg-weak w-full' header='' isElevated={false}>
           <div className='flex flex-col gap-4 gap-y-4'>
             {listMessages.map((chat, index) => (
               <div
                 ref={messagesEndRef}
                 key={chat.id}
-                className={clsx(`flex gap-2.5 items-end`, {
+                className={clsx(`flex gap-2.5`, {
                   'flex-row': chat.user === 'chatbot',
-                  'flex-row-reverse': chat.user !== 'chatbot'
+                  'flex-row-reverse': chat.user !== 'chatbot',
                 })}
               >
                 <div className='w-8 h-8'>
@@ -197,25 +192,25 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${chat.user === 'chatbot'
-                    ? 'n-bg-palette-neutral-bg-strong'
-                    : 'n-bg-palette-primary-bg-weak'
-                    } ${isFullScreen ? 'max-w-[55%]': ''}`}
+                  className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
+                    chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                  } `}
                 >
                   <div
-                    className={`${listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
-                      ? 'loader'
-                      : ''
-                      }`}
+                    className={`${
+                      listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
+                        ? 'loader'
+                        : ''
+                    }`}
                   >
                     {chat.message.split(/`(.+?)`/).map((part, index) =>
-                    (index % 2 === 1 ? (
-                      <span key={index} style={formattedTextStyle}>
-                        {part}
-                      </span>
-                    ) : (
-                      part
-                    ))
+                      index % 2 === 1 ? (
+                        <span key={index} style={formattedTextStyle}>
+                          {part}
+                        </span>
+                      ) : (
+                        part
+                      )
                     )}
                   </div>
                   <div>

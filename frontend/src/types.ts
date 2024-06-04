@@ -119,6 +119,8 @@ export interface SideNavProps {
   setShowDrawerChatbot?: Dispatch<SetStateAction<boolean>>;
   showDrawerChatbot?: boolean;
   setIsRightExpanded?: Dispatch<SetStateAction<boolean>>;
+  messages?: Messages[];
+  clearHistoryData?: boolean;
 }
 
 export interface DrawerProps {

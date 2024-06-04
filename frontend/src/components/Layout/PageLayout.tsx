@@ -7,6 +7,7 @@ import SettingsModal from '../SettingModal';
 import { clearChatAPI } from '../../services/QnaAPI';
 import { useCredentials } from '../../context/UserCredentials';
 import { UserCredentials } from '../../types';
+import { useMessageContext } from '../../context/UserMessages';
 export default function PageLayoutNew({
   isSettingPanelExpanded,
   closeSettingModal,
@@ -22,7 +23,8 @@ export default function PageLayoutNew({
   const { userCredentials } = useCredentials();
   const toggleLeftDrawer = () => setIsLeftExpanded(!isLeftExpanded);
   const toggleRightDrawer = () => setIsRightExpanded(!isRightExpanded);
-  
+  const { messages } = useMessageContext();
+
   const deleteOnClick = async () => {
     try {
       setClearHistoryData(true);
@@ -49,8 +51,11 @@ export default function PageLayoutNew({
         isRightExpanded={isRightExpanded}
         showChatBot={showChatBot}
       />
-      {showDrawerChatbot && <DrawerChatbot isExpanded={isRightExpanded} clearHistoryData={clearHistoryData} />}
+      {showDrawerChatbot && (
+        <DrawerChatbot messages={messages} isExpanded={isRightExpanded} clearHistoryData={clearHistoryData} />
+      )}
       <SideNav
+        messages={messages}
         isExpanded={isRightExpanded}
         position='right'
         toggleDrawer={toggleRightDrawer}
@@ -58,6 +63,7 @@ export default function PageLayoutNew({
         showDrawerChatbot={showDrawerChatbot}
         setShowDrawerChatbot={setShowDrawerChatbot}
         setIsRightExpanded={setIsRightExpanded}
+        clearHistoryData={clearHistoryData}
       />
     </div>
   );
