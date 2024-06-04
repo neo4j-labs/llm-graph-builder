@@ -61,7 +61,10 @@ export default function ConfirmationDialog({
     setChecked(newChecked);
   };
   return (
-    <Dialog size='medium' open={open} aria-labelledby='form-dialog-title' onClose={onClose}>
+    <Dialog size='medium' open={open} aria-labelledby='form-dialog-title' onClose={() => {
+      setChecked([])
+      onClose()
+    }}>
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
         {largeFiles.length === 0 && loading ? (
           <Typography variant='subheading-large'>Files are under processing</Typography>
@@ -76,6 +79,7 @@ export default function ConfirmationDialog({
           fill='outlined'
           onClick={function Ua() {
             extractHandler(false, []);
+            setChecked([])
             onClose()
           }}
           size='large'

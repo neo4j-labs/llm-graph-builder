@@ -51,11 +51,11 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
                         <Flex flexDirection='row'>
                           <span>
                             {f.name} - {Math.floor((f?.size as number) / 1000)?.toFixed(2)}KB -
-                            {minutes === 0 ? `${timeperpage * f?.total_pages} Sec` : `${minutes} Min`}
+                            {minutes === 0 ? ` ${timeperpage * f?.total_pages} Sec ` : ` ${minutes} Min`}
                           </span>
-                          <span>
+                          {f.total_pages > 20 && <span>
                             <AlertIcon />
-                          </span>
+                          </span>}
                         </Flex>
                       }
                     />
