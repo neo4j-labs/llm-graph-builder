@@ -269,8 +269,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -280,10 +281,10 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     isExpanded && showChatBot
       ? 'contentWithBothDrawers'
       : isExpanded
-        ? 'contentWithExpansion'
-        : showChatBot
-          ? 'contentWithChatBot'
-          : 'contentWithNoExpansion';
+      ? 'contentWithExpansion'
+      : showChatBot
+      ? 'contentWithChatBot'
+      : 'contentWithNoExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -343,7 +344,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     try {
       setdeleteLoading(true);
       const response = await deleteAPI(userCredentials as UserCredentials, selectedRows, deleteEntities);
-      setRowSelection({})
+      setRowSelection({});
       setdeleteLoading(false);
       if (response.data.status == 'Success') {
         setalertDetails({
@@ -385,7 +386,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           alertMessage={alertDetails.alertMessage}
         />
       )}
-      {(showConfirmationModal && filesForProcessing.length) && (
+      {showConfirmationModal && filesForProcessing.length && (
         <ConfirmationDialog
           open={showConfirmationModal}
           largeFiles={filesForProcessing}
@@ -455,8 +456,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                 if (selectedRows.length) {
                   let selectedLargeFiles: CustomFile[] = [];
                   selectedRows.forEach((f) => {
-                    if (JSON.parse(f).total_pages > 20) {
-                      selectedLargeFiles.push(JSON.parse(f));
+                    const parsedData = JSON.parse(f);
+                    if (parsedData.total_pages > 20 && parsedData.status === 'New') {
+                      selectedLargeFiles.push(parsedData);
                     }
                   });
                   // @ts-ignore
@@ -468,7 +470,22 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                   }
                 } else if (filesData.length) {
                   // @ts-ignore
-                  const largefiles = filesData.filter((f) => f?.total_pages > 20);
+                  const largefiles = filesData.filter((f) => {
+                    if (f.total_pages > 20 && f.status === 'New') {
+                      return true;
+                    } 
+                      return false;
+                    
+                  });
+                  const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
+                  const stringified = selectAllNewFiles.reduce((accu, f) => {
+                    const key = JSON.stringify(f);
+                    // @ts-ignore
+                    accu[key] = true;
+                    return accu;
+                  }, {});
+                  console.log(stringified);
+                  setRowSelection(stringified);
                   if (largefiles.length) {
                     setshowConfirmationModal(true);
                     handleGenerateGraph(false, []);

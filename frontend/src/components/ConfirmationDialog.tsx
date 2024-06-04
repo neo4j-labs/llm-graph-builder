@@ -25,11 +25,11 @@ export default function ConfirmationDialog({
       const file = filesData.find((f) => f.id === id);
       newChecked.push(id);
       setSelectedRows((prev) => {
-        const fileindex = prev.findIndex((f) => JSON.parse(f).id === id)
+        const fileindex = prev.findIndex((f) => JSON.parse(f).id === id);
         if (fileindex == -1) {
-          return [...prev, JSON.stringify(file)]
+          return [...prev, JSON.stringify(file)];
         }
-        return prev
+        return prev;
       });
       setRowSelection((prev) => {
         const copiedobj = { ...prev };
@@ -60,46 +60,56 @@ export default function ConfirmationDialog({
     }
     setChecked(newChecked);
   };
+
   return (
-    <Dialog size='medium' open={open} aria-labelledby='form-dialog-title' onClose={() => {
-      setChecked([])
-      onClose()
-    }}>
+    <Dialog
+      size='medium'
+      open={open}
+      aria-labelledby='form-dialog-title'
+      onClose={() => {
+        setChecked([]);
+        onClose();
+      }}
+    >
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
         {largeFiles.length === 0 && loading ? (
           <Typography variant='subheading-large'>Files are under processing</Typography>
-        ) :
-          (
-            <LargeFilesAlert handleToggle={handleToggle} largeFiles={largeFiles} checked={checked}></LargeFilesAlert>
-          )}
+        ) : (
+          <LargeFilesAlert handleToggle={handleToggle} largeFiles={largeFiles} checked={checked}></LargeFilesAlert>
+        )}
       </Dialog.Content>
-      <Dialog.Actions className='mt-3'>
+      <Dialog.Actions className='!mt-3'>
         <Button
           color='neutral'
           fill='outlined'
           onClick={function Ua() {
             extractHandler(false, []);
-            setChecked([])
-            onClose()
+            setChecked([]);
+            onClose();
           }}
           size='large'
         >
           Cancel
         </Button>
-        <Button disabled={loading} onClick={() => {
-          if (selectedRows.length) {
-            extractHandler(true, [])
-          } else {
-            const tobeProcessFiles: CustomFile[] = [];
-            checked.forEach((id: string) => {
-              const file = filesData.find((f) => f.id === id);
-              if (file) {
-                tobeProcessFiles.push(file)
-              }
-            })
-            extractHandler(true, tobeProcessFiles)
-          }
-        }} size='large' loading={loading}>
+        <Button
+          disabled={loading}
+          onClick={() => {
+            if (selectedRows.length) {
+              extractHandler(true, []);
+            } else {
+              const tobeProcessFiles: CustomFile[] = [];
+              checked.forEach((id: string) => {
+                const file = filesData.find((f) => f.id === id);
+                if (file) {
+                  tobeProcessFiles.push(file);
+                }
+              });
+              extractHandler(true, tobeProcessFiles);
+            }
+          }}
+          size='large'
+          loading={loading}
+        >
           Continue
         </Button>
       </Dialog.Actions>
