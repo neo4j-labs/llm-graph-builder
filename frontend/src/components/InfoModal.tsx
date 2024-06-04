@@ -168,4 +168,54 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                     </div>
                   )}
                 </li>
-              )
+              ))}
+            </ul>
+          ) : (
+            <span className='h6 text-center'>No Sources Found</span>
+          )
+        ) : loading ? (
+          <Box className='flex justify-center items-center'>
+            <LoadingSpinner size='small' />
+          </Box>
+        ) : Object.keys(groupedEntities).length > 0 ? (
+          <ul className='list-none'>
+            {sortedLabels.map((label, index) => (
+              <li
+                key={index}
+                className='flex items-center mb-2'
+                style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}
+              >
+                <div key={index} style={{ backgroundColor: `${groupedEntities[label].color}` }} className='legend mr-2'>
+                  {label} ({labelCounts[label]})
+                </div>
+                <Typography
+                  className='entity-text'
+                  variant='body-medium'
+                  sx={{
+                    display: 'inline-block',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: 'calc(100% - 120px)',
+                  }}
+                >
+                  {Array.from(groupedEntities[label].texts).slice(0, 3).join(', ')}
+                </Typography>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <span className='h6 text-center'>No Entities Found</span>
+        )}
+      </Flex>
+      {activeTab === 1 && nodes.length && relationships.length ? (
+        <Box className='button-container flex mt-2 justify-center'>
+          <GraphViewButton nodeValues={nodes} relationshipValues={relationships} />
+        </Box>
+      ) : (
+        <></>
+      )}
+    </Box>
+  );
+};
+export default InfoModal;
