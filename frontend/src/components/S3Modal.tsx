@@ -83,6 +83,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               name: item.fileName,
               size: item.fileSize,
               source_url: item.url,
+              total_pages: 1,
               id: uuidv4(),
               ...defaultValues,
             });

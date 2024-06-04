@@ -6,8 +6,17 @@ import { FC } from 'react';
 import { timeperpage } from '../utils/Constants';
 import BellImage from '../assets/images/Stopwatch-blue.svg';
 import AlertIcon from './Layout/AlertIcon';
+import wikipedialogo from '../assets/images/Wikipedia-logo-v2.svg';
+import youtubelogo from '../assets/images/youtube.png';
+import gcslogo from '../assets/images/gcs.webp';
+import s3logo from '../assets/images/s3logo.png';
 
-
+const imageIcon: Record<string, string> = {
+  Wikipedia: wikipedialogo,
+  'gcs bucket': gcslogo,
+  youtube: youtubelogo,
+  's3 bucket': s3logo,
+};
 const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checked }) => {
   return (
     <Box className='n-bg-palette-neutral-bg-weak p-4'>
@@ -44,7 +53,11 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
                       />
                     </ListItemIcon>
                     <ListItemAvatar>
-                      <DocumentTextIconOutline className='n-size-token-7 mr-2' />
+                      {imageIcon[f.fileSource] ? (
+                        <img width={20} height={20} src={imageIcon[f.fileSource]}></img>
+                      ) : (
+                        <DocumentTextIconOutline className='n-size-token-7 mr-2' />
+                      )}
                     </ListItemAvatar>
                     <ListItemText
                       primary={

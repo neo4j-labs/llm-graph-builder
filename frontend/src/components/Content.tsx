@@ -473,9 +473,8 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                   const largefiles = filesData.filter((f) => {
                     if (f.total_pages > 20 && f.status === 'New') {
                       return true;
-                    } 
-                      return false;
-                    
+                    }
+                    return false;
                   });
                   const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
                   const stringified = selectAllNewFiles.reduce((accu, f) => {

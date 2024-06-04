@@ -1,7 +1,7 @@
 import { Button, Dialog, Typography } from '@neo4j-ndl/react';
 import { CustomFile } from '../types';
 import LargeFilesAlert from './LargeFilesAlert';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFileContext } from '../context/UsersFiles';
 
 export default function ConfirmationDialog({
@@ -60,6 +60,11 @@ export default function ConfirmationDialog({
     }
     setChecked(newChecked);
   };
+  useEffect(() => {
+    if (!checked.length) {
+      onClose();
+    }
+  }, [checked]);
 
   return (
     <Dialog
