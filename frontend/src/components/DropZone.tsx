@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
-import { CustomFile, alertStateType } from '../types';
+import { CustomFile, CustomFileBase, UploadResponse, alertStateType } from '../types';
 import { chunkSize } from '../utils/Constants';
 import { url } from '../utils/Utils';
 
@@ -27,7 +27,7 @@ const DropZone: FunctionComponent = () => {
     setSelectedFiles(f.map((f) => f as File));
     setIsLoading(false);
     if (f.length) {
-      const defaultValues: CustomFile = {
+      const defaultValues: CustomFileBase = {
         processing: 0,
         status: 'None',
         NodesCount: 0,
@@ -49,6 +49,7 @@ const DropZone: FunctionComponent = () => {
             type: file.type,
             size: file.size,
             uploadprogess: file.size && file?.size < chunkSize ? 100 : 0,
+            total_pages: 0,
             id: uuidv4(),
             ...defaultValues,
           });
@@ -118,14 +119,29 @@ const DropZone: FunctionComponent = () => {
           })
         );
         try {
-          const apiResponse = await axios.post(`${url()}/upload`, formData, {
+          const apiResponse = await axios.post<UploadResponse>(`${url()}/upload`, formData, {
             headers: {
               'Content-Type': 'multipart/form-data',
             },
           });
+
           if (apiResponse?.data.status === 'Failed') {
             throw new Error(`message:${apiResponse.data.message},fileName:${apiResponse.data.file_name}`);
           } else {
+            if (apiResponse.data.data) {
+              setFilesData((prevfiles) =>
+                prevfiles.map((curfile) => {
+                  if (curfile.name == file.name) {
+                    return {
+                      ...curfile,
+                      uploadprogess: chunkNumber * chunkProgressIncrement,
+                      total_pages: apiResponse.data.data.total_pages,
+                    };
+                  }
+                  return curfile;
+                })
+              );
+            }
             setFilesData((prevfiles) =>
               prevfiles.map((curfile) => {
                 if (curfile.name == file.name) {

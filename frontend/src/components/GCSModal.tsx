@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { urlScanAPI } from '../services/URLScan';
-import { CustomFile, S3ModalProps, fileName, nonoautherror } from '../types';
+import { CustomFileBase, S3ModalProps, fileName, nonoautherror } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
 import { useGoogleLogin } from '@react-oauth/google';
@@ -20,7 +20,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
 
   const { setFilesData, model, filesData } = useFileContext();
 
-  const defaultValues: CustomFile = {
+  const defaultValues: CustomFileBase = {
     processing: 0,
     status: 'New',
     NodesCount: 0,
@@ -84,6 +84,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               gcsBucket: item.gcsBucketName,
               gcsBucketFolder: item.gcsBucketFolder,
               google_project_id: item.gcsProjectId,
+              total_pages: 'NA',
               id: uuidv4(),
               ...defaultValues,
             });
