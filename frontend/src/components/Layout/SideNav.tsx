@@ -75,7 +75,7 @@ const SideNav: React.FC<SideNavProps> = ({
               )
             }
           />
-          {position === 'right' && (
+          {position === 'right' && isExpanded && (
             <>
               <SideNavigation.Item icon={<TrashIconOutline className='n-size-full' onClick={deleteOnClick} />} />
               <SideNavigation.Item icon={<ExpandIcon className='n-size-full' />} onClick={handleExpandClick} />
@@ -88,14 +88,13 @@ const SideNav: React.FC<SideNavProps> = ({
           <Dialog
             modalProps={{
               id: 'Chatbot-popup',
-              className: 'n-p-token-4 n-bg-neutral-10 n-rounded-lg h-[90%]',
+              className: 'n-p-token-4 n-rounded-lg h-[90%]',
             }}
             open={isChatModalOpen}
             size='unset'
             disableCloseButton={true}
           >
-            <Dialog.Header className='flex justify-between' id='chatbot-dialog-title'>
-              <p>{'Chat-bot'}</p>
+            <Dialog.Header className='flex justify-between self-end' id='chatbot-dialog-title'>
               <IconsPlacement
                 closeChatBot={handleShrinkClick}
                 deleteOnClick={deleteOnClick}

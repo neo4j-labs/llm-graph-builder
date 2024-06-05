@@ -149,7 +149,6 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
   }, [listMessages]);
 
-  console.log('isex', isFullScreen);
 
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
