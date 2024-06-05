@@ -403,7 +403,8 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                 'total_chunks':result[0]['total_chunks'],
                 'total_pages':result[0]['total_pages'],
                 'fileSize':result[0]['fileSize'],
-                'processed_chunk':result[0]['processed_chunk']
+                'processed_chunk':result[0]['processed_chunk'],
+                'fileSource':result[0]['fileSource']
                 })
             else:
                 status = json.dumps({'fileName':file_name, 'status':'Failed'})
@@ -459,7 +460,8 @@ async def get_document_status(file_name, url, userName, password, database):
                 'total_chunks':result[0]['total_chunks'],
                 'total_pages':result[0]['total_pages'],
                 'fileSize':result[0]['fileSize'],
-                'processed_chunk':result[0]['processed_chunk']
+                'processed_chunk':result[0]['processed_chunk'],
+                'fileSource':result[0]['fileSource']
                 }
         else:
             status = {'fileName':file_name, 'status':'Failed'}
