@@ -38,8 +38,7 @@ import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 
 const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
-  const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, selectedRows } =
-    useFileContext();
+  const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows } = useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);

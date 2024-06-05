@@ -96,7 +96,6 @@ export default function ConfirmationDialog({
           Cancel
         </Button>
         <Button
-          disabled={loading}
           onClick={() => {
             if (selectedRows.length) {
               extractHandler(true, []);
@@ -110,9 +109,10 @@ export default function ConfirmationDialog({
               });
               extractHandler(true, tobeProcessFiles);
             }
+            setChecked([]);
+            onClose();
           }}
           size='large'
-          loading={loading}
         >
           Continue
         </Button>

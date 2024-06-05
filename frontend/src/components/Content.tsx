@@ -458,7 +458,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                   let selectedLargeFiles: CustomFile[] = [];
                   selectedRows.forEach((f) => {
                     const parsedData: CustomFile = JSON.parse(f);
-                    if (parsedData.fileSource === 'local') {
+                    if (parsedData.fileSource === 'local file') {
                       if (
                         typeof parsedData.total_pages === 'number' &&
                         parsedData.status === 'New' &&
@@ -482,7 +482,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                   }
                 } else if (filesData.length) {
                   const largefiles = filesData.filter((f) => {
-                    if (f.fileSource === 'local') {
+                    if (f.fileSource === 'local file') {
                       if (typeof f.total_pages === 'number' && f.status === 'New' && f.total_pages > 20) {
                         return true;
                       }

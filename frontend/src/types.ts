@@ -317,6 +317,7 @@ export interface eventResponsetypes {
   total_pages: number;
   fileSize: number;
   processed_chunk?: number;
+  fileSource: string;
 }
 export type Nullable<Type> = Type | null;
 

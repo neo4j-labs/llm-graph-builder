@@ -3,7 +3,7 @@ import { DocumentTextIconOutline } from '@neo4j-ndl/react/icons';
 import { LargefilesProps } from '../types';
 import { List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 import { FC } from 'react';
-import { timeperpage } from '../utils/Constants';
+import { chunkSize, timeperpage } from '../utils/Constants';
 import BellImage from '../assets/images/Stopwatch-blue.svg';
 import AlertIcon from './Layout/AlertIcon';
 import wikipedialogo from '../assets/images/Wikipedia-logo-v2.svg';
@@ -67,16 +67,22 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
                         <Flex flexDirection='row'>
                           <span>
                             {f.name} - {Math.floor((f?.size as number) / 1000)?.toFixed(2)}KB
-                            {f.fileSource === 'local' && minutes === 0 && typeof f.total_pages === 'number'
+                            {f.fileSource === 'local file' && minutes === 0 && typeof f.total_pages === 'number'
                               ? `- ${timeperpage * f?.total_pages} Sec `
-                              : f.fileSource === 'local'
+                              : f.fileSource === 'local file'
                               ? `- ${minutes} Min`
                               : ''}
                           </span>
-                          {typeof f.total_pages === 'number' && f.total_pages > 20 && (
+                          {f.fileSource === 'local file' && typeof f.total_pages === 'number' && f.total_pages > 20 ? (
                             <span>
                               <AlertIcon />
                             </span>
+                          ) : typeof f.size === 'number' && f.size > chunkSize ? (
+                            <span>
+                              <AlertIcon />
+                            </span>
+                          ) : (
+                            <></>
                           )}
                         </Flex>
                       }
