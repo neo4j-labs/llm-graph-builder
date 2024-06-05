@@ -26,13 +26,17 @@ const DropZone: FunctionComponent = () => {
     setIsClicked(true);
     setSelectedFiles(f.map((f) => f as File));
     setIsLoading(false);
+    const validFiles = f.filter((file) => {
+      const fileType = file.type;
+      return fileType === 'application/pdf' || fileType === 'text/plain';
+    });
     if (f.length) {
       const defaultValues: CustomFile = {
         processing: 0,
         status: 'None',
         NodesCount: 0,
         relationshipCount: 0,
-        type: 'PDF',
+        type: validFiles[0].type === 'application/pdf' ? 'PDF' : 'TXT',
         model: model,
         fileSource: 'local file',
         uploadprogess: 0,
@@ -207,9 +211,12 @@ const DropZone: FunctionComponent = () => {
         loadingComponent={isLoading && <Loader />}
         isTesting={true}
         className='!bg-none'
-        supportedFilesDescription={'Supports: PDF Files'}
+        supportedFilesDescription={'Supports: PDF and TXT Files'}
         dropZoneOptions={{
-          accept: { 'application/pdf': ['.pdf'] },
+          accept: { 
+            'application/pdf': ['.pdf'], 
+            'text/plain': ['.txt'],
+          },
           onDrop: (f: Partial<globalThis.File>[]) => {
             onDropHandler(f);
           },
