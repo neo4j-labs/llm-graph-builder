@@ -1,12 +1,8 @@
 import os
 import logging
 from google.cloud import storage
-from langchain_community.document_loaders import GCSFileLoader, GCSDirectoryLoader
+from langchain_community.document_loaders import GCSFileLoader
 from langchain_community.document_loaders import PyMuPDFLoader
-from langchain_core.documents import Document
-from PyPDF2 import PdfReader
-import io
-from google.oauth2.credentials import Credentials
 
 def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, creds):
     storage_client = storage.Client(project=gcs_project_id, credentials=creds)
@@ -50,9 +46,9 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
       blob_name = gcs_bucket_folder+'/'+gcs_blob_filename 
   else:
       blob_name = gcs_blob_filename  
-  credentials, project_id = google.auth.default()
-  logging.info(f"GCS project_id : {project_id}")   
-  loader = GCSFileLoader(project_name=project_id, bucket=gcs_bucket_name, blob=blob_name)
+  #credentials, project_id = google.auth.default()
+  logging.info(f"GCS project_id : {gcs_project_id}")  
+  loader = GCSFileLoader(project_name=gcs_project_id, bucket=gcs_bucket_name, blob=blob_name, loader_func=load_pdf)
   pages = loader.load()
   file_name = gcs_blob_filename
   return file_name, pages  
