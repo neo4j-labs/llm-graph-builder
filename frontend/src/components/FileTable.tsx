@@ -36,6 +36,7 @@ import useServerSideEvent from '../hooks/useSse';
 import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
+
 const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows } = useFileContext();
   const { userCredentials } = useCredentials();
@@ -90,13 +91,13 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
           );
         },
         cell: ({ row }: { row: Row<CustomFile> }) => {
+          const checkedCase =
+            row.getIsSelected() && row.original.status != 'Uploading' && row.original.status != 'Processing';
           return (
             <div className='px-1'>
               <Checkbox
                 aria-label='row-checkbox'
-                checked={
-                  row.getIsSelected() && row.original.status != 'Uploading' && row.original.status != 'Processing'
-                }
+                checked={checkedCase}
                 disabled={
                   !row.getCanSelect() || row.original.status === 'Uploading' || row.original.status === 'Processing'
                 }
@@ -288,6 +289,12 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         header: () => <span>Duration (s)</span>,
         footer: (info) => info.column.id,
       }),
+      columnHelper.accessor((row) => row.total_pages, {
+        id: 'Total pages',
+        cell: (info) => <i>{info.getValue()}</i>,
+        header: () => <span>Total pages (s)</span>,
+        footer: (info) => info.column.id,
+      }),
       columnHelper.accessor((row) => row.status, {
         id: 'inspect',
         cell: (info) => (
@@ -353,9 +360,12 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   google_project_id: item?.gcsProjectId,
                   language: item.language ?? '',
                   processingProgress:
-                    item.processed_chunk != undefined && item.total_chunks != undefined
+                    item.processed_chunk != undefined &&
+                    item.total_chunks != undefined &&
+                    !isNaN(Math.floor((item.processed_chunk / item.total_chunks) * 100))
                       ? Math.floor((item.processed_chunk / item.total_chunks) * 100)
                       : undefined,
+                  total_pages: item.total_pages ?? 0,
                 });
               }
             });
@@ -367,9 +377,10 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
               item.status === 'Processing' &&
               item.fileName != undefined &&
               userCredentials &&
-              userCredentials.database
+              userCredentials.database &&
+              item.total_pages
             ) {
-              if (item?.fileSize < 10000000) {
+              if (item?.total_pages < 20) {
                 subscribe(
                   item.fileName,
                   userCredentials?.uri,
@@ -518,7 +529,6 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     const { file_name } = i;
     const { fileName, nodeCount = 0, relationshipCount = 0, status, processed_chunk = 0, total_chunks } = file_name;
     if (fileName && total_chunks) {
-      console.log({ processed_chunk, total_chunks, percentage: Math.floor((processed_chunk / total_chunks) * 100) });
       setFilesData((prevfiles) =>
         prevfiles.map((curfile) => {
           if (curfile.name == fileName) {
