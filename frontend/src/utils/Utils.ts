@@ -1,3 +1,7 @@
+import { calcWordColor } from '@neo4j-devtools/word-color';
+import type { Node, Relationship } from '@neo4j-nvl/base';
+import { Scheme } from '../types';
+
 // Get the Url
 export const url = () => {
   let url = window.location.href.replace('5173', '8000');
@@ -10,53 +14,6 @@ export const url = () => {
 // validation check for s3 bucket url
 export const validation = (url: string) => {
   return url.trim() != '' && /^s3:\/\/([^/]+)\/?$/.test(url) != false;
-};
-
-export const fileToBase64 = (file: File): Promise<string | ArrayBuffer | null> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = (error) => reject(error);
-  });
-};
-
-// Save file to local storage
-export const saveFileToLocal = async (file: File) => {
-  try {
-    const base64String: string | ArrayBuffer | null = await fileToBase64(file);
-    localStorage.setItem(`${file.name}`, base64String as string);
-    console.log('File saved to local storage');
-  } catch (error) {
-    console.error('Error saving file to local storage:', error);
-  }
-};
-
-export const base64ToFile = (base64String: string, fileName: string) => {
-  const byteCharacters = atob(base64String.split(',')[1]);
-  const byteArrays = [];
-  for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-    const slice = byteCharacters.slice(offset, offset + 512);
-    const byteNumbers = new Array(slice.length);
-    for (let i = 0; i < slice.length; i++) {
-      byteNumbers[i] = slice.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    byteArrays.push(byteArray);
-  }
-  const file = new File(byteArrays, fileName, { type: 'application/pdf' });
-  return file;
-};
-
-// Retrieve file from local storage
-export const getFileFromLocal = (filename: string) => {
-  const base64String = localStorage.getItem(filename);
-  if (base64String) {
-    const file = base64ToFile(base64String, filename);
-    console.log('File fetched from local storage:', file);
-    return file;
-  }
-  return null;
 };
 
 // Status indicator icons to status column
@@ -79,11 +36,15 @@ export const statusCheck = (status: string) => {
   }
 };
 
+// Graph Functions
 export const constructQuery = (queryTochange: string, docLimit: string) => {
   return `MATCH docs = (d:Document {status:'Completed'}) 
   WITH docs, d ORDER BY d.createdAt DESC 
   LIMIT ${docLimit}
-  OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
+  CALL { WITH d
+    OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
+    RETURN chunks, c LIMIT 50
+  }
   WITH [] 
   ${queryTochange}
   AS paths
@@ -92,12 +53,15 @@ export const constructQuery = (queryTochange: string, docLimit: string) => {
   RETURN nodes, rels`;
 };
 
-export const constructDocQuery = (queryTochange: string, inspectedName: string) => {
+export const constructDocQuery = (queryTochange: string) => {
   return `
 MATCH docs = (d:Document {status:'Completed'}) 
-WHERE d.fileName = '${inspectedName}'
+WHERE d.fileName = $document_name
 WITH docs, d ORDER BY d.createdAt DESC 
-OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
+CALL { WITH d
+  OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
+  RETURN chunks, c LIMIT 50
+}
 WITH [] 
 ${queryTochange}
 AS paths
@@ -128,6 +92,7 @@ export const getNodeCaption = (node: any) => {
   }
   return node.properties.id;
 };
+
 export const getIcon = (node: any) => {
   if (node.labels[0] == 'Document') {
     return 'paginate-filter-text.svg';
@@ -136,4 +101,49 @@ export const getIcon = (node: any) => {
     return 'paragraph-left-align.svg';
   }
   return undefined;
+};
+export function extractPdfFileName(url: string): string {
+  const splitUrl = url.split('/');
+  const encodedFileName = splitUrl[splitUrl.length - 1].split('?')[0];
+  const decodedFileName = decodeURIComponent(encodedFileName);
+  if (decodedFileName.includes('/')) {
+    const splitedstr = decodedFileName.split('/');
+    return splitedstr[splitedstr.length - 1];
+  }
+  return decodedFileName;
+}
+
+export const processGraphData = (neoNodes: Node[], neoRels: Relationship[]) => {
+  const schemeVal: Scheme = {};
+  let iterator = 0;
+  const labels: string[] = neoNodes.map((f: any) => f.labels);
+  labels.forEach((label: any) => {
+    if (schemeVal[label] == undefined) {
+      schemeVal[label] = calcWordColor(label[0]);
+      iterator += 1;
+    }
+  });
+  const newNodes: Node[] = neoNodes.map((g: any) => {
+    return {
+      id: g.element_id,
+      size: getSize(g),
+      captionAlign: 'bottom',
+      iconAlign: 'bottom',
+      caption: getNodeCaption(g),
+      color: schemeVal[g.labels[0]],
+      icon: getIcon(g),
+      labels: g.labels,
+    };
+  });
+  const finalNodes = newNodes.flat();
+  const newRels: Relationship[] = neoRels.map((relations: any) => {
+    return {
+      id: relations.element_id,
+      from: relations.start_node_element_id,
+      to: relations.end_node_element_id,
+      caption: relations.type,
+    };
+  });
+  const finalRels = newRels.flat();
+  return { finalNodes, finalRels, schemeVal };
 };

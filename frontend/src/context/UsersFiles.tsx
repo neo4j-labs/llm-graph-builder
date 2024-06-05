@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
-import { CustomFile } from '../types';
+import { createContext, useContext, useState, Dispatch, SetStateAction, FC, useEffect } from 'react';
+import { CustomFile, FileContextProviderProps, OptionType } from '../types';
 import { defaultLLM } from '../utils/Constants';
+import { useCredentials } from './UserCredentials';
 
 interface FileContextType {
   files: (File | null)[] | [];
@@ -11,16 +12,46 @@ interface FileContextType {
   setModel: Dispatch<SetStateAction<string>>;
   graphType: string;
   setGraphType: Dispatch<SetStateAction<string>>;
+  selectedNodes: readonly OptionType[];
+  setSelectedNodes: Dispatch<SetStateAction<readonly OptionType[]>>;
+  selectedRels: readonly OptionType[];
+  setSelectedRels: Dispatch<SetStateAction<readonly OptionType[]>>;
+  rowSelection: Record<string, boolean>;
+  setRowSelection: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  selectedRows: string[];
+  setSelectedRows: React.Dispatch<React.SetStateAction<string[]>>;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
-interface FileContextProviderProps {
-  children: ReactNode;
-}
-const FileContextProvider: React.FC<FileContextProviderProps> = ({ children }) => {
+
+const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
+  const selectedNodeLabelstr = localStorage.getItem('selectedNodeLabels');
+  const selectedNodeRelsstr = localStorage.getItem('selectedRelationshipLabels');
+
   const [files, setFiles] = useState<(File | null)[] | []>([]);
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
   const [model, setModel] = useState<string>(defaultLLM);
   const [graphType, setGraphType] = useState<string>('Knowledge Graph Entities');
+  const [selectedNodes, setSelectedNodes] = useState<readonly OptionType[]>([]);
+  const [selectedRels, setSelectedRels] = useState<readonly OptionType[]>([]);
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const { userCredentials } = useCredentials();
+
+  useEffect(() => {
+    if (selectedNodeLabelstr != null) {
+      const selectedNodeLabel = JSON.parse(selectedNodeLabelstr);
+      if (userCredentials?.uri === selectedNodeLabel.db) {
+        setSelectedNodes(selectedNodeLabel.selectedOptions);
+      }
+    }
+    if (selectedNodeRelsstr != null) {
+      const selectedNodeRels = JSON.parse(selectedNodeRelsstr);
+      if (userCredentials?.uri === selectedNodeRels.db) {
+        setSelectedRels(selectedNodeRels.selectedOptions);
+      }
+    }
+  }, [userCredentials]);
+
   const value: FileContextType = {
     files,
     filesData,
@@ -30,6 +61,14 @@ const FileContextProvider: React.FC<FileContextProviderProps> = ({ children }) =
     setModel,
     graphType,
     setGraphType,
+    selectedRels,
+    setSelectedRels,
+    selectedNodes,
+    setSelectedNodes,
+    rowSelection,
+    setRowSelection,
+    selectedRows,
+    setSelectedRows,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

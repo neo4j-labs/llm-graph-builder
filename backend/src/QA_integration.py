@@ -2,163 +2,341 @@ from langchain_community.vectorstores.neo4j_vector import Neo4jVector
 from langchain.chains import GraphCypherQAChain
 from langchain.graphs import Neo4jGraph
 import os
+
 from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
+from langchain.chains import RetrievalQAWithSourcesChain
 from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
 from langchain_google_vertexai import VertexAIEmbeddings
+from langchain_google_vertexai import ChatVertexAI
+from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
 import logging
 from langchain_community.chat_message_histories import Neo4jChatMessageHistory
+from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
+from src.shared.common_fn import load_embedding_model
+import re
+from typing import Any
+from datetime import datetime
+import time
+
 load_dotenv()
 
 openai_api_key = os.environ.get('OPENAI_API_KEY')
-model_version='gpt-4-0125-preview'
+
+EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
+EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
+CHAT_MAX_TOKENS = 1000
+
+
+# RETRIEVAL_QUERY = """
+# WITH node, score, apoc.text.join([ (node)-[:HAS_ENTITY]->(e) | head(labels(e)) + ": "+ e.id],", ") as entities
+# MATCH (node)-[:PART_OF]->(d:Document)
+# WITH d, apoc.text.join(collect(node.text + "\n" + entities),"\n----\n") as text, avg(score) as score
+# RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)} as metadata
+# """
+
+RETRIEVAL_QUERY = """
+WITH node as chunk, score
+MATCH (chunk)-[:PART_OF]->(d:Document)
+CALL { WITH chunk
+MATCH (chunk)-[:HAS_ENTITY]->(e) 
+MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,3}(:!Chunk&!Document) 
+UNWIND rels as r
+RETURN collect(distinct r) as rels
+}
+WITH d, collect(distinct chunk) as chunks, avg(score) as score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels
+WITH d, score, 
+[c in chunks | c.text] as texts,  
+[r in rels | coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ startNode(r).id + " "+ type(r) + " " + coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + endNode(r).id] as entities
+WITH d, score,
+apoc.text.join(texts,"\n----\n") +
+apoc.text.join(entities,"\n")
+as text, entities
+RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), entities:entities} as metadata
+"""
+
+FINAL_PROMPT = """
+You are an AI-powered question-answering agent tasked with providing accurate and direct responses to user queries. Utilize information from the chat history, current user input, and Relevant Information effectively.
+
+Response Requirements:
+- Deliver concise and direct answers to the user's query without headers unless requested.
+- Acknowledge and utilize relevant previous interactions based on the chat history summary.
+- Respond to initial greetings appropriately, but avoid including a greeting in subsequent responses unless the chat is restarted or significantly paused.
+- For non-general questions, strive to provide answers using chat history and Relevant Information ONLY do not Hallucinate.
+- Clearly state if an answer is unknown; avoid speculating.
+
+Instructions:
+- Prioritize directly answering the User Input: {question}.
+- Use the Chat History Summary: {chat_summary} to provide context-aware responses.
+- Refer to Relevant Information: {vector_result} only if it directly relates to the query.
+- Cite sources clearly when using Relevant Information in your response [Sources: {sources}] without fail. The Source must be printed only at the last in the format [Source: source1,source2] . Duplicate sources should be removed.
+Ensure that answers are straightforward and context-aware, focusing on being relevant and concise.
+"""
+
+def get_llm(model: str,max_tokens=1000) -> Any:
+    """Retrieve the specified language model based on the model name."""
+
+    model_versions = {
+        "OpenAI GPT 3.5": "gpt-3.5-turbo-16k",
+        "Gemini Pro": "gemini-1.0-pro-001",
+        "Gemini 1.5 Pro": "gemini-1.5-pro-preview-0409",
+        "OpenAI GPT 4": "gpt-4-0125-preview",
+        "Diffbot" : "gpt-4-0125-preview",
+        "OpenAI GPT 4o":"gpt-4o"
+         }
+
+    if model in model_versions:
+        model_version = model_versions[model]
+        logging.info(f"Chat Model: {model}, Model Version: {model_version}")
+        
+        if "Gemini" in model:
+            llm = ChatVertexAI(
+                model_name=model_version,
+                convert_system_message_to_human=True,
+                max_tokens=max_tokens,
+                temperature=0,
+                safety_settings={
+                    HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE, 
+                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE, 
+                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE, 
+                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE
+                }
+            )
+        else:
+            llm = ChatOpenAI(model=model_version, temperature=0,max_tokens=max_tokens)
+
+        return llm,model_version
+
+    else:
+        logging.error(f"Unsupported model: {model}")
+        return None,None
 
 def vector_embed_results(qa,question):
     vector_res={}
     try:
         result = qa({"query": question})
         vector_res['result']=result.get("result")
-        list_source_docs=[]
-        for i in result["source_documents"]:
-            list_source_docs.append(i.metadata['source'])
-            vector_res['source']=list_source_docs
+
+        sources = set()
+        entities = set()
+        for document in result["source_documents"]:
+            sources.add(document.metadata["source"])
+            for entiti in document.metadata["entities"]:
+                entities.add(entiti)
+        vector_res['source']=list(sources)
+        vector_res['entities'] = list(entities)
+        if len( vector_res['entities']) > 5:
+            vector_res['entities'] =  vector_res['entities'][:5]
+            
+        # list_source_docs=[]
+        # for i in result["source_documents"]:
+        #     list_source_docs.append(i.metadata['source'])
+        #     vector_res['source']=list_source_docs
+
+        # result = qa({"question":question},return_only_outputs=True)
+        # vector_res['result'] = result.get("answer")
+        # vector_res["source"] = result.get("sources")
     except Exception as e:
       error_message = str(e)
       logging.exception(f'Exception in vector embedding in QA component:{error_message}')
     #   raise Exception(error_message)
     
     return vector_res
-
-# def cypher_results(graph,question):
-#     cypher_res={}
-#     try:
-#         graph.refresh_schema()
-#         cypher_chain = GraphCypherQAChain.from_llm(
-#             graph=graph,
-#             cypher_llm=ChatOpenAI(temperature=0, model=model_version),
-#             qa_llm=ChatOpenAI(temperature=0, model=model_version),
-#             validate_cypher=True, # Validate relationship directions
-#             verbose=True,
-#             top_k=2
-#         )
-#         try:
-#             cypher_res=cypher_chain.invoke({"query": question})
-#         except:
-#             cypher_res={}
-        
-#     except Exception as e:
-#       error_message = str(e)
-#       logging.exception(f'Exception in CypherQAChain in QA component:{error_message}')
-#     #   raise Exception(error_message)
-
-#     return cypher_res
     
-def save_chat_history(uri,userName,password,session_id,user_message,ai_message):
+def save_chat_history(history,user_message,ai_message):
     try:
-        history = Neo4jChatMessageHistory(
-        url=uri,
-        username=userName,
-        password=password,
-        session_id=session_id
-        )
+        # history = Neo4jChatMessageHistory(
+        #     graph=graph,
+        #     session_id=session_id
+        # )
         history.add_user_message(user_message)
         history.add_ai_message(ai_message)
         logging.info(f'Successfully saved chat history')
     except Exception as e:
         error_message = str(e)
         logging.exception(f'Exception in saving chat history:{error_message}')
-        # raise Exception(error_message)
     
+def get_chat_history(llm, history):
+    """Retrieves and summarizes the chat history for a given session."""
 
-def get_chat_history(llm,uri,userName,password,session_id):
     try:
+        # history = Neo4jChatMessageHistory(
+        #     graph=graph,
+        #     session_id=session_id
+        # )        
+        chat_history = history.messages
+        
+        if not chat_history:
+            return ""
+
+        if len(chat_history) > 4:
+            chat_history = chat_history[-4:]
+
+        condense_template = f"""
+        Given the following earlier conversation, summarize the chat history. 
+        Make sure to include all relevant information.
+        Chat History: {chat_history}
+        """
+        chat_summary = llm.predict(condense_template)
+        return chat_summary
+
+    except Exception as e:
+        logging.exception(f"Exception in retrieving chat history: {e}")
+        return "" 
+
+def clear_chat_history(graph, session_id):
+
+    try:
+        logging.info(f"Clearing chat history for session ID: {session_id}")
         history = Neo4jChatMessageHistory(
-        url=uri,
-        username=userName,
-        password=password,
+            graph=graph,
+            session_id=session_id
+        )
+        history.clear()
+        logging.info("Chat history cleared successfully")
+
+        return {
+            "session_id": session_id,
+            "message": "The chat history is cleared",
+            "user": "chatbot"
+        }
+    except Exception as e:
+        logging.exception(f"Error occurred while clearing chat history for session ID {session_id}: {e}")
+
+
+def extract_and_remove_source(message):
+    pattern = r'\[Source: ([^\]]+)\]'
+    match = re.search(pattern, message)
+    if match:
+        sources_string = match.group(1)
+        sources = [source.strip().strip("'") for source in sources_string.split(',')]
+        new_message = re.sub(pattern, '', message).strip()
+        response = {
+            "message" : new_message,
+            "sources" : sources
+        }
+    else:
+        response = {
+            "message" : message,
+            "sources" : []
+        }
+    return response
+
+def clear_chat_history(graph,session_id):
+    history = Neo4jChatMessageHistory(
+        graph=graph,
         session_id=session_id
         )
-        chat_history=history.messages
-
-        if len(chat_history)==0:
-            return ""
-        condense_template = f"""Given the following earlier conversation , Summarise the chat history.Make sure to include all the relevant information.
-            Chat History:
-            {chat_history}"""
-        chat_summary=llm.predict(condense_template)
-        return chat_summary
-    except Exception as e:
-        error_message = str(e)
-        logging.exception(f'Exception in retrieving chat history:{error_message}')
-        # raise Exception(error_message)
-        return ''
-
-def QA_RAG(uri,userName,password,question,session_id):
+    history.clear()
+    return {
+            "session_id": session_id, 
+            "message": "The chat History is cleared", 
+            "user": "chatbot"
+            }
+  
+def QA_RAG(graph,model,question,session_id):
+    logging.info(f"QA_RAG called at {datetime.now()}")
+    # model = "Gemini Pro"
     try:
-        retrieval_query="""
-        MATCH (node)-[:PART_OF]->(d:Document)
-        WITH d, apoc.text.join(collect(node.text),"\n----\n") as text, avg(score) as score
-        RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)} as metadata
-        """
-        embedding_model = os.getenv('EMBEDDING_MODEL')
-        neo_db=Neo4jVector.from_existing_index(
-                embedding = VertexAIEmbeddings(model_name=embedding_model),
-                url=uri,
-                username=userName,
-                password=password,
-                database="neo4j",
-                index_name="vector",
-                retrieval_query=retrieval_query,
-            )
-        llm = ChatOpenAI(model= model_version, temperature=0)
+        qa_rag_start_time = time.time()
 
-        qa = RetrievalQA.from_chain_type(
-            llm=llm, chain_type="stuff", retriever=neo_db.as_retriever(search_kwargs={'k': 3,"score_threshold": 0.5}), return_source_documents=True
+
+        start_time = time.time()
+        neo_db = Neo4jVector.from_existing_index(
+            embedding=EMBEDDING_FUNCTION,
+            index_name="vector",
+            retrieval_query=RETRIEVAL_QUERY,
+            graph=graph
         )
 
-        vector_res=vector_embed_results(qa,question)
-        print('Response from Vector embeddings')
-        print(vector_res)
+        history = Neo4jChatMessageHistory(
+            graph=graph,
+            session_id=session_id
+        )
+        
+        llm,model_version = get_llm(model=model,max_tokens=CHAT_MAX_TOKENS)
 
-        # Disable Cypher Chain QA
-        # graph = Neo4jGraph(
-        #     url=uri,
-        #     username=userName,
-        #     password=password
-        # )
-        # cypher_res= cypher_results(graph,question)
-        # print('Response from CypherQAChain')
-        # print(cypher_res)
+        qa = RetrievalQA.from_chain_type(
+            llm=llm,
+            chain_type="stuff",
+            retriever=neo_db.as_retriever(search_kwargs={'k': 3, "score_threshold": 0.7}),
+            return_source_documents=True
+        )
+        # qa = RetrievalQAWithSourcesChain.from_chain_type(
+        #     llm=llm,
+        #     chain_type="stuff",
+        #     retriever=neo_db.as_retriever(search_kwargs={'k': 3, "score_threshold": 0.7}))
 
-        chat_summary=get_chat_history(llm,uri,userName,password,session_id)
+        db_setup_time = time.time() - start_time
+        logging.info(f"DB Setup completed in {db_setup_time:.2f} seconds")
+        
+        start_time = time.time()
+        chat_summary = get_chat_history(llm,history)
+        chat_history_time = time.time() - start_time
+        logging.info(f"Chat history summarized in {chat_history_time:.2f} seconds")
+        # print(chat_summary)
 
-        final_prompt = f"""You are a helpful question-answering agent. Your task is to analyze
-        and synthesize information from two sources: the top result from a similarity search
-        (unstructured information) and relevant data from a graph database (structured information). 
-        If structured information fails to find an answer then use the answer from unstructured information 
-        and vice versa. I only want a straightforward answer without mentioning from which source you got the answer. You are also receiving 
-        a chat history of the earlier conversation. You should be able to understand the context from the chat history and answer the question.
-        Given the user's query: {question}, provide a meaningful and efficient answer based
-        on the insights derived from the following data:
-        chat_summary:{chat_summary}
-        Structured information:  .
-        Unstructured information: {vector_res.get('result','')}.
+        start_time = time.time()
+        vector_res = vector_embed_results(qa, question)
+        vector_time = time.time() - start_time
+        logging.info(f"Vector response obtained in {vector_time:.2f} seconds")
+        # print(vector_res)
+        
+        formatted_prompt = FINAL_PROMPT.format(
+            question=question,
+            chat_summary=chat_summary,
+            vector_result=vector_res.get('result', ''),
+            sources=vector_res.get('source', '')
+        )
+        # print(formatted_prompt)
 
-        """ 
+        start_time = time.time()
+        # llm = get_llm(model=model,embedding=False)
+        response = llm.predict(formatted_prompt)
+        predict_time = time.time() - start_time
+        logging.info(f"Response predicted in {predict_time:.2f} seconds")
 
-        print(final_prompt)
-        response = llm.predict(final_prompt)
-        ai_message=response
-        user_message=question
-        save_chat_history(uri,userName,password,session_id,user_message,ai_message)
+        start_time = time.time()
+        ai_message = response
+        user_message = question
+        save_chat_history(history, user_message, ai_message)
+        chat_history_save = time.time() - start_time
+        logging.info(f"Chat History saved in {chat_history_save:.2f} seconds")
+        
+        response_data = extract_and_remove_source(response)
+        message = response_data["message"]
+        sources = response_data["sources"]
+        
+        print(f"message : {message}")
+        print(f"sources : {sources}")
+        total_call_time = time.time() - qa_rag_start_time
+        logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
+        return {
+            "session_id": session_id, 
+            "message": message, 
+            "info": {
+                "sources": sources,
+                "model":model_version,
+                "entities":vector_res["entities"]
+            },
+            "user": "chatbot"
+            }
 
-        res={"session_id":session_id,"message":response,"user":"chatbot"}
-        return res
     except Exception as e:
-      error_message = str(e)
-      logging.exception(f'Exception in in QA component:{error_message}')
-    #   raise Exception(error_message)
-      return {"session_id":session_id,"message":"Something went wrong","user":"chatbot"}
+        logging.exception(f"Exception in QA component at {datetime.now()}: {str(e)}")
+        error_name = type(e).__name__
+        return {
+            "session_id": session_id, 
+            "message": "Something went wrong",
+            "info": {
+                "sources": [],
+                "error": f"{error_name} :- {str(e)}"
+            },
+            "user": "chatbot"}
+    
 
- 
+
+
+

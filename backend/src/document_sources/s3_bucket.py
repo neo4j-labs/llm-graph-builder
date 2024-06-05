@@ -17,14 +17,14 @@ def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
         # List objects in the specified directory
         response = s3.list_objects_v2(Bucket=bucket_name, Prefix=directory)
       except Exception as e:
-         return {"status": "Failed","message": "Invalid AWS credentials"}
+         raise Exception("Invalid AWS credentials")
+      
       files_info = []
 
       # Check each object for file size and type
       for obj in response.get('Contents', []):
           file_key = obj['Key']
           file_name = os.path.basename(file_key)
-          # file_name=s3_url.split('/')[-1]
           logging.info(f'file_name : {file_name}  and file key : {file_key}')
           file_size = obj['Size']
 
