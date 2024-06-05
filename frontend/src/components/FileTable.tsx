@@ -19,6 +19,12 @@ import { useCredentials } from '../context/UserCredentials';
 import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
 import CustomAlert from './Alert';
 import CustomProgressBar from './CustomProgressBar';
+import subscribe from '../services/PollingAPI';
+import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
+import useServerSideEvent from '../hooks/useSse';
+import { AxiosError } from 'axios';
+import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
+import cancelAPI from '../services/CancelAPI';
 
 const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
   const { filesData, setFilesData, model } = useFileContext();
@@ -212,6 +218,12 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         header: () => <span>Total pages</span>,
         footer: (info) => info.column.id,
       }),
+      columnHelper.accessor((row) => row.total_pages, {
+        id: 'Total pages',
+        cell: (info) => <i>{info.getValue()}</i>,
+        header: () => <span>Total pages (s)</span>,
+        footer: (info) => info.column.id,
+      }),
       columnHelper.accessor((row) => row.status, {
         id: 'inspect',
         cell: (info) => (
@@ -278,12 +290,65 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   gcsBucketFolder: item?.gcsBucketFolder,
                   errorMessage: item?.errorMessage,
                   uploadprogess: item?.uploadprogress ?? 0,
+                  google_project_id: item?.gcsProjectId,
+                  language: item.language ?? '',
+                  processingProgress:
+                    item.processed_chunk != undefined &&
+                    item.total_chunks != undefined &&
+                    !isNaN(Math.floor((item.processed_chunk / item.total_chunks) * 100))
+                      ? Math.floor((item.processed_chunk / item.total_chunks) * 100)
+                      : undefined,
+                  total_pages: item.total_pages ?? 0,
                 });
               }
             });
           }
           setIsLoading(false);
           setFilesData(prefiles);
+          res.data.data.forEach((item) => {
+            if (
+              item.status === 'Processing' &&
+              item.fileName != undefined &&
+              userCredentials &&
+              userCredentials.database &&
+              item.total_pages
+            ) {
+              if (item?.total_pages < 20) {
+                subscribe(
+                  item.fileName,
+                  userCredentials?.uri,
+                  userCredentials?.userName,
+                  userCredentials?.database,
+                  userCredentials?.password,
+                  updatestatus,
+                  updateProgress
+                ).catch((error: AxiosError) => {
+                  // @ts-ignore
+                  const errorfile = decodeURI(error.config.url.split('?')[0].split('/').at(-1));
+                  setFilesData((prevfiles) => {
+                    return prevfiles.map((curfile) => {
+                      if (curfile.name == errorfile) {
+                        return {
+                          ...curfile,
+                          status: 'Failed',
+                        };
+                      }
+                      return curfile;
+                    });
+                  });
+                });
+              } else {
+                triggerStatusUpdateAPI(
+                  item.fileName,
+                  userCredentials.uri,
+                  userCredentials.userName,
+                  userCredentials.password,
+                  userCredentials.database,
+                  updateStatusForLargeFiles
+                );
+              }
+            }
+          });
         } else {
           throw new Error(res?.data?.error);
         }

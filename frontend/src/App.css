@@ -254,3 +254,10 @@
 .ndl-dropzone .ndl-dropzone-header{
   row-gap: 0 !important;
 }
+
+.ndl-status-indicator{
+  margin-bottom: 0px !important;
+}
+.css-h4y409-MuiList-root{
+  scrollbar-width: thin;
+}

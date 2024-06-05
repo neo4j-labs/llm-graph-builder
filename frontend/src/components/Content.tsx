@@ -12,6 +12,13 @@ import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './GraphViewModal';
 import { initialiseDriver } from '../utils/Driver';
 import Driver from 'neo4j-driver/types/driver';
+import deleteAPI from '../services/deleteFiles';
+import DeletePopUp from './DeletePopUp';
+import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
+import useServerSideEvent from '../hooks/useSse';
+import { useSearchParams } from 'react-router-dom';
+import ConfirmationDialog from './ConfirmationDialog';
+import { chunkSize } from '../utils/Constants';
 
 const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -20,10 +27,47 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
-  const { filesData, setFilesData, setModel, model } = useFileContext();
-  const [errorMessage, setErrorMessage] = useState<string>('');
-  const [showAlert, setShowAlert] = useState<boolean>(false);
-  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView'>('tableView');
+  const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
+  const [extractLoading, setextractLoading] = useState<boolean>(false);
+
+  const {
+    filesData,
+    setFilesData,
+    setModel,
+    model,
+    selectedNodes,
+    selectedRels,
+    selectedRows,
+    setSelectedNodes,
+    setRowSelection,
+    setSelectedRels,
+  } = useFileContext();
+  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
+  const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
+  const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
+  const [searchParams] = useSearchParams();
+  const [alertDetails, setalertDetails] = useState<alertStateType>({
+    showAlert: false,
+    alertType: 'error',
+    alertMessage: '',
+  });
+  const { updateStatusForLargeFiles } = useServerSideEvent(
+    (inMinutes, time, fileName) => {
+      setalertDetails({
+        showAlert: true,
+        alertType: 'info',
+        alertMessage: `${fileName} will take approx ${time} ${inMinutes ? 'Min' : 'Sec'}`,
+      });
+      localStorage.setItem('alertShown', JSON.stringify(true));
+    },
+    (fileName) => {
+      setalertDetails({
+        showAlert: true,
+        alertType: 'error',
+        alertMessage: `${fileName} Failed to process`,
+      });
+    }
+  );
 
   useEffect(() => {
     if (!init && !searchParams.has('connectURL')) {
@@ -75,12 +119,80 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     }
   };
 
-  const extractData = async (uid: number) => {
-    if (filesData[uid]?.status == 'New') {
-      try {
-        setFilesData((prevfiles) =>
-          prevfiles.map((curfile, idx) => {
-            if (idx == uid) {
+  const extractData = async (uid: string, isselectedRows = false) => {
+    if (!isselectedRows) {
+      const fileItem = filesData.find((f) => f.id == uid);
+      if (fileItem) {
+        setextractLoading(true);
+        await extractHandler(fileItem, uid);
+      }
+    } else {
+      const fileItem = selectedRows.find((f) => JSON.parse(f).id == uid);
+      if (fileItem) {
+        setextractLoading(true);
+        await extractHandler(JSON.parse(fileItem), uid);
+      }
+    }
+  };
+
+  const extractHandler = async (fileItem: CustomFile, uid: string) => {
+    try {
+      setFilesData((prevfiles) =>
+        prevfiles.map((curfile) => {
+          if (curfile.id === uid) {
+            return {
+              ...curfile,
+              status: 'Processing',
+            };
+          }
+          return curfile;
+        })
+      );
+      setRowSelection((prev) => {
+        const copiedobj = { ...prev };
+        for (const key in copiedobj) {
+          if (JSON.parse(key).id == uid) {
+            copiedobj[key] = false;
+          }
+        }
+        return copiedobj;
+      });
+      if (fileItem.name != undefined && userCredentials != null) {
+        const { name } = fileItem;
+        triggerStatusUpdateAPI(
+          name as string,
+          userCredentials?.uri,
+          userCredentials?.userName,
+          userCredentials?.password,
+          userCredentials?.database,
+          updateStatusForLargeFiles
+        );
+      }
+
+      const apiResponse = await extractAPI(
+        fileItem.model,
+        userCredentials as UserCredentials,
+        fileItem.fileSource,
+        fileItem.source_url,
+        localStorage.getItem('accesskey'),
+        localStorage.getItem('secretkey'),
+        fileItem.name ?? '',
+        fileItem.gcsBucket ?? '',
+        fileItem.gcsBucketFolder ?? '',
+        selectedNodes.map((l) => l.value),
+        selectedRels.map((t) => t.value),
+        fileItem.google_project_id,
+        fileItem.language
+      );
+
+      if (apiResponse?.status === 'Failed') {
+        let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
+        throw new Error(JSON.stringify(errorobj));
+      } else if (fileItem.total_pages != undefined && (fileItem.total_pages === 'NA' || fileItem.total_pages < 20)) {
+        setFilesData((prevfiles) => {
+          return prevfiles.map((curfile) => {
+            if (curfile.name == apiResponse?.data?.fileName) {
+              const apiRes = apiResponse?.data;
               return {
                 ...curfile,
                 processing: apiRes?.processingTime?.toFixed(2),
@@ -199,15 +311,28 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     }
   };
 
-  const handleGenerateGraph = () => {
+  const handleGenerateGraph = (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => {
     const data = [];
-    if (filesData.length > 0) {
-      for (let i = 0; i < filesData.length; i++) {
-        if (filesData[i]?.status === 'New') {
-          data.push(extractData(i));
+    if (selectedfileslength && allowLargeFiles) {
+      for (let i = 0; i < selectedfileslength; i++) {
+        const row = JSON.parse(selectedRows[i]);
+        if (row.status === 'New') {
+          data.push(extractData(row.id, true));
         }
       }
       Promise.allSettled(data).then(async (_) => {
+        setextractLoading(false);
+        await updateGraphAPI(userCredentials as UserCredentials);
+      });
+    } else if (selectedFilesFromAllfiles.length && allowLargeFiles) {
+      // @ts-ignore
+      for (let i = 0; i < selectedFilesFromAllfiles.length; i++) {
+        if (selectedFilesFromAllfiles[i]?.status === 'New') {
+          data.push(extractData(selectedFilesFromAllfiles[i].id as string));
+        }
+      }
+      Promise.allSettled(data).then(async (_) => {
+        setextractLoading(false);
         await updateGraphAPI(userCredentials as UserCredentials);
       });
     }
@@ -250,6 +375,84 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     setConnectionStatus(false);
     localStorage.removeItem('password');
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
+    setSelectedNodes([]);
+    setSelectedRels([]);
+  };
+
+  const selectedfileslength = useMemo(() => selectedRows.length, [selectedRows]);
+
+  const newFilecheck = useMemo(() => selectedRows.filter((f) => JSON.parse(f).status === 'New').length, [selectedRows]);
+
+  const completedfileNo = useMemo(
+    () => selectedRows.filter((f) => JSON.parse(f).status === 'Completed').length,
+    [selectedRows]
+  );
+
+  const dropdowncheck = useMemo(() => !filesData.some((f) => f.status === 'New'), [filesData]);
+
+  const disableCheck = useMemo(
+    () => (!selectedfileslength ? dropdowncheck : !newFilecheck),
+    [selectedfileslength, filesData, newFilecheck]
+  );
+
+  const showGraphCheck = useMemo(
+    () => (selectedfileslength ? completedfileNo === 0 : true),
+    [selectedfileslength, completedfileNo]
+  );
+
+  const deleteFileClickHandler: React.MouseEventHandler<HTMLButtonElement> = () => {
+    setshowDeletePopUp(true);
+  };
+
+  const filesForProcessing = useMemo(() => {
+    let newstatusfiles: CustomFile[] = [];
+    if (selectedRows.length) {
+      selectedRows.forEach((f) => {
+        const parsedFile: CustomFile = JSON.parse(f);
+        if (parsedFile.status === 'New') {
+          newstatusfiles.push(parsedFile);
+        }
+      });
+    } else if (filesData.length) {
+      newstatusfiles = filesData.filter((f) => f.status === 'New');
+    }
+    return newstatusfiles;
+  }, [filesData, selectedRows]);
+
+  const handleDeleteFiles = async (deleteEntities: boolean) => {
+    try {
+      setdeleteLoading(true);
+      const response = await deleteAPI(userCredentials as UserCredentials, selectedRows, deleteEntities);
+      setRowSelection({});
+      setdeleteLoading(false);
+      if (response.data.status == 'Success') {
+        setalertDetails({
+          showAlert: true,
+          alertMessage: response.data.message,
+          alertType: 'success',
+        });
+        const filenames = selectedRows.map((str) => JSON.parse(str).name);
+        filenames.forEach((name) => {
+          setFilesData((prev) => prev.filter((f) => f.name != name));
+        });
+      } else {
+        let errorobj = { error: response.data.error, message: response.data.message };
+        throw new Error(JSON.stringify(errorobj));
+      }
+      setshowDeletePopUp(false);
+    } catch (err) {
+      if (err instanceof Error) {
+        const error = JSON.parse(err.message);
+        const { message } = error;
+        setalertDetails({
+          showAlert: true,
+          alertType: 'error',
+          alertMessage: message,
+        });
+        console.log(err);
+      }
+    }
+    setshowDeletePopUp(false);
   };
 
   return (
@@ -328,7 +531,67 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={disableCheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
-            <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
+            <Button
+              disabled={disableCheck}
+              onClick={() => {
+                if (selectedRows.length) {
+                  let selectedLargeFiles: CustomFile[] = [];
+                  selectedRows.forEach((f) => {
+                    const parsedData: CustomFile = JSON.parse(f);
+                    if (parsedData.fileSource === 'local file') {
+                      if (
+                        typeof parsedData.total_pages === 'number' &&
+                        parsedData.status === 'New' &&
+                        parsedData.total_pages > 20
+                      ) {
+                        selectedLargeFiles.push(parsedData);
+                      }
+                    } else if (parsedData.fileSource === 's3 bucket' || parsedData.fileSource === 'gcs bucket') {
+                      // @ts-ignore
+                      if (parsedData.size > chunkSize) {
+                        selectedLargeFiles.push(parsedData);
+                      }
+                    }
+                  });
+                  // @ts-ignore
+                  if (selectedLargeFiles.length) {
+                    setshowConfirmationModal(true);
+                    handleGenerateGraph(false, []);
+                  } else {
+                    handleGenerateGraph(true, filesData);
+                  }
+                } else if (filesData.length) {
+                  const largefiles = filesData.filter((f) => {
+                    if (f.fileSource === 'local file') {
+                      if (typeof f.total_pages === 'number' && f.status === 'New' && f.total_pages > 20) {
+                        return true;
+                      }
+                    } else if (f.fileSource === 's3 bucket' || f.fileSource === 'gcs bucket') {
+                      // @ts-ignore
+                      if (f.size > chunkSize) {
+                        return true;
+                      }
+                    }
+                    return false;
+                  });
+                  const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
+                  const stringified = selectAllNewFiles.reduce((accu, f) => {
+                    const key = JSON.stringify(f);
+                    // @ts-ignore
+                    accu[key] = true;
+                    return accu;
+                  }, {});
+                  setRowSelection(stringified);
+                  if (largefiles.length) {
+                    setshowConfirmationModal(true);
+                    handleGenerateGraph(false, []);
+                  } else {
+                    handleGenerateGraph(true, filesData);
+                  }
+                }
+              }}
+              className='mr-0.5'
+            >
               Generate Graph {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
             </Button>
             <Button

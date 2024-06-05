@@ -36,14 +36,13 @@ class graphDBdataAccess:
                             d.processingTime = $pt, d.errorMessage = $e_message, d.nodeCount= $n_count, 
                             d.relationshipCount = $r_count, d.model= $model, d.gcsBucket=$gcs_bucket, 
                             d.gcsBucketFolder= $gcs_bucket_folder, d.language= $language,d.gcsProjectId= $gcs_project_id,
-                            d.is_cancelled=False, d.total_pages=0, d.total_chunks=0, d.processed_chunk=0""",
+                            d.is_cancelled=False, d.total_pages=0, d.total_chunks=0, d.processed_chunk=0, d.total_pages=$total_pages""",
                             {"fn":obj_source_node.file_name, "fs":obj_source_node.file_size, "ft":obj_source_node.file_type, "st":job_status, 
                             "url":obj_source_node.url,
                             "awsacc_key_id":obj_source_node.awsAccessKeyId, "f_source":obj_source_node.file_source, "c_at":obj_source_node.created_at,
                             "u_at":obj_source_node.created_at, "pt":0, "e_message":'', "n_count":0, "r_count":0, "model":obj_source_node.model,
                             "gcs_bucket": obj_source_node.gcsBucket, "gcs_bucket_folder": obj_source_node.gcsBucketFolder, 
-                            "language":obj_source_node.language, "gcs_project_id":obj_source_node.gcsProjectId, "total_pages": obj_source_node.total_pages,
-                            "access_token":obj_source_node.access_token})
+                            "language":obj_source_node.language, "gcs_project_id":obj_source_node.gcsProjectId, "total_pages": obj_source_node.total_pages})
         except Exception as e:
             error_message = str(e)
             logging.info(f"error_message = {error_message}")
@@ -109,5 +108,61 @@ class graphDBdataAccess:
         """
         if self.graph:
             return "Connection Successful"
+
+    def execute_query(self, query, param=None):
+        return self.graph.query(query, param)
+
+    def get_current_status_document_node(self, file_name):
+        query = """
+                MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, 
+                d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount,
+                d.total_pages AS total_pages, d.total_chunks AS total_chunks , d.fileSize as fileSize, 
+                d.is_cancelled as is_cancelled, d.processed_chunk as processed_chunk, d.fileSource as fileSource
+                """
+        param = {"file_name" : file_name}
+        return self.execute_query(query, param)
+    
+    def delete_file_from_graph(self, filenames, source_types, deleteEntities:str, merged_dir:str):
+        # filename_list = filenames.split(',')
+        filename_list= list(map(str.strip, json.loads(filenames)))
+        source_types_list= list(map(str.strip, json.loads(source_types)))
+        # source_types_list = source_types.split(',')
+        for (file_name,source_type) in zip(filename_list, source_types_list):
+            merged_file_path = os.path.join(merged_dir, file_name)
+            if source_type == 'local file':
+                logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+                delete_uploaded_local_file(merged_file_path, file_name)
+
+        query_to_delete_document=""" 
+           MATCH (d:Document) where d.fileName in $filename_list and d.fileSource in $source_types_list
+            with collect(d) as documents 
+            unwind documents as d
+            optional match (d)<-[:PART_OF]-(c:Chunk) 
+            detach delete c, d
+            return count(*) as deletedChunks
+            """
+        query_to_delete_document_and_entities=""" 
+            MATCH (d:Document) where d.fileName in $filename_list and d.fileSource in $source_types_list
+            with collect(d) as documents 
+            unwind documents as d
+            optional match (d)<-[:PART_OF]-(c:Chunk)
+            // if delete-entities checkbox is set
+            call { with  c, documents
+                match (c)-[:HAS_ENTITY]->(e)
+                // belongs to another document
+                where not exists {  (d2)<-[:PART_OF]-()-[:HAS_ENTITY]->(e) WHERE NOT d2 IN documents }
+                detach delete e
+                return count(*) as entities
+            } 
+            detach delete c, d
+            return sum(entities) as deletedEntities, count(*) as deletedChunks
+            """    
+        param = {"filename_list" : filename_list, "source_types_list": source_types_list}
+        if deleteEntities == "true":
+            result = self.execute_query(query_to_delete_document_and_entities, param)
+            logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' from database")
+        else :
+            result = self.execute_query(query_to_delete_document, param)    
+            logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' with their entities from database")
         
         return result, len(filename_list)    

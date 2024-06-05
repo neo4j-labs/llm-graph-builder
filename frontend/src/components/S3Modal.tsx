@@ -1,6 +1,6 @@
 import { TextInput } from '@neo4j-ndl/react';
 import React, { useState } from 'react';
-import { CustomFile, S3ModalProps, UserCredentials } from '../types';
+import { CustomFile, CustomFileBase, S3ModalProps, UserCredentials } from '../types';
 import { urlScanAPI } from '../services/URLScan';
 import { useCredentials } from '../context/UserCredentials';
 import { validation } from '../utils/Utils';
@@ -87,6 +87,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               name: item.fileName,
               size: item.fileSize,
               source_url: item.url,
+              total_pages: 'NA',
               id: uuidv4(),
               ...defaultValues,
             });

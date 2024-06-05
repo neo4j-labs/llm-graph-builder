@@ -7,7 +7,6 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   processing: number | string;
   status: string;
   NodesCount: number;
-  id?: string;
   relationshipCount: number;
   model: string;
   fileSource: string;
@@ -17,6 +16,10 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   gcsBucketFolder?: string;
   errorMessage?: string;
   uploadprogess?: number;
+}
+export interface CustomFile extends CustomFileBase {
+  id: string;
+  total_pages: number | 'NA';
 }
 
 export interface OptionType {
@@ -110,6 +113,11 @@ export interface SourceNode {
   gcsBucketFolder?: string;
   errorMessage?: string;
   uploadprogress?: number;
+  gcsProjectId?: string;
+  language?: string;
+  processed_chunk?: number;
+  total_chunks?: number;
+  total_pages?: number;
 }
 export interface SideNavProps {
   isExpanded: boolean;
@@ -250,6 +258,7 @@ export interface commonserverresponse {
   status: string;
   error?: string;
   message?: string;
+  file_name?: string;
 }
 export interface ServerData extends Partial<commonserverresponse> {
   data: labelsAndTypes[];
@@ -278,9 +287,10 @@ export interface eventResponsetypes {
   relationshipCount: number;
   model: string;
   total_chunks: number | null;
-  total_pages: number | null;
+  total_pages: number;
   fileSize: number;
   processed_chunk?: number;
+  fileSource: string;
 }
 export type Nullable<Type> = Type | null;
 
@@ -325,6 +335,21 @@ export type GroupedEntity = {
   texts: Set<string>;
   color: string;
 };
+
+export interface uploadData {
+  file_size: number;
+  total_pages: number;
+  file_name: string;
+  message: string;
+}
+export interface UploadResponse extends Partial<commonserverresponse> {
+  data: uploadData;
+}
+export interface LargefilesProps {
+  largeFiles: CustomFile[];
+  handleToggle: (ischecked: boolean, id: string) => void;
+  checked: string[];
+}
 
 export interface MessagesContextProviderProps {
   children: ReactNode;

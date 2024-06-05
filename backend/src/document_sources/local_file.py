@@ -2,8 +2,8 @@ import logging
 import shutil
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from langchain_community.document_loaders import PyPDFLoader
-
+# from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyMuPDFLoader
 # def get_documents_from_file_by_bytes(file):
 #     file_name = file.filename
 #     logging.info(f"get_documents_from_file called for filename = {file_name}")
@@ -19,8 +19,9 @@ def get_documents_from_file_by_path(file_path,file_name):
     file_path = Path(file_path)
     if file_path.exists():
         logging.info(f'file {file_name} processing')
-        loader = PyPDFLoader(str(file_path))
-        pages = loader.load_and_split()
+        # loader = PyPDFLoader(str(file_path))
+        loader = PyMuPDFLoader(str(file_path))
+        pages = loader.load()
     else:
         logging.info(f'File {file_name} does not exist')
         raise Exception(f'File {file_name} does not exist')

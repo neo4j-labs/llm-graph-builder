@@ -23,7 +23,12 @@ export default function useServerSideEvent(
     const alertShownStatus = JSON.parse(localStorage.getItem('alertShown') || 'null');
 
     if (status === 'Processing') {
-      if (alertShownStatus != null && alertShownStatus == false && total_chunks != null) {
+      if (fileSource === 'local file') {
+        if (alertShownStatus != null && alertShownStatus == false && total_chunks != null) {
+          const minutes = Math.floor((perpagesecond * total_pages) / 60);
+          alertHandler(minutes !== 0, minutes === 0 ? Math.floor(perpagesecond * total_pages) : minutes, fileName);
+        }
+      } else if (alertShownStatus != null && alertShownStatus == false && total_chunks != null) {
         const minutes = Math.floor((perchunksecond * total_chunks) / 60);
         alertHandler(minutes, fileName);
       }

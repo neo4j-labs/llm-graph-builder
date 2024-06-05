@@ -124,6 +124,7 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     obj_source_node.file_type = 'text'
     obj_source_node.file_source = source_type
     obj_source_node.model = model
+    obj_source_node.total_pages = 1
     obj_source_node.url = youtube_url
     obj_source_node.created_at = datetime.now()
     # source_url= youtube_url
@@ -162,6 +163,7 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
         obj_source_node.file_type = 'text'
         obj_source_node.file_source = source_type
         obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
+        obj_source_node.total_pages = len(pages)
         obj_source_node.model = model
         obj_source_node.url = pages[0].metadata['source']
         obj_source_node.created_at = datetime.now()
@@ -182,9 +184,10 @@ def extract_graph_from_file_local_file(graph, model, fileName):
   merged_file_path = os.path.join(os.path.join(os.path.dirname(__file__), "merged_files"),fileName)
   logging.info(f'File path:{merged_file_path}')
   file_name, pages = get_documents_from_file_by_path(merged_file_path,fileName)
-
-  if pages==None or len(pages)==0:
-    raise Exception('Pdf content is not available for file : {file_name}')
+  pdf_total_pages = pages[0].metadata['total_pages']
+  
+  if pages==None or pdf_total_pages==0:
+    raise Exception(f'Pdf content is not available for file : {file_name}')
 
   return processing_source(graph, model, file_name, pages, merged_file_path)
 
@@ -245,39 +248,28 @@ def processing_source(graph, model, file_name, pages, merged_file_path=None):
   """
   start_time = datetime.now()
   graphDb_data_Access = graphDBdataAccess(graph)
-  obj_source_node = sourceNode()
-  status = "Processing"
-  obj_source_node.file_name = file_name
-  obj_source_node.status = status
-  obj_source_node.created_at = start_time
-  obj_source_node.updated_at = start_time
-  logging.info(file_name)
-  logging.info(obj_source_node)
-  # graphDb_data_Access.update_source_node(obj_source_node)
-  
-  if result[0]['Status'] != 'Processing':
-    
-    bad_chars = ['"', "\n", "'"]
-    for i in range(0,len(pages)):
-      text = pages[i].page_content
-      for j in bad_chars:
-        if j == '\n':
-          text = text.replace(j, ' ')
-        else:
-          text = text.replace(j, '')
-      pages[i]=Document(page_content=str(text), metadata=pages[i].metadata)
-      
-    logging.info("Break down file into chunks")
-    
-    create_chunks_obj = CreateChunksofDocument(pages, graph, file_name)
-    chunks = create_chunks_obj.split_file_into_chunks()
 
+  result = graphDb_data_Access.get_current_status_document_node(file_name)
+  logging.info("Break down file into chunks")
+  bad_chars = ['"', "\n", "'"]
+  for i in range(0,len(pages)):
+    text = pages[i].page_content
+    for j in bad_chars:
+      if j == '\n':
+        text = text.replace(j, ' ')
+      else:
+        text = text.replace(j, '')
+    pages[i]=Document(page_content=str(text), metadata=pages[i].metadata)
+  create_chunks_obj = CreateChunksofDocument(pages, graph, file_name)
+  chunks = create_chunks_obj.split_file_into_chunks()
+  
+  if result[0]['Status'] != 'Processing':      
     obj_source_node = sourceNode()
     status = "Processing"
     obj_source_node.file_name = file_name
     obj_source_node.status = status
-    obj_source_node.total_pages = len(pages)
     obj_source_node.total_chunks = len(chunks)
+    obj_source_node.total_pages = len(pages)
     obj_source_node.model = model
     logging.info(file_name)
     logging.info(obj_source_node)
@@ -459,18 +451,21 @@ def merge_chunks(file_name, total_chunks):
   chunk_dir = os.path.join(os.path.dirname(__file__), "chunks")
   merged_file_path = os.path.join(os.path.dirname(__file__), "merged_files")
 
-  if not os.path.exists(merged_file_path):
-      os.mkdir(merged_file_path)
-
-  with open(os.path.join(merged_file_path, file_name), "wb") as write_stream:
+  if not os.path.exists(merged_dir):
+      os.mkdir(merged_dir)
+  logging.info(f'Merged File Path: {merged_dir}')
+  merged_file_path = os.path.join(merged_dir, file_name)
+  with open(merged_file_path, "wb") as write_stream:
       for i in range(1,total_chunks+1):
           chunk_file_path = os.path.join(chunk_dir, f"{file_name}_part_{i}")
           with open(chunk_file_path, "rb") as chunk_file:
               shutil.copyfileobj(chunk_file, write_stream)
           os.unlink(chunk_file_path)  # Delete the individual chunk file after merging
   logging.info("Chunks merged successfully and return file size")
-  file_size = os.path.getsize(os.path.join(merged_file_path, file_name))
-  return file_size
+  file_name, pages = get_documents_from_file_by_path(merged_file_path,file_name)
+  pdf_total_pages = pages[0].metadata['total_pages']
+  file_size = os.path.getsize(merged_file_path)
+  return file_size, pdf_total_pages
   
 
 def upload_file(uri, userName, password, db_name, model, chunk, chunk_number:int, total_chunks:int, originalname):
@@ -486,7 +481,7 @@ def upload_file(uri, userName, password, db_name, model, chunk, chunk_number:int
 
   if int(chunk_number) == int(total_chunks):
       # If this is the last chunk, merge all chunks into a single file
-      file_size = merge_chunks(originalname, int(total_chunks))
+      file_size, pdf_total_pages = merge_chunks(originalname, int(total_chunks), chunk_dir, merged_dir)
       logging.info("File merged successfully")
 
       obj_source_node = sourceNode()
@@ -495,10 +490,11 @@ def upload_file(uri, userName, password, db_name, model, chunk, chunk_number:int
       obj_source_node.file_size = file_size
       obj_source_node.file_source = 'local file'
       obj_source_node.model = model
+      obj_source_node.total_pages = pdf_total_pages
       obj_source_node.created_at = datetime.now()
       graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
       graphDb_data_Access = graphDBdataAccess(graph)
         
       graphDb_data_Access.create_source_node(obj_source_node)
-      return "Source Node created Successfully"
+      return {'file_size': file_size, 'total_pages': pdf_total_pages, 'file_name': originalname, 'message':f"Chunk {chunk_number}/{total_chunks} saved"}
   return f"Chunk {chunk_number}/{total_chunks} saved"
