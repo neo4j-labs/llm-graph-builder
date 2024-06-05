@@ -58,8 +58,8 @@
 }
 
 .contentWithChatBot {
-  width: calc(-425px + 100dvw);
-  height: calc(100dvh - 60px);
+  width: calc(-550px + 100dvw);
+  height: calc(100dvh - 58px);
   padding: 3px;
   display: flex;
   flex-direction: column;
@@ -226,11 +226,6 @@
   line-height: 1.25rem;
   width: max-content;
   height: 30px
-}
-
-.chatBotContainer>div {
-  max-width: 370px;
-  scrollbar-gutter: stable;
 }
 
 .ndl-widget-content>div {

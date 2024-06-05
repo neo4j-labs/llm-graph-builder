@@ -237,7 +237,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
       : isRightExpanded
       ? 'contentWithChatBot'
       : !isLeftExpanded && !isRightExpanded
-      ? 'w-[calc(100%-128px)]'
+      ? 'w-100'
       : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
@@ -320,7 +320,9 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
           }}
         ></FileTable>
         <Flex
-          className='w-full p-2.5 absolute bottom-4 mt-1.5 self-start'
+          className={`${
+            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection='row'
         >
@@ -355,13 +357,6 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
               label='Delete Files'
             >
               Delete Files {selectedfileslength > 0 && `(${selectedfileslength})`}
-            </Button>
-            <Button
-              onClick={() => {
-                openChatBot();
-              }}
-            >
-              Q&A Chat
             </Button>
           </Flex>
         </Flex>

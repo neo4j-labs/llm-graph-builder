@@ -1,24 +1,29 @@
-/* eslint-disable no-confusing-arrow */
-import { useEffect, useRef, useState } from 'react';
-import { Button, Widget, Typography, Avatar, TextInput, TextLink } from '@neo4j-ndl/react';
-import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
+import React, { useEffect, useRef, useState } from 'react';
+import { Button, Widget, Typography, Avatar, TextInput, IconButton, Modal } from '@neo4j-ndl/react';
+import { InformationCircleIconOutline, XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
 import { ChatbotProps, UserCredentials } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { chatBotAPI } from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../context/UsersFiles';
-import { extractPdfFileName } from '../utils/Utils';
+import InfoModal from './InfoModal';
+import clsx from 'clsx';
 
 const Chatbot: React.FC<ChatbotProps> = (props) => {
-  const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, clear } = props;
+  const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen } = props;
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
   const { model } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
-
+  const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
+  const [sourcesModal, setSourcesModal] = useState<Source[]>([]);
+  const [modelModal, setModelModal] = useState<string>('');
+  const [responseTime, setResponseTime] = useState<number>(0);
+  const [chunkModal, setChunkModal] = useState<string[]>([]);
+  const [tokensUsed, setTokensUsed] = useState<number>(0);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
   };
@@ -29,8 +34,17 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       sessionStorage.setItem('session_id', id);
     }
   }, []);
-
-  const simulateTypingEffect = (response: { reply: string; sources?: [string] }, index = 0) => {
+  const simulateTypingEffect = (
+    response: {
+      reply: string;
+      sources?: Source[];
+      model?: string;
+      chunk_ids?: string[];
+      total_tokens?: number;
+      response_time?: number;
+    },
+    index = 0
+  ) => {
     if (index < response.reply.length) {
       const nextIndex = index + 1;
       const currentTypedText = response.reply.substring(0, nextIndex);
@@ -75,7 +89,6 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
     }
   };
   let date = new Date();
-
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     if (!inputMessage.trim()) {
@@ -110,54 +123,10 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   useEffect(() => {
     scrollToBottom();
   }, [listMessages]);
-
   useEffect(() => {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
   }, [listMessages]);
 
-  useEffect(() => {
-    if (clear) {
-      cancel();
-      setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
-    }
-  }, [clear]);
-
-  const handleCopy = (message: string, id: number) => {
-    copy(message);
-    setListMessages((msgs) =>
-      msgs.map((msg) => {
-        if (msg.id === id) {
-          msg.copying = true;
-        }
-        return msg;
-      })
-    );
-    setCopyMessageId(id);
-    setTimeout(() => {
-      setCopyMessageId(null);
-      setListMessages((msgs) =>
-        msgs.map((msg) => {
-          if (msg.id === id) {
-            msg.copying = false;
-          }
-          return msg;
-        })
-      );
-    }, 2000);
-  };
-
-  const handleCancel = (id: number) => {
-    cancel();
-    setListMessages((msgs) => msgs.map((msg) => (msg.id === id ? { ...msg, speaking: false } : msg)));
-  };
-
-  const handleSpeak = (chatMessage: any, id: number) => {
-    speak({ text: chatMessage });
-    setListMessages((msgs) => {
-      const messageWithSpeaking = msgs.find((msg) => msg.speaking);
-      return msgs.map((msg) => (msg.id === id && !messageWithSpeaking ? { ...msg, speaking: true } : msg));
-    });
-  };
 
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
@@ -211,7 +180,15 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                         : ''
                     }`}
                   >
-                    <ReactMarkdown>{chat.message}</ReactMarkdown>
+                    {chat.message.split(/`(.+?)`/).map((part, index) =>
+                      index % 2 === 1 ? (
+                        <span key={index} style={formattedTextStyle}>
+                          {part}
+                        </span>
+                      ) : (
+                        part
+                      )
+                    )}
                   </div>
                   <div className='text-right align-bottom pt-3'>
                     <Typography variant='body-small'>{chat.datetime}</Typography>

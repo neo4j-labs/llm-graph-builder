@@ -1,21 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Dialog, SideNavigation, Tip } from '@neo4j-ndl/react';
-import {
-  ArrowRightIconOutline,
-  ArrowLeftIconOutline,
-  TrashIconOutline,
-  ArrowsPointingOutIconOutline,
-  ChatBubbleOvalLeftEllipsisIconOutline,
-  CloudArrowUpIconSolid,
-} from '@neo4j-ndl/react/icons';
-import {} from '@neo4j-ndl/react/icons';
+import { Dialog, SideNavigation } from '@neo4j-ndl/react';
+import { ArrowRightIconOutline, ArrowLeftIconOutline, TrashIconOutline, ExpandIcon } from '@neo4j-ndl/react/icons';
 import { SideNavProps } from '../../types';
 import Chatbot from '../Chatbot';
 import { createPortal } from 'react-dom';
 import { useMessageContext } from '../../context/UserMessages';
 import { getIsLoading } from '../../utils/Utils';
 import IconsPlacement from '../IconsPlacement';
-import { tooltips } from '../../utils/Constants';
 
 const SideNav: React.FC<SideNavProps> = ({
   position,
@@ -78,55 +69,16 @@ const SideNav: React.FC<SideNavProps> = ({
                   <ArrowRightIconOutline />
                 )
               ) : position === 'left' ? (
-                <>
-                  <Tip allowedPlacements={['right']}>
-                    <Tip.Trigger>
-                      <CloudArrowUpIconSolid />
-                    </Tip.Trigger>
-                    <Tip.Content>{tooltips.sources}</Tip.Content>
-                  </Tip>
-                </>
+                <ArrowRightIconOutline />
               ) : (
-                <>
-                  <Tip allowedPlacements={['left']}>
-                    <Tip.Trigger>
-                      <ChatBubbleOvalLeftEllipsisIconOutline />
-                    </Tip.Trigger>
-                    <Tip.Content>{tooltips.chat}</Tip.Content>
-                  </Tip>
-                </>
+                <ArrowLeftIconOutline />
               )
             }
           />
-
           {position === 'right' && isExpanded && (
             <>
-              <Tip allowedPlacements={['left']}>
-                <SideNavigation.Item
-                  onClick={deleteOnClick}
-                  icon={
-                    <>
-                      <Tip.Trigger>
-                        <TrashIconOutline />
-                      </Tip.Trigger>
-                      <Tip.Content>{tooltips.clearChat}</Tip.Content>
-                    </>
-                  }
-                />
-              </Tip>
-              <Tip allowedPlacements={['left']}>
-                <SideNavigation.Item
-                  onClick={handleExpandClick}
-                  icon={
-                    <>
-                      <Tip.Trigger>
-                        <ArrowsPointingOutIconOutline className='n-size-token-7' />
-                      </Tip.Trigger>
-                      <Tip.Content>{tooltips.maximise}</Tip.Content>
-                    </>
-                  }
-                />
-              </Tip>
+              <SideNavigation.Item icon={<TrashIconOutline className='n-size-full' onClick={deleteOnClick} />} />
+              <SideNavigation.Item icon={<ExpandIcon className='n-size-full' />} onClick={handleExpandClick} />
             </>
           )}
         </SideNavigation.List>

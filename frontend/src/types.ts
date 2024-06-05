@@ -1,6 +1,6 @@
 import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { AxiosResponse } from 'axios';
-import { Dispatch, ReactNode, SetStateAction } from 'react';
+import React, { Dispatch, ReactNode, SetStateAction } from 'react';
 import { OverridableStringUnion } from '@mui/types';
 
 export interface CustomFileBase extends Partial<globalThis.File> {
@@ -177,6 +177,8 @@ export type ChatbotProps = {
   messages: Messages[];
   setMessages: Dispatch<SetStateAction<Messages[]>>;
   isLoading: boolean;
+  clear?: boolean;
+  isFullScreen?: boolean;
 };
 export interface WikipediaModalTypes {
   hideModal: () => void;
@@ -226,3 +228,104 @@ export type alertState = {
   alertType: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined;
   alertMessage: string;
 };
+
+export type Scheme = Record<string, string>;
+export type LabelCount = Record<string, number>;
+interface NodeType extends Partial<Node> {
+  labels?: string[];
+}
+export interface LegendChipProps {
+  scheme: Scheme;
+  title: string;
+  nodes: NodeType[];
+}
+export interface FileContextProviderProps {
+  children: ReactNode;
+}
+export interface labelsAndTypes {
+  labels: string[];
+  relationshipTypes: string[];
+}
+export interface commonserverresponse {
+  status: string;
+  error?: string;
+  message?: string;
+}
+export interface ServerData extends Partial<commonserverresponse> {
+  data: labelsAndTypes[];
+}
+
+export interface SourceListServerData {
+  data: SourceNode[];
+  status: string;
+  error?: string;
+  message?: string;
+}
+
+export interface chatInfoMessage extends Partial<Messages> {
+  sources: Source[];
+  model: string;
+  response_time: number;
+  chunk_ids: string[];
+  total_tokens: number;
+}
+
+export interface eventResponsetypes {
+  fileName: string;
+  status: string;
+  processingTime: number;
+  nodeCount: number;
+  relationshipCount: number;
+  model: string;
+  total_chunks: number | null;
+  total_pages: number | null;
+  fileSize: number;
+  processed_chunk?: number;
+}
+export type Nullable<Type> = Type | null;
+
+export type LabelColors = 'default' | 'success' | 'info' | 'warning' | 'danger' | undefined;
+
+export interface HoverableLinkProps {
+  url: string;
+  children: React.ReactNode;
+}
+
+export interface ChunkEntitiesProps {
+  userCredentials: UserCredentials | null;
+  chunkIds: string[];
+}
+
+export interface CHATINFO_RESPONSE {
+  status: string;
+  message: string;
+  error?: string;
+  node: Node[];
+  relationships: Relationship[];
+  data?: any;
+}
+
+export interface ChatInfo_APIResponse extends Partial<AxiosResponse> {
+  data: CHATINFO_RESPONSE;
+}
+
+export interface nonoautherror extends NonOAuthError {
+  message?: string;
+}
+
+export type Entity = {
+  element_id: string;
+  labels: string[];
+  properties: {
+    id: string;
+  };
+};
+
+export type GroupedEntity = {
+  texts: Set<string>;
+  color: string;
+};
+
+export interface MessagesContextProviderProps {
+  children: ReactNode;
+}

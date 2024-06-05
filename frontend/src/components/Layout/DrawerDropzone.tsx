@@ -68,7 +68,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   return (
     <div className='flex min-h-[calc(-58px+100vh)] relative'>
       <Drawer expanded={isExpanded} position='left' type='push' closeable={false}>
-        <Drawer.Body className={`!overflow-hidden !w-[294px]`} style={{ height: 'intial' }}>
+        <Drawer.Body className='!overflow-hidden' style={{ height: 'intial' }}>
           {alertState.showAlert && (
             <CustomAlert
               severity={alertState.alertType}

@@ -149,3 +149,58 @@ export const getIcon = (node: any) => {
   }
   return undefined;
 };
+export function extractPdfFileName(url: string): string {
+  const splitUrl = url.split('/');
+  const encodedFileName = splitUrl[splitUrl.length - 1].split('?')[0];
+  const decodedFileName = decodeURIComponent(encodedFileName);
+  if (decodedFileName.includes('/')) {
+    const splitedstr = decodedFileName.split('/');
+    return splitedstr[splitedstr.length - 1];
+  }
+  return decodedFileName;
+}
+
+export const processGraphData = (neoNodes: Node[], neoRels: Relationship[]) => {
+  const schemeVal: Scheme = {};
+  let iterator = 0;
+  const labels: string[] = neoNodes.map((f: any) => f.labels);
+  labels.forEach((label: any) => {
+    if (schemeVal[label] == undefined) {
+      schemeVal[label] = calcWordColor(label[0]);
+      iterator += 1;
+    }
+  });
+  const newNodes: Node[] = neoNodes.map((g: any) => {
+    return {
+      id: g.element_id,
+      size: getSize(g),
+      captionAlign: 'bottom',
+      iconAlign: 'bottom',
+      caption: getNodeCaption(g),
+      color: schemeVal[g.labels[0]],
+      icon: getIcon(g),
+      labels: g.labels,
+    };
+  });
+  const finalNodes = newNodes.flat();
+  const newRels: Relationship[] = neoRels.map((relations: any) => {
+    return {
+      id: relations.element_id,
+      from: relations.start_node_element_id,
+      to: relations.end_node_element_id,
+      caption: relations.type,
+    };
+  });
+  const finalRels = newRels.flat();
+  return { finalNodes, finalRels, schemeVal };
+};
+
+export const getDateTime = () => {
+  const date = new Date();
+  const formattedDateTime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+  return formattedDateTime;
+};
+
+export const getIsLoading = (messages: Messages[]) => {
+  return messages.some((msg) => msg.isTyping || msg.isLoading);
+};
