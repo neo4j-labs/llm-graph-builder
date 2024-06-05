@@ -18,7 +18,7 @@ import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
 
-const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
+const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
@@ -260,13 +260,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   };
 
   const classNameCheck =
-    isExpanded && showChatBot
-      ? 'contentWithBothDrawers'
-      : isExpanded
+    isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
-      : showChatBot
+      : isRightExpanded
       ? 'contentWithChatBot'
-      : 'contentWithNoExpansion';
+      : !isLeftExpanded && !isRightExpanded
+      ? 'w-100'
+      : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -391,7 +391,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           )}
         </Flex>
         <FileTable
-          isExpanded={isExpanded}
+          isExpanded={isLeftExpanded && isRightExpanded}
           connectionStatus={connectionStatus}
           setConnectionStatus={setConnectionStatus}
           onInspect={(name) => {
@@ -401,7 +401,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           }}
         ></FileTable>
         <Flex
-          className='w-full p-2.5 absolute bottom-4 mt-1.5 self-start'
+          className={`${
+            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection='row'
         >
@@ -432,13 +434,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               disabled={!selectedfileslength}
             >
               Delete Files {selectedfileslength > 0 && `(${selectedfileslength})`}
-            </Button>
-            <Button
-              onClick={() => {
-                openChatBot();
-              }}
-            >
-              Q&A Chat
             </Button>
           </Flex>
         </Flex>

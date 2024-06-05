@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button, Widget, Typography, Avatar, TextInput, IconButton, Modal } from '@neo4j-ndl/react';
 import { InformationCircleIconOutline, XMarkIconOutline } from '@neo4j-ndl/react/icons';
-import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
 import { ChatbotProps, Source, UserCredentials } from '../types';
 import { useCredentials } from '../context/UserCredentials';
@@ -9,9 +8,10 @@ import { chatBotAPI } from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../context/UsersFiles';
 import InfoModal from './InfoModal';
+import clsx from 'clsx';
 
-export default function Chatbot(props: ChatbotProps) {
-  const { messages: listMessages, setMessages: setListMessages, isLoading } = props;
+const Chatbot: React.FC<ChatbotProps> = (props) => {
+  const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen } = props;
   const [inputMessage, setInputMessage] = useState('');
   const formattedTextStyle = { color: 'rgb(var(--theme-palette-discovery-bg-strong))' };
   const [loading, setLoading] = useState<boolean>(isLoading);
@@ -25,11 +25,9 @@ export default function Chatbot(props: ChatbotProps) {
   const [responseTime, setResponseTime] = useState<number>(0);
   const [chunkModal, setChunkModal] = useState<string[]>([]);
   const [tokensUsed, setTokensUsed] = useState<number>(0);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
   };
-
   useEffect(() => {
     if (!sessionStorage.getItem('session_id')) {
       const id = uuidv4();
@@ -37,7 +35,6 @@ export default function Chatbot(props: ChatbotProps) {
       sessionStorage.setItem('session_id', id);
     }
   }, []);
-
   const simulateTypingEffect = (
     response: {
       reply: string;
@@ -102,9 +99,7 @@ export default function Chatbot(props: ChatbotProps) {
       setListMessages((msgs) => msgs.map((msg) => (msg.isTyping ? { ...msg, isTyping: false } : msg)));
     }
   };
-
   let date = new Date();
-
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     if (!inputMessage.trim()) {
@@ -144,29 +139,30 @@ export default function Chatbot(props: ChatbotProps) {
       simulateTypingEffect({ reply: chatbotReply });
     }
   };
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-
   useEffect(() => {
     scrollToBottom();
   }, [listMessages]);
-
   useEffect(() => {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
   }, [listMessages]);
 
+
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
-      <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3'>
-        <Widget className='n-bg-palette-neutral-bg-weak' header='' isElevated={false}>
+      <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3 pr-3'>
+        <Widget className='n-bg-palette-neutral-bg-weak w-full' header='' isElevated={false}>
           <div className='flex flex-col gap-4 gap-y-4'>
             {listMessages.map((chat, index) => (
               <div
                 ref={messagesEndRef}
                 key={chat.id}
-                className={`flex gap-2.5 ${chat.user === 'chatbot' ? 'flex-row' : 'flex-row-reverse'} `}
+                className={clsx(`flex gap-2.5`, {
+                  'flex-row': chat.user === 'chatbot',
+                  'flex-row-reverse': chat.user !== 'chatbot',
+                })}
               >
                 <div className='w-8 h-8'>
                   {chat.user === 'chatbot' ? (
@@ -187,7 +183,6 @@ export default function Chatbot(props: ChatbotProps) {
                       name='KM'
                       shape='square'
                       size='x-large'
-                      source={ChatBotUserAvatar}
                       status='online'
                       type='image'
                     />
@@ -196,11 +191,9 @@ export default function Chatbot(props: ChatbotProps) {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${
-                    chat.user === 'chatbot'
-                      ? 'n-bg-palette-neutral-bg-strong max-w-[315px]'
-                      : 'n-bg-palette-primary-bg-weak max-w-[305px]'
-                  }`}
+                  className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
+                    chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                  } `}
                 >
                   <div
                     className={`${
@@ -210,13 +203,13 @@ export default function Chatbot(props: ChatbotProps) {
                     }`}
                   >
                     {chat.message.split(/`(.+?)`/).map((part, index) =>
-                      (index % 2 === 1 ? (
+                      index % 2 === 1 ? (
                         <span key={index} style={formattedTextStyle}>
                           {part}
                         </span>
                       ) : (
                         part
-                      ))
+                      )
                     )}
                   </div>
                   <div>
@@ -295,4 +288,6 @@ export default function Chatbot(props: ChatbotProps) {
       </Modal>
     </div>
   );
-}
+};
+
+export default Chatbot;
