@@ -361,7 +361,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   google_project_id: item?.gcsProjectId,
                   language: item.language ?? '',
                   processingProgress:
-                    item.processed_chunk != undefined && item.total_chunks != undefined
+                    item.processed_chunk != undefined && item.total_chunks != undefined && !isNaN(Math.floor((item.processed_chunk / item.total_chunks) * 100))
                       ? Math.floor((item.processed_chunk / item.total_chunks) * 100)
                       : undefined,
                   total_pages: item.total_pages ?? 0,
@@ -376,7 +376,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
               item.status === 'Processing' &&
               item.fileName != undefined &&
               userCredentials &&
-              userCredentials.database&&item.total_pages
+              userCredentials.database && item.total_pages
             ) {
               if (item?.total_pages < 20) {
                 subscribe(
