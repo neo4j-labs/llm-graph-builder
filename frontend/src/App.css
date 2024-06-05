@@ -5,7 +5,7 @@
 }
 
 .fileTableWithExpansion {
-  width: calc(-400px + 100dvw) !important;
+  width: calc(-640px + 100dvw) !important;
   height: calc(-322px + 100dvh);
   border: 1px solid #d1d5db;
 }
@@ -25,8 +25,19 @@
 }
 
 .contentWithExpansion {
-  width: calc(-360px + 100dvw);
-  height: calc(100dvh - 60px);
+  width: calc(-800px + 100dvw);
+  height: calc(100dvh - 58px);
+  padding: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  position: relative;
+}
+
+.contentWithOneExpansion {
+  width: calc(-550px + 100dvw);
+  height: calc(100dvh - 58px);
   padding: 3px;
   display: flex;
   flex-direction: column;
@@ -37,7 +48,7 @@
 
 .contentWithBothDrawers {
   width: calc(-786px + 100dvw);
-  height: calc(100dvh - 60px);
+  height: calc(100dvh - 58px);
   padding: 3px;
   display: flex;
   flex-direction: column;
@@ -47,8 +58,8 @@
 }
 
 .contentWithChatBot {
-  width: calc(-475px + 100dvw);
-  height: calc(100dvh - 60px);
+  width: calc(-550px + 100dvw);
+  height: calc(100dvh - 58px);
   padding: 3px;
   display: flex;
   flex-direction: column;
@@ -57,9 +68,9 @@
   position: relative;
 }
 
-.contentWithNoExpansion {
-  width: calc(100% - 64px);
-  height: calc(100dvh - 60px);
+.contentWithDropzoneExpansion {
+  width: calc(100% - 422px);
+  height: calc(100dvh - 58px);
   padding: 3px;
   display: flex;
   flex-direction: column;
@@ -159,7 +170,9 @@
 .chatBotContainer {
   scrollbar-width: thin;
   overflow-x: hidden;
+  scrollbar-gutter: stable;
 }
+
 
 .connectionmodal__input {
   width: 48.5%;
@@ -220,11 +233,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
-}
-
-.chatBotContainer>div {
-  max-width: 370px;
-  scrollbar-gutter: stable;
 }
 
 .ndl-widget-content>div {
