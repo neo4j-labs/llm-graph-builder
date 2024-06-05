@@ -5,7 +5,7 @@ import ButtonWithToolTip from './ButtonWithToolTip';
 
 interface IconProps {
   closeChatBot: () => void;
-  deleteOnClick: () => void;
+  deleteOnClick?: () => void;
   messages: Messages[];
 }
 
