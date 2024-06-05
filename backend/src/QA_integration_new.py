@@ -44,13 +44,13 @@ RETURN collect(distinct r) as rels
 }
 WITH d, collect(distinct chunk) as chunks, avg(score) as score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels
 WITH d, score,
-[c in chunks | c.text] as texts,  [c in chunks | c.id] as chunkIds,  [c in chunks | c.page_number] as page_numbers,
+[c in chunks | c.text] as texts,  [c in chunks | c.id] as chunkIds, [c in chunks | c.start_time] as start_time, [c in chunks | c.page_number] as page_numbers, [c in chunks | c.start_time] as start_times, 
 [r in rels | coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ startNode(r).id + " "+ type(r) + " " + coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + endNode(r).id] as entities
 WITH d, score,
 apoc.text.join(texts,"\n----\n") +
 apoc.text.join(entities,"\n")
-as text, entities, chunkIds, page_numbers
-RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkIds:chunkIds, page_numbers:page_numbers} as metadata
+as text, entities, chunkIds, page_numbers ,start_times
+RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkIds:chunkIds, page_numbers:page_numbers,start_times:start_times} as metadata
 """
 
 SYSTEM_TEMPLATE = """
@@ -87,44 +87,6 @@ AI Response: "PyCaret simplifies the process of building and deploying machine l
 
 Note: This system does not generate answers based solely on internal knowledge. It answers from the information provided in the user's current and previous inputs, and from explicitly referenced external sources.
 """
-
-# def get_llm(model: str,max_tokens=CHAT_MAX_TOKENS) -> Any:
-#     """Retrieve the specified language model based on the model name."""
-
-#     model_versions = {
-#         "OpenAI GPT 3.5": "gpt-3.5-turbo-16k",
-#         "Gemini Pro": "gemini-1.0-pro-001",
-#         "Gemini 1.5 Pro": "gemini-1.5-pro-preview-0409",
-#         "OpenAI GPT 4": "gpt-4-0125-preview",
-#         "Diffbot" : "gpt-4-0125-preview",
-#         "OpenAI GPT 4o":"gpt-4o"
-#          }
-
-#     if model in model_versions:
-#         model_version = model_versions[model]
-#         logging.info(f"Chat Model: {model}, Model Version: {model_version}")
-
-#         if "Gemini" in model:
-#             llm = ChatVertexAI(
-#                 model_name=model_version,
-#                 convert_system_message_to_human=True,
-#                 max_tokens=max_tokens,
-#                 temperature=0,
-#                 safety_settings={
-#                     HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
-#                     HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-#                     HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-#                     HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-#                     HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE
-#                 }
-#             )
-#         else:
-#             llm = ChatOpenAI(model=model_version, temperature=0,max_tokens=max_tokens)
-#         return llm,model_version
-
-#     else:
-#         logging.error(f"Unsupported model: {model}")
-#         return None,None
 
 def get_neo4j_retriever(graph, index_name="vector", search_k=SEARCH_KWARG_K, score_threshold=SEARCH_KWARG_SCORE_THRESHOLD):
     try:
@@ -195,17 +157,23 @@ def create_neo4j_chat_message_history(graph, session_id):
 
 def format_documents(documents):
     sorted_documents = sorted(documents, key=lambda doc: doc.state["query_similarity_score"], reverse=True)
-    sorted_documents = sorted_documents[:5] if len(sorted_documents) > 5 else sorted_documents
+    sorted_documents = sorted_documents[:7]
+
     formatted_docs = []
     sources = set()
-    for i,doc in enumerate(sorted_documents):
-        print("here")
-        doc_start = f"Document start\n"
-        formatted_doc = f"Content: {doc.page_content}"
-        doc_end = f"\nDocument end\n"
-        sources.add(doc.metadata['source'])
-        final_formatted_doc = doc_start + formatted_doc + doc_end
-        formatted_docs.append(final_formatted_doc)
+
+    for doc in sorted_documents:
+        source = doc.metadata['source']
+        sources.add(source)
+
+        formatted_doc = (
+            "Document start\n"
+            f"This Document belongs to the source {source}\n"
+            f"Content: {doc.page_content}\n"
+            "Document end\n"
+        )
+        formatted_docs.append(formatted_doc)
+
     return "\n\n".join(formatted_docs), sources
 
 def get_rag_chain(llm,system_template=SYSTEM_TEMPLATE):
@@ -223,34 +191,39 @@ def get_rag_chain(llm,system_template=SYSTEM_TEMPLATE):
 
     return question_answering_chain
 
+def update_timestamps_with_min_seconds(result_dict):
+    def time_to_seconds(time_str):
+        h, m, s = map(int, time_str.split(':'))
+        return h * 3600 + m * 60 + s
+    
+    for source in result_dict.get('sources', []):
+        time_stamps = source.get('start_time', [])
+        if time_stamps:
+            seconds_list = [time_to_seconds(ts) for ts in time_stamps]
+            min_seconds = min(seconds_list)
+            source['start_time'] = min_seconds
+    
+    return result_dict
+
 def get_sources_and_chunks(sources_used, docs):
-    # sources_pattern = r"\[Sources: ([^\]]+)\]"
-    # sources = re.search(sources_pattern, response)
-    # content = re.sub(sources_pattern, '', response)
-    # sources = sources.group(1).split(', ') if sources else []
-
-    # source_pattern = r"\[Source: ([^\]]+)\]"
-    # source = re.search(source_pattern, response)
-    # content = re.sub(source_pattern, '', content)
-    # source = source.group(1).split(', ') if source else []
-    # sources.extend(source)
-
     docs_metadata = dict()
     for doc in docs:
         source = doc.metadata["source"]
         chunkids = doc.metadata["chunkIds"]
         page_numbers = doc.metadata["page_numbers"]
-        docs_metadata[source] = [chunkids,page_numbers]
+        start_times = doc.metadata["start_times"]
+        docs_metadata[source] = [chunkids,page_numbers,start_times]
     chunkids = list()
     output_sources = list()
     for source in sources_used:
         if source in set(docs_metadata.keys()):
             chunkids.extend(docs_metadata[source][0])
             page_numbers = docs_metadata[source][1]
+            start_times = docs_metadata[source][2]
             current_source = {
                 "source_name":source,
                 "page_numbers":page_numbers if len(page_numbers) > 1 and page_numbers[0] is not None else [],
-                "time_stamps":list()
+                "start_time": start_times if len(start_times) > 1 and start_times[0] is not None else [],
             }
             output_sources.append(current_source)
 
@@ -258,6 +231,8 @@ def get_sources_and_chunks(sources_used, docs):
         'sources': output_sources,
         'chunkIds': chunkids
     }
+
+    result = update_timestamps_with_min_seconds(result)
     return result
 
 def summarize_messages(llm,history,stored_messages):

@@ -615,7 +615,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
             <input type='checkbox' onChange={handleChange} />
             <label>Show files with status New </label>
           </div>
-          <div style={{ width: 'calc(100% - 64px)' }}>
+          <div className={`${isExpanded ? 'w-[calc(100%-64px)]' : 'mx-auto w-[calc(100%-100px)]'}`}>
             <DataGrid
               isResizable={true}
               tableInstance={table}

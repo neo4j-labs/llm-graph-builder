@@ -1,6 +1,6 @@
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import type { Node, Relationship } from '@neo4j-nvl/base';
-import { Scheme } from '../types';
+import { Messages, Scheme } from '../types';
 
 // Get the Url
 export const url = () => {
@@ -146,4 +146,14 @@ export const processGraphData = (neoNodes: Node[], neoRels: Relationship[]) => {
   });
   const finalRels = newRels.flat();
   return { finalNodes, finalRels, schemeVal };
+};
+
+export const getDateTime = () => {
+  const date = new Date();
+  const formattedDateTime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+  return formattedDateTime;
+};
+
+export const getIsLoading = (messages: Messages[]) => {
+  return messages.some((msg) => msg.isTyping || msg.isLoading);
 };

@@ -1,6 +1,6 @@
 import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { AxiosResponse } from 'axios';
-import { Dispatch, ReactNode, SetStateAction } from 'react';
+import React, { Dispatch, ReactNode, SetStateAction } from 'react';
 import { OverridableStringUnion } from '@mui/types';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { NonOAuthError } from '@react-oauth/google';
@@ -116,9 +116,15 @@ export interface SourceNode {
 }
 
 export interface SideNavProps {
-  openDrawer: () => void;
-  closeDrawer: () => void;
   isExpanded: boolean;
+  position: 'left' | 'right';
+  toggleDrawer: () => void;
+  deleteOnClick?: () => void;
+  setShowDrawerChatbot?: Dispatch<SetStateAction<boolean>>;
+  showDrawerChatbot?: boolean;
+  setIsRightExpanded?: Dispatch<SetStateAction<boolean>>;
+  messages?: Messages[];
+  clearHistoryData?: boolean;
 }
 
 export interface DrawerProps {
@@ -126,7 +132,8 @@ export interface DrawerProps {
 }
 
 export interface ContentProps {
-  isExpanded: boolean;
+  isLeftExpanded: boolean;
+  isRightExpanded: boolean;
   showChatBot: boolean;
   openChatBot: () => void;
 }
@@ -180,7 +187,8 @@ export type ChatbotProps = {
   messages: Messages[];
   setMessages: Dispatch<SetStateAction<Messages[]>>;
   isLoading: boolean;
-  clear: boolean;
+  clear?: boolean;
+  isFullScreen?: boolean;
 };
 export interface WikipediaModalTypes {
   hideModal: () => void;
@@ -362,6 +370,7 @@ export type GroupedEntity = {
   texts: Set<string>;
   color: string;
 };
+
 export interface uploadData {
   file_size: number;
   total_pages: number;
@@ -375,4 +384,8 @@ export interface LargefilesProps {
   largeFiles: CustomFile[];
   handleToggle: (ischecked: boolean, id: string) => void;
   checked: string[];
+}
+
+export interface MessagesContextProviderProps {
+  children: ReactNode;
 }
