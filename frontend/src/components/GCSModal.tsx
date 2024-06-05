@@ -84,7 +84,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               gcsBucket: item.gcsBucketName,
               gcsBucketFolder: item.gcsBucketFolder,
               google_project_id: item.gcsProjectId,
-              total_pages: 1,
+              total_pages: 'NA',
               id: uuidv4(),
               ...defaultValues,
             });

@@ -16,7 +16,7 @@ export default function useServerSideEvent(
       total_chunks,
       model,
       processed_chunk = 0,
-      total_pages = 0
+      total_pages = 0,
     } = eventSourceRes;
     const alertShownStatus = JSON.parse(localStorage.getItem('alertShown') || 'null');
 

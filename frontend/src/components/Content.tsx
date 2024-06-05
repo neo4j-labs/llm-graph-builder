@@ -18,6 +18,7 @@ import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
 import ConfirmationDialog from './ConfirmationDialog';
+import { chunkSize } from '../utils/Constants';
 
 const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -186,7 +187,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       if (apiResponse?.status === 'Failed') {
         let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
         throw new Error(JSON.stringify(errorobj));
-      } else if (fileItem.total_pages != undefined && fileItem.total_pages < 20) {
+      } else if (fileItem.total_pages != undefined && (fileItem.total_pages === 'NA' || fileItem.total_pages < 20)) {
         setFilesData((prevfiles) => {
           return prevfiles.map((curfile) => {
             if (curfile.name == apiResponse?.data?.fileName) {
@@ -456,9 +457,20 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                 if (selectedRows.length) {
                   let selectedLargeFiles: CustomFile[] = [];
                   selectedRows.forEach((f) => {
-                    const parsedData = JSON.parse(f);
-                    if (parsedData.total_pages > 20 && parsedData.status === 'New') {
-                      selectedLargeFiles.push(parsedData);
+                    const parsedData: CustomFile = JSON.parse(f);
+                    if (parsedData.fileSource === 'local') {
+                      if (
+                        typeof parsedData.total_pages === 'number' &&
+                        parsedData.status === 'New' &&
+                        parsedData.total_pages > 20
+                      ) {
+                        selectedLargeFiles.push(parsedData);
+                      }
+                    } else if (parsedData.fileSource === 's3 bucket' || parsedData.fileSource === 'gcs bucket') {
+                      // @ts-ignore
+                      if (parsedData.size > chunkSize) {
+                        selectedLargeFiles.push(parsedData);
+                      }
                     }
                   });
                   // @ts-ignore
@@ -469,10 +481,16 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                     handleGenerateGraph(true, filesData);
                   }
                 } else if (filesData.length) {
-                  // @ts-ignore
                   const largefiles = filesData.filter((f) => {
-                    if (f.total_pages > 20 && f.status === 'New') {
-                      return true;
+                    if (f.fileSource === 'local') {
+                      if (typeof f.total_pages === 'number' && f.status === 'New' && f.total_pages > 20) {
+                        return true;
+                      }
+                    } else if (f.fileSource === 's3 bucket' || f.fileSource === 'gcs bucket') {
+                      // @ts-ignore
+                      if (f.size > chunkSize) {
+                        return true;
+                      }
                     }
                     return false;
                   });

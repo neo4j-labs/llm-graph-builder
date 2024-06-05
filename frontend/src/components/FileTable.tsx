@@ -120,8 +120,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   info.row.original?.fileSource === 's3 bucket'
                     ? info.row.original?.source_url
                     : info.row.original?.fileSource === 'youtube'
-                      ? info.row.original?.source_url
-                      : info.getValue()
+                    ? info.row.original?.source_url
+                    : info.getValue()
                 }
               >
                 {info.getValue()}
@@ -342,14 +342,14 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                     item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                       ? item.status
                       : item.fileSource === 'local file'
-                        ? item.status
-                        : item.status === 'Completed' || item.status === 'Failed'
-                          ? item.status
-                          : item.fileSource == 'Wikipedia' ||
-                            item.fileSource == 'youtube' ||
-                            item.fileSource == 'gcs bucket'
-                            ? item.status
-                            : 'N/A',
+                      ? item.status
+                      : item.status === 'Completed' || item.status === 'Failed'
+                      ? item.status
+                      : item.fileSource == 'Wikipedia' ||
+                        item.fileSource == 'youtube' ||
+                        item.fileSource == 'gcs bucket'
+                      ? item.status
+                      : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
                   source_url: item.url != 'None' && item?.url != '' ? item.url : '',
@@ -361,7 +361,9 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   google_project_id: item?.gcsProjectId,
                   language: item.language ?? '',
                   processingProgress:
-                    item.processed_chunk != undefined && item.total_chunks != undefined && !isNaN(Math.floor((item.processed_chunk / item.total_chunks) * 100))
+                    item.processed_chunk != undefined &&
+                    item.total_chunks != undefined &&
+                    !isNaN(Math.floor((item.processed_chunk / item.total_chunks) * 100))
                       ? Math.floor((item.processed_chunk / item.total_chunks) * 100)
                       : undefined,
                   total_pages: item.total_pages ?? 0,
@@ -376,7 +378,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
               item.status === 'Processing' &&
               item.fileName != undefined &&
               userCredentials &&
-              userCredentials.database && item.total_pages
+              userCredentials.database &&
+              item.total_pages
             ) {
               if (item?.total_pages < 20) {
                 subscribe(

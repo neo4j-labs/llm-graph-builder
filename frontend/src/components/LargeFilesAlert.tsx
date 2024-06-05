@@ -34,7 +34,10 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
           </Typography>
           <List className='max-h-80 overflow-y-auto'>
             {largeFiles.map((f, i) => {
-              const minutes = Math.floor((timeperpage * f.total_pages) / 60);
+              let minutes = undefined;
+              if (typeof f.total_pages === 'number') {
+                minutes = Math.floor((timeperpage * f.total_pages) / 60);
+              }
               return (
                 <ListItem key={i} disablePadding>
                   <ListItemButton role={undefined} dense>
@@ -63,10 +66,14 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
                       primary={
                         <Flex flexDirection='row'>
                           <span>
-                            {f.name} - {Math.floor((f?.size as number) / 1000)?.toFixed(2)}KB -
-                            {minutes === 0 ? ` ${timeperpage * f?.total_pages} Sec ` : ` ${minutes} Min`}
+                            {f.name} - {Math.floor((f?.size as number) / 1000)?.toFixed(2)}KB
+                            {f.fileSource === 'local' && minutes === 0 && typeof f.total_pages === 'number'
+                              ? `- ${timeperpage * f?.total_pages} Sec `
+                              : f.fileSource === 'local'
+                              ? `- ${minutes} Min`
+                              : ''}
                           </span>
-                          {f.total_pages > 20 && (
+                          {typeof f.total_pages === 'number' && f.total_pages > 20 && (
                             <span>
                               <AlertIcon />
                             </span>

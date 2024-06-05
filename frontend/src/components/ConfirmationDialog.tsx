@@ -42,7 +42,6 @@ export default function ConfirmationDialog({
       });
     } else {
       const currentIndex = checked.findIndex((v) => v === id);
-      console.log({ currentIndex });
       newChecked.splice(currentIndex, 1);
       setRowSelection((prev) => {
         const copiedobj = { ...prev };
