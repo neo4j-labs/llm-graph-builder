@@ -314,7 +314,7 @@ export interface eventResponsetypes {
   relationshipCount: number;
   model: string;
   total_chunks: number | null;
-  total_pages: number | null;
+  total_pages: number;
   fileSize: number;
   processed_chunk?: number;
 }
