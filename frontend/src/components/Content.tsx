@@ -186,7 +186,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       if (apiResponse?.status === 'Failed') {
         let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
         throw new Error(JSON.stringify(errorobj));
-      } else if (fileItem.size != undefined && fileItem.size < 10000000) {
+      } else if (fileItem.total_pages != undefined && fileItem.total_pages < 20) {
         setFilesData((prevfiles) => {
           return prevfiles.map((curfile) => {
             if (curfile.name == apiResponse?.data?.fileName) {
@@ -483,7 +483,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
                     accu[key] = true;
                     return accu;
                   }, {});
-                  console.log(stringified);
                   setRowSelection(stringified);
                   if (largefiles.length) {
                     setshowConfirmationModal(true);

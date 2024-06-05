@@ -376,9 +376,9 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
               item.status === 'Processing' &&
               item.fileName != undefined &&
               userCredentials &&
-              userCredentials.database
+              userCredentials.database&&item.total_pages
             ) {
-              if (item?.fileSize < 10000000) {
+              if (item?.total_pages < 20) {
                 subscribe(
                   item.fileName,
                   userCredentials?.uri,
@@ -527,7 +527,6 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     const { file_name } = i;
     const { fileName, nodeCount = 0, relationshipCount = 0, status, processed_chunk = 0, total_chunks } = file_name;
     if (fileName && total_chunks) {
-      console.log({ processed_chunk, total_chunks, percentage: Math.floor((processed_chunk / total_chunks) * 100) });
       setFilesData((prevfiles) =>
         prevfiles.map((curfile) => {
           if (curfile.name == fileName) {
