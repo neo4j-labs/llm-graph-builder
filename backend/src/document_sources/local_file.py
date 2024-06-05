@@ -2,7 +2,11 @@ import logging
 import shutil
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from langchain_community.document_loaders import TextLoader, PyPDFLoader
+from langchain_community.document_loaders import (
+    TextLoader,
+    PyPDFLoader,
+    UnstructuredMarkdownLoader,
+)
 
 # def get_documents_from_file_by_bytes(file):
 #     file_name = file.filename
@@ -28,6 +32,9 @@ def get_documents_from_file_by_path(file_path, file_name):
         elif file_extension == ".txt":
             loader = TextLoader(str(file_path), encoding="utf-8")
             pages = loader.load_and_split()
+        elif file_extension == ".md":
+            loader = UnstructuredMarkdownLoader(str(file_path))
+            pages = loader.load()
         else:
             logging.info(f"Unsupported file type: {file_extension}")
             raise Exception(f"Unsupported file type: {file_extension}")

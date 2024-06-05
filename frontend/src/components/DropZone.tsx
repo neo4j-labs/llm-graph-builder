@@ -211,11 +211,12 @@ const DropZone: FunctionComponent = () => {
         loadingComponent={isLoading && <Loader />}
         isTesting={true}
         className='!bg-none'
-        supportedFilesDescription={'Supports: PDF and TXT Files'}
+        supportedFilesDescription={'Supports: PDF, MD and TXT Files'}
         dropZoneOptions={{
           accept: { 
             'application/pdf': ['.pdf'], 
             'text/plain': ['.txt'],
+            'text/markdown': ['.md'],
           },
           onDrop: (f: Partial<globalThis.File>[]) => {
             onDropHandler(f);
