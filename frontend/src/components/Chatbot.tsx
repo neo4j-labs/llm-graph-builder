@@ -127,7 +127,6 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
   }, [listMessages]);
 
-
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
       <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3 pr-3'>
@@ -181,13 +180,13 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                     }`}
                   >
                     {chat.message.split(/`(.+?)`/).map((part, index) =>
-                      index % 2 === 1 ? (
+                      (index % 2 === 1 ? (
                         <span key={index} style={formattedTextStyle}>
                           {part}
                         </span>
                       ) : (
                         part
-                      )
+                      ))
                     )}
                   </div>
                   <div className='text-right align-bottom pt-3'>

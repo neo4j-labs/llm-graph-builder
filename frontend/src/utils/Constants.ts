@@ -25,24 +25,10 @@ export const docChunkEntities = `+[chunks]
 + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
 //chunks with entities
 + collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
-
-export const colors = [
-  '#588c7e',
-  '#f2e394',
-  '#f2ae72',
-  '#d96459',
-  '#5b9aa0',
-  '#d6d4e0',
-  '#b8a9c9',
-  '#622569',
-  '#ddd5af',
-  '#d9ad7c',
-  '#a2836e',
-  '#674d3c',
-  '#d7b69f',
-  '#00ffff',
-  '##8eb9ff',
-];
+export const APP_SOURCES =
+  process.env.REACT_APP_SOURCES !== ''
+    ? process.env.REACT_APP_SOURCES?.split(',') || []
+    : ['gcs', 's3', 'local', 'wiki', 'youtube'];
 export const llms =
   process.env?.LLM_MODELS?.trim() != ''
     ? process.env.LLM_MODELS?.split(',')
