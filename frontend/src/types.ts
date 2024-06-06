@@ -389,3 +389,14 @@ export interface LargefilesProps {
 export interface MessagesContextProviderProps {
   children: ReactNode;
 }
+
+export interface Chunk {
+  id: string;
+  position: number;
+  text: string;
+  fileName: string;
+  length: number;
+  embedding: string | null;
+  page_number: number;
+  start_time: string;
+}

@@ -6,7 +6,7 @@ import wikipedialogo from '../assets/images/Wikipedia-logo-v2.svg';
 import youtubelogo from '../assets/images/youtube.png';
 import gcslogo from '../assets/images/gcs.webp';
 import s3logo from '../assets/images/s3logo.png';
-import { Entity, GroupedEntity, UserCredentials, chatInfoMessage } from '../types';
+import { Chunk, Entity, GroupedEntity, UserCredentials, chatInfoMessage } from '../types';
 import { useEffect, useMemo, useState } from 'react';
 import HoverableLink from './HoverableLink';
 import GraphViewButton from './GraphViewButton';
@@ -14,16 +14,6 @@ import { chunkEntitiesAPI } from '../services/ChunkEntitiesInfo';
 import { useCredentials } from '../context/UserCredentials';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { calcWordColor } from '@neo4j-devtools/word-color';
-
-interface Chunk {
-  id: string;
-  position: number;
-  text: string;
-  fileName: string;
-  length: number;
-  embedding: string | null;
-  page_number: number;
-}
 
 const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, response_time, chunk_ids }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
@@ -240,6 +230,10 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                   {chunk.page_number ? (
                     <Typography variant='h6' className='italic'>
                       - Page {chunk.page_number}
+                    </Typography>
+                  ) : chunk.start_time ? (
+                    <Typography variant='h6' className='italic'>
+                      - Time {chunk.start_time}
                     </Typography>
                   ) : (
                     <></>
