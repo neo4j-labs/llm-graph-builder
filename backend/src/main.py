@@ -232,7 +232,7 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
       else:
         text = text.replace(j, '')
     pages[i]=Document(page_content=str(text), metadata=pages[i].metadata)
-  create_chunks_obj = CreateChunksofDocument(pages, graph, file_name)
+  create_chunks_obj = CreateChunksofDocument(pages, graph)
   chunks = create_chunks_obj.split_file_into_chunks()
   
   if result[0]['Status'] != 'Processing':      
