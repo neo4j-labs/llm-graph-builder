@@ -25,7 +25,7 @@
 }
 
 .contentWithExpansion {
-  width: calc(-800px + 100dvw);
+  width: calc(-890px + 100dvw);
   height: calc(100dvh - 58px);
   padding: 3px;
   display: flex;
