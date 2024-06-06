@@ -67,9 +67,12 @@ source_url= <s3 bucket url or youtube url> ,
 aws_access_key_id= AWS access key,
 aws_secret_access_key= AWS secret key,
 wiki_query= Wikipedia query sources,
+gcs_project_id= GCS project id,
 gcs_bucket_name= GCS bucket name,
 gcs_bucket_folder= GCS bucket folder,
-source_type= s3 bucket/ gcs bucket/ youtube/ Wikipedia as source type
+source_type= s3 bucket/ gcs bucket/ youtube/Wikipedia as source type
+gcs_project_id=Form(None),
+access_token=Form(None)
 ....
 **Response :**
 ....
@@ -117,11 +120,11 @@ This API is responsible for -
 
 *** Local file - User can upload pdf file from their device.
 
-*** s3 bucket - User passes the bucket url and all the pdf files inside folders and subfolders will  listed. 
+*** s3 bucket - User passes the bucket url and all the pdf files inside folders and subfolders will be listed. 
 
-*** GCS bucket - User passes gcs bucket name and folder name, all the pdf files under that folder and its subfolders will be listed and if folder name is not passed by user, all the pdf files under the bucket and its subfolders will be listed. 
+*** GCS bucket - User passes gcs project id, gcs bucket name and folder name, do google authentication to access all the pdf files under that folder and its subfolders and if folder name is not passed by user, all the pdf files under the bucket and its subfolders will be listed if user have read access of the bucket.
 
-*** Wikipedia - Wikipedia content is rendered (if exist) for comma seprated values passed by user. 
+*** Wikipedia - Wikipedia content is rendered (if exist) for comma seprated wikipedia ids or urls passed by user. 
 
 *** Youtube - Youtube video transcript is processed and if no transcript is available then respective error is thrown.
 
@@ -138,15 +141,19 @@ userName= Neo4j db username,
 password= Neo4j db password, 
 database= Neo4j database name
 model= LLM model,
-file = File uploaded from device
+file_name = File uploaded from device
 source_url= <s3 bucket url or youtube url> ,
 aws_access_key_id= AWS access key,
 aws_secret_access_key= AWS secret key,
 wiki_query= Wikipedia query sources,
+gcs_project_id=GCS project id,
 gcs_bucket_name= GCS bucket name,
 gcs_bucket_folder= GCS bucket folder,
-gcs_blob_filename = GCS file name
-source_type= local file/ s3 bucket/ gcs bucket/ youtube/ Wikipedia as source
+gcs_blob_filename = GCS file name,
+source_type= local file/ s3 bucket/ gcs bucket/ youtube/ Wikipedia as source,
+allowedNodes=Node labels passed from settings panel,
+allowedRelationship=Relationship labels passed from settings panel,
+language=Language in which wikipedia content will be extracted
 ....
 **Response :**
 ....
@@ -217,6 +224,27 @@ database= Neo4j database name
 
 === /update_similarity_graph :
 
+**Overview :**
+
+This API is called at the end of processing of whole document to get create k-nearest neighbor relations between similar chunks of document based on KNN_MIN_SCORE which is 0.8 by default.
+
+**API Parameters :**
+....
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name
+....
+
+**Response :**
+....
+{
+    "status":"Success",
+    "message":"Updated KNN Graph"
+}
+....
+
+
 === /chat_bot :
 
 **Overview :**
@@ -254,6 +282,186 @@ session_id= Session ID used to maintain the history of chats during the user's c
   }
 ....
 
+=== /chunk_entities :
+
+**Overview :**
+
+
+**API Parameters :**
+....
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name
+chunk_ids = Chunk ids of document
+....
+
+**Response :**
+....
+{
+    
+}
+....
+
+=== /graph_query :
+
+**Overview :**
+
+This API is used to view graph for a particular file.
+
+**API Parameters :**
+....
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+query_type= Neo4j database name
+document_names = File name for which user wants to view graph
+....
+
+**Response :**
+....
+{
+   
+}
+....
+
+=== /clear_chat_bot :
+
+**Overview :**
+
+This API is used to clear the chat history which is saved in Neo4j DB.
+
+**API Parameters :**
+....
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name,
+session_id = User session id for QA chat
+....
+
+**Response :**
+....
+{
+    
+}
+....
+
+=== /connect :
+
+**Overview :**
+
+Neo4j database connection on frontend is done with this API.
+
+**API Parameters :**
+....
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name
+....
+
+**Response :**
+....
+{
+    
+}
+....
+
+=== /upload :
+
+**Overview :**
+
+When uploading a local file, it gets uploaded in chunks of 1Mb each and user can see the progress of uploading.
+
+**API Parameters :**
+....
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name,
+file:UploadFile= , 
+chunkNumber=, 
+totalChunks=, 
+originalname=, 
+model= LLm model
+....
+
+**Response :**
+....
+{
+    
+}
+....
+
+=== /schema :
+
+**Overview :**
+
+User can set schema for graph generation (i.e. Nodes and relationship labels) in settings panel or get existing db schema through this API. 
+
+**API Parameters :**
+....
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name
+....
+
+**Response :**
+....
+{
+    
+}
+....
+
+=== /delete_document_and_entities :
+
+**Overview :**
+
+Deleteion of nodes and relations for multiple files is done through this API. User can choose multiple documents to be deleted, also user have option to delete only 'Document' and 'Chunk' nodes and keep the entities extracted from that document. 
+
+**API Parameters :**
+....
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name,
+filenames= List of files to be deleted,
+source_types= Document sources(Wikipedia, youtube, etc.),
+deleteEntities= Boolean value to check entities deletion is requested or not
+....
+
+**Response :**
+....
+{
+    
+}
+....
+
+=== /cancelled_job :
+
+**Overview :**
+
+This API is responsible for cancelling an in process job.
+
+**API Parameters :**
+....
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name,
+filenames= Name of the file whose processing need to be stopped, 
+source_types= Source of the file
+....
+
+**Response :**
+....
+{
+    
+}
+....
+
 == Decisions
 
 * Process only 1st page of Wikipedia
@@ -262,3 +470,4 @@ session_id= Session ID used to maintain the history of chats during the user's c
 ** Number of chunks to combine
 ** Generate Embedding or not 
 ** Embedding model
+** minimum score for KNN graph
