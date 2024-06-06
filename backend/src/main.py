@@ -498,3 +498,80 @@ def upload_file(uri, userName, password, db_name, model, chunk, chunk_number:int
       graphDb_data_Access.create_source_node(obj_source_node)
       return {'file_size': file_size, 'total_pages': pdf_total_pages, 'file_name': originalname, 'message':f"Chunk {chunk_number}/{total_chunks} saved"}
   return f"Chunk {chunk_number}/{total_chunks} saved"
+
+def get_labels_and_relationtypes(graph):
+  query = """
+          RETURN collect { 
+          CALL db.labels() yield label 
+          WHERE NOT label  IN ['Chunk','_Bloom_Perspective_'] 
+          return label order by label limit 50 } as labels, 
+          collect { 
+          CALL db.relationshipTypes() yield relationshipType  as type 
+          WHERE NOT type  IN ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_'] 
+          return type order by type LIMIT 50 } as relationshipTypes
+          """
+  graphDb_data_Access = graphDBdataAccess(graph)
+  result = graphDb_data_Access.execute_query(query)
+  if result is None:
+     result=[]
+  return result
+
+def manually_cancelled_job(graph, filenames, source_types, merged_dir):
+  
+  filename_list= list(map(str.strip, json.loads(filenames)))
+  source_types_list= list(map(str.strip, json.loads(source_types)))
+  
+  for (file_name,source_type) in zip(filename_list, source_types_list):
+      obj_source_node = sourceNode()
+      obj_source_node.file_name = file_name
+      obj_source_node.is_cancelled = True
+      obj_source_node.status = 'Cancelled'
+      obj_source_node.updated_at = datetime.now()
+      graphDb_data_Access = graphDBdataAccess(graph)
+      graphDb_data_Access.update_source_node(obj_source_node)
+      obj_source_node = None
+      merged_file_path = os.path.join(merged_dir, file_name)
+      if source_type == 'local file':
+          logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+          delete_uploaded_local_file(merged_file_path, file_name)
+  return "Cancelled the processing job successfully"
+
+def populate_graph_schema_from_text(graph, text, model):
+  """_summary_
+
+  Args:
+      graph (Neo4Graph): Neo4jGraph connection object
+      input_text (str): rendom text from PDF or user input.
+      model (str): AI model to use extraction from text
+
+  Returns:
+      data (list): list of lebels and relationTypes
+  """
+  pages = []
+  pages.append(Document(page_content=str(text),metadata={'page':1}))
+  create_chunks_obj = CreateChunksofDocument(pages, graph)
+  chunks = create_chunks_obj.split_file_into_chunks()
+  
+  lst_chunks_including_hash = []
+  for i,chunk in enumerate(chunks):
+      # print(chunk.page_content)
+      page_content_sha1 = hashlib.sha1(chunk.page_content.encode())
+      current_chunk_id = page_content_sha1.hexdigest()
+      lst_chunks_including_hash.append({'chunk_id': current_chunk_id, 'chunk_doc': chunk})
+      
+  logging.info("Get graph document list from models to extract labels and relationship types")
+  graph_document =  generate_graphDocuments(model, graph, lst_chunks_including_hash)
+  print(graph_document)
+  nodes = set()
+  relationships = set()
+  
+  for graph_document in graph_document:
+    #get distinct nodes
+    for node in graph_document.nodes:
+      node_type= node.type
+      nodes.add(node_type)
+    #get all relationship
+    for relation in graph_document.relationships:
+      relationships.add(relation.type)
+    data = {"labels": nodes, "relationshipTypes": relationships}
+  return data

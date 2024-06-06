@@ -532,5 +532,21 @@ async def get_document_status(file_name, url, userName, password, database):
         logging.exception(f'{message}:{error_message}')
         return create_api_response('Failed',message=message)
 
+@app.post("/populate_graph_schema")
+async def populate_graph_schema(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), input_text=Form(None), model=Form(None)):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        result = populate_graph_schema_from_text(graph,input_text,model)
+        
+        return create_api_response('Success',data=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to get the schema from text"
+        error_message = str(e)
+        logging.exception(f'Exception in getting the schema from text:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        close_db_connection(graph, 'populate_graph_schema')
+
 if __name__ == "__main__":
     uvicorn.run(app)
