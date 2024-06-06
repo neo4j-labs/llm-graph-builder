@@ -22,13 +22,26 @@ const DropZone: FunctionComponent = () => {
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
+  const getFileType = (file: Partial<globalThis.File>) => {
+    if (file.type) {
+      return file.type;
+    }
+    // special case for markdown files as their type might be empty based on MIME browser
+    if (file.name?.endsWith('.md')) {
+      return 'text/markdown';
+    }
+    return '';
+  };
+
   const onDropHandler = (f: Partial<globalThis.File>[]) => {
     setIsClicked(true);
     setSelectedFiles(f.map((f) => f as File));
     setIsLoading(false);
+    console.log(f);
     const validFiles = f.filter((file) => {
-      const fileType = file.type;
-      return fileType === 'application/pdf' || fileType === 'text/plain';
+      console.log(file);
+      const fileType = getFileType(file);
+      return fileType === 'application/pdf' || fileType === 'text/plain' || fileType === 'text/markdown';
     });
     if (f.length) {
       const defaultValues: CustomFile = {
@@ -36,7 +49,7 @@ const DropZone: FunctionComponent = () => {
         status: 'None',
         NodesCount: 0,
         relationshipCount: 0,
-        type: validFiles[0].type === 'application/pdf' ? 'PDF' : 'TXT',
+        type: validFiles[0].type === 'application/pdf' ? 'PDF' : validFiles[0].type === 'text/plain' ? 'TXT' : "MD",
         model: model,
         fileSource: 'local file',
         uploadprogess: 0,
