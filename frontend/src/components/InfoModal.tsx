@@ -15,12 +15,23 @@ import { useCredentials } from '../context/UserCredentials';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 
+interface Chunk {
+  id: string;
+  position: number;
+  text: string;
+  fileName: string;
+  length: number;
+  embedding: string | null;
+  page_number: number;
+}
+
 const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, response_time, chunk_ids }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
   const [nodes, setNodes] = useState<Node[]>([]);
+  const [chunks, setChunks] = useState<Chunk[]>([]);
   const [relationships, setRelationships] = useState<Relationship[]>([]);
   const parseEntity = (entity: Entity) => {
     const { labels, properties } = entity;
@@ -29,13 +40,16 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
     return { label, text };
   };
 
+  console.log('chunks', chunks);
   useEffect(() => {
     setLoading(true);
     chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids.join(','))
       .then((response) => {
+        console.log('chunks', response.data.data.chunk_data);
         setInfoEntities(response.data.data.nodes);
         setNodes(response.data.data.nodes);
         setRelationships(response.data.data.relationships);
+        setChunks(response.data.data.chunk_data);
         setLoading(false);
       })
       .catch((error) => {
@@ -79,7 +93,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
   return (
     <Box className='n-bg-palette-neutral-bg-weak p-4'>
       <Box className='flex flex-row pb-6 items-center mb-2'>
-        <img src={Neo4jRetrievalLogo} alt='icon' style={{ width: 95, height: 95, marginRight: 10 }} />
+        <img src={Neo4jRetrievalLogo} alt='icon' style={{ width: 95, height: 95, marginRight: 10 }} loading='lazy' />
         <Box className='flex flex-col'>
           <Typography variant='h2'>Retrieval information</Typography>
           <Typography variant='body-medium' sx={{ mb: 2 }}>
@@ -92,6 +106,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
       <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
         <Tabs.Tab tabId={0}>Sources used</Tabs.Tab>
         <Tabs.Tab tabId={1}>Top Entities used</Tabs.Tab>
+        <Tabs.Tab tabId={2}>Chunks</Tabs.Tab>
       </Tabs>
       <Flex className='p-6'>
         {activeTab === 0 ? (
@@ -173,39 +188,68 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
           ) : (
             <span className='h6 text-center'>No Sources Found</span>
           )
+        ) : activeTab === 1 ? (
+          loading ? (
+            <Box className='flex justify-center items-center'>
+              <LoadingSpinner size='small' />
+            </Box>
+          ) : Object.keys(groupedEntities).length > 0 ? (
+            <ul className='list-none'>
+              {sortedLabels.map((label, index) => (
+                <li
+                  key={index}
+                  className='flex items-center mb-2'
+                  style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}
+                >
+                  <div
+                    key={index}
+                    style={{ backgroundColor: `${groupedEntities[label].color}` }}
+                    className='legend mr-2'
+                  >
+                    {label} ({labelCounts[label]})
+                  </div>
+                  <Typography
+                    className='entity-text'
+                    variant='body-medium'
+                    sx={{
+                      display: 'inline-block',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      maxWidth: 'calc(100% - 120px)',
+                    }}
+                  >
+                    {Array.from(groupedEntities[label].texts).slice(0, 3).join(', ')}
+                  </Typography>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <span className='h6 text-center'>No Entities Found</span>
+          )
         ) : loading ? (
           <Box className='flex justify-center items-center'>
             <LoadingSpinner size='small' />
           </Box>
-        ) : Object.keys(groupedEntities).length > 0 ? (
-          <ul className='list-none'>
-            {sortedLabels.map((label, index) => (
-              <li
-                key={index}
-                className='flex items-center mb-2'
-                style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}
-              >
-                <div key={index} style={{ backgroundColor: `${groupedEntities[label].color}` }} className='legend mr-2'>
-                  {label} ({labelCounts[label]})
-                </div>
-                <Typography
-                  className='entity-text'
-                  variant='body-medium'
-                  sx={{
-                    display: 'inline-block',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: 'calc(100% - 120px)',
-                  }}
-                >
-                  {Array.from(groupedEntities[label].texts).slice(0, 3).join(', ')}
-                </Typography>
-              </li>
-            ))}
-          </ul>
+        ) : chunks.length > 0 ? (
+          <div className='p-4 h-80 overflow-auto'>
+            <ul className='list-disc list-inside'>
+              {chunks.map((chunk) => (
+                <li key={chunk.id} className='mb-2'>
+                  <Typography variant='body-medium'>{chunk.text}</Typography>
+                  {chunk.page_number ? (
+                    <Typography variant='h6' className='italic'>
+                      - Page {chunk.page_number}
+                    </Typography>
+                  ) : (
+                    <></>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
         ) : (
-          <span className='h6 text-center'>No Entities Found</span>
+          <span className='h6 text-center'>No Chunks Found</span>
         )}
       </Flex>
       {activeTab === 1 && nodes.length && relationships.length ? (
