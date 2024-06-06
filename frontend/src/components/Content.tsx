@@ -284,7 +284,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
       : isRightExpanded
       ? 'contentWithChatBot'
       : !isLeftExpanded && !isRightExpanded
-      ? 'w-100'
+      ? 'w-[calc(100%-128px)]'
       : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
