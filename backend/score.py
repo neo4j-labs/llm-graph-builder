@@ -362,6 +362,7 @@ async def get_structured_schema(uri=Form(None), userName=Form(None), password=Fo
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(get_labels_and_relationtypes, graph)
+        logging.info(f'Schema result from DB: {result}')
         josn_obj = {'api_name':'schema','db_url':uri}
         logger.log_struct(josn_obj)
         return create_api_response('Success', data=result)
@@ -488,6 +489,22 @@ async def cancelled_job(uri=Form(None), userName=Form(None), password=Form(None)
         return create_api_response(job_status, message=message, error=error_message)
     finally:
         close_db_connection(graph, 'cancelled_job')
+
+@app.post("/populate_graph_schema")
+async def populate_graph_schema(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), input_text=Form(None), model=Form(None)):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        result = populate_graph_schema_from_text(graph,input_text,model)
+        
+        return create_api_response('Success',data=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to get the schema from text"
+        error_message = str(e)
+        logging.exception(f'Exception in getting the schema from text:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        close_db_connection(graph, 'populate_graph_schema')
 
 if __name__ == "__main__":
     uvicorn.run(app)
