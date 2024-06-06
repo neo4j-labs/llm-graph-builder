@@ -28,6 +28,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
     const text = properties.id;
     return { label, text };
   };
+
   useEffect(() => {
     setLoading(true);
     chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids.join(','))

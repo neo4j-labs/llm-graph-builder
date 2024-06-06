@@ -2,6 +2,7 @@ import os
 import logging
 from google.cloud import storage
 from langchain_community.document_loaders import GCSFileLoader
+from langchain_community.document_loaders import PyMuPDFLoader
 
 def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, creds):
     storage_client = storage.Client(project=gcs_project_id, credentials=creds)
@@ -33,6 +34,8 @@ def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder
       logging.exception(f'Exception Stack trace: {error_message}')
       raise Exception(error_message)
 
+def load_pdf(file_path):
+    return PyMuPDFLoader(file_path)
 
 def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename):
 
@@ -45,7 +48,7 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
       blob_name = gcs_blob_filename  
   #credentials, project_id = google.auth.default()
   logging.info(f"GCS project_id : {gcs_project_id}")  
-  loader = GCSFileLoader(project_name=gcs_project_id, bucket=gcs_bucket_name, blob=blob_name)
+  loader = GCSFileLoader(project_name=gcs_project_id, bucket=gcs_bucket_name, blob=blob_name, loader_func=load_pdf)
   pages = loader.load()
   file_name = gcs_blob_filename
   return file_name, pages

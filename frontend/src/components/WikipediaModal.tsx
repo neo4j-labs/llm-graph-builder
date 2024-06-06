@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import CustomModal from '../HOC/CustomModal';
 import { TextInput } from '@neo4j-ndl/react';
-import { CustomFile, UserCredentials, WikipediaModalTypes, fileName } from '../types';
+import { CustomFile, CustomFileBase, UserCredentials, WikipediaModalTypes, fileName } from '../types';
 import { useFileContext } from '../context/UsersFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
@@ -20,7 +20,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
   }, []);
 
   const submitHandler = async () => {
-    const defaultValues: CustomFile = {
+    const defaultValues: CustomFileBase = {
       processing: 0,
       status: 'New',
       NodesCount: 0,
@@ -76,6 +76,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
               source_url: item.url,
               id: uuidv4(),
               language: item.language,
+              total_pages: 1,
               ...defaultValues,
             });
           } else {

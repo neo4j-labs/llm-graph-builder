@@ -17,14 +17,19 @@ import DeletePopUp from './DeletePopUp';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
+import ConfirmationDialog from './ConfirmationDialog';
+import { chunkSize } from '../utils/Constants';
 
-const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
+const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
+  const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
+  const [extractLoading, setextractLoading] = useState<boolean>(false);
+
   const {
     filesData,
     setFilesData,
@@ -34,6 +39,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     selectedRels,
     selectedRows,
     setSelectedNodes,
+    setRowSelection,
     setSelectedRels,
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
@@ -116,11 +122,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     if (!isselectedRows) {
       const fileItem = filesData.find((f) => f.id == uid);
       if (fileItem) {
+        setextractLoading(true);
         await extractHandler(fileItem, uid);
       }
     } else {
       const fileItem = selectedRows.find((f) => JSON.parse(f).id == uid);
       if (fileItem) {
+        setextractLoading(true);
         await extractHandler(JSON.parse(fileItem), uid);
       }
     }
@@ -139,7 +147,15 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           return curfile;
         })
       );
-
+      setRowSelection((prev) => {
+        const copiedobj = { ...prev };
+        for (const key in copiedobj) {
+          if (JSON.parse(key).id == uid) {
+            copiedobj[key] = false;
+          }
+        }
+        return copiedobj;
+      });
       if (fileItem.name != undefined && userCredentials != null) {
         const { name } = fileItem;
         triggerStatusUpdateAPI(
@@ -171,7 +187,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
       if (apiResponse?.status === 'Failed') {
         let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
         throw new Error(JSON.stringify(errorobj));
-      } else if (fileItem.size != undefined && fileItem.size < 10000000) {
+      } else if (fileItem.total_pages != undefined && (fileItem.total_pages === 'NA' || fileItem.total_pages < 20)) {
         setFilesData((prevfiles) => {
           return prevfiles.map((curfile) => {
             if (curfile.name == apiResponse?.data?.fileName) {
@@ -216,9 +232,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     }
   };
 
-  const handleGenerateGraph = () => {
+  const handleGenerateGraph = (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => {
     const data = [];
-    if (selectedfileslength) {
+    if (selectedfileslength && allowLargeFiles) {
       for (let i = 0; i < selectedfileslength; i++) {
         const row = JSON.parse(selectedRows[i]);
         if (row.status === 'New') {
@@ -226,15 +242,18 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         }
       }
       Promise.allSettled(data).then(async (_) => {
+        setextractLoading(false);
         await updateGraphAPI(userCredentials as UserCredentials);
       });
-    } else if (filesData.length > 0) {
-      for (let i = 0; i < filesData.length; i++) {
-        if (filesData[i]?.status === 'New') {
-          data.push(extractData(filesData[i].id as string));
+    } else if (selectedFilesFromAllfiles.length && allowLargeFiles) {
+      // @ts-ignore
+      for (let i = 0; i < selectedFilesFromAllfiles.length; i++) {
+        if (selectedFilesFromAllfiles[i]?.status === 'New') {
+          data.push(extractData(selectedFilesFromAllfiles[i].id as string));
         }
       }
       Promise.allSettled(data).then(async (_) => {
+        setextractLoading(false);
         await updateGraphAPI(userCredentials as UserCredentials);
       });
     }
@@ -260,13 +279,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   };
 
   const classNameCheck =
-    isExpanded && showChatBot
-      ? 'contentWithBothDrawers'
-      : isExpanded
+    isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
-      : showChatBot
+      : isRightExpanded
       ? 'contentWithChatBot'
-      : 'contentWithNoExpansion';
+      : !isLeftExpanded && !isRightExpanded
+      ? 'w-[calc(100%-128px)]'
+      : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -307,10 +326,26 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     setshowDeletePopUp(true);
   };
 
+  const filesForProcessing = useMemo(() => {
+    let newstatusfiles: CustomFile[] = [];
+    if (selectedRows.length) {
+      selectedRows.forEach((f) => {
+        const parsedFile: CustomFile = JSON.parse(f);
+        if (parsedFile.status === 'New') {
+          newstatusfiles.push(parsedFile);
+        }
+      });
+    } else if (filesData.length) {
+      newstatusfiles = filesData.filter((f) => f.status === 'New');
+    }
+    return newstatusfiles;
+  }, [filesData, selectedRows]);
+
   const handleDeleteFiles = async (deleteEntities: boolean) => {
     try {
       setdeleteLoading(true);
       const response = await deleteAPI(userCredentials as UserCredentials, selectedRows, deleteEntities);
+      setRowSelection({});
       setdeleteLoading(false);
       if (response.data.status == 'Success') {
         setalertDetails({
@@ -352,6 +387,15 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           alertMessage={alertDetails.alertMessage}
         />
       )}
+      {showConfirmationModal && filesForProcessing.length && (
+        <ConfirmationDialog
+          open={showConfirmationModal}
+          largeFiles={filesForProcessing}
+          extractHandler={handleGenerateGraph}
+          onClose={() => setshowConfirmationModal(false)}
+          loading={extractLoading}
+        ></ConfirmationDialog>
+      )}
       {showDeletePopUp && (
         <DeletePopUp
           open={showDeletePopUp}
@@ -391,7 +435,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           )}
         </Flex>
         <FileTable
-          isExpanded={isExpanded}
+          isExpanded={isLeftExpanded && isRightExpanded}
           connectionStatus={connectionStatus}
           setConnectionStatus={setConnectionStatus}
           onInspect={(name) => {
@@ -401,13 +445,75 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           }}
         ></FileTable>
         <Flex
-          className='w-full p-2.5 absolute bottom-4 mt-1.5 self-start'
+          className={`${
+            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection='row'
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={dropdowncheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
-            <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
+            <Button
+              disabled={disableCheck}
+              onClick={() => {
+                if (selectedRows.length) {
+                  let selectedLargeFiles: CustomFile[] = [];
+                  selectedRows.forEach((f) => {
+                    const parsedData: CustomFile = JSON.parse(f);
+                    if (parsedData.fileSource === 'local file') {
+                      if (
+                        typeof parsedData.total_pages === 'number' &&
+                        parsedData.status === 'New' &&
+                        parsedData.total_pages > 20
+                      ) {
+                        selectedLargeFiles.push(parsedData);
+                      }
+                    } else if (parsedData.fileSource === 's3 bucket' || parsedData.fileSource === 'gcs bucket') {
+                      // @ts-ignore
+                      if (parsedData.size > chunkSize) {
+                        selectedLargeFiles.push(parsedData);
+                      }
+                    }
+                  });
+                  // @ts-ignore
+                  if (selectedLargeFiles.length) {
+                    setshowConfirmationModal(true);
+                    handleGenerateGraph(false, []);
+                  } else {
+                    handleGenerateGraph(true, filesData);
+                  }
+                } else if (filesData.length) {
+                  const largefiles = filesData.filter((f) => {
+                    if (f.fileSource === 'local file') {
+                      if (typeof f.total_pages === 'number' && f.status === 'New' && f.total_pages > 20) {
+                        return true;
+                      }
+                    } else if (f.fileSource === 's3 bucket' || f.fileSource === 'gcs bucket') {
+                      // @ts-ignore
+                      if (f.size > chunkSize) {
+                        return true;
+                      }
+                    }
+                    return false;
+                  });
+                  const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
+                  const stringified = selectAllNewFiles.reduce((accu, f) => {
+                    const key = JSON.stringify(f);
+                    // @ts-ignore
+                    accu[key] = true;
+                    return accu;
+                  }, {});
+                  setRowSelection(stringified);
+                  if (largefiles.length) {
+                    setshowConfirmationModal(true);
+                    handleGenerateGraph(false, []);
+                  } else {
+                    handleGenerateGraph(true, filesData);
+                  }
+                }
+              }}
+              className='mr-0.5'
+            >
               Generate Graph {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
             </Button>
             <Button
@@ -432,13 +538,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
               disabled={!selectedfileslength}
             >
               Delete Files {selectedfileslength > 0 && `(${selectedfileslength})`}
-            </Button>
-            <Button
-              onClick={() => {
-                openChatBot();
-              }}
-            >
-              Q&A Chat
             </Button>
           </Flex>
         </Flex>
