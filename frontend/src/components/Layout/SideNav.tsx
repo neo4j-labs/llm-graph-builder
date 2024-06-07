@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, SideNavigation } from '@neo4j-ndl/react';
-import { ArrowRightIconOutline, ArrowLeftIconOutline, TrashIconOutline, ExpandIcon } from '@neo4j-ndl/react/icons';
+import {
+  ArrowRightIconOutline,
+  ArrowLeftIconOutline,
+  TrashIconOutline,
+  ExpandIcon,
+  ChatBubbleOvalLeftEllipsisIconOutline,
+  CloudArrowUpIconSolid,
+} from '@neo4j-ndl/react/icons';
 import { SideNavProps } from '../../types';
 import Chatbot from '../Chatbot';
 import { createPortal } from 'react-dom';
@@ -69,9 +76,9 @@ const SideNav: React.FC<SideNavProps> = ({
                   <ArrowRightIconOutline />
                 )
               ) : position === 'left' ? (
-                <ArrowRightIconOutline />
+                <CloudArrowUpIconSolid />
               ) : (
-                <ArrowLeftIconOutline />
+                <ChatBubbleOvalLeftEllipsisIconOutline />
               )
             }
           />
