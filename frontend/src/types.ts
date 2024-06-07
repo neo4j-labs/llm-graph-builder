@@ -299,7 +299,7 @@ export interface commonserverresponse {
   error?: string;
   message?: string;
   file_name?: string;
-  data?: labelsAndTypes | labelsAndTypes[]|uploadData;
+  data?: labelsAndTypes | labelsAndTypes[] | uploadData;
 }
 
 export interface ScehmaFromText extends Partial<commonserverresponse> {

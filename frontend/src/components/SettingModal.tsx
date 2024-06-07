@@ -152,6 +152,7 @@ export default function SettingsModal({
   }, [userCredentials, open]);
 
   const clickHandler: MouseEventHandler<HTMLButtonElement> = useCallback(() => {
+    setSelectedSchemas([]);
     setSelectedNodes(nodeLabelOptions);
     setSelectedRels(relationshipTypeOptions);
   }, [nodeLabelOptions, relationshipTypeOptions]);
