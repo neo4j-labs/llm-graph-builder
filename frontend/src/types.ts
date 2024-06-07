@@ -259,9 +259,18 @@ export interface commonserverresponse {
   error?: string;
   message?: string;
   file_name?: string;
+  data?: labelsAndTypes | labelsAndTypes[] | uploadData;
+}
+
+export interface ScehmaFromText extends Partial<commonserverresponse> {
+  data: labelsAndTypes;
 }
 export interface ServerData extends Partial<commonserverresponse> {
   data: labelsAndTypes[];
+}
+export interface schema {
+  nodelabels: string[];
+  relationshipTypes: string[];
 }
 
 export interface SourceListServerData {
