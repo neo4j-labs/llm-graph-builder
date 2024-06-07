@@ -1,22 +1,57 @@
 import { Button, Dialog, Dropdown } from '@neo4j-ndl/react';
-import { OnChangeValue } from 'react-select';
-import { OptionType, OptionTypeForExamples, UserCredentials } from '../types';
+import { OnChangeValue, ActionMeta } from 'react-select';
+import { OptionType, OptionTypeForExamples, UserCredentials, schema } from '../types';
 import { useFileContext } from '../context/UsersFiles';
 import { getNodeLabelsAndRelTypes } from '../services/GetNodeLabelsRelTypes';
 import { useCredentials } from '../context/UserCredentials';
 import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
 import schemaExamples from '../assets/schemas.json';
 
-export default function SettingsModal({ open, onClose, opneTextSchema }: { open: boolean; onClose: () => void, opneTextSchema: () => void }) {
+export default function SettingsModal({
+  open,
+  onClose,
+  opneTextSchema,
+}: {
+  open: boolean;
+  onClose: () => void;
+  opneTextSchema: () => void;
+}) {
   const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels, selectedSchemas, setSelectedSchemas } =
     useFileContext();
   const { userCredentials } = useCredentials();
   const [loading, setLoading] = useState<boolean>(false);
-  const onChangenodes = (selectedOptions: OnChangeValue<OptionType, true>) => {
-    setSelectedNodes(selectedOptions);
-    localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions }));
+  const removeNodesAndRels = (nodelabels: string[], relationshipTypes: string[]) => {
+    const labelsToRemoveSet = new Set(nodelabels);
+    const relationshipLabelsToremoveSet = new Set(relationshipTypes);
+    setSelectedNodes((prevState) => {
+      const filterednodes = prevState.filter((item) => !labelsToRemoveSet.has(item.label));
+      localStorage.setItem(
+        'selectedNodeLabels',
+        JSON.stringify({ db: userCredentials?.uri, selectedOptions: filterednodes })
+      );
+      return filterednodes;
+    });
+    setSelectedRels((prevState) => {
+      const filteredrels = prevState.filter((item) => !relationshipLabelsToremoveSet.has(item.label));
+      localStorage.setItem(
+        'selectedRelationshipLabels',
+        JSON.stringify({ db: userCredentials?.uri, selectedOptions: filteredrels })
+      );
+      return filteredrels;
+    });
   };
-  const onChangeSchema = (selectedOptions: OnChangeValue<OptionType, true>) => {
+  const onChangeSchema = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
+    if (actionMeta.action === 'remove-value') {
+      const removedSchema: schema = JSON.parse(actionMeta.removedValue.value);
+      const { nodelabels, relationshipTypes } = removedSchema;
+      removeNodesAndRels(nodelabels, relationshipTypes);
+    } else if (actionMeta.action === 'clear') {
+      console.log({ actionMeta });
+      const removedSchemas = actionMeta.removedValues.map((s) => JSON.parse(s.value));
+      const removedNodelabels = removedSchemas.map((s) => s.nodelabels).flatMap((k) => k);
+      const removedRelations = removedSchemas.map((s) => s.relationshipTypes).flatMap((k) => k);
+      removeNodesAndRels(removedNodelabels, removedRelations);
+    }
     setSelectedSchemas(selectedOptions);
     const nodesFromSchema = selectedOptions.map((s) => JSON.parse(s.value).nodelabels).flat();
     const relationsFromSchema = selectedOptions.map((s) => JSON.parse(s.value).relationshipTypes).flat();
@@ -25,13 +60,52 @@ export default function SettingsModal({ open, onClose, opneTextSchema }: { open:
     let relationshipOptionsFromSchema: OptionType[] = [];
     relationsFromSchema.forEach((r) => relationshipOptionsFromSchema.push({ label: r, value: r }));
     setSelectedNodes((prev) => {
-      return [...prev, ...nodeOptionsFromSchema];
+      const combinedData = [...prev, ...nodeOptionsFromSchema];
+      const uniqueLabels = new Set();
+      const updatedOptions = combinedData.filter((item) => {
+        if (!uniqueLabels.has(item.label)) {
+          uniqueLabels.add(item.label);
+          return true;
+        }
+        return false;
+      });
+      localStorage.setItem(
+        'selectedNodeLabels',
+        JSON.stringify({ db: userCredentials?.uri, selectedOptions: updatedOptions })
+      );
+      return updatedOptions;
     });
     setSelectedRels((prev) => {
-      return [...prev, ...relationshipOptionsFromSchema];
+      const combinedData = [...prev, ...relationshipOptionsFromSchema];
+      const uniqueLabels = new Set();
+      const updatedOptions = combinedData.filter((item) => {
+        if (!uniqueLabels.has(item.label)) {
+          uniqueLabels.add(item.label);
+          return true;
+        }
+        return false;
+      });
+      localStorage.setItem(
+        'selectedRelationshipLabels',
+        JSON.stringify({ db: userCredentials?.uri, selectedOptions: updatedOptions })
+      );
+      return updatedOptions;
     });
   };
-  const onChangerels = (selectedOptions: OnChangeValue<OptionType, true>) => {
+  const onChangenodes = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
+    if (actionMeta.action === 'clear') {
+      localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
+    }
+    setSelectedNodes(selectedOptions);
+    localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions }));
+  };
+  const onChangerels = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
+    if (actionMeta.action === 'clear') {
+      localStorage.setItem(
+        'selectedRelationshipLabels',
+        JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] })
+      );
+    }
     setSelectedRels(selectedOptions);
     localStorage.setItem('selectedRelationshipLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions }));
   };
@@ -87,14 +161,15 @@ export default function SettingsModal({ open, onClose, opneTextSchema }: { open:
       <Dialog.Header id='form-dialog-title'>Graph Settings</Dialog.Header>
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
         <Dropdown
-          helpText='Examples For Node an labels'
-          label='Node Labels'
+          helpText='Schema Examples'
+          label='Schema'
           selectProps={{
             isClearable: true,
             isMulti: true,
             options: defaultExamples,
             onChange: onChangeSchema,
             value: selectedSchemas,
+            menuPosition: 'fixed',
           }}
           type='creatable'
         />
@@ -131,7 +206,14 @@ export default function SettingsModal({ open, onClose, opneTextSchema }: { open:
           >
             Use Existing Schema
           </Button>
-          <Button onClick={()=>{onClose();opneTextSchema()}}>Get Existing Schema From Text</Button>
+          <Button
+            onClick={() => {
+              onClose();
+              opneTextSchema();
+            }}
+          >
+            Get Existing Schema From Text
+          </Button>
         </Dialog.Actions>
       </Dialog.Content>
     </Dialog>

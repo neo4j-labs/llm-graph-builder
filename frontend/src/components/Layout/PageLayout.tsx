@@ -12,9 +12,11 @@ import SchemaFromTextDialog from '../SchemaFromText';
 export default function PageLayoutNew({
   isSettingPanelExpanded,
   closeSettingModal,
+  openSettingsDialog,
 }: {
   isSettingPanelExpanded: boolean;
   closeSettingModal: () => void;
+  openSettingsDialog: () => void;
 }) {
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(true);
   const [isRightExpanded, setIsRightExpanded] = useState<boolean>(true);
@@ -28,9 +30,8 @@ export default function PageLayoutNew({
 
   const { messages } = useMessageContext();
 
-  const openSchemaFromTextDialog = useCallback(() => setOpenTextSchemaDialog(true), [])
-  const closeSchemaFromTextDialog = useCallback(() => setOpenTextSchemaDialog(false), [])
-
+  const openSchemaFromTextDialog = useCallback(() => setOpenTextSchemaDialog(true), []);
+  const closeSchemaFromTextDialog = useCallback(() => setOpenTextSchemaDialog(false), []);
 
   const deleteOnClick = async () => {
     try {
@@ -51,8 +52,16 @@ export default function PageLayoutNew({
     <div style={{ maxHeight: 'calc(100vh - 58px)' }} className='flex overflow-hidden'>
       <SideNav isExpanded={isLeftExpanded} position='left' toggleDrawer={toggleLeftDrawer} />
       <DrawerDropzone isExpanded={isLeftExpanded} />
-      <SchemaFromTextDialog open={openTextSchemaDialog} onClose={closeSchemaFromTextDialog}></SchemaFromTextDialog>
-      <SettingsModal opneTextSchema={openSchemaFromTextDialog} open={isSettingPanelExpanded} onClose={closeSettingModal} />
+      <SchemaFromTextDialog
+        open={openTextSchemaDialog}
+        openSettingsDialog={openSettingsDialog}
+        onClose={closeSchemaFromTextDialog}
+      ></SchemaFromTextDialog>
+      <SettingsModal
+        opneTextSchema={openSchemaFromTextDialog}
+        open={isSettingPanelExpanded}
+        onClose={closeSettingModal}
+      />
       <Content
         openChatBot={() => setShowChatBot(true)}
         isLeftExpanded={isLeftExpanded}

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { url } from '../utils/Utils';
-import { ServerData, UserCredentials } from '../types';
+import { ScehmaFromText, UserCredentials } from '../types';
 
 export const getNodeLabelsAndRelTypesFromText = async (
   userCredentials: UserCredentials,
@@ -13,9 +13,9 @@ export const getNodeLabelsAndRelTypesFromText = async (
   formData.append('userName', userCredentials?.userName ?? '');
   formData.append('password', userCredentials?.password ?? '');
   formData.append('model', model);
-  formData.append('inputText', inputText);
+  formData.append('input_text', inputText);
   try {
-    const response = await axios.post<ServerData>(`${url()}/populate_graph_schema`, formData);
+    const response = await axios.post<ScehmaFromText>(`${url()}/populate_graph_schema`, formData);
     return response;
   } catch (error) {
     console.log(error);

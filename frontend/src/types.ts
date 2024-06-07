@@ -32,10 +32,7 @@ export interface OptionType {
   readonly value: string;
   readonly label: string;
 }
-interface exmapleType {
-  nodelabels: string[];
-  relationshipTypes: string[];
-}
+
 export interface OptionTypeForExamples {
   readonly value: string;
   readonly label: string;
@@ -302,9 +299,18 @@ export interface commonserverresponse {
   error?: string;
   message?: string;
   file_name?: string;
+  data?: labelsAndTypes | labelsAndTypes[]|uploadData;
+}
+
+export interface ScehmaFromText extends Partial<commonserverresponse> {
+  data: labelsAndTypes;
 }
 export interface ServerData extends Partial<commonserverresponse> {
   data: labelsAndTypes[];
+}
+export interface schema {
+  nodelabels: string[];
+  relationshipTypes: string[];
 }
 
 export interface SourceListServerData {
