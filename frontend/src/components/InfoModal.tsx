@@ -6,7 +6,7 @@ import wikipedialogo from '../assets/images/Wikipedia-logo-v2.svg';
 import youtubelogo from '../assets/images/youtube.png';
 import gcslogo from '../assets/images/gcs.webp';
 import s3logo from '../assets/images/s3logo.png';
-import { Entity, GroupedEntity, UserCredentials, chatInfoMessage } from '../types';
+import { Chunk, Entity, GroupedEntity, UserCredentials, chatInfoMessage } from '../types';
 import { useEffect, useMemo, useState } from 'react';
 import HoverableLink from './HoverableLink';
 import GraphViewButton from './GraphViewButton';
@@ -21,8 +21,8 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
   const [loading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
   const [nodes, setNodes] = useState<Node[]>([]);
-  const [relationships, setRelationships] = useState<Relationship[]>([]);
   const [chunks, setChunks] = useState<Chunk[]>([]);
+  const [relationships, setRelationships] = useState<Relationship[]>([]);
   const parseEntity = (entity: Entity) => {
     const { labels, properties } = entity;
     const label = labels[0];
@@ -71,21 +71,18 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
   const sortedLabels = useMemo(() => {
     return Object.keys(labelCounts).sort((a, b) => labelCounts[b] - labelCounts[a]);
   }, [labelCounts]);
-  const generateYouTubeLink = (url: string, startTime: string) => {
-    try {
-      const urlObj = new URL(url);
-      urlObj.searchParams.set('t', startTime);
-      console.log('url', urlObj.toString());
-      return urlObj.toString();
-    } catch (error) {
-      console.error('Invalid URL:', error);
-      return '';
-    }
-  };
+
+  // const generateYouTubeLink = (url: string, startTime: string) => {
+  //   const urlObj = new URL(url);
+  //   urlObj.searchParams.set('t', startTime);
+  //   console.log('url', urlObj.toString());
+  //   return urlObj.toString();
+  // };
+
   return (
     <Box className='n-bg-palette-neutral-bg-weak p-4'>
       <Box className='flex flex-row pb-6 items-center mb-2'>
-        <img src={Neo4jRetrievalLogo} style={{ width: 95, height: 95, marginRight: 10 }} loading='lazy' />
+        <img src={Neo4jRetrievalLogo} alt='icon' style={{ width: 95, height: 95, marginRight: 10 }} loading='lazy' />
         <Box className='flex flex-col'>
           <Typography variant='h2'>Retrieval information</Typography>
           <Typography variant='body-medium' className='mb-2'>
@@ -157,7 +154,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                       )}
                     </div>
                   ) : (
-                    <div className='flex flex-row inline-block justiy-between items-center'>
+                    <div className='flex flex -row inline-block justiy-between items-center'>
                       <DocumentTextIconOutline className='n-size-token-7 mr-2' />
                       <Typography
                         variant='body-medium'
@@ -186,28 +183,38 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
               <LoadingSpinner size='small' />
             </Box>
           ) : Object.keys(groupedEntities).length > 0 ? (
-            <ul className='list-none p-4 max-h-80 overflow-auto'>
-              {sortedLabels.map((label, index) => (
-                <li
-                  key={index}
-                  className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%)] overflow-hidden'
-                >
-                  <div
+            <div className='p-4 h-80 overflow-auto'>
+              <ul className='list-none'>
+                {sortedLabels.map((label, index) => (
+                  <li
                     key={index}
-                    style={{ backgroundColor: `${groupedEntities[label].color}` }}
-                    className='legend mr-2'
+                    className='flex items-center mb-2'
+                    style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}
                   >
-                    {label} ({labelCounts[label]})
-                  </div>
-                  <Typography
-                    className='entity-text text-ellipsis whitespace-nowrap max-w-[calc(100%-120px)] overflow-hidden'
-                    variant='body-medium'
-                  >
-                    {Array.from(groupedEntities[label].texts).slice(0, 3).join(', ')}
-                  </Typography>
-                </li>
-              ))}
-            </ul>
+                    <div
+                      key={index}
+                      style={{ backgroundColor: `${groupedEntities[label].color}` }}
+                      className='legend mr-2'
+                    >
+                      {label} ({labelCounts[label]})
+                    </div>
+                    <Typography
+                      className='entity-text'
+                      variant='body-medium'
+                      sx={{
+                        display: 'inline-block',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: 'calc(100% - 120px)',
+                      }}
+                    >
+                      {Array.from(groupedEntities[label].texts).slice(0, 3).join(', ')}
+                    </Typography>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : (
             <span className='h6 text-center'>No Entities Found</span>
           )
@@ -221,23 +228,22 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
               {chunks.map((chunk) => (
                 <li key={chunk.id} className='mb-2'>
                   {chunk.page_number ? (
-                    <Typography variant='subheading-medium'>
-                      File: {chunk.fileName}, Page: {chunk.page_number}
+                    <Typography variant='subheading-small'>
+                      File: {chunk.fileName}, Page: {chunk.page_number}, Offset: {chunk.content_offset}
                     </Typography>
                   ) : chunk.start_time ? (
-                    <Flex>
-                      {chunk.url && chunk.start_time && (
-                        <>
-                          <TextLink externalLink href={generateYouTubeLink(chunk.url, chunk.start_time)}>
-                            File: {chunk.fileName}
-                          </TextLink>
-                        </>
-                      )}
-                    </Flex>
+                    <div>
+                      <Typography variant='subheading-small'>
+                        File: {chunk.fileName}, Time: {chunk.start_time}{' '}
+                      </Typography>
+                      {/* <Typography as="a"
+                        href={generateYouTubeLink('https://www.youtube.com/watch?v=1bUy-1hGZpI', chunk.start_time)}
+                        variant="body-small"
+                        target='_blank' rel='noopener noreferrer'
+                      > Time {chunk.start_time}</Typography> */}
+                    </div>
                   ) : (
-                    <Typography variant='subheading-medium'>
-                      File: {chunk.fileName}, Source: {chunk.fileSource}
-                    </Typography>
+                    <></>
                   )}
                   <ReactMarkdown>{chunk.text}</ReactMarkdown>
                 </li>

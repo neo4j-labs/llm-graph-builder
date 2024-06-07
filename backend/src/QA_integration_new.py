@@ -31,9 +31,6 @@ openai_api_key = os.environ.get('OPENAI_API_KEY')
 
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
-CHAT_MAX_TOKENS = 1000
-SEARCH_KWARG_K = 2
-SEARCH_KWARG_SCORE_THRESHOLD = 0.7
 
 RETRIEVAL_QUERY = """
 WITH node as chunk, score
@@ -93,7 +90,7 @@ Response: "PyCaret simplifies the process of building and deploying machine lear
 Note: This system does not generate answers based solely on internal knowledge. It answers from the information provided in the user's current and previous inputs, and from explicitly referenced external sources. Ensure that the system is capable of extracting and referencing chunk IDs from your documentation system.
 """
 
-def get_neo4j_retriever(graph, index_name="vector", search_k=SEARCH_KWARG_K, score_threshold=SEARCH_KWARG_SCORE_THRESHOLD):
+def get_neo4j_retriever(graph, index_name="vector", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
     try:
         neo_db = Neo4jVector.from_existing_index(
             embedding=EMBEDDING_FUNCTION,
@@ -284,7 +281,9 @@ def QA_RAG(graph,model,question,session_id):
         qa_rag_start_time = time.time()
 
         start_time = time.time()
-        llm,model_version = get_llm(model=model,max_tokens=CHAT_MAX_TOKENS)
+        print(model)
+        model_version = MODEL_VERSIONS[model]
+        llm = get_llm(model_version)
         retriever = get_neo4j_retriever(graph=graph)
         doc_retriever = create_document_retriever_chain(llm,retriever)
         history = create_neo4j_chat_message_history(graph,session_id )
