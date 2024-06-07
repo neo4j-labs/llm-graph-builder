@@ -67,21 +67,26 @@ def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name
     logging.info(f'embedding model:{embeddings} and dimesion:{dimension}')
     for row in chunkId_chunkDoc_list:
         # for graph_document in row['graph_doc']:
-        embeddings_arr = embeddings.embed_query(row['chunk_doc'].page_content)
-        # logging.info(f'Embedding list {embeddings}')
         if isEmbedding.upper() == "TRUE":
-            logging.info(f"update embedding for {row['chunk_id']}")
-            graph.query("""MATCH (d:Document {fileName : $fileName})
-                           MERGE (c:Chunk {id:$chunkId}) SET c.embedding = $embeddings 
-                           MERGE (c)-[:PART_OF]->(d)
-                        """,
-                        {
-                            "fileName" : file_name,
-                            "chunkId": row['chunk_id'],
-                            "embeddings" : embeddings_arr
-                        }
-                        )
-            logging.info('create vector index on chunk embedding')
+            embeddings_arr = embeddings.embed_query(row['chunk_doc'].page_content)
+            # logging.info(f'Embedding list {embeddings_arr}')
+                                    
+            data_for_query.append({
+                "chunkId": row['chunk_id'],
+                "embeddings": embeddings_arr
+            })
+            # graph.query("""MATCH (d:Document {fileName : $fileName})
+            #                MERGE (c:Chunk {id:$chunkId}) SET c.embedding = $embeddings 
+            #                MERGE (c)-[:PART_OF]->(d)
+            #             """,
+            #             {
+            #                 "fileName" : file_name,
+            #                 "chunkId": row['chunk_id'],
+            #                 "embeddings" : embeddings_arr
+            #             }
+            #             )
+            # logging.info('create vector index on chunk embedding')
+
             graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
                             OPTIONS {indexConfig: {
                             `vector.dimensions`: $dimensions,
