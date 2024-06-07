@@ -5,15 +5,31 @@ import { useFileContext } from '../context/UsersFiles';
 import { getNodeLabelsAndRelTypes } from '../services/GetNodeLabelsRelTypes';
 import { useCredentials } from '../context/UserCredentials';
 import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
-import schemaExamples from '../assets/schemas.json'
+import schemaExamples from '../assets/schemas.json';
 
-export default function SettingsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels } = useFileContext();
+export default function SettingsModal({ open, onClose, opneTextSchema }: { open: boolean; onClose: () => void, opneTextSchema: () => void }) {
+  const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels, selectedSchemas, setSelectedSchemas } =
+    useFileContext();
   const { userCredentials } = useCredentials();
   const [loading, setLoading] = useState<boolean>(false);
   const onChangenodes = (selectedOptions: OnChangeValue<OptionType, true>) => {
     setSelectedNodes(selectedOptions);
     localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions }));
+  };
+  const onChangeSchema = (selectedOptions: OnChangeValue<OptionType, true>) => {
+    setSelectedSchemas(selectedOptions);
+    const nodesFromSchema = selectedOptions.map((s) => JSON.parse(s.value).nodelabels).flat();
+    const relationsFromSchema = selectedOptions.map((s) => JSON.parse(s.value).relationshipTypes).flat();
+    let nodeOptionsFromSchema: OptionType[] = [];
+    nodesFromSchema.forEach((n) => nodeOptionsFromSchema.push({ label: n, value: n }));
+    let relationshipOptionsFromSchema: OptionType[] = [];
+    relationsFromSchema.forEach((r) => relationshipOptionsFromSchema.push({ label: r, value: r }));
+    setSelectedNodes((prev) => {
+      return [...prev, ...nodeOptionsFromSchema];
+    });
+    setSelectedRels((prev) => {
+      return [...prev, ...relationshipOptionsFromSchema];
+    });
   };
   const onChangerels = (selectedOptions: OnChangeValue<OptionType, true>) => {
     setSelectedRels(selectedOptions);
@@ -21,22 +37,22 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
   };
   const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>([]);
   const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
-  const [defaultExamples, setdefaultExamples] = useState<OptionTypeForExamples[]>([]);
+  const [defaultExamples, setdefaultExamples] = useState<OptionType[]>([]);
 
   useEffect(() => {
     const parsedData = schemaExamples.reduce((accu: OptionTypeForExamples[], example) => {
       const examplevalues: OptionTypeForExamples = {
         label: example.schema,
-        value: {
+        value: JSON.stringify({
           nodelabels: example.labels,
-          relationshipTypes: example.relationshipTypes
-        }
-      }
-      accu.push(examplevalues)
-      return accu
-    }, [])
-    setdefaultExamples(parsedData)
-  }, [])
+          relationshipTypes: example.relationshipTypes,
+        }),
+      };
+      accu.push(examplevalues);
+      return accu;
+    }, []);
+    setdefaultExamples(parsedData);
+  }, []);
   useEffect(() => {
     if (userCredentials && open) {
       const getOptions = async () => {
@@ -76,9 +92,9 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
           selectProps={{
             isClearable: true,
             isMulti: true,
-            options: nodeLabelOptions,
-            onChange: onChangenodes,
-            value: selectedNodes,
+            options: defaultExamples,
+            onChange: onChangeSchema,
+            value: selectedSchemas,
           }}
           type='creatable'
         />
@@ -106,7 +122,7 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
           }}
           type='creatable'
         />
-        <div>
+        <Dialog.Actions className='!mt-4'>
           <Button
             loading={loading}
             title={!nodeLabelOptions.length && !relationshipTypeOptions.length ? `No Labels Found in the Database` : ''}
@@ -115,7 +131,8 @@ export default function SettingsModal({ open, onClose }: { open: boolean; onClos
           >
             Use Existing Schema
           </Button>
-        </div>
+          <Button onClick={()=>{onClose();opneTextSchema()}}>Get Existing Schema From Text</Button>
+        </Dialog.Actions>
       </Dialog.Content>
     </Dialog>
   );

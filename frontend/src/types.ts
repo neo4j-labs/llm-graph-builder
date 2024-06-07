@@ -32,14 +32,13 @@ export interface OptionType {
   readonly value: string;
   readonly label: string;
 }
-interface exmapleType{
-  nodelabels:string[],
-  relationshipTypes:string[]
+interface exmapleType {
+  nodelabels: string[];
+  relationshipTypes: string[];
 }
-export interface OptionTypeForExamples{
-  readonly value:exmapleType;
+export interface OptionTypeForExamples {
+  readonly value: string;
   readonly label: string;
-
 }
 
 export type UserCredentials = {

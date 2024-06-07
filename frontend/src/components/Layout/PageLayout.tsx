@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import SideNav from './SideNav';
 import DrawerDropzone from './DrawerDropzone';
 import DrawerChatbot from './DrawerChatbot';
@@ -8,6 +8,7 @@ import { clearChatAPI } from '../../services/QnaAPI';
 import { useCredentials } from '../../context/UserCredentials';
 import { UserCredentials } from '../../types';
 import { useMessageContext } from '../../context/UserMessages';
+import SchemaFromTextDialog from '../SchemaFromText';
 export default function PageLayoutNew({
   isSettingPanelExpanded,
   closeSettingModal,
@@ -23,7 +24,13 @@ export default function PageLayoutNew({
   const { userCredentials } = useCredentials();
   const toggleLeftDrawer = () => setIsLeftExpanded(!isLeftExpanded);
   const toggleRightDrawer = () => setIsRightExpanded(!isRightExpanded);
+  const [openTextSchemaDialog, setOpenTextSchemaDialog] = useState<boolean>(false);
+
   const { messages } = useMessageContext();
+
+  const openSchemaFromTextDialog = useCallback(() => setOpenTextSchemaDialog(true), [])
+  const closeSchemaFromTextDialog = useCallback(() => setOpenTextSchemaDialog(false), [])
+
 
   const deleteOnClick = async () => {
     try {
@@ -44,7 +51,8 @@ export default function PageLayoutNew({
     <div style={{ maxHeight: 'calc(100vh - 58px)' }} className='flex overflow-hidden'>
       <SideNav isExpanded={isLeftExpanded} position='left' toggleDrawer={toggleLeftDrawer} />
       <DrawerDropzone isExpanded={isLeftExpanded} />
-      <SettingsModal open={isSettingPanelExpanded} onClose={closeSettingModal} />
+      <SchemaFromTextDialog open={openTextSchemaDialog} onClose={closeSchemaFromTextDialog}></SchemaFromTextDialog>
+      <SettingsModal opneTextSchema={openSchemaFromTextDialog} open={isSettingPanelExpanded} onClose={closeSettingModal} />
       <Content
         openChatBot={() => setShowChatBot(true)}
         isLeftExpanded={isLeftExpanded}

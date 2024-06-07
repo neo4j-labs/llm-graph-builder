@@ -202,13 +202,13 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                     }`}
                   >
                     {chat.message.split(/`(.+?)`/).map((part, index) =>
-                      (index % 2 === 1 ? (
+                      index % 2 === 1 ? (
                         <span key={index} style={formattedTextStyle}>
                           {part}
                         </span>
                       ) : (
                         part
-                      ))
+                      )
                     )}
                   </div>
                   <div>
