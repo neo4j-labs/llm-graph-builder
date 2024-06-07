@@ -399,4 +399,5 @@ export interface Chunk {
   embedding: string | null;
   page_number: number;
   start_time: string;
+  content_offset: string;
 }

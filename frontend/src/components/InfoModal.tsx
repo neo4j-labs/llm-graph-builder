@@ -14,7 +14,7 @@ import { chunkEntitiesAPI } from '../services/ChunkEntitiesInfo';
 import { useCredentials } from '../context/UserCredentials';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { calcWordColor } from '@neo4j-devtools/word-color';
-
+import ReactMarkdown from 'react-markdown';
 const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, response_time, chunk_ids }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
@@ -23,6 +23,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
   const [nodes, setNodes] = useState<Node[]>([]);
   const [chunks, setChunks] = useState<Chunk[]>([]);
   const [relationships, setRelationships] = useState<Relationship[]>([]);
+
   const parseEntity = (entity: Entity) => {
     const { labels, properties } = entity;
     const label = labels[0];
@@ -30,12 +31,10 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
     return { label, text };
   };
 
-  console.log('chunks', chunks);
   useEffect(() => {
     setLoading(true);
     chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids.join(','))
       .then((response) => {
-        console.log('chunks', response.data.data.chunk_data);
         setInfoEntities(response.data.data.nodes);
         setNodes(response.data.data.nodes);
         setRelationships(response.data.data.relationships);
@@ -75,10 +74,15 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
   }, [infoEntities]);
 
   const sortedLabels = useMemo(() => {
-    return Object.keys(labelCounts)
-      .slice(0, 7)
-      .sort((a, b) => labelCounts[b] - labelCounts[a]);
+    return Object.keys(labelCounts).sort((a, b) => labelCounts[b] - labelCounts[a]);
   }, [labelCounts]);
+
+  // const generateYouTubeLink = (url: string, startTime: string) => {
+  //   const urlObj = new URL(url);
+  //   urlObj.searchParams.set('t', startTime);
+  //   console.log('url', urlObj.toString());
+  //   return urlObj.toString();
+  // };
 
   return (
     <Box className='n-bg-palette-neutral-bg-weak p-4'>
@@ -155,7 +159,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                       )}
                     </div>
                   ) : (
-                    <div className='flex flex-row inline-block justiy-between items-center'>
+                    <div className='flex flex -row inline-block justiy-between items-center'>
                       <DocumentTextIconOutline className='n-size-token-7 mr-2' />
                       <Typography
                         variant='body-medium'
@@ -184,36 +188,38 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
               <LoadingSpinner size='small' />
             </Box>
           ) : Object.keys(groupedEntities).length > 0 ? (
-            <ul className='list-none'>
-              {sortedLabels.map((label, index) => (
-                <li
-                  key={index}
-                  className='flex items-center mb-2'
-                  style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}
-                >
-                  <div
+            <div className='p-4 h-80 overflow-auto'>
+              <ul className='list-none'>
+                {sortedLabels.map((label, index) => (
+                  <li
                     key={index}
-                    style={{ backgroundColor: `${groupedEntities[label].color}` }}
-                    className='legend mr-2'
+                    className='flex items-center mb-2'
+                    style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}
                   >
-                    {label} ({labelCounts[label]})
-                  </div>
-                  <Typography
-                    className='entity-text'
-                    variant='body-medium'
-                    sx={{
-                      display: 'inline-block',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      maxWidth: 'calc(100% - 120px)',
-                    }}
-                  >
-                    {Array.from(groupedEntities[label].texts).slice(0, 3).join(', ')}
-                  </Typography>
-                </li>
-              ))}
-            </ul>
+                    <div
+                      key={index}
+                      style={{ backgroundColor: `${groupedEntities[label].color}` }}
+                      className='legend mr-2'
+                    >
+                      {label} ({labelCounts[label]})
+                    </div>
+                    <Typography
+                      className='entity-text'
+                      variant='body-medium'
+                      sx={{
+                        display: 'inline-block',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: 'calc(100% - 120px)',
+                      }}
+                    >
+                      {Array.from(groupedEntities[label].texts).slice(0, 3).join(', ')}
+                    </Typography>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : (
             <span className='h6 text-center'>No Entities Found</span>
           )
@@ -226,18 +232,25 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
             <ul className='list-disc list-inside'>
               {chunks.map((chunk) => (
                 <li key={chunk.id} className='mb-2'>
-                  <Typography variant='body-medium'>{chunk.text}</Typography>
                   {chunk.page_number ? (
-                    <Typography variant='h6' className='italic'>
-                      - Page {chunk.page_number}
+                    <Typography variant='subheading-small'>
+                      File: {chunk.fileName}, Page: {chunk.page_number}, Offset: {chunk.content_offset}
                     </Typography>
                   ) : chunk.start_time ? (
-                    <Typography variant='h6' className='italic'>
-                      - Time {chunk.start_time}
-                    </Typography>
+                    <div>
+                      <Typography variant='subheading-small'>
+                        File: {chunk.fileName}, Time: {chunk.start_time}{' '}
+                      </Typography>
+                      {/* <Typography as="a"
+                        href={generateYouTubeLink('https://www.youtube.com/watch?v=1bUy-1hGZpI', chunk.start_time)}
+                        variant="body-small"
+                        target='_blank' rel='noopener noreferrer'
+                      > Time {chunk.start_time}</Typography> */}
+                    </div>
                   ) : (
                     <></>
                   )}
+                  <ReactMarkdown>{chunk.text}</ReactMarkdown>
                 </li>
               ))}
             </ul>
