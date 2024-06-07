@@ -9,11 +9,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../context/UsersFiles';
 import InfoModal from './InfoModal';
 import clsx from 'clsx';
-
+import ReactMarkdown from 'react-markdown';
 const Chatbot: React.FC<ChatbotProps> = (props) => {
   const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen } = props;
   const [inputMessage, setInputMessage] = useState('');
-  const formattedTextStyle = { color: 'rgb(var(--theme-palette-discovery-bg-strong))' };
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
   const { model } = useFileContext();
@@ -149,7 +148,6 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   useEffect(() => {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
   }, [listMessages]);
-
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
       <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3 pr-3'>
@@ -202,15 +200,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                         : ''
                     }`}
                   >
-                    {chat.message.split(/`(.+?)`/).map((part, index) =>
-                      (index % 2 === 1 ? (
-                        <span key={index} style={formattedTextStyle}>
-                          {part}
-                        </span>
-                      ) : (
-                        part
-                      ))
-                    )}
+                    <ReactMarkdown>{chat.message}</ReactMarkdown>
                   </div>
                   <div>
                     <div>
