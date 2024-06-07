@@ -116,11 +116,12 @@ const SchemaFromTextDialog = ({
           helpText='Analyze the text to extract Entities'
           label='Document Text'
           style={{
-            resize: 'both',
+            resize: 'vertical',
           }}
           fluid
           value={userText}
           onChange={(e) => setUserText(e.target.value)}
+          size="large"
         />
         <Dialog.Actions className='!mt-4'>
           <Button loading={loading} disabled={userText.trim() === '' || loading} onClick={clickHandler}>
