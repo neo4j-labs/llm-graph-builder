@@ -56,7 +56,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "True").lower() in ("true", "1", "yes")
+is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "False").lower() in ("true", "1", "yes")
 if is_gemini_enabled:
     add_routes(app,ChatVertexAI(), path="/vertexai")
 
