@@ -72,6 +72,34 @@ Alternatively, you can run the backend and frontend separately:
     pip install -r requirements.txt
     uvicorn score:app --reload
     ```
+### ENV
+| Env Variable Name       | Mandatory/Optional | Default Value | Description                                                                                      |
+|-------------------------|--------------------|---------------|--------------------------------------------------------------------------------------------------|
+| OPENAI_API_KEY          | Mandatory          |               | API key for OpenAI                                                                               |
+| DIFFBOT_API_KEY         | Mandatory          |               | API key for Diffbot                                                                              |
+| EMBEDDING_MODEL         | Optional           | text-embedding-ada-002 | Model for text embedding                                                        |
+| IS_EMBEDDING            | Optional           | true          | Flag to enable text embedding                                                                    |
+| KNN_MIN_SCORE           | Optional           | 0.94          | Minimum score for KNN algorithm                                                                  |
+| GEMINI_ENABLED          | Optional           | False         | Flag to enable Gemini                                                                             |
+| GCP_LOG_METRICS_ENABLED | Optional           | False         | Flag to enable Google Cloud logs                                                                 |
+| NUMBER_OF_CHUNKS_TO_COMBINE | Optional        | 6             | Number of chunks to combine when processing embeddings                                           |
+| UPDATE_GRAPH_CHUNKS_PROCESSED | Optional      | 20            | Number of chunks processed before updating progress                                        |
+| NEO4J_URI               | Optional           | neo4j://database:7687 | URI for Neo4j database                                                                  |
+| NEO4J_USERNAME          | Optional           | neo4j         | Username for Neo4j database                                                                       |
+| NEO4J_PASSWORD          | Optional           | password      | Password for Neo4j database                                                                       |
+| LANGCHAIN_API_KEY       | Optional           |               | API key for Langchain                                                                             |
+| LANGCHAIN_PROJECT       | Optional           |               | Project for Langchain                                                                             |
+| LANGCHAIN_TRACING_V2    | Optional           | true          | Flag to enable Langchain tracing                                                                  |
+| LANGCHAIN_ENDPOINT      | Optional           | https://api.smith.langchain.com | Endpoint for Langchain API                                                            |
+| BACKEND_API_URL         | Optional           | http://localhost:8000 | URL for backend API                                                                       |
+| BLOOM_URL               | Optional           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
+| REACT_APP_SOURCES       | Optional           | local,youtube,wiki,s3 | List of input sources that will be available                                               |
+| LLM_MODELS              | Optional           | Diffbot,OpenAI GPT 3.5,OpenAI GPT 4o | Models available for selection on the frontend                          |
+| ENV                     | Optional           | DEV           | Environment variable for the app                                                                 |
+| TIME_PER_CHUNK          | Optional           | 4             | Time per chunk for processing                                                                    |
+| CHUNK_SIZE              | Optional           | 5242880       | Size of each chunk for processing                                                                |
+| GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
+
 
 ###
 To deploy the app and packages on Google Cloud Platform, run the following command on google cloud run:
@@ -148,31 +176,3 @@ https://github.com/neo4j-labs/llm-graph-builder/assets/121786590/b725a503-6ade-4
 ## Links
  The Public [ Google cloud Run URL](https://devfrontend-dcavk67s4a-uc.a.run.app).
  [Workspace URL](https://workspace-preview.neo4j.io/workspace)
-
-
-| Env Variable Name       | Mandatory/Optional | Default Value | Description                                                                                      |
-|-------------------------|--------------------|---------------|--------------------------------------------------------------------------------------------------|
-| OPENAI_API_KEY          | Mandatory          |               | API key for OpenAI                                                                               |
-| DIFFBOT_API_KEY         | Mandatory          |               | API key for Diffbot                                                                              |
-| EMBEDDING_MODEL         | Optional           | text-embedding-ada-002 | Model for text embedding                                                        |
-| IS_EMBEDDING            | Optional           | true          | Flag to enable text embedding                                                                    |
-| KNN_MIN_SCORE           | Optional           | 0.94          | Minimum score for KNN algorithm                                                                  |
-| GEMINI_ENABLED          | Optional           | False         | Flag to enable Gemini                                                                             |
-| GCP_LOG_METRICS_ENABLED | Optional           | False         | Flag to enable Google Cloud logs                                                                 |
-| NUMBER_OF_CHUNKS_TO_COMBINE | Optional        | 6             | Number of chunks to combine when processing embeddings                                           |
-| UPDATE_GRAPH_CHUNKS_PROCESSED | Optional      | 20            | Number of chunks processed before updating progress                                        |
-| NEO4J_URI               | Optional           | neo4j://database:7687 | URI for Neo4j database                                                                  |
-| NEO4J_USERNAME          | Optional           | neo4j         | Username for Neo4j database                                                                       |
-| NEO4J_PASSWORD          | Optional           | password      | Password for Neo4j database                                                                       |
-| LANGCHAIN_API_KEY       | Optional           |               | API key for Langchain                                                                             |
-| LANGCHAIN_PROJECT       | Optional           |               | Project for Langchain                                                                             |
-| LANGCHAIN_TRACING_V2    | Optional           | true          | Flag to enable Langchain tracing                                                                  |
-| LANGCHAIN_ENDPOINT      | Optional           | https://api.smith.langchain.com | Endpoint for Langchain API                                                            |
-| BACKEND_API_URL         | Optional           | http://localhost:8000 | URL for backend API                                                                       |
-| BLOOM_URL               | Optional           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
-| REACT_APP_SOURCES       | Optional           | local,youtube,wiki,s3 | List of input sources that will be available                                               |
-| LLM_MODELS              | Optional           | Diffbot,OpenAI GPT 3.5,OpenAI GPT 4o | Models available for selection on the frontend                          |
-| ENV                     | Optional           | DEV           | Environment variable for the app                                                                 |
-| TIME_PER_CHUNK          | Optional           | 4             | Time per chunk for processing                                                                    |
-| CHUNK_SIZE              | Optional           | 5242880       | Size of each chunk for processing                                                                |
-| GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
