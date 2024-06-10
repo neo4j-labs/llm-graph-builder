@@ -39,12 +39,12 @@ services:
       args:
         - BACKEND_API_URL=${BACKEND_API_URL-http://localhost:8000}
         - REACT_APP_SOURCES=${REACT_APP_SOURCES-local,youtube,wiki,s3}
-        - LLM_MODELS=${LLM_MODELS-"Diffbot,OpenAI GPT 3.5,OpenAI GPT 4o"}
+        - LLM_MODELS=${LLM_MODELS-Diffbot,OpenAI GPT 3.5,OpenAI GPT 4o}
         - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID-""}
-        - BLOOM_URL=${BLOOM_URL-"https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true"}
+        - BLOOM_URL=${BLOOM_URL-https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true}
         - TIME_PER_CHUNK=${TIME_PER_CHUNK-4}
         - CHUNK_SIZE=${CHUNK_SIZE-5242880}
-        - ENV=${ENV-"DEV"}
+        - ENV=${ENV-DEV}
     volumes:
       - ./frontend:/app
       - /app/node_modules
