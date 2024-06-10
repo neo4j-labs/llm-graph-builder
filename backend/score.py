@@ -490,10 +490,9 @@ async def cancelled_job(uri=Form(None), userName=Form(None), password=Form(None)
         close_db_connection(graph, 'cancelled_job')
 
 @app.post("/populate_graph_schema")
-async def populate_graph_schema(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), input_text=Form(None), model=Form(None)):
+async def populate_graph_schema(input_text=Form(None), model=Form(None), is_schema_description_cheked=Form(None)):
     try:
-        graph = create_graph_database_connection(uri, userName, password, database)
-        result = populate_graph_schema_from_text(graph,input_text,model)
+        result = populate_graph_schema_from_text(input_text, model, is_schema_description_cheked)
         
         return create_api_response('Success',data=result)
     except Exception as e:
