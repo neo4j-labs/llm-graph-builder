@@ -33,6 +33,11 @@ export interface OptionType {
   readonly label: string;
 }
 
+export interface OptionTypeForExamples {
+  readonly value: string;
+  readonly label: string;
+}
+
 export type UserCredentials = {
   uri: string;
   userName: string;
@@ -294,9 +299,18 @@ export interface commonserverresponse {
   error?: string;
   message?: string;
   file_name?: string;
+  data?: labelsAndTypes | labelsAndTypes[] | uploadData;
+}
+
+export interface ScehmaFromText extends Partial<commonserverresponse> {
+  data: labelsAndTypes;
 }
 export interface ServerData extends Partial<commonserverresponse> {
   data: labelsAndTypes[];
+}
+export interface schema {
+  nodelabels: string[];
+  relationshipTypes: string[];
 }
 
 export interface SourceListServerData {
@@ -388,4 +402,16 @@ export interface LargefilesProps {
 
 export interface MessagesContextProviderProps {
   children: ReactNode;
+}
+
+export interface Chunk {
+  id: string;
+  position: number;
+  text: string;
+  fileName: string;
+  length: number;
+  embedding: string | null;
+  page_number: number;
+  start_time: string;
+  content_offset: string;
 }

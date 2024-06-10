@@ -1,0 +1,230 @@
+[{
+  "labels": [
+    "Answer",
+    "Question",
+    "Tag",
+    "User"
+  ],
+  "relationshipTypes": [
+    "ACCEPTED",
+    "ANSWERED",
+    "POSTED",
+    "SIMILAR",
+    "TAGGED"
+  ],
+  "schema": "stackoverflow"
+},
+{
+    "labels": [
+      "Actor",
+      "Director",
+      "Genre",
+      "Movie",
+      "Person",
+      "User"
+    ],
+    "relationshipTypes": [
+      "ACTED_IN",
+      "DIRECTED",
+      "IN_GENRE",
+      "RATED"
+    ],
+    "schema": "movies"
+  },
+  {
+    "labels": [
+      "Application",
+      "DataCenter",
+      "Egress",
+      "Interface",
+      "Machine",
+      "Network",
+      "OS",
+      "Port",
+      "Process",
+      "Rack",
+      "Router",
+      "Service",
+      "Software",
+      "Switch",
+      "Type",
+      "Version",
+      "Zone"
+    ],
+    "relationshipTypes": [
+      "CONNECTS",
+      "CONTAINS",
+      "DEPENDS_ON",
+      "EXPOSES",
+      "HOLDS",
+      "INSTANCE",
+      "LISTENS",
+      "PREVIOUS",
+      "ROUTES",
+      "RUNS",
+      "TYPE",
+      "VERSION"
+    ],
+    "schema": "network"
+  }, 
+  {
+    "labels": [
+      "Category",
+      "Customer",
+      "Order",
+      "Product",
+      "Supplier"
+    ],
+    "relationshipTypes": [
+      "ORDERS",
+      "PART_OF",
+      "PURCHASED",
+      "SUPPLIES"
+    ],
+    "schema": "retail"
+  },{
+    "labels": [
+      "Tag",
+      "Link",
+      "Post",
+      "User"
+    ],
+    "relationshipTypes": [
+      "CONTAINS",
+      "FOLLOWS",
+      "MENTIONS",
+      "POSTS",
+      "REPLY_TO",
+      "REPOST",
+      "TAGS"
+    ],
+    "schema": "social"
+  },
+  {
+    "labels": [
+      "Business",
+      "Category",
+      "City",
+      "Label",
+      "Photo",
+      "Review",
+      "User"
+    ],
+    "relationshipTypes": [
+      "FRIENDS",
+      "HAS_LABEL",
+      "HAS_PHOTO",
+      "IN_CATEGORY",
+      "IN_CITY",
+      "REVIEWS",
+      "SIMILAR",
+      "WROTE",
+      "WROTE_TIP"
+    ],
+    "schema": "reviews"
+  },
+  {
+    "labels": [
+      "Bank",
+      "CashIn",
+      "CashOut",
+      "Client",
+      "Debit",
+      "Email",
+      "Merchant",
+      "Payment",
+      "Phone",
+      "SSN",
+      "Transaction",
+      "Transfer"
+    ],
+    "relationshipTypes": [
+      "HAS_EMAIL",
+      "HAS_PHONE",
+      "HAS_SSN",
+      "NEXT",
+      "PERFORMED",
+      "SENT_TO",
+      "RECEIVED_FROM"
+    ],
+    "schema": "payments"
+  },
+  {
+    "labels": [
+      "Area",
+      "Crime",
+      "Email",
+      "Location",
+      "Object",
+      "Officer",
+      "Person",
+      "Phone",
+      "PhoneCall",
+      "PostCode",
+      "Vehicle"
+    ],
+    "relationshipTypes": [
+      "CALLED",
+      "CALLER",
+      "CURRENT_ADDRESS",
+      "FAMILY_REL",
+      "HAS_EMAIL",
+      "HAS_PHONE",
+      "HAS_POSTCODE",
+      "INVESTIGATED_BY",
+      "INVOLVED_IN",
+      "KNOWS",
+      "KNOWS_LW",
+      "KNOWS_PHONE",
+      "KNOWS_SN",
+      "LOCATION_IN_AREA",
+      "OCCURRED_AT",
+      "PARTY_TO",
+      "POSTCODE_IN_AREA"
+    ],
+    "schema": "crime"
+  },
+  {
+    "labels": [
+      "Airport",
+      "City",
+      "Continent",
+      "Country",
+      "Region"
+    ],
+    "relationshipTypes": [
+      "HAS_ROUTE",
+      "IN_CITY",
+      "IN_COUNTRY",
+      "IN_REGION",
+      "ON_CONTINENT"
+    ],
+    "schema": "flights"
+  },
+  {
+    "labels": [
+      "AgeGroup",
+      "Case",
+      "Drug",
+      "Manufacturer",
+      "Outcome",
+      "Reaction",
+      "ReportSource",
+      "Therapy"
+    ],
+    "relationshipTypes": [
+      "FALLS_UNDER",
+      "HAS_REACTION",
+      "IS_CONCOMITANT",
+      "IS_INTERACTING",
+      "IS_PRIMARY_SUSPECT",
+      "IS_SECONDARY_SUSPECT",
+      "PRESCRIBED",
+      "RECEIVED",
+      "REGISTERED",
+      "REPORTED_BY",
+      "RESULTED_IN"
+    ],
+    "schema": "healthcare"
+  }
+]
