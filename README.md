@@ -5,6 +5,10 @@ Files can be uploaded from local machine or S3 bucket and then LLM model can be 
 
 ### Getting started
 
+:warning: You will need to have a Neo4j Database V5.15 or later with [APOC installed](https://neo4j.com/docs/apoc/current/installation/) to use this Knowledge Graph Builder.
+You can use any [Neo4j Aura database](https://neo4j.com/aura/) (including the free database)
+If you are using Neo4j Desktop, you will not be able to use the docker-compose but will have to follow the [separate deployment of backend and frontend section](#running-backend-and-frontend-separately-dev-environment). :warning:
+
 ### Deploy locally
 #### Running through docker-compose
 By default only OpenAI and Diffbot are enabled since Gemini requires extra GCP configurations.
@@ -176,3 +180,4 @@ https://github.com/neo4j-labs/llm-graph-builder/assets/121786590/b725a503-6ade-4
 ## Links
  The Public [ Google cloud Run URL](https://devfrontend-dcavk67s4a-uc.a.run.app).
  [Workspace URL](https://workspace-preview.neo4j.io/workspace)
+
