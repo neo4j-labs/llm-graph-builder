@@ -23,6 +23,7 @@ const DropZone: FunctionComponent = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const onDropHandler = (f: Partial<globalThis.File>[]) => {
+    console.log(f)
     setIsClicked(true);
     setSelectedFiles(f.map((f) => f as File));
     setIsLoading(false);
@@ -32,7 +33,6 @@ const DropZone: FunctionComponent = () => {
         status: 'None',
         NodesCount: 0,
         relationshipCount: 0,
-        type: 'PDF',
         model: model,
         fileSource: 'local file',
         uploadprogess: 0,
@@ -46,7 +46,8 @@ const DropZone: FunctionComponent = () => {
         if (filedataIndex == -1) {
           copiedFilesData.unshift({
             name: file.name,
-            type: file.type,
+            //@ts-ignore
+            type: `${file.name.substring(file.name.lastIndexOf('.')+1, file.name.length)}`,
             size: file.size,
             uploadprogess: file.size && file?.size < chunkSize ? 100 : 0,
             total_pages: 0,
