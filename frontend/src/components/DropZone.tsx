@@ -23,7 +23,6 @@ const DropZone: FunctionComponent = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const onDropHandler = (f: Partial<globalThis.File>[]) => {
-    console.log(f)
     setIsClicked(true);
     setSelectedFiles(f.map((f) => f as File));
     setIsLoading(false);
@@ -47,7 +46,7 @@ const DropZone: FunctionComponent = () => {
           copiedFilesData.unshift({
             name: file.name,
             //@ts-ignore
-            type: `${file.name.substring(file.name.lastIndexOf('.')+1, file.name.length)}`,
+            type: `${file.name.substring(file.name.lastIndexOf('.') + 1, file.name.length).toUpperCase()}`,
             size: file.size,
             uploadprogess: file.size && file?.size < chunkSize ? 100 : 0,
             total_pages: 0,
@@ -224,9 +223,20 @@ const DropZone: FunctionComponent = () => {
         loadingComponent={isLoading && <Loader />}
         isTesting={true}
         className='!bg-none dropzoneContainer'
-        supportedFilesDescription={'Supports: PDF Files'}
+        supportedFilesDescription={'Supports: Common Types'}
         dropZoneOptions={{
-          // accept: { 'application/pdf': ['.pdf'] },
+          accept: {
+            'application/pdf': ['.pdf'],
+            'image/png': ['.png'],
+            'text/html': ['.html'],
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+            'text/plain': ['.txt'],
+            'application/vnd.ms-powerpoint': ['.ppt'],
+            'application/vnd.ms-excel': ['.xls'],
+            'text/markdown': ['.md'],
+            'image/jpeg': ['.jpeg', 'jpg'],
+            'mage/svg+xml': ['.svg']
+          },
           onDrop: (f: Partial<globalThis.File>[]) => {
             onDropHandler(f);
           },
