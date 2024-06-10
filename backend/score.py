@@ -490,10 +490,9 @@ async def cancelled_job(uri=Form(None), userName=Form(None), password=Form(None)
         close_db_connection(graph, 'cancelled_job')
 
 @app.post("/populate_graph_schema")
-async def populate_graph_schema(input_text=Form(None), model=Form(None), is_schema_description_cheked=Form(None)):
+async def populate_graph_schema(input_text=Form(None), model=Form(None), is_schema_description_checked=Form(None)):
     try:
-        result = populate_graph_schema_from_text(input_text, model, is_schema_description_cheked)
-        
+        result = populate_graph_schema_from_text(input_text, model, is_schema_description_checked)
         return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
@@ -501,8 +500,6 @@ async def populate_graph_schema(input_text=Form(None), model=Form(None), is_sche
         error_message = str(e)
         logging.exception(f'Exception in getting the schema from text:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
-    finally:
-        close_db_connection(graph, 'populate_graph_schema')
 
 if __name__ == "__main__":
     uvicorn.run(app)
