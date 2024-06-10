@@ -7,6 +7,7 @@ ARG LLM_MODELS="Diffbot,OpenAI GPT 3.5,OpenAI GPT 4o"
 ARG GOOGLE_CLIENT_ID=""
 ARG BLOOM_URL="https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true"
 ARG TIME_PER_CHUNK=4
+ARG TIME_PER_PAGE=50
 ARG CHUNK_SIZE=5242880
 ARG ENV="DEV"
 

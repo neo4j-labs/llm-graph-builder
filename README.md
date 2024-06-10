@@ -56,7 +56,7 @@ You can of course combine all (local, youtube, wikipedia, s3 and gcs) or remove 
 Alternatively, you can run the backend and frontend separately:
 
 - For the frontend:
-1. Create the frontend/.env file by copy/pasting the example.env.
+1. Create the frontend/.env file by copy/pasting the frontend/example.env.
 2. Change values as needed
 3.
     ```bash
@@ -66,7 +66,7 @@ Alternatively, you can run the backend and frontend separately:
     ```
 
 - For the backend:
-1. Create the backend/.env file by copy/pasting the example.env.
+1. Create the backend/.env file by copy/pasting the backend/example.env.
 2. Change values as needed
 3.
     ```bash
@@ -81,7 +81,7 @@ Alternatively, you can run the backend and frontend separately:
 |-------------------------|--------------------|---------------|--------------------------------------------------------------------------------------------------|
 | OPENAI_API_KEY          | Mandatory          |               | API key for OpenAI                                                                               |
 | DIFFBOT_API_KEY         | Mandatory          |               | API key for Diffbot                                                                              |
-| EMBEDDING_MODEL         | Optional           | text-embedding-ada-002 | Model for text embedding                                                        |
+| EMBEDDING_MODEL         | Optional           | all-MiniLM-L6-v2 | Model for generating the text embedding (all-MiniLM-L6-v2 , openai , vertexai)                |
 | IS_EMBEDDING            | Optional           | true          | Flag to enable text embedding                                                                    |
 | KNN_MIN_SCORE           | Optional           | 0.94          | Minimum score for KNN algorithm                                                                  |
 | GEMINI_ENABLED          | Optional           | False         | Flag to enable Gemini                                                                             |
@@ -98,7 +98,7 @@ Alternatively, you can run the backend and frontend separately:
 | BACKEND_API_URL         | Optional           | http://localhost:8000 | URL for backend API                                                                       |
 | BLOOM_URL               | Optional           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
 | REACT_APP_SOURCES       | Optional           | local,youtube,wiki,s3 | List of input sources that will be available                                               |
-| LLM_MODELS              | Optional           | Diffbot,OpenAI GPT 3.5,OpenAI GPT 4o | Models available for selection on the frontend                          |
+| LLM_MODELS              | Optional           | Diffbot,OpenAI GPT 3.5,OpenAI GPT 4o | Models available for selection on the frontend, used for entities extraction and Q&A Chatbot                          |
 | ENV                     | Optional           | DEV           | Environment variable for the app                                                                 |
 | TIME_PER_CHUNK          | Optional           | 4             | Time per chunk for processing                                                                    |
 | CHUNK_SIZE              | Optional           | 5242880       | Size of each chunk for processing                                                                |

@@ -13,7 +13,7 @@ services:
       - NEO4J_USERNAME=${NEO4J_USERNAME-neo4j}
       - OPENAI_API_KEY=${OPENAI_API_KEY-}
       - DIFFBOT_API_KEY=${DIFFBOT_API_KEY-}
-      - EMBEDDING_MODEL=${EMBEDDING_MODEL-text-embedding-ada-002}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL-all-MiniLM-L6-v2}
       - LANGCHAIN_ENDPOINT=${LANGCHAIN_ENDPOINT-}
       - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2-}
       - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT-}
@@ -43,6 +43,7 @@ services:
         - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID-""}
         - BLOOM_URL=${BLOOM_URL-https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true}
         - TIME_PER_CHUNK=${TIME_PER_CHUNK-4}
+        - TIME_PER_PAGE=${TIME_PER_PAGE-50}
         - CHUNK_SIZE=${CHUNK_SIZE-5242880}
         - ENV=${ENV-DEV}
     volumes:
