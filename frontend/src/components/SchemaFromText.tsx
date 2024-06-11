@@ -1,4 +1,5 @@
-import { Button, Dialog, Textarea } from '@neo4j-ndl/react';
+
+import { Button, Checkbox, Dialog, Textarea } from '@neo4j-ndl/react';
 import { useCallback, useState } from 'react';
 import { getNodeLabelsAndRelTypesFromText } from '../services/SchemaFromTextAPI';
 import { useCredentials } from '../context/UserCredentials';
@@ -25,12 +26,13 @@ const SchemaFromTextDialog = ({
   const [loading, setloading] = useState<boolean>(false);
   const { setSelectedNodes, setSelectedRels } = useFileContext();
   const { userCredentials } = useCredentials();
+  const [isSchema, setIsSchema] = useState<boolean>(false)
   const { model } = useFileContext();
 
   const clickHandler = useCallback(async () => {
     try {
       setloading(true);
-      const response = await getNodeLabelsAndRelTypesFromText(userCredentials as UserCredentials, model, userText);
+      const response = await getNodeLabelsAndRelTypesFromText(model, userText, isSchema);
       console.log({ response });
       setloading(false);
       if (response.data.status === 'Success') {
@@ -92,12 +94,14 @@ const SchemaFromTextDialog = ({
       }
       onClose();
       setUserText('');
+      setIsSchema(false);
       openSettingsDialog();
     } catch (error) {
       setloading(false);
       console.log(error);
     }
-  }, [userCredentials, userText]);
+  }, [userCredentials, userText,isSchema]);
+
 
   return (
     <Dialog
@@ -106,6 +110,7 @@ const SchemaFromTextDialog = ({
       aria-labelledby='form-dialog-title'
       onClose={() => {
         setloading(false);
+        setIsSchema(false);
         setUserText('');
         onClose();
       }}
@@ -124,6 +129,13 @@ const SchemaFromTextDialog = ({
           size='large'
         />
         <Dialog.Actions className='!mt-4'>
+          <Checkbox
+            label="Text is schema description"
+            onChange={(e) => {
+                setIsSchema(e.target.checked)
+            }}
+            checked={isSchema}
+          />
           <Button loading={loading} disabled={userText.trim() === '' || loading} onClick={clickHandler}>
             Analyze
           </Button>
