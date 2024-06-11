@@ -63,7 +63,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   return (
     <div className='flex min-h-[calc(-58px+100vh)] relative'>
       <Drawer expanded={isExpanded} position='left' type='push' closeable={false}>
-        <Drawer.Body className='!overflow-hidden !w-max' style={{ height: 'intial' }}>
+        <Drawer.Body className='!overflow-hidden !w-[285px]' style={{ height: 'intial' }}>
           {alertState.showAlert && (
             <CustomAlert
               severity={alertState.alertType}
@@ -92,7 +92,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                 {process.env.ENV != 'PROD' ? (
                   <>
                     {isBackendConnected && APP_SOURCES != undefined && APP_SOURCES.length === 0 ? (
-                      <Flex gap='6' className='h-full'>
+                      <Flex gap='6' className='h-full source-container'>
                         <div
                           className={`px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 imageBg ${
                             process.env.ENV === 'PROD' ? 'mt-2' : ''
@@ -118,7 +118,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                         </div>
                       </Flex>
                     ) : (
-                      <Flex gap='6' className='h-full'>
+                      <Flex gap='6' className='h-full source-container'>
                         {APP_SOURCES != undefined && APP_SOURCES.includes('local') && (
                           <div className='px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 imageBg'>
                             <DropZone />
@@ -165,7 +165,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                 ) : (
                   <>
                     {APP_SOURCES != undefined && APP_SOURCES.length === 0 ? (
-                      <Flex gap='6' className='h-full'>
+                      <Flex gap='6' className='h-full source-container'>
                         <div
                           className={`px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 imageBg ${
                             process.env.ENV === 'PROD' ? 'mt-2' : ''
@@ -191,7 +191,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                         </div>
                       </Flex>
                     ) : (
-                      <Flex gap='6' className='h-full'>
+                      <Flex gap='6' className='h-full source-container'>
                         {APP_SOURCES != undefined && APP_SOURCES.includes('local') && (
                           <div className='px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 imageBg'>
                             <DropZone />
