@@ -17,6 +17,7 @@ import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
 import ConfirmationDialog from './ConfirmationDialog';
 import { chunkSize } from '../utils/Constants';
+import connectAPI from '../services/ConnectAPI';
 
 const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -359,6 +360,23 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     }
     setshowDeletePopUp(false);
   };
+  useEffect(() => {
+    const connection = localStorage.getItem('neo4j.connection');
+    if (connection != null) {
+      (async () => {
+        const parsedData = JSON.parse(connection);
+        console.log(parsedData.uri);
+        const response = await connectAPI(parsedData.uri, parsedData.user, parsedData.password, parsedData.database);
+        if (response?.data?.status === 'Success') {
+          setConnectionStatus(true);
+          setOpenConnection(false);
+        } else {
+          setOpenConnection(true);
+          setConnectionStatus(false);
+        }
+      })();
+    }
+  }, []);
 
   return (
     <>

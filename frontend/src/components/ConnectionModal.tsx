@@ -31,7 +31,6 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
     initialport = initialuri.split(':')[1];
     initialprotocol = urisplit[0];
   }
-
   const protocols = ['neo4j', 'neo4j+s', 'neo4j+ssc', 'bolt', 'bolt+s', 'bolt+ssc'];
   const [protocol, setProtocol] = useState<string>(initialprotocol ?? 'neo4j+s');
   const [URI, setURI] = useState<string>(initialuri ?? '');
@@ -130,26 +129,29 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
     const connectionURI = `${protocol}://${URI}${URI.split(':')[1] ? '' : `:${port}`}`;
     setUserCredentials({ uri: connectionURI, userName: username, password: password, database: database, port: port });
     setIsLoading(true);
-    await connectAPI(connectionURI, username, password, database).then((response: any) => {
-      if (response?.data?.status === 'Success') {
-        setConnectionStatus(true);
-        setMessage({
-          type: 'success',
-          content: response.data.message,
-        });
-        setOpenConnection(false);
-      } else {
-        setMessage({ type: 'danger', content: response.data.error });
-        setOpenConnection(true);
-        setPassword('');
-        setConnectionStatus(false);
-      }
-      setIsLoading(false);
-      setTimeout(() => {
-        setMessage({ type: 'unknown', content: '' });
-        setPassword('');
-      }, 3000);
-    });
+    const response = await connectAPI(connectionURI, username, password, database);
+    if (response?.data?.status === 'Success') {
+      localStorage.setItem(
+        'neo4j.connection',
+        JSON.stringify({ uri: connectionURI, user: username, password: password, database: database })
+      );
+      setConnectionStatus(true);
+      setMessage({
+        type: 'success',
+        content: response.data.message,
+      });
+      setOpenConnection(false);
+    } else {
+      setMessage({ type: 'danger', content: response.data.error });
+      setOpenConnection(true);
+      setPassword('');
+      setConnectionStatus(false);
+    }
+    setIsLoading(false);
+    setTimeout(() => {
+      setMessage({ type: 'unknown', content: '' });
+      setPassword('');
+    }, 3000);
   };
 
   const onClose = useCallback(() => {
