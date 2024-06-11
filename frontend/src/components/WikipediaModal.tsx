@@ -101,7 +101,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
               processing: defaultValues.processing,
               model: defaultValues.model,
               fileSource: defaultValues.fileSource,
-              processingProgress: defaultValues.processingProgress,
+              processingProgress:defaultValues.processingProgress
             });
           }
         });

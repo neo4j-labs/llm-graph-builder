@@ -133,9 +133,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
               processing: defaultValues.processing,
               model: defaultValues.model,
               fileSource: defaultValues.fileSource,
-              processingProgress: defaultValues.processingProgress,
-              access_token: codeResponse.access_token,
-              total_pages:"N/A"
+              processingProgress:defaultValues.processingProgress
             });
           }
         });
