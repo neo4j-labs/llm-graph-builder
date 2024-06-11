@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button, Widget, Typography, Avatar, TextInput, IconButton, Modal } from '@neo4j-ndl/react';
-import { InformationCircleIconOutline, XMarkIconOutline } from '@neo4j-ndl/react/icons';
+import { InformationCircleIconOutline, XMarkIconOutline, ClipboardDocumentIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
 import { ChatbotProps, Source, UserCredentials } from '../types';
 import { useCredentials } from '../context/UserCredentials';
@@ -24,6 +24,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [responseTime, setResponseTime] = useState<number>(0);
   const [chunkModal, setChunkModal] = useState<string[]>([]);
   const [tokensUsed, setTokensUsed] = useState<number>(0);
+  const [copyMessage, setCopyMessage] = useState<string>('');
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
   };
@@ -147,6 +148,16 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   useEffect(() => {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
   }, [listMessages]);
+
+  const handleCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyMessage('copied!');
+      setTimeout(() => setCopyMessage(''), 2000);
+    } catch (error) {
+      console.error('Failed to copy text: ', error);
+    }
+  };
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
       <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3 pr-3'>
@@ -224,6 +235,15 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                         >
                           <InformationCircleIconOutline className='w-4 h-4 inline-block' />
                         </IconButton>
+                        <IconButton
+                          clean
+                          aria-label='Copy to Clipboard'
+                          onClick={() => handleCopy(chat.message)}
+                          disabled={chat.isTyping || chat.isLoading}
+                        >
+                          <ClipboardDocumentIconOutline className='w-4 h-4 inline-block' />
+                        </IconButton>
+                        {copyMessage && <span className='pt-4 text-xs'>{copyMessage}</span>}
                       </div>
                     )}
                   </div>
