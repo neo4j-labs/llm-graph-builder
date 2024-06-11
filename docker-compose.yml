@@ -2,9 +2,6 @@ version: '3'
 
 services:
   backend:
-#    env_file:
-#      - path: ./backend/.env
-#        required: false
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -16,13 +13,17 @@ services:
       - NEO4J_USERNAME=${NEO4J_USERNAME-neo4j}
       - OPENAI_API_KEY=${OPENAI_API_KEY-}
       - DIFFBOT_API_KEY=${DIFFBOT_API_KEY-}
-      - EMBEDDING_MODEL=${EMBEDDING_MODEL-text-embedding-ada-002}
-      - LANGCHAIN_ENDPOINT=${LANGCHAIN_ENDPOINT-"https://api.smith.langchain.com"}
-      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2-true}
-      - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT}
-      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY}
-      - KNN_MIN_SCORE = ${KNN_MIN_SCORE-"0.94"}
-      - IS_EMBEDDING = ${IS_EMBEDDING-true}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL-all-MiniLM-L6-v2}
+      - LANGCHAIN_ENDPOINT=${LANGCHAIN_ENDPOINT-}
+      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2-}
+      - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT-}
+      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY-}
+      - KNN_MIN_SCORE=${KNN_MIN_SCORE-0.94}
+      - IS_EMBEDDING=${IS_EMBEDDING-true}
+      - GEMINI_ENABLED=${GEMINI_ENABLED-False}
+      - GCP_LOG_METRICS_ENABLED=${GCP_LOG_METRICS_ENABLED-False}
+      - UPDATE_GRAPH_CHUNKS_PROCESSED=${UPDATE_GRAPH_CHUNKS_PROCESSED-20}
+      - NUMBER_OF_CHUNKS_TO_COMBINE=${NUMBER_OF_CHUNKS_TO_COMBINE-6}
     container_name: backend
     ports:
       - "8000:8000"
@@ -35,13 +36,19 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - BACKEND_API_URL=${BACKEND_API_URL-http://localhost:8000}
+        - REACT_APP_SOURCES=${REACT_APP_SOURCES-local,youtube,wiki,s3}
+        - LLM_MODELS=${LLM_MODELS-Diffbot,OpenAI GPT 3.5,OpenAI GPT 4o}
+        - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID-""}
+        - BLOOM_URL=${BLOOM_URL-https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true}
+        - TIME_PER_CHUNK=${TIME_PER_CHUNK-4}
+        - TIME_PER_PAGE=${TIME_PER_PAGE-50}
+        - CHUNK_SIZE=${CHUNK_SIZE-5242880}
+        - ENV=${ENV-DEV}
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    environment:
-      - BACKEND_API_URL=${BACKEND_API_URL}
-      - BLOOM_URL=${BLOOM_URL}
-      - REACT_APP_SOURCES=${REACT_APP_SOURCES}
     container_name: frontend
     ports:
       - "8080:8080"
