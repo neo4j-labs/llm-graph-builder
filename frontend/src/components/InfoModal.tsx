@@ -197,7 +197,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                   >
                     <div
                       key={index}
-                      style={{ backgroundColor: `${groupedEntities[label].color}`}}
+                      style={{ backgroundColor: `${groupedEntities[label].color}` }}
                       className='legend mr-2'
                     >
                       {label} ({labelCounts[label]})

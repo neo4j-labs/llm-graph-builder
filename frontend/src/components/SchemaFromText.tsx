@@ -121,7 +121,7 @@ const SchemaFromTextDialog = ({
           fluid
           value={userText}
           onChange={(e) => setUserText(e.target.value)}
-          size="large"
+          size='large'
         />
         <Dialog.Actions className='!mt-4'>
           <Button loading={loading} disabled={userText.trim() === '' || loading} onClick={clickHandler}>

@@ -36,6 +36,7 @@ import useServerSideEvent from '../hooks/useSse';
 import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
+import IconButtonWithToolTip from './IconButtonToolTip';
 
 const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows } = useFileContext();
@@ -299,15 +300,16 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         id: 'inspect',
         cell: (info) => (
           <>
-            <IconButton
-              aria-label='Toggle settings'
+            <IconButtonWithToolTip
+              placement='right'
+              text='Graph'
               size='large'
               disabled={!(info.getValue() === 'Completed' || info.getValue() == 'Cancelled')}
               clean
               onClick={() => onInspect(info?.row?.original?.name as string)}
             >
               <MagnifyingGlassCircleIconSolid />
-            </IconButton>
+            </IconButtonWithToolTip>
           </>
         ),
         header: () => <span>View</span>,

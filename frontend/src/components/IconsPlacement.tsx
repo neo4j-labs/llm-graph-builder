@@ -1,7 +1,7 @@
 import { TrashIconOutline, XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import { IconButton } from '@neo4j-ndl/react';
 import { Messages } from '../types';
-import ButtonWithToolTip from './ButtonWithToolTip';
+import IconButtonWithToolTip from './IconButtonToolTip';
 
 interface IconProps {
   closeChatBot: () => void;
@@ -12,7 +12,7 @@ interface IconProps {
 const IconsPlacement: React.FC<IconProps> = ({ closeChatBot, deleteOnClick, messages }) => {
   return (
     <div className='flex items-end justify-end'>
-      <ButtonWithToolTip
+      <IconButtonWithToolTip
         text='Clear chat history'
         aria-label='Remove chat history'
         clean
@@ -21,7 +21,7 @@ const IconsPlacement: React.FC<IconProps> = ({ closeChatBot, deleteOnClick, mess
         placement='left'
       >
         <TrashIconOutline />
-      </ButtonWithToolTip>
+      </IconButtonWithToolTip>
       <IconButton aria-label='Remove chatbot' clean onClick={closeChatBot}>
         <XMarkIconOutline />
       </IconButton>

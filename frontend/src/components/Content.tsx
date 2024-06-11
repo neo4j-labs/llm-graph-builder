@@ -19,6 +19,7 @@ import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
 import ConfirmationDialog from './ConfirmationDialog';
 import { chunkSize } from '../utils/Constants';
+import ButtonWithToolTip from './ButtonWithToolTip';
 
 const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -270,9 +271,8 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
-      userCredentials?.port ?? '7687'
-    }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
+      }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -282,10 +282,10 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
       : isRightExpanded
-      ? 'contentWithChatBot'
-      : !isLeftExpanded && !isRightExpanded
-      ? 'w-[calc(100%-128px)]'
-      : 'contentWithDropzoneExpansion';
+        ? 'contentWithChatBot'
+        : !isLeftExpanded && !isRightExpanded
+          ? 'w-[calc(100%-128px)]'
+          : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -321,10 +321,6 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     () => (selectedfileslength ? completedfileNo === 0 : true),
     [selectedfileslength, completedfileNo]
   );
-
-  const deleteFileClickHandler: React.MouseEventHandler<HTMLButtonElement> = () => {
-    setshowDeletePopUp(true);
-  };
 
   const filesForProcessing = useMemo(() => {
     let newstatusfiles: CustomFile[] = [];
@@ -445,15 +441,14 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
           }}
         ></FileTable>
         <Flex
-          className={`${
-            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+          className={`${!isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+            } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection='row'
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={dropdowncheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
-            <Button
+            <ButtonWithToolTip
               disabled={disableCheck}
               onClick={() => {
                 if (selectedRows.length) {
@@ -513,32 +508,38 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
                 }
               }}
               className='mr-0.5'
+              placement='top'
+              text='New files will be processed for Graph Visualization'
             >
               Generate Graph {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
-            </Button>
-            <Button
-              title='only completed files will be processed for graph visualization'
+            </ButtonWithToolTip>
+            <ButtonWithToolTip
+              text='Only completed files will be processed for Graph Visualization'
               disabled={showGraphCheck}
               onClick={handleGraphView}
               className='mr-0.5'
+              placement='top'
             >
               Show Graph {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
-            </Button>
-            <Button
+            </ButtonWithToolTip>
+            <ButtonWithToolTip
               onClick={handleOpenGraphClick}
               disabled={!filesData.some((f) => f?.status === 'Completed')}
               className='ml-0.5'
+              text='For advance Graph Visualization'
+              placement='top'
             >
               Open Graph with Bloom
-            </Button>
-            <Button
-              onClick={deleteFileClickHandler}
+            </ButtonWithToolTip>
+            <ButtonWithToolTip
+              placement='top'
+              onClick={() => setshowDeletePopUp(true)}
               className='ml-0.5'
-              title={!selectedfileslength ? 'please select a file' : 'File is still under process'}
+              text={!selectedfileslength ? 'Please select a file to delete' : `${selectedfileslength} File/Files to be deleted`}
               disabled={!selectedfileslength}
             >
               Delete Files {selectedfileslength > 0 && `(${selectedfileslength})`}
-            </Button>
+            </ButtonWithToolTip>
           </Flex>
         </Flex>
       </div>
