@@ -5,41 +5,105 @@ Files can be uploaded from local machine or S3 bucket and then LLM model can be 
 
 ### Getting started
 
-:warning: 
-For the backend, if you want to run the LLM KG Builder locally, and don't need the GCP/VertexAI integration, make sure to have the following set in your ENV file :
+:warning: You will need to have a Neo4j Database V5.15 or later with [APOC installed](https://neo4j.com/docs/apoc/current/installation/) to use this Knowledge Graph Builder.
+You can use any [Neo4j Aura database](https://neo4j.com/aura/) (including the free database)
+If you are using Neo4j Desktop, you will not be able to use the docker-compose but will have to follow the [separate deployment of backend and frontend section](#running-backend-and-frontend-separately-dev-environment). :warning:
 
+### Deploy locally
+#### Running through docker-compose
+By default only OpenAI and Diffbot are enabled since Gemini requires extra GCP configurations.
+
+In your root folder, create a .env file with your OPENAI and DIFFBOT keys (if you want to use both):
 ```env
-GEMINI_ENABLED = False
-GCP_LOG_METRICS_ENABLED = False
+OPENAI_API_KEY="your-openai-key"
+DIFFBOT_API_KEY="your-diffbot-key"
 ```
 
-And for the frontend, make sure to export your local backend URL before running docker-compose by having the BACKEND_API_URL set in your ENV file :
+if you only want OpenAI:
 ```env
-BACKEND_API_URL="http://localhost:8000"
+LLM_MODELS="OpenAI GPT 3.5,OpenAI GPT 4o"
+OPENAI_API_KEY="your-openai-key"
 ```
 
-1. Run Docker Compose to build and start all components:
+if you only want Diffbot:
+```env
+LLM_MODELS="Diffbot"
+DIFFBOT_API_KEY="your-diffbot-key"
+```
+
+You can then run Docker Compose to build and start all components:
+```bash
+docker-compose up --build
+```
+
+##### Additional configs
+
+By default, the input sources will be: Local files, Youtube, Wikipedia and AWS S3. As this default config is applied:
+```env
+REACT_APP_SOURCES="local,youtube,wiki,s3"
+```
+
+If however you want the Google GCS integration, add `gcs` and your Google client ID:
+```env
+REACT_APP_SOURCES="local,youtube,wiki,s3,gcs"
+GOOGLE_CLIENT_ID="xxxx"
+```
+
+You can of course combine all (local, youtube, wikipedia, s3 and gcs) or remove any you don't want/need.
+
+
+#### Running Backend and Frontend separately (dev environment)
+Alternatively, you can run the backend and frontend separately:
+
+- For the frontend:
+1. Create the frontend/.env file by copy/pasting the frontend/example.env.
+2. Change values as needed
+3.
     ```bash
-    docker-compose up --build
+    cd frontend
+    yarn
+    yarn run dev
     ```
 
-2. Alternatively, you can run specific directories separately:
+- For the backend:
+1. Create the backend/.env file by copy/pasting the backend/example.env.
+2. Change values as needed
+3.
+    ```bash
+    cd backend
+    python -m venv envName
+    source envName/bin/activate 
+    pip install -r requirements.txt
+    uvicorn score:app --reload
+    ```
+### ENV
+| Env Variable Name       | Mandatory/Optional | Default Value | Description                                                                                      |
+|-------------------------|--------------------|---------------|--------------------------------------------------------------------------------------------------|
+| OPENAI_API_KEY          | Mandatory          |               | API key for OpenAI                                                                               |
+| DIFFBOT_API_KEY         | Mandatory          |               | API key for Diffbot                                                                              |
+| EMBEDDING_MODEL         | Optional           | all-MiniLM-L6-v2 | Model for generating the text embedding (all-MiniLM-L6-v2 , openai , vertexai)                |
+| IS_EMBEDDING            | Optional           | true          | Flag to enable text embedding                                                                    |
+| KNN_MIN_SCORE           | Optional           | 0.94          | Minimum score for KNN algorithm                                                                  |
+| GEMINI_ENABLED          | Optional           | False         | Flag to enable Gemini                                                                             |
+| GCP_LOG_METRICS_ENABLED | Optional           | False         | Flag to enable Google Cloud logs                                                                 |
+| NUMBER_OF_CHUNKS_TO_COMBINE | Optional        | 6             | Number of chunks to combine when processing embeddings                                           |
+| UPDATE_GRAPH_CHUNKS_PROCESSED | Optional      | 20            | Number of chunks processed before updating progress                                        |
+| NEO4J_URI               | Optional           | neo4j://database:7687 | URI for Neo4j database                                                                  |
+| NEO4J_USERNAME          | Optional           | neo4j         | Username for Neo4j database                                                                       |
+| NEO4J_PASSWORD          | Optional           | password      | Password for Neo4j database                                                                       |
+| LANGCHAIN_API_KEY       | Optional           |               | API key for Langchain                                                                             |
+| LANGCHAIN_PROJECT       | Optional           |               | Project for Langchain                                                                             |
+| LANGCHAIN_TRACING_V2    | Optional           | true          | Flag to enable Langchain tracing                                                                  |
+| LANGCHAIN_ENDPOINT      | Optional           | https://api.smith.langchain.com | Endpoint for Langchain API                                                            |
+| BACKEND_API_URL         | Optional           | http://localhost:8000 | URL for backend API                                                                       |
+| BLOOM_URL               | Optional           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
+| REACT_APP_SOURCES       | Optional           | local,youtube,wiki,s3 | List of input sources that will be available                                               |
+| LLM_MODELS              | Optional           | Diffbot,OpenAI GPT 3.5,OpenAI GPT 4o | Models available for selection on the frontend, used for entities extraction and Q&A Chatbot                          |
+| ENV                     | Optional           | DEV           | Environment variable for the app                                                                 |
+| TIME_PER_CHUNK          | Optional           | 4             | Time per chunk for processing                                                                    |
+| CHUNK_SIZE              | Optional           | 5242880       | Size of each chunk for processing                                                                |
+| GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
 
-    - For the frontend:
-        ```bash
-        cd frontend
-        yarn
-        yarn run dev
-        ```
-
-    - For the backend:
-        ```bash
-        cd backend
-        python -m venv envName
-        source envName/bin/activate 
-        pip install -r requirements.txt
-        uvicorn score:app --reload
-        ```
 
 ###
 To deploy the app and packages on Google Cloud Platform, run the following command on google cloud run:
@@ -64,29 +128,6 @@ Allow unauthenticated request : Yes
 - **Neo4j Integration**: The extracted nodes and relationships are stored in a Neo4j database for easy visualization and querying.
 - **Grid View of source node files with** : Name,Type,Size,Nodes,Relations,Duration,Status,Source,Model
   
-## Setting up Environment Variables
-Create .env file and update the following env variables.\
-OPENAI_API_KEY = ""\
-DIFFBOT_API_KEY = ""\
-NEO4J_URI = ""\
-NEO4J_USERNAME = ""\
-NEO4J_PASSWORD = ""\
-AWS_ACCESS_KEY_ID =  ""\
-AWS_SECRET_ACCESS_KEY = ""\
-EMBEDDING_MODEL = ""\
-IS_EMBEDDING = "TRUE"\
-KNN_MIN_SCORE = ""
-
-## Setting up Enviournment Variables For Frontend Configuration
-
-Create .env file in the frontend root folder and update the following env variables.\
-BACKEND_API_URL=""\
-BLOOM_URL=""\
-REACT_APP_SOURCES=""\
-LLM_MODELS=""\
-ENV=""\
-TIME_PER_CHUNK=
-
 ## Functions/Modules
 
 #### extract_graph_from_file(uri, userName, password, file_path, model):
@@ -139,5 +180,4 @@ https://github.com/neo4j-labs/llm-graph-builder/assets/121786590/b725a503-6ade-4
 ## Links
  The Public [ Google cloud Run URL](https://devfrontend-dcavk67s4a-uc.a.run.app).
  [Workspace URL](https://workspace-preview.neo4j.io/workspace)
-
 

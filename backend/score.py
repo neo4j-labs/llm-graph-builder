@@ -56,7 +56,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "True").lower() in ("true", "1", "yes")
+is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "False").lower() in ("true", "1", "yes")
 if is_gemini_enabled:
     add_routes(app,ChatVertexAI(), path="/vertexai")
 
@@ -201,16 +201,16 @@ async def extract_knowledge_graph_from_file(
 @app.get("/sources_list")
 async def get_source_list(uri:str, userName:str, password:str, database:str=None):
     """
-    Calls 'get_source_list_from_graph' which returns list of sources which alreday exist in databse
+    Calls 'get_source_list_from_graph' which returns list of sources which already exist in databse
     """
     try:
         decoded_password = decode_password(password)
         if " " in uri:
-            uri= uri.replace(" ","+")
-            result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
-            josn_obj = {'api_name':'sources_list','db_url':uri}
-            logger.log_struct(josn_obj)
-            return create_api_response("Success",data=result)
+            uri = uri.replace(" ","+")
+        result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
+        josn_obj = {'api_name':'sources_list','db_url':uri}
+        logger.log_struct(josn_obj)
+        return create_api_response("Success",data=result)
     except Exception as e:
         job_status = "Failed"
         message="Unable to fetch source list"
@@ -385,6 +385,7 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
     async def generate():
         status = ''
         decoded_password = decode_password(password)
+        uri = url
         if " " in url:
             uri= url.replace(" ","+")
         while True:
