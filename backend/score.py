@@ -151,7 +151,11 @@ async def extract_knowledge_graph_from_file(
     gcs_bucket_folder=Form(None),
     gcs_blob_filename=Form(None),
     source_type=Form(None),
-    file_name=Form(None)
+    file_name=Form(None),
+    allowedNodes=Form(None),
+    allowedRelationship=Form(None),
+    language=Form(None),
+    access_token=Form(None)
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a

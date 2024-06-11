@@ -104,6 +104,8 @@ def create_source_node_graph_url_gcs(graph, model, source_url, gcs_bucket_name, 
       obj_source_node.gcsBucket = gcs_bucket_name
       obj_source_node.gcsBucketFolder = file_metadata['gcsBucketFolder']
       obj_source_node.created_at = datetime.now()
+      obj_source_node.access_token = credentials.token
+    
       try:
           graphDb_data_Access = graphDBdataAccess(graph)
           graphDb_data_Access.create_source_node(obj_source_node)
@@ -220,9 +222,9 @@ def extract_graph_from_file_Wikipedia(graph, model, wiki_query, max_sources):
 
   return processing_source(graph, model, file_name, pages)
 
-def extract_graph_from_file_gcs(graph, model, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename):
+def extract_graph_from_file_gcs(graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, allowedNodes, allowedRelationship):
 
-  file_name, pages = get_documents_from_gcs(gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename)
+  file_name, pages = get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token)
   if pages==None or len(pages)==0:
     raise Exception('Pdf content is not available for file : {file_name}')
 

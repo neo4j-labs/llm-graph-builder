@@ -46,6 +46,10 @@ export const extractAPI = async (
       gcs_bucket_name,
       source_type,
       file_name,
+      allowedNodes,
+      allowedRelationship,
+      gcs_project_id,
+      access_token,
     };
   } else if (source_type === 'youtube') {
     additionalParams = { model, source_url, source_type, file_name };

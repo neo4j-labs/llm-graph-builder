@@ -102,7 +102,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               processing: defaultValues.processing,
               model: defaultValues.model,
               fileSource: defaultValues.fileSource,
-              processingProgress:defaultValues.processingProgress
+              processingProgress: defaultValues.processingProgress,
             });
           }
         });

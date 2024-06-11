@@ -16,6 +16,11 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   gcsBucketFolder?: string;
   errorMessage?: string;
   uploadprogess?: number;
+  processingStatus?: boolean;
+  google_project_id?: string;
+  language?: string;
+  processingProgress?: number;
+  access_token?: string;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
@@ -52,6 +57,11 @@ export type ExtractParams = {
   gcs_blob_filename?: string;
   source_type?: string;
   file_name?: string;
+  allowedNodes?: string[];
+  allowedRelationship?: string[];
+  gcs_project_id?: string;
+  language?: string;
+  access_token?: string;
 } & { [key: string]: any };
 
 export type UploadParams = {
@@ -118,6 +128,7 @@ export interface SourceNode {
   processed_chunk?: number;
   total_chunks?: number;
   total_pages?: number;
+  access_token?: string;
 }
 export interface SideNavProps {
   isExpanded: boolean;

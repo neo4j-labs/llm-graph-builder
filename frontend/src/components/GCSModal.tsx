@@ -120,6 +120,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
               google_project_id: item.gcsProjectId,
               total_pages: 'NA',
               id: uuidv4(),
+              access_token: codeResponse.access_token,
               ...defaultValues,
             });
           } else {
@@ -133,7 +134,8 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
               processing: defaultValues.processing,
               model: defaultValues.model,
               fileSource: defaultValues.fileSource,
-              processingProgress:defaultValues.processingProgress
+              processingProgress: defaultValues.processingProgress,
+              access_token: codeResponse.access_token,
             });
           }
         });
