@@ -156,7 +156,7 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
 def extract_graph_from_file_local_file(graph, model, fileName, merged_file_path, allowedNodes, allowedRelationship):
 
   logging.info(f'Process file name :{fileName}')
-  file_name, pages = get_documents_from_file_by_path(merged_file_path,fileName)
+  file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,fileName)
   pdf_total_pages = pages[0].metadata['total_pages']
   
   if pages==None or pdf_total_pages==0:
@@ -401,10 +401,10 @@ def merge_chunks(file_name, total_chunks, chunk_dir, merged_dir):
               shutil.copyfileobj(chunk_file, write_stream)
           os.unlink(chunk_file_path)  # Delete the individual chunk file after merging
   logging.info("Chunks merged successfully and return file size")
-  file_name, pages = get_documents_from_file_by_path(merged_file_path,file_name)
+  file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,file_name)
   pdf_total_pages = pages[0].metadata['total_pages']
   file_size = os.path.getsize(merged_file_path)
-  return file_size, pdf_total_pages
+  return file_size, pdf_total_pages, file_extension
   
 
 
@@ -421,12 +421,12 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
 
   if int(chunk_number) == int(total_chunks):
       # If this is the last chunk, merge all chunks into a single file
-      file_size, pdf_total_pages = merge_chunks(originalname, int(total_chunks), chunk_dir, merged_dir)
+      file_size, pdf_total_pages, file_extension= merge_chunks(originalname, int(total_chunks), chunk_dir, merged_dir)
       logging.info("File merged successfully")
 
       obj_source_node = sourceNode()
       obj_source_node.file_name = originalname
-      obj_source_node.file_type = 'pdf'
+      obj_source_node.file_type = file_extension
       obj_source_node.file_size = file_size
       obj_source_node.file_source = 'local file'
       obj_source_node.model = model
@@ -435,7 +435,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
       graphDb_data_Access = graphDBdataAccess(graph)
         
       graphDb_data_Access.create_source_node(obj_source_node)
-      return {'file_size': file_size, 'total_pages': pdf_total_pages, 'file_name': originalname, 'message':f"Chunk {chunk_number}/{total_chunks} saved"}
+      return {'file_size': file_size, 'total_pages': pdf_total_pages, 'file_name': originalname, 'file_extension':file_extension, 'message':f"Chunk {chunk_number}/{total_chunks} saved"}
   return f"Chunk {chunk_number}/{total_chunks} saved"
 
 def get_labels_and_relationtypes(graph):

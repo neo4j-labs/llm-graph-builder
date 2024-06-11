@@ -251,18 +251,61 @@
   font-weight: 600;
   font-size: larger;
 }
-.ndl-upload-img-wrapper{
+
+.ndl-upload-img-wrapper {
   background: url("./assets/images/dropzone.svg");
   background-repeat: no-repeat;
   background-position: center;
 }
-.ndl-dropzone .ndl-dropzone-header{
+
+.ndl-dropzone .ndl-dropzone-header {
   row-gap: 0 !important;
 }
 
-.ndl-status-indicator{
+.ndl-status-indicator {
   margin-bottom: 0px !important;
 }
-.css-h4y409-MuiList-root{
+
+.css-h4y409-MuiList-root {
   scrollbar-width: thin;
+}
+
+.source-container {
+  container-type: size;
+}
+
+.source-container>* {
+  width: 100%;
+}
+
+@container (min-height:500px) and (max-height:600px) {
+  .outline-dashed img {
+    width: 45px;
+  }
+
+  .outline-dashed h6 {
+    font-size: 14px;
+  }
+
+}
+
+@container (min-height:300px) and (max-height:500px) {
+  .outline-dashed img {
+    width: 35px;
+    height: auto;
+  }
+
+  .outline-dashed h6 {
+    font-size: 12px;
+  }
+
+  .dropzoneContainer .ndl-upload-img-wrapper {
+    display: none !important;
+  }
+  .dropzoneContainer .ndl-dropzone-header{
+    margin-bottom: 5px !important;
+  }
+  .imageBg >div{
+    padding: 5px;
+  }
 }
