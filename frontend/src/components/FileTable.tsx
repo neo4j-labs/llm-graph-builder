@@ -333,7 +333,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                 prefiles.push({
                   name: item.fileName,
                   size: item.fileSize ?? 0,
-                  type: item?.fileType?.toUpperCase() ?? 'None',
+                  type: item?.fileType?.substring(1).toUpperCase() ?? 'None',
                   NodesCount: item?.nodeCount ?? 0,
                   processing: item?.processingTime ?? 'None',
                   relationshipCount: item?.relationshipCount ?? 0,
