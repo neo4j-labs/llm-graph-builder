@@ -10,8 +10,6 @@ import { extractAPI } from '../utils/FileAPI';
 import { ContentProps, CustomFile, OptionType, UserCredentials, alertStateType } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './GraphViewModal';
-import { initialiseDriver } from '../utils/Driver';
-import Driver from 'neo4j-driver/types/driver';
 import deleteAPI from '../services/deleteFiles';
 import DeletePopUp from './DeletePopUp';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
@@ -26,7 +24,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
-  const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
+  const { setUserCredentials, userCredentials } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
 
@@ -51,6 +49,8 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     alertType: 'error',
     alertMessage: '',
   });
+  const [connectionClosed, setConnectionClosed] = useState<boolean>(false);
+
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
       setalertDetails({
@@ -80,20 +80,6 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
           password: neo4jConnection.password,
           database: neo4jConnection.database,
           port: neo4jConnection.uri.split(':')[2],
-        });
-        initialiseDriver(
-          neo4jConnection.uri,
-          neo4jConnection.user,
-          neo4jConnection.password,
-          neo4jConnection.database
-        ).then((driver: Driver) => {
-          if (driver) {
-            localStorage.setItem('alertShown', JSON.stringify(false));
-            setConnectionStatus(true);
-            setDriver(driver);
-          } else {
-            setConnectionStatus(false);
-          }
         });
       } else {
         setOpenConnection(true);
@@ -270,9 +256,8 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
-      userCredentials?.port ?? '7687'
-    }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
+      }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -282,23 +267,36 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
       : isRightExpanded
-      ? 'contentWithChatBot'
-      : !isLeftExpanded && !isRightExpanded
-      ? 'w-[calc(100%-128px)]'
-      : 'contentWithDropzoneExpansion';
+        ? 'contentWithChatBot'
+        : !isLeftExpanded && !isRightExpanded
+          ? 'w-[calc(100%-128px)]'
+          : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
     setViewPoint('showGraphView');
   };
 
-  const disconnect = () => {
-    driver?.close();
+  const closeConnection = () => {
     setConnectionStatus(false);
     localStorage.removeItem('password');
+    localStorage.removeItem('neo4j.connection');
+    localStorage.removeItem('accesskey');
+    localStorage.removeItem('secretkey');
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
+    // setInit(false);
+  };
+
+  const disconnect = async () => {
+    if (connectionClosed) {
+      closeConnection();
+    } else {
+      setConnectionClosed(true);
+      //await disconnectAPI(connectionClosed);
+      closeConnection();
+    }
   };
 
   const selectedfileslength = useMemo(() => selectedRows.length, [selectedRows]);
@@ -445,9 +443,8 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
           }}
         ></FileTable>
         <Flex
-          className={`${
-            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+          className={`${!isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+            } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection='row'
         >

@@ -2,8 +2,6 @@ import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone, Typography, Text
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 import connectAPI from '../services/ConnectAPI';
 import { useCredentials } from '../context/UserCredentials';
-import { initialiseDriver } from '../utils/Driver';
-import { Driver } from 'neo4j-driver';
 import { useSearchParams } from 'react-router-dom';
 
 interface Message {
@@ -42,7 +40,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
   const [username, setUsername] = useState<string>(initialusername ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
-  const { setUserCredentials, setDriver } = useCredentials();
+  const { setUserCredentials } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -139,7 +137,6 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
           type: 'success',
           content: response.data.message,
         });
-        driverSetting(connectionURI, username, password, database);
         setOpenConnection(false);
       } else {
         setMessage({ type: 'danger', content: response.data.error });
@@ -152,18 +149,6 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
         setMessage({ type: 'unknown', content: '' });
         setPassword('');
       }, 3000);
-    });
-  };
-
-  const driverSetting = (connectionURI: string, username: string, password: string, database: string) => {
-    initialiseDriver(connectionURI, username, password, database).then((driver: Driver) => {
-      if (driver) {
-        setConnectionStatus(true);
-        setDriver(driver);
-        localStorage.setItem('alertShown', JSON.stringify(false));
-      } else {
-        setConnectionStatus(false);
-      }
     });
   };
 
