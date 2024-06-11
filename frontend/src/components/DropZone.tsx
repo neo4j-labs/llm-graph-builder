@@ -32,7 +32,6 @@ const DropZone: FunctionComponent = () => {
         status: 'None',
         NodesCount: 0,
         relationshipCount: 0,
-        type: 'PDF',
         model: model,
         fileSource: 'local file',
         uploadprogess: 0,
@@ -46,7 +45,8 @@ const DropZone: FunctionComponent = () => {
         if (filedataIndex == -1) {
           copiedFilesData.unshift({
             name: file.name,
-            type: file.type,
+            //@ts-ignore
+            type: `${file.name.substring(file.name.lastIndexOf('.') + 1, file.name.length).toUpperCase()}`,
             size: file.size,
             uploadprogess: file.size && file?.size < chunkSize ? 100 : 0,
             total_pages: 0,
@@ -223,10 +223,21 @@ const DropZone: FunctionComponent = () => {
       <Dropzone
         loadingComponent={isLoading && <Loader />}
         isTesting={true}
-        className='!bg-none'
-        supportedFilesDescription={'Supports: PDF Files'}
+        className='!bg-none dropzoneContainer'
+        supportedFilesDescription={'Supports: Common Types'}
         dropZoneOptions={{
-          accept: { 'application/pdf': ['.pdf'] },
+          accept: {
+            'application/pdf': ['.pdf'],
+            'image/png': ['.png'],
+            'text/html': ['.html'],
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+            'text/plain': ['.txt'],
+            'application/vnd.ms-powerpoint': ['.pptx'],
+            'application/vnd.ms-excel': ['.xls'],
+            'text/markdown': ['.md'],
+            'image/jpeg': ['.jpeg', 'jpg'],
+            'image/svg+xml': ['.svg']
+          },
           onDrop: (f: Partial<globalThis.File>[]) => {
             onDropHandler(f);
           },
