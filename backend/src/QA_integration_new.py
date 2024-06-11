@@ -16,22 +16,17 @@ from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableBranch
 from langchain.retrievers import ContextualCompressionRetriever
-from langchain.retrievers.document_compressors import LLMChainExtractor
-from langchain.retrievers.document_compressors import LLMChainFilter
 from langchain_community.document_transformers import EmbeddingsRedundantFilter
 from langchain.retrievers.document_compressors import EmbeddingsFilter
 from langchain.retrievers.document_compressors import DocumentCompressorPipeline
 from langchain_text_splitters import TokenTextSplitter
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage,AIMessage
 from src.shared.constants import *
 
 load_dotenv() 
 
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
-CHAT_MAX_TOKENS = 1000
-SEARCH_KWARG_K = 2
-SEARCH_KWARG_SCORE_THRESHOLD = 0.7
 
 RETRIEVAL_QUERY = """
 WITH node as chunk, score
@@ -88,7 +83,7 @@ AI Response: "PyCaret simplifies the process of building and deploying machine l
 Note: This system does not generate answers based solely on internal knowledge. It answers from the information provided in the user's current and previous inputs, and from explicitly referenced external sources.
 """
 
-def get_neo4j_retriever(graph, index_name="vector", search_k=SEARCH_KWARG_K, score_threshold=SEARCH_KWARG_SCORE_THRESHOLD):
+def get_neo4j_retriever(graph, index_name="vector", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
     try:
         neo_db = Neo4jVector.from_existing_index(
             embedding=EMBEDDING_FUNCTION,
@@ -274,6 +269,7 @@ def clear_chat_history(graph,session_id):
 def QA_RAG(graph,model,question,session_id):
     try:
         start_time = time.time()
+        print(model)
         model_version = MODEL_VERSIONS[model]
         llm = get_llm(model_version)
         retriever = get_neo4j_retriever(graph=graph)
@@ -291,28 +287,34 @@ def QA_RAG(graph,model,question,session_id):
                 "messages":messages
             }
         )
-        formatted_docs,sources = format_documents(docs)
-        doc_retrieval_time = time.time() - start_time
-        logging.info(f"Modified question and Documents retrieved in {doc_retrieval_time:.2f} seconds")
+        if docs:
+            formatted_docs,sources = format_documents(docs)
+            doc_retrieval_time = time.time() - start_time
+            logging.info(f"Modified question and Documents retrieved in {doc_retrieval_time:.2f} seconds")
 
-        start_time = time.time()
-        rag_chain = get_rag_chain(llm=llm)
-        ai_response = rag_chain.invoke(
-            {
-            "messages" : messages[:-1],
-            "context"  : formatted_docs,
-            "input"    : question 
-        }
-        )
-        result = get_sources_and_chunks(sources,docs)
-        content = ai_response.content
-        if "Gemini" in model:
-            total_tokens = ai_response.response_metadata['usage_metadata']['prompt_token_count']
-        else:    
-            total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
-        predict_time = time.time() - start_time
-        logging.info(f"Final Response predicted in {predict_time:.2f} seconds")
-
+            start_time = time.time()
+            rag_chain = get_rag_chain(llm=llm)
+            ai_response = rag_chain.invoke(
+                {
+                "messages" : messages[:-1],
+                "context"  : formatted_docs,
+                "input"    : question 
+            }
+            )
+            result = get_sources_and_chunks(sources,docs)
+            content = ai_response.content
+            if "Gemini" in model:
+                total_tokens = ai_response.response_metadata['usage_metadata']['prompt_token_count']
+            else:    
+                total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
+            predict_time = time.time() - start_time
+            logging.info(f"Final Response predicted in {predict_time:.2f} seconds")
+        else:
+            ai_response = AIMessage(content="I couldn't find any relevant documents to answer your question.")
+            result = {"sources": [], "chunkIds": []}
+            total_tokens = 0
+            content = ai_response.content
+             
         start_time = time.time()
         messages.append(ai_response)
         summarize_messages(llm,history,messages)

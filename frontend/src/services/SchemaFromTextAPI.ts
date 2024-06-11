@@ -11,6 +11,7 @@ export const getNodeLabelsAndRelTypesFromText = async (
   formData.append('model', model);
   formData.append('input_text', inputText);
   formData.append('is_schema_description_checked', JSON.stringify(isSchemaText))
+
   try {
     const response = await axios.post<ScehmaFromText>(`${url()}/populate_graph_schema`, formData);
     return response;
