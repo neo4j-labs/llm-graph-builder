@@ -4,7 +4,7 @@ import { LegendChipProps } from '../types';
 export const LegendsChip: React.FunctionComponent<LegendChipProps> = ({ scheme, title, nodes }) => {
   const chunkcount = useMemo(
     // @ts-ignore
-    () => [...new Set(nodes?.filter((n) => n?.labels?.includes(title)).map((i) => i.caption))].length,
+    () => [...new Set(nodes?.filter((n) => n?.labels?.includes(title)).map((i) => i.id))].length,
     []
   );
   return (

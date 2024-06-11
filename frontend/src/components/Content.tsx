@@ -18,7 +18,7 @@ import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
 import ConfirmationDialog from './ConfirmationDialog';
-import { chunkSize } from '../utils/Constants';
+import { chunkSize, tooltips } from '../utils/Constants';
 import ButtonWithToolTip from './ButtonWithToolTip';
 
 const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) => {
@@ -271,8 +271,9 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -282,10 +283,10 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
       : isRightExpanded
-        ? 'contentWithChatBot'
-        : !isLeftExpanded && !isRightExpanded
-          ? 'w-[calc(100%-128px)]'
-          : 'contentWithDropzoneExpansion';
+      ? 'contentWithChatBot'
+      : !isLeftExpanded && !isRightExpanded
+      ? 'w-[calc(100%-128px)]'
+      : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -441,15 +442,17 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
           }}
         ></FileTable>
         <Flex
-          className={`${!isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-            } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+          className={`${
+            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection='row'
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={dropdowncheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <ButtonWithToolTip
-              disabled={disableCheck}
+              text={tooltips.generateGraph}
+              placement='top'
               onClick={() => {
                 if (selectedRows.length) {
                   let selectedLargeFiles: CustomFile[] = [];
@@ -507,36 +510,37 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
                   }
                 }
               }}
+              disabled={disableCheck}
               className='mr-0.5'
-              placement='top'
-              text='New files will be processed for Graph Visualization'
             >
               Generate Graph {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
             </ButtonWithToolTip>
             <ButtonWithToolTip
-              text='Only completed files will be processed for Graph Visualization'
-              disabled={showGraphCheck}
-              onClick={handleGraphView}
-              className='mr-0.5'
+              text={tooltips.showGraph}
               placement='top'
+              onClick={handleGraphView}
+              disabled={showGraphCheck}
+              className='mr-0.5'
             >
               Show Graph {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
             </ButtonWithToolTip>
             <ButtonWithToolTip
+              text={tooltips.bloomGraph}
+              placement='top'
               onClick={handleOpenGraphClick}
               disabled={!filesData.some((f) => f?.status === 'Completed')}
               className='ml-0.5'
-              text='For advance Graph Visualization'
-              placement='top'
             >
               Open Graph with Bloom
             </ButtonWithToolTip>
             <ButtonWithToolTip
+              text={
+                !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
+              }
               placement='top'
               onClick={() => setshowDeletePopUp(true)}
-              className='ml-0.5'
-              text={!selectedfileslength ? 'Please select a file to delete' : `${selectedfileslength} File/Files to be deleted`}
               disabled={!selectedfileslength}
+              className='ml-0.5'
             >
               Delete Files {selectedfileslength > 0 && `(${selectedfileslength})`}
             </ButtonWithToolTip>

@@ -10,6 +10,7 @@ import {
 import { Typography } from '@neo4j-ndl/react';
 import { useCallback } from 'react';
 import IconButtonWithToolTip from '../IconButtonToolTip';
+import { tooltips } from '../../utils/Constants';
 
 export default function Header({
   themeMode,
@@ -52,7 +53,7 @@ export default function Header({
               style={{ display: 'flex', flexGrow: 0, alignItems: 'center', gap: '4px' }}
             >
               <IconButtonWithToolTip
-                text='Documentation'
+                text={tooltips.documentation}
                 onClick={() => handleURLClick('https://neo4j.com/labs/genai-ecosystem/llm-graph-builder')}
                 size='large'
                 clean
@@ -63,13 +64,13 @@ export default function Header({
 
               <IconButtonWithToolTip
                 onClick={() => handleURLClick('https://github.com/neo4j-labs/llm-graph-builder/issues')}
-                text={'GitHub Issues'}
+                text={tooltips.github}
                 size='large'
                 clean
               >
                 <CodeBracketSquareIconOutline />
               </IconButtonWithToolTip>
-              <IconButtonWithToolTip text='Theme' clean size='large' onClick={toggleTheme}>
+              <IconButtonWithToolTip text={tooltips.theme} clean size='large' onClick={toggleTheme}>
                 {themeMode === 'dark' ? (
                   <span role='img' aria-label='sun'>
                     <SunIconOutline />
@@ -80,7 +81,13 @@ export default function Header({
                   </span>
                 )}
               </IconButtonWithToolTip>
-              <IconButtonWithToolTip text='Settings' size='large' clean onClick={openSettingsModal} placement='left'>
+              <IconButtonWithToolTip
+                text={tooltips.settings}
+                size='large'
+                clean
+                onClick={openSettingsModal}
+                placement='left'
+              >
                 <Cog8ToothIconOutline />
               </IconButtonWithToolTip>
             </div>
