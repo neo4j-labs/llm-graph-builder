@@ -163,7 +163,7 @@ export default function SettingsModal({
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
         <Dropdown
           helpText='Schema Examples'
-          label='Schema'
+          label='Predefined Schema'
           selectProps={{
             isClearable: true,
             isMulti: true,

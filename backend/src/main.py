@@ -1,4 +1,5 @@
 from langchain_community.graphs import Neo4jGraph
+from src.shared.schema_extraction import sceham_extraction_from_text
 from dotenv import load_dotenv
 from datetime import datetime
 import logging
@@ -475,7 +476,7 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir):
           delete_uploaded_local_file(merged_file_path, file_name)
   return "Cancelled the processing job successfully"
 
-def populate_graph_schema_from_text(graph, text, model):
+def populate_graph_schema_from_text(text, model, is_schema_description_cheked):
   """_summary_
 
   Args:
@@ -486,31 +487,5 @@ def populate_graph_schema_from_text(graph, text, model):
   Returns:
       data (list): list of lebels and relationTypes
   """
-  pages = []
-  pages.append(Document(page_content=str(text),metadata={'page':1}))
-  create_chunks_obj = CreateChunksofDocument(pages, graph)
-  chunks = create_chunks_obj.split_file_into_chunks()
-  
-  lst_chunks_including_hash = []
-  for i,chunk in enumerate(chunks):
-      # print(chunk.page_content)
-      page_content_sha1 = hashlib.sha1(chunk.page_content.encode())
-      current_chunk_id = page_content_sha1.hexdigest()
-      lst_chunks_including_hash.append({'chunk_id': current_chunk_id, 'chunk_doc': chunk})
-      
-  logging.info("Get graph document list from models to extract labels and relationship types")
-  graph_document =  generate_graphDocuments(model, graph, lst_chunks_including_hash)
-  print(graph_document)
-  nodes = set()
-  relationships = set()
-  
-  for graph_document in graph_document:
-    #get distinct nodes
-    for node in graph_document.nodes:
-      node_type= node.type
-      nodes.add(node_type)
-    #get all relationship
-    for relation in graph_document.relationships:
-      relationships.add(relation.type)
-    data = {"labels": nodes, "relationshipTypes": relationships}
-  return data
+  result = sceham_extraction_from_text(text, model, is_schema_description_cheked)
+  return {"labels": result.labels, "relationshipTypes": result.relationshipTypes}
