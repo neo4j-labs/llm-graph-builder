@@ -37,7 +37,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-add_routes(app,ChatVertexAI(), path="/vertexai")
+is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "False").lower() in ("true", "1", "yes")
+if is_gemini_enabled:
+    add_routes(app,ChatVertexAI(), path="/vertexai")
 
 app.add_api_route("/health", health([healthy_condition, healthy]))
 
@@ -242,9 +244,11 @@ async def get_source_list(uri:str, userName:str, password:str, database:str=None
     try:
         decoded_password = decode_password(password)
         if " " in uri:
-            uri= uri.replace(" ","+")
-            result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
-            return create_api_response("Success",data=result)
+            uri = uri.replace(" ","+")
+        result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
+        josn_obj = {'api_name':'sources_list','db_url':uri}
+        logger.log_struct(josn_obj)
+        return create_api_response("Success",data=result)
     except Exception as e:
         job_status = "Failed"
         message="Unable to fetch source list"

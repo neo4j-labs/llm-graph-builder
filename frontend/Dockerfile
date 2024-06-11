@@ -1,12 +1,16 @@
 # Step 1: Build the React application
 FROM node:20 AS build
-# ENV BACKEND_API_URL "https://prod-backend-new-dcavk67s4a-uc.a.run.app"
-#ENV BLOOM_URL "https://bloom-latest.s3.eu-west-2.amazonaws.com/assets/index.html?connectURL={CONNECT_URL}&search=Show+me+a+graph"
-ENV BLOOM_URL "https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true"
-ENV REACT_APP_SOURCES ""
-ENV LLM_MODELS ""
-ENV TIME_PER_CHUNK 4
-ENV ENV "PROD"
+
+ARG BACKEND_API_URL="http://localhost:8000"
+ARG REACT_APP_SOURCES="local,youtube,wiki,s3"
+ARG LLM_MODELS="Diffbot,OpenAI GPT 3.5,OpenAI GPT 4o"
+ARG GOOGLE_CLIENT_ID=""
+ARG BLOOM_URL="https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true"
+ARG TIME_PER_CHUNK=4
+ARG TIME_PER_PAGE=50
+ARG CHUNK_SIZE=5242880
+ARG ENV="DEV"
+
 WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn add @neo4j-nvl/base @neo4j-nvl/react
