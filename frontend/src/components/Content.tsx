@@ -181,7 +181,8 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
         selectedNodes.map((l) => l.value),
         selectedRels.map((t) => t.value),
         fileItem.google_project_id,
-        fileItem.language
+        fileItem.language,
+        fileItem.access_token
       );
 
       if (apiResponse?.status === 'Failed') {
