@@ -14,8 +14,16 @@ import GCSModal from '../GCSModal';
 import CustomAlert from '../Alert';
 import { useAlertContext } from '../../context/Alert';
 import { APP_SOURCES } from '../../utils/Constants';
+import { tokens } from '@neo4j-ndl/base';
+import { useMediaQuery } from '@neo4j-ndl/react';
 
 const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
+  const { breakpoints } = tokens;
+  const mobile = useMediaQuery(`(max-width: ${breakpoints.xs})`);
+  const tablet = useMediaQuery(
+    `(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`,
+  );
+  const desktop = useMediaQuery(`(min-width: ${breakpoints.lg})`);
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
   const [showModal, setshowModal] = useState<boolean>(false);
   const [showWikiepediaModal, setShowWikiepediaModal] = useState<boolean>(false);
@@ -62,7 +70,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
 
   return (
     <div className='flex min-h-[calc(-58px+100vh)] relative'>
-      <Drawer expanded={isExpanded} position='left' type='push' closeable={false}>
+      <Drawer expanded={isExpanded} position='left' type={desktop?'push':'overlay'}closeable={false}>
         <Drawer.Body className='!overflow-hidden !w-max' style={{ height: 'intial' }}>
           {alertState.showAlert && (
             <CustomAlert
