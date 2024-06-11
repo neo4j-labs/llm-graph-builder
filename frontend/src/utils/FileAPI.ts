@@ -27,7 +27,8 @@ export const extractAPI = async (
   allowedNodes?: string[],
   allowedRelationship?: string[],
   gcs_project_id?: string,
-  language?: string
+  language?: string,
+  access_token?: string
 ): Promise<any> => {
   const urlExtract = `${url()}/extract`;
   const method: Method = 'post';
@@ -65,6 +66,7 @@ export const extractAPI = async (
       allowedNodes,
       allowedRelationship,
       gcs_project_id,
+      access_token,
     };
   } else if (source_type === 'youtube') {
     additionalParams = {
