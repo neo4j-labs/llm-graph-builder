@@ -235,7 +235,7 @@ const DropZone: FunctionComponent = () => {
             'application/vnd.ms-excel': ['.xls'],
             'text/markdown': ['.md'],
             'image/jpeg': ['.jpeg', 'jpg'],
-            'mage/svg+xml': ['.svg']
+            'image/svg+xml': ['.svg']
           },
           onDrop: (f: Partial<globalThis.File>[]) => {
             onDropHandler(f);
