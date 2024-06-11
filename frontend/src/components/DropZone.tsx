@@ -231,7 +231,7 @@ const DropZone: FunctionComponent = () => {
             'text/html': ['.html'],
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
             'text/plain': ['.txt'],
-            'application/vnd.ms-powerpoint': ['.ppt'],
+            'application/vnd.ms-powerpoint': ['.pptx'],
             'application/vnd.ms-excel': ['.xls'],
             'text/markdown': ['.md'],
             'image/jpeg': ['.jpeg', 'jpg'],
