@@ -118,6 +118,7 @@ pydantic==2.6.4
 pydantic_core==2.16.3
 pyparsing==3.0.9
 pypdf==4.0.1
+PyPDF2
 pypdfium2==4.27.0
 pytesseract==0.3.10
 python-dateutil==2.8.2
