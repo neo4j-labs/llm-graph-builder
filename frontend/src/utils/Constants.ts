@@ -91,8 +91,8 @@ export const queryMap: {
 };
 
 export const tooltips = {
-  generateGraph: `Only New files will be processed for Graph Visualization`,
-  deleteFile: 'Please select a file to delete',
+  generateGraph: `Only New files will be processed for the Graph generation`,
+  deleteFile: 'Please select one or more files to delete',
   showGraph: 'Only completed files will be processed for Graph Visualization',
   bloomGraph: 'For advance Graph Visualization',
   deleteSelectedFiles: 'File/Files to be deleted',

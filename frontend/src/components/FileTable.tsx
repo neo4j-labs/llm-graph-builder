@@ -1,4 +1,14 @@
-import { DataGrid, DataGridComponents, IconButton, StatusIndicator, TextLink, Typography } from '@neo4j-ndl/react';
+import {
+  Checkbox,
+  DataGrid,
+  DataGridComponents,
+  Flex,
+  IconButton,
+  ProgressBar,
+  StatusIndicator,
+  TextLink,
+  Typography,
+} from '@neo4j-ndl/react';
 import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
 import {
@@ -179,18 +189,22 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         cell: (info) => {
           if (info.row.original.fileSource === 'youtube' || info.row.original.fileSource === 'Wikipedia') {
             return (
-              <>
-                <TextLink externalLink href={info.row.original.source_url}>
-                  {info.row.original.fileSource}
-                </TextLink>
-                <Typography variant='body-medium'> / {info.row.original.type}</Typography>
-              </>
+              <Flex>
+                <span>
+                  <TextLink externalLink href={info.row.original.source_url}>
+                    {info.row.original.fileSource}
+                  </TextLink>{' '}
+                  /
+                </span>
+                <Typography variant='body-medium'>{info.row.original.type}</Typography>
+              </Flex>
             );
           }
           return (
-            <i>
-              {info.row.original.fileSource} / {info.row.original.type}
-            </i>
+            <div>
+              <span>{info.row.original.fileSource} / </span>
+              <span>{info.row.original.type}</span>
+            </div>
           );
         },
         header: () => <span>Source/Type</span>,
