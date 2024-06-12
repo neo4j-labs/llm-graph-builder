@@ -25,7 +25,6 @@ export default function DeletePopUp({
         <div className='mt-1'>
           <Checkbox
             label='Delete Entities'
-            onClick={function Ua() { }}
             checked={deleteEntities}
             onChange={(e) => {
               if (e.target.checked) {
