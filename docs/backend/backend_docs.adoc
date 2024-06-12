@@ -2,33 +2,12 @@
 
 == API Reference
 
-=== /connect : 
 
-**Overview:**
-
-Connect with Neo4j database
-
-**API Parameters :**
-....
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name
-....
-**Response :**
-....
-{
-    "status": "Success",
-    "message": "Connection Successful"
-}
-....
-
-
-=== /sources :
+=== /connect :
 
 **Overview :**
 
-Create Document node for local file upload
+Neo4j database connection on frontend is done with this API.
 
 **API Parameters :**
 ....
@@ -36,19 +15,49 @@ uri=Neo4j uri,
 userName= Neo4j db username, 
 password= Neo4j db password, 
 database= Neo4j database name
-file= File uploaded from device, 
-model= LLM model 
 ....
+
+**Response :**
+....
+{
+    "status":"Success",
+    "message":"Connection Successful"
+}
+....
+
+=== /upload :
+
+**Overview :**
+
+When uploading a local file, it gets uploaded in chunks of 1Mb each and user can see the progress of uploading.
+
+**API Parameters :**
+....
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name,
+file:UploadFile= , 
+chunkNumber=, 
+totalChunks=, 
+originalname=, 
+model= LLm model
+....
+
 **Response :**
 ....
 {
     "status": "Success",
-    "message": "Source Node created successfully",
-    "file_source": "local file",
-    "file_name": "<Uploaded File Name>"
+    "data": {
+        "file_size": 163931,
+        "total_pages": 8,
+        "file_name": "About Amazon.pdf",
+        "file_extension": ".pdf",
+        "message": "Chunk 1/1 saved"
+    },
+    "message": "Source Node Created Successfully"
 }
 ....
-
 
 === /url/scan :
 
@@ -254,7 +263,7 @@ The API responsible for a chatbot system designed to leverage multiple AI models
 **Components :** 
  
 ** Embedding Models - Includes OpenAI Embeddings, VertexAI Embeddings, and SentenceTransformer Embeddings to support vector-based query operations.
-** AI Models - OpenAI GPT 3.5, GPT 4, Gemini Pro and Gemini 1.5 Pro can be configured for the chatbot backend to generate responses and process natural language.
+** AI Models - OpenAI GPT 3.5, GPT 4o, Gemini Pro, Gemini 1.5 Pro and Groq llama3 can be configured for the chatbot backend to generate responses and process natural language.
 ** Graph Database (Neo4jGraph) - Manages interactions with the Neo4j database, retrieving, and storing conversation histories.
 ** Response Generation - Utilizes Vector Embeddings from the Neo4j database, chat history, and the knowledge base of the LLM used.
 
@@ -273,19 +282,39 @@ session_id= Session ID used to maintain the history of chats during the user's c
 **Response :**
 ....
 {
-  "status": "Success",
-  "data": {
-    "session_id": "312dd183-4c14-437c-8b2f-8144e5eac646",
-    "message": "Hello! How can I assist you today?",
-    "sources": [],
-    "user": "chatbot"
-  }
+    "status": "Success",
+    "data": {
+        "session_id": "0901",
+        "message": "Fibrosis, also known as fibrotic scarring, is a pathological wound healing process where connective tissue replaces normal parenchymal tissue."
+        "info": {
+            "sources": [
+                {
+                    "source_name": "https://en.wikipedia.org/wiki/Fibrosis",
+                    "page_numbers": [],
+                    "start_time": []
+                }
+            ],
+            "model": "gpt-4o",
+            "chunkids": [
+                "54d8c0dbefb67f1ed3f6939d59267e1ff557a94c",
+                "4cc02ee8419706c8decdf71ab0d3896aad5c7dca",
+                "266ce95311bb1921791b4f1cd29a48d433027139",
+                "11e19513247e1e396475728fa6a197695045b248",
+                "8bafa01b6d851f70822bcb86863e485e1785a64c"
+            ],
+            "total_tokens": 2213,
+            "response_time": 10.17
+        },
+        "user": "chatbot"
+    }
+}
 ....
 
 === /chunk_entities :
 
 **Overview :**
 
+This API is used to  get the entities and relations associated with a particular chunk and chunk metadata.
 
 **API Parameters :**
 ....
@@ -299,7 +328,46 @@ chunk_ids = Chunk ids of document
 **Response :**
 ....
 {
-    
+    "status": "Success",
+    "data": {
+        "nodes": [
+            {
+                "element_id": "4:a69712a5-1102-40da-a96d-70c1143ea8e5:73267",
+                "labels": [
+                    "Condition"
+                ],
+                "properties": {
+                    "id": "Fibrosis"
+                }
+            },
+ 
+        ],
+        "relationships": [
+            {
+                "element_id": "5:a69712a5-1102-40da-a96d-70c1143ea8e5:1153057844048764467",
+                "type": "AFFECTS",
+                "start_node_element_id": "4:a69712a5-1102-40da-a96d-70c1143ea8e5:73267",
+                "end_node_element_id": "4:a69712a5-1102-40da-a96d-70c1143ea8e5:73282"
+            },
+            {
+                "element_id": "5:a69712a5-1102-40da-a96d-70c1143ea8e5:1155309643862449715",
+                "type": "AFFECTS",
+                "start_node_element_id": "4:a69712a5-1102-40da-a96d-70c1143ea8e5:73267",
+                "end_node_element_id": "4:a69712a5-1102-40da-a96d-70c1143ea8e5:73294"
+            },
+        ],
+        "chunk_data": [
+            {
+                "id": "54d8c0dbefb67f1ed3f6939d59267e1ff557a94c",
+                "position": 1,
+                "text": "Fibrosis, also known as fibrotic scarring, is a pathological wound healing ...",
+                "content_offset": 0,
+                "fileName": "fibrosis",
+                "length": 1002,
+                "embedding": null
+            }
+        ]
+    }
 }
 ....
 
@@ -321,8 +389,41 @@ document_names = File name for which user wants to view graph
 **Response :**
 ....
 {
-   
-}
+    "status": "Success",
+    "data": {
+        "nodes": [
+            {
+                "element_id": "4:98e5e9bb-8095-440d-9462-03985fed2fa2:9972",
+                "labels": [
+                    "Person"
+                ],
+                "properties": {
+                    "id": "Jeff"
+                }
+            },
+            {
+                "element_id": "4:98e5e9bb-8095-440d-9462-03985fed2fa2:9973",
+                "labels": [
+                    "Team"
+                ],
+                "properties": {
+                    "id": "Miami"
+                }
+            }
+        ],
+        "relationships": [
+            {
+                "element_id": "5:98e5e9bb-8095-440d-9462-03985fed2fa2:1153200780560312052",
+                "type": "PLAYER",
+                "start_node_element_id": "4:98e5e9bb-8095-440d-9462-03985fed2fa2:9972",
+                "end_node_element_id": "4:98e5e9bb-8095-440d-9462-03985fed2fa2:9973"
+            }  
+        ]
+    }
+}    
+
+
+
 ....
 
 === /clear_chat_bot :
@@ -343,54 +444,12 @@ session_id = User session id for QA chat
 **Response :**
 ....
 {
-    
-}
-....
-
-=== /connect :
-
-**Overview :**
-
-Neo4j database connection on frontend is done with this API.
-
-**API Parameters :**
-....
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name
-....
-
-**Response :**
-....
-{
-    
-}
-....
-
-=== /upload :
-
-**Overview :**
-
-When uploading a local file, it gets uploaded in chunks of 1Mb each and user can see the progress of uploading.
-
-**API Parameters :**
-....
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name,
-file:UploadFile= , 
-chunkNumber=, 
-totalChunks=, 
-originalname=, 
-model= LLm model
-....
-
-**Response :**
-....
-{
-    
+    "status": "Success",
+    "data": {
+        "session_id": "99c1a808-377f-448f-9ea6-4b4a8de46b14",
+        "message": "The chat History is cleared",
+        "user": "chatbot"
+    }
 }
 ....
 
@@ -435,7 +494,8 @@ deleteEntities= Boolean value to check entities deletion is requested or not
 **Response :**
 ....
 {
-    
+    "status": "Success",
+    "message": "Deleted 1 documents with 68 entities from database"
 }
 ....
 
@@ -458,7 +518,7 @@ source_types= Source of the file
 **Response :**
 ....
 {
-    
+    "message":"Cancelled the processing job successfully"
 }
 ....
 
