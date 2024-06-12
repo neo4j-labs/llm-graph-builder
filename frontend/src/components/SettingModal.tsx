@@ -1,4 +1,4 @@
-import { Button, Dialog, Dropdown } from '@neo4j-ndl/react';
+import { Dialog, Dropdown } from '@neo4j-ndl/react';
 import { OnChangeValue, ActionMeta } from 'react-select';
 import { OptionType, OptionTypeForExamples, UserCredentials, schema } from '../types';
 import { useFileContext } from '../context/UsersFiles';
@@ -6,6 +6,8 @@ import { getNodeLabelsAndRelTypes } from '../services/GetNodeLabelsRelTypes';
 import { useCredentials } from '../context/UserCredentials';
 import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
 import schemaExamples from '../assets/schemas.json';
+import ButtonWithToolTip from './ButtonWithToolTip';
+import { tooltips } from '../utils/Constants';
 
 export default function SettingsModal({
   open,
@@ -199,22 +201,31 @@ export default function SettingsModal({
           type='creatable'
         />
         <Dialog.Actions className='!mt-4'>
-          <Button
+          <ButtonWithToolTip
             loading={loading}
-            title={!nodeLabelOptions.length && !relationshipTypeOptions.length ? `No Labels Found in the Database` : ''}
+            text={
+              !nodeLabelOptions.length && !relationshipTypeOptions.length
+                ? `No Labels Found in the Database`
+                : tooltips.useExistingSchema
+            }
             disabled={!nodeLabelOptions.length && !relationshipTypeOptions.length}
-            onClick={clickHandler}
+            onClick={() => clickHandler}
+            label='Use Existing Schema'
+            placement='top'
           >
             Use Existing Schema
-          </Button>
-          <Button
+          </ButtonWithToolTip>
+          <ButtonWithToolTip
+            text={tooltips.createSchema}
+            placement='top'
             onClick={() => {
               onClose();
               opneTextSchema();
             }}
+            label='Get Existing Schema From Text'
           >
             Get Existing Schema From Text
-          </Button>
+          </ButtonWithToolTip>
         </Dialog.Actions>
       </Dialog.Content>
     </Dialog>
