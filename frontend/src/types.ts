@@ -22,6 +22,7 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   google_project_id?: string;
   language?: string;
   processingProgress?: number;
+  access_token?: string;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
@@ -62,6 +63,7 @@ export type ExtractParams = {
   allowedRelationship?: string[];
   gcs_project_id?: string;
   language?: string;
+  access_token?: string;
 } & { [key: string]: any };
 
 export type UploadParams = {
@@ -118,6 +120,7 @@ export interface SourceNode {
   processed_chunk?: number;
   total_chunks?: number;
   total_pages?: number;
+  access_token?: string;
 }
 
 export interface SideNavProps {
