@@ -2,8 +2,6 @@ import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone, Typography, Text
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 import connectAPI from '../services/ConnectAPI';
 import { useCredentials } from '../context/UserCredentials';
-import { initialiseDriver } from '../utils/Driver';
-import { Driver } from 'neo4j-driver';
 import { useSearchParams } from 'react-router-dom';
 
 interface Message {
@@ -33,7 +31,6 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
     initialport = initialuri.split(':')[1];
     initialprotocol = urisplit[0];
   }
-
   const protocols = ['neo4j', 'neo4j+s', 'neo4j+ssc', 'bolt', 'bolt+s', 'bolt+ssc'];
   const [protocol, setProtocol] = useState<string>(initialprotocol ?? 'neo4j+s');
   const [URI, setURI] = useState<string>(initialuri ?? '');
@@ -42,7 +39,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
   const [username, setUsername] = useState<string>(initialusername ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
-  const { setUserCredentials, setDriver } = useCredentials();
+  const { setUserCredentials } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -132,39 +129,29 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
     const connectionURI = `${protocol}://${URI}${URI.split(':')[1] ? '' : `:${port}`}`;
     setUserCredentials({ uri: connectionURI, userName: username, password: password, database: database, port: port });
     setIsLoading(true);
-    await connectAPI(connectionURI, username, password, database).then((response: any) => {
-      if (response?.data?.status === 'Success') {
-        setConnectionStatus(true);
-        setMessage({
-          type: 'success',
-          content: response.data.message,
-        });
-        driverSetting(connectionURI, username, password, database);
-        setOpenConnection(false);
-      } else {
-        setMessage({ type: 'danger', content: response.data.error });
-        setOpenConnection(true);
-        setPassword('');
-        setConnectionStatus(false);
-      }
-      setIsLoading(false);
-      setTimeout(() => {
-        setMessage({ type: 'unknown', content: '' });
-        setPassword('');
-      }, 3000);
-    });
-  };
-
-  const driverSetting = (connectionURI: string, username: string, password: string, database: string) => {
-    initialiseDriver(connectionURI, username, password, database).then((driver: Driver) => {
-      if (driver) {
-        setConnectionStatus(true);
-        setDriver(driver);
-        localStorage.setItem('alertShown', JSON.stringify(false));
-      } else {
-        setConnectionStatus(false);
-      }
-    });
+    const response = await connectAPI(connectionURI, username, password, database);
+    if (response?.data?.status === 'Success') {
+      localStorage.setItem(
+        'neo4j.connection',
+        JSON.stringify({ uri: connectionURI, user: username, password: password, database: database })
+      );
+      setConnectionStatus(true);
+      setMessage({
+        type: 'success',
+        content: response.data.message,
+      });
+      setOpenConnection(false);
+    } else {
+      setMessage({ type: 'danger', content: response.data.error });
+      setOpenConnection(true);
+      setPassword('');
+      setConnectionStatus(false);
+    }
+    setIsLoading(false);
+    setTimeout(() => {
+      setMessage({ type: 'unknown', content: '' });
+      setPassword('');
+    }, 3000);
   };
 
   const onClose = useCallback(() => {

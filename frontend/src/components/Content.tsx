@@ -10,8 +10,6 @@ import { extractAPI } from '../utils/FileAPI';
 import { ContentProps, CustomFile, OptionType, UserCredentials, alertStateType } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './GraphViewModal';
-import { initialiseDriver } from '../utils/Driver';
-import Driver from 'neo4j-driver/types/driver';
 import deleteAPI from '../services/deleteFiles';
 import DeletePopUp from './DeletePopUp';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
@@ -20,6 +18,7 @@ import { useSearchParams } from 'react-router-dom';
 import ConfirmationDialog from './ConfirmationDialog';
 import { chunkSize, tooltips } from '../utils/Constants';
 import ButtonWithToolTip from './ButtonWithToolTip';
+import connectAPI from '../services/ConnectAPI';
 
 const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -27,7 +26,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
-  const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
+  const { setUserCredentials, userCredentials } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
 
@@ -81,20 +80,6 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
           password: neo4jConnection.password,
           database: neo4jConnection.database,
           port: neo4jConnection.uri.split(':')[2],
-        });
-        initialiseDriver(
-          neo4jConnection.uri,
-          neo4jConnection.user,
-          neo4jConnection.password,
-          neo4jConnection.database
-        ).then((driver: Driver) => {
-          if (driver) {
-            localStorage.setItem('alertShown', JSON.stringify(false));
-            setConnectionStatus(true);
-            setDriver(driver);
-          } else {
-            setConnectionStatus(false);
-          }
         });
       } else {
         setOpenConnection(true);
@@ -295,7 +280,6 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
   };
 
   const disconnect = () => {
-    driver?.close();
     setConnectionStatus(false);
     localStorage.removeItem('password');
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
@@ -374,6 +358,23 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     }
     setshowDeletePopUp(false);
   };
+  useEffect(() => {
+    const connection = localStorage.getItem('neo4j.connection');
+    if (connection != null) {
+      (async () => {
+        const parsedData = JSON.parse(connection);
+        console.log(parsedData.uri);
+        const response = await connectAPI(parsedData.uri, parsedData.user, parsedData.password, parsedData.database);
+        if (response?.data?.status === 'Success') {
+          setConnectionStatus(true);
+          setOpenConnection(false);
+        } else {
+          setOpenConnection(true);
+          setConnectionStatus(false);
+        }
+      })();
+    }
+  }, []);
 
   return (
     <>
