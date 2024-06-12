@@ -228,24 +228,27 @@ const DropZone: FunctionComponent = () => {
         className='!bg-none dropzoneContainer'
         supportedFilesDescription={
           <Typography variant='body-small'>
-            Documents, Images, Unstructured
-            <IconButtonWithToolTip
-              label='Source info'
-              size='small'
-              clean
-              text={
-                <Typography variant='body-small'>
-                  <Flex gap='5'>
-                    <span>Microsoft Office (.docx, .pptx, .xls)</span>
-                    <span>PDF (.pdf)</span>
-                    <span>Images (.jpeg, .jpg, .png, .svg)</span>
-                    <span>Text (.html, .txt , .md)</span>
-                  </Flex>
-                </Typography>
-              }
-            >
-              <InformationCircleIconOutline className='n-size-token-7' />
-            </IconButtonWithToolTip>
+            <Flex>
+              <span>Documents, Images, Unstructured</span>
+              <div className='align-self-center'>
+                <IconButtonWithToolTip
+                  label='Source info'
+                  clean
+                  text={
+                    <Typography variant='body-small'>
+                      <Flex gap='3' alignItems='flex-start'>
+                        <span>Microsoft Office (.docx, .pptx, .xls)</span>
+                        <span>PDF (.pdf)</span>
+                        <span>Images (.jpeg, .jpg, .png, .svg)</span>
+                        <span>Text (.html, .txt , .md)</span>
+                      </Flex>
+                    </Typography>
+                  }
+                >
+                  <InformationCircleIconOutline className='w-[22px] h-[22px]' />
+                </IconButtonWithToolTip>
+              </div>
+            </Flex>
           </Typography>
         }
         dropZoneOptions={{
