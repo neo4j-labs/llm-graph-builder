@@ -108,4 +108,6 @@ export const tooltips = {
   copied: 'Copied',
   stopSpeaking: 'Stop Speaking',
   textTospeech: 'Text to Speech',
+  createSchema: 'Create your own schema by passing text',
+  useExistingSchema: 'Use the already existing schema from DB',
 };
