@@ -18,10 +18,10 @@ export default function DeletePopUp({
   return (
     <Dialog open={open} onClose={deleteCloseHandler}>
       <Dialog.Content>
-        <h5 className='max-w-[90%]'>
+        <Typography variant='subheading-large'>
           Are you sure you want to permanently delete {no_of_files} {no_of_files > 1 ? 'Files' : 'File'}{' '}
-          {deleteEntities ? 'and associated entities' : ''} from the graph database ?
-        </h5>
+          {deleteEntities ? 'and associated entities' : ''}?
+        </Typography>
         <div className='mt-1'>
           <Checkbox
             label='Delete Entities'
