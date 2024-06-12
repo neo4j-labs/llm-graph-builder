@@ -3,7 +3,6 @@ import { useCallback, useState } from 'react';
 import { getNodeLabelsAndRelTypesFromText } from '../services/SchemaFromTextAPI';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
-import { UserCredentials } from '../types';
 import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { OverridableStringUnion } from '@mui/types';
 
