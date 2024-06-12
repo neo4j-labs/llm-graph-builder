@@ -228,15 +228,13 @@ const DropZone: FunctionComponent = () => {
         dropZoneOptions={{
           accept: {
             'application/pdf': ['.pdf'],
-            'image/png': ['.png'],
+            'image/*': ['.jpeg', '.jpg', '.png','.svg'],
             'text/html': ['.html'],
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
             'text/plain': ['.txt'],
             'application/vnd.ms-powerpoint': ['.pptx'],
             'application/vnd.ms-excel': ['.xls'],
             'text/markdown': ['.md'],
-            'image/jpeg': ['.jpeg', 'jpg'],
-            'image/svg+xml': ['.svg'],
           },
           onDrop: (f: Partial<globalThis.File>[]) => {
             onDropHandler(f);
