@@ -245,8 +245,8 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                         File: {chunk.fileName}
                       </Typography>
                       <Typography as="a"
-                        href={generateYouTubeLink('https://www.youtube.com/watch?v=dN0lsF2cvm4', chunk.start_time)}
-                        variant="body-small"
+                        href={generateYouTubeLink('https://www.youtube.com/watch?v=1bUy-1hGZpI', chunk.start_time)}
+                        variant='subheading-small'
                         target='_blank' rel='noopener noreferrer'
                       > Time {chunk.start_time}</Typography>
                     </div>
