@@ -36,6 +36,7 @@ import useServerSideEvent from '../hooks/useSse';
 import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
+import IconButtonWithToolTip from './IconButtonToolTip';
 
 const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows } = useFileContext();
@@ -235,7 +236,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
             </Typography>
           );
         },
-        header: () => <span>Upload Progress</span>,
+        header: () => <span>Upload Status</span>,
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.size, {
@@ -244,25 +245,26 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         header: () => <span>Size (KB)</span>,
         footer: (info) => info.column.id,
       }),
-      columnHelper.accessor((row) => row.type, {
-        id: 'fileType',
-        cell: (info) => <i>{info.getValue()}</i>,
-        header: () => <span>Type</span>,
-        footer: (info) => info.column.id,
-      }),
-      columnHelper.accessor((row) => row.fileSource, {
+      columnHelper.accessor((row) => row, {
         id: 'source',
         cell: (info) => {
           if (info.row.original.fileSource === 'youtube' || info.row.original.fileSource === 'Wikipedia') {
             return (
-              <TextLink externalLink href={info.row.original.source_url}>
-                {info.getValue()}
-              </TextLink>
+              <>
+                <TextLink externalLink href={info.row.original.source_url}>
+                  {info.row.original.fileSource}
+                </TextLink>
+                <Typography variant='body-medium'> /{info.row.original.type}</Typography>
+              </>
             );
           }
-          return <i>{info.getValue()}</i>;
+          return (
+            <i>
+              {info.row.original.fileSource}/ {info.row.original.type}
+            </i>
+          );
         },
-        header: () => <span>Source</span>,
+        header: () => <span>Source/Type</span>,
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.model, {
@@ -283,31 +285,27 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         header: () => <span>Relations</span>,
         footer: (info) => info.column.id,
       }),
-      columnHelper.accessor((row) => row.processing, {
-        id: 'processing',
-        cell: (info) => <i>{info.getValue()}</i>,
-        header: () => <span>Duration (s)</span>,
-        footer: (info) => info.column.id,
-      }),
       columnHelper.accessor((row) => row.total_pages, {
         id: 'Total pages',
         cell: (info) => <i>{info.getValue()}</i>,
-        header: () => <span>Total pages (s)</span>,
+        header: () => <span>Total pages</span>,
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.status, {
         id: 'inspect',
         cell: (info) => (
           <>
-            <IconButton
-              aria-label='Toggle settings'
+            <IconButtonWithToolTip
+              placement='right'
+              text='Graph'
               size='large'
+              label='Graph view'
               disabled={!(info.getValue() === 'Completed' || info.getValue() == 'Cancelled')}
               clean
               onClick={() => onInspect(info?.row?.original?.name as string)}
             >
               <MagnifyingGlassCircleIconSolid />
-            </IconButton>
+            </IconButtonWithToolTip>
           </>
         ),
         header: () => <span>View</span>,
@@ -333,7 +331,9 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                 prefiles.push({
                   name: item.fileName,
                   size: item.fileSize ?? 0,
-                  type: item?.fileType?.substring(1).toUpperCase() ?? 'None',
+                  type: item.fileType?.includes('.')
+                    ? item?.fileType?.substring(1).toUpperCase()
+                    : item?.fileType.toUpperCase() ?? 'None',
                   NodesCount: item?.nodeCount ?? 0,
                   processing: item?.processingTime ?? 'None',
                   relationshipCount: item?.relationshipCount ?? 0,

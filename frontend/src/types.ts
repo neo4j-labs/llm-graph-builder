@@ -107,7 +107,7 @@ export interface GraphViewModalProps {
 export interface SourceNode {
   fileName: string;
   fileSize: number;
-  fileType?: string;
+  fileType: string;
   nodeCount?: number;
   processingTime?: string;
   relationshipCount?: number;

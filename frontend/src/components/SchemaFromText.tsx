@@ -1,4 +1,3 @@
-
 import { Button, Checkbox, Dialog, Textarea } from '@neo4j-ndl/react';
 import { useCallback, useState } from 'react';
 import { getNodeLabelsAndRelTypesFromText } from '../services/SchemaFromTextAPI';
@@ -26,7 +25,7 @@ const SchemaFromTextDialog = ({
   const [loading, setloading] = useState<boolean>(false);
   const { setSelectedNodes, setSelectedRels } = useFileContext();
   const { userCredentials } = useCredentials();
-  const [isSchema, setIsSchema] = useState<boolean>(false)
+  const [isSchema, setIsSchema] = useState<boolean>(false);
   const { model } = useFileContext();
 
   const clickHandler = useCallback(async () => {
@@ -100,8 +99,7 @@ const SchemaFromTextDialog = ({
       setloading(false);
       console.log(error);
     }
-  }, [userCredentials, userText,isSchema]);
-
+  }, [userCredentials, userText, isSchema]);
 
   return (
     <Dialog
@@ -130,9 +128,9 @@ const SchemaFromTextDialog = ({
         />
         <Dialog.Actions className='!mt-4'>
           <Checkbox
-            label="Text is schema description"
+            label='Text is schema description'
             onChange={(e) => {
-                setIsSchema(e.target.checked)
+              setIsSchema(e.target.checked);
             }}
             checked={isSchema}
           />

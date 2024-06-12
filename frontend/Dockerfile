@@ -2,8 +2,8 @@
 FROM node:20 AS build
 
 ARG BACKEND_API_URL="http://localhost:8000"
-ARG REACT_APP_SOURCES="local,youtube,wiki,s3"
-ARG LLM_MODELS="Diffbot,OpenAI GPT 3.5,OpenAI GPT 4o"
+ARG REACT_APP_SOURCES=""
+ARG LLM_MODELS=""
 ARG GOOGLE_CLIENT_ID=""
 ARG BLOOM_URL="https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true"
 ARG TIME_PER_CHUNK=4

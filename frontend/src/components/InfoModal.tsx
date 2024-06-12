@@ -90,7 +90,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
         <img src={Neo4jRetrievalLogo} alt='icon' style={{ width: 95, height: 95, marginRight: 10 }} loading='lazy' />
         <Box className='flex flex-col'>
           <Typography variant='h2'>Retrieval information</Typography>
-          <Typography variant='body-medium' sx={{ mb: 2 }}>
+          <Typography variant='body-medium' className='mb-2'>
             To generate this response, in <span className='font-bold'>{response_time} seconds</span> we used{' '}
             <span className='font-bold'>{total_tokens}</span> tokens with the model{' '}
             <span className='font-bold'>{model}</span>.
@@ -123,7 +123,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                         <div className='flex flex-row inline-block justiy-between items-center'>
                           <Typography
                             variant='body-medium'
-                            className='text-ellipsis whitespace-nowrap max-w-[calc(100%-100px)] overflow-hidden'
+                            className='text-ellipsis whitespace-nowrap w-[calc(100%-200px)] overflow-hidden'
                           >
                             {decodeURIComponent(link.source_name).split('/').at(-1) ?? 'S3 File'}
                           </Typography>
@@ -132,7 +132,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                         <div className='flex flex-row inline-block justiy-between items-center'>
                           <Typography
                             variant='body-medium'
-                            className='text-ellipsis whitespace-nowrap max-w-[calc(100%-100px)] overflow-hidden'
+                            className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden'
                           >
                             {decodeURIComponent(link.source_name).split('/').at(-1)?.split('?')[0] ?? 'GCS File'}
                           </Typography>
@@ -163,7 +163,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                       <DocumentTextIconOutline className='n-size-token-7 mr-2' />
                       <Typography
                         variant='body-medium'
-                        className='text-ellipsis whitespace-nowrap max-w-[calc(100%-100px)] overflow-hidden'
+                        className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden'
                       >
                         {link.source_name}
                       </Typography>
@@ -193,8 +193,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                 {sortedLabels.map((label, index) => (
                   <li
                     key={index}
-                    className='flex items-center mb-2'
-                    style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}
+                    className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%)] overflow-hidden'
                   >
                     <div
                       key={index}
@@ -204,15 +203,8 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                       {label} ({labelCounts[label]})
                     </div>
                     <Typography
-                      className='entity-text'
+                      className='entity-text text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden'
                       variant='body-medium'
-                      sx={{
-                        display: 'inline-block',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        maxWidth: 'calc(100% - 120px)',
-                      }}
                     >
                       {Array.from(groupedEntities[label].texts).slice(0, 3).join(', ')}
                     </Typography>
