@@ -106,7 +106,7 @@ const SideNav: React.FC<SideNavProps> = ({
                       <Tip.Trigger>
                         <TrashIconOutline />
                       </Tip.Trigger>
-                      <Tip.Content>{tooltips.deleteChat}</Tip.Content>
+                      <Tip.Content>clear chat histroy</Tip.Content>
                     </>
                   }
                 />
