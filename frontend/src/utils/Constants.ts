@@ -102,4 +102,6 @@ export const tooltips = {
   settings: 'Settings',
   chat: 'Chat',
   sources: 'Sources',
+  deleteChat: 'Delete',
+  maximise: 'Maximise',
 };

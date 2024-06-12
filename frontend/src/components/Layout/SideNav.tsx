@@ -96,10 +96,32 @@ const SideNav: React.FC<SideNavProps> = ({
             />
           </Tip>
           {position === 'right' && isExpanded && (
-            <>
-              <SideNavigation.Item icon={<TrashIconOutline className='n-size-full' onClick={deleteOnClick} />} />
-              <SideNavigation.Item icon={<ExpandIcon className='n-size-full' />} onClick={handleExpandClick} />
-            </>
+            <Tip allowedPlacements={['left']}>
+              <>
+                <SideNavigation.Item
+                  onClick={deleteOnClick}
+                  icon={
+                    <>
+                      <Tip.Trigger>
+                        <TrashIconOutline />
+                      </Tip.Trigger>{' '}
+                      <Tip.Content>{tooltips.deleteChat}</Tip.Content>
+                    </>
+                  }
+                />
+                <SideNavigation.Item
+                  onClick={handleExpandClick}
+                  icon={
+                    <>
+                      <Tip.Trigger>
+                        <ExpandIcon className='n-size-full' />
+                      </Tip.Trigger>
+                      <Tip.Content>{tooltips.maximise}</Tip.Content>
+                    </>
+                  }
+                />
+              </>
+            </Tip>
           )}
         </SideNavigation.List>
       </SideNavigation>
