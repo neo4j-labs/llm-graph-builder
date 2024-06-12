@@ -16,16 +16,16 @@ export default function DeletePopUp({
 }) {
   const [deleteEntities, setDeleteEntities] = useState<boolean>(true);
   return (
-    <Dialog onClose={deleteCloseHandler} open={open}>
+    <Dialog open={open} onClose={deleteCloseHandler}>
       <Dialog.Content>
-        <Typography variant='subheading-large'>
+        <h5 className='max-w-[90%]'>
           Are you sure you want to permanently delete {no_of_files} {no_of_files > 1 ? 'Files' : 'File'}{' '}
           {deleteEntities ? 'and associated entities' : ''}?
-        </Typography>
+        </h5>
         <div className='mt-1'>
           <Checkbox
             label='Delete Entities'
-            onClick={function Ua() {}}
+            onClick={function Ua() { }}
             checked={deleteEntities}
             onChange={(e) => {
               if (e.target.checked) {
@@ -38,6 +38,9 @@ export default function DeletePopUp({
         </div>
       </Dialog.Content>
       <Dialog.Actions className='mt-3'>
+        <Button fill='outlined' size='large' onClick={deleteCloseHandler}>
+          Cancel
+        </Button>
         <Button onClick={() => deleteHandler(deleteEntities)} size='large' loading={loading}>
           Continue
         </Button>
