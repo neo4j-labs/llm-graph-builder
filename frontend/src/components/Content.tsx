@@ -16,7 +16,8 @@ import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
 import ConfirmationDialog from './ConfirmationDialog';
-import { chunkSize } from '../utils/Constants';
+import { chunkSize, tooltips } from '../utils/Constants';
+import ButtonWithToolTip from './ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 
 const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) => {
@@ -307,10 +308,6 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     [selectedfileslength, completedfileNo]
   );
 
-  const deleteFileClickHandler: React.MouseEventHandler<HTMLButtonElement> = () => {
-    setshowDeletePopUp(true);
-  };
-
   const filesForProcessing = useMemo(() => {
     let newstatusfiles: CustomFile[] = [];
     if (selectedRows.length) {
@@ -455,8 +452,10 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={dropdowncheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
-            <Button
-              disabled={disableCheck}
+            <ButtonWithToolTip
+              text={tooltips.generateGraph}
+              placement='top'
+              label='generate graph'
               onClick={() => {
                 if (selectedRows.length) {
                   let selectedLargeFiles: CustomFile[] = [];
@@ -514,33 +513,43 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
                   }
                 }
               }}
+              disabled={disableCheck}
               className='mr-0.5'
             >
               Generate Graph {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
-            </Button>
-            <Button
-              title='only completed files will be processed for graph visualization'
-              disabled={showGraphCheck}
+            </ButtonWithToolTip>
+            <ButtonWithToolTip
+              text={tooltips.showGraph}
+              placement='top'
               onClick={handleGraphView}
+              disabled={showGraphCheck}
               className='mr-0.5'
+              label='show graph'
             >
               Show Graph {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
-            </Button>
-            <Button
+            </ButtonWithToolTip>
+            <ButtonWithToolTip
+              text={tooltips.bloomGraph}
+              placement='top'
               onClick={handleOpenGraphClick}
               disabled={!filesData.some((f) => f?.status === 'Completed')}
               className='ml-0.5'
+              label='Open Graph with Bloom'
             >
               Open Graph with Bloom
-            </Button>
-            <Button
-              onClick={deleteFileClickHandler}
-              className='ml-0.5'
-              title={!selectedfileslength ? 'please select a file' : 'File is still under process'}
+            </ButtonWithToolTip>
+            <ButtonWithToolTip
+              text={
+                !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
+              }
+              placement='top'
+              onClick={() => setshowDeletePopUp(true)}
               disabled={!selectedfileslength}
+              className='ml-0.5'
+              label='Delete Files'
             >
               Delete Files {selectedfileslength > 0 && `(${selectedfileslength})`}
-            </Button>
+            </ButtonWithToolTip>
           </Flex>
         </Flex>
       </div>
