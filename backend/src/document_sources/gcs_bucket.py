@@ -104,6 +104,18 @@ def merge_file(bucket_name, original_file_name: str):
     file_io = io.BytesIO(merged_file)
     blob.upload_from_file(file_io)
     pdf_reader = PdfReader(file_io)
+    file_size = len(merged_file)
     total_pages = len(pdf_reader.pages)
     
-    return total_pages
+    return total_pages, file_size
+  
+def delete_file_from_gcs(bucket_name, file_name):
+  try:
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(file_name)
+    if blob.exists():
+      blob.delete()
+    logging.info('File deleted from GCS successfully')
+  except:
+    raise Exception('BLOB not exists in GCS')

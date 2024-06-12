@@ -103,11 +103,11 @@ def save_graphDocuments_in_neo4j(graph:Neo4jGraph, graph_document_list:List[Grap
   # graph.add_graph_documents(graph_document_list, baseEntityLabel=True)
   graph.add_graph_documents(graph_document_list)
 
-def delete_uploaded_local_file(merged_file_path, file_name):
-  file_path = Path(merged_file_path)
-  if file_path.exists():
-    file_path.unlink()
-    logging.info(f'file {file_name} deleted successfully')
+# def delete_uploaded_local_file(merged_file_path, file_name):
+#   file_path = Path(merged_file_path)
+#   if file_path.exists():
+#     file_path.unlink()
+#     logging.info(f'file {file_name} deleted successfully')
    
 def close_db_connection(graph, api_name):
   if not graph._driver._closed:

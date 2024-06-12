@@ -158,14 +158,14 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
         lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'language':obj_source_node.language, 'status':'Failed'})
     return lst_file_name,success_count,failed_count
     
-def extract_graph_from_file_local_file(graph, model, fileName, merged_file_path, allowedNodes, allowedRelationship):
+def extract_graph_from_file_local_file(graph, model, fileName, allowedNodes, allowedRelationship):
 
   logging.info(f'Process file name :{fileName}')
   file_name, pages = get_documents_from_gcs( PROJECT_ID, BUCKET_UPLOAD, None, fileName)
   if pages==None or len(pages)==0:
     raise Exception(f'Pdf content is not available for file : {file_name}')
 
-  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
+  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, True)
 
 def extract_graph_from_file_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, allowedNodes, allowedRelationship):
 
@@ -205,7 +205,7 @@ def extract_graph_from_file_gcs(graph, model, gcs_project_id, gcs_bucket_name, g
 
   return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
-def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, merged_file_path=None):
+def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, is_uploaded_from_local=None):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -303,8 +303,9 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
 
 
     # merged_file_path have value only when file uploaded from local
-    if merged_file_path is not None:
-      delete_uploaded_local_file(merged_file_path, file_name)
+    
+    if is_uploaded_from_local:
+      delete_file_from_gcs(BUCKET_UPLOAD,file_name)
       
     return {
         "fileName": file_name,
@@ -417,13 +418,13 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
 
   if int(chunk_number) == int(total_chunks):
       # If this is the last chunk, merge all chunks into a single file
-      total_pages = merge_file(BUCKET_UPLOAD, originalname)
+      total_pages, file_size = merge_file(BUCKET_UPLOAD, originalname)
       logging.info("File merged successfully")
-
+      file_extension = originalname.split('.')[-1]
       obj_source_node = sourceNode()
       obj_source_node.file_name = originalname
-      obj_source_node.file_type = originalname.split('.')[-1]
-      # obj_source_node.file_size = file_size
+      obj_source_node.file_type = file_extension
+      obj_source_node.file_size = file_size
       obj_source_node.file_source = 'local file'
       obj_source_node.model = model
       obj_source_node.total_pages = total_pages
@@ -431,8 +432,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
       graphDb_data_Access = graphDBdataAccess(graph)
         
       graphDb_data_Access.create_source_node(obj_source_node)
-      return {'total_pages': total_pages,'file_name': originalname,  'message':f"Chunk {chunk_number}/{total_chunks} saved"}
-      # return {'file_size': file_size, 'total_pages': pdf_total_pages, 'file_name': originalname, 'file_extension':file_extension, 'message':f"Chunk {chunk_number}/{total_chunks} saved"}
+      return {'file_size': file_size, 'total_pages': total_pages, 'file_name': originalname, 'file_extension':file_extension, 'message':f"Chunk {chunk_number}/{total_chunks} saved"}
   return f"Chunk {chunk_number}/{total_chunks} saved"
 
 def get_labels_and_relationtypes(graph):
@@ -469,7 +469,7 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir):
       merged_file_path = os.path.join(merged_dir, file_name)
       if source_type == 'local file':
           logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
-          delete_uploaded_local_file(merged_file_path, file_name)
+          delete_file_from_gcs(BUCKET_UPLOAD,file_name)
   return "Cancelled the processing job successfully"
 
 def populate_graph_schema_from_text(text, model, is_schema_description_cheked):
