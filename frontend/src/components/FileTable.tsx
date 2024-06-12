@@ -333,7 +333,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                 prefiles.push({
                   name: item.fileName,
                   size: item.fileSize ?? 0,
-                  type: item?.fileType?.toUpperCase() ?? 'None',
+                  type: item?.fileType?.substring(1).toUpperCase() ?? 'None',
                   NodesCount: item?.nodeCount ?? 0,
                   processing: item?.processingTime ?? 'None',
                   relationshipCount: item?.relationshipCount ?? 0,
@@ -366,6 +366,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                       ? Math.floor((item.processed_chunk / item.total_chunks) * 100)
                       : undefined,
                   total_pages: item.total_pages ?? 0,
+                  access_token: item.access_token ?? '',
                 });
               }
             });

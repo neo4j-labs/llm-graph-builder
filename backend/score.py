@@ -56,7 +56,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "True").lower() in ("true", "1", "yes")
+is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "False").lower() in ("true", "1", "yes")
 if is_gemini_enabled:
     add_routes(app,ChatVertexAI(), path="/vertexai")
 
@@ -138,7 +138,8 @@ async def extract_knowledge_graph_from_file(
     file_name=Form(None),
     allowedNodes=Form(None),
     allowedRelationship=Form(None),
-    language=Form(None)
+    language=Form(None),
+    access_token=Form(None)
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
@@ -177,7 +178,7 @@ async def extract_knowledge_graph_from_file(
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
             result = await asyncio.to_thread(
-                extract_graph_from_file_gcs, graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, allowedNodes, allowedRelationship)
+                extract_graph_from_file_gcs, graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, allowedNodes, allowedRelationship)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
         if result is not None:
@@ -201,16 +202,16 @@ async def extract_knowledge_graph_from_file(
 @app.get("/sources_list")
 async def get_source_list(uri:str, userName:str, password:str, database:str=None):
     """
-    Calls 'get_source_list_from_graph' which returns list of sources which alreday exist in databse
+    Calls 'get_source_list_from_graph' which returns list of sources which already exist in databse
     """
     try:
         decoded_password = decode_password(password)
         if " " in uri:
-            uri= uri.replace(" ","+")
-            result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
-            josn_obj = {'api_name':'sources_list','db_url':uri}
-            logger.log_struct(josn_obj)
-            return create_api_response("Success",data=result)
+            uri = uri.replace(" ","+")
+        result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
+        josn_obj = {'api_name':'sources_list','db_url':uri}
+        logger.log_struct(josn_obj)
+        return create_api_response("Success",data=result)
     except Exception as e:
         job_status = "Failed"
         message="Unable to fetch source list"
@@ -384,6 +385,7 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
     async def generate():
         status = ''
         decoded_password = decode_password(password)
+        uri = url
         if " " in url:
             uri= url.replace(" ","+")
         while True:
@@ -490,11 +492,9 @@ async def cancelled_job(uri=Form(None), userName=Form(None), password=Form(None)
         close_db_connection(graph, 'cancelled_job')
 
 @app.post("/populate_graph_schema")
-async def populate_graph_schema(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), input_text=Form(None), model=Form(None)):
+async def populate_graph_schema(input_text=Form(None), model=Form(None), is_schema_description_checked=Form(None)):
     try:
-        graph = create_graph_database_connection(uri, userName, password, database)
-        result = populate_graph_schema_from_text(graph,input_text,model)
-        
+        result = populate_graph_schema_from_text(input_text, model, is_schema_description_checked)
         return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
@@ -502,8 +502,6 @@ async def populate_graph_schema(uri=Form(None), userName=Form(None), password=Fo
         error_message = str(e)
         logging.exception(f'Exception in getting the schema from text:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
-    finally:
-        close_db_connection(graph, 'populate_graph_schema')
 
 if __name__ == "__main__":
     uvicorn.run(app)
