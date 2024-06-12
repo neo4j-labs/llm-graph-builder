@@ -112,11 +112,11 @@ def create_document_retriever_chain(llm,retriever):
 
     splitter = TokenTextSplitter(chunk_size=2000, chunk_overlap=0)
     # extractor = LLMChainExtractor.from_llm(llm)
-    redundant_filter = EmbeddingsRedundantFilter(embeddings=EMBEDDING_FUNCTION)
-    embeddings_filter = EmbeddingsFilter(embeddings=EMBEDDING_FUNCTION, similarity_threshold=0.35)
+    # redundant_filter = EmbeddingsRedundantFilter(embeddings=EMBEDDING_FUNCTION)
+    embeddings_filter = EmbeddingsFilter(embeddings=EMBEDDING_FUNCTION, similarity_threshold=0.25)
 
     pipeline_compressor = DocumentCompressorPipeline(
-        transformers=[splitter,redundant_filter, embeddings_filter]
+        transformers=[splitter, embeddings_filter]
     )
     compression_retriever = ContextualCompressionRetriever(
         base_compressor=pipeline_compressor, base_retriever=retriever
