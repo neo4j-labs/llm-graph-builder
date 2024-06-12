@@ -4,10 +4,11 @@ import {
   ArrowRightIconOutline,
   ArrowLeftIconOutline,
   TrashIconOutline,
-  ExpandIcon,
+  ArrowsPointingOutIconOutline,
   ChatBubbleOvalLeftEllipsisIconOutline,
   CloudArrowUpIconSolid,
 } from '@neo4j-ndl/react/icons';
+import {} from '@neo4j-ndl/react/icons';
 import { SideNavProps } from '../../types';
 import Chatbot from '../Chatbot';
 import { createPortal } from 'react-dom';
@@ -96,32 +97,34 @@ const SideNav: React.FC<SideNavProps> = ({
             />
           </Tip>
           {position === 'right' && isExpanded && (
-            <Tip allowedPlacements={['left']}>
-              <>
+            <>
+              <Tip allowedPlacements={['left']}>
                 <SideNavigation.Item
                   onClick={deleteOnClick}
                   icon={
                     <>
                       <Tip.Trigger>
                         <TrashIconOutline />
-                      </Tip.Trigger>{' '}
+                      </Tip.Trigger>
                       <Tip.Content>{tooltips.deleteChat}</Tip.Content>
                     </>
                   }
                 />
+              </Tip>
+              <Tip allowedPlacements={['left']}>
                 <SideNavigation.Item
                   onClick={handleExpandClick}
                   icon={
                     <>
                       <Tip.Trigger>
-                        <ExpandIcon className='n-size-full' />
+                        <ArrowsPointingOutIconOutline className='n-size-token-7' />
                       </Tip.Trigger>
                       <Tip.Content>{tooltips.maximise}</Tip.Content>
                     </>
                   }
                 />
-              </>
-            </Tip>
+              </Tip>
+            </>
           )}
         </SideNavigation.List>
       </SideNavigation>

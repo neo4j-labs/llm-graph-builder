@@ -267,13 +267,18 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       nvlCallbacks={nvlCallbacks}
                     />
                     <IconButtonArray orientation='vertical' floating className='absolute bottom-4 right-4'>
-                      <IconButtonWithToolTip text='Zoom in' onClick={handleZoomIn} placement='left'>
+                      <IconButtonWithToolTip label='Zoomin' text='Zoom in' onClick={handleZoomIn} placement='left'>
                         <MagnifyingGlassPlusIconOutline />
                       </IconButtonWithToolTip>
-                      <IconButtonWithToolTip text='Zoom out' onClick={handleZoomOut} placement='left'>
+                      <IconButtonWithToolTip label='Zoom out' text='Zoom out' onClick={handleZoomOut} placement='left'>
                         <MagnifyingGlassMinusIconOutline />
                       </IconButtonWithToolTip>
-                      <IconButtonWithToolTip text='Zoom to fit' onClick={handleZoomToFit} placement='left'>
+                      <IconButtonWithToolTip
+                        label='Zoom to fit'
+                        text='Zoom to fit'
+                        onClick={handleZoomToFit}
+                        placement='left'
+                      >
                         <FitToScreenIcon />
                       </IconButtonWithToolTip>
                     </IconButtonArray>

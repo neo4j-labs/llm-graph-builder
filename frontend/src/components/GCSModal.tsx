@@ -195,7 +195,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           disabled={false}
           label='Folder Name'
           aria-label='Folder Name'
-          helpText="Optional"
+          helpText='Optional'
           placeholder=''
           fluid
           onChange={(e) => {

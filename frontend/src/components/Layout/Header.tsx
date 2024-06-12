@@ -58,11 +58,13 @@ export default function Header({
                 size='large'
                 clean
                 placement='left'
+                label={tooltips.documentation}
               >
                 <InformationCircleIconOutline className='n-size-token-7' />
               </IconButtonWithToolTip>
 
               <IconButtonWithToolTip
+                label={tooltips.github}
                 onClick={() => handleURLClick('https://github.com/neo4j-labs/llm-graph-builder/issues')}
                 text={tooltips.github}
                 size='large'
@@ -70,7 +72,13 @@ export default function Header({
               >
                 <CodeBracketSquareIconOutline />
               </IconButtonWithToolTip>
-              <IconButtonWithToolTip text={tooltips.theme} clean size='large' onClick={toggleTheme}>
+              <IconButtonWithToolTip
+                label={tooltips.theme}
+                text={tooltips.theme}
+                clean
+                size='large'
+                onClick={toggleTheme}
+              >
                 {themeMode === 'dark' ? (
                   <span role='img' aria-label='sun'>
                     <SunIconOutline />
@@ -82,6 +90,7 @@ export default function Header({
                 )}
               </IconButtonWithToolTip>
               <IconButtonWithToolTip
+                label={tooltips.settings}
                 text={tooltips.settings}
                 size='large'
                 clean

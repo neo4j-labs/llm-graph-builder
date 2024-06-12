@@ -1,4 +1,5 @@
 import { Button, Tip } from '@neo4j-ndl/react';
+import React from 'react';
 
 const ButtonWithToolTip = ({
   text,
@@ -8,8 +9,9 @@ const ButtonWithToolTip = ({
   placement = 'bottom',
   disabled = false,
   className = '',
+  label,
 }: {
-  text: string;
+  text: string | React.ReactNode;
   children: React.ReactNode;
   onClick?: () => void;
   size?: 'small' | 'medium' | 'large';
@@ -18,11 +20,12 @@ const ButtonWithToolTip = ({
   placement?: 'bottom' | 'top' | 'right' | 'left';
   disabled?: boolean;
   className?: string;
+  label: string;
 }) => {
   return (
     <Tip allowedPlacements={[placement]}>
       <Tip.Trigger>
-        <Button aria-label={text} size={size} onClick={onClick} disabled={disabled} className={className}>
+        <Button aria-label={label} size={size} onClick={onClick} disabled={disabled} className={className}>
           {children}
         </Button>
       </Tip.Trigger>

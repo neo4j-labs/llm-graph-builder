@@ -454,6 +454,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
             <ButtonWithToolTip
               text={tooltips.generateGraph}
               placement='top'
+              label='generate graph'
               onClick={() => {
                 if (selectedRows.length) {
                   let selectedLargeFiles: CustomFile[] = [];
@@ -522,6 +523,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
               onClick={handleGraphView}
               disabled={showGraphCheck}
               className='mr-0.5'
+              label='show graph'
             >
               Show Graph {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
             </ButtonWithToolTip>
@@ -531,6 +533,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
               onClick={handleOpenGraphClick}
               disabled={!filesData.some((f) => f?.status === 'Completed')}
               className='ml-0.5'
+              label='Open Graph with Bloom'
             >
               Open Graph with Bloom
             </ButtonWithToolTip>
@@ -542,6 +545,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
               onClick={() => setshowDeletePopUp(true)}
               disabled={!selectedfileslength}
               className='ml-0.5'
+              label='Delete Files'
             >
               Delete Files {selectedfileslength > 0 && `(${selectedfileslength})`}
             </ButtonWithToolTip>

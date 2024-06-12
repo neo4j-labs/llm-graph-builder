@@ -9,8 +9,10 @@ const IconButtonWithToolTip = ({
   grouped,
   placement = 'bottom',
   disabled = false,
+  label,
 }: {
-  text: string;
+  label: string;
+  text: string | React.ReactNode;
   children: React.ReactNode;
   onClick?: () => void;
   size?: 'small' | 'medium' | 'large';
@@ -22,7 +24,14 @@ const IconButtonWithToolTip = ({
   return (
     <Tip allowedPlacements={[placement]}>
       <Tip.Trigger>
-        <IconButton aria-label={text} size={size} clean={clean} grouped={grouped} onClick={onClick} disabled={disabled}>
+        <IconButton
+          aria-label={label}
+          size={size}
+          clean={clean}
+          grouped={grouped}
+          onClick={onClick}
+          disabled={disabled}
+        >
           {children}
         </IconButton>
       </Tip.Trigger>

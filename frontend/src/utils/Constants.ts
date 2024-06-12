@@ -106,6 +106,6 @@ export const tooltips = {
   maximise: 'Maximise',
   copy: 'Copy to Clipboard',
   copied: 'Copied',
-  stopSpeaking:'Stop Speaking',
+  stopSpeaking: 'Stop Speaking',
   textTospeech: 'Text to Speech',
 };
