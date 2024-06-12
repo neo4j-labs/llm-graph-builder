@@ -19,8 +19,8 @@ export default function DeletePopUp({
     <Dialog onClose={deleteCloseHandler} open={open}>
       <Dialog.Content>
         <Typography variant='subheading-large'>
-          This Action Will Delete {no_of_files} {no_of_files > 1 ? 'Files' : 'File'}{' '}
-          {deleteEntities ? 'and associated entities' : ''}
+          Are you sure you want to permanently delete {no_of_files} {no_of_files > 1 ? 'Files' : 'File'}{' '}
+          {deleteEntities ? 'and associated entities' : ''}?
         </Typography>
         <div className='mt-1'>
           <Checkbox
