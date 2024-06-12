@@ -19,6 +19,7 @@ const IconsPlacement: React.FC<IconProps> = ({ closeChatBot, deleteOnClick, mess
         onClick={deleteOnClick}
         disabled={messages.length === 1}
         placement='left'
+        label='clear chat history'
       >
         <TrashIconOutline />
       </IconButtonWithToolTip>
