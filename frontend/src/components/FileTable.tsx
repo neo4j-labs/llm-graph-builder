@@ -254,13 +254,13 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                 <TextLink externalLink href={info.row.original.source_url}>
                   {info.row.original.fileSource}
                 </TextLink>
-                <Typography variant='body-medium'> /{info.row.original.type}</Typography>
+                <Typography variant='body-medium'> / {info.row.original.type}</Typography>
               </>
             );
           }
           return (
             <i>
-              {info.row.original.fileSource}/ {info.row.original.type}
+              {info.row.original.fileSource} / {info.row.original.type}
             </i>
           );
         },
