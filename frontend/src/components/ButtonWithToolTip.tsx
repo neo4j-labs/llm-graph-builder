@@ -10,6 +10,7 @@ const ButtonWithToolTip = ({
   disabled = false,
   className = '',
   label,
+  loading,
 }: {
   text: string | React.ReactNode;
   children: React.ReactNode;
@@ -20,12 +21,20 @@ const ButtonWithToolTip = ({
   placement?: 'bottom' | 'top' | 'right' | 'left';
   disabled?: boolean;
   className?: string;
+  loading?: boolean;
   label: string;
 }) => {
   return (
     <Tip allowedPlacements={[placement]}>
       <Tip.Trigger>
-        <Button aria-label={label} size={size} onClick={onClick} disabled={disabled} className={className}>
+        <Button
+          aria-label={label}
+          size={size}
+          onClick={onClick}
+          disabled={disabled}
+          className={className}
+          loading={loading}
+        >
           {children}
         </Button>
       </Tip.Trigger>
