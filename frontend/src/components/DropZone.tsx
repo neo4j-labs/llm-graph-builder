@@ -224,7 +224,7 @@ const DropZone: FunctionComponent = () => {
         loadingComponent={isLoading && <Loader />}
         isTesting={true}
         className='!bg-none dropzoneContainer'
-        supportedFilesDescription={'Supports: Common Types'}
+        supportedFilesDescription={'Supports: Common type'}
         dropZoneOptions={{
           accept: {
             'application/pdf': ['.pdf'],
