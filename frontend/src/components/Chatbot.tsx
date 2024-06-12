@@ -1,6 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button, Widget, Typography, Avatar, TextInput, IconButton, Modal } from '@neo4j-ndl/react';
-import { InformationCircleIconOutline, XMarkIconOutline } from '@neo4j-ndl/react/icons';
+import {
+  InformationCircleIconOutline,
+  XMarkIconOutline,
+  // ClipboardDocumentIconOutline,
+  // SpeakerWaveIconOutline,
+  // SpeakerXMarkIconOutline,
+} from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
 import { ChatbotProps, UserCredentials } from '../types';
 import { useCredentials } from '../context/UserCredentials';
@@ -10,6 +16,8 @@ import { useFileContext } from '../context/UsersFiles';
 import InfoModal from './InfoModal';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
+import IconButtonWithToolTip from './IconButtonToolTip';
+// import { tooltips } from '../utils/Constants';
 const Chatbot: React.FC<ChatbotProps> = (props) => {
   const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen } = props;
   const [inputMessage, setInputMessage] = useState('');
@@ -24,6 +32,9 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [responseTime, setResponseTime] = useState<number>(0);
   const [chunkModal, setChunkModal] = useState<string[]>([]);
   const [tokensUsed, setTokensUsed] = useState<number>(0);
+  // const [copyMessage, setCopyMessage] = useState<string>('');
+  // const [speaking, setSpeaking] = useState<boolean>(false);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
   };
@@ -126,6 +137,31 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   useEffect(() => {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
   }, [listMessages]);
+
+  // const handleCopy = async (text: string) => {
+  //   try {
+  //     await navigator.clipboard.writeText(text);
+  //     setCopyMessage('copied!');
+  //     setTimeout(() => setCopyMessage(''), 2000);
+  //   } catch (error) {
+  //     console.error('Failed to copy text: ', error);
+  //   }
+  // };
+
+  // const handleSpeak = (text: string) => {
+  //   if (speaking) {
+  //     window.speechSynthesis.cancel();
+  //     setSpeaking(false);
+  //   } else {
+  //     const utterance = new SpeechSynthesisUtterance(text);
+  //     utterance.onend = () => {
+  //       setSpeaking(false);
+  //     };
+  //     window.speechSynthesis.speak(utterance);
+  //     setSpeaking(true);
+  //   }
+  // };
+
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
       <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3 pr-3'>
@@ -180,21 +216,56 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                   >
                     <ReactMarkdown>{chat.message}</ReactMarkdown>
                   </div>
-                  <div className='text-right align-bottom pt-3'>
-                    <Typography variant='body-small'>{chat.datetime}</Typography>
-                    {chat?.sources?.length ? (
-                      <div className={`flex ${chat.sources?.length > 1 ? 'flex-col' : 'flex-row justify-end'} gap-1`}>
-                        {chat.sources.map((link) => (
-                          <div className='text-right'>
-                            {link.startsWith('http') || link.startsWith('https') ? (
-                              <TextLink href={link} externalLink={true}>
-                                Source
-                              </TextLink>
-                            ) : (
-                              <Typography variant='body-small'>{link}</Typography>
-                            )}
-                          </div>
-                        ))}
+                  <div>
+                    <div>
+                      <Typography variant='body-small' className='pt-2 font-bold'>
+                        {chat.datetime}
+                      </Typography>
+                    </div>
+                    {((chat.user === 'chatbot' && chat.id !== 2 && chat.sources?.length !== 0) || chat.isLoading) && (
+                      <div className='flex'>
+                        <IconButtonWithToolTip
+                          placement='top'
+                          clean
+                          text='Retrieval Information'
+                          label='Retrieval Information'
+                          disabled={chat.isTyping || chat.isLoading}
+                          onClick={() => {
+                            setModelModal(chat.model ?? '');
+                            setSourcesModal(chat.sources ?? []);
+                            setResponseTime(chat.response_time ?? 0);
+                            setChunkModal(chat.chunk_ids ?? []);
+                            setTokensUsed(chat.total_tokens ?? 0);
+                            setShowInfoModal(true);
+                          }}
+                        >
+                          <InformationCircleIconOutline className='w-4 h-4 inline-block' />
+                        </IconButtonWithToolTip>
+                        {/* <IconButtonWithToolTip
+                          label='copy text'
+                          placement='top'
+                          clean
+                          text={copyMessage ? tooltips.copied : tooltips.copy}
+                          onClick={() => handleCopy(chat.message)}
+                          disabled={chat.isTyping || chat.isLoading}
+                        >
+                          <ClipboardDocumentIconOutline className='w-4 h-4 inline-block' />
+                        </IconButtonWithToolTip>
+                        {copyMessage && <span className='pt-4 text-xs'>{copyMessage}</span>}
+                        <IconButtonWithToolTip
+                          placement='top'
+                          label='text to speak'
+                          clean
+                          text={speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
+                          onClick={() => handleSpeak(chat.message)}
+                          disabled={chat.isTyping || chat.isLoading}
+                        >
+                          {speaking ? (
+                            <SpeakerXMarkIconOutline className='w-4 h-4 inline-block' />
+                          ) : (
+                            <SpeakerWaveIconOutline className='w-4 h-4 inline-block' />
+                          )}
+                        </IconButtonWithToolTip> */}
                       </div>
                     ) : null}
                   </div>

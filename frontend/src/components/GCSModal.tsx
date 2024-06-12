@@ -229,6 +229,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
           disabled={false}
           label='Folder Name'
           aria-label='Folder Name'
+          helpText='Optional'
           placeholder=''
           fluid
           onChange={(e) => {

@@ -20,19 +20,8 @@ import {
   MagnifyingGlassMinusIconOutline,
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
-import ButtonWithToolTip from './ButtonWithToolTip';
-import { constructDocQuery, constructQuery, getIcon, getNodeCaption, getSize } from '../utils/Utils';
-import {
-  colors,
-  entities,
-  chunks,
-  document,
-  docEntities,
-  docChunks,
-  chunksEntities,
-  docChunkEntities,
-} from '../utils/Constants';
-import { ArrowSmallRightIconOutline } from '@neo4j-ndl/react/icons';
+import IconButtonWithToolTip from './IconButtonToolTip';
+import { processGraphData } from '../utils/Utils';
 import { useCredentials } from '../context/UserCredentials';
 
 type Scheme = Record<string, string>;
@@ -371,15 +360,20 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       nvlCallbacks={nvlCallbacks}
                     />
                     <IconButtonArray orientation='vertical' floating className='absolute bottom-4 right-4'>
-                      <ButtonWithToolTip text='Zoom in' onClick={handleZoomIn}>
+                      <IconButtonWithToolTip label='Zoomin' text='Zoom in' onClick={handleZoomIn} placement='left'>
                         <MagnifyingGlassPlusIconOutline />
-                      </ButtonWithToolTip>
-                      <ButtonWithToolTip text='Zoom out' onClick={handleZoomOut}>
+                      </IconButtonWithToolTip>
+                      <IconButtonWithToolTip label='Zoom out' text='Zoom out' onClick={handleZoomOut} placement='left'>
                         <MagnifyingGlassMinusIconOutline />
-                      </ButtonWithToolTip>
-                      <ButtonWithToolTip text='Zoom to fit' onClick={handleZoomToFit}>
+                      </IconButtonWithToolTip>
+                      <IconButtonWithToolTip
+                        label='Zoom to fit'
+                        text='Zoom to fit'
+                        onClick={handleZoomToFit}
+                        placement='left'
+                      >
                         <FitToScreenIcon />
-                      </ButtonWithToolTip>
+                      </IconButtonWithToolTip>
                     </IconButtonArray>
                   </div>
                 </Flex>
