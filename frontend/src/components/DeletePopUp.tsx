@@ -18,13 +18,14 @@ export default function DeletePopUp({
   return (
     <Dialog open={open} onClose={deleteCloseHandler}>
       <Dialog.Content>
-        <Typography variant='subheading-large'>
+        <h5 className='max-w-[90%]'>
           Are you sure you want to permanently delete {no_of_files} {no_of_files > 1 ? 'Files' : 'File'}{' '}
           {deleteEntities ? 'and associated entities' : ''}?
-        </Typography>
+        </h5>
         <div className='mt-1'>
           <Checkbox
             label='Delete Entities'
+            onClick={function Ua() { }}
             checked={deleteEntities}
             onChange={(e) => {
               if (e.target.checked) {
