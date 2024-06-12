@@ -104,4 +104,8 @@ export const tooltips = {
   sources: 'Sources',
   deleteChat: 'Delete',
   maximise: 'Maximise',
+  copy: 'Copy to Clipboard',
+  copied: 'Copied',
+  stopSpeaking:'Stop Speaking',
+  textTospeech: 'Text to Speech',
 };

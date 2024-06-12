@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button, Widget, Typography, Avatar, TextInput, IconButton, Modal } from '@neo4j-ndl/react';
-import { InformationCircleIconOutline, XMarkIconOutline, ClipboardDocumentIconOutline } from '@neo4j-ndl/react/icons';
+import { InformationCircleIconOutline, XMarkIconOutline, ClipboardDocumentIconOutline, SpeakerWaveIconOutline, SpeakerXMarkIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
 import { ChatbotProps, Source, UserCredentials } from '../types';
 import { useCredentials } from '../context/UserCredentials';
@@ -10,6 +10,8 @@ import { useFileContext } from '../context/UsersFiles';
 import InfoModal from './InfoModal';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
+import IconButtonWithToolTip from './IconButtonToolTip';
+import { tooltips } from '../utils/Constants';
 const Chatbot: React.FC<ChatbotProps> = (props) => {
   const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen } = props;
   const [inputMessage, setInputMessage] = useState('');
@@ -25,6 +27,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [chunkModal, setChunkModal] = useState<string[]>([]);
   const [tokensUsed, setTokensUsed] = useState<number>(0);
   const [copyMessage, setCopyMessage] = useState<string>('');
+  const [speaking, setSpeaking] = useState<boolean>(false);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
   };
@@ -158,6 +162,22 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       console.error('Failed to copy text: ', error);
     }
   };
+
+
+  const handleSpeak = (text: string) => {
+    if (speaking) {
+      window.speechSynthesis.cancel();
+      setSpeaking(false);
+    } else {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.onend = () => {
+        setSpeaking(false);
+      };
+      window.speechSynthesis.speak(utterance);
+      setSpeaking(true);
+    }
+  };
+
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
       <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3 pr-3'>
@@ -199,16 +219,14 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
-                    chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
-                  } `}
+                  className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                    } `}
                 >
                   <div
-                    className={`${
-                      listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
-                        ? 'loader'
-                        : ''
-                    }`}
+                    className={`${listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
+                      ? 'loader'
+                      : ''
+                      }`}
                   >
                     <ReactMarkdown>{chat.message}</ReactMarkdown>
                   </div>
@@ -220,9 +238,10 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                     </div>
                     {((chat.user === 'chatbot' && chat.id !== 2 && chat.sources?.length !== 0) || chat.isLoading) && (
                       <div className='flex'>
-                        <IconButton
+                        <IconButtonWithToolTip
+                          placement='top'
                           clean
-                          aria-label='Retrieval Information'
+                          text='Retrieval Information'
                           disabled={chat.isTyping || chat.isLoading}
                           onClick={() => {
                             setModelModal(chat.model ?? '');
@@ -234,16 +253,26 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                           }}
                         >
                           <InformationCircleIconOutline className='w-4 h-4 inline-block' />
-                        </IconButton>
-                        <IconButton
+                        </IconButtonWithToolTip>
+                        <IconButtonWithToolTip
+                          placement='top'
                           clean
-                          aria-label='Copy to Clipboard'
+                          text={copyMessage ? tooltips.copied : tooltips.copy}
                           onClick={() => handleCopy(chat.message)}
                           disabled={chat.isTyping || chat.isLoading}
                         >
                           <ClipboardDocumentIconOutline className='w-4 h-4 inline-block' />
-                        </IconButton>
+                        </IconButtonWithToolTip>
                         {copyMessage && <span className='pt-4 text-xs'>{copyMessage}</span>}
+                        <IconButtonWithToolTip
+                          placement='top'
+                          clean
+                          text={speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
+                          onClick={() => handleSpeak(chat.message)}
+                          disabled={chat.isTyping || chat.isLoading}
+                        >
+                          {speaking ? <SpeakerXMarkIconOutline className="w-4 h-4 inline-block" /> : <SpeakerWaveIconOutline className="w-4 h-4 inline-block" />}
+                        </IconButtonWithToolTip>
                       </div>
                     )}
                   </div>
