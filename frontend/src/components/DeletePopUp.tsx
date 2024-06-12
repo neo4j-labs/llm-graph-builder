@@ -1,4 +1,4 @@
-import { Button, Checkbox, Dialog, Typography } from '@neo4j-ndl/react';
+import { Button, Checkbox, Dialog } from '@neo4j-ndl/react';
 import { useState } from 'react';
 
 export default function DeletePopUp({
