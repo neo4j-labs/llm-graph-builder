@@ -7,9 +7,10 @@ import {
   Cog8ToothIconOutline,
   InformationCircleIconOutline,
 } from '@neo4j-ndl/react/icons';
-import { Typography, IconButton } from '@neo4j-ndl/react';
-import ButtonWithToolTip from '../ButtonWithToolTip';
+import { Typography } from '@neo4j-ndl/react';
 import { useCallback } from 'react';
+import IconButtonWithToolTip from '../IconButtonToolTip';
+import { tooltips } from '../../utils/Constants';
 
 export default function Header({
   themeMode,
@@ -51,25 +52,33 @@ export default function Header({
               className='inline-flex gap-x-1'
               style={{ display: 'flex', flexGrow: 0, alignItems: 'center', gap: '4px' }}
             >
-              <ButtonWithToolTip
-                text='Documentation'
+              <IconButtonWithToolTip
+                text={tooltips.documentation}
                 onClick={() => handleURLClick('https://neo4j.com/labs/genai-ecosystem/llm-graph-builder')}
                 size='large'
                 clean
                 placement='left'
+                label={tooltips.documentation}
               >
                 <InformationCircleIconOutline className='n-size-token-7' />
-              </ButtonWithToolTip>
+              </IconButtonWithToolTip>
 
-              <ButtonWithToolTip
+              <IconButtonWithToolTip
+                label={tooltips.github}
                 onClick={() => handleURLClick('https://github.com/neo4j-labs/llm-graph-builder/issues')}
-                text={'GitHub Issues'}
+                text={tooltips.github}
                 size='large'
                 clean
               >
                 <CodeBracketSquareIconOutline />
-              </ButtonWithToolTip>
-              <IconButton aria-label='Toggle Dark mode' clean size='large' onClick={toggleTheme}>
+              </IconButtonWithToolTip>
+              <IconButtonWithToolTip
+                label={tooltips.theme}
+                text={tooltips.theme}
+                clean
+                size='large'
+                onClick={toggleTheme}
+              >
                 {themeMode === 'dark' ? (
                   <span role='img' aria-label='sun'>
                     <SunIconOutline />
@@ -79,10 +88,17 @@ export default function Header({
                     <MoonIconOutline />
                   </span>
                 )}
-              </IconButton>
-              <IconButton aria-label='Toggle settings' size='large' clean onClick={openSettingsModal}>
+              </IconButtonWithToolTip>
+              <IconButtonWithToolTip
+                label={tooltips.settings}
+                text={tooltips.settings}
+                size='large'
+                clean
+                onClick={openSettingsModal}
+                placement='left'
+              >
                 <Cog8ToothIconOutline />
-              </IconButton>
+              </IconButtonWithToolTip>
             </div>
           </div>
         </section>

@@ -89,3 +89,23 @@ export const queryMap: {
   ChunksEntities: 'chunksEntities',
   DocChunkEntities: 'docChunkEntities',
 };
+
+export const tooltips = {
+  generateGraph: `Only New files will be processed for Graph Visualization`,
+  deleteFile: 'Please select a file to delete',
+  showGraph: 'Only completed files will be processed for Graph Visualization',
+  bloomGraph: 'For advance Graph Visualization',
+  deleteSelectedFiles: 'File/Files to be deleted',
+  documentation: 'Documentation',
+  github: 'GitHub Issues',
+  theme: 'Theme',
+  settings: 'Settings',
+  chat: 'Chat',
+  sources: 'Sources',
+  deleteChat: 'Delete',
+  maximise: 'Maximise',
+  copy: 'Copy to Clipboard',
+  copied: 'Copied',
+  stopSpeaking: 'Stop Speaking',
+  textTospeech: 'Text to Speech',
+};
