@@ -16,6 +16,9 @@ export const validation = (url: string) => {
   return url.trim() != '' && /^s3:\/\/([^/]+)\/?$/.test(url) != false;
 };
 
+export const wikiValidation = (url: string) => {
+  return url.trim() != '' && /https:\/\/([a-zA-Z]{2,3})\.wikipedia\.org\/wiki\/(.*)/gm.test(url) != false;
+};
 // Status indicator icons to status column
 export const statusCheck = (status: string) => {
   switch (status) {
