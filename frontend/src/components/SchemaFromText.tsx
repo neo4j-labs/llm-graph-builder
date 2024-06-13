@@ -1,4 +1,4 @@
-import { Button, Checkbox, Dialog, Textarea } from '@neo4j-ndl/react';
+import { Checkbox, Dialog, Textarea } from '@neo4j-ndl/react';
 import { useCallback, useState } from 'react';
 import { getNodeLabelsAndRelTypesFromText } from '../services/SchemaFromTextAPI';
 import { useCredentials } from '../context/UserCredentials';
@@ -135,7 +135,14 @@ const SchemaFromTextDialog = ({
             }}
             checked={isSchema}
           />
-          <ButtonWithToolTip placement='top' label='Analyze button' text={userText.trim() === ''?'please fill the text to extract graph schema':buttonCaptions.analyze} loading={loading} disabled={userText.trim() === '' || loading} onClick={clickHandler}>
+          <ButtonWithToolTip
+            placement='top'
+            label='Analyze button'
+            text={userText.trim() === '' ? 'please fill the text to extract graph schema' : buttonCaptions.analyze}
+            loading={loading}
+            disabled={userText.trim() === '' || loading}
+            onClick={clickHandler}
+          >
             {buttonCaptions.analyze}
           </ButtonWithToolTip>
         </Dialog.Actions>

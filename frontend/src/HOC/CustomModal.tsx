@@ -6,7 +6,7 @@ const CustomModal: React.FC<CustomModalProps> = ({
   open,
   onClose,
   children,
-  submitLabel =  buttonCaptions.submit,
+  submitLabel = buttonCaptions.submit,
   submitHandler,
   statusMessage,
   status,

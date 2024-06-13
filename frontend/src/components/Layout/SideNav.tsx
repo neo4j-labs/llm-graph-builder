@@ -8,7 +8,7 @@ import {
   ChatBubbleOvalLeftEllipsisIconOutline,
   CloudArrowUpIconSolid,
 } from '@neo4j-ndl/react/icons';
-import { } from '@neo4j-ndl/react/icons';
+import {} from '@neo4j-ndl/react/icons';
 import { SideNavProps } from '../../types';
 import Chatbot from '../Chatbot';
 import { createPortal } from 'react-dom';
@@ -79,7 +79,6 @@ const SideNav: React.FC<SideNavProps> = ({
                 )
               ) : position === 'left' ? (
                 <>
-
                   <Tip allowedPlacements={['right']}>
                     <Tip.Trigger>
                       <CloudArrowUpIconSolid />
@@ -96,7 +95,6 @@ const SideNav: React.FC<SideNavProps> = ({
                     <Tip.Content>{tooltips.chat}</Tip.Content>
                   </Tip>
                 </>
-
               )
             }
           />
