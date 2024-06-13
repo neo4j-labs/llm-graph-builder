@@ -42,9 +42,9 @@ def check_url_source(source_type, yt_url:str=None, queries_list:List[str]=None):
           if match:
                 languages.append(match.group(2))
                 wiki_query_ids.append(match.group(3))
-          else : 
-                languages.append("en")
-                wiki_query_ids.append(wiki_url.strip())
+          # else : 
+          #       languages.append("en")
+          #       wiki_query_ids.append(wiki_url.strip())
  
 
         logging.info(f"wikipedia query ids = {wiki_query_ids}")     
