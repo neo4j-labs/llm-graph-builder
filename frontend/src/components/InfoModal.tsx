@@ -83,17 +83,17 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
     const urlObj = new URL(url);
     let timeInSeconds;
     if (startTime.includes('m')) {
-        const parts = startTime.split('m');
-        const minutes = parseInt(parts[0], 10);
-        const seconds = parts[1] ? parseInt(parts[1].replace('s', ''), 10) : 0;
-        timeInSeconds = (minutes * 60) + seconds;
+      const parts = startTime.split('m');
+      const minutes = parseInt(parts[0], 10);
+      const seconds = parts[1] ? parseInt(parts[1].replace('s', ''), 10) : 0;
+      timeInSeconds = minutes * 60 + seconds;
     } else {
-        timeInSeconds = parseInt(startTime, 10);
+      timeInSeconds = parseInt(startTime, 10);
     }
     urlObj.searchParams.set('t', timeInSeconds.toString());
     console.log('url', urlObj.toString());
     return urlObj.toString();
-};
+  };
 
   return (
     <Box className='n-bg-palette-neutral-bg-weak p-4'>
@@ -241,14 +241,17 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                     </Typography>
                   ) : chunk.start_time ? (
                     <div>
-                      <Typography variant='subheading-small'>
-                        File: {chunk.fileName}
-                      </Typography>
-                      <Typography as="a"
+                      <Typography variant='subheading-small'>File: {chunk.fileName}</Typography>
+                      <Typography
+                        as='a'
                         href={generateYouTubeLink('https://www.youtube.com/watch?v=1bUy-1hGZpI', chunk.start_time)}
                         variant='subheading-small'
-                        target='_blank' rel='noopener noreferrer'
-                      > Time {chunk.start_time}</Typography>
+                        target='_blank'
+                        rel='noopener noreferrer'
+                      >
+                        {' '}
+                        Time {chunk.start_time}
+                      </Typography>
                     </div>
                   ) : (
                     <></>

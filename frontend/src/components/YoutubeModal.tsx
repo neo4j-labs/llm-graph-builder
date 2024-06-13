@@ -108,7 +108,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       setStatus={setStatus}
       submitHandler={submitHandler}
       status={status}
-      submitLabel= {buttonCaptions.submit}
+      submitLabel={buttonCaptions.submit}
     >
       <div className='w-full inline-block'>
         <TextInput
