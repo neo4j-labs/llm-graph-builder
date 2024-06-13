@@ -130,14 +130,13 @@ class graphDBdataAccess:
         knn_min_score = os.environ.get('KNN_MIN_SCORE')
         if len(index) > 0:
             logging.info('update KNN graph')
-            result = self.graph.query("""MATCH (c:Chunk)
+            self.graph.query("""MATCH (c:Chunk)
                                     WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
                                     CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score
                                     WHERE node <> c and score >= $score MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score
                                 """,
                                 {"score":float(knn_min_score)}
                                 )
-            logging.info(f"result : {result}")
         else:
             logging.info("Vector index does not exist, So KNN graph not update")
             
