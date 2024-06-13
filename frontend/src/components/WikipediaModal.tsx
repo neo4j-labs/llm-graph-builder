@@ -135,8 +135,8 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
           id='keyword'
           value={wikiQuery}
           disabled={false}
-          label='Wikipedia Links'
-          aria-label='Wikipedia Links'
+          label='Wikipedia Link'
+          aria-label='Wikipedia Link'
           placeholder='https://en.wikipedia.org/wiki/Albert_Einstein'
           autoFocus
           fluid
