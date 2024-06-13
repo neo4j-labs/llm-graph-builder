@@ -6,7 +6,11 @@ import { useFileContext } from '../context/UsersFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
 import { urlScanAPI } from '../services/URLScan';
+<<<<<<< chatbot-es
 import { buttonCaptions } from '../utils/Constants';
+=======
+import { wikiValidation } from '../utils/Utils';
+>>>>>>> DEV
 
 const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
   const [wikiQuery, setwikiQuery] = useState<string>('');
@@ -14,13 +18,17 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const { setFilesData, model, filesData } = useFileContext();
   const { userCredentials } = useCredentials();
+  const [isFocused, setisFocused] = useState<boolean>(false);
+  const [isValid, setValid] = useState<boolean>(false);
   const onClose = useCallback(() => {
     hideModal();
     setwikiQuery('');
     setStatus('unknown');
+    setValid(false)
+    setisFocused(false)
   }, []);
 
-  const submitHandler = async () => {
+  const submitHandler = async (url: string) => {
     const defaultValues: CustomFileBase = {
       processing: 0,
       status: 'New',
@@ -31,7 +39,10 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
       fileSource: 'Wikipedia',
       processingProgress: undefined,
     };
-    if (wikiQuery.length) {
+    if (url.trim() != '') {
+      setValid(wikiValidation(url) && isFocused);
+    }
+    if (isValid) {
       try {
         setStatus('info');
         setStatusMessage('Scanning...');
@@ -48,6 +59,8 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
           setTimeout(() => {
             setStatus('unknown');
             setwikiQuery('');
+            setValid(false)
+            setisFocused(false)
             hideModal();
           }, 5000);
           return;
@@ -57,13 +70,13 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
         if (apiResCheck) {
           setStatus('info');
           setStatusMessage(
-            `Successfully Created Source Nodes for ${apiResponse.data.success_count} and Failed for ${apiResponse.data.failed_count} Wikipedia Sources`
+            `Successfully Created Source Node for ${apiResponse.data.success_count} and Failed for ${apiResponse.data.failed_count} Wikipedia Link`
           );
         } else if (apiResponse?.data?.success_count) {
-          setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Wikipedia Sources`);
+          setStatusMessage(`Successfully Created Source Node for ${apiResponse.data.success_count} Wikipedia Link`);
         } else {
           setStatus('danger');
-          setStatusMessage(`Failed to Create Source Nodes for ${apiResponse.data.failed_count} Wikipedia Sources`);
+          setStatusMessage(`Failed to Create Source Node for ${apiResponse.data.failed_count} Wikipedia Link`);
         }
 
         const copiedFilesData: CustomFile[] = [...filesData];
@@ -97,13 +110,15 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
         });
         setFilesData(copiedFilesData);
         setwikiQuery('');
+        setValid(false);
+        setisFocused(false);
       } catch (error) {
         setStatus('danger');
         setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
       }
     } else {
       setStatus('danger');
-      setStatusMessage('Please Fill the Wikipedia source');
+      setStatusMessage('Please Fill the Wikipedia Link');
       setTimeout(() => {
         setStatus('unknown');
       }, 5000);
@@ -112,7 +127,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
     setTimeout(() => {
       setStatus('unknown');
       hideModal();
-    }, 500);
+    }, 1000);
   };
   return (
     <CustomModal
@@ -120,22 +135,26 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
       onClose={onClose}
       statusMessage={statusMessage}
       setStatus={setStatus}
-      submitHandler={submitHandler}
+      submitHandler={() => submitHandler(wikiQuery)}
       status={status}
       submitLabel= {buttonCaptions.submit}
     >
       <div className='w-full inline-block'>
         <TextInput
+          type='url'
           id='keyword'
           value={wikiQuery}
           disabled={false}
-          label='Wikipedia Keywords'
-          aria-label='Wikipedia Keywords'
-          placeholder='Albert Einstein ,Isaac Newton'
+          label='Wikipedia Link'
+          aria-label='Wikipedia Link'
+          placeholder='https://en.wikipedia.org/wiki/Albert_Einstein'
           autoFocus
           fluid
           required
+          onBlur={() => setValid(wikiValidation(wikiQuery) && isFocused)}
+          errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
           onChange={(e) => {
+            setisFocused(true);
             setwikiQuery(e.target.value);
           }}
         />
