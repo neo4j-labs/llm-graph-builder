@@ -128,7 +128,7 @@ class graphDBdataAccess:
         index = self.graph.query("""show indexes yield * where type = 'VECTOR' and name = 'vector'""")
         # logging.info(f'show index vector: {index}')
         knn_min_score = os.environ.get('KNN_MIN_SCORE')
-        if index[0]['name'] == 'vector':
+        if len(index) > 0:
             logging.info('update KNN graph')
             result = self.graph.query("""MATCH (c:Chunk)
                                     WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
@@ -138,6 +138,8 @@ class graphDBdataAccess:
                                 {"score":float(knn_min_score)}
                                 )
             logging.info(f"result : {result}")
+        else:
+            logging.info("Vector index does not exist, So KNN graph not update")
             
     def connection_check(self):
         """
