@@ -62,13 +62,13 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
         if (apiResCheck) {
           setStatus('info');
           setStatusMessage(
-            `Successfully Created Source Nodes for ${apiResponse.data.success_count} and Failed for ${apiResponse.data.failed_count} Wikipedia Sources`
+            `Successfully Created Source Node for ${apiResponse.data.success_count} and Failed for ${apiResponse.data.failed_count} Wikipedia Link`
           );
         } else if (apiResponse?.data?.success_count) {
-          setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Wikipedia Sources`);
+          setStatusMessage(`Successfully Created Source Node for ${apiResponse.data.success_count} Wikipedia Link`);
         } else {
           setStatus('danger');
-          setStatusMessage(`Failed to Create Source Nodes for ${apiResponse.data.failed_count} Wikipedia Sources`);
+          setStatusMessage(`Failed to Create Source Node for ${apiResponse.data.failed_count} Wikipedia Link`);
         }
 
         const copiedFilesData: CustomFile[] = [...filesData];
@@ -108,7 +108,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
       }
     } else {
       setStatus('danger');
-      setStatusMessage('Please Fill the Wikipedia source');
+      setStatusMessage('Please Fill the Wikipedia Link');
       setTimeout(() => {
         setStatus('unknown');
       }, 5000);
