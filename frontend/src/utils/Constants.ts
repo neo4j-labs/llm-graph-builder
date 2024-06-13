@@ -124,7 +124,7 @@ export const buttonCaptions = {
   amazon: 'Amazon S3',
   noLables: 'No Labels Found in the Database',
   dropYourCreds: 'Drop your neo4j credentials file here',
-  analyze:'Analyze',
+  analyze:'Analyze text to extract graph schema',
   connect: 'Connect',
   disconnect:'Disconnect',
   submit:'Submit',
