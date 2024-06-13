@@ -266,15 +266,8 @@ async def update_similarity_graph(uri=Form(None), userName=Form(None), password=
     Calls 'update_graph' which post the query to update the similiar nodes in the graph
     """
     try:
-        result = await asyncio.to_thread(update_graph,uri,userName,password,database)
-        logging.info(f"result : {result}")
-        return create_api_response('Success',message='Updated KNN Graph',data=result)
-    except Exception as e:
-        job_status = "Failed"
-        message="Unable to update KNN Graph"
-        error_message = str(e)
-        logging.exception(f'Exception in update KNN graph:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        graph = create_graph_database_connection(uri, userName, password, database)
+        await asyncio.to_thread(update_graph, graph)
         
         josn_obj = {'api_name':'update_similarity_graph','db_url':uri}
         logger.log_struct(josn_obj)

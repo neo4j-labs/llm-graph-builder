@@ -427,7 +427,7 @@ def update_graph(graph):
   """
   graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
   graph_DB_dataAccess = graphDBdataAccess(graph)
-  return graph_DB_dataAccess.update_KNN_graph()
+  graph_DB_dataAccess.update_KNN_graph()
 
   
 def connection_check(graph):
