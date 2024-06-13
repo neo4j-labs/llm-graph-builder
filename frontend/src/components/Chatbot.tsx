@@ -11,7 +11,7 @@ import InfoModal from './InfoModal';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import IconButtonWithToolTip from './IconButtonToolTip';
-import { tooltips } from '../utils/Constants';
+import { buttonCaptions, tooltips } from '../utils/Constants';
 import useSpeechSynthesis from '../hooks/useSpeech';
 
 const Chatbot: React.FC<ChatbotProps> = (props) => {
@@ -31,7 +31,13 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
 
   const [value, copy] = useCopyToClipboard();
-  const { speak, cancel } = useSpeechSynthesis();
+  const { speak, cancel, supported } = useSpeechSynthesis({
+    onEnd: () => {
+      setListMessages((msgs) =>
+        msgs.map((msg) => ({ ...msg, speaking: false }))
+      );
+    },
+  });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
@@ -141,14 +147,17 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       chatChunks = chatresponse?.data?.data?.info.chunkids;
       chatTokensUsed = chatresponse?.data?.data?.info.total_tokens;
       chatTimeTaken = chatresponse?.data?.data?.info.response_time;
-      simulateTypingEffect({
+      const finalbotReply = {
         reply: chatbotReply,
         sources: chatSources,
         model: chatModel,
         chunk_ids: chatChunks,
         total_tokens: chatTokensUsed,
         response_time: chatTimeTaken,
-      });
+        speaking: false,
+        copying: false,
+      };
+      simulateTypingEffect(finalbotReply);
     } catch (error) {
       chatbotReply = "Oops! It seems we couldn't retrieve the answer. Please try again later";
       setInputMessage('');
@@ -166,26 +175,36 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
   }, [listMessages]);
 
-  const handleCopy = async (text: string, id: number) => {
-    copy(text)
-    setListMessages((msgs) => {
-      const messageWithCopying = msgs.find(msg => msg.copying);
-      return msgs.map((msg) =>
-        msg.id
-          === id && !messageWithCopying ? { ...msg, copying: true } : msg
-      );
-    }
+  const handleCopy = (message: string, id: number) => {
+    copy(message);
+    setListMessages((msgs) =>
+      msgs.map((msg) => {
+        if (msg.id === id) {
+          msg.copying = true;
+        }
+        return msg;
+      })
     );
     setCopyMessageId(id);
-    setTimeout(() => setCopyMessageId(null), 2000);
+    setTimeout(() => {
+      setCopyMessageId(null);
+      setListMessages((msgs) =>
+        msgs.map((msg) => {
+          if (msg.id === id) {
+            msg.copying = false;
+          }
+          return msg;
+        })
+      );
+    }, 2000);
   };
 
   const handleCancel = (id: number) => {
     cancel();
     setListMessages((msgs) =>
       msgs.map((msg) =>
-        msg.id
-          === id ? { ...msg, speaking: false } : msg
+        (msg.id
+          === id ? { ...msg, speaking: false } : msg)
       )
     );
   }
@@ -195,8 +214,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
     setListMessages((msgs) => {
       const messageWithSpeaking = msgs.find(msg => msg.speaking);
       return msgs.map((msg) =>
-        msg.id
-          === id && !messageWithSpeaking ? { ...msg, speaking: true } : msg
+        (msg.id
+          === id && !messageWithSpeaking ? { ...msg, speaking: true } : msg)
       );
     });
   }
@@ -247,8 +266,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                 >
                   <div
                     className={`${listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
-                        ? 'loader'
-                        : ''
+                      ? 'loader'
+                      : ''
                       }`}
                   >
                     <ReactMarkdown>{chat.message}</ReactMarkdown>
@@ -289,9 +308,10 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                           <ClipboardDocumentIconOutline className='w-4 h-4 inline-block' />
                         </IconButtonWithToolTip>
                         {copyMessageId === chat.id && (
-                          <span className='pt-4 text-xs'>Copied!</span>
+                          <><span className='pt-4 text-xs'>Copied!</span>
+                            <span style={{display:'none'}}>{value}</span></>
                         )}
-                        {chat.speaking ? <IconButtonWithToolTip
+                        {supported && chat.speaking ? <IconButtonWithToolTip
                           placement='top'
                           label='text to speak'
                           clean
@@ -332,7 +352,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
             onChange={handleInputChange}
           />
           <Button type='submit' disabled={loading}>
-            Submit
+            {buttonCaptions.submit}
           </Button>
         </form>
       </div>

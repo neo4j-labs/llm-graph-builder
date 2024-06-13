@@ -6,6 +6,7 @@ import { useFileContext } from '../context/UsersFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
 import { urlScanAPI } from '../services/URLScan';
+import { buttonCaptions } from '../utils/Constants';
 
 const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
   const [wikiQuery, setwikiQuery] = useState<string>('');
@@ -121,7 +122,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
       setStatus={setStatus}
       submitHandler={submitHandler}
       status={status}
-      submitLabel='Submit'
+      submitLabel= {buttonCaptions.submit}
     >
       <div className='w-full inline-block'>
         <TextInput

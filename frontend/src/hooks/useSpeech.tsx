@@ -16,7 +16,8 @@ const useSpeechSynthesis = (props: SpeechSynthesisProps = {}) => {
     }, []);
     const speak = (args: SpeechArgs = {}) => {
         const { text = "", rate = 1, pitch = 1, volume = 1 } = args;
-        if (!supported) return;
+        if (!supported) 
+        {return;}
         setSpeaking(true);
         const utterance = new SpeechSynthesisUtterance();
         utterance.text = text;
@@ -27,7 +28,8 @@ const useSpeechSynthesis = (props: SpeechSynthesisProps = {}) => {
         window.speechSynthesis.speak(utterance);
     };
     const cancel = () => {
-        if (!supported) return;
+        if (!supported) 
+        {return;}
         setSpeaking(false);
         window.speechSynthesis.cancel();
     };

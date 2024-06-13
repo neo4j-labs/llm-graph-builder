@@ -7,7 +7,7 @@ import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
 import { CustomFile, CustomFileBase, UploadResponse, alertStateType } from '../types';
-import { chunkSize } from '../utils/Constants';
+import { buttonCaptions, chunkSize } from '../utils/Constants';
 import { url } from '../utils/Utils';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import IconButtonWithToolTip from './IconButtonToolTip';
@@ -47,7 +47,7 @@ const DropZone: FunctionComponent = () => {
         if (filedataIndex == -1) {
           copiedFilesData.unshift({
             name: file.name,
-            //@ts-ignore
+            // @ts-ignore
             type: `${file.name.substring(file.name.lastIndexOf('.') + 1, file.name.length).toUpperCase()}`,
             size: file.size,
             uploadprogess: file.size && file?.size < chunkSize ? 100 : 0,
@@ -229,7 +229,7 @@ const DropZone: FunctionComponent = () => {
         supportedFilesDescription={
           <Typography variant='body-small'>
             <Flex>
-              <span>Documents, Images, Unstructured</span>
+              <span>{buttonCaptions.dropzoneSpan}</span>
               <div className='align-self-center'>
                 <IconButtonWithToolTip
                   label='Source info'

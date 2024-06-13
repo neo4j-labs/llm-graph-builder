@@ -8,7 +8,7 @@ import {
   ChatBubbleOvalLeftEllipsisIconOutline,
   CloudArrowUpIconSolid,
 } from '@neo4j-ndl/react/icons';
-import {} from '@neo4j-ndl/react/icons';
+import { } from '@neo4j-ndl/react/icons';
 import { SideNavProps } from '../../types';
 import Chatbot from '../Chatbot';
 import { createPortal } from 'react-dom';
@@ -68,34 +68,39 @@ const SideNav: React.FC<SideNavProps> = ({
     <div style={{ height: 'calc(100vh - 58px)', minHeight: '200px', display: 'flex' }}>
       <SideNavigation iconMenu={true} expanded={false} position={position}>
         <SideNavigation.List>
-          <Tip allowedPlacements={['bottom']}>
-            <SideNavigation.Item
-              onClick={handleClick}
-              icon={
-                isExpanded ? (
-                  position === 'left' ? (
-                    <ArrowLeftIconOutline />
-                  ) : (
-                    <ArrowRightIconOutline />
-                  )
-                ) : position === 'left' ? (
-                  <>
+          <SideNavigation.Item
+            onClick={handleClick}
+            icon={
+              isExpanded ? (
+                position === 'left' ? (
+                  <ArrowLeftIconOutline />
+                ) : (
+                  <ArrowRightIconOutline />
+                )
+              ) : position === 'left' ? (
+                <>
+
+                  <Tip allowedPlacements={['right']}>
                     <Tip.Trigger>
                       <CloudArrowUpIconSolid />
                     </Tip.Trigger>
                     <Tip.Content>{tooltips.sources}</Tip.Content>
-                  </>
-                ) : (
-                  <>
+                  </Tip>
+                </>
+              ) : (
+                <>
+                  <Tip allowedPlacements={['left']}>
                     <Tip.Trigger>
                       <ChatBubbleOvalLeftEllipsisIconOutline />
                     </Tip.Trigger>
                     <Tip.Content>{tooltips.chat}</Tip.Content>
-                  </>
-                )
-              }
-            />
-          </Tip>
+                  </Tip>
+                </>
+
+              )
+            }
+          />
+
           {position === 'right' && isExpanded && (
             <>
               <Tip allowedPlacements={['left']}>
@@ -106,7 +111,7 @@ const SideNav: React.FC<SideNavProps> = ({
                       <Tip.Trigger>
                         <TrashIconOutline />
                       </Tip.Trigger>
-                      <Tip.Content>clear chat histroy</Tip.Content>
+                      <Tip.Content>{tooltips.clearChat}</Tip.Content>
                     </>
                   }
                 />
