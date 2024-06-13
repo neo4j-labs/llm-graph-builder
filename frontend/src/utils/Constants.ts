@@ -37,8 +37,8 @@ export const llms =
 export const defaultLLM = llms?.includes('OpenAI GPT 3.5')
   ? 'OpenAI GPT 3.5'
   : llms?.includes('Gemini 1.0 Pro')
-  ? 'Gemini 1.0 Pro'
-  : 'Diffbot';
+    ? 'Gemini 1.0 Pro'
+    : 'Diffbot';
 
 export const chunkSize = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 5 * 1024 * 1024;
 export const timeperpage = process.env.TIME_PER_PAGE ? parseInt(process.env.TIME_PER_PAGE) : 50;
@@ -91,17 +91,17 @@ export const queryMap: {
 };
 
 export const tooltips = {
-  generateGraph: `Only New files will be processed for the Graph generation`,
-  deleteFile: 'Please select one or more files to delete',
-  showGraph: 'Only completed files will be processed for Graph Visualization',
-  bloomGraph: 'For advance Graph Visualization',
+  generateGraph: 'Select one or more (new) files to turn into a graph.',
+  deleteFile: 'Select one or more files to delete.',
+  showGraph: 'Select one or more files to preview the generated graph.',
+  bloomGraph: 'Open Neo4j Bloom for advanced graph interaction and exploration.',
   deleteSelectedFiles: 'File/Files to be deleted',
   documentation: 'Documentation',
   github: 'GitHub Issues',
   theme: 'Theme',
   settings: 'Settings',
-  chat: 'Chat',
-  sources: 'Sources',
+  chat: 'Ask questions about the processed documents.',
+  sources: 'Upload files of different formats.',
   deleteChat: 'Delete',
   maximise: 'Maximise',
   copy: 'Copy to Clipboard',
@@ -110,4 +110,24 @@ export const tooltips = {
   textTospeech: 'Text to Speech',
   createSchema: 'Create your own schema by passing text',
   useExistingSchema: 'Use the already existing schema from DB',
+  clearChat: 'Clear Chat History'
 };
+
+export const buttonCaptions = {
+  exploreGraphWithBloom: 'Explore Graph with Bloom',
+  showPreviewGraph: 'Preview Graph',
+  deleteFiles: 'Delete Files',
+  generateGraph: 'Generate Graph',
+  dropzoneSpan: 'Documents, Images, Unstructured text',
+  youtube: 'Youtube',
+  gcs: 'GCS',
+  amazon: 'Amazon S3',
+  noLables: 'No Labels Found in the Database',
+  dropYourCreds: 'Drop your neo4j credentials file here',
+  analyze:'Analyze',
+  connect: 'Connect',
+  disconnect:'Disconnect',
+  submit:'Submit',
+  connectToNeo4j:'Connect to Neo4j',
+  cancel:'Cancel'
+}

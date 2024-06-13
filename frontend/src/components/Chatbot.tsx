@@ -1,12 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Widget, Typography, Avatar, TextInput, IconButton, Modal } from '@neo4j-ndl/react';
-import {
-  InformationCircleIconOutline,
-  XMarkIconOutline,
-  // ClipboardDocumentIconOutline,
-  // SpeakerWaveIconOutline,
-  // SpeakerXMarkIconOutline,
-} from '@neo4j-ndl/react/icons';
+import { Button, Widget, Typography, Avatar, TextInput, IconButton, Modal, useCopyToClipboard } from '@neo4j-ndl/react';
+import { InformationCircleIconOutline, XMarkIconOutline, ClipboardDocumentIconOutline, SpeakerWaveIconOutline, SpeakerXMarkIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
 import { ChatbotProps, Source, UserCredentials } from '../types';
 import { useCredentials } from '../context/UserCredentials';
@@ -17,7 +11,9 @@ import InfoModal from './InfoModal';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import IconButtonWithToolTip from './IconButtonToolTip';
-// import { tooltips } from '../utils/Constants';
+import { buttonCaptions, tooltips } from '../utils/Constants';
+import useSpeechSynthesis from '../hooks/useSpeech';
+
 const Chatbot: React.FC<ChatbotProps> = (props) => {
   const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen } = props;
   const [inputMessage, setInputMessage] = useState('');
@@ -32,8 +28,16 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [responseTime, setResponseTime] = useState<number>(0);
   const [chunkModal, setChunkModal] = useState<string[]>([]);
   const [tokensUsed, setTokensUsed] = useState<number>(0);
-  // const [copyMessage, setCopyMessage] = useState<string>('');
-  // const [speaking, setSpeaking] = useState<boolean>(false);
+  const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
+
+  const [value, copy] = useCopyToClipboard();
+  const { speak, cancel, supported } = useSpeechSynthesis({
+    onEnd: () => {
+      setListMessages((msgs) =>
+        msgs.map((msg) => ({ ...msg, speaking: false }))
+      );
+    },
+  });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
@@ -53,6 +57,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       chunk_ids?: string[];
       total_tokens?: number;
       response_time?: number;
+      speaking?: boolean;
+      copying?: boolean
     },
     index = 0
   ) => {
@@ -77,6 +83,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
               chunks: response?.chunk_ids,
               total_tokens: response.total_tokens,
               response_time: response?.response_time,
+              speaking: false,
+              copying: false,
             },
           ]);
         } else {
@@ -93,6 +101,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
             lastmsg.chunk_ids = response?.chunk_ids;
             lastmsg.total_tokens = response?.total_tokens;
             lastmsg.response_time = response?.response_time;
+            lastmsg.speaking = false;
+            lastmsg.copying = false;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -110,6 +120,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
     }
   };
   let date = new Date();
+
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     if (!inputMessage.trim()) {
@@ -129,20 +140,24 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       simulateTypingEffect({ reply: ' ' });
       const chatbotAPI = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
       const chatresponse = chatbotAPI?.response;
+      console.log('api', chatresponse);
       chatbotReply = chatresponse?.data?.data?.message;
       chatSources = chatresponse?.data?.data?.info.sources;
       chatModel = chatresponse?.data?.data?.info.model;
       chatChunks = chatresponse?.data?.data?.info.chunkids;
       chatTokensUsed = chatresponse?.data?.data?.info.total_tokens;
       chatTimeTaken = chatresponse?.data?.data?.info.response_time;
-      simulateTypingEffect({
+      const finalbotReply = {
         reply: chatbotReply,
         sources: chatSources,
         model: chatModel,
         chunk_ids: chatChunks,
         total_tokens: chatTokensUsed,
         response_time: chatTimeTaken,
-      });
+        speaking: false,
+        copying: false,
+      };
+      simulateTypingEffect(finalbotReply);
     } catch (error) {
       chatbotReply = "Oops! It seems we couldn't retrieve the answer. Please try again later";
       setInputMessage('');
@@ -155,33 +170,55 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   useEffect(() => {
     scrollToBottom();
   }, [listMessages]);
+
   useEffect(() => {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
   }, [listMessages]);
 
-  // const handleCopy = async (text: string) => {
-  //   try {
-  //     await navigator.clipboard.writeText(text);
-  //     setCopyMessage('copied!');
-  //     setTimeout(() => setCopyMessage(''), 2000);
-  //   } catch (error) {
-  //     console.error('Failed to copy text: ', error);
-  //   }
-  // };
+  const handleCopy = (message: string, id: number) => {
+    copy(message);
+    setListMessages((msgs) =>
+      msgs.map((msg) => {
+        if (msg.id === id) {
+          msg.copying = true;
+        }
+        return msg;
+      })
+    );
+    setCopyMessageId(id);
+    setTimeout(() => {
+      setCopyMessageId(null);
+      setListMessages((msgs) =>
+        msgs.map((msg) => {
+          if (msg.id === id) {
+            msg.copying = false;
+          }
+          return msg;
+        })
+      );
+    }, 2000);
+  };
 
-  // const handleSpeak = (text: string) => {
-  //   if (speaking) {
-  //     window.speechSynthesis.cancel();
-  //     setSpeaking(false);
-  //   } else {
-  //     const utterance = new SpeechSynthesisUtterance(text);
-  //     utterance.onend = () => {
-  //       setSpeaking(false);
-  //     };
-  //     window.speechSynthesis.speak(utterance);
-  //     setSpeaking(true);
-  //   }
-  // };
+  const handleCancel = (id: number) => {
+    cancel();
+    setListMessages((msgs) =>
+      msgs.map((msg) =>
+        (msg.id
+          === id ? { ...msg, speaking: false } : msg)
+      )
+    );
+  }
+
+  const handleSpeak = (chatMessage: any, id: number) => {
+    speak({ text: chatMessage });
+    setListMessages((msgs) => {
+      const messageWithSpeaking = msgs.find(msg => msg.speaking);
+      return msgs.map((msg) =>
+        (msg.id
+          === id && !messageWithSpeaking ? { ...msg, speaking: true } : msg)
+      );
+    });
+  }
 
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
@@ -224,16 +261,14 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
-                    chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
-                  } `}
+                  className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                    } `}
                 >
                   <div
-                    className={`${
-                      listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
-                        ? 'loader'
-                        : ''
-                    }`}
+                    className={`${listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
+                      ? 'loader'
+                      : ''
+                      }`}
                   >
                     <ReactMarkdown>{chat.message}</ReactMarkdown>
                   </div>
@@ -262,31 +297,41 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                         >
                           <InformationCircleIconOutline className='w-4 h-4 inline-block' />
                         </IconButtonWithToolTip>
-                        {/* <IconButtonWithToolTip
+                        <IconButtonWithToolTip
                           label='copy text'
                           placement='top'
                           clean
-                          text={copyMessage ? tooltips.copied : tooltips.copy}
-                          onClick={() => handleCopy(chat.message)}
+                          text={chat.copying ? tooltips.copied : tooltips.copy}
+                          onClick={() => handleCopy(chat.message, chat.id)}
                           disabled={chat.isTyping || chat.isLoading}
                         >
                           <ClipboardDocumentIconOutline className='w-4 h-4 inline-block' />
                         </IconButtonWithToolTip>
-                        {copyMessage && <span className='pt-4 text-xs'>{copyMessage}</span>}
-                        <IconButtonWithToolTip
+                        {copyMessageId === chat.id && (
+                          <><span className='pt-4 text-xs'>Copied!</span>
+                            <span style={{display:'none'}}>{value}</span></>
+                        )}
+                        {supported && chat.speaking ? <IconButtonWithToolTip
                           placement='top'
                           label='text to speak'
                           clean
-                          text={speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
-                          onClick={() => handleSpeak(chat.message)}
+                          onClick={() => handleCancel(chat.id)}
+                          text={chat.speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
                           disabled={chat.isTyping || chat.isLoading}
                         >
-                          {speaking ? (
-                            <SpeakerXMarkIconOutline className='w-4 h-4 inline-block' />
-                          ) : (
-                            <SpeakerWaveIconOutline className='w-4 h-4 inline-block' />
-                          )}
-                        </IconButtonWithToolTip> */}
+                          <SpeakerXMarkIconOutline className="w-4 h-4 inline-block" />
+                        </IconButtonWithToolTip> :
+                          <IconButtonWithToolTip
+                            placement='top'
+                            clean
+                            onClick={() => handleSpeak(chat.message, chat.id)}
+                            text={chat.speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
+                            disabled={chat.isTyping || chat.isLoading}
+                            label='speech'
+                          >
+                            <SpeakerWaveIconOutline className="w-4 h-4 inline-block" />
+                          </IconButtonWithToolTip>
+                        }
                       </div>
                     )}
                   </div>
@@ -294,8 +339,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
               </div>
             ))}
           </div>
-        </Widget>
-      </div>
+        </Widget >
+      </div >
       <div className='n-bg-palette-neutral-bg-weak flex gap-2.5 bottom-0 p-2.5 w-full'>
         <form onSubmit={handleSubmit} className='flex gap-2.5 w-full'>
           <TextInput
@@ -307,7 +352,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
             onChange={handleInputChange}
           />
           <Button type='submit' disabled={loading}>
-            Submit
+            {buttonCaptions.submit}
           </Button>
         </form>
       </div>
@@ -338,7 +383,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
           total_tokens={tokensUsed}
         />
       </Modal>
-    </div>
+    </div >
   );
 };
 
