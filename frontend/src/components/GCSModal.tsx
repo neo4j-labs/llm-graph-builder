@@ -195,7 +195,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
       setStatus={setStatus}
       submitHandler={submitHandler}
       status={status}
-      submitLabel= {buttonCaptions.submit}
+      submitLabel={buttonCaptions.submit}
     >
       <div className='w-full inline-block'>
         <TextInput

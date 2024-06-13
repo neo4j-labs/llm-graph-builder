@@ -9,7 +9,6 @@ import { urlScanAPI } from '../services/URLScan';
 import { buttonCaptions } from '../utils/Constants';
 import { wikiValidation } from '../utils/Utils';
 
-
 const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
   const [wikiQuery, setwikiQuery] = useState<string>('');
   const [statusMessage, setStatusMessage] = useState<string>('');
@@ -22,8 +21,8 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
     hideModal();
     setwikiQuery('');
     setStatus('unknown');
-    setValid(false)
-    setisFocused(false)
+    setValid(false);
+    setisFocused(false);
   }, []);
 
   const submitHandler = async (url: string) => {
@@ -57,8 +56,8 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
           setTimeout(() => {
             setStatus('unknown');
             setwikiQuery('');
-            setValid(false)
-            setisFocused(false)
+            setValid(false);
+            setisFocused(false);
             hideModal();
           }, 5000);
           return;
@@ -135,7 +134,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
       setStatus={setStatus}
       submitHandler={() => submitHandler(wikiQuery)}
       status={status}
-      submitLabel= {buttonCaptions.submit}
+      submitLabel={buttonCaptions.submit}
     >
       <div className='w-full inline-block'>
         <TextInput

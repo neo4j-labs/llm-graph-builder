@@ -504,7 +504,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
 
           {!connectionStatus ? (
             <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
-               {buttonCaptions.connectToNeo4j}
+              {buttonCaptions.connectToNeo4j}
             </Button>
           ) : (
             <Button className='mr-2.5' onClick={disconnect}>
@@ -595,7 +595,8 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
               disabled={disableCheck}
               className='mr-0.5'
             >
-              {buttonCaptions.generateGraph} {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
+              {buttonCaptions.generateGraph}{' '}
+              {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
             </ButtonWithToolTip>
             <ButtonWithToolTip
               text={tooltips.showGraph}
@@ -615,7 +616,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
               className='ml-0.5'
               label='Open Graph with Bloom'
             >
-             {buttonCaptions.exploreGraphWithBloom}
+              {buttonCaptions.exploreGraphWithBloom}
             </ButtonWithToolTip>
             <ButtonWithToolTip
               text={
@@ -627,7 +628,8 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
               className='ml-0.5'
               label='Delete Files'
             >
-              {buttonCaptions.deleteFiles}{selectedfileslength > 0 && `(${selectedfileslength})`}
+              {buttonCaptions.deleteFiles}
+              {selectedfileslength > 0 && `(${selectedfileslength})`}
             </ButtonWithToolTip>
           </Flex>
         </Flex>
