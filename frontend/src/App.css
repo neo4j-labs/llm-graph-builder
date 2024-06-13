@@ -287,6 +287,9 @@
   .outline-dashed h6 {
     font-size: 14px;
   }
+  .outline-dashed  .wikipedia-div{
+    padding: 12px;
+  }
 
 }
 @container (min-height:400px) and (max-height:500px) {
@@ -297,6 +300,9 @@
 
   .outline-dashed h6 {
     font-size: 14px;
+  }
+  .outline-dashed  .wikipedia-div{
+    padding: 10px;
   }
 
 }
@@ -318,6 +324,9 @@
   }
   .imageBg >div{
     padding: 5px;
+  }
+  .outline-dashed  .wikipedia-div{
+    padding: 8px;
   }
 }
 .ndl-dropzone .ndl-dropzone-header{
