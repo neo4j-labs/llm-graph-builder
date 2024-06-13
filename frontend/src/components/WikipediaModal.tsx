@@ -125,12 +125,13 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
     >
       <div className='w-full inline-block'>
         <TextInput
+          type='url'
           id='keyword'
           value={wikiQuery}
           disabled={false}
-          label='Wikipedia Keywords'
-          aria-label='Wikipedia Keywords'
-          placeholder='Albert Einstein ,Isaac Newton'
+          label='Wikipedia Links'
+          aria-label='Wikipedia Links'
+          placeholder='https://en.wikipedia.org/wiki/Albert_Einstein'
           autoFocus
           fluid
           required

@@ -178,7 +178,7 @@ const DropZone: FunctionComponent = () => {
                 return {
                   ...curfile,
                   status: 'Failed',
-                  type: curfile.type?.split('/')[1]?.toUpperCase() ?? 'PDF',
+                  type: `${file.name.substring(file.name.lastIndexOf('.') + 1, file.name.length).toUpperCase()}`,
                 };
               }
               return curfile;
@@ -228,7 +228,7 @@ const DropZone: FunctionComponent = () => {
         className='!bg-none dropzoneContainer'
         supportedFilesDescription={
           <Typography variant='body-small'>
-            <Flex>
+            <Flex gap='0'>
               <span>Documents, Images, Unstructured</span>
               <div className='align-self-center'>
                 <IconButtonWithToolTip
