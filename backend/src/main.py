@@ -370,7 +370,7 @@ def update_graph(graph):
   Update the graph node with SIMILAR relationship where embedding scrore match
   """
   graph_DB_dataAccess = graphDBdataAccess(graph)
-  return graph_DB_dataAccess.update_KNN_graph()
+  graph_DB_dataAccess.update_KNN_graph()
 
   
 def connection_check(graph):
