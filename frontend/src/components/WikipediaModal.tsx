@@ -6,6 +6,7 @@ import { useFileContext } from '../context/UsersFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
 import { urlScanAPI } from '../services/URLScan';
+import { wikiValidation } from '../utils/Utils';
 
 const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
   const [wikiQuery, setwikiQuery] = useState<string>('');
@@ -13,13 +14,15 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const { setFilesData, model, filesData } = useFileContext();
   const { userCredentials } = useCredentials();
+  const [isFocused, setisFocused] = useState<boolean>(false);
+  const [isValid, setValid] = useState<boolean>(false);
   const onClose = useCallback(() => {
     hideModal();
     setwikiQuery('');
     setStatus('unknown');
   }, []);
 
-  const submitHandler = async () => {
+  const submitHandler = async (url: string) => {
     const defaultValues: CustomFileBase = {
       processing: 0,
       status: 'New',
@@ -30,7 +33,10 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
       fileSource: 'Wikipedia',
       processingProgress: undefined,
     };
-    if (wikiQuery.length) {
+    if (url.trim() != '') {
+      setValid(wikiValidation(url) && isFocused);
+    }
+    if (isValid) {
       try {
         setStatus('info');
         setStatusMessage('Scanning...');
@@ -111,7 +117,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
     setTimeout(() => {
       setStatus('unknown');
       hideModal();
-    }, 500);
+    }, 1000);
   };
   return (
     <CustomModal
@@ -119,7 +125,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
       onClose={onClose}
       statusMessage={statusMessage}
       setStatus={setStatus}
-      submitHandler={submitHandler}
+      submitHandler={() => submitHandler(wikiQuery)}
       status={status}
       submitLabel='Submit'
     >
@@ -135,7 +141,10 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
           autoFocus
           fluid
           required
+          onBlur={() => setValid(wikiValidation(wikiQuery) && isFocused)}
+          errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
           onChange={(e) => {
+            setisFocused(true);
             setwikiQuery(e.target.value);
           }}
         />
