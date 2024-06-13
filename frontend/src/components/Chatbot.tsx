@@ -1,6 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button, Widget, Typography, Avatar, TextInput, IconButton, Modal, useCopyToClipboard } from '@neo4j-ndl/react';
-import { InformationCircleIconOutline, XMarkIconOutline, ClipboardDocumentIconOutline, SpeakerWaveIconOutline, SpeakerXMarkIconOutline } from '@neo4j-ndl/react/icons';
+import {
+  InformationCircleIconOutline,
+  XMarkIconOutline,
+  ClipboardDocumentIconOutline,
+  SpeakerWaveIconOutline,
+  SpeakerXMarkIconOutline,
+} from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
 import { ChatbotProps, Source, UserCredentials } from '../types';
 import { useCredentials } from '../context/UserCredentials';
@@ -33,9 +39,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [value, copy] = useCopyToClipboard();
   const { speak, cancel, supported } = useSpeechSynthesis({
     onEnd: () => {
-      setListMessages((msgs) =>
-        msgs.map((msg) => ({ ...msg, speaking: false }))
-      );
+      setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
     },
   });
 
@@ -58,7 +62,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       total_tokens?: number;
       response_time?: number;
       speaking?: boolean;
-      copying?: boolean
+      copying?: boolean;
     },
     index = 0
   ) => {
@@ -201,24 +205,16 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
 
   const handleCancel = (id: number) => {
     cancel();
-    setListMessages((msgs) =>
-      msgs.map((msg) =>
-        (msg.id
-          === id ? { ...msg, speaking: false } : msg)
-      )
-    );
-  }
+    setListMessages((msgs) => msgs.map((msg) => (msg.id === id ? { ...msg, speaking: false } : msg)));
+  };
 
   const handleSpeak = (chatMessage: any, id: number) => {
     speak({ text: chatMessage });
     setListMessages((msgs) => {
-      const messageWithSpeaking = msgs.find(msg => msg.speaking);
-      return msgs.map((msg) =>
-        (msg.id
-          === id && !messageWithSpeaking ? { ...msg, speaking: true } : msg)
-      );
+      const messageWithSpeaking = msgs.find((msg) => msg.speaking);
+      return msgs.map((msg) => (msg.id === id && !messageWithSpeaking ? { ...msg, speaking: true } : msg));
     });
-  }
+  };
 
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
@@ -261,14 +257,16 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
-                    } `}
+                  className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
+                    chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                  } `}
                 >
                   <div
-                    className={`${listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
-                      ? 'loader'
-                      : ''
-                      }`}
+                    className={`${
+                      listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
+                        ? 'loader'
+                        : ''
+                    }`}
                   >
                     <ReactMarkdown>{chat.message}</ReactMarkdown>
                   </div>
@@ -308,19 +306,23 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                           <ClipboardDocumentIconOutline className='w-4 h-4 inline-block' />
                         </IconButtonWithToolTip>
                         {copyMessageId === chat.id && (
-                          <><span className='pt-4 text-xs'>Copied!</span>
-                            <span style={{display:'none'}}>{value}</span></>
+                          <>
+                            <span className='pt-4 text-xs'>Copied!</span>
+                            <span style={{ display: 'none' }}>{value}</span>
+                          </>
                         )}
-                        {supported && chat.speaking ? <IconButtonWithToolTip
-                          placement='top'
-                          label='text to speak'
-                          clean
-                          onClick={() => handleCancel(chat.id)}
-                          text={chat.speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
-                          disabled={chat.isTyping || chat.isLoading}
-                        >
-                          <SpeakerXMarkIconOutline className="w-4 h-4 inline-block" />
-                        </IconButtonWithToolTip> :
+                        {supported && chat.speaking ? (
+                          <IconButtonWithToolTip
+                            placement='top'
+                            label='text to speak'
+                            clean
+                            onClick={() => handleCancel(chat.id)}
+                            text={chat.speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
+                            disabled={chat.isTyping || chat.isLoading}
+                          >
+                            <SpeakerXMarkIconOutline className='w-4 h-4 inline-block' />
+                          </IconButtonWithToolTip>
+                        ) : (
                           <IconButtonWithToolTip
                             placement='top'
                             clean
@@ -329,9 +331,9 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                             disabled={chat.isTyping || chat.isLoading}
                             label='speech'
                           >
-                            <SpeakerWaveIconOutline className="w-4 h-4 inline-block" />
+                            <SpeakerWaveIconOutline className='w-4 h-4 inline-block' />
                           </IconButtonWithToolTip>
-                        }
+                        )}
                       </div>
                     )}
                   </div>
@@ -339,8 +341,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
               </div>
             ))}
           </div>
-        </Widget >
-      </div >
+        </Widget>
+      </div>
       <div className='n-bg-palette-neutral-bg-weak flex gap-2.5 bottom-0 p-2.5 w-full'>
         <form onSubmit={handleSubmit} className='flex gap-2.5 w-full'>
           <TextInput
@@ -383,7 +385,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
           total_tokens={tokensUsed}
         />
       </Modal>
-    </div >
+    </div>
   );
 };
 

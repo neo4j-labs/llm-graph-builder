@@ -37,8 +37,8 @@ export const llms =
 export const defaultLLM = llms?.includes('OpenAI GPT 3.5')
   ? 'OpenAI GPT 3.5'
   : llms?.includes('Gemini 1.0 Pro')
-    ? 'Gemini 1.0 Pro'
-    : 'Diffbot';
+  ? 'Gemini 1.0 Pro'
+  : 'Diffbot';
 
 export const chunkSize = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 5 * 1024 * 1024;
 export const timeperpage = process.env.TIME_PER_PAGE ? parseInt(process.env.TIME_PER_PAGE) : 50;
@@ -110,7 +110,7 @@ export const tooltips = {
   textTospeech: 'Text to Speech',
   createSchema: 'Create your own schema by passing text',
   useExistingSchema: 'Use the already existing schema from DB',
-  clearChat: 'Clear Chat History'
+  clearChat: 'Clear Chat History',
 };
 
 export const buttonCaptions = {
@@ -124,10 +124,10 @@ export const buttonCaptions = {
   amazon: 'Amazon S3',
   noLables: 'No Labels Found in the Database',
   dropYourCreds: 'Drop your neo4j credentials file here',
-  analyze:'Analyze text to extract graph schema',
+  analyze: 'Analyze text to extract graph schema',
   connect: 'Connect',
-  disconnect:'Disconnect',
-  submit:'Submit',
-  connectToNeo4j:'Connect to Neo4j',
-  cancel:'Cancel'
-}
+  disconnect: 'Disconnect',
+  submit: 'Submit',
+  connectToNeo4j: 'Connect to Neo4j',
+  cancel: 'Cancel',
+};

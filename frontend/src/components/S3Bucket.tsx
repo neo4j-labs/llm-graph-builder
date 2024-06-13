@@ -4,7 +4,9 @@ import CustomButton from './CustomButton';
 import { buttonCaptions } from '../utils/Constants';
 
 const S3Component: React.FC<DataComponentProps> = ({ openModal }) => {
-  return <CustomButton title={buttonCaptions.amazon}openModal={openModal} logo={s3logo} wrapperclassName='' className='' />;
+  return (
+    <CustomButton title={buttonCaptions.amazon} openModal={openModal} logo={s3logo} wrapperclassName='' className='' />
+  );
 };
 
 export default S3Component;
