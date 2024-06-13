@@ -6,11 +6,9 @@ import { useFileContext } from '../context/UsersFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
 import { urlScanAPI } from '../services/URLScan';
-<<<<<<< chatbot-es
 import { buttonCaptions } from '../utils/Constants';
-=======
 import { wikiValidation } from '../utils/Utils';
->>>>>>> DEV
+
 
 const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
   const [wikiQuery, setwikiQuery] = useState<string>('');
