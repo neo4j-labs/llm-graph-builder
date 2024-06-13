@@ -160,6 +160,7 @@ unstructured
 unstructured-client
 unstructured-inference
 unstructured.pytesseract
+unstructured[all-docs]
 urllib3
 uvicorn
 gunicorn
