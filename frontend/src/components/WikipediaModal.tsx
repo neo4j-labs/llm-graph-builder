@@ -20,6 +20,8 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
     hideModal();
     setwikiQuery('');
     setStatus('unknown');
+    setValid(false)
+    setisFocused(false)
   }, []);
 
   const submitHandler = async (url: string) => {
@@ -53,6 +55,8 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
           setTimeout(() => {
             setStatus('unknown');
             setwikiQuery('');
+            setValid(false)
+            setisFocused(false)
             hideModal();
           }, 5000);
           return;
@@ -102,6 +106,8 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
         });
         setFilesData(copiedFilesData);
         setwikiQuery('');
+        setValid(false);
+        setisFocused(false);
       } catch (error) {
         setStatus('danger');
         setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
