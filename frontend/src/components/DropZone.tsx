@@ -228,13 +228,8 @@ const DropZone: FunctionComponent = () => {
         className='!bg-none dropzoneContainer'
         supportedFilesDescription={
           <Typography variant='body-small'>
-<<<<<<< chatbot-es
             <Flex>
               <span>{buttonCaptions.dropzoneSpan}</span>
-=======
-            <Flex gap='0'>
-              <span>Documents, Images, Unstructured</span>
->>>>>>> DEV
               <div className='align-self-center'>
                 <IconButtonWithToolTip
                   label='Source info'
