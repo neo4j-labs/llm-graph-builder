@@ -190,7 +190,14 @@ export interface Messages {
   user: string;
   datetime: string;
   isTyping?: boolean;
-  sources?: string[];
+  sources?: Source[];
+  model?: string;
+  isLoading?: boolean;
+  response_time?: number;
+  chunk_ids?: string[];
+  total_tokens?: number;
+  speaking?: boolean;
+  copying?: boolean;
 }
 export type ChatbotProps = {
   messages: Messages[];
@@ -385,4 +392,15 @@ export interface Chunk {
   page_number: number;
   start_time: string;
   content_offset: string;
+}
+
+export interface SpeechSynthesisProps {
+  onEnd?: () => void;
+}
+
+export interface SpeechArgs {
+  text?: string;
+  rate?: number;
+  pitch?: number;
+  volume?: number;
 }

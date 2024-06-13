@@ -3,8 +3,6 @@ import { DataComponentProps } from '../types';
 import { buttonCaptions } from '../utils/Constants';
 import CustomButton from './CustomButton';
 const GCSButton: React.FC<DataComponentProps> = ({ openModal }) => {
-  return (
-    <CustomButton title={buttonCaptions.gcs} openModal={openModal} logo={gcslogo} wrapperclassName='' className='' />
-  );
+  return <CustomButton title={buttonCaptions.gcs} openModal={openModal} logo={gcslogo} wrapperclassName='' className='' />;
 };
 export default GCSButton;

@@ -133,7 +133,7 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
       setStatus={setStatus}
       submitHandler={() => submitHandler(wikiQuery)}
       status={status}
-      submitLabel={buttonCaptions.submit}
+      submitLabel= {buttonCaptions.submit}
     >
       <div className='w-full inline-block'>
         <TextInput

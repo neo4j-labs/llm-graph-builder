@@ -6,6 +6,9 @@ import { urlScanAPI } from '../services/URLScan';
 import { CustomFileBase, S3ModalProps, fileName, nonoautherror } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
+import { useGoogleLogin } from '@react-oauth/google';
+import { useAlertContext } from '../context/Alert';
+import { buttonCaptions } from '../utils/Constants';
 
 const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) => {
   const [bucketName, setbucketName] = useState<string>('');
@@ -192,7 +195,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
       setStatus={setStatus}
       submitHandler={submitHandler}
       status={status}
-      submitLabel={buttonCaptions.submit}
+      submitLabel= {buttonCaptions.submit}
     >
       <div className='w-full inline-block'>
         <TextInput

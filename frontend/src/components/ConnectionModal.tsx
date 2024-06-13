@@ -3,6 +3,7 @@ import { Dispatch, SetStateAction, useState } from 'react';
 import connectAPI from '../services/ConnectAPI';
 import { useCredentials } from '../context/UserCredentials';
 import { useSearchParams } from 'react-router-dom';
+import { buttonCaptions } from '../utils/Constants';
 
 interface Message {
   type: 'success' | 'info' | 'warning' | 'danger' | 'unknown';
@@ -151,7 +152,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
           <div className='n-flex max-h-44'>
             <Dropzone
               isTesting={false}
-              customTitle={<>Drop your env file here</>}
+              customTitle={<>{buttonCaptions.dropYourCreds}</>}
               className='n-p-6 end-0 top-0 w-full h-full'
               acceptedFileExtensions={['.txt', '.env']}
               dropZoneOptions={{
@@ -236,7 +237,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
             </div>
           </div>
           <Button loading={isLoading} disabled={isDisabled} onClick={() => submitConnection()}>
-            Submit
+           {buttonCaptions.connect}
           </Button>
         </Dialog.Content>
       </Dialog>
