@@ -16,6 +16,8 @@ import type { Node, Relationship } from '@neo4j-nvl/base';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import ReactMarkdown from 'react-markdown';
 const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, response_time, chunk_ids }) => {
+  console.log('sources', sources);
+  console.log('chunk_ids', chunk_ids);
   const [activeTab, setActiveTab] = useState<number>(0);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -77,12 +79,21 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
     return Object.keys(labelCounts).sort((a, b) => labelCounts[b] - labelCounts[a]);
   }, [labelCounts]);
 
-  // const generateYouTubeLink = (url: string, startTime: string) => {
-  //   const urlObj = new URL(url);
-  //   urlObj.searchParams.set('t', startTime);
-  //   console.log('url', urlObj.toString());
-  //   return urlObj.toString();
-  // };
+  const generateYouTubeLink = (url: string, startTime: string) => {
+    const urlObj = new URL(url);
+    let timeInSeconds;
+    if (startTime.includes('m')) {
+        const parts = startTime.split('m');
+        const minutes = parseInt(parts[0], 10);
+        const seconds = parts[1] ? parseInt(parts[1].replace('s', ''), 10) : 0;
+        timeInSeconds = (minutes * 60) + seconds;
+    } else {
+        timeInSeconds = parseInt(startTime, 10);
+    }
+    urlObj.searchParams.set('t', timeInSeconds.toString());
+    console.log('url', urlObj.toString());
+    return urlObj.toString();
+};
 
   return (
     <Box className='n-bg-palette-neutral-bg-weak p-4'>
@@ -102,7 +113,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
         <Tabs.Tab tabId={1}>Top Entities used</Tabs.Tab>
         <Tabs.Tab tabId={2}>Chunks</Tabs.Tab>
       </Tabs>
-      <Flex className='p-6'>
+      <Flex className='p-4'>
         {activeTab === 0 ? (
           sources.length > 0 ? (
             <ul className='list-class list-none'>
@@ -188,7 +199,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
               <LoadingSpinner size='small' />
             </Box>
           ) : Object.keys(groupedEntities).length > 0 ? (
-            <div className='p-4 h-80 overflow-auto'>
+            <div className='p-4 max-h-[80] overflow-auto'>
               <ul className='list-none'>
                 {sortedLabels.map((label, index) => (
                   <li
@@ -231,13 +242,13 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                   ) : chunk.start_time ? (
                     <div>
                       <Typography variant='subheading-small'>
-                        File: {chunk.fileName}, Time: {chunk.start_time}{' '}
+                        File: {chunk.fileName}
                       </Typography>
-                      {/* <Typography as="a"
+                      <Typography as="a"
                         href={generateYouTubeLink('https://www.youtube.com/watch?v=1bUy-1hGZpI', chunk.start_time)}
-                        variant="body-small"
+                        variant='subheading-small'
                         target='_blank' rel='noopener noreferrer'
-                      > Time {chunk.start_time}</Typography> */}
+                      > Time {chunk.start_time}</Typography>
                     </div>
                   ) : (
                     <></>

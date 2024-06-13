@@ -54,16 +54,27 @@ def process_record(record, elements_data):
         logging.error(f"chunkid_entities module: An error occurred while extracting the nodes and relationships from records: {e}")
 
 
+def time_to_seconds(time_str):
+    h, m, s = map(int, time_str.split(':'))
+    return h * 3600 + m * 60 + s
+
 def process_chunk_data(chunk_data):
     """
     Processes a record to extract chunk_text
     """
     try:
-        chunk_properties = list()
+        required_doc_properties = ["fileSource", "fileType", "url"]
+        chunk_properties = []
+
         for record in chunk_data:
-            chunks = record["chunks"]
-            for chunk in chunks:
+            doc_properties = {prop: record["doc"].get(prop, None) for prop in required_doc_properties}
+            for chunk in record["chunks"]:
+                chunk.update(doc_properties)
+                if chunk["fileSource"] == "youtube":
+                    chunk["start_time"] = time_to_seconds(chunk["start_time"])
+                    chunk["end_time"] = time_to_seconds(chunk["end_time"])
                 chunk_properties.append(chunk)
+
         return chunk_properties
     except Exception as e:
         logging.error(f"chunkid_entities module: An error occurred while extracting the Chunk text from records: {e}")

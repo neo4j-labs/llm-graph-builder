@@ -5,6 +5,7 @@ import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { OverridableStringUnion } from '@mui/types';
+import { buttonCaptions } from '../utils/Constants';
 
 const SchemaFromTextDialog = ({
   open,
@@ -134,7 +135,7 @@ const SchemaFromTextDialog = ({
             checked={isSchema}
           />
           <Button loading={loading} disabled={userText.trim() === '' || loading} onClick={clickHandler}>
-            Analyze
+            {buttonCaptions.analyze}
           </Button>
         </Dialog.Actions>
       </Dialog.Content>

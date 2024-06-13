@@ -7,6 +7,7 @@ import { validation } from '../utils/Utils';
 import { useFileContext } from '../context/UsersFiles';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
+import { buttonCaptions } from '../utils/Constants';
 interface S3File {
   fileName: string;
   fileSize: number;
@@ -135,7 +136,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       submitHandler={() => submitHandler(bucketUrl)}
       status={status}
       setStatus={setStatus}
-      submitLabel='Submit'
+      submitLabel= {buttonCaptions.submit}
     >
       <div className='w-full inline-block'>
         <TextInput
