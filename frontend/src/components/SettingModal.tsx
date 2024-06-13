@@ -161,7 +161,7 @@ export default function SettingsModal({
 
   return (
     <Dialog size='medium' open={open} aria-labelledby='form-dialog-title' onClose={onClose}>
-      <Dialog.Header id='form-dialog-title'>Graph Settings</Dialog.Header>
+      <Dialog.Header id='form-dialog-title'>Entity Graph Extraction Settings</Dialog.Header>
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
         <Dropdown
           helpText='Schema Examples'

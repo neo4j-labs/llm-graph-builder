@@ -6,6 +6,7 @@ import { useFileContext } from '../context/UsersFiles';
 import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { OverridableStringUnion } from '@mui/types';
 import { buttonCaptions } from '../utils/Constants';
+import ButtonWithToolTip from './ButtonWithToolTip';
 
 const SchemaFromTextDialog = ({
   open,
@@ -113,7 +114,7 @@ const SchemaFromTextDialog = ({
         onClose();
       }}
     >
-      <Dialog.Header id='form-dialog-title'>Graph Settings</Dialog.Header>
+      <Dialog.Header id='form-dialog-title'>Entity Graph Extraction Settings</Dialog.Header>
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
         <Textarea
           helpText='Analyze the text to extract Entities'
@@ -134,9 +135,9 @@ const SchemaFromTextDialog = ({
             }}
             checked={isSchema}
           />
-          <Button loading={loading} disabled={userText.trim() === '' || loading} onClick={clickHandler}>
+          <ButtonWithToolTip placement='top' label='Analyze button' text={userText.trim() === ''?'please fill the text to extract graph schema':buttonCaptions.analyze} loading={loading} disabled={userText.trim() === '' || loading} onClick={clickHandler}>
             {buttonCaptions.analyze}
-          </Button>
+          </ButtonWithToolTip>
         </Dialog.Actions>
       </Dialog.Content>
     </Dialog>
