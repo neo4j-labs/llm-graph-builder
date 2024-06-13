@@ -1,11 +1,12 @@
 import { Banner, Button, Dialog } from '@neo4j-ndl/react';
 import { CustomModalProps } from '../types';
+import { buttonCaptions } from '../utils/Constants';
 
 const CustomModal: React.FC<CustomModalProps> = ({
   open,
   onClose,
   children,
-  submitLabel = 'Submit',
+  submitLabel =  buttonCaptions.submit,
   submitHandler,
   statusMessage,
   status,
@@ -35,7 +36,7 @@ const CustomModal: React.FC<CustomModalProps> = ({
         <div className='n-flex n-flex-row n-flex-wrap'>{children}</div>
         <Dialog.Actions className='mt-4'>
           <Button color='neutral' fill='outlined' onClick={onClose} size='medium'>
-            Cancel
+            {buttonCaptions.cancel}
           </Button>
           <Button onClick={submitHandler} size='medium' disabled={isDisabled}>
             {submitLabel}

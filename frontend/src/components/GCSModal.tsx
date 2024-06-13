@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAlertContext } from '../context/Alert';
+import { buttonCaptions } from '../utils/Constants';
 
 const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [bucketName, setbucketName] = useState<string>('');
@@ -158,7 +159,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       setStatus={setStatus}
       submitHandler={submitHandler}
       status={status}
-      submitLabel='Submit'
+      submitLabel= {buttonCaptions.submit}
     >
       <div className='w-full inline-block'>
         <TextInput

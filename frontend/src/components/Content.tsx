@@ -16,7 +16,7 @@ import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
 import ConfirmationDialog from './ConfirmationDialog';
-import { chunkSize, tooltips } from '../utils/Constants';
+import { buttonCaptions, chunkSize, tooltips } from '../utils/Constants';
 import ButtonWithToolTip from './ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 
@@ -425,11 +425,11 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
 
           {!connectionStatus ? (
             <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
-              Connect to Neo4j
+               {buttonCaptions.connectToNeo4j}
             </Button>
           ) : (
             <Button className='mr-2.5' onClick={disconnect}>
-              Disconnect
+              {buttonCaptions.disconnect}
             </Button>
           )}
         </Flex>
@@ -516,7 +516,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
               disabled={disableCheck}
               className='mr-0.5'
             >
-              Generate Graph {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
+              {buttonCaptions.generateGraph} {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
             </ButtonWithToolTip>
             <ButtonWithToolTip
               text={tooltips.showGraph}
@@ -526,7 +526,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
               className='mr-0.5'
               label='show graph'
             >
-              Show Graph {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
+              {buttonCaptions.showPreviewGraph} {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
             </ButtonWithToolTip>
             <ButtonWithToolTip
               text={tooltips.bloomGraph}
@@ -536,7 +536,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
               className='ml-0.5'
               label='Open Graph with Bloom'
             >
-              Open Graph with Bloom
+             {buttonCaptions.exploreGraphWithBloom}
             </ButtonWithToolTip>
             <ButtonWithToolTip
               text={
@@ -548,7 +548,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
               className='ml-0.5'
               label='Delete Files'
             >
-              Delete Files {selectedfileslength > 0 && `(${selectedfileslength})`}
+              {buttonCaptions.deleteFiles}{selectedfileslength > 0 && `(${selectedfileslength})`}
             </ButtonWithToolTip>
           </Flex>
         </Flex>

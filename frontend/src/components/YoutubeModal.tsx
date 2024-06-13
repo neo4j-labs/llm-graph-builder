@@ -6,6 +6,7 @@ import { urlScanAPI } from '../services/URLScan';
 import { CustomFileBase, S3ModalProps } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
+import { buttonCaptions } from '../utils/Constants';
 
 const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [youtubeURL, setYoutubeURL] = useState<string>('');
@@ -107,7 +108,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       setStatus={setStatus}
       submitHandler={submitHandler}
       status={status}
-      submitLabel='Submit'
+      submitLabel= {buttonCaptions.submit}
     >
       <div className='w-full inline-block'>
         <TextInput
