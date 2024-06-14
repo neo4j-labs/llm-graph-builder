@@ -287,6 +287,7 @@ async def graph_query(
     document_names: str = Form(None),
 ):
     try:
+        print(document_names)
         result = await asyncio.to_thread(
             get_graph_results,
             uri=uri,
