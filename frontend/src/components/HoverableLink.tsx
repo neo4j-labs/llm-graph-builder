@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { HoverableLinkProps } from '../types';
-
 const HoverableLink: React.FC<HoverableLinkProps> = ({ url, children }) => {
   const [hovering, setHovering] = useState(false);
   const [iframeSrc, setIframeSrc] = useState<string>('');
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const popupRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (hovering) {
@@ -44,9 +42,7 @@ const HoverableLink: React.FC<HoverableLinkProps> = ({ url, children }) => {
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      <a href={url} target='_blank' rel='noopener noreferrer'>
-        {children}
-      </a>
+      {children}
       {hovering && (
         <div
           className='popup'
@@ -68,6 +64,7 @@ const HoverableLink: React.FC<HoverableLinkProps> = ({ url, children }) => {
           )}
         </div>
       )}
+      <a href={url} target='_blank' rel='noopener noreferrer' />
     </div>
   );
 };
