@@ -224,7 +224,7 @@ export default function SettingsModal({
             }}
             label='Get Existing Schema From Text'
           >
-            Get Existing Schema From Text
+            Get Schema From Text
           </ButtonWithToolTip>
         </Dialog.Actions>
       </Dialog.Content>
