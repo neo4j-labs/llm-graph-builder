@@ -26,7 +26,7 @@ export interface CustomFileBase extends Partial<globalThis.File> {
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
-  total_pages: number | 'NA';
+  total_pages: number | 'N/A';
 }
 
 export interface OptionType {

@@ -174,7 +174,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
       if (apiResponse?.status === 'Failed') {
         let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
         throw new Error(JSON.stringify(errorobj));
-      } else if (fileItem.total_pages != undefined && (fileItem.total_pages === 'NA' || fileItem.total_pages < 20)) {
+      } else if (fileItem.total_pages != undefined && (fileItem.total_pages === 'N/A' || fileItem.total_pages < 20)) {
         setFilesData((prevfiles) => {
           return prevfiles.map((curfile) => {
             if (curfile.name == apiResponse?.data?.fileName) {
