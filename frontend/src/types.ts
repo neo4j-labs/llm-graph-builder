@@ -389,9 +389,11 @@ export interface Chunk {
   fileName: string;
   length: number;
   embedding: string | null;
-  page_number: number;
-  start_time: string;
-  content_offset: string;
+  page_number?: number;
+  start_time?: string;
+  content_offset?: string;
+  url?: string;
+  fileSource: string;
 }
 
 export interface SpeechSynthesisProps {
