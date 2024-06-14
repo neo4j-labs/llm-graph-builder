@@ -98,7 +98,7 @@ export const tooltips = {
   deleteSelectedFiles: 'File/Files to be deleted',
   documentation: 'Documentation',
   github: 'GitHub Issues',
-  theme: 'light / dark mode',
+  theme: 'Light / Dark mode',
   settings: 'Entity Graph Extraction Settings',
   chat: 'Ask questions about the processed documents.',
   sources: 'Upload files of different formats.',

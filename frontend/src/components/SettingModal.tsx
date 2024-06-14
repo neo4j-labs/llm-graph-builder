@@ -183,6 +183,7 @@ export default function SettingsModal({
             options: nodeLabelOptions,
             onChange: onChangenodes,
             value: selectedNodes,
+            classNamePrefix:"node_label"
           }}
           type='creatable'
         />
@@ -195,6 +196,7 @@ export default function SettingsModal({
             options: relationshipTypeOptions,
             onChange: onChangerels,
             value: selectedRels,
+            classNamePrefix:"relationship_label"
           }}
           type='creatable'
         />
