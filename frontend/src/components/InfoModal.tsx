@@ -70,11 +70,11 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
   const sortedLabels = useMemo(() => {
     return Object.keys(labelCounts).sort((a, b) => labelCounts[b] - labelCounts[a]);
   }, [labelCounts]);
+
   const generateYouTubeLink = (url: string, startTime: string) => {
     try {
       const urlObj = new URL(url);
       urlObj.searchParams.set('t', startTime);
-      console.log('url', urlObj.toString());
       return urlObj.toString();
     } catch (error) {
       console.error('Invalid URL:', error);
@@ -215,23 +215,39 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
               {chunks.map((chunk) => (
                 <li key={chunk.id} className='mb-2'>
                   {chunk.page_number ? (
-                    <Typography variant='subheading-medium'>
-                      File: {chunk.fileName}, Page: {chunk.page_number}
-                    </Typography>
-                  ) : chunk.start_time ? (
-                    <Flex>
-                      {chunk.url && chunk.start_time && (
-                        <>
-                          <TextLink externalLink href={generateYouTubeLink(chunk.url, chunk.start_time)}>
-                            File: {chunk.fileName}
-                          </TextLink>
-                        </>
-                      )}
-                    </Flex>
+                    <div className='flex flex-row inline-block justiy-between items-center'>
+                      <DocumentTextIconOutline className='w-4 h-4 inline-block mr-2' />
+                      <Typography
+                        variant='subheading-small'
+                        className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden'
+                      >
+                        {chunk.fileName}, Page: {chunk.page_number}
+                      </Typography>
+                    </div>
+                  ) : chunk.url && chunk.start_time ? (
+                    <div className='flex flex-row inline-block justiy-between items-center'>
+                      <img src={youtubelogo} width={20} height={20} className='mr-2' />
+                      <TextLink externalLink href={generateYouTubeLink(chunk.url, chunk.start_time)}>
+                        {chunk.fileName}
+                      </TextLink>
+                    </div>
+                  ) : chunk.url && chunk.url.includes('wikipedia.org') ? (
+                    <div className='flex flex-row inline-block justiy-between items-center'>
+                      <img src={wikipedialogo} width={20} height={20} className='mr-2' />
+                      <Typography variant='subheading-medium'>{chunk.fileName}</Typography>
+                    </div>
+                  ) : chunk.url && chunk.url.includes('storage.googleapis.com') ? (
+                    <div className='flex flex-row inline-block justiy-between items-center'>
+                      <img src={gcslogo} width={20} height={20} className='mr-2' />
+                      <Typography variant='subheading-medium'>{chunk.fileName}</Typography>
+                    </div>
+                  ) : chunk.url && chunk.url.startsWith('s3://') ? (
+                    <div className='flex flex-row inline-block justiy-between items-center'>
+                      <img src={s3logo} width={20} height={20} className='mr-2' />
+                      <Typography variant='subheading-medium'>{chunk.fileName}</Typography>
+                    </div>
                   ) : (
-                    <Typography variant='subheading-medium'>
-                      File: {chunk.fileName}, Source: {chunk.fileSource}
-                    </Typography>
+                    <></>
                   )}
                   <ReactMarkdown>{chunk.text}</ReactMarkdown>
                 </li>

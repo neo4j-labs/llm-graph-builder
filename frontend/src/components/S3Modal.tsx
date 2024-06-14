@@ -100,7 +100,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               model: defaultValues.model,
               fileSource: defaultValues.fileSource,
               processingProgress: defaultValues.processingProgress,
-              total_pages:"N/A"
+              total_pages: 'N/A',
             });
           }
         });
