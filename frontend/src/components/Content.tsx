@@ -10,21 +10,26 @@ import { extractAPI } from '../utils/FileAPI';
 import { ContentProps, CustomFile, OptionType, UserCredentials, alertStateType } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './GraphViewModal';
-import { initialiseDriver } from '../utils/Driver';
-import Driver from 'neo4j-driver/types/driver';
 import deleteAPI from '../services/deleteFiles';
 import DeletePopUp from './DeletePopUp';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
+import ConfirmationDialog from './ConfirmationDialog';
+import { buttonCaptions, chunkSize, tooltips } from '../utils/Constants';
+import ButtonWithToolTip from './ButtonWithToolTip';
+import connectAPI from '../services/ConnectAPI';
 
-const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot }) => {
+const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
-  const { setUserCredentials, userCredentials, driver, setDriver } = useCredentials();
+  const { setUserCredentials, userCredentials } = useCredentials();
+  const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
+  const [extractLoading, setextractLoading] = useState<boolean>(false);
+
   const {
     filesData,
     setFilesData,
@@ -34,6 +39,7 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     selectedRels,
     selectedRows,
     setSelectedNodes,
+    setRowSelection,
     setSelectedRels,
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
@@ -75,20 +81,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           database: neo4jConnection.database,
           port: neo4jConnection.uri.split(':')[2],
         });
-        initialiseDriver(
-          neo4jConnection.uri,
-          neo4jConnection.user,
-          neo4jConnection.password,
-          neo4jConnection.database
-        ).then((driver: Driver) => {
-          if (driver) {
-            localStorage.setItem('alertShown', JSON.stringify(false));
-            setConnectionStatus(true);
-            setDriver(driver);
-          } else {
-            setConnectionStatus(false);
-          }
-        });
       } else {
         setOpenConnection(true);
       }
@@ -116,11 +108,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     if (!isselectedRows) {
       const fileItem = filesData.find((f) => f.id == uid);
       if (fileItem) {
+        setextractLoading(true);
         await extractHandler(fileItem, uid);
       }
     } else {
       const fileItem = selectedRows.find((f) => JSON.parse(f).id == uid);
       if (fileItem) {
+        setextractLoading(true);
         await extractHandler(JSON.parse(fileItem), uid);
       }
     }
@@ -139,7 +133,15 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           return curfile;
         })
       );
-
+      setRowSelection((prev) => {
+        const copiedobj = { ...prev };
+        for (const key in copiedobj) {
+          if (JSON.parse(key).id == uid) {
+            copiedobj[key] = false;
+          }
+        }
+        return copiedobj;
+      });
       if (fileItem.name != undefined && userCredentials != null) {
         const { name } = fileItem;
         triggerStatusUpdateAPI(
@@ -165,13 +167,14 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         selectedNodes.map((l) => l.value),
         selectedRels.map((t) => t.value),
         fileItem.google_project_id,
-        fileItem.language
+        fileItem.language,
+        fileItem.access_token
       );
 
       if (apiResponse?.status === 'Failed') {
         let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
         throw new Error(JSON.stringify(errorobj));
-      } else if (fileItem.size != undefined && fileItem.size < 10000000) {
+      } else if (fileItem.total_pages != undefined && (fileItem.total_pages === 'N/A' || fileItem.total_pages < 20)) {
         setFilesData((prevfiles) => {
           return prevfiles.map((curfile) => {
             if (curfile.name == apiResponse?.data?.fileName) {
@@ -216,9 +219,9 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     }
   };
 
-  const handleGenerateGraph = () => {
+  const handleGenerateGraph = (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => {
     const data = [];
-    if (selectedfileslength) {
+    if (selectedfileslength && allowLargeFiles) {
       for (let i = 0; i < selectedfileslength; i++) {
         const row = JSON.parse(selectedRows[i]);
         if (row.status === 'New') {
@@ -226,15 +229,18 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
         }
       }
       Promise.allSettled(data).then(async (_) => {
+        setextractLoading(false);
         await updateGraphAPI(userCredentials as UserCredentials);
       });
-    } else if (filesData.length > 0) {
-      for (let i = 0; i < filesData.length; i++) {
-        if (filesData[i]?.status === 'New') {
-          data.push(extractData(filesData[i].id as string));
+    } else if (selectedFilesFromAllfiles.length && allowLargeFiles) {
+      // @ts-ignore
+      for (let i = 0; i < selectedFilesFromAllfiles.length; i++) {
+        if (selectedFilesFromAllfiles[i]?.status === 'New') {
+          data.push(extractData(selectedFilesFromAllfiles[i].id as string));
         }
       }
       Promise.allSettled(data).then(async (_) => {
+        setextractLoading(false);
         await updateGraphAPI(userCredentials as UserCredentials);
       });
     }
@@ -260,13 +266,13 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   };
 
   const classNameCheck =
-    isExpanded && showChatBot
-      ? 'contentWithBothDrawers'
-      : isExpanded
+    isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
-      : showChatBot
+      : isRightExpanded
       ? 'contentWithChatBot'
-      : 'contentWithNoExpansion';
+      : !isLeftExpanded && !isRightExpanded
+      ? 'w-[calc(100%-128px)]'
+      : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -274,7 +280,6 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
   };
 
   const disconnect = () => {
-    driver?.close();
     setConnectionStatus(false);
     localStorage.removeItem('password');
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
@@ -303,14 +308,26 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     [selectedfileslength, completedfileNo]
   );
 
-  const deleteFileClickHandler: React.MouseEventHandler<HTMLButtonElement> = () => {
-    setshowDeletePopUp(true);
-  };
+  const filesForProcessing = useMemo(() => {
+    let newstatusfiles: CustomFile[] = [];
+    if (selectedRows.length) {
+      selectedRows.forEach((f) => {
+        const parsedFile: CustomFile = JSON.parse(f);
+        if (parsedFile.status === 'New') {
+          newstatusfiles.push(parsedFile);
+        }
+      });
+    } else if (filesData.length) {
+      newstatusfiles = filesData.filter((f) => f.status === 'New');
+    }
+    return newstatusfiles;
+  }, [filesData, selectedRows]);
 
   const handleDeleteFiles = async (deleteEntities: boolean) => {
     try {
       setdeleteLoading(true);
       const response = await deleteAPI(userCredentials as UserCredentials, selectedRows, deleteEntities);
+      setRowSelection({});
       setdeleteLoading(false);
       if (response.data.status == 'Success') {
         setalertDetails({
@@ -341,6 +358,23 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
     }
     setshowDeletePopUp(false);
   };
+  useEffect(() => {
+    const connection = localStorage.getItem('neo4j.connection');
+    if (connection != null) {
+      (async () => {
+        const parsedData = JSON.parse(connection);
+        console.log(parsedData.uri);
+        const response = await connectAPI(parsedData.uri, parsedData.user, parsedData.password, parsedData.database);
+        if (response?.data?.status === 'Success') {
+          setConnectionStatus(true);
+          setOpenConnection(false);
+        } else {
+          setOpenConnection(true);
+          setConnectionStatus(false);
+        }
+      })();
+    }
+  }, []);
 
   return (
     <>
@@ -351,6 +385,15 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           handleClose={handleClose}
           alertMessage={alertDetails.alertMessage}
         />
+      )}
+      {showConfirmationModal && filesForProcessing.length && (
+        <ConfirmationDialog
+          open={showConfirmationModal}
+          largeFiles={filesForProcessing}
+          extractHandler={handleGenerateGraph}
+          onClose={() => setshowConfirmationModal(false)}
+          loading={extractLoading}
+        ></ConfirmationDialog>
       )}
       {showDeletePopUp && (
         <DeletePopUp
@@ -382,16 +425,16 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
 
           {!connectionStatus ? (
             <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
-              Connect to Neo4j
+              {buttonCaptions.connectToNeo4j}
             </Button>
           ) : (
             <Button className='mr-2.5' onClick={disconnect}>
-              Disconnect
+              {buttonCaptions.disconnect}
             </Button>
           )}
         </Flex>
         <FileTable
-          isExpanded={isExpanded}
+          isExpanded={isLeftExpanded && isRightExpanded}
           connectionStatus={connectionStatus}
           setConnectionStatus={setConnectionStatus}
           onInspect={(name) => {
@@ -401,45 +444,114 @@ const Content: React.FC<ContentProps> = ({ isExpanded, showChatBot, openChatBot 
           }}
         ></FileTable>
         <Flex
-          className='w-full p-2.5 absolute bottom-4 mt-1.5 self-start'
+          className={`${
+            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection='row'
         >
           <LlmDropdown onSelect={handleDropdownChange} isDisabled={dropdowncheck} />
           <Flex flexDirection='row' gap='4' className='self-end'>
-            <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
-              Generate Graph {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
-            </Button>
-            <Button
-              title='only completed files will be processed for graph visualization'
-              disabled={showGraphCheck}
-              onClick={handleGraphView}
+            <ButtonWithToolTip
+              text={tooltips.generateGraph}
+              placement='top'
+              label='generate graph'
+              onClick={() => {
+                if (selectedRows.length) {
+                  let selectedLargeFiles: CustomFile[] = [];
+                  selectedRows.forEach((f) => {
+                    const parsedData: CustomFile = JSON.parse(f);
+                    if (parsedData.fileSource === 'local file') {
+                      if (
+                        typeof parsedData.total_pages === 'number' &&
+                        parsedData.status === 'New' &&
+                        parsedData.total_pages > 20
+                      ) {
+                        selectedLargeFiles.push(parsedData);
+                      }
+                    } else if (parsedData.fileSource === 's3 bucket' || parsedData.fileSource === 'gcs bucket') {
+                      // @ts-ignore
+                      if (parsedData.size > chunkSize) {
+                        selectedLargeFiles.push(parsedData);
+                      }
+                    }
+                  });
+                  // @ts-ignore
+                  if (selectedLargeFiles.length) {
+                    setshowConfirmationModal(true);
+                    handleGenerateGraph(false, []);
+                  } else {
+                    handleGenerateGraph(true, filesData);
+                  }
+                } else if (filesData.length) {
+                  const largefiles = filesData.filter((f) => {
+                    if (f.fileSource === 'local file') {
+                      if (typeof f.total_pages === 'number' && f.status === 'New' && f.total_pages > 20) {
+                        return true;
+                      }
+                    } else if (f.fileSource === 's3 bucket' || f.fileSource === 'gcs bucket') {
+                      // @ts-ignore
+                      if (f.size > chunkSize) {
+                        return true;
+                      }
+                    }
+                    return false;
+                  });
+                  const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
+                  const stringified = selectAllNewFiles.reduce((accu, f) => {
+                    const key = JSON.stringify(f);
+                    // @ts-ignore
+                    accu[key] = true;
+                    return accu;
+                  }, {});
+                  setRowSelection(stringified);
+                  if (largefiles.length) {
+                    setshowConfirmationModal(true);
+                    handleGenerateGraph(false, []);
+                  } else {
+                    handleGenerateGraph(true, filesData);
+                  }
+                }
+              }}
+              disabled={disableCheck}
               className='mr-0.5'
             >
-              Show Graph {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
-            </Button>
-            <Button
+              {buttonCaptions.generateGraph}{' '}
+              {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
+            </ButtonWithToolTip>
+            <ButtonWithToolTip
+              text={tooltips.showGraph}
+              placement='top'
+              onClick={handleGraphView}
+              disabled={showGraphCheck}
+              className='mr-0.5'
+              label='show graph'
+            >
+              {buttonCaptions.showPreviewGraph} {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
+            </ButtonWithToolTip>
+            <ButtonWithToolTip
+              text={tooltips.bloomGraph}
+              placement='top'
               onClick={handleOpenGraphClick}
               disabled={!filesData.some((f) => f?.status === 'Completed')}
               className='ml-0.5'
+              label='Open Graph with Bloom'
             >
-              Open Graph with Bloom
-            </Button>
-            <Button
-              onClick={deleteFileClickHandler}
-              className='ml-0.5'
-              title={!selectedfileslength ? 'please select a file' : 'File is still under process'}
+              {buttonCaptions.exploreGraphWithBloom}
+            </ButtonWithToolTip>
+            <ButtonWithToolTip
+              text={
+                !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
+              }
+              placement='top'
+              onClick={() => setshowDeletePopUp(true)}
               disabled={!selectedfileslength}
+              className='ml-0.5'
+              label='Delete Files'
             >
-              Delete Files {selectedfileslength > 0 && `(${selectedfileslength})`}
-            </Button>
-            <Button
-              onClick={() => {
-                openChatBot();
-              }}
-            >
-              Q&A Chat
-            </Button>
+              {buttonCaptions.deleteFiles}
+              {selectedfileslength > 0 && `(${selectedfileslength})`}
+            </ButtonWithToolTip>
           </Flex>
         </Flex>
       </div>

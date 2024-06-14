@@ -74,6 +74,7 @@ langchain-community
 langchain-core
 langchain-experimental
 langchain-google-vertexai
+langchain-groq
 langchain-openai
 langchain-text-splitters==0.0.1
 langdetect==1.0.9
@@ -117,6 +118,7 @@ pydantic==2.6.4
 pydantic_core==2.16.3
 pyparsing==3.0.9
 pypdf==4.0.1
+PyPDF2
 pypdfium2==4.27.0
 pytesseract==0.3.10
 python-dateutil==2.8.2
@@ -158,6 +160,7 @@ unstructured
 unstructured-client
 unstructured-inference
 unstructured.pytesseract
+unstructured[all-docs]
 urllib3
 uvicorn
 gunicorn
@@ -168,3 +171,4 @@ youtube-transcript-api==0.6.2
 zipp==3.17.0
 sentence-transformers
 google-cloud-logging==3.10.0
+PyMuPDF==1.24.5

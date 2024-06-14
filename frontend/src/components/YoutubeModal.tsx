@@ -3,9 +3,10 @@ import { useCallback, useState } from 'react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { urlScanAPI } from '../services/URLScan';
-import { CustomFile, S3ModalProps } from '../types';
+import { CustomFileBase, S3ModalProps } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
+import { buttonCaptions } from '../utils/Constants';
 
 const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [youtubeURL, setYoutubeURL] = useState<string>('');
@@ -14,15 +15,15 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const { userCredentials } = useCredentials();
   const { setFilesData, model, filesData } = useFileContext();
   const submitHandler = async () => {
-    const defaultValues: CustomFile = {
+    const defaultValues: CustomFileBase = {
       processing: 0,
       status: 'New',
       NodesCount: 0,
-      id: uuidv4(),
       relationshipCount: 0,
       type: 'TEXT',
       model: model,
       fileSource: 'youtube',
+      processingProgress: undefined,
     };
     if (!youtubeURL) {
       setStatus('danger');
@@ -62,6 +63,8 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               name: item.fileName,
               size: item.fileSize ?? 0,
               source_url: item.url,
+              total_pages: 1,
+              id: uuidv4(),
               ...defaultValues,
             });
           } else {
@@ -75,6 +78,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               processing: defaultValues.processing,
               model: defaultValues.model,
               fileSource: defaultValues.fileSource,
+              processingProgress: defaultValues.processingProgress,
             });
           }
         });
@@ -104,7 +108,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       setStatus={setStatus}
       submitHandler={submitHandler}
       status={status}
-      submitLabel='Submit'
+      submitLabel={buttonCaptions.submit}
     >
       <div className='w-full inline-block'>
         <TextInput

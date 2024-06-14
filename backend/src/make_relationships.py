@@ -47,10 +47,10 @@ def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name
     logging.info(f"update embedding and vector index for chunks")
     for row in chunkId_chunkDoc_list:
         # for graph_document in row['graph_doc']:
-        embeddings_arr = embeddings.embed_query(row['chunk_doc'].page_content)
-        # logging.info(f'Embedding list {embeddings}')
         if isEmbedding.upper() == "TRUE":
-
+            embeddings_arr = embeddings.embed_query(row['chunk_doc'].page_content)
+            # logging.info(f'Embedding list {embeddings_arr}')
+                                    
             data_for_query.append({
                 "chunkId": row['chunk_id'],
                 "embeddings": embeddings_arr
@@ -93,16 +93,20 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
     lst_chunks_including_hash = []
     batch_data = []
     relationships = []
+    offset=0
     for i, chunk in enumerate(chunks):
         page_content_sha1 = hashlib.sha1(chunk.page_content.encode())
         previous_chunk_id = current_chunk_id
         current_chunk_id = page_content_sha1.hexdigest()
-        position = i + 1
+        position = i + 1 
+        if i>0:
+            #offset += len(tiktoken.encoding_for_model("gpt2").encode(chunk.page_content))
+            offset += len(chunks[i-1].page_content)
         if i == 0:
             firstChunk = True
         else:
             firstChunk = False  
-        metadata = {"position": position,"length": len(chunk.page_content)}
+        metadata = {"position": position,"length": len(chunk.page_content), "content_offset":offset}
         chunk_document = Document(
             page_content=chunk.page_content, metadata=metadata
         )
@@ -114,11 +118,16 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
             "length": chunk_document.metadata["length"],
             "f_name": file_name,
             "previous_id" : previous_chunk_id,
+            "content_offset" : offset
         }
         
         if 'page_number' in chunk.metadata:
             chunk_data['page_number'] = chunk.metadata['page_number']
-            
+         
+        if 'start_time' in chunk.metadata and 'end_time' in chunk.metadata:
+            chunk_data['start_time'] = chunk.metadata['start_time']
+            chunk_data['end_time'] = chunk.metadata['end_time'] 
+               
         batch_data.append(chunk_data)
         
         lst_chunks_including_hash.append({'chunk_id': current_chunk_id, 'chunk_doc': chunk})
@@ -136,13 +145,11 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
     query_to_create_chunk_and_PART_OF_relation = """
         UNWIND $batch_data AS data
         MERGE (c:Chunk {id: data.id})
-        SET c.text = data.pg_content, c.position = data.position, c.length = data.length, c.fileName=data.f_name
+        SET c.text = data.pg_content, c.position = data.position, c.length = data.length, c.fileName=data.f_name, c.content_offset=data.content_offset
         WITH data, c
-        WHERE data.page_number IS NOT NULL
-        SET c.page_number = data.page_number
-        WITH data, c
-        WHERE data.page_number IS NOT NULL
-        SET c.page_number = data.page_number
+        SET c.page_number = CASE WHEN data.page_number IS NOT NULL THEN data.page_number END,
+            c.start_time = CASE WHEN data.start_time IS NOT NULL THEN data.start_time END,
+            c.end_time = CASE WHEN data.end_time IS NOT NULL THEN data.end_time END
         WITH data, c
         MATCH (d:Document {fileName: data.f_name})
         MERGE (c)-[:PART_OF]->(d)

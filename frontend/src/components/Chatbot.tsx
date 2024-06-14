@@ -1,7 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
-import { Button, Widget, Typography, Avatar, TextInput, IconButton, Modal } from '@neo4j-ndl/react';
-import { InformationCircleIconOutline, XMarkIconOutline } from '@neo4j-ndl/react/icons';
-import ChatBotUserAvatar from '../assets/images/chatbot-user.png';
+import React, { useEffect, useRef, useState } from 'react';
+import { Button, Widget, Typography, Avatar, TextInput, IconButton, Modal, useCopyToClipboard } from '@neo4j-ndl/react';
+import {
+  XMarkIconOutline,
+  ClipboardDocumentIconOutline,
+  SpeakerWaveIconOutline,
+  SpeakerXMarkIconOutline,
+} from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../assets/images/chatbot-ai.png';
 import { ChatbotProps, Source, UserCredentials } from '../types';
 import { useCredentials } from '../context/UserCredentials';
@@ -9,11 +13,16 @@ import { chatBotAPI } from '../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../context/UsersFiles';
 import InfoModal from './InfoModal';
+import clsx from 'clsx';
+import ReactMarkdown from 'react-markdown';
+import IconButtonWithToolTip from './IconButtonToolTip';
+import { buttonCaptions, tooltips } from '../utils/Constants';
+import useSpeechSynthesis from '../hooks/useSpeech';
+import ButtonWithToolTip from './ButtonWithToolTip';
 
-export default function Chatbot(props: ChatbotProps) {
-  const { messages: listMessages, setMessages: setListMessages, isLoading } = props;
+const Chatbot: React.FC<ChatbotProps> = (props) => {
+  const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, clear } = props;
   const [inputMessage, setInputMessage] = useState('');
-  const formattedTextStyle = { color: 'rgb(var(--theme-palette-discovery-bg-strong))' };
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
   const { model } = useFileContext();
@@ -25,11 +34,18 @@ export default function Chatbot(props: ChatbotProps) {
   const [responseTime, setResponseTime] = useState<number>(0);
   const [chunkModal, setChunkModal] = useState<string[]>([]);
   const [tokensUsed, setTokensUsed] = useState<number>(0);
+  const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
+
+  const [value, copy] = useCopyToClipboard();
+  const { speak, cancel } = useSpeechSynthesis({
+    onEnd: () => {
+      setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
+    },
+  });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
   };
-
   useEffect(() => {
     if (!sessionStorage.getItem('session_id')) {
       const id = uuidv4();
@@ -37,7 +53,6 @@ export default function Chatbot(props: ChatbotProps) {
       sessionStorage.setItem('session_id', id);
     }
   }, []);
-
   const simulateTypingEffect = (
     response: {
       reply: string;
@@ -46,6 +61,8 @@ export default function Chatbot(props: ChatbotProps) {
       chunk_ids?: string[];
       total_tokens?: number;
       response_time?: number;
+      speaking?: boolean;
+      copying?: boolean;
     },
     index = 0
   ) => {
@@ -70,6 +87,8 @@ export default function Chatbot(props: ChatbotProps) {
               chunks: response?.chunk_ids,
               total_tokens: response.total_tokens,
               response_time: response?.response_time,
+              speaking: false,
+              copying: false,
             },
           ]);
         } else {
@@ -86,6 +105,8 @@ export default function Chatbot(props: ChatbotProps) {
             lastmsg.chunk_ids = response?.chunk_ids;
             lastmsg.total_tokens = response?.total_tokens;
             lastmsg.response_time = response?.response_time;
+            lastmsg.speaking = false;
+            lastmsg.copying = false;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -102,7 +123,6 @@ export default function Chatbot(props: ChatbotProps) {
       setListMessages((msgs) => msgs.map((msg) => (msg.isTyping ? { ...msg, isTyping: false } : msg)));
     }
   };
-
   let date = new Date();
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
@@ -124,31 +144,33 @@ export default function Chatbot(props: ChatbotProps) {
       simulateTypingEffect({ reply: ' ' });
       const chatbotAPI = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
       const chatresponse = chatbotAPI?.response;
+      console.log('api', chatresponse);
       chatbotReply = chatresponse?.data?.data?.message;
       chatSources = chatresponse?.data?.data?.info.sources;
       chatModel = chatresponse?.data?.data?.info.model;
       chatChunks = chatresponse?.data?.data?.info.chunkids;
       chatTokensUsed = chatresponse?.data?.data?.info.total_tokens;
       chatTimeTaken = chatresponse?.data?.data?.info.response_time;
-      simulateTypingEffect({
+      const finalbotReply = {
         reply: chatbotReply,
         sources: chatSources,
         model: chatModel,
         chunk_ids: chatChunks,
         total_tokens: chatTokensUsed,
         response_time: chatTimeTaken,
-      });
+        speaking: false,
+        copying: false,
+      };
+      simulateTypingEffect(finalbotReply);
     } catch (error) {
       chatbotReply = "Oops! It seems we couldn't retrieve the answer. Please try again later";
       setInputMessage('');
       simulateTypingEffect({ reply: chatbotReply });
     }
   };
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-
   useEffect(() => {
     scrollToBottom();
   }, [listMessages]);
@@ -157,16 +179,63 @@ export default function Chatbot(props: ChatbotProps) {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
   }, [listMessages]);
 
+  useEffect(() => {
+    if (clear) {
+      cancel();
+      setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
+    }
+  }, [clear]);
+
+  const handleCopy = (message: string, id: number) => {
+    copy(message);
+    setListMessages((msgs) =>
+      msgs.map((msg) => {
+        if (msg.id === id) {
+          msg.copying = true;
+        }
+        return msg;
+      })
+    );
+    setCopyMessageId(id);
+    setTimeout(() => {
+      setCopyMessageId(null);
+      setListMessages((msgs) =>
+        msgs.map((msg) => {
+          if (msg.id === id) {
+            msg.copying = false;
+          }
+          return msg;
+        })
+      );
+    }, 2000);
+  };
+
+  const handleCancel = (id: number) => {
+    cancel();
+    setListMessages((msgs) => msgs.map((msg) => (msg.id === id ? { ...msg, speaking: false } : msg)));
+  };
+
+  const handleSpeak = (chatMessage: any, id: number) => {
+    speak({ text: chatMessage });
+    setListMessages((msgs) => {
+      const messageWithSpeaking = msgs.find((msg) => msg.speaking);
+      return msgs.map((msg) => (msg.id === id && !messageWithSpeaking ? { ...msg, speaking: true } : msg));
+    });
+  };
+
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
-      <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3'>
-        <Widget className='n-bg-palette-neutral-bg-weak' header='' isElevated={false}>
+      <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3 pr-3'>
+        <Widget className='n-bg-palette-neutral-bg-weak w-full' header='' isElevated={false}>
           <div className='flex flex-col gap-4 gap-y-4'>
             {listMessages.map((chat, index) => (
               <div
                 ref={messagesEndRef}
                 key={chat.id}
-                className={`flex gap-2.5 ${chat.user === 'chatbot' ? 'flex-row' : 'flex-row-reverse'} `}
+                className={clsx(`flex gap-2.5`, {
+                  'flex-row': chat.user === 'chatbot',
+                  'flex-row-reverse': chat.user !== 'chatbot',
+                })}
               >
                 <div className='w-8 h-8'>
                   {chat.user === 'chatbot' ? (
@@ -187,7 +256,6 @@ export default function Chatbot(props: ChatbotProps) {
                       name='KM'
                       shape='square'
                       size='x-large'
-                      source={ChatBotUserAvatar}
                       status='online'
                       type='image'
                     />
@@ -196,11 +264,9 @@ export default function Chatbot(props: ChatbotProps) {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${
-                    chat.user === 'chatbot'
-                      ? 'n-bg-palette-neutral-bg-strong max-w-[315px]'
-                      : 'n-bg-palette-primary-bg-weak max-w-[305px]'
-                  }`}
+                  className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
+                    chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                  } `}
                 >
                   <div
                     className={`${
@@ -209,15 +275,7 @@ export default function Chatbot(props: ChatbotProps) {
                         : ''
                     }`}
                   >
-                    {chat.message.split(/`(.+?)`/).map((part, index) =>
-                      (index % 2 === 1 ? (
-                        <span key={index} style={formattedTextStyle}>
-                          {part}
-                        </span>
-                      ) : (
-                        part
-                      ))
-                    )}
+                    <ReactMarkdown>{chat.message}</ReactMarkdown>
                   </div>
                   <div>
                     <div>
@@ -225,25 +283,70 @@ export default function Chatbot(props: ChatbotProps) {
                         {chat.datetime}
                       </Typography>
                     </div>
-                    {((chat.user === 'chatbot' && chat.id !== 2 && chat.sources?.length !== 0) || chat.isLoading) && (
-                      <div className='flex'>
-                        <IconButton
-                          clean
-                          aria-label='Retrieval Information'
-                          disabled={chat.isTyping || chat.isLoading}
-                          onClick={() => {
-                            setModelModal(chat.model ?? '');
-                            setSourcesModal(chat.sources ?? []);
-                            setResponseTime(chat.response_time ?? 0);
-                            setChunkModal(chat.chunk_ids ?? []);
-                            setTokensUsed(chat.total_tokens ?? 0);
-                            setShowInfoModal(true);
-                          }}
-                        >
-                          <InformationCircleIconOutline className='w-4 h-4 inline-block' />
-                        </IconButton>
-                      </div>
-                    )}
+                    {chat.user === 'chatbot' &&
+                      chat.id !== 2 &&
+                      chat.sources?.length !== 0 &&
+                      !chat.isLoading &&
+                      !chat.isTyping && (
+                        <div className='flex inline-block'>
+                          <ButtonWithToolTip
+                            className='w-4 h-4 inline-block p-6 mt-1.5'
+                            fill='text'
+                            placement='top'
+                            clean
+                            text='Retrieval Information'
+                            label='Retrieval Information'
+                            disabled={chat.isTyping || chat.isLoading}
+                            onClick={() => {
+                              setModelModal(chat.model ?? '');
+                              setSourcesModal(chat.sources ?? []);
+                              setResponseTime(chat.response_time ?? 0);
+                              setChunkModal(chat.chunk_ids ?? []);
+                              setTokensUsed(chat.total_tokens ?? 0);
+                              setShowInfoModal(true);
+                            }}
+                          >
+                            {' '}
+                            {buttonCaptions.details}
+                          </ButtonWithToolTip>
+                          <IconButtonWithToolTip
+                            label='copy text'
+                            placement='top'
+                            clean
+                            text={chat.copying ? tooltips.copied : tooltips.copy}
+                            onClick={() => handleCopy(chat.message, chat.id)}
+                            disabled={chat.isTyping || chat.isLoading}
+                          >
+                            <ClipboardDocumentIconOutline className='w-4 h-4 inline-block' />
+                          </IconButtonWithToolTip>
+                          {copyMessageId === chat.id && (
+                            <>
+                              <span className='pt-4 text-xs'>Copied!</span>
+                              <span style={{ display: 'none' }}>{value}</span>
+                            </>
+                          )}
+                          <IconButtonWithToolTip
+                            placement='top'
+                            clean
+                            onClick={() => {
+                              if (chat.speaking) {
+                                handleCancel(chat.id);
+                              } else {
+                                handleSpeak(chat.message, chat.id);
+                              }
+                            }}
+                            text={chat.speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
+                            disabled={listMessages.some((msg) => msg.speaking && msg.id !== chat.id)}
+                            label={chat.speaking ? 'stop speaking' : 'text to speech'}
+                          >
+                            {chat.speaking ? (
+                              <SpeakerXMarkIconOutline className='w-4 h-4 inline-block' />
+                            ) : (
+                              <SpeakerWaveIconOutline className='w-4 h-4 inline-block' />
+                            )}
+                          </IconButtonWithToolTip>
+                        </div>
+                      )}
                   </div>
                 </Widget>
               </div>
@@ -262,7 +365,7 @@ export default function Chatbot(props: ChatbotProps) {
             onChange={handleInputChange}
           />
           <Button type='submit' disabled={loading}>
-            Submit
+            {buttonCaptions.submit}
           </Button>
         </form>
       </div>
@@ -295,4 +398,6 @@ export default function Chatbot(props: ChatbotProps) {
       </Modal>
     </div>
   );
-}
+};
+
+export default Chatbot;

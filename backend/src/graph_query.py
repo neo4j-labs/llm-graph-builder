@@ -19,7 +19,7 @@ QUERY_MAP = {
 
 QUERY_WITH_DOCUMENT = """
     MATCH docs = (d:Document) 
-    WHERE d.fileName = $document_name AND (d.status = 'Cancelled' OR d.status = 'Completed')
+    WHERE d.fileName IN $document_names
     WITH docs, d ORDER BY d.createdAt DESC 
     CALL {{ WITH d
       OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
@@ -64,7 +64,7 @@ def get_graphDB_driver(uri, username, password):
         # raise Exception(error_message) from e 
 
 
-def get_cypher_query(query_map, query_type, document_name):
+def get_cypher_query(query_map, query_type, document_names):
     """
     Generates a Cypher query based on the provided parameters using global templates.
 
@@ -75,8 +75,8 @@ def get_cypher_query(query_map, query_type, document_name):
         query_to_change = query_map[query_type].strip()
         logging.info(f"Query template retrieved for type {query_type}")
 
-        if document_name:
-            logging.info(f"Generating query for document: {document_name}")
+        if document_names:
+            logging.info(f"Generating query for documents: {document_names}")
             query = QUERY_WITH_DOCUMENT.format(query_to_change=query_to_change)
         else:
             logging.info("Generating query without specific document.")
@@ -87,7 +87,7 @@ def get_cypher_query(query_map, query_type, document_name):
         logging.error("graph_query module: An unexpected error occurred while generating the Cypher query.")
     
 
-def execute_query(driver, query,document_name,doc_limit=None):
+def execute_query(driver, query,document_names,doc_limit=None):
     """
     Executes a specified query using the Neo4j driver, with parameters based on the presence of a document name.
 
@@ -95,9 +95,9 @@ def execute_query(driver, query,document_name,doc_limit=None):
     tuple: Contains records, summary of the execution, and keys of the records.
     """
     try:
-        if document_name:
-            logging.info(f"Executing query for document: {document_name}")
-            records, summary, keys = driver.execute_query(query, document_name=document_name)
+        if document_names:
+            logging.info(f"Executing query for documents: {document_names}")
+            records, summary, keys = driver.execute_query(query, document_names=document_names)
         else:
             logging.info(f"Executing query with a document limit of {doc_limit}")
             records, summary, keys = driver.execute_query(query, doc_limit=doc_limit)
@@ -250,36 +250,21 @@ def get_graph_results(uri, username, password, query_type,document_names):
     dict: Contains the session ID, user-defined messages with nodes and relationships, and the user module identifier.
     """
     try:
-        # logging.info(f"URI: {uri}, Username: {username}, Password: {password}, Query Type: {query_type}, Document Names: {document_names}")
         logging.info(f"Starting graph query process")
-        driver = get_graphDB_driver(uri, username, password)
-        # if document_names:
-        #     document_names = document_names.split(",")
-        # else:
-        #     document_names = get_completed_documents(driver)
-        #     doc_limit = doc_limit if doc_limit else 3
-        #     if len(document_names) > int(doc_limit):
-        #         document_names = document_names[:int(doc_limit)]
-        #     print(document_names)
-        # document_names = document_names.split(",")    
-        nodes = list()
-        relationships = list()
+        driver = get_graphDB_driver(uri, username, password)  
         document_names= list(map(str.strip, json.loads(document_names)))
-        for document in document_names:
-            query = get_cypher_query(QUERY_MAP, query_type, document.strip())
-            # print(query)
-            records, summary , keys = execute_query(driver, query, document.strip())
-            # print(query)
-            document_nodes = extract_node_elements(records)
-            document_relationships = extract_relationships(records)
-            nodes.extend(document_nodes)
-            relationships.extend(document_relationships)
-        
-        logging.info(f"no of nodes : {len(nodes)}")
-        logging.info(f"no of relations : {len(relationships)}")
+        query = get_cypher_query(QUERY_MAP, query_type, document_names)
+        records, summary , keys = execute_query(driver, query, document_names)
+        document_nodes = extract_node_elements(records)
+        document_relationships = extract_relationships(records)
+
+        print(query)
+
+        logging.info(f"no of nodes : {len(document_nodes)}")
+        logging.info(f"no of relations : {len(document_relationships)}")
         result = {
-            "nodes": nodes,
-            "relationships": relationships
+            "nodes": document_nodes,
+            "relationships": document_relationships
         }
 
         logging.info(f"Query process completed successfully")

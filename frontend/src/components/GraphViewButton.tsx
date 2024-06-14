@@ -17,7 +17,7 @@ const GraphViewButton: React.FC<GraphViewButtonProps> = ({ nodeValues, relations
   };
   return (
     <>
-      <Button onClick={handleGraphViewClick}>Graph Schema used for Entity Extraction</Button>
+      <Button onClick={handleGraphViewClick}>Graph Entities used for Answer Generation</Button>
       <GraphViewModal
         open={openGraphView}
         setGraphViewOpen={setOpenGraphView}

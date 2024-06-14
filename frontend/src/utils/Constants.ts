@@ -25,10 +25,14 @@ export const docChunkEntities = `+[chunks]
 + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
 //chunks with entities
 + collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
+export const APP_SOURCES =
+  process.env.REACT_APP_SOURCES !== ''
+    ? process.env.REACT_APP_SOURCES?.split(',') || []
+    : ['gcs', 's3', 'local', 'wiki', 'youtube'];
 export const llms =
   process.env?.LLM_MODELS?.trim() != ''
     ? process.env.LLM_MODELS?.split(',')
-    : ['Diffbot', 'Gemini 1.0 Pro', 'OpenAI GPT 3.5', 'OpenAI GPT 4o', 'Gemini 1.5 Pro'];
+    : ['Diffbot', 'Gemini 1.0 Pro', 'OpenAI GPT 3.5', 'OpenAI GPT 4o', 'Gemini 1.5 Pro', 'Groq llama3'];
 
 export const defaultLLM = llms?.includes('OpenAI GPT 3.5')
   ? 'OpenAI GPT 3.5'
@@ -37,7 +41,7 @@ export const defaultLLM = llms?.includes('OpenAI GPT 3.5')
   : 'Diffbot';
 
 export const chunkSize = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 5 * 1024 * 1024;
-
+export const timeperpage = process.env.TIME_PER_PAGE ? parseInt(process.env.TIME_PER_PAGE) : 50;
 export const NODES_OPTIONS = [
   {
     label: 'Person',
@@ -84,4 +88,47 @@ export const queryMap: {
   DocChunks: 'docChunks',
   ChunksEntities: 'chunksEntities',
   DocChunkEntities: 'docChunkEntities',
+};
+
+export const tooltips = {
+  generateGraph: 'Select one or more (new) files to turn into a graph.',
+  deleteFile: 'Select one or more files to delete.',
+  showGraph: 'Select one or more files to preview the generated graph.',
+  bloomGraph: 'Open Neo4j Bloom for advanced graph interaction and exploration.',
+  deleteSelectedFiles: 'File/Files to be deleted',
+  documentation: 'Documentation',
+  github: 'GitHub Issues',
+  theme: 'Light / Dark mode',
+  settings: 'Entity Graph Extraction Settings',
+  chat: 'Ask questions about the processed documents.',
+  sources: 'Upload files of different formats.',
+  deleteChat: 'Delete',
+  maximise: 'Maximise',
+  copy: 'Copy to Clipboard',
+  copied: 'Copied',
+  stopSpeaking: 'Stop Speaking',
+  textTospeech: 'Text to Speech',
+  createSchema: 'Create your own schema by passing text',
+  useExistingSchema: 'Use the already existing schema from DB',
+  clearChat: 'Clear Chat History',
+};
+
+export const buttonCaptions = {
+  exploreGraphWithBloom: 'Explore Graph with Bloom',
+  showPreviewGraph: 'Preview Graph',
+  deleteFiles: 'Delete Files',
+  generateGraph: 'Generate Graph',
+  dropzoneSpan: 'Documents, Images, Unstructured text',
+  youtube: 'Youtube',
+  gcs: 'GCS',
+  amazon: 'Amazon S3',
+  noLables: 'No Labels Found in the Database',
+  dropYourCreds: 'Drop your neo4j credentials file here',
+  analyze: 'Analyze text to extract graph schema',
+  connect: 'Connect',
+  disconnect: 'Disconnect',
+  submit: 'Submit',
+  connectToNeo4j: 'Connect to Neo4j',
+  cancel: 'Cancel',
+  details: 'Details',
 };

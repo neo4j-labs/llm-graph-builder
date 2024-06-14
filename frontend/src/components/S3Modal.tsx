@@ -1,12 +1,13 @@
 import { TextInput } from '@neo4j-ndl/react';
 import React, { useState } from 'react';
-import { CustomFile, S3ModalProps, UserCredentials } from '../types';
+import { CustomFile, CustomFileBase, S3ModalProps, UserCredentials } from '../types';
 import { urlScanAPI } from '../services/URLScan';
 import { useCredentials } from '../context/UserCredentials';
 import { validation } from '../utils/Utils';
 import { useFileContext } from '../context/UsersFiles';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
+import { buttonCaptions } from '../utils/Constants';
 interface S3File {
   fileName: string;
   fileSize: number;
@@ -32,7 +33,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   };
 
   const submitHandler = async (url: string) => {
-    const defaultValues: CustomFile = {
+    const defaultValues: CustomFileBase = {
       processing: 0,
       status: 'New',
       NodesCount: 0,
@@ -40,6 +41,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       type: 'PDF',
       model: model,
       fileSource: 's3 bucket',
+      processingProgress: undefined,
     };
     if (url) {
       setValid(validation(bucketUrl) && isFocused);
@@ -82,6 +84,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               name: item.fileName,
               size: item.fileSize,
               source_url: item.url,
+              total_pages: 'N/A',
               id: uuidv4(),
               ...defaultValues,
             });
@@ -96,6 +99,8 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               processing: defaultValues.processing,
               model: defaultValues.model,
               fileSource: defaultValues.fileSource,
+              processingProgress: defaultValues.processingProgress,
+              total_pages:"N/A"
             });
           }
         });
@@ -132,7 +137,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       submitHandler={() => submitHandler(bucketUrl)}
       status={status}
       setStatus={setStatus}
-      submitLabel='Submit'
+      submitLabel={buttonCaptions.submit}
     >
       <div className='w-full inline-block'>
         <TextInput

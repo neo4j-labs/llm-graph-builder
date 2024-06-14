@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 from langchain_openai import ChatOpenAI
 from langchain_google_vertexai import ChatVertexAI
+from langchain_groq import ChatGroq
 from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
 from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransformer
 # from neo4j.debug import watch
@@ -19,36 +20,36 @@ from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransf
 #watch("neo4j")
 
 
-def check_url_source(source_type, yt_url:str=None, queries_list:List[str]=None):
-    languages=[]
+def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
+    language=''
     try:
       logging.info(f"incoming URL: {yt_url}")
       if source_type == 'youtube':
         if re.match('(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?',yt_url.strip()):
           youtube_url = create_youtube_url(yt_url.strip())
           logging.info(youtube_url)
-          return youtube_url,languages
+          return youtube_url,language
         else:
           raise Exception('Incoming URL is not youtube URL')
       
       elif  source_type == 'Wikipedia':
-        wiki_query_ids=[]
+        wiki_query_id=''
         #pattern = r"https?:\/\/([a-zA-Z0-9\.\,\_\-\/]+)\.wikipedia\.([a-zA-Z]{2,3})\/wiki\/([a-zA-Z0-9\.\,\_\-\/]+)"
         wikipedia_url_regex = r'https?:\/\/(www\.)?([a-zA-Z]{2,3})\.wikipedia\.org\/wiki\/(.*)'
         wiki_id_pattern = r'^[a-zA-Z0-9 _\-\.\,\:\(\)\[\]\{\}\/]*$'
         
-        for wiki_url in queries_list:
-          match = re.search(wikipedia_url_regex, wiki_url.strip())
-          if match:
-                languages.append(match.group(2))
-                wiki_query_ids.append(match.group(3))
-          else : 
-                languages.append("en")
-                wiki_query_ids.append(wiki_url.strip())
- 
+        match = re.search(wikipedia_url_regex, wiki_query.strip())
+        if match:
+                language = match.group(2)
+                wiki_query_id = match.group(3)
+          # else : 
+          #       languages.append("en")
+          #       wiki_query_ids.append(wiki_url.strip())
+        else:
+            raise Exception(f'Not a valid wikipedia url: {wiki_query} ')
 
-        logging.info(f"wikipedia query ids = {wiki_query_ids}")     
-        return wiki_query_ids, languages     
+        logging.info(f"wikipedia query id = {wiki_query_id}")     
+        return wiki_query_id, language     
     except Exception as e:
       logging.error(f"Error in recognize URL: {e}")
       raise Exception(e)
@@ -133,8 +134,14 @@ def get_llm(model_version:str) :
         llm = ChatOpenAI(api_key=os.environ.get('OPENAI_API_KEY'), 
                          model=model_version, 
                          temperature=0)
+        
+    elif "llama3" in model_version:
+        llm = ChatGroq(api_key=os.environ.get('GROQ_API_KEY'),
+                       temperature=0,
+                       model_name=model_version)
+    
     else:
         llm = DiffbotGraphTransformer(diffbot_api_key=os.environ.get('DIFFBOT_API_KEY'))    
-    logging.info(f"Model created : Model Version: {model_version}")
+    logging.info(f"Model created - Model Version: {model_version}")
     return llm
   

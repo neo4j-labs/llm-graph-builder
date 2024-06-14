@@ -2,6 +2,7 @@ from langchain_community.graphs import Neo4jGraph
 from src.diffbot_transformer import get_graph_from_diffbot
 from src.openAI_llm import get_graph_from_OpenAI
 from src.gemini_llm import get_graph_from_Gemini
+from src.groq_llama3_llm import get_graph_from_Groq_Llama3
 from typing import List
 import logging
 from src.shared.constants import *
@@ -9,7 +10,7 @@ from src.shared.constants import *
 logging.basicConfig(format="%(asctime)s - %(message)s", level="INFO")
 
 
-def generate_graphDocuments(model: str, graph: Neo4jGraph, chunkId_chunkDoc_list: List, allowedNodes, allowedRelationship):
+def generate_graphDocuments(model: str, graph: Neo4jGraph, chunkId_chunkDoc_list: List, allowedNodes=None, allowedRelationship=None):
     
     if  allowedNodes is None or allowedNodes=="":
         allowedNodes =[]
@@ -31,6 +32,9 @@ def generate_graphDocuments(model: str, graph: Neo4jGraph, chunkId_chunkDoc_list
 
     elif model in GEMINI_MODELS:
         graph_documents = get_graph_from_Gemini(MODEL_VERSIONS[model], graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
+
+    elif model in GROQ_MODELS :
+        graph_documents = get_graph_from_Groq_Llama3(MODEL_VERSIONS[model], graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
 
     logging.info(f"graph_documents = {len(graph_documents)}")
     return graph_documents
