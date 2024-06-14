@@ -151,9 +151,6 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
             c.start_time = CASE WHEN data.start_time IS NOT NULL THEN data.start_time END,
             c.end_time = CASE WHEN data.end_time IS NOT NULL THEN data.end_time END
         WITH data, c
-        WHERE data.page_number IS NOT NULL
-        SET c.page_number = data.page_number
-        WITH data, c
         MATCH (d:Document {fileName: data.f_name})
         MERGE (c)-[:PART_OF]->(d)
     """
