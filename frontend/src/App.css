@@ -287,11 +287,13 @@
   .outline-dashed h6 {
     font-size: 14px;
   }
-  .outline-dashed  .wikipedia-div{
+
+  .outline-dashed .wikipedia-div {
     padding: 12px;
   }
 
 }
+
 @container (min-height:400px) and (max-height:500px) {
   .outline-dashed img {
     width: 35px;
@@ -301,11 +303,13 @@
   .outline-dashed h6 {
     font-size: 14px;
   }
-  .outline-dashed  .wikipedia-div{
+
+  .outline-dashed .wikipedia-div {
     padding: 10px;
   }
 
 }
+
 @container (max-height:300px) {
   .outline-dashed img {
     width: 30px;
@@ -319,16 +323,32 @@
   .dropzoneContainer .ndl-upload-img-wrapper {
     display: none !important;
   }
-  .dropzoneContainer .ndl-dropzone-header{
+
+  .dropzoneContainer .ndl-dropzone-header {
     margin-bottom: 5px !important;
   }
-  .imageBg >div{
+
+  .imageBg>div {
     padding: 5px;
   }
-  .outline-dashed  .wikipedia-div{
+
+  .outline-dashed .wikipedia-div {
     padding: 8px;
   }
 }
-.ndl-dropzone .ndl-dropzone-header{
+
+.ndl-dropzone .ndl-dropzone-header {
   margin-bottom: 0 !important;
+}
+
+.node_label__value-container--has-value {
+  max-height: 215px;
+  overflow-y: scroll !important;
+  scrollbar-width: thin;
+}
+
+.relationship_label__value-container--has-value {
+  max-height: 215px;
+  overflow-y: scroll !important;
+  scrollbar-width: thin
 }
