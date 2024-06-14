@@ -44,6 +44,7 @@ def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id,
         obj_source_node.file_type = 'pdf'
         obj_source_node.file_size = file_info['file_size_bytes']
         obj_source_node.file_source = source_type
+        obj_source_node.total_pages = 1
         obj_source_node.model = model
         obj_source_node.url = str(source_url+file_name)
         obj_source_node.awsAccessKeyId = aws_access_key_id
@@ -73,6 +74,7 @@ def create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_na
       obj_source_node.file_size = file_metadata['fileSize']
       obj_source_node.url = file_metadata['url']
       obj_source_node.file_source = source_type
+      obj_source_node.total_pages = 1
       obj_source_node.model = model
       obj_source_node.file_type = 'pdf'
       obj_source_node.gcsBucket = gcs_bucket_name
@@ -442,11 +444,11 @@ def get_labels_and_relationtypes(graph):
           RETURN collect { 
           CALL db.labels() yield label 
           WHERE NOT label  IN ['Chunk','_Bloom_Perspective_'] 
-          return label order by label limit 50 } as labels, 
+          return label order by label limit 100 } as labels, 
           collect { 
           CALL db.relationshipTypes() yield relationshipType  as type 
           WHERE NOT type  IN ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_'] 
-          return type order by type LIMIT 50 } as relationshipTypes
+          return type order by type LIMIT 100 } as relationshipTypes
           """
   graphDb_data_Access = graphDBdataAccess(graph)
   result = graphDb_data_Access.execute_query(query)
