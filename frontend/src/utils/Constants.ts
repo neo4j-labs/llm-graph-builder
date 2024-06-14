@@ -131,4 +131,5 @@ export const buttonCaptions = {
   submit: 'Submit',
   connectToNeo4j: 'Connect to Neo4j',
   cancel: 'Cancel',
+  details: 'Details',
 };
