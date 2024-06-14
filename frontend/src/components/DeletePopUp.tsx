@@ -20,7 +20,7 @@ export default function DeletePopUp({
       <Dialog.Content>
         <h5 className='max-w-[90%]'>
           Are you sure you want to permanently delete {no_of_files} {no_of_files > 1 ? 'Files' : 'File'}{' '}
-          {deleteEntities ? 'and associated entities' : ''}?
+          {deleteEntities ? 'and associated entities' : ''} from the graph database ?
         </h5>
         <div className='mt-1'>
           <Checkbox
