@@ -92,7 +92,11 @@ export interface S3ModalProps {
   hideModal: () => void;
   open: boolean;
 }
-
+export interface GCSModalProps {
+  hideModal: () => void;
+  open: boolean;
+  openGCSModal:()=>void
+}
 export interface ConnectionModalProps {
   open: boolean;
   setOpenConnection: Dispatch<SetStateAction<boolean>>;

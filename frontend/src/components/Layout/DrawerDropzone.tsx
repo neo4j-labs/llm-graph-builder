@@ -76,9 +76,8 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
             <div className='relative h-full'>
               <div className='flex flex-col h-full'>
                 <div
-                  className={`mx-6 flex flex-none items-center justify-between ${
-                    process.env.ENV != 'PROD' ? 'pb-6' : 'pb-5'
-                  }`}
+                  className={`mx-6 flex flex-none items-center justify-between ${process.env.ENV != 'PROD' ? 'pb-6' : 'pb-5'
+                    }`}
                 >
                   {process.env.ENV != 'PROD' && (
                     <Typography variant='body-medium' className='flex items-center content-center'>
@@ -94,9 +93,8 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                     {isBackendConnected && APP_SOURCES != undefined && APP_SOURCES.length === 0 ? (
                       <Flex gap='6' className='h-full source-container'>
                         <div
-                          className={`px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 imageBg ${
-                            process.env.ENV === 'PROD' ? 'mt-2' : ''
-                          }`}
+                          className={`px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 imageBg ${process.env.ENV === 'PROD' ? 'mt-2' : ''
+                            }`}
                         >
                           <DropZone />
                         </div>
@@ -114,7 +112,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                         </div>
                         <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
                           <GCSButton openModal={openGCSModal} />
-                          <GCSModal open={showGCSModal} hideModal={hideGCSModal} />
+                          <GCSModal openGCSModal={openGCSModal} open={showGCSModal} hideModal={hideGCSModal} />
                         </div>
                       </Flex>
                     ) : (
@@ -137,7 +135,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                           </div>
                         )}
                         {(APP_SOURCES != undefined && APP_SOURCES.includes('s3')) ||
-                        (APP_SOURCES != undefined && APP_SOURCES.includes('gcs')) ? (
+                          (APP_SOURCES != undefined && APP_SOURCES.includes('gcs')) ? (
                           <>
                             {APP_SOURCES.includes('s3') && (
                               <div
@@ -152,7 +150,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                                 className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}
                               >
                                 <GCSButton openModal={openGCSModal} />
-                                <GCSModal open={showGCSModal} hideModal={hideGCSModal} />
+                                <GCSModal openGCSModal={openGCSModal} open={showGCSModal} hideModal={hideGCSModal} />
                               </div>
                             )}
                           </>
@@ -167,9 +165,8 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                     {APP_SOURCES != undefined && APP_SOURCES.length === 0 ? (
                       <Flex gap='6' className='h-full source-container'>
                         <div
-                          className={`px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 imageBg ${
-                            process.env.ENV === 'PROD' ? 'mt-2' : ''
-                          }`}
+                          className={`px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 imageBg ${process.env.ENV === 'PROD' ? 'mt-2' : ''
+                            }`}
                         >
                           <DropZone />
                         </div>
@@ -187,7 +184,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                         </div>
                         <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
                           <GCSButton openModal={openGCSModal} />
-                          <GCSModal open={showGCSModal} hideModal={hideGCSModal} />
+                          <GCSModal openGCSModal={openGCSModal} open={showGCSModal} hideModal={hideGCSModal} />
                         </div>
                       </Flex>
                     ) : (
@@ -210,7 +207,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                           </div>
                         )}
                         {(APP_SOURCES != undefined && APP_SOURCES.includes('s3')) ||
-                        (APP_SOURCES != undefined && APP_SOURCES.includes('gcs')) ? (
+                          (APP_SOURCES != undefined && APP_SOURCES.includes('gcs')) ? (
                           <>
                             {APP_SOURCES != undefined && APP_SOURCES.includes('s3') && (
                               <div
@@ -225,7 +222,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                                 className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}
                               >
                                 <GCSButton openModal={openGCSModal} />
-                                <GCSModal open={showGCSModal} hideModal={hideGCSModal} />
+                                <GCSModal openGCSModal={openGCSModal} open={showGCSModal} hideModal={hideGCSModal} />
                               </div>
                             )}
                           </>
