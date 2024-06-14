@@ -209,7 +209,7 @@ export default function SettingsModal({
                 : tooltips.useExistingSchema
             }
             disabled={!nodeLabelOptions.length && !relationshipTypeOptions.length}
-            onClick={() => clickHandler}
+            onClick={clickHandler}
             label='Use Existing Schema'
             placement='top'
           >
@@ -224,7 +224,7 @@ export default function SettingsModal({
             }}
             label='Get Existing Schema From Text'
           >
-            Get Existing Schema From Text
+            Get Schema From Text
           </ButtonWithToolTip>
         </Dialog.Actions>
       </Dialog.Content>
