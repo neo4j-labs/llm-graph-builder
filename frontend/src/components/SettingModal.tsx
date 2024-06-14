@@ -137,10 +137,8 @@ export default function SettingsModal({
           const response = await getNodeLabelsAndRelTypes(userCredentials as UserCredentials);
           setLoading(false);
           if (response.data.data.length) {
-            const nodelabels = response.data?.data[0]?.labels?.slice(0, 20).map((l) => ({ value: l, label: l }));
-            const reltypes = response.data?.data[0]?.relationshipTypes
-              .slice(0, 20)
-              .map((t) => ({ value: t, label: t }));
+            const nodelabels = response.data?.data[0]?.labels.map((l) => ({ value: l, label: l }));
+            const reltypes = response.data?.data[0]?.relationshipTypes.map((t) => ({ value: t, label: t }));
             setnodeLabelOptions(nodelabels);
             setrelationshipTypeOptions(reltypes);
           }
