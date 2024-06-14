@@ -45,7 +45,7 @@ def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id,
         obj_source_node.file_type = 'pdf'
         obj_source_node.file_size = file_info['file_size_bytes']
         obj_source_node.file_source = source_type
-        obj_source_node.total_pages = 1
+        obj_source_node.total_pages = 'N/A'
         obj_source_node.model = model
         obj_source_node.url = str(source_url+file_name)
         obj_source_node.awsAccessKeyId = aws_access_key_id
@@ -75,7 +75,7 @@ def create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_na
       obj_source_node.file_size = file_metadata['fileSize']
       obj_source_node.url = file_metadata['url']
       obj_source_node.file_source = source_type
-      obj_source_node.total_pages = 1
+      obj_source_node.total_pages = 'N/A'
       obj_source_node.model = model
       obj_source_node.file_type = 'pdf'
       obj_source_node.gcsBucket = gcs_bucket_name
