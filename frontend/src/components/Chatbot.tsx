@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button, Widget, Typography, Avatar, TextInput, IconButton, Modal, useCopyToClipboard } from '@neo4j-ndl/react';
 import {
-  InformationCircleIconOutline,
   XMarkIconOutline,
   ClipboardDocumentIconOutline,
   SpeakerWaveIconOutline,
@@ -38,7 +37,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
 
   const [value, copy] = useCopyToClipboard();
-  const { speak, cancel, supported } = useSpeechSynthesis({
+  const { speak, cancel } = useSpeechSynthesis({
     onEnd: () => {
       setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
     },
