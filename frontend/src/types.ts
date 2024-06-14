@@ -179,7 +179,7 @@ export interface CommonButtonProps {
 export interface Source {
   page_numbers?: number[];
   source_name: string;
-  time_stamps?: string;
+  start_time?: string;
 }
 export interface Messages {
   id: number;
@@ -420,9 +420,11 @@ export interface Chunk {
   fileName: string;
   length: number;
   embedding: string | null;
-  page_number: number;
-  start_time: string;
-  content_offset: string;
+  page_number?: number;
+  start_time?: string;
+  content_offset?: string;
+  url?: string;
+  fileSource: string;
 }
 
 export interface SpeechSynthesisProps {

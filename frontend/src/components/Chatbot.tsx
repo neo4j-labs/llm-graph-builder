@@ -19,9 +19,10 @@ import ReactMarkdown from 'react-markdown';
 import IconButtonWithToolTip from './IconButtonToolTip';
 import { buttonCaptions, tooltips } from '../utils/Constants';
 import useSpeechSynthesis from '../hooks/useSpeech';
+import ButtonWithToolTip from './ButtonWithToolTip';
 
 const Chatbot: React.FC<ChatbotProps> = (props) => {
-  const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen } = props;
+  const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, clear } = props;
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
@@ -179,6 +180,13 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
   }, [listMessages]);
 
+  useEffect(() => {
+    if (clear) {
+      cancel();
+      setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
+    }
+  }, [clear]);
+
   const handleCopy = (message: string, id: number) => {
     copy(message);
     setListMessages((msgs) =>
@@ -276,66 +284,70 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                         {chat.datetime}
                       </Typography>
                     </div>
-                    {((chat.user === 'chatbot' && chat.id !== 2 && chat.sources?.length !== 0) || chat.isLoading) && (
-                      <div className='flex'>
-                        <IconButtonWithToolTip
-                          placement='top'
-                          clean
-                          text='Retrieval Information'
-                          label='Retrieval Information'
-                          disabled={chat.isTyping || chat.isLoading}
-                          onClick={() => {
-                            setModelModal(chat.model ?? '');
-                            setSourcesModal(chat.sources ?? []);
-                            setResponseTime(chat.response_time ?? 0);
-                            setChunkModal(chat.chunk_ids ?? []);
-                            setTokensUsed(chat.total_tokens ?? 0);
-                            setShowInfoModal(true);
-                          }}
-                        >
-                          <InformationCircleIconOutline className='w-4 h-4 inline-block' />
-                        </IconButtonWithToolTip>
-                        <IconButtonWithToolTip
-                          label='copy text'
-                          placement='top'
-                          clean
-                          text={chat.copying ? tooltips.copied : tooltips.copy}
-                          onClick={() => handleCopy(chat.message, chat.id)}
-                          disabled={chat.isTyping || chat.isLoading}
-                        >
-                          <ClipboardDocumentIconOutline className='w-4 h-4 inline-block' />
-                        </IconButtonWithToolTip>
-                        {copyMessageId === chat.id && (
-                          <>
-                            <span className='pt-4 text-xs'>Copied!</span>
-                            <span style={{ display: 'none' }}>{value}</span>
-                          </>
-                        )}
-                        {supported && chat.speaking ? (
-                          <IconButtonWithToolTip
+                    {chat.user === 'chatbot' &&
+                      chat.id !== 2 &&
+                      chat.sources?.length !== 0 &&
+                      !chat.isLoading &&
+                      !chat.isTyping && (
+                        <div className='flex inline-block'>
+                          <ButtonWithToolTip
+                            className='w-4 h-4 inline-block p-6 mt-1.5'
+                            fill='text'
                             placement='top'
-                            label='text to speak'
                             clean
-                            onClick={() => handleCancel(chat.id)}
-                            text={chat.speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
+                            text='Retrieval Information'
+                            label='Retrieval Information'
+                            disabled={chat.isTyping || chat.isLoading}
+                            onClick={() => {
+                              setModelModal(chat.model ?? '');
+                              setSourcesModal(chat.sources ?? []);
+                              setResponseTime(chat.response_time ?? 0);
+                              setChunkModal(chat.chunk_ids ?? []);
+                              setTokensUsed(chat.total_tokens ?? 0);
+                              setShowInfoModal(true);
+                            }}
+                          >
+                            {' '}
+                            {buttonCaptions.details}
+                          </ButtonWithToolTip>
+                          <IconButtonWithToolTip
+                            label='copy text'
+                            placement='top'
+                            clean
+                            text={chat.copying ? tooltips.copied : tooltips.copy}
+                            onClick={() => handleCopy(chat.message, chat.id)}
                             disabled={chat.isTyping || chat.isLoading}
                           >
-                            <SpeakerXMarkIconOutline className='w-4 h-4 inline-block' />
+                            <ClipboardDocumentIconOutline className='w-4 h-4 inline-block' />
                           </IconButtonWithToolTip>
-                        ) : (
+                          {copyMessageId === chat.id && (
+                            <>
+                              <span className='pt-4 text-xs'>Copied!</span>
+                              <span style={{ display: 'none' }}>{value}</span>
+                            </>
+                          )}
                           <IconButtonWithToolTip
                             placement='top'
                             clean
-                            onClick={() => handleSpeak(chat.message, chat.id)}
+                            onClick={() => {
+                              if (chat.speaking) {
+                                handleCancel(chat.id);
+                              } else {
+                                handleSpeak(chat.message, chat.id);
+                              }
+                            }}
                             text={chat.speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
-                            disabled={chat.isTyping || chat.isLoading}
-                            label='speech'
+                            disabled={listMessages.some((msg) => msg.speaking && msg.id !== chat.id)}
+                            label={chat.speaking ? 'stop speaking' : 'text to speech'}
                           >
-                            <SpeakerWaveIconOutline className='w-4 h-4 inline-block' />
+                            {chat.speaking ? (
+                              <SpeakerXMarkIconOutline className='w-4 h-4 inline-block' />
+                            ) : (
+                              <SpeakerWaveIconOutline className='w-4 h-4 inline-block' />
+                            )}
                           </IconButtonWithToolTip>
-                        )}
-                      </div>
-                    )}
+                        </div>
+                      )}
                   </div>
                 </Widget>
               </div>
