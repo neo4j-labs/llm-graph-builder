@@ -1,5 +1,5 @@
 import { Button, Tip } from '@neo4j-ndl/react';
-import React from 'react';
+import React, { MouseEventHandler } from 'react';
 
 const ButtonWithToolTip = ({
   text,
@@ -14,7 +14,7 @@ const ButtonWithToolTip = ({
 }: {
   text: string | React.ReactNode;
   children: React.ReactNode;
-  onClick?: () => void;
+  onClick?: MouseEventHandler<HTMLButtonElement> | (() => void);
   size?: 'small' | 'medium' | 'large';
   clean?: boolean;
   grouped?: boolean;

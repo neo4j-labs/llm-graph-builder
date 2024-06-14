@@ -209,7 +209,7 @@ export default function SettingsModal({
                 : tooltips.useExistingSchema
             }
             disabled={!nodeLabelOptions.length && !relationshipTypeOptions.length}
-            onClick={() => clickHandler}
+            onClick={clickHandler}
             label='Use Existing Schema'
             placement='top'
           >
