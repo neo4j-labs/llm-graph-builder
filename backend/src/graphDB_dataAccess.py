@@ -30,6 +30,7 @@ class graphDBdataAccess:
         try:
             job_status = "New"
             logging.info("creating source node if does not exist")
+            logging.info(f"obj_source_node.file_name = {obj_source_node.file_name}, obj_source_node.total_pages = {obj_source_node.total_pages}")
             self.graph.query("""MERGE(d:Document {fileName :$fn}) SET d.fileSize = $fs, d.fileType = $ft ,
                             d.status = $st, d.url = $url, d.awsAccessKeyId = $awsacc_key_id, 
                             d.fileSource = $f_source, d.createdAt = $c_at, d.updatedAt = $u_at, 
