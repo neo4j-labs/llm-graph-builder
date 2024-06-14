@@ -36,7 +36,7 @@ class graphDBdataAccess:
                             d.processingTime = $pt, d.errorMessage = $e_message, d.nodeCount= $n_count, 
                             d.relationshipCount = $r_count, d.model= $model, d.gcsBucket=$gcs_bucket, 
                             d.gcsBucketFolder= $gcs_bucket_folder, d.language= $language,d.gcsProjectId= $gcs_project_id,
-                            d.is_cancelled=False, d.total_pages=0, d.total_chunks=0, d.processed_chunk=0, d.total_pages=$total_pages,
+                            d.is_cancelled=False, d.total_chunks=0, d.processed_chunk=0, d.total_pages=$total_pages,
                             d.access_token=$access_token""",
                             {"fn":obj_source_node.file_name, "fs":obj_source_node.file_size, "ft":obj_source_node.file_type, "st":job_status, 
                             "url":obj_source_node.url,
