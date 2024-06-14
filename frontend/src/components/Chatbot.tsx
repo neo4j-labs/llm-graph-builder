@@ -19,6 +19,7 @@ import ReactMarkdown from 'react-markdown';
 import IconButtonWithToolTip from './IconButtonToolTip';
 import { buttonCaptions, tooltips } from '../utils/Constants';
 import useSpeechSynthesis from '../hooks/useSpeech';
+import ButtonWithToolTip from './ButtonWithToolTip';
 
 const Chatbot: React.FC<ChatbotProps> = (props) => {
   const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, clear } = props;
@@ -288,8 +289,10 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                       chat.sources?.length !== 0 &&
                       !chat.isLoading &&
                       !chat.isTyping && (
-                        <div className='flex'>
-                          <IconButtonWithToolTip
+                        <div className='flex inline-block'>
+                          <ButtonWithToolTip
+                            className='w-4 h-4 inline-block p-6 mt-1.5'
+                            fill='text'
                             placement='top'
                             clean
                             text='Retrieval Information'
@@ -304,8 +307,9 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                               setShowInfoModal(true);
                             }}
                           >
-                            <InformationCircleIconOutline className='w-4 h-4 inline-block' />
-                          </IconButtonWithToolTip>
+                            {' '}
+                            {buttonCaptions.details}
+                          </ButtonWithToolTip>
                           <IconButtonWithToolTip
                             label='copy text'
                             placement='top'

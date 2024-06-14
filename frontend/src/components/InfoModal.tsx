@@ -15,7 +15,6 @@ import { useCredentials } from '../context/UserCredentials';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import ReactMarkdown from 'react-markdown';
-
 const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, response_time, chunk_ids }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
@@ -24,14 +23,12 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
   const [nodes, setNodes] = useState<Node[]>([]);
   const [relationships, setRelationships] = useState<Relationship[]>([]);
   const [chunks, setChunks] = useState<Chunk[]>([]);
-
   const parseEntity = (entity: Entity) => {
     const { labels, properties } = entity;
     const label = labels[0];
     const text = properties.id;
     return { label, text };
   };
-
   useEffect(() => {
     setLoading(true);
     chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids.join(','))
@@ -47,7 +44,6 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
         setLoading(false);
       });
   }, [chunk_ids]);
-
   const groupedEntities = useMemo<{ [key: string]: GroupedEntity }>(() => {
     return infoEntities.reduce((acc, entity) => {
       const { label, text } = parseEntity(entity);
@@ -59,11 +55,9 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
       return acc;
     }, {} as Record<string, { texts: Set<string>; color: string }>);
   }, [infoEntities]);
-
   const onChangeTabs = (tabId: number) => {
     setActiveTab(tabId);
   };
-
   const labelCounts = useMemo(() => {
     const counts: { [label: string]: number } = {};
     infoEntities.forEach((entity) => {
@@ -73,11 +67,9 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
     });
     return counts;
   }, [infoEntities]);
-
   const sortedLabels = useMemo(() => {
     return Object.keys(labelCounts).sort((a, b) => labelCounts[b] - labelCounts[a]);
   }, [labelCounts]);
-
   const generateYouTubeLink = (url: string, startTime: string) => {
     try {
       const urlObj = new URL(url);
@@ -89,7 +81,6 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
       return '';
     }
   };
-
   return (
     <Box className='n-bg-palette-neutral-bg-weak p-4'>
       <Box className='flex flex-row pb-6 items-center mb-2'>
@@ -152,15 +143,9 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                               </HoverableLink>
                             </>
                           ) : (
-                            <>
-                              <HoverableLink url={link.source_name}>
-                                <Typography variant='body-medium'>{link.source_name}</Typography>
-                                <Typography variant='body-small' className='italic'>
-                                  {' '}
-                                  {link.start_time}
-                                </Typography>
-                              </HoverableLink>
-                            </>
+                            <HoverableLink url={link.source_name}>
+                              <Typography variant='body-medium'>{link.source_name}</Typography>
+                            </HoverableLink>
                           )}
                         </TextLink>
                       )}
