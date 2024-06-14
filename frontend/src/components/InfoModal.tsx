@@ -120,7 +120,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                         <div className='flex flex-row inline-block justiy-between items-center'>
                           <Typography
                             variant='body-medium'
-                            className='text-ellipsis whitespace-nowrap w-[calc(100%-200px)] overflow-hidden'
+                            className='text-ellipsis whitespace-nowrap w-[calc(100%-50px)] overflow-hidden'
                           >
                             {decodeURIComponent(link.source_name).split('/').at(-1) ?? 'S3 File'}
                           </Typography>
@@ -129,7 +129,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                         <div className='flex flex-row inline-block justiy-between items-center'>
                           <Typography
                             variant='body-medium'
-                            className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden'
+                            className='text-ellipsis whitespace-nowrap max-w-[calc(100%-50px)] overflow-hidden'
                           >
                             {decodeURIComponent(link.source_name).split('/').at(-1)?.split('?')[0] ?? 'GCS File'}
                           </Typography>
