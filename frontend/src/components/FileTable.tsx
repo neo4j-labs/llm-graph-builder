@@ -332,12 +332,12 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
           const prefiles: CustomFile[] = [];
           if (res.data.data.length) {
             res.data.data.forEach((item: SourceNode) => {
-              if (item.fileName != undefined && item.fileName.length) {
+             if (item.fileName != undefined && item.fileName.length) {
                 prefiles.push({
                   name: item.fileName,
                   size: item.fileSize ?? 0,
                   type: item.fileType?.includes('.')
-                    ? item?.fileType?.substring(1).toUpperCase()
+                    ? item?.fileType?.substring(1)?.toUpperCase() ?? 'None'
                     : item?.fileType.toUpperCase() ?? 'None',
                   NodesCount: item?.nodeCount ?? 0,
                   processing: item?.processingTime ?? 'None',
