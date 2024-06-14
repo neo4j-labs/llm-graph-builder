@@ -152,8 +152,8 @@ const WikipediaModal: React.FC<WikipediaModalTypes> = ({ hideModal, open }) => {
           errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
           onChange={(e) => {
             setisFocused(true);
-            if (e.target.value.includes("https://en.wikipedia.org/wiki/")) {
-              setValid(wikiValidation(e.target.value))
+            if (e.target.value.includes('https://en.wikipedia.org/wiki/')) {
+              setValid(wikiValidation(e.target.value));
             }
             setwikiQuery(e.target.value);
           }}
