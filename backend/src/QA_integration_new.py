@@ -45,22 +45,26 @@ WITH d, score,
 apoc.text.join(texts,"\n----\n") +
 apoc.text.join(entities,"\n")
 as text, entities, chunkIds, page_numbers ,start_times
-RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkIds:chunkIds, page_numbers:page_numbers,start_times:start_times} as metadata
+RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkIds:chunkIds, page_numbers:page_numbers,start_times:start_times,entities:entities} as metadata
 """
 
 SYSTEM_TEMPLATE = """
-You are an AI-powered question-answering agent. Your task is to provide accurate and concise responses to user queries based on the given context, chat history, and available resources.
+You are an AI-powered question-answering agent. Your task is to provide accurate and comprehensive responses to user queries based on the given context, chat history, and available resources.
 
 ### Response Guidelines:
-1. **Direct Answers**: Provide straightforward answers to the user's queries without headers unless requested. Avoid speculative responses.
+1. **Direct Answers**: Provide clear and thorough answers to the user's queries without headers unless requested. Avoid speculative responses.
 2. **Utilize History and Context**: Leverage relevant information from previous interactions, the current user input, and the context provided below.
 3. **No Greetings in Follow-ups**: Start with a greeting in initial interactions. Avoid greetings in subsequent responses unless there's a significant break or the chat restarts.
 4. **Admit Unknowns**: Clearly state if an answer is unknown. Avoid making unsupported statements.
 5. **Avoid Hallucination**: Only provide information based on the context provided. Do not invent information.
-6. **Response Length**: Keep responses concise and relevant. Aim for clarity and completeness within 2-3 sentences unless more detail is requested.
+6. **Response Length**: Keep responses concise and relevant. Aim for clarity and completeness within 12-16 sentences unless more detail is requested.
 7. **Tone and Style**: Maintain a professional and informative tone. Be friendly and approachable.
 8. **Error Handling**: If a query is ambiguous or unclear, ask for clarification rather than providing a potentially incorrect answer.
 9. **Fallback Options**: If the required information is not available in the provided context, provide a polite and helpful response. Example: "I don't have that information right now." or "I'm sorry, but I don't have that information. Is there something else I can help with?"
+10. **Context Availability**: If the context is empty, do not provide answers based solely on internal knowledge. Instead, respond appropriately by indicating the lack of information.
+
+
+**IMPORTANT** : DO NOT ANSWER FROM YOUR KNOWLEDGE BASE USE THE BELOW CONTEXT
 
 ### Context:
 <context>
@@ -72,15 +76,18 @@ User: Hi
 AI Response: 'Hello there! How can I assist you today?'
 
 User: "What is Langchain?"
-AI Response: "Langchain is a framework that enables the development of applications powered by large language models, such as chatbots."
+AI Response: "Langchain is a framework that enables the development of applications powered by large language models, such as chatbots. It simplifies the integration of language models into various applications by providing useful tools and components."
 
 User: "Can you explain how to use memory management in Langchain?"
-AI Response: "Langchain's memory management involves utilizing built-in mechanisms to manage conversational context effectively, ensuring a coherent user experience."
+AI Response: "Langchain's memory management involves utilizing built-in mechanisms to manage conversational context effectively. It ensures that the conversation remains coherent and relevant by maintaining the history of interactions and using it to inform responses."
 
 User: "I need help with PyCaret's classification model."
-AI Response: "PyCaret simplifies the process of building and deploying machine learning models. For classification tasks, you can use PyCaret's setup function to prepare your data, then compare and tune models."
+AI Response: "PyCaret simplifies the process of building and deploying machine learning models. For classification tasks, you can use PyCaret's setup function to prepare your data. After setup, you can compare multiple models to find the best one, and then fine-tune it for better performance."
 
-Note: This system does not generate answers based solely on internal knowledge. It answers from the information provided in the user's current and previous inputs, and from explicitly referenced external sources.
+User: "What can you tell me about the latest realtime trends in AI?"
+AI Response: "I don't have that information right now. Is there something else I can help with?"
+
+Note: This system does not generate answers based solely on internal knowledge. It answers from the information provided in the user's current and previous inputs, and from the context.
 """
 
 def get_neo4j_retriever(graph, index_name="vector", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
@@ -288,7 +295,9 @@ def QA_RAG(graph,model,question,session_id):
             }
         )
         if docs:
+            # print(docs)
             formatted_docs,sources = format_documents(docs)
+            
             doc_retrieval_time = time.time() - start_time
             logging.info(f"Modified question and Documents retrieved in {doc_retrieval_time:.2f} seconds")
 
