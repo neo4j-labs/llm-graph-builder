@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
  
 # Copy requirements file
-COPY . /code/requirements.txt
+COPY requirements.txt
  
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
