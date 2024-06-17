@@ -86,9 +86,24 @@ def upload_file_to_gcs(file_chunk, chunk_number, original_file_name, bucket_name
   blob = bucket.blob(file_name)
   file_io = io.BytesIO(file_data)
   blob.upload_from_file(file_io)
+  # Define the lifecycle rule to delete objects after 6 hours
+  rule = {
+      "action": {"type": "Delete"},
+      "condition": {"age": 1}  # Age in days (24 hours = 1 days)
+  }
+
+  # Get the current lifecycle policy
+  lifecycle = list(bucket.lifecycle_rules)
+
+  # Add the new rule
+  lifecycle.append(rule)
+
+  # Set the lifecycle policy on the bucket
+  bucket.lifecycle_rules = lifecycle
+  bucket.patch()
   print('Chunk uploaded successfully')
   
-def merge_file(bucket_name, original_file_name: str):
+def merge_file_gcs(bucket_name, original_file_name: str):
     storage_client = storage.Client()
     # Retrieve chunks from GCS
     blobs = storage_client.list_blobs(bucket_name, prefix=f"{original_file_name}_part_")

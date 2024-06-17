@@ -391,34 +391,51 @@ def connection_check(graph):
   graph_DB_dataAccess = graphDBdataAccess(graph)
   return graph_DB_dataAccess.connection_check()
 
-# def merge_chunks(file_name, total_chunks, chunk_dir, merged_dir):
+def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
 
-#   if not os.path.exists(merged_dir):
-#       os.mkdir(merged_dir)
-#   logging.info(f'Merged File Path: {merged_dir}')
-#   merged_file_path = os.path.join(merged_dir, file_name)
-#   with open(merged_file_path, "wb") as write_stream:
-#       for i in range(1,total_chunks+1):
-#           chunk_file_path = os.path.join(chunk_dir, f"{file_name}_part_{i}")
-#           logging.info(f'Chunk File Path While Merging Parts:{chunk_file_path}')
-#           with open(chunk_file_path, "rb") as chunk_file:
-#               shutil.copyfileobj(chunk_file, write_stream)
-#           os.unlink(chunk_file_path)  # Delete the individual chunk file after merging
-#   logging.info("Chunks merged successfully and return file size")
-#   file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,file_name)
-#   pdf_total_pages = pages[0].metadata['total_pages']
-#   file_size = os.path.getsize(merged_file_path)
-#   return file_size, pdf_total_pages, file_extension
+  if not os.path.exists(merged_dir):
+      os.mkdir(merged_dir)
+  logging.info(f'Merged File Path: {merged_dir}')
+  merged_file_path = os.path.join(merged_dir, file_name)
+  with open(merged_file_path, "wb") as write_stream:
+      for i in range(1,total_chunks+1):
+          chunk_file_path = os.path.join(chunk_dir, f"{file_name}_part_{i}")
+          logging.info(f'Chunk File Path While Merging Parts:{chunk_file_path}')
+          with open(chunk_file_path, "rb") as chunk_file:
+              shutil.copyfileobj(chunk_file, write_stream)
+          os.unlink(chunk_file_path)  # Delete the individual chunk file after merging
+  logging.info("Chunks merged successfully and return file size")
+  file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,file_name)
+  pdf_total_pages = pages[0].metadata['total_pages']
+  file_size = os.path.getsize(merged_file_path)
+  return pdf_total_pages,file_size
   
 
 
-def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname):
+def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname, uri, chunk_dir, merged_dir):
   
-  upload_file_to_gcs(chunk, chunk_number, originalname, BUCKET_UPLOAD)
+  gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
+  print(f'gcs file cache: {gcs_file_cache}')
+  
+  if gcs_file_cache == 'True':
+    upload_file_to_gcs(chunk, chunk_number, originalname, BUCKET_UPLOAD)
+  else:
+    if not os.path.exists(chunk_dir):
+      os.mkdir(chunk_dir)
+    
+    chunk_file_path = os.path.join(chunk_dir, f"{originalname}_part_{chunk_number}")
+    logging.info(f'Chunk File Path: {chunk_file_path}')
+    
+    with open(chunk_file_path, "wb") as chunk_file:
+      chunk_file.write(chunk.file.read())
 
   if int(chunk_number) == int(total_chunks):
       # If this is the last chunk, merge all chunks into a single file
-      total_pages, file_size = merge_file(BUCKET_UPLOAD, originalname)
+      if gcs_file_cache == 'True':
+        total_pages, file_size = merge_file_gcs(BUCKET_UPLOAD, originalname)
+      else:
+        total_pages, file_size = merge_chunks_local(originalname, int(total_chunks), chunk_dir, merged_dir)
+      
       logging.info("File merged successfully")
       file_extension = originalname.split('.')[-1]
       obj_source_node = sourceNode()
