@@ -33,7 +33,7 @@ WITH node as chunk, score
 MATCH (chunk)-[:PART_OF]->(d:Document)
 CALL { WITH chunk
 MATCH (chunk)-[:HAS_ENTITY]->(e)
-MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,3}(:!Chunk&!Document)
+MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk&!Document)
 UNWIND rels as r
 RETURN collect(distinct r) as rels
 }
@@ -57,7 +57,7 @@ You are an AI-powered question-answering agent. Your task is to provide accurate
 3. **No Greetings in Follow-ups**: Start with a greeting in initial interactions. Avoid greetings in subsequent responses unless there's a significant break or the chat restarts.
 4. **Admit Unknowns**: Clearly state if an answer is unknown. Avoid making unsupported statements.
 5. **Avoid Hallucination**: Only provide information based on the context provided. Do not invent information.
-6. **Response Length**: Keep responses concise and relevant. Aim for clarity and completeness within 12-16 sentences unless more detail is requested.
+6. **Response Length**: Keep responses concise and relevant. Aim for clarity and completeness within 4-5 sentences unless more detail is requested.
 7. **Tone and Style**: Maintain a professional and informative tone. Be friendly and approachable.
 8. **Error Handling**: If a query is ambiguous or unclear, ask for clarification rather than providing a potentially incorrect answer.
 9. **Fallback Options**: If the required information is not available in the provided context, provide a polite and helpful response. Example: "I don't have that information right now." or "I'm sorry, but I don't have that information. Is there something else I can help with?"
