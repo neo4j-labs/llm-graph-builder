@@ -313,7 +313,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                     !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
-                  // total_pages: item?.total_pages ?? 0,
+                  total_pages: item?.total_pages ?? 0,
                   access_token: item?.access_token ?? '',
                 });
               }

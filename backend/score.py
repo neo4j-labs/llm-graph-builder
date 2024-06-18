@@ -176,7 +176,7 @@ async def extract_knowledge_graph_from_file(
         graphDb_data_Access = graphDBdataAccess(graph)
         if source_type == 'local file':
             result = await asyncio.to_thread(
-                extract_graph_from_file_local_file, graph, model, merged_file_path, file_name, allowedNodes, allowedRelationship, uri)
+                extract_graph_from_file_local_file, graph, model, merged_file_path, file_name, allowedNodes, allowedRelationship)
 
         elif source_type == 's3 bucket' and source_url:
             result = await asyncio.to_thread(
@@ -206,12 +206,7 @@ async def extract_knowledge_graph_from_file(
         graphDb_data_Access.update_exception_db(file_name,error_message)
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
         if source_type == 'local file':
-            if gcs_file_cache == 'True':
-                folder_name = create_gcs_bucket_folder_name_hashed(uri,file_name)
-                delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
-            else:
-                logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
-                delete_uploaded_local_file(merged_file_path,file_name)
+            delete_file_from_gcs(BUCKET_UPLOAD,file_name)
         josn_obj = {'message':message,'error_message':error_message, 'file_name': file_name,'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type}
         logger.log_struct(josn_obj)
         logging.exception(f'File Failed in extraction: {josn_obj}')

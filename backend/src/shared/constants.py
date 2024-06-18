@@ -12,6 +12,6 @@ GEMINI_MODELS = ["gemini-1.0-pro", "gemini-1.5-pro"]
 CHAT_MAX_TOKENS = 1000
 CHAT_SEARCH_KWARG_K = 3
 CHAT_SEARCH_KWARG_SCORE_THRESHOLD = 0.7
-GROQ_MODELS = ["groq-llama3"]
+GROQ_MODELS = ["Groq llama3"]
 BUCKET_UPLOAD = 'llm-graph-builder-upload'
 PROJECT_ID = 'llm-experiments-387609'
