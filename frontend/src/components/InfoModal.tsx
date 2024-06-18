@@ -70,11 +70,11 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
   const sortedLabels = useMemo(() => {
     return Object.keys(labelCounts).sort((a, b) => labelCounts[b] - labelCounts[a]);
   }, [labelCounts]);
+
   const generateYouTubeLink = (url: string, startTime: string) => {
     try {
       const urlObj = new URL(url);
       urlObj.searchParams.set('t', startTime);
-      console.log('url', urlObj.toString());
       return urlObj.toString();
     } catch (error) {
       console.error('Invalid URL:', error);
@@ -104,67 +104,70 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
           sources.length > 0 ? (
             <ul className='list-class list-none'>
               {sources.map((link, index) => (
-                <li key={index}>
-                  {link.source_name.startsWith('http') || link.source_name.startsWith('https') ? (
-                    <div className='flex flex-row inline-block justiy-between items-center p8'>
-                      {link.source_name.includes('wikipedia.org') ? (
-                        <img src={wikipedialogo} width={20} height={20} className='mr-2' />
-                      ) : link.source_name.includes('storage.googleapis.com') ? (
-                        <img src={gcslogo} width={20} height={20} className='mr-2' />
-                      ) : link.source_name?.startsWith('s3://') ? (
-                        <img src={s3logo} width={20} height={20} className='mr-2' />
-                      ) : (
-                        <img src={youtubelogo} width={20} height={20} className='mr-2' />
+                <li key={index} className='flex flex-row inline-block justify-between items-center p-2'>
+                  {link?.source_name.startsWith('http') || link?.source_name.startsWith('https') ? (
+                    <>
+                      {link?.source_name.includes('wikipedia.org') && (
+                        <div className='flex flex-row inline-block justify-between items-center'>
+                          <img src={wikipedialogo} width={20} height={20} className='mr-2' alt='Wikipedia Logo' />
+                          <Typography
+                            variant='body-medium'
+                            className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                          >
+                            {link?.source_name}
+                          </Typography>
+                        </div>
                       )}
-                      {link.source_name.startsWith('s3://') ? (
-                        <div className='flex flex-row inline-block justiy-between items-center'>
+                      {link?.source_name.includes('storage.googleapis.com') && (
+                        <div className='flex flex-row inline-block justify-between items-center'>
+                          <img src={gcslogo} width={20} height={20} className='mr-2' alt='Google Cloud Storage Logo' />
                           <Typography
                             variant='body-medium'
-                            className='text-ellipsis whitespace-nowrap w-[calc(100%-200px)] overflow-hidden'
+                            className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
                           >
-                            {decodeURIComponent(link.source_name).split('/').at(-1) ?? 'S3 File'}
+                            {decodeURIComponent(link?.source_name).split('/').at(-1)?.split('?')[0] ?? 'GCS File'}
                           </Typography>
                         </div>
-                      ) : link.source_name.includes('storage.googleapis.com') ? (
-                        <div className='flex flex-row inline-block justiy-between items-center'>
+                      )}
+                      {link.source_name.startsWith('s3://') && (
+                        <div className='flex flex-row inline-block justify-between items-center'>
+                          <img src={s3logo} width={20} height={20} className='mr-2' alt='S3 Logo' />
                           <Typography
                             variant='body-medium'
-                            className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden'
+                            className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
                           >
-                            {decodeURIComponent(link.source_name).split('/').at(-1)?.split('?')[0] ?? 'GCS File'}
+                            {decodeURIComponent(link?.source_name).split('/').at(-1) ?? 'S3 File'}
                           </Typography>
                         </div>
-                      ) : (
-                        <TextLink href={link.source_name} externalLink={true}>
-                          {link.source_name.includes('wikipedia.org') ? (
-                            <>
-                              <HoverableLink url={link.source_name}>
-                                <Typography variant='body-medium'>{link.source_name}</Typography>
-                              </HoverableLink>
-                            </>
-                          ) : (
-                            <HoverableLink url={link.source_name}>
-                              <Typography variant='body-medium'>{link.source_name}</Typography>
+                      )}
+                      {!link.source_name.includes('wikipedia.org') &&
+                        !link.source_name.includes('storage.googleapis.com') &&
+                        !link.source_name.startsWith('s3://') && (
+                          <TextLink href={link?.source_name} externalLink={true}>
+                            <HoverableLink url={link?.source_name}>
+                              <Typography
+                                variant='body-medium'
+                                className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                              >
+                                {link.source_name}
+                              </Typography>
                             </HoverableLink>
-                          )}
-                        </TextLink>
-                      )}
-                    </div>
+                          </TextLink>
+                        )}
+                    </>
                   ) : (
-                    <div className='flex flex-row inline-block justiy-between items-center'>
+                    <div className='flex flex-row inline-block justify-between items-center'>
                       <DocumentTextIconOutline className='n-size-token-7 mr-2' />
                       <Typography
                         variant='body-medium'
-                        className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden'
+                        className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
                       >
-                        {link.source_name}
+                        {link?.source_name}
                       </Typography>
-                      {link.page_numbers && link.page_numbers.length > 0 ? (
+                      {link?.page_numbers && link?.page_numbers.length > 0 && (
                         <Typography variant='body-small' className='italic'>
-                          - Page {link.page_numbers.sort((a, b) => a - b).join(', ')}
+                          - Page {link?.page_numbers.sort((a, b) => a - b).join(', ')}
                         </Typography>
-                      ) : (
-                        <></>
                       )}
                     </div>
                   )}
@@ -214,26 +217,42 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
             <ul className='list-disc list-inside'>
               {chunks.map((chunk) => (
                 <li key={chunk.id} className='mb-2'>
-                  {chunk.page_number ? (
-                    <Typography variant='subheading-medium'>
-                      File: {chunk.fileName}, Page: {chunk.page_number}
-                    </Typography>
-                  ) : chunk.start_time ? (
-                    <Flex>
-                      {chunk.url && chunk.start_time && (
-                        <>
-                          <TextLink externalLink href={generateYouTubeLink(chunk.url, chunk.start_time)}>
-                            File: {chunk.fileName}
-                          </TextLink>
-                        </>
-                      )}
-                    </Flex>
+                  {chunk?.page_number ? (
+                    <div className='flex flex-row inline-block justiy-between items-center'>
+                      <DocumentTextIconOutline className='w-4 h-4 inline-block mr-2' />
+                      <Typography
+                        variant='subheading-small'
+                        className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden'
+                      >
+                        {chunk?.fileName}, Page: {chunk?.page_number}
+                      </Typography>
+                    </div>
+                  ) : chunk?.url && chunk?.start_time ? (
+                    <div className='flex flex-row inline-block justiy-between items-center'>
+                      <img src={youtubelogo} width={20} height={20} className='mr-2' />
+                      <TextLink externalLink href={generateYouTubeLink(chunk?.url, chunk?.start_time)}>
+                        {chunk?.fileName}
+                      </TextLink>
+                    </div>
+                  ) : chunk?.url && chunk?.url.includes('wikipedia.org') ? (
+                    <div className='flex flex-row inline-block justiy-between items-center'>
+                      <img src={wikipedialogo} width={20} height={20} className='mr-2' />
+                      <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
+                    </div>
+                  ) : chunk?.url && chunk?.url.includes('storage.googleapis.com') ? (
+                    <div className='flex flex-row inline-block justiy-between items-center'>
+                      <img src={gcslogo} width={20} height={20} className='mr-2' />
+                      <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
+                    </div>
+                  ) : chunk?.url && chunk?.url.startsWith('s3://') ? (
+                    <div className='flex flex-row inline-block justiy-between items-center'>
+                      <img src={s3logo} width={20} height={20} className='mr-2' />
+                      <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
+                    </div>
                   ) : (
-                    <Typography variant='subheading-medium'>
-                      File: {chunk.fileName}, Source: {chunk.fileSource}
-                    </Typography>
+                    <></>
                   )}
-                  <ReactMarkdown>{chunk.text}</ReactMarkdown>
+                  <ReactMarkdown>{chunk?.text}</ReactMarkdown>
                 </li>
               ))}
             </ul>

@@ -1,4 +1,5 @@
 from langchain_community.graphs import Neo4jGraph
+from src.shared.constants import BUCKET_UPLOAD, PROJECT_ID
 from src.shared.schema_extraction import sceham_extraction_from_text
 from dotenv import load_dotenv
 from datetime import datetime
@@ -153,17 +154,19 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
       success_count+=1
       lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'language':obj_source_node.language, 'status':'Success'})
     return lst_file_name,success_count,failed_count
-  
-def extract_graph_from_file_local_file(graph, model, fileName, merged_file_path, allowedNodes, allowedRelationship):
+    
+def extract_graph_from_file_local_file(graph, model, merged_file_path, fileName, allowedNodes, allowedRelationship):
 
   logging.info(f'Process file name :{fileName}')
-  file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,fileName)
-  pdf_total_pages = pages[0].metadata['total_pages']
-  
-  if pages==None or pdf_total_pages==0:
+  gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
+  if gcs_file_cache == 'True' and fileName.split('.')[-1]=='pdf':
+    file_name, pages = get_documents_from_gcs( PROJECT_ID, BUCKET_UPLOAD, None, fileName)
+  else:
+    file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,fileName)
+  if pages==None or len(pages)==0:
     raise Exception(f'Pdf content is not available for file : {file_name}')
 
-  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, merged_file_path)
+  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, True, merged_file_path)
 
 def extract_graph_from_file_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, allowedNodes, allowedRelationship):
 
@@ -203,7 +206,7 @@ def extract_graph_from_file_gcs(graph, model, gcs_project_id, gcs_bucket_name, g
 
   return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
-def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, merged_file_path=None):
+def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, is_uploaded_from_local=None, merged_file_path=None):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -301,8 +304,13 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
 
 
     # merged_file_path have value only when file uploaded from local
-    if merged_file_path is not None:
-      delete_uploaded_local_file(merged_file_path, file_name)
+    
+    if is_uploaded_from_local:
+      gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
+      if gcs_file_cache == 'True' and file_name.split('.')[-1]=='pdf':
+        delete_file_from_gcs(BUCKET_UPLOAD,file_name)
+      else:
+        delete_uploaded_local_file(merged_file_path, file_name)  
       
     return {
         "fileName": file_name,
@@ -388,7 +396,7 @@ def connection_check(graph):
   graph_DB_dataAccess = graphDBdataAccess(graph)
   return graph_DB_dataAccess.connection_check()
 
-def merge_chunks(file_name, total_chunks, chunk_dir, merged_dir):
+def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
 
   if not os.path.exists(merged_dir):
       os.mkdir(merged_dir)
@@ -405,38 +413,48 @@ def merge_chunks(file_name, total_chunks, chunk_dir, merged_dir):
   file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,file_name)
   pdf_total_pages = pages[0].metadata['total_pages']
   file_size = os.path.getsize(merged_file_path)
-  return file_size, pdf_total_pages, file_extension
+  return pdf_total_pages,file_size
   
 
 
-def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname, chunk_dir, merged_dir):
+def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname, uri, chunk_dir, merged_dir):
   
-  if not os.path.exists(chunk_dir):
+  gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
+  logging.info(f'gcs file cache: {gcs_file_cache}')
+  
+  if gcs_file_cache == 'True' and originalname.split('.')[-1]=='pdf':
+    upload_file_to_gcs(chunk, chunk_number, originalname, BUCKET_UPLOAD)
+  else:
+    if not os.path.exists(chunk_dir):
       os.mkdir(chunk_dir)
-  
-  chunk_file_path = os.path.join(chunk_dir, f"{originalname}_part_{chunk_number}")
-  logging.info(f'Chunk File Path: {chunk_file_path}')
-  
-  with open(chunk_file_path, "wb") as chunk_file:
+    
+    chunk_file_path = os.path.join(chunk_dir, f"{originalname}_part_{chunk_number}")
+    logging.info(f'Chunk File Path: {chunk_file_path}')
+    
+    with open(chunk_file_path, "wb") as chunk_file:
       chunk_file.write(chunk.file.read())
 
   if int(chunk_number) == int(total_chunks):
       # If this is the last chunk, merge all chunks into a single file
-      file_size, pdf_total_pages, file_extension= merge_chunks(originalname, int(total_chunks), chunk_dir, merged_dir)
+      if gcs_file_cache == 'True' and originalname.split('.')[-1]=='pdf':
+        total_pages, file_size = merge_file_gcs(BUCKET_UPLOAD, originalname)
+      else:
+        total_pages, file_size = merge_chunks_local(originalname, int(total_chunks), chunk_dir, merged_dir)
+      
       logging.info("File merged successfully")
-
+      file_extension = originalname.split('.')[-1]
       obj_source_node = sourceNode()
       obj_source_node.file_name = originalname
       obj_source_node.file_type = file_extension
       obj_source_node.file_size = file_size
       obj_source_node.file_source = 'local file'
       obj_source_node.model = model
-      obj_source_node.total_pages = pdf_total_pages
+      obj_source_node.total_pages = total_pages
       obj_source_node.created_at = datetime.now()
       graphDb_data_Access = graphDBdataAccess(graph)
         
       graphDb_data_Access.create_source_node(obj_source_node)
-      return {'file_size': file_size, 'total_pages': pdf_total_pages, 'file_name': originalname, 'file_extension':file_extension, 'message':f"Chunk {chunk_number}/{total_chunks} saved"}
+      return {'file_size': file_size, 'total_pages': total_pages, 'file_name': originalname, 'file_extension':file_extension, 'message':f"Chunk {chunk_number}/{total_chunks} saved"}
   return f"Chunk {chunk_number}/{total_chunks} saved"
 
 def get_labels_and_relationtypes(graph):
@@ -473,7 +491,7 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir):
       merged_file_path = os.path.join(merged_dir, file_name)
       if source_type == 'local file':
           logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
-          delete_uploaded_local_file(merged_file_path, file_name)
+          delete_file_from_gcs(BUCKET_UPLOAD,file_name)
   return "Cancelled the processing job successfully"
 
 def populate_graph_schema_from_text(text, model, is_schema_description_cheked):
