@@ -162,7 +162,7 @@ async def extract_knowledge_graph_from_file(
             merged_file_path = os.path.join(MERGED_DIR,file_name)
             logging.info(f'File path:{merged_file_path}')
             result = await asyncio.to_thread(
-                extract_graph_from_file_local_file, graph, model, file_name, merged_file_path, allowedNodes, allowedRelationship)
+                extract_graph_from_file_local_file, graph, model, merged_file_path, file_name, allowedNodes, allowedRelationship)
 
         elif source_type == 's3 bucket' and source_url:
             result = await asyncio.to_thread(
@@ -191,7 +191,7 @@ async def extract_knowledge_graph_from_file(
         error_message = str(e)
         graphDb_data_Access.update_exception_db(file_name,error_message)
         if source_type == 'local file':
-            delete_uploaded_local_file(merged_file_path, file_name)
+            delete_file_from_gcs(BUCKET_UPLOAD,file_name)
         josn_obj = {'message':message,'error_message':error_message, 'file_name': file_name,'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type}
         logger.log_struct(josn_obj)
         logging.exception(f'File Failed in extraction: {josn_obj}')
@@ -342,7 +342,7 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
                                         password=Form(None), database=Form(None)):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
-        result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, CHUNK_DIR, MERGED_DIR)
+        result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, uri, CHUNK_DIR, MERGED_DIR)
         josn_obj = {'api_name':'upload','db_url':uri}
         logger.log_struct(josn_obj)
         if int(chunkNumber) == int(totalChunks):
