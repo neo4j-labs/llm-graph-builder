@@ -54,7 +54,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
       try {
         setStatus('info');
         setStatusMessage('Loading...');
-        openGCSModal()
+        openGCSModal();
         const apiResponse = await urlScanAPI({
           userCredentials,
           model,
@@ -104,7 +104,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
               fileSource: defaultValues.fileSource,
               processingProgress: defaultValues.processingProgress,
               access_token: codeResponse.access_token,
-              total_pages:"N/A"
+              total_pages: 'N/A',
             });
           }
         });
