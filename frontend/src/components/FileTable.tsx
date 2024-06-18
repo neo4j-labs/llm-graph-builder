@@ -118,11 +118,9 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
             <div className='textellipsis'>
               <span
                 title={
-                  info.row.original?.fileSource === 's3 bucket'
-                    ? info.row.original?.source_url
-                    : info.row.original?.fileSource === 'youtube'
-                    ? info.row.original?.source_url
-                    : info.getValue()
+                  (info.row.original?.fileSource === 's3 bucket' && info.row.original?.source_url) ||
+                  (info.row.original?.fileSource === 'youtube' && info.row.original?.source_url) ||
+                  info.getValue()
                 }
               >
                 {info.getValue()}
@@ -332,46 +330,46 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
           const prefiles: CustomFile[] = [];
           if (res.data.data.length) {
             res.data.data.forEach((item: SourceNode) => {
-             if (item.fileName != undefined && item.fileName.length) {
+              if (item.fileName != undefined && item.fileName.length) {
                 prefiles.push({
-                  name: item.fileName,
-                  size: item.fileSize ?? 0,
-                  type: item.fileType?.includes('.')
+                  name: item?.fileName,
+                  size: item?.fileSize ?? 0,
+                  type: item?.fileType?.includes('.')
                     ? item?.fileType?.substring(1)?.toUpperCase() ?? 'None'
-                    : item?.fileType.toUpperCase() ?? 'None',
+                    : item?.fileType?.toUpperCase() ?? 'None',
                   NodesCount: item?.nodeCount ?? 0,
                   processing: item?.processingTime ?? 'None',
                   relationshipCount: item?.relationshipCount ?? 0,
                   status:
-                    item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
-                      ? item.status
-                      : item.fileSource === 'local file'
-                      ? item.status
-                      : item.status === 'Completed' || item.status === 'Failed'
-                      ? item.status
-                      : item.fileSource == 'Wikipedia' ||
-                        item.fileSource == 'youtube' ||
-                        item.fileSource == 'gcs bucket'
-                      ? item.status
+                    item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                      ? item?.status
+                      : item?.fileSource === 'local file'
+                      ? item?.status
+                      : item?.status === 'Completed' || item.status === 'Failed'
+                      ? item?.status
+                      : item?.fileSource == 'Wikipedia' ||
+                        item?.fileSource == 'youtube' ||
+                        item?.fileSource == 'gcs bucket'
+                      ? item?.status
                       : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
-                  source_url: item.url != 'None' && item?.url != '' ? item.url : '',
-                  fileSource: item.fileSource ?? 'None',
+                  source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
+                  fileSource: item?.fileSource ?? 'None',
                   gcsBucket: item?.gcsBucket,
                   gcsBucketFolder: item?.gcsBucketFolder,
                   errorMessage: item?.errorMessage,
                   uploadprogess: item?.uploadprogress ?? 0,
                   google_project_id: item?.gcsProjectId,
-                  language: item.language ?? '',
+                  language: item?.language ?? '',
                   processingProgress:
-                    item.processed_chunk != undefined &&
-                    item.total_chunks != undefined &&
-                    !isNaN(Math.floor((item.processed_chunk / item.total_chunks) * 100))
-                      ? Math.floor((item.processed_chunk / item.total_chunks) * 100)
+                    item?.processed_chunk != undefined &&
+                    item?.total_chunks != undefined &&
+                    !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
+                      ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
-                  total_pages: item.total_pages ?? 0,
-                  access_token: item.access_token ?? '',
+                  total_pages: item?.total_pages ?? 0,
+                  access_token: item?.access_token ?? '',
                 });
               }
             });

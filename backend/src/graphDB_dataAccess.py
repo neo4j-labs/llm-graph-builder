@@ -2,8 +2,8 @@ import logging
 import os
 from datetime import datetime
 from langchain_community.graphs import Neo4jGraph
-from src.shared.common_fn import delete_uploaded_local_file
-from src.api_response import create_api_response
+from src.document_sources.gcs_bucket import delete_file_from_gcs
+from src.shared.constants import BUCKET_UPLOAD
 from src.entities.source_node import sourceNode
 import json
 
@@ -175,7 +175,7 @@ class graphDBdataAccess:
             merged_file_path = os.path.join(merged_dir, file_name)
             if source_type == 'local file':
                 logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
-                delete_uploaded_local_file(merged_file_path, file_name)
+                delete_file_from_gcs(BUCKET_UPLOAD,file_name)
 
         query_to_delete_document=""" 
            MATCH (d:Document) where d.fileName in $filename_list and d.fileSource in $source_types_list
