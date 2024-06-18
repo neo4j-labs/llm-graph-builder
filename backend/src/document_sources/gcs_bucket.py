@@ -7,6 +7,7 @@ from langchain_core.documents import Document
 from PyPDF2 import PdfReader
 import io
 from google.oauth2.credentials import Credentials
+import time
 
 def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, creds):
     storage_client = storage.Client(project=gcs_project_id, credentials=creds)
@@ -87,20 +88,21 @@ def upload_file_to_gcs(file_chunk, chunk_number, original_file_name, bucket_name
   file_io = io.BytesIO(file_data)
   blob.upload_from_file(file_io)
   # Define the lifecycle rule to delete objects after 6 hours
-  rule = {
-      "action": {"type": "Delete"},
-      "condition": {"age": 1}  # Age in days (24 hours = 1 days)
-  }
+  # rule = {
+  #     "action": {"type": "Delete"},
+  #     "condition": {"age": 1}  # Age in days (24 hours = 1 days)
+  # }
 
-  # Get the current lifecycle policy
-  lifecycle = list(bucket.lifecycle_rules)
+  # # Get the current lifecycle policy
+  # lifecycle = list(bucket.lifecycle_rules)
 
-  # Add the new rule
-  lifecycle.append(rule)
+  # # Add the new rule
+  # lifecycle.append(rule)
 
-  # Set the lifecycle policy on the bucket
-  bucket.lifecycle_rules = lifecycle
-  bucket.patch()
+  # # Set the lifecycle policy on the bucket
+  # bucket.lifecycle_rules = lifecycle
+  # bucket.patch()
+  time.sleep(1)
   logging.info('Chunk uploaded successfully in gcs')
   
 def merge_file_gcs(bucket_name, original_file_name: str):

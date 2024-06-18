@@ -43,7 +43,7 @@ google-cloud-aiplatform
 google-cloud-bigquery==3.19.0
 google-cloud-core==2.4.1
 google-cloud-resource-manager==1.12.3
-google-cloud-storage==2.16.0
+google-cloud-storage
 google-crc32c==1.5.0
 google-resumable-media==2.7.0
 googleapis-common-protos==1.63.0
