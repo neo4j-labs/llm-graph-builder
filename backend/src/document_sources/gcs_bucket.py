@@ -41,7 +41,7 @@ def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder
 def load_pdf(file_path):
     return PyMuPDFLoader(file_path)
 
-def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token):
+def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token=None):
 
   if gcs_bucket_folder is not None:
     if gcs_bucket_folder.endswith('/'):
@@ -56,8 +56,12 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
   # pages = loader.load()
   # file_name = gcs_blob_filename
   #creds= Credentials(access_token)
-  creds= Credentials(access_token)
-  storage_client = storage.Client(project=gcs_project_id, credentials=creds)
+  if access_token is None:
+    storage_client = storage.Client(project=gcs_project_id)
+  else:
+    creds= Credentials(access_token)
+    storage_client = storage.Client(project=gcs_project_id, credentials=creds)
+  print(f'BLOB Name: {blob_name}')
   bucket = storage_client.bucket(gcs_bucket_name)
   blob = bucket.blob(blob_name) 
   content = blob.download_as_bytes()
@@ -70,4 +74,63 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
         text += page.extract_text()
   pages = [Document(page_content = text)]
   return gcs_blob_filename, pages
+
+def upload_file_to_gcs(file_chunk, chunk_number, original_file_name, bucket_name):
+  storage_client = storage.Client()
+  
+  file_name = f'{original_file_name}_part_{chunk_number}'
+  bucket = storage_client.bucket(bucket_name)
+  file_data = file_chunk.file.read()
+  # print(f'data after read {file_data}')
        
+  blob = bucket.blob(file_name)
+  file_io = io.BytesIO(file_data)
+  blob.upload_from_file(file_io)
+  # Define the lifecycle rule to delete objects after 6 hours
+  rule = {
+      "action": {"type": "Delete"},
+      "condition": {"age": 1}  # Age in days (24 hours = 1 days)
+  }
+
+  # Get the current lifecycle policy
+  lifecycle = list(bucket.lifecycle_rules)
+
+  # Add the new rule
+  lifecycle.append(rule)
+
+  # Set the lifecycle policy on the bucket
+  bucket.lifecycle_rules = lifecycle
+  bucket.patch()
+  logging.info('Chunk uploaded successfully in gcs')
+  
+def merge_file_gcs(bucket_name, original_file_name: str):
+    storage_client = storage.Client()
+    # Retrieve chunks from GCS
+    blobs = storage_client.list_blobs(bucket_name, prefix=f"{original_file_name}_part_")
+    chunks = []
+    for blob in blobs:
+      chunks.append(blob.download_as_bytes())
+      blob.delete()
+
+    # Merge chunks into a single file
+    merged_file = b"".join(chunks)
+    blob = storage_client.bucket(bucket_name).blob(original_file_name)
+    logging.info('save the merged file from chunks in gcs')
+    file_io = io.BytesIO(merged_file)
+    blob.upload_from_file(file_io)
+    pdf_reader = PdfReader(file_io)
+    file_size = len(merged_file)
+    total_pages = len(pdf_reader.pages)
+    
+    return total_pages, file_size
+  
+def delete_file_from_gcs(bucket_name, file_name):
+  try:
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(file_name)
+    if blob.exists():
+      blob.delete()
+    logging.info('File deleted from GCS successfully')
+  except:
+    raise Exception('BLOB not exists in GCS')

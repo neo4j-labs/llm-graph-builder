@@ -176,34 +176,7 @@ async def extract_knowledge_graph_from_file(
         graphDb_data_Access = graphDBdataAccess(graph)
         if source_type == 'local file':
             result = await asyncio.to_thread(
-                extract_graph_from_file_local_file, graph, model, file_name)
-
-        elif source_type == 's3 bucket' and source_url:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_s3, graph, model, source_url, aws_access_key_id, aws_secret_access_key)
-
-        elif source_type == 'youtube' and source_url:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_youtube, graph, model, source_url)
-
-        elif source_type == 'Wikipedia' and wiki_query:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_Wikipedia, graph, model, wiki_query, max_sources)
-
-        elif source_type == 'gcs bucket' and gcs_bucket_name:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_gcs, graph, model, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename)
-        else:
-            return create_api_response('Failed',message='source_type is other than accepted source')
-        
-        return create_api_response('Success', data=result)
-    except Exception as e:
-        message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content"
-        logging.info(message)
-        error_message = str(e)
-        graphDb_data_Access.update_exception_db(file_name,error_message)
-        logging.exception(f'Exception Stack trace: {error_message}')
-        return create_api_response('Failed', message=message, error=error_message, file_name = file_name)
+                extract_graph_from_file_local_file, graph, model, merged_file_path, file_name, allowedNodes, allowedRelationship)
 
         elif source_type == 's3 bucket' and source_url:
             result = await asyncio.to_thread(
@@ -232,7 +205,7 @@ async def extract_knowledge_graph_from_file(
         error_message = str(e)
         graphDb_data_Access.update_exception_db(file_name,error_message)
         if source_type == 'local file':
-            delete_uploaded_local_file(merged_file_path, file_name)
+            delete_file_from_gcs(BUCKET_UPLOAD,file_name)
         josn_obj = {'message':message,'error_message':error_message, 'file_name': file_name,'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type}
         logger.log_struct(josn_obj)
         logging.exception(f'File Failed in extraction: {josn_obj}')
@@ -399,7 +372,7 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
                                         password=Form(None), database=Form(None)):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
-        result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, CHUNK_DIR, MERGED_DIR)
+        result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, uri, CHUNK_DIR, MERGED_DIR)
         josn_obj = {'api_name':'upload','db_url':uri}
         logger.log_struct(josn_obj)
         if int(chunkNumber) == int(totalChunks):
