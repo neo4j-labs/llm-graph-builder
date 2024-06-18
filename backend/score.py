@@ -162,7 +162,7 @@ async def extract_knowledge_graph_from_file(
             merged_file_path = os.path.join(MERGED_DIR,file_name)
             logging.info(f'File path:{merged_file_path}')
             result = await asyncio.to_thread(
-                extract_graph_from_file_local_file, graph, model, file_name, allowedNodes, allowedRelationship)
+                extract_graph_from_file_local_file, graph, model, merged_file_path, file_name, allowedNodes, allowedRelationship)
 
         elif source_type == 's3 bucket' and source_url:
             result = await asyncio.to_thread(
