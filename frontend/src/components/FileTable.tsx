@@ -395,7 +395,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   updateProgress
                 ).catch((error: AxiosError) => {
                   // @ts-ignore
-                  const errorfile = decodeURI(error.config.url.split('?')[0].split('/').at(-1));
+                  const errorfile = decodeURI(error?.config?.url?.split('?')[0].split('/').at(-1));
                   setFilesData((prevfiles) => {
                     return prevfiles.map((curfile) => {
                       if (curfile.name == errorfile) {
