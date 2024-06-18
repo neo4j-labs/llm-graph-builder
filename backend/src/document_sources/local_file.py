@@ -43,13 +43,17 @@ def get_documents_from_file_by_path(file_path,file_name):
                         
                     if page.metadata['page_number']>page_number:
                         page_number+=1
+                        if not metadata:
+                            metadata = {'total_pages':unstructured_pages[-1].metadata['page_number']}
                         pages.append(Document(page_content = page_content, metadata=metadata))
                         page_content='' 
                            
                     if page == unstructured_pages[-1]:
+                        if not metadata:
+                            metadata = {'total_pages':unstructured_pages[-1].metadata['page_number']}
                         pages.append(Document(page_content = page_content, metadata=metadata))
                             
-                elif page.metadata['category']=='PageBreak':
+                elif page.metadata['category']=='PageBreak' and page!=unstructured_pages[0]:
                     page_number+=1
                     pages.append(Document(page_content = page_content, metadata=metadata))
                     page_content=''
@@ -65,5 +69,4 @@ def get_documents_from_file_by_path(file_path,file_name):
     else:
         logging.info(f'File {file_name} does not exist')
         raise Exception(f'File {file_name} does not exist')
-    
     return file_name, pages , file_extension
