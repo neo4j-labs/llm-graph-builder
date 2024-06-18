@@ -362,11 +362,15 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   errorMessage: item?.errorMessage,
                   uploadprogess: item?.uploadprogress ?? 0,
                   google_project_id: item?.gcsProjectId,
-                  language: item.language ?? '',
+                  language: item?.language ?? '',
                   processingProgress:
-                    item.processed_chunk != undefined && item.total_chunks != undefined
-                      ? Math.floor((item.processed_chunk / item.total_chunks) * 100)
+                    item?.processed_chunk != undefined &&
+                    item?.total_chunks != undefined &&
+                    !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
+                      ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
+                  total_pages: item?.total_pages ?? 0,
+                  access_token: item?.access_token ?? '',
                 });
               }
             });

@@ -188,19 +188,18 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
         lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'language':obj_source_node.language, 'status':'Failed'})
     return lst_file_name,success_count,failed_count
     
-def extract_graph_from_file_local_file(graph, model, merged_file_path, fileName, allowedNodes, allowedRelationship,uri):
+def extract_graph_from_file_local_file(graph, model, merged_file_path, fileName, allowedNodes, allowedRelationship):
 
   logging.info(f'Process file name :{fileName}')
   gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-  if gcs_file_cache == 'True':
-    folder_name = create_gcs_bucket_folder_name_hashed(uri, fileName)
-    file_name, pages = get_documents_from_gcs( PROJECT_ID, BUCKET_UPLOAD, folder_name, fileName)
+  if gcs_file_cache == 'True' and fileName.split('.')[-1]=='pdf':
+    file_name, pages = get_documents_from_gcs( PROJECT_ID, BUCKET_UPLOAD, None, fileName)
   else:
     file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,fileName)
   if pages==None or len(pages)==0:
     raise Exception(f'Pdf content is not available for file : {file_name}')
 
-  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, True, merged_file_path, uri)
+  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, True, merged_file_path)
 
 def extract_graph_from_file_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key):
 
@@ -241,7 +240,7 @@ def extract_graph_from_file_gcs(graph, model, gcs_project_id, gcs_bucket_name, g
 
   return processing_source(graph, model, file_name, pages)
 
-def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, is_uploaded_from_local=None, merged_file_path=None, uri=None):
+def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, is_uploaded_from_local=None, merged_file_path=None):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -359,9 +358,8 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     
     if is_uploaded_from_local:
       gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-      if gcs_file_cache == 'True':
-        folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
-        delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
+      if gcs_file_cache == 'True' and file_name.split('.')[-1]=='pdf':
+        delete_file_from_gcs(BUCKET_UPLOAD,file_name)
       else:
         delete_uploaded_local_file(merged_file_path, file_name)  
       
@@ -470,9 +468,15 @@ def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
   
 
 
-def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname, chunk_dir, merged_dir):
+def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname, uri, chunk_dir, merged_dir):
   
-  if not os.path.exists(chunk_dir):
+  gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
+  logging.info(f'gcs file cache: {gcs_file_cache}')
+  
+  if gcs_file_cache == 'True' and originalname.split('.')[-1]=='pdf':
+    upload_file_to_gcs(chunk, chunk_number, originalname, BUCKET_UPLOAD)
+  else:
+    if not os.path.exists(chunk_dir):
       os.mkdir(chunk_dir)
     
     chunk_file_path = os.path.join(chunk_dir, f"{originalname}_part_{chunk_number}")
@@ -483,9 +487,8 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
 
   if int(chunk_number) == int(total_chunks):
       # If this is the last chunk, merge all chunks into a single file
-      if gcs_file_cache == 'True':
-        file_size = merge_file_gcs(BUCKET_UPLOAD, originalname, folder_name, int(total_chunks))
-        total_pages = 1
+      if gcs_file_cache == 'True' and originalname.split('.')[-1]=='pdf':
+        total_pages, file_size = merge_file_gcs(BUCKET_UPLOAD, originalname)
       else:
         total_pages, file_size = merge_chunks_local(originalname, int(total_chunks), chunk_dir, merged_dir)
       
@@ -540,5 +543,5 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir):
       merged_file_path = os.path.join(merged_dir, file_name)
       if source_type == 'local file':
           logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
-          delete_uploaded_local_file(merged_file_path, file_name)
+          delete_file_from_gcs(BUCKET_UPLOAD,file_name)
   return "Cancelled the processing job successfully"

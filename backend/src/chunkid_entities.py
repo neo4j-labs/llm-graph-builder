@@ -10,7 +10,7 @@ match (chunk:Chunk) where chunk.id IN $chunksIds
 MATCH (chunk)-[:PART_OF]->(d:Document)
 CALL {WITH chunk
 MATCH (chunk)-[:HAS_ENTITY]->(e) 
-MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,3}(:!Chunk&!Document) 
+MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk&!Document) 
 UNWIND rels as r
 RETURN collect(distinct r) as rels
 }
