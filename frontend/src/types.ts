@@ -95,7 +95,7 @@ export interface S3ModalProps {
 export interface GCSModalProps {
   hideModal: () => void;
   open: boolean;
-  openGCSModal:()=>void
+  openGCSModal: () => void;
 }
 export interface ConnectionModalProps {
   open: boolean;
