@@ -1,45 +1,39 @@
-import { Button, Tip } from '@neo4j-ndl/react';
-import React, { MouseEventHandler } from 'react';
+import { IconButton, Tip } from '@neo4j-ndl/react';
 
-const ButtonWithToolTip = ({
+const IconButtonWithToolTip = ({
   text,
   children,
   onClick,
   size = 'medium',
+  clean,
+  grouped,
   placement = 'bottom',
   disabled = false,
-  className = '',
   label,
-  loading,
-  fill = 'filled',
 }: {
+  label: string;
   text: string | React.ReactNode;
   children: React.ReactNode;
-  onClick?: MouseEventHandler<HTMLButtonElement> | (() => void);
+  onClick?: () => void;
   size?: 'small' | 'medium' | 'large';
   clean?: boolean;
   grouped?: boolean;
   placement?: 'bottom' | 'top' | 'right' | 'left';
   disabled?: boolean;
-  className?: string;
-  loading?: boolean;
-  label: string;
-  fill?: 'filled' | 'outlined' | 'text';
 }) => {
   return (
     <Tip allowedPlacements={[placement]}>
       <Tip.Trigger>
-        <Button
+        <IconButton
           aria-label={label}
           size={size}
+          clean={clean}
+          grouped={grouped}
           onClick={onClick}
           disabled={disabled}
-          className={className}
-          loading={loading}
-          fill={fill}
         >
           {children}
-        </Button>
+        </IconButton>
       </Tip.Trigger>
       <Tip.Content isPortaled={false} style={{ whiteSpace: 'nowrap' }}>
         {text}
@@ -48,4 +42,4 @@ const ButtonWithToolTip = ({
   );
 };
 
-export default ButtonWithToolTip;
+export default IconButtonWithToolTip;

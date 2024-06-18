@@ -26,7 +26,7 @@ export interface CustomFileBase extends Partial<globalThis.File> {
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
-  total_pages: number | 'NA';
+  total_pages: number | 'N/A';
 }
 
 export interface OptionType {
@@ -92,7 +92,11 @@ export interface S3ModalProps {
   hideModal: () => void;
   open: boolean;
 }
-
+export interface GCSModalProps {
+  hideModal: () => void;
+  open: boolean;
+  openGCSModal: () => void;
+}
 export interface ConnectionModalProps {
   open: boolean;
   setOpenConnection: Dispatch<SetStateAction<boolean>>;
@@ -102,7 +106,7 @@ export interface ConnectionModalProps {
 export interface SourceNode {
   fileName: string;
   fileSize: number;
-  fileType?: string;
+  fileType: string;
   nodeCount?: number;
   processingTime?: string;
   relationshipCount?: number;
@@ -175,7 +179,7 @@ export interface CommonButtonProps {
 export interface Source {
   page_numbers?: number[];
   source_name: string;
-  time_stamps?: string;
+  start_time?: string;
 }
 export interface Messages {
   id: number;
@@ -189,6 +193,8 @@ export interface Messages {
   response_time?: number;
   chunk_ids?: string[];
   total_tokens?: number;
+  speaking?: boolean;
+  copying?: boolean;
 }
 
 export type ChatbotProps = {
@@ -414,7 +420,20 @@ export interface Chunk {
   fileName: string;
   length: number;
   embedding: string | null;
-  page_number: number;
-  start_time: string;
-  content_offset: string;
+  page_number?: number;
+  start_time?: string;
+  content_offset?: string;
+  url?: string;
+  fileSource: string;
+}
+
+export interface SpeechSynthesisProps {
+  onEnd?: () => void;
+}
+
+export interface SpeechArgs {
+  text?: string;
+  rate?: number;
+  pitch?: number;
+  volume?: number;
 }

@@ -34,7 +34,6 @@ def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id,
     files_info = get_s3_files_info(source_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
     if len(files_info)==0:
       raise Exception('No pdf files found.')
-
     logging.info(f'files info : {files_info}')
     success_count=0
     failed_count=0
@@ -46,6 +45,7 @@ def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id,
         obj_source_node.file_type = 'pdf'
         obj_source_node.file_size = file_info['file_size_bytes']
         obj_source_node.file_source = source_type
+        obj_source_node.total_pages = 'N/A'
         obj_source_node.model = model
         obj_source_node.url = str(source_url+file_name)
         obj_source_node.awsAccessKeyId = aws_access_key_id
@@ -75,6 +75,7 @@ def create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_na
       obj_source_node.file_size = file_metadata['fileSize']
       obj_source_node.url = file_metadata['url']
       obj_source_node.file_source = source_type
+      obj_source_node.total_pages = 'N/A'
       obj_source_node.model = model
       obj_source_node.file_type = 'pdf'
       obj_source_node.gcsBucket = gcs_bucket_name
@@ -108,7 +109,6 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     obj_source_node.total_pages = 1
     obj_source_node.url = youtube_url
     obj_source_node.created_at = datetime.now()
-
     match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
     logging.info(f"match value{match}")
     obj_source_node.file_name = YouTube(obj_source_node.url).title
@@ -130,32 +130,29 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
     success_count=0
     failed_count=0
     lst_file_name=[]
-    queries_list =  wiki_query.split(',')
-    wiki_query_ids, languages = check_url_source(source_type=source_type, queries_list=queries_list)
-    for query,language in zip(wiki_query_ids, languages):
-      logging.info(f"Creating source node for {query.strip()}, {language}")
-      pages = WikipediaLoader(query=query.strip(), lang=language, load_max_docs=1, load_all_available_meta=True).load()
-      try:
-        if not pages:
-          failed_count+=1
-          continue
-        obj_source_node = sourceNode()
-        obj_source_node.file_name = query.strip()
-        obj_source_node.file_type = 'text'
-        obj_source_node.file_source = source_type
-        obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
-        obj_source_node.total_pages = len(pages)
-        obj_source_node.model = model
-        obj_source_node.url = urllib.parse.unquote(pages[0].metadata['source'])
-        obj_source_node.created_at = datetime.now()
-        obj_source_node.language = language
-        graphDb_data_Access = graphDBdataAccess(graph)
-        graphDb_data_Access.create_source_node(obj_source_node)
-        success_count+=1
-        lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'language':obj_source_node.language, 'status':'Success'})
-      except Exception as e:
-        failed_count+=1
-        lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'language':obj_source_node.language, 'status':'Failed'})
+    #queries_list =  wiki_query.split(',')
+    wiki_query_id, language = check_url_source(source_type=source_type, wiki_query=wiki_query)
+    logging.info(f"Creating source node for {wiki_query_id.strip()}, {language}")
+    pages = WikipediaLoader(query=wiki_query_id.strip(), lang=language, load_max_docs=1, load_all_available_meta=True).load()
+    if pages==None or len(pages)==0:
+      failed_count+=1
+      message = f"Unable to read data for given Wikipedia url : {wiki_query}"
+      raise Exception(message)
+    else:
+      obj_source_node = sourceNode()
+      obj_source_node.file_name = wiki_query_id.strip()
+      obj_source_node.file_type = 'text'
+      obj_source_node.file_source = source_type
+      obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
+      obj_source_node.total_pages = len(pages)
+      obj_source_node.model = model
+      obj_source_node.url = urllib.parse.unquote(pages[0].metadata['source'])
+      obj_source_node.created_at = datetime.now()
+      obj_source_node.language = language
+      graphDb_data_Access = graphDBdataAccess(graph)
+      graphDb_data_Access.create_source_node(obj_source_node)
+      success_count+=1
+      lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'language':obj_source_node.language, 'status':'Success'})
     return lst_file_name,success_count,failed_count
     
 def extract_graph_from_file_local_file(graph, model, merged_file_path, fileName, allowedNodes, allowedRelationship):
@@ -383,7 +380,7 @@ def update_graph(graph):
   Update the graph node with SIMILAR relationship where embedding scrore match
   """
   graph_DB_dataAccess = graphDBdataAccess(graph)
-  return graph_DB_dataAccess.update_KNN_graph()
+  graph_DB_dataAccess.update_KNN_graph()
 
   
 def connection_check(graph):
@@ -465,11 +462,11 @@ def get_labels_and_relationtypes(graph):
           RETURN collect { 
           CALL db.labels() yield label 
           WHERE NOT label  IN ['Chunk','_Bloom_Perspective_'] 
-          return label order by label limit 50 } as labels, 
+          return label order by label limit 100 } as labels, 
           collect { 
           CALL db.relationshipTypes() yield relationshipType  as type 
           WHERE NOT type  IN ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_'] 
-          return type order by type LIMIT 50 } as relationshipTypes
+          return type order by type LIMIT 100 } as relationshipTypes
           """
   graphDb_data_Access = graphDBdataAccess(graph)
   result = graphDb_data_Access.execute_query(query)

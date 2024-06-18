@@ -36,7 +36,7 @@ class graphDBdataAccess:
                             d.processingTime = $pt, d.errorMessage = $e_message, d.nodeCount= $n_count, 
                             d.relationshipCount = $r_count, d.model= $model, d.gcsBucket=$gcs_bucket, 
                             d.gcsBucketFolder= $gcs_bucket_folder, d.language= $language,d.gcsProjectId= $gcs_project_id,
-                            d.is_cancelled=False, d.total_pages=0, d.total_chunks=0, d.processed_chunk=0, d.total_pages=$total_pages,
+                            d.is_cancelled=False, d.total_chunks=0, d.processed_chunk=0, d.total_pages=$total_pages,
                             d.access_token=$access_token""",
                             {"fn":obj_source_node.file_name, "fs":obj_source_node.file_size, "ft":obj_source_node.file_type, "st":job_status, 
                             "url":obj_source_node.url,
@@ -128,16 +128,17 @@ class graphDBdataAccess:
         index = self.graph.query("""show indexes yield * where type = 'VECTOR' and name = 'vector'""")
         # logging.info(f'show index vector: {index}')
         knn_min_score = os.environ.get('KNN_MIN_SCORE')
-        if index[0]['name'] == 'vector':
+        if len(index) > 0:
             logging.info('update KNN graph')
-            result = self.graph.query("""MATCH (c:Chunk)
+            self.graph.query("""MATCH (c:Chunk)
                                     WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
                                     CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score
                                     WHERE node <> c and score >= $score MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score
                                 """,
                                 {"score":float(knn_min_score)}
                                 )
-            logging.info(f"result : {result}")
+        else:
+            logging.info("Vector index does not exist, So KNN graph not update")
             
     def connection_check(self):
         """

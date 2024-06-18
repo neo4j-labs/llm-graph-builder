@@ -3,13 +3,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { urlScanAPI } from '../services/URLScan';
-import { CustomFileBase, S3ModalProps, fileName, nonoautherror } from '../types';
+import { CustomFileBase, GCSModalProps, fileName, nonoautherror } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../HOC/CustomModal';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAlertContext } from '../context/Alert';
+import { buttonCaptions } from '../utils/Constants';
 
-const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
+const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) => {
   const [bucketName, setbucketName] = useState<string>('');
   const [folderName, setFolderName] = useState<string>('');
   const [projectId, setprojectId] = useState<string>('');
@@ -53,6 +54,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       try {
         setStatus('info');
         setStatusMessage('Loading...');
+        openGCSModal();
         const apiResponse = await urlScanAPI({
           userCredentials,
           model,
@@ -84,7 +86,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               gcsBucket: item.gcsBucketName,
               gcsBucketFolder: item.gcsBucketFolder,
               google_project_id: item.gcsProjectId,
-              total_pages: 'NA',
+              total_pages: 'N/A',
               id: uuidv4(),
               access_token: codeResponse.access_token,
               ...defaultValues,
@@ -102,6 +104,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               fileSource: defaultValues.fileSource,
               processingProgress: defaultValues.processingProgress,
               access_token: codeResponse.access_token,
+              total_pages: 'N/A',
             });
           }
         });
@@ -158,7 +161,7 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       setStatus={setStatus}
       submitHandler={submitHandler}
       status={status}
-      submitLabel='Submit'
+      submitLabel={buttonCaptions.submit}
     >
       <div className='w-full inline-block'>
         <TextInput
@@ -195,8 +198,8 @@ const GCSModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           disabled={false}
           label='Folder Name'
           aria-label='Folder Name'
+          helpText='Optional'
           placeholder=''
-          isOptional={true}
           fluid
           onChange={(e) => {
             setFolderName(e.target.value);

@@ -1,12 +1,12 @@
-
-import { Button, Checkbox, Dialog, Textarea } from '@neo4j-ndl/react';
+import { Checkbox, Dialog, Textarea } from '@neo4j-ndl/react';
 import { useCallback, useState } from 'react';
 import { getNodeLabelsAndRelTypesFromText } from '../services/SchemaFromTextAPI';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
-import { UserCredentials } from '../types';
 import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { OverridableStringUnion } from '@mui/types';
+import { buttonCaptions } from '../utils/Constants';
+import ButtonWithToolTip from './ButtonWithToolTip';
 
 const SchemaFromTextDialog = ({
   open,
@@ -26,7 +26,7 @@ const SchemaFromTextDialog = ({
   const [loading, setloading] = useState<boolean>(false);
   const { setSelectedNodes, setSelectedRels } = useFileContext();
   const { userCredentials } = useCredentials();
-  const [isSchema, setIsSchema] = useState<boolean>(false)
+  const [isSchema, setIsSchema] = useState<boolean>(false);
   const { model } = useFileContext();
 
   const clickHandler = useCallback(async () => {
@@ -100,8 +100,7 @@ const SchemaFromTextDialog = ({
       setloading(false);
       console.log(error);
     }
-  }, [userCredentials, userText,isSchema]);
-
+  }, [userCredentials, userText, isSchema]);
 
   return (
     <Dialog
@@ -115,7 +114,7 @@ const SchemaFromTextDialog = ({
         onClose();
       }}
     >
-      <Dialog.Header id='form-dialog-title'>Graph Settings</Dialog.Header>
+      <Dialog.Header id='form-dialog-title'>Entity Graph Extraction Settings</Dialog.Header>
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
         <Textarea
           helpText='Analyze the text to extract Entities'
@@ -130,15 +129,22 @@ const SchemaFromTextDialog = ({
         />
         <Dialog.Actions className='!mt-4'>
           <Checkbox
-            label="Text is schema description"
+            label='Text is schema description'
             onChange={(e) => {
-                setIsSchema(e.target.checked)
+              setIsSchema(e.target.checked);
             }}
             checked={isSchema}
           />
-          <Button loading={loading} disabled={userText.trim() === '' || loading} onClick={clickHandler}>
-            Analyze
-          </Button>
+          <ButtonWithToolTip
+            placement='top'
+            label='Analyze button'
+            text={userText.trim() === '' ? 'please fill the text to extract graph schema' : buttonCaptions.analyze}
+            loading={loading}
+            disabled={userText.trim() === '' || loading}
+            onClick={clickHandler}
+          >
+            {buttonCaptions.analyze}
+          </ButtonWithToolTip>
         </Dialog.Actions>
       </Dialog.Content>
     </Dialog>
