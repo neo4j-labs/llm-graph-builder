@@ -417,7 +417,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
   gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
   print(f'gcs file cache: {gcs_file_cache}')
   
-  if gcs_file_cache == 'True':
+  if gcs_file_cache == 'True' and originalname.split('.')[-1]=='pdf':
     upload_file_to_gcs(chunk, chunk_number, originalname, BUCKET_UPLOAD)
   else:
     if not os.path.exists(chunk_dir):
@@ -431,7 +431,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
 
   if int(chunk_number) == int(total_chunks):
       # If this is the last chunk, merge all chunks into a single file
-      if gcs_file_cache == 'True':
+      if gcs_file_cache == 'True' and originalname.split('.')[-1]=='pdf':
         total_pages, file_size = merge_file_gcs(BUCKET_UPLOAD, originalname)
       else:
         total_pages, file_size = merge_chunks_local(originalname, int(total_chunks), chunk_dir, merged_dir)

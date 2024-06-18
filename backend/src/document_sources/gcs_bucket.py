@@ -101,7 +101,7 @@ def upload_file_to_gcs(file_chunk, chunk_number, original_file_name, bucket_name
   # Set the lifecycle policy on the bucket
   bucket.lifecycle_rules = lifecycle
   bucket.patch()
-  print('Chunk uploaded successfully')
+  logging.info('Chunk uploaded successfully in gcs')
   
 def merge_file_gcs(bucket_name, original_file_name: str):
     storage_client = storage.Client()
@@ -115,7 +115,7 @@ def merge_file_gcs(bucket_name, original_file_name: str):
     # Merge chunks into a single file
     merged_file = b"".join(chunks)
     blob = storage_client.bucket(bucket_name).blob(original_file_name)
-    print('save the merged file from chunks')
+    logging.info('save the merged file from chunks in gcs')
     file_io = io.BytesIO(merged_file)
     blob.upload_from_file(file_io)
     pdf_reader = PdfReader(file_io)
