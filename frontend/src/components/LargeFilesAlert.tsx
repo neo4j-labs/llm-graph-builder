@@ -65,7 +65,7 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
                     <ListItemText
                       primary={
                         <Flex flexDirection='row'>
-                          <span>
+                          <span className='word-break'>
                             {f.name} - {Math.floor((f?.size as number) / 1000)?.toFixed(2)}KB
                             {f.fileSource === 'local file' && minutes === 0 && typeof f.total_pages === 'number'
                               ? `- ${timeperpage * f?.total_pages} Sec `

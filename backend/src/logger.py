@@ -12,7 +12,7 @@ class CustomLogger:
             self.logger = None
 
     def log_struct(self, message):
-        if self.is_gcp_log_enabled or message is not None:
+        if self.is_gcp_log_enabled and message is not None:
             self.logger.log_struct(message)
         else:
             print(message)
