@@ -75,7 +75,17 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
           }, 5000);
           return;
         }
-        showAlert('success', `Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
+        const apiResCheck = apiResponse?.data?.success_count && apiResponse.data.failed_count;
+        if (apiResCheck) {
+          showAlert(
+            'info',
+            `Successfully Created Source Nodes for ${apiResponse.data.success_count} and Failed for ${apiResponse.data.failed_count} Files`
+          );
+        } else if (apiResponse?.data?.success_count) {
+          showAlert('info', `Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
+        } else {
+          showAlert('error', `Failed to Created Source Node for ${apiResponse.data.failed_count} Files`);
+        }
         const copiedFilesData = [...filesData];
         apiResponse?.data?.file_name?.forEach((item: fileName) => {
           const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
