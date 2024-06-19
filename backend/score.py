@@ -351,10 +351,11 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
             return create_api_response('Success', message=result)
     except Exception as e:
         # job_status = "Failed"
-        message="Unable to upload large file into chunks or saving the chunks"
+        message="Unable to upload large file into chunks. "
         error_message = str(e)
         logging.info(message)
         logging.exception(f'Exception:{error_message}')
+        return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = originalname)
     finally:
             close_db_connection(graph, 'upload')
             
@@ -368,11 +369,11 @@ async def get_structured_schema(uri=Form(None), userName=Form(None), password=Fo
         logger.log_struct(josn_obj)
         return create_api_response('Success', data=result)
     except Exception as e:
-        job_status = "Failed"
         message="Unable to get the labels and relationtypes from neo4j database"
         error_message = str(e)
         logging.info(message)
         logging.exception(f'Exception:{error_message}')
+        return create_api_response("Failed", message=message, error=error_message)
     finally:
             close_db_connection(graph, 'schema')
             

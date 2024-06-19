@@ -24,48 +24,51 @@ def get_documents_from_file_by_path(file_path,file_name):
         logging.info(f'file {file_name} processing')
         # loader = PyPDFLoader(str(file_path))
         file_extension = file_path.suffix.lower()
-        if file_extension == ".pdf":
-            loader = PyMuPDFLoader(str(file_path))
-            pages = loader.load()
-        else:
-            loader = UnstructuredFileLoader(str(file_path), encoding="utf-8", mode="elements")
-            unstructured_pages = loader.load()   
-            pages = []
-            page_number = 1
-            page_content=''
-            metadata = {}
-            for page in unstructured_pages:
-                if  'page_number' in page.metadata:
-                    if page.metadata['page_number']==page_number:
-                        page_content += page.page_content
-                        metadata = {'source':page.metadata['source'],'page_number':page_number, 'filename':page.metadata['filename'],
-                                'filetype':page.metadata['filetype'], 'total_pages':unstructured_pages[-1].metadata['page_number']}
-                        
-                    if page.metadata['page_number']>page_number:
-                        page_number+=1
-                        if not metadata:
-                            metadata = {'total_pages':unstructured_pages[-1].metadata['page_number']}
-                        pages.append(Document(page_content = page_content, metadata=metadata))
-                        page_content='' 
-                           
-                    if page == unstructured_pages[-1]:
-                        if not metadata:
-                            metadata = {'total_pages':unstructured_pages[-1].metadata['page_number']}
-                        pages.append(Document(page_content = page_content, metadata=metadata))
+        try:
+            if file_extension == ".pdf":
+                loader = PyMuPDFLoader(str(file_path))
+                pages = loader.load()
+            else:
+                loader = UnstructuredFileLoader(str(file_path), encoding="utf-8", mode="elements")
+                unstructured_pages = loader.load()   
+                pages = []
+                page_number = 1
+                page_content=''
+                metadata = {}
+                for page in unstructured_pages:
+                    if  'page_number' in page.metadata:
+                        if page.metadata['page_number']==page_number:
+                            page_content += page.page_content
+                            metadata = {'source':page.metadata['source'],'page_number':page_number, 'filename':page.metadata['filename'],
+                                    'filetype':page.metadata['filetype'], 'total_pages':unstructured_pages[-1].metadata['page_number']}
                             
-                elif page.metadata['category']=='PageBreak' and page!=unstructured_pages[0]:
-                    page_number+=1
-                    pages.append(Document(page_content = page_content, metadata=metadata))
-                    page_content=''
-                    metadata={}
-                
-                else:
-                    page_content += page.page_content
-                    metadata_with_custom_page_number = {'source':page.metadata['source'],
-                                    'page_number':1, 'filename':page.metadata['filename'],
-                                    'filetype':page.metadata['filetype'], 'total_pages':1}
-                    if page == unstructured_pages[-1]:
-                            pages.append(Document(page_content = page_content, metadata=metadata_with_custom_page_number))       
+                        if page.metadata['page_number']>page_number:
+                            page_number+=1
+                            if not metadata:
+                                metadata = {'total_pages':unstructured_pages[-1].metadata['page_number']}
+                            pages.append(Document(page_content = page_content, metadata=metadata))
+                            page_content='' 
+                            
+                        if page == unstructured_pages[-1]:
+                            if not metadata:
+                                metadata = {'total_pages':unstructured_pages[-1].metadata['page_number']}
+                            pages.append(Document(page_content = page_content, metadata=metadata))
+                                
+                    elif page.metadata['category']=='PageBreak' and page!=unstructured_pages[0]:
+                        page_number+=1
+                        pages.append(Document(page_content = page_content, metadata=metadata))
+                        page_content=''
+                        metadata={}
+                    
+                    else:
+                        page_content += page.page_content
+                        metadata_with_custom_page_number = {'source':page.metadata['source'],
+                                        'page_number':1, 'filename':page.metadata['filename'],
+                                        'filetype':page.metadata['filetype'], 'total_pages':1}
+                        if page == unstructured_pages[-1]:
+                                pages.append(Document(page_content = page_content, metadata=metadata_with_custom_page_number))       
+        except Exception as e:
+            raise Exception('Error while reading the file content or metadata')
     else:
         logging.info(f'File {file_name} does not exist')
         raise Exception(f'File {file_name} does not exist')
