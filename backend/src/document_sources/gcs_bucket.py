@@ -65,15 +65,18 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
   print(f'BLOB Name: {blob_name}')
   bucket = storage_client.bucket(gcs_bucket_name)
   blob = bucket.blob(blob_name) 
-  content = blob.download_as_bytes()
-  pdf_file = io.BytesIO(content)
-  pdf_reader = PdfReader(pdf_file)
+  if blob.exists():
+    content = blob.download_as_bytes()
+    pdf_file = io.BytesIO(content)
+    pdf_reader = PdfReader(pdf_file)
 
-    # Extract text from all pages
-  text = ""
-  for page in pdf_reader.pages:
-        text += page.extract_text()
-  pages = [Document(page_content = text)]
+      # Extract text from all pages
+    text = ""
+    for page in pdf_reader.pages:
+          text += page.extract_text()
+    pages = [Document(page_content = text)]
+  else:
+    raise Exception('Blob Not Found')
   return gcs_blob_filename, pages
 
 def upload_file_to_gcs(file_chunk, chunk_number, original_file_name, bucket_name):
@@ -140,5 +143,5 @@ def delete_file_from_gcs(bucket_name, file_name):
     if blob.exists():
       blob.delete()
     logging.info('File deleted from GCS successfully')
-  except:
-    raise Exception('BLOB not exists in GCS')
+  except Exception as e:
+    raise Exception(e)
