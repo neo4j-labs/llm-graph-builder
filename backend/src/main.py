@@ -160,7 +160,7 @@ def extract_graph_from_file_local_file(graph, model, merged_file_path, fileName,
   logging.info(f'Process file name :{fileName}')
   gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
   if gcs_file_cache == 'True' and (fileName.split('.')[-1]).upper() =='PDF':
-    folder_name = create_gcs_bucket_folder_name_hashed
+    folder_name = create_gcs_bucket_folder_name_hashed(uri, fileName)
     file_name, pages = get_documents_from_gcs( PROJECT_ID, BUCKET_UPLOAD, None, fileName, folder_name_sha1_hashed=folder_name)
   else:
     file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,fileName)
@@ -425,7 +425,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
   logging.info(f'gcs file cache: {gcs_file_cache}')
   
   if gcs_file_cache == 'True' and (originalname.split('.')[-1]).upper() =='PDF':
-    folder_name = create_gcs_bucket_folder_name_hashed
+    folder_name = create_gcs_bucket_folder_name_hashed(uri,originalname)
     upload_file_to_gcs(chunk, chunk_number, originalname, BUCKET_UPLOAD, folder_name)
   else:
     if not os.path.exists(chunk_dir):
@@ -440,7 +440,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
   if int(chunk_number) == int(total_chunks):
       # If this is the last chunk, merge all chunks into a single file
       if gcs_file_cache == 'True' and (originalname.split('.')[-1]).upper()=='PDF':
-        file_size = merge_file_gcs(BUCKET_UPLOAD, originalname, folder_name_sha1_hashed)
+        file_size = merge_file_gcs(BUCKET_UPLOAD, originalname, folder_name)
         total_pages = 1
       else:
         total_pages, file_size = merge_chunks_local(originalname, int(total_chunks), chunk_dir, merged_dir)
