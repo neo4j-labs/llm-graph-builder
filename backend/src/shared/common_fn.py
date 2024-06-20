@@ -1,3 +1,4 @@
+import hashlib
 import logging
 from src.document_sources.youtube import create_youtube_url
 from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
@@ -144,3 +145,8 @@ def get_llm(model_version:str) :
     logging.info(f"Model created - Model Version: {model_version}")
     return llm
   
+def create_gcs_bucket_folder_name_hashed(uri, file_name):
+  folder_name = uri + file_name
+  folder_name_sha1 = hashlib.sha1(folder_name.encode())
+  folder_name_sha1_hashed = folder_name_sha1.hexdigest()
+  return folder_name_sha1_hashed

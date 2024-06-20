@@ -42,7 +42,7 @@ def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder
 def load_pdf(file_path):
     return PyMuPDFLoader(file_path)
 
-def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token=None):
+def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token=None, folder_name_sha1_hashed = None):
 
   if gcs_bucket_folder is not None:
     if gcs_bucket_folder.endswith('/'):
@@ -59,6 +59,7 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
   #creds= Credentials(access_token)
   if access_token is None:
     storage_client = storage.Client(project=gcs_project_id)
+    blob_name = folder_name_sha1_hashed +'/'+gcs_blob_filename
   else:
     creds= Credentials(access_token)
     storage_client = storage.Client(project=gcs_project_id, credentials=creds)
@@ -79,43 +80,28 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
     raise Exception('Blob Not Found')
   return gcs_blob_filename, pages
 
-def upload_file_to_gcs(file_chunk, chunk_number, original_file_name, bucket_name):
+def upload_file_to_gcs(file_chunk, chunk_number, original_file_name, bucket_name, folder_name_sha1_hashed):
   try:
     storage_client = storage.Client()
   
     file_name = f'{original_file_name}_part_{chunk_number}'
     bucket = storage_client.bucket(bucket_name)
     file_data = file_chunk.file.read()
-    # print(f'data after read {file_data}')
-        
-    blob = bucket.blob(file_name)
+    file_name_with__hashed_folder = folder_name_sha1_hashed +'/'+file_name
+    logging.info(f'GCS folder pathin upload: {file_name_with__hashed_folder}')
+    blob = bucket.blob(file_name_with__hashed_folder)
     file_io = io.BytesIO(file_data)
     blob.upload_from_file(file_io)
-    # Define the lifecycle rule to delete objects after 6 hours
-    # rule = {
-    #     "action": {"type": "Delete"},
-    #     "condition": {"age": 1}  # Age in days (24 hours = 1 days)
-    # }
-
-    # # Get the current lifecycle policy
-    # lifecycle = list(bucket.lifecycle_rules)
-
-    # # Add the new rule
-    # lifecycle.append(rule)
-
-    # # Set the lifecycle policy on the bucket
-    # bucket.lifecycle_rules = lifecycle
-    # bucket.patch()
     time.sleep(1)
     logging.info('Chunk uploaded successfully in gcs')
   except Exception as e:
     raise Exception('Error in while uploading the file chunks on GCS')
   
-def merge_file_gcs(bucket_name, original_file_name: str):
+def merge_file_gcs(bucket_name, original_file_name: str, folder_name_sha1_hashed):
   try:
       storage_client = storage.Client()
       # Retrieve chunks from GCS
-      blobs = storage_client.list_blobs(bucket_name, prefix=f"{original_file_name}_part_")
+      blobs = storage_client.list_blobs(bucket_name, prefix=folder_name_sha1_hashed)
       chunks = []
       for blob in blobs:
         chunks.append(blob.download_as_bytes())
@@ -123,11 +109,13 @@ def merge_file_gcs(bucket_name, original_file_name: str):
 
       # Merge chunks into a single file
       merged_file = b"".join(chunks)
-      blob = storage_client.bucket(bucket_name).blob(original_file_name)
+      file_name_with__hashed_folder = folder_name_sha1_hashed +'/'+original_file_name
+      logging.info(f'GCS folder path in merge: {file_name_with__hashed_folder}')
+      blob = storage_client.bucket(bucket_name).blob(file_name_with__hashed_folder)
       logging.info('save the merged file from chunks in gcs')
       file_io = io.BytesIO(merged_file)
       blob.upload_from_file(file_io)
-      pdf_reader = PdfReader(file_io)
+      # pdf_reader = PdfReader(file_io)
       file_size = len(merged_file)
       # total_pages = len(pdf_reader.pages)
       
@@ -135,11 +123,12 @@ def merge_file_gcs(bucket_name, original_file_name: str):
   except Exception as e:
     raise Exception('Error in while merge the files chunks on GCS')
   
-def delete_file_from_gcs(bucket_name, file_name):
+def delete_file_from_gcs(bucket_name,folder_name, file_name):
   try:
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
-    blob = bucket.blob(file_name)
+    folder_file_name = folder_name +'/'+file_name
+    blob = bucket.blob(folder_file_name)
     if blob.exists():
       blob.delete()
     logging.info('File deleted from GCS successfully')

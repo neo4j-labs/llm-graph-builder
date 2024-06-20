@@ -2,7 +2,7 @@ import logging
 import os
 from datetime import datetime
 from langchain_community.graphs import Neo4jGraph
-from src.shared.common_fn import delete_uploaded_local_file
+from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file
 from src.document_sources.gcs_bucket import delete_file_from_gcs
 from src.shared.constants import BUCKET_UPLOAD
 from src.entities.source_node import sourceNode
@@ -167,7 +167,7 @@ class graphDBdataAccess:
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
     
-    def delete_file_from_graph(self, filenames, source_types, deleteEntities:str, merged_dir:str):
+    def delete_file_from_graph(self, filenames, source_types, deleteEntities:str, merged_dir:str, uri):
         # filename_list = filenames.split(',')
         filename_list= list(map(str.strip, json.loads(filenames)))
         source_types_list= list(map(str.strip, json.loads(source_types)))
@@ -176,7 +176,8 @@ class graphDBdataAccess:
         for (file_name,source_type) in zip(filename_list, source_types_list):
             merged_file_path = os.path.join(merged_dir, file_name)
             if source_type == 'local file' and gcs_file_cache == 'True' and (file_name.split('.')[-1]).upper()=='PDF':
-                delete_file_from_gcs(BUCKET_UPLOAD,file_name)
+                folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
+                delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
             else:
                 logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
                 delete_uploaded_local_file(merged_file_path,file_name)
