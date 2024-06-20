@@ -35,6 +35,8 @@ def generate_graphDocuments(model: str, graph: Neo4jGraph, chunkId_chunkDoc_list
 
     elif model in GROQ_MODELS :
         graph_documents = get_graph_from_Groq_Llama3(MODEL_VERSIONS[model], graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
+    else:
+        raise Exception('Invalid LLM Model')
 
     logging.info(f"graph_documents = {len(graph_documents)}")
     return graph_documents
