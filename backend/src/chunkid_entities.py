@@ -1,8 +1,6 @@
 import logging
 from neo4j import graph
-from langchain_community.graphs import graph_document
 from src.graph_query import *
-
 
 CHUNK_QUERY = """
 match (chunk:Chunk) where chunk.id IN $chunksIds
@@ -15,41 +13,51 @@ UNWIND rels as r
 RETURN collect(distinct r) as rels
 }
 WITH d, collect(distinct chunk) as chunks, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels
-return [r in rels | [startNode(r), endNode(r), r]] as entities
+RETURN d as doc, [chunk in chunks | chunk {.*, embedding:null}] as chunks,
+       [r in rels | {startNode:{element_id:elementId(startNode(r)), labels:labels(startNode(r)), properties:{id:startNode(r).id,description:startNode(r).description}},
+                     endNode:{element_id:elementId(endNode(r)), labels:labels(endNode(r)), properties:{id:endNode(r).id,description:endNode(r).description}},
+                     relationship: {type:type(r), element_id:elementId(r)}}] as entities
 """
 
-CHUNK_TEXT_QUERY = "match (doc)<-[:PART_OF]-(chunk:Chunk) WHERE chunk.id IN $chunkIds RETURN doc, collect(chunk {.*, embedding:null}) as chunks"
 
-
-def process_record(record, elements_data):
+def process_records(records):
     """
     Processes a record to extract and organize node and relationship data.
     """
-    try:
-        entities = record["entities"]
-        for entity in entities:
-            for element in entity:
-                element_id = element.element_id
-                if isinstance(element, graph.Node):
-                    if element_id not in elements_data["seen_nodes"]:
-                        elements_data["seen_nodes"].add(element_id)
-                        node_element = process_node(element)
-                        elements_data["nodes"].append(node_element)
-                else:
-                    if element_id not in elements_data["seen_relationships"]:
-                        elements_data["seen_relationships"].add(element_id)
-                        nodes = element.nodes
-                        if len(nodes) < 2:
-                            logging.warning(f"Relationship with ID {element_id} does not have two nodes.")
-                            continue
-                        relationship = {
-                            "element_id": element_id,
-                            "type": element.type,
-                            "start_node_element_id": process_node(nodes[0])["element_id"],
-                            "end_node_element_id": process_node(nodes[1])["element_id"],
-                        }
-                        elements_data["relationships"].append(relationship)
-        return elements_data
+    try:            
+        nodes = []
+        relationships = []
+        seen_nodes = set()
+        seen_relationships = set()
+
+        for record in records:
+            for element in record["entities"]:
+                start_node = element['startNode']
+                end_node = element['endNode']
+                relationship = element['relationship']
+
+                if start_node['element_id'] not in seen_nodes:
+                    nodes.append(start_node)
+                    seen_nodes.add(start_node['element_id'])
+
+                if end_node['element_id'] not in seen_nodes:
+                    nodes.append(end_node)
+                    seen_nodes.add(end_node['element_id'])
+
+                if relationship['element_id'] not in seen_relationships:
+                    relationships.append({
+                        "element_id": relationship['element_id'],
+                        "type": relationship['type'],
+                        "start_node_element_id": start_node['element_id'],
+                        "end_node_element_id": end_node['element_id']
+                    })
+                    seen_relationships.add(relationship['element_id'])
+        output = {
+            "nodes": nodes,
+            "relationships": relationships
+        }
+
+        return output
     except Exception as e:
         logging.error(f"chunkid_entities module: An error occurred while extracting the nodes and relationships from records: {e}")
 
@@ -97,24 +105,9 @@ def get_entities_from_chunkids(uri, username, password, chunk_ids):
         chunk_ids_list = chunk_ids.split(",")
         driver = get_graphDB_driver(uri, username, password)
         records, summary, keys = driver.execute_query(CHUNK_QUERY, chunksIds=chunk_ids_list)
-        elements_data = {
-            "nodes": [],
-            "seen_nodes": set(),
-            "relationships": [],
-            "seen_relationships": set()
-        }
-        for record in records:
-            elements_data = process_record(record, elements_data)
-
+        result = process_records(records)
         logging.info(f"Nodes and relationships are processed")
-
-        chunk_data,summary, keys = driver.execute_query(CHUNK_TEXT_QUERY, chunkIds=chunk_ids_list)
-        chunk_properties = process_chunk_data(chunk_data)
-        result = {
-            "nodes": elements_data["nodes"],
-            "relationships": elements_data["relationships"],
-            "chunk_data": chunk_properties
-        }
+        result["chunk_data"] = process_chunk_data(records)
         logging.info(f"Query process completed successfully for chunk ids")
         return result
 
