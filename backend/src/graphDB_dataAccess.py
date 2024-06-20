@@ -175,7 +175,7 @@ class graphDBdataAccess:
         # source_types_list = source_types.split(',')
         for (file_name,source_type) in zip(filename_list, source_types_list):
             merged_file_path = os.path.join(merged_dir, file_name)
-            if source_type == 'local file' and gcs_file_cache == 'True' and (file_name.split('.')[-1]).upper()=='PDF':
+            if source_type == 'local file' and gcs_file_cache == 'True':
                 folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
                 delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
             else:

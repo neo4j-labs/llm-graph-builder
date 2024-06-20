@@ -191,8 +191,8 @@ async def extract_knowledge_graph_from_file(
         error_message = str(e)
         graphDb_data_Access.update_exception_db(file_name,error_message)
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-        if source_type == 'local file' and gcs_file_cache == 'True' and (file_name.split('.')[-1]).upper()=='PDF':
-            folder_name = create_gcs_bucket_folder_name_hashed
+        if source_type == 'local file' and gcs_file_cache == 'True':
+            folder_name = create_gcs_bucket_folder_name_hashed(uri,file_name)
             delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
         else:
             logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
