@@ -159,7 +159,7 @@ def extract_graph_from_file_local_file(graph, model, merged_file_path, fileName,
 
   logging.info(f'Process file name :{fileName}')
   gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-  if gcs_file_cache == 'True' and fileName.split('.')[-1]=='pdf':
+  if gcs_file_cache == 'True' and (fileName.split('.')[-1]).upper() =='PDF':
     file_name, pages = get_documents_from_gcs( PROJECT_ID, BUCKET_UPLOAD, None, fileName)
   else:
     file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,fileName)
@@ -307,7 +307,7 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     
     if is_uploaded_from_local:
       gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-      if gcs_file_cache == 'True' and file_name.split('.')[-1]=='pdf':
+      if gcs_file_cache == 'True' and (file_name.split('.')[-1]).upper()=='PDF':
         delete_file_from_gcs(BUCKET_UPLOAD,file_name)
       else:
         delete_uploaded_local_file(merged_file_path, file_name)  
@@ -422,7 +422,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
   gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
   logging.info(f'gcs file cache: {gcs_file_cache}')
   
-  if gcs_file_cache == 'True' and originalname.split('.')[-1]=='pdf':
+  if gcs_file_cache == 'True' and (originalname.split('.')[-1]).upper() =='PDF':
     upload_file_to_gcs(chunk, chunk_number, originalname, BUCKET_UPLOAD)
   else:
     if not os.path.exists(chunk_dir):
@@ -436,7 +436,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
 
   if int(chunk_number) == int(total_chunks):
       # If this is the last chunk, merge all chunks into a single file
-      if gcs_file_cache == 'True' and originalname.split('.')[-1]=='pdf':
+      if gcs_file_cache == 'True' and (originalname.split('.')[-1]).upper()=='PDF':
         total_pages, file_size = merge_file_gcs(BUCKET_UPLOAD, originalname)
       else:
         total_pages, file_size = merge_chunks_local(originalname, int(total_chunks), chunk_dir, merged_dir)
@@ -478,6 +478,7 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir):
   
   filename_list= list(map(str.strip, json.loads(filenames)))
   source_types_list= list(map(str.strip, json.loads(source_types)))
+  gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
   
   for (file_name,source_type) in zip(filename_list, source_types_list):
       obj_source_node = sourceNode()
@@ -489,9 +490,11 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir):
       graphDb_data_Access.update_source_node(obj_source_node)
       obj_source_node = None
       merged_file_path = os.path.join(merged_dir, file_name)
-      if source_type == 'local file':
-          logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+      if source_type == 'local file' and gcs_file_cache == 'True' and (file_name.split('.')[-1]).upper()=='PDF':
           delete_file_from_gcs(BUCKET_UPLOAD,file_name)
+      else:
+        logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+        delete_uploaded_local_file(merged_file_path,file_name)
   return "Cancelled the processing job successfully"
 
 def populate_graph_schema_from_text(text, model, is_schema_description_cheked):

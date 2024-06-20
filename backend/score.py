@@ -190,8 +190,12 @@ async def extract_knowledge_graph_from_file(
         message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content "
         error_message = str(e)
         graphDb_data_Access.update_exception_db(file_name,error_message)
-        if source_type == 'local file':
-            delete_file_from_gcs(BUCKET_UPLOAD,file_name)
+        gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
+        if source_type == 'local file' and gcs_file_cache == 'True' and (file_name.split('.')[-1]).upper()=='PDF':
+          delete_file_from_gcs(BUCKET_UPLOAD,file_name)
+        else:
+            logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+            delete_uploaded_local_file(merged_file_path,file_name)
         josn_obj = {'message':message,'error_message':error_message, 'file_name': file_name,'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type}
         logger.log_struct(josn_obj)
         logging.exception(f'File Failed in extraction: {josn_obj}')
