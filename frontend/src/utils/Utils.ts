@@ -160,3 +160,9 @@ export const getDateTime = () => {
 export const getIsLoading = (messages: Messages[]) => {
   return messages.some((msg) => msg.isTyping || msg.isLoading);
 };
+export const calculateProcessingTime = (fileSizeBytes: number, processingTimePerByteSeconds: number) => {
+  const totalProcessingTimeSeconds = (fileSizeBytes / 1000) * processingTimePerByteSeconds;
+  const minutes = Math.floor(totalProcessingTimeSeconds / 60);
+  const seconds = Math.floor(totalProcessingTimeSeconds % 60);
+  return { minutes, seconds };
+};

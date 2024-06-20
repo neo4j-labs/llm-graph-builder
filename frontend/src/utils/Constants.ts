@@ -42,6 +42,8 @@ export const defaultLLM = llms?.includes('OpenAI GPT 3.5')
 
 export const chunkSize = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.TIME_PER_PAGE ? parseInt(process.env.TIME_PER_PAGE) : 50;
+export const timePerByte = process.env.TIME_PER_BYTE ? parseInt(process.env.TIME_PER_BYTE) : 200;
+export const largeFileSize = process.env.LARGE_FILE_SIZE ? parseInt(process.env.LARGE_FILE_SIZE) : 5 * 1024 * 1024;
 export const NODES_OPTIONS = [
   {
     label: 'Person',
