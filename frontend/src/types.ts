@@ -26,7 +26,7 @@ export interface CustomFileBase extends Partial<globalThis.File> {
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
-  total_pages: number | 'N/A';
+  // total_pages: number | 'N/A';
 }
 
 export interface OptionType {
@@ -123,7 +123,7 @@ export interface SourceNode {
   language?: string;
   processed_chunk?: number;
   total_chunks?: number;
-  total_pages?: number;
+  // total_pages?: number;
   access_token?: string;
 }
 
@@ -258,7 +258,7 @@ export interface fileStatus {
   relationshipCount?: number;
   model: string;
   total_chunks?: number;
-  total_pages?: number;
+  // total_pages?: number;
   processed_chunk?: number;
 }
 export interface PollingAPI_Response extends Partial<AxiosResponse> {
@@ -345,7 +345,7 @@ export interface eventResponsetypes {
   relationshipCount: number;
   model: string;
   total_chunks: number | null;
-  total_pages: number;
+  // total_pages: number;
   fileSize: number;
   processed_chunk?: number;
   fileSource: string;
@@ -396,7 +396,7 @@ export type GroupedEntity = {
 
 export interface uploadData {
   file_size: number;
-  total_pages: number;
+  // total_pages: number;
   file_name: string;
   message: string;
 }
