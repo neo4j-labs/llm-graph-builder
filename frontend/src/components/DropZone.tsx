@@ -129,7 +129,9 @@ const DropZone: FunctionComponent = () => {
           });
 
           if (apiResponse?.data.status === 'Failed') {
-            throw new Error(`message:${apiResponse.data.message},fileName:${apiResponse.data.file_name}`);
+            throw new Error(
+              JSON.stringify({ message: apiResponse.data.message, fileName: apiResponse.data.file_name })
+            );
           } else {
             if (apiResponse.data.data) {
               setFilesData((prevfiles) =>
@@ -166,24 +168,35 @@ const DropZone: FunctionComponent = () => {
             uploadNextChunk();
           }
         } catch (error) {
-          setIsLoading(false);
-          setalertDetails({
-            showAlert: true,
-            alertType: 'error',
-            alertMessage: 'Error  Occurred',
-          });
-          setFilesData((prevfiles) =>
-            prevfiles.map((curfile) => {
-              if (curfile.name == file.name) {
-                return {
-                  ...curfile,
-                  status: 'Failed',
-                  type: `${file.name.substring(file.name.lastIndexOf('.') + 1, file.name.length).toUpperCase()}`,
-                };
-              }
-              return curfile;
-            })
-          );
+          if (error instanceof Error) {
+            setIsLoading(false);
+            if (error.name === 'AxiosError') {
+              setalertDetails({
+                showAlert: true,
+                alertType: 'error',
+                alertMessage: error.message,
+              });
+            } else {
+              const parsedError = JSON.parse(error.message);
+              setalertDetails({
+                showAlert: true,
+                alertType: 'error',
+                alertMessage: parsedError.message,
+              });
+            }
+            setFilesData((prevfiles) =>
+              prevfiles.map((curfile) => {
+                if (curfile.name == file.name) {
+                  return {
+                    ...curfile,
+                    status: 'Failed',
+                    type: `${file.name.substring(file.name.lastIndexOf('.') + 1, file.name.length).toUpperCase()}`,
+                  };
+                }
+                return curfile;
+              })
+            );
+          }
         }
       } else {
         setFilesData((prevfiles) =>

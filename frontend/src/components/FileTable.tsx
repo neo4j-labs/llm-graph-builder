@@ -21,12 +21,12 @@ import {
   CellContext,
   Table,
   Row,
-  getSortedRowModel
+  getSortedRowModel,
 } from '@tanstack/react-table';
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
-import { statusCheck } from '../utils/Utils';
+import { statusCheck, capitalize } from '../utils/Utils';
 import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, alertStateType } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
@@ -276,7 +276,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       }),
       columnHelper.accessor((row) => row.model, {
         id: 'model',
-        cell: (info) => <i>{info.getValue()}</i>,
+        cell: (info) => <i>{capitalize(info.getValue())}</i>,
         header: () => <span>Model</span>,
         footer: (info) => info.column.id,
       }),
@@ -588,7 +588,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     enableMultiRowSelection: true,
     getRowId: (row) => JSON.stringify({ ...row }),
     enableSorting: true,
-    getSortedRowModel: getSortedRowModel()
+    getSortedRowModel: getSortedRowModel(),
   });
 
   useEffect(() => {
