@@ -238,7 +238,9 @@
 .ndl-widget-content>div {
   overflow-wrap: break-word
 }
-
+.word-break{
+  word-break: break-word;
+}
 .cellClass {
   width: 100%;
   height: 100%;

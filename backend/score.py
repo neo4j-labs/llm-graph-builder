@@ -162,7 +162,7 @@ async def extract_knowledge_graph_from_file(
             merged_file_path = os.path.join(MERGED_DIR,file_name)
             logging.info(f'File path:{merged_file_path}')
             result = await asyncio.to_thread(
-                extract_graph_from_file_local_file, graph, model, merged_file_path, file_name, allowedNodes, allowedRelationship)
+                extract_graph_from_file_local_file, graph, model, merged_file_path, file_name, allowedNodes, allowedRelationship, uri)
 
         elif source_type == 's3 bucket' and source_url:
             result = await asyncio.to_thread(
@@ -190,8 +190,14 @@ async def extract_knowledge_graph_from_file(
         message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content "
         error_message = str(e)
         graphDb_data_Access.update_exception_db(file_name,error_message)
+        gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
         if source_type == 'local file':
-            delete_file_from_gcs(BUCKET_UPLOAD,file_name)
+            if gcs_file_cache == 'True':
+                folder_name = create_gcs_bucket_folder_name_hashed(uri,file_name)
+                delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
+            else:
+                logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+                delete_uploaded_local_file(merged_file_path,file_name)
         josn_obj = {'message':message,'error_message':error_message, 'file_name': file_name,'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type}
         logger.log_struct(josn_obj)
         logging.exception(f'File Failed in extraction: {josn_obj}')
@@ -351,10 +357,11 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
             return create_api_response('Success', message=result)
     except Exception as e:
         # job_status = "Failed"
-        message="Unable to upload large file into chunks or saving the chunks"
+        message="Unable to upload large file into chunks. "
         error_message = str(e)
         logging.info(message)
         logging.exception(f'Exception:{error_message}')
+        return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = originalname)
     finally:
             close_db_connection(graph, 'upload')
             
@@ -368,11 +375,11 @@ async def get_structured_schema(uri=Form(None), userName=Form(None), password=Fo
         logger.log_struct(josn_obj)
         return create_api_response('Success', data=result)
     except Exception as e:
-        job_status = "Failed"
         message="Unable to get the labels and relationtypes from neo4j database"
         error_message = str(e)
         logging.info(message)
         logging.exception(f'Exception:{error_message}')
+        return create_api_response("Failed", message=message, error=error_message)
     finally:
             close_db_connection(graph, 'schema')
             
@@ -427,7 +434,7 @@ async def delete_document_and_entities(uri=Form(None),
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
-        result, files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filenames, source_types, deleteEntities, MERGED_DIR)
+        result, files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filenames, source_types, deleteEntities, MERGED_DIR, uri)
         entities_count = result[0]['deletedEntities'] if 'deletedEntities' in result[0] else 0
         message = f"Deleted {files_list_size} documents with {entities_count} entities from database"
         josn_obj = {'api_name':'delete_document_and_entities','db_url':uri}
@@ -480,7 +487,7 @@ async def get_document_status(file_name, url, userName, password, database):
 async def cancelled_job(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), filenames=Form(None), source_types=Form(None)):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
-        result = manually_cancelled_job(graph,filenames, source_types, MERGED_DIR)
+        result = manually_cancelled_job(graph,filenames, source_types, MERGED_DIR, uri)
         
         return create_api_response('Success',message=result)
     except Exception as e:

@@ -6,6 +6,7 @@ EXPOSE 8000
 RUN apt-get update && \
    apt-get install -y --no-install-recommends \
        libgl1-mesa-glx \
+       libreoffice \
        cmake \
        poppler-utils \
        tesseract-ocr && \
@@ -19,4 +20,4 @@ RUN pip install --no-cache-dir --upgrade -r requirements.txt
 # Copy application code
 COPY . /code
 # Set command
-CMD ["gunicorn", "score:app", "--workers", "2", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "300"]
+CMD ["gunicorn", "score:app", "--workers", "8","--threads", "8", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "300"]

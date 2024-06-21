@@ -75,7 +75,19 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
           }, 5000);
           return;
         }
-        showAlert('success', `Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
+        const apiResCheck = apiResponse?.data?.success_count && apiResponse.data.failed_count;
+        if (apiResCheck) {
+          showAlert(
+            'info',
+            `Successfully Created Source Nodes for ${apiResponse.data.success_count} and Failed for ${apiResponse.data.failed_count} Files`
+          );
+        } else if (apiResponse?.data?.success_count) {
+          showAlert('info', `Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
+        } else if (apiResponse.data.failed_count) {
+          showAlert('error', `Failed to Created Source Node for ${apiResponse.data.failed_count} Files`);
+        } else {
+          showAlert('error', `Invalid Folder Name`);
+        }
         const copiedFilesData = [...filesData];
         apiResponse?.data?.file_name?.forEach((item: fileName) => {
           const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
@@ -86,7 +98,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
               gcsBucket: item.gcsBucketName,
               gcsBucketFolder: item.gcsBucketFolder,
               google_project_id: item.gcsProjectId,
-              total_pages: 'N/A',
+              // total_pages: 'N/A',
               id: uuidv4(),
               access_token: codeResponse.access_token,
               ...defaultValues,
@@ -104,7 +116,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
               fileSource: defaultValues.fileSource,
               processingProgress: defaultValues.processingProgress,
               access_token: codeResponse.access_token,
-              total_pages: 'N/A',
+              // total_pages: 'N/A',
             });
           }
         });

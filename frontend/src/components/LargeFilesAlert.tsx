@@ -3,13 +3,14 @@ import { DocumentTextIconOutline } from '@neo4j-ndl/react/icons';
 import { LargefilesProps } from '../types';
 import { List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 import { FC } from 'react';
-import { chunkSize, timeperpage } from '../utils/Constants';
+import { chunkSize } from '../utils/Constants';
 import BellImage from '../assets/images/Stopwatch-blue.svg';
 import AlertIcon from './Layout/AlertIcon';
 import wikipedialogo from '../assets/images/Wikipedia-logo-v2.svg';
 import youtubelogo from '../assets/images/youtube.png';
 import gcslogo from '../assets/images/gcs.webp';
 import s3logo from '../assets/images/s3logo.png';
+import { calculateProcessingTime } from '../utils/Utils';
 
 const imageIcon: Record<string, string> = {
   Wikipedia: wikipedialogo,
@@ -34,10 +35,7 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
           </Typography>
           <List className='max-h-80 overflow-y-auto'>
             {largeFiles.map((f, i) => {
-              let minutes = undefined;
-              if (typeof f.total_pages === 'number') {
-                minutes = Math.floor((timeperpage * f.total_pages) / 60);
-              }
+              const { minutes, seconds } = calculateProcessingTime(f.size as number, 0.2);
               return (
                 <ListItem key={i} disablePadding>
                   <ListItemButton role={undefined} dense>
@@ -65,19 +63,15 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
                     <ListItemText
                       primary={
                         <Flex flexDirection='row'>
-                          <span>
+                          <span className='word-break'>
                             {f.name} - {Math.floor((f?.size as number) / 1000)?.toFixed(2)}KB
-                            {f.fileSource === 'local file' && minutes === 0 && typeof f.total_pages === 'number'
-                              ? `- ${timeperpage * f?.total_pages} Sec `
+                            {f.fileSource === 'local file' && minutes === 0 && typeof f.size === 'number'
+                              ? `- ${seconds} Sec `
                               : f.fileSource === 'local file'
                               ? `- ${minutes} Min`
                               : ''}
                           </span>
-                          {f.fileSource === 'local file' && typeof f.total_pages === 'number' && f.total_pages > 20 ? (
-                            <span>
-                              <AlertIcon />
-                            </span>
-                          ) : typeof f.size === 'number' && f.size > chunkSize ? (
+                          {typeof f.size === 'number' && f.size > chunkSize ? (
                             <span>
                               <AlertIcon />
                             </span>
