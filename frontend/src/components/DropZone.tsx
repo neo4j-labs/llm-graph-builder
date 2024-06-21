@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import { Dropzone, Flex, Typography } from '@neo4j-ndl/react';
 import React, { useState, useEffect, FunctionComponent } from 'react';
 import Loader from '../utils/Loader';
@@ -129,7 +129,9 @@ const DropZone: FunctionComponent = () => {
           });
 
           if (apiResponse?.data.status === 'Failed') {
-            throw new Error(JSON.stringify({message:apiResponse.data.message,fileName:apiResponse.data.file_name}));
+            throw new Error(
+              JSON.stringify({ message: apiResponse.data.message, fileName: apiResponse.data.file_name })
+            );
           } else {
             if (apiResponse.data.data) {
               setFilesData((prevfiles) =>
@@ -168,14 +170,14 @@ const DropZone: FunctionComponent = () => {
         } catch (error) {
           if (error instanceof Error) {
             setIsLoading(false);
-            if(error.name==="AxiosError"){
+            if (error.name === 'AxiosError') {
               setalertDetails({
                 showAlert: true,
                 alertType: 'error',
                 alertMessage: error.message,
               });
-            }else{
-              const parsedError=JSON.parse(error.message);
+            } else {
+              const parsedError = JSON.parse(error.message);
               setalertDetails({
                 showAlert: true,
                 alertType: 'error',
@@ -195,7 +197,6 @@ const DropZone: FunctionComponent = () => {
               })
             );
           }
-
         }
       } else {
         setFilesData((prevfiles) =>
