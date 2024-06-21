@@ -17,7 +17,10 @@ const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
           aria-label='A selection dropdown'
           selectProps={{
             onChange: handleChange,
-            options: allOptions?.map((option) => ({ label: `${option[0].toUpperCase()}${option.slice(1)}`, value: option })),
+            options: allOptions?.map((option) => ({
+              label: `${option[0].toUpperCase()}${option.slice(1)}`,
+              value: option,
+            })),
             placeholder: 'Select LLM Model',
             defaultValue: { label: `${defaultLLM[0].toUpperCase()}${defaultLLM.slice(1)}`, value: defaultLLM },
             menuPlacement: 'auto',

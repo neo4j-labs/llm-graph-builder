@@ -21,7 +21,7 @@ import {
   CellContext,
   Table,
   Row,
-  getSortedRowModel
+  getSortedRowModel,
 } from '@tanstack/react-table';
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
@@ -581,7 +581,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     enableMultiRowSelection: true,
     getRowId: (row) => JSON.stringify({ ...row }),
     enableSorting: true,
-    getSortedRowModel: getSortedRowModel()
+    getSortedRowModel: getSortedRowModel(),
   });
 
   useEffect(() => {
