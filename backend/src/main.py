@@ -440,7 +440,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
   if int(chunk_number) == int(total_chunks):
       # If this is the last chunk, merge all chunks into a single file
       if gcs_file_cache == 'True':
-        file_size = merge_file_gcs(BUCKET_UPLOAD, originalname, folder_name)
+        file_size = merge_file_gcs(BUCKET_UPLOAD, originalname, folder_name, int(total_chunks))
         total_pages = 1
       else:
         total_pages, file_size = merge_chunks_local(originalname, int(total_chunks), chunk_dir, merged_dir)

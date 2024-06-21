@@ -113,7 +113,7 @@ def delete_uploaded_local_file(merged_file_path, file_name):
 def close_db_connection(graph, api_name):
   if not graph._driver._closed:
       logging.info(f"closing connection for {api_name} api")
-      graph._driver.close()   
+      # graph._driver.close()   
       
 def get_llm(model_version:str) :
     """Retrieve the specified language model based on the model name."""

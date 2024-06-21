@@ -97,17 +97,22 @@ def upload_file_to_gcs(file_chunk, chunk_number, original_file_name, bucket_name
   except Exception as e:
     raise Exception('Error in while uploading the file chunks on GCS')
   
-def merge_file_gcs(bucket_name, original_file_name: str, folder_name_sha1_hashed):
+def merge_file_gcs(bucket_name, original_file_name: str, folder_name_sha1_hashed, total_chunks):
   try:
       storage_client = storage.Client()
+      bucket = storage_client.bucket(bucket_name)
       # Retrieve chunks from GCS
-      blobs = storage_client.list_blobs(bucket_name, prefix=folder_name_sha1_hashed)
+      # blobs = storage_client.list_blobs(bucket_name, prefix=folder_name_sha1_hashed)
+      # print(f'before sorted blobs: {blobs}')
       chunks = []
-      for blob in blobs:
-        chunks.append(blob.download_as_bytes())
+      for i in range(1,total_chunks+1):
+        blob_name = folder_name_sha1_hashed + '/' + f"{original_file_name}_part_{i}"
+        blob = bucket.blob(blob_name) 
+        if blob.exists():
+          print(f'Blob Name: {blob.name}')
+          chunks.append(blob.download_as_bytes())
         blob.delete()
-
-      # Merge chunks into a single file
+      
       merged_file = b"".join(chunks)
       file_name_with__hashed_folder = folder_name_sha1_hashed +'/'+original_file_name
       logging.info(f'GCS folder path in merge: {file_name_with__hashed_folder}')
