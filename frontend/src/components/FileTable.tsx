@@ -26,7 +26,7 @@ import {
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
-import { statusCheck } from '../utils/Utils';
+import { statusCheck, capitalize } from '../utils/Utils';
 import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, alertStateType } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
@@ -273,7 +273,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       }),
       columnHelper.accessor((row) => row.model, {
         id: 'model',
-        cell: (info) => <i>{info.getValue()}</i>,
+        cell: (info) => <i>{capitalize(info.getValue())}</i>,
         header: () => <span>Model</span>,
         footer: (info) => info.column.id,
       }),
@@ -345,14 +345,14 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                     item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                       ? item?.status
                       : item?.fileSource === 'local file'
-                      ? item?.status
-                      : item?.status === 'Completed' || item.status === 'Failed'
-                      ? item?.status
-                      : item?.fileSource == 'Wikipedia' ||
-                        item?.fileSource == 'youtube' ||
-                        item?.fileSource == 'gcs bucket'
-                      ? item?.status
-                      : 'N/A',
+                        ? item?.status
+                        : item?.status === 'Completed' || item.status === 'Failed'
+                          ? item?.status
+                          : item?.fileSource == 'Wikipedia' ||
+                            item?.fileSource == 'youtube' ||
+                            item?.fileSource == 'gcs bucket'
+                            ? item?.status
+                            : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
                   source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
@@ -365,8 +365,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   language: item?.language ?? '',
                   processingProgress:
                     item?.processed_chunk != undefined &&
-                    item?.total_chunks != undefined &&
-                    !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
+                      item?.total_chunks != undefined &&
+                      !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
                   total_pages: item?.total_pages ?? 0,

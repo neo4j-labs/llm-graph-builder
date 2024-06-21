@@ -2,6 +2,8 @@ import { Dropdown } from '@neo4j-ndl/react';
 import { DropdownProps, OptionType } from '../types';
 import { useMemo } from 'react';
 import { defaultLLM, llms } from '../utils/Constants';
+import { capitalize } from '../utils/Utils';
+
 
 const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
   const handleChange = (selectedOption: OptionType | null | void) => {
@@ -18,11 +20,11 @@ const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
           selectProps={{
             onChange: handleChange,
             options: allOptions?.map((option) => ({
-              label: `${option[0].toUpperCase()}${option.slice(1)}`,
+              label: capitalize(option),
               value: option,
             })),
             placeholder: 'Select LLM Model',
-            defaultValue: { label: `${defaultLLM[0].toUpperCase()}${defaultLLM.slice(1)}`, value: defaultLLM },
+            defaultValue: { label: capitalize(defaultLLM), value: defaultLLM },
             menuPlacement: 'auto',
             isDisabled,
           }}

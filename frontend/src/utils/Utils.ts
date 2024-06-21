@@ -166,3 +166,7 @@ export const calculateProcessingTime = (fileSizeBytes: number, processingTimePer
   const seconds = Math.floor(totalProcessingTimeSeconds % 60);
   return { minutes, seconds };
 };
+
+export const capitalize = (word: string): string => {
+  return `${word[0].toUpperCase()}${word.slice(1)}`
+}
