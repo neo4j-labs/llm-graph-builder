@@ -53,7 +53,7 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
   else:
       blob_name = gcs_blob_filename  
   
-  logging.info(f"GCS project_id : {gcs_project_id}")
+  logging.info(f"GCS project_id : {gcs_project_id}")  
  
   if access_token is None:
     storage_client = storage.Client(project=gcs_project_id)
