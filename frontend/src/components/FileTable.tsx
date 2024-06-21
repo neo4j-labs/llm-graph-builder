@@ -39,6 +39,7 @@ import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 import IconButtonWithToolTip from './IconButtonToolTip';
+import { largeFileSize } from '../utils/Constants';
 
 const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows } = useFileContext();
@@ -292,12 +293,12 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         header: () => <span>Relations</span>,
         footer: (info) => info.column.id,
       }),
-      columnHelper.accessor((row) => row.total_pages, {
-        id: 'Total pages',
-        cell: (info) => <i>{info.getValue()}</i>,
-        header: () => <span>Total pages</span>,
-        footer: (info) => info.column.id,
-      }),
+      // columnHelper.accessor((row) => row.total_pages, {
+      //   id: 'Total pages',
+      //   cell: (info) => <i>{info.getValue()}</i>,
+      //   header: () => <span>Total pages</span>,
+      //   footer: (info) => info.column.id,
+      // }),
       columnHelper.accessor((row) => row.status, {
         id: 'inspect',
         cell: (info) => (
@@ -372,7 +373,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                       !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
-                  total_pages: item?.total_pages ?? 0,
+                  // total_pages: item?.total_pages ?? 0,
                   access_token: item?.access_token ?? '',
                 });
               }
@@ -385,10 +386,9 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
               item.status === 'Processing' &&
               item.fileName != undefined &&
               userCredentials &&
-              userCredentials.database &&
-              item.total_pages
+              userCredentials.database 
             ) {
-              if (item?.total_pages < 20) {
+              if (item?.fileSize > largeFileSize) {
                 subscribe(
                   item.fileName,
                   userCredentials?.uri,
