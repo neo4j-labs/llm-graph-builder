@@ -50,7 +50,7 @@ const DropZone: FunctionComponent = () => {
             type: `${file.name.substring(file.name.lastIndexOf('.') + 1, file.name.length).toUpperCase()}`,
             size: file.size,
             uploadprogess: file.size && file?.size < chunkSize ? 100 : 0,
-            total_pages: 0,
+            // total_pages: 0,
             id: uuidv4(),
             ...defaultValues,
           });
@@ -139,7 +139,7 @@ const DropZone: FunctionComponent = () => {
                     return {
                       ...curfile,
                       uploadprogess: chunkNumber * chunkProgressIncrement,
-                      total_pages: apiResponse.data.data.total_pages,
+                      // total_pages: apiResponse.data.data.total_pages,
                     };
                   }
                   return curfile;
