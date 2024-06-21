@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { defaultLLM, llms } from '../utils/Constants';
 import { capitalize } from '../utils/Utils';
 
-const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
+const LlmDropdown: React.FC<DropdownProps> = ({ onSelect }) => {
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
   };
@@ -25,7 +25,6 @@ const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
             placeholder: 'Select LLM Model',
             defaultValue: { label: capitalize(defaultLLM), value: defaultLLM },
             menuPlacement: 'auto',
-            isDisabled,
           }}
           size='medium'
           fluid
