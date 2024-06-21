@@ -349,14 +349,14 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                     item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                       ? item?.status
                       : item?.fileSource === 'local file'
-                        ? item?.status
-                        : item?.status === 'Completed' || item.status === 'Failed'
-                          ? item?.status
-                          : item?.fileSource == 'Wikipedia' ||
-                            item?.fileSource == 'youtube' ||
-                            item?.fileSource == 'gcs bucket'
-                            ? item?.status
-                            : 'N/A',
+                      ? item?.status
+                      : item?.status === 'Completed' || item.status === 'Failed'
+                      ? item?.status
+                      : item?.fileSource == 'Wikipedia' ||
+                        item?.fileSource == 'youtube' ||
+                        item?.fileSource == 'gcs bucket'
+                      ? item?.status
+                      : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
                   source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
@@ -369,8 +369,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   language: item?.language ?? '',
                   processingProgress:
                     item?.processed_chunk != undefined &&
-                      item?.total_chunks != undefined &&
-                      !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
+                    item?.total_chunks != undefined &&
+                    !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
                   // total_pages: item?.total_pages ?? 0,
@@ -386,7 +386,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
               item.status === 'Processing' &&
               item.fileName != undefined &&
               userCredentials &&
-              userCredentials.database 
+              userCredentials.database
             ) {
               if (item?.fileSize > largeFileSize) {
                 subscribe(
@@ -533,8 +533,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         })
       );
     }
-  }
-
+  };
 
   const updateProgress = (i: statusupdate) => {
     const { file_name } = i;
@@ -555,7 +554,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         })
       );
     }
-  }
+  };
 
   // const pageSizeCalculation = Math.floor((currentOuterHeight - 402) / 45);
 
@@ -600,7 +599,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
           const { height } = entry.contentRect;
           // setcurrentOuterHeight(height);
           const rowHeight = document?.getElementsByClassName('ndl-data-grid-td')?.[0]?.clientHeight ?? 69;
-          table.setPageSize(Math.floor((height) / rowHeight));
+          table.setPageSize(Math.floor(height / rowHeight));
         });
       });
 

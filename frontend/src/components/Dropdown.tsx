@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import { defaultLLM, llms } from '../utils/Constants';
 import { capitalize } from '../utils/Utils';
 
-
 const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
