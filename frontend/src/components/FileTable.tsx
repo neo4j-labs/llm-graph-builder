@@ -612,7 +612,6 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         resizeObserver.unobserve(contentElement);
       };
     }
-    return () => { };
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
