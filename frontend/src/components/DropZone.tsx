@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import { Dropzone, Flex, Typography } from '@neo4j-ndl/react';
 import React, { useState, useEffect, FunctionComponent } from 'react';
 import Loader from '../utils/Loader';
