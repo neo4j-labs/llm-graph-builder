@@ -2,6 +2,7 @@ import logging
 import os
 from datetime import datetime
 from langchain_community.graphs import Neo4jGraph
+from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file
 from src.document_sources.gcs_bucket import delete_file_from_gcs
 from src.shared.constants import BUCKET_UPLOAD
 from src.entities.source_node import sourceNode
@@ -138,7 +139,7 @@ class graphDBdataAccess:
                 delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
             else:
                 logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
-                delete_file_from_gcs(BUCKET_UPLOAD,file_name)
+                delete_uploaded_local_file(merged_file_path,file_name)
 
         query_to_delete_document=""" 
            MATCH (d:Document) where d.fileName in $filename_list and d.fileSource in $source_types_list
