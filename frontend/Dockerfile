@@ -3,14 +3,14 @@ FROM node:20 AS build
 
 ARG BACKEND_API_URL="http://localhost:8000"
 ARG REACT_APP_SOURCES=""
-ARG LLM_MODELS=""
+ARG LLM_MODELS="Diffbot,Gemini 1.0 Pro,OpenAI GPT 3.5,OpenAI GPT 4o"
 ARG GOOGLE_CLIENT_ID=""
 ARG BLOOM_URL="https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true"
 ARG TIME_PER_CHUNK=4
 ARG TIME_PER_PAGE=50
 ARG LARGE_FILE_SIZE=5242880
 ARG CHUNK_SIZE=5242880
-ARG ENV="DEV"
+ARG ENV="PROD"
 
 WORKDIR /app
 COPY package.json yarn.lock ./
