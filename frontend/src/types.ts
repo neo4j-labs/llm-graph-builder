@@ -67,8 +67,11 @@ export type ExtractParams = {
 } & { [key: string]: any };
 
 export type UploadParams = {
-  file: File;
+  file: Blob;
   model: string;
+  chunkNumber:number;
+  totalChunks:number;
+  originalname:string
 } & { [key: string]: any };
 
 export type FormDataParams = ExtractParams | UploadParams;
