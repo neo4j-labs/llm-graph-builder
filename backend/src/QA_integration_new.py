@@ -28,24 +28,37 @@ load_dotenv()
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
 
+# RETRIEVAL_QUERY = 
+# """
+# WITH node as chunk, score
+# MATCH (chunk)-[:PART_OF]->(d:Document)
+# CALL { WITH chunk
+# MATCH (chunk)-[:HAS_ENTITY]->(e)
+# MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk&!Document)
+# UNWIND rels as r
+# RETURN collect(distinct r) as rels
+# }
+# WITH d, collect(distinct chunk) as chunks, avg(score) as score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels
+# WITH d, score,
+# [c in chunks | c.text] as texts,  [c in chunks | c.id] as chunkIds, [c in chunks | c.start_time] as start_time, [c in chunks | c.page_number] as page_numbers, [c in chunks | c.start_time] as start_times, 
+# [r in rels | coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ startNode(r).id + " "+ type(r) + " " + coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + endNode(r).id] as entities
+# WITH d, score,
+# apoc.text.join(texts,"\n----\n") +
+# apoc.text.join(entities,"\n")
+# as text, chunkIds, page_numbers ,start_times
+# RETURN text, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkIds:chunkIds, page_numbers:page_numbers,start_times:start_times,score:score} as metadata
+# """
+
 RETRIEVAL_QUERY = """
 WITH node as chunk, score
 MATCH (chunk)-[:PART_OF]->(d:Document)
-CALL { WITH chunk
-MATCH (chunk)-[:HAS_ENTITY]->(e)
-MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk&!Document)
-UNWIND rels as r
-RETURN collect(distinct r) as rels
-}
-WITH d, collect(distinct chunk) as chunks, avg(score) as score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels
+WITH d, collect(distinct chunk) as chunks, avg(score) as score,
 WITH d, score,
-[c in chunks | c.text] as texts,  [c in chunks | c.id] as chunkIds, [c in chunks | c.start_time] as start_time, [c in chunks | c.page_number] as page_numbers, [c in chunks | c.start_time] as start_times, 
-[r in rels | coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ startNode(r).id + " "+ type(r) + " " + coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + endNode(r).id] as entities
+[c in chunks | c.text] as texts, [c in chunks | c.id] as chunkIds
 WITH d, score,
-apoc.text.join(texts,"\n----\n") +
-apoc.text.join(entities,"\n")
-as text, entities, chunkIds, page_numbers ,start_times
-RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkIds:chunkIds, page_numbers:page_numbers,start_times:start_times,entities:entities} as metadata
+apoc.text.join(texts,"\n----\n")
+as text, chunkIds
+RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName),chunkIds:chunkIds,score:score} as metadata
 """
 
 SYSTEM_TEMPLATE = """
@@ -276,7 +289,6 @@ def clear_chat_history(graph,session_id):
 def QA_RAG(graph,model,question,session_id):
     try:
         start_time = time.time()
-        print(model)
         model_version = MODEL_VERSIONS[model]
         llm = get_llm(model_version)
         retriever = get_neo4j_retriever(graph=graph)
@@ -295,7 +307,7 @@ def QA_RAG(graph,model,question,session_id):
             }
         )
         if docs:
-            # print(docs)
+            print(docs)
             formatted_docs,sources = format_documents(docs)
             
             doc_retrieval_time = time.time() - start_time
