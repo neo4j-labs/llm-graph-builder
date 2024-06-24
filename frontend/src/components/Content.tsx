@@ -15,6 +15,10 @@ import DeletePopUp from './DeletePopUp';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
+import ConfirmationDialog from './ConfirmationDialog';
+import { buttonCaptions, largeFileSize, tooltips } from '../utils/Constants';
+import ButtonWithToolTip from './ButtonWithToolTip';
+import connectAPI from '../services/ConnectAPI';
 
 const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -154,7 +158,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
       if (apiResponse?.status === 'Failed') {
         let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
         throw new Error(JSON.stringify(errorobj));
-      } else if (fileItem.size != undefined && fileItem.size < 10000000) {
+      } else if (fileItem.size != undefined && fileItem.size < largeFileSize) {
         setFilesData((prevfiles) => {
           return prevfiles.map((curfile) => {
             if (curfile.name == apiResponse?.data?.fileName) {
@@ -427,13 +431,67 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
           justifyContent='space-between'
           flexDirection='row'
         >
-          <LlmDropdown onSelect={handleDropdownChange} isDisabled={dropdowncheck} />
+          <LlmDropdown onSelect={handleDropdownChange}  />
           <Flex flexDirection='row' gap='4' className='self-end'>
-            <Button disabled={disableCheck} onClick={handleGenerateGraph} className='mr-0.5'>
-              Generate Graph {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
-            </Button>
-            <Button
-              title='only completed files will be processed for graph visualization'
+            <ButtonWithToolTip
+              text={tooltips.generateGraph}
+              placement='top'
+              label='generate graph'
+              onClick={() => {
+                if (selectedRows.length) {
+                  let selectedLargeFiles: CustomFile[] = [];
+                  selectedRows.forEach((f) => {
+                    const parsedData: CustomFile = JSON.parse(f);
+                    if (parsedData.fileSource === 'local file') {
+                      if (
+                        typeof parsedData.size === 'number' &&
+                        parsedData.status === 'New' &&
+                        parsedData.size > largeFileSize
+                      ) {
+                        selectedLargeFiles.push(parsedData);
+                      }
+                    }
+                  });
+                  // @ts-ignore
+                  if (selectedLargeFiles.length) {
+                    setshowConfirmationModal(true);
+                    handleGenerateGraph(false, []);
+                  } else {
+                    handleGenerateGraph(true, filesData);
+                  }
+                } else if (filesData.length) {
+                  const largefiles = filesData.filter((f) => {
+                    if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
+                      return true;
+                    }
+                    return false;
+                  });
+                  const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
+                  const stringified = selectAllNewFiles.reduce((accu, f) => {
+                    const key = JSON.stringify(f);
+                    // @ts-ignore
+                    accu[key] = true;
+                    return accu;
+                  }, {});
+                  setRowSelection(stringified);
+                  if (largefiles.length) {
+                    setshowConfirmationModal(true);
+                    handleGenerateGraph(false, []);
+                  } else {
+                    handleGenerateGraph(true, filesData);
+                  }
+                }
+              }}
+              disabled={disableCheck}
+              className='mr-0.5'
+            >
+              {buttonCaptions.generateGraph}{' '}
+              {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
+            </ButtonWithToolTip>
+            <ButtonWithToolTip
+              text={tooltips.showGraph}
+              placement='top'
+              onClick={handleGraphView}
               disabled={showGraphCheck}
               onClick={handleGraphView}
               className='mr-0.5'

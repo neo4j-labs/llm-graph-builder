@@ -17,13 +17,14 @@ export default function useServerSideEvent(
       total_chunks,
       model,
       processed_chunk = 0,
+      fileSize,
     } = eventSourceRes;
     const alertShownStatus = JSON.parse(localStorage.getItem('alertShown') || 'null');
 
     if (status === 'Processing') {
       if (alertShownStatus != null && alertShownStatus == false && total_chunks != null) {
-        const minutes = Math.floor((perchunksecond * total_chunks) / 60);
-        alertHandler(minutes !== 0, minutes === 0 ? Math.floor(perchunksecond * total_chunks) : minutes, fileName);
+        const { minutes, seconds } = calculateProcessingTime(fileSize, 0.2);
+        alertHandler(minutes !== 0, minutes === 0 ? seconds : minutes, fileName);
       }
       if (total_chunks) {
         setFilesData((prevfiles) => {

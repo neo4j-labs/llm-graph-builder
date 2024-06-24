@@ -5,9 +5,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './Alert';
-import { CustomFile, alertStateType } from '../types';
-import { chunkSize } from '../utils/Constants';
-import { url } from '../utils/Utils';
+import { CustomFile, CustomFileBase, UserCredentials, alertStateType } from '../types';
+import { buttonCaptions, chunkSize } from '../utils/Constants';
+import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
+import IconButtonWithToolTip from './IconButtonToolTip';
+import { uploadAPI } from '../utils/FileAPI';
 
 const DropZone: FunctionComponent = () => {
   const { filesData, setFilesData, model } = useFileContext();
@@ -48,6 +50,7 @@ const DropZone: FunctionComponent = () => {
             type: `${file.name.substring(file.name.lastIndexOf('.') + 1, file.name.length).toUpperCase()}`,
             size: file.size,
             uploadprogess: file.size && file?.size < chunkSize ? 100 : 0,
+            // total_pages: 0,
             id: uuidv4(),
             ...defaultValues,
           });
@@ -250,7 +253,7 @@ const DropZone: FunctionComponent = () => {
               setalertDetails({
                 showAlert: true,
                 alertType: 'error',
-                alertMessage: 'Failed To Upload, File is larger than 15MB',
+                alertMessage: 'Failed To Upload, Unsupported file extention',
               });
             }
           },

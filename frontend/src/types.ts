@@ -23,6 +23,11 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   google_project_id?: string;
   language?: string;
   processingProgress?: number;
+  access_token?: string;
+}
+export interface CustomFile extends CustomFileBase {
+  id: string;
+  // total_pages: number | 'N/A';
 }
 
 export interface OptionType {
@@ -126,6 +131,8 @@ export interface SourceNode {
   language?: string;
   processed_chunk?: number;
   total_chunks?: number;
+  // total_pages?: number;
+  access_token?: string;
 }
 export interface SideNavProps {
   isExpanded: boolean;
@@ -254,7 +261,7 @@ export interface fileStatus {
   relationshipCount?: number;
   model: string;
   total_chunks?: number;
-  total_pages?: number;
+  // total_pages?: number;
   processed_chunk?: number;
 }
 export interface PollingAPI_Response extends Partial<AxiosResponse> {
@@ -333,7 +340,7 @@ export interface eventResponsetypes {
   relationshipCount: number;
   model: string;
   total_chunks: number | null;
-  total_pages: number | null;
+  // total_pages: number;
   fileSize: number;
   processed_chunk?: number;
 }
@@ -380,3 +387,47 @@ export type GroupedEntity = {
   texts: Set<string>;
   color: string;
 };
+
+export interface uploadData {
+  file_size: number;
+  // total_pages: number;
+  file_name: string;
+  message: string;
+}
+export interface UploadResponse extends Partial<commonserverresponse> {
+  data: uploadData;
+}
+export interface LargefilesProps {
+  largeFiles: CustomFile[];
+  handleToggle: (ischecked: boolean, id: string) => void;
+  checked: string[];
+}
+
+export interface MessagesContextProviderProps {
+  children: ReactNode;
+}
+
+export interface Chunk {
+  id: string;
+  position: number;
+  text: string;
+  fileName: string;
+  length: number;
+  embedding: string | null;
+  page_number?: number;
+  start_time?: string;
+  content_offset?: string;
+  url?: string;
+  fileSource: string;
+}
+
+export interface SpeechSynthesisProps {
+  onEnd?: () => void;
+}
+
+export interface SpeechArgs {
+  text?: string;
+  rate?: number;
+  pitch?: number;
+  volume?: number;
+}

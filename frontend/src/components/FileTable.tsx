@@ -26,7 +26,7 @@ import {
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
-import { statusCheck } from '../utils/Utils';
+import { statusCheck, capitalize } from '../utils/Utils';
 import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, alertStateType } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
@@ -38,13 +38,16 @@ import useServerSideEvent from '../hooks/useSse';
 import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
+import IconButtonWithToolTip from './IconButtonToolTip';
+import { largeFileSize } from '../utils/Constants';
+
 const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
   const { filesData, setFilesData, model } = useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
+  //const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
   const [alertDetails, setalertDetails] = useState<alertStateType>({
     showAlert: false,
     alertType: 'error',
@@ -369,7 +372,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                     !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
-                  total_pages: item?.total_pages ?? 0,
+                  // total_pages: item?.total_pages ?? 0,
                   access_token: item?.access_token ?? '',
                 });
               }
@@ -441,62 +444,6 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       setFilesData([]);
     }
   }, [connectionStatus, userCredentials]);
-  const cancelHandler = async (fileName: string, id: string, fileSource: string) => {
-    setFilesData((prevfiles) =>
-      prevfiles.map((curfile) => {
-        if (curfile.id === id) {
-          return {
-            ...curfile,
-            processingStatus: true,
-          };
-        }
-        return curfile;
-      })
-    );
-    try {
-      const res = await cancelAPI([fileName], [fileSource]);
-      if (res.data.status === 'Success') {
-        setFilesData((prevfiles) =>
-          prevfiles.map((curfile) => {
-            if (curfile.id === id) {
-              return {
-                ...curfile,
-                status: 'Cancelled',
-                processingStatus: false,
-              };
-            }
-            return curfile;
-          })
-        );
-      } else {
-        let errorobj = { error: res.data.error, message: res.data.message, fileName };
-        throw new Error(JSON.stringify(errorobj));
-      }
-    } catch (err) {
-      setFilesData((prevfiles) =>
-        prevfiles.map((curfile) => {
-          if (curfile.id === id) {
-            return {
-              ...curfile,
-              processingStatus: false,
-            };
-          }
-          return curfile;
-        })
-      );
-      if (err instanceof Error) {
-        const error = JSON.parse(err.message);
-        if (Object.keys(error).includes('fileName')) {
-          const { message } = error;
-          setalertDetails({
-            showAlert: true,
-            alertType: 'error',
-            alertMessage: message,
-          });
-        }
-      }
-    }
-  };
 
   const cancelHandler = async (fileName: string, id: string, fileSource: string) => {
     setFilesData((prevfiles) =>
@@ -585,33 +532,13 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         })
       );
     }
-  }
-  function updateProgress(i: statusupdate) {
-    const { file_name } = i;
-    const { fileName, nodeCount = 0, relationshipCount = 0, status, processed_chunk = 0, total_chunks } = file_name;
-    if (fileName && total_chunks) {
-      console.log({ processed_chunk, total_chunks, percentage: Math.floor((processed_chunk / total_chunks) * 100) });
-      setFilesData((prevfiles) =>
-        prevfiles.map((curfile) => {
-          if (curfile.name == fileName) {
-            return {
-              ...curfile,
-              status: status,
-              NodesCount: nodeCount,
-              relationshipCount: relationshipCount,
-              processingProgress: Math.floor((processed_chunk / total_chunks) * 100),
-            };
-          }
-          return curfile;
-        })
-      );
-    }
   };
 
   const updateProgress = (i: statusupdate) => {
     const { file_name } = i;
     const { fileName, nodeCount = 0, relationshipCount = 0, status, processed_chunk = 0, total_chunks } = file_name;
     if (fileName && total_chunks) {
+      console.log({ processed_chunk, total_chunks, percentage: Math.floor((processed_chunk / total_chunks) * 100) });
       setFilesData((prevfiles) =>
         prevfiles.map((curfile) => {
           if (curfile.name == fileName) {
@@ -659,6 +586,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     enableRowSelection: true,
     enableMultiRowSelection: true,
     getRowId: (row) => JSON.stringify({ ...row }),
+    enableSorting: true,
+    getSortedRowModel: getSortedRowModel(),
   });
 
   useEffect(() => {
