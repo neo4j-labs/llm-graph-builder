@@ -3,6 +3,7 @@ import { IconButton } from '@neo4j-ndl/react';
 import { Messages } from '../types';
 import IconButtonWithToolTip from './IconButtonToolTip';
 import { tooltips } from '../utils/Constants';
+import ChatModeToggle from './ChatModeToggle';
 
 interface IconProps {
   closeChatBot: () => void;
@@ -13,6 +14,7 @@ interface IconProps {
 const IconsPlacement: React.FC<IconProps> = ({ closeChatBot, deleteOnClick, messages }) => {
   return (
     <div className='flex items-end justify-end'>
+      <ChatModeToggle />
       <IconButtonWithToolTip
         text={tooltips.clearChat}
         aria-label='Remove chat history'
