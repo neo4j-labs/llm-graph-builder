@@ -3,7 +3,7 @@ FROM node:20 AS build
 
 ARG BACKEND_API_URL="http://localhost:8000"
 ARG REACT_APP_SOURCES=""
-ARG LLM_MODELS="Diffbot,Gemini 1.0 Pro,OpenAI GPT 3.5,OpenAI GPT 4o"
+ARG LLM_MODELS="diffbot,gpt-3.5,gpt-4o,gemini-1.0-pro"
 ARG GOOGLE_CLIENT_ID=""
 ARG BLOOM_URL="https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true"
 ARG TIME_PER_CHUNK=4
