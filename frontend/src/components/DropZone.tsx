@@ -121,12 +121,14 @@ const DropZone: FunctionComponent = () => {
           })
         );
         try {
-          const apiResponse = await axios.post<UploadResponse>(`${url()}/upload`, formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          });
-
+          const apiResponse = await uploadAPI(
+            chunk,
+            userCredentials as UserCredentials,
+            model,
+            chunkNumber,
+            totalChunks,
+            file.name
+          );
           if (apiResponse?.data.status === 'Failed') {
             throw new Error(`message:${apiResponse.data.message},fileName:${apiResponse.data.file_name}`);
           } else {

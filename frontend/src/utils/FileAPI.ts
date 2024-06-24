@@ -4,11 +4,18 @@ import { UserCredentials, ExtractParams, UploadParams } from '../types';
 import { apiCall } from '../services/CommonAPI';
 
 // Upload Call
-export const uploadAPI = async (file: Blob, userCredentials: UserCredentials, model: string, chunkNumber: number, totalChunks: number,originalname:string): Promise<any> => {
+export const uploadAPI = async (
+  file: Blob,
+  userCredentials: UserCredentials,
+  model: string,
+  chunkNumber: number,
+  totalChunks: number,
+  originalname: string
+): Promise<any> => {
   const urlUpload = `${url()}/upload`;
   const method: Method = 'post';
   const commonParams: UserCredentials = userCredentials;
-  const additionalParams: UploadParams = { file, model, chunkNumber, totalChunks ,originalname};
+  const additionalParams: UploadParams = { file, model, chunkNumber, totalChunks, originalname };
   const response = await apiCall(urlUpload, method, commonParams, additionalParams);
   return response;
 };
