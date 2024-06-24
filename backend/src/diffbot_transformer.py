@@ -11,7 +11,7 @@ logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
 def get_graph_from_diffbot(graph,chunkId_chunkDoc_list:List):
     combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
-    llm = get_llm('Diffbot')
+    llm = get_llm('diffbot')
     graph_documents = llm.convert_to_graph_documents(combined_chunk_document_list)
     return graph_documents
 
