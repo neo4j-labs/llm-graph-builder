@@ -277,7 +277,7 @@ const DropZone: FunctionComponent = () => {
               setalertDetails({
                 showAlert: true,
                 alertType: 'error',
-                alertMessage: 'Failed To Upload, File is larger than 15MB',
+                alertMessage: 'Failed To Upload, Unsupported file extention',
               });
             }
           },
