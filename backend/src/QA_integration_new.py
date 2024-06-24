@@ -28,37 +28,18 @@ load_dotenv()
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
 
-# RETRIEVAL_QUERY = 
-# """
-# WITH node as chunk, score
-# MATCH (chunk)-[:PART_OF]->(d:Document)
-# CALL { WITH chunk
-# MATCH (chunk)-[:HAS_ENTITY]->(e)
-# MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk&!Document)
-# UNWIND rels as r
-# RETURN collect(distinct r) as rels
-# }
-# WITH d, collect(distinct chunk) as chunks, avg(score) as score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels
-# WITH d, score,
-# [c in chunks | c.text] as texts,  [c in chunks | c.id] as chunkIds, [c in chunks | c.start_time] as start_time, [c in chunks | c.page_number] as page_numbers, [c in chunks | c.start_time] as start_times, 
-# [r in rels | coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ startNode(r).id + " "+ type(r) + " " + coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + endNode(r).id] as entities
-# WITH d, score,
-# apoc.text.join(texts,"\n----\n") +
-# apoc.text.join(entities,"\n")
-# as text, chunkIds, page_numbers ,start_times
-# RETURN text, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkIds:chunkIds, page_numbers:page_numbers,start_times:start_times,score:score} as metadata
-# """
 
 RETRIEVAL_QUERY = """
 WITH node as chunk, score
 MATCH (chunk)-[:PART_OF]->(d:Document)
-WITH d, collect(distinct chunk) as chunks, avg(score) as score,
-WITH d, score,
-[c in chunks | c.text] as texts, [c in chunks | c.id] as chunkIds
-WITH d, score,
-apoc.text.join(texts,"\n----\n")
-as text, chunkIds
-RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName),chunkIds:chunkIds,score:score} as metadata
+WITH d, collect(distinct {chunk: chunk, score: score}) as chunks, avg(score) as score
+WITH d, score, 
+     [c in chunks | c.chunk.text] as texts, 
+     [c in chunks | {id: c.chunk.id, score: c.score}] as chunkdetails
+WITH d, score, texts, chunkdetails,
+     apoc.text.join(texts, "\n----\n") as text
+RETURN text, score, 
+       {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkdetails: chunkdetails} as metadata
 """
 
 SYSTEM_TEMPLATE = """
@@ -206,48 +187,21 @@ def get_rag_chain(llm,system_template=SYSTEM_TEMPLATE):
 
     return question_answering_chain
 
-def update_timestamps_with_min_seconds(result_dict):
-    def time_to_seconds(time_str):
-        h, m, s = map(int, time_str.split(':'))
-        return h * 3600 + m * 60 + s
-    
-    for source in result_dict.get('sources', []):
-        time_stamps = source.get('start_time', [])
-        if time_stamps:
-            seconds_list = [time_to_seconds(ts) for ts in time_stamps]
-            min_seconds = min(seconds_list)
-            source['start_time'] = min_seconds
-    
-    return result_dict
-
 def get_sources_and_chunks(sources_used, docs):
-    docs_metadata = dict()
+    chunkdetails_list = []
+    sources_used_set = set(sources_used)
+
     for doc in docs:
         source = doc.metadata["source"]
-        chunkids = doc.metadata["chunkIds"]
-        page_numbers = doc.metadata["page_numbers"]
-        start_times = doc.metadata["start_times"]
-        docs_metadata[source] = [chunkids,page_numbers,start_times]
-    chunkids = list()
-    output_sources = list()
-    for source in sources_used:
-        if source in set(docs_metadata.keys()):
-            chunkids.extend(docs_metadata[source][0])
-            page_numbers = docs_metadata[source][1]
-            start_times = docs_metadata[source][2]
-            current_source = {
-                "source_name":source,
-                "page_numbers":page_numbers if len(page_numbers) > 1 and page_numbers[0] is not None else [],
-                "start_time": start_times if len(start_times) > 1 and start_times[0] is not None else [],
-            }
-            output_sources.append(current_source)
+        chunkdetails = doc.metadata["chunkdetails"]
+        if source in sources_used_set:
+            chunkdetails = [{**chunkdetail, "score": round(chunkdetail["score"], 4)} for chunkdetail in chunkdetails]
+            chunkdetails_list.extend(chunkdetails)
 
     result = {
-        'sources': output_sources,
-        'chunkIds': chunkids
+        'sources': sources_used,
+        'chunkdetails': chunkdetails_list
     }
-
-    result = update_timestamps_with_min_seconds(result)
     return result
 
 def summarize_messages(llm,history,stored_messages):
@@ -332,7 +286,7 @@ def QA_RAG(graph,model,question,session_id):
             logging.info(f"Final Response predicted in {predict_time:.2f} seconds")
         else:
             ai_response = AIMessage(content="I couldn't find any relevant documents to answer your question.")
-            result = {"sources": [], "chunkIds": []}
+            result = {"sources": [], "chunkdetails": []}
             total_tokens = 0
             content = ai_response.content
              
@@ -348,7 +302,7 @@ def QA_RAG(graph,model,question,session_id):
             "info": {
                 "sources": result["sources"],
                 "model": model_version,
-                "chunkids":result["chunkIds"],
+                "chunkdetails":result["chunkdetails"],
                 "total_tokens": total_tokens,
                 "response_time": 0
             },
