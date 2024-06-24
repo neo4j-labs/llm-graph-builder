@@ -113,6 +113,7 @@ export const tooltips = {
   createSchema: 'Create your own schema by passing text',
   useExistingSchema: 'Use the already existing schema from DB',
   clearChat: 'Clear Chat History',
+  continue: 'Continue'
 };
 
 export const buttonCaptions = {

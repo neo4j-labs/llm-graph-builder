@@ -1,4 +1,4 @@
-import { Dialog, Dropdown } from '@neo4j-ndl/react';
+import { Checkbox, Dialog, Dropdown } from '@neo4j-ndl/react';
 import { OnChangeValue, ActionMeta } from 'react-select';
 import { OptionType, OptionTypeForExamples, UserCredentials, schema } from '../types';
 import { useFileContext } from '../context/UsersFiles';
@@ -18,7 +18,7 @@ export default function SettingsModal({
   onClose: () => void;
   opneTextSchema: () => void;
 }) {
-  const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels, selectedSchemas, setSelectedSchemas } =
+  const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels, selectedSchemas, setSelectedSchemas, isSchema, setIsSchema } =
     useFileContext();
   const { userCredentials } = useCredentials();
   const [loading, setLoading] = useState<boolean>(false);
@@ -158,7 +158,7 @@ export default function SettingsModal({
   }, [nodeLabelOptions, relationshipTypeOptions]);
 
   return (
-    <Dialog size='medium' open={open} aria-labelledby='form-dialog-title' onClose={onClose}>
+    <Dialog size='large' open={open} aria-labelledby='form-dialog-title' onClose={onClose}>
       <Dialog.Header id='form-dialog-title'>Entity Graph Extraction Settings</Dialog.Header>
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
         <Dropdown
@@ -200,7 +200,14 @@ export default function SettingsModal({
           }}
           type='creatable'
         />
-        <Dialog.Actions className='!mt-4'>
+        <Dialog.Actions className='!mt-4 flex items-center'>
+          <Checkbox
+            label="Set Schema for all files"
+            onChange={(e) => {
+              setIsSchema(e.target.checked)
+            }}
+            checked={isSchema}
+          />
           <ButtonWithToolTip
             loading={loading}
             text={
@@ -226,6 +233,16 @@ export default function SettingsModal({
           >
             Get Schema From Text
           </ButtonWithToolTip>
+          {isSchema && <ButtonWithToolTip
+            text={tooltips.continue}
+            placement='top'
+            onClick={() => {
+              console.log('continue')
+            }}
+            label='Continue to extract'
+          >
+            Continue
+          </ButtonWithToolTip>}
         </Dialog.Actions>
       </Dialog.Content>
     </Dialog>

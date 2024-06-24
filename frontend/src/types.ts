@@ -150,6 +150,7 @@ export interface ContentProps {
   isRightExpanded: boolean;
   showChatBot: boolean;
   openChatBot: () => void;
+  openSettingsModal: () => void;
 }
 
 export interface FileTableProps {

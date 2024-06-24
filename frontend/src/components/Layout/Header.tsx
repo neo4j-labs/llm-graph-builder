@@ -7,10 +7,11 @@ import {
   Cog8ToothIconOutline,
   InformationCircleIconOutline,
 } from '@neo4j-ndl/react/icons';
-import { Typography } from '@neo4j-ndl/react';
+import { StatusIndicator, Typography } from '@neo4j-ndl/react';
 import { useCallback } from 'react';
 import IconButtonWithToolTip from '../IconButtonToolTip';
 import { tooltips } from '../../utils/Constants';
+import { useFileContext } from '../../context/UsersFiles';
 
 export default function Header({
   themeMode,
@@ -24,6 +25,8 @@ export default function Header({
   const handleURLClick = useCallback((url: string) => {
     window.open(url, '_blank');
   }, []);
+
+  const { isSchema } = useFileContext();
 
   return (
     <div
@@ -89,16 +92,19 @@ export default function Header({
                   </span>
                 )}
               </IconButtonWithToolTip>
-              <IconButtonWithToolTip
-                label={tooltips.settings}
-                text={tooltips.settings}
-                size='large'
-                clean
-                onClick={openSettingsModal}
-                placement='left'
-              >
-                <Cog8ToothIconOutline />
-              </IconButtonWithToolTip>
+              <div className='flex items-center'>
+                <StatusIndicator style={{ marginRight: '-8px' }} type={isSchema ? 'success' : 'danger'} />
+                <IconButtonWithToolTip
+                  label={tooltips.settings}
+                  text={tooltips.settings}
+                  size='large'
+                  clean
+                  onClick={openSettingsModal}
+                  placement='left'
+                >
+                  <Cog8ToothIconOutline />
+                </IconButtonWithToolTip>
+              </div>
             </div>
           </div>
         </section>
