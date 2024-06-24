@@ -16,7 +16,7 @@ import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
 import ConfirmationDialog from './ConfirmationDialog';
-import { buttonCaptions, chunkSize, tooltips } from '../utils/Constants';
+import { buttonCaptions, largeFileSize, tooltips } from '../utils/Constants';
 import ButtonWithToolTip from './ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 
@@ -174,7 +174,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
       if (apiResponse?.status === 'Failed') {
         let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
         throw new Error(JSON.stringify(errorobj));
-      } else if (fileItem.total_pages != undefined && (fileItem.total_pages === 'N/A' || fileItem.total_pages < 20)) {
+      } else if (fileItem.size != undefined && fileItem.size < largeFileSize) {
         setFilesData((prevfiles) => {
           return prevfiles.map((curfile) => {
             if (curfile.name == apiResponse?.data?.fileName) {
@@ -450,7 +450,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
           justifyContent='space-between'
           flexDirection='row'
         >
-          <LlmDropdown onSelect={handleDropdownChange} isDisabled={dropdowncheck} />
+          <LlmDropdown onSelect={handleDropdownChange}  />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <ButtonWithToolTip
               text={tooltips.generateGraph}
@@ -463,15 +463,10 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
                     const parsedData: CustomFile = JSON.parse(f);
                     if (parsedData.fileSource === 'local file') {
                       if (
-                        typeof parsedData.total_pages === 'number' &&
+                        typeof parsedData.size === 'number' &&
                         parsedData.status === 'New' &&
-                        parsedData.total_pages > 20
+                        parsedData.size > largeFileSize
                       ) {
-                        selectedLargeFiles.push(parsedData);
-                      }
-                    } else if (parsedData.fileSource === 's3 bucket' || parsedData.fileSource === 'gcs bucket') {
-                      // @ts-ignore
-                      if (parsedData.size > chunkSize) {
                         selectedLargeFiles.push(parsedData);
                       }
                     }
@@ -485,15 +480,8 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
                   }
                 } else if (filesData.length) {
                   const largefiles = filesData.filter((f) => {
-                    if (f.fileSource === 'local file') {
-                      if (typeof f.total_pages === 'number' && f.status === 'New' && f.total_pages > 20) {
-                        return true;
-                      }
-                    } else if (f.fileSource === 's3 bucket' || f.fileSource === 'gcs bucket') {
-                      // @ts-ignore
-                      if (f.size > chunkSize) {
-                        return true;
-                      }
+                    if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
+                      return true;
                     }
                     return false;
                   });

@@ -1,3 +1,4 @@
+import hashlib
 import logging
 from src.document_sources.youtube import create_youtube_url
 from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
@@ -113,7 +114,7 @@ def delete_uploaded_local_file(merged_file_path, file_name):
 def close_db_connection(graph, api_name):
   if not graph._driver._closed:
       logging.info(f"closing connection for {api_name} api")
-      graph._driver.close()   
+      # graph._driver.close()   
       
 def get_llm(model_version:str) :
     """Retrieve the specified language model based on the model name."""
@@ -145,3 +146,8 @@ def get_llm(model_version:str) :
     logging.info(f"Model created - Model Version: {model_version}")
     return llm
   
+def create_gcs_bucket_folder_name_hashed(uri, file_name):
+  folder_name = uri + file_name
+  folder_name_sha1 = hashlib.sha1(folder_name.encode())
+  folder_name_sha1_hashed = folder_name_sha1.hexdigest()
+  return folder_name_sha1_hashed

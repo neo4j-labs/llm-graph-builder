@@ -1,7 +1,7 @@
 import { useFileContext } from '../context/UsersFiles';
 import { eventResponsetypes } from '../types';
-const perpagesecond = parseInt(process.env.TIME_PER_PAGE as string);
-const perchunksecond = parseInt(process.env.TIME_PER_CHUNK as string);
+import { calculateProcessingTime } from '../utils/Utils';
+
 export default function useServerSideEvent(
   alertHandler: (inMinutes: boolean, minutes: number, filename: string) => void,
   errorHandler: (filename: string) => void
@@ -17,20 +17,14 @@ export default function useServerSideEvent(
       total_chunks,
       model,
       processed_chunk = 0,
-      total_pages = 0,
-      fileSource,
+      fileSize,
     } = eventSourceRes;
     const alertShownStatus = JSON.parse(localStorage.getItem('alertShown') || 'null');
 
     if (status === 'Processing') {
-      if (fileSource === 'local file') {
-        if (alertShownStatus != null && alertShownStatus == false && total_chunks != null) {
-          const minutes = Math.floor((perpagesecond * total_pages) / 60);
-          alertHandler(minutes !== 0, minutes === 0 ? Math.floor(perpagesecond * total_pages) : minutes, fileName);
-        }
-      } else if (alertShownStatus != null && alertShownStatus == false && total_chunks != null) {
-        const minutes = Math.floor((perchunksecond * total_chunks) / 60);
-        alertHandler(minutes !== 0, minutes === 0 ? Math.floor(perchunksecond * total_chunks) : minutes, fileName);
+      if (alertShownStatus != null && alertShownStatus == false && total_chunks != null) {
+        const { minutes, seconds } = calculateProcessingTime(fileSize, 0.2);
+        alertHandler(minutes !== 0, minutes === 0 ? seconds : minutes, fileName);
       }
       if (total_chunks) {
         setFilesData((prevfiles) => {

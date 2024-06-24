@@ -63,7 +63,7 @@ const YoutubeModal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               name: item.fileName,
               size: item.fileSize ?? 0,
               source_url: item.url,
-              total_pages: 1,
+              // total_pages: 1,
               id: uuidv4(),
               ...defaultValues,
             });

@@ -8,6 +8,7 @@ ARG GOOGLE_CLIENT_ID=""
 ARG BLOOM_URL="https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true"
 ARG TIME_PER_CHUNK=4
 ARG TIME_PER_PAGE=50
+ARG LARGE_FILE_SIZE=5242880
 ARG CHUNK_SIZE=5242880
 ARG ENV="PROD"
 
@@ -24,6 +25,7 @@ RUN BACKEND_API_URL=$BACKEND_API_URL \
     TIME_PER_CHUNK=$TIME_PER_CHUNK \
     CHUNK_SIZE=$CHUNK_SIZE \
     ENV=$ENV \
+    LARGE_FILE_SIZE=${LARGE_FILE_SIZE} \
     yarn run build
 
 # Step 2: Serve the application using Nginx
