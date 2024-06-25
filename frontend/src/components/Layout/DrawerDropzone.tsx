@@ -14,6 +14,8 @@ import GCSModal from '../GCSModal';
 import CustomAlert from '../Alert';
 import { useAlertContext } from '../../context/Alert';
 import { APP_SOURCES } from '../../utils/Constants';
+import GenericButton from '../GenericButton';
+import GenericModal from '../GenericModal';
 
 const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
@@ -21,6 +23,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   const [showWikiepediaModal, setShowWikiepediaModal] = useState<boolean>(false);
   const [showYoutubeModal, setShowYoutubeModal] = useState<boolean>(false);
   const [showGCSModal, setShowGCSModal] = useState<boolean>(false);
+  const [showGenericModal, setshowGenericModal] = useState<boolean>(false);
   const { closeAlert, alertState } = useAlertContext();
 
   useEffect(() => {
@@ -58,6 +61,12 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   }, []);
   const hideGCSModal = useCallback(() => {
     setShowGCSModal(false);
+  }, []);
+  const openGenericModal = useCallback(() => {
+    setshowGenericModal(true);
+  }, []);
+  const closeGenericModal = useCallback(() => {
+    setshowGenericModal(false);
   }, []);
 
   return (
@@ -116,6 +125,10 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                           <GCSButton openModal={openGCSModal} />
                           <GCSModal openGCSModal={openGCSModal} open={showGCSModal} hideModal={hideGCSModal} />
                         </div>
+                        <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
+                          <GenericButton openModal={openGenericModal}></GenericButton>
+                          <GenericModal open={showGenericModal} closeHandler={closeGenericModal}></GenericModal>
+                        </div>
                       </Flex>
                     ) : (
                       <Flex gap='6' className='h-full source-container'>
@@ -159,6 +172,10 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                         ) : (
                           <></>
                         )}
+                        <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
+                          <GenericButton openModal={openGenericModal}></GenericButton>
+                          <GenericModal open={showGenericModal} closeHandler={closeGenericModal}></GenericModal>
+                        </div>
                       </Flex>
                     )}
                   </>

@@ -69,9 +69,9 @@ export type ExtractParams = {
 export type UploadParams = {
   file: Blob;
   model: string;
-  chunkNumber:number;
-  totalChunks:number;
-  originalname:string
+  chunkNumber: number;
+  totalChunks: number;
+  originalname: string;
 } & { [key: string]: any };
 
 export type FormDataParams = ExtractParams | UploadParams;
@@ -174,7 +174,7 @@ export interface CommonButtonProps {
   openModal: () => void;
   wrapperclassName?: string;
   logo: string;
-  title: string;
+  title?: string;
   className?: string;
 }
 
