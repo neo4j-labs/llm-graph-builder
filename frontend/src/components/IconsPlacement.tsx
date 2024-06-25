@@ -1,5 +1,5 @@
 import { TrashIconOutline, XMarkIconOutline } from '@neo4j-ndl/react/icons';
-import { IconButton } from '@neo4j-ndl/react';
+import { Flex, IconButton } from '@neo4j-ndl/react';
 import { Messages } from '../types';
 import IconButtonWithToolTip from './IconButtonToolTip';
 import { tooltips } from '../utils/Constants';
@@ -15,6 +15,7 @@ const IconsPlacement: React.FC<IconProps> = ({ closeChatBot, deleteOnClick, mess
   return (
     <div className='flex items-end justify-end'>
       <ChatModeToggle />
+      <Flex flexDirection='row' gap='2'>
       <IconButtonWithToolTip
         text={tooltips.clearChat}
         aria-label='Remove chat history'
@@ -26,9 +27,10 @@ const IconsPlacement: React.FC<IconProps> = ({ closeChatBot, deleteOnClick, mess
       >
         <TrashIconOutline />
       </IconButtonWithToolTip>
-      <IconButton aria-label='Remove chatbot' clean onClick={closeChatBot}>
+      <IconButton  aria-label='Remove chatbot' clean onClick={closeChatBot}>
         <XMarkIconOutline />
-      </IconButton>
+      </IconButton></Flex>
+      
     </div>
   );
 };

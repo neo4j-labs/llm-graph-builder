@@ -128,7 +128,8 @@ const SideNav: React.FC<SideNavProps> = ({
                   }
                 />
               </Tip>
-              <ChatModeToggle inSidenav={true}/>
+            <ChatModeToggle inSidenav={true}/>
+              
             </>
           )}
         </SideNavigation.List>
