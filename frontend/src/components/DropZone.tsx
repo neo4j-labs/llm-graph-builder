@@ -121,7 +121,14 @@ const DropZone: FunctionComponent = () => {
           })
         );
         try {
-          const apiResponse=await uploadAPI(chunk,userCredentials as UserCredentials,model,chunkNumber,totalChunks,file.name)
+          const apiResponse = await uploadAPI(
+            chunk,
+            userCredentials as UserCredentials,
+            model,
+            chunkNumber,
+            totalChunks,
+            file.name
+          );
           if (apiResponse?.data.status === 'Failed') {
             throw new Error(
               JSON.stringify({ message: apiResponse.data.message, fileName: apiResponse.data.file_name })
@@ -277,7 +284,7 @@ const DropZone: FunctionComponent = () => {
               setalertDetails({
                 showAlert: true,
                 alertType: 'error',
-                alertMessage: 'Failed To Upload, File is larger than 15MB',
+                alertMessage: 'Failed To Upload, Unsupported file extention',
               });
             }
           },
