@@ -19,6 +19,7 @@ import ConfirmationDialog from './ConfirmationDialog';
 import { buttonCaptions, largeFileSize, tooltips } from '../utils/Constants';
 import ButtonWithToolTip from './ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
+import useSettingsModal from '../hooks/useSettings';
 
 const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, openSettingsModal }) => {
   const [init, setInit] = useState<boolean>(false);
@@ -29,6 +30,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
   const { setUserCredentials, userCredentials } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
+  // const {settingsModal, defaultSettings} = useSettingsModal(openSettingsModal());
 
   const {
     filesData,
@@ -383,6 +385,55 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
     }
   }, []);
 
+  const onClickGenerate = () => {
+    if (!settingModalOpened) {
+      openSettingsModal();
+    }
+    if (selectedRows.length) {
+      let selectedLargeFiles: CustomFile[] = [];
+      selectedRows.forEach((f) => {
+        const parsedData: CustomFile = JSON.parse(f);
+        if (parsedData.fileSource === 'local file') {
+          if (
+            typeof parsedData.size === 'number' &&
+            parsedData.status === 'New' &&
+            parsedData.size > largeFileSize
+          ) {
+            selectedLargeFiles.push(parsedData);
+          }
+        }
+      });
+      // @ts-ignore
+      if (selectedLargeFiles.length) {
+        setshowConfirmationModal(true);
+        handleGenerateGraph(false, []);
+      } else {
+        handleGenerateGraph(true, filesData);
+      }
+    } else if (filesData.length) {
+      const largefiles = filesData.filter((f) => {
+        if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
+          return true;
+        }
+        return false;
+      });
+      const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
+      const stringified = selectAllNewFiles.reduce((accu, f) => {
+        const key = JSON.stringify(f);
+        // @ts-ignore
+        accu[key] = true;
+        return accu;
+      }, {});
+      setRowSelection(stringified);
+      if (largefiles.length) {
+        setshowConfirmationModal(true);
+        handleGenerateGraph(false, []);
+      } else {
+        handleGenerateGraph(true, filesData);
+      }
+    }
+  }
+
   return (
     <>
       {alertDetails.showAlert && (
@@ -462,55 +513,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
               text={tooltips.generateGraph}
               placement='top'
               label='generate graph'
-              onClick={() => {
-                if (!settingModalOpened) {
-                  openSettingsModal();
-                  return;
-                }
-                if (selectedRows.length) {
-                  let selectedLargeFiles: CustomFile[] = [];
-                  selectedRows.forEach((f) => {
-                    const parsedData: CustomFile = JSON.parse(f);
-                    if (parsedData.fileSource === 'local file') {
-                      if (
-                        typeof parsedData.size === 'number' &&
-                        parsedData.status === 'New' &&
-                        parsedData.size > largeFileSize
-                      ) {
-                        selectedLargeFiles.push(parsedData);
-                      }
-                    }
-                  });
-                  // @ts-ignore
-                  if (selectedLargeFiles.length) {
-                    setshowConfirmationModal(true);
-                    handleGenerateGraph(false, []);
-                  } else {
-                    handleGenerateGraph(true, filesData);
-                  }
-                } else if (filesData.length) {
-                  const largefiles = filesData.filter((f) => {
-                    if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
-                      return true;
-                    }
-                    return false;
-                  });
-                  const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
-                  const stringified = selectAllNewFiles.reduce((accu, f) => {
-                    const key = JSON.stringify(f);
-                    // @ts-ignore
-                    accu[key] = true;
-                    return accu;
-                  }, {});
-                  setRowSelection(stringified);
-                  if (largefiles.length) {
-                    setshowConfirmationModal(true);
-                    handleGenerateGraph(false, []);
-                  } else {
-                    handleGenerateGraph(true, filesData);
-                  }
-                }
-              }}
+              onClick={onClickGenerate}
               disabled={disableCheck}
               className='mr-0.5'
             >
