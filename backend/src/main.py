@@ -165,7 +165,7 @@ def extract_graph_from_file_local_file(graph, model, merged_file_path, fileName,
   else:
     file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,fileName)
   if pages==None or len(pages)==0:
-    raise Exception(f'Pdf content is not available for file : {file_name}')
+    raise Exception(f'File content is not available for file : {file_name}')
 
   return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, True, merged_file_path, uri)
 
@@ -178,7 +178,7 @@ def extract_graph_from_file_s3(graph, model, source_url, aws_access_key_id, aws_
     file_name, pages = get_documents_from_s3(source_url, aws_access_key_id, aws_secret_access_key)
 
   if pages==None or len(pages)==0:
-    raise Exception(f'Pdf content is not available for file : {file_name}')
+    raise Exception(f'File content is not available for file : {file_name}')
 
   return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
@@ -203,7 +203,7 @@ def extract_graph_from_file_gcs(graph, model, gcs_project_id, gcs_bucket_name, g
 
   file_name, pages = get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token)
   if pages==None or len(pages)==0:
-    raise Exception(f'Pdf content is not available for file : {file_name}')
+    raise Exception(f'File content is not available for file : {file_name}')
 
   return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
