@@ -15,8 +15,9 @@ from src.document_sources.wikipedia import *
 from src.document_sources.youtube import *
 from src.shared.common_fn import *
 from src.make_relationships import *
+from src.document_sources.web_pages import *
 import re
-from langchain_community.document_loaders import WikipediaLoader
+from langchain_community.document_loaders import WikipediaLoader, WebBaseLoader
 import warnings
 from pytube import YouTube
 import sys
@@ -96,6 +97,32 @@ def create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_na
                               'gcsBucketName': gcs_bucket_name, 'gcsBucketFolder':obj_source_node.gcsBucketFolder, 'gcsProjectId':obj_source_node.gcsProjectId})
     return lst_file_name,success_count,failed_count
 
+def create_source_node_graph_web_url(graph, model, source_url, source_type):
+    success_count=0
+    failed_count=0
+    lst_file_name = []
+    pages = WebBaseLoader(source_url, verify_ssl=False).load()
+    if pages==None or len(pages)==0:
+      failed_count+=1
+      message = f"Unable to read data for given url : {source_url}"
+      raise Exception(message)
+    obj_source_node = sourceNode()
+    obj_source_node.file_type = 'text'
+    obj_source_node.file_source = source_type
+    obj_source_node.model = model
+    obj_source_node.total_pages = 1
+    obj_source_node.url = urllib.parse.unquote(source_url)
+    obj_source_node.created_at = datetime.now()
+    obj_source_node.file_name = pages[0].metadata['title']
+    obj_source_node.language = pages[0].metadata['language'] 
+    obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
+    
+    graphDb_data_Access = graphDBdataAccess(graph)
+    graphDb_data_Access.create_source_node(obj_source_node)
+    lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Success'})
+    success_count+=1
+    return lst_file_name,success_count,failed_count
+  
 def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     
     youtube_url, language = check_url_source(source_type=source_type, yt_url=source_url)
@@ -110,7 +137,7 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     obj_source_node.url = youtube_url
     obj_source_node.created_at = datetime.now()
     match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
-    logging.info(f"match value{match}")
+    logging.info(f"match value: {match}")
     obj_source_node.file_name = YouTube(obj_source_node.url).title
     transcript= get_youtube_combined_transcript(match.group(1))
     if transcript==None or len(transcript)==0:
@@ -179,6 +206,15 @@ def extract_graph_from_file_s3(graph, model, source_url, aws_access_key_id, aws_
 
   if pages==None or len(pages)==0:
     raise Exception(f'Pdf content is not available for file : {file_name}')
+
+  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
+
+def extract_graph_from_web_page(graph, model, source_url, allowedNodes, allowedRelationship):
+
+  file_name, pages = get_documents_from_web_page(source_url)
+
+  if pages==None or len(pages)==0:
+    raise Exception(f'Content is not available for given URL : {file_name}')
 
   return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
