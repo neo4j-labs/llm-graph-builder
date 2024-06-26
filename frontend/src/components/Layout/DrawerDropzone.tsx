@@ -1,17 +1,17 @@
 import { Drawer, Flex, StatusIndicator, Typography } from '@neo4j-ndl/react';
-import DropZone from '../DropZone';
+import DropZone from '../DataSources/Local/DropZone';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { healthStatus } from '../../services/HealthStatus';
-import S3Component from '../S3Bucket';
-import S3Modal from '../S3Modal';
+import S3Component from '../DataSources/AWS/S3Bucket';
+import S3Modal from '../DataSources/AWS/S3Modal';
 import { DrawerProps } from '../../types';
-import GCSButton from '../GCSButton';
-import GCSModal from '../GCSModal';
-import CustomAlert from '../Alert';
+import GCSButton from '../DataSources/GCS/GCSButton';
+import GCSModal from '../DataSources/GCS/GCSModal';
+import CustomAlert from '../UI/Alert';
 import { useAlertContext } from '../../context/Alert';
 import { APP_SOURCES } from '../../utils/Constants';
-import GenericButton from '../GenericSourceButton';
-import GenericModal from '../GenericSourceModal';
+import GenericButton from '../WebSources/GenericSourceButton';
+import GenericModal from '../WebSources/GenericSourceModal';
 
 const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);

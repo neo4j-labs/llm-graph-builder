@@ -9,7 +9,7 @@ import {
 } from '@neo4j-ndl/react/icons';
 import { Typography } from '@neo4j-ndl/react';
 import { useCallback } from 'react';
-import IconButtonWithToolTip from '../IconButtonToolTip';
+import IconButtonWithToolTip from '../UI/IconButtonToolTip';
 import { tooltips } from '../../utils/Constants';
 
 export default function Header({
