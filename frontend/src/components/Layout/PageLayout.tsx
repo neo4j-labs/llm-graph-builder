@@ -3,15 +3,15 @@ import SideNav from './SideNav';
 import DrawerDropzone from './DrawerDropzone';
 import DrawerChatbot from './DrawerChatbot';
 import Content from '../Content';
-import SettingsModal from '../SettingModal';
+import SettingsModal from '../Popups/Settings/SettingModal';
 import { clearChatAPI } from '../../services/QnaAPI';
 import { useCredentials } from '../../context/UserCredentials';
 import { UserCredentials, alertStateType } from '../../types';
 import { useMessageContext } from '../../context/UserMessages';
 import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { OverridableStringUnion } from '@mui/types';
-import SchemaFromTextDialog from '../SchemaFromText';
-import CustomAlert from '../Alert';
+import SchemaFromTextDialog from '../Popups/Settings/SchemaFromText';
+import CustomAlert from '../UI/Alert';
 export default function PageLayoutNew({
   isSettingPanelExpanded,
   closeSettingModal,

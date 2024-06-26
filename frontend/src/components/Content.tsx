@@ -1,23 +1,23 @@
 import { useEffect, useState, useMemo } from 'react';
-import ConnectionModal from './ConnectionModal';
+import ConnectionModal from './Popups/ConnectionModal/ConnectionModal';
 import LlmDropdown from './Dropdown';
 import FileTable from './FileTable';
 import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
-import CustomAlert from './Alert';
+import CustomAlert from './UI/Alert';
 import { extractAPI } from '../utils/FileAPI';
 import { ContentProps, CustomFile, OptionType, UserCredentials, alertStateType } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
-import GraphViewModal from './GraphViewModal';
+import GraphViewModal from './Graph/GraphViewModal';
 import deleteAPI from '../services/deleteFiles';
-import DeletePopUp from './DeletePopUp';
+import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
-import ConfirmationDialog from './ConfirmationDialog';
+import ConfirmationDialog from './Popups/LargeFilePopUp/ConfirmationDialog';
 import { buttonCaptions, largeFileSize, tooltips } from '../utils/Constants';
-import ButtonWithToolTip from './ButtonWithToolTip';
+import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 
 const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) => {
@@ -376,6 +376,48 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     }
   }, []);
 
+  const onClickHandler = () => {
+    if (selectedRows.length) {
+      let selectedLargeFiles: CustomFile[] = [];
+      selectedRows.forEach((f) => {
+        const parsedData: CustomFile = JSON.parse(f);
+        if (parsedData.fileSource === 'local file') {
+          if (typeof parsedData.size === 'number' && parsedData.status === 'New' && parsedData.size > largeFileSize) {
+            selectedLargeFiles.push(parsedData);
+          }
+        }
+      });
+      // @ts-ignore
+      if (selectedLargeFiles.length) {
+        setshowConfirmationModal(true);
+        handleGenerateGraph(false, []);
+      } else {
+        handleGenerateGraph(true, filesData);
+      }
+    } else if (filesData.length) {
+      const largefiles = filesData.filter((f) => {
+        if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
+          return true;
+        }
+        return false;
+      });
+      const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
+      const stringified = selectAllNewFiles.reduce((accu, f) => {
+        const key = JSON.stringify(f);
+        // @ts-ignore
+        accu[key] = true;
+        return accu;
+      }, {});
+      setRowSelection(stringified);
+      if (largefiles.length) {
+        setshowConfirmationModal(true);
+        handleGenerateGraph(false, []);
+      } else {
+        handleGenerateGraph(true, filesData);
+      }
+    }
+  };
+
   return (
     <>
       {alertDetails.showAlert && (
@@ -456,51 +498,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
               text={tooltips.generateGraph}
               placement='top'
               label='generate graph'
-              onClick={() => {
-                if (selectedRows.length) {
-                  let selectedLargeFiles: CustomFile[] = [];
-                  selectedRows.forEach((f) => {
-                    const parsedData: CustomFile = JSON.parse(f);
-                    if (parsedData.fileSource === 'local file') {
-                      if (
-                        typeof parsedData.size === 'number' &&
-                        parsedData.status === 'New' &&
-                        parsedData.size > largeFileSize
-                      ) {
-                        selectedLargeFiles.push(parsedData);
-                      }
-                    }
-                  });
-                  // @ts-ignore
-                  if (selectedLargeFiles.length) {
-                    setshowConfirmationModal(true);
-                    handleGenerateGraph(false, []);
-                  } else {
-                    handleGenerateGraph(true, filesData);
-                  }
-                } else if (filesData.length) {
-                  const largefiles = filesData.filter((f) => {
-                    if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
-                      return true;
-                    }
-                    return false;
-                  });
-                  const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
-                  const stringified = selectAllNewFiles.reduce((accu, f) => {
-                    const key = JSON.stringify(f);
-                    // @ts-ignore
-                    accu[key] = true;
-                    return accu;
-                  }, {});
-                  setRowSelection(stringified);
-                  if (largefiles.length) {
-                    setshowConfirmationModal(true);
-                    handleGenerateGraph(false, []);
-                  } else {
-                    handleGenerateGraph(true, filesData);
-                  }
-                }
-              }}
+              onClick={onClickHandler}
               disabled={disableCheck}
               className='mr-0.5'
             >
