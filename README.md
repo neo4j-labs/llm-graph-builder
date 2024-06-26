@@ -38,14 +38,14 @@ docker-compose up --build
 
 ##### Additional configs
 
-By default, the input sources will be: Local files, Youtube, Wikipedia and AWS S3. As this default config is applied:
+By default, the input sources will be: Local files, Youtube, Wikipedia ,AWS S3 and Webpages. As this default config is applied:
 ```env
-REACT_APP_SOURCES="local,youtube,wiki,s3"
+REACT_APP_SOURCES="local,youtube,wiki,s3,web"
 ```
 
 If however you want the Google GCS integration, add `gcs` and your Google client ID:
 ```env
-REACT_APP_SOURCES="local,youtube,wiki,s3,gcs"
+REACT_APP_SOURCES="local,youtube,wiki,s3,gcs,web"
 GOOGLE_CLIENT_ID="xxxx"
 ```
 
