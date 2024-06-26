@@ -170,12 +170,32 @@ export interface CustomModalProps {
   setStatus: Dispatch<SetStateAction<'unknown' | 'success' | 'info' | 'warning' | 'danger'>>;
 }
 
+export interface CustomInput {
+  value: string;
+  label: string;
+  placeHolder: string;
+  onChangeHandler: React.ChangeEventHandler<HTMLInputElement>;
+  submitHandler: (url: string) => void;
+  disabledCheck: boolean;
+  onCloseHandler: () => void;
+  id: string;
+  onBlurHandler: React.FocusEventHandler<HTMLInputElement>;
+  status: 'unknown' | 'success' | 'info' | 'warning' | 'danger';
+  setStatus: Dispatch<SetStateAction<'unknown' | 'success' | 'info' | 'warning' | 'danger'>>;
+  statusMessage: string;
+  isValid: boolean;
+  isFocused: boolean;
+  onPasteHandler: React.ClipboardEventHandler<HTMLInputElement>;
+}
+
 export interface CommonButtonProps {
   openModal: () => void;
   wrapperclassName?: string;
   logo: string;
-  title: string;
+  title?: string;
   className?: string;
+  imgWidth?: number;
+  imgeHeight?: number;
 }
 
 export interface Source {

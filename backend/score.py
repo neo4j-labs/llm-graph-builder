@@ -98,6 +98,9 @@ async def create_source_knowledge_graph_url(
         elif source_type == 'gcs bucket':
             lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, source_type,Credentials(access_token)
             )
+        elif source_type == 'web-url':
+            lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_web_url,graph, model, source_url, source_type
+            )  
         elif source_type == 'youtube':
             lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_url_youtube,graph, model, source_url, source_type
             )
@@ -170,6 +173,10 @@ async def extract_knowledge_graph_from_file(
         elif source_type == 's3 bucket' and source_url:
             result = await asyncio.to_thread(
                 extract_graph_from_file_s3, graph, model, source_url, aws_access_key_id, aws_secret_access_key, allowedNodes, allowedRelationship)
+        
+        elif source_type == 'web-url':
+            result = await asyncio.to_thread(
+                extract_graph_from_web_page, graph, model, source_url, allowedNodes, allowedRelationship)
 
         elif source_type == 'youtube' and source_url:
             result = await asyncio.to_thread(
