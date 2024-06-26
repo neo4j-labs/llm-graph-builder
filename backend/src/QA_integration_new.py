@@ -179,74 +179,79 @@ def clear_chat_history(graph,session_id):
             "user": "chatbot"
             }
 
-def QA_RAG(graph,model,question,session_id):
+def QA_RAG(graph,model,question,session_id,mode):
     try:
         start_time = time.time()
         model_version = MODEL_VERSIONS[model]
-        llm = get_llm(model_version)
-        retriever = get_neo4j_retriever(graph=graph)
-        doc_retriever = create_document_retriever_chain(llm,retriever)
-        history = create_neo4j_chat_message_history(graph,session_id )
-        chat_setup_time = time.time() - start_time
-        logging.info(f"Chat setup completed in {chat_setup_time:.2f} seconds")
-        
-        start_time = time.time()
-        messages = history.messages
-        user_question = HumanMessage(content=question)
-        messages.append(user_question)
-        docs = doc_retriever.invoke(
-            {
-                "messages":messages
-            }
-        )
-        if docs:
-            print(docs)
-            formatted_docs,sources = format_documents(docs)
+        if mode == "vector":
+            llm = get_llm(model_version)
+            retriever = get_neo4j_retriever(graph=graph)
+            doc_retriever = create_document_retriever_chain(llm,retriever)
+            history = create_neo4j_chat_message_history(graph,session_id )
+            chat_setup_time = time.time() - start_time
+            logging.info(f"Chat setup completed in {chat_setup_time:.2f} seconds")
             
-            doc_retrieval_time = time.time() - start_time
-            logging.info(f"Modified question and Documents retrieved in {doc_retrieval_time:.2f} seconds")
-
             start_time = time.time()
-            rag_chain = get_rag_chain(llm=llm)
-            ai_response = rag_chain.invoke(
+            messages = history.messages
+            user_question = HumanMessage(content=question)
+            messages.append(user_question)
+            docs = doc_retriever.invoke(
                 {
-                "messages" : messages[:-1],
-                "context"  : formatted_docs,
-                "input"    : question 
-            }
+                    "messages":messages
+                }
             )
-            result = get_sources_and_chunks(sources,docs)
-            content = ai_response.content
-            if "Gemini" in model:
-                total_tokens = ai_response.response_metadata['usage_metadata']['prompt_token_count']
-            else:    
-                total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
-            predict_time = time.time() - start_time
-            logging.info(f"Final Response predicted in {predict_time:.2f} seconds")
-        else:
-            ai_response = AIMessage(content="I couldn't find any relevant documents to answer your question.")
-            result = {"sources": [], "chunkdetails": []}
-            total_tokens = 0
-            content = ai_response.content
-             
-        start_time = time.time()
-        messages.append(ai_response)
-        summarize_messages(llm,history,messages)
-        history_summarized_time = time.time() - start_time
-        logging.info(f"Chat History summarized in {history_summarized_time:.2f} seconds")
+            if docs:
+                print(docs)
+                formatted_docs,sources = format_documents(docs)
+                
+                doc_retrieval_time = time.time() - start_time
+                logging.info(f"Modified question and Documents retrieved in {doc_retrieval_time:.2f} seconds")
 
-        return {
-            "session_id": session_id, 
-            "message": content, 
-            "info": {
-                "sources": result["sources"],
-                "model": model_version,
-                "chunkdetails":result["chunkdetails"],
-                "total_tokens": total_tokens,
-                "response_time": 0
-            },
-            "user": "chatbot"
-            }
+                start_time = time.time()
+                rag_chain = get_rag_chain(llm=llm)
+                ai_response = rag_chain.invoke(
+                    {
+                    "messages" : messages[:-1],
+                    "context"  : formatted_docs,
+                    "input"    : question 
+                }
+                )
+                result = get_sources_and_chunks(sources,docs)
+                content = ai_response.content
+                if "Gemini" in model:
+                    total_tokens = ai_response.response_metadata['usage_metadata']['prompt_token_count']
+                else:    
+                    total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
+                predict_time = time.time() - start_time
+                logging.info(f"Final Response predicted in {predict_time:.2f} seconds")
+            else:
+                ai_response = AIMessage(content="I couldn't find any relevant documents to answer your question.")
+                result = {"sources": [], "chunkdetails": []}
+                total_tokens = 0
+                content = ai_response.content
+                
+            start_time = time.time()
+            messages.append(ai_response)
+            summarize_messages(llm,history,messages)
+            history_summarized_time = time.time() - start_time
+            logging.info(f"Chat History summarized in {history_summarized_time:.2f} seconds")
+
+            return {
+                "session_id": session_id, 
+                "message": content, 
+                "info": {
+                    "sources": result["sources"],
+                    "model": model_version,
+                    "chunkdetails":result["chunkdetails"],
+                    "total_tokens": total_tokens,
+                    "response_time": 0
+                },
+                "user": "chatbot"
+                }
+        elif mode == "graph":
+            pass
+        else:
+            pass
 
     except Exception as e:
         logging.exception(f"Exception in QA component at {datetime.now()}: {str(e)}")
