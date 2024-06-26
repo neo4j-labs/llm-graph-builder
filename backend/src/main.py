@@ -275,7 +275,7 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     pages[i]=Document(page_content=str(text), metadata=pages[i].metadata)
   create_chunks_obj = CreateChunksofDocument(pages, graph)
   chunks = create_chunks_obj.split_file_into_chunks()
-  
+  chunkId_chunkDoc_list = create_relation_between_chunks(graph,file_name,chunks)
   if result[0]['Status'] != 'Processing':      
     obj_source_node = sourceNode()
     status = "Processing"
@@ -295,12 +295,12 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     job_status = "Completed"
     node_count = 0
     rel_count = 0
-    for i in range(0, len(chunks), update_graph_chunk_processed):
+    for i in range(0, len(chunkId_chunkDoc_list), update_graph_chunk_processed):
       select_chunks_upto = i+update_graph_chunk_processed
       logging.info(f'Selected Chunks upto: {select_chunks_upto}')
-      if len(chunks) <= select_chunks_upto:
-         select_chunks_upto = len(chunks)
-      selected_chunks = chunks[i:select_chunks_upto]
+      if len(chunkId_chunkDoc_list) <= select_chunks_upto:
+         select_chunks_upto = len(chunkId_chunkDoc_list)
+      selected_chunks = chunkId_chunkDoc_list[i:select_chunks_upto]
       result = graphDb_data_Access.get_current_status_document_node(file_name)
       is_cancelled_status = result[0]['is_cancelled']
       logging.info(f"Value of is_cancelled : {result[0]['is_cancelled']}")
@@ -362,8 +362,7 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
   else:
      logging.info('File does not process because it\'s already in Processing status')
 
-def processing_chunks(chunks,graph,file_name,model,allowedNodes,allowedRelationship, node_count, rel_count):
-  chunkId_chunkDoc_list = create_relation_between_chunks(graph,file_name,chunks)
+def processing_chunks(chunkId_chunkDoc_list,graph,file_name,model,allowedNodes,allowedRelationship, node_count, rel_count):
   #create vector index and update chunk node with embedding
   update_embedding_create_vector_index( graph, chunkId_chunkDoc_list, file_name)
   logging.info("Get graph document list from models")
