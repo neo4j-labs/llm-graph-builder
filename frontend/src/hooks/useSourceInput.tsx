@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export default function useSourceInput(
   validator: (e: string) => boolean,
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fileSource: string,
   isWikiQuery?: boolean,
   isYoutubeLink?: boolean,
@@ -22,11 +23,19 @@ export default function useSourceInput(
 
   const onChangeHandler: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setIsFocused(true);
+    if (e.target.value.length >= 10) {
+      setIsValid(validator(e.target.value) && true);
+    }
     setInputVal(e.target.value);
   }, []);
   const onBlurHandler: React.FocusEventHandler<HTMLInputElement> = useCallback(() => {
     setIsValid(validator(inputVal) && isFocused);
   }, [inputVal, isFocused]);
+
+  const onPasteHandler: React.ClipboardEventHandler<HTMLInputElement> = useCallback(() => {
+    setIsFocused(true);
+    setIsValid(validator(inputVal) && true);
+  }, [inputVal]);
 
   const onClose = useCallback(() => {
     setInputVal('');
@@ -53,6 +62,7 @@ export default function useSourceInput(
       if (isValid) {
         try {
           setStatus('info');
+          setIsLoading(true);
           setStatusMessage('Scanning...');
           const params: ScanProps = {
             userCredentials: userCredentials as UserCredentials,
@@ -65,6 +75,7 @@ export default function useSourceInput(
             params.urlParam = url.trim();
           }
           const apiResponse = await urlScanAPI(params);
+          setIsLoading(false);
           setStatus('success');
           if (apiResponse?.data.status == 'Failed' || !apiResponse.data) {
             setStatus('danger');
@@ -160,5 +171,6 @@ export default function useSourceInput(
     statusMessage,
     submitHandler,
     onClose,
+    onPasteHandler,
   };
 }

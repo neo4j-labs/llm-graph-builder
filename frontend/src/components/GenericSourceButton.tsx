@@ -9,11 +9,11 @@ import { APP_SOURCES } from '../utils/Constants';
 export default function GenericButton({ openModal }: DataComponentProps) {
   return (
     <Flex alignItems='center' gap='4'>
-      <CustomButton openModal={openModal} logo={internet} wrapperclassName='' className='webImg' />
+      <CustomButton openModal={openModal} logo={internet} wrapperclassName='my-2' className='webImg' />
       <Typography variant='body-small'>
         <Flex gap='0'>
-          <span>Sources</span>
-          <div className='align-self-center'>
+          <span>Web Sources</span>
+          <div className='align-self-center flex justify-center'>
             <IconButtonWithToolTip
               label='Source info'
               clean

@@ -2,7 +2,11 @@ import CustomSourceInput from './CustomSourceInput';
 import useSourceInput from '../hooks/useSourceInput';
 import { youtubeLinkValidation } from '../utils/Utils';
 
-export default function YoutubeInput() {
+export default function YoutubeInput({
+  setIsLoading,
+}: {
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
   const {
     inputVal,
     onChangeHandler,
@@ -14,7 +18,8 @@ export default function YoutubeInput() {
     isFocused,
     isValid,
     onClose,
-  } = useSourceInput(youtubeLinkValidation, 'youtube', false, true, false);
+    onPasteHandler,
+  } = useSourceInput(youtubeLinkValidation, setIsLoading, 'youtube', false, true, false);
   return (
     <CustomSourceInput
       onCloseHandler={onClose}
@@ -31,6 +36,7 @@ export default function YoutubeInput() {
       status={status}
       statusMessage={statusMessage}
       id='youtube link'
+      onPasteHandler={onPasteHandler}
     />
   );
 }
