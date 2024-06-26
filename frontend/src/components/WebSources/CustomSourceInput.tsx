@@ -60,7 +60,7 @@ export default function CustomSourceInput({
           size='medium'
           className='mr-4'
         >
-          Cancel
+          Reset
         </Button>
         <Button onClick={() => submitHandler(value)} size='medium' disabled={disabledCheck}>
           Sumbit
