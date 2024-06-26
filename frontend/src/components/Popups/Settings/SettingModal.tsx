@@ -172,7 +172,7 @@ export default function SettingsModal({
             value: selectedSchemas,
             menuPosition: 'fixed',
           }}
-          type='creatable'
+          type='select'
         />
         <Dropdown
           helpText='You can select more than one values'
