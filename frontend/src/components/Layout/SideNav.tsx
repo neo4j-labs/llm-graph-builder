@@ -16,7 +16,7 @@ import { useMessageContext } from '../../context/UserMessages';
 import { getIsLoading } from '../../utils/Utils';
 import IconsPlacement from '../ChatBot/IconsPlacement';
 import { tooltips } from '../../utils/Constants';
-import ChatModeToggle from '../ChatModeToggle';
+import ChatModeToggle from '../ChatBot/ChatModeToggle';
 
 const SideNav: React.FC<SideNavProps> = ({
   position,
