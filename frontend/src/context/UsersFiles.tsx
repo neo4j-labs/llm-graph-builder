@@ -22,6 +22,8 @@ interface FileContextType {
   setSelectedRows: React.Dispatch<React.SetStateAction<string[]>>;
   selectedSchemas: readonly OptionType[];
   setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
+  chatMode: string;
+  setchatMode: Dispatch<SetStateAction<string>>;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
@@ -38,6 +40,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [selectedSchemas, setSelectedSchemas] = useState<readonly OptionType[]>([]);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [chatMode, setchatMode] = useState<string>('vector');
   const { userCredentials } = useCredentials();
 
   useEffect(() => {
@@ -74,6 +77,8 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setSelectedRows,
     selectedSchemas,
     setSelectedSchemas,
+    chatMode,
+    setchatMode,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

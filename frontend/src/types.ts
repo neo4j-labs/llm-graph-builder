@@ -23,6 +23,7 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   language?: string;
   processingProgress?: number;
   access_token?: string;
+  chatMode: string;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;

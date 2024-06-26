@@ -1,3 +1,5 @@
+import { DbmsIcon, VisualizeBloomIcon } from '@neo4j-ndl/react/icons';
+
 export const document = `+ [docs]`;
 
 export const chunks = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
@@ -134,3 +136,7 @@ export const buttonCaptions = {
   cancel: 'Cancel',
   details: 'Details',
 };
+export const ChatModeOptions = [
+  { Icon: VisualizeBloomIcon, value: 'graph' },
+  { Icon: DbmsIcon, value: 'vector' },
+];

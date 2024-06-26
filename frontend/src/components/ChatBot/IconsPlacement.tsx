@@ -16,21 +16,21 @@ const IconsPlacement: React.FC<IconProps> = ({ closeChatBot, deleteOnClick, mess
     <div className='flex items-end justify-end'>
       <ChatModeToggle />
       <Flex flexDirection='row' gap='2'>
-      <IconButtonWithToolTip
-        text={tooltips.clearChat}
-        aria-label='Remove chat history'
-        clean
-        onClick={deleteOnClick}
-        disabled={messages.length === 1}
-        placement='left'
-        label={tooltips.clearChat}
-      >
-        <TrashIconOutline />
-      </IconButtonWithToolTip>
-      <IconButton  aria-label='Remove chatbot' clean onClick={closeChatBot}>
-        <XMarkIconOutline />
-      </IconButton></Flex>
-      
+        <IconButtonWithToolTip
+          text={tooltips.clearChat}
+          aria-label='Remove chat history'
+          clean
+          onClick={deleteOnClick}
+          disabled={messages.length === 1}
+          placement='left'
+          label={tooltips.clearChat}
+        >
+          <TrashIconOutline />
+        </IconButtonWithToolTip>
+        <IconButton aria-label='Remove chatbot' clean onClick={closeChatBot}>
+          <XMarkIconOutline />
+        </IconButton>
+      </Flex>
     </div>
   );
 };

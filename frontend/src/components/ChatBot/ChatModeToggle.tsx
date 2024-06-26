@@ -1,13 +1,22 @@
 import { SegmentedControl } from '@neo4j-ndl/react';
-import { useState } from 'react'
-import { DbmsIcon ,VisualizeBloomIcon } from '@neo4j-ndl/react/icons';
+import { ChatModeOptions } from '../../utils/Constants';
+import { useFileContext } from '../../context/UsersFiles';
 
-export default function ChatModeToggle({inSidenav=false}) {
-  const options = [{Icon:VisualizeBloomIcon,value:'graph'}, {Icon:DbmsIcon,value:'vector'}]
-  const [mode, setmode] = useState<string>("graph")
+export default function ChatModeToggle({ inSidenav = false }) {
+  const { chatMode, setchatMode } = useFileContext();
   return (
-    <SegmentedControl className={inSidenav?'flex-col !h-full !ml-1':''} onChange={setmode} hasOnlyIcons={true} selected={mode} size={inSidenav?"large":'small'}>
-      {options.map((i,idx) => <SegmentedControl.Item  key={`${idx}`} value={i.value}>{<i.Icon className="n-size-token-7"/>}</SegmentedControl.Item>)}
+    <SegmentedControl
+      className={inSidenav ? 'flex-col !h-full !ml-1' : ''}
+      onChange={setchatMode}
+      hasOnlyIcons={true}
+      selected={chatMode}
+      size={inSidenav ? 'large' : 'small'}
+    >
+      {ChatModeOptions.map((i, idx) => (
+        <SegmentedControl.Item key={`${idx}`} value={i.value}>
+          {<i.Icon className='n-size-token-7' />}
+        </SegmentedControl.Item>
+      ))}
     </SegmentedControl>
-  )
+  );
 }
