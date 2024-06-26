@@ -18,7 +18,7 @@ from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
 from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransformer
 # from neo4j.debug import watch
 
-#watch("neo4j")
+# watch("neo4j")
 
 
 def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
@@ -77,8 +77,7 @@ def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
   return lst_chunk_chunkId_document  
                  
 def create_graph_database_connection(uri, userName, password, database):
-  graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True)
-  #driver_config={'user_agent':os.environ.get('NEO4J_USER_AGENT')}
+  graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True,driver_config={'user_agent':os.environ.get('NEO4J_USER_AGENT')})  
   return graph
 
 
