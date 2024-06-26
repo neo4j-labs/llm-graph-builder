@@ -18,6 +18,7 @@ from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.graph_query import get_graph_results
 from src.chunkid_entities import get_entities_from_chunkids
+from src.post_processing import create_fulltext
 from sse_starlette.sse import EventSourceResponse
 import json
 from typing import List, Mapping
@@ -239,6 +240,21 @@ async def update_similarity_graph(uri=Form(None), userName=Form(None), password=
         return create_api_response(job_status, message=message, error=error_message)
     finally:
             close_db_connection(graph, 'update_similarity_graph')
+
+@app.post("/post_processing/create_fulltext_index")
+async def create_fulltext_index(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
+    try:
+        await asyncio.to_thread(create_fulltext,uri=uri, username=userName, password=password, database=database)
+        
+        josn_obj = {'api_name':'post_processing/create_fulltext_index','db_url':uri}
+        logger.log_struct(josn_obj)
+        return create_api_response('Success',message='Full Text index created')
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to create full text index"
+        error_message = str(e)
+        logging.exception(f'Exception in post_processing/create_fulltext_index :{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
                 
 @app.post("/chat_bot")
 async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password=Form(None), database=Form(None),question=Form(None), session_id=Form(None)):
