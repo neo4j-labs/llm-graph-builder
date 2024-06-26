@@ -31,6 +31,7 @@ from google.cloud import logging as gclogger
 from src.logger import CustomLogger
 from datetime import datetime
 import time
+import gc
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
@@ -119,6 +120,8 @@ async def create_source_knowledge_graph_url(
         logging.exception(f'Exception Stack trace:')
         return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=source_type)
     finally:
+        gc.collect()
+        if graph is not None:
             close_db_connection(graph, 'url/scan')
 
 @app.post("/extract")
@@ -210,6 +213,8 @@ async def extract_knowledge_graph_from_file(
         logging.exception(f'File Failed in extraction: {josn_obj}')
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = file_name)
     finally:
+        gc.collect()
+        if graph is not None:
             close_db_connection(graph, 'extract')
             
 @app.get("/sources_list")
@@ -251,6 +256,8 @@ async def update_similarity_graph(uri=Form(None), userName=Form(None), password=
         logging.exception(f'Exception in update KNN graph:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
     finally:
+        gc.collect()
+        if graph is not None:
             close_db_connection(graph, 'update_similarity_graph')
                 
 @app.post("/chat_bot")
@@ -275,6 +282,8 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
         error_message = str(e)
         logging.exception(f'Exception in chat bot:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()
 
 @app.post("/chunk_entities")
 async def chunk_entities(uri=Form(None),userName=Form(None), password=Form(None), chunk_ids=Form(None)):
@@ -290,6 +299,8 @@ async def chunk_entities(uri=Form(None),userName=Form(None), password=Form(None)
         error_message = str(e)
         logging.exception(f'Exception in chat bot:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()
 
 @app.post("/graph_query")
 async def graph_query(
@@ -318,6 +329,9 @@ async def graph_query(
         error_message = str(e)
         logging.exception(f'Exception in graph query: {error_message}')
         return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()
+    
 
 @app.post("/clear_chat_bot")
 async def clear_chat_bot(uri=Form(None),userName=Form(None), password=Form(None), database=Form(None), session_id=Form(None)):
@@ -332,6 +346,8 @@ async def clear_chat_bot(uri=Form(None),userName=Form(None), password=Form(None)
         logging.exception(f'Exception in chat bot:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
     finally:
+        gc.collect()
+        if graph is not None:
             close_db_connection(graph, 'clear_chat_bot')
             
 @app.post("/connect")
@@ -370,6 +386,8 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
         logging.exception(f'Exception:{error_message}')
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = originalname)
     finally:
+        gc.collect()
+        if graph is not None:
             close_db_connection(graph, 'upload')
             
 @app.post("/schema")
@@ -388,6 +406,8 @@ async def get_structured_schema(uri=Form(None), userName=Form(None), password=Fo
         logging.exception(f'Exception:{error_message}')
         return create_api_response("Failed", message=message, error=error_message)
     finally:
+        gc.collect()
+        if graph is not None:
             close_db_connection(graph, 'schema')
             
 def decode_password(pwd):
@@ -454,6 +474,8 @@ async def delete_document_and_entities(uri=Form(None),
         logging.exception(f'{message}:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
     finally:
+        gc.collect()
+        if graph is not None:
             close_db_connection(graph, 'delete_document_and_entities')
 
 @app.get('/document_status/{file_name}')
@@ -504,7 +526,9 @@ async def cancelled_job(uri=Form(None), userName=Form(None), password=Form(None)
         logging.exception(f'Exception in cancelling the running job:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
     finally:
-        close_db_connection(graph, 'cancelled_job')
+        gc.collect()
+        if graph is not None:
+            close_db_connection(graph, 'cancelled_job')
 
 @app.post("/populate_graph_schema")
 async def populate_graph_schema(input_text=Form(None), model=Form(None), is_schema_description_checked=Form(None)):
@@ -517,6 +541,8 @@ async def populate_graph_schema(input_text=Form(None), model=Form(None), is_sche
         error_message = str(e)
         logging.exception(f'Exception in getting the schema from text:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()
 
 if __name__ == "__main__":
     uvicorn.run(app)
