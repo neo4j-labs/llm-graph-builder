@@ -8,6 +8,7 @@ import { useCredentials } from '../context/UserCredentials';
 import schemaExamples from '../assets/schemas.json';
 import ButtonWithToolTip from '../components/ButtonWithToolTip';
 import { tooltips } from '../utils/Constants';
+import { useFileContext } from '../context/UsersFiles';
 
 interface DefaultSettings {
     setSelectedRels: React.Dispatch<React.SetStateAction<readonly OptionType[]>>;
@@ -27,7 +28,7 @@ interface UseSettingsModalProps {
 }
 
 const useSettingsModal = ({ open, onClose, opneTextSchema, defaultSettings }: UseSettingsModalProps) => {
-    const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels, selectedSchemas, setSelectedSchemas, isSchema, setIsSchema } = defaultSettings;
+    const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels, selectedSchemas, setSelectedSchemas, isSchema, setIsSchema } = useFileContext();
     const { userCredentials } = useCredentials();
     const [loading, setLoading] = useState<boolean>(false);
     const [nodeLabelOptions, setNodeLabelOptions] = useState<OptionType[]>([]);
@@ -207,13 +208,13 @@ const useSettingsModal = ({ open, onClose, opneTextSchema, defaultSettings }: Us
                     type='creatable'
                 />
                 <Dialog.Actions className='!mt-4 flex items-center'>
-                    <Checkbox
+                    {/* <Checkbox
                         label="Set Schema for all files"
                         onChange={(e) => {
                             setIsSchema(e.target.checked);
                         }}
                         checked={isSchema}
-                    />
+                    /> */}
                     <ButtonWithToolTip
                         loading={loading}
                         text={

@@ -72,6 +72,9 @@ export default function PageLayoutNew({
       alertMessage: '',
     });
   };
+
+
+
   return (
     <div style={{ maxHeight: 'calc(100vh - 58px)' }} className='flex overflow-hidden'>
       {alertDetails.showAlert && (
@@ -91,7 +94,7 @@ export default function PageLayoutNew({
         showAlert={showAlert}
       ></SchemaFromTextDialog>
       <SettingsModal
-        opneTextSchema={openSchemaFromTextDialog}
+        openTextSchema={openSchemaFromTextDialog}
         open={isSettingPanelExpanded}
         onClose={closeSettingModal}
       />
@@ -100,7 +103,7 @@ export default function PageLayoutNew({
         isLeftExpanded={isLeftExpanded}
         isRightExpanded={isRightExpanded}
         showChatBot={showChatBot}
-        openSettingsModal={openSettingsDialog}
+        openTextSchema={openSchemaFromTextDialog}
       />
       {showDrawerChatbot && (
         <DrawerChatbot messages={messages} isExpanded={isRightExpanded} clearHistoryData={clearHistoryData} />

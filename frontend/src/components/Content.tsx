@@ -19,9 +19,9 @@ import ConfirmationDialog from './ConfirmationDialog';
 import { buttonCaptions, largeFileSize, tooltips } from '../utils/Constants';
 import ButtonWithToolTip from './ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
-import useSettingsModal from '../hooks/useSettings';
+import SettingModalHOC from '../HOC/SettingModalHOC';
 
-const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, openSettingsModal }) => {
+const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, openTextSchema }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
@@ -30,7 +30,8 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
   const { setUserCredentials, userCredentials } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
-  // const {settingsModal, defaultSettings} = useSettingsModal(openSettingsModal());
+  const [showSettingnModal, setshowSettingModal] = useState<boolean>(false);
+  const [isLargeFile, setisLargeFile] = useState<boolean>(false);
 
   const {
     filesData,
@@ -53,6 +54,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
     alertType: 'error',
     alertMessage: '',
   });
+  const [isSchema, setIsSchema] = useState<boolean>(false);
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
       setalertDetails({
@@ -70,7 +72,6 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
       });
     }
   );
-  const [settingModalOpened, setSettingModalOpened] = useState<boolean>(false);
 
   useEffect(() => {
     if (!init && !searchParams.has('connectURL')) {
@@ -310,13 +311,6 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
     [selectedfileslength, completedfileNo]
   );
 
-  useEffect(() => {
-    const settingsOpened = localStorage.getItem('settingModalOpened');
-    if (settingsOpened) {
-      setSettingModalOpened(true);
-    }
-  }, []);
-
   const filesForProcessing = useMemo(() => {
     let newstatusfiles: CustomFile[] = [];
     if (selectedRows.length) {
@@ -385,10 +379,43 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
     }
   }, []);
 
-  const onClickGenerate = () => {
-    if (!settingModalOpened) {
-      openSettingsModal();
+  useEffect(() => {
+    const storedSchema = localStorage.getItem('isSchema');
+    if (storedSchema !== null) {
+      setIsSchema(JSON.parse(storedSchema))
     }
+  }, [])
+
+  const handleContinue = () => {
+    if (!isLargeFile) {
+      handleGenerateGraph(true, filesData);
+      setshowSettingModal(false);
+    } else {
+      setshowSettingModal(false);
+      setshowConfirmationModal(true);
+      handleGenerateGraph(false, []);
+    }
+    setIsSchema(true);
+    setalertDetails({
+      showAlert: true,
+      alertType: 'success',
+      alertMessage: 'Schema is set successfully',
+    });
+    localStorage.setItem('isSchema', JSON.stringify(true))
+  }
+
+  const onClickGenerate = () => {
+    if (isSchema) {
+      setshowSettingModal(true); if (!isLargeFile) {
+        handleGenerateGraph(true, filesData);
+        setshowSettingModal(false);
+      } else {
+        setshowSettingModal(false);
+        setshowConfirmationModal(true);
+        handleGenerateGraph(false, []);
+      }
+    }
+
     if (selectedRows.length) {
       let selectedLargeFiles: CustomFile[] = [];
       selectedRows.forEach((f) => {
@@ -405,10 +432,9 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
       });
       // @ts-ignore
       if (selectedLargeFiles.length) {
-        setshowConfirmationModal(true);
-        handleGenerateGraph(false, []);
+        setisLargeFile(true);
       } else {
-        handleGenerateGraph(true, filesData);
+        setisLargeFile(false);
       }
     } else if (filesData.length) {
       const largefiles = filesData.filter((f) => {
@@ -426,10 +452,9 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
       }, {});
       setRowSelection(stringified);
       if (largefiles.length) {
-        setshowConfirmationModal(true);
-        handleGenerateGraph(false, []);
+        setisLargeFile(true);
       } else {
-        handleGenerateGraph(true, filesData);
+        setisLargeFile(false);
       }
     }
   }
@@ -437,6 +462,14 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
   return (
     <>
       {alertDetails.showAlert && (
+        <CustomAlert
+          severity={alertDetails.alertType}
+          open={alertDetails.showAlert}
+          handleClose={handleClose}
+          alertMessage={alertDetails.alertMessage}
+        />
+      )}
+      {isSchema && (
         <CustomAlert
           severity={alertDetails.alertType}
           open={alertDetails.showAlert}
@@ -461,6 +494,9 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
           deleteCloseHandler={() => setshowDeletePopUp(false)}
           loading={deleteLoading}
         ></DeletePopUp>
+      )}
+      {showSettingnModal && (
+        <SettingModalHOC settingView='content' onClose={() => setshowSettingModal(false)} onContinue={handleContinue} open={showSettingnModal} openTextSchema={openTextSchema} isSchema={isSchema} />
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>

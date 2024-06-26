@@ -11,7 +11,6 @@ import { StatusIndicator, Typography } from '@neo4j-ndl/react';
 import { useCallback } from 'react';
 import IconButtonWithToolTip from '../IconButtonToolTip';
 import { tooltips } from '../../utils/Constants';
-import { useFileContext } from '../../context/UsersFiles';
 
 export default function Header({
   themeMode,
@@ -26,7 +25,7 @@ export default function Header({
     window.open(url, '_blank');
   }, []);
 
-  const { isSchema } = useFileContext();
+  const isSchema = localStorage.getItem('isSchema');
 
   return (
     <div
@@ -93,7 +92,7 @@ export default function Header({
                 )}
               </IconButtonWithToolTip>
               <div className='flex items-center'>
-                <StatusIndicator style={{ marginRight: '-8px' }} type={isSchema ? 'success' : 'danger'} />
+
                 <IconButtonWithToolTip
                   label={tooltips.settings}
                   text={tooltips.settings}
@@ -104,7 +103,17 @@ export default function Header({
                 >
                   <Cog8ToothIconOutline />
                 </IconButtonWithToolTip>
+                <StatusIndicator style={{ marginLeft: '-8px' }} type={isSchema ? 'success' : 'danger'} />
               </div>
+              {/* <Avatar
+                hasStatus
+                size='large'
+                source={Setting}
+                status={isSchema ? 'online' : 'offline'}
+                type='image'
+                onClick={openSettingsModal}
+                label={tooltips.settings}
+              /> */}
             </div>
           </div>
         </section>

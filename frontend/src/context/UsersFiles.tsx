@@ -22,8 +22,6 @@ interface FileContextType {
   setSelectedRows: React.Dispatch<React.SetStateAction<string[]>>;
   selectedSchemas: readonly OptionType[];
   setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
-  isSchema: boolean;
-  setIsSchema: Dispatch<SetStateAction<boolean>>;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
@@ -41,7 +39,6 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const { userCredentials } = useCredentials();
-  const [isSchema, setIsSchema] = useState<boolean>(true);
 
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
@@ -77,8 +74,6 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setSelectedRows,
     selectedSchemas,
     setSelectedSchemas,
-    isSchema,
-    setIsSchema
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

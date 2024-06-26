@@ -150,7 +150,7 @@ export interface ContentProps {
   isRightExpanded: boolean;
   showChatBot: boolean;
   openChatBot: () => void;
-  openSettingsModal: () => void;
+  openTextSchema: () => void;
 }
 
 export interface FileTableProps {
@@ -440,3 +440,13 @@ export interface SpeechArgs {
   pitch?: number;
   volume?: number;
 }
+
+export interface SettingsModalProps {
+  open: boolean;
+  onClose: () => void;
+  openTextSchema: () => void;
+  onContinue?: () => void;
+  isSchema?: boolean;
+  settingView?: string;
+}
+

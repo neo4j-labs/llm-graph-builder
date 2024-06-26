@@ -1,6 +1,6 @@
-import { Checkbox, Dialog, Dropdown } from '@neo4j-ndl/react';
+import { Dialog, Dropdown } from '@neo4j-ndl/react';
 import { OnChangeValue, ActionMeta } from 'react-select';
-import { OptionType, OptionTypeForExamples, UserCredentials, schema } from '../types';
+import { OptionType, OptionTypeForExamples, UserCredentials, schema, SettingsModalProps } from '../types';
 import { useFileContext } from '../context/UsersFiles';
 import { getNodeLabelsAndRelTypes } from '../services/GetNodeLabelsRelTypes';
 import { useCredentials } from '../context/UserCredentials';
@@ -9,16 +9,8 @@ import schemaExamples from '../assets/schemas.json';
 import ButtonWithToolTip from './ButtonWithToolTip';
 import { tooltips } from '../utils/Constants';
 
-export default function SettingsModal({
-  open,
-  onClose,
-  opneTextSchema,
-}: {
-  open: boolean;
-  onClose: () => void;
-  opneTextSchema: () => void;
-}) {
-  const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels, selectedSchemas, setSelectedSchemas, isSchema, setIsSchema } =
+const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, openTextSchema, onContinue }) => {
+  const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels, selectedSchemas, setSelectedSchemas } =
     useFileContext();
   const { userCredentials } = useCredentials();
   const [loading, setLoading] = useState<boolean>(false);
@@ -48,7 +40,6 @@ export default function SettingsModal({
       const { nodelabels, relationshipTypes } = removedSchema;
       removeNodesAndRels(nodelabels, relationshipTypes);
     } else if (actionMeta.action === 'clear') {
-      console.log({ actionMeta });
       const removedSchemas = actionMeta.removedValues.map((s) => JSON.parse(s.value));
       const removedNodelabels = removedSchemas.map((s) => s.nodelabels).flatMap((k) => k);
       const removedRelations = removedSchemas.map((s) => s.relationshipTypes).flatMap((k) => k);
@@ -114,7 +105,6 @@ export default function SettingsModal({
   const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>([]);
   const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
   const [defaultExamples, setdefaultExamples] = useState<OptionType[]>([]);
-
   useEffect(() => {
     const parsedData = schemaExamples.reduce((accu: OptionTypeForExamples[], example) => {
       const examplevalues: OptionTypeForExamples = {
@@ -129,6 +119,7 @@ export default function SettingsModal({
     }, []);
     setdefaultExamples(parsedData);
   }, []);
+
   useEffect(() => {
     if (userCredentials && open) {
       const getOptions = async () => {
@@ -150,15 +141,16 @@ export default function SettingsModal({
       getOptions();
     }
   }, [userCredentials, open]);
-
   const clickHandler: MouseEventHandler<HTMLButtonElement> = useCallback(() => {
     setSelectedSchemas([]);
     setSelectedNodes(nodeLabelOptions);
     setSelectedRels(relationshipTypeOptions);
   }, [nodeLabelOptions, relationshipTypeOptions]);
 
+  const onContinueCLick = () => { if (onContinue) onContinue() }
+
   return (
-    <Dialog size='large' open={open} aria-labelledby='form-dialog-title' onClose={onClose}>
+    <Dialog size='medium' open={open} aria-labelledby='form-dialog-title' onClose={onClose}>
       <Dialog.Header id='form-dialog-title'>Entity Graph Extraction Settings</Dialog.Header>
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
         <Dropdown
@@ -201,13 +193,13 @@ export default function SettingsModal({
           type='creatable'
         />
         <Dialog.Actions className='!mt-4 flex items-center'>
-          <Checkbox
-            label="Set Schema for all files"
+          {/* <Checkbox
+            label='Set Schema for all Files'
             onChange={(e) => {
-              setIsSchema(e.target.checked)
+              setCheckAllFiles(e.target.checked);
             }}
-            checked={isSchema}
-          />
+            checked={checkAllFiles}
+          /> */}
           <ButtonWithToolTip
             loading={loading}
             text={
@@ -227,24 +219,24 @@ export default function SettingsModal({
             placement='top'
             onClick={() => {
               onClose();
-              opneTextSchema();
+              openTextSchema();
             }}
             label='Get Existing Schema From Text'
           >
             Get Schema From Text
           </ButtonWithToolTip>
-          {isSchema && <ButtonWithToolTip
+          <ButtonWithToolTip
             text={tooltips.continue}
             placement='top'
-            onClick={() => {
-              console.log('continue')
-            }}
+            onClick={onContinueCLick}
             label='Continue to extract'
           >
             Continue
-          </ButtonWithToolTip>}
+          </ButtonWithToolTip>
         </Dialog.Actions>
       </Dialog.Content>
     </Dialog>
   );
 }
+
+export default SettingsModal;
