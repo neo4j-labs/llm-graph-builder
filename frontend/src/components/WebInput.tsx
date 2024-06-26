@@ -2,7 +2,7 @@ import { webLinkValidation } from '../utils/Utils';
 import useSourceInput from '../hooks/useSourceInput';
 import CustomSourceInput from './CustomSourceInput';
 
-export default function WebInput() {
+export default function WebInput({ setIsLoading }: { setIsLoading: React.Dispatch<React.SetStateAction<boolean>> }) {
   const {
     inputVal,
     onChangeHandler,
@@ -14,7 +14,8 @@ export default function WebInput() {
     isFocused,
     isValid,
     onClose,
-  } = useSourceInput(webLinkValidation, 'web-url', false, false, true);
+    onPasteHandler,
+  } = useSourceInput(webLinkValidation, setIsLoading, 'web-url', false, false, true);
   return (
     <CustomSourceInput
       onCloseHandler={onClose}
@@ -31,6 +32,7 @@ export default function WebInput() {
       status={status}
       statusMessage={statusMessage}
       id='Website link'
+      onPasteHandler={onPasteHandler}
     />
   );
 }

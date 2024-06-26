@@ -2,7 +2,11 @@ import { wikiValidation } from '../utils/Utils';
 import useSourceInput from '../hooks/useSourceInput';
 import CustomSourceInput from './CustomSourceInput';
 
-export default function WikipediaInput() {
+export default function WikipediaInput({
+  setIsLoading,
+}: {
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
   const {
     inputVal,
     onChangeHandler,
@@ -14,7 +18,8 @@ export default function WikipediaInput() {
     isFocused,
     isValid,
     onClose,
-  } = useSourceInput(wikiValidation, 'Wikipedia', true, false, false);
+    onPasteHandler,
+  } = useSourceInput(wikiValidation, setIsLoading, 'Wikipedia', true, false, false);
   return (
     <CustomSourceInput
       onCloseHandler={onClose}
@@ -31,6 +36,7 @@ export default function WikipediaInput() {
       status={status}
       statusMessage={statusMessage}
       id='Wikipedia link'
+      onPasteHandler={onPasteHandler}
     />
   );
 }

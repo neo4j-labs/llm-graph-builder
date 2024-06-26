@@ -252,7 +252,11 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       columnHelper.accessor((row) => row, {
         id: 'source',
         cell: (info) => {
-          if (info.row.original.fileSource === 'youtube' || info.row.original.fileSource === 'Wikipedia'||info.row.original.fileSource==="web-url") {
+          if (
+            info.row.original.fileSource === 'youtube' ||
+            info.row.original.fileSource === 'Wikipedia' ||
+            info.row.original.fileSource === 'web-url'
+          ) {
             return (
               <Flex>
                 <span>

@@ -10,8 +10,8 @@ import GCSModal from '../GCSModal';
 import CustomAlert from '../Alert';
 import { useAlertContext } from '../../context/Alert';
 import { APP_SOURCES } from '../../utils/Constants';
-import GenericButton from '../GenericButton';
-import GenericModal from '../GenericModal';
+import GenericButton from '../GenericSourceButton';
+import GenericModal from '../GenericSourceModal';
 
 const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);

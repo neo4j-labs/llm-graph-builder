@@ -185,6 +185,7 @@ export interface CustomInput {
   statusMessage: string;
   isValid: boolean;
   isFocused: boolean;
+  onPasteHandler: React.ClipboardEventHandler<HTMLInputElement>;
 }
 
 export interface CommonButtonProps {

@@ -30,7 +30,7 @@ export const webLinkValidation = (url: string) => {
 export const youtubeLinkValidation = (url: string) => {
   return (
     url.trim() != '' &&
-    /http(?:s?):\/\/(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)([\w\-\_]*)(&(amp;)?‌​[\w\?‌​=]*)?/.test(url) != false
+    /^(?:https?:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/.test(url) != false
   );
 };
 // Status indicator icons to status column

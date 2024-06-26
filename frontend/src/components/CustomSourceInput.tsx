@@ -16,6 +16,7 @@ export default function CustomSourceInput({
   statusMessage,
   isValid,
   isFocused,
+  onPasteHandler,
 }: CustomInput) {
   return (
     <Flex gap='6'>
@@ -46,6 +47,7 @@ export default function CustomSourceInput({
             required
             onChange={onChangeHandler}
             errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
+            onPaste={onPasteHandler}
           />
         </div>
       </Box>
