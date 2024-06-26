@@ -8,8 +8,20 @@ import WebInput from './WebInput';
 import YoutubeInput from './YoutubeInput';
 import { APP_SOURCES } from '../utils/Constants';
 
-export default function GenericModal({ open, closeHandler }: { open: boolean; closeHandler: () => void }) {
-  const [activeTab, setactiveTab] = useState<number>(0);
+export default function GenericModal({
+  open,
+  closeHandler,
+  isOnlyYoutube,
+  isOnlyWikipedia,
+  isOnlyWeb,
+}: {
+  open: boolean;
+  closeHandler: () => void;
+  isOnlyYoutube?: boolean;
+  isOnlyWikipedia?: boolean;
+  isOnlyWeb?: boolean;
+}) {
+  const [activeTab, setactiveTab] = useState<number>(isOnlyYoutube ? 0 : isOnlyWikipedia ? 1 : isOnlyWeb ? 2 : 0);
   return (
     <Dialog open={open} onClose={closeHandler}>
       <Dialog.Header>

@@ -14,7 +14,7 @@ export default function WebInput() {
     isFocused,
     isValid,
     onClose,
-  } = useSourceInput(webLinkValidation, 'web-url', true, false, false);
+  } = useSourceInput(webLinkValidation, 'web-url', false, false, true);
   return (
     <CustomSourceInput
       onCloseHandler={onClose}

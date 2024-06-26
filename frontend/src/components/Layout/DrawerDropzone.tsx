@@ -1,6 +1,6 @@
 import { Drawer, Flex, StatusIndicator, Typography } from '@neo4j-ndl/react';
 import DropZone from '../DropZone';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { healthStatus } from '../../services/HealthStatus';
 import S3Component from '../S3Bucket';
 import S3Modal from '../S3Modal';
@@ -51,6 +51,19 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
     setshowGenericModal(false);
   }, []);
 
+  const isYoutubeOnlyCheck = useMemo(
+    () => APP_SOURCES?.includes('youtube') && !APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('web'),
+    [APP_SOURCES]
+  );
+  const isWikipediaOnlyCheck = useMemo(
+    () => APP_SOURCES?.includes('wiki') && !APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('web'),
+    [APP_SOURCES]
+  );
+  const iswebOnlyCheck = useMemo(
+    () => APP_SOURCES?.includes('web') && !APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('wiki'),
+    [APP_SOURCES]
+  );
+
   return (
     <div className='flex min-h-[calc(-58px+100vh)] relative'>
       <Drawer expanded={isExpanded} position='left' type='push' closeable={false}>
@@ -91,6 +104,20 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                       {(APP_SOURCES != undefined && APP_SOURCES.includes('s3')) ||
                       (APP_SOURCES != undefined && APP_SOURCES.includes('gcs')) ? (
                         <>
+                          {(APP_SOURCES.includes('youtube') ||
+                            APP_SOURCES.includes('wiki') ||
+                            APP_SOURCES.includes('web')) && (
+                            <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
+                              <GenericButton openModal={openGenericModal}></GenericButton>
+                              <GenericModal
+                                isOnlyYoutube={isYoutubeOnlyCheck}
+                                isOnlyWikipedia={isWikipediaOnlyCheck}
+                                isOnlyWeb={iswebOnlyCheck}
+                                open={showGenericModal}
+                                closeHandler={closeGenericModal}
+                              ></GenericModal>
+                            </div>
+                          )}
                           {APP_SOURCES.includes('s3') && (
                             <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
                               <S3Component openModal={openModal} />
@@ -107,64 +134,47 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                       ) : (
                         <></>
                       )}
-                      <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
-                        <GenericButton openModal={openGenericModal}></GenericButton>
-                        <GenericModal open={showGenericModal} closeHandler={closeGenericModal}></GenericModal>
-                      </div>
                     </Flex>
                   </>
                 ) : (
                   <>
-                    {APP_SOURCES != undefined && APP_SOURCES.length === 0 ? (
-                      <Flex gap='6' className='h-full source-container'>
-                        <div
-                          className={`px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 imageBg ${
-                            process.env.ENV === 'PROD' ? 'mt-2' : ''
-                          }`}
-                        >
+                    <Flex gap='6' className='h-full source-container'>
+                      {APP_SOURCES != undefined && APP_SOURCES.includes('local') && (
+                        <div className='px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 imageBg'>
                           <DropZone />
                         </div>
-                        <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
-                          <S3Component openModal={openModal} />
-                          <S3Modal hideModal={hideModal} open={showModal} />
-                        </div>
-                        <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
-                          <GCSButton openModal={openGCSModal} />
-                          <GCSModal openGCSModal={openGCSModal} open={showGCSModal} hideModal={hideGCSModal} />
-                        </div>
-                      </Flex>
-                    ) : (
-                      <Flex gap='6' className='h-full source-container'>
-                        {APP_SOURCES != undefined && APP_SOURCES.includes('local') && (
-                          <div className='px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 imageBg'>
-                            <DropZone />
-                          </div>
-                        )}
-                        {(APP_SOURCES != undefined && APP_SOURCES.includes('s3')) ||
-                        (APP_SOURCES != undefined && APP_SOURCES.includes('gcs')) ? (
-                          <>
-                            {APP_SOURCES != undefined && APP_SOURCES.includes('s3') && (
-                              <div
-                                className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}
-                              >
-                                <S3Component openModal={openModal} />
-                                <S3Modal hideModal={hideModal} open={showModal} />{' '}
-                              </div>
-                            )}
-                            {APP_SOURCES != undefined && APP_SOURCES.includes('gcs') && (
-                              <div
-                                className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}
-                              >
-                                <GCSButton openModal={openGCSModal} />
-                                <GCSModal openGCSModal={openGCSModal} open={showGCSModal} hideModal={hideGCSModal} />
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <></>
-                        )}
-                      </Flex>
-                    )}
+                      )}
+                      (APP_SOURCES.includes('youtube')||APP_SOURCES.includes('wiki')||APP_SOURCES.includes('web'))&&
+                      <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
+                        <GenericButton openModal={openGenericModal}></GenericButton>
+                        <GenericModal
+                          isOnlyYoutube={isYoutubeOnlyCheck}
+                          isOnlyWikipedia={isWikipediaOnlyCheck}
+                          isOnlyWeb={iswebOnlyCheck}
+                          open={showGenericModal}
+                          closeHandler={closeGenericModal}
+                        ></GenericModal>
+                      </div>
+                      {(APP_SOURCES != undefined && APP_SOURCES.includes('s3')) ||
+                      (APP_SOURCES != undefined && APP_SOURCES.includes('gcs')) ? (
+                        <>
+                          {APP_SOURCES != undefined && APP_SOURCES.includes('s3') && (
+                            <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
+                              <S3Component openModal={openModal} />
+                              <S3Modal hideModal={hideModal} open={showModal} />{' '}
+                            </div>
+                          )}
+                          {APP_SOURCES != undefined && APP_SOURCES.includes('gcs') && (
+                            <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
+                              <GCSButton openModal={openGCSModal} />
+                              <GCSModal openGCSModal={openGCSModal} open={showGCSModal} hideModal={hideGCSModal} />
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <></>
+                      )}
+                    </Flex>
                   </>
                 )}
               </div>

@@ -97,16 +97,19 @@ export default function useSourceInput(
           apiResponse?.data?.file_name?.forEach((item: fileName) => {
             const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
             if (filedataIndex == -1) {
-              copiedFilesData.unshift({
+              const baseValues = {
                 name: item.fileName,
                 size: item.fileSize,
-                wiki_query: item.fileName,
                 source_url: item.url,
                 id: uuidv4(),
                 language: item.language,
                 // total_pages: 1,
                 ...defaultValues,
-              });
+              };
+              if (isWikiQuery) {
+                baseValues.wiki_query = item.fileName;
+              }
+              copiedFilesData.unshift(baseValues);
             } else {
               const tempFileData = copiedFilesData[filedataIndex];
               copiedFilesData.splice(filedataIndex, 1);

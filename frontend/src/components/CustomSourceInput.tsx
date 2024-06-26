@@ -27,6 +27,7 @@ export default function CustomSourceInput({
             onClose={() => setStatus('unknown')}
             type={status}
             name='Custom Banner'
+            className='text-lg font-semibold'
           />
         </Box>
       )}
@@ -49,7 +50,14 @@ export default function CustomSourceInput({
         </div>
       </Box>
       <Box>
-        <Button color='neutral' fill='outlined' onClick={onCloseHandler} size='medium' className='mr-4'>
+        <Button
+          disabled={value.trim() === ''}
+          color='neutral'
+          fill='outlined'
+          onClick={onCloseHandler}
+          size='medium'
+          className='mr-4'
+        >
           Cancel
         </Button>
         <Button onClick={() => submitHandler(value)} size='medium' disabled={disabledCheck}>
