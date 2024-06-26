@@ -1,31 +1,36 @@
-import { TextInput } from '@neo4j-ndl/react';
-import { useState } from 'react';
 import { webLinkValidation } from '../utils/Utils';
+import useSourceInput from '../hooks/useSourceInput';
+import CustomSourceInput from './CustomSourceInput';
 
 export default function WebInput() {
-  const [webLink, setwebLink] = useState<string>('');
-  const [isValid, setisValid] = useState<boolean>(false);
-  const [isFocused, setisFocused] = useState<boolean>(false);
+  const {
+    inputVal,
+    onChangeHandler,
+    onBlurHandler,
+    submitHandler,
+    status,
+    setStatus,
+    statusMessage,
+    isFocused,
+    isValid,
+    onClose,
+  } = useSourceInput(webLinkValidation, 'web-url', true, false, false);
   return (
-    <div className='w-full inline-block'>
-      <TextInput
-        type='url'
-        id='keyword'
-        value={webLink}
-        disabled={false}
-        label='Website Link'
-        aria-label='Website Link'
-        placeholder='https://www.espn.com/'
-        autoFocus
-        fluid
-        required
-        onBlur={() => setisValid(webLinkValidation(webLink) && isFocused)}
-        errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
-        onChange={(e) => {
-          setisFocused(true);
-          setwebLink(e.target.value);
-        }}
-      />
-    </div>
+    <CustomSourceInput
+      onCloseHandler={onClose}
+      isFocused={isFocused}
+      isValid={isValid}
+      disabledCheck={false}
+      label='Website link'
+      placeHolder='https://neo4j.com/'
+      value={inputVal}
+      onChangeHandler={onChangeHandler}
+      onBlurHandler={onBlurHandler}
+      submitHandler={submitHandler}
+      setStatus={setStatus}
+      status={status}
+      statusMessage={statusMessage}
+      id='Website link'
+    />
   );
 }

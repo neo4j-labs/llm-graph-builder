@@ -1,24 +1,36 @@
-import { TextInput } from '@neo4j-ndl/react';
-import { useState } from 'react';
+import CustomSourceInput from './CustomSourceInput';
+import useSourceInput from '../hooks/useSourceInput';
+import { youtubeLinkValidation } from '../utils/Utils';
 
 export default function YoutubeInput() {
-  const [youtubeURL, setYoutubeURL] = useState<string>('');
+  const {
+    inputVal,
+    onChangeHandler,
+    onBlurHandler,
+    submitHandler,
+    status,
+    setStatus,
+    statusMessage,
+    isFocused,
+    isValid,
+    onClose,
+  } = useSourceInput(youtubeLinkValidation, 'youtube', false, true, false);
   return (
-    <div className='w-full inline-block'>
-      <TextInput
-        id='url'
-        value={youtubeURL}
-        disabled={false}
-        label='Youtube Link'
-        aria-label='Youtube Link'
-        placeholder='https://www.youtube.com/watch?v=2W9HM1xBibo'
-        autoFocus
-        fluid
-        required
-        onChange={(e) => {
-          setYoutubeURL(e.target.value);
-        }}
-      />
-    </div>
+    <CustomSourceInput
+      onCloseHandler={onClose}
+      isFocused={isFocused}
+      isValid={isValid}
+      disabledCheck={false}
+      label='Youtube Link'
+      placeHolder='https://www.youtube.com/watch?v=2W9HM1xBibo'
+      value={inputVal}
+      onChangeHandler={onChangeHandler}
+      onBlurHandler={onBlurHandler}
+      submitHandler={submitHandler}
+      setStatus={setStatus}
+      status={status}
+      statusMessage={statusMessage}
+      id='youtube link'
+    />
   );
 }

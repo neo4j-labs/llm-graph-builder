@@ -1,35 +1,36 @@
-import { TextInput } from '@neo4j-ndl/react';
-import { useState } from 'react';
 import { wikiValidation } from '../utils/Utils';
+import useSourceInput from '../hooks/useSourceInput';
+import CustomSourceInput from './CustomSourceInput';
 
 export default function WikipediaInput() {
-  const [wikiQuery, setwikiQuery] = useState<string>('');
-  const [isValid, setisValid] = useState<boolean>(false);
-  const [isFocused, setisFocused] = useState<boolean>(false);
-
+  const {
+    inputVal,
+    onChangeHandler,
+    onBlurHandler,
+    submitHandler,
+    status,
+    setStatus,
+    statusMessage,
+    isFocused,
+    isValid,
+    onClose,
+  } = useSourceInput(wikiValidation, 'Wikipedia', true, false, false);
   return (
-    <div className='w-full inline-block'>
-      <TextInput
-        type='url'
-        id='keyword'
-        value={wikiQuery}
-        disabled={false}
-        label='Wikipedia Link'
-        aria-label='Wikipedia Link'
-        placeholder='https://en.wikipedia.org/wiki/Albert_Einstein'
-        autoFocus
-        fluid
-        required
-        onBlur={() => setisValid(wikiValidation(wikiQuery) && isFocused)}
-        errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
-        onChange={(e) => {
-          setisFocused(true);
-          if (e.target.value.includes('https://en.wikipedia.org/wiki/')) {
-            setisValid(wikiValidation(e.target.value));
-          }
-          setwikiQuery(e.target.value);
-        }}
-      />
-    </div>
+    <CustomSourceInput
+      onCloseHandler={onClose}
+      isFocused={isFocused}
+      isValid={isValid}
+      disabledCheck={false}
+      label='Wikipedia Link'
+      placeHolder='https://en.wikipedia.org/wiki/Albert_Einstein'
+      value={inputVal}
+      onChangeHandler={onChangeHandler}
+      onBlurHandler={onBlurHandler}
+      submitHandler={submitHandler}
+      setStatus={setStatus}
+      status={status}
+      statusMessage={statusMessage}
+      id='Wikipedia link'
+    />
   );
 }

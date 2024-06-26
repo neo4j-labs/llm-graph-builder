@@ -121,6 +121,10 @@
   height: 55px;
   object-fit: contain;
 }
+.webImg{
+  width: 80px;
+  height: 80px;
+}
 
 ::placeholder {
   color: rgb(135, 130, 130) !important;

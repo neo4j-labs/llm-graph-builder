@@ -27,6 +27,12 @@ export const webLinkValidation = (url: string) => {
     ) != false
   );
 };
+export const youtubeLinkValidation = (url: string) => {
+  return (
+    url.trim() != '' &&
+    /http(?:s?):\/\/(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)([\w\-\_]*)(&(amp;)?‌​[\w\?‌​=]*)?/.test(url) != false
+  );
+};
 // Status indicator icons to status column
 export const statusCheck = (status: string) => {
   switch (status) {
