@@ -10,7 +10,7 @@ MODEL_VERSIONS = {
 OPENAI_MODELS = ["gpt-3.5", "gpt-4o"]
 GEMINI_MODELS = ["gemini-1.0-pro", "gemini-1.5-pro"]
 CHAT_MAX_TOKENS = 1000
-CHAT_SEARCH_KWARG_K = 3
+CHAT_SEARCH_KWARG_K = 5
 CHAT_SEARCH_KWARG_SCORE_THRESHOLD = 0.7
 GROQ_MODELS = ["groq-llama3"]
 BUCKET_UPLOAD = 'llm-graph-builder-upload'
@@ -64,15 +64,37 @@ Note: This system does not generate answers based solely on internal knowledge. 
 QUESTION_TRANSFORM_TEMPLATE = "Given the below conversation, generate a search query to look up in order to get information relevant to the conversation. Only respond with the query, nothing else." 
 
 
+## CHAT QUERIES 
 VECTOR_SEARCH_QUERY = """
-WITH node as chunk, score
+WITH node AS chunk, score
 MATCH (chunk)-[:PART_OF]->(d:Document)
-WITH d, collect(distinct {chunk: chunk, score: score}) as chunks, avg(score) as score
-WITH d, score, 
+WITH d, collect(distinct {chunk: chunk, score: score}) as chunks, avg(score) as avg_score
+WITH d, avg_score, 
      [c in chunks | c.chunk.text] as texts, 
      [c in chunks | {id: c.chunk.id, score: c.score}] as chunkdetails
-WITH d, score, texts, chunkdetails,
+WITH d, avg_score, chunkdetails,
      apoc.text.join(texts, "\n----\n") as text
-RETURN text, score, 
+RETURN text, avg_score AS score, 
        {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkdetails: chunkdetails} as metadata
-"""
+""" 
+
+VECTOR_GRAPH_SEARCH_QUERY="""
+WITH node AS chunk, score
+MATCH (chunk)-[:PART_OF]->(d:Document)
+CALL {
+  WITH chunk
+  MATCH (chunk)-[:HAS_ENTITY]->(e)
+  MATCH path=(e)-[rels:!HAS_ENTITY&!PART_OF*0..2]-(:!Chunk&!Document)
+  UNWIND rels AS r
+  RETURN collect(DISTINCT r) AS rels
+}
+WITH d, collect(DISTINCT {chunk: chunk, score: score}) AS chunks, avg(score) AS avg_score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) AS rels
+WITH d, avg_score,
+     [c IN chunks | c.chunk.text] AS texts, 
+     [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails, 
+     [r IN rels | coalesce(apoc.coll.removeAll(labels(startNode(r)), ['__Entity__'])[0], "") + ":" + startNode(r).id + " " + type(r) + " " + coalesce(apoc.coll.removeAll(labels(endNode(r)), ['__Entity__'])[0], "") + ":" + endNode(r).id] AS entities
+WITH d, avg_score, chunkdetails, apoc.text.join(texts, "\n----\n") + apoc.text.join(entities, "\n") AS text
+RETURN text, avg_score AS score, {source: COALESCE( CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkdetails: chunkdetails} AS metadata
+""" 
+
+

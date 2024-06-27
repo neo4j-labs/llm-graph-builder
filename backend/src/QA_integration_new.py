@@ -26,12 +26,12 @@ EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
 
 
-def get_neo4j_retriever(graph, index_name="vector", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
+def get_neo4j_retriever(graph, retrieval_query,index_name="vector", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
     try:
         neo_db = Neo4jVector.from_existing_index(
             embedding=EMBEDDING_FUNCTION,
             index_name=index_name,
-            retrieval_query=VECTOR_SEARCH_QUERY,
+            retrieval_query=retrieval_query,
             graph=graph
         )
         logging.info(f"Successfully retrieved Neo4jVector index '{index_name}'")
@@ -51,10 +51,8 @@ def create_document_retriever_chain(llm,retriever):
     )
     output_parser = StrOutputParser()
 
-    splitter = TokenTextSplitter(chunk_size=2000, chunk_overlap=0)
-    # extractor = LLMChainExtractor.from_llm(llm)
-    # redundant_filter = EmbeddingsRedundantFilter(embeddings=EMBEDDING_FUNCTION)
-    embeddings_filter = EmbeddingsFilter(embeddings=EMBEDDING_FUNCTION, similarity_threshold=0.25)
+    splitter = TokenTextSplitter(chunk_size=CHAT_DOC_SPLIT_SIZE, chunk_overlap=0)
+    embeddings_filter = EmbeddingsFilter(embeddings=EMBEDDING_FUNCTION, similarity_threshold=CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD)
 
     pipeline_compressor = DocumentCompressorPipeline(
         transformers=[splitter, embeddings_filter]
@@ -91,9 +89,10 @@ def create_neo4j_chat_message_history(graph, session_id):
         logging.error(f"Error creating Neo4jChatMessageHistory: {e}")
     return None 
 
-def format_documents(documents):
+def format_documents(documents,model):
+
     sorted_documents = sorted(documents, key=lambda doc: doc.state["query_similarity_score"], reverse=True)
-    sorted_documents = sorted_documents[:7]
+    sorted_documents = sorted_documents[:CHAT_TOKEN_CUT_OFF[model]]
 
     formatted_docs = []
     sources = set()
@@ -179,79 +178,97 @@ def clear_chat_history(graph,session_id):
             "user": "chatbot"
             }
 
-def QA_RAG(graph,model,question,session_id,mode):
+def setup_chat(model, graph, session_id, retrieval_query):
+    start_time = time.time()
+    model_version = MODEL_VERSIONS[model]
+    llm = get_llm(model_version)
+    retriever = get_neo4j_retriever(graph=graph,retrieval_query=retrieval_query)
+    doc_retriever = create_document_retriever_chain(llm, retriever)
+    history = create_neo4j_chat_message_history(graph, session_id)
+    chat_setup_time = time.time() - start_time
+    logging.info(f"Chat setup completed in {chat_setup_time:.2f} seconds")
+    
+    return llm, doc_retriever, history, model_version
+
+def retrieve_documents(doc_retriever, messages):
+    start_time = time.time()
+    docs = doc_retriever.invoke({"messages": messages})
+    doc_retrieval_time = time.time() - start_time
+    logging.info(f"Documents retrieved in {doc_retrieval_time:.2f} seconds") 
+    return docs
+
+def process_documents(docs, question, messages, llm,model):
+    start_time = time.time()
+    formatted_docs, sources = format_documents(docs,model)
+    rag_chain = get_rag_chain(llm=llm)
+    ai_response = rag_chain.invoke({
+        "messages": messages[:-1],
+        "context": formatted_docs,
+        "input": question 
+    })
+    result = get_sources_and_chunks(sources, docs)
+    content = ai_response.content
+    
+    if "gemini" in model:
+        total_tokens = ai_response.response_metadata['usage_metadata']['prompt_token_count']
+    else:    
+        total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
+    
+    predict_time = time.time() - start_time
+    logging.info(f"Final Response predicted in {predict_time:.2f} seconds")
+    
+    return content, result, total_tokens
+
+def summarize_and_log(history, messages, llm):
+    start_time = time.time()
+    summarize_messages(llm, history, messages)
+    history_summarized_time = time.time() - start_time
+    logging.info(f"Chat History summarized in {history_summarized_time:.2f} seconds")
+
+def QA_RAG(graph, model, question, session_id, mode):
     try:
-        start_time = time.time()
-        model_version = MODEL_VERSIONS[model]
         if mode == "vector":
-            llm = get_llm(model_version)
-            retriever = get_neo4j_retriever(graph=graph)
-            doc_retriever = create_document_retriever_chain(llm,retriever)
-            history = create_neo4j_chat_message_history(graph,session_id )
-            chat_setup_time = time.time() - start_time
-            logging.info(f"Chat setup completed in {chat_setup_time:.2f} seconds")
-            
-            start_time = time.time()
-            messages = history.messages
-            user_question = HumanMessage(content=question)
-            messages.append(user_question)
-            docs = doc_retriever.invoke(
-                {
-                    "messages":messages
-                }
-            )
-            if docs:
-                print(docs)
-                formatted_docs,sources = format_documents(docs)
-                
-                doc_retrieval_time = time.time() - start_time
-                logging.info(f"Modified question and Documents retrieved in {doc_retrieval_time:.2f} seconds")
-
-                start_time = time.time()
-                rag_chain = get_rag_chain(llm=llm)
-                ai_response = rag_chain.invoke(
-                    {
-                    "messages" : messages[:-1],
-                    "context"  : formatted_docs,
-                    "input"    : question 
-                }
-                )
-                result = get_sources_and_chunks(sources,docs)
-                content = ai_response.content
-                if "Gemini" in model:
-                    total_tokens = ai_response.response_metadata['usage_metadata']['prompt_token_count']
-                else:    
-                    total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
-                predict_time = time.time() - start_time
-                logging.info(f"Final Response predicted in {predict_time:.2f} seconds")
-            else:
-                ai_response = AIMessage(content="I couldn't find any relevant documents to answer your question.")
-                result = {"sources": [], "chunkdetails": []}
-                total_tokens = 0
-                content = ai_response.content
-                
-            start_time = time.time()
-            messages.append(ai_response)
-            summarize_messages(llm,history,messages)
-            history_summarized_time = time.time() - start_time
-            logging.info(f"Chat History summarized in {history_summarized_time:.2f} seconds")
-
-            return {
-                "session_id": session_id, 
-                "message": content, 
-                "info": {
-                    "sources": result["sources"],
-                    "model": model_version,
-                    "chunkdetails":result["chunkdetails"],
-                    "total_tokens": total_tokens,
-                    "response_time": 0
-                },
+            retrieval_query = VECTOR_SEARCH_QUERY
+        elif mode == "graph":
+            #WIP
+            result =  {
+                "session_id": session_id,
                 "user": "chatbot"
                 }
-        elif mode == "graph":
-            pass
+            return result
         else:
-            pass
+            retrieval_query = VECTOR_GRAPH_SEARCH_QUERY
+
+        llm, doc_retriever, history, model_version = setup_chat(model, graph, session_id, retrieval_query)
+        messages = history.messages
+        user_question = HumanMessage(content=question)
+        messages.append(user_question)
+        
+        docs = retrieve_documents(doc_retriever, messages)
+        
+        if docs:
+            content, result, total_tokens = process_documents(docs, question, messages, llm,model)
+        else:
+            content = "I couldn't find any relevant documents to answer your question."
+            result = {"sources": [], "chunkdetails": []}
+            total_tokens = 0
+        
+        ai_response = AIMessage(content=content)
+        messages.append(ai_response)
+        summarize_and_log(history, messages, llm)
+        
+        return {
+            "session_id": session_id, 
+            "message": content, 
+            "info": {
+                "sources": result["sources"],
+                "model": model_version,
+                "chunkdetails": result["chunkdetails"],
+                "total_tokens": total_tokens,
+                "response_time": 0
+            },
+            "user": "chatbot"
+        }
 
     except Exception as e:
         logging.exception(f"Exception in QA component at {datetime.now()}: {str(e)}")
@@ -264,4 +281,5 @@ def QA_RAG(graph,model,question,session_id,mode):
                 "chunkids": [],
                 "error": f"{error_name} :- {str(e)}"
             },
-            "user": "chatbot"}
+            "user": "chatbot"
+        }
