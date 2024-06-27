@@ -224,30 +224,30 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                         variant='subheading-small'
                         className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden'
                       >
-                        {chunk?.fileName}, Page: {chunk?.page_number} Score: {chunk?.score}
+                        {chunk?.fileName}, Page: {chunk?.page_number} Similarity Score: {chunk?.score}
                       </Typography>
                     </div>
                   ) : chunk?.url && chunk?.start_time ? (
                     <div className='flex flex-row inline-block justiy-between items-center'>
                       <img src={youtubelogo} width={20} height={20} className='mr-2' />
                       <TextLink externalLink href={generateYouTubeLink(chunk?.url, chunk?.start_time)}>
-                        {chunk?.fileName} Score: {chunk?.score}
+                        {chunk?.fileName} Similarity Score: {chunk?.score}
                       </TextLink>
                     </div>
                   ) : chunk?.url && chunk?.url.includes('wikipedia.org') ? (
                     <div className='flex flex-row inline-block justiy-between items-center'>
                       <img src={wikipedialogo} width={20} height={20} className='mr-2' />
-                      <Typography variant='subheading-medium'>{chunk?.fileName} Score: {chunk?.score}</Typography>
+                      <Typography variant='subheading-medium'>{chunk?.fileName} Similarity Score: {chunk?.score}</Typography>
                     </div>
                   ) : chunk?.url && chunk?.url.includes('storage.googleapis.com') ? (
                     <div className='flex flex-row inline-block justiy-between items-center'>
                       <img src={gcslogo} width={20} height={20} className='mr-2' />
-                      <Typography variant='subheading-medium'>{chunk?.fileName} Score: {chunk?.score}</Typography>
+                      <Typography variant='subheading-medium'>{chunk?.fileName} Similarity Score: {chunk?.score}</Typography>
                     </div>
                   ) : chunk?.url && chunk?.url.startsWith('s3://') ? (
                     <div className='flex flex-row inline-block justiy-between items-center'>
                       <img src={s3logo} width={20} height={20} className='mr-2' />
-                      <Typography variant='subheading-medium'>{chunk?.fileName} Score: {chunk?.score}</Typography>
+                      <Typography variant='subheading-medium'>{chunk?.fileName} Similarity Score: {chunk?.score}</Typography>
                     </div>
                   ) : (
                     <></>
