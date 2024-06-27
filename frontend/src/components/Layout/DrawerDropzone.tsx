@@ -100,22 +100,6 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                         >
                           <DropZone />
                         </div>
-                        <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
-                          <YouTubeButton openModal={openYoutubeModal} />
-                          <YoutubeModal hideModal={hideYoutubeModal} open={showYoutubeModal} />
-                        </div>
-                        <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
-                          <Wikipedia openModal={openWikipediaModal} />
-                          <WikipediaModal hideModal={closeWikipediaModal} open={showWikiepediaModal} />
-                        </div>
-                        <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
-                          <S3Component openModal={openModal} />
-                          <S3Modal hideModal={hideModal} open={showModal} />
-                        </div>
-                        <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
-                          <GCSButton openModal={openGCSModal} />
-                          <GCSModal openGCSModal={openGCSModal} open={showGCSModal} hideModal={hideGCSModal} />
-                        </div>
                       </Flex>
                     ) : (
                       <Flex gap='6' className='h-full source-container'>
@@ -123,41 +107,6 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                           <div className='px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 imageBg'>
                             <DropZone />
                           </div>
-                        )}
-                        {APP_SOURCES != undefined && APP_SOURCES.includes('youtube') && (
-                          <div className='outline-dashed imageBg'>
-                            <YouTubeButton openModal={openYoutubeModal} />
-                            <YoutubeModal hideModal={hideYoutubeModal} open={showYoutubeModal} />
-                          </div>
-                        )}
-                        {APP_SOURCES != undefined && APP_SOURCES.includes('wiki') && (
-                          <div className='outline-dashed imageBg'>
-                            <Wikipedia openModal={openWikipediaModal} />
-                            <WikipediaModal hideModal={closeWikipediaModal} open={showWikiepediaModal} />
-                          </div>
-                        )}
-                        {(APP_SOURCES != undefined && APP_SOURCES.includes('s3')) ||
-                        (APP_SOURCES != undefined && APP_SOURCES.includes('gcs')) ? (
-                          <>
-                            {APP_SOURCES.includes('s3') && (
-                              <div
-                                className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}
-                              >
-                                <S3Component openModal={openModal} />
-                                <S3Modal hideModal={hideModal} open={showModal} />{' '}
-                              </div>
-                            )}
-                            {APP_SOURCES.includes('gcs') && (
-                              <div
-                                className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}
-                              >
-                                <GCSButton openModal={openGCSModal} />
-                                <GCSModal openGCSModal={openGCSModal} open={showGCSModal} hideModal={hideGCSModal} />
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <></>
                         )}
                       </Flex>
                     )}

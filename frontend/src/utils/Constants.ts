@@ -120,7 +120,7 @@ export const buttonCaptions = {
   showPreviewGraph: 'Preview Graph',
   deleteFiles: 'Delete Files',
   generateGraph: 'Generate Graph',
-  dropzoneSpan: 'Documents, Images, Unstructured text',
+  dropzoneSpan: 'Excel files',
   youtube: 'Youtube',
   gcs: 'GCS',
   amazon: 'Amazon S3',

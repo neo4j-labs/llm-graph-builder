@@ -235,10 +235,7 @@ const DropZone: FunctionComponent = () => {
                   text={
                     <Typography variant='body-small'>
                       <Flex gap='3' alignItems='flex-start'>
-                        <span>Microsoft Office (.docx, .pptx, .xls)</span>
-                        <span>PDF (.pdf)</span>
-                        <span>Images (.jpeg, .jpg, .png, .svg)</span>
-                        <span>Text (.html, .txt , .md)</span>
+                        <span>Microsoft Excel (.xls, .xlsx)</span>
                       </Flex>
                     </Typography>
                   }
@@ -257,7 +254,7 @@ const DropZone: FunctionComponent = () => {
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
             'text/plain': ['.txt'],
             'application/vnd.ms-powerpoint': ['.pptx'],
-            'application/vnd.ms-excel': ['.xls'],
+            'application/vnd.ms-excel': ['.xls', '.xlsx'],
             'text/markdown': ['.md'],
           },
           onDrop: (f: Partial<globalThis.File>[]) => {
