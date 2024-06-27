@@ -10,10 +10,11 @@ from langchain.chains.retrieval_qa.base import RetrievalQA
 from langchain.graphs import Neo4jGraph
 from langchain_community.chat_message_histories import Neo4jChatMessageHistory
 from langchain_community.vectorstores.neo4j_vector import Neo4jVector
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from src.shared.common_fn import load_embedding_model, get_llm
 
 load_dotenv()
 
+llm , embeddings = get_llm(), load_embedding_model()
 
 class ParallelComponent:
 
@@ -24,7 +25,7 @@ class ParallelComponent:
         self.question = question
         self.session_id = session_id
         self.model_version = "gpt-4-0125-preview"
-        self.llm = ChatOpenAI(model=self.model_version, temperature=0)
+        self.llm = llm
 
     # async def execute(self):
     #     tasks = []
@@ -59,7 +60,7 @@ class ParallelComponent:
         vector_res = {}
         try:
             neo_db = Neo4jVector.from_existing_index(
-                embedding=OpenAIEmbeddings(),
+                embedding=embeddings,
                 url=self.uri,
                 username=self.userName,
                 password=self.password,
@@ -67,7 +68,6 @@ class ParallelComponent:
                 index_name="vector",
                 retrieval_query=retrieval_query,
             )
-            # llm = ChatOpenAI(model= model_version, temperature=0)
 
             qa = RetrievalQA.from_chain_type(
                 llm=self.llm,
@@ -105,8 +105,8 @@ class ParallelComponent:
             graph.refresh_schema()
             cypher_chain = GraphCypherQAChain.from_llm(
                 graph=graph,
-                cypher_llm=ChatOpenAI(temperature=0, model=self.model_version),
-                qa_llm=ChatOpenAI(temperature=0, model=self.model_version),
+                cypher_llm=llm,
+                qa_llm=llm,
                 validate_cypher=True,  # Validate relationship directions
                 verbose=True,
                 top_k=2,

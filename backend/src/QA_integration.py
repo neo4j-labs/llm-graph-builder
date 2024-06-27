@@ -6,26 +6,17 @@ from datetime import datetime
 from typing import Any
 
 from dotenv import load_dotenv
-from langchain.chains.qa_with_sources.retrieval import RetrievalQAWithSourcesChain
-from langchain.chains.graph_qa.cypher import GraphCypherQAChain
 from langchain.chains.retrieval_qa.base import RetrievalQA
-from langchain.graphs import Neo4jGraph
 from langchain_community.chat_message_histories import Neo4jChatMessageHistory
-from langchain_community.embeddings.sentence_transformer import \
-    SentenceTransformerEmbeddings
-from langchain_community.vectorstores.neo4j_vector import Neo4jVector
-from langchain_google_vertexai import (ChatVertexAI, HarmBlockThreshold,
-                                       HarmCategory)
-from langchain_openai import ChatOpenAI
 
-from src.shared.common_fn import load_embedding_model
+from langchain_community.vectorstores.neo4j_vector import Neo4jVector
+
+
+from src.shared.common_fn import load_embedding_model, get_llm
 
 load_dotenv()
 
-openai_api_key = os.environ.get("OPENAI_API_KEY")
-
-EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
-EMBEDDING_FUNCTION, _ = load_embedding_model(EMBEDDING_MODEL)
+llm = get_llm()
 CHAT_MAX_TOKENS = 1000
 
 
@@ -80,33 +71,13 @@ def get_llm(model: str, max_tokens=1000) -> Any:
 
     model_versions = {
         "gpt-3.5": "gpt-3.5-turbo-16k",
-        "gemini-1.0-pro": "gemini-1.0-pro-001",
-        "gemini-1.5-pro": "gemini-1.5-pro-preview-0409",
         "gpt-4": "gpt-4-0125-preview",
-        "diffbot": "gpt-4-0125-preview",
         "gpt-4o": "gpt-4o",
     }
     if model in model_versions:
         model_version = model_versions[model]
         logging.info(f"Chat Model: {model}, Model Version: {model_version}")
-
-        if "Gemini" in model:
-            llm = ChatVertexAI(
-                model_name=model_version,
-                convert_system_message_to_human=True,
-                max_tokens=max_tokens,
-                temperature=0,
-                safety_settings={
-                    HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-                },
-            )
-        else:
-            llm = ChatOpenAI(model=model_version, temperature=0, max_tokens=max_tokens)
-
+       
         return llm, model_version
 
     else:

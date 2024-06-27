@@ -1,29 +1,19 @@
 import json
 import logging
-import re
 import shutil
-import sys
-import urllib.parse
 import warnings
 from datetime import datetime
 
 from dotenv import load_dotenv
-from langchain_community.document_loaders import WikipediaLoader
 from langchain_community.graphs import Neo4jGraph
-from pytube import YouTube
 
 from src.create_chunks import CreateChunksofDocument
-from src.document_sources.gcs_bucket import *
 from src.document_sources.local_file import get_documents_from_file_by_path
-from src.document_sources.s3_bucket import *
-from src.document_sources.wikipedia import *
-from src.document_sources.youtube import *
 from src.entities.source_node import sourceNode
 from src.generate_graphDocuments_from_llm import generate_graphDocuments
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.make_relationships import *
 from src.shared.common_fn import *
-from src.shared.constants import BUCKET_UPLOAD, PROJECT_ID
 from src.shared.schema_extraction import sceham_extraction_from_text
 
 warnings.filterwarnings("ignore")
@@ -31,224 +21,15 @@ load_dotenv()
 logging.basicConfig(format="%(asctime)s - %(message)s", level="INFO")
 
 
-def create_source_node_graph_url_s3(
-    graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type
-):
-
-    lst_file_name = []
-    files_info = get_s3_files_info(
-        source_url,
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
-    )
-    if len(files_info) == 0:
-        raise Exception("No pdf files found.")
-    logging.info(f"files info : {files_info}")
-    success_count = 0
-    failed_count = 0
-
-    for file_info in files_info:
-        file_name = file_info["file_key"]
-        obj_source_node = sourceNode()
-        obj_source_node.file_name = file_name.split("/")[-1]
-        obj_source_node.file_type = "pdf"
-        obj_source_node.file_size = file_info["file_size_bytes"]
-        obj_source_node.file_source = source_type
-        obj_source_node.total_pages = "N/A"
-        obj_source_node.model = model
-        obj_source_node.url = str(source_url + file_name)
-        obj_source_node.awsAccessKeyId = aws_access_key_id
-        obj_source_node.created_at = datetime.now()
-        try:
-            graphDb_data_Access = graphDBdataAccess(graph)
-            graphDb_data_Access.create_source_node(obj_source_node)
-            success_count += 1
-            lst_file_name.append(
-                {
-                    "fileName": obj_source_node.file_name,
-                    "fileSize": obj_source_node.file_size,
-                    "url": obj_source_node.url,
-                    "status": "Success",
-                }
-            )
-
-        except Exception as e:
-            failed_count += 1
-            # error_message = str(e)
-            lst_file_name.append(
-                {
-                    "fileName": obj_source_node.file_name,
-                    "fileSize": obj_source_node.file_size,
-                    "url": obj_source_node.url,
-                    "status": "Failed",
-                }
-            )
-    return lst_file_name, success_count, failed_count
-
-
-def create_source_node_graph_url_gcs(
-    graph,
-    model,
-    gcs_project_id,
-    gcs_bucket_name,
-    gcs_bucket_folder,
-    source_type,
-    credentials,
-):
-
-    success_count = 0
-    failed_count = 0
-    lst_file_name = []
-
-    lst_file_metadata = get_gcs_bucket_files_info(
-        gcs_project_id, gcs_bucket_name, gcs_bucket_folder, credentials
-    )
-    for file_metadata in lst_file_metadata:
-        obj_source_node = sourceNode()
-        obj_source_node.file_name = file_metadata["fileName"]
-        obj_source_node.file_size = file_metadata["fileSize"]
-        obj_source_node.url = file_metadata["url"]
-        obj_source_node.file_source = source_type
-        obj_source_node.total_pages = "N/A"
-        obj_source_node.model = model
-        obj_source_node.file_type = "pdf"
-        obj_source_node.gcsBucket = gcs_bucket_name
-        obj_source_node.gcsBucketFolder = file_metadata["gcsBucketFolder"]
-        obj_source_node.gcsProjectId = file_metadata["gcsProjectId"]
-        obj_source_node.created_at = datetime.now()
-        obj_source_node.access_token = credentials.token
-
-        try:
-            graphDb_data_Access = graphDBdataAccess(graph)
-            graphDb_data_Access.create_source_node(obj_source_node)
-            success_count += 1
-            lst_file_name.append(
-                {
-                    "fileName": obj_source_node.file_name,
-                    "fileSize": obj_source_node.file_size,
-                    "url": obj_source_node.url,
-                    "status": "Success",
-                    "gcsBucketName": gcs_bucket_name,
-                    "gcsBucketFolder": obj_source_node.gcsBucketFolder,
-                    "gcsProjectId": obj_source_node.gcsProjectId,
-                }
-            )
-        except Exception as e:
-            failed_count += 1
-            lst_file_name.append(
-                {
-                    "fileName": obj_source_node.file_name,
-                    "fileSize": obj_source_node.file_size,
-                    "url": obj_source_node.url,
-                    "status": "Failed",
-                    "gcsBucketName": gcs_bucket_name,
-                    "gcsBucketFolder": obj_source_node.gcsBucketFolder,
-                    "gcsProjectId": obj_source_node.gcsProjectId,
-                }
-            )
-    return lst_file_name, success_count, failed_count
-
-
-def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
-
-    youtube_url, language = check_url_source(source_type=source_type, yt_url=source_url)
-    success_count = 0
-    failed_count = 0
-    lst_file_name = []
-    obj_source_node = sourceNode()
-    obj_source_node.file_type = "text"
-    obj_source_node.file_source = source_type
-    obj_source_node.model = model
-    obj_source_node.total_pages = 1
-    obj_source_node.url = youtube_url
-    obj_source_node.created_at = datetime.now()
-    match = re.search(r"(?:v=)([0-9A-Za-z_-]{11})\s*", obj_source_node.url)
-    logging.info(f"match value{match}")
-    obj_source_node.file_name = YouTube(obj_source_node.url).title
-    transcript = get_youtube_combined_transcript(match.group(1))
-    if transcript == None or len(transcript) == 0:
-        message = (
-            f"Youtube transcript is not available for : {obj_source_node.file_name}"
-        )
-        raise Exception(message)
-    else:
-        obj_source_node.file_size = sys.getsizeof(transcript)
-
-    graphDb_data_Access = graphDBdataAccess(graph)
-    graphDb_data_Access.create_source_node(obj_source_node)
-    lst_file_name.append(
-        {
-            "fileName": obj_source_node.file_name,
-            "fileSize": obj_source_node.file_size,
-            "url": obj_source_node.url,
-            "status": "Success",
-        }
-    )
-    success_count += 1
-    return lst_file_name, success_count, failed_count
-
-
-def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type):
-
-    success_count = 0
-    failed_count = 0
-    lst_file_name = []
-    # queries_list =  wiki_query.split(',')
-    wiki_query_id, language = check_url_source(
-        source_type=source_type, wiki_query=wiki_query
-    )
-    logging.info(f"Creating source node for {wiki_query_id.strip()}, {language}")
-    pages = WikipediaLoader(
-        query=wiki_query_id.strip(),
-        lang=language,
-        load_max_docs=1,
-        load_all_available_meta=True,
-    ).load()
-    if pages == None or len(pages) == 0:
-        failed_count += 1
-        message = f"Unable to read data for given Wikipedia url : {wiki_query}"
-        raise Exception(message)
-    else:
-        obj_source_node = sourceNode()
-        obj_source_node.file_name = wiki_query_id.strip()
-        obj_source_node.file_type = "text"
-        obj_source_node.file_source = source_type
-        obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
-        obj_source_node.total_pages = len(pages)
-        obj_source_node.model = model
-        obj_source_node.url = urllib.parse.unquote(pages[0].metadata["source"])
-        obj_source_node.created_at = datetime.now()
-        obj_source_node.language = language
-        graphDb_data_Access = graphDBdataAccess(graph)
-        graphDb_data_Access.create_source_node(obj_source_node)
-        success_count += 1
-        lst_file_name.append(
-            {
-                "fileName": obj_source_node.file_name,
-                "fileSize": obj_source_node.file_size,
-                "url": obj_source_node.url,
-                "language": obj_source_node.language,
-                "status": "Success",
-            }
-        )
-    return lst_file_name, success_count, failed_count
-
 
 def extract_graph_from_file_local_file(
     graph, model, merged_file_path, fileName, allowedNodes, allowedRelationship, uri
 ):
 
     logging.info(f"Process file name :{fileName}")
-    gcs_file_cache = os.environ.get("GCS_FILE_CACHE")
-    if gcs_file_cache == "True":
-        folder_name = create_gcs_bucket_folder_name_hashed(uri, fileName)
-        file_name, pages = get_documents_from_gcs(
-            PROJECT_ID, BUCKET_UPLOAD, folder_name, fileName
-        )
-    else:
-        file_name, pages, file_extension = get_documents_from_file_by_path(
-            merged_file_path, fileName
-        )
+    file_name, pages, file_extension = get_documents_from_file_by_path(
+        merged_file_path, fileName
+    )
     if pages == None or len(pages) == 0:
         raise Exception(f"Pdf content is not available for file : {file_name}")
 
@@ -466,11 +247,7 @@ def processing_source(
 
         if is_uploaded_from_local:
             gcs_file_cache = os.environ.get("GCS_FILE_CACHE")
-            if gcs_file_cache == "True":
-                folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
-                delete_file_from_gcs(BUCKET_UPLOAD, folder_name, file_name)
-            else:
-                delete_uploaded_local_file(merged_file_path, file_name)
+            delete_uploaded_local_file(merged_file_path, file_name)
 
         return {
             "fileName": file_name,
@@ -607,35 +384,20 @@ def upload_file(
     merged_dir,
 ):
 
-    gcs_file_cache = os.environ.get("GCS_FILE_CACHE")
-    logging.info(f"gcs file cache: {gcs_file_cache}")
+    if not os.path.exists(chunk_dir):
+        os.mkdir(chunk_dir)
 
-    if gcs_file_cache == "True":
-        folder_name = create_gcs_bucket_folder_name_hashed(uri, originalname)
-        upload_file_to_gcs(
-            chunk, chunk_number, originalname, BUCKET_UPLOAD, folder_name
-        )
-    else:
-        if not os.path.exists(chunk_dir):
-            os.mkdir(chunk_dir)
+    chunk_file_path = os.path.join(chunk_dir, f"{originalname}_part_{chunk_number}")
+    logging.info(f"Chunk File Path: {chunk_file_path}")
 
-        chunk_file_path = os.path.join(chunk_dir, f"{originalname}_part_{chunk_number}")
-        logging.info(f"Chunk File Path: {chunk_file_path}")
-
-        with open(chunk_file_path, "wb") as chunk_file:
-            chunk_file.write(chunk.file.read())
+    with open(chunk_file_path, "wb") as chunk_file:
+        chunk_file.write(chunk.file.read())
 
     if int(chunk_number) == int(total_chunks):
         # If this is the last chunk, merge all chunks into a single file
-        if gcs_file_cache == "True":
-            file_size = merge_file_gcs(
-                BUCKET_UPLOAD, originalname, folder_name, int(total_chunks)
-            )
-            total_pages = 1
-        else:
-            total_pages, file_size = merge_chunks_local(
-                originalname, int(total_chunks), chunk_dir, merged_dir
-            )
+        total_pages, file_size = merge_chunks_local(
+            originalname, int(total_chunks), chunk_dir, merged_dir
+        )
 
         logging.info("File merged successfully")
         file_extension = originalname.split(".")[-1]
@@ -694,14 +456,10 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
         graphDb_data_Access.update_source_node(obj_source_node)
         obj_source_node = None
         merged_file_path = os.path.join(merged_dir, file_name)
-        if source_type == "local file" and gcs_file_cache == "True":
-            folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
-            delete_file_from_gcs(BUCKET_UPLOAD, folder_name, file_name)
-        else:
-            logging.info(
-                f"Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}"
-            )
-            delete_uploaded_local_file(merged_file_path, file_name)
+        logging.info(
+            f"Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}"
+        )
+        delete_uploaded_local_file(merged_file_path, file_name)
     return "Cancelled the processing job successfully"
 
 

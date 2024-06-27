@@ -17,9 +17,6 @@ from langchain_community.vectorstores.neo4j_vector import Neo4jVector
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableBranch
-from langchain_google_vertexai import (ChatVertexAI, HarmBlockThreshold,
-                                       HarmCategory)
-from langchain_openai import ChatOpenAI
 from langchain_text_splitters import TokenTextSplitter
 
 from src.shared.common_fn import get_llm, load_embedding_model

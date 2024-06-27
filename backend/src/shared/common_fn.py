@@ -12,53 +12,11 @@ from langchain_community.graphs import Neo4jGraph
 from langchain_community.graphs.graph_document import GraphDocument
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 
-from src.document_sources.youtube import create_youtube_url
-
 # from neo4j.debug import watch
 
 # watch("neo4j")
 
 store = LocalFileStore("./cache/")
-
-
-def check_url_source(source_type, yt_url: str = None, wiki_query: str = None):
-    language = ""
-    try:
-        logging.info(f"incoming URL: {yt_url}")
-        if source_type == "youtube":
-            if re.match(
-                "(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?",
-                yt_url.strip(),
-            ):
-                youtube_url = create_youtube_url(yt_url.strip())
-                logging.info(youtube_url)
-                return youtube_url, language
-            else:
-                raise Exception("Incoming URL is not youtube URL")
-
-        elif source_type == "Wikipedia":
-            wiki_query_id = ""
-            # pattern = r"https?:\/\/([a-zA-Z0-9\.\,\_\-\/]+)\.wikipedia\.([a-zA-Z]{2,3})\/wiki\/([a-zA-Z0-9\.\,\_\-\/]+)"
-            wikipedia_url_regex = (
-                r"https?:\/\/(www\.)?([a-zA-Z]{2,3})\.wikipedia\.org\/wiki\/(.*)"
-            )
-            wiki_id_pattern = r"^[a-zA-Z0-9 _\-\.\,\:\(\)\[\]\{\}\/]*$"
-
-            match = re.search(wikipedia_url_regex, wiki_query.strip())
-            if match:
-                language = match.group(2)
-                wiki_query_id = match.group(3)
-            # else :
-            #       languages.append("en")
-            #       wiki_query_ids.append(wiki_url.strip())
-            else:
-                raise Exception(f"Not a valid wikipedia url: {wiki_query} ")
-
-            logging.info(f"wikipedia query id = {wiki_query_id}")
-            return wiki_query_id, language
-    except Exception as e:
-        logging.error(f"Error in recognize URL: {e}")
-        raise Exception(e)
 
 
 def get_combined_chunks(chunkId_chunkDoc_list):
@@ -167,10 +125,3 @@ def get_llm(model_version: str):
 
     logging.info(f"Model created - Model Version: {model_version}")
     return llm
-
-
-def create_gcs_bucket_folder_name_hashed(uri, file_name):
-    folder_name = uri + file_name
-    folder_name_sha1 = hashlib.sha1(folder_name.encode())
-    folder_name_sha1_hashed = folder_name_sha1.hexdigest()
-    return folder_name_sha1_hashed

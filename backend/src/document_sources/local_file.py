@@ -5,7 +5,7 @@ from tempfile import NamedTemporaryFile
 
 # from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.document_loaders import (PyMuPDFLoader,
-                                                  UnstructuredFileLoader)
+                                                  UnstructuredFileLoader, UnstructuredExcelLoader)
 from langchain_core.documents import Document
 
 # def get_documents_from_file_by_bytes(file):
@@ -21,12 +21,9 @@ from langchain_core.documents import Document
 
 
 def load_document_content(file_path):
-    if Path(file_path).suffix.lower() == ".pdf":
-        print("in if")
-        return PyMuPDFLoader(file_path)
-    else:
-        print("in else")
-        return UnstructuredFileLoader(file_path, encoding="utf-8", mode="elements")
+    file_path = "C:/Users/abhinav.m/Desktop/abhi/code/Python/Graph/llm-graph-builder/backend/merged_files/Ipsen Insights.xlsx"
+    print("Excel loader")
+    return UnstructuredExcelLoader(file_path)
 
 
 def get_documents_from_file_by_path(file_path, file_name):
