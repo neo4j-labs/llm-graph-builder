@@ -1,31 +1,30 @@
-from langchain_community.vectorstores.neo4j_vector import Neo4jVector
-from langchain.chains import GraphCypherQAChain
-from langchain.graphs import Neo4jGraph
+import logging
 import os
+import re
+import time
+from datetime import datetime
+from typing import Any
 
 from dotenv import load_dotenv
-from langchain.chains import RetrievalQA
-from langchain.chains import RetrievalQAWithSourcesChain
-from langchain_openai import ChatOpenAI
-from langchain_openai import OpenAIEmbeddings
-from langchain_google_vertexai import VertexAIEmbeddings
-from langchain_google_vertexai import ChatVertexAI
-from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
-import logging
+from langchain.chains import (GraphCypherQAChain, RetrievalQA,
+                              RetrievalQAWithSourcesChain)
+from langchain.graphs import Neo4jGraph
 from langchain_community.chat_message_histories import Neo4jChatMessageHistory
-from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
+from langchain_community.embeddings.sentence_transformer import \
+    SentenceTransformerEmbeddings
+from langchain_community.vectorstores.neo4j_vector import Neo4jVector
+from langchain_google_vertexai import (ChatVertexAI, HarmBlockThreshold,
+                                       HarmCategory, VertexAIEmbeddings)
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+
 from src.shared.common_fn import load_embedding_model
-import re
-from typing import Any
-from datetime import datetime
-import time
 
 load_dotenv()
 
-openai_api_key = os.environ.get('OPENAI_API_KEY')
+openai_api_key = os.environ.get("OPENAI_API_KEY")
 
-EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
-EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
+EMBEDDING_FUNCTION, _ = load_embedding_model(EMBEDDING_MODEL)
 CHAT_MAX_TOKENS = 1000
 
 
@@ -74,7 +73,8 @@ Instructions:
 Ensure that answers are straightforward and context-aware, focusing on being relevant and concise.
 """
 
-def get_llm(model: str,max_tokens=1000) -> Any:
+
+def get_llm(model: str, max_tokens=1000) -> Any:
     """Retrieve the specified language model based on the model name."""
 
     model_versions = {
@@ -82,13 +82,13 @@ def get_llm(model: str,max_tokens=1000) -> Any:
         "gemini-1.0-pro": "gemini-1.0-pro-001",
         "gemini-1.5-pro": "gemini-1.5-pro-preview-0409",
         "gpt-4": "gpt-4-0125-preview",
-        "diffbot" : "gpt-4-0125-preview",
-        "gpt-4o":"gpt-4o"
-         }
+        "diffbot": "gpt-4-0125-preview",
+        "gpt-4o": "gpt-4o",
+    }
     if model in model_versions:
         model_version = model_versions[model]
         logging.info(f"Chat Model: {model}, Model Version: {model_version}")
-        
+
         if "Gemini" in model:
             llm = ChatVertexAI(
                 model_name=model_version,
@@ -96,27 +96,28 @@ def get_llm(model: str,max_tokens=1000) -> Any:
                 max_tokens=max_tokens,
                 temperature=0,
                 safety_settings={
-                    HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE, 
+                    HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
                     HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE, 
-                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE, 
-                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE
-                }
+                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                },
             )
         else:
-            llm = ChatOpenAI(model=model_version, temperature=0,max_tokens=max_tokens)
+            llm = ChatOpenAI(model=model_version, temperature=0, max_tokens=max_tokens)
 
-        return llm,model_version
+        return llm, model_version
 
     else:
         logging.error(f"Unsupported model: {model}")
-        return None,None
+        return None, None
 
-def vector_embed_results(qa,question):
-    vector_res={}
+
+def vector_embed_results(qa, question):
+    vector_res = {}
     try:
         result = qa({"query": question})
-        vector_res['result']=result.get("result")
+        vector_res["result"] = result.get("result")
 
         sources = set()
         entities = set()
@@ -124,11 +125,11 @@ def vector_embed_results(qa,question):
             sources.add(document.metadata["source"])
             for entiti in document.metadata["entities"]:
                 entities.add(entiti)
-        vector_res['source']=list(sources)
-        vector_res['entities'] = list(entities)
-        if len( vector_res['entities']) > 5:
-            vector_res['entities'] =  vector_res['entities'][:5]
-            
+        vector_res["source"] = list(sources)
+        vector_res["entities"] = list(entities)
+        if len(vector_res["entities"]) > 5:
+            vector_res["entities"] = vector_res["entities"][:5]
+
         # list_source_docs=[]
         # for i in result["source_documents"]:
         #     list_source_docs.append(i.metadata['source'])
@@ -138,13 +139,16 @@ def vector_embed_results(qa,question):
         # vector_res['result'] = result.get("answer")
         # vector_res["source"] = result.get("sources")
     except Exception as e:
-      error_message = str(e)
-      logging.exception(f'Exception in vector embedding in QA component:{error_message}')
+        error_message = str(e)
+        logging.exception(
+            f"Exception in vector embedding in QA component:{error_message}"
+        )
     #   raise Exception(error_message)
-    
+
     return vector_res
-    
-def save_chat_history(history,user_message,ai_message):
+
+
+def save_chat_history(history, user_message, ai_message):
     try:
         # history = Neo4jChatMessageHistory(
         #     graph=graph,
@@ -152,11 +156,12 @@ def save_chat_history(history,user_message,ai_message):
         # )
         history.add_user_message(user_message)
         history.add_ai_message(ai_message)
-        logging.info(f'Successfully saved chat history')
+        logging.info(f"Successfully saved chat history")
     except Exception as e:
         error_message = str(e)
-        logging.exception(f'Exception in saving chat history:{error_message}')
-    
+        logging.exception(f"Exception in saving chat history:{error_message}")
+
+
 def get_chat_history(llm, history):
     """Retrieves and summarizes the chat history for a given session."""
 
@@ -164,9 +169,9 @@ def get_chat_history(llm, history):
         # history = Neo4jChatMessageHistory(
         #     graph=graph,
         #     session_id=session_id
-        # )        
+        # )
         chat_history = history.messages
-        
+
         if not chat_history:
             return ""
 
@@ -183,85 +188,76 @@ def get_chat_history(llm, history):
 
     except Exception as e:
         logging.exception(f"Exception in retrieving chat history: {e}")
-        return "" 
+        return ""
+
 
 def clear_chat_history(graph, session_id):
 
     try:
         logging.info(f"Clearing chat history for session ID: {session_id}")
-        history = Neo4jChatMessageHistory(
-            graph=graph,
-            session_id=session_id
-        )
+        history = Neo4jChatMessageHistory(graph=graph, session_id=session_id)
         history.clear()
         logging.info("Chat history cleared successfully")
 
         return {
             "session_id": session_id,
             "message": "The chat history is cleared",
-            "user": "chatbot"
+            "user": "chatbot",
         }
     except Exception as e:
-        logging.exception(f"Error occurred while clearing chat history for session ID {session_id}: {e}")
+        logging.exception(
+            f"Error occurred while clearing chat history for session ID {session_id}: {e}"
+        )
 
 
 def extract_and_remove_source(message):
-    pattern = r'\[Source: ([^\]]+)\]'
+    pattern = r"\[Source: ([^\]]+)\]"
     match = re.search(pattern, message)
     if match:
         sources_string = match.group(1)
-        sources = [source.strip().strip("'") for source in sources_string.split(',')]
-        new_message = re.sub(pattern, '', message).strip()
-        response = {
-            "message" : new_message,
-            "sources" : sources
-        }
+        sources = [source.strip().strip("'") for source in sources_string.split(",")]
+        new_message = re.sub(pattern, "", message).strip()
+        response = {"message": new_message, "sources": sources}
     else:
-        response = {
-            "message" : message,
-            "sources" : []
-        }
+        response = {"message": message, "sources": []}
     return response
 
-def clear_chat_history(graph,session_id):
-    history = Neo4jChatMessageHistory(
-        graph=graph,
-        session_id=session_id
-        )
+
+def clear_chat_history(graph, session_id):
+    history = Neo4jChatMessageHistory(graph=graph, session_id=session_id)
     history.clear()
     return {
-            "session_id": session_id, 
-            "message": "The chat History is cleared", 
-            "user": "chatbot"
-            }
-  
-def QA_RAG(graph,model,question,session_id):
+        "session_id": session_id,
+        "message": "The chat History is cleared",
+        "user": "chatbot",
+    }
+
+
+def QA_RAG(graph, model, question, session_id):
     logging.info(f"QA_RAG called at {datetime.now()}")
     # model = "Gemini Pro"
     try:
         qa_rag_start_time = time.time()
-
 
         start_time = time.time()
         neo_db = Neo4jVector.from_existing_index(
             embedding=EMBEDDING_FUNCTION,
             index_name="vector",
             retrieval_query=RETRIEVAL_QUERY,
-            graph=graph
+            graph=graph,
         )
 
-        history = Neo4jChatMessageHistory(
-            graph=graph,
-            session_id=session_id
-        )
-        
-        llm,model_version = get_llm(model=model,max_tokens=CHAT_MAX_TOKENS)
+        history = Neo4jChatMessageHistory(graph=graph, session_id=session_id)
+
+        llm, model_version = get_llm(model=model, max_tokens=CHAT_MAX_TOKENS)
 
         qa = RetrievalQA.from_chain_type(
             llm=llm,
             chain_type="stuff",
-            retriever=neo_db.as_retriever(search_kwargs={'k': 3, "score_threshold": 0.7}),
-            return_source_documents=True
+            retriever=neo_db.as_retriever(
+                search_kwargs={"k": 3, "score_threshold": 0.7}
+            ),
+            return_source_documents=True,
         )
         # qa = RetrievalQAWithSourcesChain.from_chain_type(
         #     llm=llm,
@@ -270,9 +266,9 @@ def QA_RAG(graph,model,question,session_id):
 
         db_setup_time = time.time() - start_time
         logging.info(f"DB Setup completed in {db_setup_time:.2f} seconds")
-        
+
         start_time = time.time()
-        chat_summary = get_chat_history(llm,history)
+        chat_summary = get_chat_history(llm, history)
         chat_history_time = time.time() - start_time
         logging.info(f"Chat history summarized in {chat_history_time:.2f} seconds")
         # print(chat_summary)
@@ -282,12 +278,12 @@ def QA_RAG(graph,model,question,session_id):
         vector_time = time.time() - start_time
         logging.info(f"Vector response obtained in {vector_time:.2f} seconds")
         # print(vector_res)
-        
+
         formatted_prompt = FINAL_PROMPT.format(
             question=question,
             chat_summary=chat_summary,
-            vector_result=vector_res.get('result', ''),
-            sources=vector_res.get('source', '')
+            vector_result=vector_res.get("result", ""),
+            sources=vector_res.get("source", ""),
         )
         # print(formatted_prompt)
 
@@ -303,39 +299,32 @@ def QA_RAG(graph,model,question,session_id):
         save_chat_history(history, user_message, ai_message)
         chat_history_save = time.time() - start_time
         logging.info(f"Chat History saved in {chat_history_save:.2f} seconds")
-        
+
         response_data = extract_and_remove_source(response)
         message = response_data["message"]
         sources = response_data["sources"]
-        
+
         print(f"message : {message}")
         print(f"sources : {sources}")
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
         return {
-            "session_id": session_id, 
-            "message": message, 
+            "session_id": session_id,
+            "message": message,
             "info": {
                 "sources": sources,
-                "model":model_version,
-                "entities":vector_res["entities"]
+                "model": model_version,
+                "entities": vector_res["entities"],
             },
-            "user": "chatbot"
-            }
+            "user": "chatbot",
+        }
 
     except Exception as e:
         logging.exception(f"Exception in QA component at {datetime.now()}: {str(e)}")
         error_name = type(e).__name__
         return {
-            "session_id": session_id, 
+            "session_id": session_id,
             "message": "Something went wrong",
-            "info": {
-                "sources": [],
-                "error": f"{error_name} :- {str(e)}"
-            },
-            "user": "chatbot"}
-    
-
-
-
-
+            "info": {"sources": [], "error": f"{error_name} :- {str(e)}"},
+            "user": "chatbot",
+        }

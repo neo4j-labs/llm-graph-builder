@@ -1,32 +1,34 @@
-from langchain_community.vectorstores.neo4j_vector import Neo4jVector
-from langchain.graphs import Neo4jGraph
-import os
-from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
-from langchain_google_vertexai import ChatVertexAI
-from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
 import logging
-from langchain_community.chat_message_histories import Neo4jChatMessageHistory
-from src.shared.common_fn import load_embedding_model, get_llm
+import os
 import re
-from typing import Any
-from datetime import datetime
 import time
+from datetime import datetime
+from typing import Any
+
+from dotenv import load_dotenv
+from langchain.graphs import Neo4jGraph
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.retrievers import ContextualCompressionRetriever
+from langchain.retrievers.document_compressors import (
+    DocumentCompressorPipeline, EmbeddingsFilter)
+from langchain_community.chat_message_histories import Neo4jChatMessageHistory
+from langchain_community.document_transformers import EmbeddingsRedundantFilter
+from langchain_community.vectorstores.neo4j_vector import Neo4jVector
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableBranch
-from langchain.retrievers import ContextualCompressionRetriever
-from langchain_community.document_transformers import EmbeddingsRedundantFilter
-from langchain.retrievers.document_compressors import EmbeddingsFilter
-from langchain.retrievers.document_compressors import DocumentCompressorPipeline
+from langchain_google_vertexai import (ChatVertexAI, HarmBlockThreshold,
+                                       HarmCategory)
+from langchain_openai import ChatOpenAI
 from langchain_text_splitters import TokenTextSplitter
-from langchain_core.messages import HumanMessage,AIMessage
+
+from src.shared.common_fn import get_llm, load_embedding_model
 from src.shared.constants import *
 
-load_dotenv() 
+load_dotenv()
 
-EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
-EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
+EMBEDDING_FUNCTION, _ = load_embedding_model(EMBEDDING_MODEL)
 
 RETRIEVAL_QUERY = """
 WITH node as chunk, score
@@ -90,37 +92,49 @@ AI Response: "I don't have that information right now. Is there something else I
 Note: This system does not generate answers based solely on internal knowledge. It answers from the information provided in the user's current and previous inputs, and from the context.
 """
 
-def get_neo4j_retriever(graph, index_name="vector", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
+
+def get_neo4j_retriever(
+    graph,
+    index_name="vector",
+    search_k=CHAT_SEARCH_KWARG_K,
+    score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD,
+):
     try:
         neo_db = Neo4jVector.from_existing_index(
             embedding=EMBEDDING_FUNCTION,
             index_name=index_name,
             retrieval_query=RETRIEVAL_QUERY,
-            graph=graph
+            graph=graph,
         )
         logging.info(f"Successfully retrieved Neo4jVector index '{index_name}'")
-        retriever = neo_db.as_retriever(search_kwargs={'k': search_k, "score_threshold": score_threshold})
-        logging.info(f"Successfully created retriever for index '{index_name}' with search_k={search_k}, score_threshold={score_threshold}")
+        retriever = neo_db.as_retriever(
+            search_kwargs={"k": search_k, "score_threshold": score_threshold}
+        )
+        logging.info(
+            f"Successfully created retriever for index '{index_name}' with search_k={search_k}, score_threshold={score_threshold}"
+        )
         return retriever
     except Exception as e:
-        logging.error(f"Error retrieving Neo4jVector index '{index_name}' or creating retriever: {e}")
-        return None 
-    
-def create_document_retriever_chain(llm,retriever):
-    question_template= "Given the below conversation, generate a search query to look up in order to get information relevant to the conversation. Only respond with the query, nothing else."
+        logging.error(
+            f"Error retrieving Neo4jVector index '{index_name}' or creating retriever: {e}"
+        )
+        return None
+
+
+def create_document_retriever_chain(llm, retriever):
+    question_template = "Given the below conversation, generate a search query to look up in order to get information relevant to the conversation. Only respond with the query, nothing else."
 
     query_transform_prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", question_template),
-            MessagesPlaceholder(variable_name="messages")
-        ]
+        [("system", question_template), MessagesPlaceholder(variable_name="messages")]
     )
     output_parser = StrOutputParser()
 
     splitter = TokenTextSplitter(chunk_size=2000, chunk_overlap=0)
     # extractor = LLMChainExtractor.from_llm(llm)
     # redundant_filter = EmbeddingsRedundantFilter(embeddings=EMBEDDING_FUNCTION)
-    embeddings_filter = EmbeddingsFilter(embeddings=EMBEDDING_FUNCTION, similarity_threshold=0.25)
+    embeddings_filter = EmbeddingsFilter(
+        embeddings=EMBEDDING_FUNCTION, similarity_threshold=0.25
+    )
 
     pipeline_compressor = DocumentCompressorPipeline(
         transformers=[splitter, embeddings_filter]
@@ -147,25 +161,25 @@ def create_neo4j_chat_message_history(graph, session_id):
     """
     try:
 
-        history = Neo4jChatMessageHistory(
-            graph=graph,
-            session_id=session_id
-        )
+        history = Neo4jChatMessageHistory(graph=graph, session_id=session_id)
         return history
 
     except Exception as e:
         logging.error(f"Error creating Neo4jChatMessageHistory: {e}")
-    return None 
+    return None
+
 
 def format_documents(documents):
-    sorted_documents = sorted(documents, key=lambda doc: doc.state["query_similarity_score"], reverse=True)
+    sorted_documents = sorted(
+        documents, key=lambda doc: doc.state["query_similarity_score"], reverse=True
+    )
     sorted_documents = sorted_documents[:7]
 
     formatted_docs = []
     sources = set()
 
     for doc in sorted_documents:
-        source = doc.metadata['source']
+        source = doc.metadata["source"]
         sources.add(source)
 
         formatted_doc = (
@@ -178,34 +192,34 @@ def format_documents(documents):
 
     return "\n\n".join(formatted_docs), sources
 
-def get_rag_chain(llm,system_template=SYSTEM_TEMPLATE):
+
+def get_rag_chain(llm, system_template=SYSTEM_TEMPLATE):
     question_answering_prompt = ChatPromptTemplate.from_messages(
-    [
-        ("system", system_template),
-        MessagesPlaceholder(variable_name="messages"),
-        (
-                "human",
-                "User question: {input}"
-            ),
-    ]
+        [
+            ("system", system_template),
+            MessagesPlaceholder(variable_name="messages"),
+            ("human", "User question: {input}"),
+        ]
     )
-    question_answering_chain = question_answering_prompt | llm 
+    question_answering_chain = question_answering_prompt | llm
 
     return question_answering_chain
 
+
 def update_timestamps_with_min_seconds(result_dict):
     def time_to_seconds(time_str):
-        h, m, s = map(int, time_str.split(':'))
+        h, m, s = map(int, time_str.split(":"))
         return h * 3600 + m * 60 + s
-    
-    for source in result_dict.get('sources', []):
-        time_stamps = source.get('start_time', [])
+
+    for source in result_dict.get("sources", []):
+        time_stamps = source.get("start_time", [])
         if time_stamps:
             seconds_list = [time_to_seconds(ts) for ts in time_stamps]
             min_seconds = min(seconds_list)
-            source['start_time'] = min_seconds
-    
+            source["start_time"] = min_seconds
+
     return result_dict
+
 
 def get_sources_and_chunks(sources_used, docs):
     docs_metadata = dict()
@@ -214,7 +228,7 @@ def get_sources_and_chunks(sources_used, docs):
         chunkids = doc.metadata["chunkIds"]
         page_numbers = doc.metadata["page_numbers"]
         start_times = doc.metadata["start_times"]
-        docs_metadata[source] = [chunkids,page_numbers,start_times]
+        docs_metadata[source] = [chunkids, page_numbers, start_times]
     chunkids = list()
     output_sources = list()
     for source in sources_used:
@@ -223,21 +237,27 @@ def get_sources_and_chunks(sources_used, docs):
             page_numbers = docs_metadata[source][1]
             start_times = docs_metadata[source][2]
             current_source = {
-                "source_name":source,
-                "page_numbers":page_numbers if len(page_numbers) > 1 and page_numbers[0] is not None else [],
-                "start_time": start_times if len(start_times) > 1 and start_times[0] is not None else [],
+                "source_name": source,
+                "page_numbers": (
+                    page_numbers
+                    if len(page_numbers) > 1 and page_numbers[0] is not None
+                    else []
+                ),
+                "start_time": (
+                    start_times
+                    if len(start_times) > 1 and start_times[0] is not None
+                    else []
+                ),
             }
             output_sources.append(current_source)
 
-    result = {
-        'sources': output_sources,
-        'chunkIds': chunkids
-    }
+    result = {"sources": output_sources, "chunkIds": chunkids}
 
     result = update_timestamps_with_min_seconds(result)
     return result
 
-def summarize_messages(llm,history,stored_messages):
+
+def summarize_messages(llm, history, stored_messages):
     if len(stored_messages) == 0:
         return False
     # summarization_template = "Distill the below chat messages into a single summary message. Include as many specific details as you can."
@@ -246,7 +266,7 @@ def summarize_messages(llm,history,stored_messages):
             MessagesPlaceholder(variable_name="chat_history"),
             (
                 "human",
-                "Summarize the above chat messages into a concise message, focusing on key points and relevant details that could be useful for future conversations. Exclude all introductions and extraneous information."
+                "Summarize the above chat messages into a concise message, focusing on key points and relevant details that could be useful for future conversations. Exclude all introductions and extraneous information.",
             ),
         ]
     )
@@ -261,97 +281,102 @@ def summarize_messages(llm,history,stored_messages):
     return True
 
 
-def clear_chat_history(graph,session_id):
-    history = Neo4jChatMessageHistory(
-        graph=graph,
-        session_id=session_id
-        )
+def clear_chat_history(graph, session_id):
+    history = Neo4jChatMessageHistory(graph=graph, session_id=session_id)
     history.clear()
     return {
-            "session_id": session_id, 
-            "message": "The chat History is cleared", 
-            "user": "chatbot"
-            }
+        "session_id": session_id,
+        "message": "The chat History is cleared",
+        "user": "chatbot",
+    }
 
-def QA_RAG(graph,model,question,session_id):
+
+def QA_RAG(graph, model, question, session_id):
     try:
         start_time = time.time()
         print(model)
         model_version = MODEL_VERSIONS[model]
         llm = get_llm(model_version)
         retriever = get_neo4j_retriever(graph=graph)
-        doc_retriever = create_document_retriever_chain(llm,retriever)
-        history = create_neo4j_chat_message_history(graph,session_id )
+        doc_retriever = create_document_retriever_chain(llm, retriever)
+        history = create_neo4j_chat_message_history(graph, session_id)
         chat_setup_time = time.time() - start_time
         logging.info(f"Chat setup completed in {chat_setup_time:.2f} seconds")
-        
+
         start_time = time.time()
         messages = history.messages
         user_question = HumanMessage(content=question)
         messages.append(user_question)
-        docs = doc_retriever.invoke(
-            {
-                "messages":messages
-            }
-        )
+        docs = doc_retriever.invoke({"messages": messages})
         if docs:
             # print(docs)
-            formatted_docs,sources = format_documents(docs)
-            
+            formatted_docs, sources = format_documents(docs)
+
             doc_retrieval_time = time.time() - start_time
-            logging.info(f"Modified question and Documents retrieved in {doc_retrieval_time:.2f} seconds")
+            logging.info(
+                f"Modified question and Documents retrieved in {doc_retrieval_time:.2f} seconds"
+            )
 
             start_time = time.time()
             rag_chain = get_rag_chain(llm=llm)
             ai_response = rag_chain.invoke(
                 {
-                "messages" : messages[:-1],
-                "context"  : formatted_docs,
-                "input"    : question 
-            }
+                    "messages": messages[:-1],
+                    "context": formatted_docs,
+                    "input": question,
+                }
             )
-            result = get_sources_and_chunks(sources,docs)
+            result = get_sources_and_chunks(sources, docs)
             content = ai_response.content
             if "Gemini" in model:
-                total_tokens = ai_response.response_metadata['usage_metadata']['prompt_token_count']
-            else:    
-                total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
+                total_tokens = ai_response.response_metadata["usage_metadata"][
+                    "prompt_token_count"
+                ]
+            else:
+                total_tokens = ai_response.response_metadata["token_usage"][
+                    "total_tokens"
+                ]
             predict_time = time.time() - start_time
             logging.info(f"Final Response predicted in {predict_time:.2f} seconds")
         else:
-            ai_response = AIMessage(content="I couldn't find any relevant documents to answer your question.")
+            ai_response = AIMessage(
+                content="I couldn't find any relevant documents to answer your question."
+            )
             result = {"sources": [], "chunkIds": []}
             total_tokens = 0
             content = ai_response.content
-             
+
         start_time = time.time()
         messages.append(ai_response)
-        summarize_messages(llm,history,messages)
+        summarize_messages(llm, history, messages)
         history_summarized_time = time.time() - start_time
-        logging.info(f"Chat History summarized in {history_summarized_time:.2f} seconds")
+        logging.info(
+            f"Chat History summarized in {history_summarized_time:.2f} seconds"
+        )
 
         return {
-            "session_id": session_id, 
-            "message": content, 
+            "session_id": session_id,
+            "message": content,
             "info": {
                 "sources": result["sources"],
                 "model": model_version,
-                "chunkids":result["chunkIds"],
+                "chunkids": result["chunkIds"],
                 "total_tokens": total_tokens,
-                "response_time": 0
+                "response_time": 0,
             },
-            "user": "chatbot"
-            }
+            "user": "chatbot",
+        }
 
     except Exception as e:
         logging.exception(f"Exception in QA component at {datetime.now()}: {str(e)}")
         error_name = type(e).__name__
         return {
-            "session_id": session_id, 
+            "session_id": session_id,
             "message": "Something went wrong",
             "info": {
                 "sources": [],
                 "chunkids": [],
-                "error": f"{error_name} :- {str(e)}"
+                "error": f"{error_name} :- {str(e)}",
             },
-            "user": "chatbot"}
+            "user": "chatbot",
+        }
