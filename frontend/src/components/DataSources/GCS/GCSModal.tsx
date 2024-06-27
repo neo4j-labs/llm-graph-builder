@@ -201,7 +201,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
   const submitHandler = async () => {
     if (bucketName.trim() === '' || projectId.trim() === '') {
       setStatus('danger');
-      setStatusMessage('Please Fill the Bucket Name');
+      setStatusMessage('Please Fill the Credentials');
       setTimeout(() => {
         setStatus('unknown');
       }, 5000);
