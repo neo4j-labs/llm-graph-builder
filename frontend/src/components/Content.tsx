@@ -8,8 +8,8 @@ import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './UI/Alert';
 import { extractAPI } from '../utils/FileAPI';
 import { ContentProps, CustomFile, OptionType, UserCredentials, alertStateType } from '../types';
-import { updateGraphAPI } from '../services/UpdateGraph';
-import GraphViewModal from './Graph/GraphViewModal';
+import { postProcessing } from '../services/PostProcessing';
+import GraphViewModal from '../components/Graph/GraphViewModal';
 import deleteAPI from '../services/deleteFiles';
 import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
@@ -230,7 +230,8 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
       }
       Promise.allSettled(data).then(async (_) => {
         setextractLoading(false);
-        await updateGraphAPI(userCredentials as UserCredentials);
+        await postProcessing(userCredentials as UserCredentials, 'update_similarity_graph');
+        await postProcessing(userCredentials as UserCredentials, 'create_fulltext_index');
       });
     } else if (selectedFilesFromAllfiles.length && allowLargeFiles) {
       // @ts-ignore
@@ -241,7 +242,8 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
       }
       Promise.allSettled(data).then(async (_) => {
         setextractLoading(false);
-        await updateGraphAPI(userCredentials as UserCredentials);
+        await postProcessing(userCredentials as UserCredentials, 'update_similarity_graph');
+        await postProcessing(userCredentials as UserCredentials, 'create_fulltext_index');
       });
     }
   };
