@@ -15,8 +15,9 @@ from src.document_sources.wikipedia import *
 from src.document_sources.youtube import *
 from src.shared.common_fn import *
 from src.make_relationships import *
+from src.document_sources.web_pages import *
 import re
-from langchain_community.document_loaders import WikipediaLoader
+from langchain_community.document_loaders import WikipediaLoader, WebBaseLoader
 import warnings
 from pytube import YouTube
 import sys
@@ -96,6 +97,32 @@ def create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_na
                               'gcsBucketName': gcs_bucket_name, 'gcsBucketFolder':obj_source_node.gcsBucketFolder, 'gcsProjectId':obj_source_node.gcsProjectId})
     return lst_file_name,success_count,failed_count
 
+def create_source_node_graph_web_url(graph, model, source_url, source_type):
+    success_count=0
+    failed_count=0
+    lst_file_name = []
+    pages = WebBaseLoader(source_url, verify_ssl=False).load()
+    if pages==None or len(pages)==0:
+      failed_count+=1
+      message = f"Unable to read data for given url : {source_url}"
+      raise Exception(message)
+    obj_source_node = sourceNode()
+    obj_source_node.file_type = 'text'
+    obj_source_node.file_source = source_type
+    obj_source_node.model = model
+    obj_source_node.total_pages = 1
+    obj_source_node.url = urllib.parse.unquote(source_url)
+    obj_source_node.created_at = datetime.now()
+    obj_source_node.file_name = pages[0].metadata['title']
+    obj_source_node.language = pages[0].metadata['language'] 
+    obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
+    
+    graphDb_data_Access = graphDBdataAccess(graph)
+    graphDb_data_Access.create_source_node(obj_source_node)
+    lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Success'})
+    success_count+=1
+    return lst_file_name,success_count,failed_count
+  
 def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     
     youtube_url, language = check_url_source(source_type=source_type, yt_url=source_url)
@@ -110,7 +137,7 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     obj_source_node.url = youtube_url
     obj_source_node.created_at = datetime.now()
     match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
-    logging.info(f"match value{match}")
+    logging.info(f"match value: {match}")
     obj_source_node.file_name = YouTube(obj_source_node.url).title
     transcript= get_youtube_combined_transcript(match.group(1))
     if transcript==None or len(transcript)==0:
@@ -155,18 +182,19 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
       lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'language':obj_source_node.language, 'status':'Success'})
     return lst_file_name,success_count,failed_count
     
-def extract_graph_from_file_local_file(graph, model, merged_file_path, fileName, allowedNodes, allowedRelationship):
+def extract_graph_from_file_local_file(graph, model, merged_file_path, fileName, allowedNodes, allowedRelationship,uri):
 
   logging.info(f'Process file name :{fileName}')
   gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-  if gcs_file_cache == 'True' and fileName.split('.')[-1]=='pdf':
-    file_name, pages = get_documents_from_gcs( PROJECT_ID, BUCKET_UPLOAD, None, fileName)
+  if gcs_file_cache == 'True':
+    folder_name = create_gcs_bucket_folder_name_hashed(uri, fileName)
+    file_name, pages = get_documents_from_gcs( PROJECT_ID, BUCKET_UPLOAD, folder_name, fileName)
   else:
     file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,fileName)
   if pages==None or len(pages)==0:
-    raise Exception(f'Pdf content is not available for file : {file_name}')
+    raise Exception(f'File content is not available for file : {file_name}')
 
-  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, True, merged_file_path)
+  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, True, merged_file_path, uri)
 
 def extract_graph_from_file_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, allowedNodes, allowedRelationship):
 
@@ -177,7 +205,16 @@ def extract_graph_from_file_s3(graph, model, source_url, aws_access_key_id, aws_
     file_name, pages = get_documents_from_s3(source_url, aws_access_key_id, aws_secret_access_key)
 
   if pages==None or len(pages)==0:
-    raise Exception(f'Pdf content is not available for file : {file_name}')
+    raise Exception(f'File content is not available for file : {file_name}')
+
+  return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
+
+def extract_graph_from_web_page(graph, model, source_url, allowedNodes, allowedRelationship):
+
+  file_name, pages = get_documents_from_web_page(source_url)
+
+  if pages==None or len(pages)==0:
+    raise Exception(f'Content is not available for given URL : {file_name}')
 
   return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
@@ -202,11 +239,11 @@ def extract_graph_from_file_gcs(graph, model, gcs_project_id, gcs_bucket_name, g
 
   file_name, pages = get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token)
   if pages==None or len(pages)==0:
-    raise Exception(f'Pdf content is not available for file : {file_name}')
+    raise Exception(f'File content is not available for file : {file_name}')
 
   return processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship)
 
-def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, is_uploaded_from_local=None, merged_file_path=None):
+def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelationship, is_uploaded_from_local=None, merged_file_path=None, uri=None):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -238,7 +275,7 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     pages[i]=Document(page_content=str(text), metadata=pages[i].metadata)
   create_chunks_obj = CreateChunksofDocument(pages, graph)
   chunks = create_chunks_obj.split_file_into_chunks()
-  
+  chunkId_chunkDoc_list = create_relation_between_chunks(graph,file_name,chunks)
   if result[0]['Status'] != 'Processing':      
     obj_source_node = sourceNode()
     status = "Processing"
@@ -258,12 +295,12 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     job_status = "Completed"
     node_count = 0
     rel_count = 0
-    for i in range(0, len(chunks), update_graph_chunk_processed):
+    for i in range(0, len(chunkId_chunkDoc_list), update_graph_chunk_processed):
       select_chunks_upto = i+update_graph_chunk_processed
       logging.info(f'Selected Chunks upto: {select_chunks_upto}')
-      if len(chunks) <= select_chunks_upto:
-         select_chunks_upto = len(chunks)
-      selected_chunks = chunks[i:select_chunks_upto]
+      if len(chunkId_chunkDoc_list) <= select_chunks_upto:
+         select_chunks_upto = len(chunkId_chunkDoc_list)
+      selected_chunks = chunkId_chunkDoc_list[i:select_chunks_upto]
       result = graphDb_data_Access.get_current_status_document_node(file_name)
       is_cancelled_status = result[0]['is_cancelled']
       logging.info(f"Value of is_cancelled : {result[0]['is_cancelled']}")
@@ -307,8 +344,9 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     
     if is_uploaded_from_local:
       gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-      if gcs_file_cache == 'True' and file_name.split('.')[-1]=='pdf':
-        delete_file_from_gcs(BUCKET_UPLOAD,file_name)
+      if gcs_file_cache == 'True':
+        folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
+        delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
       else:
         delete_uploaded_local_file(merged_file_path, file_name)  
       
@@ -324,8 +362,7 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
   else:
      logging.info('File does not process because it\'s already in Processing status')
 
-def processing_chunks(chunks,graph,file_name,model,allowedNodes,allowedRelationship, node_count, rel_count):
-  chunkId_chunkDoc_list = create_relation_between_chunks(graph,file_name,chunks)
+def processing_chunks(chunkId_chunkDoc_list,graph,file_name,model,allowedNodes,allowedRelationship, node_count, rel_count):
   #create vector index and update chunk node with embedding
   update_embedding_create_vector_index( graph, chunkId_chunkDoc_list, file_name)
   logging.info("Get graph document list from models")
@@ -422,8 +459,9 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
   gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
   logging.info(f'gcs file cache: {gcs_file_cache}')
   
-  if gcs_file_cache == 'True' and originalname.split('.')[-1]=='pdf':
-    upload_file_to_gcs(chunk, chunk_number, originalname, BUCKET_UPLOAD)
+  if gcs_file_cache == 'True':
+    folder_name = create_gcs_bucket_folder_name_hashed(uri,originalname)
+    upload_file_to_gcs(chunk, chunk_number, originalname, BUCKET_UPLOAD, folder_name)
   else:
     if not os.path.exists(chunk_dir):
       os.mkdir(chunk_dir)
@@ -436,8 +474,9 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
 
   if int(chunk_number) == int(total_chunks):
       # If this is the last chunk, merge all chunks into a single file
-      if gcs_file_cache == 'True' and originalname.split('.')[-1]=='pdf':
-        total_pages, file_size = merge_file_gcs(BUCKET_UPLOAD, originalname)
+      if gcs_file_cache == 'True':
+        file_size = merge_file_gcs(BUCKET_UPLOAD, originalname, folder_name, int(total_chunks))
+        total_pages = 1
       else:
         total_pages, file_size = merge_chunks_local(originalname, int(total_chunks), chunk_dir, merged_dir)
       
@@ -474,10 +513,11 @@ def get_labels_and_relationtypes(graph):
      result=[]
   return result
 
-def manually_cancelled_job(graph, filenames, source_types, merged_dir):
+def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
   
   filename_list= list(map(str.strip, json.loads(filenames)))
   source_types_list= list(map(str.strip, json.loads(source_types)))
+  gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
   
   for (file_name,source_type) in zip(filename_list, source_types_list):
       obj_source_node = sourceNode()
@@ -489,9 +529,12 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir):
       graphDb_data_Access.update_source_node(obj_source_node)
       obj_source_node = None
       merged_file_path = os.path.join(merged_dir, file_name)
-      if source_type == 'local file':
-          logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
-          delete_file_from_gcs(BUCKET_UPLOAD,file_name)
+      if source_type == 'local file' and gcs_file_cache == 'True':
+          folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
+          delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
+      else:
+        logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+        delete_uploaded_local_file(merged_file_path,file_name)
   return "Cancelled the processing job successfully"
 
 def populate_graph_schema_from_text(text, model, is_schema_description_cheked):

@@ -19,6 +19,22 @@ export const validation = (url: string) => {
 export const wikiValidation = (url: string) => {
   return url.trim() != '' && /https:\/\/([a-zA-Z]{2,3})\.wikipedia\.org\/wiki\/(.*)/gm.test(url) != false;
 };
+export const webLinkValidation = (url: string) => {
+  return (
+    url.trim() != '' &&
+    /(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g.test(
+      url
+    ) != false
+  );
+};
+export const youtubeLinkValidation = (url: string) => {
+  return (
+    url.trim() != '' &&
+    /^(?:https?:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/.test(
+      url
+    ) != false
+  );
+};
 // Status indicator icons to status column
 export const statusCheck = (status: string) => {
   switch (status) {
@@ -159,4 +175,14 @@ export const getDateTime = () => {
 
 export const getIsLoading = (messages: Messages[]) => {
   return messages.some((msg) => msg.isTyping || msg.isLoading);
+};
+export const calculateProcessingTime = (fileSizeBytes: number, processingTimePerByteSeconds: number) => {
+  const totalProcessingTimeSeconds = (fileSizeBytes / 1000) * processingTimePerByteSeconds;
+  const minutes = Math.floor(totalProcessingTimeSeconds / 60);
+  const seconds = Math.floor(totalProcessingTimeSeconds % 60);
+  return { minutes, seconds };
+};
+
+export const capitalize = (word: string): string => {
+  return `${word[0].toUpperCase()}${word.slice(1)}`;
 };

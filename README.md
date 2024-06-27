@@ -21,13 +21,13 @@ DIFFBOT_API_KEY="your-diffbot-key"
 
 if you only want OpenAI:
 ```env
-LLM_MODELS="OpenAI GPT 3.5,OpenAI GPT 4o"
+LLM_MODELS="gpt-3.5,gpt-4o"
 OPENAI_API_KEY="your-openai-key"
 ```
 
 if you only want Diffbot:
 ```env
-LLM_MODELS="Diffbot"
+LLM_MODELS="diffbot"
 DIFFBOT_API_KEY="your-diffbot-key"
 ```
 
@@ -38,14 +38,14 @@ docker-compose up --build
 
 ##### Additional configs
 
-By default, the input sources will be: Local files, Youtube, Wikipedia and AWS S3. As this default config is applied:
+By default, the input sources will be: Local files, Youtube, Wikipedia ,AWS S3 and Webpages. As this default config is applied:
 ```env
-REACT_APP_SOURCES="local,youtube,wiki,s3"
+REACT_APP_SOURCES="local,youtube,wiki,s3,web"
 ```
 
 If however you want the Google GCS integration, add `gcs` and your Google client ID:
 ```env
-REACT_APP_SOURCES="local,youtube,wiki,s3,gcs"
+REACT_APP_SOURCES="local,youtube,wiki,s3,gcs,web"
 GOOGLE_CLIENT_ID="xxxx"
 ```
 
@@ -98,11 +98,12 @@ Alternatively, you can run the backend and frontend separately:
 | BACKEND_API_URL         | Optional           | http://localhost:8000 | URL for backend API                                                                       |
 | BLOOM_URL               | Optional           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
 | REACT_APP_SOURCES       | Optional           | local,youtube,wiki,s3 | List of input sources that will be available                                               |
-| LLM_MODELS              | Optional           | Diffbot,OpenAI GPT 3.5,OpenAI GPT 4o | Models available for selection on the frontend, used for entities extraction and Q&A Chatbot                          |
+| LLM_MODELS              | Optional           | diffbot,gpt-3.5,gpt-4o | Models available for selection on the frontend, used for entities extraction and Q&A Chatbot                          |
 | ENV                     | Optional           | DEV           | Environment variable for the app                                                                 |
 | TIME_PER_CHUNK          | Optional           | 4             | Time per chunk for processing                                                                    |
 | CHUNK_SIZE              | Optional           | 5242880       | Size of each chunk for processing                                                                |
 | GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
+| GCS_FILE_CACHE        | Optional           | False              | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
 
 
 ###

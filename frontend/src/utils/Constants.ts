@@ -27,21 +27,23 @@ export const docChunkEntities = `+[chunks]
 + collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
 export const APP_SOURCES =
   process.env.REACT_APP_SOURCES !== ''
-    ? process.env.REACT_APP_SOURCES?.split(',') || []
-    : ['gcs', 's3', 'local', 'wiki', 'youtube'];
+    ? process.env.REACT_APP_SOURCES?.split(',')
+    : ['gcs', 's3', 'local', 'wiki', 'youtube', 'web'];
 export const llms =
   process.env?.LLM_MODELS?.trim() != ''
     ? process.env.LLM_MODELS?.split(',')
-    : ['Diffbot', 'Gemini 1.0 Pro', 'OpenAI GPT 3.5', 'OpenAI GPT 4o', 'Gemini 1.5 Pro', 'Groq llama3'];
+    : ['diffbot', 'gpt-3.5', 'gpt-4o', 'gemini-1.0-pro', 'gemini-1.5-pro', 'groq-llama3'];
 
-export const defaultLLM = llms?.includes('OpenAI GPT 3.5')
-  ? 'OpenAI GPT 3.5'
-  : llms?.includes('Gemini 1.0 Pro')
-  ? 'Gemini 1.0 Pro'
-  : 'Diffbot';
+export const defaultLLM = llms?.includes('gpt-3.5')
+  ? 'gpt-3.5'
+  : llms?.includes('gemini-1.0-pro')
+  ? 'gemini-1.0-pro'
+  : 'diffbot';
 
 export const chunkSize = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.TIME_PER_PAGE ? parseInt(process.env.TIME_PER_PAGE) : 50;
+export const timePerByte = 0.2;
+export const largeFileSize = process.env.LARGE_FILE_SIZE ? parseInt(process.env.LARGE_FILE_SIZE) : 5 * 1024 * 1024;
 export const NODES_OPTIONS = [
   {
     label: 'Person',

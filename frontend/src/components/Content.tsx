@@ -1,23 +1,23 @@
 import { useEffect, useState, useMemo } from 'react';
-import ConnectionModal from './ConnectionModal';
+import ConnectionModal from './Popups/ConnectionModal/ConnectionModal';
 import LlmDropdown from './Dropdown';
 import FileTable from './FileTable';
 import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
-import CustomAlert from './Alert';
+import CustomAlert from './UI/Alert';
 import { extractAPI } from '../utils/FileAPI';
 import { ContentProps, CustomFile, OptionType, UserCredentials, alertStateType } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
-import GraphViewModal from './GraphViewModal';
+import GraphViewModal from './Graph/GraphViewModal';
 import deleteAPI from '../services/deleteFiles';
-import DeletePopUp from './DeletePopUp';
+import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
-import ConfirmationDialog from './ConfirmationDialog';
-import { buttonCaptions, chunkSize, tooltips } from '../utils/Constants';
-import ButtonWithToolTip from './ButtonWithToolTip';
+import ConfirmationDialog from './Popups/LargeFilePopUp/ConfirmationDialog';
+import { buttonCaptions, largeFileSize, tooltips } from '../utils/Constants';
+import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 
 const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) => {
@@ -174,7 +174,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
       if (apiResponse?.status === 'Failed') {
         let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
         throw new Error(JSON.stringify(errorobj));
-      } else if (fileItem.total_pages != undefined && (fileItem.total_pages === 'N/A' || fileItem.total_pages < 20)) {
+      } else if (fileItem.size != undefined && fileItem.size < largeFileSize) {
         setFilesData((prevfiles) => {
           return prevfiles.map((curfile) => {
             if (curfile.name == apiResponse?.data?.fileName) {
@@ -376,6 +376,48 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     }
   }, []);
 
+  const onClickHandler = () => {
+    if (selectedRows.length) {
+      let selectedLargeFiles: CustomFile[] = [];
+      selectedRows.forEach((f) => {
+        const parsedData: CustomFile = JSON.parse(f);
+        if (parsedData.fileSource === 'local file') {
+          if (typeof parsedData.size === 'number' && parsedData.status === 'New' && parsedData.size > largeFileSize) {
+            selectedLargeFiles.push(parsedData);
+          }
+        }
+      });
+      // @ts-ignore
+      if (selectedLargeFiles.length) {
+        setshowConfirmationModal(true);
+        handleGenerateGraph(false, []);
+      } else {
+        handleGenerateGraph(true, filesData);
+      }
+    } else if (filesData.length) {
+      const largefiles = filesData.filter((f) => {
+        if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
+          return true;
+        }
+        return false;
+      });
+      const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
+      const stringified = selectAllNewFiles.reduce((accu, f) => {
+        const key = JSON.stringify(f);
+        // @ts-ignore
+        accu[key] = true;
+        return accu;
+      }, {});
+      setRowSelection(stringified);
+      if (largefiles.length) {
+        setshowConfirmationModal(true);
+        handleGenerateGraph(false, []);
+      } else {
+        handleGenerateGraph(true, filesData);
+      }
+    }
+  };
+
   return (
     <>
       {alertDetails.showAlert && (
@@ -450,69 +492,13 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
           justifyContent='space-between'
           flexDirection='row'
         >
-          <LlmDropdown onSelect={handleDropdownChange} isDisabled={dropdowncheck} />
+          <LlmDropdown onSelect={handleDropdownChange} />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <ButtonWithToolTip
               text={tooltips.generateGraph}
               placement='top'
               label='generate graph'
-              onClick={() => {
-                if (selectedRows.length) {
-                  let selectedLargeFiles: CustomFile[] = [];
-                  selectedRows.forEach((f) => {
-                    const parsedData: CustomFile = JSON.parse(f);
-                    if (parsedData.fileSource === 'local file') {
-                      if (
-                        typeof parsedData.total_pages === 'number' &&
-                        parsedData.status === 'New' &&
-                        parsedData.total_pages > 20
-                      ) {
-                        selectedLargeFiles.push(parsedData);
-                      }
-                    } else if (parsedData.fileSource === 's3 bucket' || parsedData.fileSource === 'gcs bucket') {
-                      // @ts-ignore
-                      if (parsedData.size > chunkSize) {
-                        selectedLargeFiles.push(parsedData);
-                      }
-                    }
-                  });
-                  // @ts-ignore
-                  if (selectedLargeFiles.length) {
-                    setshowConfirmationModal(true);
-                    handleGenerateGraph(false, []);
-                  } else {
-                    handleGenerateGraph(true, filesData);
-                  }
-                } else if (filesData.length) {
-                  const largefiles = filesData.filter((f) => {
-                    if (f.fileSource === 'local file') {
-                      if (typeof f.total_pages === 'number' && f.status === 'New' && f.total_pages > 20) {
-                        return true;
-                      }
-                    } else if (f.fileSource === 's3 bucket' || f.fileSource === 'gcs bucket') {
-                      // @ts-ignore
-                      if (f.size > chunkSize) {
-                        return true;
-                      }
-                    }
-                    return false;
-                  });
-                  const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
-                  const stringified = selectAllNewFiles.reduce((accu, f) => {
-                    const key = JSON.stringify(f);
-                    // @ts-ignore
-                    accu[key] = true;
-                    return accu;
-                  }, {});
-                  setRowSelection(stringified);
-                  if (largefiles.length) {
-                    setshowConfirmationModal(true);
-                    handleGenerateGraph(false, []);
-                  } else {
-                    handleGenerateGraph(true, filesData);
-                  }
-                }
-              }}
+              onClick={onClickHandler}
               disabled={disableCheck}
               className='mr-0.5'
             >
