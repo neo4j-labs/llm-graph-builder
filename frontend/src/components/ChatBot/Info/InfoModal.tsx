@@ -31,12 +31,20 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
   };
   useEffect(() => {
     setLoading(true);
-    chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids.join(','))
+    chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids.map((c) => c.id).join(','))
       .then((response) => {
         setInfoEntities(response.data.data.nodes);
         setNodes(response.data.data.nodes);
         setRelationships(response.data.data.relationships);
-        setChunks(response.data.data.chunk_data);
+        const chunks=response.data.data.chunk_data.map((chunk:any)=>{
+          const chunkScore=chunk_ids.find((chunkdetail)=>chunkdetail.id===chunk.id)
+          return {
+            ...chunk,
+            score:chunkScore?.score
+          }
+        })
+        const sortedchunks=chunks.sort((a:any,b:any)=>a.score-b.score)
+        setChunks(sortedchunks);
         setLoading(false);
       })
       .catch((error) => {
@@ -103,57 +111,48 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
         {activeTab === 0 ? (
           sources.length > 0 ? (
             <ul className='list-class list-none'>
-              {sources.map((link, index) => (
-                <li key={index} className='flex flex-row inline-block justify-between items-center p-2'>
-                  {link?.source_name.startsWith('http') || link?.source_name.startsWith('https') ? (
+              {sources.map((link, index) => {
+                console.log({link})
+                return (<li key={index} className='flex flex-row inline-block justify-between items-center p-2'>
+                  {link?.startsWith('http') || link?.startsWith('https') ? (
                     <>
-                      {link?.source_name.includes('wikipedia.org') && (
+                      {link?.includes('wikipedia.org') && (
                         <div className='flex flex-row inline-block justify-between items-center'>
                           <img src={wikipedialogo} width={20} height={20} className='mr-2' alt='Wikipedia Logo' />
-                          <Typography
-                            variant='body-medium'
-                            className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
-                          >
-                            {link?.source_name}
-                          </Typography>
+                          <TextLink href={link} externalLink={true}>
+                            <HoverableLink url={link}>
+                              <Typography
+                                variant='body-medium'
+                                className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                              >
+                                {link}
+                              </Typography>
+                            </HoverableLink>
+                          </TextLink>
                         </div>
                       )}
-                      {link?.source_name.includes('storage.googleapis.com') && (
+                      {link?.includes('storage.googleapis.com') && (
                         <div className='flex flex-row inline-block justify-between items-center'>
                           <img src={gcslogo} width={20} height={20} className='mr-2' alt='Google Cloud Storage Logo' />
                           <Typography
                             variant='body-medium'
                             className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
                           >
-                            {decodeURIComponent(link?.source_name).split('/').at(-1)?.split('?')[0] ?? 'GCS File'}
+                            {decodeURIComponent(link).split('/').at(-1)?.split('?')[0] ?? 'GCS File'}
                           </Typography>
                         </div>
                       )}
-                      {link.source_name.startsWith('s3://') && (
+                      {link.startsWith('s3://') && (
                         <div className='flex flex-row inline-block justify-between items-center'>
                           <img src={s3logo} width={20} height={20} className='mr-2' alt='S3 Logo' />
                           <Typography
                             variant='body-medium'
                             className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
                           >
-                            {decodeURIComponent(link?.source_name).split('/').at(-1) ?? 'S3 File'}
+                            {decodeURIComponent(link).split('/').at(-1) ?? 'S3 File'}
                           </Typography>
                         </div>
                       )}
-                      {!link.source_name.includes('wikipedia.org') &&
-                        !link.source_name.includes('storage.googleapis.com') &&
-                        !link.source_name.startsWith('s3://') && (
-                          <TextLink href={link?.source_name} externalLink={true}>
-                            <HoverableLink url={link?.source_name}>
-                              <Typography
-                                variant='body-medium'
-                                className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
-                              >
-                                {link.source_name}
-                              </Typography>
-                            </HoverableLink>
-                          </TextLink>
-                        )}
                     </>
                   ) : (
                     <div className='flex flex-row inline-block justify-between items-center'>
@@ -162,17 +161,18 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                         variant='body-medium'
                         className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
                       >
-                        {link?.source_name}
+                        {link}
                       </Typography>
-                      {link?.page_numbers && link?.page_numbers.length > 0 && (
+                      {chunks?.length > 0 && (
                         <Typography variant='body-small' className='italic'>
-                          - Page {link?.page_numbers.sort((a, b) => a - b).join(', ')}
+                          - Page {chunks.map((c)=>c.page_number as number).sort((a,b)=>a - b ).join(', ')}
                         </Typography>
                       )}
                     </div>
                   )}
                 </li>
-              ))}
+                )
+              })}
             </ul>
           ) : (
             <span className='h6 text-center'>No Sources Found</span>
