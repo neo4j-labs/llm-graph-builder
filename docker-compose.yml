@@ -24,6 +24,7 @@ services:
       - GCP_LOG_METRICS_ENABLED=${GCP_LOG_METRICS_ENABLED-False}
       - UPDATE_GRAPH_CHUNKS_PROCESSED=${UPDATE_GRAPH_CHUNKS_PROCESSED-20}
       - NUMBER_OF_CHUNKS_TO_COMBINE=${NUMBER_OF_CHUNKS_TO_COMBINE-6}
+      - GCS_FILE_CACHE=${GCS_FILE_CACHE-False}
     container_name: backend
     ports:
       - "8000:8000"
@@ -39,7 +40,7 @@ services:
       args:
         - BACKEND_API_URL=${BACKEND_API_URL-http://localhost:8000}
         - REACT_APP_SOURCES=${REACT_APP_SOURCES-local,youtube,wiki,s3}
-        - LLM_MODELS=${LLM_MODELS-Diffbot,OpenAI GPT 3.5,OpenAI GPT 4o}
+        - LLM_MODELS=${LLM_MODELS-diffbot,gpt-3.5,gpt-4o}
         - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID-""}
         - BLOOM_URL=${BLOOM_URL-https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true}
         - TIME_PER_CHUNK=${TIME_PER_CHUNK-4}
