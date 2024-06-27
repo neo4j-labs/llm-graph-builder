@@ -43,7 +43,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
             score:chunkScore?.score
           }
         })
-        const sortedchunks=chunks.sort((a:any,b:any)=>a.score-b.score)
+        const sortedchunks=chunks.sort((a:any,b:any)=>b.score-a.score)
         setChunks(sortedchunks);
         setLoading(false);
       })
