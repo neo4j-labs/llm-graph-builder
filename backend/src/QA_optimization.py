@@ -4,16 +4,15 @@ import os
 from datetime import datetime
 
 from dotenv import load_dotenv
-from langchain.chains import GraphCypherQAChain, RetrievalQA
+from langchain.chains.graph_qa.cypher import GraphCypherQAChain
+from langchain.chains.retrieval_qa.base import RetrievalQA
+
 from langchain.graphs import Neo4jGraph
 from langchain_community.chat_message_histories import Neo4jChatMessageHistory
 from langchain_community.vectorstores.neo4j_vector import Neo4jVector
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 load_dotenv()
-
-# openai_api_key = os.environ.get('OPENAI_API_KEY')
-# model_version='gpt-4-0125-preview'
 
 
 class ParallelComponent:

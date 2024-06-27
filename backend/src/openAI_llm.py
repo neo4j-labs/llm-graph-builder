@@ -1,10 +1,8 @@
 import concurrent.futures
 import logging
-import os
 from concurrent.futures import ThreadPoolExecutor
 
 from dotenv import load_dotenv
-from langchain_community.graphs import Neo4jGraph
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 
 from src.shared.common_fn import get_combined_chunks, get_llm

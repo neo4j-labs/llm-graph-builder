@@ -6,16 +6,17 @@ from datetime import datetime
 from typing import Any
 
 from dotenv import load_dotenv
-from langchain.chains import (GraphCypherQAChain, RetrievalQA,
-                              RetrievalQAWithSourcesChain)
+from langchain.chains.qa_with_sources.retrieval import RetrievalQAWithSourcesChain
+from langchain.chains.graph_qa.cypher import GraphCypherQAChain
+from langchain.chains.retrieval_qa.base import RetrievalQA
 from langchain.graphs import Neo4jGraph
 from langchain_community.chat_message_histories import Neo4jChatMessageHistory
 from langchain_community.embeddings.sentence_transformer import \
     SentenceTransformerEmbeddings
 from langchain_community.vectorstores.neo4j_vector import Neo4jVector
 from langchain_google_vertexai import (ChatVertexAI, HarmBlockThreshold,
-                                       HarmCategory, VertexAIEmbeddings)
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+                                       HarmCategory)
+from langchain_openai import ChatOpenAI
 
 from src.shared.common_fn import load_embedding_model
 
