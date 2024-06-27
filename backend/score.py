@@ -239,30 +239,29 @@ async def get_source_list(uri:str, userName:str, password:str, database:str=None
         return create_api_response(job_status, message=message, error=error_message)
 
 @app.post("/post_processing")
-async def post_processing(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), task=Form(None)):
+async def post_processing(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), tasks=Form(None)):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
-        
-        if task == "update_similarity_graph":
+        tasks_names = set(map(str.strip, json.loads(tasks)))
+
+        if "update_similarity_graph" in tasks_names:
             await asyncio.to_thread(update_graph, graph)
             josn_obj = {'api_name': 'post_processing/update_similarity_graph', 'db_url': uri}
             logger.log_struct(josn_obj)
-            message = 'Updated KNN Graph'
-        elif task == "create_fulltext_index":
+            logging.info(f'Updated KNN Graph')
+        if "create_fulltext_index" in tasks_names:
             await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database)
             josn_obj = {'api_name': 'post_processing/create_fulltext_index', 'db_url': uri}
             logger.log_struct(josn_obj)
-            message = 'Full Text index created'
-        else:
-            raise ValueError("Invalid task specified")
+            logging.info(f'Full Text index created')
 
-        return create_api_response('Success', message=message)
+        return create_api_response('Success', message='All tasks completed successfully')
     
     except Exception as e:
         job_status = "Failed"
         error_message = str(e)
-        message = f"Unable to complete task: {task}"
-        logging.exception(f'Exception in post_processing/{task} :{error_message}')
+        message = f"Unable to complete tasks"
+        logging.exception(f'Exception in post_processing tasks: {error_message}')
         return create_api_response(job_status, message=message, error=error_message)
     
     finally:
