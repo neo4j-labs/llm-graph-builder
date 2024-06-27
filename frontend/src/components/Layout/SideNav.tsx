@@ -10,11 +10,11 @@ import {
 } from '@neo4j-ndl/react/icons';
 import {} from '@neo4j-ndl/react/icons';
 import { SideNavProps } from '../../types';
-import Chatbot from '../Chatbot';
+import Chatbot from '../ChatBot/Chatbot';
 import { createPortal } from 'react-dom';
 import { useMessageContext } from '../../context/UserMessages';
 import { getIsLoading } from '../../utils/Utils';
-import IconsPlacement from '../IconsPlacement';
+import IconsPlacement from '../ChatBot/IconsPlacement';
 import { tooltips } from '../../utils/Constants';
 
 const SideNav: React.FC<SideNavProps> = ({
