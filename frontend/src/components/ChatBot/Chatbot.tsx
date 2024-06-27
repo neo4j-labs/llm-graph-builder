@@ -25,7 +25,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
-  const { model } = useFileContext();
+  const { model, chatMode } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
@@ -142,7 +142,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
     try {
       setInputMessage('');
       simulateTypingEffect({ reply: ' ' });
-      const chatbotAPI = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
+      const chatbotAPI = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model, chatMode);
       const chatresponse = chatbotAPI?.response;
       console.log('api', chatresponse);
       chatbotReply = chatresponse?.data?.data?.message;

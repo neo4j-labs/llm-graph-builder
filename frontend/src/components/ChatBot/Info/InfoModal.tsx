@@ -36,14 +36,14 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
         setInfoEntities(response.data.data.nodes);
         setNodes(response.data.data.nodes);
         setRelationships(response.data.data.relationships);
-        const chunks=response.data.data.chunk_data.map((chunk:any)=>{
-          const chunkScore=chunk_ids.find((chunkdetail)=>chunkdetail.id===chunk.id)
+        const chunks = response.data.data.chunk_data.map((chunk: any) => {
+          const chunkScore = chunk_ids.find((chunkdetail) => chunkdetail.id === chunk.id);
           return {
             ...chunk,
-            score:chunkScore?.score
-          }
-        })
-        const sortedchunks=chunks.sort((a:any,b:any)=>b.score-a.score)
+            score: chunkScore?.score,
+          };
+        });
+        const sortedchunks = chunks.sort((a: any, b: any) => b.score - a.score);
         setChunks(sortedchunks);
         setLoading(false);
       })
@@ -112,66 +112,77 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
           sources.length > 0 ? (
             <ul className='list-class list-none'>
               {sources.map((link, index) => {
-                console.log({link})
-                return (<li key={index} className='flex flex-row inline-block justify-between items-center p-2'>
-                  {link?.startsWith('http') || link?.startsWith('https') ? (
-                    <>
-                      {link?.includes('wikipedia.org') && (
-                        <div className='flex flex-row inline-block justify-between items-center'>
-                          <img src={wikipedialogo} width={20} height={20} className='mr-2' alt='Wikipedia Logo' />
-                          <TextLink href={link} externalLink={true}>
-                            <HoverableLink url={link}>
-                              <Typography
-                                variant='body-medium'
-                                className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
-                              >
-                                {link}
-                              </Typography>
-                            </HoverableLink>
-                          </TextLink>
-                        </div>
-                      )}
-                      {link?.includes('storage.googleapis.com') && (
-                        <div className='flex flex-row inline-block justify-between items-center'>
-                          <img src={gcslogo} width={20} height={20} className='mr-2' alt='Google Cloud Storage Logo' />
-                          <Typography
-                            variant='body-medium'
-                            className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
-                          >
-                            {decodeURIComponent(link).split('/').at(-1)?.split('?')[0] ?? 'GCS File'}
-                          </Typography>
-                        </div>
-                      )}
-                      {link.startsWith('s3://') && (
-                        <div className='flex flex-row inline-block justify-between items-center'>
-                          <img src={s3logo} width={20} height={20} className='mr-2' alt='S3 Logo' />
-                          <Typography
-                            variant='body-medium'
-                            className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
-                          >
-                            {decodeURIComponent(link).split('/').at(-1) ?? 'S3 File'}
-                          </Typography>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className='flex flex-row inline-block justify-between items-center'>
-                      <DocumentTextIconOutline className='n-size-token-7 mr-2' />
-                      <Typography
-                        variant='body-medium'
-                        className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
-                      >
-                        {link}
-                      </Typography>
-                      {chunks?.length > 0 && (
-                        <Typography variant='body-small' className='italic'>
-                          - Page {chunks.map((c)=>c.page_number as number).sort((a,b)=>a - b ).join(', ')}
+                console.log({ link });
+                return (
+                  <li key={index} className='flex flex-row inline-block justify-between items-center p-2'>
+                    {link?.startsWith('http') || link?.startsWith('https') ? (
+                      <>
+                        {link?.includes('wikipedia.org') && (
+                          <div className='flex flex-row inline-block justify-between items-center'>
+                            <img src={wikipedialogo} width={20} height={20} className='mr-2' alt='Wikipedia Logo' />
+                            <TextLink href={link} externalLink={true}>
+                              <HoverableLink url={link}>
+                                <Typography
+                                  variant='body-medium'
+                                  className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                                >
+                                  {link}
+                                </Typography>
+                              </HoverableLink>
+                            </TextLink>
+                          </div>
+                        )}
+                        {link?.includes('storage.googleapis.com') && (
+                          <div className='flex flex-row inline-block justify-between items-center'>
+                            <img
+                              src={gcslogo}
+                              width={20}
+                              height={20}
+                              className='mr-2'
+                              alt='Google Cloud Storage Logo'
+                            />
+                            <Typography
+                              variant='body-medium'
+                              className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                            >
+                              {decodeURIComponent(link).split('/').at(-1)?.split('?')[0] ?? 'GCS File'}
+                            </Typography>
+                          </div>
+                        )}
+                        {link.startsWith('s3://') && (
+                          <div className='flex flex-row inline-block justify-between items-center'>
+                            <img src={s3logo} width={20} height={20} className='mr-2' alt='S3 Logo' />
+                            <Typography
+                              variant='body-medium'
+                              className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                            >
+                              {decodeURIComponent(link).split('/').at(-1) ?? 'S3 File'}
+                            </Typography>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className='flex flex-row inline-block justify-between items-center'>
+                        <DocumentTextIconOutline className='n-size-token-7 mr-2' />
+                        <Typography
+                          variant='body-medium'
+                          className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                        >
+                          {link}
                         </Typography>
-                      )}
-                    </div>
-                  )}
-                </li>
-                )
+                        {chunks?.length > 0 && (
+                          <Typography variant='body-small' className='italic'>
+                            - Page{' '}
+                            {chunks
+                              .map((c) => c.page_number as number)
+                              .sort((a, b) => a - b)
+                              .join(', ')}
+                          </Typography>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                );
               })}
             </ul>
           ) : (
@@ -237,17 +248,23 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                   ) : chunk?.url && chunk?.url.includes('wikipedia.org') ? (
                     <div className='flex flex-row inline-block justiy-between items-center'>
                       <img src={wikipedialogo} width={20} height={20} className='mr-2' />
-                      <Typography variant='subheading-medium'>{chunk?.fileName} Similarity Score: {chunk?.score}</Typography>
+                      <Typography variant='subheading-medium'>
+                        {chunk?.fileName} Similarity Score: {chunk?.score}
+                      </Typography>
                     </div>
                   ) : chunk?.url && chunk?.url.includes('storage.googleapis.com') ? (
                     <div className='flex flex-row inline-block justiy-between items-center'>
                       <img src={gcslogo} width={20} height={20} className='mr-2' />
-                      <Typography variant='subheading-medium'>{chunk?.fileName} Similarity Score: {chunk?.score}</Typography>
+                      <Typography variant='subheading-medium'>
+                        {chunk?.fileName} Similarity Score: {chunk?.score}
+                      </Typography>
                     </div>
                   ) : chunk?.url && chunk?.url.startsWith('s3://') ? (
                     <div className='flex flex-row inline-block justiy-between items-center'>
                       <img src={s3logo} width={20} height={20} className='mr-2' />
-                      <Typography variant='subheading-medium'>{chunk?.fileName} Similarity Score: {chunk?.score}</Typography>
+                      <Typography variant='subheading-medium'>
+                        {chunk?.fileName} Similarity Score: {chunk?.score}
+                      </Typography>
                     </div>
                   ) : (
                     <></>

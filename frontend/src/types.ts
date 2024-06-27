@@ -23,7 +23,6 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   language?: string;
   processingProgress?: number;
   access_token?: string;
-  chatMode: string;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
@@ -205,9 +204,9 @@ export interface Source {
   start_time?: string;
 }
 export interface chunk {
-  id:string,
-  score:number
-  }
+  id: string;
+  score: number;
+}
 export interface Messages {
   id: number;
   message: string;
@@ -452,7 +451,7 @@ export interface Chunk {
   content_offset?: string;
   url?: string;
   fileSource: string;
-  score?:string
+  score?: string;
 }
 
 export interface SpeechSynthesisProps {

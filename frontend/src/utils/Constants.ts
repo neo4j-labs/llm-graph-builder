@@ -139,4 +139,5 @@ export const buttonCaptions = {
 export const ChatModeOptions = [
   { Icon: VisualizeBloomIcon, value: 'graph' },
   { Icon: DbmsIcon, value: 'vector' },
+  { Icon: '', value: 'graph+vector' },
 ];
