@@ -9,14 +9,26 @@ MODEL_VERSIONS = {
          }
 OPENAI_MODELS = ["gpt-3.5", "gpt-4o"]
 GEMINI_MODELS = ["gemini-1.0-pro", "gemini-1.5-pro"]
-CHAT_MAX_TOKENS = 1000
-CHAT_SEARCH_KWARG_K = 5
-CHAT_SEARCH_KWARG_SCORE_THRESHOLD = 0.7
 GROQ_MODELS = ["groq-llama3"]
 BUCKET_UPLOAD = 'llm-graph-builder-upload'
 PROJECT_ID = 'llm-experiments-387609' 
 
 
+## CHAT SETUP
+CHAT_MAX_TOKENS = 1000
+CHAT_SEARCH_KWARG_K = 5
+CHAT_SEARCH_KWARG_SCORE_THRESHOLD = 0.7
+CHAT_DOC_SPLIT_SIZE = 3000
+CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD = 0.15
+CHAT_TOKEN_CUT_OFF = {
+     "gpt-3.5": 5,
+     "gemini-1.0-pro": 5,
+     "gemini-1.5-pro": 10,
+     "gpt-4": 10,
+     "diffbot" : 10,
+     "gpt-4o": 10,
+     "groq-llama3" : 5
+}
 ### CHAT TEMPLATES 
 CHAT_SYSTEM_TEMPLATE = """
 You are an AI-powered question-answering agent. Your task is to provide accurate and comprehensive responses to user queries based on the given context, chat history, and available resources.
