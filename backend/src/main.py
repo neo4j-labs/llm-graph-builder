@@ -367,7 +367,7 @@ def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
     file_name, pages, file_extension = get_documents_from_file_by_path(
         merged_file_path, file_name
     )
-    pdf_total_pages = pages[0].metadata["total_pages"]
+    pdf_total_pages = len(pages)
     file_size = os.path.getsize(merged_file_path)
     return pdf_total_pages, file_size
 

@@ -4,24 +4,18 @@ import json
 import os
 import time
 from datetime import datetime
-from typing import List, Mapping
 
-import google_auth_oauthlib.flow
 import uvicorn
 from fastapi import Body, FastAPI, File, Form, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi_health import health
-from google.cloud import logging as gclogger
 from google.oauth2.credentials import Credentials
-from langchain_google_vertexai import ChatVertexAI
 from langserve import add_routes
 from sse_starlette.sse import EventSourceResponse
 from starlette.middleware.sessions import SessionMiddleware
 
 from src.api_response import create_api_response
 from src.chunkid_entities import get_entities_from_chunkids
-from src.entities.user_credential import user_credential
 from src.graph_query import get_graph_results
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.logger import CustomLogger
@@ -63,8 +57,6 @@ is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "False").lower() in (
     "1",
     "yes",
 )
-if is_gemini_enabled:
-    add_routes(app, ChatVertexAI(), path="/vertexai")
 
 app.add_api_route("/health", health([healthy_condition, healthy]))
 

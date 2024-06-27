@@ -2,11 +2,8 @@ import logging
 import shutil
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-
-# from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.document_loaders import (PyMuPDFLoader,
-                                                  UnstructuredFileLoader, UnstructuredExcelLoader)
 from langchain_core.documents import Document
+import pandas as pd
 
 # def get_documents_from_file_by_bytes(file):
 #     file_name = file.filename
@@ -20,26 +17,20 @@ from langchain_core.documents import Document
 #     return file_name, pages
 
 
-def load_document_content(file_path):
-    file_path = "C:/Users/abhinav.m/Desktop/abhi/code/Python/Graph/llm-graph-builder/backend/merged_files/Ipsen Insights.xlsx"
-    print("Excel loader")
-    return UnstructuredExcelLoader(file_path)
-
-
 def get_documents_from_file_by_path(file_path, file_name):
     file_path = Path(file_path)
     if file_path.exists():
-        logging.info(f"file {file_name} processing")
-        # loader = PyPDFLoader(str(file_path))
+        logging.info(f"file {file_name} processing at {file_path}")
+
         file_extension = file_path.suffix.lower()
         try:
-            loader = load_document_content(file_path)
-            if file_extension == ".pdf":
-                pages = loader.load()
-            else:
-                unstructured_pages = loader.load()
-                pages = get_pages_with_page_numbers(unstructured_pages)
+            df = pd.read_excel(file_path)
+            insights, insightIDs = df["Insight"], df["InsightID"]
+            pages = [Document(page_content=insight, metadata={"insightID": insightID}) for insight, insightID in zip(insights, insightIDs)]
+            logging.warn(f"{len(pages)=}")
+            
         except Exception as e:
+            logging.info("THERE")
             raise Exception("Error while reading the file content or metadata")
     else:
         logging.info(f"File {file_name} does not exist")
