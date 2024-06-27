@@ -242,14 +242,14 @@ async def get_source_list(uri:str, userName:str, password:str, database:str=None
 async def post_processing(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), tasks=Form(None)):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
-        tasks_names = set(map(str.strip, json.loads(tasks)))
+        tasks = set(map(str.strip, json.loads(tasks)))
 
-        if "update_similarity_graph" in tasks_names:
+        if "update_similarity_graph" in tasks:
             await asyncio.to_thread(update_graph, graph)
             josn_obj = {'api_name': 'post_processing/update_similarity_graph', 'db_url': uri}
             logger.log_struct(josn_obj)
             logging.info(f'Updated KNN Graph')
-        if "create_fulltext_index" in tasks_names:
+        if "create_fulltext_index" in tasks:
             await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database)
             josn_obj = {'api_name': 'post_processing/create_fulltext_index', 'db_url': uri}
             logger.log_struct(josn_obj)
@@ -297,7 +297,7 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
 @app.post("/chunk_entities")
 async def chunk_entities(uri=Form(None),userName=Form(None), password=Form(None), chunk_ids=Form(None)):
     try:
-        logging.info(f"URI: {uri}, Username: {userName},password:{password}, chunk_ids: {chunk_ids}")
+        logging.info(f"URI: {uri}, Username: {userName}, chunk_ids: {chunk_ids}")
         result = await asyncio.to_thread(get_entities_from_chunkids,uri=uri, username=userName, password=password, chunk_ids=chunk_ids)
         josn_obj = {'api_name':'chunk_entities','db_url':uri}
         logger.log_struct(josn_obj)
