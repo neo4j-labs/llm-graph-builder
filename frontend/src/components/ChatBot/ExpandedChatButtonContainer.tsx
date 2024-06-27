@@ -1,6 +1,6 @@
 import { TrashIconOutline, XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import ChatModeToggle from './ChatModeToggle';
-import { Flex, IconButton } from '@neo4j-ndl/react';
+import { Box, IconButton } from '@neo4j-ndl/react';
 import { Messages } from '../../types';
 import IconButtonWithToolTip from '../UI/IconButtonToolTip';
 import { tooltips } from '../../utils/Constants';
@@ -11,18 +11,18 @@ interface IconProps {
   messages: Messages[];
 }
 
-const IconsPlacement: React.FC<IconProps> = ({ closeChatBot, deleteOnClick, messages }) => {
+const ExpandedChatButtonContainer: React.FC<IconProps> = ({ closeChatBot, deleteOnClick, messages }) => {
   return (
     <div className='flex items-end justify-end'>
       <ChatModeToggle />
-      <Flex flexDirection='row' gap='2'>
+      <Box borderRadius='sm' className='!h-[48px] n-border n-border-palette-primary-border-strong mx-2'>
         <IconButtonWithToolTip
           text={tooltips.clearChat}
           aria-label='Remove chat history'
           clean
           onClick={deleteOnClick}
           disabled={messages.length === 1}
-          placement='left'
+          placement='bottom'
           label={tooltips.clearChat}
         >
           <TrashIconOutline />
@@ -30,9 +30,9 @@ const IconsPlacement: React.FC<IconProps> = ({ closeChatBot, deleteOnClick, mess
         <IconButton aria-label='Remove chatbot' clean onClick={closeChatBot}>
           <XMarkIconOutline />
         </IconButton>
-      </Flex>
+      </Box>
     </div>
   );
 };
 
-export default IconsPlacement;
+export default ExpandedChatButtonContainer;
