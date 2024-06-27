@@ -220,41 +220,35 @@ async def get_source_list(uri:str, userName:str, password:str, database:str=None
         logging.exception(f'Exception:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
 
-@app.post("/update_similarity_graph")
-async def update_similarity_graph(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
-    """
-    Calls 'update_graph' which post the query to update the similiar nodes in the graph
-    """
+@app.post("/post_processing")
+async def post_processing(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), task=Form(None)):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
-        await asyncio.to_thread(update_graph, graph)
         
-        josn_obj = {'api_name':'update_similarity_graph','db_url':uri}
-        logger.log_struct(josn_obj)
-        return create_api_response('Success',message='Updated KNN Graph')
-    except Exception as e:
-        job_status = "Failed"
-        message="Unable to update KNN Graph"
-        error_message = str(e)
-        logging.exception(f'Exception in update KNN graph:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
-    finally:
-            close_db_connection(graph, 'update_similarity_graph')
+        if task == "update_similarity_graph":
+            await asyncio.to_thread(update_graph, graph)
+            josn_obj = {'api_name': 'post_processing/update_similarity_graph', 'db_url': uri}
+            logger.log_struct(josn_obj)
+            message = 'Updated KNN Graph'
+        elif task == "create_fulltext_index":
+            await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database)
+            josn_obj = {'api_name': 'post_processing/create_fulltext_index', 'db_url': uri}
+            logger.log_struct(josn_obj)
+            message = 'Full Text index created'
+        else:
+            raise ValueError("Invalid task specified")
 
-@app.post("/post_processing/create_fulltext_index")
-async def create_fulltext_index(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
-    try:
-        await asyncio.to_thread(create_fulltext,uri=uri, username=userName, password=password, database=database)
-        
-        josn_obj = {'api_name':'post_processing/create_fulltext_index','db_url':uri}
-        logger.log_struct(josn_obj)
-        return create_api_response('Success',message='Full Text index created')
+        return create_api_response('Success', message=message)
+    
     except Exception as e:
         job_status = "Failed"
-        message="Unable to create full text index"
         error_message = str(e)
-        logging.exception(f'Exception in post_processing/create_fulltext_index :{error_message}')
+        message = f"Unable to complete task: {task}"
+        logging.exception(f'Exception in post_processing/{task} :{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
+    
+    finally:
+        close_db_connection(graph, 'post_processing')
                 
 @app.post("/chat_bot")
 async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password=Form(None), database=Form(None),question=Form(None), session_id=Form(None)):
