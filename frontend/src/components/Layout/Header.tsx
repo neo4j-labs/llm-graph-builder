@@ -7,10 +7,12 @@ import {
   Cog8ToothIconOutline,
   InformationCircleIconOutline,
 } from '@neo4j-ndl/react/icons';
-import { StatusIndicator, Typography } from '@neo4j-ndl/react';
+import {Typography } from '@neo4j-ndl/react';
 import { useCallback } from 'react';
 import IconButtonWithToolTip from '../IconButtonToolTip';
 import { tooltips } from '../../utils/Constants';
+import { useFileContext } from '../../context/UsersFiles';
+import { Badge } from '@mui/material';
 
 export default function Header({
   themeMode,
@@ -25,7 +27,7 @@ export default function Header({
     window.open(url, '_blank');
   }, []);
 
-  const isSchema = localStorage.getItem('isSchema');
+  const { isSchema } = useFileContext();
 
   return (
     <div
@@ -91,8 +93,7 @@ export default function Header({
                   </span>
                 )}
               </IconButtonWithToolTip>
-              <div className='flex items-center'>
-
+              <Badge color={isSchema ? 'success' : 'error'} overlap='circular' badgeContent=' ' variant='dot'>
                 <IconButtonWithToolTip
                   label={tooltips.settings}
                   text={tooltips.settings}
@@ -103,17 +104,7 @@ export default function Header({
                 >
                   <Cog8ToothIconOutline />
                 </IconButtonWithToolTip>
-                <StatusIndicator style={{ marginLeft: '-8px' }} type={isSchema ? 'success' : 'danger'} />
-              </div>
-              {/* <Avatar
-                hasStatus
-                size='large'
-                source={Setting}
-                status={isSchema ? 'online' : 'offline'}
-                type='image'
-                onClick={openSettingsModal}
-                label={tooltips.settings}
-              /> */}
+              </Badge>
             </div>
           </div>
         </section>

@@ -21,7 +21,13 @@ import ButtonWithToolTip from './ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 import SettingModalHOC from '../HOC/SettingModalHOC';
 
-const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, openTextSchema }) => {
+const Content: React.FC<ContentProps> = ({
+  isLeftExpanded,
+  isRightExpanded,
+  openTextSchema,
+  isSchema,
+  setIsSchema,
+}) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
@@ -54,7 +60,6 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
     alertType: 'error',
     alertMessage: '',
   });
-  const [isSchema, setIsSchema] = useState<boolean>(false);
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
       setalertDetails({
@@ -261,8 +266,9 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -272,10 +278,10 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
     isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
       : isRightExpanded
-        ? 'contentWithChatBot'
-        : !isLeftExpanded && !isRightExpanded
-          ? 'w-[calc(100%-128px)]'
-          : 'contentWithDropzoneExpansion';
+      ? 'contentWithChatBot'
+      : !isLeftExpanded && !isRightExpanded
+      ? 'w-[calc(100%-128px)]'
+      : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -382,9 +388,9 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
   useEffect(() => {
     const storedSchema = localStorage.getItem('isSchema');
     if (storedSchema !== null) {
-      setIsSchema(JSON.parse(storedSchema))
+      setIsSchema(JSON.parse(storedSchema));
     }
-  }, [])
+  }, []);
 
   const handleContinue = () => {
     if (!isLargeFile) {
@@ -401,12 +407,12 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
       alertType: 'success',
       alertMessage: 'Schema is set successfully',
     });
-    localStorage.setItem('isSchema', JSON.stringify(true))
-  }
+    localStorage.setItem('isSchema', JSON.stringify(true));
+  };
 
   const onClickGenerate = () => {
     if (isSchema) {
-      setshowSettingModal(true); if (!isLargeFile) {
+      if (!isLargeFile) {
         handleGenerateGraph(true, filesData);
         setshowSettingModal(false);
       } else {
@@ -414,50 +420,47 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
         setshowConfirmationModal(true);
         handleGenerateGraph(false, []);
       }
-    }
-
-    if (selectedRows.length) {
-      let selectedLargeFiles: CustomFile[] = [];
-      selectedRows.forEach((f) => {
-        const parsedData: CustomFile = JSON.parse(f);
-        if (parsedData.fileSource === 'local file') {
-          if (
-            typeof parsedData.size === 'number' &&
-            parsedData.status === 'New' &&
-            parsedData.size > largeFileSize
-          ) {
-            selectedLargeFiles.push(parsedData);
+    } else {
+      setshowSettingModal(true);
+      if (selectedRows.length) {
+        let selectedLargeFiles: CustomFile[] = [];
+        selectedRows.forEach((f) => {
+          const parsedData: CustomFile = JSON.parse(f);
+          if (parsedData.fileSource === 'local file') {
+            if (typeof parsedData.size === 'number' && parsedData.status === 'New' && parsedData.size > largeFileSize) {
+              selectedLargeFiles.push(parsedData);
+            }
           }
-        }
-      });
-      // @ts-ignore
-      if (selectedLargeFiles.length) {
-        setisLargeFile(true);
-      } else {
-        setisLargeFile(false);
-      }
-    } else if (filesData.length) {
-      const largefiles = filesData.filter((f) => {
-        if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
-          return true;
-        }
-        return false;
-      });
-      const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
-      const stringified = selectAllNewFiles.reduce((accu, f) => {
-        const key = JSON.stringify(f);
+        });
         // @ts-ignore
-        accu[key] = true;
-        return accu;
-      }, {});
-      setRowSelection(stringified);
-      if (largefiles.length) {
-        setisLargeFile(true);
-      } else {
-        setisLargeFile(false);
+        if (selectedLargeFiles.length) {
+          setisLargeFile(true);
+        } else {
+          setisLargeFile(false);
+        }
+      } else if (filesData.length) {
+        const largefiles = filesData.filter((f) => {
+          if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
+            return true;
+          }
+          return false;
+        });
+        const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
+        const stringified = selectAllNewFiles.reduce((accu, f) => {
+          const key = JSON.stringify(f);
+          // @ts-ignore
+          accu[key] = true;
+          return accu;
+        }, {});
+        setRowSelection(stringified);
+        if (largefiles.length) {
+          setisLargeFile(true);
+        } else {
+          setisLargeFile(false);
+        }
       }
     }
-  }
+  };
 
   return (
     <>
@@ -496,7 +499,15 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
         ></DeletePopUp>
       )}
       {showSettingnModal && (
-        <SettingModalHOC settingView='content' onClose={() => setshowSettingModal(false)} onContinue={handleContinue} open={showSettingnModal} openTextSchema={openTextSchema} isSchema={isSchema} />
+        <SettingModalHOC
+          settingView='contentView'
+          onClose={() => setshowSettingModal(false)}
+          onContinue={handleContinue}
+          open={showSettingnModal}
+          openTextSchema={openTextSchema}
+          isSchema={isSchema}
+          setIsSchema={setIsSchema}
+        />
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>
@@ -538,8 +549,9 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded, open
           }}
         ></FileTable>
         <Flex
-          className={`${!isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-            } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+          className={`${
+            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection='row'
         >

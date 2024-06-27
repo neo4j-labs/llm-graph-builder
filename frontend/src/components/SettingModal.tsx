@@ -7,13 +7,23 @@ import { useCredentials } from '../context/UserCredentials';
 import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
 import schemaExamples from '../assets/schemas.json';
 import ButtonWithToolTip from './ButtonWithToolTip';
-import { tooltips } from '../utils/Constants';
+import { buttonCaptions, tooltips } from '../utils/Constants';
+import { useAlertContext } from '../context/Alert';
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, openTextSchema, onContinue }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({
+  open,
+  onClose,
+  openTextSchema,
+  onContinue,
+  settingView,
+  setIsSchema,
+  isSchema,
+}) => {
   const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels, selectedSchemas, setSelectedSchemas } =
     useFileContext();
   const { userCredentials } = useCredentials();
   const [loading, setLoading] = useState<boolean>(false);
+
   const removeNodesAndRels = (nodelabels: string[], relationshipTypes: string[]) => {
     const labelsToRemoveSet = new Set(nodelabels);
     const relationshipLabelsToremoveSet = new Set(relationshipTypes);
@@ -105,6 +115,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, openTextSc
   const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>([]);
   const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
   const [defaultExamples, setdefaultExamples] = useState<OptionType[]>([]);
+
+  const { showAlert } = useAlertContext();
+
   useEffect(() => {
     const parsedData = schemaExamples.reduce((accu: OptionTypeForExamples[], example) => {
       const examplevalues: OptionTypeForExamples = {
@@ -141,13 +154,27 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, openTextSc
       getOptions();
     }
   }, [userCredentials, open]);
+
   const clickHandler: MouseEventHandler<HTMLButtonElement> = useCallback(() => {
     setSelectedSchemas([]);
     setSelectedNodes(nodeLabelOptions);
     setSelectedRels(relationshipTypeOptions);
   }, [nodeLabelOptions, relationshipTypeOptions]);
 
-  const onContinueCLick = () => { if (onContinue) onContinue() }
+  const handleClear = () => {
+    setIsSchema(false);
+    setSelectedNodes([]);
+    setSelectedRels([]);
+    setSelectedSchemas([]);
+    localStorage.setItem('isSchema', JSON.stringify(false));
+    localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
+    localStorage.setItem(
+      'selectedRelationshipLabels',
+      JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] })
+    );
+    showAlert('info', `Successfully Removed the Schema settings`);
+    onClose();
+  };
 
   return (
     <Dialog size='medium' open={open} aria-labelledby='form-dialog-title' onClose={onClose}>
@@ -193,13 +220,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, openTextSc
           type='creatable'
         />
         <Dialog.Actions className='!mt-4 flex items-center'>
-          {/* <Checkbox
-            label='Set Schema for all Files'
-            onChange={(e) => {
-              setCheckAllFiles(e.target.checked);
-            }}
-            checked={checkAllFiles}
-          /> */}
           <ButtonWithToolTip
             loading={loading}
             text={
@@ -225,18 +245,30 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, openTextSc
           >
             Get Schema From Text
           </ButtonWithToolTip>
-          <ButtonWithToolTip
-            text={tooltips.continue}
-            placement='top'
-            onClick={onContinueCLick}
-            label='Continue to extract'
-          >
-            Continue
-          </ButtonWithToolTip>
+          {settingView === 'contentView' ? (
+            <ButtonWithToolTip
+              text={tooltips.continue}
+              placement='top'
+              onClick={onContinue}
+              label='Continue to extract'
+            >
+              {buttonCaptions.continueSettings}
+            </ButtonWithToolTip>
+          ) : (
+            <ButtonWithToolTip
+              text={tooltips.clearGraphSettings}
+              placement='top'
+              onClick={handleClear}
+              label='Clear Graph Settings'
+              disabled={!isSchema}
+            >
+              {buttonCaptions.clearSettings}
+            </ButtonWithToolTip>
+          )}
         </Dialog.Actions>
       </Dialog.Content>
     </Dialog>
   );
-}
+};
 
 export default SettingsModal;

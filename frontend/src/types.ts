@@ -151,6 +151,8 @@ export interface ContentProps {
   showChatBot: boolean;
   openChatBot: () => void;
   openTextSchema: () => void;
+  isSchema?: boolean;
+  setIsSchema: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface FileTableProps {
@@ -446,7 +448,8 @@ export interface SettingsModalProps {
   onClose: () => void;
   openTextSchema: () => void;
   onContinue?: () => void;
+  settingView: 'contentView' | 'headerView';
   isSchema?: boolean;
-  settingView?: string;
+  setIsSchema: Dispatch<SetStateAction<boolean>>;
+  onClear?: () => void;
 }
-
