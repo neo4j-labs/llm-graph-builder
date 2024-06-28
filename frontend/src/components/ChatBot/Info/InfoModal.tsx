@@ -165,9 +165,17 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                           <>
                             <div className='flex flex-row inline-block justiy-between items-center'>
                               <img src={youtubelogo} width={20} height={20} className='mr-2' />
-                              <TextLink externalLink href={link}>
-                                {link}
-                              </TextLink>
+                              <TextLink href={link} externalLink={true}>
+                              <HoverableLink url={link}>
+                                <Typography
+                                  variant='body-medium'
+                                  className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                                >
+                                  {link}
+                                </Typography>
+                              </HoverableLink>
+                            </TextLink>
+                   
                             </div>
                           </>
                         )}
