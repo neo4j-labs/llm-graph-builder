@@ -529,8 +529,7 @@ database= Neo4j database name
 
 The API provides a continuous update on the extraction status of a specified file. It uses Server-Sent Events (SSE) to stream updates to the client.
 
-**API Parameters**
-
+**API Parameters :**
 ...
 file_name=The name of the file whose extraction status is being tracked,
 uri=Neo4j uri, 
