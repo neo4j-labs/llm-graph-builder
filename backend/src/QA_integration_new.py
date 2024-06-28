@@ -291,7 +291,7 @@ def clear_chat_history(graph, session_id):
 def QA_RAG(graph, model, question, session_id):
     try:
         start_time = time.time()
-        model_version = MODEL_VERSIONS[model]
+        model_version = "gpt-3.5-turbo"
         llm = get_llm(model_version)
         retriever = get_neo4j_retriever(graph=graph)
         doc_retriever = create_document_retriever_chain(llm, retriever)

@@ -9,7 +9,6 @@ import uvicorn
 from fastapi import Body, FastAPI, File, Form, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_health import health
-from google.oauth2.credentials import Credentials
 from langserve import add_routes
 from sse_starlette.sse import EventSourceResponse
 from starlette.middleware.sessions import SessionMiddleware
@@ -18,13 +17,11 @@ from src.api_response import create_api_response
 from src.chunkid_entities import get_entities_from_chunkids
 from src.graph_query import get_graph_results
 from src.graphDB_dataAccess import graphDBdataAccess
-from src.logger import CustomLogger
 from src.main import *
 # from src.QA_integration import *
 from src.QA_integration_new import *
 from src.shared.common_fn import *
 
-logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
 
@@ -63,103 +60,6 @@ app.add_api_route("/health", health([healthy_condition, healthy]))
 app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
 
 
-@app.post("/url/scan")
-async def create_source_knowledge_graph_url(
-    request: Request,
-    uri=Form(None),
-    userName=Form(None),
-    password=Form(None),
-    source_url=Form(None),
-    database=Form(None),
-    aws_access_key_id=Form(None),
-    aws_secret_access_key=Form(None),
-    wiki_query=Form(None),
-    model=Form(None),
-    gcs_bucket_name=Form(None),
-    gcs_bucket_folder=Form(None),
-    source_type=Form(None),
-    gcs_project_id=Form(None),
-    access_token=Form(None),
-):
-
-    try:
-        if source_url is not None:
-            source = source_url
-        else:
-            source = wiki_query
-
-        graph = create_graph_database_connection(uri, userName, password, database)
-        if source_type == "s3 bucket" and aws_access_key_id and aws_secret_access_key:
-            lst_file_name, success_count, failed_count = await asyncio.to_thread(
-                create_source_node_graph_url_s3,
-                graph,
-                model,
-                source_url,
-                aws_access_key_id,
-                aws_secret_access_key,
-                source_type,
-            )
-        elif source_type == "gcs bucket":
-            lst_file_name, success_count, failed_count = (
-                create_source_node_graph_url_gcs(
-                    graph,
-                    model,
-                    gcs_project_id,
-                    gcs_bucket_name,
-                    gcs_bucket_folder,
-                    source_type,
-                    Credentials(access_token),
-                )
-            )
-        elif source_type == "youtube":
-            lst_file_name, success_count, failed_count = await asyncio.to_thread(
-                create_source_node_graph_url_youtube,
-                graph,
-                model,
-                source_url,
-                source_type,
-            )
-        elif source_type == "Wikipedia":
-            lst_file_name, success_count, failed_count = await asyncio.to_thread(
-                create_source_node_graph_url_wikipedia,
-                graph,
-                model,
-                wiki_query,
-                source_type,
-            )
-        else:
-            return create_api_response(
-                "Failed", message="source_type is other than accepted source"
-            )
-
-        message = f"Source Node created successfully for source type: {source_type} and source: {source}"
-        josn_obj = {
-            "api_name": "url_scan",
-            "db_url": uri,
-            "url_scanned_file": lst_file_name,
-        }
-        logger.log_struct(josn_obj)
-        return create_api_response(
-            "Success",
-            message=message,
-            success_count=success_count,
-            failed_count=failed_count,
-            file_name=lst_file_name,
-        )
-    except Exception as e:
-        error_message = str(e)
-        message = f" Unable to create source node for source type: {source_type} and source: {source}"
-        logging.exception(f"Exception Stack trace:")
-        return create_api_response(
-            "Failed",
-            message=message + error_message[:80],
-            error=error_message,
-            file_source=source_type,
-        )
-    finally:
-        close_db_connection(graph, "url/scan")
-
-
 @app.post("/extract")
 async def extract_knowledge_graph_from_file(
     uri=Form(None),
@@ -167,21 +67,10 @@ async def extract_knowledge_graph_from_file(
     password=Form(None),
     model=Form(None),
     database=Form(None),
-    source_url=Form(None),
-    aws_access_key_id=Form(None),
-    aws_secret_access_key=Form(None),
-    wiki_query=Form(None),
-    max_sources=Form(None),
-    gcs_project_id=Form(None),
-    gcs_bucket_name=Form(None),
-    gcs_bucket_folder=Form(None),
-    gcs_blob_filename=Form(None),
     source_type=Form(None),
     file_name=Form(None),
     allowedNodes=Form(None),
     allowedRelationship=Form(None),
-    language=Form(None),
-    access_token=Form(None),
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
@@ -221,22 +110,15 @@ async def extract_knowledge_graph_from_file(
         if result is not None:
             result["db_url"] = uri
             result["api_name"] = "extract"
-        logger.log_struct(result)
         return create_api_response("Success", data=result, file_source=source_type)
     except Exception as e:
         message = f"Failed To Process File:{file_name} or LLM Unable To Parse Content "
         error_message = str(e)
         graphDb_data_Access.update_exception_db(file_name, error_message)
-        gcs_file_cache = os.environ.get("GCS_FILE_CACHE")
-        if source_type == "local file":
-            if gcs_file_cache == "True":
-                folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
-                delete_file_from_gcs(BUCKET_UPLOAD, folder_name, file_name)
-            else:
-                logging.info(
-                    f"Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}"
-                )
-                delete_uploaded_local_file(merged_file_path, file_name)
+        logging.info(
+            f"Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}"
+        )
+        delete_uploaded_local_file(merged_file_path, file_name)
         josn_obj = {
             "message": message,
             "error_message": error_message,
@@ -246,7 +128,6 @@ async def extract_knowledge_graph_from_file(
             "failed_count": 1,
             "source_type": source_type,
         }
-        logger.log_struct(josn_obj)
         logging.exception(f"File Failed in extraction: {josn_obj}")
         return create_api_response(
             "Failed",
@@ -271,7 +152,6 @@ async def get_source_list(uri: str, userName: str, password: str, database: str 
             get_source_list_from_graph, uri, userName, decoded_password, database
         )
         josn_obj = {"api_name": "sources_list", "db_url": uri}
-        logger.log_struct(josn_obj)
         return create_api_response("Success", data=result)
     except Exception as e:
         job_status = "Failed"
@@ -292,8 +172,6 @@ async def update_similarity_graph(
         graph = create_graph_database_connection(uri, userName, password, database)
         await asyncio.to_thread(update_graph, graph)
 
-        josn_obj = {"api_name": "update_similarity_graph", "db_url": uri}
-        logger.log_struct(josn_obj)
         return create_api_response("Success", message="Updated KNN Graph")
     except Exception as e:
         job_status = "Failed"
@@ -328,8 +206,6 @@ async def chat_bot(
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
         result["info"]["response_time"] = round(total_call_time, 2)
 
-        josn_obj = {"api_name": "chat_bot", "db_url": uri}
-        logger.log_struct(josn_obj)
         return create_api_response("Success", data=result)
     except Exception as e:
         job_status = "Failed"
@@ -354,8 +230,6 @@ async def chunk_entities(
             password=password,
             chunk_ids=chunk_ids,
         )
-        josn_obj = {"api_name": "chunk_entities", "db_url": uri}
-        logger.log_struct(josn_obj)
         return create_api_response("Success", data=result)
     except Exception as e:
         job_status = "Failed"
@@ -383,8 +257,6 @@ async def graph_query(
             query_type=query_type,
             document_names=document_names,
         )
-        josn_obj = {"api_name": "graph_query", "db_url": uri}
-        logger.log_struct(josn_obj)
         return create_api_response("Success", data=result)
     except Exception as e:
         job_status = "Failed"
@@ -425,8 +297,6 @@ async def connect(
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(connection_check, graph)
-        josn_obj = {"api_name": "connect", "db_url": uri, "status": result, "count": 1}
-        logger.log_struct(josn_obj)
         return create_api_response("Success", message=result)
     except Exception as e:
         job_status = "Failed"
@@ -464,8 +334,6 @@ async def upload_large_file_into_chunks(
             CHUNK_DIR,
             MERGED_DIR,
         )
-        josn_obj = {"api_name": "upload", "db_url": uri}
-        logger.log_struct(josn_obj)
         if int(chunkNumber) == int(totalChunks):
             return create_api_response(
                 "Success", data=result, message="Source Node Created Successfully"
@@ -496,8 +364,6 @@ async def get_structured_schema(
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(get_labels_and_relationtypes, graph)
         logging.info(f"Schema result from DB: {result}")
-        josn_obj = {"api_name": "schema", "db_url": uri}
-        logger.log_struct(josn_obj)
         return create_api_response("Success", data=result)
     except Exception as e:
         message = "Unable to get the labels and relationtypes from neo4j database"
@@ -583,8 +449,6 @@ async def delete_document_and_entities(
             result[0]["deletedEntities"] if "deletedEntities" in result[0] else 0
         )
         message = f"Deleted {files_list_size} documents with {entities_count} entities from database"
-        josn_obj = {"api_name": "delete_document_and_entities", "db_url": uri}
-        logger.log_struct(josn_obj)
         return create_api_response("Success", message=message)
     except Exception as e:
         job_status = "Failed"

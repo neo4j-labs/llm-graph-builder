@@ -15,11 +15,17 @@ from src.graphDB_dataAccess import graphDBdataAccess
 from src.make_relationships import *
 from src.shared.common_fn import *
 from src.shared.schema_extraction import sceham_extraction_from_text
+import coloredlogs
+
 
 warnings.filterwarnings("ignore")
 load_dotenv()
 logging.basicConfig(format="%(asctime)s - %(message)s", level="INFO")
 
+coloredlogs.install(level='DEBUG')
+
+for module in ["azure", "httpcore", "httpx", "multipart", "neo4j", "openai"]:
+    logging.getLogger(module).setLevel(logging.ERROR)
 
 
 def extract_graph_from_file_local_file(
@@ -27,11 +33,11 @@ def extract_graph_from_file_local_file(
 ):
 
     logging.info(f"Process file name :{fileName}")
-    file_name, pages, file_extension = get_documents_from_file_by_path(
+    file_name, pages, _file_extension = get_documents_from_file_by_path(
         merged_file_path, fileName
     )
     if pages == None or len(pages) == 0:
-        raise Exception(f"Pdf content is not available for file : {file_name}")
+        raise Exception(f"Content is not available for file : {file_name}")
 
     return processing_source(
         graph,
@@ -43,86 +49,6 @@ def extract_graph_from_file_local_file(
         True,
         merged_file_path,
         uri,
-    )
-
-
-def extract_graph_from_file_s3(
-    graph,
-    model,
-    source_url,
-    aws_access_key_id,
-    aws_secret_access_key,
-    allowedNodes,
-    allowedRelationship,
-):
-
-    if aws_access_key_id == None or aws_secret_access_key == None:
-        raise Exception("Please provide AWS access and secret keys")
-    else:
-        logging.info("Insert in S3 Block")
-        file_name, pages = get_documents_from_s3(
-            source_url, aws_access_key_id, aws_secret_access_key
-        )
-
-    if pages == None or len(pages) == 0:
-        raise Exception(f"Pdf content is not available for file : {file_name}")
-
-    return processing_source(
-        graph, model, file_name, pages, allowedNodes, allowedRelationship
-    )
-
-
-def extract_graph_from_file_youtube(
-    graph, model, source_url, allowedNodes, allowedRelationship
-):
-
-    file_name, pages = get_documents_from_youtube(source_url)
-
-    if pages == None or len(pages) == 0:
-        raise Exception(f"Youtube transcript is not available for file : {file_name}")
-
-    return processing_source(
-        graph, model, file_name, pages, allowedNodes, allowedRelationship
-    )
-
-
-def extract_graph_from_file_Wikipedia(
-    graph, model, wiki_query, max_sources, language, allowedNodes, allowedRelationship
-):
-
-    file_name, pages = get_documents_from_Wikipedia(wiki_query, language)
-    if pages == None or len(pages) == 0:
-        raise Exception(f"Wikipedia page is not available for file : {file_name}")
-
-    return processing_source(
-        graph, model, file_name, pages, allowedNodes, allowedRelationship
-    )
-
-
-def extract_graph_from_file_gcs(
-    graph,
-    model,
-    gcs_project_id,
-    gcs_bucket_name,
-    gcs_bucket_folder,
-    gcs_blob_filename,
-    access_token,
-    allowedNodes,
-    allowedRelationship,
-):
-
-    file_name, pages = get_documents_from_gcs(
-        gcs_project_id,
-        gcs_bucket_name,
-        gcs_bucket_folder,
-        gcs_blob_filename,
-        access_token,
-    )
-    if pages == None or len(pages) == 0:
-        raise Exception(f"Pdf content is not available for file : {file_name}")
-
-    return processing_source(
-        graph, model, file_name, pages, allowedNodes, allowedRelationship
     )
 
 
