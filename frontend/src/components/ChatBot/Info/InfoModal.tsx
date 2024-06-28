@@ -15,6 +15,7 @@ import { useCredentials } from '../../../context/UserCredentials';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import ReactMarkdown from 'react-markdown';
+import { GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
 const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, response_time, chunk_ids }) => {
   const [activeTab, setActiveTab] = useState<number>(3);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
@@ -112,7 +113,6 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
           {sources.length ? (
             <ul className='list-class list-none'>
               {sources.map((link, index) => {
-                console.log({ link });
                 return (
                   <li key={index} className='flex flex-row inline-block justify-between items-center p-2'>
                     {link?.startsWith('http') || link?.startsWith('https') ? (
@@ -160,6 +160,16 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                             </Typography>
                           </div>
                         )}
+                        {!link.startsWith('s3://') &&
+                          !link?.includes('storage.googleapis.com') &&
+                          !link?.includes('wikipedia.org') && (
+                            <div className='flex flex-row inline-block justify-between items-center'>
+                              <GlobeAltIconOutline className='n-size-token-7' />
+                              <TextLink href={link} externalLink={true}>
+                                <Typography variant='body-medium'>{link}</Typography>
+                              </TextLink>
+                            </div>
+                          )}
                       </>
                     ) : (
                       <div className='flex flex-row inline-block justify-between items-center'>
@@ -275,6 +285,18 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                         <div className='flex flex-row inline-block justiy-between items-center'>
                           <img src={s3logo} width={20} height={20} className='mr-2' />
                           <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
+                        </div>
+                      </>
+                    ) : chunk.url !== undefined &&
+                      !chunk?.url.startsWith('s3://') &&
+                      !chunk?.url.includes('storage.googleapis.com') &&
+                      !chunk?.url.includes('wikipedia.org') ? (
+                      <>
+                        <div className='flex flex-row inline-block items-center'>
+                          <GlobeAltIconOutline className='n-size-token-7' />
+                          <TextLink href={chunk?.url} externalLink={true}>
+                            <Typography variant='body-medium'>{chunk?.url}</Typography>
+                          </TextLink>
                         </div>
                         <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                       </>
