@@ -1,27 +1,29 @@
 import { Dialog, Dropdown } from '@neo4j-ndl/react';
 import { OnChangeValue, ActionMeta } from 'react-select';
-import { OptionType, OptionTypeForExamples, UserCredentials, schema } from '../../../types';
+import { OptionType, OptionTypeForExamples, SettingsModalProps, UserCredentials, schema } from '../../../types';
 import { useFileContext } from '../../../context/UsersFiles';
 import { getNodeLabelsAndRelTypes } from '../../../services/GetNodeLabelsRelTypes';
 import { useCredentials } from '../../../context/UserCredentials';
 import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
 import schemaExamples from '../../../assets/schemas.json';
 import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
-import { tooltips } from '../../../utils/Constants';
+import { buttonCaptions, tooltips } from '../../../utils/Constants';
+import { useAlertContext } from '../../../context/Alert';
 
-export default function SettingsModal({
+const SettingsModal: React.FC<SettingsModalProps> = ({
   open,
   onClose,
-  opneTextSchema,
-}: {
-  open: boolean;
-  onClose: () => void;
-  opneTextSchema: () => void;
-}) {
+  openTextSchema,
+  onContinue,
+  settingView,
+  setIsSchema,
+  isSchema,
+}) => {
   const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels, selectedSchemas, setSelectedSchemas } =
     useFileContext();
   const { userCredentials } = useCredentials();
   const [loading, setLoading] = useState<boolean>(false);
+
   const removeNodesAndRels = (nodelabels: string[], relationshipTypes: string[]) => {
     const labelsToRemoveSet = new Set(nodelabels);
     const relationshipLabelsToremoveSet = new Set(relationshipTypes);
@@ -48,7 +50,6 @@ export default function SettingsModal({
       const { nodelabels, relationshipTypes } = removedSchema;
       removeNodesAndRels(nodelabels, relationshipTypes);
     } else if (actionMeta.action === 'clear') {
-      console.log({ actionMeta });
       const removedSchemas = actionMeta.removedValues.map((s) => JSON.parse(s.value));
       const removedNodelabels = removedSchemas.map((s) => s.nodelabels).flatMap((k) => k);
       const removedRelations = removedSchemas.map((s) => s.relationshipTypes).flatMap((k) => k);
@@ -115,6 +116,8 @@ export default function SettingsModal({
   const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
   const [defaultExamples, setdefaultExamples] = useState<OptionType[]>([]);
 
+  const { showAlert } = useAlertContext();
+
   useEffect(() => {
     const parsedData = schemaExamples.reduce((accu: OptionTypeForExamples[], example) => {
       const examplevalues: OptionTypeForExamples = {
@@ -129,6 +132,7 @@ export default function SettingsModal({
     }, []);
     setdefaultExamples(parsedData);
   }, []);
+
   useEffect(() => {
     if (userCredentials && open) {
       const getOptions = async () => {
@@ -156,6 +160,21 @@ export default function SettingsModal({
     setSelectedNodes(nodeLabelOptions);
     setSelectedRels(relationshipTypeOptions);
   }, [nodeLabelOptions, relationshipTypeOptions]);
+
+  const handleClear = () => {
+    setIsSchema(false);
+    setSelectedNodes([]);
+    setSelectedRels([]);
+    setSelectedSchemas([]);
+    localStorage.setItem('isSchema', JSON.stringify(false));
+    localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
+    localStorage.setItem(
+      'selectedRelationshipLabels',
+      JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] })
+    );
+    showAlert('info', `Successfully Removed the Schema settings`);
+    onClose();
+  };
 
   return (
     <Dialog size='medium' open={open} aria-labelledby='form-dialog-title' onClose={onClose}>
@@ -200,7 +219,7 @@ export default function SettingsModal({
           }}
           type='creatable'
         />
-        <Dialog.Actions className='!mt-4'>
+        <Dialog.Actions className='!mt-4 flex items-center'>
           <ButtonWithToolTip
             loading={loading}
             text={
@@ -220,14 +239,36 @@ export default function SettingsModal({
             placement='top'
             onClick={() => {
               onClose();
-              opneTextSchema();
+              openTextSchema();
             }}
             label='Get Existing Schema From Text'
           >
             Get Schema From Text
           </ButtonWithToolTip>
+          {settingView === 'contentView' ? (
+            <ButtonWithToolTip
+              text={tooltips.continue}
+              placement='top'
+              onClick={onContinue}
+              label='Continue to extract'
+            >
+              {buttonCaptions.continueSettings}
+            </ButtonWithToolTip>
+          ) : (
+            <ButtonWithToolTip
+              text={tooltips.clearGraphSettings}
+              placement='top'
+              onClick={handleClear}
+              label='Clear Graph Settings'
+              disabled={!isSchema}
+            >
+              {buttonCaptions.clearSettings}
+            </ButtonWithToolTip>
+          )}
         </Dialog.Actions>
       </Dialog.Content>
     </Dialog>
   );
-}
+};
+
+export default SettingsModal;

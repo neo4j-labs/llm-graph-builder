@@ -24,6 +24,8 @@ interface FileContextType {
   setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
   chatMode: string;
   setchatMode: Dispatch<SetStateAction<string>>;
+  isSchema: boolean;
+  setIsSchema: React.Dispatch<React.SetStateAction<boolean>>;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
@@ -42,6 +44,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [chatMode, setchatMode] = useState<string>('graph+vector');
   const { userCredentials } = useCredentials();
+  const [isSchema, setIsSchema] = useState<boolean>(false);
 
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
@@ -79,6 +82,8 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setSelectedSchemas,
     chatMode,
     setchatMode,
+    isSchema,
+    setIsSchema,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

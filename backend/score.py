@@ -18,6 +18,7 @@ from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.graph_query import get_graph_results
 from src.chunkid_entities import get_entities_from_chunkids
+from src.post_processing import create_fulltext
 from sse_starlette.sse import EventSourceResponse
 import json
 from typing import List, Mapping
@@ -30,6 +31,7 @@ from typing import List
 from google.cloud import logging as gclogger
 from src.logger import CustomLogger
 from datetime import datetime
+from fastapi.middleware.gzip import GZipMiddleware
 import time
 import gc
 
@@ -56,6 +58,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "False").lower() in ("true", "1", "yes")
 if is_gemini_enabled:
@@ -237,28 +240,36 @@ async def get_source_list(uri:str, userName:str, password:str, database:str=None
         logging.exception(f'Exception:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
 
-@app.post("/update_similarity_graph")
-async def update_similarity_graph(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
-    """
-    Calls 'update_graph' which post the query to update the similiar nodes in the graph
-    """
+@app.post("/post_processing")
+async def post_processing(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), tasks=Form(None)):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
-        await asyncio.to_thread(update_graph, graph)
-        
-        josn_obj = {'api_name':'update_similarity_graph','db_url':uri}
-        logger.log_struct(josn_obj)
-        return create_api_response('Success',message='Updated KNN Graph')
+        tasks = set(map(str.strip, json.loads(tasks)))
+
+        if "update_similarity_graph" in tasks:
+            await asyncio.to_thread(update_graph, graph)
+            josn_obj = {'api_name': 'post_processing/update_similarity_graph', 'db_url': uri}
+            logger.log_struct(josn_obj)
+            logging.info(f'Updated KNN Graph')
+        if "create_fulltext_index" in tasks:
+            await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database)
+            josn_obj = {'api_name': 'post_processing/create_fulltext_index', 'db_url': uri}
+            logger.log_struct(josn_obj)
+            logging.info(f'Full Text index created')
+
+        return create_api_response('Success', message='All tasks completed successfully')
+    
     except Exception as e:
         job_status = "Failed"
-        message="Unable to update KNN Graph"
         error_message = str(e)
-        logging.exception(f'Exception in update KNN graph:{error_message}')
+        message = f"Unable to complete tasks"
+        logging.exception(f'Exception in post_processing tasks: {error_message}')
         return create_api_response(job_status, message=message, error=error_message)
+    
     finally:
         gc.collect()
         if graph is not None:
-            close_db_connection(graph, 'update_similarity_graph')
+            close_db_connection(graph, 'post_processing')
                 
 @app.post("/chat_bot")
 async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password=Form(None), database=Form(None),question=Form(None), session_id=Form(None),mode=Form(None)):
@@ -288,7 +299,7 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
 @app.post("/chunk_entities")
 async def chunk_entities(uri=Form(None),userName=Form(None), password=Form(None), chunk_ids=Form(None)):
     try:
-        logging.info(f"URI: {uri}, Username: {userName},password:{password}, chunk_ids: {chunk_ids}")
+        logging.info(f"URI: {uri}, Username: {userName}, chunk_ids: {chunk_ids}")
         result = await asyncio.to_thread(get_entities_from_chunkids,uri=uri, username=userName, password=password, chunk_ids=chunk_ids)
         josn_obj = {'api_name':'chunk_entities','db_url':uri}
         logger.log_struct(josn_obj)
@@ -451,13 +462,13 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
     return EventSourceResponse(generate(),ping=60)
 
 @app.post("/delete_document_and_entities")
-async def delete_document_and_entities(uri=Form(None), 
-                                       userName=Form(None), 
-                                       password=Form(None), 
-                                       database=Form(None), 
-                                       filenames=Form(None),
-                                       source_types=Form(None),
-                                       deleteEntities=Form(None)):
+async def delete_document_and_entities(uri=Form(), 
+                                       userName=Form(), 
+                                       password=Form(), 
+                                       database=Form(), 
+                                       filenames=Form(),
+                                       source_types=Form(),
+                                       deleteEntities=Form()):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
@@ -542,6 +553,42 @@ async def populate_graph_schema(input_text=Form(None), model=Form(None), is_sche
         logging.exception(f'Exception in getting the schema from text:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
     finally:
+        gc.collect()
+        
+@app.post("/get_unconnected_nodes_list")
+async def get_unconnected_nodes_list(uri=Form(), userName=Form(), password=Form(), database=Form()):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        result = graphDb_data_Access.list_unconnected_nodes()
+        return create_api_response('Success',data=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to get the list of unconnected nodes"
+        error_message = str(e)
+        logging.exception(f'Exception in getting list of unconnected nodes:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        if graph is not None:
+            close_db_connection(graph,"get_unconnected_nodes_list")
+        gc.collect()
+        
+@app.post("/delete_unconnected_nodes")
+async def get_unconnected_nodes_list(uri=Form(), userName=Form(), password=Form(), database=Form(),unconnected_entities_list=Form()):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        result = graphDb_data_Access.delete_unconnected_nodes(unconnected_entities_list)
+        return create_api_response('Success',data=result,message="Unconnected entities delete successfully")
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to delete the unconnected nodes"
+        error_message = str(e)
+        logging.exception(f'Exception in delete the unconnected nodes:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        if graph is not None:
+            close_db_connection(graph,"delete_unconnected_nodes")
         gc.collect()
 
 if __name__ == "__main__":
