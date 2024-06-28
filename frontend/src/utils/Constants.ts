@@ -1,3 +1,5 @@
+import { VisualizeBloomIcon } from '@neo4j-ndl/react/icons';
+
 export const document = `+ [docs]`;
 
 export const chunks = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
@@ -139,4 +141,11 @@ export const buttonCaptions = {
   clearSettings: 'Clear Settings',
 };
 
+export const ChatModeOptions = [
+  { Icon: VisualizeBloomIcon, value: 'vector' },
+  { Icon: 'abc', value: 'graph+vector' },
+];
+
+
 export const taskParam: string[] = ['update_similarity_graph', 'create_fulltext_index'];
+
