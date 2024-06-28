@@ -204,7 +204,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                         >
                           {link}
                         </Typography>
-                        {chunks?.length > 0 && (
+                        {/* {chunks?.length > 0 && (
                           <Typography variant='body-small' className='italic'>
                             - Page{' '}
                             {chunks
@@ -212,7 +212,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                               .sort((a, b) => a - b)
                               .join(', ')}
                           </Typography>
-                        )}
+                        )} */}
                       </div>
                     )}
                   </li>
