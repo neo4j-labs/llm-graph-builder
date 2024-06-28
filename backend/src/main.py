@@ -165,9 +165,12 @@ def processing_source(
                 text = text.replace(j, " ")
             else:
                 text = text.replace(j, "")
-        pages[i] = Document(page_content=str(text), metadata=pages[i].metadata)
-    create_chunks_obj = CreateChunksofDocument(pages, graph)
-    chunks = create_chunks_obj.split_file_into_chunks()
+                
+        metadata = pages[i].metadata
+        metadata["page_number"] = i
+        pages[i] = Document(page_content=str(text), metadata=metadata)
+    # create_chunks_obj = CreateChunksofDocument(pages, graph)
+    chunks = pages
 
     if result[0]["Status"] != "Processing":
         obj_source_node = sourceNode()
