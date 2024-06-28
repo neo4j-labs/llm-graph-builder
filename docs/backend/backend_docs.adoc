@@ -532,13 +532,15 @@ The /update_extract_status/{file_name} endpoint provides a continuous update on 
 **API Parameters**
 
 The endpoint accepts the following path parameter:
+
 ...
 file_name=The name of the file whose extraction status is being tracked.,
 ...
 
-== Query Parameters
+**Query Parameters**
 
 The endpoint accepts the following query parameters:
+
 ...
 uri=Neo4j uri, 
 userName= Neo4j db username, 
@@ -610,7 +612,6 @@ source_types= Source of the file
 }
 ....
 
-....
 
 === /populate_graph_schema :
 
@@ -619,6 +620,7 @@ source_types= Source of the file
 The API is used to populate a graph schema based on the provided input text, model, and schema description flag.
 
 **API Parameters :**
+
 ....
 input_text=The input text used to populate the graph schema.
 model=The model to be used for populating the graph schema.
@@ -652,6 +654,7 @@ is_schema_description_checked=A flag indicating whether the schema description s
 }
 ....
 
+
 === /get_unconnected_nodes_list :
 
 **Overview :**
@@ -667,6 +670,7 @@ database= Neo4j database name,
 ....
 
 **Response :**
+
 ....
 {   "status": "Success",
     "data": [
@@ -683,6 +687,7 @@ database= Neo4j database name,
 }
 ....
 
+
 === /delete_unconnected_nodes :
 
 **Overview :**
@@ -690,6 +695,7 @@ database= Neo4j database name,
 The API is used to delete unconnected entities from database.
 
 **API Parameters :**
+
 ....
 uri=Neo4j uri, 
 userName= Neo4j db username, 
@@ -698,13 +704,16 @@ database= Neo4j database name,
 unconnected_entities_list=selected entities list to delete of unconnected entities.
 ....
 
+
 **Response :**
+
 ....
 {   
     "status": "Success",
     "message: "Unconnected entities delete successfully"
 }
 ....
+
 
 == Decisions
 
