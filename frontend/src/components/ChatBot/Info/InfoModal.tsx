@@ -173,9 +173,8 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                         )}
                         {!link.startsWith('s3://') &&
                           !link?.includes('storage.googleapis.com') &&
-                          !link?.includes('wikipedia.org') && 
-                          !link?.includes('youtube.com')&&
-                          (
+                          !link?.includes('wikipedia.org') &&
+                          !link?.includes('youtube.com') && (
                             <div className='flex flex-row inline-block justify-between items-center'>
                               <GlobeAltIconOutline className='n-size-token-7' />
                               <TextLink href={link} externalLink={true}>
@@ -304,8 +303,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                       !chunk?.url.startsWith('s3://') &&
                       !chunk?.url.includes('storage.googleapis.com') &&
                       !chunk?.url.includes('wikipedia.org') &&
-                      !chunk?.url.includes('youtube.com')
-                      ? (
+                      !chunk?.url.includes('youtube.com') ? (
                       <>
                         <div className='flex flex-row inline-block items-center'>
                           <GlobeAltIconOutline className='n-size-token-7' />
