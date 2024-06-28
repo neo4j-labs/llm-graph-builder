@@ -137,8 +137,8 @@ def get_llm(model_version:str) :
                          model=model_version, 
                          temperature=0)
     else:
-        llm = DiffbotGraphTransformer(diffbot_api_key=os.environ.get('DIFFBOT_API_KEY'))    
-    logging.info(f"Model created : Model Version: {model_version}")
+        llm = DiffbotGraphTransformer(diffbot_api_key=os.environ.get('DIFFBOT_API_KEY'),extract_types=['entities','facts'])    
+    logging.info(f"Model created - Model Version: {model_version}")
     return llm
   
 def create_gcs_bucket_folder_name_hashed(uri, file_name):
