@@ -231,11 +231,11 @@ database= Neo4j database name
 ....
 
 
-=== /update_similarity_graph :
+=== /post_processing :
 
 **Overview :**
 
-This API is called at the end of processing of whole document to get create k-nearest neighbor relations between similar chunks of document based on KNN_MIN_SCORE which is 0.8 by default.
+This API is called at the end of processing of whole document to get create k-nearest neighbor relations between similar chunks of document based on KNN_MIN_SCORE which is 0.8 by default and to drop and create a full text index on db labels.
 
 **API Parameters :**
 ....
@@ -243,13 +243,14 @@ uri=Neo4j uri,
 userName= Neo4j db username, 
 password= Neo4j db password, 
 database= Neo4j database name
+tasks= List of tasks to perform
 ....
 
 **Response :**
 ....
 {
     "status":"Success",
-    "message":"Updated KNN Graph"
+    "message":"All tasks completed successfully"
 }
 ....
 
