@@ -30,6 +30,7 @@ from typing import List
 from google.cloud import logging as gclogger
 from src.logger import CustomLogger
 from datetime import datetime
+from fastapi.middleware.gzip import GZipMiddleware
 import time
 import gc
 
@@ -56,6 +57,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "False").lower() in ("true", "1", "yes")
 if is_gemini_enabled:
@@ -451,13 +453,13 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
     return EventSourceResponse(generate(),ping=60)
 
 @app.post("/delete_document_and_entities")
-async def delete_document_and_entities(uri=Form(None), 
-                                       userName=Form(None), 
-                                       password=Form(None), 
-                                       database=Form(None), 
-                                       filenames=Form(None),
-                                       source_types=Form(None),
-                                       deleteEntities=Form(None)):
+async def delete_document_and_entities(uri=Form(), 
+                                       userName=Form(), 
+                                       password=Form(), 
+                                       database=Form(), 
+                                       filenames=Form(),
+                                       source_types=Form(),
+                                       deleteEntities=Form()):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
@@ -542,6 +544,42 @@ async def populate_graph_schema(input_text=Form(None), model=Form(None), is_sche
         logging.exception(f'Exception in getting the schema from text:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
     finally:
+        gc.collect()
+        
+@app.post("/get_unconnected_nodes_list")
+async def get_unconnected_nodes_list(uri=Form(), userName=Form(), password=Form(), database=Form()):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        result = graphDb_data_Access.list_unconnected_nodes()
+        return create_api_response('Success',data=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to get the list of unconnected nodes"
+        error_message = str(e)
+        logging.exception(f'Exception in getting list of unconnected nodes:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        if graph is not None:
+            close_db_connection(graph,"get_unconnected_nodes_list")
+        gc.collect()
+        
+@app.post("/delete_unconnected_nodes")
+async def get_unconnected_nodes_list(uri=Form(), userName=Form(), password=Form(), database=Form(),unconnected_entities_list=Form()):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        result = graphDb_data_Access.delete_unconnected_nodes(unconnected_entities_list)
+        return create_api_response('Success',data=result,message="Unconnected entities delete successfully")
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to delete the unconnected nodes"
+        error_message = str(e)
+        logging.exception(f'Exception in delete the unconnected nodes:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        if graph is not None:
+            close_db_connection(graph,"delete_unconnected_nodes")
         gc.collect()
 
 if __name__ == "__main__":
