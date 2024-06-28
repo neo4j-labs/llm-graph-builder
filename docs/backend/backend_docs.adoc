@@ -527,21 +527,12 @@ database= Neo4j database name
 
 **Overview :**
 
-The /update_extract_status/{file_name} endpoint provides a continuous update on the extraction status of a specified file. It uses Server-Sent Events (SSE) to stream updates to the client.
+The API provides a continuous update on the extraction status of a specified file. It uses Server-Sent Events (SSE) to stream updates to the client.
 
 **API Parameters**
 
-The endpoint accepts the following path parameter:
-
 ...
-file_name=The name of the file whose extraction status is being tracked.,
-...
-
-**Query Parameters**
-
-The endpoint accepts the following query parameters:
-
-...
+file_name=The name of the file whose extraction status is being tracked,
 uri=Neo4j uri, 
 userName= Neo4j db username, 
 password= Neo4j db password, 
