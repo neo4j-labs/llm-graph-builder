@@ -36,8 +36,8 @@ const Content: React.FC<ContentProps> = ({
   const { setUserCredentials, userCredentials } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
+  const [isLargeFile, setIsLargeFile] = useState<boolean>(false);
   const [showSettingnModal, setshowSettingModal] = useState<boolean>(false);
-  const [isLargeFile, setisLargeFile] = useState<boolean>(false);
 
   const {
     filesData,
@@ -229,6 +229,7 @@ const Content: React.FC<ContentProps> = ({
   };
 
   const handleGenerateGraph = (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => {
+    setIsLargeFile(false);
     const data = [];
     if (selectedfileslength && allowLargeFiles) {
       for (let i = 0; i < selectedfileslength; i++) {
@@ -392,36 +393,8 @@ const Content: React.FC<ContentProps> = ({
     }
   }, []);
 
-  const handleContinue = () => {
-    if (!isLargeFile) {
-      handleGenerateGraph(true, filesData);
-      setshowSettingModal(false);
-    } else {
-      setshowSettingModal(false);
-      setshowConfirmationModal(true);
-      handleGenerateGraph(false, []);
-    }
-    setIsSchema(true);
-    setalertDetails({
-      showAlert: true,
-      alertType: 'success',
-      alertMessage: 'Schema is set successfully',
-    });
-    localStorage.setItem('isSchema', JSON.stringify(true));
-  };
-
-  const onClickGenerate = () => {
+  const onClickHandler = () => {
     if (isSchema) {
-      if (!isLargeFile) {
-        handleGenerateGraph(true, filesData);
-        setshowSettingModal(false);
-      } else {
-        setshowSettingModal(false);
-        setshowConfirmationModal(true);
-        handleGenerateGraph(false, []);
-      }
-    } else {
-      setshowSettingModal(true);
       if (selectedRows.length) {
         let selectedLargeFiles: CustomFile[] = [];
         selectedRows.forEach((f) => {
@@ -434,9 +407,12 @@ const Content: React.FC<ContentProps> = ({
         });
         // @ts-ignore
         if (selectedLargeFiles.length) {
-          setisLargeFile(true);
+          setIsLargeFile(true);
+          setshowConfirmationModal(true);
+          handleGenerateGraph(false, []);
         } else {
-          setisLargeFile(false);
+          setIsLargeFile(false);
+          handleGenerateGraph(true, filesData);
         }
       } else if (filesData.length) {
         const largefiles = filesData.filter((f) => {
@@ -454,12 +430,72 @@ const Content: React.FC<ContentProps> = ({
         }, {});
         setRowSelection(stringified);
         if (largefiles.length) {
-          setisLargeFile(true);
+          setIsLargeFile(true);
+          setshowConfirmationModal(true);
+          handleGenerateGraph(false, []);
         } else {
-          setisLargeFile(false);
+          setIsLargeFile(false);
+          handleGenerateGraph(true, filesData);
         }
       }
+    } else {
+      if (selectedRows.length) {
+        let selectedLargeFiles: CustomFile[] = [];
+        selectedRows.forEach((f) => {
+          const parsedData: CustomFile = JSON.parse(f);
+          if (parsedData.fileSource === 'local file') {
+            if (typeof parsedData.size === 'number' && parsedData.status === 'New' && parsedData.size > largeFileSize) {
+              selectedLargeFiles.push(parsedData);
+            }
+          }
+        });
+        // @ts-ignore
+        if (selectedLargeFiles.length) {
+          setIsLargeFile(true);
+        } else {
+          setIsLargeFile(false);
+        }
+      } else if (filesData.length) {
+        const largefiles = filesData.filter((f) => {
+          if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
+            return true;
+          }
+          return false;
+        });
+        const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
+        const stringified = selectAllNewFiles.reduce((accu, f) => {
+          const key = JSON.stringify(f);
+          // @ts-ignore
+          accu[key] = true;
+          return accu;
+        }, {});
+        setRowSelection(stringified);
+        if (largefiles.length) {
+          setIsLargeFile(true);
+        } else {
+          setIsLargeFile(false);
+        }
+      }
+      setshowSettingModal(true);
     }
+  };
+
+  const handleContinue = () => {
+    if (!isLargeFile) {
+      handleGenerateGraph(true, filesData);
+      setshowSettingModal(false);
+    } else {
+      setshowSettingModal(false);
+      setshowConfirmationModal(true);
+      handleGenerateGraph(false, []);
+    }
+    setIsSchema(true);
+    setalertDetails({
+      showAlert: true,
+      alertType: 'success',
+      alertMessage: 'Schema is set successfully',
+    });
+    localStorage.setItem('isSchema', JSON.stringify(true));
   };
 
   return (
@@ -561,7 +597,7 @@ const Content: React.FC<ContentProps> = ({
               text={tooltips.generateGraph}
               placement='top'
               label='generate graph'
-              onClick={onClickGenerate}
+              onClick={onClickHandler}
               disabled={disableCheck}
               className='mr-0.5'
             >

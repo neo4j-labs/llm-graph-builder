@@ -7,8 +7,8 @@ import {
   Cog8ToothIconOutline,
   InformationCircleIconOutline,
 } from '@neo4j-ndl/react/icons';
-import {Typography } from '@neo4j-ndl/react';
-import { useCallback } from 'react';
+import { Typography } from '@neo4j-ndl/react';
+import { useCallback, useEffect } from 'react';
 import IconButtonWithToolTip from '../UI/IconButtonToolTip';
 import { tooltips } from '../../utils/Constants';
 import { useFileContext } from '../../context/UsersFiles';
@@ -27,7 +27,11 @@ export default function Header({
     window.open(url, '_blank');
   }, []);
 
-  const { isSchema } = useFileContext();
+  const { isSchema, setIsSchema } = useFileContext();
+
+  useEffect(() => {
+    setIsSchema(isSchema);
+  }, [isSchema]);
 
   return (
     <div
