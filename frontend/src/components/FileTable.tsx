@@ -47,7 +47,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  //const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
+  // const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
   const [alertDetails, setalertDetails] = useState<alertStateType>({
     showAlert: false,
     alertType: 'error',

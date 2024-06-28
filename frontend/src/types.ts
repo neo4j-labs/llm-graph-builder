@@ -155,6 +155,9 @@ export interface ContentProps {
   isRightExpanded: boolean;
   showChatBot: boolean;
   openChatBot: () => void;
+  openTextSchema: () => void;
+  isSchema?: boolean;
+  setIsSchema: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface FileTableProps {
@@ -450,4 +453,15 @@ export interface SpeechArgs {
   rate?: number;
   pitch?: number;
   volume?: number;
+}
+
+export interface SettingsModalProps {
+  open: boolean;
+  onClose: () => void;
+  openTextSchema: () => void;
+  onContinue?: () => void;
+  settingView: 'contentView' | 'headerView';
+  isSchema?: boolean;
+  setIsSchema: Dispatch<SetStateAction<boolean>>;
+  onClear?: () => void;
 }

@@ -1,28 +1,104 @@
 import { Dialog, Dropdown } from '@neo4j-ndl/react';
 import { OnChangeValue, ActionMeta } from 'react-select';
-import { OptionType, OptionTypeForExamples, UserCredentials, schema } from '../../../types';
+import { OptionType, OptionTypeForExamples, SettingsModalProps, UserCredentials, schema } from '../../../types';
 import { useFileContext } from '../../../context/UsersFiles';
 import { getNodeLabelsAndRelTypes } from '../../../services/GetNodeLabelsRelTypes';
 import { useCredentials } from '../../../context/UserCredentials';
 import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
 import schemaExamples from '../../../assets/schemas.json';
 import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
-import { tooltips } from '../../../utils/Constants';
+import { buttonCaptions, tooltips } from '../../../utils/Constants';
+import { useAlertContext } from '../../../context/Alert';
 
-export default function SettingsModal({
+const SettingsModal: React.FC<SettingsModalProps> = ({
   open,
   onClose,
-  opneTextSchema,
-}: {
-  open: boolean;
-  onClose: () => void;
-  opneTextSchema: () => void;
-}) {
+  openTextSchema,
+  onContinue,
+  settingView,
+  setIsSchema,
+  isSchema,
+}) => {
   const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels, selectedSchemas, setSelectedSchemas } =
     useFileContext();
   const { userCredentials } = useCredentials();
   const [loading, setLoading] = useState<boolean>(false);
-  const onChangenodes = (selectedOptions: OnChangeValue<OptionType, true>) => {
+
+  const removeNodesAndRels = (nodelabels: string[], relationshipTypes: string[]) => {
+    const labelsToRemoveSet = new Set(nodelabels);
+    const relationshipLabelsToremoveSet = new Set(relationshipTypes);
+    setSelectedNodes((prevState) => {
+      const filterednodes = prevState.filter((item) => !labelsToRemoveSet.has(item.label));
+      localStorage.setItem(
+        'selectedNodeLabels',
+        JSON.stringify({ db: userCredentials?.uri, selectedOptions: filterednodes })
+      );
+      return filterednodes;
+    });
+    setSelectedRels((prevState) => {
+      const filteredrels = prevState.filter((item) => !relationshipLabelsToremoveSet.has(item.label));
+      localStorage.setItem(
+        'selectedRelationshipLabels',
+        JSON.stringify({ db: userCredentials?.uri, selectedOptions: filteredrels })
+      );
+      return filteredrels;
+    });
+  };
+  const onChangeSchema = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
+    if (actionMeta.action === 'remove-value') {
+      const removedSchema: schema = JSON.parse(actionMeta.removedValue.value);
+      const { nodelabels, relationshipTypes } = removedSchema;
+      removeNodesAndRels(nodelabels, relationshipTypes);
+    } else if (actionMeta.action === 'clear') {
+      const removedSchemas = actionMeta.removedValues.map((s) => JSON.parse(s.value));
+      const removedNodelabels = removedSchemas.map((s) => s.nodelabels).flatMap((k) => k);
+      const removedRelations = removedSchemas.map((s) => s.relationshipTypes).flatMap((k) => k);
+      removeNodesAndRels(removedNodelabels, removedRelations);
+    }
+    setSelectedSchemas(selectedOptions);
+    const nodesFromSchema = selectedOptions.map((s) => JSON.parse(s.value).nodelabels).flat();
+    const relationsFromSchema = selectedOptions.map((s) => JSON.parse(s.value).relationshipTypes).flat();
+    let nodeOptionsFromSchema: OptionType[] = [];
+    nodesFromSchema.forEach((n) => nodeOptionsFromSchema.push({ label: n, value: n }));
+    let relationshipOptionsFromSchema: OptionType[] = [];
+    relationsFromSchema.forEach((r) => relationshipOptionsFromSchema.push({ label: r, value: r }));
+    setSelectedNodes((prev) => {
+      const combinedData = [...prev, ...nodeOptionsFromSchema];
+      const uniqueLabels = new Set();
+      const updatedOptions = combinedData.filter((item) => {
+        if (!uniqueLabels.has(item.label)) {
+          uniqueLabels.add(item.label);
+          return true;
+        }
+        return false;
+      });
+      localStorage.setItem(
+        'selectedNodeLabels',
+        JSON.stringify({ db: userCredentials?.uri, selectedOptions: updatedOptions })
+      );
+      return updatedOptions;
+    });
+    setSelectedRels((prev) => {
+      const combinedData = [...prev, ...relationshipOptionsFromSchema];
+      const uniqueLabels = new Set();
+      const updatedOptions = combinedData.filter((item) => {
+        if (!uniqueLabels.has(item.label)) {
+          uniqueLabels.add(item.label);
+          return true;
+        }
+        return false;
+      });
+      localStorage.setItem(
+        'selectedRelationshipLabels',
+        JSON.stringify({ db: userCredentials?.uri, selectedOptions: updatedOptions })
+      );
+      return updatedOptions;
+    });
+  };
+  const onChangenodes = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
+    if (actionMeta.action === 'clear') {
+      localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
+    }
     setSelectedNodes(selectedOptions);
     localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions }));
   };
@@ -33,6 +109,23 @@ export default function SettingsModal({
   const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>([]);
   const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
   const [defaultExamples, setdefaultExamples] = useState<OptionType[]>([]);
+
+  const { showAlert } = useAlertContext();
+
+  useEffect(() => {
+    const parsedData = schemaExamples.reduce((accu: OptionTypeForExamples[], example) => {
+      const examplevalues: OptionTypeForExamples = {
+        label: example.schema,
+        value: JSON.stringify({
+          nodelabels: example.labels,
+          relationshipTypes: example.relationshipTypes,
+        }),
+      };
+      accu.push(examplevalues);
+      return accu;
+    }, []);
+    setdefaultExamples(parsedData);
+  }, []);
 
   useEffect(() => {
     if (userCredentials && open) {
@@ -63,6 +156,21 @@ export default function SettingsModal({
     setSelectedNodes(nodeLabelOptions);
     setSelectedRels(relationshipTypeOptions);
   }, [nodeLabelOptions, relationshipTypeOptions]);
+
+  const handleClear = () => {
+    setIsSchema(false);
+    setSelectedNodes([]);
+    setSelectedRels([]);
+    setSelectedSchemas([]);
+    localStorage.setItem('isSchema', JSON.stringify(false));
+    localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
+    localStorage.setItem(
+      'selectedRelationshipLabels',
+      JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] })
+    );
+    showAlert('info', `Successfully Removed the Schema settings`);
+    onClose();
+  };
 
   return (
     <Dialog size='medium' open={open} aria-labelledby='form-dialog-title' onClose={onClose}>
@@ -107,8 +215,8 @@ export default function SettingsModal({
           }}
           type='creatable'
         />
-        <div>
-          <Button
+        <Dialog.Actions className='!mt-4 flex items-center'>
+          <ButtonWithToolTip
             loading={loading}
             title={!nodeLabelOptions.length && !relationshipTypeOptions.length ? `No Labels Found in the Database` : ''}
             disabled={!nodeLabelOptions.length && !relationshipTypeOptions.length}
@@ -123,14 +231,36 @@ export default function SettingsModal({
             placement='top'
             onClick={() => {
               onClose();
-              opneTextSchema();
+              openTextSchema();
             }}
             label='Get Existing Schema From Text'
           >
             Get Schema From Text
           </ButtonWithToolTip>
+          {settingView === 'contentView' ? (
+            <ButtonWithToolTip
+              text={tooltips.continue}
+              placement='top'
+              onClick={onContinue}
+              label='Continue to extract'
+            >
+              {buttonCaptions.continueSettings}
+            </ButtonWithToolTip>
+          ) : (
+            <ButtonWithToolTip
+              text={tooltips.clearGraphSettings}
+              placement='top'
+              onClick={handleClear}
+              label='Clear Graph Settings'
+              disabled={!isSchema}
+            >
+              {buttonCaptions.clearSettings}
+            </ButtonWithToolTip>
+          )}
         </Dialog.Actions>
       </Dialog.Content>
     </Dialog>
   );
-}
+};
+
+export default SettingsModal;
