@@ -291,14 +291,13 @@ def clear_chat_history(graph, session_id):
 def QA_RAG(graph, model, question, session_id):
     try:
         start_time = time.time()
-        print(model)
         model_version = MODEL_VERSIONS[model]
         llm = get_llm(model_version)
         retriever = get_neo4j_retriever(graph=graph)
         doc_retriever = create_document_retriever_chain(llm, retriever)
         history = create_neo4j_chat_message_history(graph, session_id)
         chat_setup_time = time.time() - start_time
-        logging.info(f"Chat setup completed in {chat_setup_time:.2f} seconds")
+        logging.warning(f"Chat setup completed in {chat_setup_time:.2f} seconds")
 
         start_time = time.time()
         messages = history.messages
@@ -310,7 +309,7 @@ def QA_RAG(graph, model, question, session_id):
             formatted_docs, sources = format_documents(docs)
 
             doc_retrieval_time = time.time() - start_time
-            logging.info(
+            logging.warning(
                 f"Modified question and Documents retrieved in {doc_retrieval_time:.2f} seconds"
             )
 
@@ -325,16 +324,11 @@ def QA_RAG(graph, model, question, session_id):
             )
             result = get_sources_and_chunks(sources, docs)
             content = ai_response.content
-            if "Gemini" in model:
-                total_tokens = ai_response.response_metadata["usage_metadata"][
-                    "prompt_token_count"
-                ]
-            else:
-                total_tokens = ai_response.response_metadata["token_usage"][
-                    "total_tokens"
-                ]
+            total_tokens = ai_response.response_metadata["token_usage"][
+                "total_tokens"
+            ]
             predict_time = time.time() - start_time
-            logging.info(f"Final Response predicted in {predict_time:.2f} seconds")
+            logging.debug(f"Final Response predicted in {predict_time:.2f} seconds")
         else:
             ai_response = AIMessage(
                 content="I couldn't find any relevant documents to answer your question."
