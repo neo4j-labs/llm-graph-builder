@@ -27,23 +27,49 @@ Neo4j database connection on frontend is done with this API.
 }
 ----
 
-=== /upload :
 
-**Overview :**
+=== Upload Files from Local
+----
+POST /upload
+----
 
-When uploading a local file, it gets uploaded in chunks of 1Mb each and user can see the progress of uploading.
+The upload endpoint is designed to handle the uploading of large files by breaking them into smaller chunks. This method ensures that large files can be uploaded efficiently without overloading the server.
+
+***API Parameters***
+
+* `file`=The file to be uploaded, received in chunks,
+* `chunkNumber`=The current chunk number being uploaded,
+* `totalChunks`=The total number of chunks the file is divided into (each chunk of 1Mb size),
+* `originalname`=The original name of the file,
+* `model`=The model associated with the file,
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "message": "File uploaded and chunks merged successfully."
+}
+....
+
+
+=== User defined schema
+----
+POST /schema
+----
+
+User can set schema for graph generation (i.e. Nodes and relationship labels) in settings panel or get existing db schema through this API. 
 
 **API Parameters :**
 
-* `uri`= Neo4j uri, 
+* `uri`=Neo4j uri, 
 * `userName`= Neo4j db username, 
 * `password`= Neo4j db password, 
-* `database`= Neo4j database name,
-* `file` = , 
-* `chunkNumber`=, 
-* `totalChunks`=, 
-* `originalname`=, 
-* `model`= LLm model
+* `database`= Neo4j database name
 
 
 **Response :**
@@ -51,22 +77,79 @@ When uploading a local file, it gets uploaded in chunks of 1Mb each and user can
 ....
 {
     "status": "Success",
-    "data": {
-        "file_size": 163931,
-        "total_pages": 8,
-        "file_name": "About Amazon.pdf",
-        "file_extension": ".pdf",
-        "message": "Chunk 1/1 saved"
-    },
-    "message": "Source Node Created Successfully"
+    "data": [
+        {
+            "labels": [
+                "Access_token",
+                "Activity",
+                "Ai chatbot",
+                "Book",
+                "Metric",
+                "Mode",
+                "Mountain"
+            ],
+            "relationshipTypes": [
+                "ACCELERATE",
+                "ACCEPTS",
+                "CONVERT",
+                "CORRELATE",
+                "ESTABLISHED",
+                "EXAMPLE_OF"
+            ]
+        }
+    ]
 }
 ....
 
-=== /url/scan :
+=== Graph schema from input text
+----
+POST /populate_graph_schema
+----
 
-**Overview:**
+The API is used to populate a graph schema based on the provided input text, model, and schema description flag.
 
-Create Document node for other sources - s3 bucket, gcs bucket, wikipedia and youtube url.
+**API Parameters :**
+
+* `input_text`=The input text used to populate the graph schema.
+* `model`=The model to be used for populating the graph schema.
+* `is_schema_description_checked`=A flag indicating whether the schema description should be considered.
+
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "data": [
+        {
+            "labels": [
+                "Technology",
+                "Company",
+                "Person",
+                "Location",
+                "Organization",
+                "Concept"
+            ],
+            "relationshipTypes": [
+                "LOCATED_AT",
+                "SUBSIDARY_OF",
+                "BORN_IN",
+                "LAST_MESSAGE",
+                "ATTENDED",
+                "PARTNERED_WITH"
+            ]
+        }
+    ]
+}
+....
+
+
+=== Unstructured sources scan other than local 
+----
+POST /url/scan 
+----
+
+Create Document node for other sources - s3 bucket, gcs bucket, wikipedia, youtube url and web pages.
 
 **API Parameters :**
 
@@ -107,9 +190,10 @@ Create Document node for other sources - s3 bucket, gcs bucket, wikipedia and yo
 ....
 
 
-=== /extract :
-
-**Overview :**
+=== Extration of nodes and relations from content
+----
+POST /extract :
+----
 
 This API is responsible for -
 
@@ -138,9 +222,12 @@ This API is responsible for -
 
 *** GCS bucket - User passes gcs project id, gcs bucket name and folder name, do google authentication to access all the pdf files under that folder and its subfolders and if folder name is not passed by user, all the pdf files under the bucket and its subfolders will be listed if user have read access of the bucket.
 
-*** Wikipedia - Wikipedia content is rendered (if exist) for comma seprated wikipedia ids or urls passed by user. 
+*** Web Sources - 
+**** Wikipedia - Wikipedia 1st page content is rendered url passed by user. 
 
-*** Youtube - Youtube video transcript is processed and if no transcript is available then respective error is thrown.
+**** Youtube - Youtube video transcript is processed and if no transcript is available then respective error is thrown.
+
+**** Web urls - Text Content from any web url is processed for generating graph.
 
 ** Langchain's LLMGraphTransformer library is used to get nodes and relations in the form of GraphDocument from LLMs. User and System prompts, LLM chain, graphDocument schema are defined in the library itself.
 
@@ -186,9 +273,10 @@ allowedNodes=Node labels passed from settings panel,
 ....
 
      
-=== /sources_list :
-
-**Overview :**
+=== Get list of sources
+----
+GET /sources_list
+----
 
 List all sources (Document nodes) present in Neo4j graph database.
 
@@ -238,9 +326,10 @@ List all sources (Document nodes) present in Neo4j graph database.
 ....
 
 
-=== /post_processing :
-
-**Overview :**
+=== Post processing after graph generation
+----
+POST /post_processing :
+----
 
 This API is called at the end of processing of whole document to get create k-nearest neighbor relations between similar chunks of document based on KNN_MIN_SCORE which is 0.8 by default and to drop and create a full text index on db labels.
 
@@ -263,9 +352,10 @@ This API is called at the end of processing of whole document to get create k-ne
 ....
 
 
-=== /chat_bot :
-
-**Overview :**
+=== Chat with Data
+----
+POST /chat_bot
+----
 
 The API responsible for a chatbot system designed to leverage multiple AI models and a Neo4j graph database, providing answers to user queries. It interacts with AI models from OpenAI and Google's Vertex AI and utilizes embedding models to enhance the retrieval of relevant information.
 
@@ -317,9 +407,10 @@ The API responsible for a chatbot system designed to leverage multiple AI models
 }
 ....
 
-=== /chunk_entities :
-
-**Overview :**
+=== Get entities from chunks
+----
+/chunk_entities
+----
 
 This API is used to  get the entities and relations associated with a particular chunk and chunk metadata.
 
@@ -379,9 +470,10 @@ This API is used to  get the entities and relations associated with a particular
 }
 ....
 
-=== /graph_query :
-
-**Overview :**
+=== View graph for a file
+----
+POST /graph_query
+----
 
 This API is used to view graph for a particular file.
 
@@ -430,14 +522,12 @@ This API is used to view graph for a particular file.
         ]
     }
 }    
-
-
-
 ....
 
-=== /clear_chat_bot :
-
-**Overview :**
+=== Clear chat history
+----
+POST /clear_chat_bot
+----
 
 This API is used to clear the chat history which is saved in Neo4j DB.
 
@@ -463,58 +553,10 @@ This API is used to clear the chat history which is saved in Neo4j DB.
 }
 ....
 
-=== /upload :
-
-**Overview :**
-
-The upload endpoint is designed to handle the uploading of large files by breaking them into smaller chunks. This method ensures that large files can be uploaded efficiently without overloading the server.
-
-***API Parameters***
-
-* `file`=The file to be uploaded, received in chunks,
-* `chunkNumber`=The current chunk number being uploaded,
-* `totalChunks`=The total number of chunks the file is divided into,
-* `originalname`=The original name of the file,
-* `model`=The model associated with the file,
-* `uri`=Neo4j uri, 
-* `userName`= Neo4j db username, 
-* `password`= Neo4j db password, 
-* `database`= Neo4j database name
-
-**Response :**
-[source,json,indent=0]
-....
-{
-    "status": "Success",
-    "message": "File uploaded and chunks merged successfully."
-}
-....
-
-=== /schema :
-
-**Overview :**
-
-User can set schema for graph generation (i.e. Nodes and relationship labels) in settings panel or get existing db schema through this API. 
-
-**API Parameters :**
-
-* `uri`=Neo4j uri, 
-* `userName`= Neo4j db username, 
-* `password`= Neo4j db password, 
-* `database`= Neo4j database name
-
-
-**Response :**
-[source,json,indent=0]
-....
-{
-    
-}
-....
-
-=== /update_extract_status :
-
-**Overview :**
+=== SSE event to update processing status
+----
+GET /update_extract_status 
+----
 
 The API provides a continuous update on the extraction status of a specified file. It uses Server-Sent Events (SSE) to stream updates to the client.
 
@@ -544,7 +586,10 @@ The API provides a continuous update on the extraction status of a specified fil
 }
 ....
 
-=== /delete_document_and_entities :
+=== Delete selected documents
+----
+POST /delete_document_and_entities
+----
 
 **Overview :**
 
@@ -569,9 +614,10 @@ Deleteion of nodes and relations for multiple files is done through this API. Us
 }
 ....
 
-=== /cancelled_job :
-
-**Overview :**
+=== Cancel processing job
+----
+/cancelled_job
+----
 
 This API is responsible for cancelling an in process job.
 
@@ -594,51 +640,10 @@ This API is responsible for cancelling an in process job.
 ....
 
 
-=== /populate_graph_schema :
-
-**Overview :**
-
-The API is used to populate a graph schema based on the provided input text, model, and schema description flag.
-
-**API Parameters :**
-
-* `input_text`=The input text used to populate the graph schema.
-* `model`=The model to be used for populating the graph schema.
-* `is_schema_description_checked`=A flag indicating whether the schema description should be considered.
-
-
-**Response :**
-[source,json,indent=0]
-....
-{
-    "status": "Success",
-    "data": [
-        {
-            "labels": [
-                "Technology",
-                "Company",
-                "Person",
-                "Location",
-                "Organization",
-                "Concept"
-            ],
-            "relationshipTypes": [
-                "LOCATED_AT",
-                "SUBSIDARY_OF",
-                "BORN_IN",
-                "LAST_MESSAGE",
-                "ATTENDED",
-                "PARTNERED_WITH"
-            ]
-        }
-    ]
-}
-....
-
-
-=== /get_unconnected_nodes_list :
-
-**Overview :**
+=== Get the list of orphan nodes
+----
+POST /get_unconnected_nodes_list
+----
 
 The API retrieves a list of nodes in the graph database that are not connected to any other nodes.
 
@@ -669,9 +674,10 @@ The API retrieves a list of nodes in the graph database that are not connected t
 ....
 
 
-=== /delete_unconnected_nodes :
-
-**Overview :**
+=== Deletion of orpahn nodes
+----
+POST /delete_unconnected_nodes
+----
 
 The API is used to delete unconnected entities from database.
 
@@ -703,3 +709,4 @@ The API is used to delete unconnected entities from database.
 ** Generate Embedding or not 
 ** Embedding model
 ** minimum score for KNN graph
+** Uploaded file storage location (GCS bucket or container)
