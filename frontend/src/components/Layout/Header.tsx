@@ -6,6 +6,7 @@ import {
   CodeBracketSquareIconOutline,
   Cog8ToothIconOutline,
   InformationCircleIconOutline,
+  TrashIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { Typography } from '@neo4j-ndl/react';
 import { useCallback } from 'react';
@@ -20,6 +21,7 @@ export default function Header({
   themeMode: string;
   toggleTheme: () => void;
   openSettingsModal: () => void;
+  openOrphanNodeDeletionModal: () => void;
 }) {
   const handleURLClick = useCallback((url: string) => {
     window.open(url, '_blank');
@@ -88,6 +90,9 @@ export default function Header({
                     <MoonIconOutline />
                   </span>
                 )}
+              </IconButtonWithToolTip>
+              <IconButtonWithToolTip clean text='delete orphan nodes' label='delete orphan node'>
+                <TrashIconOutline />
               </IconButtonWithToolTip>
               <IconButtonWithToolTip
                 label={tooltips.settings}

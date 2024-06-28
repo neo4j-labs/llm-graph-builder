@@ -80,8 +80,9 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
             <div className='relative h-full'>
               <div className='flex flex-col h-full'>
                 <div
-                  className={`mx-6 flex flex-none items-center justify-between ${process.env.ENV != 'PROD' ? 'pb-6' : 'pb-5'
-                    }`}
+                  className={`mx-6 flex flex-none items-center justify-between ${
+                    process.env.ENV != 'PROD' ? 'pb-6' : 'pb-5'
+                  }`}
                 >
                   {process.env.ENV != 'PROD' && (
                     <Typography variant='body-medium' className='flex items-center content-center'>
@@ -101,22 +102,22 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                         </div>
                       )}
                       {(APP_SOURCES != undefined && APP_SOURCES.includes('s3')) ||
-                        (APP_SOURCES != undefined && APP_SOURCES.includes('gcs')) ? (
+                      (APP_SOURCES != undefined && APP_SOURCES.includes('gcs')) ? (
                         <>
                           {(APP_SOURCES.includes('youtube') ||
                             APP_SOURCES.includes('wiki') ||
                             APP_SOURCES.includes('web')) && (
-                              <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
-                                <GenericButton openModal={openGenericModal}></GenericButton>
-                                <GenericModal
-                                  isOnlyYoutube={isYoutubeOnlyCheck}
-                                  isOnlyWikipedia={isWikipediaOnlyCheck}
-                                  isOnlyWeb={iswebOnlyCheck}
-                                  open={showGenericModal}
-                                  closeHandler={closeGenericModal}
-                                ></GenericModal>
-                              </div>
-                            )}
+                            <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
+                              <GenericButton openModal={openGenericModal}></GenericButton>
+                              <GenericModal
+                                isOnlyYoutube={isYoutubeOnlyCheck}
+                                isOnlyWikipedia={isWikipediaOnlyCheck}
+                                isOnlyWeb={iswebOnlyCheck}
+                                open={showGenericModal}
+                                closeHandler={closeGenericModal}
+                              ></GenericModal>
+                            </div>
+                          )}
                           {APP_SOURCES.includes('s3') && (
                             <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
                               <S3Component openModal={openModal} />
@@ -143,7 +144,9 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                           <DropZone />
                         </div>
                       )}
-                      {((APP_SOURCES != undefined && APP_SOURCES.includes('youtube')) || (APP_SOURCES != undefined && APP_SOURCES.includes('wiki')) || (APP_SOURCES != undefined && APP_SOURCES.includes('web'))) &&
+                      {((APP_SOURCES != undefined && APP_SOURCES.includes('youtube')) ||
+                        (APP_SOURCES != undefined && APP_SOURCES.includes('wiki')) ||
+                        (APP_SOURCES != undefined && APP_SOURCES.includes('web'))) && (
                         <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
                           <GenericButton openModal={openGenericModal}></GenericButton>
                           <GenericModal
@@ -153,9 +156,10 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                             open={showGenericModal}
                             closeHandler={closeGenericModal}
                           ></GenericModal>
-                        </div>}
+                        </div>
+                      )}
                       {(APP_SOURCES != undefined && APP_SOURCES.includes('s3')) ||
-                        (APP_SOURCES != undefined && APP_SOURCES.includes('gcs')) ? (
+                      (APP_SOURCES != undefined && APP_SOURCES.includes('gcs')) ? (
                         <>
                           {APP_SOURCES != undefined && APP_SOURCES.includes('s3') && (
                             <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
