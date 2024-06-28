@@ -1,4 +1,4 @@
-import { DbmsIcon, VisualizeBloomIcon } from '@neo4j-ndl/react/icons';
+import { VisualizeBloomIcon } from '@neo4j-ndl/react/icons';
 
 export const document = `+ [docs]`;
 
@@ -137,7 +137,6 @@ export const buttonCaptions = {
   details: 'Details',
 };
 export const ChatModeOptions = [
-  { Icon: VisualizeBloomIcon, value: 'graph' },
-  { Icon: DbmsIcon, value: 'vector' },
+  { Icon: VisualizeBloomIcon, value: 'vector' },
   { Icon: '', value: 'graph+vector' },
 ];

@@ -16,7 +16,7 @@ import type { Node, Relationship } from '@neo4j-nvl/base';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import ReactMarkdown from 'react-markdown';
 const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, response_time, chunk_ids }) => {
-  const [activeTab, setActiveTab] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<number>(3);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
@@ -103,13 +103,13 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
         </Box>
       </Box>
       <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
-        <Tabs.Tab tabId={0}>Sources used</Tabs.Tab>
-        <Tabs.Tab tabId={1}>Top Entities used</Tabs.Tab>
-        <Tabs.Tab tabId={2}>Chunks</Tabs.Tab>
+        <Tabs.Tab tabId={3}>Sources used</Tabs.Tab>
+        <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
+        <Tabs.Tab tabId={5}>Chunks</Tabs.Tab>
       </Tabs>
       <Flex className='p-4'>
-        {activeTab === 0 ? (
-          sources.length > 0 ? (
+        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={3}>
+          {sources.length ? (
             <ul className='list-class list-none'>
               {sources.map((link, index) => {
                 console.log({ link });
@@ -187,9 +187,10 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
             </ul>
           ) : (
             <span className='h6 text-center'>No Sources Found</span>
-          )
-        ) : activeTab === 1 ? (
-          loading ? (
+          )}
+        </Tabs.TabPanel>
+        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={4}>
+          {loading ? (
             <Box className='flex justify-center items-center'>
               <LoadingSpinner size='small' />
             </Box>
@@ -218,67 +219,79 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
             </ul>
           ) : (
             <span className='h6 text-center'>No Entities Found</span>
-          )
-        ) : loading ? (
-          <Box className='flex justify-center items-center'>
-            <LoadingSpinner size='small' />
-          </Box>
-        ) : chunks.length > 0 ? (
-          <div className='p-4 h-80 overflow-auto'>
-            <ul className='list-disc list-inside'>
-              {chunks.map((chunk) => (
-                <li key={chunk.id} className='mb-2'>
-                  {chunk?.page_number ? (
-                    <div className='flex flex-row inline-block justiy-between items-center'>
-                      <DocumentTextIconOutline className='w-4 h-4 inline-block mr-2' />
-                      <Typography
-                        variant='subheading-small'
-                        className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden'
-                      >
-                        {chunk?.fileName}, Page: {chunk?.page_number} Similarity Score: {chunk?.score}
-                      </Typography>
-                    </div>
-                  ) : chunk?.url && chunk?.start_time ? (
-                    <div className='flex flex-row inline-block justiy-between items-center'>
-                      <img src={youtubelogo} width={20} height={20} className='mr-2' />
-                      <TextLink externalLink href={generateYouTubeLink(chunk?.url, chunk?.start_time)}>
-                        {chunk?.fileName} Similarity Score: {chunk?.score}
-                      </TextLink>
-                    </div>
-                  ) : chunk?.url && chunk?.url.includes('wikipedia.org') ? (
-                    <div className='flex flex-row inline-block justiy-between items-center'>
-                      <img src={wikipedialogo} width={20} height={20} className='mr-2' />
-                      <Typography variant='subheading-medium'>
-                        {chunk?.fileName} Similarity Score: {chunk?.score}
-                      </Typography>
-                    </div>
-                  ) : chunk?.url && chunk?.url.includes('storage.googleapis.com') ? (
-                    <div className='flex flex-row inline-block justiy-between items-center'>
-                      <img src={gcslogo} width={20} height={20} className='mr-2' />
-                      <Typography variant='subheading-medium'>
-                        {chunk?.fileName} Similarity Score: {chunk?.score}
-                      </Typography>
-                    </div>
-                  ) : chunk?.url && chunk?.url.startsWith('s3://') ? (
-                    <div className='flex flex-row inline-block justiy-between items-center'>
-                      <img src={s3logo} width={20} height={20} className='mr-2' />
-                      <Typography variant='subheading-medium'>
-                        {chunk?.fileName} Similarity Score: {chunk?.score}
-                      </Typography>
-                    </div>
-                  ) : (
-                    <></>
-                  )}
-                  <ReactMarkdown>{chunk?.text}</ReactMarkdown>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : (
-          <span className='h6 text-center'>No Chunks Found</span>
-        )}
+          )}
+        </Tabs.TabPanel>
+        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={5}>
+          {loading ? (
+            <Box className='flex justify-center items-center'>
+              <LoadingSpinner size='small' />
+            </Box>
+          ) : chunks.length > 0 ? (
+            <div className='p-4 h-80 overflow-auto'>
+              <ul className='list-disc list-inside'>
+                {chunks.map((chunk) => (
+                  <li key={chunk.id} className='mb-2'>
+                    {chunk?.page_number ? (
+                      <>
+                        <div className='flex flex-row inline-block justiy-between items-center'>
+                          <DocumentTextIconOutline className='w-4 h-4 inline-block mr-2' />
+                          <Typography
+                            variant='subheading-medium'
+                            className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden'
+                          >
+                            {chunk?.fileName}, Page: {chunk?.page_number}
+                          </Typography>
+                        </div>
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      </>
+                    ) : chunk?.url && chunk?.start_time ? (
+                      <>
+                        <div className='flex flex-row inline-block justiy-between items-center'>
+                          <img src={youtubelogo} width={20} height={20} className='mr-2' />
+                          <TextLink externalLink href={generateYouTubeLink(chunk?.url, chunk?.start_time)}>
+                            {chunk?.fileName}
+                          </TextLink>
+                        </div>
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      </>
+                    ) : chunk?.url && chunk?.url.includes('wikipedia.org') ? (
+                      <>
+                        <div className='flex flex-row inline-block justiy-between items-center'>
+                          <img src={wikipedialogo} width={20} height={20} className='mr-2' />
+                          <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
+                        </div>
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      </>
+                    ) : chunk?.url && chunk?.url.includes('storage.googleapis.com') ? (
+                      <>
+                        <div className='flex flex-row inline-block justiy-between items-center'>
+                          <img src={gcslogo} width={20} height={20} className='mr-2' />
+                          <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
+                        </div>
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      </>
+                    ) : chunk?.url && chunk?.url.startsWith('s3://') ? (
+                      <>
+                        <div className='flex flex-row inline-block justiy-between items-center'>
+                          <img src={s3logo} width={20} height={20} className='mr-2' />
+                          <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
+                        </div>
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      </>
+                    ) : (
+                      <></>
+                    )}
+                    <ReactMarkdown>{chunk?.text}</ReactMarkdown>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <span className='h6 text-center'>No Chunks Found</span>
+          )}
+        </Tabs.TabPanel>
       </Flex>
-      {activeTab === 1 && nodes.length && relationships.length ? (
+      {activeTab == 4 && nodes.length && relationships.length ? (
         <Box className='button-container flex mt-2 justify-center'>
           <GraphViewButton nodeValues={nodes} relationshipValues={relationships} />
         </Box>
