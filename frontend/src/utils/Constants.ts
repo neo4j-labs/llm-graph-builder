@@ -113,6 +113,8 @@ export const tooltips = {
   createSchema: 'Create your own schema by passing text',
   useExistingSchema: 'Use the already existing schema from DB',
   clearChat: 'Clear Chat History',
+  continue: 'Continue',
+  clearGraphSettings: 'Allow User to remove Settings',
 };
 
 export const buttonCaptions = {
@@ -133,4 +135,6 @@ export const buttonCaptions = {
   connectToNeo4j: 'Connect to Neo4j',
   cancel: 'Cancel',
   details: 'Details',
+  continueSettings: 'Continue',
+  clearSettings: 'Clear Settings',
 };

@@ -19,8 +19,15 @@ import ConfirmationDialog from './Popups/LargeFilePopUp/ConfirmationDialog';
 import { buttonCaptions, largeFileSize, tooltips } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
+import SettingModalHOC from '../HOC/SettingModalHOC';
 
-const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) => {
+const Content: React.FC<ContentProps> = ({
+  isLeftExpanded,
+  isRightExpanded,
+  openTextSchema,
+  isSchema,
+  setIsSchema,
+}) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
@@ -29,6 +36,8 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
   const { setUserCredentials, userCredentials } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
+  const [isLargeFile, setIsLargeFile] = useState<boolean>(false);
+  const [showSettingnModal, setshowSettingModal] = useState<boolean>(false);
 
   const {
     filesData,
@@ -220,6 +229,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
   };
 
   const handleGenerateGraph = (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => {
+    setIsLargeFile(false);
     const data = [];
     if (selectedfileslength && allowLargeFiles) {
       for (let i = 0; i < selectedfileslength; i++) {
@@ -376,51 +386,129 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     }
   }, []);
 
-  const onClickHandler = () => {
-    if (selectedRows.length) {
-      let selectedLargeFiles: CustomFile[] = [];
-      selectedRows.forEach((f) => {
-        const parsedData: CustomFile = JSON.parse(f);
-        if (parsedData.fileSource === 'local file') {
-          if (typeof parsedData.size === 'number' && parsedData.status === 'New' && parsedData.size > largeFileSize) {
-            selectedLargeFiles.push(parsedData);
-          }
-        }
-      });
-      // @ts-ignore
-      if (selectedLargeFiles.length) {
-        setshowConfirmationModal(true);
-        handleGenerateGraph(false, []);
-      } else {
-        handleGenerateGraph(true, filesData);
-      }
-    } else if (filesData.length) {
-      const largefiles = filesData.filter((f) => {
-        if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
-          return true;
-        }
-        return false;
-      });
-      const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
-      const stringified = selectAllNewFiles.reduce((accu, f) => {
-        const key = JSON.stringify(f);
-        // @ts-ignore
-        accu[key] = true;
-        return accu;
-      }, {});
-      setRowSelection(stringified);
-      if (largefiles.length) {
-        setshowConfirmationModal(true);
-        handleGenerateGraph(false, []);
-      } else {
-        handleGenerateGraph(true, filesData);
-      }
+  useEffect(() => {
+    const storedSchema = localStorage.getItem('isSchema');
+    if (storedSchema !== null) {
+      setIsSchema(JSON.parse(storedSchema));
     }
+  }, []);
+
+  const onClickHandler = () => {
+    if (isSchema) {
+      if (selectedRows.length) {
+        let selectedLargeFiles: CustomFile[] = [];
+        selectedRows.forEach((f) => {
+          const parsedData: CustomFile = JSON.parse(f);
+          if (parsedData.fileSource === 'local file') {
+            if (typeof parsedData.size === 'number' && parsedData.status === 'New' && parsedData.size > largeFileSize) {
+              selectedLargeFiles.push(parsedData);
+            }
+          }
+        });
+        // @ts-ignore
+        if (selectedLargeFiles.length) {
+          setIsLargeFile(true);
+          setshowConfirmationModal(true);
+          handleGenerateGraph(false, []);
+        } else {
+          setIsLargeFile(false);
+          handleGenerateGraph(true, filesData);
+        }
+      } else if (filesData.length) {
+        const largefiles = filesData.filter((f) => {
+          if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
+            return true;
+          }
+          return false;
+        });
+        const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
+        const stringified = selectAllNewFiles.reduce((accu, f) => {
+          const key = JSON.stringify(f);
+          // @ts-ignore
+          accu[key] = true;
+          return accu;
+        }, {});
+        setRowSelection(stringified);
+        if (largefiles.length) {
+          setIsLargeFile(true);
+          setshowConfirmationModal(true);
+          handleGenerateGraph(false, []);
+        } else {
+          setIsLargeFile(false);
+          handleGenerateGraph(true, filesData);
+        }
+      }
+    } else {
+      if (selectedRows.length) {
+        let selectedLargeFiles: CustomFile[] = [];
+        selectedRows.forEach((f) => {
+          const parsedData: CustomFile = JSON.parse(f);
+          if (parsedData.fileSource === 'local file') {
+            if (typeof parsedData.size === 'number' && parsedData.status === 'New' && parsedData.size > largeFileSize) {
+              selectedLargeFiles.push(parsedData);
+            }
+          }
+        });
+        // @ts-ignore
+        if (selectedLargeFiles.length) {
+          setIsLargeFile(true);
+        } else {
+          setIsLargeFile(false);
+        }
+      } else if (filesData.length) {
+        const largefiles = filesData.filter((f) => {
+          if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
+            return true;
+          }
+          return false;
+        });
+        const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
+        const stringified = selectAllNewFiles.reduce((accu, f) => {
+          const key = JSON.stringify(f);
+          // @ts-ignore
+          accu[key] = true;
+          return accu;
+        }, {});
+        setRowSelection(stringified);
+        if (largefiles.length) {
+          setIsLargeFile(true);
+        } else {
+          setIsLargeFile(false);
+        }
+      }
+      setshowSettingModal(true);
+    }
+  };
+
+  const handleContinue = () => {
+    if (!isLargeFile) {
+      handleGenerateGraph(true, filesData);
+      setshowSettingModal(false);
+    } else {
+      setshowSettingModal(false);
+      setshowConfirmationModal(true);
+      handleGenerateGraph(false, []);
+    }
+    setIsSchema(true);
+    setalertDetails({
+      showAlert: true,
+      alertType: 'success',
+      alertMessage: 'Schema is set successfully',
+    });
+    localStorage.setItem('isSchema', JSON.stringify(true));
   };
 
   return (
     <>
       {alertDetails.showAlert && (
+        <CustomAlert
+          severity={alertDetails.alertType}
+          open={alertDetails.showAlert}
+          handleClose={handleClose}
+          alertMessage={alertDetails.alertMessage}
+        />
+      )}
+      {isSchema && (
         <CustomAlert
           severity={alertDetails.alertType}
           open={alertDetails.showAlert}
@@ -445,6 +533,17 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
           deleteCloseHandler={() => setshowDeletePopUp(false)}
           loading={deleteLoading}
         ></DeletePopUp>
+      )}
+      {showSettingnModal && (
+        <SettingModalHOC
+          settingView='contentView'
+          onClose={() => setshowSettingModal(false)}
+          onContinue={handleContinue}
+          open={showSettingnModal}
+          openTextSchema={openTextSchema}
+          isSchema={isSchema}
+          setIsSchema={setIsSchema}
+        />
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>
