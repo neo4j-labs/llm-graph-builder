@@ -453,6 +453,55 @@ session_id = User session id for QA chat
 }
 ....
 
+=== /connect :
+
+**Overview :**
+
+connect to the neo4j databse. 
+
+**API Parameters :**
+....
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name
+....
+
+**Response :**
+....
+{
+  "status": "Success",
+  "message": "Connection Successful"
+}
+....
+
+=== /upload :
+
+**Overview :**
+
+The upload endpoint is designed to handle the uploading of large files by breaking them into smaller chunks. This method ensures that large files can be uploaded efficiently without overloading the server.
+
+***API Parameters***
+....
+file=The file to be uploaded, received in chunks,
+chunkNumber=The current chunk number being uploaded,
+totalChunks=The total number of chunks the file is divided into,
+originalname=The original name of the file,
+model=The model associated with the file,
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name
+....
+
+**Response :**
+....
+{
+    "status": "Success",
+    "message": "File uploaded and chunks merged successfully."
+}
+....
+
 === /schema :
 
 **Overview :**
@@ -471,6 +520,45 @@ database= Neo4j database name
 ....
 {
     
+}
+....
+
+=== /update_extract_status :
+
+**Overview :**
+
+The /update_extract_status/{file_name} endpoint provides a continuous update on the extraction status of a specified file. It uses Server-Sent Events (SSE) to stream updates to the client.
+
+**API Parameters**
+
+The endpoint accepts the following path parameter:
+...
+file_name=The name of the file whose extraction status is being tracked.,
+...
+
+== Query Parameters
+
+The endpoint accepts the following query parameters:
+...
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name
+...
+
+**Response :**
+....
+{
+    "fileName": "testFile.pdf", 
+    "status": "Processing", 
+    "processingTime": 0, 
+    "nodeCount": 0, 
+    "relationshipCount": 0, 
+    "model": "OpenAI GPT 3.5", 
+    "total_chunks": 3, 
+    "total_pages": 1, 
+    "fileSize": 92373, 
+    "processed_chunk": 0
 }
 ....
 
@@ -519,6 +607,102 @@ source_types= Source of the file
 ....
 {
     "message":"Cancelled the processing job successfully"
+}
+....
+
+....
+
+=== /populate_graph_schema :
+
+**Overview :**
+
+The API is used to populate a graph schema based on the provided input text, model, and schema description flag.
+
+**API Parameters :**
+....
+input_text=The input text used to populate the graph schema.
+model=The model to be used for populating the graph schema.
+is_schema_description_checked=A flag indicating whether the schema description should be considered.
+....
+
+**Response :**
+....
+{
+    "status": "Success",
+    "data": [
+        {
+            "labels": [
+                "Technology",
+                "Company",
+                "Person",
+                "Location",
+                "Organization",
+                "Concept"
+            ],
+            "relationshipTypes": [
+                "LOCATED_AT",
+                "SUBSIDARY_OF",
+                "BORN_IN",
+                "LAST_MESSAGE",
+                "ATTENDED",
+                "PARTNERED_WITH"
+            ]
+        }
+    ]
+}
+....
+
+=== /get_unconnected_nodes_list :
+
+**Overview :**
+
+The API retrieves a list of nodes in the graph database that are not connected to any other nodes.
+
+**API Parameters :**
+....
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name,
+....
+
+**Response :**
+....
+{   "status": "Success",
+    "data": [
+      "e": 
+        {        
+            "id": "Leela Chess Zero",        
+            "elementId": "4:abf6f691-928d-4b1c-80fc-2914ae517b4c:336",        
+            "labels": ["Technology"],        
+            "embedding": null       
+        },      
+        "documents": ["AlphaZero - Wikipedia.pdf"],
+      "chunkConnections": 7
+    ]
+}
+....
+
+=== /delete_unconnected_nodes :
+
+**Overview :**
+
+The API is used to delete unconnected entities from database.
+
+**API Parameters :**
+....
+uri=Neo4j uri, 
+userName= Neo4j db username, 
+password= Neo4j db password, 
+database= Neo4j database name,
+unconnected_entities_list=selected entities list to delete of unconnected entities.
+....
+
+**Response :**
+....
+{   
+    "status": "Success",
+    "message: "Unconnected entities delete successfully"
 }
 ....
 
