@@ -5,7 +5,6 @@ import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL, { NvlOptions } from '@neo4j-nvl/base';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { Resizable } from 're-resizable';
-
 import {
   DragIcon,
   FitToScreenIcon,
@@ -19,7 +18,6 @@ import { LegendsChip } from './LegendsChip';
 import graphQueryAPI from '../../services/GraphQuery';
 import { queryMap } from '../../utils/Constants';
 import { useFileContext } from '../../context/UsersFiles';
-
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
   inspectedName,
@@ -31,14 +29,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const nvlRef = useRef<NVL>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [relationships, setRelationships] = useState<Relationship[]>([]);
-  const [graphType, setGraphType] = useState<GraphType[]>(['entities']);
+  const [graphType, setGraphType] = useState<GraphType[]>(['document', 'entities', 'chunks']);
+  const [allNodes, setAllNodes] = useState<Node[]>([]);
+  const [allRelationships, setAllRelationships] = useState<Relationship[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<'unknown' | 'success' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
   const [scheme, setScheme] = useState<Scheme>({});
   const { selectedRows } = useFileContext();
-
   const handleCheckboxChange = (graph: GraphType) => {
     const currentIndex = graphType.indexOf(graph);
     const newGraphSelected = [...graphType];
@@ -49,51 +48,33 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
     setGraphType(newGraphSelected);
   };
-
   const handleZoomToFit = () => {
     nvlRef.current?.fit(
-      nodes.map((node) => node.id),
+      allNodes.map((node) => node.id),
       {}
     );
   };
-
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       handleZoomToFit();
     }, 1000);
     return () => {
       nvlRef.current?.destroy();
-      setGraphType(['entities']);
+      setGraphType(['document', 'entities', 'chunks']);
       clearTimeout(timeoutId);
       setScheme({});
     };
   }, []);
-
-  const graphQuery: string =
-    graphType.length === 3
-      ? queryMap.DocChunkEntities
-      : graphType.includes('entities') && graphType.includes('chunks')
-      ? queryMap.ChunksEntities
-      : graphType.includes('entities') && graphType.includes('document')
-      ? queryMap.DocEntities
-      : graphType.includes('document') && graphType.includes('chunks')
-      ? queryMap.DocChunks
-      : graphType.includes('entities') && graphType.length === 1
-      ? queryMap.Entities
-      : graphType.includes('chunks') && graphType.length === 1
-      ? queryMap.Chunks
-      : queryMap.Document;
-
-  // API Call to fetch the queried Data
+  const graphQuery: string = queryMap.DocChunkEntities;
   const fetchData = useCallback(async () => {
     try {
       const nodeRelationshipData =
         viewPoint === 'showGraphView'
           ? await graphQueryAPI(
-              userCredentials as UserCredentials,
-              graphQuery,
-              selectedRows.map((f) => JSON.parse(f).name)
-            )
+            userCredentials as UserCredentials,
+            graphQuery,
+            selectedRows.map((f) => JSON.parse(f).name)
+          )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -103,14 +84,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
   useEffect(() => {
     if (open) {
-      setNodes([]);
-      setRelationships([]);
       setLoading(true);
       if (viewPoint === 'chatInfoView') {
         console.log('nodes', nodeValues);
         const { finalNodes, finalRels, schemeVal } = processGraphData(nodeValues ?? [], relationshipValues ?? []);
-        setNodes(finalNodes);
-        setRelationships(finalRels);
+        setAllNodes(finalNodes);
+        setAllRelationships(finalRels);
         setScheme(schemeVal);
         setLoading(false);
       } else {
@@ -120,8 +99,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               const neoNodes = result.data.data.nodes.map((f: Node) => f);
               const neoRels = result.data.data.relationships.map((f: Relationship) => f);
               const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels);
-              setNodes(finalNodes);
-              setRelationships(finalRels);
+              console.log('finalNodes', finalNodes);
+              console.log('finalRels', finalRels);
+              setAllNodes(finalNodes);
+              setAllRelationships(finalRels);
               setScheme(schemeVal);
               setLoading(false);
             } else {
@@ -137,19 +118,32 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           });
       }
     }
-  }, [open, graphType]);
+  }, [open]);
 
-  // If the modal is closed, render nothing
+  // useEffect(() => {
+  //   const filterData = () => {
+  //     const filteredNodes = allNodes.filter((node) => graphType.includes(node.labels));
+  //     const filteredRelationships = allRelationships.filter((rel) =>
+  //       graphType.includes(rel.type)
+  //     );
+  //     setNodes(filteredNodes);
+  //     setRelationships(filteredRelationships);
+  //   };
+  //   filterData();
+  // }, [graphType, allNodes, allRelationships]);
+
+
   if (!open) {
     return <></>;
   }
 
+  console.log('allNodes', allNodes);
+  console.log('allRel', allRelationships);
   const mouseEventCallbacks = {
     onPan: true,
     onZoom: true,
     onDrag: true,
   };
-
   const nvlOptions: NvlOptions = {
     allowDynamicMinZoom: true,
     disableWebGL: true,
@@ -160,14 +154,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     instanceId: 'graph-preview',
     initialZoom: 0,
   };
-
   const headerTitle =
     viewPoint === 'showGraphView' || viewPoint === 'chatInfoView'
       ? 'Generated Graph'
       : `Inspect Generated Graph from ${inspectedName}`;
-
   const checkBoxView = viewPoint !== 'chatInfoView';
-
   const nvlCallbacks = {
     onLayoutComputing(isComputing: boolean) {
       if (!isComputing) {
@@ -175,23 +166,18 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       }
     },
   };
-
   const handleZoomIn = () => {
     nvlRef.current?.setZoom(nvlRef.current.getScale() * 1.3);
   };
-
   const handleZoomOut = () => {
     nvlRef.current?.setZoom(nvlRef.current.getScale() * 0.7);
   };
-
   const onClose = () => {
     setStatus('unknown');
     setStatusMessage('');
     setGraphViewOpen(false);
     setScheme({});
   };
-
-  // Legends placement
   const legendCheck = Object.keys(scheme).sort((a, b) => {
     if (a === 'Document' || a === 'Chunk') {
       return -1;
@@ -200,7 +186,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
     return a.localeCompare(b);
   });
-
   return (
     <>
       <Dialog
@@ -214,7 +199,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         disableCloseButton={false}
         onClose={onClose}
       >
-        <Dialog.Header id='form-dialog-title'>
+        <Dialog.Header id='graph-title'>
           {headerTitle}
           {checkBoxView && (
             <div className='flex gap-5 mt-2 justify-between'>
@@ -256,8 +241,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 <div className='flex' style={{ height: '100%' }}>
                   <div className='bg-palette-neutral-bg-default relative' style={{ width: '100%', flex: '1' }}>
                     <InteractiveNvlWrapper
-                      nodes={nodes}
-                      rels={relationships}
+                      nodes={allNodes}
+                      rels={allRelationships}
                       nvlOptions={nvlOptions}
                       ref={nvlRef}
                       mouseEventCallbacks={{ ...mouseEventCallbacks }}
@@ -307,7 +292,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       <h4 className='py-4 pt-3 ml-2'>Result Overview</h4>
                       <div className='flex gap-2 flex-wrap ml-2'>
                         {legendCheck.map((key, index) => (
-                          <LegendsChip key={index} title={key} scheme={scheme} nodes={nodes} />
+                          <LegendsChip key={index} title={key} scheme={scheme} nodes={allNodes} />
                         ))}
                       </div>
                     </div>
