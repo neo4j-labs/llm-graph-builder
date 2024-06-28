@@ -3,21 +3,23 @@
 == API Reference
 
 
-=== /connect :
-
-**Overview :**
+=== Connect to Neo4j Graph Database
+-----
+POST /connect
+-----
 
 Neo4j database connection on frontend is done with this API.
 
 **API Parameters :**
-....
-`uri`=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name
-....
+
+* `uri`= Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+
 
 **Response :**
+[source,json,indent=0]
 ----
 {
     "status":"Success",
@@ -32,19 +34,20 @@ database= Neo4j database name
 When uploading a local file, it gets uploaded in chunks of 1Mb each and user can see the progress of uploading.
 
 **API Parameters :**
-....
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name,
-file:UploadFile= , 
-chunkNumber=, 
-totalChunks=, 
-originalname=, 
-model= LLm model
-....
+
+* `uri`= Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `file` = , 
+* `chunkNumber`=, 
+* `totalChunks`=, 
+* `originalname`=, 
+* `model`= LLm model
+
 
 **Response :**
+[source,json,indent=0]
 ....
 {
     "status": "Success",
@@ -66,24 +69,26 @@ model= LLm model
 Create Document node for other sources - s3 bucket, gcs bucket, wikipedia and youtube url.
 
 **API Parameters :**
-....
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name
-model= LLM model,
-source_url= <s3 bucket url or youtube url> ,
-aws_access_key_id= AWS access key,
-aws_secret_access_key= AWS secret key,
-wiki_query= Wikipedia query sources,
-gcs_project_id= GCS project id,
-gcs_bucket_name= GCS bucket name,
-gcs_bucket_folder= GCS bucket folder,
-source_type= s3 bucket/ gcs bucket/ youtube/Wikipedia as source type
-gcs_project_id=Form(None),
-access_token=Form(None)
-....
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+* `model`= LLM model,
+* `source_url`= <s3 bucket url or youtube url> ,
+* `aws_access_key_id`= AWS access key,
+* `aws_secret_access_key`= AWS secret key,
+* `wiki_query`= Wikipedia query sources,
+* `gcs_project_id`= GCS project id,
+* `gcs_bucket_name`= GCS bucket name,
+* `gcs_bucket_folder`= GCS bucket folder,
+* `source_type`= s3 bucket/ gcs bucket/ youtube/Wikipedia as source type
+* `gcs_project_id`=Form(None),
+* `access_token`=Form(None)
+
+
 **Response :**
+[source,json,indent=0]
 ....
 {
     "status": "Success",
@@ -144,27 +149,28 @@ This API is responsible for -
 ** Vector index is created in databse on embeddingds created for chunks.
 
 **API Parameters :**
-....
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name
-model= LLM model,
-file_name = File uploaded from device
-source_url= <s3 bucket url or youtube url> ,
-aws_access_key_id= AWS access key,
-aws_secret_access_key= AWS secret key,
-wiki_query= Wikipedia query sources,
-gcs_project_id=GCS project id,
-gcs_bucket_name= GCS bucket name,
-gcs_bucket_folder= GCS bucket folder,
-gcs_blob_filename = GCS file name,
-source_type= local file/ s3 bucket/ gcs bucket/ youtube/ Wikipedia as source,
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+* `model`= LLM model,
+* `file_name` = File uploaded from device
+* `source_url`= <s3 bucket url or youtube url> ,
+* `aws_access_key_id`= AWS access key,
+* `aws_secret_access_key`= AWS secret key,
+* `wiki_query`= Wikipedia query sources,
+* `gcs_project_id`=GCS project id,
+* `gcs_bucket_name`= GCS bucket name,
+* `gcs_bucket_folder`= GCS bucket folder,
+* `gcs_blob_filename` = GCS file name,
+* `source_type`= local file/ s3 bucket/ gcs bucket/ youtube/ Wikipedia as source,
 allowedNodes=Node labels passed from settings panel,
-allowedRelationship=Relationship labels passed from settings panel,
-language=Language in which wikipedia content will be extracted
-....
+* `allowedRelationship`=Relationship labels passed from settings panel,
+* `language`=Language in which wikipedia content will be extracted
+
 **Response :**
+[source,json,indent=0]
 ....
 {
     "status": "Success",
@@ -187,13 +193,14 @@ language=Language in which wikipedia content will be extracted
 List all sources (Document nodes) present in Neo4j graph database.
 
 **API Parameters :**
-....
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name
-....
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+
 **Response :**
+[source,json,indent=0]
 ....
 {
     "status": "Success",
@@ -238,15 +245,16 @@ database= Neo4j database name
 This API is called at the end of processing of whole document to get create k-nearest neighbor relations between similar chunks of document based on KNN_MIN_SCORE which is 0.8 by default and to drop and create a full text index on db labels.
 
 **API Parameters :**
-....
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name
-tasks= List of tasks to perform
-....
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+* `tasks`= List of tasks to perform
+
 
 **Response :**
+[source,json,indent=0]
 ....
 {
     "status":"Success",
@@ -269,18 +277,16 @@ The API responsible for a chatbot system designed to leverage multiple AI models
 ** Response Generation - Utilizes Vector Embeddings from the Neo4j database, chat history, and the knowledge base of the LLM used.
 
 **API Parameters :**
-....
 
-uri= Neo4j uri
-userName= Neo4j database username
-password= Neo4j database password
-model= LLM model
-question= User query for the chatbot
-session_id= Session ID used to maintain the history of chats during the user's connection
-
-....
+* `uri`= Neo4j uri
+* `userName`= Neo4j database username
+* `password`= Neo4j database password
+* `model`= LLM model
+* `question`= User query for the chatbot
+* `session_id`= Session ID used to maintain the history of chats during the user's connection
 
 **Response :**
+[source,json,indent=0]
 ....
 {
     "status": "Success",
@@ -318,15 +324,16 @@ session_id= Session ID used to maintain the history of chats during the user's c
 This API is used to  get the entities and relations associated with a particular chunk and chunk metadata.
 
 **API Parameters :**
-....
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name
-chunk_ids = Chunk ids of document
-....
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+* `chunk_ids` = Chunk ids of document
+
 
 **Response :**
+[source,json,indent=0]
 ....
 {
     "status": "Success",
@@ -379,15 +386,16 @@ chunk_ids = Chunk ids of document
 This API is used to view graph for a particular file.
 
 **API Parameters :**
-....
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-query_type= Neo4j database name
-document_names = File name for which user wants to view graph
-....
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `query_type`= Neo4j database name
+* `document_names` = File name for which user wants to view graph
+
 
 **Response :**
+[source,json,indent=0]
 ....
 {
     "status": "Success",
@@ -434,15 +442,16 @@ document_names = File name for which user wants to view graph
 This API is used to clear the chat history which is saved in Neo4j DB.
 
 **API Parameters :**
-....
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name,
-session_id = User session id for QA chat
-....
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `session_id` = User session id for QA chat
+
 
 **Response :**
+[source,json,indent=0]
 ....
 {
     "status": "Success",
@@ -454,28 +463,6 @@ session_id = User session id for QA chat
 }
 ....
 
-=== /connect :
-
-**Overview :**
-
-connect to the neo4j databse. 
-
-**API Parameters :**
-....
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name
-....
-
-**Response :**
-....
-{
-  "status": "Success",
-  "message": "Connection Successful"
-}
-....
-
 === /upload :
 
 **Overview :**
@@ -483,19 +470,19 @@ database= Neo4j database name
 The upload endpoint is designed to handle the uploading of large files by breaking them into smaller chunks. This method ensures that large files can be uploaded efficiently without overloading the server.
 
 ***API Parameters***
-....
-file=The file to be uploaded, received in chunks,
-chunkNumber=The current chunk number being uploaded,
-totalChunks=The total number of chunks the file is divided into,
-originalname=The original name of the file,
-model=The model associated with the file,
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name
-....
+
+* `file`=The file to be uploaded, received in chunks,
+* `chunkNumber`=The current chunk number being uploaded,
+* `totalChunks`=The total number of chunks the file is divided into,
+* `originalname`=The original name of the file,
+* `model`=The model associated with the file,
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
 
 **Response :**
+[source,json,indent=0]
 ....
 {
     "status": "Success",
@@ -510,14 +497,15 @@ database= Neo4j database name
 User can set schema for graph generation (i.e. Nodes and relationship labels) in settings panel or get existing db schema through this API. 
 
 **API Parameters :**
-....
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name
-....
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+
 
 **Response :**
+[source,json,indent=0]
 ....
 {
     
@@ -531,15 +519,16 @@ database= Neo4j database name
 The API provides a continuous update on the extraction status of a specified file. It uses Server-Sent Events (SSE) to stream updates to the client.
 
 **API Parameters :**
-...
-file_name=The name of the file whose extraction status is being tracked,
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name
-...
+
+* `file_name`=The name of the file whose extraction status is being tracked,
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+
 
 **Response :**
+[source,json,indent=0]
 ....
 {
     "fileName": "testFile.pdf", 
@@ -562,17 +551,17 @@ database= Neo4j database name
 Deleteion of nodes and relations for multiple files is done through this API. User can choose multiple documents to be deleted, also user have option to delete only 'Document' and 'Chunk' nodes and keep the entities extracted from that document. 
 
 **API Parameters :**
-....
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name,
-filenames= List of files to be deleted,
-source_types= Document sources(Wikipedia, youtube, etc.),
-deleteEntities= Boolean value to check entities deletion is requested or not
-....
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `filenames`= List of files to be deleted,
+* `source_types`= Document sources(Wikipedia, youtube, etc.),
+* `deleteEntities`= Boolean value to check entities deletion is requested or not
 
 **Response :**
+[source,json,indent=0]
 ....
 {
     "status": "Success",
@@ -587,16 +576,17 @@ deleteEntities= Boolean value to check entities deletion is requested or not
 This API is responsible for cancelling an in process job.
 
 **API Parameters :**
-....
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name,
-filenames= Name of the file whose processing need to be stopped, 
-source_types= Source of the file
-....
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `filenames`= Name of the file whose processing need to be stopped, 
+* `source_types`= Source of the file
+
 
 **Response :**
+[source,json,indent=0]
 ....
 {
     "message":"Cancelled the processing job successfully"
@@ -612,13 +602,13 @@ The API is used to populate a graph schema based on the provided input text, mod
 
 **API Parameters :**
 
-....
-input_text=The input text used to populate the graph schema.
-model=The model to be used for populating the graph schema.
-is_schema_description_checked=A flag indicating whether the schema description should be considered.
-....
+* `input_text`=The input text used to populate the graph schema.
+* `model`=The model to be used for populating the graph schema.
+* `is_schema_description_checked`=A flag indicating whether the schema description should be considered.
+
 
 **Response :**
+[source,json,indent=0]
 ....
 {
     "status": "Success",
@@ -653,15 +643,15 @@ is_schema_description_checked=A flag indicating whether the schema description s
 The API retrieves a list of nodes in the graph database that are not connected to any other nodes.
 
 **API Parameters :**
-....
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name,
-....
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+
 
 **Response :**
-
+[source,json,indent=0]
 ....
 {   "status": "Success",
     "data": [
@@ -687,17 +677,15 @@ The API is used to delete unconnected entities from database.
 
 **API Parameters :**
 
-....
-uri=Neo4j uri, 
-userName= Neo4j db username, 
-password= Neo4j db password, 
-database= Neo4j database name,
-unconnected_entities_list=selected entities list to delete of unconnected entities.
-....
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `unconnected_entities_list`=selected entities list to delete of unconnected entities.
 
 
 **Response :**
-
+[source,json,indent=0]
 ....
 {   
     "status": "Success",
