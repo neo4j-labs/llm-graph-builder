@@ -91,22 +91,27 @@ RETURN text, avg_score AS score,
 """ 
 
 VECTOR_GRAPH_SEARCH_QUERY="""
-WITH node AS chunk, score
+WITH node as chunk, score
 MATCH (chunk)-[:PART_OF]->(d:Document)
-CALL {
-  WITH chunk
-  MATCH (chunk)-[:HAS_ENTITY]->(e)
-  MATCH path=(e)-[rels:!HAS_ENTITY&!PART_OF*0..2]-(:!Chunk&!Document)
-  UNWIND rels AS r
-  RETURN collect(DISTINCT r) AS rels
+CALL { WITH chunk
+MATCH (chunk)-[:HAS_ENTITY]->(e)
+MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk&!Document)
+UNWIND rels as r
+RETURN collect(distinct r) as rels
 }
-WITH d, collect(DISTINCT {chunk: chunk, score: score}) AS chunks, avg(score) AS avg_score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) AS rels
+WITH d, collect(DISTINCT {chunk: chunk, score: score}) AS chunks, avg(score) as avg_score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels
 WITH d, avg_score,
      [c IN chunks | c.chunk.text] AS texts, 
-     [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails, 
-     [r IN rels | coalesce(apoc.coll.removeAll(labels(startNode(r)), ['__Entity__'])[0], "") + ":" + startNode(r).id + " " + type(r) + " " + coalesce(apoc.coll.removeAll(labels(endNode(r)), ['__Entity__'])[0], "") + ":" + endNode(r).id] AS entities
-WITH d, avg_score, chunkdetails, apoc.text.join(texts, "\n----\n") + apoc.text.join(entities, "\n") AS text
+     [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails,  
+	[r in rels | coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ startNode(r).id + " "+ type(r) + " " + coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + endNode(r).id] as entities
+WITH d, avg_score,chunkdetails,
+apoc.text.join(texts,"\n----\n") +
+apoc.text.join(entities,"\n")
+as text
 RETURN text, avg_score AS score, {source: COALESCE( CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkdetails: chunkdetails} AS metadata
 """ 
+
+
+
 
 
