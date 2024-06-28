@@ -2,8 +2,9 @@ import logging
 import os
 from datetime import datetime
 from langchain_community.graphs import Neo4jGraph
-from src.shared.common_fn import delete_uploaded_local_file
-from src.api_response import create_api_response
+from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file
+from src.document_sources.gcs_bucket import delete_file_from_gcs
+from src.shared.constants import BUCKET_UPLOAD
 from src.entities.source_node import sourceNode
 import json
 
@@ -36,13 +37,15 @@ class graphDBdataAccess:
                             d.processingTime = $pt, d.errorMessage = $e_message, d.nodeCount= $n_count, 
                             d.relationshipCount = $r_count, d.model= $model, d.gcsBucket=$gcs_bucket, 
                             d.gcsBucketFolder= $gcs_bucket_folder, d.language= $language,d.gcsProjectId= $gcs_project_id,
-                            d.is_cancelled=False, d.total_pages=0, d.total_chunks=0, d.processed_chunk=0""",
+                            d.is_cancelled=False, d.total_chunks=0, d.processed_chunk=0, d.total_pages=$total_pages,
+                            d.access_token=$access_token""",
                             {"fn":obj_source_node.file_name, "fs":obj_source_node.file_size, "ft":obj_source_node.file_type, "st":job_status, 
                             "url":obj_source_node.url,
                             "awsacc_key_id":obj_source_node.awsAccessKeyId, "f_source":obj_source_node.file_source, "c_at":obj_source_node.created_at,
                             "u_at":obj_source_node.created_at, "pt":0, "e_message":'', "n_count":0, "r_count":0, "model":obj_source_node.model,
                             "gcs_bucket": obj_source_node.gcsBucket, "gcs_bucket_folder": obj_source_node.gcsBucketFolder, 
-                            "language":obj_source_node.language, "gcs_project_id":obj_source_node.gcsProjectId})
+                            "language":obj_source_node.language, "gcs_project_id":obj_source_node.gcsProjectId, "total_pages": obj_source_node.total_pages,
+                            "access_token":obj_source_node.access_token})
         except Exception as e:
             error_message = str(e)
             logging.info(f"error_message = {error_message}")
@@ -126,16 +129,17 @@ class graphDBdataAccess:
         index = self.graph.query("""show indexes yield * where type = 'VECTOR' and name = 'vector'""")
         # logging.info(f'show index vector: {index}')
         knn_min_score = os.environ.get('KNN_MIN_SCORE')
-        if index[0]['name'] == 'vector':
+        if len(index) > 0:
             logging.info('update KNN graph')
-            result = self.graph.query("""MATCH (c:Chunk)
+            self.graph.query("""MATCH (c:Chunk)
                                     WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
                                     CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score
                                     WHERE node <> c and score >= $score MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score
                                 """,
                                 {"score":float(knn_min_score)}
                                 )
-            logging.info(f"result : {result}")
+        else:
+            logging.info("Vector index does not exist, So KNN graph not update")
             
     def connection_check(self):
         """
@@ -158,22 +162,25 @@ class graphDBdataAccess:
                 MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, 
                 d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount,
                 d.total_pages AS total_pages, d.total_chunks AS total_chunks , d.fileSize as fileSize, 
-                d.is_cancelled as is_cancelled, d.processed_chunk as processed_chunk
+                d.is_cancelled as is_cancelled, d.processed_chunk as processed_chunk, d.fileSource as fileSource
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
     
-    def delete_file_from_graph(self, filenames, source_types, deleteEntities:str, merged_dir:str):
+    def delete_file_from_graph(self, filenames, source_types, deleteEntities:str, merged_dir:str, uri):
         # filename_list = filenames.split(',')
         filename_list= list(map(str.strip, json.loads(filenames)))
         source_types_list= list(map(str.strip, json.loads(source_types)))
+        gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
         # source_types_list = source_types.split(',')
         for (file_name,source_type) in zip(filename_list, source_types_list):
             merged_file_path = os.path.join(merged_dir, file_name)
-            if source_type == 'local file':
+            if source_type == 'local file' and gcs_file_cache == 'True':
+                folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
+                delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
+            else:
                 logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
-                delete_uploaded_local_file(merged_file_path, file_name)
-
+                delete_uploaded_local_file(merged_file_path,file_name)
         query_to_delete_document=""" 
            MATCH (d:Document) where d.fileName in $filename_list and d.fileSource in $source_types_list
             with collect(d) as documents 

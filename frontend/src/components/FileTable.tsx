@@ -2,13 +2,14 @@ import {
   Checkbox,
   DataGrid,
   DataGridComponents,
+  Flex,
   IconButton,
   ProgressBar,
   StatusIndicator,
   TextLink,
   Typography,
 } from '@neo4j-ndl/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import React from 'react';
 import {
   useReactTable,
@@ -20,34 +21,41 @@ import {
   CellContext,
   Table,
   Row,
+  getSortedRowModel,
 } from '@tanstack/react-table';
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
-import { statusCheck } from '../utils/Utils';
+import { statusCheck, capitalize } from '../utils/Utils';
 import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, alertStateType } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
-import CustomAlert from './Alert';
-import CustomProgressBar from './CustomProgressBar';
+import CustomAlert from './UI/Alert';
+import CustomProgressBar from './UI/CustomProgressBar';
 import subscribe from '../services/PollingAPI';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
+import IconButtonWithToolTip from './UI/IconButtonToolTip';
+import { largeFileSize } from '../utils/Constants';
+
 const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows } = useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
+  //const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
   const [alertDetails, setalertDetails] = useState<alertStateType>({
     showAlert: false,
     alertType: 'error',
     alertMessage: '',
   });
+
+  const tableRef = useRef(null);
+
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
       setalertDetails({
@@ -90,13 +98,13 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
           );
         },
         cell: ({ row }: { row: Row<CustomFile> }) => {
+          const checkedCase =
+            row.getIsSelected() && row.original.status != 'Uploading' && row.original.status != 'Processing';
           return (
             <div className='px-1'>
               <Checkbox
                 aria-label='row-checkbox'
-                checked={
-                  row.getIsSelected() && row.original.status != 'Uploading' && row.original.status != 'Processing'
-                }
+                checked={checkedCase}
                 disabled={
                   !row.getCanSelect() || row.original.status === 'Uploading' || row.original.status === 'Processing'
                 }
@@ -115,11 +123,9 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
             <div className='textellipsis'>
               <span
                 title={
-                  info.row.original?.fileSource === 's3 bucket'
-                    ? info.row.original?.source_url
-                    : info.row.original?.fileSource === 'youtube'
-                      ? info.row.original?.source_url
-                      : info.getValue()
+                  (info.row.original?.fileSource === 's3 bucket' && info.row.original?.source_url) ||
+                  (info.row.original?.fileSource === 'youtube' && info.row.original?.source_url) ||
+                  info.getValue()
                 }
               >
                 {info.getValue()}
@@ -234,7 +240,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
             </Typography>
           );
         },
-        header: () => <span>Upload Progress</span>,
+        header: () => <span>Upload Status</span>,
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.size, {
@@ -243,30 +249,39 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         header: () => <span>Size (KB)</span>,
         footer: (info) => info.column.id,
       }),
-      columnHelper.accessor((row) => row.type, {
-        id: 'fileType',
-        cell: (info) => <i>{info.getValue()}</i>,
-        header: () => <span>Type</span>,
-        footer: (info) => info.column.id,
-      }),
-      columnHelper.accessor((row) => row.fileSource, {
+      columnHelper.accessor((row) => row, {
         id: 'source',
         cell: (info) => {
-          if (info.row.original.fileSource === 'youtube' || info.row.original.fileSource === 'Wikipedia') {
+          if (
+            info.row.original.fileSource === 'youtube' ||
+            info.row.original.fileSource === 'Wikipedia' ||
+            info.row.original.fileSource === 'web-url'
+          ) {
             return (
-              <TextLink externalLink href={info.row.original.source_url}>
-                {info.getValue()}
-              </TextLink>
+              <Flex>
+                <span>
+                  <TextLink externalLink href={info.row.original.source_url}>
+                    {info.row.original.fileSource}
+                  </TextLink>{' '}
+                  /
+                </span>
+                <Typography variant='body-medium'>{info.row.original.type}</Typography>
+              </Flex>
             );
           }
-          return <i>{info.getValue()}</i>;
+          return (
+            <div>
+              <span>{info.row.original.fileSource} / </span>
+              <span>{info.row.original.type}</span>
+            </div>
+          );
         },
-        header: () => <span>Source</span>,
+        header: () => <span>Source/Type</span>,
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.model, {
         id: 'model',
-        cell: (info) => <i>{info.getValue()}</i>,
+        cell: (info) => <i>{capitalize(info.getValue())}</i>,
         header: () => <span>Model</span>,
         footer: (info) => info.column.id,
       }),
@@ -282,25 +297,27 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         header: () => <span>Relations</span>,
         footer: (info) => info.column.id,
       }),
-      columnHelper.accessor((row) => row.processing, {
-        id: 'processing',
-        cell: (info) => <i>{info.getValue()}</i>,
-        header: () => <span>Duration (s)</span>,
-        footer: (info) => info.column.id,
-      }),
+      // columnHelper.accessor((row) => row.total_pages, {
+      //   id: 'Total pages',
+      //   cell: (info) => <i>{info.getValue()}</i>,
+      //   header: () => <span>Total pages</span>,
+      //   footer: (info) => info.column.id,
+      // }),
       columnHelper.accessor((row) => row.status, {
         id: 'inspect',
         cell: (info) => (
           <>
-            <IconButton
-              aria-label='Toggle settings'
+            <IconButtonWithToolTip
+              placement='right'
+              text='Graph'
               size='large'
+              label='Graph view'
               disabled={!(info.getValue() === 'Completed' || info.getValue() == 'Cancelled')}
               clean
               onClick={() => onInspect(info?.row?.original?.name as string)}
             >
               <MagnifyingGlassCircleIconSolid />
-            </IconButton>
+            </IconButtonWithToolTip>
           </>
         ),
         header: () => <span>View</span>,
@@ -324,38 +341,44 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
             res.data.data.forEach((item: SourceNode) => {
               if (item.fileName != undefined && item.fileName.length) {
                 prefiles.push({
-                  name: item.fileName,
-                  size: item.fileSize ?? 0,
-                  type: item?.fileType?.toUpperCase() ?? 'None',
+                  name: item?.fileName,
+                  size: item?.fileSize ?? 0,
+                  type: item?.fileType?.includes('.')
+                    ? item?.fileType?.substring(1)?.toUpperCase() ?? 'None'
+                    : item?.fileType?.toUpperCase() ?? 'None',
                   NodesCount: item?.nodeCount ?? 0,
                   processing: item?.processingTime ?? 'None',
                   relationshipCount: item?.relationshipCount ?? 0,
                   status:
-                    item.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
-                      ? item.status
-                      : item.fileSource === 'local file'
-                        ? item.status
-                        : item.status === 'Completed' || item.status === 'Failed'
-                          ? item.status
-                          : item.fileSource == 'Wikipedia' ||
-                            item.fileSource == 'youtube' ||
-                            item.fileSource == 'gcs bucket'
-                            ? item.status
-                            : 'N/A',
+                    item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                      ? item?.status
+                      : item?.fileSource === 'local file'
+                      ? item?.status
+                      : item?.status === 'Completed' || item.status === 'Failed'
+                      ? item?.status
+                      : item?.fileSource == 'Wikipedia' ||
+                        item?.fileSource == 'youtube' ||
+                        item?.fileSource == 'gcs bucket'
+                      ? item?.status
+                      : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
-                  source_url: item.url != 'None' && item?.url != '' ? item.url : '',
-                  fileSource: item.fileSource ?? 'None',
+                  source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
+                  fileSource: item?.fileSource ?? 'None',
                   gcsBucket: item?.gcsBucket,
                   gcsBucketFolder: item?.gcsBucketFolder,
                   errorMessage: item?.errorMessage,
                   uploadprogess: item?.uploadprogress ?? 0,
                   google_project_id: item?.gcsProjectId,
-                  language: item.language ?? '',
+                  language: item?.language ?? '',
                   processingProgress:
-                    item.processed_chunk != undefined && item.total_chunks != undefined
-                      ? Math.floor((item.processed_chunk / item.total_chunks) * 100)
+                    item?.processed_chunk != undefined &&
+                    item?.total_chunks != undefined &&
+                    !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
+                      ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
+                  // total_pages: item?.total_pages ?? 0,
+                  access_token: item?.access_token ?? '',
                 });
               }
             });
@@ -369,7 +392,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
               userCredentials &&
               userCredentials.database
             ) {
-              if (item?.fileSize < 10000000) {
+              if (item?.fileSize > largeFileSize) {
                 subscribe(
                   item.fileName,
                   userCredentials?.uri,
@@ -380,7 +403,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   updateProgress
                 ).catch((error: AxiosError) => {
                   // @ts-ignore
-                  const errorfile = decodeURI(error.config.url.split('?')[0].split('/').at(-1));
+                  const errorfile = decodeURI(error?.config?.url?.split('?')[0].split('/').at(-1));
                   setFilesData((prevfiles) => {
                     return prevfiles.map((curfile) => {
                       if (curfile.name == errorfile) {
@@ -426,6 +449,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       setFilesData([]);
     }
   }, [connectionStatus, userCredentials]);
+
   const cancelHandler = async (fileName: string, id: string, fileSource: string) => {
     setFilesData((prevfiles) =>
       prevfiles.map((curfile) => {
@@ -483,7 +507,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     }
   };
 
-  function updatestatus(i: statusupdate) {
+  const updatestatus = (i: statusupdate) => {
     const { file_name } = i;
     const {
       fileName,
@@ -513,12 +537,12 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         })
       );
     }
-  }
-  function updateProgress(i: statusupdate) {
+  };
+
+  const updateProgress = (i: statusupdate) => {
     const { file_name } = i;
     const { fileName, nodeCount = 0, relationshipCount = 0, status, processed_chunk = 0, total_chunks } = file_name;
     if (fileName && total_chunks) {
-      console.log({ processed_chunk, total_chunks, percentage: Math.floor((processed_chunk / total_chunks) * 100) });
       setFilesData((prevfiles) =>
         prevfiles.map((curfile) => {
           if (curfile.name == fileName) {
@@ -534,9 +558,9 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
         })
       );
     }
-  }
+  };
 
-  const pageSizeCalculation = Math.floor((currentOuterHeight - 402) / 45);
+  // const pageSizeCalculation = Math.floor((currentOuterHeight - 402) / 45);
 
   const table = useReactTable({
     data: filesData,
@@ -545,11 +569,11 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange: setColumnFilters,
-    initialState: {
-      pagination: {
-        pageSize: pageSizeCalculation < 0 ? 9 : pageSizeCalculation,
-      },
-    },
+    // initialState: {
+    //   pagination: {
+    //     pageSize: pageSizeCalculation < 0 ? 9 : pageSizeCalculation,
+    //   },
+    // },
     state: {
       columnFilters,
       rowSelection,
@@ -557,7 +581,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     onRowSelectionChange: setRowSelection,
     filterFns: {
       statusFilter: (row, columnId, filterValue) => {
-        return filterValue ? row.original[columnId] === 'New' : row.original[columnId];
+        const value = filterValue ? row.original[columnId] === 'New' : row.original[columnId];
+        return value;
       },
     },
     enableGlobalFilter: false,
@@ -565,23 +590,42 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     enableRowSelection: true,
     enableMultiRowSelection: true,
     getRowId: (row) => JSON.stringify({ ...row }),
+    enableSorting: true,
+    getSortedRowModel: getSortedRowModel(),
   });
 
   useEffect(() => {
-    const listener = (e: any) => {
-      setcurrentOuterHeight(e.currentTarget.outerHeight);
-      table.setPageSize(Math.floor((e.currentTarget.outerHeight - 402) / 45));
-    };
-    window.addEventListener('resize', listener);
-    return () => {
-      window.removeEventListener('resize', listener);
-    };
+    if (tableRef.current) {
+      // Component has content, calculate maximum height for table
+      // Observes the height of the content and calculates own height accordingly
+      const resizeObserver = new ResizeObserver((entries) => {
+        entries.forEach((entry) => {
+          const { height } = entry.contentRect;
+          // setcurrentOuterHeight(height);
+          const rowHeight = document?.getElementsByClassName('ndl-data-grid-td')?.[0]?.clientHeight ?? 69;
+          table.setPageSize(Math.floor(height / rowHeight));
+        });
+      });
+
+      const contentElement = document.getElementsByClassName('ndl-data-grid-scrollable')[0];
+      resizeObserver.observe(contentElement);
+
+      return () => {
+        // Stop observing content after cleanup
+        resizeObserver.unobserve(contentElement);
+      };
+    }
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     table.getColumn('status')?.setFilterValue(e.target.checked);
+    if (!table.getCanNextPage() || table.getRowCount()) {
+      table.setPageIndex(0);
+    }
   };
+
   const classNameCheck = isExpanded ? 'fileTableWithExpansion' : `filetable`;
+
   const handleClose = () => {
     setalertDetails((prev) => ({ ...prev, showAlert: false }));
     localStorage.setItem('alertShown', JSON.stringify(true));
@@ -589,6 +633,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
   useEffect(() => {
     setSelectedRows(table.getSelectedRowModel().rows.map((i) => i.id));
   }, [table.getSelectedRowModel()]);
+
   return (
     <>
       {alertDetails.showAlert && (
@@ -605,8 +650,9 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
             <input type='checkbox' onChange={handleChange} />
             <label>Show files with status New </label>
           </div>
-          <div style={{ width: 'calc(100% - 64px)' }}>
+          <div className={`${isExpanded ? 'w-[calc(100%-64px)]' : 'mx-auto w-[calc(100%-100px)]'}`}>
             <DataGrid
+              ref={tableRef}
               isResizable={true}
               tableInstance={table}
               styling={{

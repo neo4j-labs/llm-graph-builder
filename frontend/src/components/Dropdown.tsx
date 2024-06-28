@@ -2,8 +2,9 @@ import { Dropdown } from '@neo4j-ndl/react';
 import { DropdownProps, OptionType } from '../types';
 import { useMemo } from 'react';
 import { defaultLLM, llms } from '../utils/Constants';
+import { capitalize } from '../utils/Utils';
 
-const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
+const LlmDropdown: React.FC<DropdownProps> = ({ onSelect }) => {
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
   };
@@ -17,11 +18,13 @@ const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
           aria-label='A selection dropdown'
           selectProps={{
             onChange: handleChange,
-            options: allOptions?.map((option) => ({ label: option, value: option })),
+            options: allOptions?.map((option) => ({
+              label: capitalize(option),
+              value: option,
+            })),
             placeholder: 'Select LLM Model',
-            defaultValue: { label: defaultLLM, value: defaultLLM },
+            defaultValue: { label: capitalize(defaultLLM), value: defaultLLM },
             menuPlacement: 'auto',
-            isDisabled,
           }}
           size='medium'
           fluid
