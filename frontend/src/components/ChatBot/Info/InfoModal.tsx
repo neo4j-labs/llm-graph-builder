@@ -269,7 +269,8 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                             variant='subheading-medium'
                             className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden'
                           >
-                            {chunk?.fileName}, Page: {chunk?.page_number}
+                            {/* {chunk?.fileName}, Page: {chunk?.page_number} */}
+                            {chunk?.fileName}
                           </Typography>
                         </div>
                         <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
