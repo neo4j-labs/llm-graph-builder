@@ -16,6 +16,7 @@ import type { Node, Relationship } from '@neo4j-nvl/base';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import ReactMarkdown from 'react-markdown';
 import { GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
+import { youtubeLinkValidation } from '../../../utils/Utils';
 const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, response_time, chunk_ids }) => {
   const [activeTab, setActiveTab] = useState<number>(3);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
@@ -160,9 +161,21 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                             </Typography>
                           </div>
                         )}
+                        {youtubeLinkValidation(link) && (
+                          <>
+                            <div className='flex flex-row inline-block justiy-between items-center'>
+                              <img src={youtubelogo} width={20} height={20} className='mr-2' />
+                              <TextLink externalLink href={link}>
+                                {link}
+                              </TextLink>
+                            </div>
+                          </>
+                        )}
                         {!link.startsWith('s3://') &&
                           !link?.includes('storage.googleapis.com') &&
-                          !link?.includes('wikipedia.org') && (
+                          !link?.includes('wikipedia.org') && 
+                          !link?.includes('youtube.com')&&
+                          (
                             <div className='flex flex-row inline-block justify-between items-center'>
                               <GlobeAltIconOutline className='n-size-token-7' />
                               <TextLink href={link} externalLink={true}>
@@ -290,7 +303,9 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                     ) : chunk.url !== undefined &&
                       !chunk?.url.startsWith('s3://') &&
                       !chunk?.url.includes('storage.googleapis.com') &&
-                      !chunk?.url.includes('wikipedia.org') ? (
+                      !chunk?.url.includes('wikipedia.org') &&
+                      !chunk?.url.includes('youtube.com')
+                      ? (
                       <>
                         <div className='flex flex-row inline-block items-center'>
                           <GlobeAltIconOutline className='n-size-token-7' />
