@@ -18,6 +18,7 @@ from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.graph_query import get_graph_results
 from src.chunkid_entities import get_entities_from_chunkids
+from src.post_processing import create_fulltext
 from sse_starlette.sse import EventSourceResponse
 import json
 from typing import List, Mapping
@@ -239,28 +240,36 @@ async def get_source_list(uri:str, userName:str, password:str, database:str=None
         logging.exception(f'Exception:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
 
-@app.post("/update_similarity_graph")
-async def update_similarity_graph(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
-    """
-    Calls 'update_graph' which post the query to update the similiar nodes in the graph
-    """
+@app.post("/post_processing")
+async def post_processing(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), tasks=Form(None)):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
-        await asyncio.to_thread(update_graph, graph)
-        
-        josn_obj = {'api_name':'update_similarity_graph','db_url':uri}
-        logger.log_struct(josn_obj)
-        return create_api_response('Success',message='Updated KNN Graph')
+        tasks = set(map(str.strip, json.loads(tasks)))
+
+        if "update_similarity_graph" in tasks:
+            await asyncio.to_thread(update_graph, graph)
+            josn_obj = {'api_name': 'post_processing/update_similarity_graph', 'db_url': uri}
+            logger.log_struct(josn_obj)
+            logging.info(f'Updated KNN Graph')
+        if "create_fulltext_index" in tasks:
+            await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database)
+            josn_obj = {'api_name': 'post_processing/create_fulltext_index', 'db_url': uri}
+            logger.log_struct(josn_obj)
+            logging.info(f'Full Text index created')
+
+        return create_api_response('Success', message='All tasks completed successfully')
+    
     except Exception as e:
         job_status = "Failed"
-        message="Unable to update KNN Graph"
         error_message = str(e)
-        logging.exception(f'Exception in update KNN graph:{error_message}')
+        message = f"Unable to complete tasks"
+        logging.exception(f'Exception in post_processing tasks: {error_message}')
         return create_api_response(job_status, message=message, error=error_message)
+    
     finally:
         gc.collect()
         if graph is not None:
-            close_db_connection(graph, 'update_similarity_graph')
+            close_db_connection(graph, 'post_processing')
                 
 @app.post("/chat_bot")
 async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password=Form(None), database=Form(None),question=Form(None), session_id=Form(None)):
@@ -290,7 +299,7 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
 @app.post("/chunk_entities")
 async def chunk_entities(uri=Form(None),userName=Form(None), password=Form(None), chunk_ids=Form(None)):
     try:
-        logging.info(f"URI: {uri}, Username: {userName},password:{password}, chunk_ids: {chunk_ids}")
+        logging.info(f"URI: {uri}, Username: {userName}, chunk_ids: {chunk_ids}")
         result = await asyncio.to_thread(get_entities_from_chunkids,uri=uri, username=userName, password=password, chunk_ids=chunk_ids)
         josn_obj = {'api_name':'chunk_entities','db_url':uri}
         logger.log_struct(josn_obj)
