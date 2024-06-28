@@ -2,7 +2,13 @@ import axios from 'axios';
 import { url } from '../utils/Utils';
 import { UserCredentials } from '../types';
 
-const chatBotAPI = async (userCredentials: UserCredentials, question: string, session_id: string, model: string) => {
+export const chatBotAPI = async (
+  userCredentials: UserCredentials,
+  question: string,
+  session_id: string,
+  model: string,
+  mode = 'vector'
+) => {
   try {
     const formData = new FormData();
     formData.append('uri', userCredentials?.uri ?? '');
@@ -12,6 +18,7 @@ const chatBotAPI = async (userCredentials: UserCredentials, question: string, se
     formData.append('question', question);
     formData.append('session_id', session_id);
     formData.append('model', model);
+    formData.append('mode', mode);
     const startTime = Date.now();
     const response = await axios.post(`${url()}/chat_bot`, formData, {
       headers: {

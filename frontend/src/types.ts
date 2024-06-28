@@ -211,17 +211,21 @@ export interface Source {
   source_name: string;
   time_stamps?: string;
 }
+export interface chunk {
+  id: string;
+  score: number;
+}
 export interface Messages {
   id: number;
   message: string;
   user: string;
   datetime: string;
   isTyping?: boolean;
-  sources?: Source[];
+  sources?: string[];
   model?: string;
   isLoading?: boolean;
   response_time?: number;
-  chunk_ids?: string[];
+  chunk_ids?: chunk[];
   total_tokens?: number;
 }
 export type ChatbotProps = {
@@ -348,10 +352,10 @@ export interface SourceListServerData {
 }
 
 export interface chatInfoMessage extends Partial<Messages> {
-  sources: Source[];
+  sources: string[];
   model: string;
   response_time: number;
-  chunk_ids: string[];
+  chunk_ids: chunk[];
   total_tokens: number;
 }
 
@@ -442,6 +446,7 @@ export interface Chunk {
   content_offset?: string;
   url?: string;
   fileSource: string;
+  score?: string;
 }
 
 export interface SpeechSynthesisProps {

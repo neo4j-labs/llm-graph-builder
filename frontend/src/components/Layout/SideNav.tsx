@@ -8,14 +8,14 @@ import {
   ChatBubbleOvalLeftEllipsisIconOutline,
   CloudArrowUpIconSolid,
 } from '@neo4j-ndl/react/icons';
-import {} from '@neo4j-ndl/react/icons';
 import { SideNavProps } from '../../types';
 import Chatbot from '../ChatBot/Chatbot';
 import { createPortal } from 'react-dom';
 import { useMessageContext } from '../../context/UserMessages';
 import { getIsLoading } from '../../utils/Utils';
-import IconsPlacement from '../ChatBot/IconsPlacement';
+import ExpandedChatButtonContainer from '../ChatBot/ExpandedChatButtonContainer';
 import { tooltips } from '../../utils/Constants';
+import ChatModeToggle from '../ChatBot/ChatModeToggle';
 
 const SideNav: React.FC<SideNavProps> = ({
   position,
@@ -127,6 +127,7 @@ const SideNav: React.FC<SideNavProps> = ({
                   }
                 />
               </Tip>
+              {!isChatModalOpen && <ChatModeToggle inSidenav={true} />}
             </>
           )}
         </SideNavigation.List>
@@ -143,7 +144,7 @@ const SideNav: React.FC<SideNavProps> = ({
             disableCloseButton={true}
           >
             <Dialog.Header className='flex justify-between self-end' id='chatbot-dialog-title'>
-              <IconsPlacement
+              <ExpandedChatButtonContainer
                 closeChatBot={handleShrinkClick}
                 deleteOnClick={deleteOnClick}
                 messages={messages ?? []}
