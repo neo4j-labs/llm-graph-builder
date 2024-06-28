@@ -1,31 +1,45 @@
 import { List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 import { Button, Checkbox, Dialog, Flex } from '@neo4j-ndl/react';
 import { DocumentTextIconOutline } from '@neo4j-ndl/react/icons';
-import { useState } from 'react';
-
+import { useEffect, useState } from 'react';
+import { UserCredentials, orphanNodeProps } from '../../../types';
+import { getOrphanNodes } from '../../../services/GetOrphanNodes';
+import { useCredentials } from '../../../context/UserCredentials';
 
 export default function DeletePopUpForOrphanNodes({
   open,
   deleteHandler,
   deleteCloseHandler,
-  handleToggle,
-  checked,
   loading,
 }: {
   open: boolean;
-  deleteHandler: () => void;
+  deleteHandler: (selectedEntities: orphanNodeProps[]) => void;
   deleteCloseHandler: () => void;
-  handleToggle: () => void;
-  checked: string[];
   loading: boolean;
 }) {
-  const [orphanNodes, setorphanNodes] = useState([]);
+  const [orphanNodes, setOrphanNodes] = useState<orphanNodeProps[]>([]);
+  const [selectedOrphanNodesForDeletion, setselectedOrphanNodesForDeletion] = useState<orphanNodeProps[]>([]);
+  const { userCredentials } = useCredentials();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const apiresponse = await getOrphanNodes(userCredentials as UserCredentials);
+        if (apiresponse.data.data.length) {
+          setOrphanNodes(apiresponse.data.data);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    })();
+  }, [userCredentials]);
+
   return (
     <Dialog open={open} onClose={deleteCloseHandler}>
       <Dialog.Content>
         <List className='max-h-80 overflow-y-auto'>
           {orphanNodes.length > 0 ? (
-            orphanNodes.map((f, i) => {
+            orphanNodes.map((n, i) => {
               return (
                 <ListItem key={i} disablePadding>
                   <ListItemButton role={undefined} dense>
@@ -33,7 +47,6 @@ export default function DeletePopUpForOrphanNodes({
                       <Checkbox
                         aria-label='selection checkbox'
                         onChange={(e) => console.log(e.target.value)}
-                        // checked={checked.indexOf(f.id) !== -1}
                         tabIndex={-1}
                       />
                     </ListItemIcon>
@@ -43,7 +56,7 @@ export default function DeletePopUpForOrphanNodes({
                     <ListItemText
                       primary={
                         <Flex flexDirection='row'>
-                          <span className='word-break'></span>
+                          <span className='word-break'>{n.e.id}</span>
                         </Flex>
                       }
                     />
@@ -60,7 +73,7 @@ export default function DeletePopUpForOrphanNodes({
         <Button fill='outlined' size='large' onClick={deleteCloseHandler}>
           Cancel
         </Button>
-        <Button onClick={() => deleteHandler()} size='large' loading={loading}>
+        <Button onClick={() => deleteHandler(selectedOrphanNodesForDeletion)} size='large' loading={loading}>
           Continue
         </Button>
       </Dialog.Actions>

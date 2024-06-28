@@ -321,6 +321,18 @@ export interface LegendChipProps {
 export interface FileContextProviderProps {
   children: ReactNode;
 }
+export interface orphanNode {
+  id: string;
+  elementId: string;
+  description: string;
+  labels: string[];
+  embedding: null | string;
+}
+export interface orphanNodeProps {
+  documents: string[];
+  chunkConnections: number;
+  e: orphanNode;
+}
 export interface labelsAndTypes {
   labels: string[];
   relationshipTypes: string[];
@@ -330,7 +342,7 @@ export interface commonserverresponse {
   error?: string;
   message?: string;
   file_name?: string;
-  data?: labelsAndTypes | labelsAndTypes[] | uploadData;
+  data?: labelsAndTypes | labelsAndTypes[] | uploadData | orphanNodeProps[];
 }
 
 export interface ScehmaFromText extends Partial<commonserverresponse> {
@@ -338,6 +350,9 @@ export interface ScehmaFromText extends Partial<commonserverresponse> {
 }
 export interface ServerData extends Partial<commonserverresponse> {
   data: labelsAndTypes[];
+}
+export interface OrphanNodeResponse extends Partial<commonserverresponse> {
+  data: orphanNodeProps[];
 }
 export interface schema {
   nodelabels: string[];
