@@ -141,7 +141,7 @@ def get_llm(model_version:str) :
                        model_name=model_version)
     
     else:
-        llm = DiffbotGraphTransformer(diffbot_api_key=os.environ.get('DIFFBOT_API_KEY'))    
+        llm = DiffbotGraphTransformer(diffbot_api_key=os.environ.get('DIFFBOT_API_KEY'),extract_types=['entities','facts'])    
     logging.info(f"Model created - Model Version: {model_version}")
     return llm
   
