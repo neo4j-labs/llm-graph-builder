@@ -279,14 +279,12 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                         <div className='flex flex-row inline-block justiy-between items-center'>
                           <img src={youtubelogo} width={20} height={20} className='mr-2' />
                           <TextLink href={generateYouTubeLink(chunk?.url, chunk?.start_time)} externalLink={true}>
-                            <HoverableLink url={generateYouTubeLink(chunk?.url, chunk?.start_time)}>
                               <Typography
                                 variant='body-medium'
                                 className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
                               >
-                                {chunk?.fileName}
+                               {generateYouTubeLink(chunk?.url, chunk?.start_time)}
                               </Typography>
-                            </HoverableLink>
                           </TextLink>
                         </div>
                         <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
