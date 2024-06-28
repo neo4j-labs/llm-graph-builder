@@ -150,7 +150,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                             </Typography>
                           </div>
                         )}
-                        {link.startsWith('s3://') && (
+                        {link?.startsWith('s3://') && (
                           <div className='flex flex-row inline-block justify-between items-center'>
                             <img src={s3logo} width={20} height={20} className='mr-2' alt='S3 Logo' />
                             <Typography
@@ -166,20 +166,20 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                             <div className='flex flex-row inline-block justiy-between items-center'>
                               <img src={youtubelogo} width={20} height={20} className='mr-2' />
                               <TextLink href={link} externalLink={true}>
-                              <HoverableLink url={link}>
-                                <Typography
-                                  variant='body-medium'
-                                  className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
-                                >
-                                  {link}
-                                </Typography>
-                              </HoverableLink>
-                            </TextLink>
-                   
+                                <HoverableLink url={link}>
+                                  <Typography
+                                    variant='body-medium'
+                                    className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                                  >
+                                    {link}
+                                  </Typography>
+                                </HoverableLink>
+                              </TextLink>
+
                             </div>
                           </>
                         )}
-                        {!link.startsWith('s3://') &&
+                        {!link?.startsWith('s3://') &&
                           !link?.includes('storage.googleapis.com') &&
                           !link?.includes('wikipedia.org') &&
                           !link?.includes('youtube.com') && (
@@ -279,12 +279,12 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                         <div className='flex flex-row inline-block justiy-between items-center'>
                           <img src={youtubelogo} width={20} height={20} className='mr-2' />
                           <TextLink href={generateYouTubeLink(chunk?.url, chunk?.start_time)} externalLink={true}>
-                              <Typography
-                                variant='body-medium'
-                                className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
-                              >
-                               {generateYouTubeLink(chunk?.url, chunk?.start_time)}
-                              </Typography>
+                            <Typography
+                              variant='body-medium'
+                              className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                            >
+                              {chunk?.fileName}
+                            </Typography>
                           </TextLink>
                         </div>
                         <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
@@ -312,7 +312,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                           <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                         </div>
                       </>
-                    ) : chunk.url !== undefined &&
+                    ) : chunk?.url &&
                       !chunk?.url.startsWith('s3://') &&
                       !chunk?.url.includes('storage.googleapis.com') &&
                       !chunk?.url.includes('wikipedia.org') &&
