@@ -11,19 +11,19 @@ Neo4j database connection on frontend is done with this API.
 
 **API Parameters :**
 ....
-uri=Neo4j uri, 
+`uri`=Neo4j uri, 
 userName= Neo4j db username, 
 password= Neo4j db password, 
 database= Neo4j database name
 ....
 
 **Response :**
-....
+----
 {
     "status":"Success",
     "message":"Connection Successful"
 }
-....
+----
 
 === /upload :
 
