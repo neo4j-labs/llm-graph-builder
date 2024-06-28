@@ -10,7 +10,7 @@ import { extractAPI } from '../utils/FileAPI';
 import { ContentProps, CustomFile, OptionType, UserCredentials, alertStateType } from '../types';
 import { updateGraphAPI } from '../services/UpdateGraph';
 import GraphViewModal from './Graph/GraphViewModal';
-import deleteAPI from '../services/deleteFiles';
+import deleteAPI from '../services/DeleteFiles';
 import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
