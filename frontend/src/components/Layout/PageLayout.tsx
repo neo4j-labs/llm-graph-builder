@@ -10,10 +10,12 @@ import { UserCredentials, alertStateType, orphanNodeProps } from '../../types';
 import { useMessageContext } from '../../context/UserMessages';
 import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { OverridableStringUnion } from '@mui/types';
+import { useFileContext } from '../../context/UsersFiles';
 import SchemaFromTextDialog from '../Popups/Settings/SchemaFromText';
 import CustomAlert from '../UI/Alert';
 import DeletePopUpForOrphanNodes from '../Popups/DeletePopUpForOrphanNodes';
 import deleteOrphanAPI from '../../services/DeleteOrphanNodes';
+
 export default function PageLayoutNew({
   isSettingPanelExpanded,
   closeSettingModal,
@@ -45,6 +47,7 @@ export default function PageLayoutNew({
   const { messages } = useMessageContext();
   const openSchemaFromTextDialog = useCallback(() => setOpenTextSchemaDialog(true), []);
   const closeSchemaFromTextDialog = useCallback(() => setOpenTextSchemaDialog(false), []);
+  const { isSchema, setIsSchema } = useFileContext();
 
   const deleteOnClick = async () => {
     try {
@@ -114,15 +117,21 @@ export default function PageLayoutNew({
         loading={orphanDeleteAPIloading}
       ></DeletePopUpForOrphanNodes>
       <SettingsModal
-        opneTextSchema={openSchemaFromTextDialog}
+        openTextSchema={openSchemaFromTextDialog}
         open={isSettingPanelExpanded}
         onClose={closeSettingModal}
+        settingView='headerView'
+        isSchema={isSchema}
+        setIsSchema={setIsSchema}
       />
       <Content
         openChatBot={() => setShowChatBot(true)}
         isLeftExpanded={isLeftExpanded}
         isRightExpanded={isRightExpanded}
         showChatBot={showChatBot}
+        openTextSchema={openSchemaFromTextDialog}
+        isSchema={isSchema}
+        setIsSchema={setIsSchema}
       />
       {showDrawerChatbot && (
         <DrawerChatbot messages={messages} isExpanded={isRightExpanded} clearHistoryData={clearHistoryData} />

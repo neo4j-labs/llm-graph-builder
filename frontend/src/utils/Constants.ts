@@ -1,3 +1,5 @@
+import { VisualizeBloomIcon } from '@neo4j-ndl/react/icons';
+
 export const document = `+ [docs]`;
 
 export const chunks = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
@@ -113,6 +115,8 @@ export const tooltips = {
   createSchema: 'Create your own schema by passing text',
   useExistingSchema: 'Use the already existing schema from DB',
   clearChat: 'Clear Chat History',
+  continue: 'Continue',
+  clearGraphSettings: 'Allow User to remove Settings',
 };
 
 export const buttonCaptions = {
@@ -133,4 +137,13 @@ export const buttonCaptions = {
   connectToNeo4j: 'Connect to Neo4j',
   cancel: 'Cancel',
   details: 'Details',
+  continueSettings: 'Continue',
+  clearSettings: 'Clear Settings',
 };
+
+export const ChatModeOptions = [
+  { Icon: VisualizeBloomIcon, value: 'vector' },
+  { Icon: 'abc', value: 'graph+vector' },
+];
+
+export const taskParam: string[] = ['update_similarity_graph', 'create_fulltext_index'];

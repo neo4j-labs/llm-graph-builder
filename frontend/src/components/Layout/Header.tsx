@@ -9,9 +9,11 @@ import {
   TrashIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { Typography } from '@neo4j-ndl/react';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import IconButtonWithToolTip from '../UI/IconButtonToolTip';
 import { tooltips } from '../../utils/Constants';
+import { useFileContext } from '../../context/UsersFiles';
+import { Badge } from '@mui/material';
 
 export default function Header({
   themeMode,
@@ -27,6 +29,12 @@ export default function Header({
   const handleURLClick = useCallback((url: string) => {
     window.open(url, '_blank');
   }, []);
+
+  const { isSchema, setIsSchema } = useFileContext();
+
+  useEffect(() => {
+    setIsSchema(isSchema);
+  }, [isSchema]);
 
   return (
     <div
@@ -95,16 +103,18 @@ export default function Header({
               <IconButtonWithToolTip clean onClick={openOrphanNodeDeletionModal} text='delete orphan nodes' label='delete orphan node'>
                 <TrashIconOutline />
               </IconButtonWithToolTip>
-              <IconButtonWithToolTip
-                label={tooltips.settings}
-                text={tooltips.settings}
-                size='large'
-                clean
-                onClick={openSettingsModal}
-                placement='left'
-              >
-                <Cog8ToothIconOutline />
-              </IconButtonWithToolTip>
+              <Badge color={isSchema ? 'success' : 'error'} overlap='circular' badgeContent=' ' variant='dot'>
+                <IconButtonWithToolTip
+                  label={tooltips.settings}
+                  text={tooltips.settings}
+                  size='large'
+                  clean
+                  onClick={openSettingsModal}
+                  placement='left'
+                >
+                  <Cog8ToothIconOutline />
+                </IconButtonWithToolTip>
+              </Badge>
             </div>
           </div>
         </section>

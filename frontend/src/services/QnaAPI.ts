@@ -6,7 +6,8 @@ export const chatBotAPI = async (
   userCredentials: UserCredentials,
   question: string,
   session_id: string,
-  model: string
+  model: string,
+  mode = 'vector'
 ) => {
   try {
     const formData = new FormData();
@@ -17,6 +18,7 @@ export const chatBotAPI = async (
     formData.append('question', question);
     formData.append('session_id', session_id);
     formData.append('model', model);
+    formData.append('mode', mode);
     const startTime = Date.now();
     const response = await axios.post(`${url()}/chat_bot`, formData, {
       headers: {

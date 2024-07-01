@@ -7,7 +7,7 @@ import {
   SpeakerXMarkIconOutline,
 } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../../assets/images/chatbot-ai.png';
-import { ChatbotProps, Source, UserCredentials } from '../../types';
+import { ChatbotProps, UserCredentials, chunk } from '../../types';
 import { useCredentials } from '../../context/UserCredentials';
 import { chatBotAPI } from '../../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
@@ -25,14 +25,14 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
-  const { model } = useFileContext();
+  const { model, chatMode } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
-  const [sourcesModal, setSourcesModal] = useState<Source[]>([]);
+  const [sourcesModal, setSourcesModal] = useState<string[]>([]);
   const [modelModal, setModelModal] = useState<string>('');
   const [responseTime, setResponseTime] = useState<number>(0);
-  const [chunkModal, setChunkModal] = useState<string[]>([]);
+  const [chunkModal, setChunkModal] = useState<chunk[]>([]);
   const [tokensUsed, setTokensUsed] = useState<number>(0);
   const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
 
@@ -56,9 +56,9 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const simulateTypingEffect = (
     response: {
       reply: string;
-      sources?: Source[];
+      sources?: string[];
       model?: string;
-      chunk_ids?: string[];
+      chunk_ids?: chunk[];
       total_tokens?: number;
       response_time?: number;
       speaking?: boolean;
@@ -142,13 +142,13 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
     try {
       setInputMessage('');
       simulateTypingEffect({ reply: ' ' });
-      const chatbotAPI = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model);
+      const chatbotAPI = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model, chatMode);
       const chatresponse = chatbotAPI?.response;
       console.log('api', chatresponse);
       chatbotReply = chatresponse?.data?.data?.message;
       chatSources = chatresponse?.data?.data?.info.sources;
       chatModel = chatresponse?.data?.data?.info.model;
-      chatChunks = chatresponse?.data?.data?.info.chunkids;
+      chatChunks = chatresponse?.data?.data?.info.chunkdetails;
       chatTokensUsed = chatresponse?.data?.data?.info.total_tokens;
       chatTimeTaken = chatresponse?.data?.data?.info.response_time;
       const finalbotReply = {
