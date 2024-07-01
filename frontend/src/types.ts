@@ -339,6 +339,7 @@ export interface orphanNodeProps {
   documents: string[];
   chunkConnections: number;
   e: orphanNode;
+  checked?: boolean;
 }
 export interface labelsAndTypes {
   labels: string[];

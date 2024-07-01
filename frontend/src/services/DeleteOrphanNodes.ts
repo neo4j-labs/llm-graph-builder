@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { url } from '../utils/Utils';
-import { UserCredentials, orphanNodeProps } from '../types';
+import { UserCredentials } from '../types';
 
-const deleteOrphanAPI = async (userCredentials: UserCredentials, selectedNodes: orphanNodeProps[]) => {
+const deleteOrphanAPI = async (userCredentials: UserCredentials, selectedNodes: string[]) => {
   try {
     const formData = new FormData();
     formData.append('uri', userCredentials?.uri ?? '');

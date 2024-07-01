@@ -19,7 +19,7 @@ export default function Header({
   themeMode,
   toggleTheme,
   openSettingsModal,
-  openOrphanNodeDeletionModal
+  openOrphanNodeDeletionModal,
 }: {
   themeMode: string;
   toggleTheme: () => void;
@@ -100,7 +100,12 @@ export default function Header({
                   </span>
                 )}
               </IconButtonWithToolTip>
-              <IconButtonWithToolTip clean onClick={openOrphanNodeDeletionModal} text='delete orphan nodes' label='delete orphan node'>
+              <IconButtonWithToolTip
+                clean
+                onClick={openOrphanNodeDeletionModal}
+                text='delete orphan nodes'
+                label='delete orphan node'
+              >
                 <TrashIconOutline />
               </IconButtonWithToolTip>
               <Badge color={isSchema ? 'success' : 'error'} overlap='circular' badgeContent=' ' variant='dot'>

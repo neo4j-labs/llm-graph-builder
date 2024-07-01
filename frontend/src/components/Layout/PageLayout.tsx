@@ -6,7 +6,7 @@ import Content from '../Content';
 import SettingsModal from '../Popups/Settings/SettingModal';
 import { clearChatAPI } from '../../services/QnaAPI';
 import { useCredentials } from '../../context/UserCredentials';
-import { UserCredentials, alertStateType, orphanNodeProps } from '../../types';
+import { UserCredentials, alertStateType } from '../../types';
 import { useMessageContext } from '../../context/UserMessages';
 import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { OverridableStringUnion } from '@mui/types';
@@ -82,7 +82,7 @@ export default function PageLayoutNew({
       alertMessage: '',
     });
   };
-  const orphanNodesDeleteHandler = async (selectedEntities: orphanNodeProps[]) => {
+  const orphanNodesDeleteHandler = async (selectedEntities: string[]) => {
     try {
       setorphanDeleteAPIloading(true);
       const response = await deleteOrphanAPI(userCredentials as UserCredentials, selectedEntities);

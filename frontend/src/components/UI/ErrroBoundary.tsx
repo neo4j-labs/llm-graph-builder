@@ -1,5 +1,5 @@
 import React from 'react';
-import { Banner} from '@neo4j-ndl/react';
+import { Banner } from '@neo4j-ndl/react';
 
 export default class ErrorBoundary extends React.Component<any, any> {
   state = { hasError: false, errorMessage: '' };
