@@ -16,19 +16,16 @@ PROJECT_ID = 'llm-experiments-387609'
 
 ## CHAT SETUP
 CHAT_MAX_TOKENS = 1000
-CHAT_SEARCH_KWARG_K = 5
+CHAT_SEARCH_KWARG_K = 3
 CHAT_SEARCH_KWARG_SCORE_THRESHOLD = 0.7
 CHAT_DOC_SPLIT_SIZE = 3000
-CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD = 0.15
+CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD = 0.10
 CHAT_TOKEN_CUT_OFF = {
-     "gpt-3.5": 5,
-     "gemini-1.0-pro": 5,
-     "gemini-1.5-pro": 10,
-     "gpt-4": 10,
-     "diffbot" : 10,
-     "gpt-4o": 10,
-     "groq-llama3" : 5
+     ("gpt-3.5","gemini-1.0-pro","gemini-1.5-pro","groq-llama3" ) : 4, 
+     ("gpt-4","diffbot" , "gpt-4o") : 28   
 }
+
+
 ### CHAT TEMPLATES 
 CHAT_SYSTEM_TEMPLATE = """
 You are an AI-powered question-answering agent. Your task is to provide accurate and comprehensive responses to user queries based on the given context, chat history, and available resources.
@@ -90,26 +87,87 @@ RETURN text, avg_score AS score,
        {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkdetails: chunkdetails} as metadata
 """ 
 
-VECTOR_GRAPH_SEARCH_QUERY="""
+# VECTOR_GRAPH_SEARCH_QUERY="""
+# WITH node as chunk, score
+# MATCH (chunk)-[:PART_OF]->(d:Document)
+# CALL { WITH chunk
+# MATCH (chunk)-[:HAS_ENTITY]->(e)
+# MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk&!Document)
+# UNWIND rels as r
+# RETURN collect(distinct r) as rels
+# }
+# WITH d, collect(DISTINCT {chunk: chunk, score: score}) AS chunks, avg(score) as avg_score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels
+# WITH d, avg_score,
+#      [c IN chunks | c.chunk.text] AS texts, 
+#      [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails,  
+# 	[r in rels | coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ startNode(r).id + " "+ type(r) + " " + coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + endNode(r).id] as entities
+# WITH d, avg_score,chunkdetails,
+# apoc.text.join(texts,"\n----\n") +
+# apoc.text.join(entities,"\n")
+# as text
+# RETURN text, avg_score AS score, {source: COALESCE( CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkdetails: chunkdetails} AS metadata
+# """  
+
+
+VECTOR_GRAPH_SEARCH_QUERY = """
 WITH node as chunk, score
+// find the document of the chunk
 MATCH (chunk)-[:PART_OF]->(d:Document)
+// fetch entities
 CALL { WITH chunk
+// entities connected to the chunk
+// todo only return entities that are actually in the chunk, remember we connect all extracted entities to all chunks
 MATCH (chunk)-[:HAS_ENTITY]->(e)
-MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk&!Document)
-UNWIND rels as r
-RETURN collect(distinct r) as rels
+
+// depending on match to query embedding either 1 or 2 step expansion
+WITH CASE WHEN true // vector.similarity.cosine($embedding, e.embedding ) <= 0.95
+THEN 
+collect { MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,1}(:!Chunk&!Document) RETURN path }
+ELSE 
+collect { MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk&!Document) RETURN path } 
+END as paths
+
+RETURN collect{ unwind paths as p unwind relationships(p) as r return distinct r} as rels,
+collect{ unwind paths as p unwind nodes(p) as n return distinct n} as nodes
 }
-WITH d, collect(DISTINCT {chunk: chunk, score: score}) AS chunks, avg(score) as avg_score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels
+// aggregate chunk-details and de-duplicate nodes and relationships
+WITH d, collect(DISTINCT {chunk: chunk, score: score}) AS chunks, avg(score) as avg_score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels,
+
+// TODO sort by relevancy (embeddding comparision?) cut off after X (e.g. 25) nodes?
+apoc.coll.toSet(apoc.coll.flatten(collect(
+                [r in rels |[startNode(r),endNode(r)]]),true)) as nodes
+
+// generate metadata and text components for chunks, nodes and relationships
 WITH d, avg_score,
      [c IN chunks | c.chunk.text] AS texts, 
      [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails,  
-	[r in rels | coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ startNode(r).id + " "+ type(r) + " " + coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + endNode(r).id] as entities
+  apoc.coll.sort([n in nodes | 
+
+coalesce(apoc.coll.removeAll(labels(n),['__Entity__'])[0],"") +":"+ 
+n.id + (case when n.description is not null then " ("+ n.description+")" else "" end)]) as nodeTexts,
+	apoc.coll.sort([r in rels 
+    // optional filter if we limit the node-set
+    // WHERE startNode(r) in nodes AND endNode(r) in nodes 
+  | 
+coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ 
+startNode(r).id +
+" " + type(r) + " " + 
+coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + 
+endNode(r).id
+]) as relTexts
+
+// combine texts into response-text
 WITH d, avg_score,chunkdetails,
+"Text Content:\n" +
 apoc.text.join(texts,"\n----\n") +
-apoc.text.join(entities,"\n")
+"\n----\nEntities:\n"+
+apoc.text.join(nodeTexts,"\n") +
+"\n----\nRelationships:\n"+
+apoc.text.join(relTexts,"\n")
+
 as text
-RETURN text, avg_score AS score, {source: COALESCE( CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkdetails: chunkdetails} AS metadata
-""" 
+RETURN text, avg_score as score, {length:size(text), source: COALESCE( CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkdetails: chunkdetails} AS metadata
+"""
 
 
 
