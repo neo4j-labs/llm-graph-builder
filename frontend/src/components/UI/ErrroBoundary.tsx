@@ -1,14 +1,15 @@
 import React from 'react';
-import { Banner } from '@neo4j-ndl/react';
+import { Banner} from '@neo4j-ndl/react';
 
 export default class ErrorBoundary extends React.Component<any, any> {
-  state = { hasError: false };
+  state = { hasError: false, errorMessage: '' };
 
   static getDerivedStateFromError(_error: unknown) {
     return { hasError: true };
   }
 
   componentDidCatch(error: Error, errorInfo: any) {
+    this.setState({ ...this.state, errorMessage: error.message });
     console.log({ error });
     console.log({ errorInfo });
   }
@@ -20,14 +21,25 @@ export default class ErrorBoundary extends React.Component<any, any> {
           <Banner
             icon
             type='info'
-            description='Sorry there was a problem loading this page'
-            title='Error Occurred'
+            description={
+              this.state.errorMessage === 'Missing required parameter client_id.'
+                ? 'Please Provide The Google Client ID For GCS Source'
+                : 'Sorry there was a problem loading this page'
+            }
+            title='Something went wrong'
             floating
             className='mt-8'
+            actions={[
+              {
+                label: 'Docs Link',
+                href: 'https://neo4j.com/labs/genai-ecosystem/llm-graph-builder/',
+                target: '_blank',
+              },
+            ]}
           ></Banner>
         </div>
       );
-    } 
+    }
     return this.props.children;
   }
 }
