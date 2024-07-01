@@ -175,7 +175,6 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
                                   </Typography>
                                 </HoverableLink>
                               </TextLink>
-
                             </div>
                           </>
                         )}
