@@ -8,6 +8,7 @@ import Loader from '../../../utils/Loader';
 import Legend from '../../UI/Legend';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import { DocumentIconOutline } from '@neo4j-ndl/react/icons';
+import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
 
 export default function DeletePopUpForOrphanNodes({
   open,
@@ -76,7 +77,9 @@ export default function DeletePopUpForOrphanNodes({
               }
             }}
           ></Checkbox>
-        ):<></>}
+        ) : (
+          <></>
+        )}
         <List className='max-h-80 overflow-y-auto'>
           {orphanNodes.length > 0 ? (
             orphanNodes.map((n, i) => {
@@ -86,7 +89,7 @@ export default function DeletePopUpForOrphanNodes({
                     <ListItemIcon>
                       <Checkbox
                         aria-label='selection checkbox'
-                        defaultChecked={n.checked}
+                        checked={n.checked}
                         onChange={(e) => onChangeHandler(e.target.checked, n.e.elementId)}
                         tabIndex={-1}
                       />
@@ -147,18 +150,30 @@ export default function DeletePopUpForOrphanNodes({
         >
           Cancel
         </Button>
-        <Button
+        <ButtonWithToolTip
           onClick={async () => {
             await deleteHandler(selectedOrphanNodesForDeletion);
             selectedOrphanNodesForDeletion.forEach((eid: string) => {
               setOrphanNodes((prev) => prev.filter((node) => node.e.elementId != eid));
             });
+            setOrphanNodes((prev) => prev.map((n) => ({ ...n, checked: false })));
           }}
           size='large'
           loading={loading}
+          text={
+            isLoading
+              ? 'Fetching Orphan Nodes'
+              : !isLoading && !orphanNodes.length
+              ? 'No Nodes Found'
+              : !selectedOrphanNodesForDeletion.length
+              ? 'No Nodes Selected'
+              : 'Delete Selected Nodes'
+          }
+          label='Orphan Node deletion button'
+          disabled={!selectedOrphanNodesForDeletion.length || !orphanNodes.length}
         >
           Continue
-        </Button>
+        </ButtonWithToolTip>
       </Dialog.Actions>
     </Dialog>
   );
