@@ -39,8 +39,8 @@ export const llms =
 export const defaultLLM = llms?.includes('gpt-3.5')
   ? 'gpt-3.5'
   : llms?.includes('gemini-1.0-pro')
-    ? 'gemini-1.0-pro'
-    : 'diffbot';
+  ? 'gemini-1.0-pro'
+  : 'diffbot';
 
 export const chunkSize = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.TIME_PER_PAGE ? parseInt(process.env.TIME_PER_PAGE) : 50;
@@ -146,6 +146,4 @@ export const ChatModeOptions = [
   { Icon: 'abc', value: 'graph+vector' },
 ];
 
-
 export const taskParam: string[] = ['update_similarity_graph', 'create_fulltext_index'];
-
