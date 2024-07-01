@@ -150,6 +150,9 @@ export interface ContentProps {
   isRightExpanded: boolean;
   showChatBot: boolean;
   openChatBot: () => void;
+  openTextSchema: () => void;
+  isSchema?: boolean;
+  setIsSchema: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface FileTableProps {
@@ -203,17 +206,21 @@ export interface Source {
   source_name: string;
   start_time?: string;
 }
+export interface chunk {
+  id: string;
+  score: number;
+}
 export interface Messages {
   id: number;
   message: string;
   user: string;
   datetime: string;
   isTyping?: boolean;
-  sources?: Source[];
+  sources?: string[];
   model?: string;
   isLoading?: boolean;
   response_time?: number;
-  chunk_ids?: string[];
+  chunk_ids?: chunk[];
   total_tokens?: number;
   speaking?: boolean;
   copying?: boolean;
@@ -352,10 +359,10 @@ export interface SourceListServerData {
 }
 
 export interface chatInfoMessage extends Partial<Messages> {
-  sources: Source[];
+  sources: string[];
   model: string;
   response_time: number;
-  chunk_ids: string[];
+  chunk_ids: chunk[];
   total_tokens: number;
 }
 
@@ -447,6 +454,7 @@ export interface Chunk {
   content_offset?: string;
   url?: string;
   fileSource: string;
+  score?: string;
 }
 
 export interface SpeechSynthesisProps {
@@ -458,4 +466,15 @@ export interface SpeechArgs {
   rate?: number;
   pitch?: number;
   volume?: number;
+}
+
+export interface SettingsModalProps {
+  open: boolean;
+  onClose: () => void;
+  openTextSchema: () => void;
+  onContinue?: () => void;
+  settingView: 'contentView' | 'headerView';
+  isSchema?: boolean;
+  setIsSchema: Dispatch<SetStateAction<boolean>>;
+  onClear?: () => void;
 }
