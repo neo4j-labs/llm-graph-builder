@@ -31,7 +31,7 @@ export default class ErrorBoundary extends React.Component<any, any> {
             className='mt-8'
             actions={[
               {
-                label: 'Docs Link',
+                label: 'Documentation',
                 href: 'https://neo4j.com/labs/genai-ecosystem/llm-graph-builder/',
                 target: '_blank',
               },
