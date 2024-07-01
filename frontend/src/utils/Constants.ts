@@ -1,4 +1,5 @@
 import { VisualizeBloomIcon } from '@neo4j-ndl/react/icons';
+import { NvlOptions } from '@neo4j-nvl/base';
 
 export const document = `+ [docs]`;
 
@@ -147,3 +148,23 @@ export const ChatModeOptions = [
 ];
 
 export const taskParam: string[] = ['update_similarity_graph', 'create_fulltext_index'];
+
+export const nvlOptions: NvlOptions = {
+  allowDynamicMinZoom: true,
+  disableWebGL: true,
+  maxZoom: 3,
+  minZoom: 0.05,
+  relationshipThreshold: 0.55,
+  useWebGL: false,
+  instanceId: 'graph-preview',
+  initialZoom: 1,
+};
+
+export const mouseEventCallbacks = {
+  onPan: true,
+  onZoom: true,
+  onDrag: true,
+};
+
+export const graphView: string[] = ['Lexical_Graph' , 'Entity Graph' , 'Lexical Graph + Entity Graph'];
+export const defaultGraph = 'Lexical Graph + Entity Graph';
