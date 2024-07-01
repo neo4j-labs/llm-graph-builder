@@ -1,0 +1,712 @@
+= LLM Knowledge Graph Builder Backend
+
+== API Reference
+
+
+=== Connect to Neo4j Graph Database
+-----
+POST /connect
+-----
+
+Neo4j database connection on frontend is done with this API.
+
+**API Parameters :**
+
+* `uri`= Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+
+
+**Response :**
+[source,json,indent=0]
+----
+{
+    "status":"Success",
+    "message":"Connection Successful"
+}
+----
+
+
+=== Upload Files from Local
+----
+POST /upload
+----
+
+The upload endpoint is designed to handle the uploading of large files by breaking them into smaller chunks. This method ensures that large files can be uploaded efficiently without overloading the server.
+
+***API Parameters***
+
+* `file`=The file to be uploaded, received in chunks,
+* `chunkNumber`=The current chunk number being uploaded,
+* `totalChunks`=The total number of chunks the file is divided into (each chunk of 1Mb size),
+* `originalname`=The original name of the file,
+* `model`=The model associated with the file,
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "message": "File uploaded and chunks merged successfully."
+}
+....
+
+
+=== User defined schema
+----
+POST /schema
+----
+
+User can set schema for graph generation (i.e. Nodes and relationship labels) in settings panel or get existing db schema through this API. 
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "data": [
+        {
+            "labels": [
+                "Access_token",
+                "Activity",
+                "Ai chatbot",
+                "Book",
+                "Metric",
+                "Mode",
+                "Mountain"
+            ],
+            "relationshipTypes": [
+                "ACCELERATE",
+                "ACCEPTS",
+                "CONVERT",
+                "CORRELATE",
+                "ESTABLISHED",
+                "EXAMPLE_OF"
+            ]
+        }
+    ]
+}
+....
+
+=== Graph schema from input text
+----
+POST /populate_graph_schema
+----
+
+The API is used to populate a graph schema based on the provided input text, model, and schema description flag.
+
+**API Parameters :**
+
+* `input_text`=The input text used to populate the graph schema.
+* `model`=The model to be used for populating the graph schema.
+* `is_schema_description_checked`=A flag indicating whether the schema description should be considered.
+
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "data": [
+        {
+            "labels": [
+                "Technology",
+                "Company",
+                "Person",
+                "Location",
+                "Organization",
+                "Concept"
+            ],
+            "relationshipTypes": [
+                "LOCATED_AT",
+                "SUBSIDARY_OF",
+                "BORN_IN",
+                "LAST_MESSAGE",
+                "ATTENDED",
+                "PARTNERED_WITH"
+            ]
+        }
+    ]
+}
+....
+
+
+=== Unstructured sources scan other than local 
+----
+POST /url/scan 
+----
+
+Create Document node for other sources - s3 bucket, gcs bucket, wikipedia, youtube url and web pages.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+* `model`= LLM model,
+* `source_url`= <s3 bucket url or youtube url> ,
+* `aws_access_key_id`= AWS access key,
+* `aws_secret_access_key`= AWS secret key,
+* `wiki_query`= Wikipedia query sources,
+* `gcs_project_id`= GCS project id,
+* `gcs_bucket_name`= GCS bucket name,
+* `gcs_bucket_folder`= GCS bucket folder,
+* `source_type`= s3 bucket/ gcs bucket/ youtube/Wikipedia as source type
+* `gcs_project_id`=Form(None),
+* `access_token`=Form(None)
+
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "success_count": 2,
+    "failed_count": 0,
+    "message": "Source Node created successfully for source type: Wikipedia and source: Albert Einstein,  neo4j",
+    "file_name": [
+        {
+            "fileName": "Albert Einstein",
+            "fileSize": 8074,
+            "url": "https://en.wikipedia.org/wiki/Albert_Einstein",
+            "status": "Success"
+        }
+    ]
+}
+....
+
+
+=== Extration of nodes and relations from content
+----
+POST /extract :
+----
+
+This API is responsible for -
+
+** Reading the content of source provided in the form of langchain Document object from respective langchain loaders 
+
+** Dividing the document into multiple chunks, and make below relations - 
+*** PART_OF - relation from Document node to all chunk nodes 
+*** FIRST_CHUNK - relation from document node to first chunk node
+*** NEXT_CHUNK - relation from a chunk pointing to next chunk of the document.
+*** HAS_ENTITY - relation between chunk node and entities extracted from LLM.
+
+** Extracting nodes and relations in the form of GraphDocument from respective LLM.
+
+** Update embedding of chunks and create vector index.
+
+** Update K-Nearest Neighbors graph for similar chunks.
+
+
+**Implementation :**
+
+** For multiple sources of content - 
+
+*** Local file - User can upload pdf file from their device.
+
+*** s3 bucket - User passes the bucket url and all the pdf files inside folders and subfolders will be listed. 
+
+*** GCS bucket - User passes gcs project id, gcs bucket name and folder name, do google authentication to access all the pdf files under that folder and its subfolders and if folder name is not passed by user, all the pdf files under the bucket and its subfolders will be listed if user have read access of the bucket.
+
+*** Web Sources - 
+**** Wikipedia - Wikipedia 1st page content is rendered url passed by user. 
+
+**** Youtube - Youtube video transcript is processed and if no transcript is available then respective error is thrown.
+
+**** Web urls - Text Content from any web url is processed for generating graph.
+
+** Langchain's LLMGraphTransformer library is used to get nodes and relations in the form of GraphDocument from LLMs. User and System prompts, LLM chain, graphDocument schema are defined in the library itself.
+
+** SentenceTransformer embeddingds are used by default, also embeddings are made configurable to use either OpenAIEmbeddings or VertexAIEmbeddings.
+
+** Vector index is created in databse on embeddingds created for chunks.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+* `model`= LLM model,
+* `file_name` = File uploaded from device
+* `source_url`= <s3 bucket url or youtube url> ,
+* `aws_access_key_id`= AWS access key,
+* `aws_secret_access_key`= AWS secret key,
+* `wiki_query`= Wikipedia query sources,
+* `gcs_project_id`=GCS project id,
+* `gcs_bucket_name`= GCS bucket name,
+* `gcs_bucket_folder`= GCS bucket folder,
+* `gcs_blob_filename` = GCS file name,
+* `source_type`= local file/ s3 bucket/ gcs bucket/ youtube/ Wikipedia as source,
+allowedNodes=Node labels passed from settings panel,
+* `allowedRelationship`=Relationship labels passed from settings panel,
+* `language`=Language in which wikipedia content will be extracted
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "data": {
+        "fileName": <PDF File Name/ Wikipedia Query string/ Youtube video title>,
+        "nodeCount": <No. Nodes extracted from LLM>,
+        "relationshipCount": <No. of relations extracted from LLM>,
+        "processingTime": <Total time taken by application to give response>,
+        "status": "Completed",
+        "model": <LLM Model choosen by User>
+    }
+}
+....
+
+     
+=== Get list of sources
+----
+GET /sources_list
+----
+
+List all sources (Document nodes) present in Neo4j graph database.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "data": [
+        {
+            "fileName": "About Amazon.pdf",
+            "fileSize": 163931,
+            "errorMessage": "",
+            "fileSource": "local file",
+            "nodeCount": 62,
+            "model": "OpenAI GPT 4",
+            "fileType": "pdf",
+            "processingTime": 122.71,
+            "relationshipCount": 187,
+            "status": "Completed",
+            "updatedAt": {
+                "_DateTime__date": {
+                    "_Date__ordinal": 738993,
+                    "_Date__year": 2024,
+                    "_Date__month": 4,
+                    "_Date__day": 17
+                },
+                "_DateTime__time": {
+                    "_Time__ticks": 28640715768000,
+                    "_Time__hour": 7,
+                    "_Time__minute": 57,
+                    "_Time__second": 20,
+                    "_Time__nanosecond": 715768000,
+                    "_Time__tzinfo": null
+                }
+            }
+        }
+    ]
+}
+....
+
+
+=== Post processing after graph generation
+----
+POST /post_processing :
+----
+
+This API is called at the end of processing of whole document to get create k-nearest neighbor relations between similar chunks of document based on KNN_MIN_SCORE which is 0.8 by default and to drop and create a full text index on db labels.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+* `tasks`= List of tasks to perform
+
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status":"Success",
+    "message":"All tasks completed successfully"
+}
+....
+
+
+=== Chat with Data
+----
+POST /chat_bot
+----
+
+The API responsible for a chatbot system designed to leverage multiple AI models and a Neo4j graph database, providing answers to user queries. It interacts with AI models from OpenAI and Google's Vertex AI and utilizes embedding models to enhance the retrieval of relevant information.
+
+**Components :** 
+ 
+** Embedding Models - Includes OpenAI Embeddings, VertexAI Embeddings, and SentenceTransformer Embeddings to support vector-based query operations.
+** AI Models - OpenAI GPT 3.5, GPT 4o, Gemini Pro, Gemini 1.5 Pro and Groq llama3 can be configured for the chatbot backend to generate responses and process natural language.
+** Graph Database (Neo4jGraph) - Manages interactions with the Neo4j database, retrieving, and storing conversation histories.
+** Response Generation - Utilizes Vector Embeddings from the Neo4j database, chat history, and the knowledge base of the LLM used.
+
+**API Parameters :**
+
+* `uri`= Neo4j uri
+* `userName`= Neo4j database username
+* `password`= Neo4j database password
+* `model`= LLM model
+* `question`= User query for the chatbot
+* `session_id`= Session ID used to maintain the history of chats during the user's connection
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "data": {
+        "session_id": "0901",
+        "message": "Fibrosis, also known as fibrotic scarring, is a pathological wound healing process where connective tissue replaces normal parenchymal tissue."
+        "info": {
+            "sources": [
+                {
+                    "source_name": "https://en.wikipedia.org/wiki/Fibrosis",
+                    "page_numbers": [],
+                    "start_time": []
+                }
+            ],
+            "model": "gpt-4o",
+            "chunkids": [
+                "54d8c0dbefb67f1ed3f6939d59267e1ff557a94c",
+                "4cc02ee8419706c8decdf71ab0d3896aad5c7dca",
+                "266ce95311bb1921791b4f1cd29a48d433027139",
+                "11e19513247e1e396475728fa6a197695045b248",
+                "8bafa01b6d851f70822bcb86863e485e1785a64c"
+            ],
+            "total_tokens": 2213,
+            "response_time": 10.17
+        },
+        "user": "chatbot"
+    }
+}
+....
+
+=== Get entities from chunks
+----
+/chunk_entities
+----
+
+This API is used to  get the entities and relations associated with a particular chunk and chunk metadata.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+* `chunk_ids` = Chunk ids of document
+
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "data": {
+        "nodes": [
+            {
+                "element_id": "4:a69712a5-1102-40da-a96d-70c1143ea8e5:73267",
+                "labels": [
+                    "Condition"
+                ],
+                "properties": {
+                    "id": "Fibrosis"
+                }
+            },
+ 
+        ],
+        "relationships": [
+            {
+                "element_id": "5:a69712a5-1102-40da-a96d-70c1143ea8e5:1153057844048764467",
+                "type": "AFFECTS",
+                "start_node_element_id": "4:a69712a5-1102-40da-a96d-70c1143ea8e5:73267",
+                "end_node_element_id": "4:a69712a5-1102-40da-a96d-70c1143ea8e5:73282"
+            },
+            {
+                "element_id": "5:a69712a5-1102-40da-a96d-70c1143ea8e5:1155309643862449715",
+                "type": "AFFECTS",
+                "start_node_element_id": "4:a69712a5-1102-40da-a96d-70c1143ea8e5:73267",
+                "end_node_element_id": "4:a69712a5-1102-40da-a96d-70c1143ea8e5:73294"
+            },
+        ],
+        "chunk_data": [
+            {
+                "id": "54d8c0dbefb67f1ed3f6939d59267e1ff557a94c",
+                "position": 1,
+                "text": "Fibrosis, also known as fibrotic scarring, is a pathological wound healing ...",
+                "content_offset": 0,
+                "fileName": "fibrosis",
+                "length": 1002,
+                "embedding": null
+            }
+        ]
+    }
+}
+....
+
+=== View graph for a file
+----
+POST /graph_query
+----
+
+This API is used to view graph for a particular file.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `query_type`= Neo4j database name
+* `document_names` = File name for which user wants to view graph
+
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "data": {
+        "nodes": [
+            {
+                "element_id": "4:98e5e9bb-8095-440d-9462-03985fed2fa2:9972",
+                "labels": [
+                    "Person"
+                ],
+                "properties": {
+                    "id": "Jeff"
+                }
+            },
+            {
+                "element_id": "4:98e5e9bb-8095-440d-9462-03985fed2fa2:9973",
+                "labels": [
+                    "Team"
+                ],
+                "properties": {
+                    "id": "Miami"
+                }
+            }
+        ],
+        "relationships": [
+            {
+                "element_id": "5:98e5e9bb-8095-440d-9462-03985fed2fa2:1153200780560312052",
+                "type": "PLAYER",
+                "start_node_element_id": "4:98e5e9bb-8095-440d-9462-03985fed2fa2:9972",
+                "end_node_element_id": "4:98e5e9bb-8095-440d-9462-03985fed2fa2:9973"
+            }  
+        ]
+    }
+}    
+....
+
+=== Clear chat history
+----
+POST /clear_chat_bot
+----
+
+This API is used to clear the chat history which is saved in Neo4j DB.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `session_id` = User session id for QA chat
+
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "data": {
+        "session_id": "99c1a808-377f-448f-9ea6-4b4a8de46b14",
+        "message": "The chat History is cleared",
+        "user": "chatbot"
+    }
+}
+....
+
+=== SSE event to update processing status
+----
+GET /update_extract_status 
+----
+
+The API provides a continuous update on the extraction status of a specified file. It uses Server-Sent Events (SSE) to stream updates to the client.
+
+**API Parameters :**
+
+* `file_name`=The name of the file whose extraction status is being tracked,
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "fileName": "testFile.pdf", 
+    "status": "Processing", 
+    "processingTime": 0, 
+    "nodeCount": 0, 
+    "relationshipCount": 0, 
+    "model": "OpenAI GPT 3.5", 
+    "total_chunks": 3, 
+    "total_pages": 1, 
+    "fileSize": 92373, 
+    "processed_chunk": 0
+}
+....
+
+=== Delete selected documents
+----
+POST /delete_document_and_entities
+----
+
+**Overview :**
+
+Deleteion of nodes and relations for multiple files is done through this API. User can choose multiple documents to be deleted, also user have option to delete only 'Document' and 'Chunk' nodes and keep the entities extracted from that document. 
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `filenames`= List of files to be deleted,
+* `source_types`= Document sources(Wikipedia, youtube, etc.),
+* `deleteEntities`= Boolean value to check entities deletion is requested or not
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "message": "Deleted 1 documents with 68 entities from database"
+}
+....
+
+=== Cancel processing job
+----
+/cancelled_job
+----
+
+This API is responsible for cancelling an in process job.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `filenames`= Name of the file whose processing need to be stopped, 
+* `source_types`= Source of the file
+
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "message":"Cancelled the processing job successfully"
+}
+....
+
+
+=== Get the list of orphan nodes
+----
+POST /get_unconnected_nodes_list
+----
+
+The API retrieves a list of nodes in the graph database that are not connected to any other nodes.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+
+
+**Response :**
+[source,json,indent=0]
+....
+{   "status": "Success",
+    "data": [
+      "e": 
+        {        
+            "id": "Leela Chess Zero",        
+            "elementId": "4:abf6f691-928d-4b1c-80fc-2914ae517b4c:336",        
+            "labels": ["Technology"],        
+            "embedding": null       
+        },      
+        "documents": ["AlphaZero - Wikipedia.pdf"],
+      "chunkConnections": 7
+    ]
+}
+....
+
+
+=== Deletion of orpahn nodes
+----
+POST /delete_unconnected_nodes
+----
+
+The API is used to delete unconnected entities from database.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `unconnected_entities_list`=selected entities list to delete of unconnected entities.
+
+
+**Response :**
+[source,json,indent=0]
+....
+{   
+    "status": "Success",
+    "message: "Unconnected entities delete successfully"
+}
+....
+
+
+== Decisions
+
+* Process only 1st page of Wikipedia
+* Split document content into chunks of size 200 and overlap of 20
+* Configurable elements -
+** Number of chunks to combine
+** Generate Embedding or not 
+** Embedding model
+** minimum score for KNN graph
+** Uploaded file storage location (GCS bucket or container)

@@ -1,15 +1,34 @@
-
 # Knowledge Graph Builder App
-This application is designed to convert PDF documents into a knowledge graph stored in Neo4j. It utilizes the power of OpenAI's GPT/Diffbot LLM(Large language model) to extract nodes, relationships and properties from the text content of the PDF and then organizes them into a structured knowledge graph using Langchain framework. 
-Files can be uploaded from local machine or S3 bucket and then LLM model can be chosen to create the knowledge graph.
 
-### Getting started
+Creating knowledge graphs from unstructured data
+
+
+# LLM Graph Builder
+
+![Python](https://img.shields.io/badge/Python-yellow)
+![FastAPI](https://img.shields.io/badge/FastAPI-green)
+![React](https://img.shields.io/badge/React-blue)
+
+## Overview
+This application is designed to turn Unstructured data (pdfs,docs,txt,youtube video,web pages,etc.) into a knowledge graph stored in Neo4j. It utilizes the power of Large language models (OpenAI,Gemini,etc.) to extract nodes, relationships and their properties from the text and create a structured knowledge graph using Langchain framework. 
+
+Upload your files from local machine, GCS or S3 bucket or from web sources, choose your LLM model and generate knowledge graph.
+
+## Key Features
+- **Knowledge Graph Creation**: Transform unstructured data into structured knowledge graphs using LLMs.
+- **Providing Schema**: Provide your own custom schema or use existing schema in settings to generate graph.
+- **View Graph**: View graph for a particular source or multiple sources at a time in Bloom.
+- **Chat with Data**: Interact with your data in a Neo4j database through conversational queries, also retrive metadata about the source of response to your queries. 
+
+## Getting started
 
 :warning: You will need to have a Neo4j Database V5.15 or later with [APOC installed](https://neo4j.com/docs/apoc/current/installation/) to use this Knowledge Graph Builder.
 You can use any [Neo4j Aura database](https://neo4j.com/aura/) (including the free database)
 If you are using Neo4j Desktop, you will not be able to use the docker-compose but will have to follow the [separate deployment of backend and frontend section](#running-backend-and-frontend-separately-dev-environment). :warning:
 
-### Deploy locally
+
+## Deployment
+### Local deployment
 #### Running through docker-compose
 By default only OpenAI and Diffbot are enabled since Gemini requires extra GCP configurations.
 
@@ -36,7 +55,7 @@ You can then run Docker Compose to build and start all components:
 docker-compose up --build
 ```
 
-##### Additional configs
+#### Additional configs
 
 By default, the input sources will be: Local files, Youtube, Wikipedia ,AWS S3 and Webpages. As this default config is applied:
 ```env
@@ -76,37 +95,7 @@ Alternatively, you can run the backend and frontend separately:
     pip install -r requirements.txt
     uvicorn score:app --reload
     ```
-### ENV
-| Env Variable Name       | Mandatory/Optional | Default Value | Description                                                                                      |
-|-------------------------|--------------------|---------------|--------------------------------------------------------------------------------------------------|
-| OPENAI_API_KEY          | Mandatory          |               | API key for OpenAI                                                                               |
-| DIFFBOT_API_KEY         | Mandatory          |               | API key for Diffbot                                                                              |
-| EMBEDDING_MODEL         | Optional           | all-MiniLM-L6-v2 | Model for generating the text embedding (all-MiniLM-L6-v2 , openai , vertexai)                |
-| IS_EMBEDDING            | Optional           | true          | Flag to enable text embedding                                                                    |
-| KNN_MIN_SCORE           | Optional           | 0.94          | Minimum score for KNN algorithm                                                                  |
-| GEMINI_ENABLED          | Optional           | False         | Flag to enable Gemini                                                                             |
-| GCP_LOG_METRICS_ENABLED | Optional           | False         | Flag to enable Google Cloud logs                                                                 |
-| NUMBER_OF_CHUNKS_TO_COMBINE | Optional        | 6             | Number of chunks to combine when processing embeddings                                           |
-| UPDATE_GRAPH_CHUNKS_PROCESSED | Optional      | 20            | Number of chunks processed before updating progress                                        |
-| NEO4J_URI               | Optional           | neo4j://database:7687 | URI for Neo4j database                                                                  |
-| NEO4J_USERNAME          | Optional           | neo4j         | Username for Neo4j database                                                                       |
-| NEO4J_PASSWORD          | Optional           | password      | Password for Neo4j database                                                                       |
-| LANGCHAIN_API_KEY       | Optional           |               | API key for Langchain                                                                             |
-| LANGCHAIN_PROJECT       | Optional           |               | Project for Langchain                                                                             |
-| LANGCHAIN_TRACING_V2    | Optional           | true          | Flag to enable Langchain tracing                                                                  |
-| LANGCHAIN_ENDPOINT      | Optional           | https://api.smith.langchain.com | Endpoint for Langchain API                                                            |
-| BACKEND_API_URL         | Optional           | http://localhost:8000 | URL for backend API                                                                       |
-| BLOOM_URL               | Optional           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
-| REACT_APP_SOURCES       | Optional           | local,youtube,wiki,s3 | List of input sources that will be available                                               |
-| LLM_MODELS              | Optional           | diffbot,gpt-3.5,gpt-4o | Models available for selection on the frontend, used for entities extraction and Q&A Chatbot                          |
-| ENV                     | Optional           | DEV           | Environment variable for the app                                                                 |
-| TIME_PER_CHUNK          | Optional           | 4             | Time per chunk for processing                                                                    |
-| CHUNK_SIZE              | Optional           | 5242880       | Size of each chunk for processing                                                                |
-| GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
-| GCS_FILE_CACHE        | Optional           | False              | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
-
-
-###
+### Deploy in Cloud
 To deploy the app and packages on Google Cloud Platform, run the following command on google cloud run:
 ```bash
 # Frontend deploy 
@@ -122,63 +111,59 @@ source location current directory > Backend
 region : 32 [us-central 1]
 Allow unauthenticated request : Yes
 ```
-### Features
-- **PDF Upload**: Users can upload PDF documents using the Drop Zone.
-- **S3 Bucket Integration**: Users can also specify PDF documents stored in an S3 bucket for processing.
-- **Knowledge Graph Generation**: The application employs OpenAI/Diffbot's LLM to extract relevant information from the PDFs and construct a knowledge graph.
-- **Neo4j Integration**: The extracted nodes and relationships are stored in a Neo4j database for easy visualization and querying.
-- **Grid View of source node files with** : Name,Type,Size,Nodes,Relations,Duration,Status,Source,Model
-  
-## Functions/Modules
 
-#### extract_graph_from_file(uri, userName, password, file_path, model):
-   Extracts nodes , relationships and properties from a PDF file leveraging LLM models.
-   
-    Args:
-   	 uri: URI of the graph to extract
-   	 userName: Username to use for graph creation ( if None will use username from config file )
-   	 password: Password to use for graph creation ( if None will use password from config file )
-   	 file: File object containing the PDF file path to be used
-   	 model: Type of model to use ('Gemini Pro' or 'Diffbot')
-   
-     Returns: 
-   	 Json response to API with fileName, nodeCount, relationshipCount, processingTime, 
-     status and model as attributes.
-     
-<img width="692" alt="neoooo" src="https://github.com/neo4j-labs/llm-graph-builder/assets/118245454/01e731df-b565-4f4f-b577-c47e39dd1748">
-
-#### create_source_node_graph(uri, userName, password, file):
-
-   Creates a source node in Neo4jGraph and sets properties.
-   
-    Args:
-   	 uri: URI of Graph Service to connect to
-   	 userName: Username to connect to Graph Service with ( default : None )
-   	 password: Password to connect to Graph Service with ( default : None )
-   	 file: File object with information about file to be added
-   
-    Returns: 
-   	 Success or Failure message of node creation
-
-<img width="958" alt="neo_workspace" src="https://github.com/neo4j-labs/llm-graph-builder/assets/118245454/f2eb11cd-718c-453e-bec9-11410ec6e45d">
+## ENV
+| Env Variable Name       | Mandatory/Optional | Default Value | Description                                                                                      |
+|-------------------------|--------------------|---------------|--------------------------------------------------------------------------------------------------|
+| OPENAI_API_KEY          | Mandatory          |               | API key for OpenAI                                                                               |
+| DIFFBOT_API_KEY         | Mandatory          |               | API key for Diffbot                                                                              |
+| EMBEDDING_MODEL         | Optional           | all-MiniLM-L6-v2 | Model for generating the text embedding (all-MiniLM-L6-v2 , openai , vertexai)                |
+| IS_EMBEDDING            | Optional           | true          | Flag to enable text embedding                                                                    |
+| KNN_MIN_SCORE           | Optional           | 0.94          | Minimum score for KNN algorithm                                                                  |
+| GEMINI_ENABLED          | Optional           | False         | Flag to enable Gemini                                                                             |
+| GCP_LOG_METRICS_ENABLED | Optional           | False         | Flag to enable Google Cloud logs                                                                 |
+| NUMBER_OF_CHUNKS_TO_COMBINE | Optional        | 5             | Number of chunks to combine when processing embeddings                                           |
+| UPDATE_GRAPH_CHUNKS_PROCESSED | Optional      | 20            | Number of chunks processed before updating progress                                        |
+| NEO4J_URI               | Optional           | neo4j://database:7687 | URI for Neo4j database                                                                  |
+| NEO4J_USERNAME          | Optional           | neo4j         | Username for Neo4j database                                                                       |
+| NEO4J_PASSWORD          | Optional           | password      | Password for Neo4j database                                                                       |
+| LANGCHAIN_API_KEY       | Optional           |               | API key for Langchain                                                                             |
+| LANGCHAIN_PROJECT       | Optional           |               | Project for Langchain                                                                             |
+| LANGCHAIN_TRACING_V2    | Optional           | true          | Flag to enable Langchain tracing                                                                  |
+| LANGCHAIN_ENDPOINT      | Optional           | https://api.smith.langchain.com | Endpoint for Langchain API                                                            |
+| BACKEND_API_URL         | Optional           | http://localhost:8000 | URL for backend API                                                                       |
+| BLOOM_URL               | Optional           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
+| REACT_APP_SOURCES       | Optional           | local,youtube,wiki,s3 | List of input sources that will be available                                               |
+| LLM_MODELS              | Optional           | diffbot,gpt-3.5,gpt-4o | Models available for selection on the frontend, used for entities extraction and Q&A Chatbot                          |
+| ENV                     | Optional           | DEV           | Environment variable for the app                                                                 |
+| TIME_PER_CHUNK          | Optional           | 4             | Time per chunk for processing                                                                    |
+| CHUNK_SIZE              | Optional           | 5242880       | Size of each chunk of file for upload                                                                |
+| GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
+| GCS_FILE_CACHE        | Optional           | False              | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
 
 
-#### get_source_list_from_graph():
-   
-     Returns a list of file sources in the database by querying the graph and 
-     sorting the list by the last updated date. 
 
-<img width="822" alt="get_source" src="https://github.com/neo4j-labs/llm-graph-builder/assets/118245454/1d8c7a86-6f10-4916-a4c1-8fdd9f312bcc">
-
-#### Chunk nodes and embeddings creation in Neo4j
-
-<img width="926" alt="chunking" src="https://github.com/neo4j-labs/llm-graph-builder/assets/118245454/4d61479c-e5e9-415e-954e-3edf6a773e72">
-
-
-## Application Walkthrough
-https://github.com/neo4j-labs/llm-graph-builder/assets/121786590/b725a503-6ade-46d2-9e70-61d57443c311
+## Usage
+1. Connect to Neo4j Aura Instance by passing URI and password or using Neo4j credentials file.
+2. Choose your source from a list of Unstructured sources to create graph.
+3. Change the LLM (if required) from drop down, which will be used to generate graph.
+4. Optionally, define schema(nodes and relationship labels) in entity graph extraction settings.
+5. Either select multiple files to 'Generate Graph' or all the files in 'New' status will be processed for graph creation.
+6. Have a look at the graph for individial files using 'View' in grid or select one or more files and 'Preview Graph'
+7. Ask questions related to the processed/completed sources to chat-bot, Also get detailed information about your answers generated by LLM.
 
 ## Links
- The Public [ Google cloud Run URL](https://devfrontend-dcavk67s4a-uc.a.run.app).
- [Workspace URL](https://workspace-preview.neo4j.io/workspace)
 
+[LLM Knowledge Graph Builder Application](https://llm-graph-builder.neo4jlabs.com/)
+
+[Neo4j Workspace](https://workspace-preview.neo4j.io/workspace/query)
+
+## Reference
+
+[Demo of application](https://www.youtube.com/watch?v=LlNy5VmV290)
+
+## Contact
+For any inquiries or support, feel free to raise [Github Issue](https://github.com/neo4j-labs/llm-graph-builder/issues)
+
+
+## Happy Graph Building!
