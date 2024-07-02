@@ -4,7 +4,8 @@ import os
 from dotenv import load_dotenv
 import logging
 from langchain_community.chat_message_histories import Neo4jChatMessageHistory
-from src.shared.common_fn import load_embedding_model, get_llm
+from src.llm import get_llm
+from src.shared.common_fn import load_embedding_model
 import re
 from typing import Any
 from datetime import datetime

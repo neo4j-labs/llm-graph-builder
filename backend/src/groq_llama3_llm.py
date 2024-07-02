@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import List
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 from langchain_core.documents import Document
-from src.shared.common_fn import get_combined_chunks, get_llm
+from src.llm import get_combined_chunks, get_llm
 
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')

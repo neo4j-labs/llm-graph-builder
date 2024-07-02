@@ -5,7 +5,7 @@ from typing import List
 import os
 import logging
 import uuid
-from src.shared.common_fn import get_combined_chunks, get_llm
+from src.llm import get_combined_chunks, get_llm
 
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
