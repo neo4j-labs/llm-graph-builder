@@ -158,6 +158,7 @@ export interface ContentProps {
   openTextSchema: () => void;
   isSchema?: boolean;
   setIsSchema: Dispatch<SetStateAction<boolean>>;
+  openOrphanNodeDeletionModal: () => void;
 }
 
 export interface FileTableProps {
@@ -329,6 +330,19 @@ export interface LegendChipProps {
 export interface FileContextProviderProps {
   children: ReactNode;
 }
+export interface orphanNode {
+  id: string;
+  elementId: string;
+  description: string;
+  labels: string[];
+  embedding: null | string;
+}
+export interface orphanNodeProps {
+  documents: string[];
+  chunkConnections: number;
+  e: orphanNode;
+  checked?: boolean;
+}
 export interface labelsAndTypes {
   labels: string[];
   relationshipTypes: string[];
@@ -338,10 +352,17 @@ export interface commonserverresponse {
   error?: string;
   message?: string;
   file_name?: string;
-  data?: labelsAndTypes | labelsAndTypes[] | uploadData;
+  data?: labelsAndTypes | labelsAndTypes[] | uploadData | orphanNodeProps[];
 }
 export interface ServerData extends Partial<commonserverresponse> {
   data: labelsAndTypes[];
+}
+export interface OrphanNodeResponse extends Partial<commonserverresponse> {
+  data: orphanNodeProps[];
+}
+export interface schema {
+  nodelabels: string[];
+  relationshipTypes: string[];
 }
 
 export interface SourceListServerData {
@@ -469,4 +490,15 @@ export interface SettingsModalProps {
   isSchema?: boolean;
   setIsSchema: Dispatch<SetStateAction<boolean>>;
   onClear?: () => void;
+}
+export interface Menuitems {
+  title: string;
+  onClick: () => void;
+  disabledCondition: boolean;
+}
+export type Vertical = 'top' | 'bottom';
+export type Horizontal = 'left' | 'right' | 'center';
+export interface Origin {
+  vertical: Vertical;
+  horizontal: Horizontal;
 }

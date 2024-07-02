@@ -13,15 +13,23 @@ import { OverridableStringUnion } from '@mui/types';
 import { useFileContext } from '../../context/UsersFiles';
 import SchemaFromTextDialog from '../Popups/Settings/SchemaFromText';
 import CustomAlert from '../UI/Alert';
+import DeletePopUpForOrphanNodes from '../Popups/DeletePopUpForOrphanNodes';
+import deleteOrphanAPI from '../../services/DeleteOrphanNodes';
 
 export default function PageLayoutNew({
   isSettingPanelExpanded,
   closeSettingModal,
   openSettingsDialog,
+  closeOrphanNodeDeletionModal,
+  showOrphanNodeDeletionModal,
+  openOrphanNodeDeletionModal,
 }: {
   isSettingPanelExpanded: boolean;
   closeSettingModal: () => void;
   openSettingsDialog: () => void;
+  closeOrphanNodeDeletionModal: () => void;
+  showOrphanNodeDeletionModal: boolean;
+  openOrphanNodeDeletionModal: () => void;
 }) {
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(true);
   const [isRightExpanded, setIsRightExpanded] = useState<boolean>(true);
@@ -32,6 +40,7 @@ export default function PageLayoutNew({
   const toggleLeftDrawer = () => setIsLeftExpanded(!isLeftExpanded);
   const toggleRightDrawer = () => setIsRightExpanded(!isRightExpanded);
   const [openTextSchemaDialog, setOpenTextSchemaDialog] = useState<boolean>(false);
+  const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
   const [alertDetails, setalertDetails] = useState<alertStateType>({
     showAlert: false,
     alertType: 'error',
@@ -75,6 +84,16 @@ export default function PageLayoutNew({
       alertMessage: '',
     });
   };
+  const orphanNodesDeleteHandler = async (selectedEntities: string[]) => {
+    try {
+      setorphanDeleteAPIloading(true);
+      const response = await deleteOrphanAPI(userCredentials as UserCredentials, selectedEntities);
+      setorphanDeleteAPIloading(false);
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <div style={{ maxHeight: 'calc(100vh - 58px)' }} className='flex overflow-hidden'>
       {alertDetails.showAlert && (
@@ -93,6 +112,12 @@ export default function PageLayoutNew({
         onClose={closeSchemaFromTextDialog}
         showAlert={showAlert}
       ></SchemaFromTextDialog>
+      <DeletePopUpForOrphanNodes
+        open={showOrphanNodeDeletionModal}
+        deleteCloseHandler={closeOrphanNodeDeletionModal}
+        deleteHandler={orphanNodesDeleteHandler}
+        loading={orphanDeleteAPIloading}
+      ></DeletePopUpForOrphanNodes>
       <SettingsModal
         openTextSchema={openSchemaFromTextDialog}
         open={isSettingPanelExpanded}
@@ -107,6 +132,7 @@ export default function PageLayoutNew({
         isRightExpanded={isRightExpanded}
         showChatBot={showChatBot}
         openTextSchema={openSchemaFromTextDialog}
+        openOrphanNodeDeletionModal={openOrphanNodeDeletionModal}
         isSchema={isSchema}
         setIsSchema={setIsSchema}
       />
