@@ -30,15 +30,15 @@ import { statusCheck, capitalize } from '../utils/Utils';
 import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, alertStateType } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
-import CustomAlert from './Alert';
-import CustomProgressBar from './CustomProgressBar';
+import CustomAlert from './UI/Alert';
+import CustomProgressBar from './UI/CustomProgressBar';
 import subscribe from '../services/PollingAPI';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
-import IconButtonWithToolTip from './IconButtonToolTip';
+import IconButtonWithToolTip from './UI/IconButtonToolTip';
 import { largeFileSize } from '../utils/Constants';
 
 const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
@@ -47,7 +47,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  //const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
+  // const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
   const [alertDetails, setalertDetails] = useState<alertStateType>({
     showAlert: false,
     alertType: 'error',
@@ -252,7 +252,11 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       columnHelper.accessor((row) => row, {
         id: 'source',
         cell: (info) => {
-          if (info.row.original.fileSource === 'youtube' || info.row.original.fileSource === 'Wikipedia') {
+          if (
+            info.row.original.fileSource === 'youtube' ||
+            info.row.original.fileSource === 'Wikipedia' ||
+            info.row.original.fileSource === 'web-url'
+          ) {
             return (
               <Flex>
                 <span>
@@ -388,7 +392,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
               userCredentials &&
               userCredentials.database
             ) {
-              if (item?.fileSize > largeFileSize) {
+              if (item?.fileSize < largeFileSize) {
                 subscribe(
                   item.fileName,
                   userCredentials?.uri,
