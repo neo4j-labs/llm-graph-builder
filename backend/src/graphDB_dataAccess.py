@@ -219,9 +219,11 @@ class graphDBdataAccess:
         query = """
                 MATCH (e:!Chunk&!Document) 
                 WHERE NOT exists { (e)--(:!Chunk&!Document) }
-                MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(e)
+                OPTIONAL MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(e)
                 RETURN e {.*, embedding:null, elementId:elementId(e), labels:labels(e)} as e, 
-                collect(doc.fileName) as documents, count(distinct c) as chunkConnections
+                collect(distinct doc.fileName) as documents, count(distinct c) as chunkConnections
+                ORDER BY e.id ASC
+                LIMIT 100
                 """
         return self.execute_query(query)
     

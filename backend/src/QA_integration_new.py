@@ -90,9 +90,13 @@ def create_neo4j_chat_message_history(graph, session_id):
     return None 
 
 def format_documents(documents,model):
+    prompt_token_cutoff = 4
+    for models,value in CHAT_TOKEN_CUT_OFF.items():
+        if model in models:
+            prompt_token_cutoff = value
 
     sorted_documents = sorted(documents, key=lambda doc: doc.state["query_similarity_score"], reverse=True)
-    sorted_documents = sorted_documents[:CHAT_TOKEN_CUT_OFF[model]]
+    sorted_documents = sorted_documents[:prompt_token_cutoff]
 
     formatted_docs = []
     sources = set()
@@ -227,6 +231,7 @@ def summarize_and_log(history, messages, llm):
 
 def QA_RAG(graph, model, question, session_id, mode):
     try:
+        logging.info(f"Chat Mode : {mode}")
         if mode == "vector":
             retrieval_query = VECTOR_SEARCH_QUERY
         elif mode == "graph":
