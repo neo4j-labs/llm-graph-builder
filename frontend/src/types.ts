@@ -495,6 +495,7 @@ export interface Menuitems {
   title: string;
   onClick: () => void;
   disabledCondition: boolean;
+  description?: string;
 }
 export type Vertical = 'top' | 'bottom';
 export type Horizontal = 'left' | 'right' | 'center';

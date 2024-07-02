@@ -27,7 +27,13 @@ export default function CustomMenu({
     >
       {items.map((i, idx) => {
         return (
-          <Menu.Item key={`${idx}${i.title}`} title={i.title} onClick={i.onClick} disabled={i.disabledCondition} />
+          <Menu.Item
+            description={i.description}
+            key={`${idx}${i.title}`}
+            title={i.title}
+            onClick={i.onClick}
+            disabled={i.disabledCondition}
+          />
         );
       })}
     </Menu>

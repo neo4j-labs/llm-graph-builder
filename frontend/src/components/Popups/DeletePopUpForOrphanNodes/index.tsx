@@ -23,7 +23,7 @@ export default function DeletePopUpForOrphanNodes({
 }) {
   const [orphanNodes, setOrphanNodes] = useState<orphanNodeProps[]>([]);
   const [selectedOrphanNodesForDeletion, setselectedOrphanNodesForDeletion] = useState<string[]>([]);
-  const [selectedAll, setselectedAll] = useState<boolean>(false)
+  const [selectedAll, setselectedAll] = useState<boolean>(false);
   const [isLoading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
 
@@ -38,7 +38,7 @@ export default function DeletePopUpForOrphanNodes({
             setOrphanNodes(apiresponse.data.data);
           }
         } catch (error) {
-          setLoading(false)
+          setLoading(false);
           console.log(error);
         }
       })();
@@ -50,7 +50,7 @@ export default function DeletePopUpForOrphanNodes({
       setselectedOrphanNodesForDeletion((prev) => [...prev, id]);
       setOrphanNodes((prev) => prev.map((n) => ({ ...n, checked: n.e.elementId === id ? true : n.checked })));
     } else {
-      setselectedAll(false)
+      setselectedAll(false);
       setselectedOrphanNodesForDeletion((prev) => prev.filter((s) => s != id));
       setOrphanNodes((prev) => prev.map((n) => ({ ...n, checked: n.e.elementId === id ? false : n.checked })));
     }
@@ -65,7 +65,7 @@ export default function DeletePopUpForOrphanNodes({
         deleteCloseHandler();
         setselectedOrphanNodesForDeletion([]);
         setOrphanNodes([]);
-        setselectedAll(false)
+        setselectedAll(false);
       }}
     >
       <Dialog.Header>
@@ -82,11 +82,11 @@ export default function DeletePopUpForOrphanNodes({
             checked={selectedAll}
             onChange={(e) => {
               if (e.target.checked) {
-                setselectedAll(true)
+                setselectedAll(true);
                 setOrphanNodes((prev) => prev.map((n) => ({ ...n, checked: true })));
                 setselectedOrphanNodesForDeletion(orphanNodes.map((n) => n.e.elementId));
               } else {
-                setselectedAll(false)
+                setselectedAll(false);
                 setOrphanNodes((prev) => prev.map((n) => ({ ...n, checked: false })));
                 setselectedOrphanNodesForDeletion([]);
               }
@@ -164,7 +164,7 @@ export default function DeletePopUpForOrphanNodes({
             setOrphanNodes([]);
           }}
         >
-          Cancel
+          Close
         </Button>
         <ButtonWithToolTip
           onClick={async () => {
