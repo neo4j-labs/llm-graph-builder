@@ -55,7 +55,11 @@ def get_graphDB_driver(uri, username, password):
     """
     try:
         logging.info(f"Attempting to connect to the Neo4j database at {uri}")
-        driver = GraphDatabase.driver(uri, auth=(username, password), user_agent=os.environ.get('NEO4J_USER_AGENT'))
+        enable_user_agent = os.environ.get("ENABLE_USER_AGENT", "False").lower() in ("true", "1", "yes")
+        if enable_user_agent:
+            driver = GraphDatabase.driver(uri, auth=(username, password), user_agent=os.environ.get('NEO4J_USER_AGENT'))
+        else:
+            driver = GraphDatabase.driver(uri, auth=(username, password))
         logging.info("Connection successful")
         return driver
     except Exception as e:
