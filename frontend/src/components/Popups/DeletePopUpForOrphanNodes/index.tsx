@@ -65,6 +65,7 @@ export default function DeletePopUpForOrphanNodes({
         deleteCloseHandler();
         setselectedOrphanNodesForDeletion([]);
         setOrphanNodes([]);
+        setselectedAll(false)
       }}
     >
       <Dialog.Header>
