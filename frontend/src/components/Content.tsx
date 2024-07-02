@@ -491,6 +491,7 @@ const Content: React.FC<ContentProps> = ({
         title: `Delete Files ${selectedfileslength > 0 ? `(${selectedfileslength})` : ''}`,
         onClick: () => setshowDeletePopUp(true),
         disabledCondition: !selectedfileslength,
+        description: tooltips.deleteFile,
       },
       {
         title: 'Delete Orphan Nodes',
