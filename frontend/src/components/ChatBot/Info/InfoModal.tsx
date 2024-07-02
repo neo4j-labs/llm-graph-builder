@@ -6,20 +6,13 @@ import wikipedialogo from '../../../assets/images/Wikipedia-logo-v2.svg';
 import youtubelogo from '../../../assets/images/youtube.png';
 import gcslogo from '../../../assets/images/gcs.webp';
 import s3logo from '../../../assets/images/s3logo.png';
-import {
-  Chunk,
-  Entity,
-  ExtendedNode,
-  ExtendedRelationship,
-  GroupedEntity,
-  UserCredentials,
-  chatInfoMessage,
-} from '../../../types';
+import { Chunk, Entity, GroupedEntity, UserCredentials, chatInfoMessage } from '../../../types';
 import { useEffect, useMemo, useState } from 'react';
 import HoverableLink from '../../UI/HoverableLink';
 import GraphViewButton from '../../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../../services/ChunkEntitiesInfo';
 import { useCredentials } from '../../../context/UserCredentials';
+import type { Node, Relationship } from '@neo4j-nvl/base';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import ReactMarkdown from 'react-markdown';
 import { GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
@@ -29,12 +22,12 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
-  const [nodes, setNodes] = useState<ExtendedNode[]>([]);
-  const [relationships, setRelationships] = useState<ExtendedRelationship[]>([]);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [relationships, setRelationships] = useState<Relationship[]>([]);
   const [chunks, setChunks] = useState<Chunk[]>([]);
   const parseEntity = (entity: Entity) => {
     const { labels, properties } = entity;
-    const [label] = labels;
+    const label = labels[0];
     const text = properties.id;
     return { label, text };
   };
@@ -77,12 +70,11 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
   };
   const labelCounts = useMemo(() => {
     const counts: { [label: string]: number } = {};
-    for (let index = 0; index < infoEntities.length; index++) {
-      const entity = infoEntities[index];
+    infoEntities.forEach((entity) => {
       const { labels } = entity;
-      const [label] = labels;
+      const label = labels[0];
       counts[label] = counts[label] ? counts[label] + 1 : 1;
-    }
+    });
     return counts;
   }, [infoEntities]);
   const sortedLabels = useMemo(() => {

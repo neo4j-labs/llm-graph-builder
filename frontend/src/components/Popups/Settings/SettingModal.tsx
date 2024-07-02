@@ -1,6 +1,6 @@
 import { Dialog, Dropdown } from '@neo4j-ndl/react';
 import { OnChangeValue, ActionMeta } from 'react-select';
-import { OptionType, SettingsModalProps, UserCredentials, schema } from '../../../types';
+import { OptionType, OptionTypeForExamples, SettingsModalProps, UserCredentials, schema } from '../../../types';
 import { useFileContext } from '../../../context/UsersFiles';
 import { getNodeLabelsAndRelTypes } from '../../../services/GetNodeLabelsRelTypes';
 import { useCredentials } from '../../../context/UserCredentials';
@@ -182,7 +182,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       'selectedRelationshipLabels',
       JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] })
     );
-    localStorage.setItem('selectedSchemas', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
     showAlert('info', `Successfully Removed the Schema settings`);
     onClose();
   };

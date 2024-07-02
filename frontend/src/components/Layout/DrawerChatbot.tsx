@@ -1,6 +1,6 @@
 import { Drawer } from '@neo4j-ndl/react';
 import Chatbot from '../ChatBot/Chatbot';
-import { DrawerChatbotProps, Messages } from '../../types';
+import { Messages } from '../../types';
 import { useMessageContext } from '../../context/UserMessages';
 
 const DrawerChatbot: React.FC<DrawerChatbotProps> = ({ isExpanded, clearHistoryData, messages, connectionStatus }) => {

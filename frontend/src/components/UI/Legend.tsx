@@ -1,22 +1,16 @@
-import { GraphLabel } from '@neo4j-ndl/react';
-
 export default function Legend({
   bgColor,
   title,
-  count,
-  type,
-  onClick,
+  chunkCount,
 }: {
   bgColor: string;
   title: string;
-  count?: number;
-  type: 'node' | 'relationship' | 'propertyKey';
-  tabIndex?: number;
-  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
+  chunkCount?: number;
 }) {
   return (
-    <GraphLabel type={type} className='legend' color={bgColor} onClick={onClick}>
-      {title} {count !== undefined && `(${count})`}
-    </GraphLabel>
+    <div className='legend' style={{ backgroundColor: `${bgColor}` }}>
+      {title}
+      {chunkCount && `(${chunkCount})`}
+    </div>
   );
 }

@@ -29,8 +29,6 @@ interface FileContextType {
   setchatMode: Dispatch<SetStateAction<string>>;
   isSchema: boolean;
   setIsSchema: React.Dispatch<React.SetStateAction<boolean>>;
-  showTextFromSchemaDialog: showTextFromSchemaDialogType;
-  setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
@@ -51,12 +49,10 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [selectedSchemas, setSelectedSchemas] = useState<readonly OptionType[]>([]);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [chatMode, setchatMode] = useState<string>('graph+vector+fulltext');
+  const [chatMode, setchatMode] = useState<string>('graph+vector');
+  const { userCredentials } = useCredentials();
   const [isSchema, setIsSchema] = useState<boolean>(false);
-  const [showTextFromSchemaDialog, setShowTextFromSchemaDialog] = useState<showTextFromSchemaDialogType>({
-    triggeredFrom: '',
-    show: false,
-  });
+
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
       const selectedNodeLabel = JSON.parse(selectedNodeLabelstr);
@@ -95,14 +91,6 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setchatMode,
     isSchema,
     setIsSchema,
-    setShowTextFromSchemaDialog,
-    showTextFromSchemaDialog,
-    postProcessingTasks,
-    setPostProcessingTasks,
-    queue,
-    setQueue,
-    processedCount,
-    setProcessedCount,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

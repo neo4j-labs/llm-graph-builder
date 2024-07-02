@@ -2,13 +2,7 @@ import { webLinkValidation } from '../../../utils/Utils';
 import useSourceInput from '../../../hooks/useSourceInput';
 import CustomSourceInput from '../CustomSourceInput';
 
-export default function WebInput({
-  setIsLoading,
-  loading,
-}: {
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  loading: boolean;
-}) {
+export default function WebInput({ setIsLoading }: { setIsLoading: React.Dispatch<React.SetStateAction<boolean>> }) {
   const {
     inputVal,
     onChangeHandler,
@@ -27,8 +21,8 @@ export default function WebInput({
       onCloseHandler={onClose}
       isFocused={isFocused}
       isValid={isValid}
-      disabledCheck={Boolean(loading)}
-      label='Website Link'
+      disabledCheck={false}
+      label='Website link'
       placeHolder='https://neo4j.com/'
       value={inputVal}
       onChangeHandler={onChangeHandler}

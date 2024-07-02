@@ -48,31 +48,24 @@ export default function CustomSourceInput({
             onChange={onChangeHandler}
             errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
             onPaste={onPasteHandler}
-            onKeyDown={(e) => {
-              if (e.code === 'Enter') {
-                submitHandler(value);
-              }
-            }}
           />
         </div>
       </Box>
-      <Flex flexDirection='row' justifyContent='flex-end'>
-        <div>
-          <Button
-            disabled={value.trim() === ''}
-            color='neutral'
-            fill='outlined'
-            onClick={onCloseHandler}
-            size='medium'
-            className='mr-4'
-          >
-            Reset
-          </Button>
-          <Button onClick={() => submitHandler(value)} size='medium' disabled={disabledCheck}>
-            Submit
-          </Button>
-        </div>
-      </Flex>
+      <Box>
+        <Button
+          disabled={value.trim() === ''}
+          color='neutral'
+          fill='outlined'
+          onClick={onCloseHandler}
+          size='medium'
+          className='mr-4'
+        >
+          Reset
+        </Button>
+        <Button onClick={() => submitHandler(value)} size='medium' disabled={disabledCheck}>
+          Sumbit
+        </Button>
+      </Box>
     </Flex>
   );
 }

@@ -3,11 +3,9 @@ import useSourceInput from '../../../hooks/useSourceInput';
 import CustomSourceInput from '../CustomSourceInput';
 
 export default function WikipediaInput({
-  loading,
   setIsLoading,
 }: {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  loading: boolean;
 }) {
   const {
     inputVal,
@@ -27,7 +25,7 @@ export default function WikipediaInput({
       onCloseHandler={onClose}
       isFocused={isFocused}
       isValid={isValid}
-      disabledCheck={Boolean(loading)}
+      disabledCheck={false}
       label='Wikipedia Link'
       placeHolder='https://en.wikipedia.org/wiki/Albert_Einstein'
       value={inputVal}

@@ -1,54 +1,36 @@
-import { useEffect, useState, useMemo, useRef, Suspense, useReducer, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import ConnectionModal from './Popups/ConnectionModal/ConnectionModal';
+import LlmDropdown from './Dropdown';
 import FileTable from './FileTable';
 import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
+import CustomAlert from './UI/Alert';
 import { extractAPI } from '../utils/FileAPI';
-import {
-  BannerAlertProps,
-  ChildRef,
-  ContentProps,
-  CustomFile,
-  OptionType,
-  UserCredentials,
-  connectionState,
-} from '../types';
+import { ContentProps, CustomFile, Menuitems, OptionType, UserCredentials, alertStateType } from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
+import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
-import { batchSize, buttonCaptions, defaultLLM, largeFileSize, llms, RETRY_OPIONS, tooltips } from '../utils/Constants';
+import ConfirmationDialog from './Popups/LargeFilePopUp/ConfirmationDialog';
+import { buttonCaptions, largeFileSize, taskParam, tooltips } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
-import DropdownComponent from './Dropdown';
+import SettingModalHOC from '../HOC/SettingModalHOC';
 import GraphViewModal from './Graph/GraphViewModal';
-import { lazy } from 'react';
-import FallBackDialog from './UI/FallBackDialog';
-import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
-import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
-import { tokens } from '@neo4j-ndl/base';
-import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
-import retry from '../services/retry';
-import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/toasts';
-import axios from 'axios';
-
-const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
-const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
-
-let afterFirstRender = false;
+import CustomMenu from './UI/Menu';
+import { TrashIconOutline } from '@neo4j-ndl/react/icons';
 
 const Content: React.FC<ContentProps> = ({
   isLeftExpanded,
   isRightExpanded,
+  openTextSchema,
   isSchema,
   setIsSchema,
-  showEnhancementDialog,
-  setshowEnhancementDialog,
-  closeSettingModal
+  openOrphanNodeDeletionModal,
 }) => {
-  const { breakpoints } = tokens;
-  const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<connectionState>({
     openPopUp: false,
@@ -61,14 +43,10 @@ const Content: React.FC<ContentProps> = ({
   const { setUserCredentials, userCredentials, connectionStatus, setConnectionStatus } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
-  const [retryFile, setRetryFile] = useState<string>('');
-  const [retryLoading, setRetryLoading] = useState<boolean>(false);
-  const [showRetryPopup, toggleRetryPopup] = useReducer((state) => !state, false);
-  const [alertStateForRetry, setAlertStateForRetry] = useState<BannerAlertProps>({
-    showAlert: false,
-    alertType: 'neutral',
-    alertMessage: '',
-  });
+  const [isLargeFile, setIsLargeFile] = useState<boolean>(false);
+  const [showSettingnModal, setshowSettingModal] = useState<boolean>(false);
+  const [openDeleteMenu, setopenDeleteMenu] = useState<boolean>(false);
+  const [deleteAnchor, setdeleteAnchor] = useState<HTMLElement | null>(null);
 
   const {
     filesData,
@@ -333,12 +311,8 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
-  const triggerBatchProcessing = (
-    batch: CustomFile[],
-    selectedFiles: CustomFile[],
-    isSelectedFiles: boolean,
-    newCheck: boolean
-  ) => {
+  const handleGenerateGraph = (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => {
+    setIsLargeFile(false);
     const data = [];
     showNormalToast(`Processing ${batch.length} files at a time.`);
     for (let i = 0; i < batch.length; i++) {
@@ -349,25 +323,21 @@ const Content: React.FC<ContentProps> = ({
       } else {
         data.push(extractData(batch[i].id, isSelectedFiles, selectedFiles as CustomFile[]));
       }
-    }
-    return data;
-  };
-
-  const addFilesToQueue = (remainingFiles: CustomFile[]) => {
-    for (let index = 0; index < remainingFiles.length; index++) {
-      const f = remainingFiles[index];
-      setFilesData((prev) =>
-        prev.map((pf) => {
-          if (pf.id === f.id) {
-            return {
-              ...pf,
-              status: 'Waiting',
-            };
-          }
-          return pf;
-        })
-      );
-      queue.enqueue(f);
+      Promise.allSettled(data).then(async (_) => {
+        setextractLoading(false);
+        await postProcessing(userCredentials as UserCredentials, taskParam);
+      });
+    } else if (selectedFilesFromAllfiles.length && allowLargeFiles) {
+      // @ts-ignore
+      for (let i = 0; i < selectedFilesFromAllfiles.length; i++) {
+        if (selectedFilesFromAllfiles[i]?.status === 'New') {
+          data.push(extractData(selectedFilesFromAllfiles[i].id as string));
+        }
+      }
+      Promise.allSettled(data).then(async (_) => {
+        setextractLoading(false);
+        await postProcessing(userCredentials as UserCredentials, taskParam);
+      });
     }
   };
 
@@ -684,17 +654,153 @@ const Content: React.FC<ContentProps> = ({
     });
   }, []);
 
+  useEffect(() => {
+    const storedSchema = localStorage.getItem('isSchema');
+    if (storedSchema !== null) {
+      setIsSchema(JSON.parse(storedSchema));
+    }
+  }, []);
+
+  const onClickHandler = () => {
+    if (isSchema) {
+      if (selectedRows.length) {
+        let selectedLargeFiles: CustomFile[] = [];
+        selectedRows.forEach((f) => {
+          const parsedData: CustomFile = JSON.parse(f);
+          if (parsedData.fileSource === 'local file') {
+            if (typeof parsedData.size === 'number' && parsedData.status === 'New' && parsedData.size > largeFileSize) {
+              selectedLargeFiles.push(parsedData);
+            }
+          }
+        });
+        // @ts-ignore
+        if (selectedLargeFiles.length) {
+          setIsLargeFile(true);
+          setshowConfirmationModal(true);
+          handleGenerateGraph(false, []);
+        } else {
+          setIsLargeFile(false);
+          handleGenerateGraph(true, filesData);
+        }
+      } else if (filesData.length) {
+        const largefiles = filesData.filter((f) => {
+          if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
+            return true;
+          }
+          return false;
+        });
+        const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
+        const stringified = selectAllNewFiles.reduce((accu, f) => {
+          const key = JSON.stringify(f);
+          // @ts-ignore
+          accu[key] = true;
+          return accu;
+        }, {});
+        setRowSelection(stringified);
+        if (largefiles.length) {
+          setIsLargeFile(true);
+          setshowConfirmationModal(true);
+          handleGenerateGraph(false, []);
+        } else {
+          setIsLargeFile(false);
+          handleGenerateGraph(true, filesData);
+        }
+      }
+    } else {
+      if (selectedRows.length) {
+        let selectedLargeFiles: CustomFile[] = [];
+        selectedRows.forEach((f) => {
+          const parsedData: CustomFile = JSON.parse(f);
+          if (parsedData.fileSource === 'local file') {
+            if (typeof parsedData.size === 'number' && parsedData.status === 'New' && parsedData.size > largeFileSize) {
+              selectedLargeFiles.push(parsedData);
+            }
+          }
+        });
+        // @ts-ignore
+        if (selectedLargeFiles.length) {
+          setIsLargeFile(true);
+        } else {
+          setIsLargeFile(false);
+        }
+      } else if (filesData.length) {
+        const largefiles = filesData.filter((f) => {
+          if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
+            return true;
+          }
+          return false;
+        });
+        const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
+        const stringified = selectAllNewFiles.reduce((accu, f) => {
+          const key = JSON.stringify(f);
+          // @ts-ignore
+          accu[key] = true;
+          return accu;
+        }, {});
+        setRowSelection(stringified);
+        if (largefiles.length) {
+          setIsLargeFile(true);
+        } else {
+          setIsLargeFile(false);
+        }
+      }
+      setshowSettingModal(true);
+    }
+  };
+
+  const deleteMenuItems: Menuitems[] = useMemo(
+    () => [
+      {
+        title: `Delete Files ${selectedfileslength > 0 ? `(${selectedfileslength})` : ''}`,
+        onClick: () => setshowDeletePopUp(true),
+        disabledCondition: !selectedfileslength,
+        description: tooltips.deleteFile,
+      },
+      {
+        title: 'Delete Orphan Nodes',
+        onClick: () => openOrphanNodeDeletionModal(),
+        disabledCondition: false,
+      },
+    ],
+    [selectedfileslength]
+  );
+
+  const handleContinue = () => {
+    if (!isLargeFile) {
+      handleGenerateGraph(true, filesData);
+      setshowSettingModal(false);
+    } else {
+      setshowSettingModal(false);
+      setshowConfirmationModal(true);
+      handleGenerateGraph(false, []);
+    }
+    setIsSchema(true);
+    setalertDetails({
+      showAlert: true,
+      alertType: 'success',
+      alertMessage: 'Schema is set successfully',
+    });
+    localStorage.setItem('isSchema', JSON.stringify(true));
+  };
+
   return (
     <>
-      <RetryConfirmationDialog
-        retryLoading={retryLoading}
-        retryHandler={retryHandler}
-        fileId={retryFile}
-        onClose={retryOnclose}
-        open={showRetryPopup}
-        onBannerClose={onBannerClose}
-        alertStatus={alertStateForRetry}
-      />
+      {alertDetails.showAlert && (
+        <CustomAlert
+          severity={alertDetails.alertType}
+          open={alertDetails.showAlert}
+          handleClose={handleClose}
+          alertMessage={alertDetails.alertMessage}
+        />
+      )}
+      {isSchema && (
+        <CustomAlert
+          severity={alertDetails.alertType}
+          open={alertDetails.showAlert}
+          handleClose={handleClose}
+          alertMessage={alertDetails.alertMessage}
+        />
+      )}
       {showConfirmationModal && filesForProcessing.length && (
         <Suspense fallback={<FallBackDialog />}>
           <ConfirmationDialog
@@ -717,12 +823,16 @@ const Content: React.FC<ContentProps> = ({
           view='contentView'
         ></DeletePopUp>
       )}
-      {showEnhancementDialog && (
-        <GraphEnhancementDialog
-          open={showEnhancementDialog}
-          onClose={closeGraphEnhancementDialog}
-          closeSettingModal={closeSettingModal}
-        ></GraphEnhancementDialog>
+      {showSettingnModal && (
+        <SettingModalHOC
+          settingView='contentView'
+          onClose={() => setshowSettingModal(false)}
+          onContinue={handleContinue}
+          open={showSettingnModal}
+          openTextSchema={openTextSchema}
+          isSchema={isSchema}
+          setIsSchema={setIsSchema}
+        />
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row' flexWrap='wrap'>
@@ -817,15 +927,8 @@ const Content: React.FC<ContentProps> = ({
           justifyContent='space-between'
           flexDirection={isTablet ? 'column' : 'row'}
         >
-          <DropdownComponent
-            onSelect={handleDropdownChange}
-            options={llms ?? ['']}
-            placeholder='Select LLM Model'
-            defaultValue={defaultLLM}
-            view='ContentView'
-            isDisabled={false}
-          />
-          <Flex flexDirection='row' gap='4' className='self-end' flexWrap='wrap'>
+          <LlmDropdown onSelect={handleDropdownChange} />
+          <Flex flexDirection='row' gap='4' className='self-end'>
             <ButtonWithToolTip
               text={tooltips.generateGraph}
               placement='top'
@@ -859,20 +962,26 @@ const Content: React.FC<ContentProps> = ({
             >
               {buttonCaptions.exploreGraphWithBloom}
             </ButtonWithToolTip>
-            <ButtonWithToolTip
-              text={
-                !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
-              }
-              placement='top'
-              onClick={() => setshowDeletePopUp(true)}
-              disabled={!selectedfileslength}
-              className='ml-0.5'
-              label='Delete Files'
-              size={isTablet ? 'small' : 'medium'}
+            <CustomMenu
+              open={openDeleteMenu}
+              closeHandler={useCallback(() => {
+                setopenDeleteMenu(false);
+              }, [])}
+              items={deleteMenuItems}
+              MenuAnchor={deleteAnchor}
+              anchorOrigin={useMemo(() => ({ horizontal: 'left', vertical: 'bottom' }), [])}
+              transformOrigin={useMemo(() => ({ horizontal: 'right', vertical: 'top' }), [])}
+            ></CustomMenu>
+            <Button
+              label='Delete Menu trigger'
+              onClick={(e) => {
+                setdeleteAnchor(e.currentTarget);
+                setopenDeleteMenu(true);
+              }}
             >
-              {buttonCaptions.deleteFiles}
-              {selectedfileslength != undefined && selectedfileslength > 0 && `(${selectedfileslength})`}
-            </ButtonWithToolTip>
+              <TrashIconOutline className='n-size-token-7' />
+              Delete <TrashIconOutline></TrashIconOutline>
+            </Button>
           </Flex>
         </Flex>
       </div>

@@ -1,5 +1,6 @@
+import axios from 'axios';
+import { url } from '../utils/Utils';
 import { OrphanNodeResponse, UserCredentials } from '../types';
-import api from '../API/Index';
 
 export const getOrphanNodes = async (userCredentials: UserCredentials) => {
   const formData = new FormData();
@@ -8,7 +9,7 @@ export const getOrphanNodes = async (userCredentials: UserCredentials) => {
   formData.append('userName', userCredentials?.userName ?? '');
   formData.append('password', userCredentials?.password ?? '');
   try {
-    const response = await api.post<OrphanNodeResponse>(`/get_unconnected_nodes_list`, formData);
+    const response = await axios.post<OrphanNodeResponse>(`${url()}/get_unconnected_nodes_list`, formData);
     return response;
   } catch (error) {
     console.log(error);

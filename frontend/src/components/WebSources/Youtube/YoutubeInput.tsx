@@ -3,10 +3,8 @@ import useSourceInput from '../../../hooks/useSourceInput';
 import { youtubeLinkValidation } from '../../../utils/Utils';
 
 export default function YoutubeInput({
-  loading,
   setIsLoading,
 }: {
-  loading: boolean;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const {
@@ -27,7 +25,7 @@ export default function YoutubeInput({
       onCloseHandler={onClose}
       isFocused={isFocused}
       isValid={isValid}
-      disabledCheck={Boolean(loading)}
+      disabledCheck={false}
       label='Youtube Link'
       placeHolder='https://www.youtube.com/watch?v=2W9HM1xBibo'
       value={inputVal}

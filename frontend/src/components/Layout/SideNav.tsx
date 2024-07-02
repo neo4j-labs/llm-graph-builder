@@ -14,15 +14,8 @@ import { createPortal } from 'react-dom';
 import { useMessageContext } from '../../context/UserMessages';
 import { getIsLoading } from '../../utils/Utils';
 import ExpandedChatButtonContainer from '../ChatBot/ExpandedChatButtonContainer';
-import { APP_SOURCES, tooltips } from '../../utils/Constants';
+import { tooltips } from '../../utils/Constants';
 import ChatModeToggle from '../ChatBot/ChatModeToggle';
-import { RiChatSettingsLine } from 'react-icons/ri';
-import IconButtonWithToolTip from '../UI/IconButtonToolTip';
-import GCSButton from '../DataSources/GCS/GCSButton';
-import S3Component from '../DataSources/AWS/S3Bucket';
-import WebButton from '../DataSources/Web/WebButton';
-import DropZoneForSmallLayouts from '../DataSources/Local/DropZoneForSmallLayouts';
-import { useCredentials } from '../../context/UserCredentials';
 
 const SideNav: React.FC<SideNavProps> = ({
   position,
@@ -201,27 +194,7 @@ const SideNav: React.FC<SideNavProps> = ({
                   }
                 />
               </Tip>
-              {!isChatModalOpen && (
-                <SideNavigation.Item
-                  onClick={(e) => {
-                    setchatModeAnchor(e.currentTarget);
-                    setshowChatMode(true);
-                  }}
-                  icon={
-                    <>
-                      <IconButtonWithToolTip size='small' placement='left' clean label='Chat mode' text='Chat mode'>
-                        <RiChatSettingsLine className='n-size-token-7' />
-                      </IconButtonWithToolTip>
-                      <ChatModeToggle
-                        open={showChatMode}
-                        closeHandler={() => setshowChatMode(false)}
-                        menuAnchor={chatModeAnchor}
-                        disableBackdrop={true}
-                      ></ChatModeToggle>
-                    </>
-                  }
-                ></SideNavigation.Item>
-              )}
+              {!isChatModalOpen && <ChatModeToggle inSidenav={true} />}
             </>
           )}
         </SideNavigation.List>

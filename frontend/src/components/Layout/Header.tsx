@@ -11,6 +11,7 @@ import { useCallback, useEffect } from 'react';
 import IconButtonWithToolTip from '../UI/IconButtonToolTip';
 import { tooltips } from '../../utils/Constants';
 import { useFileContext } from '../../context/UsersFiles';
+import { Badge } from '@mui/material';
 
 export default function Header({ themeMode, toggleTheme }: { themeMode: string; toggleTheme: () => void }) {
   const handleURLClick = useCallback((url: string) => {
@@ -88,6 +89,18 @@ export default function Header({ themeMode, toggleTheme }: { themeMode: string; 
                   </span>
                 )}
               </IconButtonWithToolTip>
+              <Badge color={isSchema ? 'success' : 'error'} overlap='circular' badgeContent=' ' variant='dot'>
+                <IconButtonWithToolTip
+                  label={tooltips.settings}
+                  text={tooltips.settings}
+                  size='large'
+                  clean
+                  onClick={openSettingsModal}
+                  placement='left'
+                >
+                  <Cog8ToothIconOutline />
+                </IconButtonWithToolTip>
+              </Badge>
             </div>
           </div>
         </section>
