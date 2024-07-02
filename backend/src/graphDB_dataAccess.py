@@ -223,6 +223,7 @@ class graphDBdataAccess:
                 RETURN e {.*, embedding:null, elementId:elementId(e), labels:labels(e)} as e, 
                 collect(distinct doc.fileName) as documents, count(distinct c) as chunkConnections
                 ORDER BY e.id ASC
+                LIMIT 100
                 """
         return self.execute_query(query)
     
