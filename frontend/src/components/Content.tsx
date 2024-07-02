@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import ConnectionModal from './Popups/ConnectionModal/ConnectionModal';
 import LlmDropdown from './Dropdown';
 import FileTable from './FileTable';
@@ -647,11 +647,13 @@ const Content: React.FC<ContentProps> = ({
             </ButtonWithToolTip>
             <CustomMenu
               open={openDeleteMenu}
-              closeHandler={() => {
+              closeHandler={useCallback(() => {
                 setopenDeleteMenu(false);
-              }}
+              }, [])}
               items={deleteMenuItems}
               MenuAnchor={deleteAnchor}
+              anchorOrigin={useMemo(() => ({ horizontal: 'left', vertical: 'bottom' }), [])}
+              transformOrigin={useMemo(() => ({ horizontal: 'right', vertical: 'top' }), [])}
             ></CustomMenu>
             <Button
               label='Delete Menu trigger'
