@@ -5,7 +5,6 @@ import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL, { NvlOptions } from '@neo4j-nvl/base';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { Resizable } from 're-resizable';
-
 import {
   DragIcon,
   FitToScreenIcon,

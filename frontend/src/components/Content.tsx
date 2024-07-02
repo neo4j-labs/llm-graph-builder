@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import ConnectionModal from './Popups/ConnectionModal/ConnectionModal';
 import LlmDropdown from './Dropdown';
 import FileTable from './FileTable';
@@ -7,10 +7,9 @@ import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './UI/Alert';
 import { extractAPI } from '../utils/FileAPI';
-import { ContentProps, CustomFile, OptionType, UserCredentials, alertStateType } from '../types';
+import { ContentProps, CustomFile, Menuitems, OptionType, UserCredentials, alertStateType } from '../types';
+import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
-import GraphViewModal from '../components/Graph/GraphViewModal';
-import deleteAPI from '../services/deleteFiles';
 import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
@@ -20,6 +19,9 @@ import { buttonCaptions, largeFileSize, taskParam, tooltips } from '../utils/Con
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 import SettingModalHOC from '../HOC/SettingModalHOC';
+import GraphViewModal from './Graph/GraphViewModal';
+import CustomMenu from './UI/Menu';
+import { TrashIconOutline } from '@neo4j-ndl/react/icons';
 
 const Content: React.FC<ContentProps> = ({
   isLeftExpanded,
@@ -27,6 +29,7 @@ const Content: React.FC<ContentProps> = ({
   openTextSchema,
   isSchema,
   setIsSchema,
+  openOrphanNodeDeletionModal,
 }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
@@ -38,6 +41,8 @@ const Content: React.FC<ContentProps> = ({
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [isLargeFile, setIsLargeFile] = useState<boolean>(false);
   const [showSettingnModal, setshowSettingModal] = useState<boolean>(false);
+  const [openDeleteMenu, setopenDeleteMenu] = useState<boolean>(false);
+  const [deleteAnchor, setdeleteAnchor] = useState<HTMLElement | null>(null);
 
   const {
     filesData,
@@ -480,6 +485,22 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
+  const deleteMenuItems: Menuitems[] = useMemo(
+    () => [
+      {
+        title: `Delete Files ${selectedfileslength > 0 ? `(${selectedfileslength})` : ''}`,
+        onClick: () => setshowDeletePopUp(true),
+        disabledCondition: !selectedfileslength,
+      },
+      {
+        title: 'Delete Orphan Nodes',
+        onClick: () => openOrphanNodeDeletionModal(),
+        disabledCondition: false,
+      },
+    ],
+    [selectedfileslength]
+  );
+
   const handleContinue = () => {
     if (!isLargeFile) {
       handleGenerateGraph(true, filesData);
@@ -624,19 +645,26 @@ const Content: React.FC<ContentProps> = ({
             >
               {buttonCaptions.exploreGraphWithBloom}
             </ButtonWithToolTip>
-            <ButtonWithToolTip
-              text={
-                !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
-              }
-              placement='top'
-              onClick={() => setshowDeletePopUp(true)}
-              disabled={!selectedfileslength}
-              className='ml-0.5'
-              label='Delete Files'
+            <CustomMenu
+              open={openDeleteMenu}
+              closeHandler={useCallback(() => {
+                setopenDeleteMenu(false);
+              }, [])}
+              items={deleteMenuItems}
+              MenuAnchor={deleteAnchor}
+              anchorOrigin={useMemo(() => ({ horizontal: 'left', vertical: 'bottom' }), [])}
+              transformOrigin={useMemo(() => ({ horizontal: 'right', vertical: 'top' }), [])}
+            ></CustomMenu>
+            <Button
+              label='Delete Menu trigger'
+              onClick={(e) => {
+                setdeleteAnchor(e.currentTarget);
+                setopenDeleteMenu(true);
+              }}
             >
-              {buttonCaptions.deleteFiles}
-              {selectedfileslength > 0 && `(${selectedfileslength})`}
-            </ButtonWithToolTip>
+              <TrashIconOutline className='n-size-token-7' />
+              Delete <TrashIconOutline></TrashIconOutline>
+            </Button>
           </Flex>
         </Flex>
       </div>
