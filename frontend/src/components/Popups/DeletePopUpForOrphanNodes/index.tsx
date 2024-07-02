@@ -67,6 +67,7 @@ export default function DeletePopUpForOrphanNodes({
         {orphanNodes.length ? (
           <Checkbox
             label='Select All Nodes'
+            className='ml-4'
             onChange={(e) => {
               if (e.target.checked) {
                 setOrphanNodes((prev) => prev.map((n) => ({ ...n, checked: true })));
@@ -89,7 +90,7 @@ export default function DeletePopUpForOrphanNodes({
                     <ListItemIcon>
                       <Checkbox
                         aria-label='selection checkbox'
-                        checked={n.checked}
+                        checked={selectedOrphanNodesForDeletion.includes(n.e.elementId)}
                         onChange={(e) => onChangeHandler(e.target.checked, n.e.elementId)}
                         tabIndex={-1}
                       />
