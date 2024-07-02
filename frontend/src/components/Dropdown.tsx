@@ -19,7 +19,9 @@ const LlmDropdown: React.FC<DropdownProps> = ({ onSelect }) => {
           selectProps={{
             onChange: handleChange,
             options: allOptions?.map((option) => ({
-              label: capitalize(option),
+              label: option.includes('LLM_MODEL_CONFIG_')
+                ? capitalize(option.split('LLM_MODEL_CONFIG_').at(-1) as string)
+                : capitalize(option),
               value: option,
             })),
             placeholder: 'Select LLM Model',
