@@ -114,7 +114,7 @@ async def create_source_knowledge_graph_url(
             return create_api_response('Failed',message='source_type is other than accepted source')
 
         message = f"Source Node created successfully for source type: {source_type} and source: {source}"
-        josn_obj = {'api_name':'url_scan','db_url':uri,'url_scanned_file':lst_file_name}
+        josn_obj = {'api_name':'url_scan','db_url':uri,'url_scanned_file':lst_file_name, 'source_url':source_url, 'wiki_query':wiki_query}
         logger.log_struct(josn_obj)
         return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name)    
     except Exception as e:
@@ -197,6 +197,9 @@ async def extract_knowledge_graph_from_file(
         if result is not None:
             result['db_url'] = uri
             result['api_name'] = 'extract'
+            result['source_url'] = source_url
+            result['wiki_query'] = wiki_query
+            result['source_type'] = source_type
         logger.log_struct(result)
         return create_api_response('Success', data=result, file_source= source_type)
     except Exception as e:
@@ -207,11 +210,13 @@ async def extract_knowledge_graph_from_file(
         if source_type == 'local file':
             if gcs_file_cache == 'True':
                 folder_name = create_gcs_bucket_folder_name_hashed(uri,file_name)
+                copy_failed_file(BUCKET_UPLOAD, BUCKET_FAILED_FILE, folder_name, file_name)
+                time.sleep(5)
                 delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
             else:
                 logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
                 delete_uploaded_local_file(merged_file_path,file_name)
-        josn_obj = {'message':message,'error_message':error_message, 'file_name': file_name,'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type}
+        josn_obj = {'message':message,'error_message':error_message, 'file_name': file_name,'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query}
         logger.log_struct(josn_obj)
         logging.exception(f'File Failed in extraction: {josn_obj}')
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = file_name)
@@ -284,7 +289,7 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
         result["info"]["response_time"] = round(total_call_time, 2)
         
-        josn_obj = {'api_name':'chat_bot','db_url':uri}
+        josn_obj = {'api_name':'chat_bot','db_url':uri,'session_id':session_id}
         logger.log_struct(josn_obj)
         return create_api_response('Success',data=result)
     except Exception as e:
@@ -331,7 +336,7 @@ async def graph_query(
             query_type=query_type,
             document_names=document_names
         )
-        josn_obj = {'api_name':'graph_query','db_url':uri}
+        josn_obj = {'api_name':'graph_query','db_url':uri,'document_names':document_names}
         logger.log_struct(josn_obj)
         return create_api_response('Success', data=result)
     except Exception as e:
