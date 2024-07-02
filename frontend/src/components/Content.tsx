@@ -1,26 +1,36 @@
-import { useEffect, useState, useMemo } from 'react';
-import ConnectionModal from './ConnectionModal';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import ConnectionModal from './Popups/ConnectionModal/ConnectionModal';
 import LlmDropdown from './Dropdown';
 import FileTable from './FileTable';
 import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
-import CustomAlert from './Alert';
+import CustomAlert from './UI/Alert';
 import { extractAPI } from '../utils/FileAPI';
-import { ContentProps, CustomFile, OptionType, UserCredentials, alertStateType } from '../types';
-import { updateGraphAPI } from '../services/UpdateGraph';
-import GraphViewModal from './GraphViewModal';
-import deleteAPI from '../services/deleteFiles';
-import DeletePopUp from './DeletePopUp';
+import { ContentProps, CustomFile, Menuitems, OptionType, UserCredentials, alertStateType } from '../types';
+import deleteAPI from '../services/DeleteFiles';
+import { postProcessing } from '../services/PostProcessing';
+import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
-import ConfirmationDialog from './ConfirmationDialog';
-import { buttonCaptions, largeFileSize, tooltips } from '../utils/Constants';
-import ButtonWithToolTip from './ButtonWithToolTip';
+import ConfirmationDialog from './Popups/LargeFilePopUp/ConfirmationDialog';
+import { buttonCaptions, largeFileSize, taskParam, tooltips } from '../utils/Constants';
+import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
+import SettingModalHOC from '../HOC/SettingModalHOC';
+import GraphViewModal from './Graph/GraphViewModal';
+import CustomMenu from './UI/Menu';
+import { TrashIconOutline } from '@neo4j-ndl/react/icons';
 
-const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) => {
+const Content: React.FC<ContentProps> = ({
+  isLeftExpanded,
+  isRightExpanded,
+  openTextSchema,
+  isSchema,
+  setIsSchema,
+  openOrphanNodeDeletionModal,
+}) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
@@ -29,6 +39,10 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
   const { setUserCredentials, userCredentials } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
+  const [isLargeFile, setIsLargeFile] = useState<boolean>(false);
+  const [showSettingnModal, setshowSettingModal] = useState<boolean>(false);
+  const [openDeleteMenu, setopenDeleteMenu] = useState<boolean>(false);
+  const [deleteAnchor, setdeleteAnchor] = useState<HTMLElement | null>(null);
 
   const {
     filesData,
@@ -220,6 +234,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
   };
 
   const handleGenerateGraph = (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => {
+    setIsLargeFile(false);
     const data = [];
     if (selectedfileslength && allowLargeFiles) {
       for (let i = 0; i < selectedfileslength; i++) {
@@ -230,7 +245,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
       }
       Promise.allSettled(data).then(async (_) => {
         setextractLoading(false);
-        await updateGraphAPI(userCredentials as UserCredentials);
+        await postProcessing(userCredentials as UserCredentials, taskParam);
       });
     } else if (selectedFilesFromAllfiles.length && allowLargeFiles) {
       // @ts-ignore
@@ -241,7 +256,7 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
       }
       Promise.allSettled(data).then(async (_) => {
         setextractLoading(false);
-        await updateGraphAPI(userCredentials as UserCredentials);
+        await postProcessing(userCredentials as UserCredentials, taskParam);
       });
     }
   };
@@ -376,9 +391,146 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
     }
   }, []);
 
+  useEffect(() => {
+    const storedSchema = localStorage.getItem('isSchema');
+    if (storedSchema !== null) {
+      setIsSchema(JSON.parse(storedSchema));
+    }
+  }, []);
+
+  const onClickHandler = () => {
+    if (isSchema) {
+      if (selectedRows.length) {
+        let selectedLargeFiles: CustomFile[] = [];
+        selectedRows.forEach((f) => {
+          const parsedData: CustomFile = JSON.parse(f);
+          if (parsedData.fileSource === 'local file') {
+            if (typeof parsedData.size === 'number' && parsedData.status === 'New' && parsedData.size > largeFileSize) {
+              selectedLargeFiles.push(parsedData);
+            }
+          }
+        });
+        // @ts-ignore
+        if (selectedLargeFiles.length) {
+          setIsLargeFile(true);
+          setshowConfirmationModal(true);
+          handleGenerateGraph(false, []);
+        } else {
+          setIsLargeFile(false);
+          handleGenerateGraph(true, filesData);
+        }
+      } else if (filesData.length) {
+        const largefiles = filesData.filter((f) => {
+          if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
+            return true;
+          }
+          return false;
+        });
+        const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
+        const stringified = selectAllNewFiles.reduce((accu, f) => {
+          const key = JSON.stringify(f);
+          // @ts-ignore
+          accu[key] = true;
+          return accu;
+        }, {});
+        setRowSelection(stringified);
+        if (largefiles.length) {
+          setIsLargeFile(true);
+          setshowConfirmationModal(true);
+          handleGenerateGraph(false, []);
+        } else {
+          setIsLargeFile(false);
+          handleGenerateGraph(true, filesData);
+        }
+      }
+    } else {
+      if (selectedRows.length) {
+        let selectedLargeFiles: CustomFile[] = [];
+        selectedRows.forEach((f) => {
+          const parsedData: CustomFile = JSON.parse(f);
+          if (parsedData.fileSource === 'local file') {
+            if (typeof parsedData.size === 'number' && parsedData.status === 'New' && parsedData.size > largeFileSize) {
+              selectedLargeFiles.push(parsedData);
+            }
+          }
+        });
+        // @ts-ignore
+        if (selectedLargeFiles.length) {
+          setIsLargeFile(true);
+        } else {
+          setIsLargeFile(false);
+        }
+      } else if (filesData.length) {
+        const largefiles = filesData.filter((f) => {
+          if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
+            return true;
+          }
+          return false;
+        });
+        const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
+        const stringified = selectAllNewFiles.reduce((accu, f) => {
+          const key = JSON.stringify(f);
+          // @ts-ignore
+          accu[key] = true;
+          return accu;
+        }, {});
+        setRowSelection(stringified);
+        if (largefiles.length) {
+          setIsLargeFile(true);
+        } else {
+          setIsLargeFile(false);
+        }
+      }
+      setshowSettingModal(true);
+    }
+  };
+
+  const deleteMenuItems: Menuitems[] = useMemo(
+    () => [
+      {
+        title: `Delete Files ${selectedfileslength > 0 ? `(${selectedfileslength})` : ''}`,
+        onClick: () => setshowDeletePopUp(true),
+        disabledCondition: !selectedfileslength,
+        description: tooltips.deleteFile,
+      },
+      {
+        title: 'Delete Orphan Nodes',
+        onClick: () => openOrphanNodeDeletionModal(),
+        disabledCondition: false,
+      },
+    ],
+    [selectedfileslength]
+  );
+
+  const handleContinue = () => {
+    if (!isLargeFile) {
+      handleGenerateGraph(true, filesData);
+      setshowSettingModal(false);
+    } else {
+      setshowSettingModal(false);
+      setshowConfirmationModal(true);
+      handleGenerateGraph(false, []);
+    }
+    setIsSchema(true);
+    setalertDetails({
+      showAlert: true,
+      alertType: 'success',
+      alertMessage: 'Schema is set successfully',
+    });
+    localStorage.setItem('isSchema', JSON.stringify(true));
+  };
+
   return (
     <>
       {alertDetails.showAlert && (
+        <CustomAlert
+          severity={alertDetails.alertType}
+          open={alertDetails.showAlert}
+          handleClose={handleClose}
+          alertMessage={alertDetails.alertMessage}
+        />
+      )}
+      {isSchema && (
         <CustomAlert
           severity={alertDetails.alertType}
           open={alertDetails.showAlert}
@@ -403,6 +555,17 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
           deleteCloseHandler={() => setshowDeletePopUp(false)}
           loading={deleteLoading}
         ></DeletePopUp>
+      )}
+      {showSettingnModal && (
+        <SettingModalHOC
+          settingView='contentView'
+          onClose={() => setshowSettingModal(false)}
+          onContinue={handleContinue}
+          open={showSettingnModal}
+          openTextSchema={openTextSchema}
+          isSchema={isSchema}
+          setIsSchema={setIsSchema}
+        />
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>
@@ -450,57 +613,13 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
           justifyContent='space-between'
           flexDirection='row'
         >
-          <LlmDropdown onSelect={handleDropdownChange}  />
+          <LlmDropdown onSelect={handleDropdownChange} />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <ButtonWithToolTip
               text={tooltips.generateGraph}
               placement='top'
               label='generate graph'
-              onClick={() => {
-                if (selectedRows.length) {
-                  let selectedLargeFiles: CustomFile[] = [];
-                  selectedRows.forEach((f) => {
-                    const parsedData: CustomFile = JSON.parse(f);
-                    if (parsedData.fileSource === 'local file') {
-                      if (
-                        typeof parsedData.size === 'number' &&
-                        parsedData.status === 'New' &&
-                        parsedData.size > largeFileSize
-                      ) {
-                        selectedLargeFiles.push(parsedData);
-                      }
-                    }
-                  });
-                  // @ts-ignore
-                  if (selectedLargeFiles.length) {
-                    setshowConfirmationModal(true);
-                    handleGenerateGraph(false, []);
-                  } else {
-                    handleGenerateGraph(true, filesData);
-                  }
-                } else if (filesData.length) {
-                  const largefiles = filesData.filter((f) => {
-                    if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
-                      return true;
-                    }
-                    return false;
-                  });
-                  const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
-                  const stringified = selectAllNewFiles.reduce((accu, f) => {
-                    const key = JSON.stringify(f);
-                    // @ts-ignore
-                    accu[key] = true;
-                    return accu;
-                  }, {});
-                  setRowSelection(stringified);
-                  if (largefiles.length) {
-                    setshowConfirmationModal(true);
-                    handleGenerateGraph(false, []);
-                  } else {
-                    handleGenerateGraph(true, filesData);
-                  }
-                }
-              }}
+              onClick={onClickHandler}
               disabled={disableCheck}
               className='mr-0.5'
             >
@@ -527,19 +646,26 @@ const Content: React.FC<ContentProps> = ({ isLeftExpanded, isRightExpanded }) =>
             >
               {buttonCaptions.exploreGraphWithBloom}
             </ButtonWithToolTip>
-            <ButtonWithToolTip
-              text={
-                !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
-              }
-              placement='top'
-              onClick={() => setshowDeletePopUp(true)}
-              disabled={!selectedfileslength}
-              className='ml-0.5'
-              label='Delete Files'
+            <CustomMenu
+              open={openDeleteMenu}
+              closeHandler={useCallback(() => {
+                setopenDeleteMenu(false);
+              }, [])}
+              items={deleteMenuItems}
+              MenuAnchor={deleteAnchor}
+              anchorOrigin={useMemo(() => ({ horizontal: 'left', vertical: 'bottom' }), [])}
+              transformOrigin={useMemo(() => ({ horizontal: 'right', vertical: 'top' }), [])}
+            ></CustomMenu>
+            <Button
+              label='Delete Menu trigger'
+              onClick={(e) => {
+                setdeleteAnchor(e.currentTarget);
+                setopenDeleteMenu(true);
+              }}
             >
-              {buttonCaptions.deleteFiles}
-              {selectedfileslength > 0 && `(${selectedfileslength})`}
-            </ButtonWithToolTip>
+              <TrashIconOutline className='n-size-token-7' />
+              Delete <TrashIconOutline></TrashIconOutline>
+            </Button>
           </Flex>
         </Flex>
       </div>

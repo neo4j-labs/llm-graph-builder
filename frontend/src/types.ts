@@ -69,9 +69,9 @@ export type ExtractParams = {
 export type UploadParams = {
   file: Blob;
   model: string;
-  chunkNumber:number;
-  totalChunks:number;
-  originalname:string
+  chunkNumber: number;
+  totalChunks: number;
+  originalname: string;
 } & { [key: string]: any };
 
 export type FormDataParams = ExtractParams | UploadParams;
@@ -150,6 +150,10 @@ export interface ContentProps {
   isRightExpanded: boolean;
   showChatBot: boolean;
   openChatBot: () => void;
+  openTextSchema: () => void;
+  isSchema?: boolean;
+  setIsSchema: Dispatch<SetStateAction<boolean>>;
+  openOrphanNodeDeletionModal: () => void;
 }
 
 export interface FileTableProps {
@@ -170,12 +174,32 @@ export interface CustomModalProps {
   setStatus: Dispatch<SetStateAction<'unknown' | 'success' | 'info' | 'warning' | 'danger'>>;
 }
 
+export interface CustomInput {
+  value: string;
+  label: string;
+  placeHolder: string;
+  onChangeHandler: React.ChangeEventHandler<HTMLInputElement>;
+  submitHandler: (url: string) => void;
+  disabledCheck: boolean;
+  onCloseHandler: () => void;
+  id: string;
+  onBlurHandler: React.FocusEventHandler<HTMLInputElement>;
+  status: 'unknown' | 'success' | 'info' | 'warning' | 'danger';
+  setStatus: Dispatch<SetStateAction<'unknown' | 'success' | 'info' | 'warning' | 'danger'>>;
+  statusMessage: string;
+  isValid: boolean;
+  isFocused: boolean;
+  onPasteHandler: React.ClipboardEventHandler<HTMLInputElement>;
+}
+
 export interface CommonButtonProps {
   openModal: () => void;
   wrapperclassName?: string;
   logo: string;
-  title: string;
+  title?: string;
   className?: string;
+  imgWidth?: number;
+  imgeHeight?: number;
 }
 
 export interface Source {
@@ -183,17 +207,21 @@ export interface Source {
   source_name: string;
   start_time?: string;
 }
+export interface chunk {
+  id: string;
+  score: number;
+}
 export interface Messages {
   id: number;
   message: string;
   user: string;
   datetime: string;
   isTyping?: boolean;
-  sources?: Source[];
+  sources?: string[];
   model?: string;
   isLoading?: boolean;
   response_time?: number;
-  chunk_ids?: string[];
+  chunk_ids?: chunk[];
   total_tokens?: number;
   speaking?: boolean;
   copying?: boolean;
@@ -301,6 +329,19 @@ export interface LegendChipProps {
 export interface FileContextProviderProps {
   children: ReactNode;
 }
+export interface orphanNode {
+  id: string;
+  elementId: string;
+  description: string;
+  labels: string[];
+  embedding: null | string;
+}
+export interface orphanNodeProps {
+  documents: string[];
+  chunkConnections: number;
+  e: orphanNode;
+  checked?: boolean;
+}
 export interface labelsAndTypes {
   labels: string[];
   relationshipTypes: string[];
@@ -310,7 +351,7 @@ export interface commonserverresponse {
   error?: string;
   message?: string;
   file_name?: string;
-  data?: labelsAndTypes | labelsAndTypes[] | uploadData;
+  data?: labelsAndTypes | labelsAndTypes[] | uploadData | orphanNodeProps[];
 }
 
 export interface ScehmaFromText extends Partial<commonserverresponse> {
@@ -318,6 +359,9 @@ export interface ScehmaFromText extends Partial<commonserverresponse> {
 }
 export interface ServerData extends Partial<commonserverresponse> {
   data: labelsAndTypes[];
+}
+export interface OrphanNodeResponse extends Partial<commonserverresponse> {
+  data: orphanNodeProps[];
 }
 export interface schema {
   nodelabels: string[];
@@ -332,10 +376,10 @@ export interface SourceListServerData {
 }
 
 export interface chatInfoMessage extends Partial<Messages> {
-  sources: Source[];
+  sources: string[];
   model: string;
   response_time: number;
-  chunk_ids: string[];
+  chunk_ids: chunk[];
   total_tokens: number;
 }
 
@@ -427,6 +471,7 @@ export interface Chunk {
   content_offset?: string;
   url?: string;
   fileSource: string;
+  score?: string;
 }
 
 export interface SpeechSynthesisProps {
@@ -438,4 +483,27 @@ export interface SpeechArgs {
   rate?: number;
   pitch?: number;
   volume?: number;
+}
+
+export interface SettingsModalProps {
+  open: boolean;
+  onClose: () => void;
+  openTextSchema: () => void;
+  onContinue?: () => void;
+  settingView: 'contentView' | 'headerView';
+  isSchema?: boolean;
+  setIsSchema: Dispatch<SetStateAction<boolean>>;
+  onClear?: () => void;
+}
+export interface Menuitems {
+  title: string;
+  onClick: () => void;
+  disabledCondition: boolean;
+  description?: string;
+}
+export type Vertical = 'top' | 'bottom';
+export type Horizontal = 'left' | 'right' | 'center';
+export interface Origin {
+  vertical: Vertical;
+  horizontal: Horizontal;
 }
