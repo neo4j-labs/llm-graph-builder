@@ -495,3 +495,14 @@ export interface SettingsModalProps {
   setIsSchema: Dispatch<SetStateAction<boolean>>;
   onClear?: () => void;
 }
+export interface Menuitems {
+  title: string;
+  onClick: () => void;
+  disabledCondition: boolean;
+}
+export type Vertical = 'top' | 'bottom';
+export type Horizontal = 'left' | 'right' | 'center';
+export interface Origin {
+  vertical: Vertical;
+  horizontal: Horizontal;
+}

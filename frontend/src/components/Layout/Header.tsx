@@ -6,7 +6,6 @@ import {
   CodeBracketSquareIconOutline,
   Cog8ToothIconOutline,
   InformationCircleIconOutline,
-  TrashIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { Typography } from '@neo4j-ndl/react';
 import { useCallback, useEffect } from 'react';

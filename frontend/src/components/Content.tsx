@@ -7,7 +7,7 @@ import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './UI/Alert';
 import { extractAPI } from '../utils/FileAPI';
-import { ContentProps, CustomFile, OptionType, UserCredentials, alertStateType } from '../types';
+import { ContentProps, CustomFile, Menuitems, OptionType, UserCredentials, alertStateType } from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
 import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
@@ -485,7 +485,7 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
-  const deleteMenuItems = useMemo(
+  const deleteMenuItems: Menuitems[] = useMemo(
     () => [
       {
         title: `Delete Files ${selectedfileslength > 0 ? `(${selectedfileslength})` : ''}`,

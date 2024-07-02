@@ -1,15 +1,5 @@
 import { Menu } from '@neo4j-ndl/react';
-interface Menuitems {
-  title: string;
-  onClick: () => void;
-  disabledCondition: boolean;
-}
-type Vertical = 'top' | 'bottom';
-type Horizontal = 'left' | 'right' | 'center';
-interface Origin {
-  vertical: Vertical;
-  horizontal: Horizontal;
-}
+import { Menuitems, Origin } from '../../types';
 
 export default function CustomMenu({
   open,
