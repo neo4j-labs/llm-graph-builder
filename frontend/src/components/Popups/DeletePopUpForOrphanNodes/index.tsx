@@ -51,7 +51,7 @@ export default function DeletePopUpForOrphanNodes({
       setOrphanNodes((prev) => prev.map((n) => ({ ...n, checked: n.e.elementId === id ? true : n.checked })));
     } else {
       setselectedAll(false)
-      setselectedOrphanNodesForDeletion((prev) => prev.filter((s) => s === id));
+      setselectedOrphanNodesForDeletion((prev) => prev.filter((s) => s != id));
       setOrphanNodes((prev) => prev.map((n) => ({ ...n, checked: n.e.elementId === id ? false : n.checked })));
     }
   }, []);
