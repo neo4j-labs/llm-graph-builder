@@ -62,7 +62,12 @@ export default function DeletePopUpForOrphanNodes({
         setOrphanNodes([]);
       }}
     >
-      <Dialog.Header>Orphan Nodes Deletion</Dialog.Header>
+      <Dialog.Header>
+        <Flex flexDirection='column'>
+          <Typography variant='subheading-large'>Orphan Nodes Deletion</Typography>
+          <Typography variant='subheading-small'>100 nodes per batch</Typography>
+        </Flex>
+      </Dialog.Header>
       <Dialog.Content>
         {orphanNodes.length ? (
           <Checkbox

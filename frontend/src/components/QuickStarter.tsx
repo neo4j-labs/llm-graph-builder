@@ -36,18 +36,14 @@ const QuickStarter: React.FunctionComponent = () => {
       <FileContextProvider>
         <MessageContextWrapper>
           <AlertContextWrapper>
-            <Header
-              themeMode={themeMode}
-              toggleTheme={toggleColorMode}
-              openSettingsModal={openSettingsModal}
-              openOrphanNodeDeletionModal={openOrphanNodeDeletionModal}
-            />
+            <Header themeMode={themeMode} toggleTheme={toggleColorMode} openSettingsModal={openSettingsModal} />
             <PageLayout
               openSettingsDialog={openSettingsModal}
               isSettingPanelExpanded={showSettingsModal}
               closeSettingModal={closeSettingModal}
               closeOrphanNodeDeletionModal={closeOrphanNodeDeletionModal}
               showOrphanNodeDeletionModal={showOrphanNodeDeletionDialog}
+              openOrphanNodeDeletionModal={openOrphanNodeDeletionModal}
             />
           </AlertContextWrapper>
         </MessageContextWrapper>

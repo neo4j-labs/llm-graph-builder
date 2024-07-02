@@ -22,12 +22,14 @@ export default function PageLayoutNew({
   openSettingsDialog,
   closeOrphanNodeDeletionModal,
   showOrphanNodeDeletionModal,
+  openOrphanNodeDeletionModal,
 }: {
   isSettingPanelExpanded: boolean;
   closeSettingModal: () => void;
   openSettingsDialog: () => void;
   closeOrphanNodeDeletionModal: () => void;
   showOrphanNodeDeletionModal: boolean;
+  openOrphanNodeDeletionModal: () => void;
 }) {
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(true);
   const [isRightExpanded, setIsRightExpanded] = useState<boolean>(true);
@@ -130,6 +132,7 @@ export default function PageLayoutNew({
         isRightExpanded={isRightExpanded}
         showChatBot={showChatBot}
         openTextSchema={openSchemaFromTextDialog}
+        openOrphanNodeDeletionModal={openOrphanNodeDeletionModal}
         isSchema={isSchema}
         setIsSchema={setIsSchema}
       />

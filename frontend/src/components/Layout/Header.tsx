@@ -19,12 +19,10 @@ export default function Header({
   themeMode,
   toggleTheme,
   openSettingsModal,
-  openOrphanNodeDeletionModal,
 }: {
   themeMode: string;
   toggleTheme: () => void;
   openSettingsModal: () => void;
-  openOrphanNodeDeletionModal: () => void;
 }) {
   const handleURLClick = useCallback((url: string) => {
     window.open(url, '_blank');
@@ -99,14 +97,6 @@ export default function Header({
                     <MoonIconOutline />
                   </span>
                 )}
-              </IconButtonWithToolTip>
-              <IconButtonWithToolTip
-                clean
-                onClick={openOrphanNodeDeletionModal}
-                text='delete orphan nodes'
-                label='delete orphan node'
-              >
-                <TrashIconOutline />
               </IconButtonWithToolTip>
               <Badge color={isSchema ? 'success' : 'error'} overlap='circular' badgeContent=' ' variant='dot'>
                 <IconButtonWithToolTip
