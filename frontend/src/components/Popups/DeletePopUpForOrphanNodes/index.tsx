@@ -186,7 +186,7 @@ export default function DeletePopUpForOrphanNodes({
               : `Delete Selected Nodes (${selectedOrphanNodesForDeletion.length})`
           }
           label='Orphan Node deletion button'
-          disabled={!selectedOrphanNodesForDeletion.length || !orphanNodes.length}
+          disabled={!selectedOrphanNodesForDeletion.length}
         >
           Continue
         </ButtonWithToolTip>
