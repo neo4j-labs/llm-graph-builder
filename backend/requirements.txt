@@ -67,8 +67,12 @@ joblib==1.3.2
 jsonpatch==1.33
 jsonpath-python==1.0.6
 jsonpointer==2.4
+json-repair
 kiwisolver==1.4.5
 langchain
+langchain-aws
+langchain-anthropic
+langchain-fireworks
 langchain-google-genai
 langchain-community
 langchain-core

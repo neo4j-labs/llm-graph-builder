@@ -1,6 +1,6 @@
 from typing import List
 from langchain_core.pydantic_v1 import BaseModel, Field
-from src.shared.common_fn import get_llm
+from src.llm import get_llm
 from src.shared.constants import MODEL_VERSIONS
 from langchain_core.prompts import ChatPromptTemplate
 

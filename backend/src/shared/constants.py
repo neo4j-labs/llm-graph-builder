@@ -1,13 +1,13 @@
 MODEL_VERSIONS = {
-        "gpt-3.5": "gpt-3.5-turbo-16k",
+        "openai-gpt-3.5": "gpt-3.5-turbo-16k",
         "gemini-1.0-pro": "gemini-1.0-pro-001",
         "gemini-1.5-pro": "gemini-1.5-pro-preview-0514",
-        "gpt-4": "gpt-4-0125-preview",
+        "openai-gpt-4": "gpt-4-0125-preview",
         "diffbot" : "gpt-4o",
-        "gpt-4o":"gpt-4o",
+        "openai-gpt-4o":"gpt-4o",
         "groq-llama3" : "llama3-70b-8192"
          }
-OPENAI_MODELS = ["gpt-3.5", "gpt-4o"]
+OPENAI_MODELS = ["openai-gpt-3.5", "openai-gpt-4o"]
 GEMINI_MODELS = ["gemini-1.0-pro", "gemini-1.5-pro"]
 GROQ_MODELS = ["groq-llama3"]
 BUCKET_UPLOAD = 'llm-graph-builder-upload'
@@ -22,8 +22,8 @@ CHAT_SEARCH_KWARG_SCORE_THRESHOLD = 0.7
 CHAT_DOC_SPLIT_SIZE = 3000
 CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD = 0.10
 CHAT_TOKEN_CUT_OFF = {
-     ("gpt-3.5","gemini-1.0-pro","gemini-1.5-pro","groq-llama3" ) : 4, 
-     ("gpt-4","diffbot" , "gpt-4o") : 28   
+     ("openai-gpt-3.5","gemini-1.0-pro","gemini-1.5-pro","groq-llama3" ) : 4, 
+     ("openai-gpt-4","diffbot" , "openai-gpt-4o") : 28   
 }
 
 

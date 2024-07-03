@@ -4,7 +4,8 @@ import os
 from dotenv import load_dotenv
 import logging
 from langchain_community.chat_message_histories import Neo4jChatMessageHistory
-from src.shared.common_fn import load_embedding_model, get_llm
+from src.llm import get_llm
+from src.shared.common_fn import load_embedding_model
 import re
 from typing import Any
 from datetime import datetime
@@ -19,6 +20,7 @@ from langchain.retrievers.document_compressors import DocumentCompressorPipeline
 from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage,AIMessage
 from src.shared.constants import *
+from src.llm import get_llm
 
 load_dotenv() 
 
@@ -184,15 +186,17 @@ def clear_chat_history(graph,session_id):
 
 def setup_chat(model, graph, session_id, retrieval_query):
     start_time = time.time()
-    model_version = MODEL_VERSIONS[model]
-    llm = get_llm(model_version)
+    if model in ["diffbot","LLM_MODEL_CONFIG_ollama_llama3","LLM_MODEL_CONFIG_anthropic-claude-3-5-sonnet","LLM_MODEL_CONFIG_bedrock-claude-3-5-sonnet"]:
+        model = "openai-gpt-4o"
+    llm,model_name = get_llm(model)
+    logging.info(f"Model called in chat {model} and model version is {model_name}")
     retriever = get_neo4j_retriever(graph=graph,retrieval_query=retrieval_query)
     doc_retriever = create_document_retriever_chain(llm, retriever)
     history = create_neo4j_chat_message_history(graph, session_id)
     chat_setup_time = time.time() - start_time
     logging.info(f"Chat setup completed in {chat_setup_time:.2f} seconds")
     
-    return llm, doc_retriever, history, model_version
+    return llm, doc_retriever, history, model_name
 
 def retrieve_documents(doc_retriever, messages):
     start_time = time.time()

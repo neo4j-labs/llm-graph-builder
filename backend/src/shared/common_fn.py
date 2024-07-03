@@ -55,17 +55,6 @@ def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
       logging.error(f"Error in recognize URL: {e}")
       raise Exception(e)
 
-def get_combined_chunks(chunkId_chunkDoc_list):
-    chunks_to_combine = int(os.environ.get('NUMBER_OF_CHUNKS_TO_COMBINE'))
-    logging.info(f"Combining {chunks_to_combine} chunks before sending request to LLM")
-    combined_chunk_document_list=[]
-    combined_chunks_page_content = ["".join(document['chunk_doc'].page_content for document in chunkId_chunkDoc_list[i:i+chunks_to_combine]) for i in range(0, len(chunkId_chunkDoc_list),chunks_to_combine)]
-    combined_chunks_ids = [[document['chunk_id'] for document in chunkId_chunkDoc_list[i:i+chunks_to_combine]] for i in range(0, len(chunkId_chunkDoc_list),chunks_to_combine)]
-    
-    for i in range(len(combined_chunks_page_content)):
-         combined_chunk_document_list.append(Document(page_content=combined_chunks_page_content[i], metadata={"combined_chunk_ids":combined_chunks_ids[i]}))
-    return combined_chunk_document_list
-
 
 def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
   logging.info("creating list of chunks and graph documents in get_chunk_and_graphDocument func")
@@ -118,36 +107,6 @@ def close_db_connection(graph, api_name):
   if not graph._driver._closed:
       logging.info(f"closing connection for {api_name} api")
       # graph._driver.close()   
-      
-def get_llm(model_version:str) :
-    """Retrieve the specified language model based on the model name."""
-    if "gemini" in model_version:
-        llm = ChatVertexAI(
-            model_name=model_version,
-            convert_system_message_to_human=True,
-            temperature=0,
-            safety_settings={
-                HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE
-            }
-        )
-    elif "gpt" in model_version:
-        llm = ChatOpenAI(api_key=os.environ.get('OPENAI_API_KEY'), 
-                         model=model_version, 
-                         temperature=0)
-        
-    elif "llama3" in model_version:
-        llm = ChatGroq(api_key=os.environ.get('GROQ_API_KEY'),
-                       temperature=0,
-                       model_name=model_version)
-    
-    else:
-        llm = DiffbotGraphTransformer(diffbot_api_key=os.environ.get('DIFFBOT_API_KEY'),extract_types=['entities','facts'])    
-    logging.info(f"Model created - Model Version: {model_version}")
-    return llm
   
 def create_gcs_bucket_folder_name_hashed(uri, file_name):
   folder_name = uri + file_name
