@@ -48,7 +48,7 @@ def get_graph_from_Gemini(model_version,
     
     combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
      
-    llm = get_llm(model_version)
+    llm,model_name = get_llm(model_version)
     return  get_graph_document_list(llm, combined_chunk_document_list, allowedNodes, allowedRelationship)
            
        

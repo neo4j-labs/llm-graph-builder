@@ -22,8 +22,9 @@ def get_llm(model_version: str):
     """Retrieve the specified language model based on the model name."""
     if "gemini" in model_version:
         credentials, project_id = google.auth.default()
+        model_name = MODEL_VERSIONS[model_version]
         llm = ChatVertexAI(
-            model_name=MODEL_VERSIONS[model_version],
+            model_name=model_name,
             convert_system_message_to_human=True,
             credentials=credentials,
             project=project_id,
@@ -37,20 +38,19 @@ def get_llm(model_version: str):
             },
         )
     elif "openai" in model_version:
+        model_name = MODEL_VERSIONS[model_version]
         llm = ChatOpenAI(
             api_key=os.environ.get("OPENAI_API_KEY"),
-            model=MODEL_VERSIONS[model_version],
+            model=model_name,
             temperature=0,
         )
 
     elif "azure" in model_version:
-        model_deployment_name, api_endpoint, api_key, api_version = os.environ.get(
-            model_version
-        ).split(",")
+        model_name, api_endpoint, api_key, api_version = os.environ.get(model_version).split(",")
         llm = AzureChatOpenAI(
             api_key=api_key,
             azure_endpoint=api_endpoint,
-            azure_deployment=model_deployment_name,  # takes precedence over model parameter
+            azure_deployment=model_name,  # takes precedence over model parameter
             api_version=api_version,
             temperature=0,
             max_tokens=None,
@@ -91,12 +91,13 @@ def get_llm(model_version: str):
         llm = ChatOllama(base_url=base_url, model=model_name)
 
     else:
+        model_name = "diffbot"
         llm = DiffbotGraphTransformer(
             diffbot_api_key=os.environ.get("DIFFBOT_API_KEY"),
             extract_types=["entities", "facts"],
         )
     logging.info(f"Model created - Model Version: {model_version}")
-    return llm
+    return llm, model_name
 
 
 def get_combined_chunks(chunkId_chunkDoc_list):
@@ -160,7 +161,7 @@ def get_graph_document_list(
 
 
 def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship):
-    llm = get_llm(model)
+    llm, model_name = get_llm(model)
     combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
     graph_document_list = get_graph_document_list(
         llm, combined_chunk_document_list, allowedNodes, allowedRelationship

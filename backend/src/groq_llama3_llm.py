@@ -33,7 +33,7 @@ def get_graph_from_Groq_Llama3(model_version,
     graph_document_list = []
     combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
     #api_key = os.environ.get('GROQ_API_KEY') 
-    llm = get_llm(model_version)
+    llm,model_name = get_llm(model_version)
     llm_transformer = LLMGraphTransformer(llm=llm, node_properties=["description"], allowed_nodes=allowedNodes, allowed_relationships=allowedRelationship)
     
     with ThreadPoolExecutor(max_workers=10) as executor:
