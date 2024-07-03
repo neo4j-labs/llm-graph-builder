@@ -1,4 +1,6 @@
 import { VisualizeBloomIcon } from '@neo4j-ndl/react/icons';
+import { NvlOptions } from '@neo4j-nvl/base';
+import { GraphType } from '../types';
 
 export const document = `+ [docs]`;
 
@@ -147,3 +149,26 @@ export const ChatModeOptions = [
 ];
 
 export const taskParam: string[] = ['update_similarity_graph', 'create_fulltext_index'];
+
+export const nvlOptions: NvlOptions = {
+  allowDynamicMinZoom: true,
+  disableWebGL: true,
+  maxZoom: 3,
+  minZoom: 0.05,
+  relationshipThreshold: 0.55,
+  useWebGL: false,
+  instanceId: 'graph-preview',
+  initialZoom: 1,
+};
+
+export const mouseEventCallbacks = {
+  onPan: true,
+  onZoom: true,
+  onDrag: true,
+};
+
+export const graphView: string[] = ['Lexical Graph', 'Entity Graph', 'Knowledge Graph'];
+export const intitalGraphType: GraphType[] = ['Document', 'Entities', 'Chunk'];
+export const knowledgeGraph = 'Knowledge Graph';
+export const lexicalGraph = 'Lexical Graph';
+export const entityGraph = 'Entity Graph';

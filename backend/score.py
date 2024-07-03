@@ -324,7 +324,6 @@ async def graph_query(
     uri: str = Form(None),
     userName: str = Form(None),
     password: str = Form(None),
-    query_type: str = Form(None),
     document_names: str = Form(None),
 ):
     try:
@@ -334,7 +333,6 @@ async def graph_query(
             uri=uri,
             username=userName,
             password=password,
-            query_type=query_type,
             document_names=document_names
         )
         josn_obj = {'api_name':'graph_query','db_url':uri,'document_names':document_names, 'logging_time': formatted_time(datetime.now(timezone.utc))}

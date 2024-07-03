@@ -248,7 +248,17 @@ export interface GraphViewModalProps {
   relationshipValues?: Relationship[];
 }
 
-export type GraphType = 'document' | 'chunks' | 'entities';
+export type GraphType = 'Document' | 'Entities' | 'Chunk';
+
+export type PartialLabelNode = Partial<Node> & {
+  labels: string;
+};
+
+export interface CheckboxSectionProps {
+  graphType: GraphType[];
+  loading: boolean;
+  handleChange: (graph: GraphType) => void;
+}
 
 export interface fileName {
   fileName: string;
@@ -317,6 +327,7 @@ export type alertStateType = {
 };
 
 export type Scheme = Record<string, string>;
+
 export type LabelCount = Record<string, number>;
 interface NodeType extends Partial<Node> {
   labels?: string[];

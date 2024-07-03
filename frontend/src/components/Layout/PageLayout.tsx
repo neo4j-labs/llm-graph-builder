@@ -32,7 +32,7 @@ export default function PageLayoutNew({
   openOrphanNodeDeletionModal: () => void;
 }) {
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(true);
-  const [isRightExpanded, setIsRightExpanded] = useState<boolean>(true);
+  const [isRightExpanded, setIsRightExpanded] = useState<boolean>(false);
   const [showChatBot, setShowChatBot] = useState<boolean>(false);
   const [showDrawerChatbot, setShowDrawerChatbot] = useState<boolean>(true);
   const [clearHistoryData, setClearHistoryData] = useState<boolean>(false);

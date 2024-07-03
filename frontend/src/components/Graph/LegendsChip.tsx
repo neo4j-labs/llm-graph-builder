@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { LegendChipProps } from '../../types';
 import Legend from '../UI/Legend';
 

@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import ConnectionModal from './Popups/ConnectionModal/ConnectionModal';
-import LlmDropdown from './Dropdown';
 import FileTable from './FileTable';
 import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
@@ -15,13 +14,13 @@ import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
 import ConfirmationDialog from './Popups/LargeFilePopUp/ConfirmationDialog';
-import { buttonCaptions, largeFileSize, taskParam, tooltips } from '../utils/Constants';
+import { buttonCaptions, defaultLLM, largeFileSize, llms, taskParam, tooltips } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 import SettingModalHOC from '../HOC/SettingModalHOC';
+import DropdownComponent from './Dropdown';
 import GraphViewModal from './Graph/GraphViewModal';
 import CustomMenu from './UI/Menu';
-import { TrashIconOutline } from '@neo4j-ndl/react/icons';
 
 const Content: React.FC<ContentProps> = ({
   isLeftExpanded,
@@ -112,9 +111,9 @@ const Content: React.FC<ContentProps> = ({
     });
   }, [model]);
 
-  const handleDropdownChange = (option: OptionType | null | void) => {
-    if (option?.value) {
-      setModel(option?.value);
+  const handleDropdownChange = (selectedOption: OptionType | null | void) => {
+    if (selectedOption?.value) {
+      setModel(selectedOption?.value);
     }
   };
 
@@ -272,9 +271,8 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
-      userCredentials?.port ?? '7687'
-    }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
+      }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -284,10 +282,10 @@ const Content: React.FC<ContentProps> = ({
     isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
       : isRightExpanded
-      ? 'contentWithChatBot'
-      : !isLeftExpanded && !isRightExpanded
-      ? 'w-[calc(100%-128px)]'
-      : 'contentWithDropzoneExpansion';
+        ? 'contentWithChatBot'
+        : !isLeftExpanded && !isRightExpanded
+          ? 'w-[calc(100%-128px)]'
+          : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -607,13 +605,18 @@ const Content: React.FC<ContentProps> = ({
           }}
         ></FileTable>
         <Flex
-          className={`${
-            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+          className={`${!isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+            } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection='row'
         >
-          <LlmDropdown onSelect={handleDropdownChange} />
+          <DropdownComponent
+            onSelect={handleDropdownChange}
+            options={llms ?? ['']}
+            placeholder='Select LLM Model'
+            defaultValue={defaultLLM}
+            view='ContentView'
+          />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <ButtonWithToolTip
               text={tooltips.generateGraph}
