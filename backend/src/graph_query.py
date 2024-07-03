@@ -238,7 +238,7 @@ def get_completed_documents(driver):
     return documents
 
 
-def get_graph_results(uri, username, password, query_type,document_names):
+def get_graph_results(uri, username, password,document_names):
     """
     Retrieves graph data by executing a specified Cypher query using credentials and parameters provided.
     Processes the results to extract nodes and relationships and packages them in a structured output.
@@ -269,18 +269,16 @@ def get_graph_results(uri, username, password, query_type,document_names):
         nodes = list()
         relationships = list()
         document_names= list(map(str.strip, json.loads(document_names)))
-        for document in document_names:
-            query = get_cypher_query(QUERY_MAP, query_type, document.strip())
-            # print(query)
-            records, summary , keys = execute_query(driver, query, document.strip())
-            # print(query)
-            document_nodes = extract_node_elements(records)
-            document_relationships = extract_relationships(records)
-            nodes.extend(document_nodes)
-            relationships.extend(document_relationships)
-        
-        logging.info(f"no of nodes : {len(nodes)}")
-        logging.info(f"no of relations : {len(relationships)}")
+        query_type = "docChunkEntities"
+        query = get_cypher_query(QUERY_MAP, query_type, document_names)
+        records, summary , keys = execute_query(driver, query, document_names)
+        document_nodes = extract_node_elements(records)
+        document_relationships = extract_relationships(records)
+
+        print(query)
+
+        logging.info(f"no of nodes : {len(document_nodes)}")
+        logging.info(f"no of relations : {len(document_relationships)}")
         result = {
             "nodes": nodes,
             "relationships": relationships
