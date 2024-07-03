@@ -29,7 +29,7 @@ def generate_graphDocuments(model: str, graph: Neo4jGraph, chunkId_chunkDoc_list
         graph_documents = get_graph_from_diffbot(graph, chunkId_chunkDoc_list)
 
     elif model in OPENAI_MODELS:
-        graph_documents = get_graph_from_OpenAI(MODEL_VERSIONS[model], graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
+        graph_documents = get_graph_from_OpenAI(model, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
 
     elif model in GEMINI_MODELS:
         graph_documents = get_graph_from_Gemini(MODEL_VERSIONS[model], graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)

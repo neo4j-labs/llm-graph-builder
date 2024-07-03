@@ -11,13 +11,20 @@ from concurrent.futures import ThreadPoolExecutor
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 from langchain_anthropic import ChatAnthropic
 from langchain_fireworks import ChatFireworks
+from langchain_aws import ChatBedrock
+import boto3
+import google.auth
+from src.shared.constants import MODEL_VERSIONS
 
 def get_llm(model_version:str) :
     """Retrieve the specified language model based on the model name."""
     if "gemini" in model_version:
+        credentials, project_id = google.auth.default()
         llm = ChatVertexAI(
             model_name=model_version,
             convert_system_message_to_human=True,
+            credentials=credentials,
+            project=project_id,
             temperature=0,
             safety_settings={
                 HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
@@ -29,7 +36,7 @@ def get_llm(model_version:str) :
         )
     elif "openai" in model_version:
         llm = ChatOpenAI(api_key=os.environ.get('OPENAI_API_KEY'), 
-                         model=model_version, 
+                         model=MODEL_VERSIONS[model_version], 
                          temperature=0)
     
     elif "azure" in model_version:
@@ -66,6 +73,23 @@ def get_llm(model_version:str) :
                        model_name=model_name,
                        temperature=0
                        )
+        
+    elif "bedrock" in model_version:
+        model_name,aws_access_key,aws_secret_key,region_name=os.environ.get(model_version).split(',')
+        bedrock_client = boto3.client(
+            service_name="bedrock-runtime",
+            region_name=region_name,
+            aws_access_key_id=aws_access_key,
+            aws_secret_access_key=aws_secret_key,
+        )
+
+        llm = ChatBedrock(
+            client = bedrock_client,
+            model_id=model_name,
+            model_kwargs=dict(temperature=0),
+            
+            # other params...
+        )
     
     else:
         llm = DiffbotGraphTransformer(diffbot_api_key=os.environ.get('DIFFBOT_API_KEY'),extract_types=['entities','facts'])    
