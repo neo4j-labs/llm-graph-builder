@@ -40,7 +40,6 @@ export const llms =
         'openai-gpt-4o',
         'gemini-1.0-pro',
         'gemini-1.5-pro',
-        'groq-llama3',
         'LLM_MODEL_CONFIG_azure-ai-gpt-35',
         'LLM_MODEL_CONFIG_azure-ai-gpt-4o',
         'LLM_MODEL_CONFIG_ollama_llama3',
