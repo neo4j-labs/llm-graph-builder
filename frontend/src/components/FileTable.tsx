@@ -321,7 +321,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
               text='Graph'
               size='large'
               label='Graph view'
-              disabled={!(info.getValue() === 'Completed' || info.getValue() == 'Cancelled')}
+              disabled={((info.getValue() === 'New' || info.row.original.NodesCount === 0 || info.getValue() === 'New' || info.getValue() === 'Uploading'))}
               clean
               onClick={() => onInspect(info?.row?.original?.name as string)}
             >
@@ -362,14 +362,14 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                     item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                       ? item?.status
                       : item?.fileSource === 'local file'
-                      ? item?.status
-                      : item?.status === 'Completed' || item.status === 'Failed'
-                      ? item?.status
-                      : item?.fileSource == 'Wikipedia' ||
-                        item?.fileSource == 'youtube' ||
-                        item?.fileSource == 'gcs bucket'
-                      ? item?.status
-                      : 'N/A',
+                        ? item?.status
+                        : item?.status === 'Completed' || item.status === 'Failed'
+                          ? item?.status
+                          : item?.fileSource == 'Wikipedia' ||
+                            item?.fileSource == 'youtube' ||
+                            item?.fileSource == 'gcs bucket'
+                            ? item?.status
+                            : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
                   source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
@@ -382,8 +382,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                   language: item?.language ?? '',
                   processingProgress:
                     item?.processed_chunk != undefined &&
-                    item?.total_chunks != undefined &&
-                    !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
+                      item?.total_chunks != undefined &&
+                      !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
                   // total_pages: item?.total_pages ?? 0,

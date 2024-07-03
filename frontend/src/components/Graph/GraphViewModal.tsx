@@ -207,6 +207,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setRelationships(filteredRelations);
       setNewScheme(filteredScheme);
     }
+    // else{
+    //   const node = allNodes.filter((node) => node.labels.includes('Document'));
+    //   setNodes(node);
+    //   setAllRelationships([]);
+    //   setNewScheme({Document:scheme.Document});
+    // }
   }
 
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
@@ -278,14 +284,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       nvlCallbacks={nvlCallbacks}
                     />
                     <IconButtonArray orientation='vertical' floating className='absolute bottom-4 right-4'>
-                      <IconButtonWithToolTip
+                      {(nodes.length === 0 && viewPoint !== 'chatInfoView') && (<IconButtonWithToolTip
                         label='Refresh'
                         text='Refresh graph'
                         onClick={handleRefresh}
                         placement='left'
                       >
                         <ArrowPathIconOutline />
-                      </IconButtonWithToolTip>
+                      </IconButtonWithToolTip>)}
                       <IconButtonWithToolTip label='Zoomin' text='Zoom in' onClick={handleZoomIn} placement='left'>
                         <MagnifyingGlassPlusIconOutline />
                       </IconButtonWithToolTip>
