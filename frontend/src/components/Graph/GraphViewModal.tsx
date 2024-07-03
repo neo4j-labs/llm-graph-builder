@@ -50,6 +50,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const { userCredentials } = useCredentials();
   const [scheme, setScheme] = useState<Scheme>({});
   const { selectedRows } = useFileContext();
+  const [newScheme, setNewScheme] = useState<Scheme>({});
 
   // const handleCheckboxChange = (graph: GraphType) => {
   //   const currentIndex = graphType.indexOf(graph);
@@ -70,12 +71,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       handleZoomToFit();
-    }, 1000);
+    }, 10);
     return () => {
       nvlRef.current?.destroy();
       setGraphType(intitalGraphType);
       clearTimeout(timeoutId);
       setScheme({});
+      setNodes([]);
+      setRelationships([]);
+      setAllNodes([]);
+      setAllRelationships([]);
     };
   }, []);
   const graphQuery: string = queryMap.DocChunkEntities;
@@ -84,16 +89,17 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === 'showGraphView'
           ? await graphQueryAPI(
-              userCredentials as UserCredentials,
-              graphQuery,
-              selectedRows.map((f) => JSON.parse(f).name)
-            )
+            userCredentials as UserCredentials,
+            graphQuery,
+            selectedRows.map((f) => JSON.parse(f).name)
+          )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
       console.log(error);
     }
   }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials]);
+
   useEffect(() => {
     if (open) {
       setLoading(true);
@@ -102,6 +108,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         setAllNodes(finalNodes);
         setAllRelationships(finalRels);
         setScheme(schemeVal);
+        setNodes(finalNodes);
+        setRelationships(finalRels);
+        setNewScheme(schemeVal);
         setLoading(false);
       } else {
         fetchData()
@@ -113,6 +122,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               setAllNodes(finalNodes);
               setAllRelationships(finalRels);
               setScheme(schemeVal);
+              setNodes(finalNodes);
+              setRelationships(finalRels);
+              setNewScheme(schemeVal);
               setLoading(false);
             } else {
               setLoading(false);
@@ -130,16 +142,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   }, [open]);
 
   console.log('scheme', scheme);
-  
-  useEffect(() => {
-    if (allNodes.length > 0 || allRelationships.length > 0) {
-      const { filteredNodes, filteredRelations, filteredScheme } = filterData(graphType, allNodes, allRelationships, scheme);
-      setNodes(filteredNodes);
-      setRelationships(filteredRelations);
-      // setScheme(filteredScheme);
-    }
-  }, [graphType, allNodes, allRelationships]);
-
+  console.log('nodes', nodes);
+  console.log('relationship', relationships);
+  console.log('all', allNodes);
+  console.log('all', allRelationships);
 
   if (!open) {
     return <></>;
@@ -172,8 +178,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setStatusMessage('');
     setGraphViewOpen(false);
     setScheme({});
+    setGraphType(intitalGraphType);
+    setNodes([]);
+    setRelationships([]);
   };
-  const legendCheck = Object.keys(scheme).sort((a, b) => {
+  const legendCheck = Object.keys(newScheme).sort((a, b) => {
     if (a === 'Document' || a === 'Chunk') {
       return -1;
     } else if (b === 'Document' || b === 'Chunk') {
@@ -195,6 +204,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     return '';
   };
 
+  const initGraph = (graphType: GraphType[], finalNodes: Node[], finalRels: Relationship[], schemeVal: Scheme) => {
+    if (allNodes.length > 0 && allRelationships.length > 0) {
+      const { filteredNodes, filteredRelations, filteredScheme } = filterData(graphType, finalNodes, finalRels, schemeVal);
+      setNodes(filteredNodes);
+      setRelationships(filteredRelations);
+      setNewScheme(filteredScheme);
+    }
+  }
+
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
       const selectedValue = selectedOption.value;
@@ -207,6 +225,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         newGraphType = ['Entities'];
       }
       setGraphType(newGraphType);
+      initGraph(newGraphType, allNodes, allRelationships, scheme);
     }
   };
   return (
@@ -311,7 +330,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       <h4 className='py-4 pt-3 ml-2'>Result Overview</h4>
                       <div className='flex gap-2 flex-wrap ml-2'>
                         {legendCheck.map((key, index) => (
-                          <LegendsChip key={index} title={key} scheme={scheme} nodes={nodes} />
+                          <LegendsChip key={index} title={key} scheme={newScheme} nodes={nodes} />
                         ))}
                       </div>
                     </div>

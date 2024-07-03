@@ -173,7 +173,8 @@ export const filterData = (
   graphType: GraphType[],
   allNodes: Node[],
   allRelationships: Relationship[],
-  scheme: Scheme
+  scheme: Scheme,
+  // selectedDropdown:string
 ) => {
   let filteredNodes: Node[] = [];
   let filteredRelations: Relationship[] = [];
@@ -189,10 +190,12 @@ export const filterData = (
     filteredRelations = allRelationships.filter(
       (rel) => !['PART_OF', 'FIRST_CHUNK', 'HAS_ENTITY', 'SIMILAR', 'NEXT_CHUNK'].includes(rel.caption)
     );
+
     filteredScheme = entityTypes.reduce((acc, key) => {
       acc[key] = scheme[key];
       return acc;
     }, {} as Scheme);
+
   } else if (!graphType.includes('Document') && !graphType.includes('Entities') && graphType.includes('Chunk')) {
     // Only Chunk
     filteredNodes = allNodes.filter((node) => node.labels.includes('Chunk'));
@@ -213,6 +216,7 @@ export const filterData = (
     filteredRelations = allRelationships.filter((rel) =>
       ['PART_OF', 'FIRST_CHUNK', 'SIMILAR', 'NEXT_CHUNK'].includes(rel.caption)
     );
+    filteredScheme = {Document: scheme.Document, Chunk:scheme.Chunk};
   } else if (!graphType.includes('Document') && graphType.includes('Entities') && graphType.includes('Chunk')) {
     // Chunk + Entity
     filteredNodes = allNodes.filter((node) => !node.labels.includes('Document'));
