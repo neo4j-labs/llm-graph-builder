@@ -1,13 +1,16 @@
 import { Box, Dialog, Tabs, Typography } from '@neo4j-ndl/react';
-import youtubelogo from '../../assets/images/youtube.png';
-import wikipedialogo from '../../assets/images/Wikipedia-logo-v2.svg';
-import weblogo from '../../assets/images/web-svgrepo-com.svg';
-import { useState } from 'react';
+import youtubelogo from '../../assets/images/youtube.svg';
+import wikipedialogo from '../../assets/images/wikipedia.svg';
+import weblogo from '../../assets/images/web.svg';
+import webdarkmode from '../../assets/images/web-darkmode.svg';
+import wikipediadarkmode from '../../assets/images/wikipedia-darkmode.svg';
+import { useContext, useState } from 'react';
 import WikipediaInput from './WikiPedia/WikipediaInput';
 import WebInput from './Web/WebInput';
 import YoutubeInput from './Youtube/YoutubeInput';
 import { APP_SOURCES } from '../../utils/Constants';
 import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
+import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 
 export default function GenericModal({
   open,
@@ -22,6 +25,7 @@ export default function GenericModal({
   isOnlyWikipedia?: boolean;
   isOnlyWeb?: boolean;
 }) {
+  const themeUtils = useContext(ThemeWrapperContext);
   const [activeTab, setactiveTab] = useState<number>(isOnlyYoutube ? 0 : isOnlyWikipedia ? 1 : isOnlyWeb ? 2 : 0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -45,12 +49,15 @@ export default function GenericModal({
           )}
           {APP_SOURCES != undefined && APP_SOURCES.includes('wiki') && (
             <Tabs.Tab tabId={1} aria-label='Add database' disabled={isLoading}>
-              <img src={wikipedialogo} className={`brandimg`}></img>
+              <img
+                src={themeUtils.colorMode === 'dark' ? wikipedialogo : wikipediadarkmode}
+                className={`brandimg`}
+              ></img>
             </Tabs.Tab>
           )}
           {APP_SOURCES != undefined && APP_SOURCES.includes('web') && (
             <Tabs.Tab tabId={2} aria-label='Inbox' disabled={isLoading}>
-              <img src={weblogo} className={`brandimg !w-[70px] !h-[70px]`}></img>
+              <img src={themeUtils.colorMode === 'dark' ? webdarkmode : weblogo} className={`brandimg`}></img>
             </Tabs.Tab>
           )}
         </Tabs>

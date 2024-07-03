@@ -2,8 +2,8 @@ import { Box, Typography, TextLink, Flex, Tabs, LoadingSpinner } from '@neo4j-nd
 import { DocumentTextIconOutline } from '@neo4j-ndl/react/icons';
 import '../../../styling/info.css';
 import Neo4jRetrievalLogo from '../../../assets/images/Neo4jRetrievalLogo.png';
-import wikipedialogo from '../../../assets/images/Wikipedia-logo-v2.svg';
-import youtubelogo from '../../../assets/images/youtube.png';
+import wikipedialogo from '../../../assets/images/wikipedia.svg';
+import youtubelogo from '../../../assets/images/youtube.svg';
 import gcslogo from '../../../assets/images/gcs.webp';
 import s3logo from '../../../assets/images/s3logo.png';
 import { Chunk, Entity, GroupedEntity, UserCredentials, chatInfoMessage } from '../../../types';
