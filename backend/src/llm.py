@@ -23,7 +23,7 @@ def get_llm(model_version: str):
     if "gemini" in model_version:
         credentials, project_id = google.auth.default()
         llm = ChatVertexAI(
-            model_name=model_version,
+            model_name=MODEL_VERSIONS[model_version],
             convert_system_message_to_human=True,
             credentials=credentials,
             project=project_id,
