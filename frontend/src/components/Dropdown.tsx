@@ -7,9 +7,16 @@ interface ReusableDropdownProps extends DropdownProps {
   placeholder?: string;
   defaultValue?: string;
   children?: React.ReactNode;
-  view?: 'ContentView'| 'GraphView';
+  view?: 'ContentView' | 'GraphView';
 }
-const DropdownComponent: React.FC<ReusableDropdownProps> = ({ options, placeholder, defaultValue, onSelect, children, view }) => {
+const DropdownComponent: React.FC<ReusableDropdownProps> = ({
+  options,
+  placeholder,
+  defaultValue,
+  onSelect,
+  children,
+  view,
+}) => {
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
   };

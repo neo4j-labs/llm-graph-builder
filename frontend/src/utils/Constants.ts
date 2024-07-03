@@ -1,5 +1,6 @@
 import { VisualizeBloomIcon } from '@neo4j-ndl/react/icons';
 import { NvlOptions } from '@neo4j-nvl/base';
+import { GraphType } from '../types';
 
 export const document = `+ [docs]`;
 
@@ -166,5 +167,8 @@ export const mouseEventCallbacks = {
   onDrag: true,
 };
 
-export const graphView: string[] = ['Lexical_Graph' , 'Entity Graph' , 'Lexical Graph + Entity Graph'];
-export const defaultGraph = 'Lexical Graph + Entity Graph';
+export const graphView: string[] = ['Lexical Graph', 'Entity Graph', 'Knowledge Graph'];
+export const intitalGraphType: GraphType[] = ['Document', 'Entities', 'Chunk'];
+export const knowledgeGraph = 'Knowledge Graph';
+export const lexicalGraph = 'Lexical Graph';
+export const entityGraph = 'Entity Graph';

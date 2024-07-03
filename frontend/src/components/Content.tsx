@@ -269,8 +269,9 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -280,10 +281,10 @@ const Content: React.FC<ContentProps> = ({
     isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
       : isRightExpanded
-        ? 'contentWithChatBot'
-        : !isLeftExpanded && !isRightExpanded
-          ? 'w-[calc(100%-128px)]'
-          : 'contentWithDropzoneExpansion';
+      ? 'contentWithChatBot'
+      : !isLeftExpanded && !isRightExpanded
+      ? 'w-[calc(100%-128px)]'
+      : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -586,12 +587,19 @@ const Content: React.FC<ContentProps> = ({
           }}
         ></FileTable>
         <Flex
-          className={`${!isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-            } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+          className={`${
+            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection='row'
         >
-          <DropdownComponent onSelect={handleDropdownChange} options={llms} placeholder='Select LLM Model' defaultValue={defaultLLM} view='ContentView'/>
+          <DropdownComponent
+            onSelect={handleDropdownChange}
+            options={llms}
+            placeholder='Select LLM Model'
+            defaultValue={defaultLLM}
+            view='ContentView'
+          />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <ButtonWithToolTip
               text={tooltips.generateGraph}
