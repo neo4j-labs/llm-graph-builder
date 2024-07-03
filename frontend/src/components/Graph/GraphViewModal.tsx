@@ -141,11 +141,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
   }, [open]);
 
-  console.log('scheme', scheme);
   console.log('nodes', nodes);
-  console.log('relationship', relationships);
-  console.log('all', allNodes);
-  console.log('all', allRelationships);
 
   if (!open) {
     return <></>;
@@ -155,7 +151,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     viewPoint === 'showGraphView' || viewPoint === 'chatInfoView'
       ? 'Generated Graph'
       : `Inspect Generated Graph from ${inspectedName}`;
-  // const checkBoxView = viewPoint !== 'chatInfoView';
+  const checkBoxView = viewPoint !== 'chatInfoView';
   const nvlCallbacks = {
     onLayoutComputing(isComputing: boolean) {
       if (!isComputing) {
@@ -247,13 +243,13 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             {/* {checkBoxView && (
                 <CheckboxSelection graphType={graphType} loading={loading} handleChange={handleCheckboxChange} />
             )} */}
-            <DropdownComponent
+            {checkBoxView && (<DropdownComponent
               onSelect={handleDropdownChange}
               options={graphView}
               placeholder='Select Graph Type'
               defaultValue={getDropdownDefaultValue()}
               view='GraphView'
-            />
+            />)}
           </Flex>
         </Dialog.Header>
         <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border border-palette-neutral-border-weak'>
