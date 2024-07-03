@@ -602,6 +602,13 @@
   dependencies:
     "@floating-ui/utils" "^0.2.1"
 
+"@floating-ui/core@^1.6.0":
+  version "1.6.4"
+  resolved "https://registry.yarnpkg.com/@floating-ui/core/-/core-1.6.4.tgz#0140cf5091c8dee602bff9da5ab330840ff91df6"
+  integrity sha512-a4IowK4QkXl4SCWTGUR0INAfEOX3wtsYw3rKK5InQEHMGObkR8Xk44qYQD9P4r6HHw0iIfK6GUKECmY8sTkqRA==
+  dependencies:
+    "@floating-ui/utils" "^0.2.4"
+
 "@floating-ui/dom@^1.0.0", "@floating-ui/dom@^1.0.1":
   version "1.6.5"
   resolved "https://registry.yarnpkg.com/@floating-ui/dom/-/dom-1.6.5.tgz#323f065c003f1d3ecf0ff16d2c2c4d38979f4cb9"
@@ -610,6 +617,14 @@
     "@floating-ui/core" "^1.0.0"
     "@floating-ui/utils" "^0.2.0"
 
+"@floating-ui/dom@^1.3.0":
+  version "1.6.7"
+  resolved "https://registry.yarnpkg.com/@floating-ui/dom/-/dom-1.6.7.tgz#85d22f731fcc5b209db504478fb1df5116a83015"
+  integrity sha512-wmVfPG5o2xnKDU4jx/m4w5qva9FWHcnZ8BvzEe90D/RpwsJaTAVYPEPdQ8sbr/N8zZTAHlZUTQdqg8ZUbzHmng==
+  dependencies:
+    "@floating-ui/core" "^1.6.0"
+    "@floating-ui/utils" "^0.2.4"
+
 "@floating-ui/dom@^1.6.1":
   version "1.6.3"
   resolved "https://registry.npmjs.org/@floating-ui/dom/-/dom-1.6.3.tgz"
@@ -617,6 +632,13 @@
   dependencies:
     "@floating-ui/core" "^1.0.0"
     "@floating-ui/utils" "^0.2.0"
+
+"@floating-ui/react-dom@2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@floating-ui/react-dom/-/react-dom-2.0.1.tgz#7972a4fc488a8c746cded3cfe603b6057c308a91"
+  integrity sha512-rZtAmSht4Lry6gdhAJDrCp/6rKN7++JnL1/Anbr/DdeyYXQPxvg/ivrbYvJulbRf4vL8b212suwMM2lxbv+RQA==
+  dependencies:
+    "@floating-ui/dom" "^1.3.0"
 
 "@floating-ui/react-dom@^2.0.1":
   version "2.0.9"
@@ -650,6 +672,11 @@
   version "0.2.1"
   resolved "https://registry.npmjs.org/@floating-ui/utils/-/utils-0.2.1.tgz"
   integrity sha512-9TANp6GPoMtYzQdt54kfAyMmz1+osLlXdg2ENroU7zzrtflTLrrC/lgrIfaSe+Wu0b89GKccT7vxXA0MoAIO+Q==
+
+"@floating-ui/utils@^0.2.4":
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.2.4.tgz#1d459cee5031893a08a0e064c406ad2130cced7c"
+  integrity sha512-dWO2pw8hhi+WrXq1YJy2yCuWoL20PddgGaqTgVe4cOS9Q6qklXCiA1tJEqX6BEwRNSCP84/afac9hd4MS+zEUA==
 
 "@formatjs/ecma402-abstract@1.18.2":
   version "1.18.2"
@@ -690,10 +717,10 @@
   dependencies:
     tslib "^2.4.0"
 
-"@heroicons/react@2.0.13":
-  version "2.0.13"
-  resolved "https://registry.yarnpkg.com/@heroicons/react/-/react-2.0.13.tgz#9b1cc54ff77d6625c9565efdce0054a4bcd9074c"
-  integrity sha512-iSN5XwmagrnirWlYEWNPdCDj9aRYVD/lnK3JlsC9/+fqGF80k8C7rl+1HCvBX0dBoagKqOFBs6fMhJJ1hOg1EQ==
+"@heroicons/react@2.0.18":
+  version "2.0.18"
+  resolved "https://registry.yarnpkg.com/@heroicons/react/-/react-2.0.18.tgz#f80301907c243df03c7e9fd76c0286e95361f7c1"
+  integrity sha512-7TyMjRrZZMBPa+/5Y8lN0iyvUU/01PeMGX2+RE7cQWpEUIcb4QotzUObFkJDejj/HUH4qjP/eQ0gzzKs2f+6Yw==
 
 "@humanwhocodes/config-array@^0.11.13":
   version "0.11.13"
@@ -957,25 +984,26 @@
     "@types/chroma-js" "2.1.4"
     chroma-js "2.4.2"
 
-"@neo4j-ndl/base@^2.9.6":
-  version "2.9.6"
-  resolved "https://registry.yarnpkg.com/@neo4j-ndl/base/-/base-2.9.6.tgz#697a812b14cef9f2006f8dc445e31acfcb218ef2"
-  integrity sha512-aqroJQI3IQAQYlzNGrPa2kX8FsC0NLmTg571IJjUhT6zFQMYU+nkin5DXnUzH6rXxVxXdjq0jSo9sKja3bsjvQ==
+"@neo4j-ndl/base@^2.11.6":
+  version "2.11.6"
+  resolved "https://registry.yarnpkg.com/@neo4j-ndl/base/-/base-2.11.6.tgz#3eacf4e41a86d84e0663f905a769ef95d3fa9cc2"
+  integrity sha512-HA4YWgN3GcGFzDcAj1maYjYgfD8mwHcFkwh/BaY1964/A2T9BCffHsxtQaPOW24AIhdO5tMMH72qwcvZB2PvlQ==
 
-"@neo4j-ndl/react@^2.13.7":
-  version "2.13.7"
-  resolved "https://registry.yarnpkg.com/@neo4j-ndl/react/-/react-2.13.7.tgz#cdc41d98edbf776edfa734bdc838e4bf3079d492"
-  integrity sha512-OAywKA/Ft+JeHMM9qihTJxsH+9Twt41FTlue4fahJNHdrqT+A5ItnHHgxNFfxEqy/RIzfAAPJ0fwJt4sqp3mWg==
+"@neo4j-ndl/react@^2.15.10":
+  version "2.15.10"
+  resolved "https://registry.yarnpkg.com/@neo4j-ndl/react/-/react-2.15.10.tgz#c109633adc3fd08fb510b3b57e70a1ed5216bf4f"
+  integrity sha512-U3pFJS23riItlklCgVZs40xxVAypVAM3u+rbIItOJYDEl1/yxtoYtjuFSyyegke6Hw6EBw/gJ73aBMel7hEWoQ==
   dependencies:
     "@dnd-kit/core" "6.1.0"
     "@dnd-kit/sortable" "8.0.0"
     "@floating-ui/react" "0.25.1"
-    "@heroicons/react" "2.0.13"
+    "@floating-ui/react-dom" "2.0.1"
+    "@heroicons/react" "2.0.18"
     "@neo4j-cypher/react-codemirror" "^1.0.1"
-    "@neo4j-ndl/base" "^2.9.6"
+    "@neo4j-ndl/base" "^2.11.6"
     "@table-nav/core" "0.0.7"
     "@table-nav/react" "0.0.7"
-    "@tanstack/react-table" "^8.9.3"
+    "@tanstack/react-table" "8.11.8"
     classnames "^2.3.1"
     date-fns "^2.30.0"
     detect-browser "^5.3.0"
@@ -989,6 +1017,7 @@
     react-syntax-highlighter "^15.5.0"
     react-table "^7.7.0"
     react-use "^17.4.0"
+    sonner "1.4.41"
     tinycolor2 "^1.4.2"
     usehooks-ts "2.9.1"
 
@@ -2115,17 +2144,17 @@
   resolved "https://registry.yarnpkg.com/@table-nav/react/-/react-0.0.7.tgz#a97699a490e31713fccd5f624ddb62e9fdc06a82"
   integrity sha512-S+DsD/qDqp50Z4dqt5tZFMWA3sRu0OOT/grMQuq/z/52jPEKJB+b9t+YSH8Ms55vCJOJ0DxuYldJpYrJLMG5ew==
 
-"@tanstack/react-table@^8.9.3":
-  version "8.16.0"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-table/-/react-table-8.16.0.tgz#92151210ff99d6925353d7a2205735d9c31af48c"
-  integrity sha512-rKRjnt8ostqN2fercRVOIH/dq7MAmOENCMvVlKx6P9Iokhh6woBGnIZEkqsY/vEJf1jN3TqLOb34xQGLVRuhAg==
+"@tanstack/react-table@8.11.8":
+  version "8.11.8"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-table/-/react-table-8.11.8.tgz#4eef4a2d91116ca51c8c9b2f00b455d8d99886c7"
+  integrity sha512-NEwvIq4iSiDQozEyvbdiSdCOiLa+g5xHmdEnvwDb98FObcK6YkBOkRrs/CNqrKdDy+/lqoIllIWHk+M80GW6+g==
   dependencies:
-    "@tanstack/table-core" "8.16.0"
+    "@tanstack/table-core" "8.11.8"
 
-"@tanstack/table-core@8.16.0":
-  version "8.16.0"
-  resolved "https://registry.yarnpkg.com/@tanstack/table-core/-/table-core-8.16.0.tgz#7b58018dd3cec8e0015fe22d6bb24d18d33c891f"
-  integrity sha512-dCG8vQGk4js5v88/k83tTedWOwjGnIyONrKpHpfmSJB8jwFHl8GSu1sBBxbtACVAPtAQgwNxl0rw1d3RqRM1Tg==
+"@tanstack/table-core@8.11.8":
+  version "8.11.8"
+  resolved "https://registry.yarnpkg.com/@tanstack/table-core/-/table-core-8.11.8.tgz#7f46c31894249dbb57e43ad95c80e891236a895f"
+  integrity sha512-DECHvtq4YW4U/gqg6etup7ydt/RB1Bi1pJaMpHUXl65ooW1d71Nv7BzD66rUdHrBSNdyiW3PLTPUQlpXjAgDeA==
 
 "@types/babel__core@^7.20.5":
   version "7.20.5"
@@ -5813,6 +5842,11 @@ slash@^3.0.0:
   resolved "https://registry.npmjs.org/slash/-/slash-3.0.0.tgz"
   integrity sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==
 
+sonner@1.4.41:
+  version "1.4.41"
+  resolved "https://registry.yarnpkg.com/sonner/-/sonner-1.4.41.tgz#ff085ae4f4244713daf294959beaa3e90f842d2c"
+  integrity sha512-uG511ggnnsw6gcn/X+YKkWPo5ep9il9wYi3QJxHsYe7yTZ4+cOd1wuodOUmOpFuXL+/RE3R04LczdNCDygTDgQ==
+
 source-map-js@^1.0.2:
   version "1.0.2"
   resolved "https://registry.npmjs.org/source-map-js/-/source-map-js-1.0.2.tgz"
@@ -5872,8 +5906,16 @@ stacktrace-js@^2.0.2:
     stack-generator "^2.0.5"
     stacktrace-gps "^3.0.4"
 
-"string-width-cjs@npm:string-width@^4.2.0", string-width@^4.1.0:
-  name string-width-cjs
+"string-width-cjs@npm:string-width@^4.2.0":
+  version "4.2.3"
+  resolved "https://registry.npmjs.org/string-width/-/string-width-4.2.3.tgz"
+  integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
+  dependencies:
+    emoji-regex "^8.0.0"
+    is-fullwidth-code-point "^3.0.0"
+    strip-ansi "^6.0.1"
+
+string-width@^4.1.0:
   version "4.2.3"
   resolved "https://registry.npmjs.org/string-width/-/string-width-4.2.3.tgz"
   integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
@@ -5953,7 +5995,14 @@ stringify-entities@^4.0.0:
     character-entities-html4 "^2.0.0"
     character-entities-legacy "^3.0.0"
 
-"strip-ansi-cjs@npm:strip-ansi@^6.0.1", strip-ansi@^6.0.0, strip-ansi@^6.0.1:
+"strip-ansi-cjs@npm:strip-ansi@^6.0.1":
+  version "6.0.1"
+  resolved "https://registry.npmjs.org/strip-ansi/-/strip-ansi-6.0.1.tgz"
+  integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
+  dependencies:
+    ansi-regex "^5.0.1"
+
+strip-ansi@^6.0.0, strip-ansi@^6.0.1:
   version "6.0.1"
   resolved "https://registry.npmjs.org/strip-ansi/-/strip-ansi-6.0.1.tgz"
   integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==

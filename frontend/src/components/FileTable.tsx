@@ -281,7 +281,16 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       }),
       columnHelper.accessor((row) => row.model, {
         id: 'model',
-        cell: (info) => <i>{capitalize(info.getValue())}</i>,
+        cell: (info) => {
+          const model = info.getValue();
+          return (
+            <i>
+              {model.includes('LLM_MODEL_CONFIG_')
+                ? capitalize(model.split('LLM_MODEL_CONFIG_').at(-1) as string)
+                : capitalize(model)}
+            </i>
+          );
+        },
         header: () => <span>Model</span>,
         footer: (info) => info.column.id,
       }),
