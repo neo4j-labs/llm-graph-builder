@@ -183,7 +183,7 @@ export default function DeletePopUpForOrphanNodes({
               ? 'No Nodes Found'
               : !selectedOrphanNodesForDeletion.length
               ? 'No Nodes Selected'
-              : 'Delete Selected Nodes'
+              : `Delete Selected Nodes (${selectedOrphanNodesForDeletion.length})`
           }
           label='Orphan Node deletion button'
           disabled={!selectedOrphanNodesForDeletion.length || !orphanNodes.length}
