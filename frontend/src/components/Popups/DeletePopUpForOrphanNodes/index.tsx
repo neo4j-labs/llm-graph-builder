@@ -24,6 +24,7 @@ export default function DeletePopUpForOrphanNodes({
   const [orphanNodes, setOrphanNodes] = useState<orphanNodeProps[]>([]);
   const [selectedOrphanNodesForDeletion, setselectedOrphanNodesForDeletion] = useState<string[]>([]);
   const [selectedAll, setselectedAll] = useState<boolean>(false);
+  const [totalOrphanNodes, setTotalOrphanNodes] = useState<number>(0);
   const [isLoading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
 
@@ -36,6 +37,11 @@ export default function DeletePopUpForOrphanNodes({
           setLoading(false);
           if (apiresponse.data.data.length) {
             setOrphanNodes(apiresponse.data.data);
+            setTotalOrphanNodes(
+              apiresponse.data.message != undefined && typeof apiresponse.data.message != 'string'
+                ? apiresponse.data.message.total
+                : 0
+            );
           }
         } catch (error) {
           setLoading(false);
@@ -71,7 +77,14 @@ export default function DeletePopUpForOrphanNodes({
       <Dialog.Header>
         <Flex flexDirection='column'>
           <Typography variant='subheading-large'>Orphan Nodes Deletion</Typography>
-          <Typography variant='subheading-small'>100 nodes per batch</Typography>
+          <Flex justifyContent='space-between' flexDirection='row'>
+            <Typography variant='subheading-small'>100 nodes per batch</Typography>
+            {totalOrphanNodes > 0 ? (
+              <Typography variant='subheading-small'>Total Nodes: {totalOrphanNodes}</Typography>
+            ) : (
+              <></>
+            )}
+          </Flex>
         </Flex>
       </Dialog.Header>
       <Dialog.Content>
@@ -162,18 +175,21 @@ export default function DeletePopUpForOrphanNodes({
             deleteCloseHandler();
             setselectedOrphanNodesForDeletion([]);
             setOrphanNodes([]);
+            setselectedAll(false)
           }}
         >
           Close
         </Button>
         <ButtonWithToolTip
-          onClick={async () => {
-            await deleteHandler(selectedOrphanNodesForDeletion);
-            selectedOrphanNodesForDeletion.forEach((eid: string) => {
-              setOrphanNodes((prev) => prev.filter((node) => node.e.elementId != eid));
+          onClick={ () => {
+            deleteHandler(selectedOrphanNodesForDeletion).then(()=>{
+              selectedOrphanNodesForDeletion.forEach((eid: string) => {
+                setOrphanNodes((prev) => prev.filter((node) => node.e.elementId != eid));
+              });
+              setOrphanNodes((prev) => prev.map((n) => ({ ...n, checked: false })));
+              setTotalOrphanNodes((prev)=>{return (prev-selectedOrphanNodesForDeletion.length)})
+              setselectedOrphanNodesForDeletion([]);
             });
-            setOrphanNodes((prev) => prev.map((n) => ({ ...n, checked: false })));
-            setselectedOrphanNodesForDeletion([])
           }}
           size='large'
           loading={loading}
