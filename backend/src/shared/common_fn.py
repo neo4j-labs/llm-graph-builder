@@ -77,7 +77,11 @@ def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
   return lst_chunk_chunkId_document  
                  
 def create_graph_database_connection(uri, userName, password, database):
-  graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True,driver_config={'user_agent':os.environ.get('NEO4J_USER_AGENT')})  
+  enable_user_agent = os.environ.get("ENABLE_USER_AGENT", "False").lower() in ("true", "1", "yes")
+  if enable_user_agent:
+    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True,driver_config={'user_agent':os.environ.get('NEO4J_USER_AGENT')})  
+  else:
+    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True)    
   return graph
 
 
@@ -150,3 +154,7 @@ def create_gcs_bucket_folder_name_hashed(uri, file_name):
   folder_name_sha1 = hashlib.sha1(folder_name.encode())
   folder_name_sha1_hashed = folder_name_sha1.hexdigest()
   return folder_name_sha1_hashed
+
+def formatted_time(current_time):
+  formatted_time = current_time.strftime('%Y-%m-%d %H:%M:%S %Z')
+  return formatted_time

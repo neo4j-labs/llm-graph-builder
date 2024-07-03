@@ -102,14 +102,23 @@ def get_entities_from_chunkids(uri, username, password, chunk_ids):
     """    
     try:
         logging.info(f"Starting graph query process for chunk ids")
-        chunk_ids_list = chunk_ids.split(",")
-        driver = get_graphDB_driver(uri, username, password)
-        records, summary, keys = driver.execute_query(CHUNK_QUERY, chunksIds=chunk_ids_list)
-        result = process_records(records)
-        logging.info(f"Nodes and relationships are processed")
-        result["chunk_data"] = process_chunk_data(records)
-        logging.info(f"Query process completed successfully for chunk ids")
-        return result
+        if chunk_ids:
+            chunk_ids_list = chunk_ids.split(",")
+            driver = get_graphDB_driver(uri, username, password)
+            records, summary, keys = driver.execute_query(CHUNK_QUERY, chunksIds=chunk_ids_list)
+            result = process_records(records)
+            logging.info(f"Nodes and relationships are processed")
+            result["chunk_data"] = process_chunk_data(records)
+            logging.info(f"Query process completed successfully for chunk ids")
+            return result
+        else:
+            logging.info(f"chunkid_entities module: No chunk ids are passed")
+            result = {
+                "nodes": [],
+                "relationships": [],
+                "chunk_data":[]
+            }
+            return result
 
     except Exception as e:
         logging.error(f"chunkid_entities module: An error occurred in get_entities_from_chunkids. Error: {str(e)}")

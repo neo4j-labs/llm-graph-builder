@@ -219,11 +219,20 @@ class graphDBdataAccess:
         query = """
                 MATCH (e:!Chunk&!Document) 
                 WHERE NOT exists { (e)--(:!Chunk&!Document) }
-                MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(e)
+                OPTIONAL MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(e)
                 RETURN e {.*, embedding:null, elementId:elementId(e), labels:labels(e)} as e, 
-                collect(doc.fileName) as documents, count(distinct c) as chunkConnections
+                collect(distinct doc.fileName) as documents, count(distinct c) as chunkConnections
+                ORDER BY e.id ASC
+                LIMIT 100
                 """
-        return self.execute_query(query)
+        query_total_nodes = """
+        MATCH (e:!Chunk&!Document) 
+        WHERE NOT exists { (e)--(:!Chunk&!Document) }
+        RETURN count(*) as total
+        """
+        nodes_list = self.execute_query(query)
+        total_nodes = self.execute_query(query_total_nodes)
+        return nodes_list, total_nodes[0]
     
     def delete_unconnected_nodes(self,unconnected_entities_list):
         entities_list = list(map(str.strip, json.loads(unconnected_entities_list)))

@@ -392,7 +392,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
               userCredentials &&
               userCredentials.database
             ) {
-              if (item?.fileSize > largeFileSize) {
+              if (item?.fileSize < largeFileSize) {
                 subscribe(
                   item.fileName,
                   userCredentials?.uri,
