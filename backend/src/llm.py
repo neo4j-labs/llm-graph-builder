@@ -11,13 +11,21 @@ from concurrent.futures import ThreadPoolExecutor
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 from langchain_anthropic import ChatAnthropic
 from langchain_fireworks import ChatFireworks
+from langchain_aws import ChatBedrock
+from langchain_community.chat_models import ChatOllama
+import boto3
+import google.auth
+from src.shared.constants import MODEL_VERSIONS
 
 def get_llm(model_version:str) :
     """Retrieve the specified language model based on the model name."""
     if "gemini" in model_version:
+        credentials, project_id = google.auth.default()
         llm = ChatVertexAI(
             model_name=model_version,
             convert_system_message_to_human=True,
+            credentials=credentials,
+            project=project_id,
             temperature=0,
             safety_settings={
                 HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
@@ -29,7 +37,7 @@ def get_llm(model_version:str) :
         )
     elif "openai" in model_version:
         llm = ChatOpenAI(api_key=os.environ.get('OPENAI_API_KEY'), 
-                         model=model_version, 
+                         model=MODEL_VERSIONS[model_version], 
                          temperature=0)
     
     elif "azure" in model_version:
@@ -66,6 +74,30 @@ def get_llm(model_version:str) :
                        model_name=model_name,
                        temperature=0
                        )
+        
+    elif "bedrock" in model_version:
+        model_name,aws_access_key,aws_secret_key,region_name=os.environ.get(model_version).split(',')
+        bedrock_client = boto3.client(
+            service_name="bedrock-runtime",
+            region_name=region_name,
+            aws_access_key_id=aws_access_key,
+            aws_secret_access_key=aws_secret_key,
+        )
+
+        llm = ChatBedrock(
+            client = bedrock_client,
+            model_id=model_name,
+            model_kwargs=dict(temperature=0),
+            
+            # other params...
+        )
+    
+    elif "ollama" in model_version:
+        model_name,base_url=os.environ.get(model_version).split(',')
+        llm = ChatOllama(
+            base_url = base_url,
+            model=model_name
+        )
     
     else:
         llm = DiffbotGraphTransformer(diffbot_api_key=os.environ.get('DIFFBOT_API_KEY'),extract_types=['entities','facts'])    
@@ -88,7 +120,11 @@ def get_combined_chunks(chunkId_chunkDoc_list):
 def get_graph_document_list(llm, combined_chunk_document_list, allowedNodes, allowedRelationship):
     futures = []
     graph_document_list = []
-    llm_transformer = LLMGraphTransformer(llm=llm, node_properties=["description"], allowed_nodes=allowedNodes, allowed_relationships=allowedRelationship)
+    if llm.get_name() == "ChatOllama":
+        node_properties = False
+    else:
+        node_properties =  ["description"]   
+    llm_transformer = LLMGraphTransformer(llm=llm, node_properties=node_properties, allowed_nodes=allowedNodes, allowed_relationships=allowedRelationship)
     with ThreadPoolExecutor(max_workers=10) as executor:
             for chunk in combined_chunk_document_list:
                 chunk_doc = Document(page_content= chunk.page_content.encode("utf-8"), metadata=chunk.metadata)
