@@ -347,10 +347,13 @@ export interface labelsAndTypes {
   labels: string[];
   relationshipTypes: string[];
 }
+interface orphanTotalNodes {
+  total: number;
+}
 export interface commonserverresponse {
   status: string;
   error?: string;
-  message?: string;
+  message?: string | orphanTotalNodes;
   file_name?: string;
   data?: labelsAndTypes | labelsAndTypes[] | uploadData | orphanNodeProps[];
 }
