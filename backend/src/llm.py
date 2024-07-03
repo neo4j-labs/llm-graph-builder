@@ -17,7 +17,8 @@ import boto3
 import google.auth
 from src.shared.constants import MODEL_VERSIONS
 
-def get_llm(model_version:str) :
+
+def get_llm(model_version: str):
     """Retrieve the specified language model based on the model name."""
     if "gemini" in model_version:
         credentials, project_id = google.auth.default()
@@ -32,51 +33,48 @@ def get_llm(model_version:str) :
                 HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
                 HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
                 HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE
-            }
+                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+            },
         )
     elif "openai" in model_version:
-        llm = ChatOpenAI(api_key=os.environ.get('OPENAI_API_KEY'), 
-                         model=MODEL_VERSIONS[model_version], 
-                         temperature=0)
-    
-    elif "azure" in model_version:
-        model_deployment_name, api_endpoint, api_key, api_version = os.environ.get(model_version).split(',')
-        llm = AzureChatOpenAI(
-                api_key=api_key,
-                azure_endpoint=api_endpoint,
-                azure_deployment=model_deployment_name, #takes precedence over model parameter
-                api_version=api_version,    
-                temperature=0,
-                max_tokens=None,
-                timeout=None
-            )
-    
-    elif "anthropic" in model_version:
-        model_name, api_key = os.environ.get(model_version).split(',')
-        llm = ChatAnthropic(
-            api_key=api_key,
-            model=model_name,
+        llm = ChatOpenAI(
+            api_key=os.environ.get("OPENAI_API_KEY"),
+            model=MODEL_VERSIONS[model_version],
             temperature=0,
-            timeout=None
-        ) 
-    
-    elif "fireworks" in model_version:
-        model_name, api_key = os.environ.get(model_version).split(',')
-        llm = ChatFireworks(
+        )
+
+    elif "azure" in model_version:
+        model_deployment_name, api_endpoint, api_key, api_version = os.environ.get(
+            model_version
+        ).split(",")
+        llm = AzureChatOpenAI(
             api_key=api_key,
-            model=model_name
-        )      
-     
+            azure_endpoint=api_endpoint,
+            azure_deployment=model_deployment_name,  # takes precedence over model parameter
+            api_version=api_version,
+            temperature=0,
+            max_tokens=None,
+            timeout=None,
+        )
+
+    elif "anthropic" in model_version:
+        model_name, api_key = os.environ.get(model_version).split(",")
+        llm = ChatAnthropic(
+            api_key=api_key, model=model_name, temperature=0, timeout=None
+        )
+
+    elif "fireworks" in model_version:
+        model_name, api_key = os.environ.get(model_version).split(",")
+        llm = ChatFireworks(api_key=api_key, model=model_name)
+
     elif "groq" in model_version:
-        model_name, base_url, api_key = os.environ.get(model_version).split(',')
-        llm = ChatGroq(api_key=api_key,
-                       model_name=model_name,
-                       temperature=0
-                       )
-        
+        model_name, base_url, api_key = os.environ.get(model_version).split(",")
+        llm = ChatGroq(api_key=api_key, model_name=model_name, temperature=0)
+
     elif "bedrock" in model_version:
-        model_name,aws_access_key,aws_secret_key,region_name=os.environ.get(model_version).split(',')
+        model_name, aws_access_key, aws_secret_key, region_name = os.environ.get(
+            model_version
+        ).split(",")
         bedrock_client = boto3.client(
             service_name="bedrock-runtime",
             region_name=region_name,
@@ -85,58 +83,86 @@ def get_llm(model_version:str) :
         )
 
         llm = ChatBedrock(
-            client = bedrock_client,
-            model_id=model_name,
-            model_kwargs=dict(temperature=0)
+            client=bedrock_client, model_id=model_name, model_kwargs=dict(temperature=0)
         )
-    
+
     elif "ollama" in model_version:
-        model_name,base_url=os.environ.get(model_version).split(',')
-        llm = ChatOllama(
-            base_url = base_url,
-            model=model_name
-        )
-    
+        model_name, base_url = os.environ.get(model_version).split(",")
+        llm = ChatOllama(base_url=base_url, model=model_name)
+
     else:
-        llm = DiffbotGraphTransformer(diffbot_api_key=os.environ.get('DIFFBOT_API_KEY'),extract_types=['entities','facts'])    
+        llm = DiffbotGraphTransformer(
+            diffbot_api_key=os.environ.get("DIFFBOT_API_KEY"),
+            extract_types=["entities", "facts"],
+        )
     logging.info(f"Model created - Model Version: {model_version}")
     return llm
 
 
 def get_combined_chunks(chunkId_chunkDoc_list):
-    chunks_to_combine = int(os.environ.get('NUMBER_OF_CHUNKS_TO_COMBINE'))
+    chunks_to_combine = int(os.environ.get("NUMBER_OF_CHUNKS_TO_COMBINE"))
     logging.info(f"Combining {chunks_to_combine} chunks before sending request to LLM")
-    combined_chunk_document_list=[]
-    combined_chunks_page_content = ["".join(document['chunk_doc'].page_content for document in chunkId_chunkDoc_list[i:i+chunks_to_combine]) for i in range(0, len(chunkId_chunkDoc_list),chunks_to_combine)]
-    combined_chunks_ids = [[document['chunk_id'] for document in chunkId_chunkDoc_list[i:i+chunks_to_combine]] for i in range(0, len(chunkId_chunkDoc_list),chunks_to_combine)]
-    
+    combined_chunk_document_list = []
+    combined_chunks_page_content = [
+        "".join(
+            document["chunk_doc"].page_content
+            for document in chunkId_chunkDoc_list[i : i + chunks_to_combine]
+        )
+        for i in range(0, len(chunkId_chunkDoc_list), chunks_to_combine)
+    ]
+    combined_chunks_ids = [
+        [
+            document["chunk_id"]
+            for document in chunkId_chunkDoc_list[i : i + chunks_to_combine]
+        ]
+        for i in range(0, len(chunkId_chunkDoc_list), chunks_to_combine)
+    ]
+
     for i in range(len(combined_chunks_page_content)):
-         combined_chunk_document_list.append(Document(page_content=combined_chunks_page_content[i], metadata={"combined_chunk_ids":combined_chunks_ids[i]}))
+        combined_chunk_document_list.append(
+            Document(
+                page_content=combined_chunks_page_content[i],
+                metadata={"combined_chunk_ids": combined_chunks_ids[i]},
+            )
+        )
     return combined_chunk_document_list
 
 
-def get_graph_document_list(llm, combined_chunk_document_list, allowedNodes, allowedRelationship):
+def get_graph_document_list(
+    llm, combined_chunk_document_list, allowedNodes, allowedRelationship
+):
     futures = []
     graph_document_list = []
     if llm.get_name() == "ChatOllama":
         node_properties = False
     else:
-        node_properties =  ["description"]   
-    llm_transformer = LLMGraphTransformer(llm=llm, node_properties=node_properties, allowed_nodes=allowedNodes, allowed_relationships=allowedRelationship)
+        node_properties = ["description"]
+    llm_transformer = LLMGraphTransformer(
+        llm=llm,
+        node_properties=node_properties,
+        allowed_nodes=allowedNodes,
+        allowed_relationships=allowedRelationship,
+    )
     with ThreadPoolExecutor(max_workers=10) as executor:
-            for chunk in combined_chunk_document_list:
-                chunk_doc = Document(page_content= chunk.page_content.encode("utf-8"), metadata=chunk.metadata)
-                futures.append(executor.submit(llm_transformer.convert_to_graph_documents,[chunk_doc]))   
-            
-            for i, future in enumerate(concurrent.futures.as_completed(futures)):
-                graph_document = future.result()
-                graph_document_list.append(graph_document[0])
-            
-    return  graph_document_list
+        for chunk in combined_chunk_document_list:
+            chunk_doc = Document(
+                page_content=chunk.page_content.encode("utf-8"), metadata=chunk.metadata
+            )
+            futures.append(
+                executor.submit(llm_transformer.convert_to_graph_documents, [chunk_doc])
+            )
+
+        for i, future in enumerate(concurrent.futures.as_completed(futures)):
+            graph_document = future.result()
+            graph_document_list.append(graph_document[0])
+
+    return graph_document_list
 
 
 def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship):
     llm = get_llm(model)
     combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
-    graph_document_list = get_graph_document_list(llm, combined_chunk_document_list, allowedNodes, allowedRelationship)
+    graph_document_list = get_graph_document_list(
+        llm, combined_chunk_document_list, allowedNodes, allowedRelationship
+    )
     return graph_document_list
