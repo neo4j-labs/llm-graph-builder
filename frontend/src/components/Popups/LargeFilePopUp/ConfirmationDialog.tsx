@@ -93,7 +93,7 @@ export default function ConfirmationDialog({
           }}
           size='large'
         >
-          Cancel
+          Close
         </Button>
         <Button
           onClick={() => {

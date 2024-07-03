@@ -142,8 +142,8 @@ export const buttonCaptions = {
 };
 
 export const ChatModeOptions = [
-  { Icon: VisualizeBloomIcon, value: 'vector' },
-  { Icon: 'abc', value: 'graph+vector' },
+  { Icon: VisualizeBloomIcon, value: 'graph+vector' },
+  { Icon: 'abc', value: 'vector' },
 ];
 
 export const taskParam: string[] = ['update_similarity_graph', 'create_fulltext_index'];

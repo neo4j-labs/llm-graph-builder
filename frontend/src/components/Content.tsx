@@ -494,7 +494,7 @@ const Content: React.FC<ContentProps> = ({
         description: tooltips.deleteFile,
       },
       {
-        title: 'Delete Orphan Nodes',
+        title: 'Deleted unconnected Nodes',
         onClick: () => openOrphanNodeDeletionModal(),
         disabledCondition: false,
       },
@@ -663,8 +663,7 @@ const Content: React.FC<ContentProps> = ({
                 setopenDeleteMenu(true);
               }}
             >
-              <TrashIconOutline className='n-size-token-7' />
-              Delete <TrashIconOutline></TrashIconOutline>
+              Delete <TrashIconOutline className='n-size-token-7'></TrashIconOutline>
             </Button>
           </Flex>
         </Flex>
