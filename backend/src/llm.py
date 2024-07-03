@@ -87,9 +87,7 @@ def get_llm(model_version:str) :
         llm = ChatBedrock(
             client = bedrock_client,
             model_id=model_name,
-            model_kwargs=dict(temperature=0),
-            
-            # other params...
+            model_kwargs=dict(temperature=0)
         )
     
     elif "ollama" in model_version:
