@@ -154,7 +154,7 @@ export default function useSourceInput(
       }
       setTimeout(() => {
         setStatus('unknown');
-      }, 1000);
+      }, 3000);
     },
 
     [filesData, isWikiQuery, isYoutubeLink, isWebLink, isValid, fileSource, model]
