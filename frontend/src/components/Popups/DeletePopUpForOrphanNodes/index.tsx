@@ -173,6 +173,7 @@ export default function DeletePopUpForOrphanNodes({
               setOrphanNodes((prev) => prev.filter((node) => node.e.elementId != eid));
             });
             setOrphanNodes((prev) => prev.map((n) => ({ ...n, checked: false })));
+            setselectedOrphanNodesForDeletion([])
           }}
           size='large'
           loading={loading}
