@@ -1,5 +1,5 @@
 import { Drawer } from '@neo4j-ndl/react';
-import Chatbot from '../Chatbot';
+import Chatbot from '../ChatBot/Chatbot';
 import { Messages } from '../../types';
 import { useMessageContext } from '../../context/UserMessages';
 interface DrawerChatbotProps {

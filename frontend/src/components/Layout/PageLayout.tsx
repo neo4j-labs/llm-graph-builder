@@ -3,23 +3,33 @@ import SideNav from './SideNav';
 import DrawerDropzone from './DrawerDropzone';
 import DrawerChatbot from './DrawerChatbot';
 import Content from '../Content';
-import SettingsModal from '../SettingModal';
+import SettingsModal from '../Popups/Settings/SettingModal';
 import { clearChatAPI } from '../../services/QnaAPI';
 import { useCredentials } from '../../context/UserCredentials';
 import { UserCredentials, alertStateType } from '../../types';
 import { useMessageContext } from '../../context/UserMessages';
 import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { OverridableStringUnion } from '@mui/types';
-import SchemaFromTextDialog from '../SchemaFromText';
-import CustomAlert from '../Alert';
+import { useFileContext } from '../../context/UsersFiles';
+import SchemaFromTextDialog from '../Popups/Settings/SchemaFromText';
+import CustomAlert from '../UI/Alert';
+import DeletePopUpForOrphanNodes from '../Popups/DeletePopUpForOrphanNodes';
+import deleteOrphanAPI from '../../services/DeleteOrphanNodes';
+
 export default function PageLayoutNew({
   isSettingPanelExpanded,
   closeSettingModal,
   openSettingsDialog,
+  closeOrphanNodeDeletionModal,
+  showOrphanNodeDeletionModal,
+  openOrphanNodeDeletionModal,
 }: {
   isSettingPanelExpanded: boolean;
   closeSettingModal: () => void;
   openSettingsDialog: () => void;
+  closeOrphanNodeDeletionModal: () => void;
+  showOrphanNodeDeletionModal: boolean;
+  openOrphanNodeDeletionModal: () => void;
 }) {
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(true);
   const [isRightExpanded, setIsRightExpanded] = useState<boolean>(true);
@@ -30,6 +40,7 @@ export default function PageLayoutNew({
   const toggleLeftDrawer = () => setIsLeftExpanded(!isLeftExpanded);
   const toggleRightDrawer = () => setIsRightExpanded(!isRightExpanded);
   const [openTextSchemaDialog, setOpenTextSchemaDialog] = useState<boolean>(false);
+  const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
   const [alertDetails, setalertDetails] = useState<alertStateType>({
     showAlert: false,
     alertType: 'error',
@@ -38,6 +49,7 @@ export default function PageLayoutNew({
   const { messages } = useMessageContext();
   const openSchemaFromTextDialog = useCallback(() => setOpenTextSchemaDialog(true), []);
   const closeSchemaFromTextDialog = useCallback(() => setOpenTextSchemaDialog(false), []);
+  const { isSchema, setIsSchema } = useFileContext();
 
   const deleteOnClick = async () => {
     try {
@@ -72,6 +84,16 @@ export default function PageLayoutNew({
       alertMessage: '',
     });
   };
+  const orphanNodesDeleteHandler = async (selectedEntities: string[]) => {
+    try {
+      setorphanDeleteAPIloading(true);
+      const response = await deleteOrphanAPI(userCredentials as UserCredentials, selectedEntities);
+      setorphanDeleteAPIloading(false);
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <div style={{ maxHeight: 'calc(100vh - 58px)' }} className='flex overflow-hidden'>
       {alertDetails.showAlert && (
@@ -90,16 +112,29 @@ export default function PageLayoutNew({
         onClose={closeSchemaFromTextDialog}
         showAlert={showAlert}
       ></SchemaFromTextDialog>
+      <DeletePopUpForOrphanNodes
+        open={showOrphanNodeDeletionModal}
+        deleteCloseHandler={closeOrphanNodeDeletionModal}
+        deleteHandler={orphanNodesDeleteHandler}
+        loading={orphanDeleteAPIloading}
+      ></DeletePopUpForOrphanNodes>
       <SettingsModal
-        opneTextSchema={openSchemaFromTextDialog}
+        openTextSchema={openSchemaFromTextDialog}
         open={isSettingPanelExpanded}
         onClose={closeSettingModal}
+        settingView='headerView'
+        isSchema={isSchema}
+        setIsSchema={setIsSchema}
       />
       <Content
         openChatBot={() => setShowChatBot(true)}
         isLeftExpanded={isLeftExpanded}
         isRightExpanded={isRightExpanded}
         showChatBot={showChatBot}
+        openTextSchema={openSchemaFromTextDialog}
+        openOrphanNodeDeletionModal={openOrphanNodeDeletionModal}
+        isSchema={isSchema}
+        setIsSchema={setIsSchema}
       />
       {showDrawerChatbot && (
         <DrawerChatbot messages={messages} isExpanded={isRightExpanded} clearHistoryData={clearHistoryData} />
