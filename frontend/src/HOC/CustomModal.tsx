@@ -36,7 +36,7 @@ const CustomModal: React.FC<CustomModalProps> = ({
         <div className='n-flex n-flex-row n-flex-wrap'>{children}</div>
         <Dialog.Actions className='mt-4'>
           <Button color='neutral' fill='outlined' onClick={onClose} size='medium'>
-            {buttonCaptions.cancel}
+            Close
           </Button>
           <Button onClick={submitHandler} size='medium' disabled={isDisabled}>
             {submitLabel}

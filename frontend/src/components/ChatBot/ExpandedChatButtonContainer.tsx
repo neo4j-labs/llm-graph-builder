@@ -15,7 +15,7 @@ const ExpandedChatButtonContainer: React.FC<IconProps> = ({ closeChatBot, delete
   return (
     <div className='flex items-end justify-end'>
       <ChatModeToggle />
-      <Box borderRadius='sm' className='!h-[48px] n-border n-border-palette-primary-border-strong mx-2'>
+      <Box className='!h-[48px] mx-2'>
         <IconButtonWithToolTip
           text={tooltips.clearChat}
           aria-label='Remove chat history'
