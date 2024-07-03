@@ -63,7 +63,7 @@ export default function CustomSourceInput({
           Reset
         </Button>
         <Button onClick={() => submitHandler(value)} size='medium' disabled={disabledCheck}>
-          Sumbit
+          Submit
         </Button>
       </Box>
     </Flex>
