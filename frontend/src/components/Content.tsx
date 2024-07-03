@@ -663,7 +663,7 @@ const Content: React.FC<ContentProps> = ({
                 setopenDeleteMenu(true);
               }}
             >
-              Delete <TrashIconOutline className='n-size-token-7'></TrashIconOutline>
+              Delete
             </Button>
           </Flex>
         </Flex>
