@@ -36,8 +36,8 @@ export const llms =
     ? process.env.LLM_MODELS?.split(',')
     : [
         'diffbot',
-        'gpt-3.5',
-        'gpt-4o',
+        'openai-gpt-3.5',
+        'openai-gpt-4o',
         'gemini-1.0-pro',
         'gemini-1.5-pro',
         'groq-llama3',
@@ -47,10 +47,11 @@ export const llms =
         'LLM_MODEL_CONFIG_groq_llama3',
         'LLM_MODEL_CONFIG_anthropic-claude-3-5-sonnet',
         'LLM_MODEL_CONFIG_fireworks-llama-v3-70b',
+        'LLM_MODEL_CONFIG_bedrock-claude-3-5-sonnet'
       ];
 
-export const defaultLLM = llms?.includes('gpt-3.5')
-  ? 'gpt-3.5'
+export const defaultLLM = llms?.includes('openai-gpt-3.5')
+  ? 'openai-gpt-3.5'
   : llms?.includes('gemini-1.0-pro')
   ? 'gemini-1.0-pro'
   : 'diffbot';
