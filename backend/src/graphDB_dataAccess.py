@@ -225,7 +225,14 @@ class graphDBdataAccess:
                 ORDER BY e.id ASC
                 LIMIT 100
                 """
-        return self.execute_query(query)
+        query_total_nodes = """
+        MATCH (e:!Chunk&!Document) 
+        WHERE NOT exists { (e)--(:!Chunk&!Document) }
+        RETURN count(*) as total
+        """
+        nodes_list = self.execute_query(query)
+        total_nodes = self.execute_query(query_total_nodes)
+        return nodes_list, total_nodes[0]
     
     def delete_unconnected_nodes(self,unconnected_entities_list):
         entities_list = list(map(str.strip, json.loads(unconnected_entities_list)))

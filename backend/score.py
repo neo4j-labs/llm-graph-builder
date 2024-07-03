@@ -30,7 +30,7 @@ import os
 from typing import List
 from google.cloud import logging as gclogger
 from src.logger import CustomLogger
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi.middleware.gzip import GZipMiddleware
 import time
 import gc
@@ -58,7 +58,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(GZipMiddleware, minimum_size=1000)
+# app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "False").lower() in ("true", "1", "yes")
 if is_gemini_enabled:
@@ -114,7 +114,7 @@ async def create_source_knowledge_graph_url(
             return create_api_response('Failed',message='source_type is other than accepted source')
 
         message = f"Source Node created successfully for source type: {source_type} and source: {source}"
-        josn_obj = {'api_name':'url_scan','db_url':uri,'url_scanned_file':lst_file_name, 'source_url':source_url, 'wiki_query':wiki_query}
+        josn_obj = {'api_name':'url_scan','db_url':uri,'url_scanned_file':lst_file_name, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(josn_obj)
         return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name)    
     except Exception as e:
@@ -200,6 +200,7 @@ async def extract_knowledge_graph_from_file(
             result['source_url'] = source_url
             result['wiki_query'] = wiki_query
             result['source_type'] = source_type
+            result['logging_time'] = formatted_time(datetime.now(timezone.utc))
         logger.log_struct(result)
         return create_api_response('Success', data=result, file_source= source_type)
     except Exception as e:
@@ -216,7 +217,7 @@ async def extract_knowledge_graph_from_file(
             else:
                 logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
                 delete_uploaded_local_file(merged_file_path,file_name)
-        josn_obj = {'message':message,'error_message':error_message, 'file_name': file_name,'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query}
+        josn_obj = {'message':message,'error_message':error_message, 'file_name': file_name,'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(josn_obj)
         logging.exception(f'File Failed in extraction: {josn_obj}')
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = file_name)
@@ -235,7 +236,7 @@ async def get_source_list(uri:str, userName:str, password:str, database:str=None
         if " " in uri:
             uri = uri.replace(" ","+")
         result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
-        josn_obj = {'api_name':'sources_list','db_url':uri}
+        josn_obj = {'api_name':'sources_list','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(josn_obj)
         return create_api_response("Success",data=result)
     except Exception as e:
@@ -253,12 +254,12 @@ async def post_processing(uri=Form(None), userName=Form(None), password=Form(Non
 
         if "update_similarity_graph" in tasks:
             await asyncio.to_thread(update_graph, graph)
-            josn_obj = {'api_name': 'post_processing/update_similarity_graph', 'db_url': uri}
+            josn_obj = {'api_name': 'post_processing/update_similarity_graph', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logger.log_struct(josn_obj)
             logging.info(f'Updated KNN Graph')
         if "create_fulltext_index" in tasks:
             await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database)
-            josn_obj = {'api_name': 'post_processing/create_fulltext_index', 'db_url': uri}
+            josn_obj = {'api_name': 'post_processing/create_fulltext_index', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logger.log_struct(josn_obj)
             logging.info(f'Full Text index created')
 
@@ -289,7 +290,7 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
         result["info"]["response_time"] = round(total_call_time, 2)
         
-        josn_obj = {'api_name':'chat_bot','db_url':uri,'session_id':session_id}
+        josn_obj = {'api_name':'chat_bot','db_url':uri,'session_id':session_id, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(josn_obj)
         return create_api_response('Success',data=result)
     except Exception as e:
@@ -306,7 +307,7 @@ async def chunk_entities(uri=Form(None),userName=Form(None), password=Form(None)
     try:
         logging.info(f"URI: {uri}, Username: {userName}, chunk_ids: {chunk_ids}")
         result = await asyncio.to_thread(get_entities_from_chunkids,uri=uri, username=userName, password=password, chunk_ids=chunk_ids)
-        josn_obj = {'api_name':'chunk_entities','db_url':uri}
+        josn_obj = {'api_name':'chunk_entities','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(josn_obj)
         return create_api_response('Success',data=result)
     except Exception as e:
@@ -336,7 +337,7 @@ async def graph_query(
             query_type=query_type,
             document_names=document_names
         )
-        josn_obj = {'api_name':'graph_query','db_url':uri,'document_names':document_names}
+        josn_obj = {'api_name':'graph_query','db_url':uri,'document_names':document_names, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(josn_obj)
         return create_api_response('Success', data=result)
     except Exception as e:
@@ -371,7 +372,7 @@ async def connect(uri=Form(None), userName=Form(None), password=Form(None), data
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(connection_check, graph)
-        josn_obj = {'api_name':'connect','db_url':uri,'status':result, 'count':1}
+        josn_obj = {'api_name':'connect','db_url':uri,'status':result, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(josn_obj)
         return create_api_response('Success',message=result)
     except Exception as e:
@@ -388,7 +389,7 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, uri, CHUNK_DIR, MERGED_DIR)
-        josn_obj = {'api_name':'upload','db_url':uri}
+        josn_obj = {'api_name':'upload','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(josn_obj)
         if int(chunkNumber) == int(totalChunks):
             return create_api_response('Success',data=result, message='Source Node Created Successfully')
@@ -412,7 +413,7 @@ async def get_structured_schema(uri=Form(None), userName=Form(None), password=Fo
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(get_labels_and_relationtypes, graph)
         logging.info(f'Schema result from DB: {result}')
-        josn_obj = {'api_name':'schema','db_url':uri}
+        josn_obj = {'api_name':'schema','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(josn_obj)
         return create_api_response('Success', data=result)
     except Exception as e:
@@ -480,7 +481,7 @@ async def delete_document_and_entities(uri=Form(),
         result, files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filenames, source_types, deleteEntities, MERGED_DIR, uri)
         entities_count = result[0]['deletedEntities'] if 'deletedEntities' in result[0] else 0
         message = f"Deleted {files_list_size} documents with {entities_count} entities from database"
-        josn_obj = {'api_name':'delete_document_and_entities','db_url':uri}
+        josn_obj = {'api_name':'delete_document_and_entities','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(josn_obj)
         return create_api_response('Success',message=message)
     except Exception as e:
@@ -565,8 +566,8 @@ async def get_unconnected_nodes_list(uri=Form(), userName=Form(), password=Form(
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
-        result = graphDb_data_Access.list_unconnected_nodes()
-        return create_api_response('Success',data=result)
+        nodes_list, total_nodes = graphDb_data_Access.list_unconnected_nodes()
+        return create_api_response('Success',data=nodes_list,message=total_nodes)
     except Exception as e:
         job_status = "Failed"
         message="Unable to get the list of unconnected nodes"
