@@ -1,6 +1,6 @@
 import { List, ListItem, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
-import { Box, Button, Checkbox, Dialog, Flex, Typography } from '@neo4j-ndl/react';
-import { useCallback, useEffect, useState } from 'react';
+import { Box, Checkbox, Dialog, Flex, Typography } from '@neo4j-ndl/react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { UserCredentials, orphanNodeProps } from '../../../types';
 import { getOrphanNodes } from '../../../services/GetOrphanNodes';
 import { useCredentials } from '../../../context/UserCredentials';
@@ -9,6 +9,7 @@ import Legend from '../../UI/Legend';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import { DocumentIconOutline } from '@neo4j-ndl/react/icons';
 import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
+import { ThemeWrapperContext } from '../../../context/ThemeWrapper';
 
 export default function DeletePopUpForOrphanNodes({
   open,
@@ -27,6 +28,7 @@ export default function DeletePopUpForOrphanNodes({
   const [totalOrphanNodes, setTotalOrphanNodes] = useState<number>(0);
   const [isLoading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
+  const themeUtils = useContext(ThemeWrapperContext);
 
   useEffect(() => {
     if (open) {
@@ -66,7 +68,6 @@ export default function DeletePopUpForOrphanNodes({
     <Dialog
       size='large'
       open={open}
-      disableCloseButton
       onClose={() => {
         deleteCloseHandler();
         setselectedOrphanNodesForDeletion([]);
@@ -139,7 +140,7 @@ export default function DeletePopUpForOrphanNodes({
                               ))}
                             </Flex>
                           </Box>
-                          <Box className='row'>
+                          <Box className={themeUtils.colorMode === 'dark' ? 'row ndl-theme-dark' : 'row'}>
                             <span className='word-break'>Related Documents :</span>
                             <Flex>
                               {Array.from(new Set([...n.documents])).map((d, index) => (
@@ -167,27 +168,16 @@ export default function DeletePopUpForOrphanNodes({
         </List>
       </Dialog.Content>
       <Dialog.Actions className='mt-3'>
-        <Button
-          fill='outlined'
-          size='large'
-          disabled={loading}
-          onClick={() => {
-            deleteCloseHandler();
-            setselectedOrphanNodesForDeletion([]);
-            setOrphanNodes([]);
-            setselectedAll(false)
-          }}
-        >
-          Close
-        </Button>
         <ButtonWithToolTip
-          onClick={ () => {
-            deleteHandler(selectedOrphanNodesForDeletion).then(()=>{
+          onClick={() => {
+            deleteHandler(selectedOrphanNodesForDeletion).then(() => {
               selectedOrphanNodesForDeletion.forEach((eid: string) => {
                 setOrphanNodes((prev) => prev.filter((node) => node.e.elementId != eid));
               });
               setOrphanNodes((prev) => prev.map((n) => ({ ...n, checked: false })));
-              setTotalOrphanNodes((prev)=>{return (prev-selectedOrphanNodesForDeletion.length)})
+              setTotalOrphanNodes((prev) => {
+                return prev - selectedOrphanNodesForDeletion.length;
+              });
               setselectedOrphanNodesForDeletion([]);
             });
           }}
