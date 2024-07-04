@@ -113,7 +113,6 @@ export default function PageLayoutNew({
         }}
         isSchema={isSchema}
         setIsSchema={setIsSchema}
-        openSettingsDialog={openSettingsDialog}
       />
       {showDrawerChatbot && (
         <DrawerChatbot messages={messages} isExpanded={isRightExpanded} clearHistoryData={clearHistoryData} />

@@ -1,12 +1,12 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import ConnectionModal from './Popups/ConnectionModal/ConnectionModal';
 import FileTable from './FileTable';
-import { Button, Typography, Flex, StatusIndicator, useWindowSize } from '@neo4j-ndl/react';
+import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './UI/Alert';
 import { extractAPI } from '../utils/FileAPI';
-import { ContentProps, CustomFile, Menuitems, OptionType, UserCredentials, alertStateType } from '../types';
+import { ContentProps, CustomFile, OptionType, UserCredentials, alertStateType } from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
 import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
@@ -20,7 +20,6 @@ import connectAPI from '../services/ConnectAPI';
 import SettingModalHOC from '../HOC/SettingModalHOC';
 import DropdownComponent from './Dropdown';
 import GraphViewModal from './Graph/GraphViewModal';
-import CustomMenu from './UI/Menu';
 import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
 import { OverridableStringUnion } from '@mui/types';
 import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
@@ -31,7 +30,6 @@ const Content: React.FC<ContentProps> = ({
   openTextSchema,
   isSchema,
   setIsSchema,
-  openSettingsDialog,
 }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
@@ -43,8 +41,6 @@ const Content: React.FC<ContentProps> = ({
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [isLargeFile, setIsLargeFile] = useState<boolean>(false);
   const [showSettingnModal, setshowSettingModal] = useState<boolean>(false);
-  const [openDeleteMenu, setopenDeleteMenu] = useState<boolean>(false);
-  const [deleteAnchor, setdeleteAnchor] = useState<HTMLElement | null>(null);
   const [showEnhancementDialog, setshowEnhancementDialog] = useState<boolean>(false);
 
   const {
@@ -503,18 +499,6 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
-  const deleteMenuItems: Menuitems[] = useMemo(
-    () => [
-      {
-        title: `Delete Files ${selectedfileslength > 0 ? `(${selectedfileslength})` : ''}`,
-        onClick: () => setshowDeletePopUp(true),
-        disabledCondition: !selectedfileslength,
-        description: tooltips.deleteFile,
-      },
-    ],
-    [selectedfileslength]
-  );
-
   const handleContinue = () => {
     if (!isLargeFile) {
       handleGenerateGraph(true, filesData);
@@ -605,7 +589,6 @@ const Content: React.FC<ContentProps> = ({
               )}
             </Typography>
           </div>
-
           {!connectionStatus ? (
             <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
               {buttonCaptions.connectToNeo4j}
@@ -620,6 +603,19 @@ const Content: React.FC<ContentProps> = ({
               </Button>
             </div>
           )}
+        </Flex>
+        <Flex className='w-full' alignItems='center' flexDirection='row'>
+          <div className='connectionstatus__container'>
+            <span className='h6 px-1'>Schema Settings</span>
+            <Typography variant='body-medium'>
+              {!isSchema ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
+              {isSchema ? (
+                <span className='n-body-small'>Graph Schema configured</span>
+              ) : (
+                <span className='n-body-small'>No Graph Schema configured</span>
+              )}
+            </Typography>
+          </div>
         </Flex>
         <FileTable
           isExpanded={isLeftExpanded && isRightExpanded}
@@ -677,25 +673,19 @@ const Content: React.FC<ContentProps> = ({
             >
               {buttonCaptions.exploreGraphWithBloom}
             </ButtonWithToolTip>
-            <CustomMenu
-              open={openDeleteMenu}
-              closeHandler={useCallback(() => {
-                setopenDeleteMenu(false);
-              }, [])}
-              items={deleteMenuItems}
-              MenuAnchor={deleteAnchor}
-              anchorOrigin={useMemo(() => ({ horizontal: 'left', vertical: 'bottom' }), [])}
-              transformOrigin={useMemo(() => ({ horizontal: 'right', vertical: 'top' }), [])}
-            ></CustomMenu>
-            <Button
-              label='Delete Menu trigger'
-              onClick={(e) => {
-                setdeleteAnchor(e.currentTarget);
-                setopenDeleteMenu(true);
-              }}
+            <ButtonWithToolTip
+              text={
+                !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
+              }
+              placement='top'
+              onClick={() => setshowDeletePopUp(true)}
+              disabled={!selectedfileslength}
+              className='ml-0.5'
+              label='Delete Files'
             >
-              Delete
-            </Button>
+              {buttonCaptions.deleteFiles}
+              {selectedfileslength > 0 && `(${selectedfileslength})`}
+            </ButtonWithToolTip>
           </Flex>
         </Flex>
       </div>

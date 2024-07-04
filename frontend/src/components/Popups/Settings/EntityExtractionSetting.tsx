@@ -150,8 +150,8 @@ export default function EntityExtractionSetting({
   }, []);
 
   useEffect(() => {
-    if (view == 'Dialog') {
-      if (userCredentials && open) {
+    if (userCredentials) {
+      if (open && view === 'Dialog') {
         const getOptions = async () => {
           setLoading(true);
           try {
@@ -169,9 +169,9 @@ export default function EntityExtractionSetting({
           }
         };
         getOptions();
+        return;
       }
-    } else {
-      if (userCredentials) {
+      if (view == 'Tabs') {
         const getOptions = async () => {
           setLoading(true);
           try {
@@ -220,6 +220,7 @@ export default function EntityExtractionSetting({
       <Dropdown
         helpText='Schema Examples'
         label='Predefined Schema'
+        size={view === 'Tabs' ? 'large' : 'medium'}
         selectProps={{
           isClearable: true,
           isMulti: true,
@@ -233,6 +234,7 @@ export default function EntityExtractionSetting({
       <Dropdown
         helpText='You can select more than one values'
         label='Node Labels'
+        size={view === 'Tabs' ? 'large' : 'medium'}
         selectProps={{
           isClearable: true,
           isMulti: true,
@@ -246,6 +248,7 @@ export default function EntityExtractionSetting({
       <Dropdown
         helpText='You can select more than one values'
         label='Relationship Types'
+        size={view === 'Tabs' ? 'large' : 'medium'}
         selectProps={{
           isClearable: true,
           isMulti: true,

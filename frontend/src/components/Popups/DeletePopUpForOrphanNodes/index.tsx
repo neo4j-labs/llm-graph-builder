@@ -219,7 +219,7 @@ export default function DeletePopUpForOrphanNodes({
           disabled={!table.getSelectedRowModel().rows.length}
           placement='top'
         >
-          Continue
+          Select Node(s) to delete
         </ButtonWithToolTip>
       </Flex>
     </div>

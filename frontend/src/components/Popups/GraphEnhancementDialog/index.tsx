@@ -52,7 +52,7 @@ export default function GraphEnhancementDialog({
           <Box className='flex flex-row pb-6 items-center mb-2'>
             <img src={graphenhancement} style={{ width: 200, height: 200, marginRight: 10 }} loading='lazy' />
             <Box className='flex flex-col'>
-              <Typography variant='h2'>Graph Enhancement Operations</Typography>
+              <Typography variant='h2'>Graph Enhancements</Typography>
               <Typography variant='subheading-medium' className='mb-2'>
                 This set of tools will help you enhance the quality of your Knowledge Graph by removing possible
                 duplicated entities, disconnected nodes and set a Graph Schema for improving the quality of the entity
@@ -72,7 +72,7 @@ export default function GraphEnhancementDialog({
           </Tabs.Tab>
         </Tabs>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={0}>
-          <>
+          <div className='w-[80%] mx-auto'>
             <EntityExtractionSettings
               view='Tabs'
               openTextSchema={() => {
@@ -81,7 +81,7 @@ export default function GraphEnhancementDialog({
               colseEnhanceGraphSchemaDialog={onClose}
               settingView='headerView'
             ></EntityExtractionSettings>
-          </>
+          </div>
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={1}>
           <DeletePopUpForOrphanNodes deleteHandler={orphanNodesDeleteHandler} loading={orphanDeleteAPIloading} />

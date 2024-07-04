@@ -153,7 +153,6 @@ export interface ContentProps {
   openTextSchema: () => void;
   isSchema?: boolean;
   setIsSchema: Dispatch<SetStateAction<boolean>>;
-  openSettingsDialog: () => void;
 }
 
 export interface FileTableProps {
