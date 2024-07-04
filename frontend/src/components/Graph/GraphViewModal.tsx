@@ -37,6 +37,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   viewPoint,
   nodeValues,
   relationshipValues,
+  processingCheck
 }) => {
   const nvlRef = useRef<NVL>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -122,7 +123,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         } else {
           setLoading(false);
           setStatus('danger');
-          setStatusMessage(`Unable to retrieve document graph for ${inspectedName}`);
+          setStatusMessage(`No Nodes and Relations for the ${inspectedName} file`);
         }
       })
       .catch((error: any) => {
@@ -158,8 +159,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     viewPoint === 'showGraphView' || viewPoint === 'chatInfoView'
       ? 'Generated Graph'
       : `Inspect Generated Graph from ${inspectedName}`;
-  
-  const checkBoxView = viewPoint !== 'chatInfoView';
+
+  const dropDownView = viewPoint !== 'chatInfoView';
 
   const nvlCallbacks = {
     onLayoutComputing(isComputing: boolean) {
@@ -169,7 +170,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     },
   };
 
-   //To handle the current zoom in function of graph
+  //To handle the current zoom in function of graph
   const handleZoomIn = () => {
     nvlRef.current?.setZoom(nvlRef.current.getScale() * 1.3);
   };
@@ -183,7 +184,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const handleRefresh = () => {
     setLoading(true);
     setGraphType(intitalGraphType);
-    graphApi();   
+    graphApi();
   };
 
   // when modal closes reset all states to default
@@ -266,12 +267,13 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             {/* {checkBoxView && (
                 <CheckboxSelection graphType={graphType} loading={loading} handleChange={handleCheckboxChange} />
             )} */}
-            {checkBoxView && (<DropdownComponent
+            {dropDownView && (<DropdownComponent
               onSelect={handleDropdownChange}
               options={graphView}
               placeholder='Select Graph Type'
               defaultValue={getDropdownDefaultValue()}
               view='GraphView'
+              isDisabled={nodes.length === 0 || allNodes.length === 0}
             />)}
           </Flex>
         </Dialog.Header>
@@ -301,7 +303,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       nvlCallbacks={nvlCallbacks}
                     />
                     <IconButtonArray orientation='vertical' floating className='absolute bottom-4 right-4'>
-                      {viewPoint !== 'chatInfoView' && (<IconButtonWithToolTip
+                      {(viewPoint !== 'chatInfoView' && processingCheck) && (<IconButtonWithToolTip
                         label='Refresh'
                         text='Refresh graph'
                         onClick={handleRefresh}

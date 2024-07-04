@@ -309,11 +309,6 @@ const Content: React.FC<ContentProps> = ({
     [selectedRows]
   );
 
-  const nodesNotZeroCheck = useMemo(
-    () => selectedRows.filter((f) => JSON.parse(f).nodeCount !== 0).length,
-    [selectedRows]
-  );
-
   const dropdowncheck = useMemo(() => !filesData.some((f) => f.status === 'New'), [filesData]);
 
   const disableCheck = useMemo(
@@ -325,6 +320,14 @@ const Content: React.FC<ContentProps> = ({
     () => (selectedfileslength ? completedfileNo === 0 : true),
     [selectedfileslength, completedfileNo]
   );
+
+
+
+  const processingCheck = () => {
+    const processingFiles = filesData.some(file => file.status === 'Processing');
+    const selectedRowProcessing = selectedRows.some(row => filesData.some(file => file.name === row && file.status === 'Processing'));
+    return processingFiles || selectedRowProcessing;
+  }
 
   const filesForProcessing = useMemo(() => {
     let newstatusfiles: CustomFile[] = [];
@@ -522,13 +525,6 @@ const Content: React.FC<ContentProps> = ({
     });
     localStorage.setItem('isSchema', JSON.stringify(true));
   };
-
-
-  const processingCheck = () => {
-    filesData.find((f) => f.processingProgress && f.processingProgress > 10)
-  }
-
-  console.log('processingCheck', processingCheck());
   return (
     <>
       {alertDetails.showAlert && (
@@ -627,6 +623,7 @@ const Content: React.FC<ContentProps> = ({
             placeholder='Select LLM Model'
             defaultValue={defaultLLM}
             view='ContentView'
+            isDisabled={false}
           />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <ButtonWithToolTip
@@ -687,6 +684,7 @@ const Content: React.FC<ContentProps> = ({
         open={openGraphView}
         setGraphViewOpen={setOpenGraphView}
         viewPoint={viewPoint}
+        processingCheck={processingCheck()}
       />
     </>
   );
