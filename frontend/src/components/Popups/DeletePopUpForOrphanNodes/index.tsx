@@ -12,14 +12,10 @@ import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
 import { ThemeWrapperContext } from '../../../context/ThemeWrapper';
 
 export default function DeletePopUpForOrphanNodes({
-  open,
   deleteHandler,
-  deleteCloseHandler,
   loading,
 }: {
-  open: boolean;
   deleteHandler: (selectedEntities: string[]) => Promise<void>;
-  deleteCloseHandler: () => void;
   loading: boolean;
 }) {
   const [orphanNodes, setOrphanNodes] = useState<orphanNodeProps[]>([]);
@@ -31,27 +27,25 @@ export default function DeletePopUpForOrphanNodes({
   const themeUtils = useContext(ThemeWrapperContext);
 
   useEffect(() => {
-    if (open) {
-      (async () => {
-        try {
-          setLoading(true);
-          const apiresponse = await getOrphanNodes(userCredentials as UserCredentials);
-          setLoading(false);
-          if (apiresponse.data.data.length) {
-            setOrphanNodes(apiresponse.data.data);
-            setTotalOrphanNodes(
-              apiresponse.data.message != undefined && typeof apiresponse.data.message != 'string'
-                ? apiresponse.data.message.total
-                : 0
-            );
-          }
-        } catch (error) {
-          setLoading(false);
-          console.log(error);
+    (async () => {
+      try {
+        setLoading(true);
+        const apiresponse = await getOrphanNodes(userCredentials as UserCredentials);
+        setLoading(false);
+        if (apiresponse.data.data.length) {
+          setOrphanNodes(apiresponse.data.data);
+          setTotalOrphanNodes(
+            apiresponse.data.message != undefined && typeof apiresponse.data.message != 'string'
+              ? apiresponse.data.message.total
+              : 0
+          );
         }
-      })();
-    }
-  }, [userCredentials, open]);
+      } catch (error) {
+        setLoading(false);
+        console.log(error);
+      }
+    })();
+  }, [userCredentials]);
 
   const onChangeHandler = useCallback((isChecked: boolean, id: string) => {
     if (isChecked) {
@@ -65,17 +59,8 @@ export default function DeletePopUpForOrphanNodes({
   }, []);
 
   return (
-    <Dialog
-      size='large'
-      open={open}
-      onClose={() => {
-        deleteCloseHandler();
-        setselectedOrphanNodesForDeletion([]);
-        setOrphanNodes([]);
-        setselectedAll(false);
-      }}
-    >
-      <Dialog.Header>
+    <div>
+      <div>
         <Flex flexDirection='column'>
           <Typography variant='subheading-large'>Orphan Nodes Deletion</Typography>
           <Flex justifyContent='space-between' flexDirection='row'>
@@ -87,8 +72,8 @@ export default function DeletePopUpForOrphanNodes({
             )}
           </Flex>
         </Flex>
-      </Dialog.Header>
-      <Dialog.Content>
+      </div>
+      <div>
         {orphanNodes.length ? (
           <Checkbox
             label='Select All Nodes'
@@ -166,8 +151,8 @@ export default function DeletePopUpForOrphanNodes({
             <>No Nodes Found</>
           )}
         </List>
-      </Dialog.Content>
-      <Dialog.Actions className='mt-3'>
+      </div>
+      <div className='mt-3'>
         <ButtonWithToolTip
           onClick={() => {
             deleteHandler(selectedOrphanNodesForDeletion).then(() => {
@@ -197,7 +182,7 @@ export default function DeletePopUpForOrphanNodes({
         >
           Continue
         </ButtonWithToolTip>
-      </Dialog.Actions>
-    </Dialog>
+      </div>
+    </div>
   );
 }

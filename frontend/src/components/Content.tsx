@@ -21,6 +21,9 @@ import SettingModalHOC from '../HOC/SettingModalHOC';
 import DropdownComponent from './Dropdown';
 import GraphViewModal from './Graph/GraphViewModal';
 import CustomMenu from './UI/Menu';
+import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
+import { OverridableStringUnion } from '@mui/types';
+import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 
 const Content: React.FC<ContentProps> = ({
   isLeftExpanded,
@@ -28,7 +31,7 @@ const Content: React.FC<ContentProps> = ({
   openTextSchema,
   isSchema,
   setIsSchema,
-  openOrphanNodeDeletionModal,
+  openSettingsDialog,
 }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
@@ -87,6 +90,16 @@ const Content: React.FC<ContentProps> = ({
   };
   const closeGraphEnhancementDialog = () => {
     setshowEnhancementDialog(false);
+  };
+  const showAlert = (
+    alertmsg: string,
+    alerttype: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined
+  ) => {
+    setalertDetails({
+      showAlert: true,
+      alertMessage: alertmsg,
+      alertType: alerttype,
+    });
   };
   useEffect(() => {
     if (!init && !searchParams.has('connectURL')) {
@@ -498,11 +511,6 @@ const Content: React.FC<ContentProps> = ({
         disabledCondition: !selectedfileslength,
         description: tooltips.deleteFile,
       },
-      {
-        title: 'Deleted unconnected Nodes',
-        onClick: () => openOrphanNodeDeletionModal(),
-        disabledCondition: false,
-      },
     ],
     [selectedfileslength]
   );
@@ -572,6 +580,13 @@ const Content: React.FC<ContentProps> = ({
           setIsSchema={setIsSchema}
         />
       )}
+      {showEnhancementDialog && (
+        <GraphEnhancementDialog
+          open={showEnhancementDialog}
+          onClose={closeGraphEnhancementDialog}
+          showAlert={showAlert}
+        ></GraphEnhancementDialog>
+      )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>
           <ConnectionModal
@@ -597,7 +612,9 @@ const Content: React.FC<ContentProps> = ({
             </Button>
           ) : (
             <div>
-              <Button className='mr-2.5'>Graph Enhancement</Button>
+              <Button className='mr-2.5' onClick={openGraphEnhancementDialog}>
+                Graph Enhancement
+              </Button>
               <Button className='mr-2.5' onClick={disconnect}>
                 {buttonCaptions.disconnect}
               </Button>

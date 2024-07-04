@@ -41,9 +41,6 @@ const QuickStarter: React.FunctionComponent = () => {
               openSettingsDialog={openSettingsModal}
               isSettingPanelExpanded={showSettingsModal}
               closeSettingModal={closeSettingModal}
-              closeOrphanNodeDeletionModal={closeOrphanNodeDeletionModal}
-              showOrphanNodeDeletionModal={showOrphanNodeDeletionDialog}
-              openOrphanNodeDeletionModal={openOrphanNodeDeletionModal}
             />
           </AlertContextWrapper>
         </MessageContextWrapper>
