@@ -309,6 +309,11 @@ const Content: React.FC<ContentProps> = ({
     [selectedRows]
   );
 
+  const nodesNotZeroCheck = useMemo(
+    () => selectedRows.filter((f) => JSON.parse(f).nodeCount !== 0).length,
+    [selectedRows]
+  );
+
   const dropdowncheck = useMemo(() => !filesData.some((f) => f.status === 'New'), [filesData]);
 
   const disableCheck = useMemo(
@@ -518,6 +523,12 @@ const Content: React.FC<ContentProps> = ({
     localStorage.setItem('isSchema', JSON.stringify(true));
   };
 
+
+  const processingCheck = () => {
+    filesData.find((f) => f.processingProgress && f.processingProgress > 10)
+  }
+
+  console.log('processingCheck', processingCheck());
   return (
     <>
       {alertDetails.showAlert && (

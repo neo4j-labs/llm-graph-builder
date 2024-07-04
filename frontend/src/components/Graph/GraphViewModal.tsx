@@ -19,13 +19,13 @@ import { LegendsChip } from './LegendsChip';
 import graphQueryAPI from '../../services/GraphQuery';
 import {
   entityGraph,
+  graphQuery,
   graphView,
   intitalGraphType,
   knowledgeGraph,
   lexicalGraph,
   mouseEventCallbacks,
   nvlOptions,
-  queryMap,
 } from '../../utils/Constants';
 import { useFileContext } from '../../context/UsersFiles';
 // import CheckboxSelection from './CheckboxSelection';
@@ -62,12 +62,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   //   }
   //   setGraphType(newGraphSelected);
   // };
+
   const handleZoomToFit = () => {
     nvlRef.current?.fit(
       allNodes.map((node) => node.id),
       {}
     );
   };
+
+  // Destroy the component
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       handleZoomToFit();
@@ -83,7 +86,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setAllRelationships([]);
     };
   }, []);
-  const graphQuery: string = queryMap.DocChunkEntities;
+
+  // To get nodes and relations on basis of view 
   const fetchData = useCallback(async () => {
     try {
       const nodeRelationshipData =
@@ -100,6 +104,34 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
   }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials]);
 
+  // Api call to get the nodes and relations 
+  const graphApi = () => {
+    fetchData()
+      .then((result) => {
+        if (result && result.data.data.nodes.length > 0) {
+          const neoNodes = result.data.data.nodes.map((f: Node) => f);
+          const neoRels = result.data.data.relationships.map((f: Relationship) => f);
+          const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels);
+          setAllNodes(finalNodes);
+          setAllRelationships(finalRels);
+          setScheme(schemeVal);
+          setNodes(finalNodes);
+          setRelationships(finalRels);
+          setNewScheme(schemeVal);
+          setLoading(false);
+        } else {
+          setLoading(false);
+          setStatus('danger');
+          setStatusMessage(`Unable to retrieve document graph for ${inspectedName}`);
+        }
+      })
+      .catch((error: any) => {
+        setLoading(false);
+        setStatus('danger');
+        setStatusMessage(error.message);
+      });
+  }
+
   useEffect(() => {
     if (open) {
       setLoading(true);
@@ -113,35 +145,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         setNewScheme(schemeVal);
         setLoading(false);
       } else {
-        fetchData()
-          .then((result) => {
-            if (result && result.data.data.nodes.length > 0) {
-              const neoNodes = result.data.data.nodes.map((f: Node) => f);
-              const neoRels = result.data.data.relationships.map((f: Relationship) => f);
-              const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels);
-              setAllNodes(finalNodes);
-              setAllRelationships(finalRels);
-              setScheme(schemeVal);
-              setNodes(finalNodes);
-              setRelationships(finalRels);
-              setNewScheme(schemeVal);
-              setLoading(false);
-            } else {
-              setLoading(false);
-              setStatus('danger');
-              setStatusMessage(`Unable to retrieve document graph for ${inspectedName}`);
-            }
-          })
-          .catch((error: any) => {
-            setLoading(false);
-            setStatus('danger');
-            setStatusMessage(error.message);
-          });
+        graphApi();
       }
     }
   }, [open]);
-
-  console.log('nodes', nodes);
 
   if (!open) {
     return <></>;
@@ -151,7 +158,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     viewPoint === 'showGraphView' || viewPoint === 'chatInfoView'
       ? 'Generated Graph'
       : `Inspect Generated Graph from ${inspectedName}`;
+  
   const checkBoxView = viewPoint !== 'chatInfoView';
+
   const nvlCallbacks = {
     onLayoutComputing(isComputing: boolean) {
       if (!isComputing) {
@@ -159,16 +168,25 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       }
     },
   };
+
+   //To handle the current zoom in function of graph
   const handleZoomIn = () => {
     nvlRef.current?.setZoom(nvlRef.current.getScale() * 1.3);
   };
+
+  //To handle the current zoom out function of graph
   const handleZoomOut = () => {
     nvlRef.current?.setZoom(nvlRef.current.getScale() * 0.7);
   };
+
+  //Refresh the graph with nodes and relations if file is processing
   const handleRefresh = () => {
-    // fetchData();
-    console.log('hello');
+    setLoading(true);
+    setGraphType(intitalGraphType);
+    graphApi();   
   };
+
+  // when modal closes reset all states to default
   const onClose = () => {
     setStatus('unknown');
     setStatusMessage('');
@@ -178,6 +196,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setNodes([]);
     setRelationships([]);
   };
+
+  // sort the legends in with Chunk and Document always the first two values 
   const legendCheck = Object.keys(newScheme).sort((a, b) => {
     if (a === 'Document' || a === 'Chunk') {
       return -1;
@@ -187,6 +207,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     return a.localeCompare(b);
   });
 
+  // setting the default dropdown values
   const getDropdownDefaultValue = () => {
     if (graphType.includes('Document') && graphType.includes('Chunk') && graphType.includes('Entities')) {
       return knowledgeGraph;
@@ -200,6 +221,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     return '';
   };
 
+  // Make a function call to store the nodes and relations in their states
   const initGraph = (graphType: GraphType[], finalNodes: Node[], finalRels: Relationship[], schemeVal: Scheme) => {
     if (allNodes.length > 0 && allRelationships.length > 0) {
       const { filteredNodes, filteredRelations, filteredScheme } = filterData(graphType, finalNodes, finalRels, schemeVal);
@@ -207,14 +229,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setRelationships(filteredRelations);
       setNewScheme(filteredScheme);
     }
-    // else{
-    //   const node = allNodes.filter((node) => node.labels.includes('Document'));
-    //   setNodes(node);
-    //   setAllRelationships([]);
-    //   setNewScheme({Document:scheme.Document});
-    // }
   }
 
+  //handle dropdown value change and call the init graph method
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
       const selectedValue = selectedOption.value;
@@ -284,7 +301,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       nvlCallbacks={nvlCallbacks}
                     />
                     <IconButtonArray orientation='vertical' floating className='absolute bottom-4 right-4'>
-                      {(nodes.length === 0 && viewPoint !== 'chatInfoView') && (<IconButtonWithToolTip
+                      {viewPoint !== 'chatInfoView' && (<IconButtonWithToolTip
                         label='Refresh'
                         text='Refresh graph'
                         onClick={handleRefresh}
