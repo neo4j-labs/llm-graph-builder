@@ -50,10 +50,10 @@ export default function GraphEnhancementDialog({
       <Dialog.Header className='flex justify-between self-end' id='chatbot-dialog-title'>
         <Box className='n-bg-palette-neutral-bg-weak p-4'>
           <Box className='flex flex-row pb-6 items-center mb-2'>
-            <img src={graphenhancement} style={{ width: 95, height: 95, marginRight: 10 }} loading='lazy' />
+            <img src={graphenhancement} style={{ width: 200, height: 200, marginRight: 10 }} loading='lazy' />
             <Box className='flex flex-col'>
               <Typography variant='h2'>Graph Enhancement Operations</Typography>
-              <Typography variant='body-medium' className='mb-2'>
+              <Typography variant='subheading-medium' className='mb-2'>
                 This set of tools will help you enhance the quality of your Knowledge Graph by removing possible
                 duplicated entities, disconnected nodes and set a Graph Schema for improving the quality of the entity
                 extraction process
