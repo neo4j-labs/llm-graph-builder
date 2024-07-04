@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import ConnectionModal from './Popups/ConnectionModal/ConnectionModal';
 import FileTable from './FileTable';
-import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
+import { Button, Typography, Flex, StatusIndicator, useWindowSize } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './UI/Alert';
@@ -42,6 +42,7 @@ const Content: React.FC<ContentProps> = ({
   const [showSettingnModal, setshowSettingModal] = useState<boolean>(false);
   const [openDeleteMenu, setopenDeleteMenu] = useState<boolean>(false);
   const [deleteAnchor, setdeleteAnchor] = useState<HTMLElement | null>(null);
+  const [showEnhancementDialog, setshowEnhancementDialog] = useState<boolean>(false);
 
   const {
     filesData,
@@ -81,7 +82,12 @@ const Content: React.FC<ContentProps> = ({
       });
     }
   );
-
+  const openGraphEnhancementDialog = () => {
+    setshowEnhancementDialog(true);
+  };
+  const closeGraphEnhancementDialog = () => {
+    setshowEnhancementDialog(false);
+  };
   useEffect(() => {
     if (!init && !searchParams.has('connectURL')) {
       let session = localStorage.getItem('neo4j.connection');
@@ -271,8 +277,9 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -282,10 +289,10 @@ const Content: React.FC<ContentProps> = ({
     isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
       : isRightExpanded
-        ? 'contentWithChatBot'
-        : !isLeftExpanded && !isRightExpanded
-          ? 'w-[calc(100%-128px)]'
-          : 'contentWithDropzoneExpansion';
+      ? 'contentWithChatBot'
+      : !isLeftExpanded && !isRightExpanded
+      ? 'w-[calc(100%-128px)]'
+      : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -589,9 +596,12 @@ const Content: React.FC<ContentProps> = ({
               {buttonCaptions.connectToNeo4j}
             </Button>
           ) : (
-            <Button className='mr-2.5' onClick={disconnect}>
-              {buttonCaptions.disconnect}
-            </Button>
+            <div>
+              <Button className='mr-2.5'>Graph Enhancement</Button>
+              <Button className='mr-2.5' onClick={disconnect}>
+                {buttonCaptions.disconnect}
+              </Button>
+            </div>
           )}
         </Flex>
         <FileTable
@@ -605,8 +615,9 @@ const Content: React.FC<ContentProps> = ({
           }}
         ></FileTable>
         <Flex
-          className={`${!isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-            } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+          className={`${
+            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection='row'
         >

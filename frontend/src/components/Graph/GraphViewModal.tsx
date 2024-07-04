@@ -89,10 +89,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === 'showGraphView'
           ? await graphQueryAPI(
-            userCredentials as UserCredentials,
-            graphQuery,
-            selectedRows.map((f) => JSON.parse(f).name)
-          )
+              userCredentials as UserCredentials,
+              graphQuery,
+              selectedRows.map((f) => JSON.parse(f).name)
+            )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -202,12 +202,17 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
   const initGraph = (graphType: GraphType[], finalNodes: Node[], finalRels: Relationship[], schemeVal: Scheme) => {
     if (allNodes.length > 0 && allRelationships.length > 0) {
-      const { filteredNodes, filteredRelations, filteredScheme } = filterData(graphType, finalNodes, finalRels, schemeVal);
+      const { filteredNodes, filteredRelations, filteredScheme } = filterData(
+        graphType,
+        finalNodes,
+        finalRels,
+        schemeVal
+      );
       setNodes(filteredNodes);
       setRelationships(filteredRelations);
       setNewScheme(filteredScheme);
     }
-  }
+  };
 
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
@@ -243,13 +248,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             {/* {checkBoxView && (
                 <CheckboxSelection graphType={graphType} loading={loading} handleChange={handleCheckboxChange} />
             )} */}
-            {checkBoxView && (<DropdownComponent
-              onSelect={handleDropdownChange}
-              options={graphView}
-              placeholder='Select Graph Type'
-              defaultValue={getDropdownDefaultValue()}
-              view='GraphView'
-            />)}
+            {checkBoxView && (
+              <DropdownComponent
+                onSelect={handleDropdownChange}
+                options={graphView}
+                placeholder='Select Graph Type'
+                defaultValue={getDropdownDefaultValue()}
+                view='GraphView'
+              />
+            )}
           </Flex>
         </Dialog.Header>
         <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border border-palette-neutral-border-weak'>

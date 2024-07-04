@@ -48,7 +48,7 @@ export const llms =
         'LLM_MODEL_CONFIG_groq-llama3-70b',
         'LLM_MODEL_CONFIG_anthropic-claude-3-5-sonnet',
         'LLM_MODEL_CONFIG_fireworks-llama-v3-70b',
-        'LLM_MODEL_CONFIG_bedrock-claude-3-5-sonnet'
+        'LLM_MODEL_CONFIG_bedrock-claude-3-5-sonnet',
       ];
 
 export const defaultLLM = llms?.includes('openai-gpt-3.5')
