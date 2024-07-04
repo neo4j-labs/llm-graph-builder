@@ -62,7 +62,7 @@ export default function GraphEnhancementDialog({
           </Box>
         </Box>
       </Dialog.Header>
-      <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto'>
+      <Dialog.Content className='flex flex-col n-gap-token- grow overflow-auto w-[80%] mx-auto'>
         <Tabs fill='underline' onChange={setactiveTab} size='large' value={activeTab}>
           <Tabs.Tab tabId={0} aria-label='Database'>
             Entity Extraction Settings
