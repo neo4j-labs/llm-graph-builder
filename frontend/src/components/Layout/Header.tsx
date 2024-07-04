@@ -76,6 +76,7 @@ export default function Header({ themeMode, toggleTheme }: { themeMode: string; 
                 clean
                 size='large'
                 onClick={toggleTheme}
+                placement='left'
               >
                 {themeMode === 'dark' ? (
                   <span role='img' aria-label='sun'>

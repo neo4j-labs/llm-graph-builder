@@ -1,7 +1,7 @@
 import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
 import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
 import { buttonCaptions, tooltips } from '../../../utils/Constants';
-import { Dropdown, Flex } from '@neo4j-ndl/react';
+import { Dropdown, Flex, Typography } from '@neo4j-ndl/react';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useFileContext } from '../../../context/UsersFiles';
 import { OnChangeValue, ActionMeta } from 'react-select';
@@ -217,102 +217,114 @@ export default function EntityExtractionSetting({
   };
   return (
     <div>
-      <Dropdown
-        helpText='Schema Examples'
-        label='Predefined Schema'
-        size={view === 'Tabs' ? 'large' : 'medium'}
-        selectProps={{
-          isClearable: true,
-          isMulti: true,
-          options: defaultExamples,
-          onChange: onChangeSchema,
-          value: selectedSchemas,
-          menuPosition: 'fixed',
-        }}
-        type='select'
-      />
-      <Dropdown
-        helpText='You can select more than one values'
-        label='Node Labels'
-        size={view === 'Tabs' ? 'large' : 'medium'}
-        selectProps={{
-          isClearable: true,
-          isMulti: true,
-          options: nodeLabelOptions,
-          onChange: onChangenodes,
-          value: selectedNodes,
-          classNamePrefix: 'node_label',
-        }}
-        type='creatable'
-      />
-      <Dropdown
-        helpText='You can select more than one values'
-        label='Relationship Types'
-        size={view === 'Tabs' ? 'large' : 'medium'}
-        selectProps={{
-          isClearable: true,
-          isMulti: true,
-          options: relationshipTypeOptions,
-          onChange: onChangerels,
-          value: selectedRels,
-          classNamePrefix: 'relationship_label',
-        }}
-        type='creatable'
-      />
-      <Flex className='!mt-4 flex items-center' flexDirection='row' justifyContent='flex-end'>
-        <Flex flexDirection='row' gap='4'>
-          <ButtonWithToolTip
-            loading={loading}
-            text={
-              !nodeLabelOptions.length && !relationshipTypeOptions.length
-                ? `No Labels Found in the Database`
-                : tooltips.useExistingSchema
-            }
-            disabled={!nodeLabelOptions.length && !relationshipTypeOptions.length}
-            onClick={clickHandler}
-            label='Use Existing Schema'
-            placement='top'
-          >
-            Use Existing Schema
-          </ButtonWithToolTip>
-          <ButtonWithToolTip
-            text={tooltips.createSchema}
-            placement='top'
-            onClick={() => {
-              if (view === 'Dialog' && onClose != undefined) {
-                onClose();
-              }
-              if (view === 'Tabs' && colseEnhanceGraphSchemaDialog != undefined) {
-                colseEnhanceGraphSchemaDialog();
-              }
-              openTextSchema();
-            }}
-            label='Get Existing Schema From Text'
-          >
-            Get Schema From Text
-          </ButtonWithToolTip>
-          {settingView === 'contentView' ? (
+      <Typography variant='body-medium'>
+        <span>
+          1.Predefine the structure of your knowledge graph by selecting specific node and relationship labels.
+        </span>
+        <br></br>
+        <span>
+          2.Focus your analysis by extracting only the relationships and entities that matter most to your use case.
+          Achieve a cleaner and more insightful graph representation tailored to your domain.
+        </span>
+      </Typography>
+      <div className='mt-4'>
+        <Dropdown
+          helpText='Schema Examples'
+          label='Predefined Schema'
+          size={view === 'Tabs' ? 'large' : 'medium'}
+          selectProps={{
+            isClearable: true,
+            isMulti: true,
+            options: defaultExamples,
+            onChange: onChangeSchema,
+            value: selectedSchemas,
+            menuPosition: 'fixed',
+          }}
+          type='select'
+        />
+        <Dropdown
+          helpText='You can select more than one values'
+          label='Node Labels'
+          size={view === 'Tabs' ? 'large' : 'medium'}
+          selectProps={{
+            isClearable: true,
+            isMulti: true,
+            options: nodeLabelOptions,
+            onChange: onChangenodes,
+            value: selectedNodes,
+            classNamePrefix: 'node_label',
+          }}
+          type='creatable'
+        />
+        <Dropdown
+          helpText='You can select more than one values'
+          label='Relationship Types'
+          size={view === 'Tabs' ? 'large' : 'medium'}
+          selectProps={{
+            isClearable: true,
+            isMulti: true,
+            options: relationshipTypeOptions,
+            onChange: onChangerels,
+            value: selectedRels,
+            classNamePrefix: 'relationship_label',
+          }}
+          type='creatable'
+        />
+        <Flex className='!mt-4 flex items-center' flexDirection='row' justifyContent='flex-end'>
+          <Flex flexDirection='row' gap='4'>
             <ButtonWithToolTip
-              text={tooltips.continue}
+              loading={loading}
+              text={
+                !nodeLabelOptions.length && !relationshipTypeOptions.length
+                  ? `No Labels Found in the Database`
+                  : tooltips.useExistingSchema
+              }
+              disabled={!nodeLabelOptions.length && !relationshipTypeOptions.length}
+              onClick={clickHandler}
+              label='Use Existing Schema'
               placement='top'
-              onClick={onContinue}
-              label='Continue to extract'
             >
-              {buttonCaptions.continueSettings}
+              Use Existing Schema
             </ButtonWithToolTip>
-          ) : (
             <ButtonWithToolTip
-              text={tooltips.clearGraphSettings}
+              text={tooltips.createSchema}
               placement='top'
-              onClick={handleClear}
-              label='Clear Graph Settings'
-              disabled={!isSchema}
+              onClick={() => {
+                if (view === 'Dialog' && onClose != undefined) {
+                  onClose();
+                }
+                if (view === 'Tabs' && colseEnhanceGraphSchemaDialog != undefined) {
+                  colseEnhanceGraphSchemaDialog();
+                }
+                openTextSchema();
+              }}
+              label='Get Existing Schema From Text'
             >
-              {buttonCaptions.clearSettings}
+              Get Schema From Text
             </ButtonWithToolTip>
-          )}
+            {settingView === 'contentView' ? (
+              <ButtonWithToolTip
+                text={tooltips.continue}
+                placement='top'
+                onClick={onContinue}
+                label='Continue to extract'
+              >
+                {buttonCaptions.continueSettings}
+              </ButtonWithToolTip>
+            ) : (
+              <ButtonWithToolTip
+                text={tooltips.clearGraphSettings}
+                placement='top'
+                onClick={handleClear}
+                label='Clear Graph Settings'
+                disabled={!isSchema}
+              >
+                {buttonCaptions.clearSettings}
+              </ButtonWithToolTip>
+            )}
+          </Flex>
         </Flex>
-      </Flex>
+      </div>
     </div>
   );
 }

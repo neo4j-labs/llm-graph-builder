@@ -120,6 +120,7 @@ export default function DeletePopUpForOrphanNodes({
         cell: (info) => <i>{info?.getValue()}</i>,
         header: () => <span>Connected Chunks</span>,
         footer: (info) => info.column.id,
+        size: 200,
       }),
     ],
     []
@@ -152,14 +153,21 @@ export default function DeletePopUpForOrphanNodes({
     <div>
       <div>
         <Flex flexDirection='column'>
-          <Typography variant='subheading-large'>Orphan Nodes Deletion</Typography>
           <Flex justifyContent='space-between' flexDirection='row'>
-            <Typography variant='subheading-small'>100 nodes per batch</Typography>
+            <Typography variant='subheading-large'>Orphan Nodes Deletion (100 nodes per batch)</Typography>
             {totalOrphanNodes > 0 ? (
-              <Typography variant='subheading-small'>Total Nodes: {totalOrphanNodes}</Typography>
+              <Typography variant='subheading-large'>Total Nodes: {totalOrphanNodes}</Typography>
             ) : (
               <></>
             )}
+          </Flex>
+          <Flex justifyContent='space-between' flexDirection='row'>
+            <Typography variant='body-medium'>
+              This feature helps improve the accuracy of your knowledge graph by identifying and removing entities that
+              are not connected to any other information. These "lonely" entities can be remnants of past analyses or
+              errors in data processing. By removing them, we can create a cleaner and more efficient knowledge graph
+              that leads to more relevant and informative responses.
+            </Typography>
           </Flex>
         </Flex>
       </div>
