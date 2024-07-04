@@ -18,7 +18,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   onSelect,
   children,
   view,
-  isDisabled
+  isDisabled,
 }) => {
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
@@ -41,11 +41,10 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
             placeholder: placeholder || 'Select an option',
             defaultValue: defaultValue ? { label: capitalize(defaultValue), value: defaultValue } : undefined,
             menuPlacement: 'auto',
-            isDisabled: isDisabled
+            isDisabled: isDisabled,
           }}
           size='medium'
           fluid
-
         />
         {children}
       </div>

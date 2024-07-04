@@ -37,7 +37,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   viewPoint,
   nodeValues,
   relationshipValues,
-  processingCheck
+  processingCheck,
 }) => {
   const nvlRef = useRef<NVL>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -88,16 +88,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     };
   }, []);
 
-  // To get nodes and relations on basis of view 
+  // To get nodes and relations on basis of view
   const fetchData = useCallback(async () => {
     try {
       const nodeRelationshipData =
         viewPoint === 'showGraphView'
           ? await graphQueryAPI(
-            userCredentials as UserCredentials,
-            graphQuery,
-            selectedRows.map((f) => JSON.parse(f).name)
-          )
+              userCredentials as UserCredentials,
+              graphQuery,
+              selectedRows.map((f) => JSON.parse(f).name)
+            )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -105,7 +105,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
   }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials]);
 
-  // Api call to get the nodes and relations 
+  // Api call to get the nodes and relations
   const graphApi = () => {
     fetchData()
       .then((result) => {
@@ -131,7 +131,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         setStatus('danger');
         setStatusMessage(error.message);
       });
-  }
+  };
 
   useEffect(() => {
     if (open) {
@@ -170,17 +170,17 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     },
   };
 
-  //To handle the current zoom in function of graph
+  // To handle the current zoom in function of graph
   const handleZoomIn = () => {
     nvlRef.current?.setZoom(nvlRef.current.getScale() * 1.3);
   };
 
-  //To handle the current zoom out function of graph
+  // To handle the current zoom out function of graph
   const handleZoomOut = () => {
     nvlRef.current?.setZoom(nvlRef.current.getScale() * 0.7);
   };
 
-  //Refresh the graph with nodes and relations if file is processing
+  // Refresh the graph with nodes and relations if file is processing
   const handleRefresh = () => {
     setLoading(true);
     setGraphType(intitalGraphType);
@@ -198,7 +198,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setRelationships([]);
   };
 
-  // sort the legends in with Chunk and Document always the first two values 
+  // sort the legends in with Chunk and Document always the first two values
   const legendCheck = Object.keys(newScheme).sort((a, b) => {
     if (a === 'Document' || a === 'Chunk') {
       return -1;
@@ -225,14 +225,19 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   // Make a function call to store the nodes and relations in their states
   const initGraph = (graphType: GraphType[], finalNodes: Node[], finalRels: Relationship[], schemeVal: Scheme) => {
     if (allNodes.length > 0 && allRelationships.length > 0) {
-      const { filteredNodes, filteredRelations, filteredScheme } = filterData(graphType, finalNodes, finalRels, schemeVal);
+      const { filteredNodes, filteredRelations, filteredScheme } = filterData(
+        graphType,
+        finalNodes,
+        finalRels,
+        schemeVal
+      );
       setNodes(filteredNodes);
       setRelationships(filteredRelations);
       setNewScheme(filteredScheme);
     }
-  }
+  };
 
-  //handle dropdown value change and call the init graph method
+  // handle dropdown value change and call the init graph method
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
       const selectedValue = selectedOption.value;
@@ -267,14 +272,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             {/* {checkBoxView && (
                 <CheckboxSelection graphType={graphType} loading={loading} handleChange={handleCheckboxChange} />
             )} */}
-            {dropDownView && (<DropdownComponent
-              onSelect={handleDropdownChange}
-              options={graphView}
-              placeholder='Select Graph Type'
-              defaultValue={getDropdownDefaultValue()}
-              view='GraphView'
-              isDisabled={nodes.length === 0 || allNodes.length === 0}
-            />)}
+            {dropDownView && (
+              <DropdownComponent
+                onSelect={handleDropdownChange}
+                options={graphView}
+                placeholder='Select Graph Type'
+                defaultValue={getDropdownDefaultValue()}
+                view='GraphView'
+                isDisabled={nodes.length === 0 || allNodes.length === 0}
+              />
+            )}
           </Flex>
         </Dialog.Header>
         <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border border-palette-neutral-border-weak'>
@@ -303,14 +310,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       nvlCallbacks={nvlCallbacks}
                     />
                     <IconButtonArray orientation='vertical' floating className='absolute bottom-4 right-4'>
-                      {(viewPoint !== 'chatInfoView' && processingCheck) && (<IconButtonWithToolTip
-                        label='Refresh'
-                        text='Refresh graph'
-                        onClick={handleRefresh}
-                        placement='left'
-                      >
-                        <ArrowPathIconOutline />
-                      </IconButtonWithToolTip>)}
+                      {viewPoint !== 'chatInfoView' && processingCheck && (
+                        <IconButtonWithToolTip
+                          label='Refresh'
+                          text='Refresh graph'
+                          onClick={handleRefresh}
+                          placement='left'
+                        >
+                          <ArrowPathIconOutline />
+                        </IconButtonWithToolTip>
+                      )}
                       <IconButtonWithToolTip label='Zoomin' text='Zoom in' onClick={handleZoomIn} placement='left'>
                         <MagnifyingGlassPlusIconOutline />
                       </IconButtonWithToolTip>
