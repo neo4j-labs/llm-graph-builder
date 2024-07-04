@@ -114,13 +114,14 @@ export default function DeletePopUpForOrphanNodes({
         },
         header: () => <span>Related Documents </span>,
         footer: (info) => info.column.id,
+        maxSize:280
       }),
       columnHelper.accessor((row) => row.chunkConnections, {
         id: 'Connected Chunks',
         cell: (info) => <i>{info?.getValue()}</i>,
         header: () => <span>Connected Chunks</span>,
         footer: (info) => info.column.id,
-        size: 200,
+        minSize:280,
       }),
     ],
     []
