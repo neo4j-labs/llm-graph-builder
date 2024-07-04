@@ -172,6 +172,20 @@ def summarize_messages(llm,history,stored_messages):
     return True
 
 
+def get_total_tokens(model, ai_response):
+    if "gemini" in model:
+        total_tokens = ai_response.response_metadata['usage_metadata']['prompt_token_count']
+    elif "bedrock" in model:
+        total_tokens = ai_response.response_metadata['usage']['total_tokens']
+    elif "anthropic-claude" in model:
+        input_tokens = int(ai_response.response_metadata['usage']['input_tokens'])
+        output_tokens = int(ai_response.response_metadata['usage']['output_tokens'])
+        total_tokens = input_tokens + output_tokens
+    else:    
+        total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
+    return total_tokens
+
+
 def clear_chat_history(graph,session_id):
     history = Neo4jChatMessageHistory(
         graph=graph,
@@ -186,7 +200,7 @@ def clear_chat_history(graph,session_id):
 
 def setup_chat(model, graph, session_id, retrieval_query):
     start_time = time.time()
-    if model in ["diffbot","LLM_MODEL_CONFIG_ollama_llama3","LLM_MODEL_CONFIG_anthropic-claude-3-5-sonnet","LLM_MODEL_CONFIG_bedrock-claude-3-5-sonnet"]:
+    if model in ["diffbot", "LLM_MODEL_CONFIG_ollama_llama3"]:
         model = "openai-gpt-4o"
     llm,model_name = get_llm(model)
     logging.info(f"Model called in chat {model} and model version is {model_name}")
@@ -216,11 +230,8 @@ def process_documents(docs, question, messages, llm,model):
     })
     result = get_sources_and_chunks(sources, docs)
     content = ai_response.content
-    
-    if "gemini" in model:
-        total_tokens = ai_response.response_metadata['usage_metadata']['prompt_token_count']
-    else:    
-        total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
+    total_tokens = get_total_tokens(model, ai_response)
+
     
     predict_time = time.time() - start_time
     logging.info(f"Final Response predicted in {predict_time:.2f} seconds")
