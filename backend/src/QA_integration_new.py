@@ -182,7 +182,7 @@ def get_total_tokens(model, ai_response):
         output_tokens = int(ai_response.response_metadata['usage']['output_tokens'])
         total_tokens = input_tokens + output_tokens
     else:    
-        total_tokens = ai_response.response_metadata['usage_metadata']['total_tokens']
+        total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
     return total_tokens
 
 
@@ -200,7 +200,7 @@ def clear_chat_history(graph,session_id):
 
 def setup_chat(model, graph, session_id, retrieval_query):
     start_time = time.time()
-    if model in ["diffbot", "LLM_MODEL_CONFIG_ollama_llama3",]:
+    if model in ["diffbot", "LLM_MODEL_CONFIG_ollama_llama3"]:
         model = "openai-gpt-4o"
     llm,model_name = get_llm(model)
     logging.info(f"Model called in chat {model} and model version is {model_name}")
