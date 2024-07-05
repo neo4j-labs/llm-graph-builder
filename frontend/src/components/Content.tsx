@@ -594,6 +594,14 @@ const Content: React.FC<ContentProps> = ({
               ) : (
                 <span className='n-body-small'>Not Connected</span>
               )}
+              <div className='pt-1'>
+               {!isSchema ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
+              {isSchema ? (
+                <span className='n-body-small'>Graph Schema configured</span>
+              ) : (
+                <span className='n-body-small'>No Graph Schema configured</span>
+              )}
+              </div>
             </Typography>
           </div>
           {!connectionStatus ? (
@@ -610,19 +618,6 @@ const Content: React.FC<ContentProps> = ({
               </Button>
             </div>
           )}
-        </Flex>
-        <Flex className='w-full' alignItems='center' flexDirection='row'>
-          <div className='connectionstatus__container !py-2'>
-            <span className='h6 px-1'>Schema Settings</span>
-            <Typography variant='body-medium'>
-              {!isSchema ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
-              {isSchema ? (
-                <span className='n-body-small'>Graph Schema configured</span>
-              ) : (
-                <span className='n-body-small'>No Graph Schema configured</span>
-              )}
-            </Typography>
-          </div>
         </Flex>
         <FileTable
           isExpanded={isLeftExpanded && isRightExpanded}
