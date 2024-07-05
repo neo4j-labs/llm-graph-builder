@@ -50,10 +50,10 @@ export default function DeletePopUpForOrphanNodes({
         console.log(error);
       }
     })();
-    return()=>{
-  setOrphanNodes([]);
- setTotalOrphanNodes(0);
-}
+    return () => {
+      setOrphanNodes([]);
+      setTotalOrphanNodes(0);
+    };
   }, [userCredentials]);
   const columnHelper = createColumnHelper<orphanNodeProps>();
 
@@ -99,7 +99,13 @@ export default function DeletePopUpForOrphanNodes({
       columnHelper.accessor((row) => row.e.labels, {
         id: 'Labels',
         cell: (info) => {
-          return info.getValue().map((l, index) => <Legend key={index} title={l} bgColor={calcWordColor(l)}></Legend>);
+          return (
+            <Flex>
+              {info.getValue().map((l, index) => (
+                <Legend key={index} title={l} bgColor={calcWordColor(l)}></Legend>
+              ))}
+            </Flex>
+          );
         },
         header: () => <span>Labels</span>,
         footer: (info) => info.column.id,
@@ -107,25 +113,29 @@ export default function DeletePopUpForOrphanNodes({
       columnHelper.accessor((row) => row.documents, {
         id: 'Connnected Documents',
         cell: (info) => {
-          return Array.from(new Set([...info.getValue()])).map((d, index) => (
-            <Flex key={`d${index}`} flexDirection='row'>
-              <span>
-                <DocumentIconOutline className='n-size-token-7' />
-              </span>
-              <span>{d}</span>
+          return (
+            <Flex>
+              {Array.from(new Set([...info.getValue()])).map((d, index) => (
+                <Flex key={`d${index}`} flexDirection='row'>
+                  <span>
+                    <DocumentIconOutline className='n-size-token-7' />
+                  </span>
+                  <span>{d}</span>
+                </Flex>
+              ))}
             </Flex>
-          ));
+          );
         },
         header: () => <span>Related Documents </span>,
         footer: (info) => info.column.id,
-        maxSize:280
+        maxSize: 280,
       }),
       columnHelper.accessor((row) => row.chunkConnections, {
         id: 'Connected Chunks',
         cell: (info) => <i>{info?.getValue()}</i>,
         header: () => <span>Connected Chunks</span>,
         footer: (info) => info.column.id,
-        minSize:280,
+        minSize: 280,
       }),
     ],
     []
@@ -232,7 +242,9 @@ export default function DeletePopUpForOrphanNodes({
           disabled={!table.getSelectedRowModel().rows.length}
           placement='top'
         >
-          {table.getSelectedRowModel().rows.length?`Delete Selected Nodes (${table.getSelectedRowModel().rows.length})`:'Select Node(s) to delete'}
+          {table.getSelectedRowModel().rows.length
+            ? `Delete Selected Nodes (${table.getSelectedRowModel().rows.length})`
+            : 'Select Node(s) to delete'}
         </ButtonWithToolTip>
       </Flex>
     </div>
