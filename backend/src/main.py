@@ -1,6 +1,6 @@
 from langchain_community.graphs import Neo4jGraph
 from src.shared.constants import BUCKET_UPLOAD, PROJECT_ID
-from src.shared.schema_extraction import sceham_extraction_from_text
+from src.shared.schema_extraction import schema_extraction_from_text
 from dotenv import load_dotenv
 from datetime import datetime
 import logging
@@ -572,3 +572,17 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
         logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
         delete_uploaded_local_file(merged_file_path,file_name)
   return "Cancelled the processing job successfully"
+
+def populate_graph_schema_from_text(text, model, is_schema_description_cheked):
+  """_summary_
+
+  Args:
+      graph (Neo4Graph): Neo4jGraph connection object
+      input_text (str): rendom text from PDF or user input.
+      model (str): AI model to use extraction from text
+
+  Returns:
+      data (list): list of lebels and relationTypes
+  """
+  result = schema_extraction_from_text(text, model, is_schema_description_cheked)
+  return {"labels": result.labels, "relationshipTypes": result.relationshipTypes}
