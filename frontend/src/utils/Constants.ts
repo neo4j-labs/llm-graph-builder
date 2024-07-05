@@ -1,6 +1,6 @@
 import { VisualizeBloomIcon } from '@neo4j-ndl/react/icons';
 import { NvlOptions } from '@neo4j-nvl/base';
-import { GraphType } from '../types';
+import { GraphType, OptionType } from '../types';
 
 export const document = `+ [docs]`;
 
@@ -180,6 +180,7 @@ export const mouseEventCallbacks = {
   onDrag: true,
 };
 
+export const graphQuery: string = queryMap.DocChunkEntities;
 export const graphView: string[] = ['Lexical Graph', 'Entity Graph', 'Knowledge Graph'];
 export const intitalGraphType: GraphType[] = ['Document', 'Entities', 'Chunk'];
 export const knowledgeGraph = 'Knowledge Graph';

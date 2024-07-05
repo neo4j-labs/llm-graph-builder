@@ -2,10 +2,6 @@ import { calcWordColor } from '@neo4j-devtools/word-color';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { GraphType, Messages, Scheme } from '../types';
 
-type PartialLabelNode = Partial<Node> & {
-  labels: string;
-};
-
 // Get the Url
 export const url = () => {
   let url = window.location.href.replace('5173', '8000');
@@ -174,7 +170,6 @@ export const filterData = (
   allNodes: Node[],
   allRelationships: Relationship[],
   scheme: Scheme
-  // selectedDropdown:string
 ) => {
   let filteredNodes: Node[] = [];
   let filteredRelations: Relationship[] = [];

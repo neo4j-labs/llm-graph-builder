@@ -213,13 +213,13 @@
   flex-wrap: wrap;
   flex: 1;
   padding: 15px;
-  background-color: #ffff;
+  background-color: rgb(var(--theme-palette-neutral-bg-weak));
   scrollbar-width: thin;
   max-height: 100%;
   overflow-y: auto;
   height: 100%;
   z-index: 1;
-  box-shadow: -2px 0px 6px #e7e7e7;
+  box-shadow: -2px 0px 6px rgb(var(--theme-palette-neutral-bg-strong));
 }
 
 .legend {

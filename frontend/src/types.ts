@@ -245,6 +245,7 @@ export interface GraphViewModalProps {
   viewPoint: string;
   nodeValues?: Node[];
   relationshipValues?: Relationship[];
+  processingCheck?: boolean;
 }
 
 export type GraphType = 'Document' | 'Entities' | 'Chunk';
