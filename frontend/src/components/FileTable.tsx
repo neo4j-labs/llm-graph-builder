@@ -628,7 +628,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     table.getColumn('status')?.setFilterValue(e.target.checked);
-    if (!table.getCanNextPage() || table.getRowCount()) {
+    if (!table.getCanNextPage() || table.getPrePaginationRowModel().rows.length) {
       table.setPageIndex(0);
     }
   };
