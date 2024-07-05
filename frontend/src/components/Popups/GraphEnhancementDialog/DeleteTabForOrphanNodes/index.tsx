@@ -1,12 +1,12 @@
 import { Checkbox, DataGrid, DataGridComponents, Flex, Typography } from '@neo4j-ndl/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { UserCredentials, orphanNodeProps } from '../../../types';
-import { getOrphanNodes } from '../../../services/GetOrphanNodes';
-import { useCredentials } from '../../../context/UserCredentials';
-import Legend from '../../UI/Legend';
+import { UserCredentials, orphanNodeProps } from '../../../../types';
+import { getOrphanNodes } from '../../../../services/GetOrphanNodes';
+import { useCredentials } from '../../../../context/UserCredentials';
+import Legend from '../../../UI/Legend';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import { DocumentIconOutline } from '@neo4j-ndl/react/icons';
-import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
+import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import {
   useReactTable,
   getCoreRowModel,
