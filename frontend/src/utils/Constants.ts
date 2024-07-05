@@ -1,6 +1,6 @@
 import { VisualizeBloomIcon } from '@neo4j-ndl/react/icons';
 import { NvlOptions } from '@neo4j-nvl/base';
-import { GraphType} from '../types';
+import { GraphType } from '../types';
 
 export const document = `+ [docs]`;
 
@@ -157,8 +157,8 @@ export const buttonCaptions = {
 };
 
 export const ChatModeOptions = [
-  { Icon: VisualizeBloomIcon, value: 'graph+vector' },
-  { Icon: 'abc', value: 'vector' },
+  { Icon: VisualizeBloomIcon, value: 'vector' },
+  { Icon: 'abc', value: 'graph+vector' },
 ];
 
 export const taskParam: string[] = ['update_similarity_graph', 'create_fulltext_index'];

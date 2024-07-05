@@ -395,6 +395,7 @@ export interface chatInfoMessage extends Partial<Messages> {
   response_time: number;
   chunk_ids: chunk[];
   total_tokens: number;
+  mode: string;
 }
 
 export interface eventResponsetypes {

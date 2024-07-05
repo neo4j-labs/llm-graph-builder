@@ -12,7 +12,7 @@ import { useCredentials } from '../../context/UserCredentials';
 import { chatBotAPI } from '../../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../../context/UsersFiles';
-import InfoModal from './Info/InfoModal';
+import InfoModal from './ChatInfoModal';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import IconButtonWithToolTip from '../UI/IconButtonToolTip';
@@ -394,6 +394,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
           chunk_ids={chunkModal}
           response_time={responseTime}
           total_tokens={tokensUsed}
+          mode={chatMode}
         />
       </Modal>
     </div>

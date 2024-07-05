@@ -50,10 +50,10 @@ export default function DeletePopUpForOrphanNodes({
         console.log(error);
       }
     })();
-    return()=>{
-  setOrphanNodes([]);
- setTotalOrphanNodes(0);
-}
+    return () => {
+      setOrphanNodes([]);
+      setTotalOrphanNodes(0);
+    };
   }, [userCredentials]);
   const columnHelper = createColumnHelper<orphanNodeProps>();
 
@@ -118,14 +118,14 @@ export default function DeletePopUpForOrphanNodes({
         },
         header: () => <span>Related Documents </span>,
         footer: (info) => info.column.id,
-        maxSize:280
+        maxSize: 280,
       }),
       columnHelper.accessor((row) => row.chunkConnections, {
         id: 'Connected Chunks',
         cell: (info) => <i>{info?.getValue()}</i>,
         header: () => <span>Connected Chunks</span>,
         footer: (info) => info.column.id,
-        minSize:280,
+        minSize: 280,
       }),
     ],
     []
