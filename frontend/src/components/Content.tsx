@@ -271,8 +271,9 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -282,10 +283,10 @@ const Content: React.FC<ContentProps> = ({
     isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
       : isRightExpanded
-        ? 'contentWithChatBot'
-        : !isLeftExpanded && !isRightExpanded
-          ? 'w-[calc(100%-128px)]'
-          : 'contentWithDropzoneExpansion';
+      ? 'contentWithChatBot'
+      : !isLeftExpanded && !isRightExpanded
+      ? 'w-[calc(100%-128px)]'
+      : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -320,6 +321,14 @@ const Content: React.FC<ContentProps> = ({
     () => (selectedfileslength ? completedfileNo === 0 : true),
     [selectedfileslength, completedfileNo]
   );
+
+  const processingCheck = () => {
+    const processingFiles = filesData.some((file) => file.status === 'Processing');
+    const selectedRowProcessing = selectedRows.some((row) =>
+      filesData.some((file) => file.name === row && file.status === 'Processing')
+    );
+    return processingFiles || selectedRowProcessing;
+  };
 
   const filesForProcessing = useMemo(() => {
     let newstatusfiles: CustomFile[] = [];
@@ -517,7 +526,6 @@ const Content: React.FC<ContentProps> = ({
     });
     localStorage.setItem('isSchema', JSON.stringify(true));
   };
-
   return (
     <>
       {alertDetails.showAlert && (
@@ -605,8 +613,9 @@ const Content: React.FC<ContentProps> = ({
           }}
         ></FileTable>
         <Flex
-          className={`${!isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-            } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+          className={`${
+            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection='row'
         >
@@ -616,6 +625,7 @@ const Content: React.FC<ContentProps> = ({
             placeholder='Select LLM Model'
             defaultValue={defaultLLM}
             view='ContentView'
+            isDisabled={false}
           />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <ButtonWithToolTip
@@ -676,6 +686,7 @@ const Content: React.FC<ContentProps> = ({
         open={openGraphView}
         setGraphViewOpen={setOpenGraphView}
         viewPoint={viewPoint}
+        processingCheck={processingCheck()}
       />
     </>
   );
