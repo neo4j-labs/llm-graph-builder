@@ -1,6 +1,6 @@
 import { VisualizeBloomIcon } from '@neo4j-ndl/react/icons';
 import { NvlOptions } from '@neo4j-nvl/base';
-import { GraphType, OptionType } from '../types';
+import { GraphType} from '../types';
 
 export const document = `+ [docs]`;
 

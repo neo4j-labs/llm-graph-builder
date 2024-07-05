@@ -24,7 +24,7 @@ export default function PageLayoutNew({
   openSettingsDialog: () => void;
 }) {
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(true);
-  const [isRightExpanded, setIsRightExpanded] = useState<boolean>(false);
+  const [isRightExpanded, setIsRightExpanded] = useState<boolean>(true);
   const [showChatBot, setShowChatBot] = useState<boolean>(false);
   const [showDrawerChatbot, setShowDrawerChatbot] = useState<boolean>(true);
   const [clearHistoryData, setClearHistoryData] = useState<boolean>(false);
