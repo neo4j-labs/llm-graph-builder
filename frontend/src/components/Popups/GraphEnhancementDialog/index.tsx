@@ -1,7 +1,7 @@
 import { Dialog, Tabs, Box, Typography } from '@neo4j-ndl/react';
 import graphenhancement from '../../../assets/images/graph-enhancements.svg';
 import { useState } from 'react';
-import DeletePopUpForOrphanNodes from '../DeletePopUpForOrphanNodes';
+import DeletePopUpForOrphanNodes from './DeleteTabForOrphanNodes';
 import deleteOrphanAPI from '../../../services/DeleteOrphanNodes';
 import { UserCredentials } from '../../../types';
 import { useCredentials } from '../../../context/UserCredentials';
