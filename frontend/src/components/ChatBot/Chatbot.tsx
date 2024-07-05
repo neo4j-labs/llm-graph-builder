@@ -340,6 +340,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
           chunk_ids={chunkModal}
           response_time={responseTime}
           total_tokens={tokensUsed}
+          mode={chatMode}
         />
       </Modal>
     </div>
