@@ -1,6 +1,6 @@
-import { VisualizeBloomIcon } from '@neo4j-ndl/react/icons';
+import { DocumentChartBarIconOutline } from '@neo4j-ndl/react/icons';
 import { NvlOptions } from '@neo4j-nvl/base';
-import { GraphType } from '../types';
+import { GraphType, OptionType } from '../types';
 
 export const document = `+ [docs]`;
 
@@ -157,8 +157,8 @@ export const buttonCaptions = {
 };
 
 export const ChatModeOptions = [
-  { Icon: VisualizeBloomIcon, value: 'graph+vector' },
-  { Icon: 'abc', value: 'vector' },
+  { Icon: DocumentChartBarIconOutline, value: 'vector' },
+  { Icon: 'abc', value: 'graph+vector' },
 ];
 
 export const taskParam: string[] = ['update_similarity_graph', 'create_fulltext_index','create_entity_embedding'];
@@ -181,7 +181,11 @@ export const mouseEventCallbacks = {
 };
 
 export const graphQuery: string = queryMap.DocChunkEntities;
-export const graphView: string[] = ['Lexical Graph', 'Entity Graph', 'Knowledge Graph'];
+export const graphView: OptionType[] = [
+  { label: 'Lexical Graph', value: queryMap.DocChunks },
+  { label: 'Entity Graph', value: queryMap.Entities },
+  { label: 'Knowledge Graph', value: queryMap.DocChunkEntities },
+];
 export const intitalGraphType: GraphType[] = ['Document', 'Entities', 'Chunk'];
 export const knowledgeGraph = 'Knowledge Graph';
 export const lexicalGraph = 'Lexical Graph';

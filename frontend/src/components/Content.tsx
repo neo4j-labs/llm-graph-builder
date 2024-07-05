@@ -337,13 +337,13 @@ const Content: React.FC<ContentProps> = ({
     [selectedfileslength, completedfileNo]
   );
 
-  const processingCheck = () => {
-    const processingFiles = filesData.some((file) => file.status === 'Processing');
-    const selectedRowProcessing = selectedRows.some((row) =>
-      filesData.some((file) => file.name === row && file.status === 'Processing')
-    );
-    return processingFiles || selectedRowProcessing;
-  };
+  // const processingCheck = () => {
+  //   const processingFiles = filesData.some((file) => file.status === 'Processing');
+  //   const selectedRowProcessing = selectedRows.some((row) =>
+  //     filesData.some((file) => file.name === row && file.status === 'Processing')
+  //   );
+  //   return processingFiles || selectedRowProcessing;
+  // };
 
   const filesForProcessing = useMemo(() => {
     let newstatusfiles: CustomFile[] = [];
@@ -418,7 +418,7 @@ const Content: React.FC<ContentProps> = ({
     if (storedSchema !== null) {
       setIsSchema(JSON.parse(storedSchema));
     }
-  }, []);
+  }, [isSchema]);
 
   const onClickHandler = () => {
     if (isSchema) {
@@ -594,6 +594,14 @@ const Content: React.FC<ContentProps> = ({
               ) : (
                 <span className='n-body-small'>Not Connected</span>
               )}
+              <div className='pt-1'>
+               {!isSchema ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
+              {isSchema ? (
+                <span className='n-body-small'>Graph Schema configured</span>
+              ) : (
+                <span className='n-body-small'>No Graph Schema configured</span>
+              )}
+              </div>
             </Typography>
           </div>
           {!connectionStatus ? (
@@ -610,19 +618,6 @@ const Content: React.FC<ContentProps> = ({
               </Button>
             </div>
           )}
-        </Flex>
-        <Flex className='w-full' alignItems='center' flexDirection='row'>
-          <div className='connectionstatus__container !py-2'>
-            <span className='h6 px-1'>Schema Settings</span>
-            <Typography variant='body-medium'>
-              {!isSchema ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
-              {isSchema ? (
-                <span className='n-body-small'>Graph Schema configured</span>
-              ) : (
-                <span className='n-body-small'>No Graph Schema configured</span>
-              )}
-            </Typography>
-          </div>
         </Flex>
         <FileTable
           isExpanded={isLeftExpanded && isRightExpanded}
@@ -702,7 +697,6 @@ const Content: React.FC<ContentProps> = ({
         open={openGraphView}
         setGraphViewOpen={setOpenGraphView}
         viewPoint={viewPoint}
-        processingCheck={processingCheck()}
       />
     </>
   );

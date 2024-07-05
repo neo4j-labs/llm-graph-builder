@@ -12,7 +12,7 @@ import { useCredentials } from '../../context/UserCredentials';
 import { chatBotAPI } from '../../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../../context/UsersFiles';
-import InfoModal from './Info/InfoModal';
+import InfoModal from './ChatInfoModal';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import IconButtonWithToolTip from '../UI/IconButtonToolTip';
@@ -35,6 +35,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [chunkModal, setChunkModal] = useState<chunk[]>([]);
   const [tokensUsed, setTokensUsed] = useState<number>(0);
   const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
+  const [chatsMode, setChatsMode] = useState<string>('graph+vector');
 
   const [value, copy] = useCopyToClipboard();
   const { speak, cancel } = useSpeechSynthesis({
@@ -63,6 +64,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       response_time?: number;
       speaking?: boolean;
       copying?: boolean;
+      mode?: string;
     },
     index = 0
   ) => {
@@ -89,6 +91,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
               response_time: response?.response_time,
               speaking: false,
               copying: false,
+              mode: response?.mode,
             },
           ]);
         } else {
@@ -107,6 +110,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
             lastmsg.response_time = response?.response_time;
             lastmsg.speaking = false;
             lastmsg.copying = false;
+            lastmsg.mode = response?.mode;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -136,6 +140,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
     let chatChunks;
     let chatTimeTaken;
     let chatTokensUsed;
+    let chatingMode;
     const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
     const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime };
     setListMessages([...listMessages, userMessage]);
@@ -151,6 +156,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       chatChunks = chatresponse?.data?.data?.info.chunkdetails;
       chatTokensUsed = chatresponse?.data?.data?.info.total_tokens;
       chatTimeTaken = chatresponse?.data?.data?.info.response_time;
+      chatingMode = chatresponse?.data?.data?.info?.mode;
       const finalbotReply = {
         reply: chatbotReply,
         sources: chatSources,
@@ -160,6 +166,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
         response_time: chatTimeTaken,
         speaking: false,
         copying: false,
+        mode: chatingMode,
       };
       simulateTypingEffect(finalbotReply);
     } catch (error) {
@@ -304,6 +311,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                               setChunkModal(chat.chunk_ids ?? []);
                               setTokensUsed(chat.total_tokens ?? 0);
                               setShowInfoModal(true);
+                              setChatsMode(chat.mode ?? '');
                             }}
                           >
                             {' '}
@@ -394,6 +402,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
           chunk_ids={chunkModal}
           response_time={responseTime}
           total_tokens={tokensUsed}
+          mode={chatsMode}
         />
       </Modal>
     </div>
