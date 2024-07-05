@@ -9,7 +9,7 @@ import WikipediaInput from './WikiPedia/WikipediaInput';
 import WebInput from './Web/WebInput';
 import YoutubeInput from './Youtube/YoutubeInput';
 import { APP_SOURCES } from '../../utils/Constants';
-import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
+import Neo4jDataImportFromCloud from '../../assets/images/data-from-cloud.svg';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 
 export default function GenericModal({
@@ -33,7 +33,7 @@ export default function GenericModal({
     <Dialog open={open} onClose={closeHandler}>
       <Dialog.Header>
         <Box className='flex flex-row pb-6 items-center mb-2'>
-          <img src={Neo4jRetrievalLogo} style={{ width: 95, height: 95, marginRight: 10 }} loading='lazy' />
+          <img src={Neo4jDataImportFromCloud} style={{ width: 95, height: 95, marginRight: 10 }} loading='lazy' />
           <Box className='flex flex-col'>
             <Typography variant='h2'>Web Sources</Typography>
             <Typography variant='body-medium' className='mb-2'>
