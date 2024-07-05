@@ -2,12 +2,14 @@ import { Dropdown } from '@neo4j-ndl/react';
 import { DropdownProps, OptionType } from '../types';
 import { useMemo } from 'react';
 import { capitalize } from '../utils/Utils';
+
 interface ReusableDropdownProps extends DropdownProps {
   options: string[];
   placeholder?: string;
   defaultValue?: string;
   children?: React.ReactNode;
   view?: 'ContentView' | 'GraphView';
+  isDisabled: boolean;
 }
 const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   options,
@@ -16,6 +18,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   onSelect,
   children,
   view,
+  isDisabled,
 }) => {
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
@@ -38,6 +41,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
             placeholder: placeholder || 'Select an option',
             defaultValue: defaultValue ? { label: capitalize(defaultValue), value: defaultValue } : undefined,
             menuPlacement: 'auto',
+            isDisabled: isDisabled,
           }}
           size='medium'
           fluid

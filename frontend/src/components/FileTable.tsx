@@ -320,7 +320,8 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
               placement='right'
               text='Graph'
               size='large'
-              disabled={!(info.getValue() === 'Completed' || info.getValue() == 'Cancelled')}
+              label='Graph view'
+              disabled={info.getValue() === 'New' || info.getValue() === 'Uploading'}
               clean
               onClick={() => onInspect(info?.row?.original?.name as string)}
             >

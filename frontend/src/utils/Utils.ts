@@ -2,10 +2,6 @@ import { calcWordColor } from '@neo4j-devtools/word-color';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { GraphType, Messages, Scheme } from '../types';
 
-type PartialLabelNode = Partial<Node> & {
-  labels: string;
-};
-
 // Get the Url
 export const url = () => {
   let url = window.location.href.replace('5173', '8000');
@@ -173,8 +169,7 @@ export const filterData = (
   graphType: GraphType[],
   allNodes: Node[],
   allRelationships: Relationship[],
-  scheme: Scheme,
-  // selectedDropdown:string
+  scheme: Scheme
 ) => {
   let filteredNodes: Node[] = [];
   let filteredRelations: Relationship[] = [];
@@ -195,7 +190,6 @@ export const filterData = (
       acc[key] = scheme[key];
       return acc;
     }, {} as Scheme);
-
   } else if (!graphType.includes('Document') && !graphType.includes('Entities') && graphType.includes('Chunk')) {
     // Only Chunk
     filteredNodes = allNodes.filter((node) => node.labels.includes('Chunk'));
@@ -216,7 +210,7 @@ export const filterData = (
     filteredRelations = allRelationships.filter((rel) =>
       ['PART_OF', 'FIRST_CHUNK', 'SIMILAR', 'NEXT_CHUNK'].includes(rel.caption)
     );
-    filteredScheme = {Document: scheme.Document, Chunk:scheme.Chunk};
+    filteredScheme = { Document: scheme.Document, Chunk: scheme.Chunk };
   } else if (!graphType.includes('Document') && graphType.includes('Entities') && graphType.includes('Chunk')) {
     // Chunk + Entity
     filteredNodes = allNodes.filter((node) => !node.labels.includes('Document'));
