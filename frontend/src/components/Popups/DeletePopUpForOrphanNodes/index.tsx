@@ -149,7 +149,7 @@ export default function DeletePopUpForOrphanNodes({
     getSortedRowModel: getSortedRowModel(),
     initialState: {
       pagination: {
-        pageSize: 8,
+        pageSize: 5,
       },
     },
   });
@@ -232,7 +232,7 @@ export default function DeletePopUpForOrphanNodes({
           disabled={!table.getSelectedRowModel().rows.length}
           placement='top'
         >
-          Select Node(s) to delete
+          {table.getSelectedRowModel().rows.length?`Delete Selected Nodes (${table.getSelectedRowModel().rows.length})`:'Select Node(s) to delete'}
         </ButtonWithToolTip>
       </Flex>
     </div>
