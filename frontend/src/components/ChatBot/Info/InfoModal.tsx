@@ -17,7 +17,7 @@ import { calcWordColor } from '@neo4j-devtools/word-color';
 import ReactMarkdown from 'react-markdown';
 import { GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
 import { youtubeLinkValidation } from '../../../utils/Utils';
-const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, response_time, chunk_ids }) => {
+const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, response_time, chunk_ids, mode }) => {
   const [activeTab, setActiveTab] = useState<number>(3);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -106,7 +106,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
       </Box>
       <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
         <Tabs.Tab tabId={3}>Sources used</Tabs.Tab>
-        <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
+        {mode === 'graph+vector' && (<Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>)}
         <Tabs.Tab tabId={5}>Chunks</Tabs.Tab>
       </Tabs>
       <Flex className='p-4'>
