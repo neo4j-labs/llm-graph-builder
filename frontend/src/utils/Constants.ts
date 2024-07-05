@@ -37,25 +37,25 @@ export const llms =
   process.env?.LLM_MODELS?.trim() != ''
     ? process.env.LLM_MODELS?.split(',')
     : [
-      'diffbot',
-      'openai-gpt-3.5',
-      'openai-gpt-4o',
-      'gemini-1.0-pro',
-      'gemini-1.5-pro',
-      'LLM_MODEL_CONFIG_azure-ai-gpt-35',
-      'LLM_MODEL_CONFIG_azure-ai-gpt-4o',
-      'LLM_MODEL_CONFIG_ollama_llama3',
-      'LLM_MODEL_CONFIG_groq-llama3-70b',
-      'LLM_MODEL_CONFIG_anthropic-claude-3-5-sonnet',
-      'LLM_MODEL_CONFIG_fireworks-llama-v3-70b',
-      'LLM_MODEL_CONFIG_bedrock-claude-3-5-sonnet',
-    ];
+        'diffbot',
+        'openai-gpt-3.5',
+        'openai-gpt-4o',
+        'gemini-1.0-pro',
+        'gemini-1.5-pro',
+        'LLM_MODEL_CONFIG_azure-ai-gpt-35',
+        'LLM_MODEL_CONFIG_azure-ai-gpt-4o',
+        'LLM_MODEL_CONFIG_ollama_llama3',
+        'LLM_MODEL_CONFIG_groq-llama3-70b',
+        'LLM_MODEL_CONFIG_anthropic-claude-3-5-sonnet',
+        'LLM_MODEL_CONFIG_fireworks-llama-v3-70b',
+        'LLM_MODEL_CONFIG_bedrock-claude-3-5-sonnet',
+      ];
 
 export const defaultLLM = llms?.includes('openai-gpt-3.5')
   ? 'openai-gpt-3.5'
   : llms?.includes('gemini-1.0-pro')
-    ? 'gemini-1.0-pro'
-    : 'diffbot';
+  ? 'gemini-1.0-pro'
+  : 'diffbot';
 
 export const chunkSize = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.TIME_PER_PAGE ? parseInt(process.env.TIME_PER_PAGE) : 50;
@@ -157,8 +157,8 @@ export const buttonCaptions = {
 };
 
 export const ChatModeOptions = [
-  { Icon: VisualizeBloomIcon, value: 'vector' },
-  { Icon: 'abc', value: 'graph+vector' },
+  { Icon: VisualizeBloomIcon, value: 'graph+vector' },
+  { Icon: 'abc', value: 'vector' },
 ];
 
 export const taskParam: string[] = ['update_similarity_graph', 'create_fulltext_index'];
