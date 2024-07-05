@@ -395,7 +395,6 @@ export interface chatInfoMessage extends Partial<Messages> {
   response_time: number;
   chunk_ids: chunk[];
   total_tokens: number;
-  mode:string;
 }
 
 export interface eventResponsetypes {
@@ -521,10 +520,4 @@ export type Horizontal = 'left' | 'right' | 'center';
 export interface Origin {
   vertical: Vertical;
   horizontal: Horizontal;
-}
-
-export type ColumnFiltersState = ColumnFilter[];
-export interface ColumnFilter {
-  id: string;
-  value: unknown;
 }
