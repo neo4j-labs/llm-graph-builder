@@ -1,6 +1,6 @@
 import { Checkbox } from '@neo4j-ndl/react';
 import React from 'react';
-import { GraphType, CheckboxSectionProps } from '../../types';
+import { CheckboxSectionProps } from '../../types';
 
 const CheckboxSelection: React.FC<CheckboxSectionProps> = ({ graphType, loading, handleChange }) => (
   <div className='flex gap-5 mt-2 justify-between'>

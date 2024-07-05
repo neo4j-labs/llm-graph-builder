@@ -26,6 +26,8 @@ interface FileContextType {
   setchatMode: Dispatch<SetStateAction<string>>;
   isSchema: boolean;
   setIsSchema: React.Dispatch<React.SetStateAction<boolean>>;
+  showTextFromSchemaDialog: boolean;
+  setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<boolean>>;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
@@ -45,6 +47,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [chatMode, setchatMode] = useState<string>('graph+vector');
   const { userCredentials } = useCredentials();
   const [isSchema, setIsSchema] = useState<boolean>(false);
+  const [showTextFromSchemaDialog, setShowTextFromSchemaDialog] = useState<boolean>(false);
 
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
@@ -84,6 +87,8 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setchatMode,
     isSchema,
     setIsSchema,
+    setShowTextFromSchemaDialog,
+    showTextFromSchemaDialog,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

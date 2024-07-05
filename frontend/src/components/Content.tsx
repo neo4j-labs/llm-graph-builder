@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import ConnectionModal from './Popups/ConnectionModal/ConnectionModal';
 import FileTable from './FileTable';
 import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
@@ -6,7 +6,7 @@ import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './UI/Alert';
 import { extractAPI } from '../utils/FileAPI';
-import { ContentProps, CustomFile, Menuitems, OptionType, UserCredentials, alertStateType } from '../types';
+import { ContentProps, CustomFile, OptionType, UserCredentials, alertStateType } from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
 import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
@@ -20,7 +20,9 @@ import connectAPI from '../services/ConnectAPI';
 import SettingModalHOC from '../HOC/SettingModalHOC';
 import DropdownComponent from './Dropdown';
 import GraphViewModal from './Graph/GraphViewModal';
-import CustomMenu from './UI/Menu';
+import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
+import { OverridableStringUnion } from '@mui/types';
+import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 
 const Content: React.FC<ContentProps> = ({
   isLeftExpanded,
@@ -28,7 +30,6 @@ const Content: React.FC<ContentProps> = ({
   openTextSchema,
   isSchema,
   setIsSchema,
-  openOrphanNodeDeletionModal,
 }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
@@ -40,8 +41,7 @@ const Content: React.FC<ContentProps> = ({
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [isLargeFile, setIsLargeFile] = useState<boolean>(false);
   const [showSettingnModal, setshowSettingModal] = useState<boolean>(false);
-  const [openDeleteMenu, setopenDeleteMenu] = useState<boolean>(false);
-  const [deleteAnchor, setdeleteAnchor] = useState<HTMLElement | null>(null);
+  const [showEnhancementDialog, setshowEnhancementDialog] = useState<boolean>(false);
 
   const {
     filesData,
@@ -81,7 +81,22 @@ const Content: React.FC<ContentProps> = ({
       });
     }
   );
-
+  const openGraphEnhancementDialog = () => {
+    setshowEnhancementDialog(true);
+  };
+  const closeGraphEnhancementDialog = () => {
+    setshowEnhancementDialog(false);
+  };
+  const showAlert = (
+    alertmsg: string,
+    alerttype: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined
+  ) => {
+    setalertDetails({
+      showAlert: true,
+      alertMessage: alertmsg,
+      alertType: alerttype,
+    });
+  };
   useEffect(() => {
     if (!init && !searchParams.has('connectURL')) {
       let session = localStorage.getItem('neo4j.connection');
@@ -271,8 +286,9 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -282,10 +298,10 @@ const Content: React.FC<ContentProps> = ({
     isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
       : isRightExpanded
-        ? 'contentWithChatBot'
-        : !isLeftExpanded && !isRightExpanded
-          ? 'w-[calc(100%-128px)]'
-          : 'contentWithDropzoneExpansion';
+      ? 'contentWithChatBot'
+      : !isLeftExpanded && !isRightExpanded
+      ? 'w-[calc(100%-128px)]'
+      : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -320,6 +336,14 @@ const Content: React.FC<ContentProps> = ({
     () => (selectedfileslength ? completedfileNo === 0 : true),
     [selectedfileslength, completedfileNo]
   );
+
+  const processingCheck = () => {
+    const processingFiles = filesData.some((file) => file.status === 'Processing');
+    const selectedRowProcessing = selectedRows.some((row) =>
+      filesData.some((file) => file.name === row && file.status === 'Processing')
+    );
+    return processingFiles || selectedRowProcessing;
+  };
 
   const filesForProcessing = useMemo(() => {
     let newstatusfiles: CustomFile[] = [];
@@ -483,23 +507,6 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
-  const deleteMenuItems: Menuitems[] = useMemo(
-    () => [
-      {
-        title: `Delete Files ${selectedfileslength > 0 ? `(${selectedfileslength})` : ''}`,
-        onClick: () => setshowDeletePopUp(true),
-        disabledCondition: !selectedfileslength,
-        description: tooltips.deleteFile,
-      },
-      {
-        title: 'Deleted unconnected Nodes',
-        onClick: () => openOrphanNodeDeletionModal(),
-        disabledCondition: false,
-      },
-    ],
-    [selectedfileslength]
-  );
-
   const handleContinue = () => {
     if (!isLargeFile) {
       handleGenerateGraph(true, filesData);
@@ -517,7 +524,6 @@ const Content: React.FC<ContentProps> = ({
     });
     localStorage.setItem('isSchema', JSON.stringify(true));
   };
-
   return (
     <>
       {alertDetails.showAlert && (
@@ -565,6 +571,13 @@ const Content: React.FC<ContentProps> = ({
           setIsSchema={setIsSchema}
         />
       )}
+      {showEnhancementDialog && (
+        <GraphEnhancementDialog
+          open={showEnhancementDialog}
+          onClose={closeGraphEnhancementDialog}
+          showAlert={showAlert}
+        ></GraphEnhancementDialog>
+      )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>
           <ConnectionModal
@@ -583,16 +596,33 @@ const Content: React.FC<ContentProps> = ({
               )}
             </Typography>
           </div>
-
           {!connectionStatus ? (
             <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
               {buttonCaptions.connectToNeo4j}
             </Button>
           ) : (
-            <Button className='mr-2.5' onClick={disconnect}>
-              {buttonCaptions.disconnect}
-            </Button>
+            <div>
+              <Button className='mr-2.5' onClick={openGraphEnhancementDialog}>
+                Graph Enhancement
+              </Button>
+              <Button className='mr-2.5' onClick={disconnect}>
+                {buttonCaptions.disconnect}
+              </Button>
+            </div>
           )}
+        </Flex>
+        <Flex className='w-full' alignItems='center' flexDirection='row'>
+          <div className='connectionstatus__container'>
+            <span className='h6 px-1'>Schema Settings</span>
+            <Typography variant='body-medium'>
+              {!isSchema ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
+              {isSchema ? (
+                <span className='n-body-small'>Graph Schema configured</span>
+              ) : (
+                <span className='n-body-small'>No Graph Schema configured</span>
+              )}
+            </Typography>
+          </div>
         </Flex>
         <FileTable
           isExpanded={isLeftExpanded && isRightExpanded}
@@ -605,8 +635,9 @@ const Content: React.FC<ContentProps> = ({
           }}
         ></FileTable>
         <Flex
-          className={`${!isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-            } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+          className={`${
+            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection='row'
         >
@@ -616,6 +647,7 @@ const Content: React.FC<ContentProps> = ({
             placeholder='Select LLM Model'
             defaultValue={defaultLLM}
             view='ContentView'
+            isDisabled={false}
           />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <ButtonWithToolTip
@@ -649,25 +681,19 @@ const Content: React.FC<ContentProps> = ({
             >
               {buttonCaptions.exploreGraphWithBloom}
             </ButtonWithToolTip>
-            <CustomMenu
-              open={openDeleteMenu}
-              closeHandler={useCallback(() => {
-                setopenDeleteMenu(false);
-              }, [])}
-              items={deleteMenuItems}
-              MenuAnchor={deleteAnchor}
-              anchorOrigin={useMemo(() => ({ horizontal: 'left', vertical: 'bottom' }), [])}
-              transformOrigin={useMemo(() => ({ horizontal: 'right', vertical: 'top' }), [])}
-            ></CustomMenu>
-            <Button
-              label='Delete Menu trigger'
-              onClick={(e) => {
-                setdeleteAnchor(e.currentTarget);
-                setopenDeleteMenu(true);
-              }}
+            <ButtonWithToolTip
+              text={
+                !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
+              }
+              placement='top'
+              onClick={() => setshowDeletePopUp(true)}
+              disabled={!selectedfileslength}
+              className='ml-0.5'
+              label='Delete Files'
             >
-              Delete
-            </Button>
+              {buttonCaptions.deleteFiles}
+              {selectedfileslength > 0 && `(${selectedfileslength})`}
+            </ButtonWithToolTip>
           </Flex>
         </Flex>
       </div>
@@ -676,6 +702,7 @@ const Content: React.FC<ContentProps> = ({
         open={openGraphView}
         setGraphViewOpen={setOpenGraphView}
         viewPoint={viewPoint}
+        processingCheck={processingCheck()}
       />
     </>
   );

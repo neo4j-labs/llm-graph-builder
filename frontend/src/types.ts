@@ -153,7 +153,6 @@ export interface ContentProps {
   openTextSchema: () => void;
   isSchema?: boolean;
   setIsSchema: Dispatch<SetStateAction<boolean>>;
-  openOrphanNodeDeletionModal: () => void;
 }
 
 export interface FileTableProps {
@@ -246,6 +245,7 @@ export interface GraphViewModalProps {
   viewPoint: string;
   nodeValues?: Node[];
   relationshipValues?: Relationship[];
+  processingCheck?: boolean;
 }
 
 export type GraphType = 'Document' | 'Entities' | 'Chunk';
