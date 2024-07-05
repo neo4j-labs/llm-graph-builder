@@ -99,9 +99,10 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens
         <Box className='flex flex-col'>
           <Typography variant='h2'>Retrieval information</Typography>
           <Typography variant='body-medium' className='mb-2'>
-            To generate this response, in <span className='font-bold'>{response_time} seconds</span> we used{' '}
-            <span className='font-bold'>{total_tokens}</span> tokens with the model{' '}
-            <span className='font-bold'>{model}</span>.
+            To generate this response, the process took <span className='font-bold'>{response_time} seconds,</span>{' '}
+            utilizing <span className='font-bold'>{total_tokens}</span> tokens with the model{' '}
+            <span className='font-bold'>{model}</span> in{' '}
+            <span className='font-bold'>{mode !== 'vector' ? mode.replace(/\+/g, ' & ') : mode}</span> mode.
           </Typography>
         </Box>
       </Box>

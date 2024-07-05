@@ -186,7 +186,7 @@ export const filterData = (
     filteredNodes = allNodes.filter((node) => !node.labels.includes('Document') && !node.labels.includes('Chunk'));
     // @ts-ignore
     filteredRelations = allRelationships.filter((rel) => !['PART_OF', 'FIRST_CHUNK', 'HAS_ENTITY', 'SIMILAR', 'NEXT_CHUNK'].includes(rel.caption));
-    filteredScheme = Object.fromEntries(entityTypes.map((key)=>[key,scheme[key]])) as Scheme;
+    filteredScheme = Object.fromEntries(entityTypes.map((key) => [key, scheme[key]])) as Scheme;
   } else if (!graphType.includes('Document') && !graphType.includes('Entities') && graphType.includes('Chunk')) {
     // Only Chunk
     // @ts-ignore
@@ -195,9 +195,9 @@ export const filterData = (
     filteredRelations = allRelationships.filter((rel) => ['SIMILAR', 'NEXT_CHUNK'].includes(rel.caption));
     filteredScheme = { Chunk: scheme.Chunk };
   } else if (graphType.includes('Document') && graphType.includes('Entities') && !graphType.includes('Chunk')) {
-    // Document + Entity   
+    // Document + Entity
     // @ts-ignore
-    filteredNodes = allNodes.filter((node) => node.labels.includes('Document') || (!node.labels.includes('Document') && !node.labels.includes('Chunk')));
+    filteredNodes = allNodes.filter((node) =>node.labels.includes('Document') || (!node.labels.includes('Document') && !node.labels.includes('Chunk')));
     // @ts-ignore
     filteredRelations = allRelationships.filter((rel) => !['PART_OF', 'FIRST_CHUNK', 'HAS_ENTITY', 'SIMILAR', 'NEXT_CHUNK'].includes(rel.caption));
   } else if (graphType.includes('Document') && !graphType.includes('Entities') && graphType.includes('Chunk')) {
@@ -205,7 +205,7 @@ export const filterData = (
     // @ts-ignore
     filteredNodes = allNodes.filter((node) => node.labels.includes('Document') || node.labels.includes('Chunk'));
     // @ts-ignore
-    filteredRelations = allRelationships.filter((rel) => ['PART_OF', 'FIRST_CHUNK', 'SIMILAR', 'NEXT_CHUNK'].includes(rel.caption));
+    filteredRelations = allRelationships.filter((rel) =>['PART_OF', 'FIRST_CHUNK', 'SIMILAR', 'NEXT_CHUNK'].includes(rel.caption));
     filteredScheme = { Document: scheme.Document, Chunk: scheme.Chunk };
   } else if (!graphType.includes('Document') && graphType.includes('Entities') && graphType.includes('Chunk')) {
     // Chunk + Entity
@@ -241,4 +241,3 @@ export const calculateProcessingTime = (fileSizeBytes: number, processingTimePer
 export const capitalize = (word: string): string => {
   return `${word[0].toUpperCase()}${word.slice(1)}`;
 };
-

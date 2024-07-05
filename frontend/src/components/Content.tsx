@@ -418,7 +418,7 @@ const Content: React.FC<ContentProps> = ({
     if (storedSchema !== null) {
       setIsSchema(JSON.parse(storedSchema));
     }
-  }, []);
+  }, [isSchema]);
 
   const onClickHandler = () => {
     if (isSchema) {

@@ -224,6 +224,7 @@ export interface Messages {
   total_tokens?: number;
   speaking?: boolean;
   copying?: boolean;
+  mode?: string;
 }
 
 export type ChatbotProps = {

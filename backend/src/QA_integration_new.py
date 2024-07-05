@@ -285,7 +285,8 @@ def QA_RAG(graph, model, question, session_id, mode):
                 "model": model_version,
                 "chunkdetails": result["chunkdetails"],
                 "total_tokens": total_tokens,
-                "response_time": 0
+                "response_time": 0,
+                "mode": mode
             },
             "user": "chatbot"
         }
@@ -299,7 +300,8 @@ def QA_RAG(graph, model, question, session_id, mode):
             "info": {
                 "sources": [],
                 "chunkids": [],
-                "error": f"{error_name} :- {str(e)}"
+                "error": f"{error_name} :- {str(e)}",
+                "mode": mode
             },
             "user": "chatbot"
         }

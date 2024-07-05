@@ -26,6 +26,7 @@ import {
   lexicalGraph,
   mouseEventCallbacks,
   nvlOptions,
+  queryMap,
 } from '../../utils/Constants';
 import { useFileContext } from '../../context/UsersFiles';
 // import CheckboxSelection from './CheckboxSelection';
@@ -51,6 +52,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [scheme, setScheme] = useState<Scheme>({});
   const { selectedRows } = useFileContext();
   const [newScheme, setNewScheme] = useState<Scheme>({});
+  const [dropdownVal, setDropdownVal] = useState<OptionType>({
+    label: 'Knowledge Graph',
+    value: queryMap.DocChunkEntities,
+  });
 
   // const handleCheckboxChange = (graph: GraphType) => {
   //   const currentIndex = graphType.indexOf(graph);
@@ -181,8 +186,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
   // Refresh the graph with nodes and relations if file is processing
   const handleRefresh = () => {
-    setGraphType(intitalGraphType);
     graphApi();
+    setGraphType(intitalGraphType);
+    setDropdownVal({ label: 'Knowledge Graph', value: queryMap.DocChunkEntities });
   };
 
   // when modal closes reset all states to default
@@ -195,7 +201,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setNodes([]);
     setRelationships([]);
   };
-
 
   // sort the legends in with Chunk and Document always the first two values
   const legendCheck = Object.keys(newScheme).sort((a, b) => {
@@ -241,14 +246,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     if (selectedOption?.value) {
       const selectedValue = selectedOption.value;
       let newGraphType: GraphType[] = [];
-      if (selectedValue === knowledgeGraph) {
-        newGraphType = intitalGraphType;
-      } else if (selectedValue === lexicalGraph) {
-        newGraphType = ['Document', 'Chunk'];
-      } else if (selectedValue === entityGraph) {
+      if (selectedValue === 'entities') {
         newGraphType = ['Entities'];
+      } else if (selectedValue === queryMap.DocChunks) {
+        newGraphType = ['Document', 'Chunk'];
+      } else if (selectedValue === queryMap.DocChunkEntities) {
+        newGraphType = ['Document', 'Entities', 'Chunk'];
       }
       setGraphType(newGraphType);
+      setDropdownVal(selectedOption);
       initGraph(newGraphType, allNodes, allRelationships, scheme);
     }
   };
@@ -279,6 +285,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 defaultValue={getDropdownDefaultValue()}
                 view='GraphView'
                 isDisabled={loading}
+                value={dropdownVal}
               />
             )}
           </Flex>
