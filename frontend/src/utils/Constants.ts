@@ -161,7 +161,7 @@ export const ChatModeOptions = [
   { Icon: 'abc', value: 'vector' },
 ];
 
-export const taskParam: string[] = ['update_similarity_graph', 'create_fulltext_index'];
+export const taskParam: string[] = ['update_similarity_graph', 'create_fulltext_index','create_entity_embedding'];
 
 export const nvlOptions: NvlOptions = {
   allowDynamicMinZoom: true,
