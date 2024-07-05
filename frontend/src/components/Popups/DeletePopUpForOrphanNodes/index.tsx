@@ -50,6 +50,10 @@ export default function DeletePopUpForOrphanNodes({
         console.log(error);
       }
     })();
+    return()=>{
+  setOrphanNodes([]);
+ setTotalOrphanNodes(0);
+}
   }, [userCredentials]);
   const columnHelper = createColumnHelper<orphanNodeProps>();
 
