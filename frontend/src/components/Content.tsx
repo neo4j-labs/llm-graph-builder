@@ -612,7 +612,7 @@ const Content: React.FC<ContentProps> = ({
           )}
         </Flex>
         <Flex className='w-full' alignItems='center' flexDirection='row'>
-          <div className='connectionstatus__container'>
+          <div className='connectionstatus__container !py-2'>
             <span className='h6 px-1'>Schema Settings</span>
             <Typography variant='body-medium'>
               {!isSchema ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}

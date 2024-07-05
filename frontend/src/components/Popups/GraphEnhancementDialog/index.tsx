@@ -1,7 +1,7 @@
 import { Dialog, Tabs, Box, Typography } from '@neo4j-ndl/react';
 import graphenhancement from '../../../assets/images/graph-enhancements.svg';
 import { useState } from 'react';
-import DeletePopUpForOrphanNodes from '../DeletePopUpForOrphanNodes';
+import DeletePopUpForOrphanNodes from './DeleteTabForOrphanNodes';
 import deleteOrphanAPI from '../../../services/DeleteOrphanNodes';
 import { UserCredentials } from '../../../types';
 import { useCredentials } from '../../../context/UserCredentials';
@@ -47,8 +47,8 @@ export default function GraphEnhancementDialog({
       disableCloseButton={false}
       onClose={onClose}
     >
-      <Dialog.Header className='flex justify-between self-end' id='chatbot-dialog-title'>
-        <Box className='n-bg-palette-neutral-bg-weak p-4'>
+      <Dialog.Header className='flex justify-between self-end !mb-0'>
+        <Box className='n-bg-palette-neutral-bg-weak px-4'>
           <Box className='flex flex-row items-center mb-2'>
             <img src={graphenhancement} style={{ width: 200, height: 200, marginRight: 10 }} loading='lazy' />
             <Box className='flex flex-col'>

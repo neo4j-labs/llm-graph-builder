@@ -1,12 +1,12 @@
 import { Checkbox, DataGrid, DataGridComponents, Flex, Typography } from '@neo4j-ndl/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { UserCredentials, orphanNodeProps } from '../../../types';
-import { getOrphanNodes } from '../../../services/GetOrphanNodes';
-import { useCredentials } from '../../../context/UserCredentials';
-import Legend from '../../UI/Legend';
+import { UserCredentials, orphanNodeProps } from '../../../../types';
+import { getOrphanNodes } from '../../../../services/GetOrphanNodes';
+import { useCredentials } from '../../../../context/UserCredentials';
+import Legend from '../../../UI/Legend';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import { DocumentIconOutline } from '@neo4j-ndl/react/icons';
-import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
+import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import {
   useReactTable,
   getCoreRowModel,
@@ -99,7 +99,13 @@ export default function DeletePopUpForOrphanNodes({
       columnHelper.accessor((row) => row.e.labels, {
         id: 'Labels',
         cell: (info) => {
-          return info.getValue().map((l, index) => <Legend key={index} title={l} bgColor={calcWordColor(l)}></Legend>);
+          return (
+            <Flex>
+              {info.getValue().map((l, index) => (
+                <Legend key={index} title={l} bgColor={calcWordColor(l)}></Legend>
+              ))}
+            </Flex>
+          );
         },
         header: () => <span>Labels</span>,
         footer: (info) => info.column.id,
@@ -107,14 +113,18 @@ export default function DeletePopUpForOrphanNodes({
       columnHelper.accessor((row) => row.documents, {
         id: 'Connnected Documents',
         cell: (info) => {
-          return Array.from(new Set([...info.getValue()])).map((d, index) => (
-            <Flex key={`d${index}`} flexDirection='row'>
-              <span>
-                <DocumentIconOutline className='n-size-token-7' />
-              </span>
-              <span>{d}</span>
+          return (
+            <Flex>
+              {Array.from(new Set([...info.getValue()])).map((d, index) => (
+                <Flex key={`d${index}`} flexDirection='row'>
+                  <span>
+                    <DocumentIconOutline className='n-size-token-7' />
+                  </span>
+                  <span>{d}</span>
+                </Flex>
+              ))}
             </Flex>
-          ));
+          );
         },
         header: () => <span>Related Documents </span>,
         footer: (info) => info.column.id,
@@ -149,7 +159,7 @@ export default function DeletePopUpForOrphanNodes({
     getSortedRowModel: getSortedRowModel(),
     initialState: {
       pagination: {
-        pageSize: 8,
+        pageSize: 5,
       },
     },
   });
@@ -232,7 +242,9 @@ export default function DeletePopUpForOrphanNodes({
           disabled={!table.getSelectedRowModel().rows.length}
           placement='top'
         >
-          Select Node(s) to delete
+          {table.getSelectedRowModel().rows.length
+            ? `Delete Selected Nodes (${table.getSelectedRowModel().rows.length})`
+            : 'Select Node(s) to delete'}
         </ButtonWithToolTip>
       </Flex>
     </div>

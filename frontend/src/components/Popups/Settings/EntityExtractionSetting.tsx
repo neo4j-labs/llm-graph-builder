@@ -112,6 +112,7 @@ export default function EntityExtractionSetting({
       localStorage.setItem('isSchema', JSON.stringify(true));
       return updatedOptions;
     });
+    setIsSchema(true);
   };
   const onChangenodes = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
     if (actionMeta.action === 'clear') {
@@ -119,6 +120,7 @@ export default function EntityExtractionSetting({
       localStorage.setItem('isSchema', JSON.stringify(false));
     }
     setSelectedNodes(selectedOptions);
+    setIsSchema(true);
     localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions }));
     localStorage.setItem('isSchema', JSON.stringify(true));
   };
@@ -130,6 +132,7 @@ export default function EntityExtractionSetting({
       );
     }
     setSelectedRels(selectedOptions);
+    setIsSchema(true);
     localStorage.setItem('selectedRelationshipLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions }));
   };
   const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>([]);
