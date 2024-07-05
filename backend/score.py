@@ -18,7 +18,7 @@ from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.graph_query import get_graph_results
 from src.chunkid_entities import get_entities_from_chunkids
-from src.post_processing import create_fulltext
+from src.post_processing import create_fulltext, create_entity_embedding
 from sse_starlette.sse import EventSourceResponse
 import json
 from typing import List, Mapping
@@ -262,7 +262,11 @@ async def post_processing(uri=Form(None), userName=Form(None), password=Form(Non
             josn_obj = {'api_name': 'post_processing/create_fulltext_index', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logger.log_struct(josn_obj)
             logging.info(f'Full Text index created')
-
+        if os.environ.get('ENTITY_EMBEDDING').upper()=="TRUE" and "create_entity_embedding" in tasks:
+            await asyncio.to_thread(create_entity_embedding, graph)
+            josn_obj = {'api_name': 'post_processing/create_entity_embedding', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+            logger.log_struct(josn_obj)
+            logging.info(f'Entity Embeddings created')
         return create_api_response('Success', message='All tasks completed successfully')
     
     except Exception as e:
