@@ -337,13 +337,13 @@ const Content: React.FC<ContentProps> = ({
     [selectedfileslength, completedfileNo]
   );
 
-  const processingCheck = () => {
-    const processingFiles = filesData.some((file) => file.status === 'Processing');
-    const selectedRowProcessing = selectedRows.some((row) =>
-      filesData.some((file) => file.name === row && file.status === 'Processing')
-    );
-    return processingFiles || selectedRowProcessing;
-  };
+  // const processingCheck = () => {
+  //   const processingFiles = filesData.some((file) => file.status === 'Processing');
+  //   const selectedRowProcessing = selectedRows.some((row) =>
+  //     filesData.some((file) => file.name === row && file.status === 'Processing')
+  //   );
+  //   return processingFiles || selectedRowProcessing;
+  // };
 
   const filesForProcessing = useMemo(() => {
     let newstatusfiles: CustomFile[] = [];
@@ -702,7 +702,6 @@ const Content: React.FC<ContentProps> = ({
         open={openGraphView}
         setGraphViewOpen={setOpenGraphView}
         viewPoint={viewPoint}
-        processingCheck={processingCheck()}
       />
     </>
   );

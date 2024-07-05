@@ -37,7 +37,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   viewPoint,
   nodeValues,
   relationshipValues,
-  processingCheck,
 }) => {
   const nvlRef = useRef<NVL>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -182,7 +181,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
   // Refresh the graph with nodes and relations if file is processing
   const handleRefresh = () => {
-    setLoading(true);
     setGraphType(intitalGraphType);
     graphApi();
   };
@@ -197,6 +195,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setNodes([]);
     setRelationships([]);
   };
+
 
   // sort the legends in with Chunk and Document always the first two values
   const legendCheck = Object.keys(newScheme).sort((a, b) => {
@@ -279,7 +278,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 placeholder='Select Graph Type'
                 defaultValue={getDropdownDefaultValue()}
                 view='GraphView'
-                isDisabled={nodes.length === 0 || allNodes.length === 0}
+                isDisabled={loading}
               />
             )}
           </Flex>
@@ -310,7 +309,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       nvlCallbacks={nvlCallbacks}
                     />
                     <IconButtonArray orientation='vertical' floating className='absolute bottom-4 right-4'>
-                      {viewPoint !== 'chatInfoView' && processingCheck && (
+                      {viewPoint !== 'chatInfoView' && (
                         <IconButtonWithToolTip
                           label='Refresh'
                           text='Refresh graph'
