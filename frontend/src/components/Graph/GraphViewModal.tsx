@@ -89,6 +89,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setRelationships([]);
       setAllNodes([]);
       setAllRelationships([]);
+      setDropdownVal({ label: 'Knowledge Graph', value: queryMap.DocChunkEntities });
     };
   }, []);
 
@@ -200,6 +201,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setGraphType(intitalGraphType);
     setNodes([]);
     setRelationships([]);
+    setDropdownVal({ label: 'Knowledge Graph', value: queryMap.DocChunkEntities });
   };
 
   // sort the legends in with Chunk and Document always the first two values
