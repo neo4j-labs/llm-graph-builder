@@ -336,7 +336,7 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     obj_source_node.processing_time = processed_time
 
     graphDb_data_Access.update_source_node(obj_source_node)
-    logging.info('Updated the nodeCount and relCount properties in Docuemnt node')
+    logging.info('Updated the nodeCount and relCount properties in Document node')
     logging.info(f'file:{file_name} extraction has been completed')
 
 
