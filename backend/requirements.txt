@@ -154,7 +154,7 @@ tiktoken==0.6.0
 timm==0.9.12
 tokenizers==0.15.2
 tqdm==4.66.2
-transformers==4.37.1
+transformers==4.42.3
 types-protobuf
 types-requests
 typing-inspect==0.9.0
@@ -173,6 +173,6 @@ wrapt==1.16.0
 yarl==1.9.4
 youtube-transcript-api==0.6.2
 zipp==3.17.0
-sentence-transformers
+sentence-transformers=2.7.0
 google-cloud-logging==3.10.0
 PyMuPDF==1.24.5
