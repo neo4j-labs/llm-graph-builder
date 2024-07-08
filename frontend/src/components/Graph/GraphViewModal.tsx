@@ -233,8 +233,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     if (allNodes.length > 0 && allRelationships.length > 0) {
       const { filteredNodes, filteredRelations, filteredScheme } = filterData(
         graphType,
-        finalNodes,
-        finalRels,
+        finalNodes ?? [],
+        finalRels ?? [],
         schemeVal
       );
       setNodes(filteredNodes);
@@ -301,6 +301,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             ) : status !== 'unknown' ? (
               <div className='my-40 flex items-center justify-center'>
                 <Banner name='graph banner' description={statusMessage} type={status} />
+              </div>
+            ) : nodes.length === 0 || relationships.length === 0 ? (
+              <div className='my-40 flex items-center justify-center'>
+                <Banner name='graph banner' description='No Entities Found' type='danger' />
               </div>
             ) : (
               <>
