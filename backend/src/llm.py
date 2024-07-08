@@ -20,6 +20,9 @@ from src.shared.constants import MODEL_VERSIONS
 
 def get_llm(model_version: str):
     """Retrieve the specified language model based on the model name."""
+    env_key = "LLM_MODEL_CONFIG_" + model_version
+    env_value = os.environ.get(env_key)
+    logging.info("Model: {}".format(env_key))
     if "gemini" in model_version:
         credentials, project_id = google.auth.default()
         model_name = MODEL_VERSIONS[model_version]
@@ -46,7 +49,7 @@ def get_llm(model_version: str):
         )
 
     elif "azure" in model_version:
-        model_name, api_endpoint, api_key, api_version = os.environ.get(model_version).split(",")
+        model_name, api_endpoint, api_key, api_version = env_value.split(",")
         llm = AzureChatOpenAI(
             api_key=api_key,
             azure_endpoint=api_endpoint,
@@ -58,23 +61,21 @@ def get_llm(model_version: str):
         )
 
     elif "anthropic" in model_version:
-        model_name, api_key = os.environ.get(model_version).split(",")
+        model_name, api_key = env_value.split(",")
         llm = ChatAnthropic(
             api_key=api_key, model=model_name, temperature=0, timeout=None
         )
 
     elif "fireworks" in model_version:
-        model_name, api_key = os.environ.get(model_version).split(",")
+        model_name, api_key = env_value.split(",")
         llm = ChatFireworks(api_key=api_key, model=model_name)
 
     elif "groq" in model_version:
-        model_name, base_url, api_key = os.environ.get(model_version).split(",")
+        model_name, base_url, api_key = env_value.split(",")
         llm = ChatGroq(api_key=api_key, model_name=model_name, temperature=0)
 
     elif "bedrock" in model_version:
-        model_name, aws_access_key, aws_secret_key, region_name = os.environ.get(
-            model_version
-        ).split(",")
+        model_name, aws_access_key, aws_secret_key, region_name = env_value.split(",")
         bedrock_client = boto3.client(
             service_name="bedrock-runtime",
             region_name=region_name,
@@ -87,7 +88,7 @@ def get_llm(model_version: str):
         )
 
     elif "ollama" in model_version:
-        model_name, base_url = os.environ.get(model_version).split(",")
+        model_name, base_url = env_value.split(",")
         llm = ChatOllama(base_url=base_url, model=model_name)
 
     else:

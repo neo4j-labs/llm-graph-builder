@@ -285,9 +285,9 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
           const model = info.getValue();
           return (
             <i>
-              {model.includes('LLM_MODEL_CONFIG_')
+              {(model.includes('LLM_MODEL_CONFIG_')
                 ? capitalize(model.split('LLM_MODEL_CONFIG_').at(-1) as string)
-                : capitalize(model)}
+                : capitalize(model)).split("_").join(" ")}
             </i>
           );
         },
