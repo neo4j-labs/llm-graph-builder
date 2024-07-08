@@ -42,13 +42,13 @@ export const llms =
         'openai-gpt-4o',
         'gemini-1.0-pro',
         'gemini-1.5-pro',
-        'LLM_MODEL_CONFIG_azure-ai-gpt-35',
-        'LLM_MODEL_CONFIG_azure-ai-gpt-4o',
-        'LLM_MODEL_CONFIG_ollama_llama3',
-        'LLM_MODEL_CONFIG_groq-llama3-70b',
-        'LLM_MODEL_CONFIG_anthropic-claude-3-5-sonnet',
-        'LLM_MODEL_CONFIG_fireworks-llama-v3-70b',
-        'LLM_MODEL_CONFIG_bedrock-claude-3-5-sonnet',
+        'azure_ai_gpt_35',
+        'azure_ai_gpt_4o',
+        'ollama_llama3',
+        'groq_llama3_70b',
+        'anthropic_claude_3_5_sonnet',
+        'fireworks_llama_v3_70b',
+        'bedrock_claude_3_5_sonnet',
       ];
 
 export const defaultLLM = llms?.includes('openai-gpt-3.5')
