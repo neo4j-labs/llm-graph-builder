@@ -378,6 +378,7 @@ const Content: React.FC<ContentProps> = ({
       }
       setshowDeletePopUp(false);
     } catch (err) {
+      setdeleteLoading(false);
       if (err instanceof Error) {
         const error = JSON.parse(err.message);
         const { message } = error;
