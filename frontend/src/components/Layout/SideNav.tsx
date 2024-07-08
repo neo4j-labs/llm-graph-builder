@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Dialog, SideNavigation, Tip } from '@neo4j-ndl/react';
+import { Dialog, SideNavigation, Tip } from '@neo4j-ndl/react';
 import {
   ArrowRightIconOutline,
   ArrowLeftIconOutline,
@@ -17,7 +17,6 @@ import ExpandedChatButtonContainer from '../ChatBot/ExpandedChatButtonContainer'
 import { tooltips } from '../../utils/Constants';
 import ChatModeToggle from '../ChatBot/ChatModeToggle';
 import { RiChatSettingsLine } from 'react-icons/ri';
-import IconButtonWithToolTip from '../UI/IconButtonToolTip';
 
 const SideNav: React.FC<SideNavProps> = ({
   position,

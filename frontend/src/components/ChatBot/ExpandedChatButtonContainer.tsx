@@ -18,7 +18,13 @@ const ExpandedChatButtonContainer: React.FC<IconProps> = ({ closeChatBot, delete
   const [showChatModeOption, setshowChatModeOption] = useState<boolean>(false);
   return (
     <div className='flex items-end justify-end'>
-      <ChatModeToggle open={showChatModeOption} menuAnchor={chatAnchor} />
+      <ChatModeToggle
+        closeHandler={() => setshowChatModeOption(false)}
+        anchorPortal={true}
+        disableBackdrop={true}
+        open={showChatModeOption}
+        menuAnchor={chatAnchor}
+      />
       <Box className='!h-[48px] mx-2'>
         <IconButtonWithToolTip
           onClick={(e) => {

@@ -5,10 +5,14 @@ export default function ChatModeToggle({
   menuAnchor,
   closeHandler = () => {},
   open,
+  anchorPortal = true,
+  disableBackdrop = false,
 }: {
   menuAnchor: HTMLElement | null;
   closeHandler?: () => void;
   open: boolean;
+  anchorPortal?: boolean;
+  disableBackdrop?: boolean;
 }) {
   const { setchatMode, chatMode } = useFileContext();
 
@@ -17,6 +21,8 @@ export default function ChatModeToggle({
       closeHandler={closeHandler}
       open={open}
       MenuAnchor={menuAnchor}
+      anchorPortal={anchorPortal}
+      disableBackdrop={disableBackdrop}
       items={[
         {
           title: 'Vector',

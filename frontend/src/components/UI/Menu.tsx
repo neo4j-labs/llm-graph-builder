@@ -8,6 +8,8 @@ export default function CustomMenu({
   MenuAnchor,
   anchorOrigin,
   transformOrigin,
+  anchorPortal = true,
+  disableBackdrop = false,
 }: {
   open: boolean;
   closeHandler: () => void;
@@ -15,6 +17,8 @@ export default function CustomMenu({
   MenuAnchor: HTMLElement | null;
   anchorOrigin?: Origin;
   transformOrigin?: Origin;
+  anchorPortal?: boolean;
+  disableBackdrop?: boolean;
 }) {
   return (
     <Menu
@@ -22,8 +26,9 @@ export default function CustomMenu({
       onClose={closeHandler}
       anchorOrigin={anchorOrigin}
       transformOrigin={transformOrigin}
-      anchorPortal={true}
+      anchorPortal={anchorPortal}
       anchorEl={MenuAnchor}
+      disableBackdrop={disableBackdrop}
     >
       {items.map((i, idx) => {
         return (
