@@ -16,6 +16,7 @@ import { getIsLoading } from '../../utils/Utils';
 import ExpandedChatButtonContainer from '../ChatBot/ExpandedChatButtonContainer';
 import { tooltips } from '../../utils/Constants';
 import ChatModeToggle from '../ChatBot/ChatModeToggle';
+import { RiChatSettingsLine } from 'react-icons/ri';
 
 const SideNav: React.FC<SideNavProps> = ({
   position,
@@ -30,6 +31,8 @@ const SideNav: React.FC<SideNavProps> = ({
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const { setMessages } = useMessageContext();
+  const [chatModeAnchor, setchatModeAnchor] = useState<HTMLElement | null>(null);
+  const [showChatMode, setshowChatMode] = useState<boolean>(false);
   const date = new Date();
   useEffect(() => {
     if (clearHistoryData) {
@@ -127,7 +130,29 @@ const SideNav: React.FC<SideNavProps> = ({
                   }
                 />
               </Tip>
-              {!isChatModalOpen && <ChatModeToggle inSidenav={true} />}
+              {!isChatModalOpen && (
+                <Tip allowedPlacements={['left']}>
+                  <SideNavigation.Item
+                    onClick={(e) => {
+                      setchatModeAnchor(e.currentTarget);
+                      setshowChatMode(true);
+                    }}
+                    icon={
+                      <>
+                        <Tip.Trigger>
+                          <RiChatSettingsLine className='n-size-token-7' />
+                        </Tip.Trigger>
+                        <Tip.Content>Chat Mode</Tip.Content>
+                        <ChatModeToggle
+                          open={showChatMode}
+                          closeHandler={() => setshowChatMode(false)}
+                          menuAnchor={chatModeAnchor}
+                        ></ChatModeToggle>
+                      </>
+                    }
+                  ></SideNavigation.Item>
+                </Tip>
+              )}
             </>
           )}
         </SideNavigation.List>

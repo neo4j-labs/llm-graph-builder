@@ -515,6 +515,8 @@ export interface Menuitems {
   onClick: () => void;
   disabledCondition: boolean;
   description?: string;
+  isSelected?: boolean;
+  selectedClassName?: string;
 }
 export type Vertical = 'top' | 'bottom';
 export type Horizontal = 'left' | 'right' | 'center';
