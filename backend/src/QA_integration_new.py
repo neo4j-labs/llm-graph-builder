@@ -177,7 +177,7 @@ def get_total_tokens(model, ai_response):
         total_tokens = ai_response.response_metadata['usage_metadata']['prompt_token_count']
     elif "bedrock" in model:
         total_tokens = ai_response.response_metadata['usage']['total_tokens']
-    elif "anthropic-claude" in model:
+    elif "anthropic" in model:
         input_tokens = int(ai_response.response_metadata['usage']['input_tokens'])
         output_tokens = int(ai_response.response_metadata['usage']['output_tokens'])
         total_tokens = input_tokens + output_tokens
