@@ -1,5 +1,5 @@
 import { Checkbox, DataGrid, DataGridComponents, Flex, Typography } from '@neo4j-ndl/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { UserCredentials, orphanNodeProps } from '../../../../types';
 import { getOrphanNodes } from '../../../../services/GetOrphanNodes';
 import { useCredentials } from '../../../../context/UserCredentials';
@@ -31,24 +31,28 @@ export default function DeletePopUpForOrphanNodes({
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const tableRef = useRef(null);
 
+  const fetchOrphanNodes = useCallback(async () => {
+    try {
+      setLoading(true);
+      const apiresponse = await getOrphanNodes(userCredentials as UserCredentials);
+      setLoading(false);
+      if (apiresponse.data.data.length) {
+        setOrphanNodes(apiresponse.data.data);
+        setTotalOrphanNodes(
+          apiresponse.data.message != undefined && typeof apiresponse.data.message != 'string'
+            ? apiresponse.data.message.total
+            : 0
+        );
+      }
+    } catch (error) {
+      setLoading(false);
+      console.log(error);
+    }
+  }, [userCredentials]);
+
   useEffect(() => {
     (async () => {
-      try {
-        setLoading(true);
-        const apiresponse = await getOrphanNodes(userCredentials as UserCredentials);
-        setLoading(false);
-        if (apiresponse.data.data.length) {
-          setOrphanNodes(apiresponse.data.data);
-          setTotalOrphanNodes(
-            apiresponse.data.message != undefined && typeof apiresponse.data.message != 'string'
-              ? apiresponse.data.message.total
-              : 0
-          );
-        }
-      } catch (error) {
-        setLoading(false);
-        console.log(error);
-      }
+      await fetchOrphanNodes();
     })();
     return () => {
       setOrphanNodes([]);
@@ -226,6 +230,9 @@ export default function DeletePopUpForOrphanNodes({
             selectedRows.forEach((eid: string) => {
               setOrphanNodes((prev) => prev.filter((node) => node.e.elementId != eid));
             });
+            if (totalOrphanNodes) {
+              await fetchOrphanNodes();
+            }
           }}
           size='large'
           loading={loading}

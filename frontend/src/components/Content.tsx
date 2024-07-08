@@ -595,12 +595,12 @@ const Content: React.FC<ContentProps> = ({
                 <span className='n-body-small'>Not Connected</span>
               )}
               <div className='pt-1'>
-               {!isSchema ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
-              {isSchema ? (
-                <span className='n-body-small'>Graph Schema configured</span>
-              ) : (
-                <span className='n-body-small'>No Graph Schema configured</span>
-              )}
+                {!isSchema ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
+                {isSchema ? (
+                  <span className='n-body-small'>Graph Schema configured</span>
+                ) : (
+                  <span className='n-body-small'>No Graph Schema configured</span>
+                )}
               </div>
             </Typography>
           </div>
