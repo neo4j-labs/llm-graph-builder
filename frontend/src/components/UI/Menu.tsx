@@ -33,6 +33,7 @@ export default function CustomMenu({
             title={i.title}
             onClick={i.onClick}
             disabled={i.disabledCondition}
+            className={i.isSelected ? i.selectedClassName : ''}
           />
         );
       })}
