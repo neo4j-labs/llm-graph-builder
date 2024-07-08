@@ -25,7 +25,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
-  const { model, chatMode } = useFileContext();
+  const { model, chatMode, selectedRows } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
@@ -43,6 +43,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
     },
   });
+
+  const selectedFileNames = selectedRows.map((str) => JSON.parse(str).name);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
@@ -147,9 +149,15 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
     try {
       setInputMessage('');
       simulateTypingEffect({ reply: ' ' });
-      const chatbotAPI = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model, chatMode);
+      const chatbotAPI = await chatBotAPI(
+        userCredentials as UserCredentials,
+        inputMessage,
+        sessionId,
+        model,
+        chatMode,
+        selectedFileNames
+      );
       const chatresponse = chatbotAPI?.response;
-      console.log('api', chatresponse);
       chatbotReply = chatresponse?.data?.data?.message;
       chatSources = chatresponse?.data?.data?.info.sources;
       chatModel = chatresponse?.data?.data?.info.model;
