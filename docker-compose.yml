@@ -24,8 +24,19 @@ services:
       - GCP_LOG_METRICS_ENABLED=${GCP_LOG_METRICS_ENABLED-False}
       - UPDATE_GRAPH_CHUNKS_PROCESSED=${UPDATE_GRAPH_CHUNKS_PROCESSED-20}
       - NUMBER_OF_CHUNKS_TO_COMBINE=${NUMBER_OF_CHUNKS_TO_COMBINE-6}
+      - ENTITY_EMBEDDING=${ENTITY_EMBEDDING-False}
       - GCS_FILE_CACHE=${GCS_FILE_CACHE-False}
+#      - LLM_MODEL_CONFIG_anthropic_claude_35_sonnet=${LLM_MODEL_CONFIG_anthropic_claude_35_sonnet-}
+#      - LLM_MODEL_CONFIG_fireworks_llama_v3_70b=${LLM_MODEL_CONFIG_fireworks_llama_v3_70b-}
+#      - LLM_MODEL_CONFIG_azure_ai_gpt_4o=${LLM_MODEL_CONFIG_azure_ai_gpt_4o-}
+#      - LLM_MODEL_CONFIG_azure_ai_gpt_35=${LLM_MODEL_CONFIG_azure_ai_gpt_35-}
+#      - LLM_MODEL_CONFIG_groq_llama3_70b=${LLM_MODEL_CONFIG_groq_llama3_70b-}
+#      - LLM_MODEL_CONFIG_bedrock_claude_3_5_sonnet=${LLM_MODEL_CONFIG_bedrock_claude_3_5_sonnet-}
+#     - LLM_MODEL_CONFIG_fireworks_qwen_72b=${LLM_MODEL_CONFIG_fireworks_qwen_72b-}
+      - LLM_MODEL_CONFIG_ollama_llama3=${LLM_MODEL_CONFIG_ollama_llama3-}
     container_name: backend
+    extra_hosts:
+      - host.docker.internal:host-gateway
     ports:
       - "8000:8000"
     networks:

@@ -36,9 +36,9 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
             options: allOptions?.map((option) => {
               const label =
                 typeof option === 'string'
-                  ? option.includes('LLM_MODEL_CONFIG_')
+                  ? (option.includes('LLM_MODEL_CONFIG_')
                     ? capitalize(option.split('LLM_MODEL_CONFIG_').at(-1) as string)
-                    : capitalize(option)
+                    : capitalize(option)).split('_').join(' ')
                   : capitalize(option.label);
               const value = typeof option === 'string' ? option : option.value;
               return {
