@@ -296,7 +296,7 @@ def get_graph_response(graph_chain, question):
     except Exception as e:
         logging.error("An error occurred while getting the graph response : {e}")
 
-def QA_RAG(graph, model, question, session_id, mode):
+def QA_RAG(graph, model, question, document_names,session_id, mode):
     try:
         logging.info(f"Chat Mode : {mode}")
         history = create_neo4j_chat_message_history(graph, session_id)
