@@ -8,7 +8,7 @@ export const chatBotAPI = async (
   session_id: string,
   model: string,
   mode: string,
-  document_names: string[]
+  document_names?: (string | undefined)[]
 ) => {
   try {
     const formData = new FormData();

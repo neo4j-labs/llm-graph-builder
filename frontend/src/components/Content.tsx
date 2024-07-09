@@ -1,6 +1,6 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import ConnectionModal from './Popups/ConnectionModal/ConnectionModal';
-import FileTable from './FileTable';
+import FileTable, { ChildRef } from './FileTable';
 import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
@@ -50,7 +50,6 @@ const Content: React.FC<ContentProps> = ({
     model,
     selectedNodes,
     selectedRels,
-    selectedRows,
     setSelectedNodes,
     setSelectedRels,
   } = useFileContext();
@@ -80,6 +79,7 @@ const Content: React.FC<ContentProps> = ({
       });
     }
   );
+  const childRef = useRef<ChildRef>(null);
   const openGraphEnhancementDialog = () => {
     setshowEnhancementDialog(true);
   };
@@ -138,9 +138,10 @@ const Content: React.FC<ContentProps> = ({
         await extractHandler(fileItem, uid);
       }
     } else {
-      const fileItem = selectedRows.find((f) => JSON.parse(f).id == uid);
+      const fileItem = childRef.current?.getSelectedRows().find((f) => f.id == uid);
       if (fileItem) {
-        await extractHandler(JSON.parse(fileItem), uid);
+        setextractLoading(true);
+        await extractHandler(fileItem, uid);
       }
     }
   };
@@ -158,6 +159,15 @@ const Content: React.FC<ContentProps> = ({
           return curfile;
         })
       );
+      setRowSelection((prev) => {
+        const copiedobj = { ...prev };
+        for (const key in copiedobj) {
+          if (key == uid) {
+            copiedobj[key] = false;
+          }
+        }
+        return copiedobj;
+      });
       if (fileItem.name != undefined && userCredentials != null) {
         const { name } = fileItem;
         triggerStatusUpdateAPI(
@@ -239,8 +249,8 @@ const Content: React.FC<ContentProps> = ({
     const data = [];
     if (selectedfileslength) {
       for (let i = 0; i < selectedfileslength; i++) {
-        const row = JSON.parse(selectedRows[i]);
-        if (row.status === 'New') {
+        const row = childRef.current?.getSelectedRows()[i];
+        if (row?.status === 'New') {
           data.push(extractData(row.id, true));
         }
       }
@@ -312,13 +322,19 @@ const Content: React.FC<ContentProps> = ({
     setSelectedRels([]);
   };
 
-  const selectedfileslength = useMemo(() => selectedRows.length, [selectedRows]);
+  const selectedfileslength = useMemo(
+    () => childRef.current?.getSelectedRows().length,
+    [childRef.current?.getSelectedRows()]
+  );
 
-  const newFilecheck = useMemo(() => selectedRows.filter((f) => JSON.parse(f).status === 'New').length, [selectedRows]);
+  const newFilecheck = useMemo(
+    () => childRef.current?.getSelectedRows().filter((f) => f.status === 'New').length,
+    [childRef.current?.getSelectedRows()]
+  );
 
   const completedfileNo = useMemo(
-    () => selectedRows.filter((f) => JSON.parse(f).status === 'Completed').length,
-    [selectedRows]
+    () => childRef.current?.getSelectedRows().filter((f) => f.status === 'Completed').length,
+    [childRef.current?.getSelectedRows()]
   );
 
   const dropdowncheck = useMemo(() => !filesData.some((f) => f.status === 'New'), [filesData]);
@@ -335,7 +351,7 @@ const Content: React.FC<ContentProps> = ({
 
   // const processingCheck = () => {
   //   const processingFiles = filesData.some((file) => file.status === 'Processing');
-  //   const selectedRowProcessing = selectedRows.some((row) =>
+  //   const selectedRowProcessing = childRef.current?.getSelectedRows().some((row) =>
   //     filesData.some((file) => file.name === row && file.status === 'Processing')
   //   );
   //   return processingFiles || selectedRowProcessing;
@@ -343,9 +359,9 @@ const Content: React.FC<ContentProps> = ({
 
   const filesForProcessing = useMemo(() => {
     let newstatusfiles: CustomFile[] = [];
-    if (selectedRows.length) {
-      selectedRows.forEach((f) => {
-        const parsedFile: CustomFile = JSON.parse(f);
+    if (childRef.current?.getSelectedRows().length) {
+      childRef.current?.getSelectedRows().forEach((f) => {
+        const parsedFile: CustomFile = f;
         if (parsedFile.status === 'New') {
           newstatusfiles.push(parsedFile);
         }
@@ -354,12 +370,16 @@ const Content: React.FC<ContentProps> = ({
       newstatusfiles = filesData.filter((f) => f.status === 'New');
     }
     return newstatusfiles;
-  }, [filesData, selectedRows]);
+  }, [filesData, childRef.current?.getSelectedRows()]);
 
   const handleDeleteFiles = async (deleteEntities: boolean) => {
     try {
       setdeleteLoading(true);
-      const response = await deleteAPI(userCredentials as UserCredentials, selectedRows, deleteEntities);
+      const response = await deleteAPI(
+        userCredentials as UserCredentials,
+        childRef.current?.getSelectedRows() as CustomFile[],
+        deleteEntities
+      );
       setRowSelection({});
       setdeleteLoading(false);
       if (response.data.status == 'Success') {
@@ -368,8 +388,8 @@ const Content: React.FC<ContentProps> = ({
           alertMessage: response.data.message,
           alertType: 'success',
         });
-        const filenames = selectedRows.map((str) => JSON.parse(str).name);
-        filenames.forEach((name) => {
+        const filenames = childRef.current?.getSelectedRows().map((str) => str.name);
+        filenames?.forEach((name) => {
           setFilesData((prev) => prev.filter((f) => f.name != name));
         });
       } else {
@@ -419,10 +439,10 @@ const Content: React.FC<ContentProps> = ({
 
   const onClickHandler = () => {
     if (isSchema) {
-      if (selectedRows.length) {
+      if (childRef.current?.getSelectedRows().length) {
         let selectedLargeFiles: CustomFile[] = [];
-        selectedRows.forEach((f) => {
-          const parsedData: CustomFile = JSON.parse(f);
+        childRef.current?.getSelectedRows().forEach((f) => {
+          const parsedData: CustomFile = f;
           if (parsedData.fileSource === 'local file') {
             if (typeof parsedData.size === 'number' && parsedData.status === 'New' && parsedData.size > largeFileSize) {
               selectedLargeFiles.push(parsedData);
@@ -447,7 +467,7 @@ const Content: React.FC<ContentProps> = ({
         });
         const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
         const stringified = selectAllNewFiles.reduce((accu, f) => {
-          const key = JSON.stringify(f);
+          const key = f.id;
           // @ts-ignore
           accu[key] = true;
           return accu;
@@ -463,10 +483,10 @@ const Content: React.FC<ContentProps> = ({
         }
       }
     } else {
-      if (selectedRows.length) {
+      if (childRef.current?.getSelectedRows().length) {
         let selectedLargeFiles: CustomFile[] = [];
-        selectedRows.forEach((f) => {
-          const parsedData: CustomFile = JSON.parse(f);
+        childRef.current?.getSelectedRows().forEach((f) => {
+          const parsedData: CustomFile = f;
           if (parsedData.fileSource === 'local file') {
             if (typeof parsedData.size === 'number' && parsedData.status === 'New' && parsedData.size > largeFileSize) {
               selectedLargeFiles.push(parsedData);
@@ -488,7 +508,7 @@ const Content: React.FC<ContentProps> = ({
         });
         const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
         const stringified = selectAllNewFiles.reduce((accu, f) => {
-          const key = JSON.stringify(f);
+          const key = f.id;
           // @ts-ignore
           accu[key] = true;
           return accu;
@@ -551,7 +571,7 @@ const Content: React.FC<ContentProps> = ({
       {showDeletePopUp && (
         <DeletePopUp
           open={showDeletePopUp}
-          no_of_files={selectedfileslength}
+          no_of_files={selectedfileslength ?? 0}
           deleteHandler={(delentities: boolean) => handleDeleteFiles(delentities)}
           deleteCloseHandler={() => setshowDeletePopUp(false)}
           loading={deleteLoading}
@@ -625,6 +645,7 @@ const Content: React.FC<ContentProps> = ({
             setOpenGraphView(true);
             setViewPoint('tableView');
           }}
+          ref={childRef}
         ></FileTable>
         <Flex
           className={`${
@@ -682,7 +703,7 @@ const Content: React.FC<ContentProps> = ({
               label='Delete Files'
             >
               {buttonCaptions.deleteFiles}
-              {selectedfileslength > 0 && `(${selectedfileslength})`}
+              {selectedfileslength != undefined && selectedfileslength > 0 && `(${selectedfileslength})`}
             </ButtonWithToolTip>
           </Flex>
         </Flex>
@@ -692,6 +713,7 @@ const Content: React.FC<ContentProps> = ({
         open={openGraphView}
         setGraphViewOpen={setOpenGraphView}
         viewPoint={viewPoint}
+        selectedRows={childRef.current?.getSelectedRows()}
       />
     </>
   );
