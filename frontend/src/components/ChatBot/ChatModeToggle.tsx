@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useFileContext } from '../../context/UsersFiles';
 import CustomMenu from '../UI/Menu';
 
@@ -23,24 +24,35 @@ export default function ChatModeToggle({
       MenuAnchor={menuAnchor}
       anchorPortal={anchorPortal}
       disableBackdrop={disableBackdrop}
-      items={[
-        {
-          title: 'Vector',
-          onClick: () => {
-            setchatMode('vector');
+      items={useMemo(
+        () => [
+          {
+            title: 'Vector',
+            onClick: () => {
+              setchatMode('vector');
+            },
+            disabledCondition: false,
+            description: `${chatMode === 'vector' ? 'selected' : ''}`,
           },
-          disabledCondition: false,
-          description: `${chatMode === 'vector' ? 'selected' : ''}`,
-        },
-        {
-          title: 'Vector + Graph',
-          onClick: () => {
-            setchatMode('graph+vector');
+          {
+            title: 'Graph',
+            onClick: () => {
+              setchatMode('graph');
+            },
+            disabledCondition: false,
+            description: `${chatMode === 'graph' ? 'selected' : ''}`,
           },
-          disabledCondition: false,
-          description: `${chatMode === 'graph+vector' ? 'selected' : ''}`,
-        },
-      ]}
+          {
+            title: 'Vector + Graph',
+            onClick: () => {
+              setchatMode('graph+vector');
+            },
+            disabledCondition: false,
+            description: `${chatMode === 'graph+vector' ? 'selected' : ''}`,
+          },
+        ],
+        [chatMode]
+      )}
     ></CustomMenu>
   );
 }
