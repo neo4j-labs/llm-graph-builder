@@ -1,23 +1,24 @@
 import { Box, Typography, TextLink, Flex, Tabs, LoadingSpinner } from '@neo4j-ndl/react';
 import { DocumentTextIconOutline } from '@neo4j-ndl/react/icons';
-import '../../../styling/info.css';
-import Neo4jRetrievalLogo from '../../../assets/images/Neo4jRetrievalLogo.png';
-import wikipedialogo from '../../../assets/images/wikipedia.svg';
-import youtubelogo from '../../../assets/images/youtube.svg';
-import gcslogo from '../../../assets/images/gcs.webp';
-import s3logo from '../../../assets/images/s3logo.png';
-import { Chunk, Entity, GroupedEntity, UserCredentials, chatInfoMessage } from '../../../types';
+import '../../styling/info.css';
+import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
+import wikipedialogo from '../../assets/images/wikipedia.svg';
+import youtubelogo from '../../assets/images/youtube.svg';
+import gcslogo from '../../assets/images/gcs.webp';
+import s3logo from '../../assets/images/s3logo.png';
+import { Chunk, Entity, GroupedEntity, UserCredentials, chatInfoMessage } from '../../types';
 import { useEffect, useMemo, useState } from 'react';
-import HoverableLink from '../../UI/HoverableLink';
-import GraphViewButton from '../../Graph/GraphViewButton';
-import { chunkEntitiesAPI } from '../../../services/ChunkEntitiesInfo';
-import { useCredentials } from '../../../context/UserCredentials';
+import HoverableLink from '../UI/HoverableLink';
+import GraphViewButton from '../Graph/GraphViewButton';
+import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
+import { useCredentials } from '../../context/UserCredentials';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import ReactMarkdown from 'react-markdown';
 import { GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
-import { youtubeLinkValidation } from '../../../utils/Utils';
-const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, response_time, chunk_ids }) => {
+import { youtubeLinkValidation } from '../../utils/Utils';
+
+const ChatInfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, response_time, chunk_ids, mode }) => {
   const [activeTab, setActiveTab] = useState<number>(3);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -98,15 +99,16 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
         <Box className='flex flex-col'>
           <Typography variant='h2'>Retrieval information</Typography>
           <Typography variant='body-medium' className='mb-2'>
-            To generate this response, in <span className='font-bold'>{response_time} seconds</span> we used{' '}
-            <span className='font-bold'>{total_tokens}</span> tokens with the model{' '}
-            <span className='font-bold'>{model}</span>.
+            To generate this response, the process took <span className='font-bold'>{response_time} seconds,</span>{' '}
+            utilizing <span className='font-bold'>{total_tokens}</span> tokens with the model{' '}
+            <span className='font-bold'>{model}</span> in{' '}
+            <span className='font-bold'>{mode !== 'vector' ? mode.replace(/\+/g, ' & ') : mode}</span> mode.
           </Typography>
         </Box>
       </Box>
       <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
         <Tabs.Tab tabId={3}>Sources used</Tabs.Tab>
-        <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
+        {mode === 'graph+vector' && <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>}
         <Tabs.Tab tabId={5}>Chunks</Tabs.Tab>
       </Tabs>
       <Flex className='p-4'>
@@ -349,4 +351,4 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
     </Box>
   );
 };
-export default InfoModal;
+export default ChatInfoModal;

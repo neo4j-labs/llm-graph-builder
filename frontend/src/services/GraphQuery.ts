@@ -2,7 +2,11 @@ import axios from 'axios';
 import { url } from '../utils/Utils';
 import { UserCredentials } from '../types';
 
-const graphQueryAPI = async (userCredentials: UserCredentials, query_type: string, document_names: string[]) => {
+const graphQueryAPI = async (
+  userCredentials: UserCredentials,
+  query_type: string,
+  document_names: (string | undefined)[] | undefined
+) => {
   try {
     const formData = new FormData();
     formData.append('uri', userCredentials?.uri ?? '');

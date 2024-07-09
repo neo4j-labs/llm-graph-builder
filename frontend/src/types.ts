@@ -23,6 +23,7 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   language?: string;
   processingProgress?: number;
   access_token?: string;
+  checked?: boolean;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
@@ -224,6 +225,7 @@ export interface Messages {
   total_tokens?: number;
   speaking?: boolean;
   copying?: boolean;
+  mode?: string;
 }
 
 export type ChatbotProps = {
@@ -245,7 +247,7 @@ export interface GraphViewModalProps {
   viewPoint: string;
   nodeValues?: Node[];
   relationshipValues?: Relationship[];
-  processingCheck?: boolean;
+  selectedRows: CustomFile[] | undefined;
 }
 
 export type GraphType = 'Document' | 'Entities' | 'Chunk';
@@ -395,6 +397,7 @@ export interface chatInfoMessage extends Partial<Messages> {
   response_time: number;
   chunk_ids: chunk[];
   total_tokens: number;
+  mode: string;
 }
 
 export interface eventResponsetypes {
@@ -514,6 +517,8 @@ export interface Menuitems {
   onClick: () => void;
   disabledCondition: boolean;
   description?: string;
+  isSelected?: boolean;
+  selectedClassName?: string;
 }
 export type Vertical = 'top' | 'bottom';
 export type Horizontal = 'left' | 'right' | 'center';
@@ -521,3 +526,41 @@ export interface Origin {
   vertical: Vertical;
   horizontal: Horizontal;
 }
+
+export type BasicNode = {
+  id: string;
+  labels: string[];
+  properties: Record<string, string>;
+  propertyTypes: Record<string, string>;
+};
+
+export type GraphStatsLabels = Record<
+  string,
+  {
+    count: number;
+    properties: Record<string, string>;
+  }
+>;
+
+type NodeStyling = {
+  backgroundColor: string;
+  borderColor: string;
+  textColor: string;
+  caption: string;
+  diameter: string;
+};
+
+type RelationStyling = {
+  fontSize: string;
+  lineColor: string;
+  textColorExternal: string;
+  textColorInternal: string;
+  caption: string;
+  padding: string;
+  width: string;
+};
+
+export type GraphStyling = {
+  node: Record<string, Partial<NodeStyling>>;
+  relationship: Record<string, Partial<RelationStyling>>;
+};

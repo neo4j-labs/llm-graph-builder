@@ -22,6 +22,7 @@ from langchain_core.messages import HumanMessage,AIMessage
 from src.shared.constants import *
 from src.llm import get_llm
 from langchain.chains import GraphCypherQAChain
+import json
 
 load_dotenv() 
 
@@ -29,7 +30,7 @@ EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
 
 
-def get_neo4j_retriever(graph, retrieval_query,index_name="vector", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
+def get_neo4j_retriever(graph, retrieval_query,document_names,index_name="vector", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
     try:
         neo_db = Neo4jVector.from_existing_index(
             embedding=EMBEDDING_FUNCTION,
@@ -38,8 +39,13 @@ def get_neo4j_retriever(graph, retrieval_query,index_name="vector", search_k=CHA
             graph=graph
         )
         logging.info(f"Successfully retrieved Neo4jVector index '{index_name}'")
-        retriever = neo_db.as_retriever(search_kwargs={'k': search_k, "score_threshold": score_threshold})
-        logging.info(f"Successfully created retriever for index '{index_name}' with search_k={search_k}, score_threshold={score_threshold}")
+        if document_names:
+            document_names= list(map(str.strip, json.loads(document_names)))
+            retriever = neo_db.as_retriever(search_kwargs={'k': search_k, "score_threshold": score_threshold,'filter':{'fileName': {'$in': document_names}}})
+            logging.info(f"Successfully created retriever for index '{index_name}' with search_k={search_k}, score_threshold={score_threshold} for documents {document_names}")
+        else:
+            retriever = neo_db.as_retriever(search_kwargs={'k': search_k, "score_threshold": score_threshold})
+            logging.info(f"Successfully created retriever for index '{index_name}' with search_k={search_k}, score_threshold={score_threshold}")
         return retriever
     except Exception as e:
         logging.error(f"Error retrieving Neo4jVector index '{index_name}' or creating retriever: {e}")
@@ -178,7 +184,7 @@ def get_total_tokens(model, ai_response):
         total_tokens = ai_response.response_metadata['usage_metadata']['prompt_token_count']
     elif "bedrock" in model:
         total_tokens = ai_response.response_metadata['usage']['total_tokens']
-    elif "anthropic-claude" in model:
+    elif "anthropic" in model:
         input_tokens = int(ai_response.response_metadata['usage']['input_tokens'])
         output_tokens = int(ai_response.response_metadata['usage']['output_tokens'])
         total_tokens = input_tokens + output_tokens
@@ -199,13 +205,13 @@ def clear_chat_history(graph,session_id):
             "user": "chatbot"
             }
 
-def setup_chat(model, graph, session_id, retrieval_query):
+def setup_chat(model, graph, session_id, document_names,retrieval_query):
     start_time = time.time()
     if model in ["diffbot", "LLM_MODEL_CONFIG_ollama_llama3"]:
         model = "openai-gpt-4o"
     llm,model_name = get_llm(model)
     logging.info(f"Model called in chat {model} and model version is {model_name}")
-    retriever = get_neo4j_retriever(graph=graph,retrieval_query=retrieval_query)
+    retriever = get_neo4j_retriever(graph=graph,retrieval_query=retrieval_query,document_names=document_names)
     doc_retriever = create_document_retriever_chain(llm, retriever)
     chat_setup_time = time.time() - start_time
     logging.info(f"Chat setup completed in {chat_setup_time:.2f} seconds")
@@ -323,7 +329,7 @@ def QA_RAG(graph, model, question, session_id, mode):
         else:
             retrieval_query = VECTOR_GRAPH_SEARCH_QUERY
 
-        llm, doc_retriever, model_version = setup_chat(model, graph, session_id, retrieval_query)
+        llm, doc_retriever, model_version = setup_chat(model, graph, session_id, document_names,retrieval_query)
         
         docs = retrieve_documents(doc_retriever, messages)
         
@@ -346,7 +352,8 @@ def QA_RAG(graph, model, question, session_id, mode):
                 "model": model_version,
                 "chunkdetails": result["chunkdetails"],
                 "total_tokens": total_tokens,
-                "response_time": 0
+                "response_time": 0,
+                "mode": mode
             },
             "user": "chatbot"
         }
@@ -360,7 +367,8 @@ def QA_RAG(graph, model, question, session_id, mode):
             "info": {
                 "sources": [],
                 "chunkids": [],
-                "error": f"{error_name} :- {str(e)}"
+                "error": f"{error_name} :- {str(e)}",
+                "mode": mode
             },
             "user": "chatbot"
         }

@@ -59,6 +59,7 @@ export default function EntityExtractionSetting({
       );
       return filteredrels;
     });
+    localStorage.setItem('isSchema', JSON.stringify(false));
   };
   const onChangeSchema = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
     if (actionMeta.action === 'remove-value') {
@@ -108,6 +109,7 @@ export default function EntityExtractionSetting({
         'selectedRelationshipLabels',
         JSON.stringify({ db: userCredentials?.uri, selectedOptions: updatedOptions })
       );
+      localStorage.setItem('isSchema', JSON.stringify(true));
       return updatedOptions;
     });
     setIsSchema(true);
@@ -115,10 +117,12 @@ export default function EntityExtractionSetting({
   const onChangenodes = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
     if (actionMeta.action === 'clear') {
       localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
+      localStorage.setItem('isSchema', JSON.stringify(false));
     }
     setSelectedNodes(selectedOptions);
     setIsSchema(true);
     localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions }));
+    localStorage.setItem('isSchema', JSON.stringify(true));
   };
   const onChangerels = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
     if (actionMeta.action === 'clear') {
@@ -192,6 +196,8 @@ export default function EntityExtractionSetting({
           }
         };
         getOptions();
+        setIsSchema(true);
+        localStorage.setItem('isSchema', JSON.stringify(true));
       }
     }
   }, [userCredentials, open]);
@@ -200,6 +206,7 @@ export default function EntityExtractionSetting({
     setSelectedSchemas([]);
     setSelectedNodes(nodeLabelOptions);
     setSelectedRels(relationshipTypeOptions);
+    localStorage.setItem('isSchema', JSON.stringify(true));
   }, [nodeLabelOptions, relationshipTypeOptions]);
 
   const handleClear = () => {

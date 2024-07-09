@@ -7,12 +7,12 @@ import {
   SpeakerXMarkIconOutline,
 } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../../assets/images/chatbot-ai.png';
-import { ChatbotProps, UserCredentials, chunk } from '../../types';
+import { ChatbotProps, CustomFile, UserCredentials, chunk } from '../../types';
 import { useCredentials } from '../../context/UserCredentials';
 import { chatBotAPI } from '../../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../../context/UsersFiles';
-import InfoModal from './Info/InfoModal';
+import InfoModal from './ChatInfoModal';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import IconButtonWithToolTip from '../UI/IconButtonToolTip';
@@ -25,7 +25,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
-  const { model, chatMode } = useFileContext();
+  const { model, chatMode, selectedRows, filesData } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
@@ -35,6 +35,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [chunkModal, setChunkModal] = useState<chunk[]>([]);
   const [tokensUsed, setTokensUsed] = useState<number>(0);
   const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
+  const [chatsMode, setChatsMode] = useState<string>('graph+vector');
 
   const [value, copy] = useCopyToClipboard();
   const { speak, cancel } = useSpeechSynthesis({
@@ -42,6 +43,17 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
     },
   });
+  let selectedFileNames: CustomFile[] = [];
+  selectedRows.forEach((id) => {
+    console.log(id);
+    filesData.forEach((f) => {
+      console.log(f.id, id);
+      if (f.id === id) {
+        selectedFileNames.push(f);
+      }
+    });
+  });
+  console.log({ selectedFileNames });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
@@ -63,6 +75,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       response_time?: number;
       speaking?: boolean;
       copying?: boolean;
+      mode?: string;
     },
     index = 0
   ) => {
@@ -89,6 +102,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
               response_time: response?.response_time,
               speaking: false,
               copying: false,
+              mode: response?.mode,
             },
           ]);
         } else {
@@ -107,6 +121,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
             lastmsg.response_time = response?.response_time;
             lastmsg.speaking = false;
             lastmsg.copying = false;
+            lastmsg.mode = response?.mode;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -136,21 +151,29 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
     let chatChunks;
     let chatTimeTaken;
     let chatTokensUsed;
+    let chatingMode;
     const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
     const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime };
     setListMessages([...listMessages, userMessage]);
     try {
       setInputMessage('');
       simulateTypingEffect({ reply: ' ' });
-      const chatbotAPI = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model, chatMode);
+      const chatbotAPI = await chatBotAPI(
+        userCredentials as UserCredentials,
+        inputMessage,
+        sessionId,
+        model,
+        chatMode,
+        selectedFileNames?.map((f) => f.name)
+      );
       const chatresponse = chatbotAPI?.response;
-      console.log('api', chatresponse);
       chatbotReply = chatresponse?.data?.data?.message;
       chatSources = chatresponse?.data?.data?.info.sources;
       chatModel = chatresponse?.data?.data?.info.model;
       chatChunks = chatresponse?.data?.data?.info.chunkdetails;
       chatTokensUsed = chatresponse?.data?.data?.info.total_tokens;
       chatTimeTaken = chatresponse?.data?.data?.info.response_time;
+      chatingMode = chatresponse?.data?.data?.info?.mode;
       const finalbotReply = {
         reply: chatbotReply,
         sources: chatSources,
@@ -160,6 +183,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
         response_time: chatTimeTaken,
         speaking: false,
         copying: false,
+        mode: chatingMode,
       };
       simulateTypingEffect(finalbotReply);
     } catch (error) {
@@ -304,6 +328,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                               setChunkModal(chat.chunk_ids ?? []);
                               setTokensUsed(chat.total_tokens ?? 0);
                               setShowInfoModal(true);
+                              setChatsMode(chat.mode ?? '');
                             }}
                           >
                             {' '}
@@ -394,6 +419,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
           chunk_ids={chunkModal}
           response_time={responseTime}
           total_tokens={tokensUsed}
+          mode={chatsMode}
         />
       </Modal>
     </div>
