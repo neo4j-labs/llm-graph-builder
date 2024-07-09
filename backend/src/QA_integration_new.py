@@ -23,6 +23,15 @@ from src.shared.constants import *
 from src.llm import get_llm
 import json
 
+## Chat models
+from langchain_openai import ChatOpenAI, AzureChatOpenAI
+from langchain_google_vertexai import ChatVertexAI
+from langchain_groq import ChatGroq
+from langchain_anthropic import ChatAnthropic
+from langchain_fireworks import ChatFireworks
+from langchain_aws import ChatBedrock
+from langchain_community.chat_models import ChatOllama
+
 load_dotenv() 
 
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
@@ -38,8 +47,8 @@ def get_neo4j_retriever(graph, retrieval_query,document_names,index_name="vector
             graph=graph
         )
         logging.info(f"Successfully retrieved Neo4jVector index '{index_name}'")
+        document_names= list(map(str.strip, json.loads(document_names)))
         if document_names:
-            document_names= list(map(str.strip, json.loads(document_names)))
             retriever = neo_db.as_retriever(search_kwargs={'k': search_k, "score_threshold": score_threshold,'filter':{'fileName': {'$in': document_names}}})
             logging.info(f"Successfully created retriever for index '{index_name}' with search_k={search_k}, score_threshold={score_threshold} for documents {document_names}")
         else:
@@ -178,17 +187,22 @@ def summarize_messages(llm,history,stored_messages):
     return True
 
 
-def get_total_tokens(model, ai_response):
-    if "gemini" in model:
+def get_total_tokens(ai_response,llm):
+    
+    if isinstance(llm,(ChatOpenAI,AzureChatOpenAI,ChatFireworks,ChatGroq)):
+        total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
+    elif isinstance(llm,(ChatVertexAI)):
         total_tokens = ai_response.response_metadata['usage_metadata']['prompt_token_count']
-    elif "bedrock" in model:
+    elif isinstance(llm,(ChatBedrock)):
         total_tokens = ai_response.response_metadata['usage']['total_tokens']
-    elif "anthropic" in model:
+    elif isinstance(llm,(ChatAnthropic)):
         input_tokens = int(ai_response.response_metadata['usage']['input_tokens'])
         output_tokens = int(ai_response.response_metadata['usage']['output_tokens'])
         total_tokens = input_tokens + output_tokens
-    else:    
-        total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
+    elif isinstance(llm,(ChatOllama)):
+        total_tokens = ai_response.response_metadata["prompt_eval_count"]
+    else:
+        total_tokens = 0
     return total_tokens
 
 
@@ -206,7 +220,7 @@ def clear_chat_history(graph,session_id):
 
 def setup_chat(model, graph, session_id, document_names,retrieval_query):
     start_time = time.time()
-    if model in ["diffbot", "LLM_MODEL_CONFIG_ollama_llama3"]:
+    if model in ["diffbot"]:
         model = "openai-gpt-4o"
     llm,model_name = get_llm(model)
     logging.info(f"Model called in chat {model} and model version is {model_name}")
@@ -236,7 +250,7 @@ def process_documents(docs, question, messages, llm,model):
     })
     result = get_sources_and_chunks(sources, docs)
     content = ai_response.content
-    total_tokens = get_total_tokens(model, ai_response)
+    total_tokens = get_total_tokens(ai_response,llm)
 
     
     predict_time = time.time() - start_time

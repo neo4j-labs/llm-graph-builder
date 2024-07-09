@@ -22,9 +22,10 @@ CHAT_SEARCH_KWARG_SCORE_THRESHOLD = 0.7
 CHAT_DOC_SPLIT_SIZE = 3000
 CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD = 0.10
 CHAT_TOKEN_CUT_OFF = {
-     ("openai-gpt-3.5","gemini-1.0-pro","gemini-1.5-pro","groq-llama3" ) : 4, 
-     ("openai-gpt-4","diffbot" , "openai-gpt-4o") : 28   
-}
+     ("openai-gpt-3.5",'azure_ai_gpt_35',"gemini-1.0-pro","gemini-1.5-pro","groq-llama3",'groq_llama3_70b','anthropic_claude_3_5_sonnet','fireworks_llama_v3_70b','bedrock_claude_3_5_sonnet', ) : 4, 
+     ("openai-gpt-4","diffbot" ,'azure_ai_gpt_4o',"openai-gpt-4o") : 28,
+     ("ollama_llama3") : 2  
+} 
 
 
 ### CHAT TEMPLATES 
