@@ -7,7 +7,7 @@ import {
   SpeakerXMarkIconOutline,
 } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../../assets/images/chatbot-ai.png';
-import { ChatbotProps, UserCredentials, chunk } from '../../types';
+import { ChatbotProps, CustomFile, UserCredentials, chunk } from '../../types';
 import { useCredentials } from '../../context/UserCredentials';
 import { chatBotAPI } from '../../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
@@ -25,7 +25,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
-  const { model, chatMode, selectedRows } = useFileContext();
+  const { model, chatMode, selectedRows, filesData } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
@@ -43,8 +43,17 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
     },
   });
-
-  const selectedFileNames = selectedRows.map((str) => JSON.parse(str).name);
+  let selectedFileNames: CustomFile[] = [];
+  selectedRows.forEach((id) => {
+    console.log(id);
+    filesData.forEach((f) => {
+      console.log(f.id, id);
+      if (f.id === id) {
+        selectedFileNames.push(f);
+      }
+    });
+  });
+  console.log({ selectedFileNames });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
@@ -155,7 +164,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
         sessionId,
         model,
         chatMode,
-        selectedFileNames
+        selectedFileNames?.map((f) => f.name)
       );
       const chatresponse = chatbotAPI?.response;
       chatbotReply = chatresponse?.data?.data?.message;

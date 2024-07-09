@@ -28,7 +28,6 @@ import {
   nvlOptions,
   queryMap,
 } from '../../utils/Constants';
-import { useFileContext } from '../../context/UsersFiles';
 // import CheckboxSelection from './CheckboxSelection';
 import DropdownComponent from '../Dropdown';
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
@@ -38,6 +37,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   viewPoint,
   nodeValues,
   relationshipValues,
+  selectedRows,
 }) => {
   const nvlRef = useRef<NVL>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -50,7 +50,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
   const [scheme, setScheme] = useState<Scheme>({});
-  const { selectedRows } = useFileContext();
   const [newScheme, setNewScheme] = useState<Scheme>({});
   const [dropdownVal, setDropdownVal] = useState<OptionType>({
     label: 'Knowledge Graph',
@@ -101,7 +100,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           ? await graphQueryAPI(
               userCredentials as UserCredentials,
               graphQuery,
-              selectedRows.map((f) => JSON.parse(f).name)
+              selectedRows?.map((f) => f.name)
             )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;

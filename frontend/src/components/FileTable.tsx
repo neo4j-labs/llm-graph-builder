@@ -9,7 +9,7 @@ import {
   TextLink,
   Typography,
 } from '@neo4j-ndl/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { forwardRef, HTMLProps, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import React from 'react';
 import {
   useReactTable,
@@ -41,7 +41,12 @@ import cancelAPI from '../services/CancelAPI';
 import IconButtonWithToolTip from './UI/IconButtonToolTip';
 import { largeFileSize } from '../utils/Constants';
 
-const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, setConnectionStatus, onInspect }) => {
+export interface ChildRef {
+  getSelectedRows: () => CustomFile[];
+}
+
+const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
+  const { isExpanded, connectionStatus, setConnectionStatus, onInspect } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows } = useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
@@ -102,7 +107,7 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
             row.getIsSelected() && row.original.status != 'Uploading' && row.original.status != 'Processing';
           return (
             <div className='px-1'>
-              <Checkbox
+              {/* <Checkbox
                 aria-label='row-checkbox'
                 checked={checkedCase}
                 disabled={
@@ -110,6 +115,16 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
                 }
                 onChange={row.getToggleSelectedHandler()}
                 title='select row for deletion'
+              /> */}
+
+              <IndeterminateCheckbox
+                {...{
+                  checked: row.getIsSelected(),
+                  disabled:
+                    !row.getCanSelect() || row.original.status == 'Uploading' || row.original.status === 'Processing',
+                  indeterminate: row.getIsSomeSelected(),
+                  onChange: row.getToggleSelectedHandler(),
+                }}
               />
             </div>
           );
@@ -601,11 +616,17 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
     autoResetPageIndex: false,
     enableRowSelection: true,
     enableMultiRowSelection: true,
-    getRowId: (row) => JSON.stringify({ ...row }),
+    getRowId: (row) => row.id,
     enableSorting: true,
     getSortedRowModel: getSortedRowModel(),
   });
-
+  useImperativeHandle(
+    ref,
+    () => ({
+      getSelectedRows: () => table.getSelectedRowModel().rows.map((r) => r.original),
+    }),
+    [table]
+  );
   useEffect(() => {
     if (tableRef.current) {
       // Component has content, calculate maximum height for table
@@ -702,6 +723,21 @@ const FileTable: React.FC<FileTableProps> = ({ isExpanded, connectionStatus, set
       ) : null}
     </>
   );
-};
+});
 
 export default FileTable;
+function IndeterminateCheckbox({
+  indeterminate,
+  className = '',
+  ...rest
+}: { indeterminate?: boolean } & HTMLProps<HTMLInputElement>) {
+  const ref = React.useRef<HTMLInputElement>(null!);
+
+  React.useEffect(() => {
+    if (typeof indeterminate === 'boolean') {
+      ref.current.indeterminate = !rest.checked && indeterminate;
+    }
+  }, [ref, indeterminate]);
+
+  return <Checkbox type='checkbox' ref={ref} className={className + ' cursor-pointer'} {...rest} />;
+}

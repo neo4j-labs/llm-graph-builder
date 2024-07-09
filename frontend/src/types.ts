@@ -23,6 +23,7 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   language?: string;
   processingProgress?: number;
   access_token?: string;
+  checked?: boolean;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
@@ -246,6 +247,7 @@ export interface GraphViewModalProps {
   viewPoint: string;
   nodeValues?: Node[];
   relationshipValues?: Relationship[];
+  selectedRows: CustomFile[] | undefined;
 }
 
 export type GraphType = 'Document' | 'Entities' | 'Chunk';
