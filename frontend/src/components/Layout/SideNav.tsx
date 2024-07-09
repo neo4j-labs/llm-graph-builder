@@ -17,6 +17,7 @@ import ExpandedChatButtonContainer from '../ChatBot/ExpandedChatButtonContainer'
 import { tooltips } from '../../utils/Constants';
 import ChatModeToggle from '../ChatBot/ChatModeToggle';
 import { RiChatSettingsLine } from 'react-icons/ri';
+import IconButtonWithToolTip from '../UI/IconButtonToolTip';
 
 const SideNav: React.FC<SideNavProps> = ({
   position,
@@ -131,27 +132,25 @@ const SideNav: React.FC<SideNavProps> = ({
                 />
               </Tip>
               {!isChatModalOpen && (
-                <Tip allowedPlacements={['left']}>
-                  <SideNavigation.Item
-                    onClick={(e) => {
-                      setchatModeAnchor(e.currentTarget);
-                      setshowChatMode(true);
-                    }}
-                    icon={
-                      <>
-                        <Tip.Trigger>
-                          <RiChatSettingsLine className='n-size-token-7' />
-                        </Tip.Trigger>
-                        <Tip.Content>Chat Mode</Tip.Content>
-                        <ChatModeToggle
-                          open={showChatMode}
-                          closeHandler={() => setshowChatMode(false)}
-                          menuAnchor={chatModeAnchor}
-                        ></ChatModeToggle>
-                      </>
-                    }
-                  ></SideNavigation.Item>
-                </Tip>
+                <SideNavigation.Item
+                  onClick={(e) => {
+                    setchatModeAnchor(e.currentTarget);
+                    setshowChatMode(true);
+                  }}
+                  icon={
+                    <>
+                      <IconButtonWithToolTip size='small' placement='left' clean label='Chat mode' text='Chat mode'>
+                        <RiChatSettingsLine className='n-size-token-7' />
+                      </IconButtonWithToolTip>
+                      <ChatModeToggle
+                        open={showChatMode}
+                        closeHandler={() => setshowChatMode(false)}
+                        menuAnchor={chatModeAnchor}
+                        disableBackdrop={true}
+                      ></ChatModeToggle>
+                    </>
+                  }
+                ></SideNavigation.Item>
               )}
             </>
           )}
