@@ -110,38 +110,13 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials]);
 
   // Api call to get the nodes and relations
-  const graphApi = () => {
-    fetchData()
-      .then((result) => {
-        if (result && result.data.data.nodes.length > 0) {
-          const neoNodes = result.data.data.nodes.map((f: Node) => f);
-          const neoRels = result.data.data.relationships.map((f: Relationship) => f);
-          const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels);
-          setAllNodes(finalNodes);
-          setAllRelationships(finalRels);
-          setScheme(schemeVal);
-          setNodes(finalNodes);
-          setRelationships(finalRels);
-          setNewScheme(schemeVal);
-          setLoading(false);
-        } else {
-          setLoading(false);
-          setStatus('danger');
-          setStatusMessage(`No Nodes and Relations for the ${inspectedName} file`);
-        }
-      })
-      .catch((error: any) => {
-        setLoading(false);
-        setStatus('danger');
-        setStatusMessage(error.message);
-      });
-  };
-
-  useEffect(() => {
-    if (open) {
-      setLoading(true);
-      if (viewPoint === 'chatInfoView') {
-        const { finalNodes, finalRels, schemeVal } = processGraphData(nodeValues ?? [], relationshipValues ?? []);
+  const graphApi = async () => {
+    try {
+      const result = await fetchData();
+      if (result && result.data.data.nodes.length > 0) {
+        const neoNodes = result.data.data.nodes.map((f: Node) => f);
+        const neoRels = result.data.data.relationships.map((f: Relationship) => f);
+        const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels);
         setAllNodes(finalNodes);
         setAllRelationships(finalRels);
         setScheme(schemeVal);
@@ -150,7 +125,31 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         setNewScheme(schemeVal);
         setLoading(false);
       } else {
+        setLoading(false);
+        setStatus('danger');
+        setStatusMessage(`No Nodes and Relations for the ${inspectedName} file`);
+      }
+    } catch (error: any) {
+      setLoading(false);
+      setStatus('danger');
+      setStatusMessage(error.message);
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      setLoading(true);
+      if (viewPoint !== 'chatInfoView') {
         graphApi();
+      } else {
+        const { finalNodes, finalRels, schemeVal } = processGraphData(nodeValues ?? [], relationshipValues ?? []);
+        setAllNodes(finalNodes);
+        setAllRelationships(finalRels);
+        setScheme(schemeVal);
+        setNodes(finalNodes);
+        setRelationships(finalRels);
+        setNewScheme(schemeVal);
+        setLoading(false);
       }
     }
   }, [open]);
