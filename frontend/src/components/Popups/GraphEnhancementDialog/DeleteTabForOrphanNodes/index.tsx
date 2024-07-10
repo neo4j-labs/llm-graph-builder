@@ -170,7 +170,9 @@ export default function DeletePopUpForOrphanNodes({
     },
   });
 
-  const selectedFilesCheck = table.getSelectedRowModel().rows.length ? `Delete Selected Nodes (${table.getSelectedRowModel().rows.length})` : 'Select Node(s) to delete'
+  const selectedFilesCheck = table.getSelectedRowModel().rows.length
+    ? `Delete Selected Nodes (${table.getSelectedRowModel().rows.length})`
+    : 'Select Node(s) to delete';
 
   const onDeleteHandler = async () => {
     await deleteHandler(table.getSelectedRowModel().rows.map((r) => r.id));
@@ -183,7 +185,7 @@ export default function DeletePopUpForOrphanNodes({
     if (totalOrphanNodes) {
       await fetchOrphanNodes();
     }
-  }
+  };
 
   return (
     <div>
@@ -255,10 +257,10 @@ export default function DeletePopUpForOrphanNodes({
             isLoading
               ? 'Fetching Orphan Nodes'
               : !isLoading && !orphanNodes.length
-                ? 'No Nodes Found'
-                : !table.getSelectedRowModel().rows.length
-                  ? 'No Nodes Selected'
-                  : `Delete Selected Nodes (${table.getSelectedRowModel().rows.length})`
+              ? 'No Nodes Found'
+              : !table.getSelectedRowModel().rows.length
+              ? 'No Nodes Selected'
+              : `Delete Selected Nodes (${table.getSelectedRowModel().rows.length})`
           }
           label='Orphan Node deletion button'
           disabled={!table.getSelectedRowModel().rows.length}
