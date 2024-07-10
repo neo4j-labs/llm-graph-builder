@@ -284,7 +284,8 @@ def get_graph_response(graph_chain, question):
 
         for step in cypher_res.get("intermediate_steps", []):
             if "query" in step:
-                cypher_query = step["query"]
+                cypher_string = step["query"]
+                cypher_query = cypher_string.replace("cypher\n", "").replace("\n", " ").strip() 
             elif "context" in step:
                 context = step["context"]
         return {
