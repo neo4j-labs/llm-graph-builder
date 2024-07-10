@@ -249,7 +249,7 @@ export interface GraphViewModalProps {
   viewPoint: string;
   nodeValues?: Node[];
   relationshipValues?: Relationship[];
-  selectedRows: CustomFile[] | undefined;
+  selectedRows?: CustomFile[] | undefined;
 }
 
 export type GraphType = 'Document' | 'Entities' | 'Chunk';
