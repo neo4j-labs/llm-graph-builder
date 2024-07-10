@@ -289,7 +289,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                       className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%)] overflow-hidden'
                     >
                       <div style={{ backgroundColor: calcWordColor(Object.keys(label)[0]) }} className='legend mr-2'>
-                        {Object.keys(label)[0]}
+                        {label[Object.keys(label)[0]]['id'] as string}
                       </div>
                     </li>
                   ))
