@@ -500,7 +500,7 @@ def get_labels_and_relationtypes(graph):
   query = """
           RETURN collect { 
           CALL db.labels() yield label 
-          WHERE NOT label  IN ['Chunk','_Bloom_Perspective_'] 
+          WHERE NOT label  IN ['__Chunk__','_Bloom_Perspective_'] 
           return label order by label limit 100 } as labels, 
           collect { 
           CALL db.relationshipTypes() yield relationshipType  as type 

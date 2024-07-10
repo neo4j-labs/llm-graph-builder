@@ -1,6 +1,5 @@
 from langchain_community.graphs import Neo4jGraph
 from dotenv import load_dotenv
-from langchain.schema import Document
 import logging
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
@@ -10,7 +9,6 @@ from langchain_core.documents import Document
 from typing import List
 import google.auth 
 from typing import List
-from langchain_core.documents import Document
 import vertexai
 from src.llm import get_graph_document_list, get_combined_chunks, get_llm
 

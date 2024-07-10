@@ -38,10 +38,10 @@ CHAT_MAX_TOKENS = 1000
 
 RETRIEVAL_QUERY = """
 WITH node as chunk, score
-MATCH (chunk)-[:PART_OF]->(d:Document)
+MATCH (chunk)-[:PART_OF]->(d:__Document__)
 CALL { WITH chunk
 MATCH (chunk)-[:HAS_ENTITY]->(e) 
-MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,3}(:!Chunk&!Document) 
+MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,3}(:!__Chunk__&!__Document__) 
 UNWIND rels as r
 RETURN collect(distinct r) as rels
 }

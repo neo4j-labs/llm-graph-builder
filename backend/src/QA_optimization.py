@@ -52,7 +52,7 @@ class ParallelComponent:
         # """
         retrieval_query="""
         WITH node, score, apoc.text.join([ (node)-[:HAS_ENTITY]->(e) | head(labels(e)) + ": "+ e.id],", ") as entities
-        MATCH (node)-[:PART_OF]->(d:Document)
+        MATCH (node)-[:PART_OF]->(d:__Document__)
         WITH d, apoc.text.join(collect(node.text + "\n" + entities),"\n----\n") as text, avg(score) as score
         RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)} as metadata
         """

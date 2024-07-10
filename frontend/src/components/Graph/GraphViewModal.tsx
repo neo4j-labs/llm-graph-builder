@@ -204,9 +204,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
   // sort the legends in with Chunk and Document always the first two values
   const legendCheck = Object.keys(newScheme).sort((a, b) => {
-    if (a === 'Document' || a === 'Chunk') {
+    if (a === '__Document__' || a === '__Chunk__') {
       return -1;
-    } else if (b === 'Document' || b === 'Chunk') {
+    } else if (b === '__Document__' || b === '__Chunk__') {
       return 1;
     }
     return a.localeCompare(b);
@@ -214,10 +214,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
   // setting the default dropdown values
   const getDropdownDefaultValue = () => {
-    if (graphType.includes('Document') && graphType.includes('Chunk') && graphType.includes('Entities')) {
+    if (graphType.includes('__Document__') && graphType.includes('__Chunk__') && graphType.includes('Entities')) {
       return knowledgeGraph;
     }
-    if (graphType.includes('Document') && graphType.includes('Chunk')) {
+    if (graphType.includes('__Document__') && graphType.includes('__Chunk__')) {
       return lexicalGraph;
     }
     if (graphType.includes('Entities')) {
@@ -249,9 +249,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       if (selectedValue === 'entities') {
         newGraphType = ['Entities'];
       } else if (selectedValue === queryMap.DocChunks) {
-        newGraphType = ['Document', 'Chunk'];
+        newGraphType = ['__Document__', '__Chunk__'];
       } else if (selectedValue === queryMap.DocChunkEntities) {
-        newGraphType = ['Document', 'Entities', 'Chunk'];
+        newGraphType = ['__Document__', 'Entities', '__Chunk__'];
       }
       setGraphType(newGraphType);
       setDropdownVal(selectedOption);

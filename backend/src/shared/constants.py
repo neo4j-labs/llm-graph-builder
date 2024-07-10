@@ -78,7 +78,7 @@ QUESTION_TRANSFORM_TEMPLATE = "Given the below conversation, generate a search q
 ## CHAT QUERIES 
 VECTOR_SEARCH_QUERY = """
 WITH node AS chunk, score
-MATCH (chunk)-[:PART_OF]->(d:Document)
+MATCH (chunk)-[:PART_OF]->(d:__Document__)
 WITH d, collect(distinct {chunk: chunk, score: score}) as chunks, avg(score) as avg_score
 WITH d, avg_score, 
      [c in chunks | c.chunk.text] as texts, 
@@ -114,7 +114,7 @@ RETURN text, avg_score AS score,
 VECTOR_GRAPH_SEARCH_QUERY = """
 WITH node as chunk, score
 // find the document of the chunk
-MATCH (chunk)-[:PART_OF]->(d:Document)
+MATCH (chunk)-[:PART_OF]->(d:__Document__)
 // fetch entities
 CALL { WITH chunk
 // entities connected to the chunk
@@ -124,9 +124,9 @@ MATCH (chunk)-[:HAS_ENTITY]->(e)
 // depending on match to query embedding either 1 or 2 step expansion
 WITH CASE WHEN true // vector.similarity.cosine($embedding, e.embedding ) <= 0.95
 THEN 
-collect { MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,1}(:!Chunk&!Document) RETURN path }
+collect { MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,1}(:!__Chunk__&!__Document__) RETURN path }
 ELSE 
-collect { MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk&!Document) RETURN path } 
+collect { MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!__Chunk__&!__Document__) RETURN path } 
 END as paths
 
 RETURN collect{ unwind paths as p unwind relationships(p) as r return distinct r} as rels,

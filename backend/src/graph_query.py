@@ -10,19 +10,19 @@ import json
 QUERY_MAP = {
     "document"          : " + [docs] ",
     "chunks"            : " + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } ",
-    "entities"          : " + collect { OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!Chunk) RETURN p }",
-    "docEntities"       : " + [docs] + collect { MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)--(:!Chunk) RETURN p }",
+    "entities"          : " + collect { OPTIONAL MATCH (c:__Chunk__)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!__Chunk__) RETURN p }",
+    "docEntities"       : " + [docs] + collect { MATCH (c:__Chunk__)-[:HAS_ENTITY]->(e), p=(e)--(:!__Chunk__) RETURN p }",
     "docChunks"         : " + [chunks] + collect { MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } ",
-    "chunksEntities"    : " + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } + collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }",
-    "docChunkEntities"  : " + [chunks] + collect { MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } + collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }"
+    "chunksEntities"    : " + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } + collect { OPTIONAL MATCH p=(c:__Chunk__)-[:HAS_ENTITY]->(e)-[*0..1]-(:!__Chunk__) RETURN p }",
+    "docChunkEntities"  : " + [chunks] + collect { MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } + collect { OPTIONAL MATCH p=(c:__Chunk__)-[:HAS_ENTITY]->(e)-[*0..1]-(:!__Chunk__) RETURN p }"
 }
 
 QUERY_WITH_DOCUMENT = """
-    MATCH docs = (d:Document) 
+    MATCH docs = (d:__Document__) 
     WHERE d.fileName IN $document_names
     WITH docs, d ORDER BY d.createdAt DESC 
     CALL {{ WITH d
-      OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
+      OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:__Chunk__)
       RETURN chunks, c LIMIT 50
     }}
     WITH [] {query_to_change} AS paths
@@ -32,11 +32,11 @@ QUERY_WITH_DOCUMENT = """
 """
 
 QUERY_WITHOUT_DOCUMENT = """
-    MATCH docs = (d:Document) 
+    MATCH docs = (d:__Document__) 
     WITH docs, d ORDER BY d.createdAt DESC 
     LIMIT $doc_limit
     CALL {{ WITH d
-        OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
+        OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:__Chunk__)
         RETURN chunks, c LIMIT 50
     }}
     WITH [] {query_to_change} AS paths
@@ -222,7 +222,7 @@ def get_completed_documents(driver):
     """
     Retrieves the names of all documents with the status 'Completed' from the database.
     """
-    docs_query = "MATCH(node:Document {status:'Completed'}) RETURN node"
+    docs_query = "MATCH(node:__Document__ {status:'Completed'}) RETURN node"
     
     try:
         logging.info("Executing query to retrieve completed documents.")

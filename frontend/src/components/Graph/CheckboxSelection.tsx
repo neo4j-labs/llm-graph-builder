@@ -6,10 +6,10 @@ const CheckboxSelection: React.FC<CheckboxSectionProps> = ({ graphType, loading,
   <div className='flex gap-5 mt-2 justify-between'>
     <div className='flex gap-5'>
       <Checkbox
-        checked={graphType.includes('Document')}
-        label='Document'
-        disabled={(graphType.includes('Document') && graphType.length === 1) || loading}
-        onChange={() => handleChange('Document')}
+        checked={graphType.includes('__Document__')}
+        label='__Document__'
+        disabled={(graphType.includes('__Document__') && graphType.length === 1) || loading}
+        onChange={() => handleChange('__Document__')}
       />
       <Checkbox
         checked={graphType.includes('Entities')}
@@ -18,10 +18,10 @@ const CheckboxSelection: React.FC<CheckboxSectionProps> = ({ graphType, loading,
         onChange={() => handleChange('Entities')}
       />
       <Checkbox
-        checked={graphType.includes('Chunk')}
+        checked={graphType.includes('__Chunk__')}
         label='Chunks'
-        disabled={(graphType.includes('Chunk') && graphType.length === 1) || loading}
-        onChange={() => handleChange('Chunk')}
+        disabled={(graphType.includes('__Chunk__') && graphType.length === 1) || loading}
+        onChange={() => handleChange('__Chunk__')}
       />
     </div>
   </div>

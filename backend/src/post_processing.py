@@ -8,7 +8,7 @@ from src.shared.common_fn import load_embedding_model
 DROP_INDEX_QUERY = "DROP INDEX entities IF EXISTS;"
 LABELS_QUERY = "CALL db.labels()"
 FULL_TEXT_QUERY = "CREATE FULLTEXT INDEX entities FOR (n{labels_str}) ON EACH [n.id, n.description];"
-FILTER_LABELS = ["Chunk","Document"]
+FILTER_LABELS = ["__Chunk__","__Document__"]
 
 def create_fulltext(uri, username, password, database):
     start_time = time.time()
@@ -68,7 +68,7 @@ def create_entity_embedding(graph:Neo4jGraph):
 def fetch_entities_for_embedding(graph):
     query = """
                 MATCH (e)
-                WHERE NOT (e:Chunk OR e:Document) AND e.embedding IS NULL AND e.id IS NOT NULL
+                WHERE NOT (e:__Chunk__ OR e:__Document__) AND e.embedding IS NULL AND e.id IS NOT NULL
                 RETURN elementId(e) AS elementId, e.id + " " + coalesce(e.description, "") AS text
                 """
     result = graph.query(query)           

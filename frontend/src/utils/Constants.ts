@@ -7,10 +7,10 @@ export const document = `+ [docs]`;
 export const chunks = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
 + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks`;
 
-export const entities = `+ collect { OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!Chunk) RETURN p}`;
+export const entities = `+ collect { OPTIONAL MATCH (c:__Chunk__)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!__Chunk__) RETURN p}`;
 
 export const docEntities = `+ [docs] 
-+ collect { MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)--(:!Chunk) RETURN p }`;
++ collect { MATCH (c:__Chunk__)-[:HAS_ENTITY]->(e), p=(e)--(:!__Chunk__) RETURN p }`;
 
 export const docChunks = `+[chunks]
 +collect {MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p} //first chunk
@@ -21,14 +21,14 @@ export const chunksEntities = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p
 
 + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
 //chunks with entities
-+ collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
++ collect { OPTIONAL MATCH p=(c:__Chunk__)-[:HAS_ENTITY]->(e)-[*0..1]-(:!__Chunk__) RETURN p }`;
 
 export const docChunkEntities = `+[chunks]
 +collect {MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p} //first chunk
 + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
 + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
 //chunks with entities
-+ collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
++ collect { OPTIONAL MATCH p=(c:__Chunk__)-[:HAS_ENTITY]->(e)-[*0..1]-(:!__Chunk__) RETURN p }`;
 export const APP_SOURCES =
   process.env.REACT_APP_SOURCES !== ''
     ? process.env.REACT_APP_SOURCES?.split(',')
@@ -186,7 +186,7 @@ export const graphView: OptionType[] = [
   { label: 'Entity Graph', value: queryMap.Entities },
   { label: 'Knowledge Graph', value: queryMap.DocChunkEntities },
 ];
-export const intitalGraphType: GraphType[] = ['Document', 'Entities', 'Chunk'];
+export const intitalGraphType: GraphType[] = ['__Document__', 'Entities', '__Chunk__'];
 export const knowledgeGraph = 'Knowledge Graph';
 export const lexicalGraph = 'Lexical Graph';
 export const entityGraph = 'Entity Graph';

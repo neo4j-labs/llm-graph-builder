@@ -29,7 +29,7 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
     if batch_data:
         unwind_query = """
                     UNWIND $batch_data AS data
-                    MATCH (c:Chunk {id: data.chunk_id})
+                    MATCH (c:__Chunk__ {id: data.chunk_id})
                     CALL apoc.merge.node([data.node_type], {id: data.node_id}) YIELD node AS n
                     MERGE (c)-[:HAS_ENTITY]->(n)
                 """
@@ -67,7 +67,7 @@ def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name
             #             )
             # logging.info('create vector index on chunk embedding')
 
-            graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
+            graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:__Chunk__) on (c.embedding)
                             OPTIONS {indexConfig: {
                             `vector.dimensions`: $dimensions,
                             `vector.similarity_function`: 'cosine'
@@ -80,8 +80,8 @@ def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name
     
     query_to_create_embedding = """
         UNWIND $data AS row
-        MATCH (d:Document {fileName: $fileName})
-        MERGE (c:Chunk {id: row.chunkId})
+        MATCH (d:__Document__ {fileName: $fileName})
+        MERGE (c:__Chunk__ {id: row.chunkId})
         SET c.embedding = row.embeddings
         MERGE (c)-[:PART_OF]->(d)
     """       
@@ -144,22 +144,22 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
           
     query_to_create_chunk_and_PART_OF_relation = """
         UNWIND $batch_data AS data
-        MERGE (c:Chunk {id: data.id})
+        MERGE (c:__Chunk__ {id: data.id})
         SET c.text = data.pg_content, c.position = data.position, c.length = data.length, c.fileName=data.f_name, c.content_offset=data.content_offset
         WITH data, c
         SET c.page_number = CASE WHEN data.page_number IS NOT NULL THEN data.page_number END,
             c.start_time = CASE WHEN data.start_time IS NOT NULL THEN data.start_time END,
             c.end_time = CASE WHEN data.end_time IS NOT NULL THEN data.end_time END
         WITH data, c
-        MATCH (d:Document {fileName: data.f_name})
+        MATCH (d:__Document__ {fileName: data.f_name})
         MERGE (c)-[:PART_OF]->(d)
     """
     graph.query(query_to_create_chunk_and_PART_OF_relation, params={"batch_data": batch_data})
     
     query_to_create_FIRST_relation = """ 
         UNWIND $relationships AS relationship
-        MATCH (d:Document {fileName: $f_name})
-        MATCH (c:Chunk {id: relationship.chunk_id})
+        MATCH (d:__Document__ {fileName: $f_name})
+        MATCH (c:__Chunk__ {id: relationship.chunk_id})
         FOREACH(r IN CASE WHEN relationship.type = 'FIRST_CHUNK' THEN [1] ELSE [] END |
                 MERGE (d)-[:FIRST_CHUNK]->(c))
         """
@@ -167,9 +167,9 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
     
     query_to_create_NEXT_CHUNK_relation = """ 
         UNWIND $relationships AS relationship
-        MATCH (c:Chunk {id: relationship.current_chunk_id})
+        MATCH (c:__Chunk__ {id: relationship.current_chunk_id})
         WITH c, relationship
-        MATCH (pc:Chunk {id: relationship.previous_chunk_id})
+        MATCH (pc:__Chunk__ {id: relationship.previous_chunk_id})
         FOREACH(r IN CASE WHEN relationship.type = 'NEXT_CHUNK' THEN [1] ELSE [] END |
                 MERGE (c)<-[:NEXT_CHUNK]-(pc))
         """
