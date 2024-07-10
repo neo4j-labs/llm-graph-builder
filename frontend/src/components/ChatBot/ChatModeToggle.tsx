@@ -1,3 +1,4 @@
+import { StatusIndicator } from '@neo4j-ndl/react';
 import { useFileContext } from '../../context/UsersFiles';
 import CustomMenu from '../UI/Menu';
 
@@ -30,7 +31,7 @@ export default function ChatModeToggle({
             setchatMode('vector');
           },
           disabledCondition: false,
-          description: `${chatMode === 'vector' ? 'selected' : ''}`,
+          icon:<StatusIndicator type={`${chatMode === 'vector' ? 'success' : 'unknown'}`}/>
         },
         {
           title: 'Vector + Graph',
@@ -38,7 +39,7 @@ export default function ChatModeToggle({
             setchatMode('graph+vector');
           },
           disabledCondition: false,
-          description: `${chatMode === 'graph+vector' ? 'selected' : ''}`,
+          icon:<StatusIndicator type={`${chatMode === 'graph+vector' ? 'success' : 'unknown'}`}/>
         },
       ]}
     ></CustomMenu>

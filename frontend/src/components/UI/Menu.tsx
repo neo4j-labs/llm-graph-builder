@@ -33,7 +33,7 @@ export default function CustomMenu({
       {items.map((i, idx) => {
         return (
           <Menu.Item
-            description={i.description}
+            icon={i.icon}
             key={`${idx}${i.title}`}
             title={i.title}
             onClick={i.onClick}
