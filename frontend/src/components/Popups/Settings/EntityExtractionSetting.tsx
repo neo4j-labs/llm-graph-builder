@@ -1,6 +1,6 @@
 import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
 import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
-import { buttonCaptions, tooltips } from '../../../utils/Constants';
+import { appLabels, buttonCaptions, tooltips } from '../../../utils/Constants';
 import { Dropdown, Flex, Typography } from '@neo4j-ndl/react';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useFileContext } from '../../../context/UsersFiles';
@@ -238,6 +238,9 @@ export default function EntityExtractionSetting({
         </span>
       </Typography>
       <div className='mt-4'>
+        <div className='flex align-self-center justify-center'>
+          <h5>{appLabels.predefinedSchema}</h5>
+        </div>
         <Dropdown
           helpText='Schema Examples'
           label='Predefined Schema'
@@ -252,6 +255,9 @@ export default function EntityExtractionSetting({
           }}
           type='select'
         />
+        <div className='flex align-self-center justify-center'>
+          <h5>{appLabels.ownSchema}</h5>
+        </div>
         <Dropdown
           helpText='You can select more than one values'
           label='Node Labels'
@@ -280,6 +286,7 @@ export default function EntityExtractionSetting({
           }}
           type='creatable'
         />
+
         <Flex className='!mt-4 flex items-center' flexDirection='row' justifyContent='flex-end'>
           <Flex flexDirection='row' gap='4'>
             <ButtonWithToolTip
