@@ -516,7 +516,7 @@ export interface Menuitems {
   title: string;
   onClick: () => void;
   disabledCondition: boolean;
-  description?: string;
+  description?: string | React.ReactNode;
   isSelected?: boolean;
   selectedClassName?: string;
 }

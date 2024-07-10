@@ -33,12 +33,12 @@ export default function CustomMenu({
       {items.map((i, idx) => {
         return (
           <Menu.Item
-            icon={i.icon}
             key={`${idx}${i.title}`}
             title={i.title}
             onClick={i.onClick}
             disabled={i.disabledCondition}
             className={i.isSelected ? i.selectedClassName : ''}
+            description={i.description}
           />
         );
       })}

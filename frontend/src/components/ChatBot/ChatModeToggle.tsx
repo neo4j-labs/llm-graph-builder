@@ -31,7 +31,15 @@ export default function ChatModeToggle({
             setchatMode('vector');
           },
           disabledCondition: false,
-          icon:<StatusIndicator type={`${chatMode === 'vector' ? 'success' : 'unknown'}`}/>
+          description: (
+            <span>
+              {chatMode == 'vector' && (
+                <>
+                 <StatusIndicator type='success' /> Selected 
+                </>
+              )}
+            </span>
+          ),
         },
         {
           title: 'Vector + Graph',
@@ -39,7 +47,15 @@ export default function ChatModeToggle({
             setchatMode('graph+vector');
           },
           disabledCondition: false,
-          icon:<StatusIndicator type={`${chatMode === 'graph+vector' ? 'success' : 'unknown'}`}/>
+          description: (
+            <span>
+              {chatMode === 'graph+vector' && (
+                <>
+                 <StatusIndicator type={`${chatMode === 'graph+vector' ? 'success' : 'unknown'}`} /> Selected 
+                </>
+              )}
+            </span>
+          ),
         },
       ]}
     ></CustomMenu>
