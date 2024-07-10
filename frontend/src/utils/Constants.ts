@@ -1,4 +1,3 @@
-import { DocumentChartBarIconOutline } from '@neo4j-ndl/react/icons';
 import { NvlOptions } from '@neo4j-nvl/base';
 import { GraphType, OptionType } from '../types';
 
@@ -156,11 +155,6 @@ export const buttonCaptions = {
   continueSettings: 'Continue',
   clearSettings: 'Clear Settings',
 };
-
-export const ChatModeOptions = [
-  { Icon: DocumentChartBarIconOutline, value: 'vector' },
-  { Icon: 'abc', value: 'graph+vector' },
-];
 
 export const taskParam: string[] = ['update_similarity_graph', 'create_fulltext_index', 'create_entity_embedding'];
 
