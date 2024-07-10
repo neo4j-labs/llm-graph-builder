@@ -115,14 +115,6 @@ async def create_source_knowledge_graph_url(
             source = wiki_query
 
         message = f"Source Node created successfully for source type: {source_type} and source: {source}"
-        return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name)    
-    except Exception as e:
-        message = f"Unable to create source node for source type: {source_type} and source: {source}"
-        error_message = str(e)
-        logging.exception(f'Exception Stack trace:')
-        return create_api_response('Failed',message=message,error=error_message,file_source=source_type)
-
-        message = f"Source Node created successfully for source type: {source_type} and source: {source}"
         josn_obj = {'api_name':'url_scan','db_url':uri,'url_scanned_file':lst_file_name, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(josn_obj)
         return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name)    
