@@ -739,5 +739,7 @@ function IndeterminateCheckbox({
     }
   }, [ref, indeterminate]);
 
-  return <Checkbox type='checkbox' ref={ref} className={className + ' cursor-pointer'} {...rest} />;
+  return (
+    <Checkbox aria-label='row checkbox' type='checkbox' ref={ref} className={className + ' cursor-pointer'} {...rest} />
+  );
 }
