@@ -185,3 +185,8 @@ export const intitalGraphType: GraphType[] = ['Document', 'Entities', 'Chunk'];
 export const knowledgeGraph = 'Knowledge Graph';
 export const lexicalGraph = 'Lexical Graph';
 export const entityGraph = 'Entity Graph';
+
+export const appLabels = {
+  ownSchema: 'Or Define your own Schema',
+  predefinedSchema: 'Select a Pre-defined Schema',
+};

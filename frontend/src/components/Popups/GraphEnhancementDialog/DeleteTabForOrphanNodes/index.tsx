@@ -17,6 +17,7 @@ import {
   Row,
   getSortedRowModel,
 } from '@tanstack/react-table';
+import DeletePopUp from '../../DeletePopUp/DeletePopUp';
 export default function DeletePopUpForOrphanNodes({
   deleteHandler,
   loading,
@@ -30,6 +31,7 @@ export default function DeletePopUpForOrphanNodes({
   const { userCredentials } = useCredentials();
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const tableRef = useRef(null);
+  const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
 
   const fetchOrphanNodes = useCallback(async () => {
     try {
@@ -64,7 +66,7 @@ export default function DeletePopUpForOrphanNodes({
   const columns = useMemo(
     () => [
       {
-        id: 'select',
+        id: 'Check to Delete All Files',
         header: ({ table }: { table: Table<orphanNodeProps> }) => {
           return (
             <Checkbox
@@ -80,7 +82,7 @@ export default function DeletePopUpForOrphanNodes({
               <Checkbox
                 aria-label='row-checkbox'
                 onChange={row.getToggleSelectedHandler()}
-                title='select row for deletion'
+                title='Select the Row for Deletion'
                 checked={row.getIsSelected()}
               />
             </div>
@@ -118,7 +120,7 @@ export default function DeletePopUpForOrphanNodes({
         id: 'Connnected Documents',
         cell: (info) => {
           return (
-            <Flex>
+            <Flex className='textellipsis'>
               {Array.from(new Set([...info.getValue()])).map((d, index) => (
                 <Flex key={`d${index}`} flexDirection='row'>
                   <span>
@@ -168,16 +170,41 @@ export default function DeletePopUpForOrphanNodes({
     },
   });
 
+  const selectedFilesCheck = table.getSelectedRowModel().rows.length
+    ? `Delete Selected Nodes (${table.getSelectedRowModel().rows.length})`
+    : 'Select Node(s) to delete';
+
+  const onDeleteHandler = async () => {
+    await deleteHandler(table.getSelectedRowModel().rows.map((r) => r.id));
+    const selectedRows = table.getSelectedRowModel().rows.map((r) => r.id);
+    setTotalOrphanNodes((prev) => prev - selectedRows.length);
+    selectedRows.forEach((eid: string) => {
+      setOrphanNodes((prev) => prev.filter((node) => node.e.elementId != eid));
+    });
+    setshowDeletePopUp(false);
+    if (totalOrphanNodes) {
+      await fetchOrphanNodes();
+    }
+  };
+
   return (
     <div>
+      {showDeletePopUp && (
+        <DeletePopUp
+          open={showDeletePopUp}
+          no_of_files={table.getSelectedRowModel().rows.length ?? 0}
+          deleteHandler={onDeleteHandler}
+          deleteCloseHandler={() => setshowDeletePopUp(false)}
+          loading={loading}
+          view='settingsView'
+        />
+      )}
       <div>
         <Flex flexDirection='column'>
           <Flex justifyContent='space-between' flexDirection='row'>
             <Typography variant='subheading-large'>Orphan Nodes Deletion (100 nodes per batch)</Typography>
-            {totalOrphanNodes > 0 ? (
+            {totalOrphanNodes > 0 && (
               <Typography variant='subheading-large'>Total Nodes: {totalOrphanNodes}</Typography>
-            ) : (
-              <></>
             )}
           </Flex>
           <Flex justifyContent='space-between' flexDirection='row'>
@@ -221,19 +248,9 @@ export default function DeletePopUpForOrphanNodes({
           },
         }}
       />
-      <Flex className='mt-1' flexDirection='row' justifyContent='flex-end'>
+      <Flex className='mt-3' flexDirection='row' justifyContent='flex-end'>
         <ButtonWithToolTip
-          onClick={async () => {
-            await deleteHandler(table.getSelectedRowModel().rows.map((r) => r.id));
-            const selectedRows = table.getSelectedRowModel().rows.map((r) => r.id);
-            setTotalOrphanNodes((prev) => prev - selectedRows.length);
-            selectedRows.forEach((eid: string) => {
-              setOrphanNodes((prev) => prev.filter((node) => node.e.elementId != eid));
-            });
-            if (totalOrphanNodes) {
-              await fetchOrphanNodes();
-            }
-          }}
+          onClick={() => setshowDeletePopUp(true)}
           size='large'
           loading={loading}
           text={
@@ -249,9 +266,7 @@ export default function DeletePopUpForOrphanNodes({
           disabled={!table.getSelectedRowModel().rows.length}
           placement='top'
         >
-          {table.getSelectedRowModel().rows.length
-            ? `Delete Selected Nodes (${table.getSelectedRowModel().rows.length})`
-            : 'Select Node(s) to delete'}
+          {selectedFilesCheck}
         </ButtonWithToolTip>
       </Flex>
     </div>
