@@ -13,7 +13,7 @@ export default function CustomMenu({
 }: {
   open: boolean;
   closeHandler: () => void;
-  items: Menuitems[];
+  items: Menuitems[] | undefined;
   MenuAnchor: HTMLElement | null;
   anchorOrigin?: Origin;
   transformOrigin?: Origin;
@@ -30,7 +30,7 @@ export default function CustomMenu({
       anchorEl={MenuAnchor}
       disableBackdrop={disableBackdrop}
     >
-      {items.map((i, idx) => {
+      {items?.map((i, idx) => {
         return (
           <Menu.Item
             description={i.description}

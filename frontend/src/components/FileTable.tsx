@@ -103,20 +103,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           );
         },
         cell: ({ row }: { row: Row<CustomFile> }) => {
-          const checkedCase =
-            row.getIsSelected() && row.original.status != 'Uploading' && row.original.status != 'Processing';
           return (
             <div className='px-1'>
-              {/* <Checkbox
-                aria-label='row-checkbox'
-                checked={checkedCase}
-                disabled={
-                  !row.getCanSelect() || row.original.status === 'Uploading' || row.original.status === 'Processing'
-                }
-                onChange={row.getToggleSelectedHandler()}
-                title='select row for deletion'
-              /> */}
-
               <IndeterminateCheckbox
                 {...{
                   checked: row.getIsSelected(),
@@ -739,5 +727,7 @@ function IndeterminateCheckbox({
     }
   }, [ref, indeterminate]);
 
-  return <Checkbox type='checkbox' ref={ref} className={className + ' cursor-pointer'} {...rest} />;
+  return (
+    <Checkbox aria-label='row checkbox' type='checkbox' ref={ref} className={className + ' cursor-pointer'} {...rest} />
+  );
 }
