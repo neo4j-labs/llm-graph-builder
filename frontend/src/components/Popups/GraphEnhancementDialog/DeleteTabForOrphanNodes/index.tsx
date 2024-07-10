@@ -120,7 +120,7 @@ export default function DeletePopUpForOrphanNodes({
         id: 'Connnected Documents',
         cell: (info) => {
           return (
-            <Flex>
+            <Flex className='textellipsis'>
               {Array.from(new Set([...info.getValue()])).map((d, index) => (
                 <Flex key={`d${index}`} flexDirection='row'>
                   <span>
@@ -198,7 +198,7 @@ export default function DeletePopUpForOrphanNodes({
         />
       )}
       <div>
-        <Flex flexDirection='column' style={{ border: '1px solid red' }}>
+        <Flex flexDirection='column'>
           <Flex justifyContent='space-between' flexDirection='row'>
             <Typography variant='subheading-large'>Orphan Nodes Deletion (100 nodes per batch)</Typography>
             {totalOrphanNodes > 0 && (
@@ -246,7 +246,7 @@ export default function DeletePopUpForOrphanNodes({
           },
         }}
       />
-      <Flex className='mt-10' flexDirection='row' justifyContent='flex-end'>
+      <Flex className='mt-3' flexDirection='row' justifyContent='flex-end'>
         <ButtonWithToolTip
           onClick={() => setshowDeletePopUp(true)}
           size='large'
