@@ -569,6 +569,7 @@ const Content: React.FC<ContentProps> = ({
           deleteHandler={(delentities: boolean) => handleDeleteFiles(delentities)}
           deleteCloseHandler={() => setshowDeletePopUp(false)}
           loading={deleteLoading}
+          view ='contentView'
         ></DeletePopUp>
       )}
       {showSettingnModal && (
