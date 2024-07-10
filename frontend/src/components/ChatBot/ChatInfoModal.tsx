@@ -40,7 +40,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   cypher_query,
   graphonly_entities,
 }) => {
-  const [activeTab, setActiveTab] = useState<number>(3);
+  const [activeTab, setActiveTab] = useState<number>(mode === 'graph' ? 4 : 3);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
@@ -57,25 +57,28 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     const text = properties.id;
     return { label, text };
   };
-  const actions: CypherCodeBlockProps['actions'] = [
-    {
-      title: 'copy',
-      'aria-label': 'copy',
-      children: (
-        <>
-          {copiedText ? (
-            <ClipboardDocumentCheckIconOutline className='n-size-token-7' />
-          ) : (
-            <DocumentDuplicateIconOutline className='text-palette-neutral-text-icon' />
-          )}
-        </>
-      ),
-      onClick: () => {
-        void copy(cypher_query as string);
-        setcopiedText(true);
+  const actions: CypherCodeBlockProps['actions'] = useMemo(
+    () => [
+      {
+        title: 'copy',
+        'aria-label': 'copy',
+        children: (
+          <>
+            {copiedText ? (
+              <ClipboardDocumentCheckIconOutline className='n-size-token-7' />
+            ) : (
+              <DocumentDuplicateIconOutline className='text-palette-neutral-text-icon' />
+            )}
+          </>
+        ),
+        onClick: () => {
+          void copy(cypher_query as string);
+          setcopiedText(true);
+        },
       },
-    },
-  ];
+    ],
+    [copiedText, cypher_query]
+  );
   useEffect(() => {
     if (mode != 'graph') {
       setLoading(true);

@@ -343,7 +343,6 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                               setcypherQuery(chat.cypher_query ?? '');
                               setShowInfoModal(true);
                               setChatsMode(chat.mode ?? '');
-                              console.log(chat.graphonly_entities);
                               setgraphEntitites(chat.graphonly_entities ?? []);
                             }}
                           >
