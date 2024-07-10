@@ -8,13 +8,17 @@ export default function CustomMenu({
   MenuAnchor,
   anchorOrigin,
   transformOrigin,
+  anchorPortal = true,
+  disableBackdrop = false,
 }: {
   open: boolean;
   closeHandler: () => void;
-  items: Menuitems[];
+  items: Menuitems[] | undefined;
   MenuAnchor: HTMLElement | null;
   anchorOrigin?: Origin;
   transformOrigin?: Origin;
+  anchorPortal?: boolean;
+  disableBackdrop?: boolean;
 }) {
   return (
     <Menu
@@ -22,17 +26,19 @@ export default function CustomMenu({
       onClose={closeHandler}
       anchorOrigin={anchorOrigin}
       transformOrigin={transformOrigin}
-      anchorPortal={true}
+      anchorPortal={anchorPortal}
       anchorEl={MenuAnchor}
+      disableBackdrop={disableBackdrop}
     >
-      {items.map((i, idx) => {
+      {items?.map((i, idx) => {
         return (
           <Menu.Item
-            description={i.description}
             key={`${idx}${i.title}`}
             title={i.title}
             onClick={i.onClick}
             disabled={i.disabledCondition}
+            className={i.isSelected ? i.selectedClassName : ''}
+            description={i.description}
           />
         );
       })}

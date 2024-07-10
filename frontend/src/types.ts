@@ -23,6 +23,7 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   language?: string;
   processingProgress?: number;
   access_token?: string;
+  checked?: boolean;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
@@ -153,7 +154,6 @@ export interface ContentProps {
   openTextSchema: () => void;
   isSchema?: boolean;
   setIsSchema: Dispatch<SetStateAction<boolean>>;
-  openOrphanNodeDeletionModal: () => void;
 }
 
 export interface FileTableProps {
@@ -225,6 +225,9 @@ export interface Messages {
   total_tokens?: number;
   speaking?: boolean;
   copying?: boolean;
+  mode?: string;
+  cypher_query?: string;
+  graphonly_entities?: [];
 }
 
 export type ChatbotProps = {
@@ -246,9 +249,20 @@ export interface GraphViewModalProps {
   viewPoint: string;
   nodeValues?: Node[];
   relationshipValues?: Relationship[];
+  selectedRows?: CustomFile[] | undefined;
 }
 
-export type GraphType = 'document' | 'chunks' | 'entities';
+export type GraphType = 'Document' | 'Entities' | 'Chunk';
+
+export type PartialLabelNode = Partial<Node> & {
+  labels: string;
+};
+
+export interface CheckboxSectionProps {
+  graphType: GraphType[];
+  loading: boolean;
+  handleChange: (graph: GraphType) => void;
+}
 
 export interface fileName {
   fileName: string;
@@ -317,6 +331,7 @@ export type alertStateType = {
 };
 
 export type Scheme = Record<string, string>;
+
 export type LabelCount = Record<string, number>;
 interface NodeType extends Partial<Node> {
   labels?: string[];
@@ -346,10 +361,13 @@ export interface labelsAndTypes {
   labels: string[];
   relationshipTypes: string[];
 }
+interface orphanTotalNodes {
+  total: number;
+}
 export interface commonserverresponse {
   status: string;
   error?: string;
-  message?: string;
+  message?: string | orphanTotalNodes;
   file_name?: string;
   data?: labelsAndTypes | labelsAndTypes[] | uploadData | orphanNodeProps[];
 }
@@ -381,6 +399,9 @@ export interface chatInfoMessage extends Partial<Messages> {
   response_time: number;
   chunk_ids: chunk[];
   total_tokens: number;
+  mode: string;
+  cypher_query?: string;
+  graphonly_entities: [];
 }
 
 export interface eventResponsetypes {
@@ -499,7 +520,9 @@ export interface Menuitems {
   title: string;
   onClick: () => void;
   disabledCondition: boolean;
-  description?: string;
+  description?: string | React.ReactNode;
+  isSelected?: boolean;
+  selectedClassName?: string;
 }
 export type Vertical = 'top' | 'bottom';
 export type Horizontal = 'left' | 'right' | 'center';
@@ -507,3 +530,41 @@ export interface Origin {
   vertical: Vertical;
   horizontal: Horizontal;
 }
+
+export type BasicNode = {
+  id: string;
+  labels: string[];
+  properties: Record<string, string>;
+  propertyTypes: Record<string, string>;
+};
+
+export type GraphStatsLabels = Record<
+  string,
+  {
+    count: number;
+    properties: Record<string, string>;
+  }
+>;
+
+type NodeStyling = {
+  backgroundColor: string;
+  borderColor: string;
+  textColor: string;
+  caption: string;
+  diameter: string;
+};
+
+type RelationStyling = {
+  fontSize: string;
+  lineColor: string;
+  textColorExternal: string;
+  textColorInternal: string;
+  caption: string;
+  padding: string;
+  width: string;
+};
+
+export type GraphStyling = {
+  node: Record<string, Partial<NodeStyling>>;
+  relationship: Record<string, Partial<RelationStyling>>;
+};

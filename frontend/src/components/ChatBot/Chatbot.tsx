@@ -7,12 +7,12 @@ import {
   SpeakerXMarkIconOutline,
 } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../../assets/images/chatbot-ai.png';
-import { ChatbotProps, UserCredentials, chunk } from '../../types';
+import { ChatbotProps, CustomFile, UserCredentials, chunk } from '../../types';
 import { useCredentials } from '../../context/UserCredentials';
 import { chatBotAPI } from '../../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../../context/UsersFiles';
-import InfoModal from './Info/InfoModal';
+import InfoModal from './ChatInfoModal';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import IconButtonWithToolTip from '../UI/IconButtonToolTip';
@@ -25,7 +25,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
-  const { model, chatMode } = useFileContext();
+  const { model, chatMode, selectedRows, filesData } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
@@ -34,13 +34,26 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [responseTime, setResponseTime] = useState<number>(0);
   const [chunkModal, setChunkModal] = useState<chunk[]>([]);
   const [tokensUsed, setTokensUsed] = useState<number>(0);
+  const [cypherQuery, setcypherQuery] = useState<string>('');
   const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
+  const [chatsMode, setChatsMode] = useState<string>('graph+vector');
+  const [graphEntitites, setgraphEntitites] = useState<[]>([]);
 
   const [value, copy] = useCopyToClipboard();
   const { speak, cancel } = useSpeechSynthesis({
     onEnd: () => {
       setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
     },
+  });
+  let selectedFileNames: CustomFile[] = [];
+  selectedRows.forEach((id) => {
+    console.log(id);
+    filesData.forEach((f) => {
+      console.log(f.id, id);
+      if (f.id === id) {
+        selectedFileNames.push(f);
+      }
+    });
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,6 +76,9 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       response_time?: number;
       speaking?: boolean;
       copying?: boolean;
+      mode?: string;
+      cypher_query?: string;
+      graphonly_entities?: [];
     },
     index = 0
   ) => {
@@ -89,6 +105,9 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
               response_time: response?.response_time,
               speaking: false,
               copying: false,
+              mode: response?.mode,
+              cypher_query: response?.cypher_query,
+              graphonly_entities: response?.graphonly_entities,
             },
           ]);
         } else {
@@ -107,6 +126,9 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
             lastmsg.response_time = response?.response_time;
             lastmsg.speaking = false;
             lastmsg.copying = false;
+            lastmsg.mode = response?.mode;
+            lastmsg.cypher_query = response.cypher_query;
+            lastmsg.graphonly_entities = response.graphonly_entities;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -136,21 +158,33 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
     let chatChunks;
     let chatTimeTaken;
     let chatTokensUsed;
+    let chatingMode;
+    let cypher_query;
+    let graphonly_entities;
     const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
     const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime };
     setListMessages([...listMessages, userMessage]);
     try {
       setInputMessage('');
       simulateTypingEffect({ reply: ' ' });
-      const chatbotAPI = await chatBotAPI(userCredentials as UserCredentials, inputMessage, sessionId, model, chatMode);
+      const chatbotAPI = await chatBotAPI(
+        userCredentials as UserCredentials,
+        inputMessage,
+        sessionId,
+        model,
+        chatMode,
+        selectedFileNames?.map((f) => f.name)
+      );
       const chatresponse = chatbotAPI?.response;
-      console.log('api', chatresponse);
       chatbotReply = chatresponse?.data?.data?.message;
       chatSources = chatresponse?.data?.data?.info.sources;
       chatModel = chatresponse?.data?.data?.info.model;
       chatChunks = chatresponse?.data?.data?.info.chunkdetails;
       chatTokensUsed = chatresponse?.data?.data?.info.total_tokens;
       chatTimeTaken = chatresponse?.data?.data?.info.response_time;
+      chatingMode = chatresponse?.data?.data?.info?.mode;
+      cypher_query = chatresponse?.data?.data?.info?.cypher_query ?? '';
+      graphonly_entities = chatresponse?.data.data.info.context ?? [];
       const finalbotReply = {
         reply: chatbotReply,
         sources: chatSources,
@@ -160,6 +194,9 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
         response_time: chatTimeTaken,
         speaking: false,
         copying: false,
+        mode: chatingMode,
+        cypher_query,
+        graphonly_entities,
       };
       simulateTypingEffect(finalbotReply);
     } catch (error) {
@@ -303,7 +340,10 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                               setResponseTime(chat.response_time ?? 0);
                               setChunkModal(chat.chunk_ids ?? []);
                               setTokensUsed(chat.total_tokens ?? 0);
+                              setcypherQuery(chat.cypher_query ?? '');
                               setShowInfoModal(true);
+                              setChatsMode(chat.mode ?? '');
+                              setgraphEntitites(chat.graphonly_entities ?? []);
                             }}
                           >
                             {' '}
@@ -365,7 +405,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
             onChange={handleInputChange}
           />
           <Button type='submit' disabled={loading}>
-            {buttonCaptions.submit}
+            Ask
           </Button>
         </form>
       </div>
@@ -394,6 +434,9 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
           chunk_ids={chunkModal}
           response_time={responseTime}
           total_tokens={tokensUsed}
+          mode={chatsMode}
+          cypher_query={cypherQuery}
+          graphonly_entities={graphEntitites}
         />
       </Modal>
     </div>

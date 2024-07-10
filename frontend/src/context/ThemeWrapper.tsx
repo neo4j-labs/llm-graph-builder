@@ -3,7 +3,7 @@ import { NeedleThemeProvider, useMediaQuery } from '@neo4j-ndl/react';
 
 export const ThemeWrapperContext = createContext({
   toggleColorMode: () => {},
-  colorMode: localStorage.getItem('mode') as string,
+  colorMode: localStorage.getItem('mode') as 'light' | 'dark',
 });
 
 interface ThemeWrapperProps {
@@ -11,7 +11,9 @@ interface ThemeWrapperProps {
 }
 const ThemeWrapper = ({ children }: ThemeWrapperProps) => {
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-  const [mode, setMode] = useState<string>(prefersDarkMode ? 'dark' : localStorage.getItem('mode') ?? 'light');
+  //@ts-ignore
+  const defaultMode: 'light' | 'dark' = localStorage.getItem('mode');
+  const [mode, setMode] = useState<'light' | 'dark'>(prefersDarkMode ? 'dark' : defaultMode ?? 'light');
   const [usingPreferredMode, setUsingPreferredMode] = useState<boolean>(true);
   const themeWrapperUtils = useMemo(
     () => ({
@@ -25,7 +27,7 @@ const ThemeWrapper = ({ children }: ThemeWrapperProps) => {
         });
       },
     }),
-    []
+    [mode]
   );
   const themeBodyInjection = (mode: string) => {
     if (mode === 'light') {

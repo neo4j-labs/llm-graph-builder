@@ -4,7 +4,6 @@ import {
   MoonIconOutline,
   SunIconOutline,
   CodeBracketSquareIconOutline,
-  Cog8ToothIconOutline,
   InformationCircleIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { Typography } from '@neo4j-ndl/react';
@@ -12,17 +11,8 @@ import { useCallback, useEffect } from 'react';
 import IconButtonWithToolTip from '../UI/IconButtonToolTip';
 import { tooltips } from '../../utils/Constants';
 import { useFileContext } from '../../context/UsersFiles';
-import { Badge } from '@mui/material';
 
-export default function Header({
-  themeMode,
-  toggleTheme,
-  openSettingsModal,
-}: {
-  themeMode: string;
-  toggleTheme: () => void;
-  openSettingsModal: () => void;
-}) {
+export default function Header({ themeMode, toggleTheme }: { themeMode: string; toggleTheme: () => void }) {
   const handleURLClick = useCallback((url: string) => {
     window.open(url, '_blank');
   }, []);
@@ -86,6 +76,7 @@ export default function Header({
                 clean
                 size='large'
                 onClick={toggleTheme}
+                placement='left'
               >
                 {themeMode === 'dark' ? (
                   <span role='img' aria-label='sun'>
@@ -97,18 +88,6 @@ export default function Header({
                   </span>
                 )}
               </IconButtonWithToolTip>
-              <Badge color={isSchema ? 'success' : 'error'} overlap='circular' badgeContent=' ' variant='dot'>
-                <IconButtonWithToolTip
-                  label={tooltips.settings}
-                  text={tooltips.settings}
-                  size='large'
-                  clean
-                  onClick={openSettingsModal}
-                  placement='left'
-                >
-                  <Cog8ToothIconOutline />
-                </IconButtonWithToolTip>
-              </Badge>
             </div>
           </div>
         </section>

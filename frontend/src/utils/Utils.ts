@@ -1,6 +1,6 @@
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import type { Node, Relationship } from '@neo4j-nvl/base';
-import { Messages, Scheme } from '../types';
+import { GraphType, Messages, Scheme } from '../types';
 
 // Get the Url
 export const url = () => {
@@ -22,8 +22,7 @@ export const wikiValidation = (url: string) => {
 export const webLinkValidation = (url: string) => {
   return (
     url.trim() != '' &&
-    /(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g.test(url) !=
-      false
+    /(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_.~#?&//=]*)/g.test(url) != false
   );
 };
 export const youtubeLinkValidation = (url: string) => {
@@ -164,6 +163,65 @@ export const processGraphData = (neoNodes: Node[], neoRels: Relationship[]) => {
   });
   const finalRels = newRels.flat();
   return { finalNodes, finalRels, schemeVal };
+};
+
+export const filterData = (
+  graphType: GraphType[],
+  allNodes: Node[],
+  allRelationships: Relationship[],
+  scheme: Scheme
+) => {
+  let filteredNodes: Node[] = [];
+  let filteredRelations: Relationship[] = [];
+  let filteredScheme: Scheme = {};
+  const entityTypes = Object.keys(scheme).filter((type) => type !== 'Document' && type !== 'Chunk');
+  if (graphType.includes('Document') && !graphType.includes('Entities') && !graphType.includes('Chunk')) {
+    // Document only
+    // @ts-ignore
+    filteredNodes = allNodes.filter((node) => node.labels.includes('Document'));
+    filteredScheme = { Document: scheme.Document };
+  } else if (!graphType.includes('Document') && graphType.includes('Entities') && !graphType.includes('Chunk')) {
+    // Only Entity
+    // @ts-ignore
+    const entityNode = allNodes.filter((node) => !node.labels.includes('Document') && !node.labels.includes('Chunk'));
+    filteredNodes = entityNode ? entityNode : [];
+    // @ts-ignore
+    filteredRelations = allRelationships.filter((rel) => !['PART_OF', 'FIRST_CHUNK', 'HAS_ENTITY', 'SIMILAR', 'NEXT_CHUNK'].includes(rel.caption));
+    filteredScheme = Object.fromEntries(entityTypes.map((key) => [key, scheme[key]])) as Scheme;
+  } else if (!graphType.includes('Document') && !graphType.includes('Entities') && graphType.includes('Chunk')) {
+    // Only Chunk
+    // @ts-ignore
+    filteredNodes = allNodes.filter((node) => node.labels.includes('Chunk'));
+    // @ts-ignore
+    filteredRelations = allRelationships.filter((rel) => ['SIMILAR', 'NEXT_CHUNK'].includes(rel.caption));
+    filteredScheme = { Chunk: scheme.Chunk };
+  } else if (graphType.includes('Document') && graphType.includes('Entities') && !graphType.includes('Chunk')) {
+    // Document + Entity
+    // @ts-ignore
+    filteredNodes = allNodes.filter((node) =>node.labels.includes('Document') || (!node.labels.includes('Document') && !node.labels.includes('Chunk'))
+    );
+    // @ts-ignore
+    filteredRelations = allRelationships.filter((rel) => !['PART_OF', 'FIRST_CHUNK', 'HAS_ENTITY', 'SIMILAR', 'NEXT_CHUNK'].includes(rel.caption));
+  } else if (graphType.includes('Document') && !graphType.includes('Entities') && graphType.includes('Chunk')) {
+    // Document + Chunk
+    // @ts-ignore
+    filteredNodes = allNodes.filter((node) => node.labels.includes('Document') || node.labels.includes('Chunk'));
+    // @ts-ignore
+    filteredRelations = allRelationships.filter((rel) =>['PART_OF', 'FIRST_CHUNK', 'SIMILAR', 'NEXT_CHUNK'].includes(rel.caption));
+    filteredScheme = { Document: scheme.Document, Chunk: scheme.Chunk };
+  } else if (!graphType.includes('Document') && graphType.includes('Entities') && graphType.includes('Chunk')) {
+    // Chunk + Entity
+    // @ts-ignore
+    filteredNodes = allNodes.filter((node) => !node.labels.includes('Document'));
+    // @ts-ignore
+    filteredRelations = allRelationships.filter((rel) => !['PART_OF', 'FIRST_CHUNK'].includes(rel.caption));
+  } else if (graphType.includes('Document') && graphType.includes('Entities') && graphType.includes('Chunk')) {
+    // Document + Chunk + Entity
+    filteredNodes = allNodes;
+    filteredRelations = allRelationships;
+    filteredScheme = scheme;
+  }
+  return { filteredNodes, filteredRelations, filteredScheme };
 };
 
 export const getDateTime = () => {

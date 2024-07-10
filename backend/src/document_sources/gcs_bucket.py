@@ -143,10 +143,11 @@ def delete_file_from_gcs(bucket_name,folder_name, file_name):
 def copy_failed_file(source_bucket_name,dest_bucket_name,folder_name, file_name):
   try:
     storage_client = storage.Client()
-    bucket = storage_client.bucket(source_bucket_name)
+    source_bucket = storage_client.bucket(source_bucket_name)
+    dest_bucket = storage_client.bucket(dest_bucket_name)
     folder_file_name = folder_name +'/'+file_name
-    source_blob = bucket.blob(folder_file_name)
-    bucket.copy_blob(source_blob,dest_bucket_name,file_name)
+    source_blob = source_bucket.blob(folder_file_name)
+    source_bucket.copy_blob(source_blob, dest_bucket, file_name)
     logging.info(f'Failed file {file_name} copied to {dest_bucket_name} from {source_bucket_name} in GCS successfully')
   except Exception as e:
     raise Exception(e)  
