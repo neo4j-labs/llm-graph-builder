@@ -405,7 +405,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
             onChange={handleInputChange}
           />
           <Button type='submit' disabled={loading}>
-            {buttonCaptions.submit}
+            Ask
           </Button>
         </form>
       </div>

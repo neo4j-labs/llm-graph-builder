@@ -569,6 +569,7 @@ const Content: React.FC<ContentProps> = ({
           deleteHandler={(delentities: boolean) => handleDeleteFiles(delentities)}
           deleteCloseHandler={() => setshowDeletePopUp(false)}
           loading={deleteLoading}
+          view='contentView'
         ></DeletePopUp>
       )}
       {showSettingnModal && (
@@ -606,9 +607,20 @@ const Content: React.FC<ContentProps> = ({
                 <span className='n-body-small'>Not Connected</span>
               )}
               <div className='pt-1'>
-                {!isSchema ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
+                {!isSchema ? (
+                  <StatusIndicator type='danger' />
+                ) : selectedNodes.length || selectedRels.length ? (
+                  <StatusIndicator type='success' />
+                ) : (
+                  <StatusIndicator type='warning' />
+                )}
                 {isSchema ? (
-                  <span className='n-body-small'>Graph Schema configured</span>
+                  <span className='n-body-small'>
+                    Empty Graph Schema configured{' '}
+                    {selectedNodes.length || selectedRels.length
+                      ? `${selectedNodes.length} Labels + ${selectedRels.length} Rel Types`
+                      : ''}{' '}
+                  </span>
                 ) : (
                   <span className='n-body-small'>No Graph Schema configured</span>
                 )}
