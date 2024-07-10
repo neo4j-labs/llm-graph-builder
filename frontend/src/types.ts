@@ -226,6 +226,8 @@ export interface Messages {
   speaking?: boolean;
   copying?: boolean;
   mode?: string;
+  cypher_query?: string;
+  graphonly_entities?: [];
 }
 
 export type ChatbotProps = {
@@ -398,6 +400,8 @@ export interface chatInfoMessage extends Partial<Messages> {
   chunk_ids: chunk[];
   total_tokens: number;
   mode: string;
+  cypher_query?: string;
+  graphonly_entities: [];
 }
 
 export interface eventResponsetypes {

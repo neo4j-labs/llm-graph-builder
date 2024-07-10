@@ -34,8 +34,10 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [responseTime, setResponseTime] = useState<number>(0);
   const [chunkModal, setChunkModal] = useState<chunk[]>([]);
   const [tokensUsed, setTokensUsed] = useState<number>(0);
+  const [cypherQuery, setcypherQuery] = useState<string>('');
   const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
   const [chatsMode, setChatsMode] = useState<string>('graph+vector');
+  const [graphEntitites, setgraphEntitites] = useState<[]>([]);
 
   const [value, copy] = useCopyToClipboard();
   const { speak, cancel } = useSpeechSynthesis({
@@ -53,7 +55,6 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       }
     });
   });
-  console.log({ selectedFileNames });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
@@ -76,6 +77,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       speaking?: boolean;
       copying?: boolean;
       mode?: string;
+      cypher_query?: string;
+      graphonly_entities?: [];
     },
     index = 0
   ) => {
@@ -103,6 +106,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
               speaking: false,
               copying: false,
               mode: response?.mode,
+              cypher_query: response?.cypher_query,
+              graphonly_entities: response?.graphonly_entities,
             },
           ]);
         } else {
@@ -122,6 +127,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
             lastmsg.speaking = false;
             lastmsg.copying = false;
             lastmsg.mode = response?.mode;
+            lastmsg.cypher_query = response.cypher_query;
+            lastmsg.graphonly_entities = response.graphonly_entities;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -152,6 +159,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
     let chatTimeTaken;
     let chatTokensUsed;
     let chatingMode;
+    let cypher_query;
+    let graphonly_entities;
     const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
     const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime };
     setListMessages([...listMessages, userMessage]);
@@ -174,6 +183,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       chatTokensUsed = chatresponse?.data?.data?.info.total_tokens;
       chatTimeTaken = chatresponse?.data?.data?.info.response_time;
       chatingMode = chatresponse?.data?.data?.info?.mode;
+      cypher_query = chatresponse?.data?.data?.info?.cypher_query ?? '';
+      graphonly_entities = chatresponse?.data.data.info.context ?? [];
       const finalbotReply = {
         reply: chatbotReply,
         sources: chatSources,
@@ -184,6 +195,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
         speaking: false,
         copying: false,
         mode: chatingMode,
+        cypher_query,
+        graphonly_entities,
       };
       simulateTypingEffect(finalbotReply);
     } catch (error) {
@@ -327,8 +340,10 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                               setResponseTime(chat.response_time ?? 0);
                               setChunkModal(chat.chunk_ids ?? []);
                               setTokensUsed(chat.total_tokens ?? 0);
+                              setcypherQuery(chat.cypher_query ?? '');
                               setShowInfoModal(true);
                               setChatsMode(chat.mode ?? '');
+                              setgraphEntitites(chat.graphonly_entities ?? []);
                             }}
                           >
                             {' '}
@@ -420,6 +435,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
           response_time={responseTime}
           total_tokens={tokensUsed}
           mode={chatsMode}
+          cypher_query={cypherQuery}
+          graphonly_entities={graphEntitites}
         />
       </Modal>
     </div>

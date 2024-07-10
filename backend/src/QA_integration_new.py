@@ -21,6 +21,7 @@ from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage,AIMessage
 from src.shared.constants import *
 from src.llm import get_llm
+from langchain.chains import GraphCypherQAChain
 import json
 
 ## Chat models
@@ -226,11 +227,10 @@ def setup_chat(model, graph, session_id, document_names,retrieval_query):
     logging.info(f"Model called in chat {model} and model version is {model_name}")
     retriever = get_neo4j_retriever(graph=graph,retrieval_query=retrieval_query,document_names=document_names)
     doc_retriever = create_document_retriever_chain(llm, retriever)
-    history = create_neo4j_chat_message_history(graph, session_id)
     chat_setup_time = time.time() - start_time
     logging.info(f"Chat setup completed in {chat_setup_time:.2f} seconds")
     
-    return llm, doc_retriever, history, model_name
+    return llm, doc_retriever, model_name
 
 def retrieve_documents(doc_retriever, messages):
     start_time = time.time()
@@ -264,25 +264,87 @@ def summarize_and_log(history, messages, llm):
     history_summarized_time = time.time() - start_time
     logging.info(f"Chat History summarized in {history_summarized_time:.2f} seconds")
 
+
+def create_graph_chain(model, graph):
+    try:
+        logging.info(f"Graph QA Chain using LLM model: {model}")
+
+        cypher_llm,model_name = get_llm(model)
+        qa_llm,model_name = get_llm(model)
+        graph_chain = GraphCypherQAChain.from_llm(
+            cypher_llm=cypher_llm,
+            qa_llm=qa_llm,
+            validate_cypher= True,
+            graph=graph,
+            # verbose=True, 
+            return_intermediate_steps = True,
+            top_k=3
+        )
+
+        logging.info("GraphCypherQAChain instance created successfully.")
+        return graph_chain,qa_llm,model_name
+
+    except Exception as e:
+        logging.error(f"An error occurred while creating the GraphCypherQAChain instance. : {e}") 
+
+
+def get_graph_response(graph_chain, question):
+    try:
+        cypher_res = graph_chain.invoke({"query": question})
+        
+        response = cypher_res.get("result")
+        cypher_query = ""
+        context = []
+
+        for step in cypher_res.get("intermediate_steps", []):
+            if "query" in step:
+                cypher_string = step["query"]
+                cypher_query = cypher_string.replace("cypher\n", "").replace("\n", " ").strip() 
+            elif "context" in step:
+                context = step["context"]
+        return {
+            "response": response,
+            "cypher_query": cypher_query,
+            "context": context
+        }
+    
+    except Exception as e:
+        logging.error("An error occurred while getting the graph response : {e}")
+
 def QA_RAG(graph, model, question, document_names,session_id, mode):
     try:
         logging.info(f"Chat Mode : {mode}")
-        if mode == "vector":
-            retrieval_query = VECTOR_SEARCH_QUERY
-        elif mode == "graph":
-            #WIP
-            result =  {
-                "session_id": session_id,
-                "user": "chatbot"
-                }
-            return result
-        else:
-            retrieval_query = VECTOR_GRAPH_SEARCH_QUERY
-
-        llm, doc_retriever, history, model_version = setup_chat(model, graph, session_id, document_names,retrieval_query)
+        history = create_neo4j_chat_message_history(graph, session_id)
         messages = history.messages
         user_question = HumanMessage(content=question)
         messages.append(user_question)
+
+        if mode == "graph":
+            graph_chain, qa_llm,model_version = create_graph_chain(model,graph)
+            graph_response = get_graph_response(graph_chain,question)
+            ai_response = AIMessage(content=graph_response["response"])
+            messages.append(ai_response)
+            summarize_and_log(history, messages, qa_llm)
+
+            result = {
+                "session_id": session_id, 
+                "message": graph_response["response"], 
+                "info": {
+                    "model": model_version,
+                    'cypher_query':graph_response["cypher_query"],
+                    "context" : graph_response["context"],
+                    "mode" : mode,
+                    "response_time": 0
+                },
+                "user": "chatbot"
+            } 
+            return result
+        elif mode == "vector":
+            retrieval_query = VECTOR_SEARCH_QUERY
+        else:
+            retrieval_query = VECTOR_GRAPH_SEARCH_QUERY
+
+        llm, doc_retriever, model_version = setup_chat(model, graph, session_id, document_names,retrieval_query)
         
         docs = retrieve_documents(doc_retriever, messages)
         

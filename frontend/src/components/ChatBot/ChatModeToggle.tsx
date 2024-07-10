@@ -1,6 +1,9 @@
 import { StatusIndicator } from '@neo4j-ndl/react';
+import { useMemo } from 'react';
 import { useFileContext } from '../../context/UsersFiles';
 import CustomMenu from '../UI/Menu';
+import { chatModes } from '../../utils/Constants';
+import { capitalize } from '@mui/material';
 
 export default function ChatModeToggle({
   menuAnchor,
@@ -24,40 +27,26 @@ export default function ChatModeToggle({
       MenuAnchor={menuAnchor}
       anchorPortal={anchorPortal}
       disableBackdrop={disableBackdrop}
-      items={[
-        {
-          title: 'Vector',
-          onClick: () => {
-            setchatMode('vector');
-          },
-          disabledCondition: false,
-          description: (
-            <span>
-              {chatMode == 'vector' && (
+      items={useMemo(
+        () =>
+          chatModes?.map((m) => {
+            return {
+              title: m.includes('+') ? 'Graph + Vector' : capitalize(m),
+              onClick: () => {
+                setchatMode(m);
+              },
+              disabledCondition: false,
+              description: <span>
+              {chatMode === m && (
                 <>
-                 <StatusIndicator type='success' /> Selected 
+                 <StatusIndicator type={`${chatMode === m ? 'success' : 'unknown'}`} /> Selected 
                 </>
               )}
-            </span>
-          ),
-        },
-        {
-          title: 'Vector + Graph',
-          onClick: () => {
-            setchatMode('graph+vector');
-          },
-          disabledCondition: false,
-          description: (
-            <span>
-              {chatMode === 'graph+vector' && (
-                <>
-                 <StatusIndicator type={`${chatMode === 'graph+vector' ? 'success' : 'unknown'}`} /> Selected 
-                </>
-              )}
-            </span>
-          ),
-        },
-      ]}
+            </span>,
+            };
+          }),
+        [chatMode, chatModes]
+      )}
     ></CustomMenu>
   );
 }
