@@ -27,6 +27,7 @@ RUN BACKEND_API_URL=$BACKEND_API_URL \
     CHUNK_SIZE=$CHUNK_SIZE \
     ENV=$ENV \
     LARGE_FILE_SIZE=${LARGE_FILE_SIZE} \
+    CHAT_MODES=$CHAT_MODES \
     yarn run build
 
 # Step 2: Serve the application using Nginx

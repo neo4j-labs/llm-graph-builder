@@ -154,6 +154,7 @@ export const buttonCaptions = {
   details: 'Details',
   continueSettings: 'Continue',
   clearSettings: 'Clear Settings',
+  ask:'Ask'
 };
 
 export const taskParam: string[] = ['update_similarity_graph', 'create_fulltext_index', 'create_entity_embedding'];
