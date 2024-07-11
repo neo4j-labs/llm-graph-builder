@@ -25,7 +25,7 @@ PROMPT_TEMPLATE_WITHOUT_SCHEMA = (
     "Only return the string types for nodes and relationships, don't return attributes."
 )
 
-def sceham_extraction_from_text(input_text:str, model:str, is_schema_description_cheked:bool):
+def schema_extraction_from_text(input_text:str, model:str, is_schema_description_cheked:bool):
     
     llm = get_llm(MODEL_VERSIONS[model])
     if is_schema_description_cheked:
