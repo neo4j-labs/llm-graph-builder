@@ -41,8 +41,8 @@ const Content: React.FC<ContentProps> = ({
   isSchema,
   setIsSchema,
   showEnhancementDialog,
-  toggleEnhancementDialog,
-  closeSettingModal,
+  setshowEnhancementDialog,
+  closeSettingModal
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
@@ -59,6 +59,8 @@ const Content: React.FC<ContentProps> = ({
   const { setUserCredentials, userCredentials } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
+  const [isLargeFile, setIsLargeFile] = useState<boolean>(false);
+  const [showSettingnModal, setshowSettingModal] = useState<boolean>(false);
 
   const {
     filesData,
@@ -671,7 +673,7 @@ const Content: React.FC<ContentProps> = ({
       {showEnhancementDialog && (
         <GraphEnhancementDialog
           open={showEnhancementDialog}
-          onClose={toggleEnhancementDialog}
+          onClose={closeGraphEnhancementDialog}
           closeSettingModal={closeSettingModal}
           showAlert={showAlert}
         ></GraphEnhancementDialog>

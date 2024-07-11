@@ -158,7 +158,7 @@ export const buttonCaptions = {
   cancel: 'Cancel',
   details: 'Details',
   continueSettings: 'Continue',
-  clearSettings: 'Clear Schema',
+  clearSettings: 'Clear Settings',
   ask: 'Ask',
 };
 

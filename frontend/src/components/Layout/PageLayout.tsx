@@ -29,10 +29,7 @@ export default function PageLayoutNew({
   const [showChatBot, setShowChatBot] = useState<boolean>(false);
   const [showDrawerChatbot, setShowDrawerChatbot] = useState<boolean>(true);
   const [clearHistoryData, setClearHistoryData] = useState<boolean>(false);
-  const [showEnhancementDialog, toggleEnhancementDialog] = useReducer((s) => !s, false);
-  const [shows3Modal, toggleS3Modal] = useReducer((s) => !s, false);
-  const [showGCSModal, toggleGCSModal] = useReducer((s) => !s, false);
-  const [showGenericModal, toggleGenericModal] = useReducer((s) => !s, false);
+  const [showEnhancementDialog, setshowEnhancementDialog] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
   const toggleLeftDrawer = () => {
     if (largedesktops) {
@@ -120,7 +117,7 @@ export default function PageLayoutNew({
           setShowTextFromSchemaDialog({ triggeredFrom: '', show: false });
           switch (showTextFromSchemaDialog.triggeredFrom) {
             case 'enhancementtab':
-              toggleEnhancementDialog();
+              setshowEnhancementDialog(true);
               break;
             case 'schemadialog':
               openSettingsDialog();
@@ -152,8 +149,9 @@ export default function PageLayoutNew({
         isSchema={isSchema}
         setIsSchema={setIsSchema}
         showEnhancementDialog={showEnhancementDialog}
-        toggleEnhancementDialog={toggleEnhancementDialog}
+        setshowEnhancementDialog={setshowEnhancementDialog}
         closeSettingModal={closeSettingModal}
+
       />
       {showDrawerChatbot && (
         <DrawerChatbot messages={messages} isExpanded={isRightExpanded} clearHistoryData={clearHistoryData} />

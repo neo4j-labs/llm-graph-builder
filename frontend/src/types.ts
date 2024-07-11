@@ -166,8 +166,8 @@ export interface ContentProps {
   isSchema?: boolean;
   setIsSchema: Dispatch<SetStateAction<boolean>>;
   showEnhancementDialog: boolean;
-  toggleEnhancementDialog: () => void;
-  closeSettingModal: () => void;
+  setshowEnhancementDialog: Dispatch<SetStateAction<boolean>>;
+  closeSettingModal:()=>void
 }
 
 export interface FileTableProps {

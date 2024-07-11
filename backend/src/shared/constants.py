@@ -155,19 +155,19 @@ RETURN text, avg_score AS score,
 # VECTOR_GRAPH_SEARCH_QUERY = """
 # WITH node as chunk, score
 # // find the document of the chunk
-# MATCH (chunk)-[:__PART_OF__]->(d:__Document__)
+# MATCH (chunk)-[:PART_OF]->(d:Document)
 # // fetch entities
 # CALL { WITH chunk
 # // entities connected to the chunk
 # // todo only return entities that are actually in the chunk, remember we connect all extracted entities to all chunks
-# MATCH (chunk)-[:__HAS_ENTITY__]->(e)
+# MATCH (chunk)-[:HAS_ENTITY]->(e)
 
 # // depending on match to query embedding either 1 or 2 step expansion
 # WITH CASE WHEN true // vector.similarity.cosine($embedding, e.embedding ) <= 0.95
 # THEN 
-# collect { MATCH path=(e)(()-[rels:!__HAS_ENTITY__&!__PART_OF__]-()){0,1}(:!Chunk&!__Document__) RETURN path }
+# collect { MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,1}(:!Chunk&!Document) RETURN path }
 # ELSE 
-# collect { MATCH path=(e)(()-[rels:!__HAS_ENTITY__&!__PART_OF__]-()){0,2}(:!Chunk&!__Document__) RETURN path } 
+# collect { MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk&!Document) RETURN path } 
 # END as paths
 
 # RETURN collect{ unwind paths as p unwind relationships(p) as r return distinct r} as rels,
@@ -276,4 +276,3 @@ as text,entities
 
 RETURN text, avg_score as score, {{length:size(text), source: COALESCE( CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkdetails: chunkdetails}} AS metadata
 """
-YOUTUBE_CHUNK_SIZE_SECONDS = 60

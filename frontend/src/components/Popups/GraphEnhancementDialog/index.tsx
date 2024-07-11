@@ -16,7 +16,7 @@ import PostProcessingCheckList from './PostProcessingCheckList';
 export default function GraphEnhancementDialog({
   open,
   onClose,
-  closeSettingModal,
+  closeSettingModal
 }: {
   open: boolean;
   onClose: () => void;
@@ -24,7 +24,7 @@ export default function GraphEnhancementDialog({
     alertmsg: string,
     alerttype: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined
   ) => void;
-  closeSettingModal: () => void;
+  closeSettingModal:()=>void
 }) {
   const { breakpoints } = tokens;
   const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
@@ -44,9 +44,9 @@ export default function GraphEnhancementDialog({
     }
   };
   useEffect(() => {
-    closeSettingModal();
-  }, []);
-
+    closeSettingModal()
+  }, [])
+  
   const [activeTab, setactiveTab] = useState<number>(0);
   return (
     <Dialog
@@ -102,7 +102,7 @@ export default function GraphEnhancementDialog({
         </Box>
       </Dialog.Header>
       <Dialog.Content className='flex flex-col n-gap-token- grow w-[90%] mx-auto'>
-        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4' value={activeTab} tabId={0}>
+        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={0}>
           <div className='w-[80%] mx-auto'>
             <EntityExtractionSettings
               view='Tabs'
