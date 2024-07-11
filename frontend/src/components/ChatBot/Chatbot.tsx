@@ -301,16 +301,14 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
-                    chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
-                  } `}
+                  className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                    } `}
                 >
                   <div
-                    className={`${
-                      listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
-                        ? 'loader'
-                        : ''
-                    }`}
+                    className={`${listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
+                      ? 'loader'
+                      : ''
+                      }`}
                   >
                     <ReactMarkdown>{chat.message}</ReactMarkdown>
                   </div>
@@ -397,15 +395,15 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       <div className='n-bg-palette-neutral-bg-weak flex gap-2.5 bottom-0 p-2.5 w-full'>
         <form onSubmit={handleSubmit} className='flex gap-2.5 w-full'>
           <TextInput
-            className='n-bg-palette-neutral-bg-default flex-grow-7 w-full'
+            className='n-bg-palette-neutral-bg-default flex-grow-7 w-[70%]'
             aria-label='chatbot-input'
             type='text'
             value={inputMessage}
             fluid
             onChange={handleInputChange}
           />
-          <Button type='submit' disabled={loading}>
-            Ask
+          <Button type='submit' disabled={loading} size='medium'>
+            {buttonCaptions.ask} {selectedRows != undefined && selectedRows.length > 0 && `(${selectedRows.length})`}
           </Button>
         </form>
       </div>
