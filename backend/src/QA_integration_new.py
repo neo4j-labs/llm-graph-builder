@@ -322,7 +322,7 @@ def QA_RAG(graph, model, question, document_names,session_id, mode):
         if mode == "graph":
             graph_chain, qa_llm,model_version = create_graph_chain(model,graph)
             graph_response = get_graph_response(graph_chain,question)
-            ai_response = AIMessage(content=graph_response["response"])
+            ai_response = AIMessage(content=graph_response["response"]) if graph_response["response"] else AIMessage(content="Something went wrong")
             messages.append(ai_response)
             summarize_and_log(history, messages, qa_llm)
 
@@ -342,7 +342,7 @@ def QA_RAG(graph, model, question, document_names,session_id, mode):
         elif mode == "vector":
             retrieval_query = VECTOR_SEARCH_QUERY
         else:
-            retrieval_query = VECTOR_GRAPH_SEARCH_QUERY
+            retrieval_query = VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT)
 
         llm, doc_retriever, model_version = setup_chat(model, graph, session_id, document_names,retrieval_query)
         
