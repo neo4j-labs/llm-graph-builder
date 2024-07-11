@@ -36,13 +36,15 @@ export default function ChatModeToggle({
                 setchatMode(m);
               },
               disabledCondition: false,
-              description: <span>
-              {chatMode === m && (
-                <>
-                 <StatusIndicator type={`${chatMode === m ? 'success' : 'unknown'}`} /> Selected 
-                </>
-              )}
-            </span>,
+              description: (
+                <span>
+                  {chatMode === m && (
+                    <>
+                      <StatusIndicator type={`${chatMode === m ? 'success' : 'unknown'}`} /> Selected
+                    </>
+                  )}
+                </span>
+              ),
             };
           }),
         [chatMode, chatModes]
