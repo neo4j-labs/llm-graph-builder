@@ -146,7 +146,8 @@ Allow unauthenticated request : Yes
 | BACKEND_API_URL         | Optional           | http://localhost:8000 | URL for backend API                                                                       |
 | BLOOM_URL               | Optional           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
 | REACT_APP_SOURCES       | Optional           | local,youtube,wiki,s3 | List of input sources that will be available                                               |
-| LLM_MODELS              | Optional           | diffbot,gpt-3.5,gpt-4o | Models available for selection on the frontend, used for entities extraction and Q&A Chatbot                          |
+| LLM_MODELS              | Optional           | diffbot,gpt-3.5,gpt-4o | Models available for selection on the frontend, used for entities extraction and Q&A
+| CHAT_MODES              | Optional           | vector,graph+vector,graph | Chat modes available for Q&A
 | ENV                     | Optional           | DEV           | Environment variable for the app                                                                 |
 | TIME_PER_CHUNK          | Optional           | 4             | Time per chunk for processing                                                                    |
 | CHUNK_SIZE              | Optional           | 5242880       | Size of each chunk of file for upload                                                                |
