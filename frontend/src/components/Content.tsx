@@ -292,9 +292,8 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
-      userCredentials?.port ?? '7687'
-    }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
+      }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -304,10 +303,10 @@ const Content: React.FC<ContentProps> = ({
     isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
       : isRightExpanded
-      ? 'contentWithChatBot'
-      : !isLeftExpanded && !isRightExpanded
-      ? 'w-[calc(100%-128px)]'
-      : 'contentWithDropzoneExpansion';
+        ? 'contentWithChatBot'
+        : !isLeftExpanded && !isRightExpanded
+          ? 'w-[calc(100%-128px)]'
+          : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -633,20 +632,20 @@ const Content: React.FC<ContentProps> = ({
               </div>
             </Typography>
           </div>
-          {!connectionStatus ? (
-            <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
-              {buttonCaptions.connectToNeo4j}
+          <div>
+            <Button className='mr-2.5' onClick={openGraphEnhancementDialog} disabled={!connectionStatus}>
+              Graph Enhancement
             </Button>
-          ) : (
-            <div>
-              <Button className='mr-2.5' onClick={openGraphEnhancementDialog}>
-                Graph Enhancement
+            {!connectionStatus ? (
+              <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
+                {buttonCaptions.connectToNeo4j}
               </Button>
+            ) : (
               <Button className='mr-2.5' onClick={disconnect}>
                 {buttonCaptions.disconnect}
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </Flex>
         <FileTable
           isExpanded={isLeftExpanded && isRightExpanded}
@@ -660,9 +659,8 @@ const Content: React.FC<ContentProps> = ({
           ref={childRef}
         ></FileTable>
         <Flex
-          className={`${
-            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+          className={`${!isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+            } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection='row'
         >
