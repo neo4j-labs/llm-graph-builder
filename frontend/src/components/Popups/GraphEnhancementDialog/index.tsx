@@ -1,6 +1,6 @@
 import { Dialog, Tabs, Box, Typography, Flex } from '@neo4j-ndl/react';
 import graphenhancement from '../../../assets/images/graph-enhancements.svg';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import DeletePopUpForOrphanNodes from './DeleteTabForOrphanNodes';
 import deleteOrphanAPI from '../../../services/DeleteOrphanNodes';
 import { UserCredentials } from '../../../types';
@@ -13,6 +13,7 @@ import { useFileContext } from '../../../context/UsersFiles';
 export default function GraphEnhancementDialog({
   open,
   onClose,
+  closeSettingModal
 }: {
   open: boolean;
   onClose: () => void;
@@ -20,6 +21,7 @@ export default function GraphEnhancementDialog({
     alertmsg: string,
     alerttype: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined
   ) => void;
+  closeSettingModal:()=>void
 }) {
   const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
   const { setShowTextFromSchemaDialog } = useFileContext();
@@ -35,6 +37,10 @@ export default function GraphEnhancementDialog({
       console.log(error);
     }
   };
+  useEffect(() => {
+    closeSettingModal()
+  }, [])
+  
   const [activeTab, setactiveTab] = useState<number>(0);
   return (
     <Dialog

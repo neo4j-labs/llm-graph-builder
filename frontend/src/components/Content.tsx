@@ -32,6 +32,7 @@ const Content: React.FC<ContentProps> = ({
   setIsSchema,
   showEnhancementDialog,
   setshowEnhancementDialog,
+  closeSettingModal
 }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
@@ -588,6 +589,7 @@ const Content: React.FC<ContentProps> = ({
         <GraphEnhancementDialog
           open={showEnhancementDialog}
           onClose={closeGraphEnhancementDialog}
+          closeSettingModal={closeSettingModal}
           showAlert={showAlert}
         ></GraphEnhancementDialog>
       )}
