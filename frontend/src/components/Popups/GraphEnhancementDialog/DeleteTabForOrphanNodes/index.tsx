@@ -224,14 +224,12 @@ export default function DeletePopUpForOrphanNodes({
           zebraStriping: true,
           headerStyle: 'clean',
         }}
-        rootProps={
-          {
-            className:'max-h-[355px] !overflow-y-auto'
-          }
-        }
+        rootProps={{
+          className: 'max-h-[355px] !overflow-y-auto',
+        }}
         isLoading={isLoading}
         components={{
-          Body: (props) => <DataGridComponents.Body {...props}  />,
+          Body: (props) => <DataGridComponents.Body {...props} />,
           PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
             return (
               <DataGridComponents.PaginationNumericButton
