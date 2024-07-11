@@ -160,10 +160,14 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         </Box>
       </Box>
       <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
-        {mode != 'graph' && <Tabs.Tab tabId={3}>Sources used</Tabs.Tab>}
-        {(mode === 'graph+vector' || mode === 'graph') && <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>}
-        {mode === 'graph' && cypher_query?.trim().length && <Tabs.Tab tabId={6}>Generated Cypher Query</Tabs.Tab>}
-        {mode != 'graph' && <Tabs.Tab tabId={5}>Chunks</Tabs.Tab>}
+        {mode != 'graph' ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
+        {mode === 'graph+vector' || mode === 'graph' ? <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab> : <></>}
+        {mode === 'graph' && cypher_query?.trim().length ? (
+          <Tabs.Tab tabId={6}>Generated Cypher Query</Tabs.Tab>
+        ) : (
+          <></>
+        )}
+        {mode != 'graph' ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
       </Tabs>
       <Flex className='p-4'>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={3}>
@@ -290,7 +294,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                       <div style={{ backgroundColor: calcWordColor(Object.keys(label)[0]) }} className='legend mr-2'>
                         {
                           //@ts-ignore
-                        label[Object.keys(label)[0]].id ?? Object.keys(label)[0]
+                          label[Object.keys(label)[0]].id ?? Object.keys(label)[0]
                         }
                       </div>
                     </li>
