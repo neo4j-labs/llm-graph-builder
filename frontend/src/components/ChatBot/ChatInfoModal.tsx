@@ -84,7 +84,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       setLoading(true);
       chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids.map((c) => c.id).join(','))
         .then((response) => {
-          console.log({ response });
           setInfoEntities(response.data.data.nodes);
           setNodes(response.data.data.nodes);
           setRelationships(response.data.data.relationships);
@@ -289,7 +288,10 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                       className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%)] overflow-hidden'
                     >
                       <div style={{ backgroundColor: calcWordColor(Object.keys(label)[0]) }} className='legend mr-2'>
-                        {(label[Object.keys(label)[0]]['id'] as string) ?? Object.keys(label)[0]}
+                        {
+                          //@ts-ignore
+                        label[Object.keys(label)[0]].id ?? Object.keys(label)[0]
+                        }
                       </div>
                     </li>
                   ))

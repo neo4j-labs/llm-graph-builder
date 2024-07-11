@@ -47,9 +47,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   });
   let selectedFileNames: CustomFile[] = [];
   selectedRows.forEach((id) => {
-    console.log(id);
     filesData.forEach((f) => {
-      console.log(f.id, id);
       if (f.id === id) {
         selectedFileNames.push(f);
       }
