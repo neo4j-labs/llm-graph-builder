@@ -1,5 +1,6 @@
 import { Box, Dialog, Tabs, Typography } from '@neo4j-ndl/react';
-import youtubelogo from '../../assets/images/youtube.svg';
+import youtubelightmodelogo from '../../assets/images/youtube-lightmode.svg';
+import youtubedarkmodelogo from '../../assets/images/youtube-darkmode.svg';
 import wikipedialogo from '../../assets/images/wikipedia.svg';
 import weblogo from '../../assets/images/web.svg';
 import webdarkmode from '../../assets/images/web-darkmode.svg';
@@ -44,7 +45,10 @@ export default function GenericModal({
         <Tabs fill='underline' onChange={setactiveTab} size='large' value={activeTab}>
           {APP_SOURCES != undefined && APP_SOURCES.includes('youtube') && (
             <Tabs.Tab tabId={0} aria-label='Database' disabled={isLoading}>
-              <img src={youtubelogo} className={`brandimg`}></img>
+              <img
+                src={themeUtils.colorMode === 'light' ? youtubelightmodelogo : youtubedarkmodelogo}
+                className={`brandimg`}
+              ></img>
             </Tabs.Tab>
           )}
           {APP_SOURCES != undefined && APP_SOURCES.includes('wiki') && (

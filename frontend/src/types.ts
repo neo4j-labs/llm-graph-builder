@@ -154,6 +154,9 @@ export interface ContentProps {
   openTextSchema: () => void;
   isSchema?: boolean;
   setIsSchema: Dispatch<SetStateAction<boolean>>;
+  showEnhancementDialog: boolean;
+  setshowEnhancementDialog: Dispatch<SetStateAction<boolean>>;
+  closeSettingModal:()=>void
 }
 
 export interface FileTableProps {

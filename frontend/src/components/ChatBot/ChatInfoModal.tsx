@@ -84,7 +84,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       setLoading(true);
       chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids.map((c) => c.id).join(','))
         .then((response) => {
-          console.log({ response });
           setInfoEntities(response.data.data.nodes);
           setNodes(response.data.data.nodes);
           setRelationships(response.data.data.relationships);
@@ -161,10 +160,14 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         </Box>
       </Box>
       <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
-        {mode != 'graph' && <Tabs.Tab tabId={3}>Sources used</Tabs.Tab>}
-        {(mode === 'graph+vector' || mode === 'graph') && <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>}
-        {mode === 'graph' && cypher_query?.trim().length && <Tabs.Tab tabId={6}>Generated Cypher Query</Tabs.Tab>}
-        {mode != 'graph' && <Tabs.Tab tabId={5}>Chunks</Tabs.Tab>}
+        {mode != 'graph' ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
+        {mode === 'graph+vector' || mode === 'graph' ? <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab> : <></>}
+        {mode === 'graph' && cypher_query?.trim().length ? (
+          <Tabs.Tab tabId={6}>Generated Cypher Query</Tabs.Tab>
+        ) : (
+          <></>
+        )}
+        {mode != 'graph' ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
       </Tabs>
       <Flex className='p-4'>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={3}>
@@ -289,7 +292,10 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                       className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%)] overflow-hidden'
                     >
                       <div style={{ backgroundColor: calcWordColor(Object.keys(label)[0]) }} className='legend mr-2'>
-                        {label[Object.keys(label)[0]]['id'] as string ?? Object.keys(label)[0]}
+                        {
+                          //@ts-ignore
+                          label[Object.keys(label)[0]].id ?? Object.keys(label)[0]
+                        }
                       </div>
                     </li>
                   ))

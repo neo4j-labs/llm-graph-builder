@@ -1,6 +1,6 @@
 import CustomButton from '../UI/CustomButton';
 import internet from '../../assets/images/web-search-svgrepo-com.svg';
-import internetdarkmode from '../../assets/images/web-search-darkmode-final.svg';
+import internetdarkmode from '../../assets/images/web-search-darkmode-final2.svg';
 import { DataComponentProps } from '../../types';
 import { Flex, Typography } from '@neo4j-ndl/react';
 import IconButtonWithToolTip from '../UI/IconButtonToolTip';

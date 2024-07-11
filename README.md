@@ -40,7 +40,7 @@ DIFFBOT_API_KEY="your-diffbot-key"
 
 if you only want OpenAI:
 ```env
-LLM_MODELS="gpt-3.5,gpt-4o"
+LLM_MODELS="diffbot,openai-gpt-3.5,openai-gpt-4o"
 OPENAI_API_KEY="your-openai-key"
 ```
 
@@ -70,6 +70,18 @@ GOOGLE_CLIENT_ID="xxxx"
 
 You can of course combine all (local, youtube, wikipedia, s3 and gcs) or remove any you don't want/need.
 
+### Chat Modes
+
+By default,all of the chat modes will be available: vector, graph+vector and graph.
+If none of the mode is mentioned in the chat modes variable all modes will be available:
+```env
+CHAT_MODES=""
+```
+
+If however you want to specifiy the only vector mode or only graph mode you can do that by specifying the mode in the env:
+```env
+CHAT_MODES="vector,graph+vector"
+```
 
 #### Running Backend and Frontend separately (dev environment)
 Alternatively, you can run the backend and frontend separately:
@@ -134,7 +146,8 @@ Allow unauthenticated request : Yes
 | BACKEND_API_URL         | Optional           | http://localhost:8000 | URL for backend API                                                                       |
 | BLOOM_URL               | Optional           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
 | REACT_APP_SOURCES       | Optional           | local,youtube,wiki,s3 | List of input sources that will be available                                               |
-| LLM_MODELS              | Optional           | diffbot,gpt-3.5,gpt-4o | Models available for selection on the frontend, used for entities extraction and Q&A Chatbot                          |
+| LLM_MODELS              | Optional           | diffbot,openai-gpt-3.5,openai-gpt-4o | Models available for selection on the frontend, used for entities extraction and Q&A
+| CHAT_MODES              | Optional           | vector,graph+vector,graph | Chat modes available for Q&A
 | ENV                     | Optional           | DEV           | Environment variable for the app                                                                 |
 | TIME_PER_CHUNK          | Optional           | 4             | Time per chunk for processing                                                                    |
 | CHUNK_SIZE              | Optional           | 5242880       | Size of each chunk of file for upload                                                                |

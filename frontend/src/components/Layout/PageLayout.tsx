@@ -28,6 +28,7 @@ export default function PageLayoutNew({
   const [showChatBot, setShowChatBot] = useState<boolean>(false);
   const [showDrawerChatbot, setShowDrawerChatbot] = useState<boolean>(true);
   const [clearHistoryData, setClearHistoryData] = useState<boolean>(false);
+  const [showEnhancementDialog, setshowEnhancementDialog] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
   const toggleLeftDrawer = () => setIsLeftExpanded(!isLeftExpanded);
   const toggleRightDrawer = () => setIsRightExpanded(!isRightExpanded);
@@ -86,16 +87,26 @@ export default function PageLayoutNew({
       <SideNav isExpanded={isLeftExpanded} position='left' toggleDrawer={toggleLeftDrawer} />
       <DrawerDropzone isExpanded={isLeftExpanded} />
       <SchemaFromTextDialog
-        open={showTextFromSchemaDialog}
+        open={showTextFromSchemaDialog.show}
         openSettingsDialog={openSettingsDialog}
         onClose={() => {
-          setShowTextFromSchemaDialog(false);
+          setShowTextFromSchemaDialog({ triggeredFrom: '', show: false });
+          switch (showTextFromSchemaDialog.triggeredFrom) {
+            case 'enhancementtab':
+              setshowEnhancementDialog(true);
+              break;
+            case 'schemadialog':
+              openSettingsDialog();
+              break;
+            default:
+              break;
+          }
         }}
         showAlert={showAlert}
       ></SchemaFromTextDialog>
       <SettingsModal
         openTextSchema={() => {
-          setShowTextFromSchemaDialog(true);
+          setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
         }}
         open={isSettingPanelExpanded}
         onClose={closeSettingModal}
@@ -109,10 +120,14 @@ export default function PageLayoutNew({
         isRightExpanded={isRightExpanded}
         showChatBot={showChatBot}
         openTextSchema={() => {
-          setShowTextFromSchemaDialog(true);
+          setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
         }}
         isSchema={isSchema}
         setIsSchema={setIsSchema}
+        showEnhancementDialog={showEnhancementDialog}
+        setshowEnhancementDialog={setshowEnhancementDialog}
+        closeSettingModal={closeSettingModal}
+
       />
       {showDrawerChatbot && (
         <DrawerChatbot messages={messages} isExpanded={isRightExpanded} clearHistoryData={clearHistoryData} />

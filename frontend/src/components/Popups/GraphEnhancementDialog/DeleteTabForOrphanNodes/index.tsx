@@ -134,14 +134,12 @@ export default function DeletePopUpForOrphanNodes({
         },
         header: () => <span>Related Documents </span>,
         footer: (info) => info.column.id,
-        maxSize: 280,
       }),
       columnHelper.accessor((row) => row.chunkConnections, {
         id: 'Connected Chunks',
         cell: (info) => <i>{info?.getValue()}</i>,
         header: () => <span>Connected Chunks</span>,
         footer: (info) => info.column.id,
-        minSize: 280,
       }),
     ],
     []
@@ -225,6 +223,9 @@ export default function DeletePopUpForOrphanNodes({
           borderStyle: 'all-sides',
           zebraStriping: true,
           headerStyle: 'clean',
+        }}
+        rootProps={{
+          className: 'max-h-[355px] !overflow-y-auto',
         }}
         isLoading={isLoading}
         components={{
