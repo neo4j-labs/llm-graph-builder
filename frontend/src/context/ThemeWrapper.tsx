@@ -11,7 +11,7 @@ interface ThemeWrapperProps {
 }
 const ThemeWrapper = ({ children }: ThemeWrapperProps) => {
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-  //@ts-ignore
+  // @ts-ignore
   const defaultMode: 'light' | 'dark' = localStorage.getItem('mode');
   const [mode, setMode] = useState<'light' | 'dark'>(prefersDarkMode ? 'dark' : defaultMode ?? 'light');
   const [usingPreferredMode, setUsingPreferredMode] = useState<boolean>(true);
