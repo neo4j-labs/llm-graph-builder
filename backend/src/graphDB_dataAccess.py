@@ -247,9 +247,9 @@ class graphDBdataAccess:
         score_value = float(os.environ.get('DUPLICATE_SCORE_VALUE'))
         text_distance = int(os.environ.get('DUPLICATE_TEXT_DISTANCE'))
         query_duplicate_nodes = """
-                MATCH (n:!Chunk&!Document) 
-                with n 
-                WHERE n.id is not null
+                MATCH (n:!Chunk&!Document) with n 
+                WHERE n.embedding is not null and n.id is not null // and size(n.id) > 3
+                WITH n ORDER BY count {{ (n)--() }} DESC, size(n.id) DESC // updated
                 WITH collect(n) as nodes
                 UNWIND nodes as n
                 WITH n, [other in nodes 
@@ -262,7 +262,7 @@ class graphDBdataAccess:
                 // either contains each other as substrings or has a text edit distinct of less than 3
                 toLower(n.id) CONTAINS toLower(other.id) OR 
                 toLower(other.id) CONTAINS toLower(n.id)
-                OR apoc.text.distance(toLower(n.id), toLower(other.id)) < $duplicate_text_distance
+                OR (size(n.id)>5 AND apoc.text.distance(toLower(n.id), toLower(other.id)) < $duplicate_text_distance)
                 )] as similar
                 WHERE size(similar) > 0 
                 OPTIONAL MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(n)
@@ -285,13 +285,18 @@ class graphDBdataAccess:
     def merge_duplicate_nodes(self,duplicate_nodes_list):
         nodes_list = list(map(str.strip, json.loads(duplicate_nodes_list)))
         query = """
-        MATCH (n) WHERE elementId(n) IN $elementIds
-        // order by degree and perhaps length of name
-        WITH n ORDER BY count { (n)--() } DESC, size(n.id) DESC
-        WITH collect(n) as nodes
+        UNWIND $rows AS row
+        CALL { with row
+        MATCH (first) WHERE elementId(first) = $row.firstElementId
+        MATCH (rest) WHERE elementId(rest) IN $row.similarElementIds
+        WITH [first] + collect(rest) as nodes
+
         CALL apoc.refactor.mergeNodes(nodes, 
         {properties:"discard",mergeRels:true, produceSelfRel:false, preserveExistingSelfRels:false, singleElementAsArray:true}) 
-        RETURN node {.id, .description, labels() }
+        YIELD node
+        RETURN size(nodes) as mergedCount
+        }
+        RETURN sum(mergedCount) as totalMerged
         """
-        param = {"elementIds":nodes_list}
+        param = {"rows":nodes_list}
         return self.execute_query(query,param)
