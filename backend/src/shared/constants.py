@@ -5,11 +5,13 @@ MODEL_VERSIONS = {
         "gpt-4": "gpt-4-0125-preview",
         "diffbot" : "gpt-4o",
         "gpt-4o":"gpt-4o",
-        "groq-llama3" : "llama3-70b-8192"
+        "groq-llama3" : "llama3-70b-8192",
+        "vllm-llama3" : "Meta-Llama-3-8B-Instruct"
          }
 OPENAI_MODELS = ["gpt-3.5", "gpt-4o"]
 GEMINI_MODELS = ["gemini-1.0-pro", "gemini-1.5-pro"]
 GROQ_MODELS = ["groq-llama3"]
+VLLM_MODELS = ["vllm-llama3"]
 BUCKET_UPLOAD = 'llm-graph-builder-upload'
 BUCKET_FAILED_FILE = 'llm-graph-builder-failed'
 PROJECT_ID = 'llm-experiments-387609' 

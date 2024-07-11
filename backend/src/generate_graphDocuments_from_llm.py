@@ -3,6 +3,7 @@ from src.diffbot_transformer import get_graph_from_diffbot
 from src.openAI_llm import get_graph_from_OpenAI
 from src.gemini_llm import get_graph_from_Gemini
 from src.groq_llama3_llm import get_graph_from_Groq_Llama3
+from src.vllm_llama3_llm import get_graph_from_Vllm_Llama3
 from typing import List
 import logging
 from src.shared.constants import *
@@ -35,6 +36,9 @@ def generate_graphDocuments(model: str, graph: Neo4jGraph, chunkId_chunkDoc_list
 
     elif model in GROQ_MODELS :
         graph_documents = get_graph_from_Groq_Llama3(MODEL_VERSIONS[model], graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
+
+    elif model in VLLM_MODELS :
+        graph_documents = get_graph_from_Vllm_Llama3(MODEL_VERSIONS[model], graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
     else:
         raise Exception('Invalid LLM Model')
 

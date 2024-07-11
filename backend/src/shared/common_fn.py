@@ -144,6 +144,11 @@ def get_llm(model_version:str) :
                        temperature=0,
                        model_name=model_version)
     
+    elif "Meta-Llama-3-8B-Instruct" in model_version:
+      llm = ChatOpenAI(base_url=os.environ.get('VLLM_ENDPOINT'),
+          api_key=os.environ.get('OPENAI_API_KEY'), 
+            model=model_version, 
+            temperature=0)
     else:
         llm = DiffbotGraphTransformer(diffbot_api_key=os.environ.get('DIFFBOT_API_KEY'),extract_types=['entities','facts'])    
     logging.info(f"Model created - Model Version: {model_version}")
