@@ -30,6 +30,8 @@ const Content: React.FC<ContentProps> = ({
   openTextSchema,
   isSchema,
   setIsSchema,
+  showEnhancementDialog,
+  setshowEnhancementDialog,
 }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
@@ -41,7 +43,6 @@ const Content: React.FC<ContentProps> = ({
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [isLargeFile, setIsLargeFile] = useState<boolean>(false);
   const [showSettingnModal, setshowSettingModal] = useState<boolean>(false);
-  const [showEnhancementDialog, setshowEnhancementDialog] = useState<boolean>(false);
 
   const {
     filesData,

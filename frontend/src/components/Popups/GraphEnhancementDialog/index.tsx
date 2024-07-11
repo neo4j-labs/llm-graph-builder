@@ -78,7 +78,7 @@ export default function GraphEnhancementDialog({
             <EntityExtractionSettings
               view='Tabs'
               openTextSchema={() => {
-                setShowTextFromSchemaDialog(true);
+                setShowTextFromSchemaDialog({ triggeredFrom: 'enhancementtab', show: true });
               }}
               colseEnhanceGraphSchemaDialog={onClose}
               settingView='headerView'

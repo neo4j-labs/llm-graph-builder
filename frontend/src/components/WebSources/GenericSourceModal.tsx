@@ -45,7 +45,10 @@ export default function GenericModal({
         <Tabs fill='underline' onChange={setactiveTab} size='large' value={activeTab}>
           {APP_SOURCES != undefined && APP_SOURCES.includes('youtube') && (
             <Tabs.Tab tabId={0} aria-label='Database' disabled={isLoading}>
-              <img src={themeUtils.colorMode==="light"?youtubelightmodelogo:youtubedarkmodelogo} className={`brandimg`}></img>
+              <img
+                src={themeUtils.colorMode === 'light' ? youtubelightmodelogo : youtubedarkmodelogo}
+                className={`brandimg`}
+              ></img>
             </Tabs.Tab>
           )}
           {APP_SOURCES != undefined && APP_SOURCES.includes('wiki') && (
