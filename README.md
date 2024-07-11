@@ -73,7 +73,7 @@ You can of course combine all (local, youtube, wikipedia, s3 and gcs) or remove 
 ### Chat Modes
 
 By default,all of the chat modes will be available: vector, graph+vector and graph.
-If none of the mode is mentioned in the chat modes variable all modes will be availabel:
+If none of the mode is mentioned in the chat modes variable all modes will be available:
 ```env
 CHAT_MODES=""
 ```
