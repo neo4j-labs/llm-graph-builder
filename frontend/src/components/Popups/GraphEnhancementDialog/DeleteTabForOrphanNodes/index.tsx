@@ -134,14 +134,12 @@ export default function DeletePopUpForOrphanNodes({
         },
         header: () => <span>Related Documents </span>,
         footer: (info) => info.column.id,
-        maxSize: 280,
       }),
       columnHelper.accessor((row) => row.chunkConnections, {
         id: 'Connected Chunks',
         cell: (info) => <i>{info?.getValue()}</i>,
         header: () => <span>Connected Chunks</span>,
         footer: (info) => info.column.id,
-        minSize: 280,
       }),
     ],
     []
@@ -226,9 +224,14 @@ export default function DeletePopUpForOrphanNodes({
           zebraStriping: true,
           headerStyle: 'clean',
         }}
+        rootProps={
+          {
+            className:'max-h-[355px] !overflow-y-auto'
+          }
+        }
         isLoading={isLoading}
         components={{
-          Body: (props) => <DataGridComponents.Body {...props} />,
+          Body: (props) => <DataGridComponents.Body {...props}  />,
           PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
             return (
               <DataGridComponents.PaginationNumericButton

@@ -72,7 +72,7 @@ export default function GraphEnhancementDialog({
           </Box>
         </Box>
       </Dialog.Header>
-      <Dialog.Content className='flex flex-col n-gap-token- grow overflow-auto w-[90%] mx-auto'>
+      <Dialog.Content className='flex flex-col n-gap-token- grow w-[90%] mx-auto'>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={0}>
           <div className='w-[80%] mx-auto'>
             <EntityExtractionSettings
