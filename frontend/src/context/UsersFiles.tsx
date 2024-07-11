@@ -2,7 +2,10 @@ import { createContext, useContext, useState, Dispatch, SetStateAction, FC, useE
 import { CustomFile, FileContextProviderProps, OptionType } from '../types';
 import { defaultLLM } from '../utils/Constants';
 import { useCredentials } from './UserCredentials';
-
+interface showTextFromSchemaDialogType {
+  triggeredFrom: string;
+  show: boolean;
+}
 interface FileContextType {
   files: (File | null)[] | [];
   filesData: CustomFile[] | [];
@@ -26,8 +29,8 @@ interface FileContextType {
   setchatMode: Dispatch<SetStateAction<string>>;
   isSchema: boolean;
   setIsSchema: React.Dispatch<React.SetStateAction<boolean>>;
-  showTextFromSchemaDialog: boolean;
-  setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<boolean>>;
+  showTextFromSchemaDialog: showTextFromSchemaDialogType;
+  setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
@@ -47,7 +50,10 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [chatMode, setchatMode] = useState<string>('graph+vector');
   const { userCredentials } = useCredentials();
   const [isSchema, setIsSchema] = useState<boolean>(false);
-  const [showTextFromSchemaDialog, setShowTextFromSchemaDialog] = useState<boolean>(false);
+  const [showTextFromSchemaDialog, setShowTextFromSchemaDialog] = useState<showTextFromSchemaDialogType>({
+    triggeredFrom: '',
+    show: false,
+  });
 
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
