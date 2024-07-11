@@ -58,6 +58,7 @@ services:
         - TIME_PER_PAGE=${TIME_PER_PAGE-50}
         - CHUNK_SIZE=${CHUNK_SIZE-5242880}
         - ENV=${ENV-DEV}
+        - CHAT_MODES=${CHAT_MODES-""}
     volumes:
       - ./frontend:/app
       - /app/node_modules
