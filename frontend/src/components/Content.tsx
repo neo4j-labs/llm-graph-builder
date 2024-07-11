@@ -622,7 +622,7 @@ const Content: React.FC<ContentProps> = ({
                 )}
                 {isSchema ? (
                   <span className='n-body-small'>
-                    {(!selectedNodes.length || !selectedNodes.length) && 'Empty'} Graph Schema configured{' '}
+                    {(!selectedNodes.length || !selectedNodes.length) && 'Empty'} Graph Schema configured
                     {selectedNodes.length || selectedRels.length
                       ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)`
                       : ''}
