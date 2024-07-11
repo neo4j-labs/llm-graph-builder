@@ -70,6 +70,18 @@ GOOGLE_CLIENT_ID="xxxx"
 
 You can of course combine all (local, youtube, wikipedia, s3 and gcs) or remove any you don't want/need.
 
+### Chat Modes
+
+By default,all of the chat modes will be available: vector, graph+vector and graph.
+If none of the mode is mentioned in the chat modes variable all modes will be availabel:
+```env
+CHAT_MODES=""
+```
+
+If however you want to specifiy the only vector mode or only graph mode you can do that by specifying the mode in the env:
+```env
+CHAT_MODES="vector,graph+vector"
+```
 
 #### Running Backend and Frontend separately (dev environment)
 Alternatively, you can run the backend and frontend separately:
