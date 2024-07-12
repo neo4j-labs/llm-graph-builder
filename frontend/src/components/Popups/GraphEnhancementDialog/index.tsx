@@ -13,7 +13,7 @@ import { useFileContext } from '../../../context/UsersFiles';
 export default function GraphEnhancementDialog({
   open,
   onClose,
-  closeSettingModal
+  closeSettingModal,
 }: {
   open: boolean;
   onClose: () => void;
@@ -21,7 +21,7 @@ export default function GraphEnhancementDialog({
     alertmsg: string,
     alerttype: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined
   ) => void;
-  closeSettingModal:()=>void
+  closeSettingModal: () => void;
 }) {
   const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
   const { setShowTextFromSchemaDialog } = useFileContext();
@@ -38,9 +38,9 @@ export default function GraphEnhancementDialog({
     }
   };
   useEffect(() => {
-    closeSettingModal()
-  }, [])
-  
+    closeSettingModal();
+  }, []);
+
   const [activeTab, setactiveTab] = useState<number>(0);
   return (
     <Dialog

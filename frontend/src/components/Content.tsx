@@ -32,7 +32,7 @@ const Content: React.FC<ContentProps> = ({
   setIsSchema,
   showEnhancementDialog,
   setshowEnhancementDialog,
-  closeSettingModal
+  closeSettingModal,
 }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
