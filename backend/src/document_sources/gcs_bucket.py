@@ -138,6 +138,7 @@ def delete_file_from_gcs(bucket_name,folder_name, file_name):
       blob.delete()
     logging.info('File deleted from GCS successfully')
   except Exception as e:
+    raise Exception(e)
   
 def copy_failed_file(source_bucket_name,dest_bucket_name,folder_name, file_name):
   try:

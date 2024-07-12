@@ -18,16 +18,10 @@ export default function PageLayoutNew({
   isSettingPanelExpanded,
   closeSettingModal,
   openSettingsDialog,
-  closeOrphanNodeDeletionModal,
-  showOrphanNodeDeletionModal,
-  openOrphanNodeDeletionModal,
 }: {
   isSettingPanelExpanded: boolean;
   closeSettingModal: () => void;
   openSettingsDialog: () => void;
-  closeOrphanNodeDeletionModal: () => void;
-  showOrphanNodeDeletionModal: boolean;
-  openOrphanNodeDeletionModal: () => void;
 }) {
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(true);
   const [isRightExpanded, setIsRightExpanded] = useState<boolean>(true);
@@ -110,12 +104,6 @@ export default function PageLayoutNew({
         }}
         showAlert={showAlert}
       ></SchemaFromTextDialog>
-      <DeletePopUpForOrphanNodes
-        open={showOrphanNodeDeletionModal}
-        deleteCloseHandler={closeOrphanNodeDeletionModal}
-        deleteHandler={orphanNodesDeleteHandler}
-        loading={orphanDeleteAPIloading}
-      ></DeletePopUpForOrphanNodes>
       <SettingsModal
         openTextSchema={() => {
           setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
