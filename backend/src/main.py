@@ -1,6 +1,6 @@
 from langchain_community.graphs import Neo4jGraph
 from src.shared.constants import BUCKET_UPLOAD, PROJECT_ID
-from src.shared.schema_extraction import sceham_extraction_from_text
+from src.shared.schema_extraction import schema_extraction_from_text
 from dotenv import load_dotenv
 from datetime import datetime
 import logging
@@ -336,7 +336,7 @@ def processing_source(graph, model, file_name, pages, allowedNodes, allowedRelat
     obj_source_node.processing_time = processed_time
 
     graphDb_data_Access.update_source_node(obj_source_node)
-    logging.info('Updated the nodeCount and relCount properties in Docuemnt node')
+    logging.info('Updated the nodeCount and relCount properties in Document node')
     logging.info(f'file:{file_name} extraction has been completed')
 
 
@@ -548,5 +548,5 @@ def populate_graph_schema_from_text(text, model, is_schema_description_cheked):
   Returns:
       data (list): list of lebels and relationTypes
   """
-  result = sceham_extraction_from_text(text, model, is_schema_description_cheked)
+  result = schema_extraction_from_text(text, model, is_schema_description_cheked)
   return {"labels": result.labels, "relationshipTypes": result.relationshipTypes}

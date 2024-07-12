@@ -1,4 +1,5 @@
-import { VisualizeBloomIcon } from '@neo4j-ndl/react/icons';
+import { NvlOptions } from '@neo4j-nvl/base';
+import { GraphType, OptionType } from '../types';
 
 export const document = `+ [docs]`;
 
@@ -34,14 +35,28 @@ export const APP_SOURCES =
 export const llms =
   process.env?.LLM_MODELS?.trim() != ''
     ? process.env.LLM_MODELS?.split(',')
-    : ['diffbot', 'gpt-3.5', 'gpt-4o', 'gemini-1.0-pro', 'gemini-1.5-pro', 'groq-llama3'];
+    : [
+        'diffbot',
+        'openai-gpt-3.5',
+        'openai-gpt-4o',
+        'gemini-1.0-pro',
+        'gemini-1.5-pro',
+        'azure_ai_gpt_35',
+        'azure_ai_gpt_4o',
+        'ollama_llama3',
+        'groq_llama3_70b',
+        'anthropic_claude_3_5_sonnet',
+        'fireworks_llama_v3_70b',
+        'bedrock_claude_3_5_sonnet',
+      ];
 
-export const defaultLLM = llms?.includes('gpt-3.5')
-  ? 'gpt-3.5'
+export const defaultLLM = llms?.includes('openai-gpt-3.5')
+  ? 'openai-gpt-3.5'
   : llms?.includes('gemini-1.0-pro')
   ? 'gemini-1.0-pro'
   : 'diffbot';
-
+export const chatModes =
+  process.env?.CHAT_MODES?.trim() != '' ? process.env.CHAT_MODES?.split(',') : ['vector', 'graph', 'graph+vector'];
 export const chunkSize = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.TIME_PER_PAGE ? parseInt(process.env.TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
@@ -139,11 +154,40 @@ export const buttonCaptions = {
   details: 'Details',
   continueSettings: 'Continue',
   clearSettings: 'Clear Settings',
+  ask: 'Ask',
 };
 
-export const ChatModeOptions = [
-  { Icon: VisualizeBloomIcon, value: 'vector' },
-  { Icon: 'abc', value: 'graph+vector' },
-];
+export const taskParam: string[] = ['update_similarity_graph', 'create_fulltext_index', 'create_entity_embedding'];
 
-export const taskParam: string[] = ['update_similarity_graph', 'create_fulltext_index'];
+export const nvlOptions: NvlOptions = {
+  allowDynamicMinZoom: true,
+  disableWebGL: true,
+  maxZoom: 3,
+  minZoom: 0.05,
+  relationshipThreshold: 0.55,
+  useWebGL: false,
+  instanceId: 'graph-preview',
+  initialZoom: 1,
+};
+
+export const mouseEventCallbacks = {
+  onPan: true,
+  onZoom: true,
+  onDrag: true,
+};
+
+export const graphQuery: string = queryMap.DocChunkEntities;
+export const graphView: OptionType[] = [
+  { label: 'Lexical Graph', value: queryMap.DocChunks },
+  { label: 'Entity Graph', value: queryMap.Entities },
+  { label: 'Knowledge Graph', value: queryMap.DocChunkEntities },
+];
+export const intitalGraphType: GraphType[] = ['Document', 'Entities', 'Chunk'];
+export const knowledgeGraph = 'Knowledge Graph';
+export const lexicalGraph = 'Lexical Graph';
+export const entityGraph = 'Entity Graph';
+
+export const appLabels = {
+  ownSchema: 'Or Define your own Schema',
+  predefinedSchema: 'Select a Pre-defined Schema',
+};

@@ -22,7 +22,7 @@ export default function WebInput({ setIsLoading }: { setIsLoading: React.Dispatc
       isFocused={isFocused}
       isValid={isValid}
       disabledCheck={false}
-      label='Website link'
+      label='Website Link'
       placeHolder='https://neo4j.com/'
       value={inputVal}
       onChangeHandler={onChangeHandler}

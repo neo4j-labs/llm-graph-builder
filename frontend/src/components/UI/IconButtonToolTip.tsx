@@ -14,7 +14,7 @@ const IconButtonWithToolTip = ({
   label: string;
   text: string | React.ReactNode;
   children: React.ReactNode;
-  onClick?: () => void;
+  onClick?: React.MouseEventHandler<HTMLButtonElement> | undefined;
   size?: 'small' | 'medium' | 'large';
   clean?: boolean;
   grouped?: boolean;

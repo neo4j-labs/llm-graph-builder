@@ -15,7 +15,6 @@ const chunkEntitiesAPI = async (userCredentials: UserCredentials, chunk_ids: str
         'Content-Type': 'multipart/form-data',
       },
     });
-    console.log('response api', response);
     return response;
   } catch (error) {
     console.log('Error uploading file:', error);

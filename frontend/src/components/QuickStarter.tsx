@@ -36,7 +36,7 @@ const QuickStarter: React.FunctionComponent = () => {
       <FileContextProvider>
         <MessageContextWrapper>
           <AlertContextWrapper>
-            <Header themeMode={themeMode} toggleTheme={toggleColorMode} openSettingsModal={openSettingsModal} />
+            <Header themeMode={themeMode} toggleTheme={toggleColorMode} />
             <PageLayout
               openSettingsDialog={openSettingsModal}
               isSettingPanelExpanded={showSettingsModal}

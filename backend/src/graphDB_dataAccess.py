@@ -212,7 +212,6 @@ class graphDBdataAccess:
         else :
             result = self.execute_query(query_to_delete_document, param)    
             logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' with their entities from database")
-        
         return result, len(filename_list)
     
     def list_unconnected_nodes(self):
@@ -225,7 +224,14 @@ class graphDBdataAccess:
                 ORDER BY e.id ASC
                 LIMIT 100
                 """
-        return self.execute_query(query)
+        query_total_nodes = """
+        MATCH (e:!Chunk&!Document) 
+        WHERE NOT exists { (e)--(:!Chunk&!Document) }
+        RETURN count(*) as total
+        """
+        nodes_list = self.execute_query(query)
+        total_nodes = self.execute_query(query_total_nodes)
+        return nodes_list, total_nodes[0]
     
     def delete_unconnected_nodes(self,unconnected_entities_list):
         entities_list = list(map(str.strip, json.loads(unconnected_entities_list)))

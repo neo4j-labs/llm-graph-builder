@@ -34,7 +34,7 @@ export default function ConfirmationDialog({
       setRowSelection((prev) => {
         const copiedobj = { ...prev };
         for (const key in copiedobj) {
-          if (JSON.parse(key).id == id) {
+          if (key == id) {
             copiedobj[key] = true;
           }
         }
@@ -46,7 +46,7 @@ export default function ConfirmationDialog({
       setRowSelection((prev) => {
         const copiedobj = { ...prev };
         for (const key in copiedobj) {
-          if (JSON.parse(key).id == id) {
+          if (key == id) {
             copiedobj[key] = false;
           }
         }
@@ -73,6 +73,7 @@ export default function ConfirmationDialog({
       onClose={() => {
         setChecked([]);
         onClose();
+        extractHandler(false, []);
       }}
     >
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
@@ -83,18 +84,6 @@ export default function ConfirmationDialog({
         )}
       </Dialog.Content>
       <Dialog.Actions className='!mt-3'>
-        <Button
-          color='neutral'
-          fill='outlined'
-          onClick={function Ua() {
-            extractHandler(false, []);
-            setChecked([]);
-            onClose();
-          }}
-          size='large'
-        >
-          Cancel
-        </Button>
         <Button
           onClick={() => {
             if (selectedRows.length) {
