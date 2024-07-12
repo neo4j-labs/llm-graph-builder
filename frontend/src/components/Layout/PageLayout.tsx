@@ -127,7 +127,6 @@ export default function PageLayoutNew({
         showEnhancementDialog={showEnhancementDialog}
         setshowEnhancementDialog={setshowEnhancementDialog}
         closeSettingModal={closeSettingModal}
-
       />
       {showDrawerChatbot && (
         <DrawerChatbot messages={messages} isExpanded={isRightExpanded} clearHistoryData={clearHistoryData} />
