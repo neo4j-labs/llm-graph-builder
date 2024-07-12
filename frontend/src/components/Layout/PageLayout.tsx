@@ -20,16 +20,10 @@ export default function PageLayoutNew({
   isSettingPanelExpanded,
   closeSettingModal,
   openSettingsDialog,
-  closeOrphanNodeDeletionModal,
-  showOrphanNodeDeletionModal,
-  openOrphanNodeDeletionModal,
 }: {
   isSettingPanelExpanded: boolean;
   closeSettingModal: () => void;
   openSettingsDialog: () => void;
-  closeOrphanNodeDeletionModal: () => void;
-  showOrphanNodeDeletionModal: boolean;
-  openOrphanNodeDeletionModal: () => void;
 }) {
   const largedesktops = useMediaQuery(`(min-width:1440px )`);
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(largedesktops));
@@ -131,12 +125,6 @@ export default function PageLayoutNew({
           }
         }}
       ></SchemaFromTextDialog>
-      <DeletePopUpForOrphanNodes
-        open={showOrphanNodeDeletionModal}
-        deleteCloseHandler={closeOrphanNodeDeletionModal}
-        deleteHandler={orphanNodesDeleteHandler}
-        loading={orphanDeleteAPIloading}
-      ></DeletePopUpForOrphanNodes>
       <SettingsModal
         openTextSchema={openSchemaFromTextDialog}
         open={isSettingPanelExpanded}
