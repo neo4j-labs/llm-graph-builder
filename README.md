@@ -152,6 +152,9 @@ Allow unauthenticated request : Yes
 | CHUNK_SIZE              | Optional           | 5242880       | Size of each chunk of file for upload                                                                |
 | GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
 | GCS_FILE_CACHE        | Optional           | False              | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
+| ENTITY_EMBEDDING        | Optional           | False              | If set to True, It will add embeddings for each entity in database |
+| LLM_MODEL_CONFIG_ollama_<model_name>        | Optional           |               | Set ollama config as - model_name,model_local_url for local deployments |
+
 
 
 
