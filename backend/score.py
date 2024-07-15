@@ -286,8 +286,10 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
     logging.info(f"QA_RAG called at {datetime.now()}")
     qa_rag_start_time = time.time()
     try:
-        # database = "neo4j"
-        graph = create_graph_database_connection(uri, userName, password, database)
+        if mode == "graph":
+            graph = Neo4jGraph( url=uri,username=userName,password=password,database=database,sanitize = True, refresh_schema=True)
+        else:
+            graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode)
 
         total_call_time = time.time() - qa_rag_start_time

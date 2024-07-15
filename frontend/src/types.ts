@@ -154,6 +154,9 @@ export interface ContentProps {
   openTextSchema: () => void;
   isSchema?: boolean;
   setIsSchema: Dispatch<SetStateAction<boolean>>;
+  showEnhancementDialog: boolean;
+  setshowEnhancementDialog: Dispatch<SetStateAction<boolean>>;
+  closeSettingModal: () => void;
 }
 
 export interface FileTableProps {
@@ -226,6 +229,8 @@ export interface Messages {
   speaking?: boolean;
   copying?: boolean;
   mode?: string;
+  cypher_query?: string;
+  graphonly_entities?: [];
 }
 
 export type ChatbotProps = {
@@ -247,7 +252,7 @@ export interface GraphViewModalProps {
   viewPoint: string;
   nodeValues?: Node[];
   relationshipValues?: Relationship[];
-  selectedRows: CustomFile[] | undefined;
+  selectedRows?: CustomFile[] | undefined;
 }
 
 export type GraphType = '__Document__' | 'Entities' | '__Chunk__';
@@ -398,6 +403,8 @@ export interface chatInfoMessage extends Partial<Messages> {
   chunk_ids: chunk[];
   total_tokens: number;
   mode: string;
+  cypher_query?: string;
+  graphonly_entities: [];
 }
 
 export interface eventResponsetypes {
@@ -516,7 +523,7 @@ export interface Menuitems {
   title: string;
   onClick: () => void;
   disabledCondition: boolean;
-  description?: string;
+  description?: string | React.ReactNode;
   isSelected?: boolean;
   selectedClassName?: string;
 }

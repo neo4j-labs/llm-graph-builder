@@ -1,6 +1,6 @@
-import { Dialog, Tabs, Box, Typography } from '@neo4j-ndl/react';
+import { Dialog, Tabs, Box, Typography, Flex } from '@neo4j-ndl/react';
 import graphenhancement from '../../../assets/images/graph-enhancements.svg';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import DeletePopUpForOrphanNodes from './DeleteTabForOrphanNodes';
 import deleteOrphanAPI from '../../../services/DeleteOrphanNodes';
 import { UserCredentials } from '../../../types';
@@ -13,6 +13,7 @@ import { useFileContext } from '../../../context/UsersFiles';
 export default function GraphEnhancementDialog({
   open,
   onClose,
+  closeSettingModal,
 }: {
   open: boolean;
   onClose: () => void;
@@ -20,6 +21,7 @@ export default function GraphEnhancementDialog({
     alertmsg: string,
     alerttype: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined
   ) => void;
+  closeSettingModal: () => void;
 }) {
   const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
   const { setShowTextFromSchemaDialog } = useFileContext();
@@ -35,6 +37,10 @@ export default function GraphEnhancementDialog({
       console.log(error);
     }
   };
+  useEffect(() => {
+    closeSettingModal();
+  }, []);
+
   const [activeTab, setactiveTab] = useState<number>(0);
   return (
     <Dialog
@@ -47,10 +53,10 @@ export default function GraphEnhancementDialog({
       disableCloseButton={false}
       onClose={onClose}
     >
-      <Dialog.Header className='flex justify-between self-end !mb-0'>
+      <Dialog.Header className='flex justify-between self-end !mb-0 '>
         <Box className='n-bg-palette-neutral-bg-weak px-4'>
           <Box className='flex flex-row items-center mb-2'>
-            <img src={graphenhancement} style={{ width: 200, height: 200, marginRight: 10 }} loading='lazy' />
+            <img src={graphenhancement} style={{ width: 250, height: 250, marginRight: 10 }} loading='lazy' />
             <Box className='flex flex-col'>
               <Typography variant='h2'>Graph Enhancements</Typography>
               <Typography variant='subheading-medium' className='mb-2'>
@@ -58,29 +64,31 @@ export default function GraphEnhancementDialog({
                 duplicated entities, disconnected nodes and set a Graph Schema for improving the quality of the entity
                 extraction process
               </Typography>
+              <Flex className='pt-2'>
+                <Tabs fill='underline' onChange={setactiveTab} size='large' value={activeTab}>
+                  <Tabs.Tab tabId={0} aria-label='Database'>
+                    Entity Extraction Settings
+                  </Tabs.Tab>
+                  <Tabs.Tab tabId={1} aria-label='Add database'>
+                    Disconnected Nodes
+                  </Tabs.Tab>
+                </Tabs>
+              </Flex>
             </Box>
           </Box>
         </Box>
       </Dialog.Header>
-      <Dialog.Content className='flex flex-col n-gap-token- grow overflow-auto w-[80%] mx-auto'>
-        <Tabs fill='underline' onChange={setactiveTab} size='large' value={activeTab}>
-          <Tabs.Tab tabId={0} aria-label='Database'>
-            Entity Extraction Settings
-          </Tabs.Tab>
-          <Tabs.Tab tabId={1} aria-label='Add database'>
-            Disconnected Nodes
-          </Tabs.Tab>
-        </Tabs>
+      <Dialog.Content className='flex flex-col n-gap-token- grow w-[90%] mx-auto'>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={0}>
           <div className='w-[80%] mx-auto'>
             <EntityExtractionSettings
               view='Tabs'
               openTextSchema={() => {
-                setShowTextFromSchemaDialog(true);
+                setShowTextFromSchemaDialog({ triggeredFrom: 'enhancementtab', show: true });
               }}
               colseEnhanceGraphSchemaDialog={onClose}
               settingView='headerView'
-            ></EntityExtractionSettings>
+            />
           </div>
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={1}>

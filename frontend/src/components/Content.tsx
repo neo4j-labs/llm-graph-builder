@@ -30,6 +30,9 @@ const Content: React.FC<ContentProps> = ({
   openTextSchema,
   isSchema,
   setIsSchema,
+  showEnhancementDialog,
+  setshowEnhancementDialog,
+  closeSettingModal,
 }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
@@ -41,7 +44,6 @@ const Content: React.FC<ContentProps> = ({
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [isLargeFile, setIsLargeFile] = useState<boolean>(false);
   const [showSettingnModal, setshowSettingModal] = useState<boolean>(false);
-  const [showEnhancementDialog, setshowEnhancementDialog] = useState<boolean>(false);
 
   const {
     filesData,
@@ -569,6 +571,7 @@ const Content: React.FC<ContentProps> = ({
           deleteHandler={(delentities: boolean) => handleDeleteFiles(delentities)}
           deleteCloseHandler={() => setshowDeletePopUp(false)}
           loading={deleteLoading}
+          view='contentView'
         ></DeletePopUp>
       )}
       {showSettingnModal && (
@@ -586,6 +589,7 @@ const Content: React.FC<ContentProps> = ({
         <GraphEnhancementDialog
           open={showEnhancementDialog}
           onClose={closeGraphEnhancementDialog}
+          closeSettingModal={closeSettingModal}
           showAlert={showAlert}
         ></GraphEnhancementDialog>
       )}
@@ -606,29 +610,40 @@ const Content: React.FC<ContentProps> = ({
                 <span className='n-body-small'>Not Connected</span>
               )}
               <div className='pt-1'>
-                {!isSchema ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
+                {!isSchema ? (
+                  <StatusIndicator type='danger' />
+                ) : selectedNodes.length || selectedRels.length ? (
+                  <StatusIndicator type='success' />
+                ) : (
+                  <StatusIndicator type='warning' />
+                )}
                 {isSchema ? (
-                  <span className='n-body-small'>Graph Schema configured</span>
+                  <span className='n-body-small'>
+                    {(!selectedNodes.length || !selectedNodes.length) && 'Empty'} Graph Schema configured
+                    {selectedNodes.length || selectedRels.length
+                      ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)`
+                      : ''}
+                  </span>
                 ) : (
                   <span className='n-body-small'>No Graph Schema configured</span>
                 )}
               </div>
             </Typography>
           </div>
-          {!connectionStatus ? (
-            <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
-              {buttonCaptions.connectToNeo4j}
+          <div>
+            <Button className='mr-2.5' onClick={openGraphEnhancementDialog} disabled={!connectionStatus}>
+              Graph Enhancement
             </Button>
-          ) : (
-            <div>
-              <Button className='mr-2.5' onClick={openGraphEnhancementDialog}>
-                Graph Enhancement
+            {!connectionStatus ? (
+              <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
+                {buttonCaptions.connectToNeo4j}
               </Button>
+            ) : (
               <Button className='mr-2.5' onClick={disconnect}>
                 {buttonCaptions.disconnect}
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </Flex>
         <FileTable
           isExpanded={isLeftExpanded && isRightExpanded}
