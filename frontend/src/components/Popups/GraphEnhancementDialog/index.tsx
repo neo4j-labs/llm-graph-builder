@@ -9,6 +9,7 @@ import EntityExtractionSettings from './EnitityExtraction/EntityExtractionSettin
 import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { OverridableStringUnion } from '@mui/types';
 import { useFileContext } from '../../../context/UsersFiles';
+import DeduplicationTab from './Deduplication';
 
 export default function GraphEnhancementDialog({
   open,
@@ -72,6 +73,9 @@ export default function GraphEnhancementDialog({
                   <Tabs.Tab tabId={1} aria-label='Add database'>
                     Disconnected Nodes
                   </Tabs.Tab>
+                  <Tabs.Tab tabId={2} aria-label='Duplication Nodes'>
+                    Duplication Nodes
+                  </Tabs.Tab>
                 </Tabs>
               </Flex>
             </Box>
@@ -93,6 +97,9 @@ export default function GraphEnhancementDialog({
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={1}>
           <DeletePopUpForOrphanNodes deleteHandler={orphanNodesDeleteHandler} loading={orphanDeleteAPIloading} />
+        </Tabs.TabPanel>
+        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={2}>
+          <DeduplicationTab />
         </Tabs.TabPanel>
       </Dialog.Content>
     </Dialog>

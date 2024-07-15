@@ -372,14 +372,20 @@ export interface commonserverresponse {
   error?: string;
   message?: string | orphanTotalNodes;
   file_name?: string;
-  data?: labelsAndTypes | labelsAndTypes[] | uploadData | orphanNodeProps[];
+  data?: labelsAndTypes | labelsAndTypes[] | uploadData | orphanNodeProps[] | duplicateNode[];
 }
 
 export interface ScehmaFromText extends Partial<commonserverresponse> {
   data: labelsAndTypes;
 }
+export interface duplicateNode extends Partial<orphanNodeProps> {
+  similar: orphanNode[];
+}
 export interface ServerData extends Partial<commonserverresponse> {
   data: labelsAndTypes[];
+}
+export interface duplicateNodesData extends Partial<commonserverresponse> {
+  data: duplicateNode[];
 }
 export interface OrphanNodeResponse extends Partial<commonserverresponse> {
   data: orphanNodeProps[];
