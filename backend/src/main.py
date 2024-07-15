@@ -367,8 +367,9 @@ def processing_chunks(chunkId_chunkDoc_list,graph,file_name,model,allowedNodes,a
   update_embedding_create_vector_index( graph, chunkId_chunkDoc_list, file_name)
   logging.info("Get graph document list from models")
   graph_documents =  generate_graphDocuments(model, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
-  save_graphDocuments_in_neo4j(graph, graph_documents)
-  chunks_and_graphDocuments_list = get_chunk_and_graphDocument(graph_documents, chunkId_chunkDoc_list)
+  cleaned_graph_documents = handle_backticks_nodes_relationship_id_type(graph_documents)
+  save_graphDocuments_in_neo4j(graph, cleaned_graph_documents)
+  chunks_and_graphDocuments_list = get_chunk_and_graphDocument(cleaned_graph_documents, chunkId_chunkDoc_list)
   merge_relationship_between_chunk_and_entites(graph, chunks_and_graphDocuments_list)
   # return graph_documents
   
