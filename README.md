@@ -78,7 +78,7 @@ If none of the mode is mentioned in the chat modes variable all modes will be av
 CHAT_MODES=""
 ```
 
-If however you want to specifiy the only vector mode or only graph mode you can do that by specifying the mode in the env:
+If however you want to specify the only vector mode or only graph mode you can do that by specifying the mode in the env:
 ```env
 CHAT_MODES="vector,graph+vector"
 ```
