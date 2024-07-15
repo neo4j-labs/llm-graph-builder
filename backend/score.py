@@ -600,6 +600,42 @@ async def get_unconnected_nodes_list(uri=Form(), userName=Form(), password=Form(
         if graph is not None:
             close_db_connection(graph,"delete_unconnected_nodes")
         gc.collect()
+        
+@app.post("/get_duplicate_nodes")
+async def get_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), database=Form()):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        nodes_list, total_nodes = graphDb_data_Access.get_duplicate_nodes_list()
+        return create_api_response('Success',data=nodes_list, message=total_nodes)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to get the list of duplicate nodes"
+        error_message = str(e)
+        logging.exception(f'Exception in getting list of duplicate nodes:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        if graph is not None:
+            close_db_connection(graph,"get_duplicate_nodes")
+        gc.collect()
+        
+@app.post("/merge_duplicate_nodes")
+async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), database=Form(),duplicate_nodes_list=Form()):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        result = graphDb_data_Access.merge_duplicate_nodes(duplicate_nodes_list)
+        return create_api_response('Success',data=result,message="Duplicate entities merged successfully")
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to merge the duplicate nodes"
+        error_message = str(e)
+        logging.exception(f'Exception in merge the duplicate nodes:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        if graph is not None:
+            close_db_connection(graph,"merge_duplicate_nodes")
+        gc.collect()
 
 if __name__ == "__main__":
     uvicorn.run(app)
