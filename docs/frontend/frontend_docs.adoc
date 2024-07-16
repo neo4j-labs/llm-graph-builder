@@ -593,21 +593,16 @@ The API is used to delete unconnected entities from database.
 * `unconnected_entities_list`=selected entities list to delete of unconnected entities.
 
 
-== 11. Conclusion: 
+11. Conclusion: 
 In conclusion, this technical document outlines the process of building a React application with Neo4j Aura integration for graph database functionalities.
 
 
-<<<<<<< Updated upstream
-== 12. Referral Links: 
+12. Referral Links: 
 Dev env : https://dev-frontend-dcavk67s4a-uc.a.run.app/
 Staging env: https://staging-frontend-dcavk67s4a-uc.a.run.app/
 Prod env:  https://prod-frontend-dcavk67s4a-uc.a.run.app/
-=======
-== 11. Referral Links: 
-* Dev env : https://dev-frontend-dcavk67s4a-uc.a.run.app/
-* Staging env: https://staging-frontend-dcavk67s4a-uc.a.run.app/
-* Prod env:  https://prod-frontend-dcavk67s4a-uc.a.run.app/
->>>>>>> Stashed changes
+
+
 
 
 
