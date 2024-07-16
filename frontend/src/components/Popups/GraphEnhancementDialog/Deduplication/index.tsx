@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getDuplicateNodes } from '../../../../services/GetDuplicateNodes';
 import { useCredentials } from '../../../../context/UserCredentials';
-import { duplicateNode, orphanNodeProps, UserCredentials } from '../../../../types';
+import { dupNodes, selectedDuplicateNodes, UserCredentials } from '../../../../types';
 import sampleduplicateResponse from '../../../../assets/sampleduplicateresponse.json';
 import {
   useReactTable,
@@ -17,23 +17,13 @@ import { Checkbox, DataGrid, DataGridComponents, Flex, Tag } from '@neo4j-ndl/re
 import Legend from '../../../UI/Legend';
 import { DocumentIconOutline } from '@neo4j-ndl/react/icons';
 import { calcWordColor } from '@neo4j-devtools/word-color';
-interface dupNodeProps {
-  id: string;
-  elementId: string;
-  labels: string[];
-  embedding?: null | string;
-}
-interface dupNodes {
-  e: dupNodeProps;
-  similar: dupNodeProps[];
-  documents: string[];
-  chunkConnections: number;
-}
+
 export default function DeduplicationTab() {
   const { userCredentials } = useCredentials();
   const [duplicateNodes, setDuplicateNodes] = useState<dupNodes[]>([]);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [isLoading, setLoading] = useState<boolean>(false);
+  const [selectedNodes, setselectedNodes] = useState<selectedDuplicateNodes[]>();
   const tableRef = useRef(null);
 
   useEffect(() => {
@@ -48,7 +38,7 @@ export default function DeduplicationTab() {
         if (duplicateNodesData.data.data.length) {
           console.log({ duplicateNodesData });
           console.log(sampleduplicateResponse);
-          setDuplicateNodes(sampleduplicateResponse);
+          setDuplicateNodes(duplicateNodesData.data.data);
         }
       } catch (error) {
         setLoading(false);
