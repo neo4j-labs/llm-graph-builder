@@ -39,11 +39,19 @@ export default function DeduplicationTab() {
   useEffect(() => {
     (async () => {
       try {
-        // const duplicateNodesData = await getDuplicateNodes(userCredentials as UserCredentials);
-        // console.log({ duplicateNodesData });
-        console.log(sampleduplicateResponse);
-        setDuplicateNodes(sampleduplicateResponse);
+        setLoading(true);
+        const duplicateNodesData = await getDuplicateNodes(userCredentials as UserCredentials);
+        setLoading(false);
+        if (duplicateNodesData.data.status === 'Failed') {
+          throw new Error(duplicateNodesData.data.error);
+        }
+        if (duplicateNodesData.data.data.length) {
+          console.log({ duplicateNodesData });
+          console.log(sampleduplicateResponse);
+          setDuplicateNodes(sampleduplicateResponse);
+        }
       } catch (error) {
+        setLoading(false);
         console.log(error);
       }
     })();
