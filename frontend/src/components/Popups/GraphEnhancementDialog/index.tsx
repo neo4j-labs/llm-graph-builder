@@ -74,7 +74,7 @@ export default function GraphEnhancementDialog({
                     Disconnected Nodes
                   </Tabs.Tab>
                   <Tabs.Tab tabId={2} aria-label='Duplication Nodes'>
-                    Duplication Nodes
+                    De-Duplication Of Nodes
                   </Tabs.Tab>
                 </Tabs>
               </Flex>
