@@ -1,4 +1,4 @@
-import { Tag } from "@neo4j-ndl/react";
+import { GraphLabel } from "@neo4j-ndl/react";
 
 export default function Legend({
   bgColor,
@@ -10,9 +10,9 @@ export default function Legend({
   chunkCount?: number;
 }) {
   return (
-    <Tag  className='legend' style={{ backgroundColor: `${bgColor}` }}>
+    <GraphLabel type="node" className='legend' style={{ backgroundColor: `${bgColor}` }}>
       {title}
       {chunkCount && `(${chunkCount})`}
-    </Tag>
+    </GraphLabel>
   );
 }
