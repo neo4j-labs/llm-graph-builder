@@ -17,13 +17,16 @@ import { Checkbox, DataGrid, DataGridComponents, Flex, Tag } from '@neo4j-ndl/re
 import Legend from '../../../UI/Legend';
 import { DocumentIconOutline } from '@neo4j-ndl/react/icons';
 import { calcWordColor } from '@neo4j-devtools/word-color';
+import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
+import mergeDuplicateNodes from '../../../../services/MergeDuplicateEntities';
+// [{firstElementId:"283947sdf", similarElementIds:["aew982349","8sd9fd9s8"}, …. ]
 
 export default function DeduplicationTab() {
   const { userCredentials } = useCredentials();
   const [duplicateNodes, setDuplicateNodes] = useState<dupNodes[]>([]);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [isLoading, setLoading] = useState<boolean>(false);
-  const [selectedNodes, setselectedNodes] = useState<selectedDuplicateNodes[]>();
+  const [mergeAPIloading, setmergeAPIloading] = useState<boolean>(false);
   const tableRef = useRef(null);
 
   useEffect(() => {
@@ -46,6 +49,26 @@ export default function DeduplicationTab() {
       }
     })();
   }, [userCredentials]);
+
+  const clickHandler = async () => {
+    try {
+      const selectedNodeMap = table.getSelectedRowModel().rows.map(
+        (r): selectedDuplicateNodes => ({
+          firstElementId: r.id,
+          similarElementIds: r.original.similar.map((s) => s.elementId),
+        })
+      );
+      setmergeAPIloading(true);
+      const response = await mergeDuplicateNodes(userCredentials as UserCredentials, selectedNodeMap);
+      setmergeAPIloading(false);
+      if (response.data.status === 'Failed') {
+        throw new Error(response.data.error);
+      }
+    } catch (error) {
+      setmergeAPIloading(false);
+      console.log(error);
+    }
+  };
 
   const columnHelper = createColumnHelper<dupNodes>();
   const onRemove = (nodeid: string, similarNodeId: string) => {
@@ -189,6 +212,9 @@ export default function DeduplicationTab() {
       },
     },
   });
+  const selectedFilesCheck = table.getSelectedRowModel().rows.length
+    ? `Merge Duplicate Nodes (${table.getSelectedRowModel().rows.length})`
+    : 'Select Node(s) to Merge';
   return (
     <div>
       <DataGrid
@@ -225,6 +251,27 @@ export default function DeduplicationTab() {
           },
         }}
       />
+      <Flex className='mt-3' flexDirection='row' justifyContent='flex-end'>
+        <ButtonWithToolTip
+          onClick={() => clickHandler()}
+          size='large'
+          loading={mergeAPIloading}
+          text={
+            isLoading
+              ? 'Fetching Duplicate Nodes'
+              : !isLoading && !duplicateNodes.length
+              ? 'No Nodes Found'
+              : !table.getSelectedRowModel().rows.length
+              ? 'No Nodes Selected'
+              : `Merge Selected Nodes (${table.getSelectedRowModel().rows.length})`
+          }
+          label='Merge Duplicate Node Button'
+          disabled={!table.getSelectedRowModel().rows.length}
+          placement='top'
+        >
+          {selectedFilesCheck}
+        </ButtonWithToolTip>
+      </Flex>
     </div>
   );
 }
