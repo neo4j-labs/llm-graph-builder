@@ -60,6 +60,7 @@ export default function DeduplicationTab() {
       setmergeAPIloading(true);
       const response = await mergeDuplicateNodes(userCredentials as UserCredentials, selectedNodeMap);
       table.resetRowSelection()
+      table.resetPagination()
       setmergeAPIloading(false);
       if (response.data.status === 'Failed') {
         throw new Error(response.data.error);
