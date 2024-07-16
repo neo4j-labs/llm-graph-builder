@@ -194,6 +194,7 @@ image::images/VectorMode.jpg[VectorMode, 600]
       •	Graph Mode: Cypher query and Entities [DEV]
 
 image::images/GraphModeDetails.png[GraphMode, 600]
+image::images/GraphModeQuery.png[GraphMode, 600]
 
       •	Graph+Vector Mode: Sources, Chunks and Entities
 
