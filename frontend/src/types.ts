@@ -352,13 +352,14 @@ export interface orphanNode {
   elementId: string;
   description: string;
   labels: string[];
-  embedding: null | string;
+  embedding?: null | string;
 }
 export interface orphanNodeProps {
   documents: string[];
   chunkConnections: number;
   e: orphanNode;
   checked?: boolean;
+  similar?: orphanNode[];
 }
 export interface labelsAndTypes {
   labels: string[];
