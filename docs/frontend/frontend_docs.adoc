@@ -91,6 +91,7 @@ image::project architecture.png[Archirecture diagram, 600, align='left']
     └── README.md
 
 = Application
+image::images/ChatInfoModal.jpg[Connection, 600, align='left']
 
 == 1.	Setup and Installation: 
 Added Node.js with version v21.1.0 and npm on the development machine. 
