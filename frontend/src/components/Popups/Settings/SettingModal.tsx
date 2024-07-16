@@ -1,6 +1,6 @@
 import { Dialog } from '@neo4j-ndl/react';
 import { SettingsModalProps } from '../../../types';
-import EntityExtractionSetting from './EntityExtractionSetting';
+import EntityExtractionSetting from '../GraphEnhancementDialog/EnitityExtraction/EntityExtractionSetting';
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, openTextSchema, onContinue, settingView }) => {
   return (

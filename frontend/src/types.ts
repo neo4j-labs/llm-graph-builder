@@ -352,13 +352,14 @@ export interface orphanNode {
   elementId: string;
   description: string;
   labels: string[];
-  embedding: null | string;
+  embedding?: null | string;
 }
 export interface orphanNodeProps {
   documents: string[];
   chunkConnections: number;
   e: orphanNode;
   checked?: boolean;
+  similar?: orphanNode[];
 }
 export interface labelsAndTypes {
   labels: string[];
@@ -372,14 +373,33 @@ export interface commonserverresponse {
   error?: string;
   message?: string | orphanTotalNodes;
   file_name?: string;
-  data?: labelsAndTypes | labelsAndTypes[] | uploadData | orphanNodeProps[];
+  data?: labelsAndTypes | labelsAndTypes[] | uploadData | orphanNodeProps[] | dupNodes[];
 }
-
+export interface dupNodeProps {
+  id: string;
+  elementId: string;
+  labels: string[];
+  embedding?: null | string;
+}
+export interface dupNodes {
+  e: dupNodeProps;
+  similar: dupNodeProps[];
+  documents: string[];
+  chunkConnections: number;
+}
+export interface selectedDuplicateNodes {
+  firstElementId: string;
+  similarElementIds: string[];
+}
 export interface ScehmaFromText extends Partial<commonserverresponse> {
   data: labelsAndTypes;
 }
+
 export interface ServerData extends Partial<commonserverresponse> {
   data: labelsAndTypes[];
+}
+export interface duplicateNodesData extends Partial<commonserverresponse> {
+  data: dupNodes[];
 }
 export interface OrphanNodeResponse extends Partial<commonserverresponse> {
   data: orphanNodeProps[];

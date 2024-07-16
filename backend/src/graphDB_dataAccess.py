@@ -242,3 +242,62 @@ class graphDBdataAccess:
         """
         param = {"elementIds":entities_list}
         return self.execute_query(query,param)
+    
+    def get_duplicate_nodes_list(self):
+        score_value = float(os.environ.get('DUPLICATE_SCORE_VALUE'))
+        text_distance = int(os.environ.get('DUPLICATE_TEXT_DISTANCE'))
+        query_duplicate_nodes = """
+                MATCH (n:!Chunk&!Document) with n 
+                WHERE n.embedding is not null and n.id is not null // and size(n.id) > 3
+                WITH n ORDER BY count {{ (n)--() }} DESC, size(n.id) DESC // updated
+                WITH collect(n) as nodes
+                UNWIND nodes as n
+                WITH n, [other in nodes 
+                // only one pair, same labels e.g. Person with Person
+                WHERE elementId(n) < elementId(other) and labels(n) = labels(other)
+                // at least embedding similarity of X
+                AND 
+                (vector.similarity.cosine(other.embedding, n.embedding) > $duplicate_score_value
+                OR
+                // either contains each other as substrings or has a text edit distinct of less than 3
+                toLower(n.id) CONTAINS toLower(other.id) OR 
+                toLower(other.id) CONTAINS toLower(n.id)
+                OR (size(n.id)>5 AND apoc.text.distance(toLower(n.id), toLower(other.id)) < $duplicate_text_distance)
+                )] as similar
+                WHERE size(similar) > 0 
+                OPTIONAL MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(n)
+                {return_statement}
+                """
+        return_query_duplicate_nodes = """
+                RETURN n {.*, embedding:null, elementId:elementId(n), labels:labels(n)} as e, 
+                [s in similar | s {.id, .description, labels:labels(s), elementId: elementId(s)}] as similar,
+                collect(distinct doc.fileName) as documents, count(distinct c) as chunkConnections
+                ORDER BY e.id ASC
+                """
+        return_query_duplicate_nodes_total = "RETURN COUNT(DISTINCT(n)) as total"
+        
+        param = {"duplicate_score_value": score_value, "duplicate_text_distance" : text_distance}
+        
+        nodes_list = self.execute_query(query_duplicate_nodes.format(return_statement=return_query_duplicate_nodes),param=param)
+        total_nodes = self.execute_query(query_duplicate_nodes.format(return_statement=return_query_duplicate_nodes_total),param=param)
+        return nodes_list, total_nodes[0]
+    
+    def merge_duplicate_nodes(self,duplicate_nodes_list):
+        nodes_list = json.loads(duplicate_nodes_list)
+        print(f'Nodes list to merge {nodes_list}')
+        query = """
+        UNWIND $rows AS row
+        CALL { with row
+        MATCH (first) WHERE elementId(first) = row.firstElementId
+        MATCH (rest) WHERE elementId(rest) IN row.similarElementIds
+        WITH first, collect (rest) as rest
+        WITH [first] + rest as nodes
+        CALL apoc.refactor.mergeNodes(nodes, 
+        {properties:"discard",mergeRels:true, produceSelfRel:false, preserveExistingSelfRels:false, singleElementAsArray:true}) 
+        YIELD node
+        RETURN size(nodes) as mergedCount
+        }
+        RETURN sum(mergedCount) as totalMerged
+        """
+        param = {"rows":nodes_list}
+        return self.execute_query(query,param)
