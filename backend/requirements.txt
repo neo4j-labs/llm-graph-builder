@@ -69,13 +69,13 @@ jsonpath-python==1.0.6
 jsonpointer==2.4
 json-repair==0.25.2
 kiwisolver==1.4.5
-langchain==0.2.6
+langchain==0.2.8
 langchain-aws==0.1.9
 langchain-anthropic==0.1.19
 langchain-fireworks==0.1.4
 langchain-google-genai==1.0.7
-langchain-community==0.2.6
-langchain-core==0.2.10
+langchain-community==0.2.7
+langchain-core==0.2.19
 langchain-experimental==0.0.62
 langchain-google-vertexai==1.0.6
 langchain-groq==0.1.6
