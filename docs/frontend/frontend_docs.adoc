@@ -13,8 +13,6 @@ This document provides a comprehensive guide for developers on how we build a Re
       ** LongPooling: Long polling can be conceptualized as the simplest way to maintain a steady connection between a client and a server.It holds the request for a period if it has no response to send it back.It regularly updates clients with new information like updating a status, processed chunks every minute with new data.
       ** SSEs are the best options when the server generates the data in a loop and sends multiple events to the clients and if we need real-time traffic from the server to the client.
 
-image::project architecture.png[Archirecture diagram, 600, align='left']
-
 == Folders
 
     .
