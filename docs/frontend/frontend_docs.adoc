@@ -100,9 +100,13 @@ Install necessary dependencies by running yarn install, such as axios for making
 == 2.	Connect to the Neo4j Aura instance: 
 Created a connection modal by adding details including protocol, URI, database name, username, and password. Added a submit button that triggers an API: ***/connect*** and accepts params like uri, password, username and database to establish a connection to the Neo4j Aura instance. Handled the authentication and error scenarios appropriately, by displaying relevant messages. To check whether the backend connection is up and working we hit the API: ***/health***
 
-* Before Connection : 
-    image::images/ChatInfoModal.jpg[Connection, 600, align='left']
-  * After connection:
+* Before Connection :
+
+image::images/ConnectionModal.jpg[NoConnection, 600]
+ 
+     * After connection:
+
+image::images/NoFiles.jpg[Connection, 600]
 
 
 == 3.	File Source integration: 
