@@ -293,7 +293,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                     >
                       <div style={{ backgroundColor: calcWordColor(Object.keys(label)[0]) }} className='legend mr-2'>
                         {
-                          //@ts-ignore
+                          // @ts-ignore
                           label[Object.keys(label)[0]].id ?? Object.keys(label)[0]
                         }
                       </div>

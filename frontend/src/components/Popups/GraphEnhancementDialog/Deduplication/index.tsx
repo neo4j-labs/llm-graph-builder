@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getDuplicateNodes } from '../../../../services/GetDuplicateNodes';
 import { useCredentials } from '../../../../context/UserCredentials';
 import { dupNodes, selectedDuplicateNodes, UserCredentials } from '../../../../types';
-import sampleduplicateResponse from '../../../../assets/sampleduplicateresponse.json';
 import {
   useReactTable,
   getCoreRowModel,
@@ -19,7 +18,6 @@ import { DocumentIconOutline } from '@neo4j-ndl/react/icons';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import mergeDuplicateNodes from '../../../../services/MergeDuplicateEntities';
-// [{firstElementId:"283947sdf", similarElementIds:["aew982349","8sd9fd9s8"}, …. ]
 
 export default function DeduplicationTab() {
   const { userCredentials } = useCredentials();
@@ -28,25 +26,26 @@ export default function DeduplicationTab() {
   const [isLoading, setLoading] = useState<boolean>(false);
   const [mergeAPIloading, setmergeAPIloading] = useState<boolean>(false);
   const tableRef = useRef(null);
-
+  const fetchDuplicateNodes = useCallback(async () => {
+    try {
+      setLoading(true);
+      const duplicateNodesData = await getDuplicateNodes(userCredentials as UserCredentials);
+      setLoading(false);
+      if (duplicateNodesData.data.status === 'Failed') {
+        throw new Error(duplicateNodesData.data.error);
+      }
+      if (duplicateNodesData.data.data.length) {
+        console.log({ duplicateNodesData });
+        setDuplicateNodes(duplicateNodesData.data.data);
+      }
+    } catch (error) {
+      setLoading(false);
+      console.log(error);
+    }
+  }, [userCredentials]);
   useEffect(() => {
     (async () => {
-      try {
-        setLoading(true);
-        const duplicateNodesData = await getDuplicateNodes(userCredentials as UserCredentials);
-        setLoading(false);
-        if (duplicateNodesData.data.status === 'Failed') {
-          throw new Error(duplicateNodesData.data.error);
-        }
-        if (duplicateNodesData.data.data.length) {
-          console.log({ duplicateNodesData });
-          console.log(sampleduplicateResponse);
-          setDuplicateNodes(duplicateNodesData.data.data);
-        }
-      } catch (error) {
-        setLoading(false);
-        console.log(error);
-      }
+      await fetchDuplicateNodes();
     })();
   }, [userCredentials]);
 
@@ -74,12 +73,12 @@ export default function DeduplicationTab() {
   const onRemove = (nodeid: string, similarNodeId: string) => {
     setDuplicateNodes((prev) => {
       return prev.map((d) =>
-        d.e.elementId === nodeid
+        (d.e.elementId === nodeid
           ? {
               ...d,
               similar: d.similar.filter((n) => n.elementId != similarNodeId),
             }
-          : d
+          : d)
       );
     });
   };
@@ -253,7 +252,10 @@ export default function DeduplicationTab() {
       />
       <Flex className='mt-3' flexDirection='row' justifyContent='flex-end'>
         <ButtonWithToolTip
-          onClick={() => clickHandler()}
+          onClick={async () => {
+            await clickHandler();
+            await fetchDuplicateNodes();
+          }}
           size='large'
           loading={mergeAPIloading}
           text={

@@ -1,4 +1,3 @@
-// [{firstElementId:"283947sdf", similarElementIds:["aew982349","8sd9fd9s8"}, …. ]
 import axios from 'axios';
 import { url } from '../utils/Utils';
 import { commonserverresponse, selectedDuplicateNodes, UserCredentials } from '../types';
