@@ -280,7 +280,7 @@ Followed best practices for optimizing performance and security of the deployed 
  * BACKEND_PROCESSING_URL=
 ----
 * ***Cloud Deployment:***
-  ** To deploy the app and packages on Google Cloud Platform, run the following command on google cloud run
+  ** To deploy the app install the gcloud cli , run the following command in the terminal specifically from frontend root folder.
     *** gcloud run deploy 
     *** source location current directory > Frontend
     *** region : 32 [us-central 1]
