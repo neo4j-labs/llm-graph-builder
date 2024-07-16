@@ -283,14 +283,15 @@ class graphDBdataAccess:
         return nodes_list, total_nodes[0]
     
     def merge_duplicate_nodes(self,duplicate_nodes_list):
-        nodes_list = list(map(str.strip, json.loads(duplicate_nodes_list)))
+        nodes_list = json.loads(duplicate_nodes_list)
+        print(f'Nodes list to merge {nodes_list}')
         query = """
         UNWIND $rows AS row
         CALL { with row
-        MATCH (first) WHERE elementId(first) = $row.firstElementId
-        MATCH (rest) WHERE elementId(rest) IN $row.similarElementIds
-        WITH [first] + collect(rest) as nodes
-
+        MATCH (first) WHERE elementId(first) = row.firstElementId
+        MATCH (rest) WHERE elementId(rest) IN row.similarElementIds
+        WITH first, collect (rest) as rest
+        WITH [first] + rest as nodes
         CALL apoc.refactor.mergeNodes(nodes, 
         {properties:"discard",mergeRels:true, produceSelfRel:false, preserveExistingSelfRels:false, singleElementAsArray:true}) 
         YIELD node
