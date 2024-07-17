@@ -1,14 +1,14 @@
 import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
-import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
-import { appLabels, buttonCaptions, tooltips } from '../../../utils/Constants';
+import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
+import { appLabels, buttonCaptions, tooltips } from '../../../../utils/Constants';
 import { Dropdown, Flex, Typography } from '@neo4j-ndl/react';
-import { useCredentials } from '../../../context/UserCredentials';
-import { useFileContext } from '../../../context/UsersFiles';
+import { useCredentials } from '../../../../context/UserCredentials';
+import { useFileContext } from '../../../../context/UsersFiles';
 import { OnChangeValue, ActionMeta } from 'react-select';
-import { OptionType, OptionTypeForExamples, schema, UserCredentials } from '../../../types';
-import { useAlertContext } from '../../../context/Alert';
-import { getNodeLabelsAndRelTypes } from '../../../services/GetNodeLabelsRelTypes';
-import schemaExamples from '../../../assets/schemas.json';
+import { OptionType, OptionTypeForExamples, schema, UserCredentials } from '../../../../types';
+import { useAlertContext } from '../../../../context/Alert';
+import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
+import schemaExamples from '../../../../assets/schemas.json';
 
 export default function EntityExtractionSetting({
   view,
