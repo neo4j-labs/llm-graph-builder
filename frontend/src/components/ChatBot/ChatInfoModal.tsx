@@ -385,6 +385,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                           <img src={s3logo} width={20} height={20} className='mr-2' />
                           <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                         </div>
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                       </>
                     ) : chunk?.url &&
                       !chunk?.url.startsWith('s3://') &&
