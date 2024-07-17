@@ -82,7 +82,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     [copiedText, cypher_query]
   );
   useEffect(() => {
-    if (mode != 'graph' && error?.length) {
+    if (mode != 'graph' || error?.trim()!=="") {
       setLoading(true);
       chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids.map((c) => c.id).join(','))
         .then((response) => {
