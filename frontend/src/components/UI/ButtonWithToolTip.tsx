@@ -12,6 +12,7 @@ const ButtonWithToolTip = ({
   label,
   loading,
   fill = 'filled',
+  type = 'button',
 }: {
   text: string | React.ReactNode;
   children: React.ReactNode;
@@ -25,6 +26,7 @@ const ButtonWithToolTip = ({
   loading?: boolean;
   label: string;
   fill?: 'filled' | 'outlined' | 'text';
+  type?: 'submit' | 'button' | 'reset';
 }) => {
   return (
     <Tip allowedPlacements={[placement]}>
@@ -37,6 +39,7 @@ const ButtonWithToolTip = ({
           className={className}
           loading={loading}
           fill={fill}
+          type={type}
         >
           {children}
         </Button>

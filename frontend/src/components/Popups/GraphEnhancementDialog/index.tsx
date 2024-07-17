@@ -5,15 +5,16 @@ import DeletePopUpForOrphanNodes from './DeleteTabForOrphanNodes';
 import deleteOrphanAPI from '../../../services/DeleteOrphanNodes';
 import { UserCredentials } from '../../../types';
 import { useCredentials } from '../../../context/UserCredentials';
-import EntityExtractionSettings from '../Settings/EntityExtractionSetting';
+import EntityExtractionSettings from './EnitityExtraction/EntityExtractionSetting';
 import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { OverridableStringUnion } from '@mui/types';
 import { useFileContext } from '../../../context/UsersFiles';
+import DeduplicationTab from './Deduplication';
 
 export default function GraphEnhancementDialog({
   open,
   onClose,
-  closeSettingModal
+  closeSettingModal,
 }: {
   open: boolean;
   onClose: () => void;
@@ -21,7 +22,7 @@ export default function GraphEnhancementDialog({
     alertmsg: string,
     alerttype: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined
   ) => void;
-  closeSettingModal:()=>void
+  closeSettingModal: () => void;
 }) {
   const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
   const { setShowTextFromSchemaDialog } = useFileContext();
@@ -38,9 +39,9 @@ export default function GraphEnhancementDialog({
     }
   };
   useEffect(() => {
-    closeSettingModal()
-  }, [])
-  
+    closeSettingModal();
+  }, []);
+
   const [activeTab, setactiveTab] = useState<number>(0);
   return (
     <Dialog
@@ -72,6 +73,9 @@ export default function GraphEnhancementDialog({
                   <Tabs.Tab tabId={1} aria-label='Add database'>
                     Disconnected Nodes
                   </Tabs.Tab>
+                  <Tabs.Tab tabId={2} aria-label='Duplication Nodes'>
+                    De-Duplication Of Nodes
+                  </Tabs.Tab>
                 </Tabs>
               </Flex>
             </Box>
@@ -93,6 +97,9 @@ export default function GraphEnhancementDialog({
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={1}>
           <DeletePopUpForOrphanNodes deleteHandler={orphanNodesDeleteHandler} loading={orphanDeleteAPIloading} />
+        </Tabs.TabPanel>
+        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={2}>
+          <DeduplicationTab />
         </Tabs.TabPanel>
       </Dialog.Content>
     </Dialog>

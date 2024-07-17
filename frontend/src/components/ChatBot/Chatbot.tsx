@@ -402,9 +402,16 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
             fluid
             onChange={handleInputChange}
           />
-          <Button type='submit' disabled={loading} size='medium'>
+          <ButtonWithToolTip
+            label='Q&A Button'
+            placement='top'
+            text={`Query Documents in ${chatMode} mode`}
+            type='submit'
+            disabled={loading}
+            size='medium'
+          >
             {buttonCaptions.ask} {selectedRows != undefined && selectedRows.length > 0 && `(${selectedRows.length})`}
-          </Button>
+          </ButtonWithToolTip>
         </form>
       </div>
       <Modal

@@ -96,6 +96,26 @@ def load_embedding_model(embedding_model_name: str):
 def save_graphDocuments_in_neo4j(graph:Neo4jGraph, graph_document_list:List[GraphDocument]):
   # graph.add_graph_documents(graph_document_list, baseEntityLabel=True)
   graph.add_graph_documents(graph_document_list)
+  
+def handle_backticks_nodes_relationship_id_type(graph_document_list:List[GraphDocument]):
+  for graph_document in graph_document_list:
+    # Clean node id and types
+    cleaned_nodes = []
+    for node in graph_document.nodes:
+      if node.type.strip() and node.id.strip():
+        node.type = node.type.replace('`', '')
+        cleaned_nodes.append(node)
+    # Clean relationship id types and source/target node id and types
+    cleaned_relationships = []
+    for rel in graph_document.relationships:
+      if rel.type.strip() and rel.source.id.strip() and rel.source.type.strip() and rel.target.id.strip() and rel.target.type.strip():
+        rel.type = rel.type.replace('`', '')
+        rel.source.type = rel.source.type.replace('`', '')
+        rel.target.type = rel.target.type.replace('`', '')
+        cleaned_relationships.append(rel)
+    graph_document.relationships = cleaned_relationships
+    graph_document.nodes = cleaned_nodes
+  return graph_document_list
 
 def delete_uploaded_local_file(merged_file_path, file_name):
   file_path = Path(merged_file_path)
