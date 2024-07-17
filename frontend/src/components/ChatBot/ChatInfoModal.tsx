@@ -210,17 +210,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                             </Typography>
                           </div>
                         )}
-                        {link?.startsWith('s3://') && (
-                          <div className='flex flex-row inline-block justify-between items-center'>
-                            <img src={s3logo} width={20} height={20} className='mr-2' alt='S3 Logo' />
-                            <Typography
-                              variant='body-medium'
-                              className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
-                            >
-                              {decodeURIComponent(link).split('/').at(-1) ?? 'S3 File'}
-                            </Typography>
-                          </div>
-                        )}
                         {youtubeLinkValidation(link) && (
                           <>
                             <div className='flex flex-row inline-block justiy-between items-center'>
@@ -250,6 +239,16 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                             </div>
                           )}
                       </>
+                    ) : link?.startsWith('s3://') ? (
+                      <div className='flex flex-row inline-block justify-between items-center'>
+                        <img src={s3logo} width={20} height={20} className='mr-2' alt='S3 Logo' />
+                        <Typography
+                          variant='body-medium'
+                          className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                        >
+                          {decodeURIComponent(link).split('/').at(-1) ?? 'S3 File'}
+                        </Typography>
+                      </div>
                     ) : (
                       <div className='flex flex-row inline-block justify-between items-center'>
                         <DocumentTextIconOutline className='n-size-token-7 mr-2' />
