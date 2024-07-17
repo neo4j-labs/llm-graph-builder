@@ -631,9 +631,16 @@ const Content: React.FC<ContentProps> = ({
             </Typography>
           </div>
           <div>
-            <Button className='mr-2.5' onClick={openGraphEnhancementDialog} disabled={!connectionStatus}>
+            <ButtonWithToolTip
+              placement='top'
+              text='Configure Graph Schema, Delete disconnected Entities, Merge duplicate Entities'
+              label='Graph Enhancemnet Settings'
+              className='mr-2.5'
+              onClick={openGraphEnhancementDialog}
+              disabled={!connectionStatus}
+            >
               Graph Enhancement
-            </Button>
+            </ButtonWithToolTip>
             {!connectionStatus ? (
               <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
                 {buttonCaptions.connectToNeo4j}
