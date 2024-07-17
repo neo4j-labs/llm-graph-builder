@@ -353,7 +353,7 @@
   scrollbar-width: thin;
 }
 .entity_extraction_Tab_node_label__value-container--has-value,.entity_extraction_Tab_relationship_label__value-container--has-value{
-  max-height: 180px;
+  max-height: 100px;
   overflow-y: scroll !important;
   scrollbar-width: thin;
 }
