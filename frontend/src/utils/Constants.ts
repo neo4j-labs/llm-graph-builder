@@ -131,7 +131,7 @@ export const tooltips = {
   useExistingSchema: 'Use the already existing schema from DB',
   clearChat: 'Clear Chat History',
   continue: 'Continue',
-  clearGraphSettings: 'Allow User to remove Settings',
+  clearGraphSettings: 'Clear configured Graph Schema',
 };
 
 export const buttonCaptions = {
@@ -153,7 +153,7 @@ export const buttonCaptions = {
   cancel: 'Cancel',
   details: 'Details',
   continueSettings: 'Continue',
-  clearSettings: 'Clear Settings',
+  clearSettings: 'Clear Schema',
   ask: 'Ask',
 };
 
