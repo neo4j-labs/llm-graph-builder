@@ -1,4 +1,4 @@
-import { Banner, Dialog, Flex, IconButtonArray, LoadingSpinner } from '@neo4j-ndl/react';
+import { Banner, Dialog, Flex, IconButtonArray, LoadingSpinner, Typography } from '@neo4j-ndl/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GraphType, GraphViewModalProps, Scheme, UserCredentials } from '../../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
@@ -101,20 +101,25 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials]);
 
   // Api call to get the nodes and relations
-  const graphApi = async () => {
+  const graphApi = async (mode?:string) => {
     try {
       const result = await fetchData();
       if (result && result.data.data.nodes.length > 0) {
         const neoNodes = result.data.data.nodes.map((f: Node) => f);
         const neoRels = result.data.data.relationships.map((f: Relationship) => f);
         const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels);
+        if(mode === 'refreshMode'){
+          initGraph(graphType,finalNodes, finalRels, schemeVal);
+        }
+        else{
+          setNodes(finalNodes);
+          setRelationships(finalRels);
+          setNewScheme(schemeVal);
+          setLoading(false);
+        }
         setAllNodes(finalNodes);
-        setAllRelationships(finalRels);
+        setAllRelationships(finalRels); 
         setScheme(schemeVal);
-        setNodes(finalNodes);
-        setRelationships(finalRels);
-        setNewScheme(schemeVal);
-        setLoading(false);
       } else {
         setLoading(false);
         setStatus('danger');
@@ -176,7 +181,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
   // Refresh the graph with nodes and relations if file is processing
   const handleRefresh = () => {
-    graphApi();
+    graphApi('refreshMode');
     setGraphType(graphType);
     setNodes(nodes);
     setRelationships(relationships);
@@ -192,8 +197,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setGraphType(intitalGraphType);
     setNodes([]);
     setRelationships([]);
+    setAllNodes([]);
+    setAllRelationships([]);
   };
 
+  console.log('nodes', nodes);
+  console.log('rel', relationships);
   // sort the legends in with Chunk and Document always the first two values
   const legendCheck = Object.keys(newScheme).sort((a, b) => {
     if (a === 'Document' || a === 'Chunk') {
@@ -316,7 +325,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                     handleClasses={{ left: 'ml-1' }}
                   >
                     <div className='legend_div'>
-                      <h4 className='py-4 pt-3 ml-2'>Result Overview</h4>
+                      <Flex className='py-4 pt-3 ml-2'>
+                      <Typography variant='h3'>Result Overview</Typography>
+                      <Typography variant='subheading-small'>Total Nodes ({nodes.length})</Typography>
+                      </Flex>
                       <div className='flex gap-2 flex-wrap ml-2'>
                         {legendCheck.map((key, index) => (
                           <LegendsChip key={index} title={key} scheme={newScheme} nodes={nodes} />
