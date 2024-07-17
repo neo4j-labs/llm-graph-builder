@@ -59,8 +59,8 @@ export default function DeduplicationTab() {
       );
       setmergeAPIloading(true);
       const response = await mergeDuplicateNodes(userCredentials as UserCredentials, selectedNodeMap);
-      table.resetRowSelection()
-      table.resetPagination()
+      table.resetRowSelection();
+      table.resetPagination();
       setmergeAPIloading(false);
       if (response.data.status === 'Failed') {
         throw new Error(response.data.error);
@@ -75,12 +75,12 @@ export default function DeduplicationTab() {
   const onRemove = (nodeid: string, similarNodeId: string) => {
     setDuplicateNodes((prev) => {
       return prev.map((d) =>
-        d.e.elementId === nodeid
+        (d.e.elementId === nodeid
           ? {
               ...d,
               similar: d.similar.filter((n) => n.elementId != similarNodeId),
             }
-          : d
+          : d)
       );
     });
   };
@@ -213,18 +213,21 @@ export default function DeduplicationTab() {
       },
     },
   });
-  const selectedFilesCheck =mergeAPIloading
-  ? 'Merging...': table.getSelectedRowModel().rows.length
+  const selectedFilesCheck = mergeAPIloading
+    ? 'Merging...'
+    : table.getSelectedRowModel().rows.length
     ? `Merge Duplicate Nodes (${table.getSelectedRowModel().rows.length})`
     : 'Select Node(s) to Merge';
   return (
     <div>
       <Flex justifyContent='space-between' flexDirection='row'>
-        <Flex><Typography variant='subheading-large'>Refine Your Knowledge Graph: Merge Duplicate Entities:</Typography>
-        <Typography variant='subheading-small'>
-          Identify and merge similar entries like "Apple" and "Apple Inc." to eliminate redundancy and improve the
-          accuracy and clarity of your knowledge graph.
-        </Typography></Flex>
+        <Flex>
+          <Typography variant='subheading-large'>Refine Your Knowledge Graph: Merge Duplicate Entities:</Typography>
+          <Typography variant='subheading-small'>
+            Identify and merge similar entries like "Apple" and "Apple Inc." to eliminate redundancy and improve the
+            accuracy and clarity of your knowledge graph.
+          </Typography>
+        </Flex>
         {duplicateNodes.length > 0 && (
           <Typography variant='subheading-large'>Total Duplicate Nodes: {duplicateNodes.length}</Typography>
         )}
