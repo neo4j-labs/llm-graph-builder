@@ -347,14 +347,13 @@
   margin-bottom: 0 !important;
 }
 
-.node_label__value-container--has-value {
+.node_label__value-container--has-value ,.relationship_label__value-container--has-value{
   max-height: 215px;
   overflow-y: scroll !important;
   scrollbar-width: thin;
 }
-
-.relationship_label__value-container--has-value {
-  max-height: 215px;
+.entity_extraction_Tab_node_label__value-container--has-value,.entity_extraction_Tab_relationship_label__value-container--has-value{
+  max-height: 100px;
   overflow-y: scroll !important;
-  scrollbar-width: thin
+  scrollbar-width: thin;
 }

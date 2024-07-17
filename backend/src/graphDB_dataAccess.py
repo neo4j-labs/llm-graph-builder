@@ -212,7 +212,6 @@ class graphDBdataAccess:
         else :
             result = self.execute_query(query_to_delete_document, param)    
             logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' with their entities from database")
-        
         return result, len(filename_list)
     
     def list_unconnected_nodes(self):

@@ -38,6 +38,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
   const [chatsMode, setChatsMode] = useState<string>('graph+vector');
   const [graphEntitites, setgraphEntitites] = useState<[]>([]);
+  const [messageError, setmessageError] = useState<string>('');
 
   const [value, copy] = useCopyToClipboard();
   const { speak, cancel } = useSpeechSynthesis({
@@ -77,6 +78,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       mode?: string;
       cypher_query?: string;
       graphonly_entities?: [];
+      error?: string;
     },
     index = 0
   ) => {
@@ -106,6 +108,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
               mode: response?.mode,
               cypher_query: response?.cypher_query,
               graphonly_entities: response?.graphonly_entities,
+              error: response.error,
             },
           ]);
         } else {
@@ -127,6 +130,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
             lastmsg.mode = response?.mode;
             lastmsg.cypher_query = response.cypher_query;
             lastmsg.graphonly_entities = response.graphonly_entities;
+            lastmsg.error = response.error;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -159,6 +163,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
     let chatingMode;
     let cypher_query;
     let graphonly_entities;
+    let error;
     const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
     const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime };
     setListMessages([...listMessages, userMessage]);
@@ -183,6 +188,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       chatingMode = chatresponse?.data?.data?.info?.mode;
       cypher_query = chatresponse?.data?.data?.info?.cypher_query ?? '';
       graphonly_entities = chatresponse?.data.data.info.context ?? [];
+      error = chatresponse.data.data.info.error ?? '';
       const finalbotReply = {
         reply: chatbotReply,
         sources: chatSources,
@@ -195,6 +201,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
         mode: chatingMode,
         cypher_query,
         graphonly_entities,
+        error,
       };
       simulateTypingEffect(finalbotReply);
     } catch (error) {
@@ -318,73 +325,70 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                         {chat.datetime}
                       </Typography>
                     </div>
-                    {chat.user === 'chatbot' &&
-                      chat.id !== 2 &&
-                      chat.sources?.length !== 0 &&
-                      !chat.isLoading &&
-                      !chat.isTyping && (
-                        <div className='flex inline-block'>
-                          <ButtonWithToolTip
-                            className='w-4 h-4 inline-block p-6 mt-1.5'
-                            fill='text'
-                            placement='top'
-                            clean
-                            text='Retrieval Information'
-                            label='Retrieval Information'
-                            disabled={chat.isTyping || chat.isLoading}
-                            onClick={() => {
-                              setModelModal(chat.model ?? '');
-                              setSourcesModal(chat.sources ?? []);
-                              setResponseTime(chat.response_time ?? 0);
-                              setChunkModal(chat.chunk_ids ?? []);
-                              setTokensUsed(chat.total_tokens ?? 0);
-                              setcypherQuery(chat.cypher_query ?? '');
-                              setShowInfoModal(true);
-                              setChatsMode(chat.mode ?? '');
-                              setgraphEntitites(chat.graphonly_entities ?? []);
-                            }}
-                          >
-                            {' '}
-                            {buttonCaptions.details}
-                          </ButtonWithToolTip>
-                          <IconButtonWithToolTip
-                            label='copy text'
-                            placement='top'
-                            clean
-                            text={chat.copying ? tooltips.copied : tooltips.copy}
-                            onClick={() => handleCopy(chat.message, chat.id)}
-                            disabled={chat.isTyping || chat.isLoading}
-                          >
-                            <ClipboardDocumentIconOutline className='w-4 h-4 inline-block' />
-                          </IconButtonWithToolTip>
-                          {copyMessageId === chat.id && (
-                            <>
-                              <span className='pt-4 text-xs'>Copied!</span>
-                              <span style={{ display: 'none' }}>{value}</span>
-                            </>
+                    {chat.user === 'chatbot' && chat.id !== 2 && !chat.isLoading && !chat.isTyping && (
+                      <div className='flex inline-block'>
+                        <ButtonWithToolTip
+                          className='w-4 h-4 inline-block p-6 mt-1.5'
+                          fill='text'
+                          placement='top'
+                          clean
+                          text='Retrieval Information'
+                          label='Retrieval Information'
+                          disabled={chat.isTyping || chat.isLoading}
+                          onClick={() => {
+                            setModelModal(chat.model ?? '');
+                            setSourcesModal(chat.sources ?? []);
+                            setResponseTime(chat.response_time ?? 0);
+                            setChunkModal(chat.chunk_ids ?? []);
+                            setTokensUsed(chat.total_tokens ?? 0);
+                            setcypherQuery(chat.cypher_query ?? '');
+                            setShowInfoModal(true);
+                            setChatsMode(chat.mode ?? '');
+                            setgraphEntitites(chat.graphonly_entities ?? []);
+                            setmessageError(chat.error ?? '');
+                          }}
+                        >
+                          {' '}
+                          {buttonCaptions.details}
+                        </ButtonWithToolTip>
+                        <IconButtonWithToolTip
+                          label='copy text'
+                          placement='top'
+                          clean
+                          text={chat.copying ? tooltips.copied : tooltips.copy}
+                          onClick={() => handleCopy(chat.message, chat.id)}
+                          disabled={chat.isTyping || chat.isLoading}
+                        >
+                          <ClipboardDocumentIconOutline className='w-4 h-4 inline-block' />
+                        </IconButtonWithToolTip>
+                        {copyMessageId === chat.id && (
+                          <>
+                            <span className='pt-4 text-xs'>Copied!</span>
+                            <span style={{ display: 'none' }}>{value}</span>
+                          </>
+                        )}
+                        <IconButtonWithToolTip
+                          placement='top'
+                          clean
+                          onClick={() => {
+                            if (chat.speaking) {
+                              handleCancel(chat.id);
+                            } else {
+                              handleSpeak(chat.message, chat.id);
+                            }
+                          }}
+                          text={chat.speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
+                          disabled={listMessages.some((msg) => msg.speaking && msg.id !== chat.id)}
+                          label={chat.speaking ? 'stop speaking' : 'text to speech'}
+                        >
+                          {chat.speaking ? (
+                            <SpeakerXMarkIconOutline className='w-4 h-4 inline-block' />
+                          ) : (
+                            <SpeakerWaveIconOutline className='w-4 h-4 inline-block' />
                           )}
-                          <IconButtonWithToolTip
-                            placement='top'
-                            clean
-                            onClick={() => {
-                              if (chat.speaking) {
-                                handleCancel(chat.id);
-                              } else {
-                                handleSpeak(chat.message, chat.id);
-                              }
-                            }}
-                            text={chat.speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
-                            disabled={listMessages.some((msg) => msg.speaking && msg.id !== chat.id)}
-                            label={chat.speaking ? 'stop speaking' : 'text to speech'}
-                          >
-                            {chat.speaking ? (
-                              <SpeakerXMarkIconOutline className='w-4 h-4 inline-block' />
-                            ) : (
-                              <SpeakerWaveIconOutline className='w-4 h-4 inline-block' />
-                            )}
-                          </IconButtonWithToolTip>
-                        </div>
-                      )}
+                        </IconButtonWithToolTip>
+                      </div>
+                    )}
                   </div>
                 </Widget>
               </div>
@@ -442,6 +446,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
           mode={chatsMode}
           cypher_query={cypherQuery}
           graphonly_entities={graphEntitites}
+          error={messageError}
         />
       </Modal>
     </div>
