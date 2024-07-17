@@ -1,6 +1,6 @@
 import { Banner, Dialog, Flex, IconButtonArray, LoadingSpinner, Typography } from '@neo4j-ndl/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { GraphType, GraphViewModalProps, Scheme, UserCredentials } from '../../types';
+import { ExtendedNode, GraphType, GraphViewModalProps, Scheme, UserCredentials } from '../../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL from '@neo4j-nvl/base';
 import type { Node, Relationship } from '@neo4j-nvl/base';
@@ -34,10 +34,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   selectedRows,
 }) => {
   const nvlRef = useRef<NVL>(null);
-  const [nodes, setNodes] = useState<Node[]>([]);
+  const [nodes, setNodes] = useState<ExtendedNode[]>([]);
   const [relationships, setRelationships] = useState<Relationship[]>([]);
   const [graphType, setGraphType] = useState<GraphType[]>(intitalGraphType);
-  const [allNodes, setAllNodes] = useState<Node[]>([]);
+  const [allNodes, setAllNodes] = useState<ExtendedNode[]>([]);
   const [allRelationships, setAllRelationships] = useState<Relationship[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<'unknown' | 'success' | 'danger'>('unknown');
@@ -213,7 +213,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     return a.localeCompare(b);
   });
 
-  const initGraph = (graphType: GraphType[], finalNodes: Node[], finalRels: Relationship[], schemeVal: Scheme) => {
+  const initGraph = (graphType: GraphType[], finalNodes: ExtendedNode[], finalRels: Relationship[], schemeVal: Scheme) => {
     if (allNodes.length > 0 && allRelationships.length > 0) {
       const { filteredNodes, filteredRelations, filteredScheme } = filterData(
         graphType,

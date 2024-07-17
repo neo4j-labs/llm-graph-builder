@@ -6,13 +6,13 @@ import wikipedialogo from '../../../assets/images/Wikipedia-logo-v2.svg';
 import youtubelogo from '../../../assets/images/youtube.png';
 import gcslogo from '../../../assets/images/gcs.webp';
 import s3logo from '../../../assets/images/s3logo.png';
-import { Chunk, Entity, GroupedEntity, UserCredentials, chatInfoMessage } from '../../../types';
+import { Chunk, Entity, ExtendedNode, GroupedEntity, UserCredentials, chatInfoMessage } from '../../../types';
 import { useEffect, useMemo, useState } from 'react';
 import HoverableLink from '../../UI/HoverableLink';
 import GraphViewButton from '../../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../../services/ChunkEntitiesInfo';
 import { useCredentials } from '../../../context/UserCredentials';
-import type { Node, Relationship } from '@neo4j-nvl/base';
+import type { Relationship } from '@neo4j-nvl/base';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import ReactMarkdown from 'react-markdown';
 import { GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
@@ -22,7 +22,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
-  const [nodes, setNodes] = useState<Node[]>([]);
+  const [nodes, setNodes] = useState<ExtendedNode[]>([]);
   const [relationships, setRelationships] = useState<Relationship[]>([]);
   const [chunks, setChunks] = useState<Chunk[]>([]);
   const parseEntity = (entity: Entity) => {
