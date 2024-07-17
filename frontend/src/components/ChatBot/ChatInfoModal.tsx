@@ -82,7 +82,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     [copiedText, cypher_query]
   );
   useEffect(() => {
-    if (mode != 'graph' || error?.trim()!=="") {
+    if (mode != 'graph' || error?.trim() !== '') {
       setLoading(true);
       chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids.map((c) => c.id).join(','))
         .then((response) => {
@@ -109,7 +109,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     () => {
       setcopiedText(false);
     };
-  }, [chunk_ids, mode,error]);
+  }, [chunk_ids, mode, error]);
   const groupedEntities = useMemo<{ [key: string]: GroupedEntity }>(() => {
     return infoEntities.reduce((acc, entity) => {
       const { label, text } = parseEntity(entity);
@@ -404,6 +404,10 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                             <Typography variant='body-medium'>{chunk?.url}</Typography>
                           </TextLink>
                         </div>
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      </>
+                    ) : chunk.fileSource === 'local file' ? (
+                      <>
                         <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                       </>
                     ) : (
