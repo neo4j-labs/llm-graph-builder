@@ -268,7 +268,7 @@ export default function EntityExtractionSetting({
             options: nodeLabelOptions,
             onChange: onChangenodes,
             value: selectedNodes,
-            classNamePrefix: 'node_label',
+            classNamePrefix: 'entity_extraction_Tab_node_label',
           }}
           type='creatable'
         />
@@ -282,7 +282,7 @@ export default function EntityExtractionSetting({
             options: relationshipTypeOptions,
             onChange: onChangerels,
             value: selectedRels,
-            classNamePrefix: 'relationship_label',
+            classNamePrefix: 'entity_extraction_Tab_relationship_label',
           }}
           type='creatable'
         />
