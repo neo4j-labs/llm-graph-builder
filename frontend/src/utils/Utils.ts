@@ -2,10 +2,6 @@ import { calcWordColor } from '@neo4j-devtools/word-color';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { GraphType, Messages, Scheme } from '../types';
 
-type PartialLabelNode = Partial<Node> & {
-  labels: string;
-};
-
 // Get the Url
 export const url = () => {
   let url = window.location.href.replace('5173', '8000');
@@ -173,8 +169,7 @@ export const filterData = (
   graphType: GraphType[],
   allNodes: Node[],
   allRelationships: Relationship[],
-  scheme: Scheme,
-  // selectedDropdown:string
+  scheme: Scheme
 ) => {
   let filteredNodes: Node[] = [];
   let filteredRelations: Relationship[] = [];
@@ -182,44 +177,51 @@ export const filterData = (
   const entityTypes = Object.keys(scheme).filter((type) => type !== 'Document' && type !== 'Chunk');
   if (graphType.includes('Document') && !graphType.includes('Entities') && !graphType.includes('Chunk')) {
     // Document only
+    // @ts-ignore
     filteredNodes = allNodes.filter((node) => node.labels.includes('Document'));
     filteredScheme = { Document: scheme.Document };
   } else if (!graphType.includes('Document') && graphType.includes('Entities') && !graphType.includes('Chunk')) {
     // Only Entity
-    filteredNodes = allNodes.filter((node) => !node.labels.includes('Document') && !node.labels.includes('Chunk'));
+    // @ts-ignore
+    const entityNode = allNodes.filter((node) => !node.labels.includes('Document') && !node.labels.includes('Chunk'));
+    filteredNodes = entityNode ? entityNode : [];
+    // @ts-ignore
     filteredRelations = allRelationships.filter(
       (rel) => !['PART_OF', 'FIRST_CHUNK', 'HAS_ENTITY', 'SIMILAR', 'NEXT_CHUNK'].includes(rel.caption)
     );
-
-    filteredScheme = entityTypes.reduce((acc, key) => {
-      acc[key] = scheme[key];
-      return acc;
-    }, {} as Scheme);
-
+    filteredScheme = Object.fromEntries(entityTypes.map((key) => [key, scheme[key]])) as Scheme;
   } else if (!graphType.includes('Document') && !graphType.includes('Entities') && graphType.includes('Chunk')) {
     // Only Chunk
+    // @ts-ignore
     filteredNodes = allNodes.filter((node) => node.labels.includes('Chunk'));
+    // @ts-ignore
     filteredRelations = allRelationships.filter((rel) => ['SIMILAR', 'NEXT_CHUNK'].includes(rel.caption));
     filteredScheme = { Chunk: scheme.Chunk };
   } else if (graphType.includes('Document') && graphType.includes('Entities') && !graphType.includes('Chunk')) {
     // Document + Entity
+    // @ts-ignore
     filteredNodes = allNodes.filter(
       (node) =>
         node.labels.includes('Document') || (!node.labels.includes('Document') && !node.labels.includes('Chunk'))
     );
+    // @ts-ignore
     filteredRelations = allRelationships.filter(
       (rel) => !['PART_OF', 'FIRST_CHUNK', 'HAS_ENTITY', 'SIMILAR', 'NEXT_CHUNK'].includes(rel.caption)
     );
   } else if (graphType.includes('Document') && !graphType.includes('Entities') && graphType.includes('Chunk')) {
     // Document + Chunk
+    // @ts-ignore
     filteredNodes = allNodes.filter((node) => node.labels.includes('Document') || node.labels.includes('Chunk'));
+    // @ts-ignore
     filteredRelations = allRelationships.filter((rel) =>
       ['PART_OF', 'FIRST_CHUNK', 'SIMILAR', 'NEXT_CHUNK'].includes(rel.caption)
     );
-    filteredScheme = {Document: scheme.Document, Chunk:scheme.Chunk};
+    filteredScheme = { Document: scheme.Document, Chunk: scheme.Chunk };
   } else if (!graphType.includes('Document') && graphType.includes('Entities') && graphType.includes('Chunk')) {
     // Chunk + Entity
+    // @ts-ignore
     filteredNodes = allNodes.filter((node) => !node.labels.includes('Document'));
+    // @ts-ignore
     filteredRelations = allRelationships.filter((rel) => !['PART_OF', 'FIRST_CHUNK'].includes(rel.caption));
   } else if (graphType.includes('Document') && graphType.includes('Entities') && graphType.includes('Chunk')) {
     // Document + Chunk + Entity

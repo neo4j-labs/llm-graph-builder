@@ -1,12 +1,12 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import ConnectionModal from './Popups/ConnectionModal/ConnectionModal';
-import FileTable from './FileTable';
+import FileTable, { ChildRef } from './FileTable';
 import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './UI/Alert';
 import { extractAPI } from '../utils/FileAPI';
-import { ContentProps, CustomFile, Menuitems, OptionType, UserCredentials, alertStateType } from '../types';
+import { ContentProps, CustomFile, OptionType, UserCredentials, alertStateType } from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
 import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
@@ -20,7 +20,9 @@ import connectAPI from '../services/ConnectAPI';
 import SettingModalHOC from '../HOC/SettingModalHOC';
 import DropdownComponent from './Dropdown';
 import GraphViewModal from './Graph/GraphViewModal';
-import CustomMenu from './UI/Menu';
+import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
+import { OverridableStringUnion } from '@mui/types';
+import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 
 const Content: React.FC<ContentProps> = ({
   isLeftExpanded,
@@ -28,7 +30,9 @@ const Content: React.FC<ContentProps> = ({
   openTextSchema,
   isSchema,
   setIsSchema,
-  openOrphanNodeDeletionModal,
+  showEnhancementDialog,
+  setshowEnhancementDialog,
+  closeSettingModal,
 }) => {
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<boolean>(false);
@@ -40,8 +44,6 @@ const Content: React.FC<ContentProps> = ({
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [isLargeFile, setIsLargeFile] = useState<boolean>(false);
   const [showSettingnModal, setshowSettingModal] = useState<boolean>(false);
-  const [openDeleteMenu, setopenDeleteMenu] = useState<boolean>(false);
-  const [deleteAnchor, setdeleteAnchor] = useState<HTMLElement | null>(null);
 
   const {
     filesData,
@@ -50,7 +52,6 @@ const Content: React.FC<ContentProps> = ({
     model,
     selectedNodes,
     selectedRels,
-    selectedRows,
     setSelectedNodes,
     setRowSelection,
     setSelectedRels,
@@ -81,7 +82,23 @@ const Content: React.FC<ContentProps> = ({
       });
     }
   );
-
+  const childRef = useRef<ChildRef>(null);
+  const openGraphEnhancementDialog = () => {
+    setshowEnhancementDialog(true);
+  };
+  const closeGraphEnhancementDialog = () => {
+    setshowEnhancementDialog(false);
+  };
+  const showAlert = (
+    alertmsg: string,
+    alerttype: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined
+  ) => {
+    setalertDetails({
+      showAlert: true,
+      alertMessage: alertmsg,
+      alertType: alerttype,
+    });
+  };
   useEffect(() => {
     if (!init && !searchParams.has('connectURL')) {
       let session = localStorage.getItem('neo4j.connection');
@@ -125,10 +142,10 @@ const Content: React.FC<ContentProps> = ({
         await extractHandler(fileItem, uid);
       }
     } else {
-      const fileItem = selectedRows.find((f) => JSON.parse(f).id == uid);
+      const fileItem = childRef.current?.getSelectedRows().find((f) => f.id == uid);
       if (fileItem) {
         setextractLoading(true);
-        await extractHandler(JSON.parse(fileItem), uid);
+        await extractHandler(fileItem, uid);
       }
     }
   };
@@ -149,7 +166,7 @@ const Content: React.FC<ContentProps> = ({
       setRowSelection((prev) => {
         const copiedobj = { ...prev };
         for (const key in copiedobj) {
-          if (JSON.parse(key).id == uid) {
+          if (key == uid) {
             copiedobj[key] = false;
           }
         }
@@ -237,8 +254,8 @@ const Content: React.FC<ContentProps> = ({
     const data = [];
     if (selectedfileslength && allowLargeFiles) {
       for (let i = 0; i < selectedfileslength; i++) {
-        const row = JSON.parse(selectedRows[i]);
-        if (row.status === 'New') {
+        const row = childRef.current?.getSelectedRows()[i];
+        if (row?.status === 'New') {
           data.push(extractData(row.id, true));
         }
       }
@@ -271,8 +288,9 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -282,10 +300,10 @@ const Content: React.FC<ContentProps> = ({
     isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
       : isRightExpanded
-        ? 'contentWithChatBot'
-        : !isLeftExpanded && !isRightExpanded
-          ? 'w-[calc(100%-128px)]'
-          : 'contentWithDropzoneExpansion';
+      ? 'contentWithChatBot'
+      : !isLeftExpanded && !isRightExpanded
+      ? 'w-[calc(100%-128px)]'
+      : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -300,13 +318,19 @@ const Content: React.FC<ContentProps> = ({
     setSelectedRels([]);
   };
 
-  const selectedfileslength = useMemo(() => selectedRows.length, [selectedRows]);
+  const selectedfileslength = useMemo(
+    () => childRef.current?.getSelectedRows().length,
+    [childRef.current?.getSelectedRows()]
+  );
 
-  const newFilecheck = useMemo(() => selectedRows.filter((f) => JSON.parse(f).status === 'New').length, [selectedRows]);
+  const newFilecheck = useMemo(
+    () => childRef.current?.getSelectedRows().filter((f) => f.status === 'New').length,
+    [childRef.current?.getSelectedRows()]
+  );
 
   const completedfileNo = useMemo(
-    () => selectedRows.filter((f) => JSON.parse(f).status === 'Completed').length,
-    [selectedRows]
+    () => childRef.current?.getSelectedRows().filter((f) => f.status === 'Completed').length,
+    [childRef.current?.getSelectedRows()]
   );
 
   const dropdowncheck = useMemo(() => !filesData.some((f) => f.status === 'New'), [filesData]);
@@ -321,11 +345,19 @@ const Content: React.FC<ContentProps> = ({
     [selectedfileslength, completedfileNo]
   );
 
+  // const processingCheck = () => {
+  //   const processingFiles = filesData.some((file) => file.status === 'Processing');
+  //   const selectedRowProcessing = childRef.current?.getSelectedRows().some((row) =>
+  //     filesData.some((file) => file.name === row && file.status === 'Processing')
+  //   );
+  //   return processingFiles || selectedRowProcessing;
+  // };
+
   const filesForProcessing = useMemo(() => {
     let newstatusfiles: CustomFile[] = [];
-    if (selectedRows.length) {
-      selectedRows.forEach((f) => {
-        const parsedFile: CustomFile = JSON.parse(f);
+    if (childRef.current?.getSelectedRows().length) {
+      childRef.current?.getSelectedRows().forEach((f) => {
+        const parsedFile: CustomFile = f;
         if (parsedFile.status === 'New') {
           newstatusfiles.push(parsedFile);
         }
@@ -334,12 +366,16 @@ const Content: React.FC<ContentProps> = ({
       newstatusfiles = filesData.filter((f) => f.status === 'New');
     }
     return newstatusfiles;
-  }, [filesData, selectedRows]);
+  }, [filesData, childRef.current?.getSelectedRows()]);
 
   const handleDeleteFiles = async (deleteEntities: boolean) => {
     try {
       setdeleteLoading(true);
-      const response = await deleteAPI(userCredentials as UserCredentials, selectedRows, deleteEntities);
+      const response = await deleteAPI(
+        userCredentials as UserCredentials,
+        childRef.current?.getSelectedRows() as CustomFile[],
+        deleteEntities
+      );
       setRowSelection({});
       setdeleteLoading(false);
       if (response.data.status == 'Success') {
@@ -348,8 +384,8 @@ const Content: React.FC<ContentProps> = ({
           alertMessage: response.data.message,
           alertType: 'success',
         });
-        const filenames = selectedRows.map((str) => JSON.parse(str).name);
-        filenames.forEach((name) => {
+        const filenames = childRef.current?.getSelectedRows().map((str) => str.name);
+        filenames?.forEach((name) => {
           setFilesData((prev) => prev.filter((f) => f.name != name));
         });
       } else {
@@ -358,6 +394,7 @@ const Content: React.FC<ContentProps> = ({
       }
       setshowDeletePopUp(false);
     } catch (err) {
+      setdeleteLoading(false);
       if (err instanceof Error) {
         const error = JSON.parse(err.message);
         const { message } = error;
@@ -394,14 +431,14 @@ const Content: React.FC<ContentProps> = ({
     if (storedSchema !== null) {
       setIsSchema(JSON.parse(storedSchema));
     }
-  }, []);
+  }, [isSchema]);
 
   const onClickHandler = () => {
     if (isSchema) {
-      if (selectedRows.length) {
+      if (childRef.current?.getSelectedRows().length) {
         let selectedLargeFiles: CustomFile[] = [];
-        selectedRows.forEach((f) => {
-          const parsedData: CustomFile = JSON.parse(f);
+        childRef.current?.getSelectedRows().forEach((f) => {
+          const parsedData: CustomFile = f;
           if (parsedData.fileSource === 'local file') {
             if (typeof parsedData.size === 'number' && parsedData.status === 'New' && parsedData.size > largeFileSize) {
               selectedLargeFiles.push(parsedData);
@@ -426,7 +463,7 @@ const Content: React.FC<ContentProps> = ({
         });
         const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
         const stringified = selectAllNewFiles.reduce((accu, f) => {
-          const key = JSON.stringify(f);
+          const key = f.id;
           // @ts-ignore
           accu[key] = true;
           return accu;
@@ -442,10 +479,10 @@ const Content: React.FC<ContentProps> = ({
         }
       }
     } else {
-      if (selectedRows.length) {
+      if (childRef.current?.getSelectedRows().length) {
         let selectedLargeFiles: CustomFile[] = [];
-        selectedRows.forEach((f) => {
-          const parsedData: CustomFile = JSON.parse(f);
+        childRef.current?.getSelectedRows().forEach((f) => {
+          const parsedData: CustomFile = f;
           if (parsedData.fileSource === 'local file') {
             if (typeof parsedData.size === 'number' && parsedData.status === 'New' && parsedData.size > largeFileSize) {
               selectedLargeFiles.push(parsedData);
@@ -467,7 +504,7 @@ const Content: React.FC<ContentProps> = ({
         });
         const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
         const stringified = selectAllNewFiles.reduce((accu, f) => {
-          const key = JSON.stringify(f);
+          const key = f.id;
           // @ts-ignore
           accu[key] = true;
           return accu;
@@ -482,23 +519,6 @@ const Content: React.FC<ContentProps> = ({
       setshowSettingModal(true);
     }
   };
-
-  const deleteMenuItems: Menuitems[] = useMemo(
-    () => [
-      {
-        title: `Delete Files ${selectedfileslength > 0 ? `(${selectedfileslength})` : ''}`,
-        onClick: () => setshowDeletePopUp(true),
-        disabledCondition: !selectedfileslength,
-        description: tooltips.deleteFile,
-      },
-      {
-        title: 'Deleted unconnected Nodes',
-        onClick: () => openOrphanNodeDeletionModal(),
-        disabledCondition: false,
-      },
-    ],
-    [selectedfileslength]
-  );
 
   const handleContinue = () => {
     if (!isLargeFile) {
@@ -517,7 +537,6 @@ const Content: React.FC<ContentProps> = ({
     });
     localStorage.setItem('isSchema', JSON.stringify(true));
   };
-
   return (
     <>
       {alertDetails.showAlert && (
@@ -548,10 +567,11 @@ const Content: React.FC<ContentProps> = ({
       {showDeletePopUp && (
         <DeletePopUp
           open={showDeletePopUp}
-          no_of_files={selectedfileslength}
+          no_of_files={selectedfileslength ?? 0}
           deleteHandler={(delentities: boolean) => handleDeleteFiles(delentities)}
           deleteCloseHandler={() => setshowDeletePopUp(false)}
           loading={deleteLoading}
+          view='contentView'
         ></DeletePopUp>
       )}
       {showSettingnModal && (
@@ -564,6 +584,14 @@ const Content: React.FC<ContentProps> = ({
           isSchema={isSchema}
           setIsSchema={setIsSchema}
         />
+      )}
+      {showEnhancementDialog && (
+        <GraphEnhancementDialog
+          open={showEnhancementDialog}
+          onClose={closeGraphEnhancementDialog}
+          closeSettingModal={closeSettingModal}
+          showAlert={showAlert}
+        ></GraphEnhancementDialog>
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>
@@ -581,18 +609,41 @@ const Content: React.FC<ContentProps> = ({
               ) : (
                 <span className='n-body-small'>Not Connected</span>
               )}
+              <div className='pt-1'>
+                {!isSchema ? (
+                  <StatusIndicator type='danger' />
+                ) : selectedNodes.length || selectedRels.length ? (
+                  <StatusIndicator type='success' />
+                ) : (
+                  <StatusIndicator type='warning' />
+                )}
+                {isSchema ? (
+                  <span className='n-body-small'>
+                    {(!selectedNodes.length || !selectedNodes.length) && 'Empty'} Graph Schema configured
+                    {selectedNodes.length || selectedRels.length
+                      ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)`
+                      : ''}
+                  </span>
+                ) : (
+                  <span className='n-body-small'>No Graph Schema configured</span>
+                )}
+              </div>
             </Typography>
           </div>
-
-          {!connectionStatus ? (
-            <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
-              {buttonCaptions.connectToNeo4j}
+          <div>
+            <Button className='mr-2.5' onClick={openGraphEnhancementDialog} disabled={!connectionStatus}>
+              Graph Enhancement
             </Button>
-          ) : (
-            <Button className='mr-2.5' onClick={disconnect}>
-              {buttonCaptions.disconnect}
-            </Button>
-          )}
+            {!connectionStatus ? (
+              <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
+                {buttonCaptions.connectToNeo4j}
+              </Button>
+            ) : (
+              <Button className='mr-2.5' onClick={disconnect}>
+                {buttonCaptions.disconnect}
+              </Button>
+            )}
+          </div>
         </Flex>
         <FileTable
           isExpanded={isLeftExpanded && isRightExpanded}
@@ -603,10 +654,12 @@ const Content: React.FC<ContentProps> = ({
             setOpenGraphView(true);
             setViewPoint('tableView');
           }}
+          ref={childRef}
         ></FileTable>
         <Flex
-          className={`${!isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-            } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+          className={`${
+            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection='row'
         >
@@ -616,6 +669,7 @@ const Content: React.FC<ContentProps> = ({
             placeholder='Select LLM Model'
             defaultValue={defaultLLM}
             view='ContentView'
+            isDisabled={false}
           />
           <Flex flexDirection='row' gap='4' className='self-end'>
             <ButtonWithToolTip
@@ -649,25 +703,19 @@ const Content: React.FC<ContentProps> = ({
             >
               {buttonCaptions.exploreGraphWithBloom}
             </ButtonWithToolTip>
-            <CustomMenu
-              open={openDeleteMenu}
-              closeHandler={useCallback(() => {
-                setopenDeleteMenu(false);
-              }, [])}
-              items={deleteMenuItems}
-              MenuAnchor={deleteAnchor}
-              anchorOrigin={useMemo(() => ({ horizontal: 'left', vertical: 'bottom' }), [])}
-              transformOrigin={useMemo(() => ({ horizontal: 'right', vertical: 'top' }), [])}
-            ></CustomMenu>
-            <Button
-              label='Delete Menu trigger'
-              onClick={(e) => {
-                setdeleteAnchor(e.currentTarget);
-                setopenDeleteMenu(true);
-              }}
+            <ButtonWithToolTip
+              text={
+                !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
+              }
+              placement='top'
+              onClick={() => setshowDeletePopUp(true)}
+              disabled={!selectedfileslength}
+              className='ml-0.5'
+              label='Delete Files'
             >
-              Delete
-            </Button>
+              {buttonCaptions.deleteFiles}
+              {selectedfileslength != undefined && selectedfileslength > 0 && `(${selectedfileslength})`}
+            </ButtonWithToolTip>
           </Flex>
         </Flex>
       </div>
@@ -676,6 +724,7 @@ const Content: React.FC<ContentProps> = ({
         open={openGraphView}
         setGraphViewOpen={setOpenGraphView}
         viewPoint={viewPoint}
+        selectedRows={childRef.current?.getSelectedRows()}
       />
     </>
   );

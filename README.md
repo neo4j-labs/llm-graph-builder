@@ -40,7 +40,7 @@ DIFFBOT_API_KEY="your-diffbot-key"
 
 if you only want OpenAI:
 ```env
-LLM_MODELS="gpt-3.5,gpt-4o"
+LLM_MODELS="diffbot,openai-gpt-3.5,openai-gpt-4o"
 OPENAI_API_KEY="your-openai-key"
 ```
 
@@ -70,6 +70,18 @@ GOOGLE_CLIENT_ID="xxxx"
 
 You can of course combine all (local, youtube, wikipedia, s3 and gcs) or remove any you don't want/need.
 
+### Chat Modes
+
+By default,all of the chat modes will be available: vector, graph+vector and graph.
+If none of the mode is mentioned in the chat modes variable all modes will be available:
+```env
+CHAT_MODES=""
+```
+
+If however you want to specifiy the only vector mode or only graph mode you can do that by specifying the mode in the env:
+```env
+CHAT_MODES="vector,graph+vector"
+```
 
 #### Running Backend and Frontend separately (dev environment)
 Alternatively, you can run the backend and frontend separately:
@@ -134,12 +146,21 @@ Allow unauthenticated request : Yes
 | BACKEND_API_URL         | Optional           | http://localhost:8000 | URL for backend API                                                                       |
 | BLOOM_URL               | Optional           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
 | REACT_APP_SOURCES       | Optional           | local,youtube,wiki,s3 | List of input sources that will be available                                               |
-| LLM_MODELS              | Optional           | diffbot,gpt-3.5,gpt-4o | Models available for selection on the frontend, used for entities extraction and Q&A Chatbot                          |
+| LLM_MODELS              | Optional           | diffbot,openai-gpt-3.5,openai-gpt-4o | Models available for selection on the frontend, used for entities extraction and Q&A
+| CHAT_MODES              | Optional           | vector,graph+vector,graph | Chat modes available for Q&A
 | ENV                     | Optional           | DEV           | Environment variable for the app                                                                 |
 | TIME_PER_CHUNK          | Optional           | 4             | Time per chunk for processing                                                                    |
 | CHUNK_SIZE              | Optional           | 5242880       | Size of each chunk of file for upload                                                                |
 | GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
 | GCS_FILE_CACHE        | Optional           | False              | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
+| ENTITY_EMBEDDING        | Optional           | False              | If set to True, It will add embeddings for each entity in database |
+| LLM_MODEL_CONFIG_azure_ai_<azure_deployment_name>        | Optional           |              | Set azure config as - azure_deployment_name,azure_endpoint or base_url,azure_api_key,api_version|
+| LLM_MODEL_CONFIG_groq_<model_name>        | Optional           |               | Set groq config as - model_name,base_url,groq_api_key |
+| LLM_MODEL_CONFIG_anthropic_<model_name>        | Optional           |               | Set anthropic config as - model_name,anthropic_api_key |
+| LLM_MODEL_CONFIG_fireworks_<model_name>        | Optional           |               | Set fireworks config as - model_name,fireworks_api_key |
+| LLM_MODEL_CONFIG_bedrock_<model_name>        | Optional           |               | Set bedrock config as - model_name,aws_access_key_id,aws_secret__access_key,region_name |
+| LLM_MODEL_CONFIG_ollama_<model_name>        | Optional           |               | Set ollama config as - model_name,model_local_url |
+
 
 
 

@@ -23,6 +23,7 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   language?: string;
   processingProgress?: number;
   access_token?: string;
+  checked?: boolean;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
@@ -153,7 +154,9 @@ export interface ContentProps {
   openTextSchema: () => void;
   isSchema?: boolean;
   setIsSchema: Dispatch<SetStateAction<boolean>>;
-  openOrphanNodeDeletionModal: () => void;
+  showEnhancementDialog: boolean;
+  setshowEnhancementDialog: Dispatch<SetStateAction<boolean>>;
+  closeSettingModal: () => void;
 }
 
 export interface FileTableProps {
@@ -225,6 +228,9 @@ export interface Messages {
   total_tokens?: number;
   speaking?: boolean;
   copying?: boolean;
+  mode?: string;
+  cypher_query?: string;
+  graphonly_entities?: [];
 }
 
 export type ChatbotProps = {
@@ -246,6 +252,7 @@ export interface GraphViewModalProps {
   viewPoint: string;
   nodeValues?: Node[];
   relationshipValues?: Relationship[];
+  selectedRows?: CustomFile[] | undefined;
 }
 
 export type GraphType = 'Document' | 'Entities' | 'Chunk';
@@ -345,13 +352,14 @@ export interface orphanNode {
   elementId: string;
   description: string;
   labels: string[];
-  embedding: null | string;
+  embedding?: null | string;
 }
 export interface orphanNodeProps {
   documents: string[];
   chunkConnections: number;
   e: orphanNode;
   checked?: boolean;
+  similar?: orphanNode[];
 }
 export interface labelsAndTypes {
   labels: string[];
@@ -365,14 +373,33 @@ export interface commonserverresponse {
   error?: string;
   message?: string | orphanTotalNodes;
   file_name?: string;
-  data?: labelsAndTypes | labelsAndTypes[] | uploadData | orphanNodeProps[];
+  data?: labelsAndTypes | labelsAndTypes[] | uploadData | orphanNodeProps[] | dupNodes[];
 }
-
+export interface dupNodeProps {
+  id: string;
+  elementId: string;
+  labels: string[];
+  embedding?: null | string;
+}
+export interface dupNodes {
+  e: dupNodeProps;
+  similar: dupNodeProps[];
+  documents: string[];
+  chunkConnections: number;
+}
+export interface selectedDuplicateNodes {
+  firstElementId: string;
+  similarElementIds: string[];
+}
 export interface ScehmaFromText extends Partial<commonserverresponse> {
   data: labelsAndTypes;
 }
+
 export interface ServerData extends Partial<commonserverresponse> {
   data: labelsAndTypes[];
+}
+export interface duplicateNodesData extends Partial<commonserverresponse> {
+  data: dupNodes[];
 }
 export interface OrphanNodeResponse extends Partial<commonserverresponse> {
   data: orphanNodeProps[];
@@ -395,6 +422,9 @@ export interface chatInfoMessage extends Partial<Messages> {
   response_time: number;
   chunk_ids: chunk[];
   total_tokens: number;
+  mode: string;
+  cypher_query?: string;
+  graphonly_entities: [];
 }
 
 export interface eventResponsetypes {
@@ -513,7 +543,9 @@ export interface Menuitems {
   title: string;
   onClick: () => void;
   disabledCondition: boolean;
-  description?: string;
+  description?: string | React.ReactNode;
+  isSelected?: boolean;
+  selectedClassName?: string;
 }
 export type Vertical = 'top' | 'bottom';
 export type Horizontal = 'left' | 'right' | 'center';
@@ -521,3 +553,41 @@ export interface Origin {
   vertical: Vertical;
   horizontal: Horizontal;
 }
+
+export type BasicNode = {
+  id: string;
+  labels: string[];
+  properties: Record<string, string>;
+  propertyTypes: Record<string, string>;
+};
+
+export type GraphStatsLabels = Record<
+  string,
+  {
+    count: number;
+    properties: Record<string, string>;
+  }
+>;
+
+type NodeStyling = {
+  backgroundColor: string;
+  borderColor: string;
+  textColor: string;
+  caption: string;
+  diameter: string;
+};
+
+type RelationStyling = {
+  fontSize: string;
+  lineColor: string;
+  textColorExternal: string;
+  textColorInternal: string;
+  caption: string;
+  padding: string;
+  width: string;
+};
+
+export type GraphStyling = {
+  node: Record<string, Partial<NodeStyling>>;
+  relationship: Record<string, Partial<RelationStyling>>;
+};

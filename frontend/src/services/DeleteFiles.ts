@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { url } from '../utils/Utils';
-import { UserCredentials } from '../types';
+import { CustomFile, UserCredentials } from '../types';
 
-const deleteAPI = async (userCredentials: UserCredentials, selectedFiles: string[], deleteEntities: boolean) => {
+const deleteAPI = async (userCredentials: UserCredentials, selectedFiles: CustomFile[], deleteEntities: boolean) => {
   try {
-    const filenames = selectedFiles.map((str) => JSON.parse(str).name);
-    const source_types = selectedFiles.map((str) => JSON.parse(str).fileSource);
+    const filenames = selectedFiles.map((str) => str.name);
+    const source_types = selectedFiles.map((str) => str.fileSource);
     const formData = new FormData();
     formData.append('uri', userCredentials?.uri ?? '');
     formData.append('database', userCredentials?.database ?? '');

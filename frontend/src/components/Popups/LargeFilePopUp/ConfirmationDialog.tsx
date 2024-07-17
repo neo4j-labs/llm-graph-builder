@@ -34,7 +34,7 @@ export default function ConfirmationDialog({
       setRowSelection((prev) => {
         const copiedobj = { ...prev };
         for (const key in copiedobj) {
-          if (JSON.parse(key).id == id) {
+          if (key == id) {
             copiedobj[key] = true;
           }
         }
@@ -46,7 +46,7 @@ export default function ConfirmationDialog({
       setRowSelection((prev) => {
         const copiedobj = { ...prev };
         for (const key in copiedobj) {
-          if (JSON.parse(key).id == id) {
+          if (key == id) {
             copiedobj[key] = false;
           }
         }

@@ -1,7 +1,9 @@
 from neo4j import GraphDatabase
 import logging
 import time
-
+from langchain_community.graphs import Neo4jGraph
+import os
+from src.shared.common_fn import load_embedding_model
 
 DROP_INDEX_QUERY = "DROP INDEX entities IF EXISTS;"
 LABELS_QUERY = "CALL db.labels()"
@@ -56,3 +58,31 @@ def create_fulltext(uri, username, password, database):
         driver.close()
         logging.info("Driver closed.")
         logging.info(f"Process completed in {time.time() - start_time:.2f} seconds.")
+
+        
+def create_entity_embedding(graph:Neo4jGraph):
+    rows = fetch_entities_for_embedding(graph)
+    for i in range(0, len(rows), 1000):
+        update_embeddings(rows[i:i+1000],graph)
+            
+def fetch_entities_for_embedding(graph):
+    query = """
+                MATCH (e)
+                WHERE NOT (e:Chunk OR e:Document) AND e.embedding IS NULL AND e.id IS NOT NULL
+                RETURN elementId(e) AS elementId, e.id + " " + coalesce(e.description, "") AS text
+                """
+    result = graph.query(query)           
+    return [{"elementId": record["elementId"], "text": record["text"]} for record in result]
+
+def update_embeddings(rows, graph):
+    embedding_model = os.getenv('EMBEDDING_MODEL')
+    embeddings, dimension = load_embedding_model(embedding_model)
+    logging.info(f"update embedding for entities")
+    for row in rows:
+        row['embedding'] = embeddings.embed_query(row['text'])                        
+    query = """
+      UNWIND $rows AS row
+      MATCH (e) WHERE elementId(e) = row.elementId
+      CALL db.create.setNodeVectorProperty(e, "embedding", row.embedding)
+      """  
+    return graph.query(query,params={'rows':rows})          
