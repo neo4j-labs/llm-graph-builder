@@ -78,7 +78,7 @@ If none of the mode is mentioned in the chat modes variable all modes will be av
 CHAT_MODES=""
 ```
 
-If however you want to specifiy the only vector mode or only graph mode you can do that by specifying the mode in the env:
+If however you want to specify the only vector mode or only graph mode you can do that by specifying the mode in the env:
 ```env
 CHAT_MODES="vector,graph+vector"
 ```
@@ -154,12 +154,7 @@ Allow unauthenticated request : Yes
 | GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
 | GCS_FILE_CACHE        | Optional           | False              | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
 | ENTITY_EMBEDDING        | Optional           | False              | If set to True, It will add embeddings for each entity in database |
-| LLM_MODEL_CONFIG_azure_ai_<azure_deployment_name>        | Optional           |              | Set azure config as - azure_deployment_name,azure_endpoint or base_url,azure_api_key,api_version|
-| LLM_MODEL_CONFIG_groq_<model_name>        | Optional           |               | Set groq config as - model_name,base_url,groq_api_key |
-| LLM_MODEL_CONFIG_anthropic_<model_name>        | Optional           |               | Set anthropic config as - model_name,anthropic_api_key |
-| LLM_MODEL_CONFIG_fireworks_<model_name>        | Optional           |               | Set fireworks config as - model_name,fireworks_api_key |
-| LLM_MODEL_CONFIG_bedrock_<model_name>        | Optional           |               | Set bedrock config as - model_name,aws_access_key_id,aws_secret__access_key,region_name |
-| LLM_MODEL_CONFIG_ollama_<model_name>        | Optional           |               | Set ollama config as - model_name,model_local_url |
+| LLM_MODEL_CONFIG_ollama_<model_name>        | Optional           |               | Set ollama config as - model_name,model_local_url for local deployments |
 
 
 
