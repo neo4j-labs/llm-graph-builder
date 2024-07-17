@@ -231,6 +231,7 @@ export interface Messages {
   mode?: string;
   cypher_query?: string;
   graphonly_entities?: [];
+  error?: string;
 }
 
 export type ChatbotProps = {
@@ -425,6 +426,7 @@ export interface chatInfoMessage extends Partial<Messages> {
   mode: string;
   cypher_query?: string;
   graphonly_entities: [];
+  error: string;
 }
 
 export interface eventResponsetypes {

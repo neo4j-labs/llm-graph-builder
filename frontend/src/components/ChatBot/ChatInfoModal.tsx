@@ -8,6 +8,7 @@ import {
   CypherCodeBlock,
   CypherCodeBlockProps,
   useCopyToClipboard,
+  Banner,
 } from '@neo4j-ndl/react';
 import { DocumentDuplicateIconOutline, DocumentTextIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
@@ -39,8 +40,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   mode,
   cypher_query,
   graphonly_entities,
+  error,
 }) => {
-  const [activeTab, setActiveTab] = useState<number>(mode === 'graph' ? 4 : 3);
+  const [activeTab, setActiveTab] = useState<number>(error.length ? 10 : mode === 'graph' ? 4 : 3);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
@@ -80,7 +82,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     [copiedText, cypher_query]
   );
   useEffect(() => {
-    if (mode != 'graph') {
+    if (mode != 'graph' && error?.length) {
       setLoading(true);
       chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids.map((c) => c.id).join(','))
         .then((response) => {
@@ -159,16 +161,20 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           </Typography>
         </Box>
       </Box>
-      <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
-        {mode != 'graph' ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
-        {mode === 'graph+vector' || mode === 'graph' ? <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab> : <></>}
-        {mode === 'graph' && cypher_query?.trim().length ? (
-          <Tabs.Tab tabId={6}>Generated Cypher Query</Tabs.Tab>
-        ) : (
-          <></>
-        )}
-        {mode != 'graph' ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
-      </Tabs>
+      {error?.length > 0 ? (
+        <Banner type='danger'>{error}</Banner>
+      ) : (
+        <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
+          {mode != 'graph' ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
+          {mode === 'graph+vector' || mode === 'graph' ? <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab> : <></>}
+          {mode === 'graph' && cypher_query?.trim().length ? (
+            <Tabs.Tab tabId={6}>Generated Cypher Query</Tabs.Tab>
+          ) : (
+            <></>
+          )}
+          {mode != 'graph' ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
+        </Tabs>
+      )}
       <Flex className='p-4'>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={3}>
           {sources.length ? (
