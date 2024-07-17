@@ -109,7 +109,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     () => {
       setcopiedText(false);
     };
-  }, [chunk_ids, mode]);
+  }, [chunk_ids, mode,error]);
   const groupedEntities = useMemo<{ [key: string]: GroupedEntity }>(() => {
     return infoEntities.reduce((acc, entity) => {
       const { label, text } = parseEntity(entity);
