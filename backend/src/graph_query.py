@@ -3,47 +3,10 @@ from neo4j import time
 from neo4j import GraphDatabase
 import os
 import json
+from src.shared.constants import GRAPH_CHUNK_LIMIT,GRAPH_QUERY
 # from neo4j.debug import watch
 
 # watch("neo4j")
-
-QUERY_MAP = {
-    "document"          : " + [docs] ",
-    "chunks"            : " + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } ",
-    "entities"          : " + collect { OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!Chunk) RETURN p }",
-    "docEntities"       : " + [docs] + collect { MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)--(:!Chunk) RETURN p }",
-    "docChunks"         : " + [chunks] + collect { MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } ",
-    "chunksEntities"    : " + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } + collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }",
-    "docChunkEntities"  : " + [chunks] + collect { MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } + collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }"
-}
-
-QUERY_WITH_DOCUMENT = """
-    MATCH docs = (d:Document) 
-    WHERE d.fileName IN $document_names
-    WITH docs, d ORDER BY d.createdAt DESC 
-    CALL {{ WITH d
-      OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
-      RETURN chunks, c LIMIT 50
-    }}
-    WITH [] {query_to_change} AS paths
-    CALL {{ WITH paths UNWIND paths AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }}
-    CALL {{ WITH paths UNWIND paths AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) as rels }}
-    RETURN nodes, rels
-"""
-
-QUERY_WITHOUT_DOCUMENT = """
-    MATCH docs = (d:Document) 
-    WITH docs, d ORDER BY d.createdAt DESC 
-    LIMIT $doc_limit
-    CALL {{ WITH d
-        OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
-        RETURN chunks, c LIMIT 50
-    }}
-    WITH [] {query_to_change} AS paths
-    CALL {{ WITH paths UNWIND paths AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }}
-    CALL {{ WITH paths UNWIND paths AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) as rels }}
-    RETURN nodes, rels
-"""
 
 def get_graphDB_driver(uri, username, password):
     """
@@ -67,29 +30,6 @@ def get_graphDB_driver(uri, username, password):
         logging.error(error_message, exc_info=True)
         # raise Exception(error_message) from e 
 
-
-def get_cypher_query(query_map, query_type, document_names):
-    """
-    Generates a Cypher query based on the provided parameters using global templates.
-
-    Returns:
-    str: A Cypher query string ready to be executed.
-    """
-    try:
-        query_to_change = query_map[query_type].strip()
-        logging.info(f"Query template retrieved for type {query_type}")
-
-        if document_names:
-            logging.info(f"Generating query for documents: {document_names}")
-            query = QUERY_WITH_DOCUMENT.format(query_to_change=query_to_change)
-        else:
-            logging.info("Generating query without specific document.")
-            query = QUERY_WITHOUT_DOCUMENT.format(query_to_change=query_to_change)
-        return query.strip()
-    
-    except Exception as e:
-        logging.error("graph_query module: An unexpected error occurred while generating the Cypher query.")
-    
 
 def execute_query(driver, query,document_names,doc_limit=None):
     """
@@ -257,9 +197,8 @@ def get_graph_results(uri, username, password,document_names):
         logging.info(f"Starting graph query process")
         driver = get_graphDB_driver(uri, username, password)  
         document_names= list(map(str.strip, json.loads(document_names)))
-        query_type = "docChunkEntities"
-        query = get_cypher_query(QUERY_MAP, query_type, document_names)
-        records, summary , keys = execute_query(driver, query, document_names)
+        query = GRAPH_QUERY.format(graph_chunk_limit=GRAPH_CHUNK_LIMIT)
+        records, summary , keys = execute_query(driver, query.strip(), document_names)
         document_nodes = extract_node_elements(records)
         document_relationships = extract_relationships(records)
 
