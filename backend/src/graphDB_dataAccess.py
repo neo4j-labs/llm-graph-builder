@@ -247,24 +247,30 @@ class graphDBdataAccess:
         text_distance = int(os.environ.get('DUPLICATE_TEXT_DISTANCE'))
         query_duplicate_nodes = """
                 MATCH (n:!Chunk&!Document) with n 
-                WHERE n.embedding is not null and n.id is not null
-                WITH n ORDER BY count {{ (n)--() }} DESC, size(n.id) DESC
+                WHERE n.embedding is not null and n.id is not null // and size(n.id) > 3
+                WITH n ORDER BY count {{ (n)--() }} DESC, size(n.id) DESC // updated
                 WITH collect(n) as nodes
                 UNWIND nodes as n
                 WITH n, [other in nodes 
+                // only one pair, same labels e.g. Person with Person
                 WHERE elementId(n) < elementId(other) and labels(n) = labels(other)
+                // at least embedding similarity of X
                 AND 
-                (vector.similarity.cosine(other.embedding, n.embedding) > $duplicate_score_value
-                OR
+                (
+                // either contains each other as substrings or has a text edit distinct of less than 3
                 toLower(n.id) CONTAINS toLower(other.id) OR 
                 toLower(other.id) CONTAINS toLower(n.id)
                 OR (size(n.id)>5 AND apoc.text.distance(toLower(n.id), toLower(other.id)) < $duplicate_text_distance)
+                OR
+                vector.similarity.cosine(other.embedding, n.embedding) > $duplicate_score_value
                 )] as similar
-                WHERE size(similar) > 0
+                WHERE size(similar) > 0 
+                // remove duplicate subsets
                 with collect([n]+similar) as all
                 CALL {{ with all
                     unwind all as nodes
                     with nodes, all
+                    // skip current entry if it's smaller and a subset of any other entry
                     where none(other in all where other <> nodes and size(other) > size(nodes) and size(apoc.coll.subtract(nodes, other))=0)
                     return head(nodes) as n, tail(nodes) as similar
                 }}

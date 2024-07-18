@@ -59,7 +59,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setGraphType(newGraphSelected);
   };
 
-
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
@@ -120,7 +119,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           setLoading(false);
         }
         setAllNodes(finalNodes);
-        setAllRelationships(finalRels);
+        setAllRelationships(finalRels); 
         setScheme(schemeVal);
       } else {
         setLoading(false);
@@ -204,6 +203,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setAllRelationships([]);
   };
 
+  console.log('nodes', nodes);
+  console.log('rel', relationships);
   // sort the legends in with Chunk and Document always the first two values
   const legendCheck = Object.keys(newScheme).sort((a, b) => {
     if (a === graphLabels.document || a === graphLabels.chunk) {

@@ -165,35 +165,36 @@ async def extract_knowledge_graph_from_file(
           Nodes and Relations created in Neo4j databse for the pdf file
     """
     try:
-        graph = create_graph_database_connection(uri, userName, password, database)   
-        graphDb_data_Access = graphDBdataAccess(graph)
         if source_type == 'local file':
             merged_file_path = os.path.join(MERGED_DIR,file_name)
             logging.info(f'File path:{merged_file_path}')
             result = await asyncio.to_thread(
-                extract_graph_from_file_local_file, graph, model, merged_file_path, file_name, allowedNodes, allowedRelationship, uri)
+                extract_graph_from_file_local_file, uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship)
 
         elif source_type == 's3 bucket' and source_url:
             result = await asyncio.to_thread(
-                extract_graph_from_file_s3, graph, model, source_url, aws_access_key_id, aws_secret_access_key, allowedNodes, allowedRelationship)
+                extract_graph_from_file_s3, uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, allowedNodes, allowedRelationship)
         
         elif source_type == 'web-url':
             result = await asyncio.to_thread(
-                extract_graph_from_web_page, graph, model, source_url, allowedNodes, allowedRelationship)
+                extract_graph_from_web_page, uri, userName, password, database, model, source_url, allowedNodes, allowedRelationship)
 
         elif source_type == 'youtube' and source_url:
             result = await asyncio.to_thread(
-                extract_graph_from_file_youtube, graph, model, source_url, allowedNodes, allowedRelationship)
+                extract_graph_from_file_youtube, uri, userName, password, database, model, source_url, allowedNodes, allowedRelationship)
 
         elif source_type == 'Wikipedia' and wiki_query:
             result = await asyncio.to_thread(
-                extract_graph_from_file_Wikipedia, graph, model, wiki_query, max_sources, language, allowedNodes, allowedRelationship)
+                extract_graph_from_file_Wikipedia, uri, userName, password, database, model, wiki_query, max_sources, language, allowedNodes, allowedRelationship)
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
             result = await asyncio.to_thread(
-                extract_graph_from_file_gcs, graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, allowedNodes, allowedRelationship)
+                extract_graph_from_file_gcs, uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, allowedNodes, allowedRelationship)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
+        
+        graph = create_graph_database_connection(uri, userName, password, database)   
+        graphDb_data_Access = graphDBdataAccess(graph)
         if result is not None:
             result['db_url'] = uri
             result['api_name'] = 'extract'
@@ -445,29 +446,32 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
         if " " in url:
             uri= url.replace(" ","+")
         while True:
-            if await request.is_disconnected():
-                logging.info("Request disconnected")
-                break
-            #get the current status of document node
-            graph = create_graph_database_connection(uri, userName, decoded_password, database)
-            graphDb_data_Access = graphDBdataAccess(graph)
-            result = graphDb_data_Access.get_current_status_document_node(file_name)
-            if result is not None:
-                status = json.dumps({'fileName':file_name, 
-                'status':result[0]['Status'],
-                'processingTime':result[0]['processingTime'],
-                'nodeCount':result[0]['nodeCount'],
-                'relationshipCount':result[0]['relationshipCount'],
-                'model':result[0]['model'],
-                'total_chunks':result[0]['total_chunks'],
-                'total_pages':result[0]['total_pages'],
-                'fileSize':result[0]['fileSize'],
-                'processed_chunk':result[0]['processed_chunk'],
-                'fileSource':result[0]['fileSource']
-                })
-            else:
-                status = json.dumps({'fileName':file_name, 'status':'Failed'})
-            yield status
+            try:
+                if await request.is_disconnected():
+                    logging.info(" SSE Client disconnected")
+                    break
+                # get the current status of document node
+                graph = create_graph_database_connection(uri, userName, decoded_password, database)
+                graphDb_data_Access = graphDBdataAccess(graph)
+                result = graphDb_data_Access.get_current_status_document_node(file_name)
+                if result is not None:
+                    status = json.dumps({'fileName':file_name, 
+                    'status':result[0]['Status'],
+                    'processingTime':result[0]['processingTime'],
+                    'nodeCount':result[0]['nodeCount'],
+                    'relationshipCount':result[0]['relationshipCount'],
+                    'model':result[0]['model'],
+                    'total_chunks':result[0]['total_chunks'],
+                    'total_pages':result[0]['total_pages'],
+                    'fileSize':result[0]['fileSize'],
+                    'processed_chunk':result[0]['processed_chunk'],
+                    'fileSource':result[0]['fileSource']
+                    })
+                else:
+                    status = json.dumps({'fileName':file_name, 'status':'Failed'})
+                yield status
+            except asyncio.CancelledError:
+                logging.info("SSE Connection cancelled")
     
     return EventSourceResponse(generate(),ping=60)
 
