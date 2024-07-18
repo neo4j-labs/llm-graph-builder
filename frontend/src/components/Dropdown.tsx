@@ -20,6 +20,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   view,
   isDisabled,
   value,
+  
 }) => {
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);

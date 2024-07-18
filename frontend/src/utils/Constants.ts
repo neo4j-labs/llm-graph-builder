@@ -191,3 +191,14 @@ export const appLabels = {
   ownSchema: 'Or Define your own Schema',
   predefinedSchema: 'Select a Pre-defined Schema',
 };
+export const statusFilterOptions = [
+  {
+    value: 'New',
+    label: 'New',
+  },
+  { value: 'Completed', label: 'Completed' },
+  { value: 'Processing', label: 'Processing' },
+  { value: 'Failed', label: 'Failed' },
+  { value: 'Uploading', label: 'Uploading' },
+
+];

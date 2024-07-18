@@ -2,6 +2,7 @@ import {
   Checkbox,
   DataGrid,
   DataGridComponents,
+  Dropdown,
   Flex,
   IconButton,
   ProgressBar,
@@ -27,7 +28,7 @@ import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { statusCheck, capitalize } from '../utils/Utils';
-import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, alertStateType } from '../types';
+import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, alertStateType, OptionType } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
 import CustomAlert from './UI/Alert';
@@ -39,7 +40,7 @@ import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 import IconButtonWithToolTip from './UI/IconButtonToolTip';
-import { largeFileSize } from '../utils/Constants';
+import { largeFileSize, statusFilterOptions } from '../utils/Constants';
 
 export interface ChildRef {
   getSelectedRows: () => CustomFile[];
@@ -53,6 +54,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   // const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
+  const [statusFilter, setstatusFilter] = useState<OptionType>();
   const [alertDetails, setalertDetails] = useState<alertStateType>({
     showAlert: false,
     alertType: 'error',
@@ -79,6 +81,30 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     }
   );
 
+  const ColumnActions = {
+    columnActions: {
+      actions: [
+        {
+          title:<Dropdown
+          type='select'
+          aria-label='A selection dropdown'
+          selectProps={{
+            onChange: newValue => newValue && setstatusFilter(newValue),
+            options: statusFilterOptions,
+            menuPlacement: 'auto',
+            defaultValue:statusFilterOptions[0],
+            value: statusFilter,
+          }}
+          size='medium'
+          fluid
+        />,
+        // onClick: () => {
+        //   alert('Action triggered');
+        // },
+        },
+      ],
+    },
+  };
   const columns = useMemo(
     () => [
       {
@@ -215,6 +241,9 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         footer: (info) => info.column.id,
         filterFn: 'statusFilter' as any,
         size: 200,
+        meta: {
+          ...ColumnActions,
+        },
       }),
       columnHelper.accessor((row) => row.uploadprogess, {
         id: 'uploadprogess',
