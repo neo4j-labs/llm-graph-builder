@@ -414,6 +414,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
             value={inputMessage}
             fluid
             onChange={handleInputChange}
+            name='chatbot-input'
           />
           <ButtonWithToolTip
             label='Q&A Button'
