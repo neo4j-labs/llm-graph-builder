@@ -251,12 +251,12 @@ export interface GraphViewModalProps {
   inspectedName?: string;
   setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
   viewPoint: string;
-  nodeValues?: Node[];
+  nodeValues?: ExtendedNode[];
   relationshipValues?: Relationship[];
   selectedRows?: CustomFile[] | undefined;
 }
 
-export type GraphType = 'Document' | 'Entities' | 'Chunk';
+export type GraphType = 'Entities'|'DocumentChunk';
 
 export type PartialLabelNode = Partial<Node> & {
   labels: string;
@@ -460,7 +460,7 @@ export interface CHATINFO_RESPONSE {
   status: string;
   message: string;
   error?: string;
-  node: Node[];
+  node: ExtendedNode[];
   relationships: Relationship[];
   data?: any;
 }
@@ -593,3 +593,11 @@ export type GraphStyling = {
   node: Record<string, Partial<NodeStyling>>;
   relationship: Record<string, Partial<RelationStyling>>;
 };
+
+export interface ExtendedNode extends Node {
+  labels: string[];
+}
+
+export interface ExtendedRelationship extends Relationship {
+  labels: string[];
+}
