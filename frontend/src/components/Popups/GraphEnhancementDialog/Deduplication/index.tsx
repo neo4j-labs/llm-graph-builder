@@ -37,6 +37,8 @@ export default function DeduplicationTab() {
       if (duplicateNodesData.data.data.length) {
         console.log({ duplicateNodesData });
         setDuplicateNodes(duplicateNodesData.data.data);
+      } else {
+        setDuplicateNodes([]);
       }
     } catch (error) {
       setLoading(false);
