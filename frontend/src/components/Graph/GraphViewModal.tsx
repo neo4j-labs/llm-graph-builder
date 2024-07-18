@@ -17,13 +17,7 @@ import { filterData, processGraphData } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 import { LegendsChip } from './LegendsChip';
 import graphQueryAPI from '../../services/GraphQuery';
-import {
-  graphLabels,
-  intitalGraphType,
-  mouseEventCallbacks,
-  nvlOptions,
-  queryMap,
-} from '../../utils/Constants';
+import { graphLabels, intitalGraphType, mouseEventCallbacks, nvlOptions, queryMap } from '../../utils/Constants';
 import CheckboxSelection from './CheckboxSelection';
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -63,16 +57,19 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-        ? queryMap.DocChunks
-        : graphType.includes('Entities')
-          ? queryMap.Entities
-          : '';
+      ? queryMap.DocChunks
+      : graphType.includes('Entities')
+      ? queryMap.Entities
+      : '';
 
   const handleZoomToFit = () => {
-    nvlRef.current?.fit(allNodes.map((node) => node.id), {});
+    nvlRef.current?.fit(
+      allNodes.map((node) => node.id),
+      {}
+    );
   };
 
-  //Unmounting the component
+  // Unmounting the component
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       handleZoomToFit();
@@ -93,7 +90,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     try {
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
-          ? await graphQueryAPI(userCredentials as UserCredentials, graphQuery, selectedRows?.map((f) => f.name))
+          ? await graphQueryAPI(
+              userCredentials as UserCredentials,
+              graphQuery,
+              selectedRows?.map((f) => f.name)
+            )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -111,15 +112,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels);
         if (mode === 'refreshMode') {
           initGraph(graphType, finalNodes, finalRels, schemeVal);
-        }
-        else {
+        } else {
           setNodes(finalNodes);
           setRelationships(finalRels);
           setNewScheme(schemeVal);
           setLoading(false);
         }
         setAllNodes(finalNodes);
-        setAllRelationships(finalRels); 
+        setAllRelationships(finalRels);
         setScheme(schemeVal);
       } else {
         setLoading(false);
@@ -151,7 +151,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
   }, [open]);
 
-  //Unmounting the component
+  // Unmounting the component
   if (!open) {
     return <></>;
   }
@@ -203,8 +203,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setAllRelationships([]);
   };
 
-  console.log('nodes', nodes);
-  console.log('rel', relationships);
   // sort the legends in with Chunk and Document always the first two values
   const legendCheck = Object.keys(newScheme).sort((a, b) => {
     if (a === graphLabels.document || a === graphLabels.chunk) {
@@ -215,7 +213,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     return a.localeCompare(b);
   });
 
-  const initGraph = (graphType: GraphType[], finalNodes: ExtendedNode[], finalRels: Relationship[], schemeVal: Scheme) => {
+  const initGraph = (
+    graphType: GraphType[],
+    finalNodes: ExtendedNode[],
+    finalRels: Relationship[],
+    schemeVal: Scheme
+  ) => {
     if (allNodes.length > 0 && allRelationships.length > 0) {
       const { filteredNodes, filteredRelations, filteredScheme } = filterData(
         graphType,
@@ -260,7 +263,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               <div className='my-40 flex items-center justify-center'>
                 <Banner name='graph banner' description={statusMessage} type={status} />
               </div>
-            ) : nodes.length === 0 && relationships.length === 0   && graphType.length !== 0? (
+            ) : nodes.length === 0 && relationships.length === 0 && graphType.length !== 0 ? (
               <div className='my-40 flex items-center justify-center'>
                 <Banner name='graph banner' description={graphLabels.noEntities} type='danger' />
               </div>
@@ -333,7 +336,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                     <div className='legend_div'>
                       <Flex className='py-4 pt-3 ml-2'>
                         <Typography variant='h3'>{graphLabels.resultOverview}</Typography>
-                        <Typography variant='subheading-small'>{graphLabels.totalNodes} ({nodes.length})</Typography>
+                        <Typography variant='subheading-small'>
+                          {graphLabels.totalNodes} ({nodes.length})
+                        </Typography>
                       </Flex>
                       <div className='flex gap-2 flex-wrap ml-2'>
                         {legendCheck.map((key, index) => (

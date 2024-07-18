@@ -189,17 +189,17 @@ export const appLabels = {
   predefinedSchema: 'Select a Pre-defined Schema',
 };
 
-export const graphLabels ={
+export const graphLabels = {
   showGraphView: 'showGraphView',
-  chatInfoView:'chatInfoView',
-  generateGraph:'Generated Graph',
-  inspectGeneratedGraphFrom:'Inspect Generated Graph from',
+  chatInfoView: 'chatInfoView',
+  generateGraph: 'Generated Graph',
+  inspectGeneratedGraphFrom: 'Inspect Generated Graph from',
   document: 'Document',
-  chunk:'Chunk',
+  chunk: 'Chunk',
   documentChunk: 'DocumentChunk',
-  entities:'Entities',
-  resultOverview:'Result Overview',
-  totalNodes:'Total Nodes',
-  noEntities:'No Entities Found',
-  selectCheckbox: 'Select atleast one checkbox for graph view'
-}
+  entities: 'Entities',
+  resultOverview: 'Result Overview',
+  totalNodes: 'Total Nodes',
+  noEntities: 'No Entities Found',
+  selectCheckbox: 'Select atleast one checkbox for graph view',
+};
