@@ -668,8 +668,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       {filesData ? (
         <>
           <div className='flex items-center p-5 self-start gap-2'>
-            <input type='checkbox' onChange={handleChange} />
-            <label>Show files with status New </label>
+            <Checkbox onChange={handleChange} label="Show files with status New"/>
           </div>
           <div className={`${isExpanded ? 'w-[calc(100%-64px)]' : 'mx-auto w-[calc(100%-100px)]'}`}>
             <DataGrid
