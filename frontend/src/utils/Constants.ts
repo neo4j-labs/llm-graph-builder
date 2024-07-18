@@ -176,13 +176,13 @@ export const mouseEventCallbacks = {
   onDrag: true,
 };
 
-export const graphQuery: string = queryMap.DocChunkEntities;
+// export const graphQuery: string = queryMap.DocChunkEntities;
 export const graphView: OptionType[] = [
   { label: 'Lexical Graph', value: queryMap.DocChunks },
   { label: 'Entity Graph', value: queryMap.Entities },
   { label: 'Knowledge Graph', value: queryMap.DocChunkEntities },
 ];
-export const intitalGraphType: GraphType[] = ['Document', 'Entities', 'Chunk'];
+export const intitalGraphType: GraphType[] = ['DocumentChunk', 'Entities'];
 export const knowledgeGraph = 'Knowledge Graph';
 export const lexicalGraph = 'Lexical Graph';
 export const entityGraph = 'Entity Graph';

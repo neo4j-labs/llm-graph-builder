@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Button } from '@neo4j-ndl/react';
 import GraphViewModal from './GraphViewModal';
-import { Node, Relationship } from '@neo4j-nvl/base';
+import { Relationship } from '@neo4j-nvl/base';
+import { ExtendedNode } from '../../types';
 
 interface GraphViewButtonProps {
-  nodeValues?: Node[];
+  nodeValues?: ExtendedNode[];
   relationshipValues?: Relationship[];
 }
 const GraphViewButton: React.FC<GraphViewButtonProps> = ({ nodeValues, relationshipValues }) => {
