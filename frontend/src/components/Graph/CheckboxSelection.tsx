@@ -7,13 +7,13 @@ const CheckboxSelection: React.FC<CheckboxSectionProps> = ({ graphType, loading,
       <Checkbox
         checked={graphType.includes('DocumentChunk')}
         label='Document & Chunk'
-        disabled={(graphType.includes('DocumentChunk') && graphType.length === 1) || loading}
+        disabled={loading}
         onChange={() => handleChange('DocumentChunk')}
       />
       <Checkbox
         checked={graphType.includes('Entities')}
         label='Entities'
-        disabled={(graphType.includes('Entities') && graphType.length === 1) || loading}
+        disabled={loading}
         onChange={() => handleChange('Entities')}
       />
     </div>
