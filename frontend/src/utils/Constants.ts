@@ -183,9 +183,6 @@ export const graphView: OptionType[] = [
   { label: 'Knowledge Graph', value: queryMap.DocChunkEntities },
 ];
 export const intitalGraphType: GraphType[] = ['DocumentChunk', 'Entities'];
-export const knowledgeGraph = 'Knowledge Graph';
-export const lexicalGraph = 'Lexical Graph';
-export const entityGraph = 'Entity Graph';
 
 export const appLabels = {
   ownSchema: 'Or Define your own Schema',
@@ -202,3 +199,18 @@ export const statusFilterOptions = [
   { value: 'Uploading', label: 'Uploading' },
 
 ];
+
+export const graphLabels = {
+  showGraphView: 'showGraphView',
+  chatInfoView: 'chatInfoView',
+  generateGraph: 'Generated Graph',
+  inspectGeneratedGraphFrom: 'Inspect Generated Graph from',
+  document: 'Document',
+  chunk: 'Chunk',
+  documentChunk: 'DocumentChunk',
+  entities: 'Entities',
+  resultOverview: 'Result Overview',
+  totalNodes: 'Total Nodes',
+  noEntities: 'No Entities Found',
+  selectCheckbox: 'Select atleast one checkbox for graph view',
+};

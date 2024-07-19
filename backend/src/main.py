@@ -8,7 +8,7 @@ from src.create_chunks import CreateChunksofDocument
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.document_sources.local_file import get_documents_from_file_by_path
 from src.entities.source_node import sourceNode
-from src.generate_graphDocuments_from_llm import generate_graphDocuments
+from src.llm import get_graph_from_llm
 from src.document_sources.gcs_bucket import *
 from src.document_sources.s3_bucket import *
 from src.document_sources.wikipedia import *
@@ -373,7 +373,7 @@ def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password, datab
       
   update_embedding_create_vector_index( graph, chunkId_chunkDoc_list, file_name)
   logging.info("Get graph document list from models")
-  graph_documents =  generate_graphDocuments(model, graph, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
+  graph_documents =  get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
   cleaned_graph_documents = handle_backticks_nodes_relationship_id_type(graph_documents)
   save_graphDocuments_in_neo4j(graph, cleaned_graph_documents)
   chunks_and_graphDocuments_list = get_chunk_and_graphDocument(cleaned_graph_documents, chunkId_chunkDoc_list)
