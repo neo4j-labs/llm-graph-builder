@@ -6,7 +6,7 @@ export const LegendsChip: React.FunctionComponent<LegendChipProps> = ({ scheme, 
   const chunkcount = useMemo(
     // @ts-ignore
     () => [...new Set(nodes?.filter((n) => n?.labels?.includes(title)).map((i) => i.id))].length,
-    []
+    [nodes]
   );
   return <Legend title={title} chunkCount={chunkcount} bgColor={scheme[title]}></Legend>;
 };

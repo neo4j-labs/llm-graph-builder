@@ -15,6 +15,54 @@ BUCKET_FAILED_FILE = 'llm-graph-builder-failed'
 PROJECT_ID = 'llm-experiments-387609' 
 
 
+
+
+##graph viz 
+
+
+GRAPH_CHUNK_LIMIT = 50
+
+#query 
+GRAPH_QUERY = """
+MATCH docs = (d:Document) 
+WHERE d.fileName IN $document_names
+WITH docs, d ORDER BY d.createdAt DESC
+// fetch chunks for documents, currently with limit
+CALL {{
+  WITH d
+  OPTIONAL MATCH chunks=(d)<-[:PART_OF|FIRST_CHUNK]-(c:Chunk)
+  RETURN c, chunks LIMIT {graph_chunk_limit}
+}}
+
+WITH collect([docs, chunks]) as data, collect(distinct c) as selectedChunks
+WITH data, selectedChunks
+// select relationships between selected chunks
+WITH *, 
+[ c in selectedChunks | [p=(c)-[:NEXT_CHUNK|SIMILAR]-(other) WHERE other IN selectedChunks | p]] as chunkRels
+
+// fetch entities and relationships between entities
+CALL {{
+  WITH selectedChunks
+  UNWIND selectedChunks as c
+  
+  OPTIONAL MATCH entities=(c:Chunk)-[:HAS_ENTITY]->(e)
+  OPTIONAL MATCH entityRels=(e)--(e2:!Chunk) WHERE exists {{
+    (e2)<-[:HAS_ENTITY]-(other) WHERE other IN selectedChunks
+  }}
+  RETURN collect(entities) as entities, collect(entityRels) as entityRels
+}}
+
+WITH apoc.coll.flatten(data + chunkRels + entities + entityRels, true) as paths
+
+// distinct nodes and rels
+CALL {{ WITH paths UNWIND paths AS path UNWIND nodes(path) as node WITH distinct node 
+       RETURN collect(node /* {{.*, labels:labels(node), elementId:elementId(node), embedding:null, text:null}} */) 
+AS nodes }}
+CALL {{ WITH paths UNWIND paths AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) AS rels }}  
+RETURN nodes, rels
+"""
+
+
 ## CHAT SETUP
 CHAT_MAX_TOKENS = 1000
 CHAT_SEARCH_KWARG_K = 3
