@@ -640,6 +640,42 @@ async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), da
         if graph is not None:
             close_db_connection(graph,"merge_duplicate_nodes")
         gc.collect()
+        
+@app.post("/get_vector_dimensions")
+async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), database=Form()):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        db_vector_dimension, application_dimension = graphDb_data_Access.get_vector_index_dimension()
+        return create_api_response('Success',data={'db_vector_dimension': db_vector_dimension, 'application_dimension':application_dimension})
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to get the vector dimesion from databse and application configuration"
+        error_message = str(e)
+        logging.exception(f'Exception in get the vector dimesion from databse and application configuration:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        if graph is not None:
+            close_db_connection(graph,"get_vector_dimensions")
+        gc.collect()
+        
+@app.post("/drop_create_vector_index")
+async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), database=Form()):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        result = graphDb_data_Access.drop_create_vector_index()
+        return create_api_response('Success',message=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to drop and re-create vector index with correct dimesion as per application configuration"
+        error_message = str(e)
+        logging.exception(f'Exception into drop and re-create vector index with correct dimesion as per application configuration:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        if graph is not None:
+            close_db_connection(graph,"drop_create_vector_index")
+        gc.collect()
 
 if __name__ == "__main__":
     uvicorn.run(app)

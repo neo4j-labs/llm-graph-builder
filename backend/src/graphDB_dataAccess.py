@@ -2,7 +2,7 @@ import logging
 import os
 from datetime import datetime
 from langchain_community.graphs import Neo4jGraph
-from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file
+from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model
 from src.document_sources.gcs_bucket import delete_file_from_gcs
 from src.shared.constants import BUCKET_UPLOAD
 from src.entities.source_node import sourceNode
@@ -310,3 +310,42 @@ class graphDBdataAccess:
         """
         param = {"rows":nodes_list}
         return self.execute_query(query,param)
+    
+    def get_vector_index_dimension(self):
+        """
+        Get the vector index dimension from database and application configuration
+        """
+        db_vector_dimension = self.graph.query("""SHOW INDEXES YIELD *
+                                    WHERE type = 'VECTOR' AND name = 'vector'
+                                    RETURN options.indexConfig['vector.dimensions'] AS vector_dimensions
+                                """)
+        embedding_model = os.getenv('EMBEDDING_MODEL')
+        embeddings, application_dimension = load_embedding_model(embedding_model)
+        logging.info(f'embedding model:{embeddings} and dimesion:{application_dimension}')
+        
+        if len(db_vector_dimension) > 0:
+            return db_vector_dimension[0]['vector_dimensions'], application_dimension
+        else:
+            logging.info("Vector index does not exist in database")
+            return 0, application_dimension
+        
+    def drop_create_vector_index(self):
+        """
+        drop and create the vector index when vector index dimesion are different.
+        """
+        self.graph.query("""drop index vector""")
+        
+        embedding_model = os.getenv('EMBEDDING_MODEL')
+        embeddings, dimension = load_embedding_model(embedding_model)
+        
+        self.graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
+                            OPTIONS {indexConfig: {
+                            `vector.dimensions`: $dimensions,
+                            `vector.similarity_function`: 'cosine'
+                            }}
+                        """,
+                        {
+                            "dimensions" : dimension
+                        }
+                        )
+        return "Drop and Re-Create vector index succesfully"
