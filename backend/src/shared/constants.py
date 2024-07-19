@@ -4,10 +4,11 @@ MODEL_VERSIONS = {
         "gemini-1.5-pro": "gemini-1.5-pro-preview-0514",
         "openai-gpt-4": "gpt-4-0125-preview",
         "diffbot" : "gpt-4o",
+        "openai-gpt-4o-mini": "gpt-4o-mini",
         "openai-gpt-4o":"gpt-4o",
         "groq-llama3" : "llama3-70b-8192"
          }
-OPENAI_MODELS = ["openai-gpt-3.5", "openai-gpt-4o"]
+OPENAI_MODELS = ["openai-gpt-3.5", "openai-gpt-4o", "openai-gpt-4o-mini"]
 GEMINI_MODELS = ["gemini-1.0-pro", "gemini-1.5-pro"]
 GROQ_MODELS = ["groq-llama3"]
 BUCKET_UPLOAD = 'llm-graph-builder-upload'
@@ -67,7 +68,7 @@ CHAT_DOC_SPLIT_SIZE = 3000
 CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD = 0.10
 CHAT_TOKEN_CUT_OFF = {
      ("openai-gpt-3.5",'azure_ai_gpt_35',"gemini-1.0-pro","gemini-1.5-pro","groq-llama3",'groq_llama3_70b','anthropic_claude_3_5_sonnet','fireworks_llama_v3_70b','bedrock_claude_3_5_sonnet', ) : 4, 
-     ("openai-gpt-4","diffbot" ,'azure_ai_gpt_4o',"openai-gpt-4o") : 28,
+     ("openai-gpt-4","diffbot" ,'azure_ai_gpt_4o',"openai-gpt-4o", "openai-gpt-4o-mini") : 28,
      ("ollama_llama3") : 2  
 } 
 
