@@ -84,7 +84,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     columnActions: {
       actions: [
         {
-          title: 'Show All Files',
+          title: 'All Files',
           onClick: () => {
             setstatusFilter('All');
             table.getColumn('status')?.setFilterValue(true);
@@ -93,7 +93,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         {
           title: (
             <span>
-              <StatusIndicator type='success'></StatusIndicator> Only Show Completed Files{' '}
+              <StatusIndicator type='success'></StatusIndicator> Completed Files
             </span>
           ),
           onClick: () => {
@@ -104,7 +104,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         {
           title: (
             <span>
-              <StatusIndicator type='info'></StatusIndicator> Only Show New Files
+              <StatusIndicator type='info'></StatusIndicator> New Files
             </span>
           ),
           onClick: () => {
@@ -115,7 +115,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         {
           title: (
             <span>
-              <StatusIndicator type='danger'></StatusIndicator> Only Show Failed Files
+              <StatusIndicator type='danger'></StatusIndicator> Failed Files
             </span>
           ),
           onClick: () => {
