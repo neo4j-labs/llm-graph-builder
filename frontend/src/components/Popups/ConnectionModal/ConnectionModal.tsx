@@ -46,6 +46,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [enableDimenstionbutton, setEnableDimenstionbutton] = useState<boolean>(true);
+  const [userDbVectorIndex, setUserDbVectorIndex] = useState<number>();
 
   useEffect(() => {
     if (searchParams.has('connectURL')) {
@@ -135,12 +136,11 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
     setIsLoading(true);
     const response = await connectAPI(connectionURI, username, password, database);
     if (response?.data?.status === 'Success') {
+      setUserDbVectorIndex(response.data.data.db_vector_dimension);
       if (response.data.data.db_vector_dimension === 0) {
         setEnableDimenstionbutton(false);
       } else {
-        setEnableDimenstionbutton(
-          response.data.data.application_dimenstion !== response.data.data.db_vector_dimension
-        );
+        setEnableDimenstionbutton(response.data.data.application_dimenstion !== response.data.data.db_vector_dimension);
       }
       localStorage.setItem(
         'neo4j.connection',
@@ -171,10 +171,14 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
 
   const recreateVectorIndex = useCallback(async () => {
     try {
-      const response = await createVectorIndex(userCredentials as UserCredentials);
+      const response = await createVectorIndex(
+        userCredentials as UserCredentials,
+        userDbVectorIndex != 0
+      );
       if (response.data.status === 'Failed') {
         throw new Error(response.data.error);
       } else {
+        setConnectionStatus(true);
         setOpenConnection(false);
       }
     } catch (error) {
@@ -182,7 +186,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
         console.log('Error in recreating the vector index', error.message);
       }
     }
-  }, [userCredentials]);
+  }, [userCredentials,userDbVectorIndex]);
 
   const isDisabled = useMemo(() => !username || !URI || !password, [username, URI, password]);
 
