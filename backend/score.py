@@ -642,11 +642,11 @@ async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), da
         gc.collect()
         
 @app.post("/drop_create_vector_index")
-async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), database=Form()):
+async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), database=Form(), is_vector_index_recreate=Form()):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
-        result = graphDb_data_Access.drop_create_vector_index()
+        result = graphDb_data_Access.drop_create_vector_index(is_vector_index_recreate)
         return create_api_response('Success',message=result)
     except Exception as e:
         job_status = "Failed"
