@@ -273,11 +273,7 @@ const Content: React.FC<ContentProps> = ({
   };
 
   const handleClose = () => {
-    setalertDetails({
-      showAlert: false,
-      alertType: 'info',
-      alertMessage: '',
-    });
+    setalertDetails((prev) => ({ ...prev, showAlert: false, alertMessage: '' }));
   };
 
   const handleOpenGraphClick = () => {
@@ -411,8 +407,18 @@ const Content: React.FC<ContentProps> = ({
         console.log(parsedData.uri);
         const response = await connectAPI(parsedData.uri, parsedData.user, parsedData.password, parsedData.database);
         if (response?.data?.status === 'Success') {
-          setConnectionStatus(true);
-          setOpenConnection(false);
+          if (response.data.data.application_dimension === response.data.data.db_vector_dimension) {
+            setConnectionStatus(true);
+            setOpenConnection(false);
+          } else {
+            setOpenConnection(true);
+            setConnectionStatus(false);
+            setalertDetails({
+              showAlert: true,
+              alertType: 'error',
+              alertMessage: "Error: Vector Index Mismatch",
+            });
+          }
         } else {
           setOpenConnection(true);
           setConnectionStatus(false);

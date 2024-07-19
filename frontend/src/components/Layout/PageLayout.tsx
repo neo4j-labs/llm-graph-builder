@@ -67,11 +67,7 @@ export default function PageLayoutNew({
     });
   };
   const handleClose = () => {
-    setalertDetails({
-      showAlert: false,
-      alertType: 'info',
-      alertMessage: '',
-    });
+    setalertDetails((prev) => ({ ...prev, showAlert: false, alertMessage: '' }));
   };
 
   return (
