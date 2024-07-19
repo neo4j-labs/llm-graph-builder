@@ -258,8 +258,8 @@ class graphDBdataAccess:
                 AND 
                 (
                 // either contains each other as substrings or has a text edit distinct of less than 3
-                toLower(n.id) CONTAINS toLower(other.id) OR 
-                toLower(other.id) CONTAINS toLower(n.id)
+                (size(other.id) > 2 AND toLower(n.id) CONTAINS toLower(other.id)) OR 
+                (size(n.id) > 2 AND toLower(other.id) CONTAINS toLower(n.id))
                 OR (size(n.id)>5 AND apoc.text.distance(toLower(n.id), toLower(other.id)) < $duplicate_text_distance)
                 OR
                 vector.similarity.cosine(other.embedding, n.embedding) > $duplicate_score_value
