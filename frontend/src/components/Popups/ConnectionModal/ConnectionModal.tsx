@@ -4,6 +4,8 @@ import connectAPI from '../../../services/ConnectAPI';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useSearchParams } from 'react-router-dom';
 import { buttonCaptions } from '../../../utils/Constants';
+import { createVectorIndex } from '../../../services/vectorIndexCreation';
+import { UserCredentials } from '../../../types';
 
 interface Message {
   type: 'success' | 'info' | 'warning' | 'danger' | 'unknown';
@@ -40,9 +42,10 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
   const [username, setUsername] = useState<string>(initialusername ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
-  const { setUserCredentials } = useCredentials();
+  const { setUserCredentials, userCredentials } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [enableDimenstionbutton, setEnableDimenstionbutton] = useState<boolean>(true);
 
   useEffect(() => {
     if (searchParams.has('connectURL')) {
@@ -132,19 +135,26 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
     setIsLoading(true);
     const response = await connectAPI(connectionURI, username, password, database);
     if (response?.data?.status === 'Success') {
+      if (response.data.data.db_vector_dimension === 0) {
+        setEnableDimenstionbutton(false);
+      } else {
+        setEnableDimenstionbutton(
+          response.data.data.application_dimenstion !== response.data.data.db_vector_dimension
+        );
+      }
       localStorage.setItem(
         'neo4j.connection',
         JSON.stringify({ uri: connectionURI, user: username, password: password, database: database })
       );
-      setConnectionStatus(true);
+      // setConnectionStatus(true);
       setMessage({
         type: 'success',
         content: response.data.message,
       });
-      setOpenConnection(false);
+      // setOpenConnection(false);
     } else {
       setMessage({ type: 'danger', content: response.data.error });
-      setOpenConnection(true);
+      // setOpenConnection(true);
       setPassword('');
       setConnectionStatus(false);
     }
@@ -158,6 +168,21 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
   const onClose = useCallback(() => {
     setMessage({ type: 'unknown', content: '' });
   }, []);
+
+  const recreateVectorIndex = useCallback(async () => {
+    try {
+      const response = await createVectorIndex(userCredentials as UserCredentials);
+      if (response.data.status === 'Failed') {
+        throw new Error(response.data.error);
+      } else {
+        setOpenConnection(false);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        console.log('Error in recreating the vector index', error.message);
+      }
+    }
+  }, [userCredentials]);
 
   const isDisabled = useMemo(() => !username || !URI || !password, [username, URI, password]);
 
@@ -277,6 +302,9 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
           </div>
           <Button loading={isLoading} disabled={isDisabled} onClick={() => submitConnection()}>
             {buttonCaptions.connect}
+          </Button>
+          <Button disabled={enableDimenstionbutton} onClick={() => recreateVectorIndex()}>
+            Create Vector Index
           </Button>
         </Dialog.Content>
       </Dialog>
