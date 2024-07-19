@@ -376,10 +376,10 @@ async def clear_chat_bot(uri=Form(None),userName=Form(None), password=Form(None)
 async def connect(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
-        result = await asyncio.to_thread(connection_check, graph)
+        result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph)
         josn_obj = {'api_name':'connect','db_url':uri,'status':result, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(josn_obj)
-        return create_api_response('Success',message=result)
+        return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
         message="Connection failed to connect Neo4j database"
@@ -639,24 +639,6 @@ async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), da
     finally:
         if graph is not None:
             close_db_connection(graph,"merge_duplicate_nodes")
-        gc.collect()
-        
-@app.post("/get_vector_dimensions")
-async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), database=Form()):
-    try:
-        graph = create_graph_database_connection(uri, userName, password, database)
-        graphDb_data_Access = graphDBdataAccess(graph)
-        db_vector_dimension, application_dimension = graphDb_data_Access.get_vector_index_dimension()
-        return create_api_response('Success',data={'db_vector_dimension': db_vector_dimension, 'application_dimension':application_dimension})
-    except Exception as e:
-        job_status = "Failed"
-        message="Unable to get the vector dimesion from databse and application configuration"
-        error_message = str(e)
-        logging.exception(f'Exception in get the vector dimesion from databse and application configuration:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
-    finally:
-        if graph is not None:
-            close_db_connection(graph,"get_vector_dimensions")
         gc.collect()
         
 @app.post("/drop_create_vector_index")

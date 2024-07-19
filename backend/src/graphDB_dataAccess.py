@@ -141,8 +141,10 @@ class graphDBdataAccess:
         else:
             logging.info("Vector index does not exist, So KNN graph not update")
             
-    def connection_check(self):
+    def connection_check_and_get_vector_dimensions(self):
         """
+        Get the vector index dimension from database and application configuration and DB connection status
+        
         Args:
             uri: URI of the graph to extract
             userName: Username to use for graph creation ( if None will use username from config file )
@@ -151,8 +153,21 @@ class graphDBdataAccess:
         Returns:
         Returns a status of connection from NEO4j is success or failure
         """
+        
+        db_vector_dimension = self.graph.query("""SHOW INDEXES YIELD *
+                                    WHERE type = 'VECTOR' AND name = 'vector'
+                                    RETURN options.indexConfig['vector.dimensions'] AS vector_dimensions
+                                """)
+        embedding_model = os.getenv('EMBEDDING_MODEL')
+        embeddings, application_dimension = load_embedding_model(embedding_model)
+        logging.info(f'embedding model:{embeddings} and dimesion:{application_dimension}')
+        
         if self.graph:
-            return "Connection Successful"
+            if len(db_vector_dimension) > 0:
+                return {'db_vector_dimension': db_vector_dimension[0]['vector_dimensions'], 'application_dimension':application_dimension, 'message':"Connection Successful"}
+            else:
+                logging.info("Vector index does not exist in database")
+                return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful"}
 
     def execute_query(self, query, param=None):
         return self.graph.query(query, param)
@@ -311,24 +326,6 @@ class graphDBdataAccess:
         param = {"rows":nodes_list}
         return self.execute_query(query,param)
     
-    def get_vector_index_dimension(self):
-        """
-        Get the vector index dimension from database and application configuration
-        """
-        db_vector_dimension = self.graph.query("""SHOW INDEXES YIELD *
-                                    WHERE type = 'VECTOR' AND name = 'vector'
-                                    RETURN options.indexConfig['vector.dimensions'] AS vector_dimensions
-                                """)
-        embedding_model = os.getenv('EMBEDDING_MODEL')
-        embeddings, application_dimension = load_embedding_model(embedding_model)
-        logging.info(f'embedding model:{embeddings} and dimesion:{application_dimension}')
-        
-        if len(db_vector_dimension) > 0:
-            return db_vector_dimension[0]['vector_dimensions'], application_dimension
-        else:
-            logging.info("Vector index does not exist in database")
-            return 0, application_dimension
-        
     def drop_create_vector_index(self):
         """
         drop and create the vector index when vector index dimesion are different.
