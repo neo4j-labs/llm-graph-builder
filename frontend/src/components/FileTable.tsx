@@ -2,7 +2,6 @@ import {
   Checkbox,
   DataGrid,
   DataGridComponents,
-  Dropdown,
   Flex,
   IconButton,
   ProgressBar,
@@ -28,7 +27,7 @@ import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { statusCheck, capitalize } from '../utils/Utils';
-import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, alertStateType, OptionType } from '../types';
+import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, alertStateType } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
 import CustomAlert from './UI/Alert';
@@ -40,7 +39,7 @@ import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 import IconButtonWithToolTip from './UI/IconButtonToolTip';
-import { largeFileSize, statusFilterOptions } from '../utils/Constants';
+import { largeFileSize } from '../utils/Constants';
 
 export interface ChildRef {
   getSelectedRows: () => CustomFile[];
@@ -54,7 +53,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   // const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
-  const [statusFilter, setstatusFilter] = useState<OptionType>();
+  const [statusFilter, setstatusFilter] = useState<string>('');
   const [alertDetails, setalertDetails] = useState<alertStateType>({
     showAlert: false,
     alertType: 'error',
@@ -85,24 +84,47 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     columnActions: {
       actions: [
         {
-          title:<Dropdown
-          type='select'
-          aria-label='A selection dropdown'
-          selectProps={{
-            onChange: newValue => newValue && setstatusFilter(newValue),
-            options: statusFilterOptions,
-            menuPlacement: 'auto',
-            defaultValue:statusFilterOptions[0],
-            value: statusFilter,
-          }}
-          size='medium'
-          fluid
-        />,
-        // onClick: () => {
-        //   alert('Action triggered');
-        // },
+          title: 'Show All Files',
+          onClick: () => {
+            setstatusFilter('All');
+            table.getColumn('status')?.setFilterValue(true);
+          },
+        },
+        {
+          title: (
+            <span>
+              <StatusIndicator type='success'></StatusIndicator> Only Show Completed Files{' '}
+            </span>
+          ),
+          onClick: () => {
+            setstatusFilter('Completed');
+            table.getColumn('status')?.setFilterValue(true);
+          },
+        },
+        {
+          title: (
+            <span>
+              <StatusIndicator type='info'></StatusIndicator> Only Show New Files
+            </span>
+          ),
+          onClick: () => {
+            setstatusFilter('New');
+            table.getColumn('status')?.setFilterValue(true);
+          },
+        },
+        {
+          title: (
+            <span>
+              <StatusIndicator type='danger'></StatusIndicator> Only Show Failed Files
+            </span>
+          ),
+          onClick: () => {
+            setstatusFilter('Failed');
+            table.getColumn('status')?.setFilterValue(true);
+          },
         },
       ],
+      defaultSortingActions: false,
     },
   };
   const columns = useMemo(
@@ -625,7 +647,10 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     onRowSelectionChange: setRowSelection,
     filterFns: {
       statusFilter: (row, columnId, filterValue) => {
-        const value = filterValue ? row.original[columnId] === 'New' : row.original[columnId];
+        if (statusFilter === 'All') {
+          return row;
+        }
+        const value = filterValue ? row.original[columnId] === statusFilter : row.original[columnId];
         return value;
       },
     },
@@ -667,13 +692,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     }
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    table.getColumn('status')?.setFilterValue(e.target.checked);
-    if (!table.getCanNextPage() || table.getPrePaginationRowModel().rows.length) {
-      table.setPageIndex(0);
-    }
-  };
-
   const classNameCheck = isExpanded ? 'fileTableWithExpansion' : `filetable`;
 
   const handleClose = () => {
@@ -696,9 +714,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       )}
       {filesData ? (
         <>
-          <div className='flex items-center p-5 self-start gap-2'>
-            <Checkbox name='newfilestatuscheckbox' onChange={handleChange} label='Show files with status New' />
-          </div>
           <div className={`${isExpanded ? 'w-[calc(100%-64px)]' : 'mx-auto w-[calc(100%-100px)]'}`}>
             <DataGrid
               ref={tableRef}

@@ -197,7 +197,6 @@ export const statusFilterOptions = [
   { value: 'Processing', label: 'Processing' },
   { value: 'Failed', label: 'Failed' },
   { value: 'Uploading', label: 'Uploading' },
-
 ];
 
 export const graphLabels = {
