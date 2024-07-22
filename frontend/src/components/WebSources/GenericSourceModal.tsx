@@ -38,7 +38,7 @@ export default function GenericModal({
           <Box className='flex flex-col'>
             <Typography variant='h2'>Web Sources</Typography>
             <Typography variant='body-medium' className='mb-2'>
-              Convert Any Web Source to Knoweldge graph
+              Convert Any Web Source to Knowledge graph
             </Typography>
           </Box>
         </Box>
