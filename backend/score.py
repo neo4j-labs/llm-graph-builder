@@ -376,10 +376,10 @@ async def clear_chat_bot(uri=Form(None),userName=Form(None), password=Form(None)
 async def connect(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
-        result = await asyncio.to_thread(connection_check, graph)
+        result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph)
         josn_obj = {'api_name':'connect','db_url':uri,'status':result, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(josn_obj)
-        return create_api_response('Success',message=result)
+        return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
         message="Connection failed to connect Neo4j database"
@@ -639,6 +639,24 @@ async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), da
     finally:
         if graph is not None:
             close_db_connection(graph,"merge_duplicate_nodes")
+        gc.collect()
+        
+@app.post("/drop_create_vector_index")
+async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), database=Form(), is_vector_index_recreate=Form()):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        result = graphDb_data_Access.drop_create_vector_index(is_vector_index_recreate)
+        return create_api_response('Success',message=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to drop and re-create vector index with correct dimesion as per application configuration"
+        error_message = str(e)
+        logging.exception(f'Exception into drop and re-create vector index with correct dimesion as per application configuration:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        if graph is not None:
+            close_db_connection(graph,"drop_create_vector_index")
         gc.collect()
 
 if __name__ == "__main__":

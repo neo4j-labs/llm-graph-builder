@@ -2,7 +2,7 @@ import logging
 import os
 from datetime import datetime
 from langchain_community.graphs import Neo4jGraph
-from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file
+from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model
 from src.document_sources.gcs_bucket import delete_file_from_gcs
 from src.shared.constants import BUCKET_UPLOAD
 from src.entities.source_node import sourceNode
@@ -141,8 +141,10 @@ class graphDBdataAccess:
         else:
             logging.info("Vector index does not exist, So KNN graph not update")
             
-    def connection_check(self):
+    def connection_check_and_get_vector_dimensions(self):
         """
+        Get the vector index dimension from database and application configuration and DB connection status
+        
         Args:
             uri: URI of the graph to extract
             userName: Username to use for graph creation ( if None will use username from config file )
@@ -151,8 +153,21 @@ class graphDBdataAccess:
         Returns:
         Returns a status of connection from NEO4j is success or failure
         """
+        
+        db_vector_dimension = self.graph.query("""SHOW INDEXES YIELD *
+                                    WHERE type = 'VECTOR' AND name = 'vector'
+                                    RETURN options.indexConfig['vector.dimensions'] AS vector_dimensions
+                                """)
+        embedding_model = os.getenv('EMBEDDING_MODEL')
+        embeddings, application_dimension = load_embedding_model(embedding_model)
+        logging.info(f'embedding model:{embeddings} and dimesion:{application_dimension}')
+        
         if self.graph:
-            return "Connection Successful"
+            if len(db_vector_dimension) > 0:
+                return {'db_vector_dimension': db_vector_dimension[0]['vector_dimensions'], 'application_dimension':application_dimension, 'message':"Connection Successful"}
+            else:
+                logging.info("Vector index does not exist in database")
+                return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful"}
 
     def execute_query(self, query, param=None):
         return self.graph.query(query, param)
@@ -258,8 +273,8 @@ class graphDBdataAccess:
                 AND 
                 (
                 // either contains each other as substrings or has a text edit distinct of less than 3
-                toLower(n.id) CONTAINS toLower(other.id) OR 
-                toLower(other.id) CONTAINS toLower(n.id)
+                (size(other.id) > 2 AND toLower(n.id) CONTAINS toLower(other.id)) OR 
+                (size(n.id) > 2 AND toLower(other.id) CONTAINS toLower(n.id))
                 OR (size(n.id)>5 AND apoc.text.distance(toLower(n.id), toLower(other.id)) < $duplicate_text_distance)
                 OR
                 vector.similarity.cosine(other.embedding, n.embedding) > $duplicate_score_value
@@ -310,3 +325,24 @@ class graphDBdataAccess:
         """
         param = {"rows":nodes_list}
         return self.execute_query(query,param)
+    
+    def drop_create_vector_index(self, is_vector_index_recreate):
+        """
+        drop and create the vector index when vector index dimesion are different.
+        """
+        embedding_model = os.getenv('EMBEDDING_MODEL')
+        embeddings, dimension = load_embedding_model(embedding_model)
+        if is_vector_index_recreate == 'true':
+            self.graph.query("""drop index vector""")
+        
+        self.graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
+                            OPTIONS {indexConfig: {
+                            `vector.dimensions`: $dimensions,
+                            `vector.similarity_function`: 'cosine'
+                            }}
+                        """,
+                        {
+                            "dimensions" : dimension
+                        }
+                        )
+        return "Drop and Re-Create vector index succesfully"

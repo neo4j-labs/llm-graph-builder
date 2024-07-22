@@ -428,7 +428,7 @@ def update_graph(graph):
   graph_DB_dataAccess.update_KNN_graph()
 
   
-def connection_check(graph):
+def connection_check_and_get_vector_dimensions(graph):
   """
   Args:
     uri: URI of the graph to extract
@@ -439,7 +439,7 @@ def connection_check(graph):
    Returns a status of connection from NEO4j is success or failure
  """
   graph_DB_dataAccess = graphDBdataAccess(graph)
-  return graph_DB_dataAccess.connection_check()
+  return graph_DB_dataAccess.connection_check_and_get_vector_dimensions()
 
 def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
 
