@@ -38,7 +38,7 @@ import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 import IconButtonWithToolTip from './UI/IconButtonToolTip';
-import { largeFileSize } from '../utils/Constants';
+import { largeFileSize, llms } from '../utils/Constants';
 import IndeterminateCheckbox from './UI/CustomCheckBox';
 
 export interface ChildRef {
@@ -52,8 +52,9 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  // const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
   const [statusFilter, setstatusFilter] = useState<string>('');
+  const [filetypeFilter, setFiletypeFilter] = useState<string>('');
+  const [llmtypeFilter, setLLmtypeFilter] = useState<string>('');
   const [alertDetails, setalertDetails] = useState<alertStateType>({
     showAlert: false,
     alertType: 'error',
@@ -127,6 +128,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       defaultSortingActions: false,
     },
   };
+
   const columns = useMemo(
     () => [
       {
@@ -332,6 +334,30 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         },
         header: () => <span>Source/Type</span>,
         footer: (info) => info.column.id,
+        filterFn: 'fileTypeFilter' as any,
+        meta: {
+          columnActions: {
+            actions: [
+              {
+                title: 'All types',
+                onClick: () => {
+                  setFiletypeFilter('All');
+                  table.getColumn('source')?.setFilterValue(true);
+                },
+              },
+              ...Array.from(new Set(filesData.map((f) => f.type))).map((t) => {
+                return {
+                  title: t,
+                  onClick: () => {
+                    setFiletypeFilter(t as string);
+                    table.getColumn('source')?.setFilterValue(true);
+                  },
+                };
+              }),
+            ],
+            defaultSortingActions: false,
+          },
+        },
       }),
       columnHelper.accessor((row) => row.model, {
         id: 'model',
@@ -350,6 +376,30 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         },
         header: () => <span>Model</span>,
         footer: (info) => info.column.id,
+        filterFn: 'llmTypeFilter' as any,
+        meta: {
+          columnActions: {
+            actions: [
+              {
+                title: 'All',
+                onClick: () => {
+                  setLLmtypeFilter('All');
+                  table.getColumn('model')?.setFilterValue(true);
+                },
+              },
+              ...llms.map((m) => {
+                return {
+                  title: m,
+                  onClick: () => {
+                    setLLmtypeFilter(m);
+                    table.getColumn('model')?.setFilterValue(true);
+                  },
+                };
+              }),
+            ],
+            defaultSortingActions: false,
+          },
+        },
       }),
       columnHelper.accessor((row) => row.NodesCount, {
         id: 'NodesCount',
@@ -390,7 +440,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         footer: (info) => info.column.id,
       }),
     ],
-    []
+    [filesData.length]
   );
 
   useEffect(() => {
@@ -653,6 +703,18 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         const value = filterValue ? row.original[columnId] === statusFilter : row.original[columnId];
         return value;
       },
+      fileTypeFilter: (row) => {
+        if (filetypeFilter === 'All') {
+          return true;
+        }
+        return row.original.type === filetypeFilter;
+      },
+      llmTypeFilter: (row) => {
+        if (llmtypeFilter === 'All') {
+          return true;
+        }
+        return row.original.model === llmtypeFilter;
+      },
     },
     enableGlobalFilter: false,
     autoResetPageIndex: false,
@@ -676,7 +738,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       const resizeObserver = new ResizeObserver((entries) => {
         entries.forEach((entry) => {
           const { height } = entry.contentRect;
-          // setcurrentOuterHeight(height);
           const rowHeight = document?.getElementsByClassName('ndl-data-grid-td')?.[0]?.clientHeight ?? 69;
           table.setPageSize(Math.floor(height / rowHeight));
         });
