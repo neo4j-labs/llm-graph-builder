@@ -259,7 +259,8 @@ async def post_processing(uri=Form(None), userName=Form(None), password=Form(Non
             logger.log_struct(josn_obj)
             logging.info(f'Updated KNN Graph')
         if "create_fulltext_index" in tasks:
-            await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database)
+            await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database,type="entities")
+            await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database,type="keyword")
             josn_obj = {'api_name': 'post_processing/create_fulltext_index', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logger.log_struct(josn_obj)
             logging.info(f'Full Text index created')
