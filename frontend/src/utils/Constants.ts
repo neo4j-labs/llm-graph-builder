@@ -57,7 +57,7 @@ export const defaultLLM = llms?.includes('openai-gpt-3.5')
   ? 'gemini-1.0-pro'
   : 'diffbot';
 export const chatModes =
-  process.env?.CHAT_MODES?.trim() != '' ? process.env.CHAT_MODES?.split(',') : ['vector', 'graph', 'graph+vector'];
+  process.env?.CHAT_MODES?.trim() != '' ? process.env.CHAT_MODES?.split(',') : ['vector', 'graph', 'graph+vector','hybrid'];
 export const chunkSize = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.TIME_PER_PAGE ? parseInt(process.env.TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
