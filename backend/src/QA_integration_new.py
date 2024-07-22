@@ -365,15 +365,13 @@ def QA_RAG(graph, model, question, document_names,session_id, mode):
             return result
         elif mode == "vector":
             retrieval_query = VECTOR_SEARCH_QUERY
-        elif mode == "hybrid":
-            retrieval_query = VECTOR_SEARCH_QUERY
         else:
             retrieval_query = VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT)
 
         llm, doc_retriever, model_version = setup_chat(model, graph, document_names,retrieval_query,mode)
         
         docs = retrieve_documents(doc_retriever, messages)
-        
+                
         if docs:
             content, result, total_tokens = process_documents(docs, question, messages, llm,model)
         else:
