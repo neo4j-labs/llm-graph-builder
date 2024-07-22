@@ -73,6 +73,7 @@ export default function EntityExtractionSetting({
       removeNodesAndRels(removedNodelabels, removedRelations);
     }
     setSelectedSchemas(selectedOptions);
+    localStorage.setItem('selectedSchemas', JSON.stringify({ db: userCredentials?.uri, selectedOptions: selectedOptions}));
     const nodesFromSchema = selectedOptions.map((s) => JSON.parse(s.value).nodelabels).flat();
     const relationsFromSchema = selectedOptions.map((s) => JSON.parse(s.value).relationshipTypes).flat();
     let nodeOptionsFromSchema: OptionType[] = [];
@@ -155,7 +156,6 @@ export default function EntityExtractionSetting({
     }, []);
     setdefaultExamples(parsedData);
   }, []);
-
   useEffect(() => {
     if (userCredentials) {
       if (open && view === 'Dialog') {
@@ -220,11 +220,23 @@ export default function EntityExtractionSetting({
       'selectedRelationshipLabels',
       JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] })
     );
+    localStorage.setItem('selectedSchemas', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
     showAlert('info', `Successfully Removed the Schema settings`);
     if (view === 'Dialog' && onClose != undefined) {
       onClose();
     }
   };
+
+  // Load selectedSchemas from local storage on mount
+  useEffect(() => {
+    const storedSchemas = localStorage.getItem('selectedSchemas');
+    if (storedSchemas) {
+      const parsedSchemas = JSON.parse(storedSchemas);
+      setSelectedSchemas(parsedSchemas.selectedOptions);
+    }
+  }, []);
+
+  console.log('selectedSchemas', selectedSchemas);
   return (
     <div>
       <Typography variant='body-medium'>

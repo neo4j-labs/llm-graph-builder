@@ -14,10 +14,6 @@ GROQ_MODELS = ["groq-llama3"]
 BUCKET_UPLOAD = 'llm-graph-builder-upload'
 BUCKET_FAILED_FILE = 'llm-graph-builder-failed'
 PROJECT_ID = 'llm-experiments-387609' 
-
-
-
-
 GRAPH_CHUNK_LIMIT = 50 
 
 #query 
