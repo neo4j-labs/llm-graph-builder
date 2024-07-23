@@ -30,11 +30,11 @@ export const docChunkEntities = `+[chunks]
 + collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
 export const APP_SOURCES =
   process.env.REACT_APP_SOURCES !== ''
-    ? process.env.REACT_APP_SOURCES?.split(',')
+    ? (process.env.REACT_APP_SOURCES?.split(',') as string[])
     : ['gcs', 's3', 'local', 'wiki', 'youtube', 'web'];
 export const llms =
   process.env?.LLM_MODELS?.trim() != ''
-    ? process.env.LLM_MODELS?.split(',')
+    ? (process.env.LLM_MODELS?.split(',') as string[])
     : [
         'diffbot',
         'openai-gpt-3.5',
