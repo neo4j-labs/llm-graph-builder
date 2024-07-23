@@ -178,3 +178,4 @@ zipp==3.17.0
 sentence-transformers==2.7.0
 google-cloud-logging==3.10.0
 PyMuPDF==1.24.5
+pypandoc==1.13
