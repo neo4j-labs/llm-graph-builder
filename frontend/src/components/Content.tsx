@@ -33,7 +33,11 @@ const Content: React.FC<ContentProps> = ({
   closeSettingModal,
 }) => {
   const [init, setInit] = useState<boolean>(false);
-  const [openConnection, setOpenConnection] = useState<connectionState>({ isvectorIndexMatch: true, openPopUp: false });
+  const [openConnection, setOpenConnection] = useState<connectionState>({
+    isvectorIndexMatch: true,
+    openPopUp: false,
+    novectorindexInDB: true,
+  });
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
@@ -403,7 +407,11 @@ const Content: React.FC<ContentProps> = ({
             setConnectionStatus(true);
             setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
           } else {
-            setOpenConnection({ isvectorIndexMatch: false, openPopUp: true });
+            setOpenConnection({
+              isvectorIndexMatch: false,
+              openPopUp: true,
+              novectorindexInDB: response.data.data.db_vector_dimension === 0,
+            });
             setConnectionStatus(false);
           }
         } else {
@@ -515,6 +523,7 @@ const Content: React.FC<ContentProps> = ({
             setOpenConnection={setOpenConnection}
             setConnectionStatus={setConnectionStatus}
             isVectorIndexMatch={openConnection.isvectorIndexMatch}
+            noVectorIndexFound={openConnection.novectorindexInDB}
           />
           <div className='connectionstatus__container'>
             <span className='h6 px-1'>Neo4j connection</span>

@@ -1,14 +1,4 @@
-import {
-  Button,
-  Dialog,
-  TextInput,
-  Dropdown,
-  Banner,
-  Dropzone,
-  Typography,
-  TextLink,
-  Flex,
-} from '@neo4j-ndl/react';
+import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone, Typography, TextLink, Flex } from '@neo4j-ndl/react';
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 import connectAPI from '../../../services/ConnectAPI';
 import { useCredentials } from '../../../context/UserCredentials';
@@ -28,6 +18,7 @@ interface ConnectionModalProps {
   setOpenConnection: Dispatch<SetStateAction<connectionState>>;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
   isVectorIndexMatch: boolean;
+  noVectorIndexFound: boolean;
 }
 
 export default function ConnectionModal({
@@ -35,6 +26,7 @@ export default function ConnectionModal({
   setOpenConnection,
   setConnectionStatus,
   isVectorIndexMatch,
+  noVectorIndexFound,
 }: ConnectionModalProps) {
   let prefilledconnection = localStorage.getItem('neo4j.connection');
   let initialuri;
@@ -78,53 +70,59 @@ export default function ConnectionModal({
       setUserDbVectorIndex(undefined);
     };
   }, [open]);
-  const recreateVectorIndex = useCallback(async () => {
-    try {
-      setVectorIndexLoading(true);
-      const response = await createVectorIndex(userCredentials as UserCredentials, userDbVectorIndex != 0);
-      setVectorIndexLoading(false);
-      if (response.data.status === 'Failed') {
-        throw new Error(response.data.error);
-      } else {
-        setMessage({
-          type: 'success',
-          content: 'Successfully created the vector index',
-        });
-        setConnectionStatus(true);
-        localStorage.setItem(
-          'neo4j.connection',
-          JSON.stringify({
-            uri: userCredentials?.uri,
-            user: userCredentials?.userName,
-            password: userCredentials?.password,
-            database: userCredentials?.database,
-            userDbVectorIndex: 384,
-          })
-        );
-      }
-    } catch (error) {
-      setVectorIndexLoading(false);
-      if (error instanceof Error) {
-        console.log('Error in recreating the vector index', error.message);
-        setMessage({ type: 'danger', content: error.message });
-      }
-    }
-    setTimeout(() => {
-      setMessage({ type: 'unknown', content: '' });
-      setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
-    }, 3000);
-  }, [userCredentials, userDbVectorIndex]);
-useEffect(()=>{
-  if (!isVectorIndexMatch) {
-    setMessage({
-      type: 'danger',
-      content: (
-        <VectorIndexMisMatchAlert vectorIndexLoading={vectorIndexLoading} recreateVectorIndex={recreateVectorIndex} />
-      ),
-    });
-  }
-},[isVectorIndexMatch,vectorIndexLoading])
 
+  const recreateVectorIndex = useCallback(
+    async (isNewVectorIndex: boolean) => {
+      try {
+        setVectorIndexLoading(true);
+        const response = await createVectorIndex(userCredentials as UserCredentials, isNewVectorIndex);
+        setVectorIndexLoading(false);
+        if (response.data.status === 'Failed') {
+          throw new Error(response.data.error);
+        } else {
+          setMessage({
+            type: 'success',
+            content: 'Successfully created the vector index',
+          });
+          setConnectionStatus(true);
+          localStorage.setItem(
+            'neo4j.connection',
+            JSON.stringify({
+              uri: userCredentials?.uri,
+              user: userCredentials?.userName,
+              password: userCredentials?.password,
+              database: userCredentials?.database,
+              userDbVectorIndex: 384,
+            })
+          );
+        }
+      } catch (error) {
+        setVectorIndexLoading(false);
+        if (error instanceof Error) {
+          console.log('Error in recreating the vector index', error.message);
+          setMessage({ type: 'danger', content: error.message });
+        }
+      }
+      setTimeout(() => {
+        setMessage({ type: 'unknown', content: '' });
+        setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
+      }, 3000);
+    },
+    [userCredentials, userDbVectorIndex]
+  );
+  useEffect(() => {
+    if (!isVectorIndexMatch) {
+      setMessage({
+        type: 'danger',
+        content: (
+          <VectorIndexMisMatchAlert
+            vectorIndexLoading={vectorIndexLoading}
+            recreateVectorIndex={() => recreateVectorIndex(!noVectorIndexFound)}
+          />
+        ),
+      });
+    }
+  }, [isVectorIndexMatch, vectorIndexLoading, noVectorIndexFound]);
 
   const parseAndSetURI = (uri: string, urlparams = false) => {
     const uriParts: string[] = uri.split('://');
@@ -219,7 +217,7 @@ useEffect(()=>{
           content: (
             <VectorIndexMisMatchAlert
               vectorIndexLoading={vectorIndexLoading}
-              recreateVectorIndex={recreateVectorIndex}
+              recreateVectorIndex={() => recreateVectorIndex(response.data.data.db_vector_dimension === 0)}
             />
           ),
         });

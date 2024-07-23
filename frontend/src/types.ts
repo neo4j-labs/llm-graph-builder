@@ -604,4 +604,5 @@ export interface ExtendedRelationship extends Relationship {
 export interface connectionState {
   isvectorIndexMatch: boolean;
   openPopUp: boolean;
+  novectorindexInDB: boolean;
 }
