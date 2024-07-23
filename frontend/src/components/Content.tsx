@@ -403,6 +403,13 @@ const Content: React.FC<ContentProps> = ({
         console.log(parsedData.uri);
         const response = await connectAPI(parsedData.uri, parsedData.user, parsedData.password, parsedData.database);
         if (response?.data?.status === 'Success') {
+          localStorage.setItem(
+            'neo4j.connection',
+            JSON.stringify({
+              ...parsedData,
+              userDbVectorIndex: response.data.data.db_vector_dimension,
+            })
+          );
           if (response.data.data.application_dimension === response.data.data.db_vector_dimension) {
             setConnectionStatus(true);
             setOpenConnection((prev) => ({ ...prev, openPopUp: false }));

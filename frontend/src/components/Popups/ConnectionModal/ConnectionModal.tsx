@@ -118,6 +118,8 @@ export default function ConnectionModal({
           <VectorIndexMisMatchAlert
             vectorIndexLoading={vectorIndexLoading}
             recreateVectorIndex={() => recreateVectorIndex(!noVectorIndexFound)}
+            isVectorIndexAlreadyExists={!noVectorIndexFound}
+            userVectorIndexDimension={JSON.parse(localStorage.getItem('neo4j.connection') ?? 'null').userDbVectorIndex}
           />
         ),
       });
@@ -218,6 +220,8 @@ export default function ConnectionModal({
             <VectorIndexMisMatchAlert
               vectorIndexLoading={vectorIndexLoading}
               recreateVectorIndex={() => recreateVectorIndex(response.data.data.db_vector_dimension === 0)}
+              isVectorIndexAlreadyExists={response.data.data.db_vector_dimension != 0}
+              userVectorIndexDimension={response.data.data.db_vector_dimension}
             />
           ),
         });
