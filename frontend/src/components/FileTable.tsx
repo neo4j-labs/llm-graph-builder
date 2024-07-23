@@ -708,7 +708,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         return value;
       },
       fileTypeFilter: (row) => {
-        console.log(row.original.type === filetypeFilter);
         if (filetypeFilter === 'All') {
           return true;
         }
