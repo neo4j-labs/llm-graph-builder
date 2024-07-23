@@ -38,7 +38,7 @@ def test_graph_from_file_local_file(model_name):
    print(merged_file_path)
 
 
-   local_file_result = extract_graph_from_file_local_file(graph, model, merged_file_path, file_name, '', '', uri)
+   local_file_result = extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, '', '')
    # final_list.append(local_file_result)
    print(local_file_result)
 
@@ -89,7 +89,7 @@ def test_graph_from_Wikipedia(model_name):
     wiki_query = 'https://en.wikipedia.org/wiki/Ram_Mandir'
     source_type = 'Wikipedia'
     create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type)
-    wikiresult = extract_graph_from_file_Wikipedia(graph, model, wiki_query, 1, 'en', '', '')
+    wikiresult = extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, 1, 'en', '', '')
     logging.info("Info: Wikipedia test done")
     print(wikiresult)
     
@@ -119,12 +119,12 @@ def test_graph_from_Wikipedia_failed():
 # Check for Youtube_video to be Success
 def test_graph_from_youtube_video(model_name):
     model = model_name
-    url = 'https://www.youtube.com/watch?v=T-qy-zPWgqA'
+    source_url = 'https://www.youtube.com/watch?v=T-qy-zPWgqA'
     source_type = 'youtube'
 
 
-    create_source_node_graph_url_youtube(graph, model, url, source_type)
-    youtuberesult = extract_graph_from_file_youtube(graph, model, url, '', '')
+    create_source_node_graph_url_youtube(graph, model, source_url, source_type)
+    youtuberesult = extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, '', '')
 
 
     logging.info("Info: Youtube Video test done")
