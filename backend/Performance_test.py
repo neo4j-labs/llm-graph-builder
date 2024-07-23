@@ -11,53 +11,64 @@ ENDPOINTS = {
 }
 
 
-CONCURRENT_REQUESTS = 1  # Number of concurrent requests # 25to do....50
-CHATBOT_MESSAGES = ["list out details of Patents of Jacob Einstein"]
+CONCURRENT_REQUESTS = 25  # Number of concurrent requests 
+CHATBOT_MESSAGES = ["list out details of Patents of Jacob Einstein","hi","hello","mango","apple","amazon","Patrick pichette","Sunder pichai","tesla","Joe biden","Modi","AI","Neo4j","list out details of Patents of Jacob Einstein","hi","hello","mango","apple","amazon","Patrick pichette",]
 
-def get_request_sourcelist():
-    data = {'uri': 'neo4j+s://73b760b4.databases.neo4j.io:7687',
-    'database' : 'neo4j',
-    'userName' : 'neo4j',
-    'password' : 'SHF3QXpmRzgzWHdjRVEtbXZFRzR5TnBjUlRITXBzZ1phWVczcUlHSmgySQ=='}
-    response = requests.get(API_BASE_URL + ENDPOINTS['get_sourcelist'], headers=data) 
-    return response.status_code, response.text
+#Source_list
 
-
-def post_request_connect():
-    data = {'uri': 'neo4j+s://73b760b4.databases.neo4j.io:7687',
-    'database' : 'neo4j',
-    'userName' : 'neo4j',
-    'password' : 'HqwAzfG83XwcEQ-mvEG4yNpcRTHMpsgZaYW3qIGJh2I'}
-    response = requests.post(API_BASE_URL + ENDPOINTS['post_connect'], headers=data)
-    return response.status_code, response.text
-
-# def post_request_chunk():
-#     data = {'uri': 'neo4j+s://73b760b4.databases.neo4j.io:7687',
+# def get_request_sourcelist():
+#     data = {'uri': 'neo4j s://eb1da2b7.databases.neo4j.io:7687',
 #     'database' : 'neo4j',
 #     'userName' : 'neo4j',
-#     'password' : 'HqwAzfG83XwcEQ-mvEG4yNpcRTHMpsgZaYW3qIGJh2I',  
-#     'chunk_ids' : "9601cfdc7e7eb5b3f53db06f164c3d5a09848952"
-#     }
-#     response = requests.post(API_BASE_URL + ENDPOINTS['post_chunk'], headers=data)
+#     'password' : 'MlQ1SUJuLTFVUTlOYUM1VFMtNEtSaHliX1M3N2ZNV21MRkprWEkybjlIOA=='}
+#     #response = requests.get(ENDPOINTS['get_sourcelist'], headers=data)
+#     response = requests.get(ENDPOINTS['get_sourcelist']) 
 #     return response.status_code, response.text
 
-def chatbot_request(message): 
-    #data = {'message': message}  # Replacing with actual message
-    data = {"uri":"neo4j+s://73b760b4.databases.neo4j.io:7687",
-        "database":"neo4j",
-        "userName":"neo4j",
-        "password": "HqwAzfG83XwcEQ-mvEG4yNpcRTHMpsgZaYW3qIGJh2I",
-        "question": message,
-        "session_id": "56fdbc27-fd94-4b57-a6db-873dade5ba3b",
-        "model":    "gpt-3.5",
-        "mode": "graph+vector"
-                } 
-    response = requests.post(API_BASE_URL + ENDPOINTS['chatbot'], data=data)
+#Connect
+
+# def post_request_connect():
+#     data = {'uri': 'neo4j+s://eb1da2b7.databases.neo4j.io:7687',
+#     'database' : 'neo4j',
+#     'userName' : 'neo4j',
+#     'password' : '2T5IBn-1UQ9NaC5TS-4KRhyb_S77fMWmLFJkXI2n9H8'}
+#     response = requests.post(API_BASE_URL + ENDPOINTS['post_connect'], headers=data)
+#     return response.status_code, response.text
+
+#Chunk
+
+def post_request_chunk():
+    data = {'uri': 'neo4j+s://73b760b4.databases.neo4j.io:7687',
+    'database' : 'neo4j',
+    'userName' : 'neo4j',
+    'password' : '2T5IBn-1UQ9NaC5TS-4KRhyb_S77fMWmLFJkXI2n9H8',  
+    'chunk_ids' : "14b337cdcab8f4c8006f7cd5a699ffe69f377e6c,f03288a5c8f5eb7ac05acf60f340d1dc207474db,9601cfdc7e7eb5b3f53db06f164c3d5a09848952"
+    }
+    response = requests.post(API_BASE_URL + ENDPOINTS['post_chunk'], headers=data)
     return response.status_code, response.text
 
-def get_request_health():
-    response = requests.get(API_BASE_URL + ENDPOINTS['get_health']). # target <10 ms comment
-    return response.status_code, response.text
+#chat_bot
+
+# def chatbot_request(message): 
+#     #data = {'message': message}  # Replacing with actual message
+#     data = {"uri":"neo4j+s://eb1da2b7.databases.neo4j.io:7687",
+#         "database":"neo4j",
+#         "userName":"neo4j",
+#         "password": "2T5IBn-1UQ9NaC5TS-4KRhyb_S77fMWmLFJkXI2n9H8",
+#         "question": message,
+#         "session_id": "697c0fa9-f340-4a8f-960b-50158d8ea804",
+#         "model":    "openai-gpt-3.5",
+#         "mode": "graph+vector",
+#           "document_names": [] 
+#                 } 
+#     response = requests.post(API_BASE_URL + ENDPOINTS['chatbot'], data=data)
+#     return response.status_code, response.text
+
+#Health API
+
+# def get_request_health():
+#     response = requests.get(API_BASE_URL + ENDPOINTS['get_health'])
+#     return response.status_code, response.text
 
 
 def performance_main():
@@ -68,22 +79,22 @@ def performance_main():
         futures = []
 
         # GET request futures
-        for _ in range(CONCURRENT_REQUESTS):
-            futures.append(executor.submit(get_request_sourcelist))
+        # for _ in range(CONCURRENT_REQUESTS):
+        #     futures.append(executor.submit(get_request_sourcelist))
 
         # GET request futures
-        for _ in range(CONCURRENT_REQUESTS):
-            futures.append(executor.submit(get_request_health))
-
-        # POST request futures
-        for _ in range(CONCURRENT_REQUESTS):
-            futures.append(executor.submit(post_request_connect))
+        # for _ in range(CONCURRENT_REQUESTS):
+        #     futures.append(executor.submit(get_request_health))
 
         # POST request futures
         # for _ in range(CONCURRENT_REQUESTS):
-        #     futures.append(executor.submit(post_request_chunk))
+        #     futures.append(executor.submit(post_request_connect))
 
-        # # Chatbot request futures
+        # POST request futures
+        for _ in range(CONCURRENT_REQUESTS):
+            futures.append(executor.submit(post_request_chunk))
+
+        #  Chatbot request futures
         # for message in CHATBOT_MESSAGES:
         #     futures.append(executor.submit(chatbot_request, message))
         
