@@ -55,6 +55,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const [statusFilter, setstatusFilter] = useState<string>('');
   const [filetypeFilter, setFiletypeFilter] = useState<string>('');
   const [llmtypeFilter, setLLmtypeFilter] = useState<string>('');
+  const skipPageResetRef = useRef<boolean>(false);
   const [alertDetails, setalertDetails] = useState<alertStateType>({
     showAlert: false,
     alertType: 'error',
@@ -89,6 +90,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           onClick: () => {
             setstatusFilter('All');
             table.getColumn('status')?.setFilterValue(true);
+            skipPageResetRef.current = true;
           },
         },
         {
@@ -100,6 +102,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           onClick: () => {
             setstatusFilter('Completed');
             table.getColumn('status')?.setFilterValue(true);
+            skipPageResetRef.current = true;
           },
         },
         {
@@ -111,6 +114,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           onClick: () => {
             setstatusFilter('New');
             table.getColumn('status')?.setFilterValue(true);
+            skipPageResetRef.current = true;
           },
         },
         {
@@ -122,6 +126,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           onClick: () => {
             setstatusFilter('Failed');
             table.getColumn('status')?.setFilterValue(true);
+            skipPageResetRef.current = true;
           },
         },
       ],
@@ -351,6 +356,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   onClick: () => {
                     setFiletypeFilter(t as string);
                     table.getColumn('source')?.setFilterValue(true);
+                    skipPageResetRef.current = true;
                   },
                 };
               }),
@@ -385,6 +391,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 onClick: () => {
                   setLLmtypeFilter('All');
                   table.getColumn('model')?.setFilterValue(true);
+                  skipPageResetRef.current = true;
                 },
               },
               ...llms.map((m) => {
@@ -393,6 +400,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   onClick: () => {
                     setLLmtypeFilter(m);
                     table.getColumn('model')?.setFilterValue(true);
+                    skipPageResetRef.current = true;
                   },
                 };
               }),
@@ -442,6 +450,9 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     ],
     [filesData.length]
   );
+  useEffect(() => {
+    skipPageResetRef.current = false;
+  }, [filesData.length]);
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -676,8 +687,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     }
   };
 
-  // const pageSizeCalculation = Math.floor((currentOuterHeight - 402) / 45);
-
   const table = useReactTable({
     data: filesData,
     columns,
@@ -685,11 +694,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange: setColumnFilters,
-    // initialState: {
-    //   pagination: {
-    //     pageSize: pageSizeCalculation < 0 ? 9 : pageSizeCalculation,
-    //   },
-    // },
     state: {
       columnFilters,
       rowSelection,
@@ -704,6 +708,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         return value;
       },
       fileTypeFilter: (row) => {
+        console.log(row.original.type === filetypeFilter);
         if (filetypeFilter === 'All') {
           return true;
         }
@@ -717,7 +722,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       },
     },
     enableGlobalFilter: false,
-    autoResetPageIndex: false,
+    autoResetPageIndex: skipPageResetRef.current,
     enableRowSelection: true,
     enableMultiRowSelection: true,
     getRowId: (row) => row.id,
