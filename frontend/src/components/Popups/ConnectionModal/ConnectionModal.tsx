@@ -1,12 +1,22 @@
-import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone, Typography, TextLink, Flex } from '@neo4j-ndl/react';
+import {
+  Button,
+  Dialog,
+  TextInput,
+  Dropdown,
+  Banner,
+  Dropzone,
+  Typography,
+  TextLink,
+  Flex,
+} from '@neo4j-ndl/react';
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 import connectAPI from '../../../services/ConnectAPI';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useSearchParams } from 'react-router-dom';
 import { buttonCaptions } from '../../../utils/Constants';
 import { createVectorIndex } from '../../../services/vectorIndexCreation';
-import { UserCredentials } from '../../../types';
-import Markdown from 'react-markdown';
+import { connectionState, UserCredentials } from '../../../types';
+import VectorIndexMisMatchAlert from './VectorIndexMisMatchAlert';
 
 interface Message {
   type: 'success' | 'info' | 'warning' | 'danger' | 'unknown';
@@ -15,11 +25,17 @@ interface Message {
 
 interface ConnectionModalProps {
   open: boolean;
-  setOpenConnection: Dispatch<SetStateAction<boolean>>;
+  setOpenConnection: Dispatch<SetStateAction<connectionState>>;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
+  isVectorIndexMatch: boolean;
 }
 
-export default function ConnectionModal({ open, setOpenConnection, setConnectionStatus }: ConnectionModalProps) {
+export default function ConnectionModal({
+  open,
+  setOpenConnection,
+  setConnectionStatus,
+  isVectorIndexMatch,
+}: ConnectionModalProps) {
   let prefilledconnection = localStorage.getItem('neo4j.connection');
   let initialuri;
   let initialdb;
@@ -48,7 +64,6 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
   const { setUserCredentials, userCredentials } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [disableDimenstionbutton, setDisableDimenstionbutton] = useState<boolean>(true);
   const [userDbVectorIndex, setUserDbVectorIndex] = useState<number | undefined>(initialuserdbvectorindex ?? undefined);
   const [vectorIndexLoading, setVectorIndexLoading] = useState<boolean>(false);
 
@@ -60,10 +75,56 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
       setSearchParams(searchParams);
     }
     return () => {
-      setDisableDimenstionbutton(true);
       setUserDbVectorIndex(undefined);
     };
   }, [open]);
+  const recreateVectorIndex = useCallback(async () => {
+    try {
+      setVectorIndexLoading(true);
+      const response = await createVectorIndex(userCredentials as UserCredentials, userDbVectorIndex != 0);
+      setVectorIndexLoading(false);
+      if (response.data.status === 'Failed') {
+        throw new Error(response.data.error);
+      } else {
+        setMessage({
+          type: 'success',
+          content: 'Successfully created the vector index',
+        });
+        setConnectionStatus(true);
+        localStorage.setItem(
+          'neo4j.connection',
+          JSON.stringify({
+            uri: userCredentials?.uri,
+            user: userCredentials?.userName,
+            password: userCredentials?.password,
+            database: userCredentials?.database,
+            userDbVectorIndex: 384,
+          })
+        );
+      }
+    } catch (error) {
+      setVectorIndexLoading(false);
+      if (error instanceof Error) {
+        console.log('Error in recreating the vector index', error.message);
+        setMessage({ type: 'danger', content: error.message });
+      }
+    }
+    setTimeout(() => {
+      setMessage({ type: 'unknown', content: '' });
+      setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
+    }, 3000);
+  }, [userCredentials, userDbVectorIndex]);
+useEffect(()=>{
+  if (!isVectorIndexMatch) {
+    setMessage({
+      type: 'danger',
+      content: (
+        <VectorIndexMisMatchAlert vectorIndexLoading={vectorIndexLoading} recreateVectorIndex={recreateVectorIndex} />
+      ),
+    });
+  }
+},[isVectorIndexMatch,vectorIndexLoading])
+
 
   const parseAndSetURI = (uri: string, urlparams = false) => {
     const uriParts: string[] = uri.split('://');
@@ -145,39 +206,23 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
     const response = await connectAPI(connectionURI, username, password, database);
     if (response?.data?.status === 'Success') {
       setUserDbVectorIndex(response.data.data.db_vector_dimension);
-      if (response.data.data.db_vector_dimension != 0) {
-        if (response.data.data.db_vector_dimension === response.data.data.application_dimension) {
-          setConnectionStatus(true);
-          setOpenConnection(false);
-          setDisableDimenstionbutton(true);
-          setMessage({
-            type: 'success',
-            content: response.data.data.message,
-          });
-        } else {
-          setMessage({
-            type: 'info',
-            content: (
-              <Markdown className='whitespace-pre-wrap'>
-                {`**Vector Index Incompatibility** 
-            The existing Neo4j vector index dimension is incompatible with the supported dimension for this application. 
-            To proceed, please choose one of the following options: 
-            **Recreate Vector Index:** Click "Create Vector Index" to generate a compatible vector index. 
-            **Use a Different Instance:** Connect to a Neo4j instance with a compatible vector index configuration  `}
-              </Markdown>
-            ),
-          });
-          setDisableDimenstionbutton(false);
-        }
+      if (response.data.data.db_vector_dimension === response.data.data.application_dimension) {
+        setConnectionStatus(true);
+        setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
+        setMessage({
+          type: 'success',
+          content: response.data.data.message,
+        });
       } else {
         setMessage({
-          type: 'info',
+          type: 'danger',
           content: (
-            <Markdown className='whitespace-pre-wrap'>{`**Vector index not found**.
-              To leverage AI-powered search, please create a vector index.This will enable efficient similarity search within your Neo4j database`}</Markdown>
+            <VectorIndexMisMatchAlert
+              vectorIndexLoading={vectorIndexLoading}
+              recreateVectorIndex={recreateVectorIndex}
+            />
           ),
         });
-        setDisableDimenstionbutton(false);
       }
       localStorage.setItem(
         'neo4j.connection',
@@ -191,58 +236,19 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
       );
     } else {
       setMessage({ type: 'danger', content: response.data.error });
-      setOpenConnection(true);
+      setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
       setPassword('');
       setConnectionStatus(false);
     }
     setIsLoading(false);
     setTimeout(() => {
-      setMessage({ type: 'unknown', content: '' });
       setPassword('');
     }, 10000);
   };
 
   const onClose = useCallback(() => {
     setMessage({ type: 'unknown', content: '' });
-    setDisableDimenstionbutton(true);
   }, []);
-
-  const recreateVectorIndex = useCallback(async () => {
-    try {
-      setVectorIndexLoading(true);
-      const response = await createVectorIndex(userCredentials as UserCredentials, userDbVectorIndex != 0);
-      setVectorIndexLoading(false);
-      if (response.data.status === 'Failed') {
-        throw new Error(response.data.error);
-      } else {
-        setMessage({
-          type: 'success',
-          content: 'Successfully created the vector index',
-        });
-        setConnectionStatus(true);
-        localStorage.setItem(
-          'neo4j.connection',
-          JSON.stringify({
-            uri: userCredentials?.uri,
-            user: userCredentials?.userName,
-            password: userCredentials?.password,
-            database: userCredentials?.database,
-            userDbVectorIndex: 384,
-          })
-        );
-      }
-    } catch (error) {
-      setVectorIndexLoading(false);
-      if (error instanceof Error) {
-        console.log('Error in recreating the vector index', error.message);
-        setMessage({ type: 'danger', content: error.message });
-      }
-    }
-    setTimeout(() => {
-      setMessage({ type: 'unknown', content: '' });
-      setOpenConnection(false);
-    }, 3000);
-  }, [userCredentials, userDbVectorIndex]);
 
   const isDisabled = useMemo(() => !username || !URI || !password, [username, URI, password]);
 
@@ -253,7 +259,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
         open={open}
         aria-labelledby='form-dialog-title'
         onClose={() => {
-          setOpenConnection(false);
+          setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
           setMessage({ type: 'unknown', content: '' });
         }}
       >
@@ -363,13 +369,6 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
           <Flex flexDirection='row' justifyContent='flex-end'>
             <Button loading={isLoading} disabled={isDisabled} onClick={() => submitConnection()}>
               {buttonCaptions.connect}
-            </Button>
-            <Button
-              loading={vectorIndexLoading}
-              disabled={disableDimenstionbutton}
-              onClick={() => recreateVectorIndex()}
-            >
-              Create Vector Index
             </Button>
           </Flex>
         </Dialog.Content>
