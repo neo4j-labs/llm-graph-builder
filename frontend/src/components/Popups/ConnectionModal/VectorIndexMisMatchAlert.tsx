@@ -19,7 +19,7 @@ export default function VectorIndexMisMatchAlert({
         <Markdown className='whitespace-pre-wrap'>
           {isVectorIndexAlreadyExists
             ? `**Vector Index Incompatibility** 
-The existing Neo4j vector index dimension (${userVectorIndexDimension}) is incompatible with the supported dimension for this application. 
+The existing Neo4j vector index dimension (${userVectorIndexDimension}) is incompatible with the supported dimension (384) for this application. 
 To proceed, please choose one of the following options: 
 1.**Recreate Vector Index:** Click "Re-Create Vector Index" to generate a compatible vector index. 
 2.**Use a Different Instance:** Connect to a Neo4j instance with a compatible vector index configuration  `
