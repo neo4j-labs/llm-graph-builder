@@ -56,7 +56,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       removeNodesAndRels(removedNodelabels, removedRelations);
     }
     setSelectedSchemas(selectedOptions);
-    localStorage.setItem('selectedSchemas', JSON.stringify({ db: userCredentials?.uri, selectedOptions: selectedOptions}));
+    localStorage.setItem(
+      'selectedSchemas',
+      JSON.stringify({ db: userCredentials?.uri, selectedOptions: selectedOptions })
+    );
     const nodesFromSchema = selectedOptions.map((s) => JSON.parse(s.value).nodelabels).flat();
     const relationsFromSchema = selectedOptions.map((s) => JSON.parse(s.value).relationshipTypes).flat();
     let nodeOptionsFromSchema: OptionType[] = [];
