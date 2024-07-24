@@ -39,15 +39,37 @@ EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
 
 
-def get_neo4j_retriever(graph, retrieval_query,document_names,index_name="vector", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
+def get_neo4j_retriever(graph, retrieval_query,document_names,mode,index_name="vector",keyword_index="keyword", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
     try:
-        neo_db = Neo4jVector.from_existing_index(
-            embedding=EMBEDDING_FUNCTION,
-            index_name=index_name,
-            retrieval_query=retrieval_query,
-            graph=graph
-        )
-        logging.info(f"Successfully retrieved Neo4jVector index '{index_name}'")
+        if mode == "hybrid":
+            # neo_db = Neo4jVector.from_existing_graph(
+            #     embedding=EMBEDDING_FUNCTION,
+            #     index_name=index_name,
+            #     retrieval_query=retrieval_query,
+            #     graph=graph,
+            #     search_type="hybrid",
+            #     node_label="Chunk",
+            #     embedding_node_property="embedding",
+            #     text_node_properties=["text"]
+            #     # keyword_index_name=keyword_index
+            # )
+            neo_db = Neo4jVector.from_existing_index(
+                embedding=EMBEDDING_FUNCTION,
+                index_name=index_name,
+                retrieval_query=retrieval_query,
+                graph=graph,
+                search_type="hybrid",
+                keyword_index_name=keyword_index
+            )
+            logging.info(f"Successfully retrieved Neo4jVector index '{index_name}' and keyword index '{keyword_index}'")
+        else:
+            neo_db = Neo4jVector.from_existing_index(
+                embedding=EMBEDDING_FUNCTION,
+                index_name=index_name,
+                retrieval_query=retrieval_query,
+                graph=graph
+            )
+            logging.info(f"Successfully retrieved Neo4jVector index '{index_name}'")
         document_names= list(map(str.strip, json.loads(document_names)))
         if document_names:
             retriever = neo_db.as_retriever(search_type="similarity_score_threshold",search_kwargs={'k': search_k, "score_threshold": score_threshold,'filter':{'fileName': {'$in': document_names}}})
@@ -232,13 +254,13 @@ def clear_chat_history(graph,session_id):
             "user": "chatbot"
             }
 
-def setup_chat(model, graph, session_id, document_names,retrieval_query):
+def setup_chat(model, graph, document_names,retrieval_query,mode):
     start_time = time.time()
     if model in ["diffbot"]:
         model = "openai-gpt-4o"
     llm,model_name = get_llm(model)
     logging.info(f"Model called in chat {model} and model version is {model_name}")
-    retriever = get_neo4j_retriever(graph=graph,retrieval_query=retrieval_query,document_names=document_names)
+    retriever = get_neo4j_retriever(graph=graph,retrieval_query=retrieval_query,document_names=document_names,mode=mode)
     doc_retriever = create_document_retriever_chain(llm, retriever)
     chat_setup_time = time.time() - start_time
     logging.info(f"Chat setup completed in {chat_setup_time:.2f} seconds")
@@ -357,10 +379,10 @@ def QA_RAG(graph, model, question, document_names,session_id, mode):
         else:
             retrieval_query = VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT)
 
-        llm, doc_retriever, model_version = setup_chat(model, graph, session_id, document_names,retrieval_query)
+        llm, doc_retriever, model_version = setup_chat(model, graph, document_names,retrieval_query,mode)
         
         docs = retrieve_documents(doc_retriever, messages)
-        
+                
         if docs:
             content, result, total_tokens = process_documents(docs, question, messages, llm,model)
         else:

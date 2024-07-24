@@ -42,7 +42,6 @@ def test_graph_from_file_local_file(model_name):
    # final_list.append(local_file_result)
    print(local_file_result)
 
-
    logging.info("Info:  ")
    try:
        assert local_file_result['status'] == 'Completed' and local_file_result['nodeCount'] > 0 and local_file_result[
@@ -53,9 +52,6 @@ def test_graph_from_file_local_file(model_name):
        print("Fail: ", e)
        return local_file_result
       
-
-
-
 
 def test_graph_from_file_local_file_failed(model_name):
    model = model_name
@@ -71,25 +67,21 @@ def test_graph_from_file_local_file_failed(model_name):
        graphDb_data_Access = graphDBdataAccess(graph)
        graphDb_data_Access.create_source_node(obj_source_node)
 
-
        local_file_result = extract_graph_from_file_local_file(graph, model, file_name, merged_file_path, '', '')
-
 
        print(local_file_result)
    except AssertionError as e:
        print('Failed due to file does not exist means not uploaded or accidentaly deleteled from server')
        print("Failed: Error from extract function ", e)
 
-
-
-
-#   Check for Wikipedia file to be success
+#   Check for Wikipedia file to be test
 def test_graph_from_Wikipedia(model_name):
     model = model_name
     wiki_query = 'https://en.wikipedia.org/wiki/Ram_Mandir'
     source_type = 'Wikipedia'
+    file_name = "Ram_Mandir"
     create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type)
-    wikiresult = extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, 1, 'en', '', '')
+    wikiresult = extract_graph_from_file_Wikipedia(uri, userName, password, database, model, file_name, 1, 'en', '', '')
     logging.info("Info: Wikipedia test done")
     print(wikiresult)
     
@@ -102,8 +94,6 @@ def test_graph_from_Wikipedia(model_name):
         return wikiresult
 
 
-
-
 def test_graph_from_Wikipedia_failed():
    wiki_query = 'Test QA 123456'
    source_type = 'Wikipedia'
@@ -113,19 +103,14 @@ def test_graph_from_Wikipedia_failed():
    except AssertionError as e:
        print("Fail ", e)
 
-
-
-
 # Check for Youtube_video to be Success
 def test_graph_from_youtube_video(model_name):
     model = model_name
     source_url = 'https://www.youtube.com/watch?v=T-qy-zPWgqA'
     source_type = 'youtube'
 
-
     create_source_node_graph_url_youtube(graph, model, source_url, source_type)
     youtuberesult = extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, '', '')
-
 
     logging.info("Info: Youtube Video test done")
     print(youtuberesult)
@@ -138,18 +123,11 @@ def test_graph_from_youtube_video(model_name):
         print("Failed ", e)
         return youtuberesult
 
-
-
-
 # Check for Youtube_video to be Failed
-
-
-
 
 def test_graph_from_youtube_video_failed():
    url = 'https://www.youtube.com/watch?v=U9mJuUkhUzk'
    source_type = 'youtube'
-
 
    create_source_node_graph_url_youtube(graph, model, url, source_type)
    youtuberesult = extract_graph_from_file_youtube(graph, model, url, ',', ',')
@@ -162,25 +140,18 @@ def test_graph_from_youtube_video_failed():
        print("Failed ", e)
 
 
-
-
 # Check for the GCS file to be uploaded, process and completed
 
-
-
-
 def test_graph_from_file_test_gcs():
-   bucket_name = 'llm_graph_transformer_test'
-   folder_name = 'technology'
-   source_type = 'gcs bucket'
+   bucket_name = 'test'
+   folder_name = 'test'
+   source_type = 'gcs test bucket'
    file_name = 'Neuralink brain chip patient playing chess.pdf'
    create_source_node_graph_url_gcs(graph, model, bucket_name, folder_name, source_type)
    gcsresult = extract_graph_from_file_gcs(graph, model, bucket_name, folder_name, file_name, '', '')
 
-
    logging.info("Info")
    print(gcsresult)
-
 
    try:
        assert gcsresult['status'] == 'Completed' and gcsresult['nodeCount'] > 10 and gcsresult['relationshipCount'] > 5
@@ -189,11 +160,9 @@ def test_graph_from_file_test_gcs():
        print("Failed ", e)
 
 
-
-
 def test_graph_from_file_test_gcs_failed():
-   bucket_name = 'llm_graph_transformer_neo'
-   folder_name = 'technology'
+   bucket_name = 'llm_graph_test'
+   folder_name = 'test'
    source_type = 'gcs bucket'
    # file_name = 'Neuralink brain chip patient playing chess.pdf'
    try:
@@ -203,10 +172,8 @@ def test_graph_from_file_test_gcs_failed():
        print("Failed ", e)
 
 
-
-
 def test_graph_from_file_test_s3_failed():
-   source_url = 's3://development-llm-graph-builder-models/'
+   source_url = 's3://development-llm-test/'
    try:
        create_source_node_graph_url_s3(graph, model, source_url, 'test123', 'pwd123')
        # assert result['status'] == 'Failed'
@@ -215,13 +182,10 @@ def test_graph_from_file_test_s3_failed():
        print("Failed ", e)
 
 
-
-
 # Check the Functionality of Chatbot QnA for mode 'graph+vector'
 def test_chatbot_QnA(model_name):
     model = model_name
     QA_n_RAG = QA_RAG(graph, model, 'Tell me about amazon', '[]', 1, 'graph+vector')
-
 
     print(QA_n_RAG)
     print(len(QA_n_RAG['message']))
@@ -257,26 +221,26 @@ if __name__ == "__main__":
        # local file
        response = test_graph_from_file_local_file(model_name)  
        final_list.append(response)
-  
-        # Youtube  Test
-       response= test_graph_from_youtube_video(model_name)  
-       final_list.append(response)
-    #    print(final_list)
-  
-       # test_graph_from_file_test_gcs(model_name) # GCS  Test
 
-       #chatbot 'graph+vector'
-       response = test_chatbot_QnA(model_name)
-       final_list.append(response)
-
-        #chatbot 'vector'
-       response = test_chatbot_QnA_vector(model_name)
-       final_list.append(response)
-
-       # Wikipedia  Test
+    #    # Wikipedia  Test
        response = test_graph_from_Wikipedia(model_name)  
        final_list.append(response)
   
+    #     # Youtube  Test
+       response= test_graph_from_youtube_video(model_name)  
+       final_list.append(response)
+    # #    print(final_list)
+  
+    #    # test_graph_from_file_test_gcs(model_name) # GCS  Test
+
+    #    #chatbot 'graph+vector'
+       response = test_chatbot_QnA(model_name)
+       final_list.append(response)
+
+    #     #chatbot 'vector'
+       response = test_chatbot_QnA_vector(model_name)
+       final_list.append(response)
+
        # test_graph_from_file_test_s3_failed() # S3 Failed Test Case
    df = pd.DataFrame(final_list)
    df['execution_date']= datetime.today().strftime('%Y-%m-%d')
