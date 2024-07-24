@@ -457,7 +457,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         footer: (info) => info.column.id,
       }),
     ],
-    [filesData.length, statusFilter, filetypeFilter,llmtypeFilter]
+    [filesData.length, statusFilter, filetypeFilter, llmtypeFilter]
   );
 
   const table = useReactTable({
