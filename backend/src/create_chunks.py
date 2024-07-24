@@ -3,7 +3,7 @@ from langchain.docstore.document import Document
 from langchain_community.graphs import Neo4jGraph
 import logging
 import os
-from src.document_sources.youtube import get_chunks_with_timestamps
+from src.document_sources.youtube import get_chunks_with_timestamps, get_calculated_timestamps
 
 logging.basicConfig(format="%(asctime)s - %(message)s", level="INFO")
 
@@ -35,8 +35,13 @@ class CreateChunksofDocument:
                     chunks.append(Document(page_content=chunk.page_content, metadata={'page_number':page_number}))    
         
         elif 'length' in self.pages[0].metadata:
-            chunks_without_timestamps = text_splitter.split_documents(self.pages)
-            chunks = get_chunks_with_timestamps(chunks_without_timestamps, self.pages[0].metadata['source'])
+            print(f"pages = {self.pages}")
+            if len(self.pages)>3 and self.pages[1].page_content.strip()=='' and  self.pages[2].page_content.strip()=='':
+                chunks_without_time_range = text_splitter.split_documents([self.pages[0]])
+                chunks = get_calculated_timestamps(chunks_without_time_range, self.pages[1].metadata['source'])
+            else: 
+                chunks_without_time_range = text_splitter.split_documents(self.pages)   
+                chunks = get_chunks_with_timestamps(chunks_without_time_range)
         else:
             chunks = text_splitter.split_documents(self.pages)
         return chunks
