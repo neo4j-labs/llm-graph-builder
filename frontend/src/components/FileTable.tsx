@@ -85,59 +85,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       });
     }
   );
-
-  const ColumnActions = {
-    columnActions: {
-      actions: [
-        {
-          title: 'All Files',
-          onClick: () => {
-            setstatusFilter('All');
-            table.getColumn('status')?.setFilterValue(true);
-            skipPageResetRef.current = true;
-          },
-        },
-        {
-          title: (
-            <span>
-              <StatusIndicator type='success'></StatusIndicator> Completed Files
-            </span>
-          ),
-          onClick: () => {
-            setstatusFilter('Completed');
-            table.getColumn('status')?.setFilterValue(true);
-            skipPageResetRef.current = true;
-          },
-        },
-        {
-          title: (
-            <span>
-              <StatusIndicator type='info'></StatusIndicator> New Files
-            </span>
-          ),
-          onClick: () => {
-            setstatusFilter('New');
-            table.getColumn('status')?.setFilterValue(true);
-            skipPageResetRef.current = true;
-          },
-        },
-        {
-          title: (
-            <span>
-              <StatusIndicator type='danger'></StatusIndicator> Failed Files
-            </span>
-          ),
-          onClick: () => {
-            setstatusFilter('Failed');
-            table.getColumn('status')?.setFilterValue(true);
-            skipPageResetRef.current = true;
-          },
-        },
-      ],
-      defaultSortingActions: false,
-    },
-  };
-
   const columns = useMemo(
     () => [
       {
@@ -275,7 +222,59 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         filterFn: 'statusFilter' as any,
         size: 200,
         meta: {
-          ...ColumnActions,
+          columnActions: {
+            actions: [
+              {
+                title: (
+                  <span className={`${statusFilter === 'All' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                    All Files
+                  </span>
+                ),
+                onClick: () => {
+                  setstatusFilter('All');
+                  table.getColumn('status')?.setFilterValue(true);
+                  skipPageResetRef.current = true;
+                },
+              },
+              {
+                title: (
+                  <span className={`${statusFilter === 'Completed' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                    <StatusIndicator type='success'></StatusIndicator> Completed Files
+                  </span>
+                ),
+                onClick: () => {
+                  setstatusFilter('Completed');
+                  table.getColumn('status')?.setFilterValue(true);
+                  skipPageResetRef.current = true;
+                },
+              },
+              {
+                title: (
+                  <span className={`${statusFilter === 'New' ? 'n-bg-palette-primary-bg-selected' : 'p-2'} p-2`}>
+                    <StatusIndicator type='info'></StatusIndicator> New Files
+                  </span>
+                ),
+                onClick: () => {
+                  setstatusFilter('New');
+                  table.getColumn('status')?.setFilterValue(true);
+                  skipPageResetRef.current = true;
+                },
+              },
+              {
+                title: (
+                  <span className={`${statusFilter === 'Failed' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                    <StatusIndicator type='danger'></StatusIndicator> Failed Files
+                  </span>
+                ),
+                onClick: () => {
+                  setstatusFilter('Failed');
+                  table.getColumn('status')?.setFilterValue(true);
+                  skipPageResetRef.current = true;
+                },
+              },
+            ],
+            defaultSortingActions: false,
+          },
         },
       }),
       columnHelper.accessor((row) => row.uploadprogess, {
@@ -348,7 +347,11 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           columnActions: {
             actions: [
               {
-                title: 'All types',
+                title: (
+                  <span className={`${filetypeFilter === 'All' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                    All types
+                  </span>
+                ),
                 onClick: () => {
                   setFiletypeFilter('All');
                   table.getColumn('source')?.setFilterValue(true);
@@ -356,7 +359,9 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               },
               ...Array.from(new Set(filesData.map((f) => f.type))).map((t) => {
                 return {
-                  title: t,
+                  title: (
+                    <span className={`${t === filetypeFilter ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>{t}</span>
+                  ),
                   onClick: () => {
                     setFiletypeFilter(t as string);
                     table.getColumn('source')?.setFilterValue(true);
@@ -391,7 +396,11 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           columnActions: {
             actions: [
               {
-                title: 'All',
+                title: (
+                  <span className={`${llmtypeFilter === 'All' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                    All
+                  </span>
+                ),
                 onClick: () => {
                   setLLmtypeFilter('All');
                   table.getColumn('model')?.setFilterValue(true);
@@ -400,7 +409,9 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               },
               ...llms.map((m) => {
                 return {
-                  title: m,
+                  title: (
+                    <span className={`${m === llmtypeFilter ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>{m}</span>
+                  ),
                   onClick: () => {
                     setLLmtypeFilter(m);
                     table.getColumn('model')?.setFilterValue(true);
@@ -425,12 +436,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         header: () => <span>Relations</span>,
         footer: (info) => info.column.id,
       }),
-      // columnHelper.accessor((row) => row.total_pages, {
-      //   id: 'Total pages',
-      //   cell: (info) => <i>{info.getValue()}</i>,
-      //   header: () => <span>Total pages</span>,
-      //   footer: (info) => info.column.id,
-      // }),
       columnHelper.accessor((row) => row.status, {
         id: 'inspect',
         cell: (info) => (
@@ -452,8 +457,51 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         footer: (info) => info.column.id,
       }),
     ],
-    [filesData.length]
+    [filesData.length, statusFilter, filetypeFilter]
   );
+
+  const table = useReactTable({
+    data: filesData,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onColumnFiltersChange: setColumnFilters,
+    state: {
+      columnFilters,
+      rowSelection,
+    },
+    onRowSelectionChange: setRowSelection,
+    filterFns: {
+      statusFilter: (row, columnId, filterValue) => {
+        if (statusFilter === 'All') {
+          return row;
+        }
+        const value = filterValue ? row.original[columnId] === statusFilter : row.original[columnId];
+        return value;
+      },
+      fileTypeFilter: (row) => {
+        if (filetypeFilter === 'All') {
+          return true;
+        }
+        return row.original.type === filetypeFilter;
+      },
+      llmTypeFilter: (row) => {
+        if (llmtypeFilter === 'All') {
+          return true;
+        }
+        return row.original.model === llmtypeFilter;
+      },
+    },
+    enableGlobalFilter: false,
+    autoResetPageIndex: skipPageResetRef.current,
+    enableRowSelection: true,
+    enableMultiRowSelection: true,
+    getRowId: (row) => row.id,
+    enableSorting: true,
+    getSortedRowModel: getSortedRowModel(),
+  });
+
   useEffect(() => {
     skipPageResetRef.current = false;
   }, [filesData.length]);
@@ -691,47 +739,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     }
   };
 
-  const table = useReactTable({
-    data: filesData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    state: {
-      columnFilters,
-      rowSelection,
-    },
-    onRowSelectionChange: setRowSelection,
-    filterFns: {
-      statusFilter: (row, columnId, filterValue) => {
-        if (statusFilter === 'All') {
-          return row;
-        }
-        const value = filterValue ? row.original[columnId] === statusFilter : row.original[columnId];
-        return value;
-      },
-      fileTypeFilter: (row) => {
-        if (filetypeFilter === 'All') {
-          return true;
-        }
-        return row.original.type === filetypeFilter;
-      },
-      llmTypeFilter: (row) => {
-        if (llmtypeFilter === 'All') {
-          return true;
-        }
-        return row.original.model === llmtypeFilter;
-      },
-    },
-    enableGlobalFilter: false,
-    autoResetPageIndex: skipPageResetRef.current,
-    enableRowSelection: true,
-    enableMultiRowSelection: true,
-    getRowId: (row) => row.id,
-    enableSorting: true,
-    getSortedRowModel: getSortedRowModel(),
-  });
   useImperativeHandle(
     ref,
     () => ({
