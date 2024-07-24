@@ -1,25 +1,12 @@
 import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone, Typography, TextLink, Flex } from '@neo4j-ndl/react';
-import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import connectAPI from '../../../services/ConnectAPI';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useSearchParams } from 'react-router-dom';
 import { buttonCaptions } from '../../../utils/Constants';
 import { createVectorIndex } from '../../../services/vectorIndexCreation';
-import { connectionState, UserCredentials } from '../../../types';
+import { ConnectionModalProps, Message, UserCredentials } from '../../../types';
 import VectorIndexMisMatchAlert from './VectorIndexMisMatchAlert';
-
-interface Message {
-  type: 'success' | 'info' | 'warning' | 'danger' | 'unknown';
-  content: string | React.ReactNode;
-}
-
-interface ConnectionModalProps {
-  open: boolean;
-  setOpenConnection: Dispatch<SetStateAction<connectionState>>;
-  setConnectionStatus: Dispatch<SetStateAction<boolean>>;
-  isVectorIndexMatch: boolean;
-  noVectorIndexFound: boolean;
-}
 
 export default function ConnectionModal({
   open,

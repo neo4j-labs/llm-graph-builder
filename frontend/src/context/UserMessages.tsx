@@ -1,12 +1,7 @@
-import { createContext, useState, useContext, Dispatch, SetStateAction, FC } from 'react';
-import { MessagesContextProviderProps, Messages } from '../types';
+import { createContext, useState, useContext, FC } from 'react';
+import { MessagesContextProviderProps, Messages, MessageContextType } from '../types';
 import chatbotmessages from '../assets/ChatbotMessages.json';
 import { getDateTime } from '../utils/Utils';
-
-interface MessageContextType {
-  messages: Messages[] | [];
-  setMessages: Dispatch<SetStateAction<Messages[]>>;
-}
 
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
 
