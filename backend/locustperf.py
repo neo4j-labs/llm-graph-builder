@@ -16,9 +16,9 @@ class UserBehavior(TaskSet):
     @task
     def post_request(self):
         payload = {
-            "uri": "neo4j+s://73b760b4.databases.neo4j.io:7687",
-            "database": "neo4j",
-            "userName": "neo4j"
+            "uri": "",
+            "database": "",
+            "userName": ""
         }
         with self.client.post("/connect", json=payload, catch_response=True) as response:
             # https://prod-backend-dcavk67s4a-uc.a.run.app/connect

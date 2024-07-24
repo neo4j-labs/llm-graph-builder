@@ -258,10 +258,6 @@ if __name__ == "__main__":
        response = test_graph_from_file_local_file(model_name)  
        final_list.append(response)
   
-       # Wikipedia  Test
-    #    response = test_graph_from_Wikipedia(model_name)  
-    #    final_list.append(response)
-
         # Youtube  Test
        response= test_graph_from_youtube_video(model_name)  
        final_list.append(response)
@@ -275,6 +271,10 @@ if __name__ == "__main__":
 
         #chatbot 'vector'
        response = test_chatbot_QnA_vector(model_name)
+       final_list.append(response)
+
+       # Wikipedia  Test
+       response = test_graph_from_Wikipedia(model_name)  
        final_list.append(response)
   
        # test_graph_from_file_test_s3_failed() # S3 Failed Test Case

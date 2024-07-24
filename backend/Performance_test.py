@@ -3,7 +3,7 @@ import requests
 import time
 API_BASE_URL = 'https://dev-backend-dcavk67s4a-uc.a.run.app'  
 ENDPOINTS = {
-    'get_sourcelist': '/sources_list?uri=neo4j+s://73b760b4.databases.neo4j.io:7687&database=neo4j&userName=neo4j&password=SHF3QXpmRzgzWHdjRVEtbXZFRzR5TnBjUlRITXBzZ1phWVczcUlHSmgySQ==',
+    'get_sourcelist': '/sources_list',
     'get_health' : '/health',
     'post_connect' : '/connect',
     'chatbot': '/chat_bot',
@@ -17,10 +17,10 @@ CHATBOT_MESSAGES = ["list out details of Patents of Jacob Einstein","hi","hello"
 #Source_list
 
 # def get_request_sourcelist():
-#     data = {'uri': 'neo4j s://eb1da2b7.databases.neo4j.io:7687',
-#     'database' : 'neo4j',
-#     'userName' : 'neo4j',
-#     'password' : 'MlQ1SUJuLTFVUTlOYUM1VFMtNEtSaHliX1M3N2ZNV21MRkprWEkybjlIOA=='}
+#     data = {'uri': '',
+#     'database' : '',
+#     'userName' : '',
+#     'password' : ''}
 #     #response = requests.get(ENDPOINTS['get_sourcelist'], headers=data)
 #     response = requests.get(ENDPOINTS['get_sourcelist']) 
 #     return response.status_code, response.text
@@ -28,21 +28,21 @@ CHATBOT_MESSAGES = ["list out details of Patents of Jacob Einstein","hi","hello"
 #Connect
 
 # def post_request_connect():
-#     data = {'uri': 'neo4j+s://eb1da2b7.databases.neo4j.io:7687',
-#     'database' : 'neo4j',
-#     'userName' : 'neo4j',
-#     'password' : '2T5IBn-1UQ9NaC5TS-4KRhyb_S77fMWmLFJkXI2n9H8'}
+#     data = {'uri': '',
+#     'database' : '',
+#     'userName' : '',
+#     'password' : ''}
 #     response = requests.post(API_BASE_URL + ENDPOINTS['post_connect'], headers=data)
 #     return response.status_code, response.text
 
 #Chunk
 
 def post_request_chunk():
-    data = {'uri': 'neo4j+s://73b760b4.databases.neo4j.io:7687',
-    'database' : 'neo4j',
-    'userName' : 'neo4j',
-    'password' : '2T5IBn-1UQ9NaC5TS-4KRhyb_S77fMWmLFJkXI2n9H8',  
-    'chunk_ids' : "14b337cdcab8f4c8006f7cd5a699ffe69f377e6c,f03288a5c8f5eb7ac05acf60f340d1dc207474db,9601cfdc7e7eb5b3f53db06f164c3d5a09848952"
+    data = {'uri': '',
+    'database' : '',
+    'userName' : '',
+    'password' : '',  
+    'chunk_ids' : "14b337cdcab8f4c8006f7cd5a699ffe69f377e6c"
     }
     response = requests.post(API_BASE_URL + ENDPOINTS['post_chunk'], headers=data)
     return response.status_code, response.text
@@ -51,10 +51,10 @@ def post_request_chunk():
 
 # def chatbot_request(message): 
 #     #data = {'message': message}  # Replacing with actual message
-#     data = {"uri":"neo4j+s://eb1da2b7.databases.neo4j.io:7687",
-#         "database":"neo4j",
-#         "userName":"neo4j",
-#         "password": "2T5IBn-1UQ9NaC5TS-4KRhyb_S77fMWmLFJkXI2n9H8",
+#     data = {"uri":"",
+#         "database":"",
+#         "userName":"",
+#         "password": "",
 #         "question": message,
 #         "session_id": "697c0fa9-f340-4a8f-960b-50158d8ea804",
 #         "model":    "openai-gpt-3.5",
