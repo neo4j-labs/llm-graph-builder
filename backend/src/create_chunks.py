@@ -9,10 +9,9 @@ logging.basicConfig(format="%(asctime)s - %(message)s", level="INFO")
 
 
 class CreateChunksofDocument:
-    def __init__(self, pages: list[Document], graph: Neo4jGraph, file_name: str):
+    def __init__(self, pages: list[Document], graph: Neo4jGraph):
         self.pages = pages
         self.graph = graph
-        self.file_name = file_name
 
     def split_file_into_chunks(self):
         """

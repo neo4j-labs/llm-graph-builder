@@ -20,6 +20,15 @@ def get_youtube_transcript(youtube_id):
 def get_youtube_combined_transcript(youtube_id):
   try:
     transcript_dict = get_youtube_transcript(youtube_id)
+    transcript = YouTubeTranscriptApi.get_transcript(youtube_id)
+    return transcript
+  except Exception as e:
+    message = f"Youtube transcript is not available for youtube Id: {youtube_id}"
+    raise Exception(message)
+  
+def get_youtube_combined_transcript(youtube_id):
+  try:
+    transcript_dict = get_youtube_transcript(youtube_id)
     transcript=''
     for td in transcript_dict:
       transcript += ''.join(td['text'])

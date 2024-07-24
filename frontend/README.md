@@ -1,6 +1,6 @@
 # Neo4j Knowledge Graph Builder
 
-Reactjs Responsive app for building an knowledge graph using [Neo4j Needle](https://www.neo4j.design/).
+Reactjs app for building an knowledge graph using [Neo4j Needle](https://www.neo4j.design/).
     
 ## Features
 - 🚀 Responsive: Adapts to different screen sizes for optimal user experience.

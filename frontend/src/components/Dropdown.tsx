@@ -1,34 +1,64 @@
-import { Dropdown } from '@neo4j-ndl/react';
-import { DropdownProps, OptionType } from '../types';
+import { Dropdown, Tip } from '@neo4j-ndl/react';
+import { OptionType, ReusableDropdownProps } from '../types';
 import { useMemo } from 'react';
-import { defaultLLM, llms } from '../utils/Constants';
+import { capitalize } from '../utils/Utils';
 
-const LlmDropdown: React.FC<DropdownProps> = ({ onSelect, isDisabled }) => {
+const DropdownComponent: React.FC<ReusableDropdownProps> = ({
+  options,
+  placeholder,
+  defaultValue,
+  onSelect,
+  children,
+  view,
+  isDisabled,
+  value,
+}) => {
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
   };
-  const allOptions = useMemo(() => llms, []);
-
+  const allOptions = useMemo(() => options, [options]);
   return (
     <>
-      <div className='w-[150px]'>
-        <Dropdown
-          type='select'
-          aria-label='A selection dropdown'
-          selectProps={{
-            onChange: handleChange,
-            options: allOptions?.map((option) => ({ label: option, value: option })),
-            placeholder: 'Select LLM Model',
-            defaultValue: { label: defaultLLM, value: defaultLLM },
-            menuPlacement: 'auto',
-            isDisabled,
-          }}
-          size='medium'
-          fluid
-        />
+      <div className={view === 'ContentView' ? 'w-[150px]' : ''}>
+        <Tip allowedPlacements={['top']}>
+          <Tip.Trigger>
+            <Dropdown
+              type='select'
+              aria-label='A selection dropdown'
+              label='LLM Models'
+              selectProps={{
+                onChange: handleChange,
+                options: allOptions?.map((option) => {
+                  const label =
+                    typeof option === 'string'
+                      ? (option.includes('LLM_MODEL_CONFIG_')
+                          ? capitalize(option.split('LLM_MODEL_CONFIG_').at(-1) as string)
+                          : capitalize(option)
+                        )
+                          .split('_')
+                          .join(' ')
+                      : capitalize(option.label);
+                  const value = typeof option === 'string' ? option : option.value;
+                  return {
+                    label,
+                    value,
+                  };
+                }),
+                placeholder: placeholder || 'Select an option',
+                defaultValue: defaultValue ? { label: capitalize(defaultValue), value: defaultValue } : undefined,
+                menuPlacement: 'auto',
+                isDisabled: isDisabled,
+                value: value,
+              }}
+              size='medium'
+              fluid
+            />
+          </Tip.Trigger>
+          <Tip.Content>LLM Model used for Extraction & Chat</Tip.Content>
+        </Tip>
+        {children}
       </div>
     </>
   );
 };
-
-export default LlmDropdown;
+export default DropdownComponent;

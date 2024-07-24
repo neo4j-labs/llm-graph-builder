@@ -3,47 +3,10 @@ from neo4j import time
 from neo4j import GraphDatabase
 import os
 import json
+from src.shared.constants import GRAPH_CHUNK_LIMIT,GRAPH_QUERY
 # from neo4j.debug import watch
 
 # watch("neo4j")
-
-QUERY_MAP = {
-    "document"          : " + [docs] ",
-    "chunks"            : " + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } ",
-    "entities"          : " + collect { OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!Chunk) RETURN p }",
-    "docEntities"       : " + [docs] + collect { MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)--(:!Chunk) RETURN p }",
-    "docChunks"         : " + [chunks] + collect { MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } ",
-    "chunksEntities"    : " + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } + collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }",
-    "docChunkEntities"  : " + [chunks] + collect { MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } + collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }"
-}
-
-QUERY_WITH_DOCUMENT = """
-    MATCH docs = (d:Document) 
-    WHERE d.fileName = $document_name AND (d.status = 'Cancelled' OR d.status = 'Completed')
-    WITH docs, d ORDER BY d.createdAt DESC 
-    CALL {{ WITH d
-      OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
-      RETURN chunks, c LIMIT 50
-    }}
-    WITH [] {query_to_change} AS paths
-    CALL {{ WITH paths UNWIND paths AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }}
-    CALL {{ WITH paths UNWIND paths AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) as rels }}
-    RETURN nodes, rels
-"""
-
-QUERY_WITHOUT_DOCUMENT = """
-    MATCH docs = (d:Document) 
-    WITH docs, d ORDER BY d.createdAt DESC 
-    LIMIT $doc_limit
-    CALL {{ WITH d
-        OPTIONAL MATCH chunks=(d)<-[:PART_OF]-(c:Chunk)
-        RETURN chunks, c LIMIT 50
-    }}
-    WITH [] {query_to_change} AS paths
-    CALL {{ WITH paths UNWIND paths AS path UNWIND nodes(path) as node RETURN collect(distinct node) as nodes }}
-    CALL {{ WITH paths UNWIND paths AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) as rels }}
-    RETURN nodes, rels
-"""
 
 def get_graphDB_driver(uri, username, password):
     """
@@ -55,7 +18,11 @@ def get_graphDB_driver(uri, username, password):
     """
     try:
         logging.info(f"Attempting to connect to the Neo4j database at {uri}")
-        driver = GraphDatabase.driver(uri, auth=(username, password), user_agent=os.environ.get('NEO4J_USER_AGENT'))
+        enable_user_agent = os.environ.get("ENABLE_USER_AGENT", "False").lower() in ("true", "1", "yes")
+        if enable_user_agent:
+            driver = GraphDatabase.driver(uri, auth=(username, password), user_agent=os.environ.get('NEO4J_USER_AGENT'))
+        else:
+            driver = GraphDatabase.driver(uri, auth=(username, password))
         logging.info("Connection successful")
         return driver
     except Exception as e:
@@ -64,30 +31,7 @@ def get_graphDB_driver(uri, username, password):
         # raise Exception(error_message) from e 
 
 
-def get_cypher_query(query_map, query_type, document_name):
-    """
-    Generates a Cypher query based on the provided parameters using global templates.
-
-    Returns:
-    str: A Cypher query string ready to be executed.
-    """
-    try:
-        query_to_change = query_map[query_type].strip()
-        logging.info(f"Query template retrieved for type {query_type}")
-
-        if document_name:
-            logging.info(f"Generating query for document: {document_name}")
-            query = QUERY_WITH_DOCUMENT.format(query_to_change=query_to_change)
-        else:
-            logging.info("Generating query without specific document.")
-            query = QUERY_WITHOUT_DOCUMENT.format(query_to_change=query_to_change)
-        return query.strip()
-    
-    except Exception as e:
-        logging.error("graph_query module: An unexpected error occurred while generating the Cypher query.")
-    
-
-def execute_query(driver, query,document_name,doc_limit=None):
+def execute_query(driver, query,document_names,doc_limit=None):
     """
     Executes a specified query using the Neo4j driver, with parameters based on the presence of a document name.
 
@@ -95,9 +39,9 @@ def execute_query(driver, query,document_name,doc_limit=None):
     tuple: Contains records, summary of the execution, and keys of the records.
     """
     try:
-        if document_name:
-            logging.info(f"Executing query for document: {document_name}")
-            records, summary, keys = driver.execute_query(query, document_name=document_name)
+        if document_names:
+            logging.info(f"Executing query for documents: {document_names}")
+            records, summary, keys = driver.execute_query(query, document_names=document_names)
         else:
             logging.info(f"Executing query with a document limit of {doc_limit}")
             records, summary, keys = driver.execute_query(query, doc_limit=doc_limit)
@@ -234,7 +178,7 @@ def get_completed_documents(driver):
     return documents
 
 
-def get_graph_results(uri, username, password, query_type,document_names):
+def get_graph_results(uri, username, password,document_names):
     """
     Retrieves graph data by executing a specified Cypher query using credentials and parameters provided.
     Processes the results to extract nodes and relationships and packages them in a structured output.
@@ -250,36 +194,21 @@ def get_graph_results(uri, username, password, query_type,document_names):
     dict: Contains the session ID, user-defined messages with nodes and relationships, and the user module identifier.
     """
     try:
-        # logging.info(f"URI: {uri}, Username: {username}, Password: {password}, Query Type: {query_type}, Document Names: {document_names}")
         logging.info(f"Starting graph query process")
-        driver = get_graphDB_driver(uri, username, password)
-        # if document_names:
-        #     document_names = document_names.split(",")
-        # else:
-        #     document_names = get_completed_documents(driver)
-        #     doc_limit = doc_limit if doc_limit else 3
-        #     if len(document_names) > int(doc_limit):
-        #         document_names = document_names[:int(doc_limit)]
-        #     print(document_names)
-        # document_names = document_names.split(",")    
-        nodes = list()
-        relationships = list()
+        driver = get_graphDB_driver(uri, username, password)  
         document_names= list(map(str.strip, json.loads(document_names)))
-        for document in document_names:
-            query = get_cypher_query(QUERY_MAP, query_type, document.strip())
-            # print(query)
-            records, summary , keys = execute_query(driver, query, document.strip())
-            # print(query)
-            document_nodes = extract_node_elements(records)
-            document_relationships = extract_relationships(records)
-            nodes.extend(document_nodes)
-            relationships.extend(document_relationships)
-        
-        logging.info(f"no of nodes : {len(nodes)}")
-        logging.info(f"no of relations : {len(relationships)}")
+        query = GRAPH_QUERY.format(graph_chunk_limit=GRAPH_CHUNK_LIMIT)
+        records, summary , keys = execute_query(driver, query.strip(), document_names)
+        document_nodes = extract_node_elements(records)
+        document_relationships = extract_relationships(records)
+
+        print(query)
+
+        logging.info(f"no of nodes : {len(document_nodes)}")
+        logging.info(f"no of relations : {len(document_relationships)}")
         result = {
-            "nodes": nodes,
-            "relationships": relationships
+            "nodes": document_nodes,
+            "relationships": document_relationships
         }
 
         logging.info(f"Query process completed successfully")
