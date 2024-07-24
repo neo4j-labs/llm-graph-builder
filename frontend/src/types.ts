@@ -100,11 +100,6 @@ export interface GCSModalProps {
   open: boolean;
   openGCSModal: () => void;
 }
-export interface ConnectionModalProps {
-  open: boolean;
-  setOpenConnection: Dispatch<SetStateAction<boolean>>;
-  setConnectionStatus: Dispatch<SetStateAction<boolean>>;
-}
 
 export interface SourceNode {
   fileName: string;
@@ -605,4 +600,56 @@ export interface connectionState {
   isvectorIndexMatch: boolean;
   openPopUp: boolean;
   novectorindexInDB: boolean;
+}
+export interface Message {
+  type: 'success' | 'info' | 'warning' | 'danger' | 'unknown';
+  content: string | React.ReactNode;
+}
+
+export interface ConnectionModalProps {
+  open: boolean;
+  setOpenConnection: Dispatch<SetStateAction<connectionState>>;
+  setConnectionStatus: Dispatch<SetStateAction<boolean>>;
+  isVectorIndexMatch: boolean;
+  noVectorIndexFound: boolean;
+}
+export interface ReusableDropdownProps extends DropdownProps {
+  options: string[] | OptionType[];
+  placeholder?: string;
+  defaultValue?: string;
+  children?: React.ReactNode;
+  view?: 'ContentView' | 'GraphView';
+  isDisabled: boolean;
+  value?: OptionType;
+}
+export interface ChildRef {
+  getSelectedRows: () => CustomFile[];
+}
+export interface IconProps {
+  closeChatBot: () => void;
+  deleteOnClick?: () => void;
+  messages: Messages[];
+}
+export interface S3File {
+  fileName: string;
+  fileSize: number;
+  url: string;
+}
+export interface GraphViewButtonProps {
+  nodeValues?: ExtendedNode[];
+  relationshipValues?: Relationship[];
+}
+export interface DrawerChatbotProps {
+  isExpanded: boolean;
+  clearHistoryData: boolean;
+  messages: Messages[];
+}
+
+export interface ContextProps {
+  userCredentials: UserCredentials | null;
+  setUserCredentials: (UserCredentials: UserCredentials) => void;
+}
+export interface MessageContextType {
+  messages: Messages[] | [];
+  setMessages: Dispatch<SetStateAction<Messages[]>>;
 }

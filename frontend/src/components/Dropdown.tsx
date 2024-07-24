@@ -1,16 +1,8 @@
 import { Dropdown, Tip } from '@neo4j-ndl/react';
-import { DropdownProps, OptionType } from '../types';
+import { OptionType, ReusableDropdownProps } from '../types';
 import { useMemo } from 'react';
 import { capitalize } from '../utils/Utils';
-interface ReusableDropdownProps extends DropdownProps {
-  options: string[] | OptionType[];
-  placeholder?: string;
-  defaultValue?: string;
-  children?: React.ReactNode;
-  view?: 'ContentView' | 'GraphView';
-  isDisabled: boolean;
-  value?: OptionType;
-}
+
 const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   options,
   placeholder,
