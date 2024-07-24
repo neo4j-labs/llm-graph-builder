@@ -6,7 +6,7 @@ import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './UI/Alert';
 import { extractAPI } from '../utils/FileAPI';
-import { ContentProps, CustomFile, OptionType, UserCredentials, alertStateType } from '../types';
+import { ContentProps, CustomFile, OptionType, UserCredentials, alertStateType, connectionState } from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
 import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
@@ -33,7 +33,11 @@ const Content: React.FC<ContentProps> = ({
   closeSettingModal,
 }) => {
   const [init, setInit] = useState<boolean>(false);
-  const [openConnection, setOpenConnection] = useState<boolean>(false);
+  const [openConnection, setOpenConnection] = useState<connectionState>({
+    isvectorIndexMatch: true,
+    openPopUp: false,
+    novectorindexInDB: true,
+  });
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
@@ -108,11 +112,11 @@ const Content: React.FC<ContentProps> = ({
           port: neo4jConnection.uri.split(':')[2],
         });
       } else {
-        setOpenConnection(true);
+        setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
       }
       setInit(true);
     } else {
-      setOpenConnection(true);
+      setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
     }
   }, []);
 
@@ -273,11 +277,7 @@ const Content: React.FC<ContentProps> = ({
   };
 
   const handleClose = () => {
-    setalertDetails({
-      showAlert: false,
-      alertType: 'info',
-      alertMessage: '',
-    });
+    setalertDetails((prev) => ({ ...prev, showAlert: false, alertMessage: '' }));
   };
 
   const handleOpenGraphClick = () => {
@@ -339,14 +339,6 @@ const Content: React.FC<ContentProps> = ({
     () => (selectedfileslength ? completedfileNo === 0 : true),
     [selectedfileslength, completedfileNo]
   );
-
-  // const processingCheck = () => {
-  //   const processingFiles = filesData.some((file) => file.status === 'Processing');
-  //   const selectedRowProcessing = childRef.current?.getSelectedRows().some((row) =>
-  //     filesData.some((file) => file.name === row && file.status === 'Processing')
-  //   );
-  //   return processingFiles || selectedRowProcessing;
-  // };
 
   const filesForProcessing = useMemo(() => {
     let newstatusfiles: CustomFile[] = [];
@@ -411,10 +403,26 @@ const Content: React.FC<ContentProps> = ({
         console.log(parsedData.uri);
         const response = await connectAPI(parsedData.uri, parsedData.user, parsedData.password, parsedData.database);
         if (response?.data?.status === 'Success') {
-          setConnectionStatus(true);
-          setOpenConnection(false);
+          localStorage.setItem(
+            'neo4j.connection',
+            JSON.stringify({
+              ...parsedData,
+              userDbVectorIndex: response.data.data.db_vector_dimension,
+            })
+          );
+          if (response.data.data.application_dimension === response.data.data.db_vector_dimension) {
+            setConnectionStatus(true);
+            setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
+          } else {
+            setOpenConnection({
+              isvectorIndexMatch: false,
+              openPopUp: true,
+              novectorindexInDB: response.data.data.db_vector_dimension === 0,
+            });
+            setConnectionStatus(false);
+          }
         } else {
-          setOpenConnection(true);
+          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
           setConnectionStatus(false);
         }
       })();
@@ -518,9 +526,11 @@ const Content: React.FC<ContentProps> = ({
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>
           <ConnectionModal
-            open={openConnection}
+            open={openConnection.openPopUp}
             setOpenConnection={setOpenConnection}
             setConnectionStatus={setConnectionStatus}
+            isVectorIndexMatch={openConnection.isvectorIndexMatch}
+            noVectorIndexFound={openConnection.novectorindexInDB}
           />
           <div className='connectionstatus__container'>
             <span className='h6 px-1'>Neo4j connection</span>
@@ -564,7 +574,7 @@ const Content: React.FC<ContentProps> = ({
               Graph Enhancement
             </ButtonWithToolTip>
             {!connectionStatus ? (
-              <Button className='mr-2.5' onClick={() => setOpenConnection(true)}>
+              <Button className='mr-2.5' onClick={() => setOpenConnection((prev) => ({ ...prev, openPopUp: true }))}>
                 {buttonCaptions.connectToNeo4j}
               </Button>
             ) : (

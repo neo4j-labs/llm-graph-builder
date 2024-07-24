@@ -74,11 +74,7 @@ const DropZone: FunctionComponent = () => {
   };
 
   const handleClose = () => {
-    setalertDetails({
-      showAlert: false,
-      alertMessage: '',
-      alertType: 'error',
-    });
+    setalertDetails((prev) => ({ ...prev, showAlert: false, alertMessage: '' }));
   };
 
   useEffect(() => {

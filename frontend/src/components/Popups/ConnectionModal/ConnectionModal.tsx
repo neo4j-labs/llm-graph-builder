@@ -1,30 +1,43 @@
-import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone, Typography, TextLink } from '@neo4j-ndl/react';
+import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone, Typography, TextLink, Flex } from '@neo4j-ndl/react';
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 import connectAPI from '../../../services/ConnectAPI';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useSearchParams } from 'react-router-dom';
 import { buttonCaptions } from '../../../utils/Constants';
+import { createVectorIndex } from '../../../services/vectorIndexCreation';
+import { connectionState, UserCredentials } from '../../../types';
+import VectorIndexMisMatchAlert from './VectorIndexMisMatchAlert';
 
 interface Message {
   type: 'success' | 'info' | 'warning' | 'danger' | 'unknown';
-  content: string;
+  content: string | React.ReactNode;
 }
 
 interface ConnectionModalProps {
   open: boolean;
-  setOpenConnection: Dispatch<SetStateAction<boolean>>;
+  setOpenConnection: Dispatch<SetStateAction<connectionState>>;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
+  isVectorIndexMatch: boolean;
+  noVectorIndexFound: boolean;
 }
 
-export default function ConnectionModal({ open, setOpenConnection, setConnectionStatus }: ConnectionModalProps) {
+export default function ConnectionModal({
+  open,
+  setOpenConnection,
+  setConnectionStatus,
+  isVectorIndexMatch,
+  noVectorIndexFound,
+}: ConnectionModalProps) {
   let prefilledconnection = localStorage.getItem('neo4j.connection');
   let initialuri;
   let initialdb;
   let initialusername;
   let initialport;
   let initialprotocol;
+  let initialuserdbvectorindex;
   if (prefilledconnection) {
     let parsedcontent = JSON.parse(prefilledconnection);
+    initialuserdbvectorindex = parsedcontent.userDbVectorIndex;
     let urisplit = parsedcontent?.uri?.split('://');
     initialuri = urisplit[1];
     initialdb = parsedcontent?.database;
@@ -40,9 +53,11 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
   const [username, setUsername] = useState<string>(initialusername ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
-  const { setUserCredentials } = useCredentials();
+  const { setUserCredentials, userCredentials } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [userDbVectorIndex, setUserDbVectorIndex] = useState<number | undefined>(initialuserdbvectorindex ?? undefined);
+  const [vectorIndexLoading, setVectorIndexLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (searchParams.has('connectURL')) {
@@ -51,7 +66,65 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
       searchParams.delete('connectURL');
       setSearchParams(searchParams);
     }
+    return () => {
+      setUserDbVectorIndex(undefined);
+    };
   }, [open]);
+
+  const recreateVectorIndex = useCallback(
+    async (isNewVectorIndex: boolean) => {
+      try {
+        setVectorIndexLoading(true);
+        const response = await createVectorIndex(userCredentials as UserCredentials, isNewVectorIndex);
+        setVectorIndexLoading(false);
+        if (response.data.status === 'Failed') {
+          throw new Error(response.data.error);
+        } else {
+          setMessage({
+            type: 'success',
+            content: 'Successfully created the vector index',
+          });
+          setConnectionStatus(true);
+          localStorage.setItem(
+            'neo4j.connection',
+            JSON.stringify({
+              uri: userCredentials?.uri,
+              user: userCredentials?.userName,
+              password: userCredentials?.password,
+              database: userCredentials?.database,
+              userDbVectorIndex: 384,
+            })
+          );
+        }
+      } catch (error) {
+        setVectorIndexLoading(false);
+        if (error instanceof Error) {
+          console.log('Error in recreating the vector index', error.message);
+          setMessage({ type: 'danger', content: error.message });
+        }
+      }
+      setTimeout(() => {
+        setMessage({ type: 'unknown', content: '' });
+        setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
+      }, 3000);
+    },
+    [userCredentials, userDbVectorIndex]
+  );
+  useEffect(() => {
+    if (!isVectorIndexMatch) {
+      setMessage({
+        type: 'danger',
+        content: (
+          <VectorIndexMisMatchAlert
+            vectorIndexLoading={vectorIndexLoading}
+            recreateVectorIndex={() => recreateVectorIndex(!noVectorIndexFound)}
+            isVectorIndexAlreadyExists={!noVectorIndexFound}
+            userVectorIndexDimension={JSON.parse(localStorage.getItem('neo4j.connection') ?? 'null').userDbVectorIndex}
+          />
+        ),
+      });
+    }
+  }, [isVectorIndexMatch, vectorIndexLoading, noVectorIndexFound]);
 
   const parseAndSetURI = (uri: string, urlparams = false) => {
     const uriParts: string[] = uri.split('://');
@@ -132,27 +205,47 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
     setIsLoading(true);
     const response = await connectAPI(connectionURI, username, password, database);
     if (response?.data?.status === 'Success') {
+      setUserDbVectorIndex(response.data.data.db_vector_dimension);
+      if (response.data.data.db_vector_dimension === response.data.data.application_dimension) {
+        setConnectionStatus(true);
+        setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
+        setMessage({
+          type: 'success',
+          content: response.data.data.message,
+        });
+      } else {
+        setMessage({
+          type: 'danger',
+          content: (
+            <VectorIndexMisMatchAlert
+              vectorIndexLoading={vectorIndexLoading}
+              recreateVectorIndex={() => recreateVectorIndex(response.data.data.db_vector_dimension === 0)}
+              isVectorIndexAlreadyExists={response.data.data.db_vector_dimension != 0}
+              userVectorIndexDimension={response.data.data.db_vector_dimension}
+            />
+          ),
+        });
+      }
       localStorage.setItem(
         'neo4j.connection',
-        JSON.stringify({ uri: connectionURI, user: username, password: password, database: database })
+        JSON.stringify({
+          uri: connectionURI,
+          user: username,
+          password: password,
+          database: database,
+          userDbVectorIndex,
+        })
       );
-      setConnectionStatus(true);
-      setMessage({
-        type: 'success',
-        content: response.data.message,
-      });
-      setOpenConnection(false);
     } else {
       setMessage({ type: 'danger', content: response.data.error });
-      setOpenConnection(true);
+      setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
       setPassword('');
       setConnectionStatus(false);
     }
     setIsLoading(false);
     setTimeout(() => {
-      setMessage({ type: 'unknown', content: '' });
       setPassword('');
-    }, 3000);
+    }, 10000);
   };
 
   const onClose = useCallback(() => {
@@ -168,7 +261,7 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
         open={open}
         aria-labelledby='form-dialog-title'
         onClose={() => {
-          setOpenConnection(false);
+          setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
           setMessage({ type: 'unknown', content: '' });
         }}
       >
@@ -275,9 +368,11 @@ export default function ConnectionModal({ open, setOpenConnection, setConnection
               />
             </div>
           </div>
-          <Button loading={isLoading} disabled={isDisabled} onClick={() => submitConnection()}>
-            {buttonCaptions.connect}
-          </Button>
+          <Flex flexDirection='row' justifyContent='flex-end'>
+            <Button loading={isLoading} disabled={isDisabled} onClick={() => submitConnection()}>
+              {buttonCaptions.connect}
+            </Button>
+          </Flex>
         </Dialog.Content>
       </Dialog>
     </>

@@ -601,3 +601,8 @@ export interface ExtendedNode extends Node {
 export interface ExtendedRelationship extends Relationship {
   labels: string[];
 }
+export interface connectionState {
+  isvectorIndexMatch: boolean;
+  openPopUp: boolean;
+  novectorindexInDB: boolean;
+}
