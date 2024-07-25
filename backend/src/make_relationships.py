@@ -133,7 +133,11 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
         
         if 'page_number' in chunk.metadata:
             chunk_data['page_number'] = chunk.metadata['page_number']
-            
+         
+        if 'start_timestamp' in chunk.metadata and 'end_timestamp' in chunk.metadata:
+            chunk_data['start_time'] = chunk.metadata['start_timestamp']
+            chunk_data['end_time'] = chunk.metadata['end_timestamp'] 
+               
         batch_data.append(chunk_data)
         
         lst_chunks_including_hash.append({'chunk_id': current_chunk_id, 'chunk_doc': chunk})
