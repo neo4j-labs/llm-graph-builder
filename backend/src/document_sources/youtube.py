@@ -11,8 +11,11 @@ from typing import List, Dict, Any
 
 def get_youtube_transcript(youtube_id):
   try:
-    transcript = YouTubeTranscriptApi.get_transcript(youtube_id)
-    return transcript
+    #transcript = YouTubeTranscriptApi.get_transcript(youtube_id)
+    transcript_list = YouTubeTranscriptApi.list_transcripts(youtube_id)
+    transcript = transcript_list.find_transcript(["en"])
+    transcript_pieces: List[Dict[str, Any]] = transcript.fetch()
+    return transcript_pieces
   except Exception as e:
     message = f"Youtube transcript is not available for youtube Id: {youtube_id}"
     raise Exception(message)
@@ -75,7 +78,7 @@ def get_calculated_timestamps(chunks, youtube_id):
     start_content = chunk.page_content[:40].strip().replace('\n', ' ')
     end_content = chunk.page_content[-40:].strip().replace('\n', ' ')
     for segment in transcript:
-        segment['text'] = segment.replace('\n', ' ')
+        segment['text'] = segment['text'].replace('\n', ' ')
         start_similarity = SequenceMatcher(None, start_content, segment['text'])
         end_similarity = SequenceMatcher(None, end_content, segment['text'])
         

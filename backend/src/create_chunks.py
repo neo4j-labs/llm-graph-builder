@@ -4,6 +4,7 @@ from langchain_community.graphs import Neo4jGraph
 import logging
 import os
 from src.document_sources.youtube import get_chunks_with_timestamps, get_calculated_timestamps
+import re
 
 logging.basicConfig(format="%(asctime)s - %(message)s", level="INFO")
 
@@ -34,10 +35,12 @@ class CreateChunksofDocument:
                     chunks.append(Document(page_content=chunk.page_content, metadata={'page_number':page_number}))    
         
         elif 'length' in self.pages[0].metadata:
-            print(f"pages = {self.pages}")
-            if len(self.pages)>3 and self.pages[1].page_content.strip()=='' and  self.pages[2].page_content.strip()=='':
+            if len(self.pages) == 1  or (len(self.pages) > 1 and self.pages[1].page_content.strip() == ''): 
+                match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',self.pages[0].metadata['source'])
+                youtube_id=match.group(1)   
                 chunks_without_time_range = text_splitter.split_documents([self.pages[0]])
-                chunks = get_calculated_timestamps(chunks_without_time_range, self.pages[1].metadata['source'])
+                chunks = get_calculated_timestamps(chunks_without_time_range, youtube_id)
+
             else: 
                 chunks_without_time_range = text_splitter.split_documents(self.pages)   
                 chunks = get_chunks_with_timestamps(chunks_without_time_range)
