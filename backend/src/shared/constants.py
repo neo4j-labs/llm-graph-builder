@@ -14,14 +14,7 @@ GROQ_MODELS = ["groq-llama3"]
 BUCKET_UPLOAD = 'llm-graph-builder-upload'
 BUCKET_FAILED_FILE = 'llm-graph-builder-failed'
 PROJECT_ID = 'llm-experiments-387609' 
-
-
-
-
-##graph viz 
-
-
-GRAPH_CHUNK_LIMIT = 50
+GRAPH_CHUNK_LIMIT = 50 
 
 #query 
 GRAPH_QUERY = """
@@ -35,8 +28,8 @@ CALL {{
   RETURN c, chunks LIMIT {graph_chunk_limit}
 }}
 
-WITH collect([docs, chunks]) as data, collect(distinct c) as selectedChunks
-WITH data, selectedChunks
+WITH collect(distinct docs) as docs, collect(distinct chunks) as chunks, collect(distinct c) as selectedChunks
+WITH docs, chunks, selectedChunks
 // select relationships between selected chunks
 WITH *, 
 [ c in selectedChunks | [p=(c)-[:NEXT_CHUNK|SIMILAR]-(other) WHERE other IN selectedChunks | p]] as chunkRels
@@ -53,16 +46,15 @@ CALL {{
   RETURN collect(entities) as entities, collect(entityRels) as entityRels
 }}
 
-WITH apoc.coll.flatten(data + chunkRels + entities + entityRels, true) as paths
+WITH apoc.coll.flatten(docs + chunks + chunkRels + entities + entityRels, true) as paths
 
 // distinct nodes and rels
 CALL {{ WITH paths UNWIND paths AS path UNWIND nodes(path) as node WITH distinct node 
-       RETURN collect(node /* {{.*, labels:labels(node), elementId:elementId(node), embedding:null, text:null}} */) 
-AS nodes }}
+       RETURN collect(node /* {{.*, labels:labels(node), elementId:elementId(node), embedding:null, text:null}} */) AS nodes }}
 CALL {{ WITH paths UNWIND paths AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) AS rels }}  
 RETURN nodes, rels
-"""
 
+"""
 
 ## CHAT SETUP
 CHAT_MAX_TOKENS = 1000
