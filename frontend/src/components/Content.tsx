@@ -44,7 +44,7 @@ const Content: React.FC<ContentProps> = ({
   const { setUserCredentials, userCredentials } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
-
+  const batchVal = 2;
   const {
     filesData,
     setFilesData,
@@ -249,31 +249,73 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
-  const handleGenerateGraph = (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => {
-    const data = [];
-    if (selectedfileslength && allowLargeFiles) {
-      for (let i = 0; i < selectedfileslength; i++) {
-        const row = childRef.current?.getSelectedRows()[i];
-        if (row?.status === 'New') {
-          data.push(extractData(row.id, true));
+  // const processFilesInBatches = async (files: CustomFile[], batchSize: number) => {
+  //   for (let i = 0; i < files.length; i += batchSize) {
+  //     const batch = files.slice(i, i + batchSize);
+  //     const data = batch.map(file => extractData(file.id, true));
+  //     await Promise.allSettled(data);
+  //   }
+  //   setextractLoading(false);
+  //   await postProcessing(userCredentials as UserCredentials, taskParam);
+  // };
+
+  const handleGenerateGraph = async (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => {
+    console.log('selectedFiles', selectedFilesFromAllfiles);
+    const queue: CustomFile[] = [];
+    // Collect files to be processed into the queue
+    const addToQueue = (files: CustomFile[]) => {
+      for (const file of files) {
+        if (file?.status === 'New') {
+          queue.push(file);
         }
       }
-      Promise.allSettled(data).then(async (_) => {
-        setextractLoading(false);
-        await postProcessing(userCredentials as UserCredentials, taskParam);
-      });
-    } else if (selectedFilesFromAllfiles.length && allowLargeFiles) {
-      // @ts-ignore
-      for (let i = 0; i < selectedFilesFromAllfiles.length; i++) {
-        if (selectedFilesFromAllfiles[i]?.status === 'New') {
-          data.push(extractData(selectedFilesFromAllfiles[i].id as string));
-        }
+    };
+    if (selectedFilesFromAllfiles.length && allowLargeFiles) {
+      const selectedRows = childRef.current?.getSelectedRows();
+      if (selectedRows) {
+        addToQueue(selectedRows);
+      } else {
+        addToQueue(selectedFilesFromAllfiles);
       }
-      Promise.allSettled(data).then(async (_) => {
-        setextractLoading(false);
-        await postProcessing(userCredentials as UserCredentials, taskParam);
-      });
     }
+    console.log('queue', queue);
+    // Process files in batches of two
+    const processBatch = async (batch: CustomFile[]) => {
+      const batchData: Promise<any>[] = [];
+      for (const file of batch) {
+        batchData.push(
+          extractData(file.id as string, true).then(() => ({
+            success: true,
+            fileId: file.id
+          })).catch(() => ({
+            success: false,
+            fileId: file.id
+          }))
+        );
+      }
+      console.log('batchData', batchData);
+      const results = await Promise.all(batchData);
+      console.log('results', results);
+      for (const result of results) {
+        const file = batch.find(f =>
+          f.id
+          === result.fileId);
+        if (file) {
+          file.status = result.status === 'Failed' ? 'Failed' : 'Completed'; // Update status based on API response
+          if (result.status === 'Failed') {
+            console.error(`Error processing file ${file.id
+              }:`, result.error);
+          }
+        }
+      }
+    };
+    // Process the queue in batches
+    while (queue.length > 0) {
+      const batch = queue.splice(0, 2); // The next batch of two files
+      await processBatch(batch);
+    }
+    setextractLoading(false);
+    await postProcessing(userCredentials as UserCredentials, taskParam);
   };
 
   const handleClose = () => {
@@ -283,9 +325,8 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
-      userCredentials?.port ?? '7687'
-    }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
+      }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -295,10 +336,10 @@ const Content: React.FC<ContentProps> = ({
     isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
       : isRightExpanded
-      ? 'contentWithChatBot'
-      : !isLeftExpanded && !isRightExpanded
-      ? 'w-[calc(100%-128px)]'
-      : 'contentWithDropzoneExpansion';
+        ? 'contentWithChatBot'
+        : !isLeftExpanded && !isRightExpanded
+          ? 'w-[calc(100%-128px)]'
+          : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -598,7 +639,7 @@ const Content: React.FC<ContentProps> = ({
         <Flex
           className={`${
             !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+            } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection='row'
         >
