@@ -154,6 +154,9 @@ async def extract_knowledge_graph_from_file(
           Nodes and Relations created in Neo4j databse for the pdf file
     """
     try:
+        graph = create_graph_database_connection(uri, userName, password, database)   
+        graphDb_data_Access = graphDBdataAccess(graph)
+        
         if source_type == 'local file':
             result = await asyncio.to_thread(
                 extract_graph_from_file_local_file, uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship)
@@ -180,8 +183,6 @@ async def extract_knowledge_graph_from_file(
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
         
-        graph = create_graph_database_connection(uri, userName, password, database)   
-        graphDb_data_Access = graphDBdataAccess(graph)
         if result is not None:
             result['db_url'] = uri
             result['api_name'] = 'extract'
