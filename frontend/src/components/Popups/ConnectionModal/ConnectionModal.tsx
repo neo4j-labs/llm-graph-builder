@@ -206,7 +206,7 @@ export default function ConnectionModal({
           content: (
             <VectorIndexMisMatchAlert
               vectorIndexLoading={vectorIndexLoading}
-              recreateVectorIndex={() => recreateVectorIndex(response.data.data.db_vector_dimension === 0)}
+              recreateVectorIndex={() => recreateVectorIndex(response.data.data.db_vector_dimension != 0)}
               isVectorIndexAlreadyExists={response.data.data.db_vector_dimension != 0}
               userVectorIndexDimension={response.data.data.db_vector_dimension}
             />
