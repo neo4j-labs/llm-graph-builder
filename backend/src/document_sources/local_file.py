@@ -24,7 +24,7 @@ def load_document_content(file_path):
         return PyMuPDFLoader(file_path)
     else:
         print("in else")
-        return UnstructuredFileLoader(file_path, encoding="utf-8", mode="elements")
+        return UnstructuredFileLoader(file_path, mode="elements",autodetect_encoding=True)
     
 def get_documents_from_file_by_path(file_path,file_name):
     file_path = Path(file_path)
