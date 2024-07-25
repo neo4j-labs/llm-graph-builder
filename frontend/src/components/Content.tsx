@@ -1,12 +1,12 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import ConnectionModal from './Popups/ConnectionModal/ConnectionModal';
-import FileTable, { ChildRef } from './FileTable';
+import FileTable  from './FileTable';
 import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './UI/Alert';
 import { extractAPI } from '../utils/FileAPI';
-import { ContentProps, CustomFile, OptionType, UserCredentials, alertStateType, connectionState } from '../types';
+import { ChildRef, ContentProps, CustomFile, OptionType, UserCredentials, alertStateType, connectionState } from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
 import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
