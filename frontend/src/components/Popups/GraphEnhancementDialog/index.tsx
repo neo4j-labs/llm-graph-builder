@@ -35,6 +35,7 @@ export default function GraphEnhancementDialog({
       setorphanDeleteAPIloading(false);
       console.log(response);
     } catch (error) {
+      setorphanDeleteAPIloading(false);
       console.log(error);
     }
   };
