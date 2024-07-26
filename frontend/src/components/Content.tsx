@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import ConnectionModal from './Popups/ConnectionModal/ConnectionModal';
-import FileTable  from './FileTable';
+import FileTable from './FileTable';
 import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
@@ -266,11 +266,19 @@ const Content: React.FC<ContentProps> = ({
     const addToQueue = (files: CustomFile[]) => {
       for (const file of files) {
         if (file?.status === 'New') {
+          file.status = 'Waiting';
           queue.push(file);
         }
       }
     };
-    if (selectedFilesFromAllfiles.length && allowLargeFiles) {
+    if (selectedfileslength && allowLargeFiles) {
+      const row = childRef.current?.getSelectedRows();
+      if (row) {
+        addToQueue(row);
+      } else {
+        addToQueue(selectedFilesFromAllfiles);
+      }
+    } else if (selectedFilesFromAllfiles.length && allowLargeFiles) {
       const selectedRows = childRef.current?.getSelectedRows();
       if (selectedRows) {
         addToQueue(selectedRows);
@@ -281,33 +289,22 @@ const Content: React.FC<ContentProps> = ({
     console.log('queue', queue);
     // Process files in batches of two
     const processBatch = async (batch: CustomFile[]) => {
-      const batchData: Promise<any>[] = [];
       for (const file of batch) {
-        batchData.push(
-          extractData(file.id as string, true).then(() => ({
-            success: true,
-            fileId: file.id
-          })).catch(() => ({
-            success: false,
-            fileId: file.id
-          }))
-        );
+        file.status = 'Processing';
       }
+      const batchData: Promise<any>[] = batch.map(file => extractData(file.id as string, true));
       console.log('batchData', batchData);
-      const results = await Promise.all(batchData);
+      const results = await Promise.allSettled(batchData);
       console.log('results', results);
-      for (const result of results) {
-        const file = batch.find(f =>
-          f.id
-          === result.fileId);
-        if (file) {
-          file.status = result.status === 'Failed' ? 'Failed' : 'Completed'; // Update status based on API response
-          if (result.status === 'Failed') {
-            console.error(`Error processing file ${file.id
-              }:`, result.error);
-          }
+      results.forEach((result, index) => {
+        const file = batch[index];
+        if (result.status === 'fulfilled') {
+          file.status = result.value.status === 'Failed' ? 'Failed' : 'Completed';
+        } else {
+          file.status = 'Failed';
+          console.error(`Error processing file ${file.id}:`, result.reason);
         }
-      }
+      });
     };
     // Process the queue in batches
     while (queue.length > 0) {
@@ -317,6 +314,8 @@ const Content: React.FC<ContentProps> = ({
     setextractLoading(false);
     await postProcessing(userCredentials as UserCredentials, taskParam);
   };
+
+
 
   const handleClose = () => {
     setalertDetails((prev) => ({ ...prev, showAlert: false, alertMessage: '' }));
@@ -637,8 +636,7 @@ const Content: React.FC<ContentProps> = ({
           ref={childRef}
         ></FileTable>
         <Flex
-          className={`${
-            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+          className={`${!isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
             } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection='row'
