@@ -1,27 +1,38 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
-import ConnectionModal from './Popups/ConnectionModal/ConnectionModal';
-import FileTable  from './FileTable';
+import { useEffect, useState, useMemo, useRef, Suspense } from 'react';
+import FileTable from './FileTable';
 import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './UI/Alert';
 import { extractAPI } from '../utils/FileAPI';
-import { ChildRef, ContentProps, CustomFile, OptionType, UserCredentials, alertStateType, connectionState } from '../types';
+import {
+  ChildRef,
+  ContentProps,
+  CustomFile,
+  OptionType,
+  UserCredentials,
+  alertStateType,
+  connectionState,
+} from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
-import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
-import ConfirmationDialog from './Popups/LargeFilePopUp/ConfirmationDialog';
 import { buttonCaptions, defaultLLM, largeFileSize, llms, taskParam, tooltips } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 import DropdownComponent from './Dropdown';
-import GraphViewModal from './Graph/GraphViewModal';
-import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
+// import GraphViewModal from './Graph/GraphViewModal';
 import { OverridableStringUnion } from '@mui/types';
 import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
+import { lazy } from 'react';
+import Loader from '../utils/Loader';
+const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
+const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
+const DeletePopUp = lazy(() => import('./Popups/DeletePopUp/DeletePopUp'));
+const GraphEnhancementDialog = lazy(() => import('./Popups/GraphEnhancementDialog'));
+const GraphViewModal = lazy(() => import('./Graph/GraphViewModal'));
 
 const Content: React.FC<ContentProps> = ({
   isLeftExpanded,
@@ -447,7 +458,6 @@ const Content: React.FC<ContentProps> = ({
           }
         }
       });
-      // @ts-ignore
       if (selectedLargeFiles.length) {
         setshowConfirmationModal(true);
         handleGenerateGraph(false, []);
@@ -497,41 +507,50 @@ const Content: React.FC<ContentProps> = ({
         />
       )}
       {showConfirmationModal && filesForProcessing.length && (
-        <ConfirmationDialog
-          open={showConfirmationModal}
-          largeFiles={filesForProcessing}
-          extractHandler={handleGenerateGraph}
-          onClose={() => setshowConfirmationModal(false)}
-          loading={extractLoading}
-        ></ConfirmationDialog>
+        <Suspense fallback={<Loader title='Loading...'></Loader>}>
+          <ConfirmationDialog
+            open={showConfirmationModal}
+            largeFiles={filesForProcessing}
+            extractHandler={handleGenerateGraph}
+            onClose={() => setshowConfirmationModal(false)}
+            loading={extractLoading}
+          ></ConfirmationDialog>
+        </Suspense>
       )}
       {showDeletePopUp && (
-        <DeletePopUp
-          open={showDeletePopUp}
-          no_of_files={selectedfileslength ?? 0}
-          deleteHandler={(delentities: boolean) => handleDeleteFiles(delentities)}
-          deleteCloseHandler={() => setshowDeletePopUp(false)}
-          loading={deleteLoading}
-          view='contentView'
-        ></DeletePopUp>
+        <Suspense fallback={<Loader title='Loading...' />}>
+          <DeletePopUp
+            open={showDeletePopUp}
+            no_of_files={selectedfileslength ?? 0}
+            deleteHandler={(delentities: boolean) => handleDeleteFiles(delentities)}
+            deleteCloseHandler={() => setshowDeletePopUp(false)}
+            loading={deleteLoading}
+            view='contentView'
+          ></DeletePopUp>
+        </Suspense>
       )}
       {showEnhancementDialog && (
-        <GraphEnhancementDialog
-          open={showEnhancementDialog}
-          onClose={closeGraphEnhancementDialog}
-          closeSettingModal={closeSettingModal}
-          showAlert={showAlert}
-        ></GraphEnhancementDialog>
+        <Suspense fallback={<Loader title='Loading...' />}>
+          <GraphEnhancementDialog
+            open={showEnhancementDialog}
+            onClose={closeGraphEnhancementDialog}
+            closeSettingModal={closeSettingModal}
+            showAlert={showAlert}
+          ></GraphEnhancementDialog>
+        </Suspense>
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>
-          <ConnectionModal
-            open={openConnection.openPopUp}
-            setOpenConnection={setOpenConnection}
-            setConnectionStatus={setConnectionStatus}
-            isVectorIndexMatch={openConnection.isvectorIndexMatch}
-            noVectorIndexFound={openConnection.novectorindexInDB}
-          />
+          <Suspense fallback={<Loader title='Loading...' />}>
+            <ConnectionModal
+              open={openConnection.openPopUp}
+              setOpenConnection={setOpenConnection}
+              setConnectionStatus={setConnectionStatus}
+              isVectorIndexMatch={openConnection.isvectorIndexMatch}
+              noVectorIndexFound={openConnection.novectorindexInDB}
+            />
+          </Suspense>
+
           <div className='connectionstatus__container'>
             <span className='h6 px-1'>Neo4j connection</span>
             <Typography variant='body-medium'>
@@ -658,13 +677,15 @@ const Content: React.FC<ContentProps> = ({
           </Flex>
         </Flex>
       </div>
-      <GraphViewModal
-        inspectedName={inspectedName}
-        open={openGraphView}
-        setGraphViewOpen={setOpenGraphView}
-        viewPoint={viewPoint}
-        selectedRows={childRef.current?.getSelectedRows()}
-      />
+      <Suspense fallback={<Loader title='Loading...' />}>
+        <GraphViewModal
+          inspectedName={inspectedName}
+          open={openGraphView}
+          setGraphViewOpen={setOpenGraphView}
+          viewPoint={viewPoint}
+          selectedRows={childRef.current?.getSelectedRows()}
+        />
+      </Suspense>
     </>
   );
 };

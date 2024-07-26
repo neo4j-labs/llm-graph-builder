@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Widget, Typography, Avatar, TextInput, IconButton, Modal, useCopyToClipboard } from '@neo4j-ndl/react';
 import {
   XMarkIconOutline,
@@ -12,13 +12,14 @@ import { useCredentials } from '../../context/UserCredentials';
 import { chatBotAPI } from '../../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../../context/UsersFiles';
-import InfoModal from './ChatInfoModal';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import IconButtonWithToolTip from '../UI/IconButtonToolTip';
 import { buttonCaptions, tooltips } from '../../utils/Constants';
 import useSpeechSynthesis from '../../hooks/useSpeech';
 import ButtonWithToolTip from '../UI/ButtonWithToolTip';
+import Loader from '../../utils/Loader';
+const InfoModal = lazy(() => import('./ChatInfoModal'));
 
 const Chatbot: React.FC<ChatbotProps> = (props) => {
   const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, clear } = props;
@@ -438,17 +439,19 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
             <XMarkIconOutline />
           </IconButton>
         </div>
-        <InfoModal
-          sources={sourcesModal}
-          model={modelModal}
-          chunk_ids={chunkModal}
-          response_time={responseTime}
-          total_tokens={tokensUsed}
-          mode={chatsMode}
-          cypher_query={cypherQuery}
-          graphonly_entities={graphEntitites}
-          error={messageError}
-        />
+        <Suspense fallback={<Loader title='Loading...' />}>
+          <InfoModal
+            sources={sourcesModal}
+            model={modelModal}
+            chunk_ids={chunkModal}
+            response_time={responseTime}
+            total_tokens={tokensUsed}
+            mode={chatsMode}
+            cypher_query={cypherQuery}
+            graphonly_entities={graphEntitites}
+            error={messageError}
+          />
+        </Suspense>
       </Modal>
     </div>
   );

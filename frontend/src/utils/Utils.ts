@@ -1,6 +1,6 @@
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import type { Relationship } from '@neo4j-nvl/base';
-import { ExtendedNode, GraphType, Messages, Scheme } from '../types';
+import { Entity, ExtendedNode, GraphType, Messages, Scheme } from '../types';
 
 // Get the Url
 export const url = () => {
@@ -218,4 +218,10 @@ export const calculateProcessingTime = (fileSizeBytes: number, processingTimePer
 
 export const capitalize = (word: string): string => {
   return `${word[0].toUpperCase()}${word.slice(1)}`;
+};
+const parseEntity = (entity: Entity) => {
+  const { labels, properties } = entity;
+  const label = labels[0];
+  const text = properties.id;
+  return { label, text };
 };

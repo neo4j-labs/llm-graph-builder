@@ -53,12 +53,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
 
-  const parseEntity = (entity: Entity) => {
-    const { labels, properties } = entity;
-    const label = labels[0];
-    const text = properties.id;
-    return { label, text };
-  };
   const actions: CypherCodeBlockProps['actions'] = useMemo(
     () => [
       {
@@ -264,15 +258,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                         >
                           {link}
                         </Typography>
-                        {/* {chunks?.length > 0 && (
-                          <Typography variant='body-small' className='italic'>
-                            - Page{' '}
-                            {chunks
-                              .map((c) => c.page_number as number)
-                              .sort((a, b) => a - b)
-                              .join(', ')}
-                          </Typography>
-                        )} */}
                       </div>
                     )}
                   </li>
@@ -443,3 +428,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   );
 };
 export default ChatInfoModal;
+function parseEntity(entity: Entity): { label: any; text: any; } {
+  throw new Error('Function not implemented.');
+}
+

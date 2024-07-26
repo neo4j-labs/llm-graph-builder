@@ -1,17 +1,18 @@
 import { Drawer, Flex, StatusIndicator, Typography } from '@neo4j-ndl/react';
 import DropZone from '../DataSources/Local/DropZone';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
 import { healthStatus } from '../../services/HealthStatus';
 import S3Component from '../DataSources/AWS/S3Bucket';
-import S3Modal from '../DataSources/AWS/S3Modal';
 import { DrawerProps } from '../../types';
 import GCSButton from '../DataSources/GCS/GCSButton';
-import GCSModal from '../DataSources/GCS/GCSModal';
 import CustomAlert from '../UI/Alert';
 import { useAlertContext } from '../../context/Alert';
 import { APP_SOURCES } from '../../utils/Constants';
 import GenericButton from '../WebSources/GenericSourceButton';
 import GenericModal from '../WebSources/GenericSourceModal';
+import Loader from '../../utils/Loader';
+const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
+const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 
 const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
@@ -121,13 +122,17 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                           {APP_SOURCES.includes('s3') && (
                             <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
                               <S3Component openModal={openModal} />
-                              <S3Modal hideModal={hideModal} open={showModal} />{' '}
+                              <Suspense fallback={<Loader title='Loading...' />}>
+                                <S3Modal hideModal={hideModal} open={showModal} />
+                              </Suspense>
                             </div>
                           )}
                           {APP_SOURCES.includes('gcs') && (
                             <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
                               <GCSButton openModal={openGCSModal} />
-                              <GCSModal openGCSModal={openGCSModal} open={showGCSModal} hideModal={hideGCSModal} />
+                              <Suspense fallback={<Loader title='Loading...' />}>
+                                <GCSModal openGCSModal={openGCSModal} open={showGCSModal} hideModal={hideGCSModal} />
+                              </Suspense>
                             </div>
                           )}
                         </>
@@ -164,7 +169,10 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                           {APP_SOURCES != undefined && APP_SOURCES.includes('s3') && (
                             <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
                               <S3Component openModal={openModal} />
-                              <S3Modal hideModal={hideModal} open={showModal} />{' '}
+                              <Suspense fallback={<Loader title='Loading...' />}>
+                                {' '}
+                                <S3Modal hideModal={hideModal} open={showModal} />
+                              </Suspense>
                             </div>
                           )}
                           {APP_SOURCES != undefined && APP_SOURCES.includes('gcs') && (
