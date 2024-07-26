@@ -10,7 +10,7 @@ import { useAlertContext } from '../../context/Alert';
 import { APP_SOURCES } from '../../utils/Constants';
 import GenericButton from '../WebSources/GenericSourceButton';
 import GenericModal from '../WebSources/GenericSourceModal';
-import Loader from '../../utils/Loader';
+import FallBackDialog from '../UI/FallBackDialog';
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 
@@ -129,7 +129,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                           {APP_SOURCES.includes('s3') && (
                             <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
                               <S3Component openModal={openModal} />
-                              <Suspense fallback={<Loader title='Loading...' />}>
+                              <Suspense fallback={<FallBackDialog />}>
                                 <S3Modal hideModal={hideModal} open={showModal} />
                               </Suspense>
                             </div>
@@ -137,7 +137,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                           {APP_SOURCES.includes('gcs') && (
                             <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
                               <GCSButton openModal={openGCSModal} />
-                              <Suspense fallback={<Loader title='Loading...' />}>
+                              <Suspense fallback={<FallBackDialog />}>
                                 <GCSModal openGCSModal={openGCSModal} open={showGCSModal} hideModal={hideGCSModal} />
                               </Suspense>
                             </div>
@@ -176,8 +176,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                           {APP_SOURCES != undefined && APP_SOURCES.includes('s3') && (
                             <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
                               <S3Component openModal={openModal} />
-                              <Suspense fallback={<Loader title='Loading...' />}>
-                                {' '}
+                              <Suspense fallback={<FallBackDialog />}>
                                 <S3Modal hideModal={hideModal} open={showModal} />
                               </Suspense>
                             </div>

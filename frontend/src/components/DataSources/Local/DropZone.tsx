@@ -116,7 +116,14 @@ const DropZone: FunctionComponent = () => {
           })
         );
         try {
-          const apiResponse = await uploadAPI(chunk,userCredentials as UserCredentials,model,chunkNumber,totalChunks,file.name)
+          const apiResponse = await uploadAPI(
+            chunk,
+            userCredentials as UserCredentials,
+            model,
+            chunkNumber,
+            totalChunks,
+            file.name
+          );
           if (apiResponse?.status === 'Failed') {
             throw new Error(`message:${apiResponse.data.message},fileName:${apiResponse.data.file_name}`);
           } else {

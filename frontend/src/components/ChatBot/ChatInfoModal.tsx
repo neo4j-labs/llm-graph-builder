@@ -431,4 +431,3 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   );
 };
 export default ChatInfoModal;
-
