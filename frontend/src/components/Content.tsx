@@ -149,7 +149,6 @@ const Content: React.FC<ContentProps> = ({
       }
     }
   };
-
   const extractHandler = async (fileItem: CustomFile, uid: string) => {
     try {
       setFilesData((prevfiles) =>
@@ -174,7 +173,7 @@ const Content: React.FC<ContentProps> = ({
       });
       if (fileItem.name != undefined && userCredentials != null) {
         const { name } = fileItem;
-        triggerStatusUpdateAPI(
+        await triggerStatusUpdateAPI(
           name as string,
           userCredentials?.uri,
           userCredentials?.userName,
@@ -183,7 +182,6 @@ const Content: React.FC<ContentProps> = ({
           updateStatusForLargeFiles
         );
       }
-
       const apiResponse = await extractAPI(
         fileItem.model,
         userCredentials as UserCredentials,
@@ -200,7 +198,6 @@ const Content: React.FC<ContentProps> = ({
         fileItem.language,
         fileItem.access_token
       );
-
       if (apiResponse?.status === 'Failed') {
         let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
         throw new Error(JSON.stringify(errorobj));
@@ -248,17 +245,6 @@ const Content: React.FC<ContentProps> = ({
       }
     }
   };
-
-  // const processFilesInBatches = async (files: CustomFile[], batchSize: number) => {
-  //   for (let i = 0; i < files.length; i += batchSize) {
-  //     const batch = files.slice(i, i + batchSize);
-  //     const data = batch.map(file => extractData(file.id, true));
-  //     await Promise.allSettled(data);
-  //   }
-  //   setextractLoading(false);
-  //   await postProcessing(userCredentials as UserCredentials, taskParam);
-  // };
-
   const handleGenerateGraph = async (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => {
     console.log('selectedFiles', selectedFilesFromAllfiles);
     const queue: CustomFile[] = [];
@@ -310,11 +296,11 @@ const Content: React.FC<ContentProps> = ({
     while (queue.length > 0) {
       const batch = queue.splice(0, 2); // The next batch of two files
       await processBatch(batch);
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait before processing the next batch
     }
     setextractLoading(false);
     await postProcessing(userCredentials as UserCredentials, taskParam);
   };
-
 
 
   const handleClose = () => {
