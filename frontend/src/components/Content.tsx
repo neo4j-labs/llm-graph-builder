@@ -183,6 +183,17 @@ const Content: React.FC<ContentProps> = ({
       });
       if (fileItem.name != undefined && userCredentials != null) {
         const { name } = fileItem;
+        // const statusUpdateResponse = await triggerStatusUpdateAPI(
+        //   name as string,
+        //   userCredentials?.uri,
+        //   userCredentials?.userName,
+        //   userCredentials?.password,
+        //   userCredentials?.database
+        // );
+        // // Check if the status update API returned a completed status
+        // if (statusUpdateResponse.status !== 'Completed') {
+        //   throw new Error(`Status update failed with status: ${statusUpdateResponse.status}`);
+        // }
         await triggerStatusUpdateAPI(
           name as string,
           userCredentials?.uri,
@@ -306,12 +317,10 @@ const Content: React.FC<ContentProps> = ({
     while (queue.length > 0) {
       const batch = queue.splice(0, 2); // The next batch of two files
       await processBatch(batch);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait before processing the next batch
     }
     setextractLoading(false);
     await postProcessing(userCredentials as UserCredentials, taskParam);
   };
-
 
   const handleClose = () => {
     setalertDetails((prev) => ({ ...prev, showAlert: false, alertMessage: '' }));
