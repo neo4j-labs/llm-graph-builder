@@ -18,7 +18,7 @@ import IconButtonWithToolTip from '../UI/IconButtonToolTip';
 import { buttonCaptions, tooltips } from '../../utils/Constants';
 import useSpeechSynthesis from '../../hooks/useSpeech';
 import ButtonWithToolTip from '../UI/ButtonWithToolTip';
-import Loader from '../../utils/Loader';
+import FallBackDialog from '../UI/FallBackDialog';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
 
 const Chatbot: React.FC<ChatbotProps> = (props) => {
@@ -439,7 +439,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
             <XMarkIconOutline />
           </IconButton>
         </div>
-        <Suspense fallback={<Loader title='Loading...' />}>
+        <Suspense fallback={<FallBackDialog></FallBackDialog>}>
           <InfoModal
             sources={sourcesModal}
             model={modelModal}

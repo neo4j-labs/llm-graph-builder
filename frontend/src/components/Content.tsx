@@ -23,16 +23,15 @@ import { buttonCaptions, defaultLLM, largeFileSize, llms, taskParam, tooltips } 
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 import DropdownComponent from './Dropdown';
-// import GraphViewModal from './Graph/GraphViewModal';
+import GraphViewModal from './Graph/GraphViewModal';
 import { OverridableStringUnion } from '@mui/types';
 import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { lazy } from 'react';
-import Loader from '../utils/Loader';
+import FallBackDialog from './UI/FallBackDialog';
+import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
+import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
-const DeletePopUp = lazy(() => import('./Popups/DeletePopUp/DeletePopUp'));
-const GraphEnhancementDialog = lazy(() => import('./Popups/GraphEnhancementDialog'));
-const GraphViewModal = lazy(() => import('./Graph/GraphViewModal'));
 
 const Content: React.FC<ContentProps> = ({
   isLeftExpanded,
@@ -507,7 +506,7 @@ const Content: React.FC<ContentProps> = ({
         />
       )}
       {showConfirmationModal && filesForProcessing.length && (
-        <Suspense fallback={<Loader title='Loading...'></Loader>}>
+        <Suspense fallback={<FallBackDialog />}>
           <ConfirmationDialog
             open={showConfirmationModal}
             largeFiles={filesForProcessing}
@@ -518,30 +517,26 @@ const Content: React.FC<ContentProps> = ({
         </Suspense>
       )}
       {showDeletePopUp && (
-        <Suspense fallback={<Loader title='Loading...' />}>
-          <DeletePopUp
-            open={showDeletePopUp}
-            no_of_files={selectedfileslength ?? 0}
-            deleteHandler={(delentities: boolean) => handleDeleteFiles(delentities)}
-            deleteCloseHandler={() => setshowDeletePopUp(false)}
-            loading={deleteLoading}
-            view='contentView'
-          ></DeletePopUp>
-        </Suspense>
+        <DeletePopUp
+          open={showDeletePopUp}
+          no_of_files={selectedfileslength ?? 0}
+          deleteHandler={(delentities: boolean) => handleDeleteFiles(delentities)}
+          deleteCloseHandler={() => setshowDeletePopUp(false)}
+          loading={deleteLoading}
+          view='contentView'
+        ></DeletePopUp>
       )}
       {showEnhancementDialog && (
-        <Suspense fallback={<Loader title='Loading...' />}>
-          <GraphEnhancementDialog
-            open={showEnhancementDialog}
-            onClose={closeGraphEnhancementDialog}
-            closeSettingModal={closeSettingModal}
-            showAlert={showAlert}
-          ></GraphEnhancementDialog>
-        </Suspense>
+        <GraphEnhancementDialog
+          open={showEnhancementDialog}
+          onClose={closeGraphEnhancementDialog}
+          closeSettingModal={closeSettingModal}
+          showAlert={showAlert}
+        ></GraphEnhancementDialog>
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>
-          <Suspense fallback={<Loader title='Loading...' />}>
+          <Suspense fallback={<FallBackDialog />}>
             <ConnectionModal
               open={openConnection.openPopUp}
               setOpenConnection={setOpenConnection}
@@ -677,15 +672,13 @@ const Content: React.FC<ContentProps> = ({
           </Flex>
         </Flex>
       </div>
-      <Suspense fallback={<Loader title='Loading...' />}>
-        <GraphViewModal
-          inspectedName={inspectedName}
-          open={openGraphView}
-          setGraphViewOpen={setOpenGraphView}
-          viewPoint={viewPoint}
-          selectedRows={childRef.current?.getSelectedRows()}
-        />
-      </Suspense>
+      <GraphViewModal
+        inspectedName={inspectedName}
+        open={openGraphView}
+        setGraphViewOpen={setOpenGraphView}
+        viewPoint={viewPoint}
+        selectedRows={childRef.current?.getSelectedRows()}
+      />
     </>
   );
 };
