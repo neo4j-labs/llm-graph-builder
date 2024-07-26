@@ -219,7 +219,7 @@ export const calculateProcessingTime = (fileSizeBytes: number, processingTimePer
 export const capitalize = (word: string): string => {
   return `${word[0].toUpperCase()}${word.slice(1)}`;
 };
-const parseEntity = (entity: Entity) => {
+export const parseEntity = (entity: Entity) => {
   const { labels, properties } = entity;
   const label = labels[0];
   const text = properties.id;

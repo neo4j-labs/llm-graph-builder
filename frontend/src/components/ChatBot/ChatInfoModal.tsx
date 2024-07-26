@@ -27,7 +27,7 @@ import type { Relationship } from '@neo4j-nvl/base';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import ReactMarkdown from 'react-markdown';
 import { GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
-import { youtubeLinkValidation } from '../../utils/Utils';
+import { parseEntity, youtubeLinkValidation } from '../../utils/Utils';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 
@@ -428,7 +428,4 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   );
 };
 export default ChatInfoModal;
-function parseEntity(entity: Entity): { label: any; text: any; } {
-  throw new Error('Function not implemented.');
-}
 
