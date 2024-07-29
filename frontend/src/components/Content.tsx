@@ -146,6 +146,178 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
+
+  const extractHandler = async (fileItem: CustomFile, uid: string, onStatusComplete: () => void) => {
+    try {
+      setFilesData((prevFiles) =>
+        prevFiles.map((curFile) =>
+          curFile.id
+            === uid
+            ? { ...curFile, status: 'Processing' }
+            : curFile
+        )
+      );
+      setRowSelection((prev) => ({
+        ...prev,
+        [uid]: false,
+      }));
+      if (fileItem.name && userCredentials) {
+        await triggerStatusUpdateAPI(
+          fileItem.name,
+          userCredentials.uri,
+          userCredentials.userName,
+          userCredentials.password,
+          userCredentials.database,
+          updateStatusForLargeFiles,
+          onStatusComplete
+        );
+      }
+      const apiResponse = await extractAPI(
+        fileItem.model,
+        userCredentials as UserCredentials,
+        fileItem.fileSource,
+        fileItem.source_url,
+        localStorage.getItem('accesskey'),
+        localStorage.getItem('secretkey'),
+        fileItem.name ?? '',
+        fileItem.gcsBucket ?? '',
+        fileItem.gcsBucketFolder ?? '',
+        selectedNodes.map((l) => l.value),
+        selectedRels.map((t) => t.value),
+        fileItem.google_project_id,
+        fileItem.language,
+        fileItem.access_token
+      );
+      if (apiResponse?.status === 'Failed') {
+        throw new Error(JSON.stringify({
+          error: apiResponse.error,
+          message: apiResponse.message,
+          fileName: apiResponse.file_name,
+        }));
+      } else if (fileItem.size && fileItem.size < largeFileSize) {
+        setFilesData((prevFiles) =>
+          prevFiles.map((curFile) =>
+            curFile.name === apiResponse?.data?.fileName
+              ? {
+                ...curFile,
+                processing: apiResponse?.data?.processingTime?.toFixed(2),
+                status: apiResponse?.data?.status,
+                NodesCount: apiResponse?.data?.nodeCount,
+                relationshipCount: apiResponse?.data?.relationshipCount,
+                model: apiResponse?.data?.model,
+              }
+              : curFile
+          )
+        );
+      }
+      return apiResponse;
+    } catch (err: any) {
+      const error = JSON.parse(err.message);
+      if ('fileName' in error) {
+        const { message, fileName, errorMessage } = error;
+        setalertDetails({
+          showAlert: true,
+          alertType: 'error',
+          alertMessage: message,
+        });
+        setFilesData((prevFiles) =>
+          prevFiles.map((curFile) =>
+            curFile.name === fileName
+              ? { ...curFile, status: 'Failed', errorMessage }
+              : curFile
+          )
+        );
+      }
+      return error;
+    }
+  };
+
+  const handleGenerateGraph = async (allowLargeFiles: boolean, selectedFilesFromAllFiles: CustomFile[]) => {
+    const queue: CustomFile[] = [];
+    const addToQueue = (files: CustomFile[]) => {
+      files.forEach((file) => {
+        if (file.status === 'New') {
+          file.status = 'Waiting';
+          queue.push(file);
+        }
+      });
+    };
+    if (selectedfileslength && allowLargeFiles) {
+      const row = childRef.current?.getSelectedRows();
+      if (row) {
+        addToQueue(row);
+      } else {
+        addToQueue(selectedFilesFromAllFiles);
+      }
+    } else if (selectedFilesFromAllFiles.length && allowLargeFiles) {
+      const selectedRows = childRef.current?.getSelectedRows();
+      if (selectedRows) {
+        addToQueue(selectedRows);
+      } else {
+        addToQueue(selectedFilesFromAllFiles);
+      }
+    }
+    console.log('queue', queue);
+    const processBatch = async (batch: CustomFile[]) => {
+      batch.forEach((file) => (file.status = 'Processing'));
+      const batchPromises = batch.map((file) => extractData(file.id as string, true, processNextBatch));
+      await Promise.allSettled(batchPromises);
+      const results = await Promise.allSettled(batchPromises);
+      results.forEach((result, index) => {
+        const file = batch[index];
+        console.log('results file', result)
+        if (result.status === 'fulfilled') {
+          file.status = result?.value?.data.status;
+        } else {
+          file.status = 'Failed';
+          console.error(`Error processing file ${file.id}:`, result.reason);
+        }
+      });
+    };
+    const processNextBatch = () => {
+      if (queue.length > 0) {
+        const nextBatch = queue.splice(0, 2);
+        processBatch(nextBatch);
+      } else {
+        setextractLoading(false);
+        postProcessing(userCredentials as UserCredentials, taskParam);
+      }
+    };
+    while (queue.length > 0) {
+      const batch = queue.splice(0, 2); // Process in batches of two
+      await processBatch(batch);
+      processNextBatch();
+    }
+  };
+
+  const extractData = async (uid: string, isSelectedRows = false, onStatusComplete: () => void) => {
+    const fileItem = isSelectedRows
+      ? childRef.current?.getSelectedRows().find((f) =>
+        f.id
+        === uid)
+      : filesData.find((f) =>
+        f.id
+        === uid);
+    if (fileItem) {
+      setextractLoading(true);
+      if (!hasAlertedUser) {
+        setalertDetails({
+          showAlert: true,
+          alertMessage: 'Processing 2 files at a time.',
+          alertType: 'info',
+        });
+        setHasAlertedUser(true);
+      }
+      const resp = await extractHandler(fileItem, uid, onStatusComplete);
+      return resp;
+    }
+  };
+
+  const handleClose = () => {
+    setalertDetails((prev) => ({ ...prev, showAlert: false, alertMessage: '' }));
+  };
+
+
   // const extractData = async (uid: string, isselectedRows = false) => {
   //   if (!isselectedRows) {
   //     const fileItem = filesData.find((f) => f.id == uid);
@@ -324,158 +496,6 @@ const Content: React.FC<ContentProps> = ({
   //   setextractLoading(false);
   //   await postProcessing(userCredentials as UserCredentials, taskParam);
   // };
-
-  const extractHandler = async (fileItem: CustomFile, uid: string, onStatusComplete: () => void) => {
-    try {
-      setFilesData((prevFiles) =>
-        prevFiles.map((curFile) =>
-          curFile.id
-            === uid
-            ? { ...curFile, status: 'Processing' }
-            : curFile
-        )
-      );
-      setRowSelection((prev) => ({
-        ...prev,
-        [uid]: false,
-      }));
-      if (fileItem.name && userCredentials) {
-        await triggerStatusUpdateAPI(
-          fileItem.name,
-          userCredentials.uri,
-          userCredentials.userName,
-          userCredentials.password,
-          userCredentials.database,
-          updateStatusForLargeFiles,
-          onStatusComplete
-        );
-      }
-      const apiResponse = await extractAPI(
-        fileItem.model,
-        userCredentials as UserCredentials,
-        fileItem.fileSource,
-        fileItem.source_url,
-        localStorage.getItem('accesskey'),
-        localStorage.getItem('secretkey'),
-        fileItem.name ?? '',
-        fileItem.gcsBucket ?? '',
-        fileItem.gcsBucketFolder ?? '',
-        selectedNodes.map((l) => l.value),
-        selectedRels.map((t) => t.value),
-        fileItem.google_project_id,
-        fileItem.language,
-        fileItem.access_token
-      );
-      if (apiResponse?.status === 'Failed') {
-        throw new Error(JSON.stringify({
-          error: apiResponse.error,
-          message: apiResponse.message,
-          fileName: apiResponse.file_name,
-        }));
-      } else if (fileItem.size && fileItem.size < largeFileSize) {
-        setFilesData((prevFiles) =>
-          prevFiles.map((curFile) =>
-            curFile.name === apiResponse?.data?.fileName
-              ? {
-                ...curFile,
-                processing: apiResponse?.data?.processingTime?.toFixed(2),
-                status: apiResponse?.data?.status,
-                NodesCount: apiResponse?.data?.nodeCount,
-                relationshipCount: apiResponse?.data?.relationshipCount,
-                model: apiResponse?.data?.model,
-              }
-              : curFile
-          )
-        );
-      }
-    } catch (err: any) {
-      const error = JSON.parse(err.message);
-      if ('fileName' in error) {
-        const { message, fileName, errorMessage } = error;
-        setalertDetails({
-          showAlert: true,
-          alertType: 'error',
-          alertMessage: message,
-        });
-        setFilesData((prevFiles) =>
-          prevFiles.map((curFile) =>
-            curFile.name === fileName
-              ? { ...curFile, status: 'Failed', errorMessage }
-              : curFile
-          )
-        );
-      }
-    }
-  };
-  const handleGenerateGraph = async (allowLargeFiles: boolean, selectedFilesFromAllFiles: CustomFile[]) => {
-    const queue: CustomFile[] = [];
-    const addToQueue = (files: CustomFile[]) => {
-      files.forEach((file) => {
-        if (file.status === 'New') {
-          file.status = 'Waiting';
-          queue.push(file);
-        }
-      });
-    };
-    if (allowLargeFiles) {
-      const selectedRows = childRef.current?.getSelectedRows() ?? selectedFilesFromAllFiles;
-      addToQueue(selectedRows);
-    }
-    const processBatch = async (batch: CustomFile[]) => {
-      batch.forEach((file) => (file.status = 'Processing'));
-      const batchPromises = batch.map((file) => extractData(file.id as string, true, processNextBatch));
-      const results = await Promise.allSettled(batchPromises);
-      results.forEach((result, index) => {
-        const file = batch[index];
-        console.log('results file', result)
-        if (result.status === 'fulfilled') {
-          file.status = result.value.status === 'Failed' ? 'Failed' : 'Completed';
-        } else {
-          file.status = 'Failed';
-          console.error(`Error processing file ${file.id}:`, result.reason);
-        }
-      });
-    };
-    const processNextBatch = () => {
-      if (queue.length > 0) {
-        const nextBatch = queue.splice(0, 2);
-        processBatch(nextBatch);
-      } else {
-        setextractLoading(false);
-        postProcessing(userCredentials as UserCredentials, taskParam);
-      }
-    };
-    while (queue.length > 0) {
-      const batch = queue.splice(0, 2); // Process in batches of two
-      await processBatch(batch);
-      processNextBatch();
-    }
-  };
-
-  const extractData = async (uid: string, isSelectedRows = false, onStatusComplete: () => void) => {
-    const fileItem = isSelectedRows
-      ? childRef.current?.getSelectedRows().find((f) =>
-        f.id
-        === uid)
-      : filesData.find((f) =>
-        f.id
-        === uid);
-    if (fileItem) {
-      setextractLoading(true);
-      if (!hasAlertedUser) {
-        setalertDetails({
-          showAlert: true,
-          alertMessage: 'Processing 2 files at a time.',
-          alertType: 'info',
-        });
-        setHasAlertedUser(true);
-      }
-      await extractHandler(fileItem, uid, onStatusComplete);
-    }
-  };
-  const handleClose = () => {
-    setalertDetails((prev) => ({ ...prev, showAlert: false, alertMessage: '' }));
-  };
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
