@@ -206,3 +206,5 @@ export const graphLabels = {
   noEntities: 'No Entities Found',
   selectCheckbox: 'Select atleast one checkbox for graph view',
 };
+
+export const fileProcessingLimit = process.env.FILE_PROCESSING_LIMIT ? parseInt(process.env.FILE_PROCESSING_LIMIT) : -1;

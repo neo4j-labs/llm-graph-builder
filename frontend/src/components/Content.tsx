@@ -19,7 +19,7 @@ import { postProcessing } from '../services/PostProcessing';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
-import { buttonCaptions, defaultLLM, largeFileSize, llms, taskParam, tooltips } from '../utils/Constants';
+import { buttonCaptions, defaultLLM, fileProcessingLimit, largeFileSize, llms, taskParam, tooltips } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 import DropdownComponent from './Dropdown';
@@ -265,7 +265,7 @@ const Content: React.FC<ContentProps> = ({
       const results = await Promise.allSettled(batchPromises);
       results.forEach((result, index) => {
         const file = batch[index];
-        console.log('results file', result)
+        console.log('results file', result);
         if (result.status === 'fulfilled') {
           file.status = result?.value?.data.status;
         } else {
@@ -276,18 +276,15 @@ const Content: React.FC<ContentProps> = ({
     };
     const processNextBatch = () => {
       if (queue.length > 0) {
-        const nextBatch = queue.splice(0, 2);
+        const batchSize: number = fileProcessingLimit > 0 ? fileProcessingLimit : queue.length;
+        const nextBatch = queue.splice(0, batchSize);
         processBatch(nextBatch);
       } else {
         setextractLoading(false);
         postProcessing(userCredentials as UserCredentials, taskParam);
       }
     };
-    while (queue.length > 0) {
-      const batch = queue.splice(0, 2); // Process in batches of two
-      await processBatch(batch);
-      processNextBatch();
-    }
+    processNextBatch();
   };
 
   const extractData = async (uid: string, isSelectedRows = false, onStatusComplete: () => void) => {
