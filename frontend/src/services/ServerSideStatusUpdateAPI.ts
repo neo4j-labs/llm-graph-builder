@@ -65,7 +65,7 @@ export function triggerStatusUpdateAPI(
     ) {
       completedCount++;
       // Check if 2 files have completed, failed, or been canceled
-      if (completedCount <= 4) {
+      if (completedCount <= 2) {
         batchCompleteHandler(); // Trigger the next batch
         eventSource.close(); // Close the event source
       }
