@@ -1,4 +1,4 @@
-import { Drawer, Flex, StatusIndicator, Typography } from '@neo4j-ndl/react';
+import { Drawer, Flex, StatusIndicator, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import DropZone from '../DataSources/Local/DropZone';
 import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
 import { healthStatus } from '../../services/HealthStatus';
@@ -11,6 +11,7 @@ import { APP_SOURCES } from '../../utils/Constants';
 import GenericButton from '../WebSources/GenericSourceButton';
 import GenericModal from '../WebSources/GenericSourceModal';
 import FallBackDialog from '../UI/FallBackDialog';
+import { tokens } from '@neo4j-ndl/base';
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 
