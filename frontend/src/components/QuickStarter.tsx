@@ -24,12 +24,13 @@ const QuickStarter: React.FunctionComponent = () => {
   const closeSettingModal = () => {
     setshowSettingsModal(false);
   };
+
   return (
     <UserCredentialsWrapper>
       <FileContextProvider>
         <MessageContextWrapper>
           <AlertContextWrapper>
-            <Header themeMode={themeMode} toggleTheme={toggleColorMode} openSettingsModal={openSettingsModal} />
+            <Header themeMode={themeMode} toggleTheme={toggleColorMode} />
             <PageLayout
               openSettingsDialog={openSettingsModal}
               isSettingPanelExpanded={showSettingsModal}

@@ -2,7 +2,11 @@ import axios from 'axios';
 import { url } from '../utils/Utils';
 import { UserCredentials } from '../types';
 
-const graphQueryAPI = async (userCredentials: UserCredentials, query_type: string, document_names: string[]) => {
+const graphQueryAPI = async (
+  userCredentials: UserCredentials,
+  query_type: string,
+  document_names: (string | undefined)[] | undefined
+) => {
   try {
     const formData = new FormData();
     formData.append('uri', userCredentials?.uri ?? '');
@@ -10,8 +14,6 @@ const graphQueryAPI = async (userCredentials: UserCredentials, query_type: strin
     formData.append('userName', userCredentials?.userName ?? '');
     formData.append('password', userCredentials?.password ?? '');
     formData.append('query_type', query_type ?? 'entities');
-
-    // @ts-ignore
     formData.append('document_names', JSON.stringify(document_names));
 
     const response = await axios.post(`${url()}/graph_query`, formData, {

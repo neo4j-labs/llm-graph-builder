@@ -2,7 +2,10 @@ import { createContext, useContext, useState, Dispatch, SetStateAction, FC, useE
 import { CustomFile, FileContextProviderProps, OptionType } from '../types';
 import { defaultLLM } from '../utils/Constants';
 import { useCredentials } from './UserCredentials';
-
+interface showTextFromSchemaDialogType {
+  triggeredFrom: string;
+  show: boolean;
+}
 interface FileContextType {
   files: (File | null)[] | [];
   filesData: CustomFile[] | [];
@@ -22,6 +25,12 @@ interface FileContextType {
   setSelectedRows: React.Dispatch<React.SetStateAction<string[]>>;
   selectedSchemas: readonly OptionType[];
   setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
+  chatMode: string;
+  setchatMode: Dispatch<SetStateAction<string>>;
+  isSchema: boolean;
+  setIsSchema: React.Dispatch<React.SetStateAction<boolean>>;
+  showTextFromSchemaDialog: showTextFromSchemaDialogType;
+  setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
@@ -38,7 +47,13 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [selectedSchemas, setSelectedSchemas] = useState<readonly OptionType[]>([]);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [chatMode, setchatMode] = useState<string>('graph+vector');
   const { userCredentials } = useCredentials();
+  const [isSchema, setIsSchema] = useState<boolean>(false);
+  const [showTextFromSchemaDialog, setShowTextFromSchemaDialog] = useState<showTextFromSchemaDialogType>({
+    triggeredFrom: '',
+    show: false,
+  });
 
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
@@ -74,6 +89,12 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setSelectedRows,
     selectedSchemas,
     setSelectedSchemas,
+    chatMode,
+    setchatMode,
+    isSchema,
+    setIsSchema,
+    setShowTextFromSchemaDialog,
+    showTextFromSchemaDialog,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

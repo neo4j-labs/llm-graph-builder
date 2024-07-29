@@ -78,14 +78,14 @@ def get_llm(model: str,max_tokens=1000) -> Any:
     """Retrieve the specified language model based on the model name."""
 
     model_versions = {
-        "OpenAI GPT 3.5": "gpt-3.5-turbo-16k",
-        "Gemini Pro": "gemini-1.0-pro-001",
-        "Gemini 1.5 Pro": "gemini-1.5-pro-preview-0409",
-        "OpenAI GPT 4": "gpt-4-0125-preview",
-        "Diffbot" : "gpt-4-0125-preview",
-        "OpenAI GPT 4o":"gpt-4o"
+        "openai-gpt-3.5": "gpt-3.5-turbo-16k",
+        "gemini-1.0-pro": "gemini-1.0-pro-001",
+        "gemini-1.5-pro": "gemini-1.5-pro-preview-0409",
+        "openai-gpt-4": "gpt-4-0125-preview",
+        "diffbot" : "gpt-4-0125-preview",
+        "openai-gpt-4o":"gpt-4o",
+        "openai-gpt-4o-mini": "gpt-4o-mini",
          }
-
     if model in model_versions:
         model_version = model_versions[model]
         logging.info(f"Chat Model: {model}, Model Version: {model_version}")

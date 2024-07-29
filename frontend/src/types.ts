@@ -22,10 +22,12 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   google_project_id?: string;
   language?: string;
   processingProgress?: number;
+  access_token?: string;
+  checked?: boolean;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
-  total_pages: number | 'NA';
+  // total_pages: number | 'N/A';
 }
 
 export interface OptionType {
@@ -62,18 +64,21 @@ export type ExtractParams = {
   allowedRelationship?: string[];
   gcs_project_id?: string;
   language?: string;
+  access_token?: string;
 } & { [key: string]: any };
 
 export type UploadParams = {
-  file: File;
+  file: Blob;
   model: string;
+  chunkNumber: number;
+  totalChunks: number;
+  originalname: string;
 } & { [key: string]: any };
 
 export type FormDataParams = ExtractParams | UploadParams;
 
 export interface DropdownProps {
   onSelect: (option: OptionType | null | void) => void;
-  isDisabled: boolean;
 }
 
 export interface CustomAlertProps {
@@ -90,17 +95,16 @@ export interface S3ModalProps {
   hideModal: () => void;
   open: boolean;
 }
-
-export interface ConnectionModalProps {
+export interface GCSModalProps {
+  hideModal: () => void;
   open: boolean;
-  setOpenConnection: Dispatch<SetStateAction<boolean>>;
-  setConnectionStatus: Dispatch<SetStateAction<boolean>>;
+  openGCSModal: () => void;
 }
 
 export interface SourceNode {
   fileName: string;
   fileSize: number;
-  fileType?: string;
+  fileType: string;
   nodeCount?: number;
   processingTime?: string;
   relationshipCount?: number;
@@ -117,7 +121,8 @@ export interface SourceNode {
   language?: string;
   processed_chunk?: number;
   total_chunks?: number;
-  total_pages?: number;
+  // total_pages?: number;
+  access_token?: string;
 }
 
 export interface SideNavProps {
@@ -141,6 +146,12 @@ export interface ContentProps {
   isRightExpanded: boolean;
   showChatBot: boolean;
   openChatBot: () => void;
+  openTextSchema: () => void;
+  isSchema?: boolean;
+  setIsSchema: Dispatch<SetStateAction<boolean>>;
+  showEnhancementDialog: boolean;
+  setshowEnhancementDialog: Dispatch<SetStateAction<boolean>>;
+  closeSettingModal: () => void;
 }
 
 export interface FileTableProps {
@@ -161,18 +172,42 @@ export interface CustomModalProps {
   setStatus: Dispatch<SetStateAction<'unknown' | 'success' | 'info' | 'warning' | 'danger'>>;
 }
 
+export interface CustomInput {
+  value: string;
+  label: string;
+  placeHolder: string;
+  onChangeHandler: React.ChangeEventHandler<HTMLInputElement>;
+  submitHandler: (url: string) => void;
+  disabledCheck: boolean;
+  onCloseHandler: () => void;
+  id: string;
+  onBlurHandler: React.FocusEventHandler<HTMLInputElement>;
+  status: 'unknown' | 'success' | 'info' | 'warning' | 'danger';
+  setStatus: Dispatch<SetStateAction<'unknown' | 'success' | 'info' | 'warning' | 'danger'>>;
+  statusMessage: string;
+  isValid: boolean;
+  isFocused: boolean;
+  onPasteHandler: React.ClipboardEventHandler<HTMLInputElement>;
+}
+
 export interface CommonButtonProps {
   openModal: () => void;
   wrapperclassName?: string;
   logo: string;
-  title: string;
+  title?: string;
   className?: string;
+  imgWidth?: number;
+  imgeHeight?: number;
 }
 
 export interface Source {
   page_numbers?: number[];
   source_name: string;
-  time_stamps?: string;
+  start_time?: string;
+}
+export interface chunk {
+  id: string;
+  score: number;
 }
 export interface Messages {
   id: number;
@@ -180,12 +215,18 @@ export interface Messages {
   user: string;
   datetime: string;
   isTyping?: boolean;
-  sources?: Source[];
+  sources?: string[];
   model?: string;
   isLoading?: boolean;
   response_time?: number;
-  chunk_ids?: string[];
+  chunk_ids?: chunk[];
   total_tokens?: number;
+  speaking?: boolean;
+  copying?: boolean;
+  mode?: string;
+  cypher_query?: string;
+  graphonly_entities?: [];
+  error?: string;
 }
 
 export type ChatbotProps = {
@@ -205,11 +246,22 @@ export interface GraphViewModalProps {
   inspectedName?: string;
   setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
   viewPoint: string;
-  nodeValues?: Node[];
+  nodeValues?: ExtendedNode[];
   relationshipValues?: Relationship[];
+  selectedRows?: CustomFile[] | undefined;
 }
 
-export type GraphType = 'document' | 'chunks' | 'entities';
+export type GraphType = 'Entities' | 'DocumentChunk';
+
+export type PartialLabelNode = Partial<Node> & {
+  labels: string;
+};
+
+export interface CheckboxSectionProps {
+  graphType: GraphType[];
+  loading: boolean;
+  handleChange: (graph: GraphType) => void;
+}
 
 export interface fileName {
   fileName: string;
@@ -249,7 +301,7 @@ export interface fileStatus {
   relationshipCount?: number;
   model: string;
   total_chunks?: number;
-  total_pages?: number;
+  // total_pages?: number;
   processed_chunk?: number;
 }
 export interface PollingAPI_Response extends Partial<AxiosResponse> {
@@ -278,6 +330,7 @@ export type alertStateType = {
 };
 
 export type Scheme = Record<string, string>;
+
 export type LabelCount = Record<string, number>;
 interface NodeType extends Partial<Node> {
   labels?: string[];
@@ -290,23 +343,62 @@ export interface LegendChipProps {
 export interface FileContextProviderProps {
   children: ReactNode;
 }
+export interface orphanNode {
+  id: string;
+  elementId: string;
+  description: string;
+  labels: string[];
+  embedding?: null | string;
+}
+export interface orphanNodeProps {
+  documents: string[];
+  chunkConnections: number;
+  e: orphanNode;
+  checked?: boolean;
+  similar?: orphanNode[];
+}
 export interface labelsAndTypes {
   labels: string[];
   relationshipTypes: string[];
 }
+interface orphanTotalNodes {
+  total: number;
+}
 export interface commonserverresponse {
   status: string;
   error?: string;
-  message?: string;
+  message?: string | orphanTotalNodes;
   file_name?: string;
-  data?: labelsAndTypes | labelsAndTypes[] | uploadData;
+  data?: labelsAndTypes | labelsAndTypes[] | uploadData | orphanNodeProps[] | dupNodes[];
 }
-
+export interface dupNodeProps {
+  id: string;
+  elementId: string;
+  labels: string[];
+  embedding?: null | string;
+}
+export interface dupNodes {
+  e: dupNodeProps;
+  similar: dupNodeProps[];
+  documents: string[];
+  chunkConnections: number;
+}
+export interface selectedDuplicateNodes {
+  firstElementId: string;
+  similarElementIds: string[];
+}
 export interface ScehmaFromText extends Partial<commonserverresponse> {
   data: labelsAndTypes;
 }
+
 export interface ServerData extends Partial<commonserverresponse> {
   data: labelsAndTypes[];
+}
+export interface duplicateNodesData extends Partial<commonserverresponse> {
+  data: dupNodes[];
+}
+export interface OrphanNodeResponse extends Partial<commonserverresponse> {
+  data: orphanNodeProps[];
 }
 export interface schema {
   nodelabels: string[];
@@ -321,11 +413,15 @@ export interface SourceListServerData {
 }
 
 export interface chatInfoMessage extends Partial<Messages> {
-  sources: Source[];
+  sources: string[];
   model: string;
   response_time: number;
-  chunk_ids: string[];
+  chunk_ids: chunk[];
   total_tokens: number;
+  mode: string;
+  cypher_query?: string;
+  graphonly_entities: [];
+  error: string;
 }
 
 export interface eventResponsetypes {
@@ -336,7 +432,7 @@ export interface eventResponsetypes {
   relationshipCount: number;
   model: string;
   total_chunks: number | null;
-  total_pages: number;
+  // total_pages: number;
   fileSize: number;
   processed_chunk?: number;
   fileSource: string;
@@ -359,7 +455,7 @@ export interface CHATINFO_RESPONSE {
   status: string;
   message: string;
   error?: string;
-  node: Node[];
+  node: ExtendedNode[];
   relationships: Relationship[];
   data?: any;
 }
@@ -387,7 +483,7 @@ export type GroupedEntity = {
 
 export interface uploadData {
   file_size: number;
-  total_pages: number;
+  // total_pages: number;
   file_name: string;
   message: string;
 }
@@ -411,7 +507,149 @@ export interface Chunk {
   fileName: string;
   length: number;
   embedding: string | null;
-  page_number: number;
-  start_time: string;
-  content_offset: string;
+  page_number?: number;
+  start_time?: string;
+  content_offset?: string;
+  url?: string;
+  fileSource: string;
+  score?: string;
+}
+
+export interface SpeechSynthesisProps {
+  onEnd?: () => void;
+}
+
+export interface SpeechArgs {
+  text?: string;
+  rate?: number;
+  pitch?: number;
+  volume?: number;
+}
+
+export interface SettingsModalProps {
+  open: boolean;
+  onClose: () => void;
+  openTextSchema: () => void;
+  onContinue?: () => void;
+  settingView: 'contentView' | 'headerView';
+  isSchema?: boolean;
+  setIsSchema: Dispatch<SetStateAction<boolean>>;
+  onClear?: () => void;
+}
+export interface Menuitems {
+  title: string;
+  onClick: () => void;
+  disabledCondition: boolean;
+  description?: string | React.ReactNode;
+  isSelected?: boolean;
+  selectedClassName?: string;
+}
+export type Vertical = 'top' | 'bottom';
+export type Horizontal = 'left' | 'right' | 'center';
+export interface Origin {
+  vertical: Vertical;
+  horizontal: Horizontal;
+}
+
+export type BasicNode = {
+  id: string;
+  labels: string[];
+  properties: Record<string, string>;
+  propertyTypes: Record<string, string>;
+};
+
+export type GraphStatsLabels = Record<
+  string,
+  {
+    count: number;
+    properties: Record<string, string>;
+  }
+>;
+
+type NodeStyling = {
+  backgroundColor: string;
+  borderColor: string;
+  textColor: string;
+  caption: string;
+  diameter: string;
+};
+
+type RelationStyling = {
+  fontSize: string;
+  lineColor: string;
+  textColorExternal: string;
+  textColorInternal: string;
+  caption: string;
+  padding: string;
+  width: string;
+};
+
+export type GraphStyling = {
+  node: Record<string, Partial<NodeStyling>>;
+  relationship: Record<string, Partial<RelationStyling>>;
+};
+
+export interface ExtendedNode extends Node {
+  labels: string[];
+}
+
+export interface ExtendedRelationship extends Relationship {
+  labels: string[];
+}
+export interface connectionState {
+  isvectorIndexMatch: boolean;
+  openPopUp: boolean;
+  novectorindexInDB: boolean;
+}
+export interface Message {
+  type: 'success' | 'info' | 'warning' | 'danger' | 'unknown';
+  content: string | React.ReactNode;
+}
+
+export interface ConnectionModalProps {
+  open: boolean;
+  setOpenConnection: Dispatch<SetStateAction<connectionState>>;
+  setConnectionStatus: Dispatch<SetStateAction<boolean>>;
+  isVectorIndexMatch: boolean;
+  noVectorIndexFound: boolean;
+}
+export interface ReusableDropdownProps extends DropdownProps {
+  options: string[] | OptionType[];
+  placeholder?: string;
+  defaultValue?: string;
+  children?: React.ReactNode;
+  view?: 'ContentView' | 'GraphView';
+  isDisabled: boolean;
+  value?: OptionType;
+}
+export interface ChildRef {
+  getSelectedRows: () => CustomFile[];
+}
+export interface IconProps {
+  closeChatBot: () => void;
+  deleteOnClick?: () => void;
+  messages: Messages[];
+}
+export interface S3File {
+  fileName: string;
+  fileSize: number;
+  url: string;
+}
+export interface GraphViewButtonProps {
+  nodeValues?: ExtendedNode[];
+  relationshipValues?: Relationship[];
+}
+export interface DrawerChatbotProps {
+  isExpanded: boolean;
+  clearHistoryData: boolean;
+  messages: Messages[];
+}
+
+export interface ContextProps {
+  userCredentials: UserCredentials | null;
+  setUserCredentials: (UserCredentials: UserCredentials) => void;
+}
+export interface MessageContextType {
+  messages: Messages[] | [];
+  setMessages: Dispatch<SetStateAction<Messages[]>>;
 }
