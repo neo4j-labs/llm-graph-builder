@@ -75,6 +75,8 @@ const Content: React.FC<ContentProps> = ({
     alertType: 'error',
     alertMessage: '',
   });
+
+  const [hasAlertedUser, setHasAlertedUser] = useState<boolean>(false);
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
       setalertDetails({
@@ -144,63 +146,208 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
-  const extractData = async (uid: string, isselectedRows = false) => {
-    if (!isselectedRows) {
-      const fileItem = filesData.find((f) => f.id == uid);
-      if (fileItem) {
-        setextractLoading(true);
-        await extractHandler(fileItem, uid);
-      }
-    } else {
-      const fileItem = childRef.current?.getSelectedRows().find((f) => f.id == uid);
-      if (fileItem) {
-        setextractLoading(true);
-        await extractHandler(fileItem, uid);
-      }
-    }
-  };
-  const extractHandler = async (fileItem: CustomFile, uid: string) => {
+  // const extractData = async (uid: string, isselectedRows = false) => {
+  //   if (!isselectedRows) {
+  //     const fileItem = filesData.find((f) => f.id == uid);
+  //     if (fileItem) {
+  //       setextractLoading(true);
+  //       await extractHandler(fileItem, uid);
+  //     }
+  //   } else {
+  //     const fileItem = childRef.current?.getSelectedRows().find((f) => f.id == uid);
+  //     if (fileItem) {
+  //       setextractLoading(true);
+  //       await extractHandler(fileItem, uid);
+  //     }
+  //   }
+  // };
+  // const extractHandler = async (fileItem: CustomFile, uid: string) => {
+  //   try {
+  //     setFilesData((prevfiles) =>
+  //       prevfiles.map((curfile) => {
+  //         if (curfile.id === uid) {
+  //           return {
+  //             ...curfile,
+  //             status: 'Processing',
+  //           };
+  //         }
+  //         return curfile;
+  //       })
+  //     );
+  //     setRowSelection((prev) => {
+  //       const copiedobj = { ...prev };
+  //       for (const key in copiedobj) {
+  //         if (key == uid) {
+  //           copiedobj[key] = false;
+  //         }
+  //       }
+  //       return copiedobj;
+  //     });
+  //     if (fileItem.name != undefined && userCredentials != null) {
+  //       const { name } = fileItem;
+  //       // const statusUpdateResponse = await triggerStatusUpdateAPI(
+  //       //   name as string,
+  //       //   userCredentials?.uri,
+  //       //   userCredentials?.userName,
+  //       //   userCredentials?.password,
+  //       //   userCredentials?.database
+  //       // );
+  //       // // Check if the status update API returned a completed status
+  //       // if (statusUpdateResponse.status !== 'Completed') {
+  //       //   throw new Error(`Status update failed with status: ${statusUpdateResponse.status}`);
+  //       // }
+  //       await triggerStatusUpdateAPI(
+  //         name as string,
+  //         userCredentials?.uri,
+  //         userCredentials?.userName,
+  //         userCredentials?.password,
+  //         userCredentials?.database,
+  //         updateStatusForLargeFiles
+  //       );
+  //     }
+  //     const apiResponse = await extractAPI(
+  //       fileItem.model,
+  //       userCredentials as UserCredentials,
+  //       fileItem.fileSource,
+  //       fileItem.source_url,
+  //       localStorage.getItem('accesskey'),
+  //       localStorage.getItem('secretkey'),
+  //       fileItem.name ?? '',
+  //       fileItem.gcsBucket ?? '',
+  //       fileItem.gcsBucketFolder ?? '',
+  //       selectedNodes.map((l) => l.value),
+  //       selectedRels.map((t) => t.value),
+  //       fileItem.google_project_id,
+  //       fileItem.language,
+  //       fileItem.access_token
+  //     );
+  //     if (apiResponse?.status === 'Failed') {
+  //       let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
+  //       throw new Error(JSON.stringify(errorobj));
+  //     } else if (fileItem.size != undefined && fileItem.size < largeFileSize) {
+  //       setFilesData((prevfiles) => {
+  //         return prevfiles.map((curfile) => {
+  //           if (curfile.name == apiResponse?.data?.fileName) {
+  //             const apiRes = apiResponse?.data;
+  //             return {
+  //               ...curfile,
+  //               processing: apiRes?.processingTime?.toFixed(2),
+  //               status: apiRes?.status,
+  //               NodesCount: apiRes?.nodeCount,
+  //               relationshipCount: apiRes?.relationshipCount,
+  //               model: apiRes?.model,
+  //             };
+  //           }
+  //           return curfile;
+  //         });
+  //       });
+  //     }
+  //   } catch (err: any) {
+  //     const error = JSON.parse(err.message);
+  //     if (Object.keys(error).includes('fileName')) {
+  //       const { message } = error;
+  //       const { fileName } = error;
+  //       const errorMessage = error.message;
+  //       setalertDetails({
+  //         showAlert: true,
+  //         alertType: 'error',
+  //         alertMessage: message,
+  //       });
+  //       setFilesData((prevfiles) =>
+  //         prevfiles.map((curfile) => {
+  //           if (curfile.name == fileName) {
+  //             return {
+  //               ...curfile,
+  //               status: 'Failed',
+  //               errorMessage,
+  //             };
+  //           }
+  //           return curfile;
+  //         })
+  //       );
+  //     }
+  //   }
+  // };
+  // const handleGenerateGraph = async (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => {
+  //   console.log('selectedFiles', selectedFilesFromAllfiles);
+  //   const queue: CustomFile[] = [];
+  //   // Collect files to be processed into the queue
+  //   const addToQueue = (files: CustomFile[]) => {
+  //     for (const file of files) {
+  //       if (file?.status === 'New') {
+  //         file.status = 'Waiting';
+  //         queue.push(file);
+  //       }
+  //     }
+  //   };
+  //   if (selectedfileslength && allowLargeFiles) {
+  //     const row = childRef.current?.getSelectedRows();
+  //     if (row) {
+  //       addToQueue(row);
+  //     } else {
+  //       addToQueue(selectedFilesFromAllfiles);
+  //     }
+  //   } else if (selectedFilesFromAllfiles.length && allowLargeFiles) {
+  //     const selectedRows = childRef.current?.getSelectedRows();
+  //     if (selectedRows) {
+  //       addToQueue(selectedRows);
+  //     } else {
+  //       addToQueue(selectedFilesFromAllfiles);
+  //     }
+  //   }
+  //   console.log('queue', queue);
+  //   // Process files in batches of two
+  //   const processBatch = async (batch: CustomFile[]) => {
+  //     for (const file of batch) {
+  //       file.status = 'Processing';
+  //     }
+  //     const batchData: Promise<any>[] = batch.map(file => extractData(file.id as string, true));
+  //     console.log('batchData', batchData);
+  //     const results = await Promise.allSettled(batchData);
+  //     console.log('results', results);
+  //     results.forEach((result, index) => {
+  //       const file = batch[index];
+  //       console.log('file Result', result);
+  //       if (result.status === 'fulfilled') {
+  //         file.status = result.value.status === 'Failed' ? 'Failed' : 'Completed';
+  //       } else {
+  //         file.status = 'Failed';
+  //         console.error(`Error processing file ${file.id}:`, result.reason);
+  //       }
+  //     });
+  //   };
+  //   // Process the queue in batches
+  //   while (queue.length > 0) {
+  //     const batch = queue.splice(0, 2); // The next batch of two files
+  //     await processBatch(batch);
+  //   }
+  //   setextractLoading(false);
+  //   await postProcessing(userCredentials as UserCredentials, taskParam);
+  // };
+
+  const extractHandler = async (fileItem: CustomFile, uid: string, onStatusComplete: () => void) => {
     try {
-      setFilesData((prevfiles) =>
-        prevfiles.map((curfile) => {
-          if (curfile.id === uid) {
-            return {
-              ...curfile,
-              status: 'Processing',
-            };
-          }
-          return curfile;
-        })
+      setFilesData((prevFiles) =>
+        prevFiles.map((curFile) =>
+          curFile.id
+            === uid
+            ? { ...curFile, status: 'Processing' }
+            : curFile
+        )
       );
-      setRowSelection((prev) => {
-        const copiedobj = { ...prev };
-        for (const key in copiedobj) {
-          if (key == uid) {
-            copiedobj[key] = false;
-          }
-        }
-        return copiedobj;
-      });
-      if (fileItem.name != undefined && userCredentials != null) {
-        const { name } = fileItem;
-        // const statusUpdateResponse = await triggerStatusUpdateAPI(
-        //   name as string,
-        //   userCredentials?.uri,
-        //   userCredentials?.userName,
-        //   userCredentials?.password,
-        //   userCredentials?.database
-        // );
-        // // Check if the status update API returned a completed status
-        // if (statusUpdateResponse.status !== 'Completed') {
-        //   throw new Error(`Status update failed with status: ${statusUpdateResponse.status}`);
-        // }
+      setRowSelection((prev) => ({
+        ...prev,
+        [uid]: false,
+      }));
+      if (fileItem.name && userCredentials) {
         await triggerStatusUpdateAPI(
-          name as string,
-          userCredentials?.uri,
-          userCredentials?.userName,
-          userCredentials?.password,
-          userCredentials?.database,
-          updateStatusForLargeFiles
+          fileItem.name,
+          userCredentials.uri,
+          userCredentials.userName,
+          userCredentials.password,
+          userCredentials.database,
+          updateStatusForLargeFiles,
+          onStatusComplete
         );
       }
       const apiResponse = await extractAPI(
@@ -220,91 +367,67 @@ const Content: React.FC<ContentProps> = ({
         fileItem.access_token
       );
       if (apiResponse?.status === 'Failed') {
-        let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
-        throw new Error(JSON.stringify(errorobj));
-      } else if (fileItem.size != undefined && fileItem.size < largeFileSize) {
-        setFilesData((prevfiles) => {
-          return prevfiles.map((curfile) => {
-            if (curfile.name == apiResponse?.data?.fileName) {
-              const apiRes = apiResponse?.data;
-              return {
-                ...curfile,
-                processing: apiRes?.processingTime?.toFixed(2),
-                status: apiRes?.status,
-                NodesCount: apiRes?.nodeCount,
-                relationshipCount: apiRes?.relationshipCount,
-                model: apiRes?.model,
-              };
-            }
-            return curfile;
-          });
-        });
+        throw new Error(JSON.stringify({
+          error: apiResponse.error,
+          message: apiResponse.message,
+          fileName: apiResponse.file_name,
+        }));
+      } else if (fileItem.size && fileItem.size < largeFileSize) {
+        setFilesData((prevFiles) =>
+          prevFiles.map((curFile) =>
+            curFile.name === apiResponse?.data?.fileName
+              ? {
+                ...curFile,
+                processing: apiResponse?.data?.processingTime?.toFixed(2),
+                status: apiResponse?.data?.status,
+                NodesCount: apiResponse?.data?.nodeCount,
+                relationshipCount: apiResponse?.data?.relationshipCount,
+                model: apiResponse?.data?.model,
+              }
+              : curFile
+          )
+        );
       }
     } catch (err: any) {
       const error = JSON.parse(err.message);
-      if (Object.keys(error).includes('fileName')) {
-        const { message } = error;
-        const { fileName } = error;
-        const errorMessage = error.message;
+      if ('fileName' in error) {
+        const { message, fileName, errorMessage } = error;
         setalertDetails({
           showAlert: true,
           alertType: 'error',
           alertMessage: message,
         });
-        setFilesData((prevfiles) =>
-          prevfiles.map((curfile) => {
-            if (curfile.name == fileName) {
-              return {
-                ...curfile,
-                status: 'Failed',
-                errorMessage,
-              };
-            }
-            return curfile;
-          })
+        setFilesData((prevFiles) =>
+          prevFiles.map((curFile) =>
+            curFile.name === fileName
+              ? { ...curFile, status: 'Failed', errorMessage }
+              : curFile
+          )
         );
       }
     }
   };
-  const handleGenerateGraph = async (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => {
-    console.log('selectedFiles', selectedFilesFromAllfiles);
+  const handleGenerateGraph = async (allowLargeFiles: boolean, selectedFilesFromAllFiles: CustomFile[]) => {
     const queue: CustomFile[] = [];
-    // Collect files to be processed into the queue
     const addToQueue = (files: CustomFile[]) => {
-      for (const file of files) {
-        if (file?.status === 'New') {
+      files.forEach((file) => {
+        if (file.status === 'New') {
           file.status = 'Waiting';
           queue.push(file);
         }
-      }
+      });
     };
-    if (selectedfileslength && allowLargeFiles) {
-      const row = childRef.current?.getSelectedRows();
-      if (row) {
-        addToQueue(row);
-      } else {
-        addToQueue(selectedFilesFromAllfiles);
-      }
-    } else if (selectedFilesFromAllfiles.length && allowLargeFiles) {
-      const selectedRows = childRef.current?.getSelectedRows();
-      if (selectedRows) {
-        addToQueue(selectedRows);
-      } else {
-        addToQueue(selectedFilesFromAllfiles);
-      }
+    if (allowLargeFiles) {
+      const selectedRows = childRef.current?.getSelectedRows() ?? selectedFilesFromAllFiles;
+      addToQueue(selectedRows);
     }
-    console.log('queue', queue);
-    // Process files in batches of two
     const processBatch = async (batch: CustomFile[]) => {
-      for (const file of batch) {
-        file.status = 'Processing';
-      }
-      const batchData: Promise<any>[] = batch.map(file => extractData(file.id as string, true));
-      console.log('batchData', batchData);
-      const results = await Promise.allSettled(batchData);
-      console.log('results', results);
+      batch.forEach((file) => (file.status = 'Processing'));
+      const batchPromises = batch.map((file) => extractData(file.id as string, true, processNextBatch));
+      const results = await Promise.allSettled(batchPromises);
       results.forEach((result, index) => {
         const file = batch[index];
+        console.log('results file', result)
         if (result.status === 'fulfilled') {
           file.status = result.value.status === 'Failed' ? 'Failed' : 'Completed';
         } else {
@@ -313,15 +436,43 @@ const Content: React.FC<ContentProps> = ({
         }
       });
     };
-    // Process the queue in batches
+    const processNextBatch = () => {
+      if (queue.length > 0) {
+        const nextBatch = queue.splice(0, 2);
+        processBatch(nextBatch);
+      } else {
+        setextractLoading(false);
+        postProcessing(userCredentials as UserCredentials, taskParam);
+      }
+    };
     while (queue.length > 0) {
-      const batch = queue.splice(0, 2); // The next batch of two files
+      const batch = queue.splice(0, 2); // Process in batches of two
       await processBatch(batch);
+      processNextBatch();
     }
-    setextractLoading(false);
-    await postProcessing(userCredentials as UserCredentials, taskParam);
   };
 
+  const extractData = async (uid: string, isSelectedRows = false, onStatusComplete: () => void) => {
+    const fileItem = isSelectedRows
+      ? childRef.current?.getSelectedRows().find((f) =>
+        f.id
+        === uid)
+      : filesData.find((f) =>
+        f.id
+        === uid);
+    if (fileItem) {
+      setextractLoading(true);
+      if (!hasAlertedUser) {
+        setalertDetails({
+          showAlert: true,
+          alertMessage: 'Processing 2 files at a time.',
+          alertType: 'info',
+        });
+        setHasAlertedUser(true);
+      }
+      await extractHandler(fileItem, uid, onStatusComplete);
+    }
+  };
   const handleClose = () => {
     setalertDetails((prev) => ({ ...prev, showAlert: false, alertMessage: '' }));
   };
