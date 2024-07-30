@@ -25,7 +25,7 @@ export default function ConfirmationDialog({
       const file = filesData.find((f) => f.id === id);
       newChecked.push(id);
       setSelectedRows((prev) => {
-        const fileindex = prev.findIndex((f) => JSON.parse(f).id === id);
+        const fileindex = prev.findIndex((f) => f === id);
         if (fileindex == -1) {
           return [...prev, JSON.stringify(file)];
         }
@@ -53,7 +53,7 @@ export default function ConfirmationDialog({
         return copiedobj;
       });
       setSelectedRows((prev) => {
-        const filteredrows = prev.filter((f) => JSON.parse(f).id != id);
+        const filteredrows = prev.filter((f) => f != id);
         return filteredrows;
       });
     }
