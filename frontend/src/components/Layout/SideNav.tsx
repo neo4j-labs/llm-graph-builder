@@ -21,6 +21,7 @@ import IconButtonWithToolTip from '../UI/IconButtonToolTip';
 import GCSButton from '../DataSources/GCS/GCSButton';
 import S3Component from '../DataSources/AWS/S3Bucket';
 import WebButton from '../DataSources/Web/WebButton';
+import DropZoneForSmallLayouts from '../DataSources/Local/DropZoneForSmallLayouts';
 
 const SideNav: React.FC<SideNavProps> = ({
   position,
@@ -120,7 +121,7 @@ const SideNav: React.FC<SideNavProps> = ({
             }
           />
           {!largedesktops && position === 'left' && (
-            <SideNavigation.Item onClick={() => {}} icon={<CloudArrowUpIconSolid />} />
+            <SideNavigation.Item onClick={() => {}} icon={<DropZoneForSmallLayouts />} />
           )}
           {!largedesktops && APP_SOURCES.includes('gcs') && position === 'left' && (
             <SideNavigation.Item
