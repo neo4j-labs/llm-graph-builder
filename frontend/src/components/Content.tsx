@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef, Suspense } from 'react';
 import FileTable from './FileTable';
-import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
+import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './UI/Alert';
@@ -30,6 +30,7 @@ import { lazy } from 'react';
 import FallBackDialog from './UI/FallBackDialog';
 import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
+import { tokens } from '@neo4j-ndl/base';
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -42,6 +43,8 @@ const Content: React.FC<ContentProps> = ({
   setshowEnhancementDialog,
   closeSettingModal,
 }) => {
+  const { breakpoints } = tokens;
+  const tablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<connectionState>({
     isvectorIndexMatch: true,
@@ -614,7 +617,7 @@ const Content: React.FC<ContentProps> = ({
             !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
           } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
-          flexDirection='row'
+          flexDirection={tablet ? 'column' : 'row'}
         >
           <DropdownComponent
             onSelect={handleDropdownChange}
