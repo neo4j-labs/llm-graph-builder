@@ -121,26 +121,54 @@ const SideNav: React.FC<SideNavProps> = ({
             }
           />
           {!largedesktops && position === 'left' && (
-            <SideNavigation.Item onClick={() => {}} icon={<DropZoneForSmallLayouts />} />
+            <SideNavigation.Item
+              onClick={() => {}}
+              icon={
+                <Tip allowedPlacements={['right']}>
+                  <Tip.Trigger>
+                    <DropZoneForSmallLayouts />
+                  </Tip.Trigger>
+                  <Tip.Content>Local files</Tip.Content>
+                </Tip>
+              }
+            />
           )}
           {!largedesktops && APP_SOURCES.includes('gcs') && position === 'left' && (
             <SideNavigation.Item
               onClick={() => {}}
-              icon={<GCSButton isLargeDesktop={largedesktops} openModal={openGCSModal}></GCSButton>}
+              icon={
+                <Tip allowedPlacements={['right']}>
+                  <Tip.Trigger>
+                    <GCSButton isLargeDesktop={largedesktops} openModal={openGCSModal}></GCSButton>
+                  </Tip.Trigger>
+                  <Tip.Content>GCS Files</Tip.Content>
+                </Tip>
+              }
             />
           )}
           {!largedesktops && APP_SOURCES.includes('s3') && position === 'left' && (
             <SideNavigation.Item
               onClick={() => {}}
-              icon={<S3Component isLargeDesktop={largedesktops} openModal={opens3Modal}></S3Component>}
+              icon={
+                <Tip allowedPlacements={['right']}>
+                  <Tip.Trigger>
+                    {' '}
+                    <S3Component isLargeDesktop={largedesktops} openModal={opens3Modal}></S3Component>
+                  </Tip.Trigger>
+                  <Tip.Content>S3 Files</Tip.Content>
+                </Tip>
+              }
             />
           )}
           {!largedesktops && APP_SOURCES.includes('web') && position === 'left' && (
             <SideNavigation.Item
               icon={
-                APP_SOURCES.includes('web') && (
-                  <WebButton isLargeDesktop={largedesktops} openModal={openGenericModal}></WebButton>
-                )
+                <Tip allowedPlacements={['right']}>
+                  <Tip.Trigger>
+                    <WebButton isLargeDesktop={largedesktops} openModal={openGenericModal}></WebButton>
+                  </Tip.Trigger>
+                  <Tip.Content>Web Sources</Tip.Content>
+                </Tip>
               }
             ></SideNavigation.Item>
           )}
