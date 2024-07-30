@@ -27,7 +27,7 @@ import type { Relationship } from '@neo4j-nvl/base';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import ReactMarkdown from 'react-markdown';
 import { GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
-import { youtubeLinkValidation } from '../../utils/Utils';
+import { parseEntity, youtubeLinkValidation } from '../../utils/Utils';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 
@@ -53,12 +53,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
 
-  const parseEntity = (entity: Entity) => {
-    const { labels, properties } = entity;
-    const label = labels[0];
-    const text = properties.id;
-    return { label, text };
-  };
   const actions: CypherCodeBlockProps['actions'] = useMemo(
     () => [
       {
@@ -264,15 +258,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                         >
                           {link}
                         </Typography>
-                        {/* {chunks?.length > 0 && (
-                          <Typography variant='body-small' className='italic'>
-                            - Page{' '}
-                            {chunks
-                              .map((c) => c.page_number as number)
-                              .sort((a, b) => a - b)
-                              .join(', ')}
-                          </Typography>
-                        )} */}
                       </div>
                     )}
                   </li>

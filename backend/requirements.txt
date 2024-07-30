@@ -196,7 +196,6 @@ s3transfer==0.10.1
 safetensors==0.4.1
 scikit-learn==1.5.1
 scipy==1.10.1
-sentence-transformers==2.7.0
 shapely==2.0.3
 shellingham==1.5.4
 six==1.16.0
@@ -243,3 +242,4 @@ XlsxWriter==3.2.0
 yarl==1.9.4
 youtube-transcript-api==0.6.2
 zipp==3.17.0
+sentence-transformers==3.0.1
