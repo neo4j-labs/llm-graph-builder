@@ -239,7 +239,6 @@ export default function EntityExtractionSetting({
     }
   }, []);
 
-  console.log('selectedSchemas', selectedSchemas);
   return (
     <div>
       <Typography variant='body-medium'>

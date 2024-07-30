@@ -89,6 +89,7 @@ export interface CustomAlertProps {
 }
 export interface DataComponentProps {
   openModal: () => void;
+  isLargeDesktop?: boolean;
 }
 
 export interface S3ModalProps {
@@ -135,10 +136,22 @@ export interface SideNavProps {
   setIsRightExpanded?: Dispatch<SetStateAction<boolean>>;
   messages?: Messages[];
   clearHistoryData?: boolean;
+  opens3Modal: () => void;
+  openGCSModal: () => void;
+  openGenericModal: () => void;
 }
 
 export interface DrawerProps {
   isExpanded: boolean;
+  shows3Modal: boolean;
+  showGCSModal: boolean;
+  showGenericModal: boolean;
+  opens3Modal: () => void;
+  hides3Modal: () => void;
+  openGCSModal: () => void;
+  hideGCSModal: () => void;
+  openGenericModal: () => void;
+  hideGenericModal: () => void;
 }
 
 export interface ContentProps {

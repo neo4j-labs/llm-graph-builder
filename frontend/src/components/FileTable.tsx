@@ -758,7 +758,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         });
       });
 
-      const contentElement = document.getElementsByClassName('ndl-data-grid-scrollable')[0];
+      const [contentElement] = document.getElementsByClassName('ndl-data-grid-scrollable');
       resizeObserver.observe(contentElement);
 
       return () => {

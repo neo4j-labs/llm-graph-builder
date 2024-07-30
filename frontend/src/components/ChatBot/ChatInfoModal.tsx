@@ -122,7 +122,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     const counts: { [label: string]: number } = {};
     infoEntities.forEach((entity) => {
       const { labels } = entity;
-      const label = labels[0];
+      const [label] = labels;
       counts[label] = counts[label] ? counts[label] + 1 : 1;
     });
     return counts;

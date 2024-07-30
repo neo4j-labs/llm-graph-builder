@@ -121,7 +121,7 @@ export const getIcon = (node: any) => {
 };
 export function extractPdfFileName(url: string): string {
   const splitUrl = url.split('/');
-  const encodedFileName = splitUrl[splitUrl.length - 1].split('?')[0];
+  const [encodedFileName] = splitUrl[splitUrl.length - 1].split('?');
   const decodedFileName = decodeURIComponent(encodedFileName);
   if (decodedFileName.includes('/')) {
     const splitedstr = decodedFileName.split('/');
@@ -221,7 +221,7 @@ export const capitalize = (word: string): string => {
 };
 export const parseEntity = (entity: Entity) => {
   const { labels, properties } = entity;
-  const label = labels[0];
+  const [label] = labels;
   const text = properties.id;
   return { label, text };
 };

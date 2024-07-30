@@ -357,3 +357,7 @@
   overflow-y: scroll !important;
   scrollbar-width: thin;
 }
+.widthunset{
+  width: initial !important;
+  height: initial !important;
+}

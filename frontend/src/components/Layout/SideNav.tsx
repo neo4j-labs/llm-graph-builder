@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Dialog, SideNavigation, Tip } from '@neo4j-ndl/react';
+import { Dialog, SideNavigation, Tip, useMediaQuery } from '@neo4j-ndl/react';
 import {
   ArrowRightIconOutline,
   ArrowLeftIconOutline,
@@ -14,10 +14,13 @@ import { createPortal } from 'react-dom';
 import { useMessageContext } from '../../context/UserMessages';
 import { getIsLoading } from '../../utils/Utils';
 import ExpandedChatButtonContainer from '../ChatBot/ExpandedChatButtonContainer';
-import { tooltips } from '../../utils/Constants';
+import { APP_SOURCES, tooltips } from '../../utils/Constants';
 import ChatModeToggle from '../ChatBot/ChatModeToggle';
 import { RiChatSettingsLine } from 'react-icons/ri';
 import IconButtonWithToolTip from '../UI/IconButtonToolTip';
+import GCSButton from '../DataSources/GCS/GCSButton';
+import S3Component from '../DataSources/AWS/S3Bucket';
+import WebButton from '../DataSources/Web/WebButton';
 
 const SideNav: React.FC<SideNavProps> = ({
   position,
@@ -28,12 +31,17 @@ const SideNav: React.FC<SideNavProps> = ({
   setIsRightExpanded,
   messages,
   clearHistoryData,
+  opens3Modal,
+  openGCSModal,
+  openGenericModal,
 }) => {
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const { setMessages } = useMessageContext();
   const [chatModeAnchor, setchatModeAnchor] = useState<HTMLElement | null>(null);
   const [showChatMode, setshowChatMode] = useState<boolean>(false);
+  const largedesktops = useMediaQuery(`(min-width:1440px )`);
+
   const date = new Date();
   useEffect(() => {
     if (clearHistoryData) {
@@ -60,13 +68,18 @@ const SideNav: React.FC<SideNavProps> = ({
   const handleShrinkClick = () => {
     setIsChatModalOpen(false);
     setIsFullScreen(false);
-    if (setShowDrawerChatbot && setIsRightExpanded) {
+    if (setShowDrawerChatbot && setIsRightExpanded && largedesktops) {
       setShowDrawerChatbot(true);
       setIsRightExpanded(true);
     }
   };
   const handleClick = () => {
-    toggleDrawer();
+    if (!largedesktops && position === 'right') {
+      setIsChatModalOpen(true);
+      setIsFullScreen(true);
+    } else {
+      toggleDrawer();
+    }
   };
   return (
     <div style={{ height: 'calc(100vh - 58px)', minHeight: '200px', display: 'flex' }}>
@@ -77,11 +90,13 @@ const SideNav: React.FC<SideNavProps> = ({
             icon={
               isExpanded ? (
                 position === 'left' ? (
-                  <ArrowLeftIconOutline />
+                  <>
+                    <ArrowLeftIconOutline />
+                  </>
                 ) : (
                   <ArrowRightIconOutline />
                 )
-              ) : position === 'left' ? (
+              ) : position === 'left' && largedesktops ? (
                 <>
                   <Tip allowedPlacements={['right']}>
                     <Tip.Trigger>
@@ -90,7 +105,7 @@ const SideNav: React.FC<SideNavProps> = ({
                     <Tip.Content>{tooltips.sources}</Tip.Content>
                   </Tip>
                 </>
-              ) : (
+              ) : position === 'right' ? (
                 <>
                   <Tip allowedPlacements={['left']}>
                     <Tip.Trigger>
@@ -99,10 +114,35 @@ const SideNav: React.FC<SideNavProps> = ({
                     <Tip.Content>{tooltips.chat}</Tip.Content>
                   </Tip>
                 </>
+              ) : (
+                <></>
               )
             }
           />
-
+          {!largedesktops && position === 'left' && (
+            <SideNavigation.Item onClick={() => {}} icon={<CloudArrowUpIconSolid />} />
+          )}
+          {!largedesktops && APP_SOURCES.includes('gcs') && position === 'left' && (
+            <SideNavigation.Item
+              onClick={() => {}}
+              icon={<GCSButton isLargeDesktop={largedesktops} openModal={openGCSModal}></GCSButton>}
+            />
+          )}
+          {!largedesktops && APP_SOURCES.includes('s3') && position === 'left' && (
+            <SideNavigation.Item
+              onClick={() => {}}
+              icon={<S3Component isLargeDesktop={largedesktops} openModal={opens3Modal}></S3Component>}
+            />
+          )}
+          {!largedesktops && APP_SOURCES.includes('web') && position === 'left' && (
+            <SideNavigation.Item
+              icon={
+                APP_SOURCES.includes('web') && (
+                  <WebButton isLargeDesktop={largedesktops} openModal={openGenericModal}></WebButton>
+                )
+              }
+            ></SideNavigation.Item>
+          )}
           {position === 'right' && isExpanded && (
             <>
               <Tip allowedPlacements={['left']}>

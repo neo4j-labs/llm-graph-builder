@@ -535,7 +535,7 @@ const Content: React.FC<ContentProps> = ({
         ></GraphEnhancementDialog>
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
-        <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>
+        <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row' flexWrap='wrap'>
           <Suspense fallback={<FallBackDialog />}>
             <ConnectionModal
               open={openConnection.openPopUp}
@@ -624,7 +624,7 @@ const Content: React.FC<ContentProps> = ({
             view='ContentView'
             isDisabled={false}
           />
-          <Flex flexDirection='row' gap='4' className='self-end'>
+          <Flex flexDirection='row' gap='4' className='self-end' flexWrap='wrap'>
             <ButtonWithToolTip
               text={tooltips.generateGraph}
               placement='top'

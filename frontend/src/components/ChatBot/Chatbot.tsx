@@ -398,9 +398,11 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
         </Widget>
       </div>
       <div className='n-bg-palette-neutral-bg-weak flex gap-2.5 bottom-0 p-2.5 w-full'>
-        <form onSubmit={handleSubmit} className='flex gap-2.5 w-full'>
+        <form onSubmit={handleSubmit} className={`flex gap-2.5 w-full ${!isFullScreen ? 'justify-between' : ''}`}>
           <TextInput
-            className='n-bg-palette-neutral-bg-default flex-grow-7 w-[70%]'
+            className={`n-bg-palette-neutral-bg-default flex-grow-7 ${
+              isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
+            }`}
             aria-label='chatbot-input'
             type='text'
             value={inputMessage}
