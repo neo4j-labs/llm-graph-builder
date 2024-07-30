@@ -1,4 +1,4 @@
-import { Drawer, Flex, StatusIndicator, Typography, useMediaQuery } from '@neo4j-ndl/react';
+import { Drawer, Flex, StatusIndicator, Typography } from '@neo4j-ndl/react';
 import DropZone from '../DataSources/Local/DropZone';
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { healthStatus } from '../../services/HealthStatus';
@@ -11,7 +11,6 @@ import { APP_SOURCES } from '../../utils/Constants';
 import GenericButton from '../WebSources/GenericSourceButton';
 import GenericModal from '../WebSources/GenericSourceModal';
 import FallBackDialog from '../UI/FallBackDialog';
-import { tokens } from '@neo4j-ndl/base';
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 
@@ -27,10 +26,6 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
   showGCSModal,
   showGenericModal,
 }) => {
-  const { breakpoints } = tokens;
-  const mobile = useMediaQuery(`(max-width: ${breakpoints.xs})`);
-  const tablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
-  const desktop = useMediaQuery(`(min-width: ${breakpoints.lg})`);
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
   const { closeAlert, alertState } = useAlertContext();
 
