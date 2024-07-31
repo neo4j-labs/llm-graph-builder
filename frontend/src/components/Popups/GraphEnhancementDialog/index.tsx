@@ -111,7 +111,7 @@ export default function GraphEnhancementDialog({
           <DeduplicationTab />
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={3}>
-          <PostProcessingCheckList/>
+          <PostProcessingCheckList />
         </Tabs.TabPanel>
       </Dialog.Content>
     </Dialog>
