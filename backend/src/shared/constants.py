@@ -18,13 +18,13 @@ GRAPH_CHUNK_LIMIT = 50
 
 #query 
 GRAPH_QUERY = """
-MATCH docs = (d:Document) 
+MATCH docs = (d:__Document__) 
 WHERE d.fileName IN $document_names
 WITH docs, d ORDER BY d.createdAt DESC
 // fetch chunks for documents, currently with limit
 CALL {{
   WITH d
-  OPTIONAL MATCH chunks=(d)<-[:__PART_OF__|__FIRST_CHUNK__]-(c:Chunk)
+  OPTIONAL MATCH chunks=(d)<-[:__PART_OF__|__FIRST_CHUNK__]-(c:__Chunk__)
   RETURN c, chunks LIMIT {graph_chunk_limit}
 }}
 
@@ -39,8 +39,8 @@ CALL {{
   WITH selectedChunks
   UNWIND selectedChunks as c
   
-  OPTIONAL MATCH entities=(c:Chunk)-[:__HAS_ENTITY__]->(e)
-  OPTIONAL MATCH entityRels=(e)--(e2:!Chunk) WHERE exists {{
+  OPTIONAL MATCH entities=(c:__Chunk__)-[:__HAS_ENTITY__]->(e)
+  OPTIONAL MATCH entityRels=(e)--(e2:!__Chunk__) WHERE exists {{
     (e2)<-[:__HAS_ENTITY__]-(other) WHERE other IN selectedChunks
   }}
   RETURN collect(entities) as entities, collect(entityRels) as entityRels
@@ -132,10 +132,10 @@ RETURN text, avg_score AS score,
 
 # VECTOR_GRAPH_SEARCH_QUERY="""
 # WITH node as chunk, score
-# MATCH (chunk)-[:__PART_OF__]->(d:Document)
+# MATCH (chunk)-[:__PART_OF__]->(d:__Document__)
 # CALL { WITH chunk
 # MATCH (chunk)-[:__HAS_ENTITY__]->(e)
-# MATCH path=(e)(()-[rels:!__HAS_ENTITY__&!__PART_OF__]-()){0,2}(:!Chunk&!Document)
+# MATCH path=(e)(()-[rels:!__HAS_ENTITY__&!__PART_OF__]-()){0,2}(:!__Chunk__&!__Document__)
 # UNWIND rels as r
 # RETURN collect(distinct r) as rels
 # }
@@ -155,7 +155,7 @@ RETURN text, avg_score AS score,
 # VECTOR_GRAPH_SEARCH_QUERY = """
 # WITH node as chunk, score
 # // find the document of the chunk
-# MATCH (chunk)-[:__PART_OF__]->(d:Document)
+# MATCH (chunk)-[:__PART_OF__]->(d:__Document__)
 # // fetch entities
 # CALL { WITH chunk
 # // entities connected to the chunk
@@ -165,9 +165,9 @@ RETURN text, avg_score AS score,
 # // depending on match to query embedding either 1 or 2 step expansion
 # WITH CASE WHEN true // vector.similarity.cosine($embedding, e.embedding ) <= 0.95
 # THEN 
-# collect { MATCH path=(e)(()-[rels:!__HAS_ENTITY__&!__PART_OF__]-()){0,1}(:!Chunk&!Document) RETURN path }
+# collect { MATCH path=(e)(()-[rels:!__HAS_ENTITY__&!__PART_OF__]-()){0,1}(:!Chunk&!__Document__) RETURN path }
 # ELSE 
-# collect { MATCH path=(e)(()-[rels:!__HAS_ENTITY__&!__PART_OF__]-()){0,2}(:!Chunk&!Document) RETURN path } 
+# collect { MATCH path=(e)(()-[rels:!__HAS_ENTITY__&!__PART_OF__]-()){0,2}(:!Chunk&!__Document__) RETURN path } 
 # END as paths
 
 # RETURN collect{ unwind paths as p unwind relationships(p) as r return distinct r} as rels,
@@ -217,7 +217,7 @@ VECTOR_GRAPH_SEARCH_ENTITY_LIMIT = 25
 VECTOR_GRAPH_SEARCH_QUERY = """
 WITH node as chunk, score
 // find the document of the chunk
-MATCH (chunk)-[:__PART_OF__]->(d:Document)
+MATCH (chunk)-[:__PART_OF__]->(d:__Document__)
 
 // aggregate chunk-details
 WITH d, collect(DISTINCT {{chunk: chunk, score: score}}) AS chunks, avg(score) as avg_score
@@ -234,9 +234,9 @@ ORDER BY numChunks DESC LIMIT {no_of_entites}
 // depending on match to query embedding either 1 or 2 step expansion
 WITH CASE WHEN true // vector.similarity.cosine($embedding, e.embedding ) <= 0.95
 THEN 
-collect {{ OPTIONAL MATCH path=(e)(()-[rels:!__HAS_ENTITY__&!__PART_OF__]-()){{0,1}}(:!Chunk&!Document) RETURN path }}
+collect {{ OPTIONAL MATCH path=(e)(()-[rels:!__HAS_ENTITY__&!__PART_OF__]-()){{0,1}}(:!__Chunk__&!__Document__) RETURN path }}
 ELSE 
-collect {{ OPTIONAL MATCH path=(e)(()-[rels:!__HAS_ENTITY__&!__PART_OF__]-()){{0,2}}(:!Chunk&!Document) RETURN path }} 
+collect {{ OPTIONAL MATCH path=(e)(()-[rels:!__HAS_ENTITY__&!__PART_OF__]-()){{0,2}}(:!__Chunk__&!__Document__) RETURN path }} 
 END as paths, e
 WITH apoc.coll.toSet(apoc.coll.flatten(collect(distinct paths))) as paths, collect(distinct e) as entities
 // de-duplicate nodes and relationships across chunks
