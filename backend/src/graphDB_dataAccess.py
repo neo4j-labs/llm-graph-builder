@@ -132,9 +132,9 @@ class graphDBdataAccess:
         if len(index) > 0:
             logging.info('update KNN graph')
             self.graph.query("""MATCH (c:__Chunk__)
-                                    WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
+                                    WHERE c.embedding IS NOT NULL AND count { (c)-[:__SIMILAR__]-() } < 5
                                     CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score
-                                    WHERE node <> c and score >= $score MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score
+                                    WHERE node <> c and score >= $score MERGE (c)-[rel:__SIMILAR__]-(node) SET rel.score = score
                                 """,
                                 {"score":float(knn_min_score)}
                                 )
@@ -185,7 +185,7 @@ class graphDBdataAccess:
            MATCH (d:__Document__) where d.fileName in $filename_list and d.fileSource in $source_types_list
             with collect(d) as documents 
             unwind documents as d
-            optional match (d)<-[:PART_OF]-(c:__Chunk__) 
+            optional match (d)<-[:__PART_OF__]-(c:__Chunk__) 
             detach delete c, d
             return count(*) as deletedChunks
             """
@@ -193,12 +193,12 @@ class graphDBdataAccess:
             MATCH (d:__Document__) where d.fileName in $filename_list and d.fileSource in $source_types_list
             with collect(d) as documents 
             unwind documents as d
-            optional match (d)<-[:PART_OF]-(c:__Chunk__)
+            optional match (d)<-[:__PART_OF__]-(c:__Chunk__)
             // if delete-entities checkbox is set
             call { with  c, documents
-                match (c)-[:HAS_ENTITY]->(e)
+                match (c)-[:__HAS_ENTITY__]->(e)
                 // belongs to another document
-                where not exists {  (d2)<-[:PART_OF]-()-[:HAS_ENTITY]->(e) WHERE NOT d2 IN documents }
+                where not exists {  (d2)<-[:__PART_OF__]-()-[:__HAS_ENTITY__]->(e) WHERE NOT d2 IN documents }
                 detach delete e
                 return count(*) as entities
             } 
@@ -219,7 +219,7 @@ class graphDBdataAccess:
         query = """
                 MATCH (e:!__Chunk__&!__Document__) 
                 WHERE NOT exists { (e)--(:!__Chunk__&!__Document__) }
-                OPTIONAL MATCH (doc:__Document__)<-[:PART_OF]-(c:__Chunk__)-[:HAS_ENTITY]->(e)
+                OPTIONAL MATCH (doc:__Document__)<-[:__PART_OF__]-(c:__Chunk__)-[:__HAS_ENTITY__]->(e)
                 RETURN e {.*, embedding:null, elementId:elementId(e), labels:labels(e)} as e, 
                 collect(distinct doc.fileName) as documents, count(distinct c) as chunkConnections
                 ORDER BY e.id ASC

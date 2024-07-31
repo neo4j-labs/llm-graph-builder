@@ -78,7 +78,7 @@ QUESTION_TRANSFORM_TEMPLATE = "Given the below conversation, generate a search q
 ## CHAT QUERIES 
 VECTOR_SEARCH_QUERY = """
 WITH node AS chunk, score
-MATCH (chunk)-[:PART_OF]->(d:__Document__)
+MATCH (chunk)-[:__PART_OF__]->(d:__Document__)
 WITH d, collect(distinct {chunk: chunk, score: score}) as chunks, avg(score) as avg_score
 WITH d, avg_score, 
      [c in chunks | c.chunk.text] as texts, 
@@ -91,10 +91,10 @@ RETURN text, avg_score AS score,
 
 # VECTOR_GRAPH_SEARCH_QUERY="""
 # WITH node as chunk, score
-# MATCH (chunk)-[:PART_OF]->(d:Document)
+# MATCH (chunk)-[:__PART_OF__]->(d:Document)
 # CALL { WITH chunk
-# MATCH (chunk)-[:HAS_ENTITY]->(e)
-# MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk&!Document)
+# MATCH (chunk)-[:__HAS_ENTITY__]->(e)
+# MATCH path=(e)(()-[rels:!__HAS_ENTITY__&!__PART_OF__]-()){0,2}(:!Chunk&!Document)
 # UNWIND rels as r
 # RETURN collect(distinct r) as rels
 # }
@@ -176,32 +176,32 @@ VECTOR_GRAPH_SEARCH_ENTITY_LIMIT = 25
 VECTOR_GRAPH_SEARCH_QUERY = """
 WITH node as chunk, score
 // find the document of the chunk
-MATCH (chunk)-[:PART_OF]->(d:Document)
-
-// aggregate chunk-details
-WITH d, collect(DISTINCT {{chunk: chunk, score: score}}) AS chunks, avg(score) as avg_score
+MATCH (chunk)-[:__PART_OF__]->(d:__Document__)
 // fetch entities
 CALL {{ WITH chunks
 UNWIND chunks as chunkScore
 WITH chunkScore.chunk as chunk
 // entities connected to the chunk
 // todo only return entities that are actually in the chunk, remember we connect all extracted entities to all chunks
-// todo sort by relevancy (embeddding comparision?) cut off after X (e.g. 25) nodes?
-OPTIONAL MATCH (chunk)-[:HAS_ENTITY]->(e)
-WITH e, count(*) as numChunks 
-ORDER BY numChunks DESC LIMIT {no_of_entites}
+MATCH (chunk)-[:__HAS_ENTITY__]->(e)
+
 // depending on match to query embedding either 1 or 2 step expansion
 WITH CASE WHEN true // vector.similarity.cosine($embedding, e.embedding ) <= 0.95
 THEN 
-collect {{ OPTIONAL MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){{0,1}}(:!Chunk&!Document) RETURN path }}
+collect { MATCH path=(e)(()-[rels:!__HAS_ENTITY__&!__PART_OF__]-()){0,1}(:!__Chunk__&!__Document__) RETURN path }
 ELSE 
-collect {{ OPTIONAL MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){{0,2}}(:!Chunk&!Document) RETURN path }} 
-END as paths, e
-WITH apoc.coll.toSet(apoc.coll.flatten(collect(distinct paths))) as paths, collect(distinct e) as entities
-// de-duplicate nodes and relationships across chunks
-RETURN collect{{ unwind paths as p unwind relationships(p) as r return distinct r}} as rels,
-collect{{ unwind paths as p unwind nodes(p) as n return distinct n}} as nodes, entities
-}}
+collect { MATCH path=(e)(()-[rels:!__HAS_ENTITY__&!__PART_OF__]-()){0,2}(:!__Chunk__&!__Document__) RETURN path } 
+END as paths
+
+RETURN collect{ unwind paths as p unwind relationships(p) as r return distinct r} as rels,
+collect{ unwind paths as p unwind nodes(p) as n return distinct n} as nodes
+}
+// aggregate chunk-details and de-duplicate nodes and relationships
+WITH d, collect(DISTINCT {chunk: chunk, score: score}) AS chunks, avg(score) as avg_score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels,
+
+// TODO sort by relevancy (embeddding comparision?) cut off after X (e.g. 25) nodes?
+apoc.coll.toSet(apoc.coll.flatten(collect(
+                [r in rels |[startNode(r),endNode(r)]]),true)) as nodes
 
 // generate metadata and text components for chunks, nodes and relationships
 WITH d, avg_score,
