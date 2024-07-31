@@ -1,14 +1,18 @@
 import { Box, Checkbox, Flex, Typography } from '@neo4j-ndl/react';
 import { taskParam } from '../../../../utils/Constants';
 import { capitalize } from '../../../../utils/Utils';
+import { useFileContext } from '../../../../context/UsersFiles';
 
 export default function PostProcessingCheckList() {
+  const { postProcessingTasks, setPostProcessingTasks } = useFileContext();
   return (
     <Flex gap='8'>
       <div>
         <Flex flexDirection='column'>
           <Flex justifyContent='space-between' flexDirection='row'>
-            <Typography variant='subheading-large'>These options allow you to fine-tune your knowledge graph for improved performance and deeper analysis</Typography>
+            <Typography variant='subheading-large'>
+              These options allow you to fine-tune your knowledge graph for improved performance and deeper analysis
+            </Typography>
           </Flex>
           <Flex justifyContent='space-between' flexDirection='column'>
             <Flex>
@@ -42,19 +46,29 @@ export default function PostProcessingCheckList() {
         </Flex>
       </div>
       <Flex>
-      {taskParam.map((task, index) => (
-        <Box key={index}>
-          <Checkbox
-            label={<Typography variant='subheading-large'>{task
-              .split('_')
-              .map((s) => capitalize(s))
-              .join(' ')}</Typography>
+        {taskParam.map((task, index) => (
+          <Box key={index}>
+            <Checkbox
+              label={
+                <Typography variant='subheading-large'>
+                  {task
+                    .split('_')
+                    .map((s) => capitalize(s))
+                    .join(' ')}
+                </Typography>
               }
-          ></Checkbox>
-        </Box>
-      ))}
+              checked={postProcessingTasks.includes(task)}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setPostProcessingTasks((prev) => [...prev, task]);
+                } else {
+                  setPostProcessingTasks((prev) => prev.filter((s) => s !== task));
+                }
+              }}
+            ></Checkbox>
+          </Box>
+        ))}
       </Flex>
-     
     </Flex>
   );
 }
