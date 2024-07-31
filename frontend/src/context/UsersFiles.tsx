@@ -31,6 +31,10 @@ interface FileContextType {
   setIsSchema: React.Dispatch<React.SetStateAction<boolean>>;
   showTextFromSchemaDialog: showTextFromSchemaDialogType;
   setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
+  queue: CustomFile[];
+  setQueue: Dispatch<SetStateAction<CustomFile[]>>;
+  processedCount: number;
+  setProcessedCount: Dispatch<SetStateAction<number>>;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
@@ -54,6 +58,8 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     triggeredFrom: '',
     show: false,
   });
+  const [queue, setQueue] = useState<CustomFile[]>([]);
+  const [processedCount, setProcessedCount] = useState<number>(0);
 
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
@@ -95,6 +101,10 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setIsSchema,
     setShowTextFromSchemaDialog,
     showTextFromSchemaDialog,
+    queue,
+    setQueue,
+    processedCount,
+    setProcessedCount,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

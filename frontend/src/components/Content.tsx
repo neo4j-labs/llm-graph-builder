@@ -54,7 +54,6 @@ const Content: React.FC<ContentProps> = ({
   const { setUserCredentials, userCredentials } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
-  const batchVal = 2;
   const {
     filesData,
     setFilesData,
@@ -65,6 +64,7 @@ const Content: React.FC<ContentProps> = ({
     setSelectedNodes,
     setRowSelection,
     setSelectedRels,
+    processedCount, setProcessedCount
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
@@ -146,8 +146,17 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
+  const leftFiles = childRef?.current?.getSelectedRows().filter((f) => f.status === 'Waiting');
+  console.log('leftFiles',leftFiles);
 
-  const extractHandler = async (fileItem: CustomFile, uid: string, onStatusComplete: () => void) => {
+  useEffect(() => {
+    if (processedCount === 2) {
+      processNextBatch(leftFiles as CustomFile[]);
+      console.log('hello', processedCount);
+    }
+  }, [processedCount]);
+
+  const extractHandler = async (fileItem: CustomFile, uid: string) => {
     try {
       setFilesData((prevFiles) =>
         prevFiles.map((curFile) =>
@@ -169,7 +178,7 @@ const Content: React.FC<ContentProps> = ({
           userCredentials.password,
           userCredentials.database,
           updateStatusForLargeFiles,
-          onStatusComplete
+          setProcessedCount
         );
       }
       const apiResponse = await extractAPI(
@@ -232,22 +241,53 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
+  const processBatch = async (batch: CustomFile[]) => {
+    // batch.forEach((file) => (file.status = 'Processing'));
+    const batchPromises = batch.map((file) => extractData(file.id as string, true));
+    await Promise.allSettled(batchPromises);
+    const results = await Promise.allSettled(batchPromises);
+    results.forEach((result, index) => {
+      const file = batch[index];
+      console.log('results file', result);
+      if (result.status === 'fulfilled') {
+        file.status = result?.value?.data.status;
+      } else {
+        file.status = 'Failed';
+        console.error(`Error processing file ${file.id}:`, result.reason);
+      }
+    });
+  };
+
+  const processNextBatch = async (tempFiles: CustomFile[]) => {
+    while (tempFiles.length > 0) {
+      const batchSize: number = fileProcessingLimit > 0 ? fileProcessingLimit : tempFiles.length;
+      const nextBatch = tempFiles.splice(0, batchSize);
+      console.log('batch', nextBatch);
+      await processBatch(nextBatch);
+    }
+    setextractLoading(false);
+    await postProcessing(userCredentials as UserCredentials, taskParam);
+  };
+
+  const addToQueue = (files: CustomFile[]) => {
+    const tempFiles: CustomFile[] = [];
+    files.forEach((file) => {
+      if (file.status === 'New') {
+        file.status = 'Waiting';
+        tempFiles.push(file);
+      }
+    });
+    return tempFiles;
+  };
+
   const handleGenerateGraph = async (allowLargeFiles: boolean, selectedFilesFromAllFiles: CustomFile[]) => {
-    const queue: CustomFile[] = [];
-    const addToQueue = (files: CustomFile[]) => {
-      files.forEach((file) => {
-        if (file.status === 'New') {
-          file.status = 'Waiting';
-          queue.push(file);
-        }
-      });
-    };
+    let tempFilesToBeProcessed: CustomFile[] = [];
     if (selectedfileslength && allowLargeFiles) {
       const row = childRef.current?.getSelectedRows();
       if (row) {
-        addToQueue(row);
+        tempFilesToBeProcessed = addToQueue(row);
       } else {
-        addToQueue(selectedFilesFromAllFiles);
+        tempFilesToBeProcessed = addToQueue(selectedFilesFromAllFiles);
       }
     } else if (selectedFilesFromAllFiles.length && allowLargeFiles) {
       const selectedRows = childRef.current?.getSelectedRows();
@@ -257,37 +297,13 @@ const Content: React.FC<ContentProps> = ({
         addToQueue(selectedFilesFromAllFiles);
       }
     }
-    console.log('queue', queue);
-    const processBatch = async (batch: CustomFile[]) => {
-      batch.forEach((file) => (file.status = 'Processing'));
-      const batchPromises = batch.map((file) => extractData(file.id as string, true, processNextBatch));
-      await Promise.allSettled(batchPromises);
-      const results = await Promise.allSettled(batchPromises);
-      results.forEach((result, index) => {
-        const file = batch[index];
-        console.log('results file', result);
-        if (result.status === 'fulfilled') {
-          file.status = result?.value?.data.status;
-        } else {
-          file.status = 'Failed';
-          console.error(`Error processing file ${file.id}:`, result.reason);
-        }
-      });
-    };
-    const processNextBatch = () => {
-      if (queue.length > 0) {
-        const batchSize: number = fileProcessingLimit > 0 ? fileProcessingLimit : queue.length;
-        const nextBatch = queue.splice(0, batchSize);
-        processBatch(nextBatch);
-      } else {
-        setextractLoading(false);
-        postProcessing(userCredentials as UserCredentials, taskParam);
-      }
-    };
-    processNextBatch();
+    if (processedCount === 1) {
+      setProcessedCount(0);
+    }
+    await processNextBatch(tempFilesToBeProcessed);
   };
 
-  const extractData = async (uid: string, isSelectedRows = false, onStatusComplete: () => void) => {
+  const extractData = async (uid: string, isSelectedRows = false) => {
     const fileItem = isSelectedRows
       ? childRef.current?.getSelectedRows().find((f) =>
         f.id
@@ -305,7 +321,7 @@ const Content: React.FC<ContentProps> = ({
         });
         setHasAlertedUser(true);
       }
-      const resp = await extractHandler(fileItem, uid, onStatusComplete);
+      const resp = await extractHandler(fileItem, uid);
       return resp;
     }
   };
@@ -313,186 +329,6 @@ const Content: React.FC<ContentProps> = ({
   const handleClose = () => {
     setalertDetails((prev) => ({ ...prev, showAlert: false, alertMessage: '' }));
   };
-
-
-  // const extractData = async (uid: string, isselectedRows = false) => {
-  //   if (!isselectedRows) {
-  //     const fileItem = filesData.find((f) => f.id == uid);
-  //     if (fileItem) {
-  //       setextractLoading(true);
-  //       await extractHandler(fileItem, uid);
-  //     }
-  //   } else {
-  //     const fileItem = childRef.current?.getSelectedRows().find((f) => f.id == uid);
-  //     if (fileItem) {
-  //       setextractLoading(true);
-  //       await extractHandler(fileItem, uid);
-  //     }
-  //   }
-  // };
-  // const extractHandler = async (fileItem: CustomFile, uid: string) => {
-  //   try {
-  //     setFilesData((prevfiles) =>
-  //       prevfiles.map((curfile) => {
-  //         if (curfile.id === uid) {
-  //           return {
-  //             ...curfile,
-  //             status: 'Processing',
-  //           };
-  //         }
-  //         return curfile;
-  //       })
-  //     );
-  //     setRowSelection((prev) => {
-  //       const copiedobj = { ...prev };
-  //       for (const key in copiedobj) {
-  //         if (key == uid) {
-  //           copiedobj[key] = false;
-  //         }
-  //       }
-  //       return copiedobj;
-  //     });
-  //     if (fileItem.name != undefined && userCredentials != null) {
-  //       const { name } = fileItem;
-  //       // const statusUpdateResponse = await triggerStatusUpdateAPI(
-  //       //   name as string,
-  //       //   userCredentials?.uri,
-  //       //   userCredentials?.userName,
-  //       //   userCredentials?.password,
-  //       //   userCredentials?.database
-  //       // );
-  //       // // Check if the status update API returned a completed status
-  //       // if (statusUpdateResponse.status !== 'Completed') {
-  //       //   throw new Error(`Status update failed with status: ${statusUpdateResponse.status}`);
-  //       // }
-  //       await triggerStatusUpdateAPI(
-  //         name as string,
-  //         userCredentials?.uri,
-  //         userCredentials?.userName,
-  //         userCredentials?.password,
-  //         userCredentials?.database,
-  //         updateStatusForLargeFiles
-  //       );
-  //     }
-  //     const apiResponse = await extractAPI(
-  //       fileItem.model,
-  //       userCredentials as UserCredentials,
-  //       fileItem.fileSource,
-  //       fileItem.source_url,
-  //       localStorage.getItem('accesskey'),
-  //       localStorage.getItem('secretkey'),
-  //       fileItem.name ?? '',
-  //       fileItem.gcsBucket ?? '',
-  //       fileItem.gcsBucketFolder ?? '',
-  //       selectedNodes.map((l) => l.value),
-  //       selectedRels.map((t) => t.value),
-  //       fileItem.google_project_id,
-  //       fileItem.language,
-  //       fileItem.access_token
-  //     );
-  //     if (apiResponse?.status === 'Failed') {
-  //       let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
-  //       throw new Error(JSON.stringify(errorobj));
-  //     } else if (fileItem.size != undefined && fileItem.size < largeFileSize) {
-  //       setFilesData((prevfiles) => {
-  //         return prevfiles.map((curfile) => {
-  //           if (curfile.name == apiResponse?.data?.fileName) {
-  //             const apiRes = apiResponse?.data;
-  //             return {
-  //               ...curfile,
-  //               processing: apiRes?.processingTime?.toFixed(2),
-  //               status: apiRes?.status,
-  //               NodesCount: apiRes?.nodeCount,
-  //               relationshipCount: apiRes?.relationshipCount,
-  //               model: apiRes?.model,
-  //             };
-  //           }
-  //           return curfile;
-  //         });
-  //       });
-  //     }
-  //   } catch (err: any) {
-  //     const error = JSON.parse(err.message);
-  //     if (Object.keys(error).includes('fileName')) {
-  //       const { message } = error;
-  //       const { fileName } = error;
-  //       const errorMessage = error.message;
-  //       setalertDetails({
-  //         showAlert: true,
-  //         alertType: 'error',
-  //         alertMessage: message,
-  //       });
-  //       setFilesData((prevfiles) =>
-  //         prevfiles.map((curfile) => {
-  //           if (curfile.name == fileName) {
-  //             return {
-  //               ...curfile,
-  //               status: 'Failed',
-  //               errorMessage,
-  //             };
-  //           }
-  //           return curfile;
-  //         })
-  //       );
-  //     }
-  //   }
-  // };
-  // const handleGenerateGraph = async (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => {
-  //   console.log('selectedFiles', selectedFilesFromAllfiles);
-  //   const queue: CustomFile[] = [];
-  //   // Collect files to be processed into the queue
-  //   const addToQueue = (files: CustomFile[]) => {
-  //     for (const file of files) {
-  //       if (file?.status === 'New') {
-  //         file.status = 'Waiting';
-  //         queue.push(file);
-  //       }
-  //     }
-  //   };
-  //   if (selectedfileslength && allowLargeFiles) {
-  //     const row = childRef.current?.getSelectedRows();
-  //     if (row) {
-  //       addToQueue(row);
-  //     } else {
-  //       addToQueue(selectedFilesFromAllfiles);
-  //     }
-  //   } else if (selectedFilesFromAllfiles.length && allowLargeFiles) {
-  //     const selectedRows = childRef.current?.getSelectedRows();
-  //     if (selectedRows) {
-  //       addToQueue(selectedRows);
-  //     } else {
-  //       addToQueue(selectedFilesFromAllfiles);
-  //     }
-  //   }
-  //   console.log('queue', queue);
-  //   // Process files in batches of two
-  //   const processBatch = async (batch: CustomFile[]) => {
-  //     for (const file of batch) {
-  //       file.status = 'Processing';
-  //     }
-  //     const batchData: Promise<any>[] = batch.map(file => extractData(file.id as string, true));
-  //     console.log('batchData', batchData);
-  //     const results = await Promise.allSettled(batchData);
-  //     console.log('results', results);
-  //     results.forEach((result, index) => {
-  //       const file = batch[index];
-  //       console.log('file Result', result);
-  //       if (result.status === 'fulfilled') {
-  //         file.status = result.value.status === 'Failed' ? 'Failed' : 'Completed';
-  //       } else {
-  //         file.status = 'Failed';
-  //         console.error(`Error processing file ${file.id}:`, result.reason);
-  //       }
-  //     });
-  //   };
-  //   // Process the queue in batches
-  //   while (queue.length > 0) {
-  //     const batch = queue.splice(0, 2); // The next batch of two files
-  //     await processBatch(batch);
-  //   }
-  //   setextractLoading(false);
-  //   await postProcessing(userCredentials as UserCredentials, taskParam);
-  // };
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
