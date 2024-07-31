@@ -1,22 +1,22 @@
 MODEL_VERSIONS = {
-        "openai-gpt-3.5": "gpt-3.5-turbo-16k",
-        "gemini-1.0-pro": "gemini-1.0-pro-001",
-        "gemini-1.5-pro": "gemini-1.5-pro-preview-0514",
-        "openai-gpt-4": "gpt-4-0125-preview",
-        "diffbot" : "gpt-4o",
-        "openai-gpt-4o-mini": "gpt-4o-mini",
-        "openai-gpt-4o":"gpt-4o",
-        "groq-llama3" : "llama3-70b-8192"
-         }
+    "openai-gpt-3.5": "gpt-3.5-turbo-16k",
+    "gemini-1.0-pro": "gemini-1.0-pro-001",
+    "gemini-1.5-pro": "gemini-1.5-pro-preview-0514",
+    "openai-gpt-4": "gpt-4-0125-preview",
+    "diffbot": "gpt-4o",
+    "openai-gpt-4o-mini": "gpt-4o-mini",
+    "openai-gpt-4o": "gpt-4o",
+    "groq-llama3": "llama3-70b-8192",
+}
 OPENAI_MODELS = ["openai-gpt-3.5", "openai-gpt-4o", "openai-gpt-4o-mini"]
 GEMINI_MODELS = ["gemini-1.0-pro", "gemini-1.5-pro"]
 GROQ_MODELS = ["groq-llama3"]
-BUCKET_UPLOAD = 'llm-graph-builder-upload'
-BUCKET_FAILED_FILE = 'llm-graph-builder-failed'
-PROJECT_ID = 'llm-experiments-387609' 
-GRAPH_CHUNK_LIMIT = 50 
+BUCKET_UPLOAD = "llm-graph-builder-upload"
+BUCKET_FAILED_FILE = "llm-graph-builder-failed"
+PROJECT_ID = "llm-experiments-387609"
+GRAPH_CHUNK_LIMIT = 50
 
-#query 
+# query
 GRAPH_QUERY = """
 MATCH docs = (d:Document) 
 WHERE d.fileName IN $document_names
@@ -63,13 +63,29 @@ CHAT_SEARCH_KWARG_SCORE_THRESHOLD = 0.5
 CHAT_DOC_SPLIT_SIZE = 3000
 CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD = 0.10
 CHAT_TOKEN_CUT_OFF = {
-     ("openai-gpt-3.5",'azure_ai_gpt_35',"gemini-1.0-pro","gemini-1.5-pro","groq-llama3",'groq_llama3_70b','anthropic_claude_3_5_sonnet','fireworks_llama_v3_70b','bedrock_claude_3_5_sonnet', ) : 4, 
-     ("openai-gpt-4","diffbot" ,'azure_ai_gpt_4o',"openai-gpt-4o", "openai-gpt-4o-mini") : 28,
-     ("ollama_llama3") : 2  
-} 
+    (
+        "openai-gpt-3.5",
+        "azure_ai_gpt_35",
+        "gemini-1.0-pro",
+        "gemini-1.5-pro",
+        "groq-llama3",
+        "groq_llama3_70b",
+        "anthropic_claude_3_5_sonnet",
+        "fireworks_llama_v3_70b",
+        "bedrock_claude_3_5_sonnet",
+    ): 4,
+    (
+        "openai-gpt-4",
+        "diffbot",
+        "azure_ai_gpt_4o",
+        "openai-gpt-4o",
+        "openai-gpt-4o-mini",
+    ): 28,
+    ("ollama_llama3"): 2,
+}
 
 
-### CHAT TEMPLATES 
+### CHAT TEMPLATES
 CHAT_SYSTEM_TEMPLATE = """
 You are an AI-powered question-answering agent. Your task is to provide accurate and comprehensive responses to user queries based on the given context, chat history, and available resources.
 
@@ -113,10 +129,10 @@ Note: This system does not generate answers based solely on internal knowledge. 
 """
 
 
-QUESTION_TRANSFORM_TEMPLATE = "Given the below conversation, generate a search query to look up in order to get information relevant to the conversation. Only respond with the query, nothing else." 
+QUESTION_TRANSFORM_TEMPLATE = "Given the below conversation, generate a search query to look up in order to get information relevant to the conversation. Only respond with the query, nothing else."
 
 
-## CHAT QUERIES 
+## CHAT QUERIES
 VECTOR_SEARCH_QUERY = """
 WITH node AS chunk, score
 MATCH (chunk)-[:PART_OF]->(d:Document)
@@ -128,7 +144,7 @@ WITH d, avg_score, chunkdetails,
      apoc.text.join(texts, "\n----\n") as text
 RETURN text, avg_score AS score, 
        {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkdetails: chunkdetails} as metadata
-""" 
+"""
 
 # VECTOR_GRAPH_SEARCH_QUERY="""
 # WITH node as chunk, score
@@ -141,15 +157,15 @@ RETURN text, avg_score AS score,
 # }
 # WITH d, collect(DISTINCT {chunk: chunk, score: score}) AS chunks, avg(score) as avg_score, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels
 # WITH d, avg_score,
-#      [c IN chunks | c.chunk.text] AS texts, 
-#      [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails,  
+#      [c IN chunks | c.chunk.text] AS texts,
+#      [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails,
 # 	[r in rels | coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ startNode(r).id + " "+ type(r) + " " + coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + endNode(r).id] as entities
 # WITH d, avg_score,chunkdetails,
 # apoc.text.join(texts,"\n----\n") +
 # apoc.text.join(entities,"\n")
 # as text
 # RETURN text, avg_score AS score, {source: COALESCE( CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkdetails: chunkdetails} AS metadata
-# """  
+# """
 
 
 # VECTOR_GRAPH_SEARCH_QUERY = """
@@ -164,10 +180,10 @@ RETURN text, avg_score AS score,
 
 # // depending on match to query embedding either 1 or 2 step expansion
 # WITH CASE WHEN true // vector.similarity.cosine($embedding, e.embedding ) <= 0.95
-# THEN 
+# THEN
 # collect { MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,1}(:!Chunk&!Document) RETURN path }
-# ELSE 
-# collect { MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk&!Document) RETURN path } 
+# ELSE
+# collect { MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk&!Document) RETURN path }
 # END as paths
 
 # RETURN collect{ unwind paths as p unwind relationships(p) as r return distinct r} as rels,
@@ -182,20 +198,20 @@ RETURN text, avg_score AS score,
 
 # // generate metadata and text components for chunks, nodes and relationships
 # WITH d, avg_score,
-#      [c IN chunks | c.chunk.text] AS texts, 
-#      [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails,  
-#   apoc.coll.sort([n in nodes | 
+#      [c IN chunks | c.chunk.text] AS texts,
+#      [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails,
+#   apoc.coll.sort([n in nodes |
 
-# coalesce(apoc.coll.removeAll(labels(n),['__Entity__'])[0],"") +":"+ 
+# coalesce(apoc.coll.removeAll(labels(n),['__Entity__'])[0],"") +":"+
 # n.id + (case when n.description is not null then " ("+ n.description+")" else "" end)]) as nodeTexts,
-# 	apoc.coll.sort([r in rels 
+# 	apoc.coll.sort([r in rels
 #     // optional filter if we limit the node-set
-#     // WHERE startNode(r) in nodes AND endNode(r) in nodes 
-#   | 
-# coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ 
+#     // WHERE startNode(r) in nodes AND endNode(r) in nodes
+#   |
+# coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+
 # startNode(r).id +
-# " " + type(r) + " " + 
-# coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + 
+# " " + type(r) + " " +
+# coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" +
 # endNode(r).id
 # ]) as relTexts
 
