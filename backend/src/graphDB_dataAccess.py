@@ -2,7 +2,7 @@ import logging
 import os
 from datetime import datetime
 from langchain_community.graphs import Neo4jGraph
-from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file
+from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model
 from src.document_sources.gcs_bucket import delete_file_from_gcs
 from src.shared.constants import BUCKET_UPLOAD
 from src.entities.source_node import sourceNode
@@ -141,8 +141,10 @@ class graphDBdataAccess:
         else:
             logging.info("Vector index does not exist, So KNN graph not update")
             
-    def connection_check(self):
+    def connection_check_and_get_vector_dimensions(self):
         """
+        Get the vector index dimension from database and application configuration and DB connection status
+        
         Args:
             uri: URI of the graph to extract
             userName: Username to use for graph creation ( if None will use username from config file )
@@ -151,8 +153,21 @@ class graphDBdataAccess:
         Returns:
         Returns a status of connection from NEO4j is success or failure
         """
+        
+        db_vector_dimension = self.graph.query("""SHOW INDEXES YIELD *
+                                    WHERE type = 'VECTOR' AND name = 'vector'
+                                    RETURN options.indexConfig['vector.dimensions'] AS vector_dimensions
+                                """)
+        embedding_model = os.getenv('EMBEDDING_MODEL')
+        embeddings, application_dimension = load_embedding_model(embedding_model)
+        logging.info(f'embedding model:{embeddings} and dimesion:{application_dimension}')
+        
         if self.graph:
-            return "Connection Successful"
+            if len(db_vector_dimension) > 0:
+                return {'db_vector_dimension': db_vector_dimension[0]['vector_dimensions'], 'application_dimension':application_dimension, 'message':"Connection Successful"}
+            else:
+                logging.info("Vector index does not exist in database")
+                return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful"}
 
     def execute_query(self, query, param=None):
         return self.graph.query(query, param)
@@ -212,7 +227,6 @@ class graphDBdataAccess:
         else :
             result = self.execute_query(query_to_delete_document, param)    
             logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' with their entities from database")
-        
         return result, len(filename_list)
     
     def list_unconnected_nodes(self):
@@ -242,3 +256,93 @@ class graphDBdataAccess:
         """
         param = {"elementIds":entities_list}
         return self.execute_query(query,param)
+    
+    def get_duplicate_nodes_list(self):
+        score_value = float(os.environ.get('DUPLICATE_SCORE_VALUE'))
+        text_distance = int(os.environ.get('DUPLICATE_TEXT_DISTANCE'))
+        query_duplicate_nodes = """
+                MATCH (n:!Chunk&!Document) with n 
+                WHERE n.embedding is not null and n.id is not null // and size(n.id) > 3
+                WITH n ORDER BY count {{ (n)--() }} DESC, size(n.id) DESC // updated
+                WITH collect(n) as nodes
+                UNWIND nodes as n
+                WITH n, [other in nodes 
+                // only one pair, same labels e.g. Person with Person
+                WHERE elementId(n) < elementId(other) and labels(n) = labels(other)
+                // at least embedding similarity of X
+                AND 
+                (
+                // either contains each other as substrings or has a text edit distinct of less than 3
+                (size(other.id) > 2 AND toLower(n.id) CONTAINS toLower(other.id)) OR 
+                (size(n.id) > 2 AND toLower(other.id) CONTAINS toLower(n.id))
+                OR (size(n.id)>5 AND apoc.text.distance(toLower(n.id), toLower(other.id)) < $duplicate_text_distance)
+                OR
+                vector.similarity.cosine(other.embedding, n.embedding) > $duplicate_score_value
+                )] as similar
+                WHERE size(similar) > 0 
+                // remove duplicate subsets
+                with collect([n]+similar) as all
+                CALL {{ with all
+                    unwind all as nodes
+                    with nodes, all
+                    // skip current entry if it's smaller and a subset of any other entry
+                    where none(other in all where other <> nodes and size(other) > size(nodes) and size(apoc.coll.subtract(nodes, other))=0)
+                    return head(nodes) as n, tail(nodes) as similar
+                }}
+                OPTIONAL MATCH (doc:Document)<-[:__PART_OF__]-(c:Chunk)-[:__HAS_ENTITY__]->(n)
+                {return_statement}
+                """
+        return_query_duplicate_nodes = """
+                RETURN n {.*, embedding:null, elementId:elementId(n), labels:labels(n)} as e, 
+                [s in similar | s {.id, .description, labels:labels(s), elementId: elementId(s)}] as similar,
+                collect(distinct doc.fileName) as documents, count(distinct c) as chunkConnections
+                ORDER BY e.id ASC
+                """
+        return_query_duplicate_nodes_total = "RETURN COUNT(DISTINCT(n)) as total"
+        
+        param = {"duplicate_score_value": score_value, "duplicate_text_distance" : text_distance}
+        
+        nodes_list = self.execute_query(query_duplicate_nodes.format(return_statement=return_query_duplicate_nodes),param=param)
+        total_nodes = self.execute_query(query_duplicate_nodes.format(return_statement=return_query_duplicate_nodes_total),param=param)
+        return nodes_list, total_nodes[0]
+    
+    def merge_duplicate_nodes(self,duplicate_nodes_list):
+        nodes_list = json.loads(duplicate_nodes_list)
+        print(f'Nodes list to merge {nodes_list}')
+        query = """
+        UNWIND $rows AS row
+        CALL { with row
+        MATCH (first) WHERE elementId(first) = row.firstElementId
+        MATCH (rest) WHERE elementId(rest) IN row.similarElementIds
+        WITH first, collect (rest) as rest
+        WITH [first] + rest as nodes
+        CALL apoc.refactor.mergeNodes(nodes, 
+        {properties:"discard",mergeRels:true, produceSelfRel:false, preserveExistingSelfRels:false, singleElementAsArray:true}) 
+        YIELD node
+        RETURN size(nodes) as mergedCount
+        }
+        RETURN sum(mergedCount) as totalMerged
+        """
+        param = {"rows":nodes_list}
+        return self.execute_query(query,param)
+    
+    def drop_create_vector_index(self, is_vector_index_recreate):
+        """
+        drop and create the vector index when vector index dimesion are different.
+        """
+        embedding_model = os.getenv('EMBEDDING_MODEL')
+        embeddings, dimension = load_embedding_model(embedding_model)
+        if is_vector_index_recreate == 'true':
+            self.graph.query("""drop index vector""")
+        
+        self.graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
+                            OPTIONS {indexConfig: {
+                            `vector.dimensions`: $dimensions,
+                            `vector.similarity_function`: 'cosine'
+                            }}
+                        """,
+                        {
+                            "dimensions" : dimension
+                        }
+                        )
+        return "Drop and Re-Create vector index succesfully"

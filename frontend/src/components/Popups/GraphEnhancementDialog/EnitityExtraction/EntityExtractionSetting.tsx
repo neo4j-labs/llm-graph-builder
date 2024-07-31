@@ -1,14 +1,14 @@
 import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
-import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
-import { appLabels, buttonCaptions, tooltips } from '../../../utils/Constants';
+import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
+import { appLabels, buttonCaptions, tooltips } from '../../../../utils/Constants';
 import { Dropdown, Flex, Typography } from '@neo4j-ndl/react';
-import { useCredentials } from '../../../context/UserCredentials';
-import { useFileContext } from '../../../context/UsersFiles';
+import { useCredentials } from '../../../../context/UserCredentials';
+import { useFileContext } from '../../../../context/UsersFiles';
 import { OnChangeValue, ActionMeta } from 'react-select';
-import { OptionType, OptionTypeForExamples, schema, UserCredentials } from '../../../types';
-import { useAlertContext } from '../../../context/Alert';
-import { getNodeLabelsAndRelTypes } from '../../../services/GetNodeLabelsRelTypes';
-import schemaExamples from '../../../assets/schemas.json';
+import { OptionType, OptionTypeForExamples, schema, UserCredentials } from '../../../../types';
+import { useAlertContext } from '../../../../context/Alert';
+import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
+import schemaExamples from '../../../../assets/schemas.json';
 
 export default function EntityExtractionSetting({
   view,
@@ -73,6 +73,10 @@ export default function EntityExtractionSetting({
       removeNodesAndRels(removedNodelabels, removedRelations);
     }
     setSelectedSchemas(selectedOptions);
+    localStorage.setItem(
+      'selectedSchemas',
+      JSON.stringify({ db: userCredentials?.uri, selectedOptions: selectedOptions })
+    );
     const nodesFromSchema = selectedOptions.map((s) => JSON.parse(s.value).nodelabels).flat();
     const relationsFromSchema = selectedOptions.map((s) => JSON.parse(s.value).relationshipTypes).flat();
     let nodeOptionsFromSchema: OptionType[] = [];
@@ -155,7 +159,6 @@ export default function EntityExtractionSetting({
     }, []);
     setdefaultExamples(parsedData);
   }, []);
-
   useEffect(() => {
     if (userCredentials) {
       if (open && view === 'Dialog') {
@@ -220,11 +223,23 @@ export default function EntityExtractionSetting({
       'selectedRelationshipLabels',
       JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] })
     );
+    localStorage.setItem('selectedSchemas', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
     showAlert('info', `Successfully Removed the Schema settings`);
     if (view === 'Dialog' && onClose != undefined) {
       onClose();
     }
   };
+
+  // Load selectedSchemas from local storage on mount
+  useEffect(() => {
+    const storedSchemas = localStorage.getItem('selectedSchemas');
+    if (storedSchemas) {
+      const parsedSchemas = JSON.parse(storedSchemas);
+      setSelectedSchemas(parsedSchemas.selectedOptions);
+    }
+  }, []);
+
+  console.log('selectedSchemas', selectedSchemas);
   return (
     <div>
       <Typography variant='body-medium'>
@@ -268,7 +283,7 @@ export default function EntityExtractionSetting({
             options: nodeLabelOptions,
             onChange: onChangenodes,
             value: selectedNodes,
-            classNamePrefix: 'node_label',
+            classNamePrefix: 'entity_extraction_Tab_node_label',
           }}
           type='creatable'
         />
@@ -282,7 +297,7 @@ export default function EntityExtractionSetting({
             options: relationshipTypeOptions,
             onChange: onChangerels,
             value: selectedRels,
-            classNamePrefix: 'relationship_label',
+            classNamePrefix: 'entity_extraction_Tab_relationship_label',
           }}
           type='creatable'
         />

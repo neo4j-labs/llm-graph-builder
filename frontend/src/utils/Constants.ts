@@ -30,15 +30,16 @@ export const docChunkEntities = `+[chunks]
 + collect { OPTIONAL MATCH p=(c:__Chunk__)-[:__HAS_ENTITY__]->(e)-[*0..1]-(:!__Chunk__) RETURN p }`;
 export const APP_SOURCES =
   process.env.REACT_APP_SOURCES !== ''
-    ? process.env.REACT_APP_SOURCES?.split(',')
+    ? (process.env.REACT_APP_SOURCES?.split(',') as string[])
     : ['gcs', 's3', 'local', 'wiki', 'youtube', 'web'];
 export const llms =
   process.env?.LLM_MODELS?.trim() != ''
-    ? process.env.LLM_MODELS?.split(',')
+    ? (process.env.LLM_MODELS?.split(',') as string[])
     : [
         'diffbot',
         'openai-gpt-3.5',
         'openai-gpt-4o',
+        'openai-gpt-4o-mini',
         'gemini-1.0-pro',
         'gemini-1.5-pro',
         'azure_ai_gpt_35',
@@ -50,13 +51,15 @@ export const llms =
         'bedrock_claude_3_5_sonnet',
       ];
 
-export const defaultLLM = llms?.includes('openai-gpt-3.5')
-  ? 'openai-gpt-3.5'
+export const defaultLLM = llms?.includes('openai-gpt-4o-mini')
+  ? 'openai-gpt-4o-mini'
   : llms?.includes('gemini-1.0-pro')
   ? 'gemini-1.0-pro'
   : 'diffbot';
 export const chatModes =
-  process.env?.CHAT_MODES?.trim() != '' ? process.env.CHAT_MODES?.split(',') : ['vector', 'graph', 'graph+vector'];
+  process.env?.CHAT_MODES?.trim() != ''
+    ? process.env.CHAT_MODES?.split(',')
+    : ['vector', 'graph', 'graph+vector', 'hybrid'];
 export const chunkSize = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.TIME_PER_PAGE ? parseInt(process.env.TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
@@ -131,7 +134,7 @@ export const tooltips = {
   useExistingSchema: 'Use the already existing schema from DB',
   clearChat: 'Clear Chat History',
   continue: 'Continue',
-  clearGraphSettings: 'Allow User to remove Settings',
+  clearGraphSettings: 'Clear configured Graph Schema',
 };
 
 export const buttonCaptions = {
@@ -153,7 +156,7 @@ export const buttonCaptions = {
   cancel: 'Cancel',
   details: 'Details',
   continueSettings: 'Continue',
-  clearSettings: 'Clear Settings',
+  clearSettings: 'Clear Schema',
   ask: 'Ask',
 };
 
@@ -176,18 +179,30 @@ export const mouseEventCallbacks = {
   onDrag: true,
 };
 
-export const graphQuery: string = queryMap.DocChunkEntities;
+// export const graphQuery: string = queryMap.DocChunkEntities;
 export const graphView: OptionType[] = [
   { label: 'Lexical Graph', value: queryMap.DocChunks },
   { label: 'Entity Graph', value: queryMap.Entities },
   { label: 'Knowledge Graph', value: queryMap.DocChunkEntities },
 ];
-export const intitalGraphType: GraphType[] = ['__Document__', 'Entities', '__Chunk__'];
-export const knowledgeGraph = 'Knowledge Graph';
-export const lexicalGraph = 'Lexical Graph';
-export const entityGraph = 'Entity Graph';
+export const intitalGraphType: GraphType[] = ['DocumentChunk', 'Entities'];
 
 export const appLabels = {
   ownSchema: 'Or Define your own Schema',
   predefinedSchema: 'Select a Pre-defined Schema',
+};
+
+export const graphLabels = {
+  showGraphView: 'showGraphView',
+  chatInfoView: 'chatInfoView',
+  generateGraph: 'Generated Graph',
+  inspectGeneratedGraphFrom: 'Inspect Generated Graph from',
+  document: 'Document',
+  chunk: 'Chunk',
+  documentChunk: 'DocumentChunk',
+  entities: 'Entities',
+  resultOverview: 'Result Overview',
+  totalNodes: 'Total Nodes',
+  noEntities: 'No Entities Found',
+  selectCheckbox: 'Select atleast one checkbox for graph view',
 };

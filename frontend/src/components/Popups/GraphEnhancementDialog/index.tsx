@@ -5,10 +5,11 @@ import DeletePopUpForOrphanNodes from './DeleteTabForOrphanNodes';
 import deleteOrphanAPI from '../../../services/DeleteOrphanNodes';
 import { UserCredentials } from '../../../types';
 import { useCredentials } from '../../../context/UserCredentials';
-import EntityExtractionSettings from '../Settings/EntityExtractionSetting';
+import EntityExtractionSettings from './EnitityExtraction/EntityExtractionSetting';
 import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { OverridableStringUnion } from '@mui/types';
 import { useFileContext } from '../../../context/UsersFiles';
+import DeduplicationTab from './Deduplication';
 
 export default function GraphEnhancementDialog({
   open,
@@ -34,6 +35,7 @@ export default function GraphEnhancementDialog({
       setorphanDeleteAPIloading(false);
       console.log(response);
     } catch (error) {
+      setorphanDeleteAPIloading(false);
       console.log(error);
     }
   };
@@ -56,7 +58,11 @@ export default function GraphEnhancementDialog({
       <Dialog.Header className='flex justify-between self-end !mb-0 '>
         <Box className='n-bg-palette-neutral-bg-weak px-4'>
           <Box className='flex flex-row items-center mb-2'>
-            <img src={graphenhancement} style={{ width: 250, height: 250, marginRight: 10 }} loading='lazy' />
+            <img
+              src={graphenhancement}
+              style={{ width: 220, height: 220, marginRight: 10, objectFit: 'contain' }}
+              loading='lazy'
+            />
             <Box className='flex flex-col'>
               <Typography variant='h2'>Graph Enhancements</Typography>
               <Typography variant='subheading-medium' className='mb-2'>
@@ -72,6 +78,9 @@ export default function GraphEnhancementDialog({
                   <Tabs.Tab tabId={1} aria-label='Add database'>
                     Disconnected Nodes
                   </Tabs.Tab>
+                  <Tabs.Tab tabId={2} aria-label='Duplication Nodes'>
+                    De-Duplication Of Nodes
+                  </Tabs.Tab>
                 </Tabs>
               </Flex>
             </Box>
@@ -79,7 +88,7 @@ export default function GraphEnhancementDialog({
         </Box>
       </Dialog.Header>
       <Dialog.Content className='flex flex-col n-gap-token- grow w-[90%] mx-auto'>
-        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={0}>
+        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4' value={activeTab} tabId={0}>
           <div className='w-[80%] mx-auto'>
             <EntityExtractionSettings
               view='Tabs'
@@ -93,6 +102,9 @@ export default function GraphEnhancementDialog({
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={1}>
           <DeletePopUpForOrphanNodes deleteHandler={orphanNodesDeleteHandler} loading={orphanDeleteAPIloading} />
+        </Tabs.TabPanel>
+        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={2}>
+          <DeduplicationTab />
         </Tabs.TabPanel>
       </Dialog.Content>
     </Dialog>

@@ -31,14 +31,20 @@ export default function GenericModal({
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   return (
-    <Dialog open={open} onClose={closeHandler}>
+    <Dialog
+      open={open}
+      onClose={() => {
+        setIsLoading(false);
+        closeHandler();
+      }}
+    >
       <Dialog.Header>
         <Box className='flex flex-row pb-6 items-center mb-2'>
           <img src={Neo4jDataImportFromCloud} style={{ width: 95, height: 95, marginRight: 10 }} loading='lazy' />
           <Box className='flex flex-col'>
             <Typography variant='h2'>Web Sources</Typography>
             <Typography variant='body-medium' className='mb-2'>
-              Convert Any Web Source to Knoweldge graph
+              Convert Any Web Source to Knowledge graph
             </Typography>
           </Box>
         </Box>
