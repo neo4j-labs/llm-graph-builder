@@ -9,8 +9,7 @@ import {
   TextLink,
   Typography,
 } from '@neo4j-ndl/react';
-import { forwardRef, HTMLProps, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import React from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -27,7 +26,15 @@ import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { statusCheck, capitalize } from '../utils/Utils';
-import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, alertStateType } from '../types';
+import {
+  SourceNode,
+  CustomFile,
+  FileTableProps,
+  UserCredentials,
+  statusupdate,
+  alertStateType,
+  ChildRef,
+} from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
 import CustomAlert from './UI/Alert';
@@ -39,11 +46,8 @@ import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 import IconButtonWithToolTip from './UI/IconButtonToolTip';
-import { largeFileSize } from '../utils/Constants';
-
-export interface ChildRef {
-  getSelectedRows: () => CustomFile[];
-}
+import { largeFileSize, llms } from '../utils/Constants';
+import IndeterminateCheckbox from './UI/CustomCheckBox';
 
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const { isExpanded, connectionStatus, setConnectionStatus, onInspect } = props;
@@ -52,7 +56,10 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  // const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
+  const [statusFilter, setstatusFilter] = useState<string>('');
+  const [filetypeFilter, setFiletypeFilter] = useState<string>('');
+  const [llmtypeFilter, setLLmtypeFilter] = useState<string>('');
+  const skipPageResetRef = useRef<boolean>(false);
   const [alertDetails, setalertDetails] = useState<alertStateType>({
     showAlert: false,
     alertType: 'error',
@@ -78,7 +85,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       });
     }
   );
-
   const columns = useMemo(
     () => [
       {
@@ -103,20 +109,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           );
         },
         cell: ({ row }: { row: Row<CustomFile> }) => {
-          const checkedCase =
-            row.getIsSelected() && row.original.status != 'Uploading' && row.original.status != 'Processing';
           return (
             <div className='px-1'>
-              {/* <Checkbox
-                aria-label='row-checkbox'
-                checked={checkedCase}
-                disabled={
-                  !row.getCanSelect() || row.original.status === 'Uploading' || row.original.status === 'Processing'
-                }
-                onChange={row.getToggleSelectedHandler()}
-                title='select row for deletion'
-              /> */}
-
               <IndeterminateCheckbox
                 {...{
                   checked: row.getIsSelected(),
@@ -227,6 +221,61 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         footer: (info) => info.column.id,
         filterFn: 'statusFilter' as any,
         size: 200,
+        meta: {
+          columnActions: {
+            actions: [
+              {
+                title: (
+                  <span className={`${statusFilter === 'All' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                    All Files
+                  </span>
+                ),
+                onClick: () => {
+                  setstatusFilter('All');
+                  table.getColumn('status')?.setFilterValue(true);
+                  skipPageResetRef.current = true;
+                },
+              },
+              {
+                title: (
+                  <span className={`${statusFilter === 'Completed' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                    <StatusIndicator type='success'></StatusIndicator> Completed Files
+                  </span>
+                ),
+                onClick: () => {
+                  setstatusFilter('Completed');
+                  table.getColumn('status')?.setFilterValue(true);
+                  skipPageResetRef.current = true;
+                },
+              },
+              {
+                title: (
+                  <span className={`${statusFilter === 'New' ? 'n-bg-palette-primary-bg-selected' : 'p-2'} p-2`}>
+                    <StatusIndicator type='info'></StatusIndicator> New Files
+                  </span>
+                ),
+                onClick: () => {
+                  setstatusFilter('New');
+                  table.getColumn('status')?.setFilterValue(true);
+                  skipPageResetRef.current = true;
+                },
+              },
+              {
+                title: (
+                  <span className={`${statusFilter === 'Failed' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                    <StatusIndicator type='danger'></StatusIndicator> Failed Files
+                  </span>
+                ),
+                onClick: () => {
+                  setstatusFilter('Failed');
+                  table.getColumn('status')?.setFilterValue(true);
+                  skipPageResetRef.current = true;
+                },
+              },
+            ],
+            defaultSortingActions: false,
+          },
+        },
       }),
       columnHelper.accessor((row) => row.uploadprogess, {
         id: 'uploadprogess',
@@ -293,6 +342,37 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         },
         header: () => <span>Source/Type</span>,
         footer: (info) => info.column.id,
+        filterFn: 'fileTypeFilter' as any,
+        meta: {
+          columnActions: {
+            actions: [
+              {
+                title: (
+                  <span className={`${filetypeFilter === 'All' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                    All types
+                  </span>
+                ),
+                onClick: () => {
+                  setFiletypeFilter('All');
+                  table.getColumn('source')?.setFilterValue(true);
+                },
+              },
+              ...Array.from(new Set(filesData.map((f) => f.type))).map((t) => {
+                return {
+                  title: (
+                    <span className={`${t === filetypeFilter ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>{t}</span>
+                  ),
+                  onClick: () => {
+                    setFiletypeFilter(t as string);
+                    table.getColumn('source')?.setFilterValue(true);
+                    skipPageResetRef.current = true;
+                  },
+                };
+              }),
+            ],
+            defaultSortingActions: false,
+          },
+        },
       }),
       columnHelper.accessor((row) => row.model, {
         id: 'model',
@@ -311,6 +391,38 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         },
         header: () => <span>Model</span>,
         footer: (info) => info.column.id,
+        filterFn: 'llmTypeFilter' as any,
+        meta: {
+          columnActions: {
+            actions: [
+              {
+                title: (
+                  <span className={`${llmtypeFilter === 'All' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                    All
+                  </span>
+                ),
+                onClick: () => {
+                  setLLmtypeFilter('All');
+                  table.getColumn('model')?.setFilterValue(true);
+                  skipPageResetRef.current = true;
+                },
+              },
+              ...llms.map((m) => {
+                return {
+                  title: (
+                    <span className={`${m === llmtypeFilter ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>{m}</span>
+                  ),
+                  onClick: () => {
+                    setLLmtypeFilter(m);
+                    table.getColumn('model')?.setFilterValue(true);
+                    skipPageResetRef.current = true;
+                  },
+                };
+              }),
+            ],
+            defaultSortingActions: false,
+          },
+        },
       }),
       columnHelper.accessor((row) => row.NodesCount, {
         id: 'NodesCount',
@@ -324,12 +436,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         header: () => <span>Relations</span>,
         footer: (info) => info.column.id,
       }),
-      // columnHelper.accessor((row) => row.total_pages, {
-      //   id: 'Total pages',
-      //   cell: (info) => <i>{info.getValue()}</i>,
-      //   header: () => <span>Total pages</span>,
-      //   footer: (info) => info.column.id,
-      // }),
       columnHelper.accessor((row) => row.status, {
         id: 'inspect',
         cell: (info) => (
@@ -351,8 +457,54 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         footer: (info) => info.column.id,
       }),
     ],
-    []
+    [filesData.length, statusFilter, filetypeFilter, llmtypeFilter]
   );
+
+  const table = useReactTable({
+    data: filesData,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onColumnFiltersChange: setColumnFilters,
+    state: {
+      columnFilters,
+      rowSelection,
+    },
+    onRowSelectionChange: setRowSelection,
+    filterFns: {
+      statusFilter: (row, columnId, filterValue) => {
+        if (statusFilter === 'All') {
+          return row;
+        }
+        const value = filterValue ? row.original[columnId] === statusFilter : row.original[columnId];
+        return value;
+      },
+      fileTypeFilter: (row) => {
+        if (filetypeFilter === 'All') {
+          return true;
+        }
+        return row.original.type === filetypeFilter;
+      },
+      llmTypeFilter: (row) => {
+        if (llmtypeFilter === 'All') {
+          return true;
+        }
+        return row.original.model === llmtypeFilter;
+      },
+    },
+    enableGlobalFilter: false,
+    autoResetPageIndex: skipPageResetRef.current,
+    enableRowSelection: true,
+    enableMultiRowSelection: true,
+    getRowId: (row) => row.id,
+    enableSorting: true,
+    getSortedRowModel: getSortedRowModel(),
+  });
+
+  useEffect(() => {
+    skipPageResetRef.current = false;
+  }, [filesData.length]);
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -587,39 +739,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     }
   };
 
-  // const pageSizeCalculation = Math.floor((currentOuterHeight - 402) / 45);
-
-  const table = useReactTable({
-    data: filesData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    // initialState: {
-    //   pagination: {
-    //     pageSize: pageSizeCalculation < 0 ? 9 : pageSizeCalculation,
-    //   },
-    // },
-    state: {
-      columnFilters,
-      rowSelection,
-    },
-    onRowSelectionChange: setRowSelection,
-    filterFns: {
-      statusFilter: (row, columnId, filterValue) => {
-        const value = filterValue ? row.original[columnId] === 'New' : row.original[columnId];
-        return value;
-      },
-    },
-    enableGlobalFilter: false,
-    autoResetPageIndex: false,
-    enableRowSelection: true,
-    enableMultiRowSelection: true,
-    getRowId: (row) => row.id,
-    enableSorting: true,
-    getSortedRowModel: getSortedRowModel(),
-  });
   useImperativeHandle(
     ref,
     () => ({
@@ -634,7 +753,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       const resizeObserver = new ResizeObserver((entries) => {
         entries.forEach((entry) => {
           const { height } = entry.contentRect;
-          // setcurrentOuterHeight(height);
           const rowHeight = document?.getElementsByClassName('ndl-data-grid-td')?.[0]?.clientHeight ?? 69;
           table.setPageSize(Math.floor(height / rowHeight));
         });
@@ -649,13 +767,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       };
     }
   }, []);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    table.getColumn('status')?.setFilterValue(e.target.checked);
-    if (!table.getCanNextPage() || table.getPrePaginationRowModel().rows.length) {
-      table.setPageIndex(0);
-    }
-  };
 
   const classNameCheck = isExpanded ? 'fileTableWithExpansion' : `filetable`;
 
@@ -679,10 +790,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       )}
       {filesData ? (
         <>
-          <div className='flex items-center p-5 self-start gap-2'>
-            <input type='checkbox' onChange={handleChange} />
-            <label>Show files with status New </label>
-          </div>
           <div className={`${isExpanded ? 'w-[calc(100%-64px)]' : 'mx-auto w-[calc(100%-100px)]'}`}>
             <DataGrid
               ref={tableRef}
@@ -726,18 +833,3 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
 });
 
 export default FileTable;
-function IndeterminateCheckbox({
-  indeterminate,
-  className = '',
-  ...rest
-}: { indeterminate?: boolean } & HTMLProps<HTMLInputElement>) {
-  const ref = React.useRef<HTMLInputElement>(null!);
-
-  React.useEffect(() => {
-    if (typeof indeterminate === 'boolean') {
-      ref.current.indeterminate = !rest.checked && indeterminate;
-    }
-  }, [ref, indeterminate]);
-
-  return <Checkbox type='checkbox' ref={ref} className={className + ' cursor-pointer'} {...rest} />;
-}

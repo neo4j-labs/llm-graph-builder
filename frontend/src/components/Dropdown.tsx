@@ -1,16 +1,8 @@
-import { Dropdown } from '@neo4j-ndl/react';
-import { DropdownProps, OptionType } from '../types';
+import { Dropdown, Tip } from '@neo4j-ndl/react';
+import { OptionType, ReusableDropdownProps } from '../types';
 import { useMemo } from 'react';
 import { capitalize } from '../utils/Utils';
-interface ReusableDropdownProps extends DropdownProps {
-  options: string[] | OptionType[];
-  placeholder?: string;
-  defaultValue?: string;
-  children?: React.ReactNode;
-  view?: 'ContentView' | 'GraphView';
-  isDisabled: boolean;
-  value?: OptionType;
-}
+
 const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   options,
   placeholder,
@@ -28,36 +20,42 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   return (
     <>
       <div className={view === 'ContentView' ? 'w-[150px]' : ''}>
-        <Dropdown
-          type='select'
-          aria-label='A selection dropdown'
-          selectProps={{
-            onChange: handleChange,
-            options: allOptions?.map((option) => {
-              const label =
-                typeof option === 'string'
-                  ? (option.includes('LLM_MODEL_CONFIG_')
-                      ? capitalize(option.split('LLM_MODEL_CONFIG_').at(-1) as string)
-                      : capitalize(option)
-                    )
-                      .split('_')
-                      .join(' ')
-                  : capitalize(option.label);
-              const value = typeof option === 'string' ? option : option.value;
-              return {
-                label,
-                value,
-              };
-            }),
-            placeholder: placeholder || 'Select an option',
-            defaultValue: defaultValue ? { label: capitalize(defaultValue), value: defaultValue } : undefined,
-            menuPlacement: 'auto',
-            isDisabled: isDisabled,
-            value: value,
-          }}
-          size='medium'
-          fluid
-        />
+        <Tip allowedPlacements={['top']}>
+          <Tip.Trigger>
+            <Dropdown
+              type='select'
+              aria-label='A selection dropdown'
+              label='LLM Models'
+              selectProps={{
+                onChange: handleChange,
+                options: allOptions?.map((option) => {
+                  const label =
+                    typeof option === 'string'
+                      ? (option.includes('LLM_MODEL_CONFIG_')
+                          ? capitalize(option.split('LLM_MODEL_CONFIG_').at(-1) as string)
+                          : capitalize(option)
+                        )
+                          .split('_')
+                          .join(' ')
+                      : capitalize(option.label);
+                  const value = typeof option === 'string' ? option : option.value;
+                  return {
+                    label,
+                    value,
+                  };
+                }),
+                placeholder: placeholder || 'Select an option',
+                defaultValue: defaultValue ? { label: capitalize(defaultValue), value: defaultValue } : undefined,
+                menuPlacement: 'auto',
+                isDisabled: isDisabled,
+                value: value,
+              }}
+              size='medium'
+              fluid
+            />
+          </Tip.Trigger>
+          <Tip.Content>LLM Model used for Extraction & Chat</Tip.Content>
+        </Tip>
         {children}
       </div>
     </>

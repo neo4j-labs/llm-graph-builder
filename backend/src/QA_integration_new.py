@@ -21,6 +21,7 @@ from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage,AIMessage
 from src.shared.constants import *
 from src.llm import get_llm
+from langchain.chains import GraphCypherQAChain
 import json
 
 ## Chat models
@@ -38,55 +39,90 @@ EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
 
 
-def get_neo4j_retriever(graph, retrieval_query,document_names,index_name="vector", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
+def get_neo4j_retriever(graph, retrieval_query,document_names,mode,index_name="vector",keyword_index="keyword", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
     try:
-        neo_db = Neo4jVector.from_existing_index(
-            embedding=EMBEDDING_FUNCTION,
-            index_name=index_name,
-            retrieval_query=retrieval_query,
-            graph=graph
-        )
-        logging.info(f"Successfully retrieved Neo4jVector index '{index_name}'")
+        if mode == "hybrid":
+            # neo_db = Neo4jVector.from_existing_graph(
+            #     embedding=EMBEDDING_FUNCTION,
+            #     index_name=index_name,
+            #     retrieval_query=retrieval_query,
+            #     graph=graph,
+            #     search_type="hybrid",
+            #     node_label="Chunk",
+            #     embedding_node_property="embedding",
+            #     text_node_properties=["text"]
+            #     # keyword_index_name=keyword_index
+            # )
+            neo_db = Neo4jVector.from_existing_index(
+                embedding=EMBEDDING_FUNCTION,
+                index_name=index_name,
+                retrieval_query=retrieval_query,
+                graph=graph,
+                search_type="hybrid",
+                keyword_index_name=keyword_index
+            )
+            logging.info(f"Successfully retrieved Neo4jVector index '{index_name}' and keyword index '{keyword_index}'")
+        else:
+            neo_db = Neo4jVector.from_existing_index(
+                embedding=EMBEDDING_FUNCTION,
+                index_name=index_name,
+                retrieval_query=retrieval_query,
+                graph=graph
+            )
+            logging.info(f"Successfully retrieved Neo4jVector index '{index_name}'")
         document_names= list(map(str.strip, json.loads(document_names)))
         if document_names:
-            retriever = neo_db.as_retriever(search_kwargs={'k': search_k, "score_threshold": score_threshold,'filter':{'fileName': {'$in': document_names}}})
+            retriever = neo_db.as_retriever(search_type="similarity_score_threshold",search_kwargs={'k': search_k, "score_threshold": score_threshold,'filter':{'fileName': {'$in': document_names}}})
             logging.info(f"Successfully created retriever for index '{index_name}' with search_k={search_k}, score_threshold={score_threshold} for documents {document_names}")
         else:
-            retriever = neo_db.as_retriever(search_kwargs={'k': search_k, "score_threshold": score_threshold})
+            retriever = neo_db.as_retriever(search_type="similarity_score_threshold",search_kwargs={'k': search_k, "score_threshold": score_threshold})
             logging.info(f"Successfully created retriever for index '{index_name}' with search_k={search_k}, score_threshold={score_threshold}")
         return retriever
     except Exception as e:
         logging.error(f"Error retrieving Neo4jVector index '{index_name}' or creating retriever: {e}")
-        return None 
+        raise Exception("An error occurred while retrieving the Neo4jVector index '{index_name}' or creating the retriever. Please drop and create a new vector index: {e}") from e 
     
-def create_document_retriever_chain(llm,retriever):
-    query_transform_prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", QUESTION_TRANSFORM_TEMPLATE),
-            MessagesPlaceholder(variable_name="messages")
-        ]
-    )
-    output_parser = StrOutputParser()
+def create_document_retriever_chain(llm, retriever):
+    try:
+        logging.info("Starting to create document retriever chain")
 
-    splitter = TokenTextSplitter(chunk_size=CHAT_DOC_SPLIT_SIZE, chunk_overlap=0)
-    embeddings_filter = EmbeddingsFilter(embeddings=EMBEDDING_FUNCTION, similarity_threshold=CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD)
+        query_transform_prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", QUESTION_TRANSFORM_TEMPLATE),
+                MessagesPlaceholder(variable_name="messages")
+            ]
+        )
 
-    pipeline_compressor = DocumentCompressorPipeline(
-        transformers=[splitter, embeddings_filter]
-    )
-    compression_retriever = ContextualCompressionRetriever(
-        base_compressor=pipeline_compressor, base_retriever=retriever
-    )
+        output_parser = StrOutputParser()
 
-    query_transforming_retriever_chain = RunnableBranch(
-        (
-            lambda x: len(x.get("messages", [])) == 1,
-            (lambda x: x["messages"][-1].content) | compression_retriever,
-        ),
-        query_transform_prompt | llm | output_parser | compression_retriever,
-    ).with_config(run_name="chat_retriever_chain")
+        splitter = TokenTextSplitter(chunk_size=CHAT_DOC_SPLIT_SIZE, chunk_overlap=0)
+        embeddings_filter = EmbeddingsFilter(
+            embeddings=EMBEDDING_FUNCTION,
+            similarity_threshold=CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD
+        )
 
-    return query_transforming_retriever_chain
+        pipeline_compressor = DocumentCompressorPipeline(
+            transformers=[splitter, embeddings_filter]
+        )
+
+        compression_retriever = ContextualCompressionRetriever(
+            base_compressor=pipeline_compressor, base_retriever=retriever
+        )
+
+        query_transforming_retriever_chain = RunnableBranch(
+            (
+                lambda x: len(x.get("messages", [])) == 1,
+                (lambda x: x["messages"][-1].content) | compression_retriever,
+            ),
+            query_transform_prompt | llm | output_parser | compression_retriever,
+        ).with_config(run_name="chat_retriever_chain")
+
+        logging.info("Successfully created document retriever chain")
+        return query_transforming_retriever_chain
+
+    except Exception as e:
+        logging.error(f"Error creating document retriever chain: {e}", exc_info=True)
+        raise
 
 
 def create_neo4j_chat_message_history(graph, session_id):
@@ -104,7 +140,7 @@ def create_neo4j_chat_message_history(graph, session_id):
 
     except Exception as e:
         logging.error(f"Error creating Neo4jChatMessageHistory: {e}")
-    return None 
+        raise 
 
 def format_documents(documents,model):
     prompt_token_cutoff = 4
@@ -218,19 +254,18 @@ def clear_chat_history(graph,session_id):
             "user": "chatbot"
             }
 
-def setup_chat(model, graph, session_id, document_names,retrieval_query):
+def setup_chat(model, graph, document_names,retrieval_query,mode):
     start_time = time.time()
     if model in ["diffbot"]:
         model = "openai-gpt-4o"
     llm,model_name = get_llm(model)
     logging.info(f"Model called in chat {model} and model version is {model_name}")
-    retriever = get_neo4j_retriever(graph=graph,retrieval_query=retrieval_query,document_names=document_names)
+    retriever = get_neo4j_retriever(graph=graph,retrieval_query=retrieval_query,document_names=document_names,mode=mode)
     doc_retriever = create_document_retriever_chain(llm, retriever)
-    history = create_neo4j_chat_message_history(graph, session_id)
     chat_setup_time = time.time() - start_time
     logging.info(f"Chat setup completed in {chat_setup_time:.2f} seconds")
     
-    return llm, doc_retriever, history, model_name
+    return llm, doc_retriever, model_name
 
 def retrieve_documents(doc_retriever, messages):
     start_time = time.time()
@@ -264,28 +299,90 @@ def summarize_and_log(history, messages, llm):
     history_summarized_time = time.time() - start_time
     logging.info(f"Chat History summarized in {history_summarized_time:.2f} seconds")
 
+
+def create_graph_chain(model, graph):
+    try:
+        logging.info(f"Graph QA Chain using LLM model: {model}")
+
+        cypher_llm,model_name = get_llm(model)
+        qa_llm,model_name = get_llm(model)
+        graph_chain = GraphCypherQAChain.from_llm(
+            cypher_llm=cypher_llm,
+            qa_llm=qa_llm,
+            validate_cypher= True,
+            graph=graph,
+            # verbose=True, 
+            return_intermediate_steps = True,
+            top_k=3
+        )
+
+        logging.info("GraphCypherQAChain instance created successfully.")
+        return graph_chain,qa_llm,model_name
+
+    except Exception as e:
+        logging.error(f"An error occurred while creating the GraphCypherQAChain instance. : {e}") 
+
+
+def get_graph_response(graph_chain, question):
+    try:
+        cypher_res = graph_chain.invoke({"query": question})
+        
+        response = cypher_res.get("result")
+        cypher_query = ""
+        context = []
+
+        for step in cypher_res.get("intermediate_steps", []):
+            if "query" in step:
+                cypher_string = step["query"]
+                cypher_query = cypher_string.replace("cypher\n", "").replace("\n", " ").strip() 
+            elif "context" in step:
+                context = step["context"]
+        return {
+            "response": response,
+            "cypher_query": cypher_query,
+            "context": context
+        }
+    
+    except Exception as e:
+        logging.error("An error occurred while getting the graph response : {e}")
+
 def QA_RAG(graph, model, question, document_names,session_id, mode):
     try:
         logging.info(f"Chat Mode : {mode}")
-        if mode == "vector":
-            retrieval_query = VECTOR_SEARCH_QUERY
-        elif mode == "graph":
-            #WIP
-            result =  {
-                "session_id": session_id,
-                "user": "chatbot"
-                }
-            return result
-        else:
-            retrieval_query = VECTOR_GRAPH_SEARCH_QUERY
-
-        llm, doc_retriever, history, model_version = setup_chat(model, graph, session_id, document_names,retrieval_query)
+        history = create_neo4j_chat_message_history(graph, session_id)
         messages = history.messages
         user_question = HumanMessage(content=question)
         messages.append(user_question)
+
+        if mode == "graph":
+            graph_chain, qa_llm,model_version = create_graph_chain(model,graph)
+            graph_response = get_graph_response(graph_chain,question)
+            ai_response = AIMessage(content=graph_response["response"]) if graph_response["response"] else AIMessage(content="Something went wrong")
+            messages.append(ai_response)
+            summarize_and_log(history, messages, qa_llm)
+
+            result = {
+                "session_id": session_id, 
+                "message": graph_response["response"], 
+                "info": {
+                    "model": model_version,
+                    'cypher_query':graph_response["cypher_query"],
+                    "context" : graph_response["context"],
+                    "mode" : mode,
+                    "response_time": 0
+                },
+                "user": "chatbot"
+            } 
+            return result
+        elif mode == "vector":
+            retrieval_query = VECTOR_SEARCH_QUERY
+        else:
+            retrieval_query = VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT)
+
+        llm, doc_retriever, model_version = setup_chat(model, graph, document_names,retrieval_query,mode)
         
         docs = retrieve_documents(doc_retriever, messages)
-        
+                
         if docs:
             content, result, total_tokens = process_documents(docs, question, messages, llm,model)
         else:
