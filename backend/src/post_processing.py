@@ -12,7 +12,7 @@ FILTER_LABELS = ["__Chunk__","__Document__"]
 
 
 HYBRID_SEARCH_INDEX_DROP_QUERY = "DROP INDEX keyword IF EXISTS;"
-HYBRID_SEARCH_FULL_TEXT_QUERY = "CREATE FULLTEXT INDEX keyword FOR (n:Chunk) ON EACH [n.text]"
+HYBRID_SEARCH_FULL_TEXT_QUERY = "CREATE FULLTEXT INDEX keyword FOR (n:__Chunk__) ON EACH [n.text]"
 
 def create_fulltext(uri, username, password, database,type):
     start_time = time.time()

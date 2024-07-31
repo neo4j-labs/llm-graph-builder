@@ -261,7 +261,7 @@ class graphDBdataAccess:
         score_value = float(os.environ.get('DUPLICATE_SCORE_VALUE'))
         text_distance = int(os.environ.get('DUPLICATE_TEXT_DISTANCE'))
         query_duplicate_nodes = """
-                MATCH (n:!Chunk&!Document) with n 
+                MATCH (n:!__Chunk__&!__Document__) with n 
                 WHERE n.embedding is not null and n.id is not null // and size(n.id) > 3
                 WITH n ORDER BY count {{ (n)--() }} DESC, size(n.id) DESC // updated
                 WITH collect(n) as nodes
@@ -289,7 +289,7 @@ class graphDBdataAccess:
                     where none(other in all where other <> nodes and size(other) > size(nodes) and size(apoc.coll.subtract(nodes, other))=0)
                     return head(nodes) as n, tail(nodes) as similar
                 }}
-                OPTIONAL MATCH (doc:Document)<-[:__PART_OF__]-(c:Chunk)-[:__HAS_ENTITY__]->(n)
+                OPTIONAL MATCH (doc:__Document__)<-[:__PART_OF__]-(c:__Chunk__)-[:__HAS_ENTITY__]->(n)
                 {return_statement}
                 """
         return_query_duplicate_nodes = """
@@ -335,7 +335,7 @@ class graphDBdataAccess:
         if is_vector_index_recreate == 'true':
             self.graph.query("""drop index vector""")
         
-        self.graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
+        self.graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:__Chunk__) on (c.embedding)
                             OPTIONS {indexConfig: {
                             `vector.dimensions`: $dimensions,
                             `vector.similarity_function`: 'cosine'

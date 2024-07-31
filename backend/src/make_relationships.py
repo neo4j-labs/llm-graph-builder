@@ -55,8 +55,8 @@ def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name
                 "chunkId": row['chunk_id'],
                 "embeddings": embeddings_arr
             })
-            # graph.query("""MATCH (d:Document {fileName : $fileName})
-            #                MERGE (c:Chunk {id:$chunkId}) SET c.embedding = $embeddings 
+            # graph.query("""MATCH (d:__Document__ {fileName : $fileName})
+            #                MERGE (c:__Chunk__ {id:$chunkId}) SET c.embedding = $embeddings 
             #                MERGE (c)-[:__PART_OF__]->(d)
             #             """,
             #             {
