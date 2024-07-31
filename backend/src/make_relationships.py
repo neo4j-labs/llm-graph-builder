@@ -11,7 +11,7 @@ logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
 def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_documents_chunk_chunk_Id : list):
     batch_data = []
-    logging.info("Create HAS_ENTITY relationship between chunks and entities")
+    logging.info("Create __HAS_ENTITY__ relationship between chunks and entities")
     chunk_node_id_set = 'id:"{}"'
     for graph_doc_chunk_id in graph_documents_chunk_chunk_Id:
         for node in graph_doc_chunk_id['graph_doc'].nodes:
@@ -24,14 +24,14 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
             #node_id = node.id
             #Below query is also unable to change as parametrize because we can't make parameter of Label or node type
             #https://neo4j.com/docs/cypher-manual/current/syntax/parameters/
-            #graph.query('MATCH(c:Chunk {'+chunk_node_id_set.format(graph_doc_chunk_id['chunk_id'])+'}) MERGE (n:'+ node.type +'{ id: "'+node_id+'"}) MERGE (c)-[:HAS_ENTITY]->(n)')
+            #graph.query('MATCH(c:Chunk {'+chunk_node_id_set.format(graph_doc_chunk_id['chunk_id'])+'}) MERGE (n:'+ node.type +'{ id: "'+node_id+'"}) MERGE (c)-[:__HAS_ENTITY__]->(n)')
           
     if batch_data:
         unwind_query = """
                     UNWIND $batch_data AS data
                     MATCH (c:__Chunk__ {id: data.chunk_id})
                     CALL apoc.merge.node([data.node_type], {id: data.node_id}) YIELD node AS n
-                    MERGE (c)-[:HAS_ENTITY]->(n)
+                    MERGE (c)-[:__HAS_ENTITY__]->(n)
                 """
         graph.query(unwind_query, params={"batch_data": batch_data})
 
@@ -57,7 +57,7 @@ def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name
             })
             # graph.query("""MATCH (d:Document {fileName : $fileName})
             #                MERGE (c:Chunk {id:$chunkId}) SET c.embedding = $embeddings 
-            #                MERGE (c)-[:PART_OF]->(d)
+            #                MERGE (c)-[:__PART_OF__]->(d)
             #             """,
             #             {
             #                 "fileName" : file_name,
@@ -83,7 +83,7 @@ def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name
         MATCH (d:__Document__ {fileName: $fileName})
         MERGE (c:__Chunk__ {id: row.chunkId})
         SET c.embedding = row.embeddings
-        MERGE (c)-[:PART_OF]->(d)
+        MERGE (c)-[:__PART_OF__]->(d)
     """       
     graph.query(query_to_create_embedding, params={"fileName":file_name, "data":data_for_query})
     
@@ -134,10 +134,10 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
         
         # create relationships between chunks
         if firstChunk:
-            relationships.append({"type": "FIRST_CHUNK", "chunk_id": current_chunk_id})
+            relationships.append({"type": "__FIRST_CHUNK__", "chunk_id": current_chunk_id})
         else:
             relationships.append({
-                "type": "NEXT_CHUNK",
+                "type": "__NEXT_CHUNK__",
                 "previous_chunk_id": previous_chunk_id,  # ID of previous chunk
                 "current_chunk_id": current_chunk_id
             })
@@ -152,7 +152,7 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
             c.end_time = CASE WHEN data.end_time IS NOT NULL THEN data.end_time END
         WITH data, c
         MATCH (d:__Document__ {fileName: data.f_name})
-        MERGE (c)-[:PART_OF]->(d)
+        MERGE (c)-[:__PART_OF__]->(d)
     """
     graph.query(query_to_create_chunk_and_PART_OF_relation, params={"batch_data": batch_data})
     
@@ -160,8 +160,8 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
         UNWIND $relationships AS relationship
         MATCH (d:__Document__ {fileName: $f_name})
         MATCH (c:__Chunk__ {id: relationship.chunk_id})
-        FOREACH(r IN CASE WHEN relationship.type = 'FIRST_CHUNK' THEN [1] ELSE [] END |
-                MERGE (d)-[:FIRST_CHUNK]->(c))
+        FOREACH(r IN CASE WHEN relationship.type = '__FIRST_CHUNK__' THEN [1] ELSE [] END |
+                MERGE (d)-[:__FIRST_CHUNK__]->(c))
         """
     graph.query(query_to_create_FIRST_relation, params={"f_name": file_name, "relationships": relationships})   
     
@@ -170,8 +170,8 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
         MATCH (c:__Chunk__ {id: relationship.current_chunk_id})
         WITH c, relationship
         MATCH (pc:__Chunk__ {id: relationship.previous_chunk_id})
-        FOREACH(r IN CASE WHEN relationship.type = 'NEXT_CHUNK' THEN [1] ELSE [] END |
-                MERGE (c)<-[:NEXT_CHUNK]-(pc))
+        FOREACH(r IN CASE WHEN relationship.type = '__NEXT_CHUNK__' THEN [1] ELSE [] END |
+                MERGE (c)<-[:__NEXT_CHUNK__]-(pc))
         """
     graph.query(query_to_create_NEXT_CHUNK_relation, params={"relationships": relationships})   
     

@@ -5,10 +5,10 @@ from src.graph_query import *
 CHUNK_QUERY = """
 match (chunk:__Chunk__) where chunk.id IN $chunksIds
 
-MATCH (chunk)-[:PART_OF]->(d:__Document__)
+MATCH (chunk)-[:__PART_OF__]->(d:__Document__)
 CALL {WITH chunk
-MATCH (chunk)-[:HAS_ENTITY]->(e) 
-MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!__Chunk__&!__Document__) 
+MATCH (chunk)-[:__HAS_ENTITY__]->(e) 
+MATCH path=(e)(()-[rels:!__HAS_ENTITY__&!__PART_OF__]-()){0,2}(:!__Chunk__&!__Document__) 
 UNWIND rels as r
 RETURN collect(distinct r) as rels
 }
