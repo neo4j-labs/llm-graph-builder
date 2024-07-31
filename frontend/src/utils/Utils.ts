@@ -180,7 +180,7 @@ export const filterData = (
     // Document + Chunk
     filteredNodes = allNodes.filter((node) => node.labels.includes('Document') || node.labels.includes('Chunk'));
     filteredRelations = allRelationships.filter((rel) =>
-      ['PART_OF', 'FIRST_CHUNK', 'SIMILAR', 'NEXT_CHUNK'].includes(rel.caption ?? '')
+      ['__PART_OF__', '__FIRST_CHUNK__', '__SIMILAR__', '__NEXT_CHUNK__'].includes(rel.caption ?? '')
     );
     filteredScheme = { Document: scheme.Document, Chunk: scheme.Chunk };
   } else if (graphType.includes('Entities') && !graphType.includes('DocumentChunk')) {
@@ -188,7 +188,7 @@ export const filterData = (
     const entityNode = allNodes.filter((node) => !node.labels.includes('Document') && !node.labels.includes('Chunk'));
     filteredNodes = entityNode ? entityNode : [];
     filteredRelations = allRelationships.filter(
-      (rel) => !['PART_OF', 'FIRST_CHUNK', 'HAS_ENTITY', 'SIMILAR', 'NEXT_CHUNK'].includes(rel?.caption ?? '')
+      (rel) => !['__PART_OF__', '__FIRST_CHUNK__', '__HAS_ENTITY__', '__SIMILAR__', '__NEXT_CHUNK__'].includes(rel?.caption ?? '')
     );
     filteredScheme = Object.fromEntries(entityTypes.map((key) => [key, scheme[key]])) as Scheme;
   } else if (graphType.includes('DocumentChunk') && graphType.includes('Entities')) {

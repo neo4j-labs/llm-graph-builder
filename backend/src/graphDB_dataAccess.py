@@ -289,7 +289,7 @@ class graphDBdataAccess:
                     where none(other in all where other <> nodes and size(other) > size(nodes) and size(apoc.coll.subtract(nodes, other))=0)
                     return head(nodes) as n, tail(nodes) as similar
                 }}
-                OPTIONAL MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(n)
+                OPTIONAL MATCH (doc:Document)<-[:__PART_OF__]-(c:Chunk)-[:__HAS_ENTITY__]->(n)
                 {return_statement}
                 """
         return_query_duplicate_nodes = """
