@@ -148,7 +148,11 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   return (
     <Box className='n-bg-palette-neutral-bg-weak p-4'>
       <Box className='flex flex-row pb-6 items-center mb-2'>
-        <img src={Neo4jRetrievalLogo} style={{ width: tablet?80:95, height:tablet?80: 95, marginRight: 10 }} loading='lazy' />
+        <img
+          src={Neo4jRetrievalLogo}
+          style={{ width: tablet ? 80 : 95, height: tablet ? 80 : 95, marginRight: 10 }}
+          loading='lazy'
+        />
         <Box className='flex flex-col'>
           <Typography variant='h2'>Retrieval information</Typography>
           <Typography variant='body-medium' className='mb-2'>
