@@ -9,6 +9,7 @@ import {
   CypherCodeBlockProps,
   useCopyToClipboard,
   Banner,
+  useMediaQuery,
 } from '@neo4j-ndl/react';
 import { DocumentDuplicateIconOutline, DocumentTextIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
@@ -30,6 +31,7 @@ import { GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
 import { parseEntity, youtubeLinkValidation } from '../../utils/Utils';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
+import { tokens } from '@neo4j-ndl/base';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
   sources,
@@ -42,6 +44,8 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   graphonly_entities,
   error,
 }) => {
+  const { breakpoints } = tokens;
+  const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const [activeTab, setActiveTab] = useState<number>(error.length ? 10 : mode === 'graph' ? 4 : 3);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -122,7 +126,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     const counts: { [label: string]: number } = {};
     infoEntities.forEach((entity) => {
       const { labels } = entity;
-      const label = labels[0];
+      const [label] = labels;
       counts[label] = counts[label] ? counts[label] + 1 : 1;
     });
     return counts;
@@ -144,7 +148,11 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   return (
     <Box className='n-bg-palette-neutral-bg-weak p-4'>
       <Box className='flex flex-row pb-6 items-center mb-2'>
-        <img src={Neo4jRetrievalLogo} style={{ width: 95, height: 95, marginRight: 10 }} loading='lazy' />
+        <img
+          src={Neo4jRetrievalLogo}
+          style={{ width: isTablet ? 80 : 95, height: isTablet ? 80 : 95, marginRight: 10 }}
+          loading='lazy'
+        />
         <Box className='flex flex-col'>
           <Typography variant='h2'>Retrieval information</Typography>
           <Typography variant='body-medium' className='mb-2'>

@@ -1,6 +1,6 @@
 import { Drawer, Flex, StatusIndicator, Typography } from '@neo4j-ndl/react';
 import DropZone from '../DataSources/Local/DropZone';
-import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { healthStatus } from '../../services/HealthStatus';
 import S3Component from '../DataSources/AWS/S3Bucket';
 import { DrawerProps } from '../../types';
@@ -14,11 +14,19 @@ import FallBackDialog from '../UI/FallBackDialog';
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 
-const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
+const DrawerDropzone: React.FC<DrawerProps> = ({
+  isExpanded,
+  opens3Modal,
+  openGCSModal,
+  openGenericModal,
+  hideGenericModal,
+  hides3Modal,
+  hideGCSModal,
+  shows3Modal,
+  showGCSModal,
+  showGenericModal,
+}) => {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
-  const [showModal, setshowModal] = useState<boolean>(false);
-  const [showGCSModal, setShowGCSModal] = useState<boolean>(false);
-  const [showGenericModal, setshowGenericModal] = useState<boolean>(false);
   const { closeAlert, alertState } = useAlertContext();
 
   useEffect(() => {
@@ -31,25 +39,6 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
       }
     }
     getHealthStatus();
-  }, []);
-
-  const openModal = useCallback(() => {
-    setshowModal(true);
-  }, []);
-  const hideModal = useCallback(() => {
-    setshowModal(false);
-  }, []);
-  const openGCSModal = useCallback(() => {
-    setShowGCSModal(true);
-  }, []);
-  const hideGCSModal = useCallback(() => {
-    setShowGCSModal(false);
-  }, []);
-  const openGenericModal = useCallback(() => {
-    setshowGenericModal(true);
-  }, []);
-  const closeGenericModal = useCallback(() => {
-    setshowGenericModal(false);
   }, []);
 
   const isYoutubeOnlyCheck = useMemo(
@@ -115,15 +104,15 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                                 isOnlyWikipedia={isWikipediaOnlyCheck}
                                 isOnlyWeb={iswebOnlyCheck}
                                 open={showGenericModal}
-                                closeHandler={closeGenericModal}
+                                closeHandler={hideGenericModal}
                               ></GenericModal>
                             </div>
                           )}
                           {APP_SOURCES.includes('s3') && (
                             <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
-                              <S3Component openModal={openModal} />
+                              <S3Component openModal={opens3Modal} />
                               <Suspense fallback={<FallBackDialog />}>
-                                <S3Modal hideModal={hideModal} open={showModal} />
+                                <S3Modal hideModal={hides3Modal} open={shows3Modal} />
                               </Suspense>
                             </div>
                           )}
@@ -159,7 +148,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                             isOnlyWikipedia={isWikipediaOnlyCheck}
                             isOnlyWeb={iswebOnlyCheck}
                             open={showGenericModal}
-                            closeHandler={closeGenericModal}
+                            closeHandler={hideGenericModal}
                           ></GenericModal>
                         </div>
                       )}
@@ -168,9 +157,9 @@ const DrawerDropzone: React.FC<DrawerProps> = ({ isExpanded }) => {
                         <>
                           {APP_SOURCES != undefined && APP_SOURCES.includes('s3') && (
                             <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
-                              <S3Component openModal={openModal} />
+                              <S3Component openModal={opens3Modal} />
                               <Suspense fallback={<FallBackDialog />}>
-                                <S3Modal hideModal={hideModal} open={showModal} />
+                                <S3Modal hideModal={hides3Modal} open={shows3Modal} />
                               </Suspense>
                             </div>
                           )}

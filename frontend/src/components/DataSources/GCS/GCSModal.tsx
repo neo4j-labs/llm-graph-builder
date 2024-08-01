@@ -143,7 +143,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
     },
   });
 
-  const submitHandler = async () => {
+  const submitHandler = () => {
     if (bucketName.trim() === '' || projectId.trim() === '') {
       setStatus('danger');
       setStatusMessage('Please Fill the Credentials');

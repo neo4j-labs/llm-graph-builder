@@ -27,7 +27,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
   const [chunks, setChunks] = useState<Chunk[]>([]);
   const parseEntity = (entity: Entity) => {
     const { labels, properties } = entity;
-    const label = labels[0];
+    const [label] = labels;
     const text = properties.id;
     return { label, text };
   };
@@ -72,7 +72,7 @@ const InfoModal: React.FC<chatInfoMessage> = ({ sources, model, total_tokens, re
     const counts: { [label: string]: number } = {};
     infoEntities.forEach((entity) => {
       const { labels } = entity;
-      const label = labels[0];
+      const [label] = labels;
       counts[label] = counts[label] ? counts[label] + 1 : 1;
     });
     return counts;

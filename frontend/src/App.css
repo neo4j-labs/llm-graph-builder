@@ -357,3 +357,12 @@
   overflow-y: scroll !important;
   scrollbar-width: thin;
 }
+.tablet_entity_extraction_Tab_node_label__value-container--has-value,.tablet_entity_extraction_Tab_relationship_label__value-container--has-value{
+  max-height: 80px;
+  overflow-y: scroll !important;
+  scrollbar-width: thin;
+}
+.widthunset{
+  width: initial !important;
+  height: initial !important;
+}

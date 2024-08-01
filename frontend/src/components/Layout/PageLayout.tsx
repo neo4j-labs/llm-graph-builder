@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import SideNav from './SideNav';
 import DrawerDropzone from './DrawerDropzone';
 import DrawerChatbot from './DrawerChatbot';
@@ -8,7 +8,7 @@ import { clearChatAPI } from '../../services/QnaAPI';
 import { useCredentials } from '../../context/UserCredentials';
 import { UserCredentials, alertStateType } from '../../types';
 import { useMessageContext } from '../../context/UserMessages';
-import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
+import { AlertColor, AlertPropsColorOverrides, useMediaQuery } from '@mui/material';
 import { OverridableStringUnion } from '@mui/types';
 import { useFileContext } from '../../context/UsersFiles';
 import SchemaFromTextDialog from '../Popups/Settings/SchemaFromText';
@@ -23,15 +23,49 @@ export default function PageLayoutNew({
   closeSettingModal: () => void;
   openSettingsDialog: () => void;
 }) {
-  const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(true);
-  const [isRightExpanded, setIsRightExpanded] = useState<boolean>(true);
+  const largedesktops = useMediaQuery(`(min-width:1440px )`);
+  const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(largedesktops));
+  const [isRightExpanded, setIsRightExpanded] = useState<boolean>(Boolean(largedesktops));
   const [showChatBot, setShowChatBot] = useState<boolean>(false);
   const [showDrawerChatbot, setShowDrawerChatbot] = useState<boolean>(true);
   const [clearHistoryData, setClearHistoryData] = useState<boolean>(false);
   const [showEnhancementDialog, setshowEnhancementDialog] = useState<boolean>(false);
+  const [showMs3odal, setshows3Modal] = useState<boolean>(false);
+  const [showGCSModal, setShowGCSModal] = useState<boolean>(false);
+  const [showGenericModal, setshowGenericModal] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
-  const toggleLeftDrawer = () => setIsLeftExpanded(!isLeftExpanded);
-  const toggleRightDrawer = () => setIsRightExpanded(!isRightExpanded);
+  const opens3Modal = useCallback(() => {
+    setshows3Modal(true);
+  }, []);
+  const hides3Modal = useCallback(() => {
+    setshows3Modal(false);
+  }, []);
+  const openGCSModal = useCallback(() => {
+    setShowGCSModal(true);
+  }, []);
+  const hideGCSModal = useCallback(() => {
+    setShowGCSModal(false);
+  }, []);
+  const openGenericModal = useCallback(() => {
+    setshowGenericModal(true);
+  }, []);
+  const hideGenericModal = useCallback(() => {
+    setshowGenericModal(false);
+  }, []);
+  const toggleLeftDrawer = () => {
+    if (largedesktops) {
+      setIsLeftExpanded(!isLeftExpanded);
+    } else {
+      setIsLeftExpanded(false);
+    }
+  };
+  const toggleRightDrawer = () => {
+    if (largedesktops) {
+      setIsRightExpanded(!isRightExpanded);
+    } else {
+      setIsRightExpanded(false);
+    }
+  };
   const [alertDetails, setalertDetails] = useState<alertStateType>({
     showAlert: false,
     alertType: 'error',
@@ -80,8 +114,26 @@ export default function PageLayoutNew({
           alertMessage={alertDetails.alertMessage}
         />
       )}
-      <SideNav isExpanded={isLeftExpanded} position='left' toggleDrawer={toggleLeftDrawer} />
-      <DrawerDropzone isExpanded={isLeftExpanded} />
+      <SideNav
+        opens3Modal={opens3Modal}
+        openGCSModal={openGCSModal}
+        openGenericModal={openGenericModal}
+        isExpanded={isLeftExpanded}
+        position='left'
+        toggleDrawer={toggleLeftDrawer}
+      />
+      <DrawerDropzone
+        shows3Modal={showMs3odal}
+        showGCSModal={showGCSModal}
+        showGenericModal={showGenericModal}
+        opens3Modal={opens3Modal}
+        hides3Modal={hides3Modal}
+        openGCSModal={openGCSModal}
+        hideGCSModal={hideGCSModal}
+        openGenericModal={openGenericModal}
+        hideGenericModal={hideGenericModal}
+        isExpanded={isLeftExpanded}
+      />
       <SchemaFromTextDialog
         open={showTextFromSchemaDialog.show}
         openSettingsDialog={openSettingsDialog}
@@ -137,6 +189,10 @@ export default function PageLayoutNew({
         setShowDrawerChatbot={setShowDrawerChatbot}
         setIsRightExpanded={setIsRightExpanded}
         clearHistoryData={clearHistoryData}
+        openGCSModal={openGCSModal}
+        opens3Modal={opens3Modal}
+        openGenericModal={openGenericModal}
+        setIsleftExpanded={setIsLeftExpanded}
       />
     </div>
   );

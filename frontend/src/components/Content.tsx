@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef, Suspense } from 'react';
 import FileTable from './FileTable';
-import { Button, Typography, Flex, StatusIndicator } from '@neo4j-ndl/react';
+import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './UI/Alert';
@@ -30,6 +30,7 @@ import { lazy } from 'react';
 import FallBackDialog from './UI/FallBackDialog';
 import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
+import { tokens } from '@neo4j-ndl/base';
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -42,6 +43,8 @@ const Content: React.FC<ContentProps> = ({
   setshowEnhancementDialog,
   closeSettingModal,
 }) => {
+  const { breakpoints } = tokens;
+  const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<connectionState>({
     isvectorIndexMatch: true,
@@ -536,7 +539,7 @@ const Content: React.FC<ContentProps> = ({
         ></GraphEnhancementDialog>
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
-        <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row'>
+        <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row' flexWrap='wrap'>
           <Suspense fallback={<FallBackDialog />}>
             <ConnectionModal
               open={openConnection.openPopUp}
@@ -585,15 +588,20 @@ const Content: React.FC<ContentProps> = ({
               className='mr-2.5'
               onClick={openGraphEnhancementDialog}
               disabled={!connectionStatus}
+              size={isTablet ? 'small' : 'medium'}
             >
               Graph Enhancement
             </ButtonWithToolTip>
             {!connectionStatus ? (
-              <Button className='mr-2.5' onClick={() => setOpenConnection((prev) => ({ ...prev, openPopUp: true }))}>
+              <Button
+                size={isTablet ? 'small' : 'medium'}
+                className='mr-2.5'
+                onClick={() => setOpenConnection((prev) => ({ ...prev, openPopUp: true }))}
+              >
                 {buttonCaptions.connectToNeo4j}
               </Button>
             ) : (
-              <Button className='mr-2.5' onClick={disconnect}>
+              <Button size={isTablet ? 'small' : 'medium'} className='mr-2.5' onClick={disconnect}>
                 {buttonCaptions.disconnect}
               </Button>
             )}
@@ -615,7 +623,7 @@ const Content: React.FC<ContentProps> = ({
             !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
           } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
-          flexDirection='row'
+          flexDirection={isTablet ? 'column' : 'row'}
         >
           <DropdownComponent
             onSelect={handleDropdownChange}
@@ -625,7 +633,7 @@ const Content: React.FC<ContentProps> = ({
             view='ContentView'
             isDisabled={false}
           />
-          <Flex flexDirection='row' gap='4' className='self-end'>
+          <Flex flexDirection='row' gap='4' className='self-end' flexWrap='wrap'>
             <ButtonWithToolTip
               text={tooltips.generateGraph}
               placement='top'
@@ -633,6 +641,7 @@ const Content: React.FC<ContentProps> = ({
               onClick={onClickHandler}
               disabled={disableCheck}
               className='mr-0.5'
+              size={isTablet ? 'small' : 'medium'}
             >
               {buttonCaptions.generateGraph}{' '}
               {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
@@ -644,6 +653,7 @@ const Content: React.FC<ContentProps> = ({
               disabled={showGraphCheck}
               className='mr-0.5'
               label='show graph'
+              size={isTablet ? 'small' : 'medium'}
             >
               {buttonCaptions.showPreviewGraph} {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
             </ButtonWithToolTip>
@@ -654,6 +664,7 @@ const Content: React.FC<ContentProps> = ({
               disabled={!filesData.some((f) => f?.status === 'Completed')}
               className='ml-0.5'
               label='Open Graph with Bloom'
+              size={isTablet ? 'small' : 'medium'}
             >
               {buttonCaptions.exploreGraphWithBloom}
             </ButtonWithToolTip>
@@ -666,6 +677,7 @@ const Content: React.FC<ContentProps> = ({
               disabled={!selectedfileslength}
               className='ml-0.5'
               label='Delete Files'
+              size={isTablet ? 'small' : 'medium'}
             >
               {buttonCaptions.deleteFiles}
               {selectedfileslength != undefined && selectedfileslength > 0 && `(${selectedfileslength})`}
