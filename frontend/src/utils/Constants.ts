@@ -47,7 +47,7 @@ export const llms =
         'ollama_llama3',
         'groq_llama3_70b',
         'anthropic_claude_3_5_sonnet',
-        'fireworks_llama_v3_70b',
+        'fireworks_v3p1_405b',
         'bedrock_claude_3_5_sonnet',
       ];
 

@@ -21,4 +21,4 @@ RUN pip install -r requirements.txt
 # Copy application code
 COPY . /code
 # Set command
-CMD ["gunicorn", "score:app", "--workers", "8","--threads", "8", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "300"]
+CMD ["gunicorn", "score:app", "--workers", "8","--preload","--threads", "8", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "300"]
