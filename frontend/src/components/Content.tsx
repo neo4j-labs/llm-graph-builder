@@ -44,7 +44,7 @@ const Content: React.FC<ContentProps> = ({
   closeSettingModal,
 }) => {
   const { breakpoints } = tokens;
-  const tablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
+  const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<connectionState>({
     isvectorIndexMatch: true,
@@ -617,7 +617,7 @@ const Content: React.FC<ContentProps> = ({
             !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
           } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
-          flexDirection={tablet ? 'column' : 'row'}
+          flexDirection={isTablet ? 'column' : 'row'}
         >
           <DropdownComponent
             onSelect={handleDropdownChange}

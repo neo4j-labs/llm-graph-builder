@@ -22,7 +22,8 @@ import { tokens } from '@neo4j-ndl/base';
 
 export default function DeduplicationTab() {
   const { breakpoints } = tokens;
-  const tablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
+  const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
+  const isSmallDesktop = useMediaQuery(`(min-width: ${breakpoints.lg})`);
   const { userCredentials } = useCredentials();
   const [duplicateNodes, setDuplicateNodes] = useState<dupNodes[]>([]);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
@@ -143,7 +144,7 @@ export default function DeduplicationTab() {
                   }}
                   removeable={true}
                   type='default'
-                  size='medium'
+                  size={isTablet ? 'small' : 'medium'}
                 >
                   {s.id}
                 </Tag>
@@ -151,6 +152,7 @@ export default function DeduplicationTab() {
             </Flex>
           );
         },
+        size: isTablet || isSmallDesktop ? 250 : 150,
       }),
       columnHelper.accessor((row) => row.e.labels, {
         id: 'Labels',
@@ -226,16 +228,16 @@ export default function DeduplicationTab() {
     <div>
       <Flex justifyContent='space-between' flexDirection='row'>
         <Flex>
-          <Typography variant={tablet ? 'subheading-medium' : 'subheading-large'}>
+          <Typography variant={isTablet ? 'subheading-medium' : 'subheading-large'}>
             Refine Your Knowledge Graph: Merge Duplicate Entities:
           </Typography>
-          <Typography variant={tablet ? 'body-small' : 'subheading-large'}>
+          <Typography variant={isTablet ? 'body-small' : 'subheading-large'}>
             Identify and merge similar entries like "Apple" and "Apple Inc." to eliminate redundancy and improve the
             accuracy and clarity of your knowledge graph.
           </Typography>
         </Flex>
         {duplicateNodes.length > 0 && (
-          <Typography variant={tablet ? 'subheading-medium' : 'subheading-large'}>
+          <Typography variant={isTablet ? 'subheading-medium' : 'subheading-large'}>
             Total Duplicate Nodes: {duplicateNodes.length}
           </Typography>
         )}

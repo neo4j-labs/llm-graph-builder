@@ -27,7 +27,7 @@ export default function DeletePopUpForOrphanNodes({
   loading: boolean;
 }) {
   const { breakpoints } = tokens;
-  const tablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
+  const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const [orphanNodes, setOrphanNodes] = useState<orphanNodeProps[]>([]);
   const [totalOrphanNodes, setTotalOrphanNodes] = useState<number>(0);
   const [isLoading, setLoading] = useState<boolean>(false);
@@ -203,17 +203,17 @@ export default function DeletePopUpForOrphanNodes({
       <div>
         <Flex flexDirection='column'>
           <Flex justifyContent='space-between' flexDirection='row'>
-            <Typography variant={tablet ? 'subheading-medium' : 'subheading-large'}>
+            <Typography variant={isTablet ? 'subheading-medium' : 'subheading-large'}>
               Orphan Nodes Deletion (100 nodes per batch)
             </Typography>
             {totalOrphanNodes > 0 && (
-              <Typography variant={tablet ? 'subheading-medium' : 'subheading-large'}>
+              <Typography variant={isTablet ? 'subheading-medium' : 'subheading-large'}>
                 Total Nodes: {totalOrphanNodes}
               </Typography>
             )}
           </Flex>
           <Flex justifyContent='space-between' flexDirection='row'>
-            <Typography variant={tablet ? 'body-small' : 'body-medium'}>
+            <Typography variant={isTablet ? 'body-small' : 'body-medium'}>
               This feature helps improve the accuracy of your knowledge graph by identifying and removing entities that
               are not connected to any other information. These "lonely" entities can be remnants of past analyses or
               errors in data processing. By removing them, we can create a cleaner and more efficient knowledge graph

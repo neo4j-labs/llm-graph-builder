@@ -41,7 +41,7 @@ export default function EntityExtractionSetting({
   } = useFileContext();
   const { userCredentials } = useCredentials();
   const [loading, setLoading] = useState<boolean>(false);
-  const tablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
+  const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const removeNodesAndRels = (nodelabels: string[], relationshipTypes: string[]) => {
     const labelsToRemoveSet = new Set(nodelabels);
     const relationshipLabelsToremoveSet = new Set(relationshipTypes);
@@ -260,7 +260,7 @@ export default function EntityExtractionSetting({
         <Dropdown
           helpText='Schema Examples'
           label='Predefined Schema'
-          size={view === 'Tabs' && !tablet ? 'large' : tablet ? 'small' : 'medium'}
+          size={view === 'Tabs' && !isTablet ? 'large' : isTablet ? 'small' : 'medium'}
           selectProps={{
             isClearable: true,
             isMulti: true,
@@ -277,28 +277,32 @@ export default function EntityExtractionSetting({
         <Dropdown
           helpText='You can select more than one values'
           label='Node Labels'
-          size={view === 'Tabs' && !tablet ? 'large' : tablet ? 'small' : 'medium'}
+          size={view === 'Tabs' && !isTablet ? 'large' : isTablet ? 'small' : 'medium'}
           selectProps={{
             isClearable: true,
             isMulti: true,
             options: nodeLabelOptions,
             onChange: onChangenodes,
             value: selectedNodes,
-            classNamePrefix: 'entity_extraction_Tab_node_label',
+            classNamePrefix: `${
+              isTablet ? 'tablet_entity_extraction_Tab_node_label' : 'entity_extraction_Tab_node_label'
+            }`,
           }}
           type='creatable'
         />
         <Dropdown
           helpText='You can select more than one values'
           label='Relationship Types'
-          size={view === 'Tabs' && !tablet ? 'large' : tablet ? 'small' : 'medium'}
+          size={view === 'Tabs' && !isTablet ? 'large' : isTablet ? 'small' : 'medium'}
           selectProps={{
             isClearable: true,
             isMulti: true,
             options: relationshipTypeOptions,
             onChange: onChangerels,
             value: selectedRels,
-            classNamePrefix: 'entity_extraction_Tab_relationship_label',
+            classNamePrefix: `${
+              isTablet ? 'tablet_entity_extraction_Tab_relationship_label' : 'entity_extraction_Tab_relationship_label'
+            }`,
           }}
           type='creatable'
         />

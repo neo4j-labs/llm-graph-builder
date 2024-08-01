@@ -29,7 +29,7 @@ export default function GraphEnhancementDialog({
   const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
   const { setShowTextFromSchemaDialog } = useFileContext();
   const { userCredentials } = useCredentials();
-  const tablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
+  const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
 
   const orphanNodesDeleteHandler = async (selectedEntities: string[]) => {
     try {
@@ -63,18 +63,23 @@ export default function GraphEnhancementDialog({
           <Box className='flex flex-row items-center mb-2'>
             <img
               src={graphenhancement}
-              style={{ width: tablet ? 180 : 220, height: tablet ? 180 : 220, marginRight: 10, objectFit: 'contain' }}
+              style={{
+                width: isTablet ? 180 : 220,
+                height: isTablet ? 180 : 220,
+                marginRight: 10,
+                objectFit: 'contain',
+              }}
               loading='lazy'
             />
             <Box className='flex flex-col'>
-              <Typography variant={tablet ? 'h5' : 'h2'}>Graph Enhancements</Typography>
-              <Typography variant={tablet ? 'subheading-small' : 'subheading-medium'} className='mb-2'>
+              <Typography variant={isTablet ? 'h5' : 'h2'}>Graph Enhancements</Typography>
+              <Typography variant={isTablet ? 'subheading-small' : 'subheading-medium'} className='mb-2'>
                 This set of tools will help you enhance the quality of your Knowledge Graph by removing possible
                 duplicated entities, disconnected nodes and set a Graph Schema for improving the quality of the entity
                 extraction process
               </Typography>
               <Flex className='pt-2'>
-                <Tabs fill='underline' onChange={setactiveTab} size={tablet ? 'small' : 'large'} value={activeTab}>
+                <Tabs fill='underline' onChange={setactiveTab} size={isTablet ? 'small' : 'large'} value={activeTab}>
                   <Tabs.Tab tabId={0} aria-label='Database'>
                     Entity Extraction Settings
                   </Tabs.Tab>

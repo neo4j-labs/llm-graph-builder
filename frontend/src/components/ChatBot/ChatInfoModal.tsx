@@ -45,7 +45,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   error,
 }) => {
   const { breakpoints } = tokens;
-  const tablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
+  const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const [activeTab, setActiveTab] = useState<number>(error.length ? 10 : mode === 'graph' ? 4 : 3);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -150,7 +150,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       <Box className='flex flex-row pb-6 items-center mb-2'>
         <img
           src={Neo4jRetrievalLogo}
-          style={{ width: tablet ? 80 : 95, height: tablet ? 80 : 95, marginRight: 10 }}
+          style={{ width: isTablet ? 80 : 95, height: isTablet ? 80 : 95, marginRight: 10 }}
           loading='lazy'
         />
         <Box className='flex flex-col'>
