@@ -12,14 +12,18 @@ import {
   Row,
   getSortedRowModel,
 } from '@tanstack/react-table';
-import { Checkbox, DataGrid, DataGridComponents, Flex, Tag, Typography } from '@neo4j-ndl/react';
+import { Checkbox, DataGrid, DataGridComponents, Flex, Tag, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import Legend from '../../../UI/Legend';
 import { DocumentIconOutline } from '@neo4j-ndl/react/icons';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import mergeDuplicateNodes from '../../../../services/MergeDuplicateEntities';
+import { tokens } from '@neo4j-ndl/base';
 
 export default function DeduplicationTab() {
+  const { breakpoints } = tokens;
+  const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
+  const isSmallDesktop = useMediaQuery(`(min-width: ${breakpoints.lg})`);
   const { userCredentials } = useCredentials();
   const [duplicateNodes, setDuplicateNodes] = useState<dupNodes[]>([]);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
@@ -35,7 +39,6 @@ export default function DeduplicationTab() {
         throw new Error(duplicateNodesData.data.error);
       }
       if (duplicateNodesData.data.data.length) {
-        console.log({ duplicateNodesData });
         setDuplicateNodes(duplicateNodesData.data.data);
       } else {
         setDuplicateNodes([]);
@@ -141,7 +144,7 @@ export default function DeduplicationTab() {
                   }}
                   removeable={true}
                   type='default'
-                  size='medium'
+                  size={isTablet ? 'small' : 'medium'}
                 >
                   {s.id}
                 </Tag>
@@ -149,6 +152,7 @@ export default function DeduplicationTab() {
             </Flex>
           );
         },
+        size: isTablet || isSmallDesktop ? 250 : 150,
       }),
       columnHelper.accessor((row) => row.e.labels, {
         id: 'Labels',
@@ -224,14 +228,18 @@ export default function DeduplicationTab() {
     <div>
       <Flex justifyContent='space-between' flexDirection='row'>
         <Flex>
-          <Typography variant='subheading-large'>Refine Your Knowledge Graph: Merge Duplicate Entities:</Typography>
-          <Typography variant='subheading-small'>
+          <Typography variant={isTablet ? 'subheading-medium' : 'subheading-large'}>
+            Refine Your Knowledge Graph: Merge Duplicate Entities:
+          </Typography>
+          <Typography variant={isTablet ? 'body-small' : 'subheading-large'}>
             Identify and merge similar entries like "Apple" and "Apple Inc." to eliminate redundancy and improve the
             accuracy and clarity of your knowledge graph.
           </Typography>
         </Flex>
         {duplicateNodes.length > 0 && (
-          <Typography variant='subheading-large'>Total Duplicate Nodes: {duplicateNodes.length}</Typography>
+          <Typography variant={isTablet ? 'subheading-medium' : 'subheading-large'}>
+            Total Duplicate Nodes: {duplicateNodes.length}
+          </Typography>
         )}
       </Flex>
       <DataGrid

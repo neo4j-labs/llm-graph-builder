@@ -1,4 +1,4 @@
-import { Dialog, Tabs, Box, Typography, Flex } from '@neo4j-ndl/react';
+import { Dialog, Tabs, Box, Typography, Flex, useMediaQuery } from '@neo4j-ndl/react';
 import graphenhancement from '../../../assets/images/graph-enhancements.svg';
 import { useEffect, useState } from 'react';
 import DeletePopUpForOrphanNodes from './DeleteTabForOrphanNodes';
@@ -10,6 +10,7 @@ import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { OverridableStringUnion } from '@mui/types';
 import { useFileContext } from '../../../context/UsersFiles';
 import DeduplicationTab from './Deduplication';
+import { tokens } from '@neo4j-ndl/base';
 import PostProcessingCheckList from './PostProcessingCheckList';
 
 export default function GraphEnhancementDialog({
@@ -25,9 +26,11 @@ export default function GraphEnhancementDialog({
   ) => void;
   closeSettingModal: () => void;
 }) {
+  const { breakpoints } = tokens;
   const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
   const { setShowTextFromSchemaDialog } = useFileContext();
   const { userCredentials } = useCredentials();
+  const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
 
   const orphanNodesDeleteHandler = async (selectedEntities: string[]) => {
     try {
@@ -61,18 +64,25 @@ export default function GraphEnhancementDialog({
           <Box className='flex flex-row items-center mb-2'>
             <img
               src={graphenhancement}
-              style={{ width: 220, height: 220, marginRight: 10, objectFit: 'contain' }}
+              style={{
+                width: isTablet ? 170 : 220,
+                height: isTablet ? 170 : 220,
+                marginRight: 10,
+                objectFit: 'contain',
+              }}
               loading='lazy'
             />
             <Box className='flex flex-col'>
-              <Typography variant='h2'>Graph Enhancements</Typography>
-              <Typography variant='subheading-medium' className='mb-2'>
-                This set of tools will help you enhance the quality of your Knowledge Graph by removing possible
+              <Typography variant={isTablet ? 'h5' : 'h2'}>Graph Enhancements</Typography>
+              <Typography variant={isTablet ? 'subheading-small' : 'subheading-medium'} className='mb-2'>
+                {isTablet
+                  ? `This set of tools will help you enhance the quality of your Knowledge Graph`
+                  : `This set of tools will help you enhance the quality of your Knowledge Graph by removing possible
                 duplicated entities, disconnected nodes and set a Graph Schema for improving the quality of the entity
-                extraction process
+                extraction process`}
               </Typography>
               <Flex className='pt-2'>
-                <Tabs fill='underline' onChange={setactiveTab} size='large' value={activeTab}>
+                <Tabs fill='underline' onChange={setactiveTab} size={isTablet ? 'small' : 'large'} value={activeTab}>
                   <Tabs.Tab tabId={0} aria-label='Database'>
                     Entity Extraction Settings
                   </Tabs.Tab>

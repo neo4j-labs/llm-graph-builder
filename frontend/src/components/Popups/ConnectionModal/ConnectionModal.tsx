@@ -122,7 +122,6 @@ export default function ConnectionModal({
       // @ts-ignore
       const hostParts = uriHost.pop()?.split('-');
       if (hostParts != undefined) {
-        console.log(hostParts);
         if (hostParts.length == 2) {
           setURI(hostParts.pop() as string);
           setDatabase(hostParts.pop() as string);
