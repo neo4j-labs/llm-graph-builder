@@ -10,6 +10,7 @@ import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { OverridableStringUnion } from '@mui/types';
 import { useFileContext } from '../../../context/UsersFiles';
 import DeduplicationTab from './Deduplication';
+import PostProcessingCheckList from './PostProcessingCheckList';
 
 export default function GraphEnhancementDialog({
   open,
@@ -81,6 +82,9 @@ export default function GraphEnhancementDialog({
                   <Tabs.Tab tabId={2} aria-label='Duplication Nodes'>
                     De-Duplication Of Nodes
                   </Tabs.Tab>
+                  <Tabs.Tab tabId={3} aria-label='Duplication Nodes'>
+                    Post Processing Jobs
+                  </Tabs.Tab>
                 </Tabs>
               </Flex>
             </Box>
@@ -105,6 +109,9 @@ export default function GraphEnhancementDialog({
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={2}>
           <DeduplicationTab />
+        </Tabs.TabPanel>
+        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={3}>
+          <PostProcessingCheckList />
         </Tabs.TabPanel>
       </Dialog.Content>
     </Dialog>
