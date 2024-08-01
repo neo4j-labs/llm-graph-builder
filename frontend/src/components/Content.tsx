@@ -64,7 +64,7 @@ const Content: React.FC<ContentProps> = ({
     setSelectedNodes,
     setRowSelection,
     setSelectedRels,
-    processedCount, setProcessedCount
+    processedCount, setProcessedCount,setQueue
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
@@ -147,7 +147,6 @@ const Content: React.FC<ContentProps> = ({
   };
 
   const leftFiles = childRef?.current?.getSelectedRows().filter((f) => f.status === 'Waiting');
-  console.log('leftFiles',leftFiles);
 
   useEffect(() => {
     if (processedCount === 2) {
@@ -242,7 +241,6 @@ const Content: React.FC<ContentProps> = ({
   };
 
   const processBatch = async (batch: CustomFile[]) => {
-    // batch.forEach((file) => (file.status = 'Processing'));
     const batchPromises = batch.map((file) => extractData(file.id as string, true));
     await Promise.allSettled(batchPromises);
     const results = await Promise.allSettled(batchPromises);
@@ -292,11 +290,12 @@ const Content: React.FC<ContentProps> = ({
     } else if (selectedFilesFromAllFiles.length && allowLargeFiles) {
       const selectedRows = childRef.current?.getSelectedRows();
       if (selectedRows) {
-        addToQueue(selectedRows);
+        tempFilesToBeProcessed = addToQueue(selectedRows);
       } else {
-        addToQueue(selectedFilesFromAllFiles);
+        tempFilesToBeProcessed = addToQueue(selectedFilesFromAllFiles);
       }
     }
+    setQueue(tempFilesToBeProcessed);
     if (processedCount === 1) {
       setProcessedCount(0);
     }
