@@ -587,15 +587,20 @@ const Content: React.FC<ContentProps> = ({
               className='mr-2.5'
               onClick={openGraphEnhancementDialog}
               disabled={!connectionStatus}
+              size={isTablet ? 'small' : 'medium'}
             >
               Graph Enhancement
             </ButtonWithToolTip>
             {!connectionStatus ? (
-              <Button className='mr-2.5' onClick={() => setOpenConnection((prev) => ({ ...prev, openPopUp: true }))}>
+              <Button
+                size={isTablet ? 'small' : 'medium'}
+                className='mr-2.5'
+                onClick={() => setOpenConnection((prev) => ({ ...prev, openPopUp: true }))}
+              >
                 {buttonCaptions.connectToNeo4j}
               </Button>
             ) : (
-              <Button className='mr-2.5' onClick={disconnect}>
+              <Button size={isTablet ? 'small' : 'medium'} className='mr-2.5' onClick={disconnect}>
                 {buttonCaptions.disconnect}
               </Button>
             )}
@@ -635,6 +640,7 @@ const Content: React.FC<ContentProps> = ({
               onClick={onClickHandler}
               disabled={disableCheck}
               className='mr-0.5'
+              size={isTablet ? 'small' : 'medium'}
             >
               {buttonCaptions.generateGraph}{' '}
               {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
@@ -646,6 +652,7 @@ const Content: React.FC<ContentProps> = ({
               disabled={showGraphCheck}
               className='mr-0.5'
               label='show graph'
+              size={isTablet ? 'small' : 'medium'}
             >
               {buttonCaptions.showPreviewGraph} {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
             </ButtonWithToolTip>
@@ -656,6 +663,7 @@ const Content: React.FC<ContentProps> = ({
               disabled={!filesData.some((f) => f?.status === 'Completed')}
               className='ml-0.5'
               label='Open Graph with Bloom'
+              size={isTablet ? 'small' : 'medium'}
             >
               {buttonCaptions.exploreGraphWithBloom}
             </ButtonWithToolTip>
@@ -668,6 +676,7 @@ const Content: React.FC<ContentProps> = ({
               disabled={!selectedfileslength}
               className='ml-0.5'
               label='Delete Files'
+              size={isTablet ? 'small' : 'medium'}
             >
               {buttonCaptions.deleteFiles}
               {selectedfileslength != undefined && selectedfileslength > 0 && `(${selectedfileslength})`}
