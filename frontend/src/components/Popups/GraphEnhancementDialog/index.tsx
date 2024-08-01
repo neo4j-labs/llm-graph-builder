@@ -64,8 +64,8 @@ export default function GraphEnhancementDialog({
             <img
               src={graphenhancement}
               style={{
-                width: isTablet ? 180 : 220,
-                height: isTablet ? 180 : 220,
+                width: isTablet ? 170 : 220,
+                height: isTablet ? 170 : 220,
                 marginRight: 10,
                 objectFit: 'contain',
               }}
@@ -74,9 +74,12 @@ export default function GraphEnhancementDialog({
             <Box className='flex flex-col'>
               <Typography variant={isTablet ? 'h5' : 'h2'}>Graph Enhancements</Typography>
               <Typography variant={isTablet ? 'subheading-small' : 'subheading-medium'} className='mb-2'>
-                This set of tools will help you enhance the quality of your Knowledge Graph by removing possible
+                {isTablet
+                  ? `This set of tools will help you enhance the quality of your Knowledge Graph`
+                  : `This set of tools will help you enhance the quality of your Knowledge Graph by removing possible
                 duplicated entities, disconnected nodes and set a Graph Schema for improving the quality of the entity
-                extraction process
+                extraction process`
+                }
               </Typography>
               <Flex className='pt-2'>
                 <Tabs fill='underline' onChange={setactiveTab} size={isTablet ? 'small' : 'large'} value={activeTab}>
