@@ -79,8 +79,7 @@ const SideNav: React.FC<SideNavProps> = ({
     if (!largedesktops && position === 'right') {
       setIsChatModalOpen(true);
       setIsFullScreen(true);
-    }
-    else if (!largedesktops && position === 'left') {
+    } else if (!largedesktops && position === 'left') {
       setIsleftExpanded && setIsleftExpanded(false);
     } else {
       toggleDrawer();
@@ -90,43 +89,43 @@ const SideNav: React.FC<SideNavProps> = ({
     <div style={{ height: 'calc(100vh - 58px)', minHeight: '200px', display: 'flex' }}>
       <SideNavigation iconMenu={true} expanded={false} position={position}>
         <SideNavigation.List>
-          <SideNavigation.Item
-            onClick={handleClick}
-            icon={
-              isExpanded ? (
-                position === 'left' ? (
-                  <>
-                    <ArrowLeftIconOutline />
-                  </>
-                ) : (
-                  <ArrowRightIconOutline />
-                )
-              ) : position === 'left' && largedesktops ? (
-                <>
-                  <Tip allowedPlacements={['right']}>
-                    <Tip.Trigger>
-                      <CloudArrowUpIconSolid />
-                    </Tip.Trigger>
-                    <Tip.Content>{tooltips.sources}</Tip.Content>
-                  </Tip>
-                </>
-              ) : position === 'right' ? (
-                <>
-                  <Tip allowedPlacements={['left']}>
-                    <Tip.Trigger>
-                      <ChatBubbleOvalLeftEllipsisIconOutline />
-                    </Tip.Trigger>
-                    <Tip.Content>{tooltips.chat}</Tip.Content>
-                  </Tip>
-                </>
-              ) : (
-                <></>
-              )
-            }
-          />
+          {isExpanded && largedesktops && (
+            <SideNavigation.Item
+              onClick={handleClick}
+              icon={position === 'left' ? <ArrowLeftIconOutline /> : <ArrowRightIconOutline />}
+            />
+          )}
+          {!isExpanded && position === 'left' && largedesktops && (
+            <SideNavigation.Item
+              onClick={handleClick}
+              icon={
+                <Tip allowedPlacements={['right']}>
+                  <Tip.Trigger>
+                    <CloudArrowUpIconSolid />
+                  </Tip.Trigger>
+                  <Tip.Content>{tooltips.sources}</Tip.Content>
+                </Tip>
+              }
+            />
+          )}
+
+          {position === 'right' && (
+            <SideNavigation.Item
+              onClick={handleClick}
+              icon={
+                <Tip allowedPlacements={['left']}>
+                  <Tip.Trigger>
+                    <ChatBubbleOvalLeftEllipsisIconOutline />
+                  </Tip.Trigger>
+                  <Tip.Content>{tooltips.chat}</Tip.Content>
+                </Tip>
+              }
+            />
+          )}
+
           {!largedesktops && position === 'left' && (
             <SideNavigation.Item
-              onClick={() => { }}
+              onClick={() => {}}
               icon={
                 <Tip allowedPlacements={['right']}>
                   <Tip.Trigger>
@@ -139,7 +138,7 @@ const SideNav: React.FC<SideNavProps> = ({
           )}
           {!largedesktops && APP_SOURCES.includes('gcs') && position === 'left' && (
             <SideNavigation.Item
-              onClick={() => { }}
+              onClick={() => {}}
               icon={
                 <Tip allowedPlacements={['right']}>
                   <Tip.Trigger>
@@ -152,7 +151,7 @@ const SideNav: React.FC<SideNavProps> = ({
           )}
           {!largedesktops && APP_SOURCES.includes('s3') && position === 'left' && (
             <SideNavigation.Item
-              onClick={() => { }}
+              onClick={() => {}}
               icon={
                 <Tip allowedPlacements={['right']}>
                   <Tip.Trigger>

@@ -79,8 +79,7 @@ export default function GraphEnhancementDialog({
                   ? `This set of tools will help you enhance the quality of your Knowledge Graph`
                   : `This set of tools will help you enhance the quality of your Knowledge Graph by removing possible
                 duplicated entities, disconnected nodes and set a Graph Schema for improving the quality of the entity
-                extraction process`
-                }
+                extraction process`}
               </Typography>
               <Flex className='pt-2'>
                 <Tabs fill='underline' onChange={setactiveTab} size={isTablet ? 'small' : 'large'} value={activeTab}>
