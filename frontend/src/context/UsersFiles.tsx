@@ -31,6 +31,8 @@ interface FileContextType {
   setIsSchema: React.Dispatch<React.SetStateAction<boolean>>;
   showTextFromSchemaDialog: showTextFromSchemaDialogType;
   setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
+  postProcessingTasks: string[];
+  setPostProcessingTasks: React.Dispatch<React.SetStateAction<string[]>>;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
@@ -54,7 +56,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     triggeredFrom: '',
     show: false,
   });
-
+  const [postProcessingTasks, setPostProcessingTasks] = useState<string[]>([]);
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
       const selectedNodeLabel = JSON.parse(selectedNodeLabelstr);
@@ -95,6 +97,8 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setIsSchema,
     setShowTextFromSchemaDialog,
     showTextFromSchemaDialog,
+    postProcessingTasks,
+    setPostProcessingTasks,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

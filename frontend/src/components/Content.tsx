@@ -19,7 +19,7 @@ import { postProcessing } from '../services/PostProcessing';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
-import { buttonCaptions, defaultLLM, largeFileSize, llms, taskParam, tooltips } from '../utils/Constants';
+import { buttonCaptions, defaultLLM, largeFileSize, llms, tooltips } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 import DropdownComponent from './Dropdown';
@@ -64,6 +64,7 @@ const Content: React.FC<ContentProps> = ({
     selectedRels,
     setSelectedNodes,
     setSelectedRels,
+    postProcessingTasks,
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
@@ -276,7 +277,7 @@ const Content: React.FC<ContentProps> = ({
       }
       Promise.allSettled(data).then(async (_) => {
         setextractLoading(false);
-        await postProcessing(userCredentials as UserCredentials, taskParam);
+        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       });
     } else if (selectedFilesFromAllfiles.length && allowLargeFiles) {
       // @ts-ignore
@@ -287,7 +288,7 @@ const Content: React.FC<ContentProps> = ({
       }
       Promise.allSettled(data).then(async (_) => {
         setextractLoading(false);
-        await postProcessing(userCredentials as UserCredentials, taskParam);
+        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       });
     }
   };
