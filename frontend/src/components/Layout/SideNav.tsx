@@ -35,6 +35,7 @@ const SideNav: React.FC<SideNavProps> = ({
   opens3Modal,
   openGCSModal,
   openGenericModal,
+  setIsleftExpanded,
 }) => {
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -78,6 +79,9 @@ const SideNav: React.FC<SideNavProps> = ({
     if (!largedesktops && position === 'right') {
       setIsChatModalOpen(true);
       setIsFullScreen(true);
+    }
+    else if (!largedesktops && position === 'left') {
+      setIsleftExpanded && setIsleftExpanded(false);
     } else {
       toggleDrawer();
     }
@@ -122,7 +126,7 @@ const SideNav: React.FC<SideNavProps> = ({
           />
           {!largedesktops && position === 'left' && (
             <SideNavigation.Item
-              onClick={() => {}}
+              onClick={() => { }}
               icon={
                 <Tip allowedPlacements={['right']}>
                   <Tip.Trigger>
@@ -135,7 +139,7 @@ const SideNav: React.FC<SideNavProps> = ({
           )}
           {!largedesktops && APP_SOURCES.includes('gcs') && position === 'left' && (
             <SideNavigation.Item
-              onClick={() => {}}
+              onClick={() => { }}
               icon={
                 <Tip allowedPlacements={['right']}>
                   <Tip.Trigger>
@@ -148,7 +152,7 @@ const SideNav: React.FC<SideNavProps> = ({
           )}
           {!largedesktops && APP_SOURCES.includes('s3') && position === 'left' && (
             <SideNavigation.Item
-              onClick={() => {}}
+              onClick={() => { }}
               icon={
                 <Tip allowedPlacements={['right']}>
                   <Tip.Trigger>

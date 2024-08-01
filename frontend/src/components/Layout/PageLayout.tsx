@@ -53,7 +53,11 @@ export default function PageLayoutNew({
     setshowGenericModal(false);
   }, []);
   const toggleLeftDrawer = () => {
-    setIsLeftExpanded(!isLeftExpanded);
+    if (largedesktops) {
+      setIsLeftExpanded(!isLeftExpanded);
+    } else {
+      setIsLeftExpanded(false);
+    }
   };
   const toggleRightDrawer = () => {
     if (largedesktops) {
@@ -188,6 +192,7 @@ export default function PageLayoutNew({
         openGCSModal={openGCSModal}
         opens3Modal={opens3Modal}
         openGenericModal={openGenericModal}
+        setIsleftExpanded={setIsLeftExpanded}
       />
     </div>
   );
