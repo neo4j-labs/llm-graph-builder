@@ -139,6 +139,7 @@ export interface SideNavProps {
   opens3Modal: () => void;
   openGCSModal: () => void;
   openGenericModal: () => void;
+  setIsleftExpanded?: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface DrawerProps {
