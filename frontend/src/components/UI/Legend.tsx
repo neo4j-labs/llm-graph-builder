@@ -4,7 +4,7 @@ export default function Legend({
   bgColor,
   title,
   chunkCount,
-  className
+  className,
 }: {
   bgColor: string;
   title: string;

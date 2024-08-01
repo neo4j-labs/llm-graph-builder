@@ -9,5 +9,12 @@ export const LegendsChip: React.FunctionComponent<LegendChipProps> = ({ scheme, 
     () => [...new Set(nodes?.filter((n) => n?.labels?.includes(title)).map((i) => i.id))].length,
     [nodes]
   );
-  return <Legend title={titleVal ? title.replace(/__/g, '').toUpperCase() : title} className={titleVal ? 'italic font-bold' : ''} chunkCount={chunkcount} bgColor={scheme[title]}></Legend>;
+  return (
+    <Legend
+      title={titleVal ? title.replace(/__/g, '').toUpperCase() : title}
+      className={titleVal ? 'italic font-bold' : ''}
+      chunkCount={chunkcount}
+      bgColor={scheme[title]}
+    ></Legend>
+  );
 };
