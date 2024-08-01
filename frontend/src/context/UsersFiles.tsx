@@ -35,6 +35,8 @@ interface FileContextType {
   setQueue: Dispatch<SetStateAction<CustomFile[]>>;
   processedCount: number;
   setProcessedCount: Dispatch<SetStateAction<number>>;
+  postProcessingTasks: string[];
+  setPostProcessingTasks: React.Dispatch<React.SetStateAction<string[]>>;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
@@ -61,6 +63,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [queue, setQueue] = useState<CustomFile[]>([]);
   const [processedCount, setProcessedCount] = useState<number>(0);
 
+  const [postProcessingTasks, setPostProcessingTasks] = useState<string[]>([]);
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
       const selectedNodeLabel = JSON.parse(selectedNodeLabelstr);
@@ -105,6 +108,8 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setQueue,
     processedCount,
     setProcessedCount,
+    postProcessingTasks,
+    setPostProcessingTasks,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };
