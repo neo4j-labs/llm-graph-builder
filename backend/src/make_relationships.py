@@ -66,6 +66,10 @@ def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name
             #             }
             #             )
             # logging.info('create vector index on chunk embedding')
+            result = graph.query("SHOW INDEXES YIELD * WHERE labelsOrTypes = ['Chunk'] and name = 'vector'")
+            if result:
+                logging.info(f"vector index dropped for 'Chunk'")
+                graph.query("DROP INDEX vector IF EXISTS;")
 
             graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:__Chunk__) on (c.embedding)
                             OPTIONS {indexConfig: {
