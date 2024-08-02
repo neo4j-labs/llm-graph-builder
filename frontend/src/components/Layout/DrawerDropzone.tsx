@@ -16,12 +16,9 @@ const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 
 const DrawerDropzone: React.FC<DrawerProps> = ({
   isExpanded,
-  opens3Modal,
-  openGCSModal,
-  openGenericModal,
-  hideGenericModal,
-  hides3Modal,
-  hideGCSModal,
+  toggleS3Modal,
+  toggleGCSModal,
+  toggleGenericModal,
   shows3Modal,
   showGCSModal,
   showGenericModal,
@@ -98,29 +95,33 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
                             APP_SOURCES.includes('wiki') ||
                             APP_SOURCES.includes('web')) && (
                             <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
-                              <GenericButton openModal={openGenericModal}></GenericButton>
+                              <GenericButton openModal={toggleGenericModal}></GenericButton>
                               <GenericModal
                                 isOnlyYoutube={isYoutubeOnlyCheck}
                                 isOnlyWikipedia={isWikipediaOnlyCheck}
                                 isOnlyWeb={iswebOnlyCheck}
                                 open={showGenericModal}
-                                closeHandler={hideGenericModal}
+                                closeHandler={toggleGenericModal}
                               ></GenericModal>
                             </div>
                           )}
                           {APP_SOURCES.includes('s3') && (
                             <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
-                              <S3Component openModal={opens3Modal} />
+                              <S3Component openModal={toggleS3Modal} />
                               <Suspense fallback={<FallBackDialog />}>
-                                <S3Modal hideModal={hides3Modal} open={shows3Modal} />
+                                <S3Modal hideModal={toggleS3Modal} open={shows3Modal} />
                               </Suspense>
                             </div>
                           )}
                           {APP_SOURCES.includes('gcs') && (
                             <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
-                              <GCSButton openModal={openGCSModal} />
+                              <GCSButton openModal={toggleGCSModal} />
                               <Suspense fallback={<FallBackDialog />}>
-                                <GCSModal openGCSModal={openGCSModal} open={showGCSModal} hideModal={hideGCSModal} />
+                                <GCSModal
+                                  openGCSModal={toggleGCSModal}
+                                  open={showGCSModal}
+                                  hideModal={toggleGCSModal}
+                                />
                               </Suspense>
                             </div>
                           )}
@@ -142,13 +143,13 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
                         (APP_SOURCES != undefined && APP_SOURCES.includes('wiki')) ||
                         (APP_SOURCES != undefined && APP_SOURCES.includes('web'))) && (
                         <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
-                          <GenericButton openModal={openGenericModal}></GenericButton>
+                          <GenericButton openModal={toggleGenericModal}></GenericButton>
                           <GenericModal
                             isOnlyYoutube={isYoutubeOnlyCheck}
                             isOnlyWikipedia={isWikipediaOnlyCheck}
                             isOnlyWeb={iswebOnlyCheck}
                             open={showGenericModal}
-                            closeHandler={hideGenericModal}
+                            closeHandler={toggleGenericModal}
                           ></GenericModal>
                         </div>
                       )}
@@ -157,16 +158,16 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
                         <>
                           {APP_SOURCES != undefined && APP_SOURCES.includes('s3') && (
                             <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
-                              <S3Component openModal={opens3Modal} />
+                              <S3Component openModal={toggleS3Modal} />
                               <Suspense fallback={<FallBackDialog />}>
-                                <S3Modal hideModal={hides3Modal} open={shows3Modal} />
+                                <S3Modal hideModal={toggleS3Modal} open={shows3Modal} />
                               </Suspense>
                             </div>
                           )}
                           {APP_SOURCES != undefined && APP_SOURCES.includes('gcs') && (
                             <div className={`outline-dashed imageBg ${process.env.ENV === 'PROD' ? 'w-[245px]' : ''}`}>
-                              <GCSButton openModal={openGCSModal} />
-                              <GCSModal openGCSModal={openGCSModal} open={showGCSModal} hideModal={hideGCSModal} />
+                              <GCSButton openModal={toggleGCSModal} />
+                              <GCSModal openGCSModal={toggleGCSModal} open={showGCSModal} hideModal={toggleGCSModal} />
                             </div>
                           )}
                         </>

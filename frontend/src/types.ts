@@ -136,9 +136,9 @@ export interface SideNavProps {
   setIsRightExpanded?: Dispatch<SetStateAction<boolean>>;
   messages?: Messages[];
   clearHistoryData?: boolean;
-  opens3Modal: () => void;
-  openGCSModal: () => void;
-  openGenericModal: () => void;
+  toggles3Modal: () => void;
+  toggleGCSModal: () => void;
+  toggleGenericModal: () => void;
   setIsleftExpanded?: Dispatch<SetStateAction<boolean>>;
 }
 
@@ -147,12 +147,9 @@ export interface DrawerProps {
   shows3Modal: boolean;
   showGCSModal: boolean;
   showGenericModal: boolean;
-  opens3Modal: () => void;
-  hides3Modal: () => void;
-  openGCSModal: () => void;
-  hideGCSModal: () => void;
-  openGenericModal: () => void;
-  hideGenericModal: () => void;
+  toggleS3Modal: () => void;
+  toggleGCSModal: () => void;
+  toggleGenericModal: () => void;
 }
 
 export interface ContentProps {
