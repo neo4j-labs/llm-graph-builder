@@ -161,7 +161,7 @@ export interface ContentProps {
   isSchema?: boolean;
   setIsSchema: Dispatch<SetStateAction<boolean>>;
   showEnhancementDialog: boolean;
-  setshowEnhancementDialog: Dispatch<SetStateAction<boolean>>;
+  toggleEnhancementDialog: () => void;
   closeSettingModal: () => void;
 }
 

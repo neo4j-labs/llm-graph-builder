@@ -40,7 +40,7 @@ const Content: React.FC<ContentProps> = ({
   isSchema,
   setIsSchema,
   showEnhancementDialog,
-  setshowEnhancementDialog,
+  toggleEnhancementDialog,
   closeSettingModal,
 }) => {
   const { breakpoints } = tokens;
@@ -97,12 +97,6 @@ const Content: React.FC<ContentProps> = ({
     }
   );
   const childRef = useRef<ChildRef>(null);
-  const openGraphEnhancementDialog = () => {
-    setshowEnhancementDialog(true);
-  };
-  const closeGraphEnhancementDialog = () => {
-    setshowEnhancementDialog(false);
-  };
   const showAlert = (
     alertmsg: string,
     alerttype: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined
@@ -533,7 +527,7 @@ const Content: React.FC<ContentProps> = ({
       {showEnhancementDialog && (
         <GraphEnhancementDialog
           open={showEnhancementDialog}
-          onClose={closeGraphEnhancementDialog}
+          onClose={toggleEnhancementDialog}
           closeSettingModal={closeSettingModal}
           showAlert={showAlert}
         ></GraphEnhancementDialog>
@@ -586,7 +580,7 @@ const Content: React.FC<ContentProps> = ({
               text='Configure Graph Schema, Delete disconnected Entities, Merge duplicate Entities'
               label='Graph Enhancemnet Settings'
               className='mr-2.5'
-              onClick={openGraphEnhancementDialog}
+              onClick={toggleEnhancementDialog}
               disabled={!connectionStatus}
               size={isTablet ? 'small' : 'medium'}
             >
