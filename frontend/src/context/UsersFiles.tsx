@@ -43,6 +43,8 @@ const FileContext = createContext<FileContextType | undefined>(undefined);
 const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const selectedNodeLabelstr = localStorage.getItem('selectedNodeLabels');
   const selectedNodeRelsstr = localStorage.getItem('selectedRelationshipLabels');
+  const waitingQueue = localStorage.getItem('waitingQueue');
+  const processedTotal = localStorage.getItem('processedTotal');
 
   const [files, setFiles] = useState<(File | null)[] | []>([]);
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
@@ -75,6 +77,18 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
       const selectedNodeRels = JSON.parse(selectedNodeRelsstr);
       if (userCredentials?.uri === selectedNodeRels.db) {
         setSelectedRels(selectedNodeRels.selectedOptions);
+      }
+    }
+    if (waitingQueue !== null) {
+      const queueVal = JSON.parse(waitingQueue);
+      if (userCredentials?.uri === queueVal.db) {
+        setQueue(queueVal.queue);
+      }
+    }
+    if (processedTotal !== null) {
+      const processVal = JSON.parse(processedTotal);
+      if (userCredentials?.uri === processVal.db) {
+        setProcessedCount(processVal.count);
       }
     }
   }, [userCredentials]);

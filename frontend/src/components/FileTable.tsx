@@ -51,7 +51,7 @@ import IndeterminateCheckbox from './UI/CustomCheckBox';
 
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const { isExpanded, connectionStatus, setConnectionStatus, onInspect } = props;
-  const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue, processedCount } = useFileContext();
+  const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } = useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -85,6 +85,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       });
     }
   );
+
+
   const columns = useMemo(
     () => [
       {
@@ -509,19 +511,19 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
 
   console.log('fileData', filesData);
 
-  const updateFileStatus = (filesData:CustomFile[], queue:CustomFile[]) => {
-    queue.forEach(queueFile => {
-      const fileToUpdate = filesData.find(file =>
-        file.id
-        === queueFile.id);
-      if (fileToUpdate) {
-        fileToUpdate.status = 'Waiting';
-      }
-    });
-    return filesData;
-  };
+  // const updateFileStatus = (files: CustomFile[], queue: CustomFile[]) => {
+  //   queue.forEach(queueFile => {
+  //     const fileToUpdate = files.find(file =>
+  //       file.name
+  //       === queueFile.name);
+  //     if (fileToUpdate) {
+  //       fileToUpdate.status = 'Waiting';
+  //     }
+  //   });
+  //   return files;
+  // };
 
-  console.log('file',updateFileStatus(filesData,queue));
+
   useEffect(() => {
     const fetchFiles = async () => {
       try {
@@ -545,17 +547,18 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   processing: item?.processingTime ?? 'None',
                   relationshipCount: item?.relationshipCount ?? 0,
                   status:
-                    item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
-                      ? item?.status
-                      : item?.fileSource === 'local file'
+                    queue.map((f) => f.name).includes(item.fileName) ? 'Waiting' :
+                      item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                         ? item?.status
-                        : item?.status === 'Completed' || item.status === 'Failed'
+                        : item?.fileSource === 'local file'
                           ? item?.status
-                          : item?.fileSource == 'Wikipedia' ||
-                            item?.fileSource == 'youtube' ||
-                            item?.fileSource == 'gcs bucket'
+                          : item?.status === 'Completed' || item.status === 'Failed'
                             ? item?.status
-                            : 'N/A',
+                            : item?.fileSource == 'Wikipedia' ||
+                              item?.fileSource == 'youtube' ||
+                              item?.fileSource == 'gcs bucket'
+                              ? item?.status
+                              : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
                   source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
@@ -579,12 +582,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             });
           }
           setIsLoading(false);
-          setFilesData(prefiles); 
-          // Check if processedCount is not equal to 2 and update file statuses
-          // if (processedCount !== 2) {
-          //     const updatedFilesData = updateFileStatus(prefiles, queue);
-          //     setFilesData(updatedFilesData);
-          // }
+          setFilesData(prefiles);
           res.data.data.forEach((item) => {
             if (
               item.status === 'Processing' &&
@@ -737,6 +735,10 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           return curfile;
         })
       );
+      setProcessedCount((prev) => {
+        console.log("Pooling count:", prev);
+        return prev === 2 ? 0 : prev + 1;
+      });
     }
   };
 

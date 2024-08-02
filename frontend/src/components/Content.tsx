@@ -66,6 +66,7 @@ const Content: React.FC<ContentProps> = ({
     setSelectedRels,
     processedCount, setProcessedCount, setQueue,
     postProcessingTasks,
+    queue
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
@@ -150,11 +151,22 @@ const Content: React.FC<ContentProps> = ({
   const leftFiles = childRef?.current?.getSelectedRows().filter((f) => f.status === 'Waiting');
 
   useEffect(() => {
-    if (processedCount === 2) {
+    if (processedCount === 2 && leftFiles?.length) {
       processNextBatch(leftFiles as CustomFile[]);
-      console.log('hello', processedCount);
     }
-  }, [processedCount]);
+    localStorage.setItem('processedTotal', JSON.stringify({
+      "db": userCredentials?.uri,
+      "count": processedCount
+    }))
+  }, [processedCount, userCredentials]);
+
+  useEffect(() => {
+    if (!filesData.some((f) => f.status === "Processing") && queue.length !== 0) {
+      if (queue.length < 2) {
+        processNextBatch(queue);
+      }
+    }
+  }, [filesData, queue])
 
   const extractHandler = async (fileItem: CustomFile, uid: string) => {
     try {
@@ -247,7 +259,6 @@ const Content: React.FC<ContentProps> = ({
     const results = await Promise.allSettled(batchPromises);
     results.forEach((result, index) => {
       const file = batch[index];
-      console.log('results file', result);
       if (result.status === 'fulfilled') {
         file.status = result?.value?.data.status;
       } else {
@@ -255,17 +266,28 @@ const Content: React.FC<ContentProps> = ({
         console.error(`Error processing file ${file.id}:`, result.reason);
       }
     });
+    if (batch.every((file) => file.status === 'Completed')) {
+      await postProcessing(userCredentials as UserCredentials, postProcessingTasks)
+    }
+    return results;
   };
 
   const processNextBatch = async (tempFiles: CustomFile[]) => {
-    while (tempFiles.length > 0) {
+    const allResults = [];
+    let nextBatch: CustomFile[] = [];
+    if (tempFiles.length > 0) {
       const batchSize: number = fileProcessingLimit > 0 ? fileProcessingLimit : tempFiles.length;
-      const nextBatch = tempFiles.splice(0, batchSize);
-      console.log('batch', nextBatch);
-      await processBatch(nextBatch);
+      nextBatch = tempFiles.splice(0, batchSize);
+      setQueue(tempFiles);
+      localStorage.setItem('waitingQueue', JSON.stringify({
+        "db": userCredentials?.uri,
+        "queue": tempFiles
+      }))
     }
+    const batchResults = await processBatch(nextBatch);
+    allResults.push(...batchResults);
+    await Promise.allSettled(allResults)
     setextractLoading(false);
-    await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
   };
 
   const addToQueue = (files: CustomFile[]) => {
@@ -280,27 +302,34 @@ const Content: React.FC<ContentProps> = ({
   };
 
   const handleGenerateGraph = async (allowLargeFiles: boolean, selectedFilesFromAllFiles: CustomFile[]) => {
-    let tempFilesToBeProcessed: CustomFile[] = [];
-    if (selectedfileslength && allowLargeFiles) {
-      const row = childRef.current?.getSelectedRows();
-      if (row) {
-        tempFilesToBeProcessed = addToQueue(row);
-      } else {
-        tempFilesToBeProcessed = addToQueue(selectedFilesFromAllFiles);
+    const processingFiles = filesData.filter((f) => f.status === "Processing").length;
+    if (processingFiles < 2) {
+      let tempFilesToBeProcessed: CustomFile[] = [];
+      if (selectedfileslength && allowLargeFiles) {
+        const row = childRef.current?.getSelectedRows();
+        if (row) {
+          tempFilesToBeProcessed = addToQueue(row);
+        } else {
+          tempFilesToBeProcessed = addToQueue(selectedFilesFromAllFiles);
+        }
+      } else if (selectedFilesFromAllFiles.length && allowLargeFiles) {
+        const selectedRows = childRef.current?.getSelectedRows();
+        if (selectedRows) {
+          tempFilesToBeProcessed = addToQueue(selectedRows);
+        } else {
+          tempFilesToBeProcessed = addToQueue(selectedFilesFromAllFiles);
+        }
       }
-    } else if (selectedFilesFromAllFiles.length && allowLargeFiles) {
-      const selectedRows = childRef.current?.getSelectedRows();
-      if (selectedRows) {
-        tempFilesToBeProcessed = addToQueue(selectedRows);
-      } else {
-        tempFilesToBeProcessed = addToQueue(selectedFilesFromAllFiles);
+      if (processedCount === 1) {
+        setProcessedCount(0);
       }
+      await processNextBatch(tempFilesToBeProcessed);
+    } else {
+      selectedFilesFromAllFiles.forEach((file) => {
+        if (file)
+          setFilesData((prev) => prev.map((f) => f.id === file.id ? ({ ...f, status: 'Waiting', }) : f))
+      })
     }
-    setQueue(tempFilesToBeProcessed);
-    if (processedCount === 1) {
-      setProcessedCount(0);
-    }
-    await processNextBatch(tempFilesToBeProcessed);
   };
 
   const extractData = async (uid: string, isSelectedRows = false) => {
@@ -316,7 +345,7 @@ const Content: React.FC<ContentProps> = ({
       if (!hasAlertedUser) {
         setalertDetails({
           showAlert: true,
-          alertMessage: 'Processing 2 files at a time.',
+          alertMessage: `Processing ${fileProcessingLimit} files at a time.`,
           alertType: 'info',
         });
         setHasAlertedUser(true);

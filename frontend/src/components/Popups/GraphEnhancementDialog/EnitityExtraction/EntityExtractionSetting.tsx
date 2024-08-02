@@ -209,6 +209,7 @@ export default function EntityExtractionSetting({
     setSelectedSchemas([]);
     setSelectedNodes(nodeLabelOptions);
     setSelectedRels(relationshipTypeOptions);
+    setIsSchema(true);
     localStorage.setItem('isSchema', JSON.stringify(true));
   }, [nodeLabelOptions, relationshipTypeOptions]);
 
