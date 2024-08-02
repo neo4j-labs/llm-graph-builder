@@ -6,6 +6,7 @@ from tempfile import NamedTemporaryFile
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_community.document_loaders import UnstructuredFileLoader
 from langchain_core.documents import Document
+from llama_parse import LlamaParse
 
 # def get_documents_from_file_by_bytes(file):
 #     file_name = file.filename
@@ -19,26 +20,17 @@ from langchain_core.documents import Document
 #     return file_name, pages
 
 def load_document_content(file_path):
-    if Path(file_path).suffix.lower() == '.pdf':
-        print("in if")
-        return PyMuPDFLoader(file_path)
-    else:
-        print("in else")
-        return UnstructuredFileLoader(file_path, mode="elements",autodetect_encoding=True)
+    parse_document = LlamaParse(result_type="text").load_data(file_path)
+    print(f'Parsed Docuemnt by lLama Parser: {parse_document}')
+    return parse_document
     
 def get_documents_from_file_by_path(file_path,file_name):
     file_path = Path(file_path)
     if file_path.exists():
         logging.info(f'file {file_name} processing')
-        # loader = PyPDFLoader(str(file_path))
         file_extension = file_path.suffix.lower()
         try:
-            loader = load_document_content(file_path)
-            if file_extension == ".pdf":
-                pages = loader.load()
-            else:
-                unstructured_pages = loader.load()   
-                pages= get_pages_with_page_numbers(unstructured_pages)      
+            pages = load_document_content(file_path)
         except Exception as e:
             raise Exception('Error while reading the file content or metadata')
     else:
