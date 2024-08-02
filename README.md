@@ -134,8 +134,8 @@ Allow unauthenticated request : Yes
 | KNN_MIN_SCORE           | Optional           | 0.94          | Minimum score for KNN algorithm                                                                  |
 | GEMINI_ENABLED          | Optional           | False         | Flag to enable Gemini                                                                             |
 | GCP_LOG_METRICS_ENABLED | Optional           | False         | Flag to enable Google Cloud logs                                                                 |
-| NUMBER_OF_CHUNKS_TO_COMBINE | Optional        | 5             | Number of chunks to combine when processing embeddings                                           |
-| UPDATE_GRAPH_CHUNKS_PROCESSED | Optional      | 20            | Number of chunks processed before updating progress                                        |
+| NUMBER_OF_CHUNKS_TO_COMBINE | Optional       | 5             | Number of chunks to combine when processing embeddings                                           |
+| UPDATE_GRAPH_CHUNKS_PROCESSED | Optional     | 20            | Number of chunks processed before updating progress                                        |
 | NEO4J_URI               | Optional           | neo4j://database:7687 | URI for Neo4j database                                                                  |
 | NEO4J_USERNAME          | Optional           | neo4j         | Username for Neo4j database                                                                       |
 | NEO4J_PASSWORD          | Optional           | password      | Password for Neo4j database                                                                       |
@@ -145,16 +145,16 @@ Allow unauthenticated request : Yes
 | LANGCHAIN_ENDPOINT      | Optional           | https://api.smith.langchain.com | Endpoint for Langchain API                                                            |
 | BACKEND_API_URL         | Optional           | http://localhost:8000 | URL for backend API                                                                       |
 | BLOOM_URL               | Optional           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
-| REACT_APP_SOURCES       | Optional           | local,youtube,wiki,s3 | List of input sources that will be available                                               |
-| LLM_MODELS              | Optional           | diffbot,openai-gpt-3.5,openai-gpt-4o | Models available for selection on the frontend, used for entities extraction and Q&A
-| CHAT_MODES              | Optional           | vector,graph+vector,graph | Chat modes available for Q&A
-| ENV                     | Optional           | DEV           | Environment variable for the app                                                                 |
+| REACT_APP_SOURCES       | Mandatory          | local,youtube,wiki,s3 | List of input sources that will be available                                               |
+| LLM_MODELS              | Mandatory          | diffbot,openai-gpt-3.5,openai-gpt-4o | Models available for selection on the frontend, used for entities extraction and Q&A
+| CHAT_MODES              | Mandatory          | vector,graph+vector,graph,hybrid | Chat modes available for Q&A
+| ENV                     | Mandatory          | DEV or PROD           | Environment variable for the app                                                                 |
 | TIME_PER_CHUNK          | Optional           | 4             | Time per chunk for processing                                                                    |
 | CHUNK_SIZE              | Optional           | 5242880       | Size of each chunk of file for upload                                                                |
 | GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
-| GCS_FILE_CACHE        | Optional           | False              | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
-| ENTITY_EMBEDDING        | Optional           | False              | If set to True, It will add embeddings for each entity in database |
-| LLM_MODEL_CONFIG_ollama_<model_name>        | Optional           |               | Set ollama config as - model_name,model_local_url for local deployments |
+| GCS_FILE_CACHE          | Optional           | False         | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
+| ENTITY_EMBEDDING        | Optional           | False         | If set to True, It will add embeddings for each entity in database |
+| LLM_MODEL_CONFIG_ollama_<model_name>         | Optional      |               | Set ollama config as - model_name,model_local_url for local deployments |
 
 
 
