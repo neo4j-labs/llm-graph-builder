@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useReducer, useState } from 'react';
 import SideNav from './SideNav';
 import DrawerDropzone from './DrawerDropzone';
 import DrawerChatbot from './DrawerChatbot';
@@ -30,28 +30,10 @@ export default function PageLayoutNew({
   const [showDrawerChatbot, setShowDrawerChatbot] = useState<boolean>(true);
   const [clearHistoryData, setClearHistoryData] = useState<boolean>(false);
   const [showEnhancementDialog, setshowEnhancementDialog] = useState<boolean>(false);
-  const [showMs3odal, setshows3Modal] = useState<boolean>(false);
-  const [showGCSModal, setShowGCSModal] = useState<boolean>(false);
-  const [showGenericModal, setshowGenericModal] = useState<boolean>(false);
+  const [shows3Modal, toggleS3Modal] = useReducer((s) => !s, false);
+  const [showGCSModal, toggleGCSModal] = useReducer((s) => !s, false);
+  const [showGenericModal, toggleGenericModal] = useReducer((s) => !s, false);
   const { userCredentials } = useCredentials();
-  const opens3Modal = useCallback(() => {
-    setshows3Modal(true);
-  }, []);
-  const hides3Modal = useCallback(() => {
-    setshows3Modal(false);
-  }, []);
-  const openGCSModal = useCallback(() => {
-    setShowGCSModal(true);
-  }, []);
-  const hideGCSModal = useCallback(() => {
-    setShowGCSModal(false);
-  }, []);
-  const openGenericModal = useCallback(() => {
-    setshowGenericModal(true);
-  }, []);
-  const hideGenericModal = useCallback(() => {
-    setshowGenericModal(false);
-  }, []);
   const toggleLeftDrawer = () => {
     if (largedesktops) {
       setIsLeftExpanded(!isLeftExpanded);
@@ -115,23 +97,20 @@ export default function PageLayoutNew({
         />
       )}
       <SideNav
-        opens3Modal={opens3Modal}
-        openGCSModal={openGCSModal}
-        openGenericModal={openGenericModal}
+        toggles3Modal={toggleS3Modal}
+        toggleGCSModal={toggleGCSModal}
+        toggleGenericModal={toggleGenericModal}
         isExpanded={isLeftExpanded}
         position='left'
         toggleDrawer={toggleLeftDrawer}
       />
       <DrawerDropzone
-        shows3Modal={showMs3odal}
+        shows3Modal={shows3Modal}
         showGCSModal={showGCSModal}
         showGenericModal={showGenericModal}
-        opens3Modal={opens3Modal}
-        hides3Modal={hides3Modal}
-        openGCSModal={openGCSModal}
-        hideGCSModal={hideGCSModal}
-        openGenericModal={openGenericModal}
-        hideGenericModal={hideGenericModal}
+        toggleGCSModal={toggleGCSModal}
+        toggleGenericModal={toggleGenericModal}
+        toggleS3Modal={toggleS3Modal}
         isExpanded={isLeftExpanded}
       />
       <SchemaFromTextDialog
@@ -189,9 +168,9 @@ export default function PageLayoutNew({
         setShowDrawerChatbot={setShowDrawerChatbot}
         setIsRightExpanded={setIsRightExpanded}
         clearHistoryData={clearHistoryData}
-        openGCSModal={openGCSModal}
-        opens3Modal={opens3Modal}
-        openGenericModal={openGenericModal}
+        toggleGCSModal={toggleGCSModal}
+        toggles3Modal={toggleS3Modal}
+        toggleGenericModal={toggleGenericModal}
         setIsleftExpanded={setIsLeftExpanded}
       />
     </div>

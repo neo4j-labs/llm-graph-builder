@@ -32,9 +32,9 @@ const SideNav: React.FC<SideNavProps> = ({
   setIsRightExpanded,
   messages,
   clearHistoryData,
-  opens3Modal,
-  openGCSModal,
-  openGenericModal,
+  toggleGCSModal,
+  toggleGenericModal,
+  toggles3Modal,
   setIsleftExpanded,
 }) => {
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
@@ -142,7 +142,7 @@ const SideNav: React.FC<SideNavProps> = ({
               icon={
                 <Tip allowedPlacements={['right']}>
                   <Tip.Trigger>
-                    <GCSButton isLargeDesktop={largedesktops} openModal={openGCSModal}></GCSButton>
+                    <GCSButton isLargeDesktop={largedesktops} openModal={toggleGCSModal}></GCSButton>
                   </Tip.Trigger>
                   <Tip.Content>GCS Files</Tip.Content>
                 </Tip>
@@ -155,8 +155,7 @@ const SideNav: React.FC<SideNavProps> = ({
               icon={
                 <Tip allowedPlacements={['right']}>
                   <Tip.Trigger>
-                    {' '}
-                    <S3Component isLargeDesktop={largedesktops} openModal={opens3Modal}></S3Component>
+                    <S3Component isLargeDesktop={largedesktops} openModal={toggles3Modal}></S3Component>
                   </Tip.Trigger>
                   <Tip.Content>S3 Files</Tip.Content>
                 </Tip>
@@ -168,7 +167,7 @@ const SideNav: React.FC<SideNavProps> = ({
               icon={
                 <Tip allowedPlacements={['right']}>
                   <Tip.Trigger>
-                    <WebButton isLargeDesktop={largedesktops} openModal={openGenericModal}></WebButton>
+                    <WebButton isLargeDesktop={largedesktops} openModal={toggleGenericModal}></WebButton>
                   </Tip.Trigger>
                   <Tip.Content>Web Sources</Tip.Content>
                 </Tip>
