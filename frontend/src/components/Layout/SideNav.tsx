@@ -109,7 +109,7 @@ const SideNav: React.FC<SideNavProps> = ({
             />
           )}
 
-          {position === 'right' && (
+          {(position === 'right'  && !isExpanded)&& (
             <SideNavigation.Item
               onClick={handleClick}
               icon={
@@ -125,7 +125,6 @@ const SideNav: React.FC<SideNavProps> = ({
 
           {!largedesktops && position === 'left' && (
             <SideNavigation.Item
-              onClick={() => {}}
               icon={
                 <Tip allowedPlacements={['right']}>
                   <Tip.Trigger>
@@ -138,7 +137,6 @@ const SideNav: React.FC<SideNavProps> = ({
           )}
           {!largedesktops && APP_SOURCES.includes('gcs') && position === 'left' && (
             <SideNavigation.Item
-              onClick={() => {}}
               icon={
                 <Tip allowedPlacements={['right']}>
                   <Tip.Trigger>
@@ -151,7 +149,6 @@ const SideNav: React.FC<SideNavProps> = ({
           )}
           {!largedesktops && APP_SOURCES.includes('s3') && position === 'left' && (
             <SideNavigation.Item
-              onClick={() => {}}
               icon={
                 <Tip allowedPlacements={['right']}>
                   <Tip.Trigger>
