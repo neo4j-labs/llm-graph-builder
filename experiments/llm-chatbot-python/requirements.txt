@@ -1,0 +1,8 @@
+tenacity!=8.4.0
+langchain==0.2.3
+openai==1.33.0
+langchain-openai==0.1.8
+neo4j-driver==5.21.0
+streamlit==1.35.0
+langchainhub==0.1.18
+langchain-community==0.2.4
