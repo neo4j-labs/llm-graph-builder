@@ -20,7 +20,7 @@ class graphDBdataAccess:
             is_cancelled_status = result[0]['is_cancelled']
             if bool(is_cancelled_status) == True:
                 job_status = 'Cancelled'
-            self.graph.query("""MERGE(d:__Document__ {fileName :$fName}) SET d.status = $status, d.errorMessage = $error_msg""",
+            self.graph.query("""MERGE(d:Document {fileName :$fName}) SET d.status = $status, d.errorMessage = $error_msg""",
                             {"fName":file_name, "status":job_status, "error_msg":exp_msg})
         except Exception as e:
             error_message = str(e)
@@ -31,7 +31,7 @@ class graphDBdataAccess:
         try:
             job_status = "New"
             logging.info("creating source node if does not exist")
-            self.graph.query("""MERGE(d:__Document__ {fileName :$fn}) SET d.fileSize = $fs, d.fileType = $ft ,
+            self.graph.query("""MERGE(d:Document {fileName :$fn}) SET d.fileSize = $fs, d.fileType = $ft ,
                             d.status = $st, d.url = $url, d.awsAccessKeyId = $awsacc_key_id, 
                             d.fileSource = $f_source, d.createdAt = $c_at, d.updatedAt = $u_at, 
                             d.processingTime = $pt, d.errorMessage = $e_message, d.nodeCount= $n_count, 
@@ -95,7 +95,7 @@ class graphDBdataAccess:
             param= {"props":params}
             
             print(f'Base Param value 1 : {param}')
-            query = "MERGE(d:__Document__ {fileName :$props.fileName}) SET d += $props"
+            query = "MERGE(d:Document {fileName :$props.fileName}) SET d += $props"
             logging.info("Update source node properties")
             self.graph.query(query,param)
         except Exception as e:
@@ -117,7 +117,7 @@ class graphDBdataAccess:
         sorting the list by the last updated date. 
         """
         logging.info("Get existing files list from graph")
-        query = "MATCH(d:__Document__) WHERE d.fileName IS NOT NULL RETURN d ORDER BY d.updatedAt DESC"
+        query = "MATCH(d:Document) WHERE d.fileName IS NOT NULL RETURN d ORDER BY d.updatedAt DESC"
         result = self.graph.query(query)
         list_of_json_objects = [entry['d'] for entry in result]
         return list_of_json_objects
@@ -131,10 +131,10 @@ class graphDBdataAccess:
         knn_min_score = os.environ.get('KNN_MIN_SCORE')
         if len(index) > 0:
             logging.info('update KNN graph')
-            self.graph.query("""MATCH (c:__Chunk__)
-                                    WHERE c.embedding IS NOT NULL AND count { (c)-[:__SIMILAR__]-() } < 5
+            self.graph.query("""MATCH (c:Chunk)
+                                    WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
                                     CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score
-                                    WHERE node <> c and score >= $score MERGE (c)-[rel:__SIMILAR__]-(node) SET rel.score = score
+                                    WHERE node <> c and score >= $score MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score
                                 """,
                                 {"score":float(knn_min_score)}
                                 )
@@ -174,7 +174,7 @@ class graphDBdataAccess:
 
     def get_current_status_document_node(self, file_name):
         query = """
-                MATCH(d:__Document__ {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, 
+                MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, 
                 d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount,
                 d.total_pages AS total_pages, d.total_chunks AS total_chunks , d.fileSize as fileSize, 
                 d.is_cancelled as is_cancelled, d.processed_chunk as processed_chunk, d.fileSource as fileSource
@@ -197,23 +197,23 @@ class graphDBdataAccess:
                 logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
                 delete_uploaded_local_file(merged_file_path,file_name)
         query_to_delete_document=""" 
-           MATCH (d:__Document__) where d.fileName in $filename_list and d.fileSource in $source_types_list
+           MATCH (d:Document) where d.fileName in $filename_list and d.fileSource in $source_types_list
             with collect(d) as documents 
             unwind documents as d
-            optional match (d)<-[:__PART_OF__]-(c:__Chunk__) 
+            optional match (d)<-[:PART_OF]-(c:Chunk) 
             detach delete c, d
             return count(*) as deletedChunks
             """
         query_to_delete_document_and_entities=""" 
-            MATCH (d:__Document__) where d.fileName in $filename_list and d.fileSource in $source_types_list
+            MATCH (d:Document) where d.fileName in $filename_list and d.fileSource in $source_types_list
             with collect(d) as documents 
             unwind documents as d
-            optional match (d)<-[:__PART_OF__]-(c:__Chunk__)
+            optional match (d)<-[:PART_OF]-(c:Chunk)
             // if delete-entities checkbox is set
             call { with  c, documents
-                match (c)-[:__HAS_ENTITY__]->(e)
+                match (c)-[:HAS_ENTITY]->(e)
                 // belongs to another document
-                where not exists {  (d2)<-[:__PART_OF__]-()-[:__HAS_ENTITY__]->(e) WHERE NOT d2 IN documents }
+                where not exists {  (d2)<-[:PART_OF]-()-[:HAS_ENTITY]->(e) WHERE NOT d2 IN documents }
                 detach delete e
                 return count(*) as entities
             } 
@@ -231,17 +231,17 @@ class graphDBdataAccess:
     
     def list_unconnected_nodes(self):
         query = """
-                MATCH (e:!__Chunk__&!__Document__) 
-                WHERE NOT exists { (e)--(:!__Chunk__&!__Document__) }
-                OPTIONAL MATCH (doc:__Document__)<-[:__PART_OF__]-(c:__Chunk__)-[:__HAS_ENTITY__]->(e)
+                MATCH (e:!Chunk&!Document) 
+                WHERE NOT exists { (e)--(:!Chunk&!Document) }
+                OPTIONAL MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(e)
                 RETURN e {.*, embedding:null, elementId:elementId(e), labels:labels(e)} as e, 
                 collect(distinct doc.fileName) as documents, count(distinct c) as chunkConnections
                 ORDER BY e.id ASC
                 LIMIT 100
                 """
         query_total_nodes = """
-        MATCH (e:!__Chunk__&!__Document__) 
-        WHERE NOT exists { (e)--(:!__Chunk__&!__Document__) }
+        MATCH (e:!Chunk&!Document) 
+        WHERE NOT exists { (e)--(:!Chunk&!Document) }
         RETURN count(*) as total
         """
         nodes_list = self.execute_query(query)
@@ -261,7 +261,7 @@ class graphDBdataAccess:
         score_value = float(os.environ.get('DUPLICATE_SCORE_VALUE'))
         text_distance = int(os.environ.get('DUPLICATE_TEXT_DISTANCE'))
         query_duplicate_nodes = """
-                MATCH (n:!__Chunk__&!__Document__) with n 
+                MATCH (n:!Chunk&!Document) with n 
                 WHERE n.embedding is not null and n.id is not null // and size(n.id) > 3
                 WITH n ORDER BY count {{ (n)--() }} DESC, size(n.id) DESC // updated
                 WITH collect(n) as nodes
@@ -289,7 +289,7 @@ class graphDBdataAccess:
                     where none(other in all where other <> nodes and size(other) > size(nodes) and size(apoc.coll.subtract(nodes, other))=0)
                     return head(nodes) as n, tail(nodes) as similar
                 }}
-                OPTIONAL MATCH (doc:__Document__)<-[:__PART_OF__]-(c:__Chunk__)-[:__HAS_ENTITY__]->(n)
+                OPTIONAL MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(n)
                 {return_statement}
                 """
         return_query_duplicate_nodes = """
@@ -335,7 +335,7 @@ class graphDBdataAccess:
         if is_vector_index_recreate == 'true':
             self.graph.query("""drop index vector""")
         
-        self.graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:__Chunk__) on (c.embedding)
+        self.graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
                             OPTIONS {indexConfig: {
                             `vector.dimensions`: $dimensions,
                             `vector.similarity_function`: 'cosine'
