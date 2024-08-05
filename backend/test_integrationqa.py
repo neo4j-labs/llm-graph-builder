@@ -198,6 +198,7 @@ def test_chatbot_QnA(model_name):
         return QA_n_RAG
 
 # Check the Functionality of Chatbot QnA for mode 'vector'
+
 def test_chatbot_QnA_vector(model_name):
     model = model_name
     QA_n_RAG_vector = QA_RAG(graph, model, 'Tell me about amazon', '[]', 1, 'vector')
@@ -212,6 +213,24 @@ def test_chatbot_QnA_vector(model_name):
     except AssertionError as e:
         print("Failed ", e)
         return QA_n_RAG_vector
+
+# Check the Functionality of Chatbot QnA for mode 'hybrid'
+
+def test_chatbot_QnA_hybrid(model_name):
+    model = model_name
+    QA_n_RAG_hybrid = QA_RAG(graph, model, 'Tell me about amazon', '[]', 1, 'hybrid')
+
+
+    print(QA_n_RAG_hybrid)
+    print(len(QA_n_RAG_hybrid['message']))
+    try:
+        assert len(QA_n_RAG_hybrid['message']) > 20
+        return QA_n_RAG_hybrid
+        print("Success")
+    except AssertionError as e:
+        print("Failed ", e)
+        return QA_n_RAG_hybrid
+
 
 
 if __name__ == "__main__":
@@ -240,6 +259,10 @@ if __name__ == "__main__":
     #     #chatbot 'vector'
        response = test_chatbot_QnA_vector(model_name)
        final_list.append(response)
+
+    #     #chatbot 'hybrid'
+       response = test_chatbot_QnA_hybrid(model_name)
+       final_list.append(response)   
 
        # test_graph_from_file_test_s3_failed() # S3 Failed Test Case
    df = pd.DataFrame(final_list)
