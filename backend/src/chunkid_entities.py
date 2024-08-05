@@ -3,12 +3,12 @@ from neo4j import graph
 from src.graph_query import *
 
 CHUNK_QUERY = """
-match (chunk:__Chunk__) where chunk.id IN $chunksIds
+match (chunk:Chunk) where chunk.id IN $chunksIds
 
-MATCH (chunk)-[:__PART_OF__]->(d:__Document__)
+MATCH (chunk)-[:PART_OF]->(d:Document)
 CALL {WITH chunk
-MATCH (chunk)-[:__HAS_ENTITY__]->(e) 
-MATCH path=(e)(()-[rels:!__HAS_ENTITY__&!__PART_OF__]-()){0,2}(:!__Chunk__&!__Document__) 
+MATCH (chunk)-[:HAS_ENTITY]->(e) 
+MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk &! Document) 
 UNWIND rels as r
 RETURN collect(distinct r) as rels
 }

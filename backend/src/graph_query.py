@@ -162,7 +162,7 @@ def get_completed_documents(driver):
     """
     Retrieves the names of all documents with the status 'Completed' from the database.
     """
-    docs_query = "MATCH(node:__Document__ {status:'Completed'}) RETURN node"
+    docs_query = "MATCH(node:Document {status:'Completed'}) RETURN node"
     
     try:
         logging.info("Executing query to retrieve completed documents.")
