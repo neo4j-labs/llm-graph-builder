@@ -200,10 +200,10 @@ This API is responsible for -
 ** Reading the content of source provided in the form of langchain Document object from respective langchain loaders 
 
 ** Dividing the document into multiple chunks, and make below relations - 
-*** __PART_OF__ - relation from Document node to all chunk nodes 
-*** __FIRST_CHUNK__ - relation from document node to first chunk node
-*** __NEXT_CHUNK__ - relation from a chunk pointing to next chunk of the document.
-*** __HAS_ENTITY__ - relation between chunk node and entities extracted from LLM.
+*** PART_OF - relation from Document node to all chunk nodes 
+*** FIRST_CHUNK - relation from document node to first chunk node
+*** NEXT_CHUNK - relation from a chunk pointing to next chunk of the document.
+*** HAS_ENTITY - relation between chunk node and entities extracted from LLM.
 
 ** Extracting nodes and relations in the form of GraphDocument from respective LLM.
 
