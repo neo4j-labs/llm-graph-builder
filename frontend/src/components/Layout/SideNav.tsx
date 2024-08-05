@@ -109,7 +109,7 @@ const SideNav: React.FC<SideNavProps> = ({
             />
           )}
 
-          {(position === 'right'  && !isExpanded)&& (
+          {position === 'right' && !isExpanded && (
             <SideNavigation.Item
               onClick={handleClick}
               icon={
