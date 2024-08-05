@@ -64,7 +64,9 @@ const Content: React.FC<ContentProps> = ({
     setSelectedNodes,
     setRowSelection,
     setSelectedRels,
-    processedCount, setProcessedCount, setQueue,
+    processedCount,
+    setProcessedCount,
+    setQueue,
     postProcessingTasks,
     queue
   } = useFileContext();
@@ -154,29 +156,27 @@ const Content: React.FC<ContentProps> = ({
     if (processedCount === 2 && leftFiles?.length) {
       processNextBatch(leftFiles as CustomFile[]);
     }
-    localStorage.setItem('processedTotal', JSON.stringify({
-      "db": userCredentials?.uri,
-      "count": processedCount
-    }))
+    localStorage.setItem(
+      'processedTotal',
+      JSON.stringify({
+        db: userCredentials?.uri,
+        count: processedCount,
+      })
+    );
   }, [processedCount, userCredentials]);
 
   useEffect(() => {
-    if (!filesData.some((f) => f.status === "Processing") && queue.length !== 0) {
+    if (!filesData.some((f) => f.status === 'Processing') && queue.length !== 0) {
       if (queue.length < 2) {
         processNextBatch(queue);
       }
     }
-  }, [filesData, queue])
+  }, [filesData, queue]);
 
   const extractHandler = async (fileItem: CustomFile, uid: string) => {
     try {
       setFilesData((prevFiles) =>
-        prevFiles.map((curFile) =>
-          curFile.id
-            === uid
-            ? { ...curFile, status: 'Processing' }
-            : curFile
-        )
+        prevFiles.map((curFile) => (curFile.id === uid ? { ...curFile, status: 'Processing' } : curFile))
       );
       setRowSelection((prev) => ({
         ...prev,
@@ -210,11 +210,13 @@ const Content: React.FC<ContentProps> = ({
         fileItem.access_token
       );
       if (apiResponse?.status === 'Failed') {
-        throw new Error(JSON.stringify({
-          error: apiResponse.error,
-          message: apiResponse.message,
-          fileName: apiResponse.file_name,
-        }));
+        throw new Error(
+          JSON.stringify({
+            error: apiResponse.error,
+            message: apiResponse.message,
+            fileName: apiResponse.file_name,
+          })
+        );
       } else if (fileItem.size && fileItem.size < largeFileSize) {
         setFilesData((prevFiles) =>
           prevFiles.map((curFile) =>
@@ -243,9 +245,7 @@ const Content: React.FC<ContentProps> = ({
         });
         setFilesData((prevFiles) =>
           prevFiles.map((curFile) =>
-            curFile.name === fileName
-              ? { ...curFile, status: 'Failed', errorMessage }
-              : curFile
+            curFile.name === fileName ? { ...curFile, status: 'Failed', errorMessage } : curFile
           )
         );
       }
@@ -267,26 +267,37 @@ const Content: React.FC<ContentProps> = ({
       }
     });
     if (batch.every((file) => file.status === 'Completed')) {
-      await postProcessing(userCredentials as UserCredentials, postProcessingTasks)
+      await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
     }
     return results;
   };
 
   const processNextBatch = async (tempFiles: CustomFile[]) => {
     const allResults = [];
+    let batchResults = [];
     let nextBatch: CustomFile[] = [];
-    if (tempFiles.length > 0) {
+
+    if (filesData.every(file => file.status !== 'Waiting')) {
+      setQueue([]);
+      return;
+    }
+    if (tempFiles.length > 2) {
       const batchSize: number = fileProcessingLimit > 0 ? fileProcessingLimit : tempFiles.length;
       nextBatch = tempFiles.splice(0, batchSize);
       setQueue(tempFiles);
-      localStorage.setItem('waitingQueue', JSON.stringify({
-        "db": userCredentials?.uri,
-        "queue": tempFiles
-      }))
+      localStorage.setItem(
+        'waitingQueue',
+        JSON.stringify({
+          db: userCredentials?.uri,
+          queue: tempFiles,
+        })
+      );
+      batchResults = await processBatch(nextBatch);
+    } else {
+      batchResults = await processBatch(tempFiles);
     }
-    const batchResults = await processBatch(nextBatch);
     allResults.push(...batchResults);
-    await Promise.allSettled(allResults)
+    await Promise.allSettled(allResults);
     setextractLoading(false);
   };
 
@@ -302,33 +313,27 @@ const Content: React.FC<ContentProps> = ({
   };
 
   const handleGenerateGraph = async (allowLargeFiles: boolean, selectedFilesFromAllFiles: CustomFile[]) => {
-    const processingFiles = filesData.filter((f) => f.status === "Processing").length;
-    if (processingFiles < 2) {
+    const processingFiles = filesData.filter((f) => f.status === 'Processing').length;
+    if (!processingFiles) {
       let tempFilesToBeProcessed: CustomFile[] = [];
       if (selectedfileslength && allowLargeFiles) {
-        const row = childRef.current?.getSelectedRows();
-        if (row) {
-          tempFilesToBeProcessed = addToQueue(row);
-        } else {
-          tempFilesToBeProcessed = addToQueue(selectedFilesFromAllFiles);
-        }
+        const rows = childRef.current?.getSelectedRows();
+        tempFilesToBeProcessed = addToQueue(rows as CustomFile[]);
       } else if (selectedFilesFromAllFiles.length && allowLargeFiles) {
-        const selectedRows = childRef.current?.getSelectedRows();
-        if (selectedRows) {
-          tempFilesToBeProcessed = addToQueue(selectedRows);
-        } else {
-          tempFilesToBeProcessed = addToQueue(selectedFilesFromAllFiles);
-        }
+        tempFilesToBeProcessed = addToQueue(selectedFilesFromAllFiles);
       }
-      if (processedCount === 1) {
+      if (processedCount === 1 && queue.length === 1) {
         setProcessedCount(0);
       }
       await processNextBatch(tempFilesToBeProcessed);
     } else {
+      if (processingFiles === 1 && selectedFilesFromAllFiles.length === 1) {
+        await processNextBatch(selectedFilesFromAllFiles);
+      } else {
+      }
       selectedFilesFromAllFiles.forEach((file) => {
-        if (file)
-          setFilesData((prev) => prev.map((f) => f.id === file.id ? ({ ...f, status: 'Waiting', }) : f))
-      })
+        if (file) setFilesData((prev) => prev.map((f) => (f.id === file.id ? { ...f, status: 'Waiting' } : f)));
+      });
     }
   };
 
@@ -350,8 +355,8 @@ const Content: React.FC<ContentProps> = ({
         });
         setHasAlertedUser(true);
       }
-      const resp = await extractHandler(fileItem, uid);
-      return resp;
+      const response = await extractHandler(fileItem, uid);
+      return response;
     }
   };
 
@@ -362,12 +367,13 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'}`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
   };
+
+  console.log('queue', queue);
 
   const classNameCheck =
     isLeftExpanded && isRightExpanded

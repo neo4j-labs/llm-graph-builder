@@ -51,7 +51,8 @@ import IndeterminateCheckbox from './UI/CustomCheckBox';
 
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const { isExpanded, connectionStatus, setConnectionStatus, onInspect } = props;
-  const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } = useFileContext();
+  const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
+    useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -85,7 +86,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       });
     }
   );
-
 
   const columns = useMemo(
     () => [
@@ -508,7 +508,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     skipPageResetRef.current = false;
   }, [filesData.length]);
 
-
   console.log('fileData', filesData);
 
   // const updateFileStatus = (files: CustomFile[], queue: CustomFile[]) => {
@@ -522,7 +521,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   //   });
   //   return files;
   // };
-
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -546,19 +544,19 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   NodesCount: item?.nodeCount ?? 0,
                   processing: item?.processingTime ?? 'None',
                   relationshipCount: item?.relationshipCount ?? 0,
-                  status:
-                    queue.map((f) => f.name).includes(item.fileName) ? 'Waiting' :
-                      item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
-                        ? item?.status
-                        : item?.fileSource === 'local file'
-                          ? item?.status
-                          : item?.status === 'Completed' || item.status === 'Failed'
-                            ? item?.status
-                            : item?.fileSource == 'Wikipedia' ||
-                              item?.fileSource == 'youtube' ||
-                              item?.fileSource == 'gcs bucket'
-                              ? item?.status
-                              : 'N/A',
+                  status: queue.map((f) => f.name).includes(item.fileName)
+                    ? 'Waiting'
+                    : item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                    ? item?.status
+                    : item?.fileSource === 'local file'
+                    ? item?.status
+                    : item?.status === 'Completed' || item.status === 'Failed'
+                    ? item?.status
+                    : item?.fileSource == 'Wikipedia' ||
+                      item?.fileSource == 'youtube' ||
+                      item?.fileSource == 'gcs bucket'
+                    ? item?.status
+                    : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
                   source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
@@ -571,8 +569,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   language: item?.language ?? '',
                   processingProgress:
                     item?.processed_chunk != undefined &&
-                      item?.total_chunks != undefined &&
-                      !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
+                    item?.total_chunks != undefined &&
+                    !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
                   // total_pages: item?.total_pages ?? 0,
@@ -736,7 +734,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         })
       );
       setProcessedCount((prev) => {
-        console.log("Pooling count:", prev);
+        console.log('Pooling count:', prev);
         return prev === 2 ? 0 : prev + 1;
       });
     }
