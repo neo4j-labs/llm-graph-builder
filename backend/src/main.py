@@ -508,15 +508,11 @@ def get_labels_and_relationtypes(graph):
   query = """
           RETURN collect { 
           CALL db.labels() yield label 
-          WHERE NOT label  IN ['_Bloom_Perspective_'] 
-          AND NOT label STARTS WITH ('__') 
-          AND NOT label ENDS WITH('__')
+          WHERE NOT label  IN ['Chunk','_Bloom_Perspective_'] 
           return label order by label limit 100 } as labels, 
           collect { 
           CALL db.relationshipTypes() yield relationshipType  as type 
-          WHERE NOT type  IN ['_Bloom_Perspective_']
-          AND NOT type STARTS WITH ('__') 
-          AND NOT type ENDS WITH('__')
+          WHERE NOT type  IN ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_'] 
           return type order by type LIMIT 100 } as relationshipTypes
           """
   graphDb_data_Access = graphDBdataAccess(graph)
