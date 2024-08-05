@@ -19,7 +19,7 @@ import { postProcessing } from '../services/PostProcessing';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
-import { buttonCaptions, defaultLLM, largeFileSize, llms, tooltips } from '../utils/Constants';
+import { batchSize, buttonCaptions, defaultLLM, largeFileSize, llms, tooltips } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 import DropdownComponent from './Dropdown';
@@ -69,6 +69,9 @@ const Content: React.FC<ContentProps> = ({
     setRowSelection,
     setSelectedRels,
     postProcessingTasks,
+    queue,
+    processedCount,
+    setProcessedCount,
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
@@ -136,13 +139,24 @@ const Content: React.FC<ContentProps> = ({
     });
   }, [model]);
 
+  useEffect(() => {
+    if (processedCount == batchSize) {
+      setProcessedCount(0);
+      handleGenerateGraph(true, []);
+    }
+  }, [processedCount]);
+
+  useEffect(() => {
+    localStorage.setItem('waitingQueue', JSON.stringify({ db: userCredentials?.uri, queue: queue.items }));
+  }, [queue.items.length, userCredentials]);
+
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
       setModel(selectedOption?.value);
     }
   };
 
-  const extractData = async (uid: string, isselectedRows = false) => {
+  const extractData = async (uid: string, isselectedRows = false, filesTobeProcess: CustomFile[]) => {
     if (!isselectedRows) {
       const fileItem = filesData.find((f) => f.id == uid);
       if (fileItem) {
@@ -150,7 +164,7 @@ const Content: React.FC<ContentProps> = ({
         await extractHandler(fileItem, uid);
       }
     } else {
-      const fileItem = childRef.current?.getSelectedRows().find((f) => f.id == uid);
+      const fileItem = filesTobeProcess.find((f) => f.id == uid);
       if (fileItem) {
         setextractLoading(true);
         await extractHandler(fileItem, uid);
@@ -260,27 +274,83 @@ const Content: React.FC<ContentProps> = ({
   const handleGenerateGraph = (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => {
     const data = [];
     if (selectedfileslength && allowLargeFiles) {
-      for (let i = 0; i < selectedfileslength; i++) {
-        const row = childRef.current?.getSelectedRows()[i];
-        if (row?.status === 'New') {
-          data.push(extractData(row.id, true));
+      const selectedRows = childRef.current?.getSelectedRows();
+      const selectedNewFiles = childRef.current?.getSelectedRows().filter((f) => f.status === 'New');
+      if (!queue.isEmpty()) {
+        if (queue.size() > batchSize) {
+          const batch = queue.items.slice(0, batchSize);
+          for (let i = 0; i < batch.length; i++) {
+            data.push(extractData(batch[i].id, true, selectedRows as CustomFile[]));
+          }
+        } else {
+          const selectedFiles = selectedNewFiles;
+          const filesToProcess = [
+            ...queue.items.concat(selectedFiles?.slice(0, selectedFiles?.length - batchSize) as CustomFile[]),
+          ];
+          for (let i = 0; i < filesToProcess.length; i++) {
+            data.push(extractData(filesToProcess[i].id, true, selectedRows as CustomFile[]));
+          }
         }
+      } else if (selectedfileslength > batchSize) {
+        const filesToProcess = selectedNewFiles?.slice(0, batchSize) as CustomFile[];
+        for (let i = 0; i < filesToProcess.length; i++) {
+          data.push(extractData(filesToProcess[i].id, true, selectedRows as CustomFile[]));
+        }
+        const remainingFiles = [...(selectedNewFiles as CustomFile[])].splice(batchSize);
+        remainingFiles.forEach((f) => {
+          setFilesData((prev) => prev.map((pf) => (pf.id === f.id ? { ...pf, status: 'Waiting' } : pf)));
+          queue.enqueue(f);
+        });
+      } else {
+        for (let i = 0; i < selectedfileslength; i++) {
+          const row = childRef.current?.getSelectedRows()[i];
+          if (row?.status === 'New') {
+            data.push(extractData(row.id, true, selectedRows as CustomFile[]));
+          }
+        }
+        Promise.allSettled(data).then(async (_) => {
+          setextractLoading(false);
+          await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+        });
       }
-      Promise.allSettled(data).then(async (_) => {
-        setextractLoading(false);
-        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
-      });
     } else if (selectedFilesFromAllfiles.length && allowLargeFiles) {
-      // @ts-ignore
-      for (let i = 0; i < selectedFilesFromAllfiles.length; i++) {
-        if (selectedFilesFromAllfiles[i]?.status === 'New') {
-          data.push(extractData(selectedFilesFromAllfiles[i].id as string));
+      const newFilesFromSelectedFiles = selectedFilesFromAllfiles.filter((f) => f.status === 'New');
+      if (!queue.isEmpty()) {
+        if (queue.size() > batchSize) {
+          const batch = queue.items.slice(0, batchSize);
+          for (let i = 0; i < batch.length; i++) {
+            data.push(extractData(batch[i].id, false, selectedFilesFromAllfiles));
+          }
+        } else {
+          const selectedFiles = newFilesFromSelectedFiles;
+          const filesToProcess = queue.items.concat(
+            selectedFiles?.slice(0, selectedFiles?.length - batchSize) as CustomFile[]
+          );
+          for (let i = 0; i < filesToProcess.length; i++) {
+            data.push(extractData(filesToProcess[i].id, false, selectedFilesFromAllfiles));
+          }
         }
+      } else if (selectedFilesFromAllfiles.length > batchSize) {
+        const filesToProcess = newFilesFromSelectedFiles.slice(0, batchSize) as CustomFile[];
+        for (let i = 0; i < filesToProcess.length; i++) {
+          data.push(extractData(filesToProcess[i].id, false, selectedFilesFromAllfiles));
+        }
+        const remainingFiles = [...(newFilesFromSelectedFiles as CustomFile[])].splice(batchSize);
+        remainingFiles.forEach((f) => {
+          setFilesData((prev) => prev.map((pf) => (pf.id === f.id ? { ...pf, status: 'Waiting' } : pf)));
+          queue.enqueue(f);
+        });
+      } else {
+        for (let i = 0; i < selectedFilesFromAllfiles.length; i++) {
+          if (selectedFilesFromAllfiles[i]?.status === 'New') {
+            data.push(extractData(selectedFilesFromAllfiles[i].id as string, false, selectedFilesFromAllfiles));
+          }
+        }
+        Promise.allSettled(data).then(async (_) => {
+          setextractLoading(false);
+          await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+        });
       }
-      Promise.allSettled(data).then(async (_) => {
-        setextractLoading(false);
-        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
-      });
     }
   };
 

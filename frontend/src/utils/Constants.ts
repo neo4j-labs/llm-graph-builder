@@ -162,6 +162,8 @@ export const buttonCaptions = {
 
 export const taskParam: string[] = ['update_similarity_graph', 'create_fulltext_index', 'create_entity_embedding'];
 
+export const batchSize: number = parseInt(process.env.BATCH_SIZE ?? '2');
+
 export const nvlOptions: NvlOptions = {
   allowDynamicMinZoom: true,
   disableWebGL: true,

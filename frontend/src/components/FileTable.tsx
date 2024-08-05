@@ -51,7 +51,8 @@ import IndeterminateCheckbox from './UI/CustomCheckBox';
 
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const { isExpanded, connectionStatus, setConnectionStatus, onInspect } = props;
-  const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows } = useFileContext();
+  const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
+    useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -715,6 +716,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           return curfile;
         })
       );
+      setProcessedCount((prev) => prev + 1);
+      queue.remove(fileName);
     }
   };
 
