@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import React, { FC, lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Widget, Typography, Avatar, TextInput, IconButton, Modal, useCopyToClipboard } from '@neo4j-ndl/react';
 import {
   XMarkIconOutline,
@@ -21,7 +21,7 @@ import ButtonWithToolTip from '../UI/ButtonWithToolTip';
 import FallBackDialog from '../UI/FallBackDialog';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
 
-const Chatbot: React.FC<ChatbotProps> = (props) => {
+const Chatbot: FC<ChatbotProps> = (props) => {
   const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, clear } = props;
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
@@ -422,26 +422,26 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
           </ButtonWithToolTip>
         </form>
       </div>
-      <Modal
-        modalProps={{
-          id: 'retrieval-information',
-          className: 'n-p-token-4 n-bg-palette-neutral-bg-weak n-rounded-lg',
-        }}
-        onClose={() => setShowInfoModal(false)}
-        open={showInfoModal}
-      >
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <IconButton
-            size='large'
-            title='close pop up'
-            aria-label='close pop up'
-            clean
-            onClick={() => setShowInfoModal(false)}
-          >
-            <XMarkIconOutline />
-          </IconButton>
-        </div>
-        <Suspense fallback={<FallBackDialog></FallBackDialog>}>
+      <Suspense fallback={<FallBackDialog />}>
+        <Modal
+          modalProps={{
+            id: 'retrieval-information',
+            className: 'n-p-token-4 n-bg-palette-neutral-bg-weak n-rounded-lg',
+          }}
+          onClose={() => setShowInfoModal(false)}
+          open={showInfoModal}
+        >
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <IconButton
+              size='large'
+              title='close pop up'
+              aria-label='close pop up'
+              clean
+              onClick={() => setShowInfoModal(false)}
+            >
+              <XMarkIconOutline />
+            </IconButton>
+          </div>
           <InfoModal
             sources={sourcesModal}
             model={modelModal}
@@ -453,8 +453,8 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
             graphonly_entities={graphEntitites}
             error={messageError}
           />
-        </Suspense>
-      </Modal>
+        </Modal>
+      </Suspense>
     </div>
   );
 };
