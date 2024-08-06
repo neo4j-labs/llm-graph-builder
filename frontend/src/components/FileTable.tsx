@@ -115,7 +115,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             <div className='px-1'>
               <IndeterminateCheckbox
                 {...{
-                  checked: row.getIsSelected() || row.original.status === 'Waiting',
+                  checked: row.getIsSelected(),
                   disabled:
                     !row.getCanSelect() ||
                     row.original.status == 'Uploading' ||
@@ -570,7 +570,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         if (!res.data) {
           throw new Error('Please check backend connection');
         }
-
         const stringified = waitingQueue.reduce((accu, f) => {
           const key = f.id;
           // @ts-ignore
