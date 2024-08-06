@@ -145,16 +145,20 @@ def get_graph_document_list(
 ):
     futures = []
     graph_document_list = []
-    if llm.get_name() == "ChatOllama":
-        node_properties = False
+
+    if "diffbot_api_key" in dir(llm):
+        llm_transformer = llm
     else:
-        node_properties = ["description"]
-    llm_transformer = LLMGraphTransformer(
-        llm=llm,
-        node_properties=node_properties,
-        allowed_nodes=allowedNodes,
-        allowed_relationships=allowedRelationship,
-    )
+        if "get_name" in dir(llm) and llm.get_name() == "ChatOllama":
+            node_properties = False
+        else:
+            node_properties = ["description"]
+        llm_transformer = LLMGraphTransformer(
+            llm=llm,
+            node_properties=node_properties,
+            allowed_nodes=allowedNodes,
+            allowed_relationships=allowedRelationship,
+        )
     with ThreadPoolExecutor(max_workers=10) as executor:
         for chunk in combined_chunk_document_list:
             chunk_doc = Document(
