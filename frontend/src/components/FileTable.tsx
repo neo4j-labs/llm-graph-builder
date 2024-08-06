@@ -729,7 +729,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           return curfile;
         })
       );
-      setProcessedCount((prev) => (prev === 2 ? 0 : prev + 1));
+      setProcessedCount((prev) => {
+        if (prev == 2) {
+          return 1;
+        } 
+          return prev + 1;
+        
+      });
       queue.remove(fileName);
     }
   };

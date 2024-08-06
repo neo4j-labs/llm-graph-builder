@@ -60,7 +60,13 @@ export default function useServerSideEvent(
           return curfile;
         });
       });
-      setProcessedCount((prev) => (prev === 2 ? 0 : prev + 1));
+      setProcessedCount((prev) => {
+        if (prev == 2) {
+          return 1;
+        } 
+          return prev + 1;
+        
+      });
       queue.remove(fileName);
     } else if (eventSourceRes.status === 'Failed') {
       setFilesData((prevfiles) => {
