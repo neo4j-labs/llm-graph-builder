@@ -115,7 +115,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             <div className='px-1'>
               <IndeterminateCheckbox
                 {...{
-                  checked: row.getIsSelected(),
+                  checked: row.getIsSelected() || row.original.status === 'Waiting',
                   disabled:
                     !row.getCanSelect() ||
                     row.original.status == 'Uploading' ||

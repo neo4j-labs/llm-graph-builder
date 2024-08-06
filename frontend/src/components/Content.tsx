@@ -34,7 +34,6 @@ import { tokens } from '@neo4j-ndl/base';
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 let afterFirstRender = false;
-
 const Content: React.FC<ContentProps> = ({
   isLeftExpanded,
   isRightExpanded,
