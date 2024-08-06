@@ -116,7 +116,10 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 {...{
                   checked: row.getIsSelected(),
                   disabled:
-                    !row.getCanSelect() || row.original.status == 'Uploading' || row.original.status === 'Processing',
+                    !row.getCanSelect() ||
+                    row.original.status == 'Uploading' ||
+                    row.original.status === 'Processing' ||
+                    row.original.status === 'Waiting',
                   indeterminate: row.getIsSomeSelected(),
                   onChange: row.getToggleSelectedHandler(),
                 }}
@@ -732,9 +735,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       setProcessedCount((prev) => {
         if (prev == 2) {
           return 1;
-        } 
-          return prev + 1;
-        
+        }
+        return prev + 1;
       });
       queue.remove(fileName);
     }

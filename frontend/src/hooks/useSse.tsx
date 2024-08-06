@@ -63,9 +63,8 @@ export default function useServerSideEvent(
       setProcessedCount((prev) => {
         if (prev == 2) {
           return 1;
-        } 
-          return prev + 1;
-        
+        }
+        return prev + 1;
       });
       queue.remove(fileName);
     } else if (eventSourceRes.status === 'Failed') {

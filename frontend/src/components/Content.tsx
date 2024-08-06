@@ -469,7 +469,10 @@ const Content: React.FC<ContentProps> = ({
     [childRef.current?.getSelectedRows()]
   );
 
-  const dropdowncheck = useMemo(() => !filesData.some((f) => f.status === 'New'), [filesData]);
+  const dropdowncheck = useMemo(
+    () => !filesData.some((f) => f.status === 'New' || f.status === 'Waiting'),
+    [filesData]
+  );
 
   const disableCheck = useMemo(
     () => (!selectedfileslength ? dropdowncheck : !newFilecheck),
