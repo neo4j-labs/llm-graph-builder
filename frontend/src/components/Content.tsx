@@ -33,7 +33,7 @@ import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
 import { tokens } from '@neo4j-ndl/base';
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
-
+let afterFirstRender = false;
 const Content: React.FC<ContentProps> = ({
   isLeftExpanded,
   isRightExpanded,
@@ -140,14 +140,19 @@ const Content: React.FC<ContentProps> = ({
   }, [model]);
 
   useEffect(() => {
+    if (afterFirstRender) {
+      localStorage.setItem('processedCount', JSON.stringify({ db: userCredentials?.uri, count: processedCount }));
+    }
     if (processedCount == batchSize) {
-      setProcessedCount(0);
       handleGenerateGraph(true, []);
     }
-  }, [processedCount]);
+  }, [processedCount, userCredentials]);
 
   useEffect(() => {
-    localStorage.setItem('waitingQueue', JSON.stringify({ db: userCredentials?.uri, queue: queue.items }));
+    if (afterFirstRender) {
+      localStorage.setItem('waitingQueue', JSON.stringify({ db: userCredentials?.uri, queue: queue.items }));
+    }
+    afterFirstRender = true;
   }, [queue.items.length, userCredentials]);
 
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
@@ -285,7 +290,14 @@ const Content: React.FC<ContentProps> = ({
         } else {
           const selectedFiles = selectedNewFiles;
           const filesToProcess = [
-            ...queue.items.concat(selectedFiles?.slice(0, selectedFiles?.length - batchSize) as CustomFile[]),
+            ...queue.items.concat(
+              selectedFiles?.slice(
+                0,
+                selectedFiles.length + queue.size() > batchSize
+                  ? selectedFiles?.length - batchSize
+                  : selectedFiles.length
+              ) as CustomFile[]
+            ),
           ];
           for (let i = 0; i < filesToProcess.length; i++) {
             data.push(extractData(filesToProcess[i].id, true, selectedRows as CustomFile[]));
@@ -324,7 +336,10 @@ const Content: React.FC<ContentProps> = ({
         } else {
           const selectedFiles = newFilesFromSelectedFiles;
           const filesToProcess = queue.items.concat(
-            selectedFiles?.slice(0, selectedFiles?.length - batchSize) as CustomFile[]
+            selectedFiles?.slice(
+              0,
+              selectedFiles.length + queue.size() > batchSize ? selectedFiles?.length - batchSize : selectedFiles.length
+            ) as CustomFile[]
           );
           for (let i = 0; i < filesToProcess.length; i++) {
             data.push(extractData(filesToProcess[i].id, false, selectedFilesFromAllfiles));
@@ -384,6 +399,8 @@ const Content: React.FC<ContentProps> = ({
   };
 
   const disconnect = () => {
+    queue.clear();
+    setProcessedCount(0);
     setConnectionStatus(false);
     localStorage.removeItem('password');
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
@@ -441,6 +458,8 @@ const Content: React.FC<ContentProps> = ({
         childRef.current?.getSelectedRows() as CustomFile[],
         deleteEntities
       );
+      queue.clear();
+      setProcessedCount(0);
       setRowSelection({});
       setdeleteLoading(false);
       if (response.data.status == 'Success') {

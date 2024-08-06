@@ -18,7 +18,7 @@ class Queue {
 
   peek() {
     if (this.isEmpty()) {
-      return 'Queue is empty';
+      return -1;
     }
     return this.items[0];
   }
@@ -33,6 +33,10 @@ class Queue {
 
   remove(name: string) {
     this.items = [...this.items.filter((f) => f.name != name)];
+  }
+
+  clear() {
+    this.items = [];
   }
 }
 export default Queue;

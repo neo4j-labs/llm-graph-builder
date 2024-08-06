@@ -114,7 +114,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             <div className='px-1'>
               <IndeterminateCheckbox
                 {...{
-                  checked: row.getIsSelected(),
+                  checked: row.getIsSelected() || row.original.status === 'Waiting',
                   disabled:
                     !row.getCanSelect() || row.original.status == 'Uploading' || row.original.status === 'Processing',
                   indeterminate: row.getIsSomeSelected(),
@@ -515,11 +515,14 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         if (!res.data) {
           throw new Error('Please check backend connection');
         }
+        const waitingQueue = JSON.parse(localStorage.getItem('waitingQueue') ?? JSON.stringify({ queue: [] })).queue;
         if (res.data.status !== 'Failed') {
           const prefiles: CustomFile[] = [];
           if (res.data.data.length) {
             res.data.data.forEach((item: SourceNode) => {
               if (item.fileName != undefined && item.fileName.length) {
+                const waitingFile =
+                  waitingQueue.length && waitingQueue.find((f: CustomFile) => f.name === item.fileName);
                 prefiles.push({
                   name: item?.fileName,
                   size: item?.fileSize ?? 0,
@@ -529,20 +532,21 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   NodesCount: item?.nodeCount ?? 0,
                   processing: item?.processingTime ?? 'None',
                   relationshipCount: item?.relationshipCount ?? 0,
-                  status:
-                    item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
-                      ? item?.status
-                      : item?.fileSource === 'local file'
-                      ? item?.status
-                      : item?.status === 'Completed' || item.status === 'Failed'
-                      ? item?.status
-                      : item?.fileSource == 'Wikipedia' ||
-                        item?.fileSource == 'youtube' ||
-                        item?.fileSource == 'gcs bucket'
-                      ? item?.status
-                      : 'N/A',
+                  status: waitingFile
+                    ? 'Waiting'
+                    : item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                    ? item?.status
+                    : item?.fileSource === 'local file'
+                    ? item?.status
+                    : item?.status === 'Completed' || item.status === 'Failed'
+                    ? item?.status
+                    : item?.fileSource == 'Wikipedia' ||
+                      item?.fileSource == 'youtube' ||
+                      item?.fileSource == 'gcs bucket'
+                    ? item?.status
+                    : 'N/A',
                   model: item?.model ?? model,
-                  id: uuidv4(),
+                  id: !waitingFile ? uuidv4() : waitingFile.id,
                   source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
                   fileSource: item?.fileSource ?? 'None',
                   gcsBucket: item?.gcsBucket,
@@ -716,7 +720,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           return curfile;
         })
       );
-      setProcessedCount((prev) => prev + 1);
+      setProcessedCount((prev) => (prev === 2 ? 0 : prev + 1));
       queue.remove(fileName);
     }
   };
