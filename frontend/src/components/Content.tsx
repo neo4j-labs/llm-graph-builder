@@ -144,7 +144,7 @@ const Content: React.FC<ContentProps> = ({
       localStorage.setItem('processedCount', JSON.stringify({ db: userCredentials?.uri, count: processedCount }));
     }
     if (processedCount == batchSize) {
-      handleGenerateGraph(true, []);
+      handleGenerateGraph([]);
     }
   }, [processedCount, userCredentials]);
 
@@ -276,9 +276,9 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
-  const handleGenerateGraph = (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => {
+  const handleGenerateGraph = (selectedFilesFromAllfiles: CustomFile[]) => {
     const data = [];
-    if (selectedfileslength && allowLargeFiles) {
+    if (selectedfileslength) {
       const selectedRows = childRef.current?.getSelectedRows();
       const selectedNewFiles = childRef.current?.getSelectedRows().filter((f) => f.status === 'New');
       if (!queue.isEmpty()) {
@@ -301,9 +301,8 @@ const Content: React.FC<ContentProps> = ({
                       ...pf,
                       status: 'Waiting',
                     };
-                  } 
-                    return pf;
-                  
+                  }
+                  return pf;
                 })
               );
               queue.enqueue(f);
@@ -329,9 +328,8 @@ const Content: React.FC<ContentProps> = ({
                   ...pf,
                   status: 'Waiting',
                 };
-              } 
-                return pf;
-              
+              }
+              return pf;
             })
           );
           queue.enqueue(f);
@@ -348,7 +346,7 @@ const Content: React.FC<ContentProps> = ({
           await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
         });
       }
-    } else if (selectedFilesFromAllfiles.length && allowLargeFiles) {
+    } else if (selectedFilesFromAllfiles.length) {
       const newFilesFromSelectedFiles = selectedFilesFromAllfiles.filter((f) => f.status === 'New');
       if (!queue.isEmpty()) {
         if (queue.size() > batchSize) {
@@ -370,9 +368,8 @@ const Content: React.FC<ContentProps> = ({
                       ...pf,
                       status: 'Waiting',
                     };
-                  } 
-                    return pf;
-                  
+                  }
+                  return pf;
                 })
               );
               queue.enqueue(f);
@@ -398,9 +395,8 @@ const Content: React.FC<ContentProps> = ({
                   ...pf,
                   status: 'Waiting',
                 };
-              } 
-                return pf;
-              
+              }
+              return pf;
             })
           );
           queue.enqueue(f);
@@ -596,9 +592,8 @@ const Content: React.FC<ContentProps> = ({
       });
       if (selectedLargeFiles.length) {
         setshowConfirmationModal(true);
-        handleGenerateGraph(false, []);
       } else {
-        handleGenerateGraph(true, filesData);
+        handleGenerateGraph(filesData);
       }
     } else if (filesData.length) {
       const largefiles = filesData.filter((f) => {
@@ -617,9 +612,8 @@ const Content: React.FC<ContentProps> = ({
       setRowSelection(stringified);
       if (largefiles.length) {
         setshowConfirmationModal(true);
-        handleGenerateGraph(false, []);
       } else {
-        handleGenerateGraph(true, filesData);
+        handleGenerateGraph(filesData);
       }
     }
   };
