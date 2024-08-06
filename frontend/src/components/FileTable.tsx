@@ -114,7 +114,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             <div className='px-1'>
               <IndeterminateCheckbox
                 {...{
-                  checked: row.getIsSelected() || row.original.status === 'Waiting',
+                  checked: row.getIsSelected(),
                   disabled:
                     !row.getCanSelect() || row.original.status == 'Uploading' || row.original.status === 'Processing',
                   indeterminate: row.getIsSomeSelected(),
@@ -515,7 +515,16 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         if (!res.data) {
           throw new Error('Please check backend connection');
         }
-        const waitingQueue = JSON.parse(localStorage.getItem('waitingQueue') ?? JSON.stringify({ queue: [] })).queue;
+        const waitingQueue: CustomFile[] = JSON.parse(
+          localStorage.getItem('waitingQueue') ?? JSON.stringify({ queue: [] })
+        ).queue;
+        const stringified = waitingQueue.reduce((accu, f) => {
+          const key = f.id;
+          // @ts-ignore
+          accu[key] = true;
+          return accu;
+        }, {});
+        setRowSelection(stringified);
         if (res.data.status !== 'Failed') {
           const prefiles: CustomFile[] = [];
           if (res.data.data.length) {

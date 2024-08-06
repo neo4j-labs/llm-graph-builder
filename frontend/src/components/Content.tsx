@@ -288,17 +288,29 @@ const Content: React.FC<ContentProps> = ({
             data.push(extractData(batch[i].id, true, selectedRows as CustomFile[]));
           }
         } else {
-          const selectedFiles = selectedNewFiles;
-          const filesToProcess = [
-            ...queue.items.concat(
-              selectedFiles?.slice(
-                0,
-                selectedFiles.length + queue.size() > batchSize
-                  ? selectedFiles?.length - batchSize
-                  : selectedFiles.length
-              ) as CustomFile[]
-            ),
-          ];
+          let mergedfiles = [...queue.items, ...(selectedNewFiles as CustomFile[])];
+          let filesToProcess: CustomFile[] = [];
+          if (mergedfiles.length > batchSize) {
+            filesToProcess = mergedfiles.slice(0, batchSize);
+            const remainingFiles = [...(mergedfiles as CustomFile[])].splice(batchSize);
+            remainingFiles.forEach((f) => {
+              setFilesData((prev) =>
+                prev.map((pf) => {
+                  if (pf.id === f.id) {
+                    return {
+                      ...pf,
+                      status: 'Waiting',
+                    };
+                  } 
+                    return pf;
+                  
+                })
+              );
+              queue.enqueue(f);
+            });
+          } else {
+            filesToProcess = mergedfiles;
+          }
           for (let i = 0; i < filesToProcess.length; i++) {
             data.push(extractData(filesToProcess[i].id, true, selectedRows as CustomFile[]));
           }
@@ -310,7 +322,18 @@ const Content: React.FC<ContentProps> = ({
         }
         const remainingFiles = [...(selectedNewFiles as CustomFile[])].splice(batchSize);
         remainingFiles.forEach((f) => {
-          setFilesData((prev) => prev.map((pf) => (pf.id === f.id ? { ...pf, status: 'Waiting' } : pf)));
+          setFilesData((prev) =>
+            prev.map((pf) => {
+              if (pf.id === f.id) {
+                return {
+                  ...pf,
+                  status: 'Waiting',
+                };
+              } 
+                return pf;
+              
+            })
+          );
           queue.enqueue(f);
         });
       } else {
@@ -334,13 +357,29 @@ const Content: React.FC<ContentProps> = ({
             data.push(extractData(batch[i].id, false, selectedFilesFromAllfiles));
           }
         } else {
-          const selectedFiles = newFilesFromSelectedFiles;
-          const filesToProcess = queue.items.concat(
-            selectedFiles?.slice(
-              0,
-              selectedFiles.length + queue.size() > batchSize ? selectedFiles?.length - batchSize : selectedFiles.length
-            ) as CustomFile[]
-          );
+          let mergedfiles = [...queue.items, ...newFilesFromSelectedFiles];
+          let filesToProcess: CustomFile[] = [];
+          if (mergedfiles.length > batchSize) {
+            filesToProcess = mergedfiles.slice(0, batchSize);
+            const remainingFiles = [...(mergedfiles as CustomFile[])].splice(batchSize);
+            remainingFiles.forEach((f) => {
+              setFilesData((prev) =>
+                prev.map((pf) => {
+                  if (pf.id === f.id) {
+                    return {
+                      ...pf,
+                      status: 'Waiting',
+                    };
+                  } 
+                    return pf;
+                  
+                })
+              );
+              queue.enqueue(f);
+            });
+          } else {
+            filesToProcess = mergedfiles;
+          }
           for (let i = 0; i < filesToProcess.length; i++) {
             data.push(extractData(filesToProcess[i].id, false, selectedFilesFromAllfiles));
           }
@@ -352,7 +391,18 @@ const Content: React.FC<ContentProps> = ({
         }
         const remainingFiles = [...(newFilesFromSelectedFiles as CustomFile[])].splice(batchSize);
         remainingFiles.forEach((f) => {
-          setFilesData((prev) => prev.map((pf) => (pf.id === f.id ? { ...pf, status: 'Waiting' } : pf)));
+          setFilesData((prev) =>
+            prev.map((pf) => {
+              if (pf.id === f.id) {
+                return {
+                  ...pf,
+                  status: 'Waiting',
+                };
+              } 
+                return pf;
+              
+            })
+          );
           queue.enqueue(f);
         });
       } else {
