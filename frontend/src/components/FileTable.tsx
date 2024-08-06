@@ -58,6 +58,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [statusFilter, setstatusFilter] = useState<string>('');
   const [filetypeFilter, setFiletypeFilter] = useState<string>('');
+  const [fileSourceFilter, setFileSourceFilter] = useState<string>('');
   const [llmtypeFilter, setLLmtypeFilter] = useState<string>('');
   const skipPageResetRef = useRef<boolean>(false);
   const [alertDetails, setalertDetails] = useState<alertStateType>({
@@ -326,21 +327,71 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 <span>
                   <TextLink externalLink href={info.row.original.source_url}>
                     {info.row.original.fileSource}
-                  </TextLink>{' '}
-                  /
+                  </TextLink>
                 </span>
+              </Flex>
+            );
+          }
+          return (
+            <div>
+              <span>{info.row.original.fileSource}</span>
+            </div>
+          );
+        },
+        header: () => <span>Source</span>,
+        footer: (info) => info.column.id,
+        filterFn: 'fileSourceFilter' as any,
+        meta: {
+          columnActions: {
+            actions: [
+              {
+                title: (
+                  <span className={`${fileSourceFilter === 'All' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                    All types
+                  </span>
+                ),
+                onClick: () => {
+                  setFileSourceFilter('All');
+                  table.getColumn('source')?.setFilterValue(true);
+                },
+              },
+              ...Array.from(new Set(filesData.map((f) => f.fileSource))).map((t) => {
+                return {
+                  title: (
+                    <span className={`${t === fileSourceFilter ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>{t}</span>
+                  ),
+                  onClick: () => {
+                    setFileSourceFilter(t as string);
+                    table.getColumn('source')?.setFilterValue(true);
+                    skipPageResetRef.current = true;
+                  },
+                };
+              }),
+            ],
+            defaultSortingActions: false,
+          },
+        },
+      }),
+      columnHelper.accessor((row) => row, {
+        id: 'type',
+        cell: (info) => {
+          if (
+            info.row.original.type === 'pdf' ||
+            info.row.original.type === 'txt'
+          ) {
+            return (
+              <Flex>
                 <Typography variant='body-medium'>{info.row.original.type}</Typography>
               </Flex>
             );
           }
           return (
             <div>
-              <span>{info.row.original.fileSource} / </span>
               <span>{info.row.original.type}</span>
             </div>
           );
         },
-        header: () => <span>Source/Type</span>,
+        header: () => <span>Type</span>,
         footer: (info) => info.column.id,
         filterFn: 'fileTypeFilter' as any,
         meta: {
@@ -354,7 +405,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 ),
                 onClick: () => {
                   setFiletypeFilter('All');
-                  table.getColumn('source')?.setFilterValue(true);
+                  table.getColumn('type')?.setFilterValue(true);
                 },
               },
               ...Array.from(new Set(filesData.map((f) => f.type))).map((t) => {
@@ -457,7 +508,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         footer: (info) => info.column.id,
       }),
     ],
-    [filesData.length, statusFilter, filetypeFilter, llmtypeFilter]
+    [filesData.length, statusFilter, filetypeFilter, llmtypeFilter, fileSourceFilter]
   );
 
   const table = useReactTable({
@@ -485,6 +536,12 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           return true;
         }
         return row.original.type === filetypeFilter;
+      },
+      fileSourceFilter: (row) => {
+        if (fileSourceFilter === 'All') {
+          return true;
+        }
+        return row.original.fileSource === fileSourceFilter;
       },
       llmTypeFilter: (row) => {
         if (llmtypeFilter === 'All') {
@@ -532,14 +589,14 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                     item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                       ? item?.status
                       : item?.fileSource === 'local file'
-                      ? item?.status
-                      : item?.status === 'Completed' || item.status === 'Failed'
-                      ? item?.status
-                      : item?.fileSource == 'Wikipedia' ||
-                        item?.fileSource == 'youtube' ||
-                        item?.fileSource == 'gcs bucket'
-                      ? item?.status
-                      : 'N/A',
+                        ? item?.status
+                        : item?.status === 'Completed' || item.status === 'Failed'
+                          ? item?.status
+                          : item?.fileSource == 'Wikipedia' ||
+                            item?.fileSource == 'youtube' ||
+                            item?.fileSource == 'gcs bucket'
+                            ? item?.status
+                            : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
                   source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
@@ -552,8 +609,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   language: item?.language ?? '',
                   processingProgress:
                     item?.processed_chunk != undefined &&
-                    item?.total_chunks != undefined &&
-                    !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
+                      item?.total_chunks != undefined &&
+                      !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
                   // total_pages: item?.total_pages ?? 0,
