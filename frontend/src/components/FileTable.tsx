@@ -48,7 +48,7 @@ import cancelAPI from '../services/CancelAPI';
 import IconButtonWithToolTip from './UI/IconButtonToolTip';
 import { largeFileSize, llms } from '../utils/Constants';
 import IndeterminateCheckbox from './UI/CustomCheckBox';
-
+let onlyfortheFirstRender = true;
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const { isExpanded, connectionStatus, setConnectionStatus, onInspect } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
@@ -511,6 +511,9 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   }, [filesData.length]);
 
   useEffect(() => {
+    const waitingQueue: CustomFile[] = JSON.parse(
+      localStorage.getItem('waitingQueue') ?? JSON.stringify({ queue: [] })
+    ).queue;
     const fetchFiles = async () => {
       try {
         setIsLoading(true);
@@ -518,9 +521,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         if (!res.data) {
           throw new Error('Please check backend connection');
         }
-        const waitingQueue: CustomFile[] = JSON.parse(
-          localStorage.getItem('waitingQueue') ?? JSON.stringify({ queue: [] })
-        ).queue;
+
         const stringified = waitingQueue.reduce((accu, f) => {
           const key = f.id;
           // @ts-ignore
@@ -535,6 +536,15 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               if (item.fileName != undefined && item.fileName.length) {
                 const waitingFile =
                   waitingQueue.length && waitingQueue.find((f: CustomFile) => f.name === item.fileName);
+                if (waitingFile && item.status === 'Completed') {
+                  setProcessedCount((prev) => {
+                    if (prev === 2) {
+                      return 1;
+                    }
+                    return prev + 1;
+                  });
+                  queue.remove(item.fileName);
+                }
                 prefiles.push({
                   name: item?.fileName,
                   size: item?.fileSize ?? 0,
@@ -645,6 +655,30 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       setFilesData([]);
     }
   }, [connectionStatus, userCredentials]);
+
+  useEffect(() => {
+    if (connectionStatus && filesData.length && onlyfortheFirstRender) {
+      const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
+      if (processingFilesCount) {
+        if (processingFilesCount === 1) {
+          setProcessedCount(1);
+        }
+        setalertDetails({
+          showAlert: true,
+          alertType: 'info',
+          alertMessage: `Files are in processing please wait till previous batch completes`,
+        });
+      } else {
+        const waitingQueue: CustomFile[] = JSON.parse(
+          localStorage.getItem('waitingQueue') ?? JSON.stringify({ queue: [] })
+        ).queue;
+        if (waitingQueue.length) {
+          props.handleGenerateGraph([]);
+        }
+      }
+      onlyfortheFirstRender = false;
+    }
+  }, [connectionStatus, filesData.length]);
 
   const cancelHandler = async (fileName: string, id: string, fileSource: string) => {
     setFilesData((prevfiles) =>

@@ -45,7 +45,6 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const selectedNodeLabelstr = localStorage.getItem('selectedNodeLabels');
   const selectedNodeRelsstr = localStorage.getItem('selectedRelationshipLabels');
   const persistedQueue = localStorage.getItem('waitingQueue');
-  const persistedProcessedCount = localStorage.getItem('processedCount');
   const { userCredentials } = useCredentials();
   const [files, setFiles] = useState<(File | null)[] | []>([]);
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
@@ -66,9 +65,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     show: false,
   });
   const [postProcessingTasks, setPostProcessingTasks] = useState<string[]>([]);
-  const [processedCount, setProcessedCount] = useState<number>(
-    JSON.parse(persistedProcessedCount ?? JSON.stringify({ count: 0 })).count
-  );
+  const [processedCount, setProcessedCount] = useState<number>(0);
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
       const selectedNodeLabel = JSON.parse(selectedNodeLabelstr);

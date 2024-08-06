@@ -412,6 +412,17 @@ const Content: React.FC<ContentProps> = ({
           await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
         });
       }
+    } else if (!queue.isEmpty()) {
+      if (queue.size() > batchSize) {
+        const batch = queue.items.slice(0, batchSize);
+        for (let i = 0; i < batch.length; i++) {
+          data.push(extractData(batch[i].id, true, queue.items));
+        }
+      } else {
+        for (let i = 0; i < queue.items.length; i++) {
+          data.push(extractData(queue.items[i].id, true, queue.items));
+        }
+      }
     }
   };
 
@@ -747,6 +758,7 @@ const Content: React.FC<ContentProps> = ({
             setViewPoint('tableView');
           }}
           ref={childRef}
+          handleGenerateGraph={handleGenerateGraph}
         ></FileTable>
         <Flex
           className={`${
