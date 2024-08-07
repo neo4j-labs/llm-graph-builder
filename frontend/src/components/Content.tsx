@@ -284,131 +284,93 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
-  const handleGenerateGraph = (selectedFilesFromAllfiles: CustomFile[]) => {
+  const triggerBatchProcessing = (
+    batch: CustomFile[],
+    selectedFiles: CustomFile[],
+    isSelectedFiles: boolean,
+    newCheck: boolean
+  ) => {
     const data = [];
+    for (let i = 0; i < batch.length; i++) {
+      if (newCheck) {
+        if (batch[i]?.status === 'New') {
+          data.push(extractData(batch[i].id, isSelectedFiles, selectedFiles as CustomFile[]));
+        }
+      } else {
+        data.push(extractData(batch[i].id, isSelectedFiles, selectedFiles as CustomFile[]));
+      }
+    }
+    return data;
+  };
+
+  const addFilesToQueue = (remainingFiles: CustomFile[]) => {
+    remainingFiles.forEach((f) => {
+      setFilesData((prev) =>
+        prev.map((pf) => {
+          if (pf.id === f.id) {
+            return {
+              ...pf,
+              status: 'Waiting',
+            };
+          }
+          return pf;
+        })
+      );
+      queue.enqueue(f);
+    });
+  };
+
+  const scheduleBatchWiseProcess  = (selectedRows: CustomFile[], selectedNewFiles: CustomFile[], isSelectedFiles: boolean) => {
+    let data = [];
+    if (queue.size() > batchSize) {
+      const batch = queue.items.slice(0, batchSize);
+      data = triggerBatchProcessing(batch, selectedRows as CustomFile[], isSelectedFiles, false);
+    } else {
+      let mergedfiles = [...queue.items, ...(selectedNewFiles as CustomFile[])];
+      let filesToProcess: CustomFile[] = [];
+      if (mergedfiles.length > batchSize) {
+        filesToProcess = mergedfiles.slice(0, batchSize);
+        const remainingFiles = [...(mergedfiles as CustomFile[])].splice(batchSize);
+        addFilesToQueue(remainingFiles);
+      } else {
+        filesToProcess = mergedfiles;
+      }
+      data = triggerBatchProcessing(filesToProcess, selectedRows as CustomFile[], isSelectedFiles, false);
+    }
+    return data;
+  };
+
+
+  const handleGenerateGraph = (selectedFilesFromAllfiles: CustomFile[]) => {
+    let data = [];
     const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
     if (selectedfileslength && processingFilesCount < batchSize) {
       const selectedRows = childRef.current?.getSelectedRows();
       const selectedNewFiles = childRef.current?.getSelectedRows().filter((f) => f.status === 'New');
       if (!queue.isEmpty()) {
-        if (queue.size() > batchSize) {
-          const batch = queue.items.slice(0, batchSize);
-          for (let i = 0; i < batch.length; i++) {
-            data.push(extractData(batch[i].id, true, selectedRows as CustomFile[]));
-          }
-        } else {
-          let mergedfiles = [...queue.items, ...(selectedNewFiles as CustomFile[])];
-          let filesToProcess: CustomFile[] = [];
-          if (mergedfiles.length > batchSize) {
-            filesToProcess = mergedfiles.slice(0, batchSize);
-            const remainingFiles = [...(mergedfiles as CustomFile[])].splice(batchSize);
-            remainingFiles.forEach((f) => {
-              setFilesData((prev) =>
-                prev.map((pf) => {
-                  if (pf.id === f.id) {
-                    return {
-                      ...pf,
-                      status: 'Waiting',
-                    };
-                  }
-                  return pf;
-                })
-              );
-              queue.enqueue(f);
-            });
-          } else {
-            filesToProcess = mergedfiles;
-          }
-          for (let i = 0; i < filesToProcess.length; i++) {
-            data.push(extractData(filesToProcess[i].id, true, selectedRows as CustomFile[]));
-          }
-        }
+        data = scheduleBatchWiseProcess(selectedRows as CustomFile[], selectedNewFiles as CustomFile[], true);
       } else if (selectedfileslength > batchSize) {
         const filesToProcess = selectedNewFiles?.slice(0, batchSize) as CustomFile[];
-        for (let i = 0; i < filesToProcess.length; i++) {
-          data.push(extractData(filesToProcess[i].id, true, selectedRows as CustomFile[]));
-        }
+        data = triggerBatchProcessing(filesToProcess, selectedRows as CustomFile[], true, false);
         const remainingFiles = [...(selectedNewFiles as CustomFile[])].splice(batchSize);
-        remainingFiles.forEach((f) => {
-          setFilesData((prev) =>
-            prev.map((pf) => {
-              if (pf.id === f.id) {
-                return {
-                  ...pf,
-                  status: 'Waiting',
-                };
-              }
-              return pf;
-            })
-          );
-          queue.enqueue(f);
-        });
+        addFilesToQueue(remainingFiles);
       } else {
         let filesTobeProcess = childRef.current?.getSelectedRows() as CustomFile[];
         if (selectedfileslength + processingFilesCount > batchSize) {
           filesTobeProcess = childRef.current?.getSelectedRows().slice(0, 1) as CustomFile[];
           const remainingFiles = [...(childRef.current?.getSelectedRows() as CustomFile[])].splice(1);
-          remainingFiles.forEach((f) => {
-            setFilesData((prev) =>
-              prev.map((pf) => {
-                if (pf.id === f.id) {
-                  return {
-                    ...pf,
-                    status: 'Waiting',
-                  };
-                }
-                return pf;
-              })
-            );
-            queue.enqueue(f);
-          });
+          addFilesToQueue(remainingFiles);
         }
-        for (let i = 0; i < filesTobeProcess.length; i++) {
-          const row = filesTobeProcess[i];
-          if (row?.status === 'New') {
-            data.push(extractData(row.id, true, selectedRows as CustomFile[]));
-          }
-        }
-        Promise.allSettled(data).then(async (_) => {
-          setextractLoading(false);
-          await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
-        });
+        data = triggerBatchProcessing(filesTobeProcess, selectedRows as CustomFile[], true, true);
       }
+      Promise.allSettled(data).then(async (_) => {
+        setextractLoading(false);
+        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+      });
     } else if (selectedFilesFromAllfiles.length && processingFilesCount < batchSize) {
       const newFilesFromSelectedFiles = selectedFilesFromAllfiles.filter((f) => f.status === 'New');
       if (!queue.isEmpty()) {
-        if (queue.size() > batchSize) {
-          const batch = queue.items.slice(0, batchSize);
-          for (let i = 0; i < batch.length; i++) {
-            data.push(extractData(batch[i].id, false, selectedFilesFromAllfiles));
-          }
-        } else {
-          let mergedfiles = [...queue.items, ...newFilesFromSelectedFiles];
-          let filesToProcess: CustomFile[] = [];
-          if (mergedfiles.length > batchSize) {
-            filesToProcess = mergedfiles.slice(0, batchSize);
-            const remainingFiles = [...(mergedfiles as CustomFile[])].splice(batchSize);
-            remainingFiles.forEach((f) => {
-              setFilesData((prev) =>
-                prev.map((pf) => {
-                  if (pf.id === f.id) {
-                    return {
-                      ...pf,
-                      status: 'Waiting',
-                    };
-                  }
-                  return pf;
-                })
-              );
-              queue.enqueue(f);
-            });
-          } else {
-            filesToProcess = mergedfiles;
-          }
-          for (let i = 0; i < filesToProcess.length; i++) {
-            data.push(extractData(filesToProcess[i].id, false, selectedFilesFromAllfiles));
-          }
-        }
+        data = scheduleBatchWiseProcess(selectedFilesFromAllfiles, newFilesFromSelectedFiles, false);
       } else if (selectedFilesFromAllfiles.length > batchSize) {
         const batchFiles = newFilesFromSelectedFiles.slice(0, batchSize) as CustomFile[];
         let filesToProcess: CustomFile[] = [];
@@ -417,47 +379,15 @@ const Content: React.FC<ContentProps> = ({
           const remainingFiles = [...(newFilesFromSelectedFiles as CustomFile[])]
             .splice(batchSize)
             .concat(batchFiles.splice(1));
-          remainingFiles.forEach((f) => {
-            setFilesData((prev) =>
-              prev.map((pf) => {
-                if (pf.id === f.id) {
-                  return {
-                    ...pf,
-                    status: 'Waiting',
-                  };
-                }
-                return pf;
-              })
-            );
-            queue.enqueue(f);
-          });
+          addFilesToQueue(remainingFiles);
         } else {
           filesToProcess = batchFiles;
           const remainingFiles = [...(newFilesFromSelectedFiles as CustomFile[])].splice(batchSize);
-          remainingFiles.forEach((f) => {
-            setFilesData((prev) =>
-              prev.map((pf) => {
-                if (pf.id === f.id) {
-                  return {
-                    ...pf,
-                    status: 'Waiting',
-                  };
-                }
-                return pf;
-              })
-            );
-            queue.enqueue(f);
-          });
+          addFilesToQueue(remainingFiles);
         }
-        for (let i = 0; i < filesToProcess.length; i++) {
-          data.push(extractData(filesToProcess[i].id, false, selectedFilesFromAllfiles));
-        }
+        data = triggerBatchProcessing(filesToProcess, selectedFilesFromAllfiles as CustomFile[], false, false);
       } else {
-        for (let i = 0; i < selectedFilesFromAllfiles.length; i++) {
-          if (selectedFilesFromAllfiles[i]?.status === 'New') {
-            data.push(extractData(selectedFilesFromAllfiles[i].id as string, false, selectedFilesFromAllfiles));
-          }
-        }
+        data = triggerBatchProcessing(selectedFilesFromAllfiles, selectedFilesFromAllfiles as CustomFile[], false, true);
         Promise.allSettled(data).then(async (_) => {
           setextractLoading(false);
           await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
@@ -466,30 +396,17 @@ const Content: React.FC<ContentProps> = ({
     } else if (!queue.isEmpty() && processingFilesCount < batchSize) {
       if (queue.size() > batchSize) {
         const batch = queue.items.slice(0, batchSize);
-        for (let i = 0; i < batch.length; i++) {
-          data.push(extractData(batch[i].id, true, queue.items));
-        }
+        data = triggerBatchProcessing(batch, queue.items as CustomFile[], true, false);
       } else {
-        for (let i = 0; i < queue.items.length; i++) {
-          data.push(extractData(queue.items[i].id, true, queue.items));
-        }
+        data = triggerBatchProcessing(queue.items, queue.items as CustomFile[], true, false);
       }
+      Promise.allSettled(data).then(async (_) => {
+        setextractLoading(false);
+        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+      });
     } else {
       const selectedNewFiles = childRef.current?.getSelectedRows().filter((f) => f.status === 'New');
-      selectedNewFiles?.forEach((f) => {
-        setFilesData((prev) =>
-          prev.map((pf) => {
-            if (pf.id === f.id) {
-              return {
-                ...pf,
-                status: 'Waiting',
-              };
-            }
-            return pf;
-          })
-        );
-        queue.enqueue(f);
-      });
+      addFilesToQueue(selectedNewFiles as CustomFile[]);
     }
   };
 
