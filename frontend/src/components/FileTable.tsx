@@ -636,7 +636,15 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   userCredentials.userName,
                   userCredentials.password,
                   userCredentials.database,
-                  updateStatusForLargeFiles
+                  updateStatusForLargeFiles,
+                  () => {
+                    setProcessedCount((prev) => {
+                      if (prev == 2) {
+                        return 1;
+                      }
+                      return prev + 1;
+                    });
+                  }
                 );
               }
             }
