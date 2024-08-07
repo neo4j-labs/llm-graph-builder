@@ -204,21 +204,17 @@ class graphDBdataAccess:
             detach delete c, d
             return count(*) as deletedChunks
             """
-        query_to_delete_document_and_entities=""" 
-            MATCH (d:Document) where d.fileName in $filename_list and d.fileSource in $source_types_list
-            with collect(d) as documents 
+        query_to_delete_document_and_entities="""
+            match (d:Document) where d.fileName IN $filename_list and d.fileSource in $source_types_list
+            detach delete d
+            with collect(d) as documents
             unwind documents as d
-            optional match (d)<-[:PART_OF]-(c:Chunk)
-            // if delete-entities checkbox is set
-            call { with  c, documents
-                match (c)-[:HAS_ENTITY]->(e)
-                // belongs to another document
-                where not exists {  (d2)<-[:PART_OF]-()-[:HAS_ENTITY]->(e) WHERE NOT d2 IN documents }
-                detach delete e
-                return count(*) as entities
-            } 
-            detach delete c, d
-            return sum(entities) as deletedEntities, count(*) as deletedChunks
+            match (d)<-[:PART_OF]-(c:Chunk)
+            detach delete c
+            with *
+            match (c)-[:HAS_ENTITY]->(e)
+            where not exists { (e)<-[:HAS_ENTITY]-()-[:PART_OF]->(d2) where not d2 in documents }
+            detach delete e
             """    
         param = {"filename_list" : filename_list, "source_types_list": source_types_list}
         if deleteEntities == "true":
