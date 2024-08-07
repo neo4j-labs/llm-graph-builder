@@ -410,25 +410,48 @@ const Content: React.FC<ContentProps> = ({
           }
         }
       } else if (selectedFilesFromAllfiles.length > batchSize) {
-        const filesToProcess = newFilesFromSelectedFiles.slice(0, batchSize) as CustomFile[];
+        const batchFiles = newFilesFromSelectedFiles.slice(0, batchSize) as CustomFile[];
+        let filesToProcess: CustomFile[] = [];
+        if (processingFilesCount + batchFiles.length > batchSize) {
+          filesToProcess = batchFiles.slice(0, 1);
+          const remainingFiles = [...(newFilesFromSelectedFiles as CustomFile[])]
+            .splice(batchSize)
+            .concat(batchFiles.splice(1));
+          remainingFiles.forEach((f) => {
+            setFilesData((prev) =>
+              prev.map((pf) => {
+                if (pf.id === f.id) {
+                  return {
+                    ...pf,
+                    status: 'Waiting',
+                  };
+                }
+                return pf;
+              })
+            );
+            queue.enqueue(f);
+          });
+        } else {
+          filesToProcess = batchFiles;
+          const remainingFiles = [...(newFilesFromSelectedFiles as CustomFile[])].splice(batchSize);
+          remainingFiles.forEach((f) => {
+            setFilesData((prev) =>
+              prev.map((pf) => {
+                if (pf.id === f.id) {
+                  return {
+                    ...pf,
+                    status: 'Waiting',
+                  };
+                }
+                return pf;
+              })
+            );
+            queue.enqueue(f);
+          });
+        }
         for (let i = 0; i < filesToProcess.length; i++) {
           data.push(extractData(filesToProcess[i].id, false, selectedFilesFromAllfiles));
         }
-        const remainingFiles = [...(newFilesFromSelectedFiles as CustomFile[])].splice(batchSize);
-        remainingFiles.forEach((f) => {
-          setFilesData((prev) =>
-            prev.map((pf) => {
-              if (pf.id === f.id) {
-                return {
-                  ...pf,
-                  status: 'Waiting',
-                };
-              }
-              return pf;
-            })
-          );
-          queue.enqueue(f);
-        });
       } else {
         for (let i = 0; i < selectedFilesFromAllfiles.length; i++) {
           if (selectedFilesFromAllfiles[i]?.status === 'New') {
