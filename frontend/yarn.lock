@@ -913,7 +913,7 @@
     "@floating-ui/react-dom" "2.0.1"
     "@heroicons/react" "2.0.18"
     "@neo4j-cypher/react-codemirror" "^1.0.1"
-    "@neo4j-ndl/base" "^2.11.6"
+    "@neo4j-ndl/base" "^2.12.7"
     "@table-nav/core" "0.0.7"
     "@table-nav/react" "0.0.7"
     "@tanstack/react-table" "8.11.8"
@@ -942,7 +942,6 @@
     "@neo4j-nvl/layout-workers" "0.3.3"
     "@segment/analytics-next" "^1.70.0"
     color-string "^1.9.1"
-    contrast "1.0.1"
     d3-force "^3.0.0"
     gl-matrix "^3.3.0"
     glsl-inject-defines "^1.0.3"
@@ -951,6 +950,8 @@
     mobx "^3.2.2"
     node-pid-controller "^1.0.1"
     resizelistener "^1.1.0"
+    tinycolor2 "1.6.0"
+    uuid "^8.3.2"
 
 "@neo4j-nvl/interaction-handlers@0.3.3":
   version "0.3.3"
@@ -2827,13 +2828,6 @@ concaveman@^1.2.1:
     robust-predicates "^2.0.4"
     tinyqueue "^2.0.3"
 
-contrast@1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/contrast/-/contrast-1.0.1.tgz#839c66d8852269d33f4eb0a1b92d994bdd16385e"
-  integrity sha512-cJvPtJOPXxFtkppBYqk1A1+ZtPT7neKmgjBKMtjnwSAZ5k+5GNdJHeDmIjCTLEItLcqna+K7GTtaGjQtDJcF4A==
-  dependencies:
-    hex-to-rgb "^1.0.0"
-
 convert-source-map@^1.5.0:
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/convert-source-map/-/convert-source-map-1.9.0.tgz#7faae62353fb4213366d0ca98358d22e8368b05f"
@@ -3841,11 +3835,6 @@ hastscript@^6.0.0:
     hast-util-parse-selector "^2.0.0"
     property-information "^5.0.0"
     space-separated-tokens "^1.0.0"
-
-hex-to-rgb@^1.0.0:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/hex-to-rgb/-/hex-to-rgb-1.0.1.tgz#100b9df126b32f2762adf8486be68c65ef8ed2a4"
-  integrity sha512-2GsESdjpJIrRL8I7iPOp0r0wczJBk++Q/zFrviNaTRPWMIgk5bPqDmKPUvRHN0SZrYT9N1e+xZU1niYJ6QxzMg==
 
 highlight.js@^10.4.1, highlight.js@~10.7.0:
   version "10.7.3"
@@ -6202,7 +6191,7 @@ through2@^0.6.3:
     readable-stream ">=1.0.33-1 <1.1.0-0"
     xtend ">=4.0.0 <4.1.0-0"
 
-tinycolor2@^1.4.2:
+tinycolor2@1.6.0, tinycolor2@^1.4.2:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/tinycolor2/-/tinycolor2-1.6.0.tgz#f98007460169b0263b97072c5ae92484ce02d09e"
   integrity sha512-XPaBkWQJdsf3pLKJV9p4qN/S+fm2Oj8AIPo1BTUhg5oxkvm9+SVEGFdhyOz7tTdUTfvxMiAs4sp6/eZO2Ew+pw==
@@ -6453,6 +6442,11 @@ util-deprecate@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
   integrity sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==
+
+uuid@^8.3.2:
+  version "8.3.2"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
+  integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
 
 uuid@^9.0.1:
   version "9.0.1"
