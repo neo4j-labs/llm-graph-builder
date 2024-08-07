@@ -231,7 +231,7 @@ export default function ConnectionModal({
     setIsLoading(false);
     setTimeout(() => {
       setPassword('');
-    }, 10000);
+    }, 3000);
   };
 
   const onClose = useCallback(() => {
