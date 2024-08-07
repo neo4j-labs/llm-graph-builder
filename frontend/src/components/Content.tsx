@@ -286,7 +286,8 @@ const Content: React.FC<ContentProps> = ({
 
   const handleGenerateGraph = (selectedFilesFromAllfiles: CustomFile[]) => {
     const data = [];
-    if (selectedfileslength && filesData.filter((f) => f.status === 'Processing').length < batchSize) {
+    const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
+    if (selectedfileslength && processingFilesCount < batchSize) {
       const selectedRows = childRef.current?.getSelectedRows();
       const selectedNewFiles = childRef.current?.getSelectedRows().filter((f) => f.status === 'New');
       if (!queue.isEmpty()) {
@@ -343,8 +344,27 @@ const Content: React.FC<ContentProps> = ({
           queue.enqueue(f);
         });
       } else {
-        for (let i = 0; i < selectedfileslength; i++) {
-          const row = childRef.current?.getSelectedRows()[i];
+        let filesTobeProcess = childRef.current?.getSelectedRows() as CustomFile[];
+        if (selectedfileslength + processingFilesCount > batchSize) {
+          filesTobeProcess = childRef.current?.getSelectedRows().slice(0, 1) as CustomFile[];
+          const remainingFiles = [...(childRef.current?.getSelectedRows() as CustomFile[])].splice(1);
+          remainingFiles.forEach((f) => {
+            setFilesData((prev) =>
+              prev.map((pf) => {
+                if (pf.id === f.id) {
+                  return {
+                    ...pf,
+                    status: 'Waiting',
+                  };
+                }
+                return pf;
+              })
+            );
+            queue.enqueue(f);
+          });
+        }
+        for (let i = 0; i < filesTobeProcess.length; i++) {
+          const row = filesTobeProcess[i];
           if (row?.status === 'New') {
             data.push(extractData(row.id, true, selectedRows as CustomFile[]));
           }
@@ -354,10 +374,7 @@ const Content: React.FC<ContentProps> = ({
           await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
         });
       }
-    } else if (
-      selectedFilesFromAllfiles.length &&
-      filesData.filter((f) => f.status === 'Processing').length < batchSize
-    ) {
+    } else if (selectedFilesFromAllfiles.length && processingFilesCount < batchSize) {
       const newFilesFromSelectedFiles = selectedFilesFromAllfiles.filter((f) => f.status === 'New');
       if (!queue.isEmpty()) {
         if (queue.size() > batchSize) {
@@ -423,7 +440,7 @@ const Content: React.FC<ContentProps> = ({
           await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
         });
       }
-    } else if (!queue.isEmpty() && filesData.filter((f) => f.status === 'Processing').length < batchSize) {
+    } else if (!queue.isEmpty() && processingFilesCount < batchSize) {
       if (queue.size() > batchSize) {
         const batch = queue.items.slice(0, batchSize);
         for (let i = 0; i < batch.length; i++) {
