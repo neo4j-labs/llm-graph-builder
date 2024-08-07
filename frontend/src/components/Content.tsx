@@ -278,7 +278,7 @@ const Content: React.FC<ContentProps> = ({
 
   const handleGenerateGraph = (selectedFilesFromAllfiles: CustomFile[]) => {
     const data = [];
-    if (selectedfileslength) {
+    if (selectedfileslength && filesData.filter((f) => f.status === 'Processing').length < batchSize) {
       const selectedRows = childRef.current?.getSelectedRows();
       const selectedNewFiles = childRef.current?.getSelectedRows().filter((f) => f.status === 'New');
       if (!queue.isEmpty()) {
@@ -346,7 +346,10 @@ const Content: React.FC<ContentProps> = ({
           await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
         });
       }
-    } else if (selectedFilesFromAllfiles.length) {
+    } else if (
+      selectedFilesFromAllfiles.length &&
+      filesData.filter((f) => f.status === 'Processing').length < batchSize
+    ) {
       const newFilesFromSelectedFiles = selectedFilesFromAllfiles.filter((f) => f.status === 'New');
       if (!queue.isEmpty()) {
         if (queue.size() > batchSize) {
@@ -412,7 +415,7 @@ const Content: React.FC<ContentProps> = ({
           await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
         });
       }
-    } else if (!queue.isEmpty()) {
+    } else if (!queue.isEmpty() && filesData.filter((f) => f.status === 'Processing').length < batchSize) {
       if (queue.size() > batchSize) {
         const batch = queue.items.slice(0, batchSize);
         for (let i = 0; i < batch.length; i++) {
@@ -423,6 +426,22 @@ const Content: React.FC<ContentProps> = ({
           data.push(extractData(queue.items[i].id, true, queue.items));
         }
       }
+    } else {
+      const selectedNewFiles = childRef.current?.getSelectedRows().filter((f) => f.status === 'New');
+      selectedNewFiles?.forEach((f) => {
+        setFilesData((prev) =>
+          prev.map((pf) => {
+            if (pf.id === f.id) {
+              return {
+                ...pf,
+                status: 'Waiting',
+              };
+            }
+            return pf;
+          })
+        );
+        queue.enqueue(f);
+      });
     }
   };
 

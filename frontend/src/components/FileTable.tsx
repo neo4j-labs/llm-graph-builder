@@ -562,9 +562,10 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                     ? item?.status
                     : item?.status === 'Completed' || item.status === 'Failed'
                     ? item?.status
-                    : item?.fileSource == 'Wikipedia' ||
-                      item?.fileSource == 'youtube' ||
-                      item?.fileSource == 'gcs bucket'
+                    : item?.fileSource === 'Wikipedia' ||
+                      item?.fileSource === 'youtube' ||
+                      item?.fileSource === 'gcs bucket' ||
+                      item?.fileSource === 'web-url'
                     ? item?.status
                     : 'N/A',
                   model: item?.model ?? model,
@@ -610,6 +611,12 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 ).catch((error: AxiosError) => {
                   // @ts-ignore
                   const errorfile = decodeURI(error?.config?.url?.split('?')[0].split('/').at(-1));
+                  setProcessedCount((prev) => {
+                    if (prev == 2) {
+                      return 1;
+                    }
+                    return prev + 1;
+                  });
                   setFilesData((prevfiles) => {
                     return prevfiles.map((curfile) => {
                       if (curfile.name == errorfile) {
