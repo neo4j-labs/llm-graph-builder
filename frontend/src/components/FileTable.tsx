@@ -629,8 +629,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   language: item?.language ?? '',
                   processingProgress:
                     item?.processed_chunk != undefined &&
-                    item?.total_chunks != undefined &&
-                    !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
+                      item?.total_chunks != undefined &&
+                      !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
                   // total_pages: item?.total_pages ?? 0,
