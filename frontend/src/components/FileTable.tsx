@@ -688,7 +688,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           localStorage.getItem('waitingQueue') ?? JSON.stringify({ queue: [] })
         ).queue;
         if (waitingQueue.length) {
-          props.handleGenerateGraph([]);
+          props.handleGenerateGraph();
         }
       }
       onlyfortheFirstRender = false;

@@ -170,7 +170,7 @@ export interface FileTableProps {
   connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
   onInspect: (id: string) => void;
-  handleGenerateGraph: (selectedFilesFromAllfiles: CustomFile[]) => void;
+  handleGenerateGraph: () => void;
 }
 
 export interface CustomModalProps {
