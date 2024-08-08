@@ -913,7 +913,7 @@
     "@floating-ui/react-dom" "2.0.1"
     "@heroicons/react" "2.0.18"
     "@neo4j-cypher/react-codemirror" "^1.0.1"
-    "@neo4j-ndl/base" "^2.12.7"
+    "@neo4j-ndl/base" "^2.11.6"
     "@table-nav/core" "0.0.7"
     "@table-nav/react" "0.0.7"
     "@tanstack/react-table" "8.11.8"
@@ -2828,6 +2828,13 @@ concaveman@^1.2.1:
     robust-predicates "^2.0.4"
     tinyqueue "^2.0.3"
 
+contrast@1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/contrast/-/contrast-1.0.1.tgz#839c66d8852269d33f4eb0a1b92d994bdd16385e"
+  integrity sha512-cJvPtJOPXxFtkppBYqk1A1+ZtPT7neKmgjBKMtjnwSAZ5k+5GNdJHeDmIjCTLEItLcqna+K7GTtaGjQtDJcF4A==
+  dependencies:
+    hex-to-rgb "^1.0.0"
+
 convert-source-map@^1.5.0:
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/convert-source-map/-/convert-source-map-1.9.0.tgz#7faae62353fb4213366d0ca98358d22e8368b05f"
@@ -3835,6 +3842,11 @@ hastscript@^6.0.0:
     hast-util-parse-selector "^2.0.0"
     property-information "^5.0.0"
     space-separated-tokens "^1.0.0"
+
+hex-to-rgb@^1.0.0:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/hex-to-rgb/-/hex-to-rgb-1.0.1.tgz#100b9df126b32f2762adf8486be68c65ef8ed2a4"
+  integrity sha512-2GsESdjpJIrRL8I7iPOp0r0wczJBk++Q/zFrviNaTRPWMIgk5bPqDmKPUvRHN0SZrYT9N1e+xZU1niYJ6QxzMg==
 
 highlight.js@^10.4.1, highlight.js@~10.7.0:
   version "10.7.3"
