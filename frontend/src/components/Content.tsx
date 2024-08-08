@@ -34,6 +34,7 @@ import { tokens } from '@neo4j-ndl/base';
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 let afterFirstRender = false;
+
 const Content: React.FC<ContentProps> = ({
   isLeftExpanded,
   isRightExpanded,
@@ -291,6 +292,11 @@ const Content: React.FC<ContentProps> = ({
     newCheck: boolean
   ) => {
     const data = [];
+    setalertDetails({
+      showAlert: true,
+      alertMessage: `Processing ${batchSize} files at a time.`,
+      alertType: 'info',
+    })
     for (let i = 0; i < batch.length; i++) {
       if (newCheck) {
         if (batch[i]?.status === 'New') {

@@ -20,6 +20,7 @@
     "@neo4j-nvl/base": "0.3.1",
     "@neo4j-nvl/react": "0.3.1",
     "@react-oauth/google": "^0.12.1",
+    "@segment/analytics-next": "^1.72.1",
     "@types/uuid": "^9.0.7",
     "axios": "^1.6.5",
     "clsx": "^2.1.1",
