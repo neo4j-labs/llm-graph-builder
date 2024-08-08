@@ -347,7 +347,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               {
                 title: (
                   <span className={`${fileSourceFilter === 'All' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
-                    All types
+                    All Sources
                   </span>
                 ),
                 onClick: () => {
