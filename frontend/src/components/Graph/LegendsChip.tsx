@@ -8,5 +8,5 @@ export const LegendsChip: React.FunctionComponent<LegendChipProps> = ({ scheme, 
     [nodes]
   );
 
-    return <Legend title={title} chunkCount={chunkcount} bgColor={scheme[title]}></Legend>;
+  return <Legend title={title} chunkCount={chunkcount} bgColor={scheme[title]}></Legend>;
 };

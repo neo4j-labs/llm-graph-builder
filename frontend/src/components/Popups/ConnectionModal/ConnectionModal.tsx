@@ -231,7 +231,7 @@ export default function ConnectionModal({
     setIsLoading(false);
     setTimeout(() => {
       setPassword('');
-    }, 10000);
+    }, 3000);
   };
 
   const onClose = useCallback(() => {
@@ -250,6 +250,7 @@ export default function ConnectionModal({
           setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
           setMessage({ type: 'unknown', content: '' });
         }}
+        disableCloseButton={vectorIndexLoading}
       >
         <Dialog.Header id='form-dialog-title'>Connect to Neo4j</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
@@ -258,15 +259,23 @@ export default function ConnectionModal({
               Don't have a Neo4j instance? Start for free today
             </TextLink>
           </Typography>
-          {connectionMessage?.type !== 'unknown' && (
-            <Banner
-              name='Connection Modal'
-              closeable
-              onClose={onClose}
-              type={connectionMessage?.type}
-              description={connectionMessage?.content}
-            ></Banner>
-          )}
+          {connectionMessage?.type !== 'unknown' &&
+            (vectorIndexLoading ? (
+              <Banner
+                name='Connection Modal'
+                closeable={false}
+                type={connectionMessage?.type}
+                description={connectionMessage?.content}
+              ></Banner>
+            ) : (
+              <Banner
+                name='Connection Modal'
+                closeable
+                onClose={onClose}
+                type={connectionMessage?.type}
+                description={connectionMessage?.content}
+              ></Banner>
+            ))}
           <div className='n-flex max-h-44'>
             <Dropzone
               isTesting={false}
