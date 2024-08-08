@@ -59,7 +59,7 @@ export const defaultLLM = llms?.includes('openai-gpt-4o-mini')
 export const chatModes =
   process.env?.CHAT_MODES?.trim() != ''
     ? process.env.CHAT_MODES?.split(',')
-    : ['vector', 'graph', 'graph+vector', 'hybrid'];
+    : ['vector', 'graph', 'graph+vector', 'hybrid','hybrid+graph'];
 export const chunkSize = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.TIME_PER_PAGE ? parseInt(process.env.TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
