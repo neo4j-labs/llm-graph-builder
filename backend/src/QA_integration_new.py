@@ -374,7 +374,7 @@ def QA_RAG(graph, model, question, document_names,session_id, mode):
                 "user": "chatbot"
             } 
             return result
-        elif mode == "vector":
+        elif mode == "vector" or mode == "hybrid":
             retrieval_query = VECTOR_SEARCH_QUERY
         else:
             retrieval_query = VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT)

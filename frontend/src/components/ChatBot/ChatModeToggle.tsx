@@ -31,7 +31,7 @@ export default function ChatModeToggle({
         () =>
           chatModes?.map((m) => {
             return {
-              title: m.includes('+') ? 'Graph + Vector' : capitalize(m),
+              title: capitalize(m),
               onClick: () => {
                 setchatMode(m);
               },
