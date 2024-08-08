@@ -375,16 +375,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       columnHelper.accessor((row) => row, {
         id: 'type',
         cell: (info) => {
-          if (
-            info.row.original.type === 'pdf' ||
-            info.row.original.type === 'txt'
-          ) {
-            return (
-              <Flex>
-                <Typography variant='body-medium'>{info.row.original.type}</Typography>
-              </Flex>
-            );
-          }
           return (
             <div>
               <span>{info.row.original.type}</span>
@@ -400,7 +390,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               {
                 title: (
                   <span className={`${filetypeFilter === 'All' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
-                    All types
+                    All Types
                   </span>
                 ),
                 onClick: () => {
@@ -415,7 +405,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   ),
                   onClick: () => {
                     setFiletypeFilter(t as string);
-                    table.getColumn('source')?.setFilterValue(true);
+                    table.getColumn('type')?.setFilterValue(true);
                     skipPageResetRef.current = true;
                   },
                 };
