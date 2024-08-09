@@ -563,7 +563,7 @@ async def get_unconnected_nodes_list(uri=Form(), userName=Form(), password=Form(
         gc.collect()
         
 @app.post("/delete_unconnected_nodes")
-async def get_unconnected_nodes_list(uri=Form(), userName=Form(), password=Form(), database=Form(),unconnected_entities_list=Form()):
+async def delete_orphan_nodes(uri=Form(), userName=Form(), password=Form(), database=Form(),unconnected_entities_list=Form()):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
