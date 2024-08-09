@@ -246,6 +246,7 @@ export type ChatbotProps = {
   isLoading: boolean;
   clear?: boolean;
   isFullScreen?: boolean;
+  connectionStatus:boolean;
 };
 export interface WikipediaModalTypes {
   hideModal: () => void;
@@ -654,11 +655,14 @@ export interface DrawerChatbotProps {
   isExpanded: boolean;
   clearHistoryData: boolean;
   messages: Messages[];
+  connectionStatus: boolean;
 }
 
 export interface ContextProps {
   userCredentials: UserCredentials | null;
   setUserCredentials: (UserCredentials: UserCredentials) => void;
+  connectionStatus: boolean;
+  setConnectionStatus: Dispatch<SetStateAction<boolean>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];

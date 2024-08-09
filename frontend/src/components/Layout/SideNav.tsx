@@ -22,6 +22,7 @@ import GCSButton from '../DataSources/GCS/GCSButton';
 import S3Component from '../DataSources/AWS/S3Bucket';
 import WebButton from '../DataSources/Web/WebButton';
 import DropZoneForSmallLayouts from '../DataSources/Local/DropZoneForSmallLayouts';
+import { useCredentials } from '../../context/UserCredentials';
 
 const SideNav: React.FC<SideNavProps> = ({
   position,
@@ -43,6 +44,7 @@ const SideNav: React.FC<SideNavProps> = ({
   const [chatModeAnchor, setchatModeAnchor] = useState<HTMLElement | null>(null);
   const [showChatMode, setshowChatMode] = useState<boolean>(false);
   const largedesktops = useMediaQuery(`(min-width:1440px )`);
+  const { connectionStatus } = useCredentials();
 
   const date = new Date();
   useEffect(() => {
@@ -249,6 +251,7 @@ const SideNav: React.FC<SideNavProps> = ({
                 messages={messages ?? []}
                 setMessages={setMessages}
                 isLoading={getIsLoading(messages ?? [])}
+                connectionStatus={connectionStatus}
               />
             </Dialog.Content>
           </Dialog>,
