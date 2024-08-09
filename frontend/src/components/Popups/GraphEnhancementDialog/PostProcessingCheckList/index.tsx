@@ -1,5 +1,5 @@
 import { Box, Checkbox, Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
-import { POST_PROCESSING_JOBS} from '../../../../utils/Constants';
+import { POST_PROCESSING_JOBS } from '../../../../utils/Constants';
 import { capitalize } from '../../../../utils/Utils';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { tokens } from '@neo4j-ndl/base';
@@ -20,33 +20,25 @@ export default function PostProcessingCheckList() {
           <Flex justifyContent='space-between' flexDirection='column' gap='6'>
             {POST_PROCESSING_JOBS.map((job, idx) => (
               <Flex key={`${job.title}${idx}`}>
-                <Typography variant={tablet ? 'subheading-small' : 'subheading-medium'}>
-                  {job.title
-                    .split('_')
-                    .map((s) => capitalize(s))
-                    .join(' ')} :
-                </Typography>
-                <Typography variant={tablet ? 'body-small' : 'body-medium'}>{job.description}</Typography>
-                <Box>
-                  <Checkbox
-                    label={
-                      <Typography variant='label'>
-                        {job.title
-                          .split('_')
-                          .map((s) => capitalize(s))
-                          .join(' ')}
-                      </Typography>
+                <Checkbox
+                  label={
+                    <Typography variant='label'>
+                      {job.title
+                        .split('_')
+                        .map((s) => capitalize(s))
+                        .join(' ')}
+                    </Typography>
+                  }
+                  checked={postProcessingTasks.includes(job.title)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setPostProcessingTasks((prev) => [...prev, job.title]);
+                    } else {
+                      setPostProcessingTasks((prev) => prev.filter((s) => s !== job.title));
                     }
-                    checked={postProcessingTasks.includes(job.title)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setPostProcessingTasks((prev) => [...prev, job.title]);
-                      } else {
-                        setPostProcessingTasks((prev) => prev.filter((s) => s !== job.title));
-                      }
-                    }}
-                  ></Checkbox>
-                </Box>
+                  }}
+                ></Checkbox>
+                <Typography variant={tablet ? 'body-small' : 'body-medium'}>{job.description}</Typography>
               </Flex>
             ))}
           </Flex>
