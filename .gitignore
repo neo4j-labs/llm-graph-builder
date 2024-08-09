@@ -3,7 +3,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+.vennv
 # C extensions
 *.so
 /backend/graph
