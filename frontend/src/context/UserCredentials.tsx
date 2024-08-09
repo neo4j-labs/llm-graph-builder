@@ -8,6 +8,8 @@ type Props = {
 export const UserConnection = createContext<ContextProps>({
   userCredentials: null,
   setUserCredentials: () => null,
+  connectionStatus: false,
+  setConnectionStatus: () => null,
 });
 export const useCredentials = () => {
   const userCredentials = useContext(UserConnection);
@@ -15,9 +17,12 @@ export const useCredentials = () => {
 };
 const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
   const [userCredentials, setUserCredentials] = useState<UserCredentials | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const value = {
     userCredentials,
     setUserCredentials,
+    connectionStatus,
+    setConnectionStatus
   };
   return <UserConnection.Provider value={value}>{props.children}</UserConnection.Provider>;
 };

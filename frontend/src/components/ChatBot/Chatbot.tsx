@@ -22,7 +22,7 @@ import FallBackDialog from '../UI/FallBackDialog';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
 
 const Chatbot: FC<ChatbotProps> = (props) => {
-  const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, clear } = props;
+  const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, clear, connectionStatus } = props;
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
@@ -289,7 +289,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                       shape='square'
                       size='x-large'
                       source={ChatBotAvatar}
-                      status='online'
+                      status={connectionStatus ? 'online': 'offline'}
                       type='image'
                     />
                   ) : (
@@ -299,7 +299,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                       name='KM'
                       shape='square'
                       size='x-large'
-                      status='online'
+                      status={connectionStatus ? 'online': 'offline'}
                       type='image'
                     />
                   )}
