@@ -150,6 +150,7 @@ export const processGraphData = (neoNodes: ExtendedNode[], neoRels: Relationship
       color: schemeVal[g.labels[0]],
       icon: getIcon(g),
       labels: g.labels,
+      properties: g.properties
     };
   });
   const finalNodes = newNodes.flat();
@@ -177,7 +178,11 @@ export const filterData = (
   const entityTypes = Object.keys(scheme).filter((type) => type !== 'Document' && type !== 'Chunk');
   if (graphType.includes('DocumentChunk') && !graphType.includes('Entities')) {
     // Document + Chunk
-    filteredNodes = allNodes.filter((node) => node.labels.includes('Document') || node.labels.includes('Chunk'));
+    filteredNodes = allNodes.filter(
+      (node) =>
+        (node.labels.includes('Document') && node.properties.fileName) ||
+        node.labels.includes('Chunk')
+    );
     const nodeIds = new Set(filteredNodes.map((node) => node.id));
     filteredRelations = allRelationships.filter(
       (rel) =>
