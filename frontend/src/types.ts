@@ -602,6 +602,10 @@ export type GraphStyling = {
 
 export interface ExtendedNode extends Node {
   labels: string[];
+  properties: {
+    fileName?: string;
+    [key: string]: any;
+  }
 }
 
 export interface ExtendedRelationship extends Relationship {
