@@ -294,7 +294,7 @@ const Content: React.FC<ContentProps> = ({
     const data = [];
     setalertDetails({
       showAlert: true,
-      alertMessage: `Processing ${batchSize} files at a time.`,
+      alertMessage: `Processing ${batch.length} files at a time.`,
       alertType: 'info',
     })
     for (let i = 0; i < batch.length; i++) {
