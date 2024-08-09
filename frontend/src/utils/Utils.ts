@@ -171,7 +171,7 @@ export const filterData = (
   allNodes: ExtendedNode[],
   allRelationships: Relationship[],
   scheme: Scheme
- ) => {
+) => {
   let filteredNodes: ExtendedNode[] = [];
   let filteredRelations: Relationship[] = [];
   let filteredScheme: Scheme = {};
@@ -208,7 +208,7 @@ export const filterData = (
     filteredScheme = scheme;
   }
   return { filteredNodes, filteredRelations, filteredScheme };
- };
+};
 
 export const getDateTime = () => {
   const date = new Date();
