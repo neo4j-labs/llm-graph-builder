@@ -322,15 +322,13 @@ class graphDBdataAccess:
         param = {"rows":nodes_list}
         return self.execute_query(query,param)
     
-    def drop_create_vector_index(self, is_vector_index_recreate):
+    def drop_create_vector_index(self):
         """
         drop and create the vector index when vector index dimesion are different.
         """
         embedding_model = os.getenv('EMBEDDING_MODEL')
         embeddings, dimension = load_embedding_model(embedding_model)
-        if is_vector_index_recreate == 'true':
-            self.graph.query("""drop index vector""")
-        
+        self.graph.query("""drop index vector""")
         self.graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
                             OPTIONS {indexConfig: {
                             `vector.dimensions`: $dimensions,
