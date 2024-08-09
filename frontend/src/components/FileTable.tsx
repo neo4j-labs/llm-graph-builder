@@ -358,7 +358,9 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               ...Array.from(new Set(filesData.map((f) => f.fileSource))).map((t) => {
                 return {
                   title: (
-                    <span className={`${t === fileSourceFilter ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>{t}</span>
+                    <span className={`${t === fileSourceFilter ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                      {t}
+                    </span>
                   ),
                   onClick: () => {
                     setFileSourceFilter(t as string);
@@ -579,14 +581,14 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                     item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
                       ? item?.status
                       : item?.fileSource === 'local file'
-                        ? item?.status
-                        : item?.status === 'Completed' || item.status === 'Failed'
-                          ? item?.status
-                          : item?.fileSource == 'Wikipedia' ||
-                            item?.fileSource == 'youtube' ||
-                            item?.fileSource == 'gcs bucket'
-                            ? item?.status
-                            : 'N/A',
+                      ? item?.status
+                      : item?.status === 'Completed' || item.status === 'Failed'
+                      ? item?.status
+                      : item?.fileSource == 'Wikipedia' ||
+                        item?.fileSource == 'youtube' ||
+                        item?.fileSource == 'gcs bucket'
+                      ? item?.status
+                      : 'N/A',
                   model: item?.model ?? model,
                   id: uuidv4(),
                   source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
@@ -599,8 +601,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   language: item?.language ?? '',
                   processingProgress:
                     item?.processed_chunk != undefined &&
-                      item?.total_chunks != undefined &&
-                      !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
+                    item?.total_chunks != undefined &&
+                    !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
                   // total_pages: item?.total_pages ?? 0,

@@ -59,7 +59,7 @@ export const defaultLLM = llms?.includes('openai-gpt-4o-mini')
 export const chatModes =
   process.env?.CHAT_MODES?.trim() != ''
     ? process.env.CHAT_MODES?.split(',')
-    : ['vector', 'graph', 'graph+vector', 'hybrid','hybrid+graph'];
+    : ['vector', 'graph', 'graph+vector', 'hybrid', 'hybrid+graph'];
 export const chunkSize = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.TIME_PER_PAGE ? parseInt(process.env.TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
@@ -160,7 +160,34 @@ export const buttonCaptions = {
   ask: 'Ask',
 };
 
-export const taskParam: string[] = ['update_similarity_graph', 'create_fulltext_index', 'create_entity_embedding'];
+export const taskParam: string[] = [
+  'materialize_text_chunk_similarities',
+  'enable_hybrid_search_and_fulltext_search_in_bloom',
+  'materialize_entity_similarities',
+];
+export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
+  {
+    title: 'materialize_text_chunk_similarities',
+    description: `This option refines the connections between different pieces of information (chunks) within your
+                knowledge graph. By leveraging a k-nearest neighbor algorithm with a similarity threshold (KNN_MIN_SCORE
+                of 0.8), this process identifies and links chunks with high semantic similarity. This results in a more
+                interconnected and insightful knowledge representation, enabling more accurate and relevant search
+                results.`,
+  },
+  {
+    title: 'enable_hybrid_search_and_fulltext_search_in_bloom',
+    description: `This option optimizes search capabilities within your knowledge graph. It rebuilds the full-text index
+                on database labels, ensuring faster and more efficient retrieval of information. This is particularly
+                beneficial for large knowledge graphs, as it significantly speeds up keyword-based searches and improves
+                overall query performance.`,
+  },
+  {
+    title: 'materialize_entity_similarities',
+    description: `Enhances entity analysis by generating numerical representations (embeddings) that capture their
+                semantic meaning. This facilitates tasks like clustering similar entities, identifying duplicates, and
+                performing similarity-based searches.`,
+  },
+];
 
 export const nvlOptions: NvlOptions = {
   allowDynamicMinZoom: true,
