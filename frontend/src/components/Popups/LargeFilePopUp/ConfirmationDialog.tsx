@@ -15,7 +15,7 @@ export default function ConfirmationDialog({
   open: boolean;
   onClose: () => void;
   loading: boolean;
-  extractHandler: (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => void;
+  extractHandler: (selectedFilesFromAllfiles: CustomFile[]) => void;
 }) {
   const { setSelectedRows, filesData, setRowSelection, selectedRows } = useFileContext();
   const [checked, setChecked] = useState<string[]>([...largeFiles.map((f) => f.id)]);
@@ -73,7 +73,6 @@ export default function ConfirmationDialog({
       onClose={() => {
         setChecked([]);
         onClose();
-        extractHandler(false, []);
       }}
     >
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
@@ -87,7 +86,7 @@ export default function ConfirmationDialog({
         <Button
           onClick={() => {
             if (selectedRows.length) {
-              extractHandler(true, []);
+              extractHandler([]);
             } else {
               const tobeProcessFiles: CustomFile[] = [];
               checked.forEach((id: string) => {
@@ -96,7 +95,7 @@ export default function ConfirmationDialog({
                   tobeProcessFiles.push(file);
                 }
               });
-              extractHandler(true, tobeProcessFiles);
+              extractHandler(tobeProcessFiles);
             }
             setChecked([]);
             onClose();
