@@ -165,7 +165,7 @@ class ParallelComponent:
             print(final_prompt)
             response = self.llm.predict(final_prompt)
             ai_message=response
-            user_message=question
+            user_message=self.question # question should be self.question to access the question from the class instance.
             print('Final prompt duration',datetime.now()-t)
             return ai_message,user_message
 
