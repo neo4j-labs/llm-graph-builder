@@ -13,6 +13,6 @@ def get_graph_from_diffbot(graph,chunkId_chunkDoc_list:List):
     combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
     llm,model_name = get_llm('diffbot')
     graph_documents = llm.convert_to_graph_documents(combined_chunk_document_list)
-    return graph_documents
+    return [doc for doc in graph_documents if doc.nodes] # Ensure that only graph documents with nodes are returned.
 
     
