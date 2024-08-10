@@ -109,7 +109,7 @@ class ParallelComponent:
                 top_k=2
             )
             try:
-                cypher_res=cypher_chain.invoke({"query": question})
+                cypher_res=cypher_chain.invoke({"query": self.question}) # Corrected to use the class instance variable self.question.
             except:
                 cypher_res={}
             
