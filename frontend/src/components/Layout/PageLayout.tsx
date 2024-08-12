@@ -22,6 +22,9 @@ export default function PageLayoutNew({
   isSettingPanelExpanded: boolean;
   closeSettingModal: () => void;
   openSettingsDialog: () => void;
+  closeOrphanNodeDeletionModal?: any;
+  showOrphanNodeDeletionModal?: any;
+  openOrphanNodeDeletionModal?: any;
 }) {
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(true);
   const [isRightExpanded, setIsRightExpanded] = useState<boolean>(true);
@@ -127,7 +130,6 @@ export default function PageLayoutNew({
         showEnhancementDialog={showEnhancementDialog}
         setshowEnhancementDialog={setshowEnhancementDialog}
         closeSettingModal={closeSettingModal}
-
       />
       {showDrawerChatbot && (
         <DrawerChatbot messages={messages} isExpanded={isRightExpanded} clearHistoryData={clearHistoryData} />
