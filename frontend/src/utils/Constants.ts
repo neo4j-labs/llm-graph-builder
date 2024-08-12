@@ -63,7 +63,9 @@ export const chatModes =
 export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.VITE_TIME_PER_PAGE ? parseInt(process.env.VITE_TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
-export const largeFileSize = process.env.VITE_LARGE_FILE_SIZE ? parseInt(process.env.VITE_LARGE_FILE_SIZE) : 5 * 1024 * 1024;
+export const largeFileSize = process.env.VITE_LARGE_FILE_SIZE
+  ? parseInt(process.env.VITE_LARGE_FILE_SIZE)
+  : 5 * 1024 * 1024;
 export const NODES_OPTIONS = [
   {
     label: 'Person',
