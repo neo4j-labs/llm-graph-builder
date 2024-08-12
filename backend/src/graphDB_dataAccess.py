@@ -166,7 +166,6 @@ class graphDBdataAccess:
         embedding_model = os.getenv('EMBEDDING_MODEL')
         embeddings, application_dimension = load_embedding_model(embedding_model)
         logging.info(f'embedding model:{embeddings} and dimesion:{application_dimension}')
-        print(result_chunks)
         # print(chunks_exists)
         
         if self.graph:
@@ -186,7 +185,7 @@ class graphDBdataAccess:
 
     def get_current_status_document_node(self, file_name):
         query = """
-                MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, 
+                MATCH(d:Document {fileName : $file_name}) RETURN d.stats AS Status , d.processingTime AS processingTime, 
                 d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount,
                 d.total_pages AS total_pages, d.total_chunks AS total_chunks , d.fileSize as fileSize, 
                 d.is_cancelled as is_cancelled, d.processed_chunk as processed_chunk, d.fileSource as fileSource
