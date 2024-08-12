@@ -47,9 +47,10 @@ const Content: React.FC<ContentProps> = ({
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<connectionState>({
-    isvectorIndexMatch: true,
     openPopUp: false,
-    novectorindexInDB: true,
+    chunksExists: true,
+    vectorIndexMisMatch: false,
+    chunksExistsWithDifferentDimension: false,
   });
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
@@ -423,9 +424,14 @@ const Content: React.FC<ContentProps> = ({
             setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
           } else {
             setOpenConnection({
-              isvectorIndexMatch: false,
               openPopUp: true,
-              novectorindexInDB: response.data.data.db_vector_dimension === 0,
+              chunksExists: response.data.data.chunks_exists as boolean,
+              vectorIndexMisMatch:
+                response.data.data.db_vector_dimension > 0 &&
+                response.data.data.db_vector_dimension != response.data.data.application_dimension,
+              chunksExistsWithDifferentDimension:
+                response.data.data.db_vector_dimension != response.data.data.application_dimension &&
+                response.data.data.application_dimension,
             });
             setConnectionStatus(false);
           }
@@ -539,8 +545,9 @@ const Content: React.FC<ContentProps> = ({
               open={openConnection.openPopUp}
               setOpenConnection={setOpenConnection}
               setConnectionStatus={setConnectionStatus}
-              isVectorIndexMatch={openConnection.isvectorIndexMatch}
-              noVectorIndexFound={openConnection.novectorindexInDB}
+              isVectorIndexMatch={openConnection.vectorIndexMisMatch}
+              chunksExistsWithoutEmbedding={openConnection.chunksExists}
+              chunksExistsWithDifferentEmbedding={openConnection.chunksExistsWithDifferentDimension}
             />
           </Suspense>
 

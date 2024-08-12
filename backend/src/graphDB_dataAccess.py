@@ -162,7 +162,8 @@ class graphDBdataAccess:
         chunks_without_embedding = self.graph.query("""match (c:Chunk) WHERE c.embedding is not null 
                                                return size(c.embedding) as embeddingSize, count(*) as chunks
                                 """)
-        
+        chunks_exists=self.graph.query("""match (c:Chunk) return count(*) as chunks
+                                """)
         embedding_model = os.getenv('EMBEDDING_MODEL')
         embeddings, application_dimension = load_embedding_model(embedding_model)
         logging.info(f'embedding model:{embeddings} and dimesion:{application_dimension}')
@@ -171,9 +172,11 @@ class graphDBdataAccess:
             if len(db_vector_dimension) > 0:
                 return {'db_vector_dimension': db_vector_dimension[0]['vector_dimensions'], 'application_dimension':application_dimension, 'message':"Connection Successful"}
             else:
-                if len(db_vector_dimension) == 0 and len(chunks_without_embedding) == 0:
+                if len(db_vector_dimension) == 0 and len(chunks_exists) == 0:
                     logging.info("Chunks are exist without embeding but vector index does not exist in database")
-                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful"}
+                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":False}
+                elif len(db_vector_dimension) == 0 and len(chunks_without_embedding)==0:
+                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":True}
                 else:
                     return {'message':"Connection Successful"}
 
@@ -336,7 +339,7 @@ class graphDBdataAccess:
         """
         embedding_model = os.getenv('EMBEDDING_MODEL')
         embeddings, dimension = load_embedding_model(embedding_model)
-        self.graph.query("""drop index vector""")
+        # self.graph.query("""drop index vector""")
         self.graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
                             OPTIONS {indexConfig: {
                             `vector.dimensions`: $dimensions,

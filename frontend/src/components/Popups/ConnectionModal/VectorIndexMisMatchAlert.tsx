@@ -8,11 +8,13 @@ export default function VectorIndexMisMatchAlert({
   recreateVectorIndex,
   isVectorIndexAlreadyExists,
   userVectorIndexDimension,
+  chunksExists,
 }: {
   vectorIndexLoading: boolean;
   recreateVectorIndex: () => Promise<void>;
   isVectorIndexAlreadyExists: boolean;
   userVectorIndexDimension: number;
+  chunksExists: boolean;
 }) {
   const { userCredentials } = useCredentials();
   return (
@@ -25,8 +27,9 @@ The existing Neo4j vector index dimension (${userVectorIndexDimension}) is incom
 To proceed, please choose one of the following options: 
 1.**Recreate Vector Index:** Click "Re-Create Vector Index" to generate a compatible vector index. 
 2.**Use a Different Instance:** Connect to a Neo4j instance with a compatible vector index configuration  `
-            : `**Vector index not found**.
-              To leverage AI-powered search, please create a vector index.This will enable efficient similarity search within your Neo4j database`}
+            : chunksExists
+            ? `Chunks without embedding exists in the DB`
+            : ''}
         </Markdown>
       </Box>
       <Box className='n-size-full n-flex n-flex-col n-items-center n-justify-center'>

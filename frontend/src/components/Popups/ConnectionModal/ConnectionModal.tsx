@@ -13,7 +13,8 @@ export default function ConnectionModal({
   setOpenConnection,
   setConnectionStatus,
   isVectorIndexMatch,
-  noVectorIndexFound,
+  chunksExistsWithoutEmbedding,
+  chunksExistsWithDifferentEmbedding,
 }: ConnectionModalProps) {
   let prefilledconnection = localStorage.getItem('neo4j.connection');
   let initialuri;
@@ -104,14 +105,15 @@ export default function ConnectionModal({
         content: (
           <VectorIndexMisMatchAlert
             vectorIndexLoading={vectorIndexLoading}
-            recreateVectorIndex={() => recreateVectorIndex(!noVectorIndexFound)}
-            isVectorIndexAlreadyExists={!noVectorIndexFound}
+            recreateVectorIndex={() => recreateVectorIndex(!chunksExistsWithDifferentEmbedding)}
+            isVectorIndexAlreadyExists={isVectorIndexMatch}
             userVectorIndexDimension={JSON.parse(localStorage.getItem('neo4j.connection') ?? 'null').userDbVectorIndex}
+            chunksExists={chunksExistsWithoutEmbedding}
           />
         ),
       });
     }
-  }, [isVectorIndexMatch, vectorIndexLoading, noVectorIndexFound]);
+  }, [isVectorIndexMatch, vectorIndexLoading, chunksExistsWithDifferentEmbedding]);
 
   const parseAndSetURI = (uri: string, urlparams = false) => {
     const uriParts: string[] = uri.split('://');
@@ -199,14 +201,22 @@ export default function ConnectionModal({
           type: 'success',
           content: response.data.data.message,
         });
-      } else {
+      } else if (response.data.chunks_exists) {
         setMessage({
           type: 'danger',
           content: (
             <VectorIndexMisMatchAlert
               vectorIndexLoading={vectorIndexLoading}
-              recreateVectorIndex={() => recreateVectorIndex(response.data.data.db_vector_dimension != 0)}
+              recreateVectorIndex={() =>
+                recreateVectorIndex(
+                  !(
+                    response.data.data.db_vector_dimension > 0 &&
+                    response.data.data.db_vector_dimension != response.data.data.application_dimension
+                  )
+                )
+              }
               isVectorIndexAlreadyExists={response.data.data.db_vector_dimension != 0}
+              chunksExists={true}
               userVectorIndexDimension={response.data.data.db_vector_dimension}
             />
           ),
