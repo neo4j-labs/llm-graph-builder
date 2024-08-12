@@ -159,25 +159,24 @@ class graphDBdataAccess:
                                     RETURN options.indexConfig['vector.dimensions'] AS vector_dimensions
                                 """)
         
-        chunks_without_embedding = self.graph.query("""match (c:Chunk) WHERE c.embedding is not null 
-                                               return size(c.embedding) as embeddingSize, count(*) as chunks
+        result_chunks = self.graph.query("""match (c:Chunk) return size(c.embedding) as embeddingSize, count(*) as chunks, 
+                                                    count(c.embedding) as hasEmbedding
                                 """)
-        chunks_exists=self.graph.query("""match (c:Chunk) return count(*) as chunks
-                                """)
+        
         embedding_model = os.getenv('EMBEDDING_MODEL')
         embeddings, application_dimension = load_embedding_model(embedding_model)
         logging.info(f'embedding model:{embeddings} and dimesion:{application_dimension}')
-        print(chunks_without_embedding)
-        print(chunks_exists)
+        print(result_chunks)
+        # print(chunks_exists)
         
         if self.graph:
             if len(db_vector_dimension) > 0:
                 return {'db_vector_dimension': db_vector_dimension[0]['vector_dimensions'], 'application_dimension':application_dimension, 'message':"Connection Successful"}
             else:
-                if len(db_vector_dimension) == 0 and chunks_exists[0]['chunks'] == 0:
-                    logging.info("Chunks are exist without embeding but vector index does not exist in database")
+                if len(db_vector_dimension) == 0 and len(result_chunks) == 0:
+                    logging.info("Chunks and vector index does not exists in database")
                     return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":False}
-                elif len(db_vector_dimension) == 0 and len(chunks_without_embedding)==0:
+                elif len(db_vector_dimension) == 0 and result_chunks[0]['hasEmbedding']==0 and result_chunks[0]['chunks'] > 0:
                     return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":True}
                 else:
                     return {'message':"Connection Successful"}
@@ -335,12 +334,15 @@ class graphDBdataAccess:
         param = {"rows":nodes_list}
         return self.execute_query(query,param)
     
-    def drop_create_vector_index(self):
+    def drop_create_vector_index(self, isVectorIndexExist):
         """
         drop and create the vector index when vector index dimesion are different.
         """
         embedding_model = os.getenv('EMBEDDING_MODEL')
         embeddings, dimension = load_embedding_model(embedding_model)
+        
+        if isVectorIndexExist == 'True':
+            self.graph.query("""drop index vector""")
         # self.graph.query("""drop index vector""")
         self.graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
                             OPTIONS {indexConfig: {
