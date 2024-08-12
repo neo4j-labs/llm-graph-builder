@@ -605,7 +605,7 @@ export interface ExtendedNode extends Node {
   properties: {
     fileName?: string;
     [key: string]: any;
-  }
+  };
 }
 
 export interface ExtendedRelationship extends Relationship {
