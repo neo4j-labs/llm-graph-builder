@@ -455,10 +455,9 @@ def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
               shutil.copyfileobj(chunk_file, write_stream)
           os.unlink(chunk_file_path)  # Delete the individual chunk file after merging
   logging.info("Chunks merged successfully and return file size")
-  file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,file_name)
-  pdf_total_pages = pages[0].metadata['total_pages']
+  
   file_size = os.path.getsize(merged_file_path)
-  return pdf_total_pages,file_size
+  return file_size
   
 
 
@@ -484,9 +483,8 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
       # If this is the last chunk, merge all chunks into a single file
       if gcs_file_cache == 'True':
         file_size = merge_file_gcs(BUCKET_UPLOAD, originalname, folder_name, int(total_chunks))
-        total_pages = 1
       else:
-        total_pages, file_size = merge_chunks_local(originalname, int(total_chunks), chunk_dir, merged_dir)
+        file_size = merge_chunks_local(originalname, int(total_chunks), chunk_dir, merged_dir)
       
       logging.info("File merged successfully")
       file_extension = originalname.split('.')[-1]
@@ -496,12 +494,11 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
       obj_source_node.file_size = file_size
       obj_source_node.file_source = 'local file'
       obj_source_node.model = model
-      obj_source_node.total_pages = total_pages
       obj_source_node.created_at = datetime.now()
       graphDb_data_Access = graphDBdataAccess(graph)
         
       graphDb_data_Access.create_source_node(obj_source_node)
-      return {'file_size': file_size, 'total_pages': total_pages, 'file_name': originalname, 'file_extension':file_extension, 'message':f"Chunk {chunk_number}/{total_chunks} saved"}
+      return {'file_size': file_size, 'file_name': originalname, 'file_extension':file_extension, 'message':f"Chunk {chunk_number}/{total_chunks} saved"}
   return f"Chunk {chunk_number}/{total_chunks} saved"
 
 def get_labels_and_relationtypes(graph):
