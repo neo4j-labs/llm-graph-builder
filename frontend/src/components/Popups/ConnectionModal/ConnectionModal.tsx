@@ -106,7 +106,7 @@ export default function ConnectionModal({
           <VectorIndexMisMatchAlert
             vectorIndexLoading={vectorIndexLoading}
             recreateVectorIndex={() => recreateVectorIndex(!chunksExistsWithDifferentEmbedding)}
-            isVectorIndexAlreadyExists={isVectorIndexMatch}
+            isVectorIndexAlreadyExists={chunksExistsWithDifferentEmbedding || isVectorIndexMatch}
             userVectorIndexDimension={JSON.parse(localStorage.getItem('neo4j.connection') ?? 'null').userDbVectorIndex}
             chunksExists={chunksExistsWithoutEmbedding}
           />
