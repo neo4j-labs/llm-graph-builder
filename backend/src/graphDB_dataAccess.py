@@ -167,12 +167,14 @@ class graphDBdataAccess:
         embedding_model = os.getenv('EMBEDDING_MODEL')
         embeddings, application_dimension = load_embedding_model(embedding_model)
         logging.info(f'embedding model:{embeddings} and dimesion:{application_dimension}')
+        print(chunks_without_embedding)
+        print(chunks_exists)
         
         if self.graph:
             if len(db_vector_dimension) > 0:
                 return {'db_vector_dimension': db_vector_dimension[0]['vector_dimensions'], 'application_dimension':application_dimension, 'message':"Connection Successful"}
             else:
-                if len(db_vector_dimension) == 0 and len(chunks_exists) == 0:
+                if len(db_vector_dimension) == 0 and chunks_exists[0]['chunks'] == 0:
                     logging.info("Chunks are exist without embeding but vector index does not exist in database")
                     return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":False}
                 elif len(db_vector_dimension) == 0 and len(chunks_without_embedding)==0:

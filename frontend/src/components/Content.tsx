@@ -419,10 +419,11 @@ const Content: React.FC<ContentProps> = ({
               userDbVectorIndex: response.data.data.db_vector_dimension,
             })
           );
-          if (response.data.data.application_dimension === response.data.data.db_vector_dimension) {
+          if (response.data.data.application_dimension === response.data.data.db_vector_dimension || !(response.data.data.db_vector_dimension != 0 &&
+            response.data.data.db_vector_dimension != response.data.data.application_dimension)) {
             setConnectionStatus(true);
             setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
-          } else {
+          } else{
             setOpenConnection({
               openPopUp: true,
               chunksExists: response.data.data.chunks_exists as boolean,

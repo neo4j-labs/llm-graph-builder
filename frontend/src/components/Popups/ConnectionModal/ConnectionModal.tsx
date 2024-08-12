@@ -99,7 +99,7 @@ export default function ConnectionModal({
     [userCredentials, userDbVectorIndex]
   );
   useEffect(() => {
-    if (!isVectorIndexMatch) {
+    if (isVectorIndexMatch) {
       setMessage({
         type: 'danger',
         content: (
