@@ -5,8 +5,8 @@ import { Entity, ExtendedNode, GraphType, Messages, Scheme } from '../types';
 // Get the Url
 export const url = () => {
   let url = window.location.href.replace('5173', '8000');
-  if (process.env.BACKEND_API_URL) {
-    url = process.env.BACKEND_API_URL;
+  if (process.env.VITE_BACKEND_API_URL) {
+    url = process.env.VITE_BACKEND_API_URL;
   }
   return !url || !url.match('/$') ? url : url.substring(0, url.length - 1);
 };

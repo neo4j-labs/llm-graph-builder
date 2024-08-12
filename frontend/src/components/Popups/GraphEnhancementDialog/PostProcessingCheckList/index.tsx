@@ -1,4 +1,4 @@
-import { Box, Checkbox, Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
+import { Checkbox, Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import { POST_PROCESSING_JOBS } from '../../../../utils/Constants';
 import { capitalize } from '../../../../utils/Utils';
 import { useFileContext } from '../../../../context/UsersFiles';

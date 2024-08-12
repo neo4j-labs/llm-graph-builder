@@ -29,12 +29,12 @@ export const docChunkEntities = `+[chunks]
 //chunks with entities
 + collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
 export const APP_SOURCES =
-  process.env.REACT_APP_SOURCES !== ''
-    ? (process.env.REACT_APP_SOURCES?.split(',') as string[])
+  process.env.VITE_REACT_APP_SOURCES !== ''
+    ? (process.env.VITE_REACT_APP_SOURCES?.split(',') as string[])
     : ['gcs', 's3', 'local', 'wiki', 'youtube', 'web'];
 export const llms =
-  process.env?.LLM_MODELS?.trim() != ''
-    ? (process.env.LLM_MODELS?.split(',') as string[])
+  process.env?.VITE_LLM_MODELS?.trim() != ''
+    ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
         'diffbot',
         'openai-gpt-3.5',
@@ -57,13 +57,13 @@ export const defaultLLM = llms?.includes('openai-gpt-4o-mini')
   ? 'gemini-1.0-pro'
   : 'diffbot';
 export const chatModes =
-  process.env?.CHAT_MODES?.trim() != ''
-    ? process.env.CHAT_MODES?.split(',')
+  process.env?.VITE_CHAT_MODES?.trim() != ''
+    ? process.env.VITE_CHAT_MODES?.split(',')
     : ['vector', 'graph', 'graph+vector', 'hybrid', 'hybrid+graph'];
-export const chunkSize = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 1 * 1024 * 1024;
-export const timeperpage = process.env.TIME_PER_PAGE ? parseInt(process.env.TIME_PER_PAGE) : 50;
+export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
+export const timeperpage = process.env.VITE_TIME_PER_PAGE ? parseInt(process.env.VITE_TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
-export const largeFileSize = process.env.LARGE_FILE_SIZE ? parseInt(process.env.LARGE_FILE_SIZE) : 5 * 1024 * 1024;
+export const largeFileSize = process.env.VITE_LARGE_FILE_SIZE ? parseInt(process.env.VITE_LARGE_FILE_SIZE) : 5 * 1024 * 1024;
 export const NODES_OPTIONS = [
   {
     label: 'Person',
