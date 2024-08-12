@@ -8,7 +8,7 @@ export const createVectorIndex = async (userCredentials: UserCredentials, isVect
   formData.append('database', userCredentials?.database ?? '');
   formData.append('userName', userCredentials?.userName ?? '');
   formData.append('password', userCredentials?.password ?? '');
-  formData.append('is_vector_index_recreate', JSON.stringify(isVectorIndexExists));
+  formData.append('isVectorIndexExist', JSON.stringify(isVectorIndexExists));
   try {
     const response = await axios.post<commonserverresponse>(`${url()}/drop_create_vector_index`, formData);
     return response;

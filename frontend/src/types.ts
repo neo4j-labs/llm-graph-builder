@@ -612,9 +612,10 @@ export interface ExtendedRelationship extends Relationship {
   labels: string[];
 }
 export interface connectionState {
-  isvectorIndexMatch: boolean;
   openPopUp: boolean;
-  novectorindexInDB: boolean;
+  chunksExists: boolean;
+  vectorIndexMisMatch: boolean;
+  chunksExistsWithDifferentDimension: boolean;
 }
 export interface Message {
   type: 'success' | 'info' | 'warning' | 'danger' | 'unknown';
@@ -626,7 +627,8 @@ export interface ConnectionModalProps {
   setOpenConnection: Dispatch<SetStateAction<connectionState>>;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
   isVectorIndexMatch: boolean;
-  noVectorIndexFound: boolean;
+  chunksExistsWithoutEmbedding: boolean;
+  chunksExistsWithDifferentEmbedding: boolean;
 }
 export interface ReusableDropdownProps extends DropdownProps {
   options: string[] | OptionType[];
