@@ -48,7 +48,7 @@ const Content: React.FC<ContentProps> = ({
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<connectionState>({
     openPopUp: false,
-    chunksExists: true,
+    chunksExists: false,
     vectorIndexMisMatch: false,
     chunksExistsWithDifferentDimension: false,
   });
@@ -420,7 +420,9 @@ const Content: React.FC<ContentProps> = ({
             })
           );
           if (
-            (response.data.data.application_dimension === response.data.data.db_vector_dimension) && (!response.data.data.chunks_exists)
+            (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
+              response.data.data.db_vector_dimension == 0) &&
+            !response.data.data.chunks_exists
           ) {
             setConnectionStatus(true);
             setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
@@ -429,11 +431,12 @@ const Content: React.FC<ContentProps> = ({
               openPopUp: true,
               chunksExists: response.data.data.chunks_exists as boolean,
               vectorIndexMisMatch:
-                (response.data.data.db_vector_dimension > 0 &&
-                  response.data.data.db_vector_dimension != response.data.data.application_dimension),
+                response.data.data.db_vector_dimension > 0 &&
+                response.data.data.db_vector_dimension != response.data.data.application_dimension,
               chunksExistsWithDifferentDimension:
+                response.data.data.db_vector_dimension > 0 &&
                 response.data.data.db_vector_dimension != response.data.data.application_dimension &&
-                response.data.data.application_dimension,
+                (response.data.data.chunks_exists ?? true),
             });
             setConnectionStatus(false);
           }

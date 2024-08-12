@@ -80,12 +80,12 @@ export default function DeduplicationTab() {
   const onRemove = (nodeid: string, similarNodeId: string) => {
     setDuplicateNodes((prev) => {
       return prev.map((d) =>
-        d.e.elementId === nodeid
+        (d.e.elementId === nodeid
           ? {
               ...d,
               similar: d.similar.filter((n) => n.elementId != similarNodeId),
             }
-          : d
+          : d)
       );
     });
   };

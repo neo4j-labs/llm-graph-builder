@@ -341,7 +341,7 @@ class graphDBdataAccess:
         embedding_model = os.getenv('EMBEDDING_MODEL')
         embeddings, dimension = load_embedding_model(embedding_model)
         
-        if isVectorIndexExist == 'True':
+        if isVectorIndexExist == 'true':
             self.graph.query("""drop index vector""")
         # self.graph.query("""drop index vector""")
         self.graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)

@@ -99,13 +99,13 @@ export default function ConnectionModal({
     [userCredentials, userDbVectorIndex]
   );
   useEffect(() => {
-    if (isVectorIndexMatch) {
+    if (isVectorIndexMatch || chunksExistsWithoutEmbedding) {
       setMessage({
         type: 'danger',
         content: (
           <VectorIndexMisMatchAlert
             vectorIndexLoading={vectorIndexLoading}
-            recreateVectorIndex={() => recreateVectorIndex(!chunksExistsWithDifferentEmbedding)}
+            recreateVectorIndex={() => recreateVectorIndex(chunksExistsWithDifferentEmbedding)}
             isVectorIndexAlreadyExists={chunksExistsWithDifferentEmbedding || isVectorIndexMatch}
             userVectorIndexDimension={JSON.parse(localStorage.getItem('neo4j.connection') ?? 'null').userDbVectorIndex}
             chunksExists={chunksExistsWithoutEmbedding}
@@ -113,7 +113,7 @@ export default function ConnectionModal({
         ),
       });
     }
-  }, [isVectorIndexMatch, vectorIndexLoading, chunksExistsWithDifferentEmbedding]);
+  }, [isVectorIndexMatch, vectorIndexLoading, chunksExistsWithDifferentEmbedding, chunksExistsWithoutEmbedding]);
 
   const parseAndSetURI = (uri: string, urlparams = false) => {
     const uriParts: string[] = uri.split('://');
@@ -191,54 +191,80 @@ export default function ConnectionModal({
     const connectionURI = `${protocol}://${URI}${URI.split(':')[1] ? '' : `:${port}`}`;
     setUserCredentials({ uri: connectionURI, userName: username, password: password, database: database, port: port });
     setIsLoading(true);
-    const response = await connectAPI(connectionURI, username, password, database);
-    if (response?.data?.status === 'Success') {
-      setUserDbVectorIndex(response.data.data.db_vector_dimension);
-      if (response.data.data.db_vector_dimension === response.data.data.application_dimension) {
-        setConnectionStatus(true);
-        setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
-        setMessage({
-          type: 'success',
-          content: response.data.data.message,
-        });
-      } else if (response.data.chunks_exists) {
-        setMessage({
-          type: 'danger',
-          content: (
-            <VectorIndexMisMatchAlert
-              vectorIndexLoading={vectorIndexLoading}
-              recreateVectorIndex={() =>
-                recreateVectorIndex(
-                  !(
-                    response.data.data.db_vector_dimension > 0 &&
-                    response.data.data.db_vector_dimension != response.data.data.application_dimension
+    try {
+      const response = await connectAPI(connectionURI, username, password, database);
+      setIsLoading(false);
+      if (response?.data?.status !== 'Success') {
+        throw new Error(response.data.error);
+      } else {
+        setUserDbVectorIndex(response.data.data.db_vector_dimension);
+        if (
+          (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
+            response.data.data.db_vector_dimension == 0) &&
+          !response.data.data.chunks_exists
+        ) {
+          setConnectionStatus(true);
+          setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
+          setMessage({
+            type: 'success',
+            content: response.data.data.message,
+          });
+        } else if ((response.data.data.chunks_exists ?? true) && response.data.data.db_vector_dimension == 0) {
+          setMessage({
+            type: 'danger',
+            content: (
+              <VectorIndexMisMatchAlert
+                vectorIndexLoading={vectorIndexLoading}
+                recreateVectorIndex={() =>
+                  recreateVectorIndex(
+                    !(
+                      response.data.data.db_vector_dimension > 0 &&
+                      response.data.data.db_vector_dimension != response.data.data.application_dimension
+                    )
                   )
-                )
-              }
-              isVectorIndexAlreadyExists={response.data.data.db_vector_dimension != 0}
-              chunksExists={true}
-              userVectorIndexDimension={response.data.data.db_vector_dimension}
-            />
-          ),
-        });
+                }
+                isVectorIndexAlreadyExists={response.data.data.db_vector_dimension != 0}
+                chunksExists={true}
+              />
+            ),
+          });
+        } else {
+          setMessage({
+            type: 'danger',
+            content: (
+              <VectorIndexMisMatchAlert
+                vectorIndexLoading={vectorIndexLoading}
+                recreateVectorIndex={() => recreateVectorIndex(true)}
+                isVectorIndexAlreadyExists={
+                  response.data.data.db_vector_dimension != 0 &&
+                  response.data.data.db_vector_dimension != response.data.data.application_dimension
+                }
+                chunksExists={true}
+                userVectorIndexDimension={response.data.data.db_vector_dimension}
+              />
+            ),
+          });
+        }
+        localStorage.setItem(
+          'neo4j.connection',
+          JSON.stringify({
+            uri: connectionURI,
+            user: username,
+            password: password,
+            database: database,
+            userDbVectorIndex,
+          })
+        );
       }
-      localStorage.setItem(
-        'neo4j.connection',
-        JSON.stringify({
-          uri: connectionURI,
-          user: username,
-          password: password,
-          database: database,
-          userDbVectorIndex,
-        })
-      );
-    } else {
-      setMessage({ type: 'danger', content: response.data.error });
-      setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-      setPassword('');
-      setConnectionStatus(false);
+    } catch (error) {
+      setIsLoading(false);
+      if (error instanceof Error) {
+        setMessage({ type: 'danger', content: error.message });
+        setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+        setPassword('');
+        setConnectionStatus(false);
+      }
     }
-    setIsLoading(false);
     setTimeout(() => {
       setPassword('');
     }, 3000);

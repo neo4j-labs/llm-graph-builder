@@ -13,7 +13,7 @@ export default function VectorIndexMisMatchAlert({
   vectorIndexLoading: boolean;
   recreateVectorIndex: () => Promise<void>;
   isVectorIndexAlreadyExists: boolean;
-  userVectorIndexDimension: number;
+  userVectorIndexDimension?: number;
   chunksExists: boolean;
 }) {
   const { userCredentials } = useCredentials();
@@ -28,7 +28,7 @@ To proceed, please choose one of the following options:
 1.**Recreate Vector Index:** Click "Re-Create Vector Index" to generate a compatible vector index. 
 2.**Use a Different Instance:** Connect to a Neo4j instance with a compatible vector index configuration  `
             : chunksExists
-            ? `Chunks without embedding exists in the DB`
+            ? `A vector index is essential for performing efficient similarity searches within your data. Without it, some chunks of data will be invisible to queries based on meaning and context. Creating a vector index unlocks the full potential of your data by allowing you to find related information quickly and accurately.`
             : ''}
         </Markdown>
       </Box>
