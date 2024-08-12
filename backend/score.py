@@ -241,20 +241,20 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
         graph = create_graph_database_connection(uri, userName, password, database)
         tasks = set(map(str.strip, json.loads(tasks)))
 
-        if "update_similarity_graph" in tasks:
+        if "materialize_text_chunk_similarities" in tasks:
             await asyncio.to_thread(update_graph, graph)
-            josn_obj = {'api_name': 'post_processing/update_similarity_graph', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+            josn_obj = {'api_name': 'post_processing/materialize_text_chunk_similarities', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logger.log_struct(josn_obj)
             logging.info(f'Updated KNN Graph')
-        if "create_fulltext_index" in tasks:
+        if "enable_hybrid_search_and_fulltext_search_in_bloom" in tasks:
             await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database,type="entities")
             await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database,type="keyword")
-            josn_obj = {'api_name': 'post_processing/create_fulltext_index', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+            josn_obj = {'api_name': 'post_processing/enable_hybrid_search_and_fulltext_search_in_bloom', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logger.log_struct(josn_obj)
             logging.info(f'Full Text index created')
-        if os.environ.get('ENTITY_EMBEDDING','False').upper()=="TRUE" and "create_entity_embedding" in tasks:
+        if os.environ.get('ENTITY_EMBEDDING','False').upper()=="TRUE" and "materialize_entity_similarities" in tasks:
             await asyncio.to_thread(create_entity_embedding, graph)
-            josn_obj = {'api_name': 'post_processing/create_entity_embedding', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+            josn_obj = {'api_name': 'post_processing/materialize_entity_similarities', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logger.log_struct(josn_obj)
             logging.info(f'Entity Embeddings created')
         return create_api_response('Success', message='All tasks completed successfully')

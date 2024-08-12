@@ -5,8 +5,8 @@ import { Entity, ExtendedNode, GraphType, Messages, Scheme } from '../types';
 // Get the Url
 export const url = () => {
   let url = window.location.href.replace('5173', '8000');
-  if (process.env.BACKEND_API_URL) {
-    url = process.env.BACKEND_API_URL;
+  if (process.env.VITE_BACKEND_API_URL) {
+    url = process.env.VITE_BACKEND_API_URL;
   }
   return !url || !url.match('/$') ? url : url.substring(0, url.length - 1);
 };
@@ -150,6 +150,7 @@ export const processGraphData = (neoNodes: ExtendedNode[], neoRels: Relationship
       color: schemeVal[g.labels[0]],
       icon: getIcon(g),
       labels: g.labels,
+      properties: g.properties,
     };
   });
   const finalNodes = newNodes.flat();
@@ -177,7 +178,9 @@ export const filterData = (
   const entityTypes = Object.keys(scheme).filter((type) => type !== 'Document' && type !== 'Chunk');
   if (graphType.includes('DocumentChunk') && !graphType.includes('Entities')) {
     // Document + Chunk
-    filteredNodes = allNodes.filter((node) => node.labels.includes('Document') || node.labels.includes('Chunk'));
+    filteredNodes = allNodes.filter(
+      (node) => (node.labels.includes('Document') && node.properties.fileName) || node.labels.includes('Chunk')
+    );
     const nodeIds = new Set(filteredNodes.map((node) => node.id));
     filteredRelations = allRelationships.filter(
       (rel) =>
