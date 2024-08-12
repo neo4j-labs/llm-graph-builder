@@ -6,9 +6,12 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
   // const env = loadEnv(mode, process.cwd(), '');
   return {
-    optimizeDeps: {
-      esbuildOptions: {
-        target: 'es2020'
+    define: {
+      // 'process.env': env,
+      optimizeDeps: {
+        esbuildOptions: {
+          target: 'es2020'
+        }
       }
     },
     plugins: [react()],
