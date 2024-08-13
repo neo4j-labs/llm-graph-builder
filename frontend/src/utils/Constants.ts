@@ -191,6 +191,9 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
   },
 ];
 
+export const batchSize: number = parseInt(process.env.VITE_BATCH_SIZE ?? '2');
+
+
 export const nvlOptions: NvlOptions = {
   allowDynamicMinZoom: true,
   disableWebGL: true,
