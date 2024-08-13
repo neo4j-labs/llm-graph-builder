@@ -552,6 +552,7 @@
     "@floating-ui/core" "^1.6.0"
     "@floating-ui/utils" "^0.2.7"
 
+
 "@floating-ui/react-dom@2.0.1":
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/@floating-ui/react-dom/-/react-dom-2.0.1.tgz#7972a4fc488a8c746cded3cfe603b6057c308a91"
@@ -584,6 +585,7 @@
   version "0.2.7"
   resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.2.7.tgz#d0ece53ce99ab5a8e37ebdfe5e32452a2bfc073e"
   integrity sha512-X8R8Oj771YRl/w+c1HqAC1szL8zWQRwFvgDwT129k9ACdBoud/+/rX9V0qiMl6LWUdP9voC2nDVZYPMQQsb6eA==
+
 
 "@formatjs/ecma402-abstract@2.0.0":
   version "2.0.0"
@@ -892,10 +894,6 @@
     "@types/chroma-js" "2.1.4"
     chroma-js "2.4.2"
 
-"@neo4j-ndl/base@2.11.6":
-  version "2.11.6"
-  resolved "https://registry.yarnpkg.com/@neo4j-ndl/base/-/base-2.11.6.tgz#3eacf4e41a86d84e0663f905a769ef95d3fa9cc2"
-  integrity sha512-HA4YWgN3GcGFzDcAj1maYjYgfD8mwHcFkwh/BaY1964/A2T9BCffHsxtQaPOW24AIhdO5tMMH72qwcvZB2PvlQ==
 
 "@neo4j-ndl/base@^2.11.6":
   version "2.12.7"
@@ -906,6 +904,7 @@
   version "2.15.10"
   resolved "https://registry.yarnpkg.com/@neo4j-ndl/react/-/react-2.15.10.tgz#c109633adc3fd08fb510b3b57e70a1ed5216bf4f"
   integrity sha512-U3pFJS23riItlklCgVZs40xxVAypVAM3u+rbIItOJYDEl1/yxtoYtjuFSyyegke6Hw6EBw/gJ73aBMel7hEWoQ==
+
   dependencies:
     "@dnd-kit/core" "6.1.0"
     "@dnd-kit/sortable" "8.0.0"
@@ -913,7 +912,7 @@
     "@floating-ui/react-dom" "2.0.1"
     "@heroicons/react" "2.0.18"
     "@neo4j-cypher/react-codemirror" "^1.0.1"
-    "@neo4j-ndl/base" "^2.11.6"
+    "@neo4j-ndl/base" "^2.12.7"
     "@table-nav/core" "0.0.7"
     "@table-nav/react" "0.0.7"
     "@tanstack/react-table" "8.11.8"
@@ -1867,6 +1866,7 @@
   dependencies:
     "@react-types/shared" "^3.24.1"
 
+
 "@react-types/combobox@^3.12.1":
   version "3.12.1"
   resolved "https://registry.yarnpkg.com/@react-types/combobox/-/combobox-3.12.1.tgz#ab015d31c160aa0a21d696887ce81467c5996602"
@@ -2672,6 +2672,7 @@ caniuse-lite@^1.0.30001646:
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001651.tgz#52de59529e8b02b1aedcaaf5c05d9e23c0c28138"
   integrity sha512-9Cf+Xv1jJNe1xPZLGuUXLNkE1BoDkqRqYyFJ9TDYSqhduqA4hu4oR9HluGoWYQC/aj8WHjsGVV+bwkh0+tegRg==
 
+
 ccount@^2.0.0:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/ccount/-/ccount-2.0.1.tgz#17a3bf82302e0870d6da43a01311a8bc02a3ecf5"
@@ -2827,13 +2828,6 @@ concaveman@^1.2.1:
     rbush "^3.0.1"
     robust-predicates "^2.0.4"
     tinyqueue "^2.0.3"
-
-contrast@1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/contrast/-/contrast-1.0.1.tgz#839c66d8852269d33f4eb0a1b92d994bdd16385e"
-  integrity sha512-cJvPtJOPXxFtkppBYqk1A1+ZtPT7neKmgjBKMtjnwSAZ5k+5GNdJHeDmIjCTLEItLcqna+K7GTtaGjQtDJcF4A==
-  dependencies:
-    hex-to-rgb "^1.0.0"
 
 convert-source-map@^1.5.0:
   version "1.9.0"
@@ -3842,11 +3836,6 @@ hastscript@^6.0.0:
     hast-util-parse-selector "^2.0.0"
     property-information "^5.0.0"
     space-separated-tokens "^1.0.0"
-
-hex-to-rgb@^1.0.0:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/hex-to-rgb/-/hex-to-rgb-1.0.1.tgz#100b9df126b32f2762adf8486be68c65ef8ed2a4"
-  integrity sha512-2GsESdjpJIrRL8I7iPOp0r0wczJBk++Q/zFrviNaTRPWMIgk5bPqDmKPUvRHN0SZrYT9N1e+xZU1niYJ6QxzMg==
 
 highlight.js@^10.4.1, highlight.js@~10.7.0:
   version "10.7.3"
@@ -6147,6 +6136,7 @@ tailwindcss@^3.4.1:
   version "3.4.9"
   resolved "https://registry.yarnpkg.com/tailwindcss/-/tailwindcss-3.4.9.tgz#9e04cddce1924d530df62af37d3520f0e2a9d85e"
   integrity sha512-1SEOvRr6sSdV5IDf9iC+NU4dhwdqzF4zKKq3sAbasUWHEM6lsMhX+eNN5gkPx1BvLFEnZQEUFbXnGj8Qlp83Pg==
+
   dependencies:
     "@alloc/quick-lru" "^5.2.0"
     arg "^5.0.2"
@@ -6203,7 +6193,7 @@ through2@^0.6.3:
     readable-stream ">=1.0.33-1 <1.1.0-0"
     xtend ">=4.0.0 <4.1.0-0"
 
-tinycolor2@^1.4.2:
+tinycolor2@1.6.0, tinycolor2@^1.4.2:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/tinycolor2/-/tinycolor2-1.6.0.tgz#f98007460169b0263b97072c5ae92484ce02d09e"
   integrity sha512-XPaBkWQJdsf3pLKJV9p4qN/S+fm2Oj8AIPo1BTUhg5oxkvm9+SVEGFdhyOz7tTdUTfvxMiAs4sp6/eZO2Ew+pw==
@@ -6454,6 +6444,11 @@ util-deprecate@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
   integrity sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==
+
+uuid@^8.3.2:
+  version "8.3.2"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
+  integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
 
 uuid@^9.0.1:
   version "9.0.1"
