@@ -61,6 +61,7 @@ services:
         - CHUNK_SIZE=${CHUNK_SIZE-5242880}
         - ENV=${ENV-DEV}
         - CHAT_MODES=${CHAT_MODES-""}
+        - BATCH_SIZE=${BATCH_SIZE-2}
     volumes:
       - ./frontend:/app
       - /app/node_modules
