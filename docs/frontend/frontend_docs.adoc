@@ -263,21 +263,21 @@ Followed best practices for optimizing performance and security of the deployed 
 
 [source,indent=0]
 ----
- * LLM_MODELS="diffbot,openai-gpt-3.5,openai-gpt-4o"
- * REACT_APP_SOURCES="local,youtube,wiki,s3,gcs,web"
- * GOOGLE_CLIENT_ID="xxxx"  [For Google GCS integration]
- * CHAT_MODES="vector,graph+vector"
- * CHUNK_SIZE=5242880
- * TIME_PER_BYTE=2
- * TIME_PER_PAGE=50
- * TIME_PER_CHUNK=4
- * LARGE_FILE_SIZE=5242880
- * ENV="PROD"/ ‘DEV’
- * NEO4J_USER_AGENT="LLM-Graph-Builder/v0.2-dev"
- * BACKEND_API_URL=
- * BLOOM_URL=
- * NPM_TOKEN=
- * BACKEND_PROCESSING_URL=
+ * VITE_LLM_MODELS="diffbot,openai-gpt-3.5,openai-gpt-4o"
+ * VITE_REACT_APP_SOURCES="local,youtube,wiki,s3,gcs,web"
+ * VITE_GOOGLE_CLIENT_ID="xxxx"  [For Google GCS integration]
+ * VITE_CHAT_MODES="vector,graph+vector"
+ * VITE_CHUNK_SIZE=5242880
+ * VITE_TIME_PER_BYTE=2
+ * VITE_TIME_PER_PAGE=50
+ * VITE_TIME_PER_CHUNK=4
+ * VITE_LARGE_FILE_SIZE=5242880
+ * VITE_ENV="PROD"/ ‘DEV’
+ * VITE_NEO4J_USER_AGENT="LLM-Graph-Builder/v0.2-dev"
+ * VITE_BACKEND_API_URL=
+ * VITE_BLOOM_URL=
+ * VITE_NPM_TOKEN=
+ * VITE_BACKEND_PROCESSING_URL=
 ----
 * ***Cloud Deployment:***
   ** To deploy the app install the gcloud cli , run the following command in the terminal specifically from frontend root folder.
