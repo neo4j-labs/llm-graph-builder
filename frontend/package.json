@@ -36,10 +36,6 @@
     "tailwind-merge": "^2.3.0",
     "uuid": "^9.0.1"
   },
-  "resolutions": {
-    "@neo4j-nvl/base": "0.3.1",
-    "@neo4j-nvl/react":"0.3.1"
-  },
   "devDependencies": {
     "@types/node": "^20.11.10",
     "@types/react": "^18.2.15",
