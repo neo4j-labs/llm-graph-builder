@@ -297,7 +297,7 @@ const Content: React.FC<ContentProps> = ({
       showAlert: true,
       alertMessage: `Processing ${batch.length} files at a time.`,
       alertType: 'info',
-    })
+    });
     for (let i = 0; i < batch.length; i++) {
       if (newCheck) {
         if (batch[i]?.status === 'New') {
