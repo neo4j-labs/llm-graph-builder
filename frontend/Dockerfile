@@ -12,10 +12,10 @@ ARG LARGE_FILE_SIZE=5242880
 ARG CHUNK_SIZE=5242880
 ARG CHAT_MODES=""
 ARG ENV="DEV"
+ARG BATCH_SIZE=2
 
 WORKDIR /app
 COPY package.json yarn.lock ./
-RUN yarn add @neo4j-nvl/base @neo4j-nvl/react
 RUN yarn install
 COPY . ./
 RUN BACKEND_API_URL=$BACKEND_API_URL \
@@ -28,6 +28,7 @@ RUN BACKEND_API_URL=$BACKEND_API_URL \
     ENV=$ENV \
     LARGE_FILE_SIZE=${LARGE_FILE_SIZE} \
     CHAT_MODES=$CHAT_MODES \
+    BATCH_SIZE=$BATCH_SIZE \
     yarn run build
 
 # Step 2: Serve the application using Nginx
