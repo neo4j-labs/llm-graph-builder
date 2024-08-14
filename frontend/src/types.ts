@@ -344,13 +344,12 @@ export type alertStateType = {
 export type Scheme = Record<string, string>;
 
 export type LabelCount = Record<string, number>;
-interface NodeType extends Partial<Node> {
-  labels?: string[];
-}
+
 export interface LegendChipProps {
   scheme: Scheme;
-  title: string;
-  nodes: NodeType[];
+  label: string;
+  type: 'node' | 'relationship' | 'propertyKey';
+  count: number
 }
 export interface FileContextProviderProps {
   children: ReactNode;

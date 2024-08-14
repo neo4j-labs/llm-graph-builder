@@ -3,16 +3,18 @@ import { GraphLabel } from '@neo4j-ndl/react';
 export default function Legend({
   bgColor,
   title,
-  chunkCount,
+  count,
+  type
 }: {
   bgColor: string;
   title: string;
-  chunkCount?: number;
+  count?: number;
+  type: 'node' | 'relationship' | 'propertyKey';
+  className?: string;
+  tabIndex?: number;
 }) {
   return (
-    <GraphLabel type='node' className='legend' style={{ backgroundColor: `${bgColor}` }}>
-      {title}
-      {chunkCount && `(${chunkCount})`}
-    </GraphLabel>
-  );
+    <GraphLabel type={type} className='legend' color={bgColor}>
+      {title} {count !== undefined && `(${count})`}
+    </GraphLabel>)
 }

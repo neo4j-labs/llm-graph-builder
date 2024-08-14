@@ -17,8 +17,9 @@ import { filterData, processGraphData } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 import { LegendsChip } from './LegendsChip';
 import graphQueryAPI from '../../services/GraphQuery';
-import { graphLabels, intitalGraphType, mouseEventCallbacks, nvlOptions, queryMap } from '../../utils/Constants';
+import { graphLabels, intitalGraphType, mouseEventCallbacks, nvlOptions, queryMap, RESULT_STEP_SIZE } from '../../utils/Constants';
 import CheckboxSelection from './CheckboxSelection';
+import { ShowAll } from '../UI/ShowAll';
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
   inspectedName,
@@ -53,14 +54,26 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setGraphType(newGraphSelected);
   };
 
+  const nodeCount =  (nodes:ExtendedNode[], label:string):number =>{
+    return [...new Set(nodes?.filter((n)=>n.labels?.includes(label)).map((i)=>i.id))].length;
+  }
+
+  const relationshipCount = (relationships:Relationship[], label:string):number =>{
+    return [...new Set(relationships?.filter((r)=>r.caption?.includes(label)).map((i)=>i.id))].length;
+  }
+
+  console.log('hello nodes count', nodes);
+  console.log('hello relations count',  relationships);
+
+
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-      ? queryMap.DocChunks
-      : graphType.includes('Entities')
-      ? queryMap.Entities
-      : '';
+        ? queryMap.DocChunks
+        : graphType.includes('Entities')
+          ? queryMap.Entities
+          : '';
 
   const handleZoomToFit = () => {
     nvlRef.current?.fit(
@@ -91,10 +104,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
-              userCredentials as UserCredentials,
-              graphQuery,
-              selectedRows?.map((f) => f.name)
-            )
+            userCredentials as UserCredentials,
+            graphQuery,
+            selectedRows?.map((f) => f.name)
+          )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -203,8 +216,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setAllRelationships([]);
   };
 
+
+
   // sort the legends in with Chunk and Document always the first two values
-  const legendCheck = Object.keys(newScheme).sort((a, b) => {
+  const nodeCheck = Object.keys(newScheme).sort((a, b) => {
     if (a === graphLabels.document || a === graphLabels.chunk) {
       return -1;
     } else if (b === graphLabels.document || b === graphLabels.chunk) {
@@ -212,6 +227,13 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
     return a.localeCompare(b);
   });
+
+  const sortAlphabetically = (a: Relationship, b: Relationship) =>{
+    const captionOne = a.caption?.toLowerCase() || '';
+    const captionTwo = b.caption?.toLowerCase() || '';
+    return captionOne.localeCompare(captionTwo);
+  }
+  const relationshipsSorted = relationships.sort(sortAlphabetically);
 
   const initGraph = (
     graphType: GraphType[],
@@ -231,6 +253,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setNewScheme(filteredScheme);
     }
   };
+
+
 
   return (
     <>
@@ -334,17 +358,41 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                     handleClasses={{ left: 'ml-1' }}
                   >
                     <div className='legend_div'>
-                      <Flex className='py-4 pt-3 ml-2'>
-                        <Typography variant='h3'>{graphLabels.resultOverview}</Typography>
-                        <Typography variant='subheading-small'>
-                          {graphLabels.totalNodes} ({nodes.length})
-                        </Typography>
-                      </Flex>
-                      <div className='flex gap-2 flex-wrap ml-2'>
-                        {legendCheck.map((key, index) => (
-                          <LegendsChip key={index} title={key} scheme={newScheme} nodes={nodes} />
-                        ))}
-                      </div>
+                      {nodeCheck.length > 0 && (
+                        <>
+                          <Flex className='py-4 pt-3 ml-2'>
+                            <Typography variant='h3'>{graphLabels.resultOverview}</Typography>
+                            <Typography variant='subheading-small'>
+                              {graphLabels.totalNodes} ({nodes.length})
+                            </Typography>
+                          </Flex>
+                          <div className='flex gap-2 flex-wrap ml-2'>
+                            <ShowAll initiallyShown={RESULT_STEP_SIZE}>
+                              {nodeCheck.map((key,index) => (
+                                <LegendsChip type="node"
+                                  key={index}
+                                  label={key} 
+                                  scheme={newScheme}
+                                  count={nodeCount(nodes, key)}/>
+                              ))}
+                            </ShowAll>
+                          </div>
+                        </>)}
+                      {relationshipsSorted.length > 0 && (
+                        <>
+                          <Flex className='py-4 pt-3 ml-2'>
+                            <Typography variant='subheading-small'>
+                              {graphLabels.totalRelationships} ({relationships.length})
+                            </Typography>
+                          </Flex>
+                          <div className='flex gap-2 flex-wrap ml-2'>
+                            <ShowAll initiallyShown={RESULT_STEP_SIZE}>
+                              {relationshipsSorted.map((relType,index) => (
+                                <LegendsChip key={index} scheme={newScheme} label={relType.caption || ''} type='relationship' count={relationshipCount(relationships, (relType.caption || ''))}/>
+                              ))}
+                            </ShowAll>
+                          </div>
+                        </>)}
                     </div>
                   </Resizable>
                 </div>
