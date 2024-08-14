@@ -10,14 +10,16 @@ export default function ConfirmationDialog({
   onClose,
   loading,
   extractHandler,
+  selectedRows,
 }: {
   largeFiles: CustomFile[];
   open: boolean;
   onClose: () => void;
   loading: boolean;
   extractHandler: (selectedFilesFromAllfiles: CustomFile[]) => void;
+  selectedRows: CustomFile[];
 }) {
-  const { setSelectedRows, filesData, setRowSelection, selectedRows } = useFileContext();
+  const { setSelectedRows, filesData, setRowSelection } = useFileContext();
   const [checked, setChecked] = useState<string[]>([...largeFiles.map((f) => f.id)]);
   const handleToggle = (ischecked: boolean, id: string) => {
     const newChecked = [...checked];
@@ -86,7 +88,7 @@ export default function ConfirmationDialog({
         <Button
           onClick={() => {
             if (selectedRows.length) {
-              extractHandler([]);
+              extractHandler(selectedRows);
             } else {
               const tobeProcessFiles: CustomFile[] = [];
               checked.forEach((id: string) => {
