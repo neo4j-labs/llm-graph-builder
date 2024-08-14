@@ -1,4 +1,4 @@
-import { Banner, Dialog, Flex, IconButtonArray, LoadingSpinner, Typography } from '@neo4j-ndl/react';
+import { Banner, Dialog, Flex, IconButtonArray, LoadingSpinner, Typography, useNeedleTheme } from '@neo4j-ndl/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ExtendedNode,
@@ -10,7 +10,7 @@ import {
 } from '../../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL from '@neo4j-nvl/base';
-import type { Node, Relationship } from '@neo4j-nvl/base';
+import type { Node, NvlOptions, Relationship } from '@neo4j-nvl/base';
 import { Resizable } from 're-resizable';
 import {
   ArrowPathIconOutline,
@@ -34,6 +34,7 @@ import {
 } from '../../utils/Constants';
 import CheckboxSelection from './CheckboxSelection';
 import { ShowAll } from '../UI/ShowAll';
+import { tokens } from '@neo4j-ndl/base';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -56,6 +57,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const { userCredentials } = useCredentials();
   const [scheme, setScheme] = useState<Scheme>({});
   const [newScheme, setNewScheme] = useState<Scheme>({});
+  const [selectedNode, setSelectedNode] = useState<string>('');
+  const [nvlOpts, setNvlOpts] = useState<NvlOptions>(nvlOptions);
   const handleCheckboxChange = (graph: GraphType) => {
     const currentIndex = graphType.indexOf(graph);
     const newGraphSelected = [...graphType];
@@ -69,6 +72,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setGraphType(newGraphSelected);
   };
 
+
+  const { theme } = useNeedleTheme();
   const nodeCount = (nodes: ExtendedNode[], label: string): number => {
     return [...new Set(nodes?.filter((n) => n.labels?.includes(label)).map((i) => i.id))].length;
   };
@@ -77,14 +82,25 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     return [...new Set(relationships?.filter((r) => r.caption?.includes(label)).map((i) => i.id))].length;
   };
 
+  
+  const handleNodeClick = useCallback((nodeLabel:string) => {
+    setSelectedNode(nodeLabel);
+     console.log('nvl', nodeLabel),
+     console.log('selected', selectedNode),
+    setNvlOpts((prevOptions) => ({
+      ...prevOptions,
+      nodeDefaultBorderColor: nodeLabel === selectedNode ? tokens.theme[theme].palette.neutral.border.strongest: 'desiredColor' ,
+    }));
+  }, [selectedNode, tokens, theme]);
+
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-      ? queryMap.DocChunks
-      : graphType.includes('Entities')
-      ? queryMap.Entities
-      : '';
+        ? queryMap.DocChunks
+        : graphType.includes('Entities')
+          ? queryMap.Entities
+          : '';
 
   const handleZoomToFit = () => {
     nvlRef.current?.fit(
@@ -115,10 +131,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
-              userCredentials as UserCredentials,
-              graphQuery,
-              selectedRows?.map((f) => f.name)
-            )
+            userCredentials as UserCredentials,
+            graphQuery,
+            selectedRows?.map((f) => f.name)
+          )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -275,6 +291,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
   };
 
+
+
+  // const onClickRelationshipLegend = (key: string) => {
+  //   return console.log('Relkey', key);
+  // }
   return (
     <>
       <Dialog
@@ -321,40 +342,41 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                     <InteractiveNvlWrapper
                       nodes={nodes}
                       rels={relationships}
-                      nvlOptions={nvlOptions}
+                      nvlOptions={nvlOpts}
                       ref={nvlRef}
                       mouseEventCallbacks={{ ...mouseEventCallbacks }}
                       interactionOptions={{
                         selectOnClick: true,
                       }}
                       nvlCallbacks={nvlCallbacks}
-                    />
+
+                    />                    
                     <IconButtonArray orientation='vertical' floating className='absolute bottom-4 right-4'>
-                      {viewPoint !== 'chatInfoView' && (
-                        <IconButtonWithToolTip
-                          label='Refresh'
-                          text='Refresh graph'
-                          onClick={handleRefresh}
-                          placement='left'
-                        >
-                          <ArrowPathIconOutline />
-                        </IconButtonWithToolTip>
-                      )}
-                      <IconButtonWithToolTip label='Zoomin' text='Zoom in' onClick={handleZoomIn} placement='left'>
-                        <MagnifyingGlassPlusIconOutline />
-                      </IconButtonWithToolTip>
-                      <IconButtonWithToolTip label='Zoom out' text='Zoom out' onClick={handleZoomOut} placement='left'>
-                        <MagnifyingGlassMinusIconOutline />
-                      </IconButtonWithToolTip>
+                    {viewPoint !== 'chatInfoView' && (
                       <IconButtonWithToolTip
-                        label='Zoom to fit'
-                        text='Zoom to fit'
-                        onClick={handleZoomToFit}
+                        label='Refresh'
+                        text='Refresh graph'
+                        onClick={handleRefresh}
                         placement='left'
                       >
-                        <FitToScreenIcon />
+                        <ArrowPathIconOutline />
                       </IconButtonWithToolTip>
-                    </IconButtonArray>
+                    )}
+                    <IconButtonWithToolTip label='Zoomin' text='Zoom in' onClick={handleZoomIn} placement='left'>
+                      <MagnifyingGlassPlusIconOutline />
+                    </IconButtonWithToolTip>
+                    <IconButtonWithToolTip label='Zoom out' text='Zoom out' onClick={handleZoomOut} placement='left'>
+                      <MagnifyingGlassMinusIconOutline />
+                    </IconButtonWithToolTip>
+                    <IconButtonWithToolTip
+                      label='Zoom to fit'
+                      text='Zoom to fit'
+                      onClick={handleZoomToFit}
+                      placement='left'
+                    >
+                      <FitToScreenIcon />
+                    </IconButtonWithToolTip>
+                  </IconButtonArray>
                   </div>
                   <Resizable
                     defaultSize={{
@@ -387,13 +409,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                           </Flex>
                           <div className='flex gap-2 flex-wrap ml-2'>
                             <ShowAll initiallyShown={RESULT_STEP_SIZE}>
-                              {nodeCheck.map((key, index) => (
+                              {nodeCheck.map((nodeLabel, index) => (
                                 <LegendsChip
                                   type='node'
                                   key={index}
-                                  label={key}
+                                  label={nodeLabel}
                                   scheme={newScheme}
-                                  count={nodeCount(nodes, key)}
+                                  count={nodeCount(nodes, nodeLabel)}
+                                  onClick={() => handleNodeClick(nodeLabel)}
                                 />
                               ))}
                             </ShowAll>
@@ -419,6 +442,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                                     relationships as ExtendedRelationship[],
                                     relType.caption || ''
                                   )}
+                                  onClick={() => console.log('rel', relType.caption)}
                                 />
                               ))}
                             </ShowAll>

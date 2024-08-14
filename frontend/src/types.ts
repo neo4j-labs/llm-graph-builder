@@ -350,6 +350,7 @@ export interface LegendChipProps {
   label: string;
   type: 'node' | 'relationship' | 'propertyKey';
   count: number;
+  onClick: (e: React.MouseEvent<HTMLElement>) => void;
 }
 export interface FileContextProviderProps {
   children: ReactNode;
@@ -647,3 +648,27 @@ export interface MessageContextType {
   messages: Messages[] | [];
   setMessages: Dispatch<SetStateAction<Messages[]>>;
 }
+
+export type NodePosition = {
+  x: number;
+  y: number;
+};
+
+export type SerialisableNodeVisualisationState = {
+  id: string;
+  position: NodePosition;
+};
+
+export type VisualisationNodeState = SerialisableNodeVisualisationState & {
+  selected: boolean;
+};
+
+export type VisualisationRelationshipState = {
+  id: string;
+  selected: boolean;
+};
+
+export type VisualisationState = {
+  nodes: VisualisationNodeState[];
+  relationships: VisualisationRelationshipState[];
+};
