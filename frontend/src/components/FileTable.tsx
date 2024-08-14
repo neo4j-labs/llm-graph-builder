@@ -119,8 +119,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   disabled:
                     !row.getCanSelect() ||
                     row.original.status == 'Uploading' ||
-                    row.original.status === 'Processing' ||
-                    row.original.status === 'Waiting',
+                    row.original.status === 'Processing',
                   indeterminate: row.getIsSomeSelected(),
                   onChange: row.getToggleSelectedHandler(),
                 }}

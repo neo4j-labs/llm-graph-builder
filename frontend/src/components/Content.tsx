@@ -146,9 +146,9 @@ const Content: React.FC<ContentProps> = ({
       localStorage.setItem('processedCount', JSON.stringify({ db: userCredentials?.uri, count: processedCount }));
     }
     if (processedCount == batchSize) {
-      handleGenerateGraph([]);
+      handleGenerateGraph(queue.items);
     }
-  }, [processedCount, userCredentials]);
+  }, [processedCount, userCredentials,queue]);
 
   useEffect(() => {
     if (afterFirstRender) {
@@ -372,7 +372,7 @@ const Content: React.FC<ContentProps> = ({
   }
 
   /**
-   *@param selectedFilesFromAllfiles iles to process in two ways one from selected files from table other way all new files from table.
+   *@param selectedFilesFromAllfiles files to process in two ways one from selected files from table other way all new files from table.
    *we will check whether queue is empty or not if queue is not empty we process queued files.
    *if queue is empty we check whether selected files count is greater than batch size we slice the selected till batch size and process them remaining files are pushed to queue.
    *if selectedfiles count is less than batch size we check whether the sum of selectedfiles count and processing files count is greater than the batch size.
