@@ -117,9 +117,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 {...{
                   checked: row.getIsSelected(),
                   disabled:
-                    !row.getCanSelect() ||
-                    row.original.status == 'Uploading' ||
-                    row.original.status === 'Processing',
+                    !row.getCanSelect() || row.original.status == 'Uploading' || row.original.status === 'Processing',
                   indeterminate: row.getIsSomeSelected(),
                   onChange: row.getToggleSelectedHandler(),
                 }}
@@ -636,66 +634,68 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 });
               }
             });
-          }
-          setIsLoading(false);
-          setFilesData(prefiles);
-          res.data.data.forEach((item) => {
-            if (
-              item.status === 'Processing' &&
-              item.fileName != undefined &&
-              userCredentials &&
-              userCredentials.database
-            ) {
-              if (item?.fileSize < largeFileSize) {
-                subscribe(
-                  item.fileName,
-                  userCredentials?.uri,
-                  userCredentials?.userName,
-                  userCredentials?.database,
-                  userCredentials?.password,
-                  updatestatus,
-                  updateProgress
-                ).catch((error: AxiosError) => {
-                  // @ts-ignore
-                  const errorfile = decodeURI(error?.config?.url?.split('?')[0].split('/').at(-1));
-                  setProcessedCount((prev) => {
-                    if (prev == 2) {
-                      return 1;
-                    }
-                    return prev + 1;
-                  });
-                  setFilesData((prevfiles) => {
-                    return prevfiles.map((curfile) => {
-                      if (curfile.name == errorfile) {
-                        return {
-                          ...curfile,
-                          status: 'Failed',
-                        };
-                      }
-                      return curfile;
-                    });
-                  });
-                });
-              } else {
-                triggerStatusUpdateAPI(
-                  item.fileName,
-                  userCredentials.uri,
-                  userCredentials.userName,
-                  userCredentials.password,
-                  userCredentials.database,
-                  updateStatusForLargeFiles,
-                  () => {
+            res.data.data.forEach((item) => {
+              if (
+                item.status === 'Processing' &&
+                item.fileName != undefined &&
+                userCredentials &&
+                userCredentials.database
+              ) {
+                if (item?.fileSize < largeFileSize) {
+                  subscribe(
+                    item.fileName,
+                    userCredentials?.uri,
+                    userCredentials?.userName,
+                    userCredentials?.database,
+                    userCredentials?.password,
+                    updatestatus,
+                    updateProgress
+                  ).catch((error: AxiosError) => {
+                    // @ts-ignore
+                    const errorfile = decodeURI(error?.config?.url?.split('?')[0].split('/').at(-1));
                     setProcessedCount((prev) => {
                       if (prev == 2) {
                         return 1;
                       }
                       return prev + 1;
                     });
-                  }
-                );
+                    setFilesData((prevfiles) => {
+                      return prevfiles.map((curfile) => {
+                        if (curfile.name == errorfile) {
+                          return {
+                            ...curfile,
+                            status: 'Failed',
+                          };
+                        }
+                        return curfile;
+                      });
+                    });
+                  });
+                } else {
+                  triggerStatusUpdateAPI(
+                    item.fileName,
+                    userCredentials.uri,
+                    userCredentials.userName,
+                    userCredentials.password,
+                    userCredentials.database,
+                    updateStatusForLargeFiles,
+                    () => {
+                      setProcessedCount((prev) => {
+                        if (prev == 2) {
+                          return 1;
+                        }
+                        return prev + 1;
+                      });
+                    }
+                  );
+                }
               }
-            }
-          });
+            });
+          } else {
+            queue.clear();
+          }
+          setIsLoading(false);
+          setFilesData(prefiles);
         } else {
           throw new Error(res?.data?.error);
         }
