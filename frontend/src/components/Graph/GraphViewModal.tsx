@@ -10,7 +10,7 @@ import {
 } from '../../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL from '@neo4j-nvl/base';
-import type { Node, NvlOptions, Relationship } from '@neo4j-nvl/base';
+import type { Node, Relationship } from '@neo4j-nvl/base';
 import { Resizable } from 're-resizable';
 import {
   ArrowPathIconOutline,
@@ -20,7 +20,7 @@ import {
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
 import IconButtonWithToolTip from '../UI/IconButtonToolTip';
-import { filterData, processGraphData } from '../../utils/Utils';
+import { filterData, processGraphData, sortAlphabetically } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 import { LegendsChip } from './LegendsChip';
 import graphQueryAPI from '../../services/GraphQuery';
@@ -34,7 +34,6 @@ import {
 } from '../../utils/Constants';
 import CheckboxSelection from './CheckboxSelection';
 import { ShowAll } from '../UI/ShowAll';
-import { tokens } from '@neo4j-ndl/base';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -57,8 +56,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const { userCredentials } = useCredentials();
   const [scheme, setScheme] = useState<Scheme>({});
   const [newScheme, setNewScheme] = useState<Scheme>({});
-  const [selectedNode, setSelectedNode] = useState<string>('');
-  const [nvlOpts, setNvlOpts] = useState<NvlOptions>(nvlOptions);
   const handleCheckboxChange = (graph: GraphType) => {
     const currentIndex = graphType.indexOf(graph);
     const newGraphSelected = [...graphType];
@@ -72,8 +69,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setGraphType(newGraphSelected);
   };
 
-
-  const { theme } = useNeedleTheme();
   const nodeCount = (nodes: ExtendedNode[], label: string): number => {
     return [...new Set(nodes?.filter((n) => n.labels?.includes(label)).map((i) => i.id))].length;
   };
@@ -82,16 +77,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     return [...new Set(relationships?.filter((r) => r.caption?.includes(label)).map((i) => i.id))].length;
   };
 
-  
-  const handleNodeClick = useCallback((nodeLabel:string) => {
-    setSelectedNode(nodeLabel);
-     console.log('nvl', nodeLabel),
-     console.log('selected', selectedNode),
-    setNvlOpts((prevOptions) => ({
-      ...prevOptions,
-      nodeDefaultBorderColor: nodeLabel === selectedNode ? tokens.theme[theme].palette.neutral.border.strongest: 'desiredColor' ,
-    }));
-  }, [selectedNode, tokens, theme]);
+
 
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
@@ -253,13 +239,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     return a.localeCompare(b);
   });
 
-  const sortAlphabetically = (a: Relationship, b: Relationship) => {
-    const captionOne = a.caption?.toLowerCase() || '';
-    const captionTwo = b.caption?.toLowerCase() || '';
-    return captionOne.localeCompare(captionTwo);
-  };
+   // get sorted relationships 
   const relationshipsSorted = relationships.sort(sortAlphabetically);
 
+   // To get the relationship count 
   const groupedAndSortedRelationships: ExtendedRelationship[] = Object.values(
     relationshipsSorted.reduce((acc: { [key: string]: ExtendedRelationship }, relType: Relationship) => {
       const key = relType.caption || '';
@@ -291,11 +274,30 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
   };
 
+  //On Node Click , highlight the nodes
+  const handleNodeClick = (nodeLabel: string) => {
+    const updatedNodes = nodes.map((node) => {
+      return {
+        ...node,
+        activated: node.labels.includes(nodeLabel),
+        selected: node.labels.includes(nodeLabel),
+      };
+    });
+    setNodes(updatedNodes);
+  };
 
+  //On Relationship Click , highlight the nodes
+  const handleRelationshipClick = (nodeLabel: string) => {
+    const updatedRelations = relationships.map((rel) => {
+      return {
+        ...rel,
+        activated: rel?.caption?.includes(nodeLabel),
+        selected: rel?.caption?.includes(nodeLabel),
+      };
+    });
+    setRelationships(updatedRelations);
+  };
 
-  // const onClickRelationshipLegend = (key: string) => {
-  //   return console.log('Relkey', key);
-  // }
   return (
     <>
       <Dialog
@@ -342,7 +344,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                     <InteractiveNvlWrapper
                       nodes={nodes}
                       rels={relationships}
-                      nvlOptions={nvlOpts}
+                      nvlOptions={nvlOptions}
                       ref={nvlRef}
                       mouseEventCallbacks={{ ...mouseEventCallbacks }}
                       interactionOptions={{
@@ -350,33 +352,33 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       }}
                       nvlCallbacks={nvlCallbacks}
 
-                    />                    
+                    />
                     <IconButtonArray orientation='vertical' floating className='absolute bottom-4 right-4'>
-                    {viewPoint !== 'chatInfoView' && (
+                      {viewPoint !== 'chatInfoView' && (
+                        <IconButtonWithToolTip
+                          label='Refresh'
+                          text='Refresh graph'
+                          onClick={handleRefresh}
+                          placement='left'
+                        >
+                          <ArrowPathIconOutline />
+                        </IconButtonWithToolTip>
+                      )}
+                      <IconButtonWithToolTip label='Zoomin' text='Zoom in' onClick={handleZoomIn} placement='left'>
+                        <MagnifyingGlassPlusIconOutline />
+                      </IconButtonWithToolTip>
+                      <IconButtonWithToolTip label='Zoom out' text='Zoom out' onClick={handleZoomOut} placement='left'>
+                        <MagnifyingGlassMinusIconOutline />
+                      </IconButtonWithToolTip>
                       <IconButtonWithToolTip
-                        label='Refresh'
-                        text='Refresh graph'
-                        onClick={handleRefresh}
+                        label='Zoom to fit'
+                        text='Zoom to fit'
+                        onClick={handleZoomToFit}
                         placement='left'
                       >
-                        <ArrowPathIconOutline />
+                        <FitToScreenIcon />
                       </IconButtonWithToolTip>
-                    )}
-                    <IconButtonWithToolTip label='Zoomin' text='Zoom in' onClick={handleZoomIn} placement='left'>
-                      <MagnifyingGlassPlusIconOutline />
-                    </IconButtonWithToolTip>
-                    <IconButtonWithToolTip label='Zoom out' text='Zoom out' onClick={handleZoomOut} placement='left'>
-                      <MagnifyingGlassMinusIconOutline />
-                    </IconButtonWithToolTip>
-                    <IconButtonWithToolTip
-                      label='Zoom to fit'
-                      text='Zoom to fit'
-                      onClick={handleZoomToFit}
-                      placement='left'
-                    >
-                      <FitToScreenIcon />
-                    </IconButtonWithToolTip>
-                  </IconButtonArray>
+                    </IconButtonArray>
                   </div>
                   <Resizable
                     defaultSize={{
@@ -442,7 +444,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                                     relationships as ExtendedRelationship[],
                                     relType.caption || ''
                                   )}
-                                  onClick={() => console.log('rel', relType.caption)}
+                                  onClick={() => handleRelationshipClick(relType.caption || "")}
                                 />
                               ))}
                             </ShowAll>
