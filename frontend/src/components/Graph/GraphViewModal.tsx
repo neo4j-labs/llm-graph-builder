@@ -1,6 +1,13 @@
 import { Banner, Dialog, Flex, IconButtonArray, LoadingSpinner, Typography } from '@neo4j-ndl/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ExtendedNode, GraphType, GraphViewModalProps, Scheme, UserCredentials } from '../../types';
+import {
+  ExtendedNode,
+  ExtendedRelationship,
+  GraphType,
+  GraphViewModalProps,
+  Scheme,
+  UserCredentials,
+} from '../../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL from '@neo4j-nvl/base';
 import type { Node, Relationship } from '@neo4j-nvl/base';
@@ -17,9 +24,17 @@ import { filterData, processGraphData } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 import { LegendsChip } from './LegendsChip';
 import graphQueryAPI from '../../services/GraphQuery';
-import { graphLabels, intitalGraphType, mouseEventCallbacks, nvlOptions, queryMap, RESULT_STEP_SIZE } from '../../utils/Constants';
+import {
+  graphLabels,
+  intitalGraphType,
+  mouseEventCallbacks,
+  nvlOptions,
+  queryMap,
+  RESULT_STEP_SIZE,
+} from '../../utils/Constants';
 import CheckboxSelection from './CheckboxSelection';
 import { ShowAll } from '../UI/ShowAll';
+
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
   inspectedName,
@@ -54,26 +69,22 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setGraphType(newGraphSelected);
   };
 
-  const nodeCount =  (nodes:ExtendedNode[], label:string):number =>{
-    return [...new Set(nodes?.filter((n)=>n.labels?.includes(label)).map((i)=>i.id))].length;
-  }
+  const nodeCount = (nodes: ExtendedNode[], label: string): number => {
+    return [...new Set(nodes?.filter((n) => n.labels?.includes(label)).map((i) => i.id))].length;
+  };
 
-  const relationshipCount = (relationships:Relationship[], label:string):number =>{
-    return [...new Set(relationships?.filter((r)=>r.caption?.includes(label)).map((i)=>i.id))].length;
-  }
-
-  console.log('hello nodes count', nodes);
-  console.log('hello relations count',  relationships);
-
+  const relationshipCount = (relationships: ExtendedRelationship[], label: string): number => {
+    return [...new Set(relationships?.filter((r) => r.caption?.includes(label)).map((i) => i.id))].length;
+  };
 
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-        ? queryMap.DocChunks
-        : graphType.includes('Entities')
-          ? queryMap.Entities
-          : '';
+      ? queryMap.DocChunks
+      : graphType.includes('Entities')
+      ? queryMap.Entities
+      : '';
 
   const handleZoomToFit = () => {
     nvlRef.current?.fit(
@@ -104,10 +115,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
-            userCredentials as UserCredentials,
-            graphQuery,
-            selectedRows?.map((f) => f.name)
-          )
+              userCredentials as UserCredentials,
+              graphQuery,
+              selectedRows?.map((f) => f.name)
+            )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -216,8 +227,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setAllRelationships([]);
   };
 
-
-
   // sort the legends in with Chunk and Document always the first two values
   const nodeCheck = Object.keys(newScheme).sort((a, b) => {
     if (a === graphLabels.document || a === graphLabels.chunk) {
@@ -228,12 +237,24 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     return a.localeCompare(b);
   });
 
-  const sortAlphabetically = (a: Relationship, b: Relationship) =>{
+  const sortAlphabetically = (a: Relationship, b: Relationship) => {
     const captionOne = a.caption?.toLowerCase() || '';
     const captionTwo = b.caption?.toLowerCase() || '';
     return captionOne.localeCompare(captionTwo);
-  }
+  };
   const relationshipsSorted = relationships.sort(sortAlphabetically);
+
+  const groupedAndSortedRelationships: ExtendedRelationship[] = Object.values(
+    relationshipsSorted.reduce((acc: { [key: string]: ExtendedRelationship }, relType: Relationship) => {
+      const key = relType.caption || '';
+      if (!acc[key]) {
+        acc[key] = { ...relType, count: 0 };
+      }
+
+      acc[key]!.count += relationshipCount(relationships as ExtendedRelationship[], key);
+      return acc;
+    }, {})
+  );
 
   const initGraph = (
     graphType: GraphType[],
@@ -253,8 +274,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setNewScheme(filteredScheme);
     }
   };
-
-
 
   return (
     <>
@@ -368,16 +387,19 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                           </Flex>
                           <div className='flex gap-2 flex-wrap ml-2'>
                             <ShowAll initiallyShown={RESULT_STEP_SIZE}>
-                              {nodeCheck.map((key,index) => (
-                                <LegendsChip type="node"
+                              {nodeCheck.map((key, index) => (
+                                <LegendsChip
+                                  type='node'
                                   key={index}
-                                  label={key} 
+                                  label={key}
                                   scheme={newScheme}
-                                  count={nodeCount(nodes, key)}/>
+                                  count={nodeCount(nodes, key)}
+                                />
                               ))}
                             </ShowAll>
                           </div>
-                        </>)}
+                        </>
+                      )}
                       {relationshipsSorted.length > 0 && (
                         <>
                           <Flex className='py-4 pt-3 ml-2'>
@@ -387,12 +409,22 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                           </Flex>
                           <div className='flex gap-2 flex-wrap ml-2'>
                             <ShowAll initiallyShown={RESULT_STEP_SIZE}>
-                              {relationshipsSorted.map((relType,index) => (
-                                <LegendsChip key={index} scheme={newScheme} label={relType.caption || ''} type='relationship' count={relationshipCount(relationships, (relType.caption || ''))}/>
+                              {groupedAndSortedRelationships.map((relType, index) => (
+                                <LegendsChip
+                                  key={index}
+                                  scheme={newScheme}
+                                  label={relType.caption || ''}
+                                  type='relationship'
+                                  count={relationshipCount(
+                                    relationships as ExtendedRelationship[],
+                                    relType.caption || ''
+                                  )}
+                                />
                               ))}
                             </ShowAll>
                           </div>
-                        </>)}
+                        </>
+                      )}
                     </div>
                   </Resizable>
                 </div>

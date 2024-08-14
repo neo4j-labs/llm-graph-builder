@@ -4,7 +4,7 @@ export default function Legend({
   bgColor,
   title,
   count,
-  type
+  type,
 }: {
   bgColor: string;
   title: string;
@@ -16,5 +16,6 @@ export default function Legend({
   return (
     <GraphLabel type={type} className='legend' color={bgColor}>
       {title} {count !== undefined && `(${count})`}
-    </GraphLabel>)
+    </GraphLabel>
+  );
 }
