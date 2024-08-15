@@ -13,7 +13,7 @@ export default function Legend({
   type: 'node' | 'relationship' | 'propertyKey';
   className?: string;
   tabIndex?: number;
-  onClick: (e: React.MouseEvent<HTMLElement>) => void;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
 }) {
   return (
     <GraphLabel type={type} className='legend' color={bgColor} onClick={onClick}>

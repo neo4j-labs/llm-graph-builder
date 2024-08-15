@@ -1,4 +1,4 @@
-import { Banner, Dialog, Flex, IconButtonArray, LoadingSpinner, Typography, useNeedleTheme } from '@neo4j-ndl/react';
+import { Banner, Dialog, Flex, IconButtonArray, LoadingSpinner, Typography } from '@neo4j-ndl/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ExtendedNode,
