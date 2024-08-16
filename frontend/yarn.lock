@@ -552,7 +552,6 @@
     "@floating-ui/core" "^1.6.0"
     "@floating-ui/utils" "^0.2.7"
 
-
 "@floating-ui/react-dom@2.0.1":
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/@floating-ui/react-dom/-/react-dom-2.0.1.tgz#7972a4fc488a8c746cded3cfe603b6057c308a91"
@@ -585,7 +584,6 @@
   version "0.2.7"
   resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.2.7.tgz#d0ece53ce99ab5a8e37ebdfe5e32452a2bfc073e"
   integrity sha512-X8R8Oj771YRl/w+c1HqAC1szL8zWQRwFvgDwT129k9ACdBoud/+/rX9V0qiMl6LWUdP9voC2nDVZYPMQQsb6eA==
-
 
 "@formatjs/ecma402-abstract@2.0.0":
   version "2.0.0"
@@ -894,17 +892,15 @@
     "@types/chroma-js" "2.1.4"
     chroma-js "2.4.2"
 
+"@neo4j-ndl/base@^2.12.10", "@neo4j-ndl/base@^2.12.7":
+  version "2.12.10"
+  resolved "https://registry.yarnpkg.com/@neo4j-ndl/base/-/base-2.12.10.tgz#50c96e34593e2b3ee157f89a1dbcdceceae5dd89"
+  integrity sha512-RPwHeUki7JBUTfORA/ssrqOZb1LcMbfZyWrKPYKi8QTrEzypEUONwuX8hef6sg4E+vp+4WI/dAEsjnTezCpB8A==
 
-"@neo4j-ndl/base@^2.11.6":
-  version "2.12.7"
-  resolved "https://registry.yarnpkg.com/@neo4j-ndl/base/-/base-2.12.7.tgz#07e68c6dfe684e91b6cf1ae87e23ef3fc77abae9"
-  integrity sha512-BtR7+MfqlJt+yC6h7Dtj/BAme1D3qDnQTbb2SlwSnCFFMuMCFwXmq0MHFFI7AbVjgT3v37NXx3ek9r7HhfyoNQ==
-
-"@neo4j-ndl/react@2.15.10":
-  version "2.15.10"
-  resolved "https://registry.yarnpkg.com/@neo4j-ndl/react/-/react-2.15.10.tgz#c109633adc3fd08fb510b3b57e70a1ed5216bf4f"
-  integrity sha512-U3pFJS23riItlklCgVZs40xxVAypVAM3u+rbIItOJYDEl1/yxtoYtjuFSyyegke6Hw6EBw/gJ73aBMel7hEWoQ==
-
+"@neo4j-ndl/react@^2.16.9":
+  version "2.16.14"
+  resolved "https://registry.yarnpkg.com/@neo4j-ndl/react/-/react-2.16.14.tgz#384ba28e2fe80b02201c6be4bf8b5090ed8392fa"
+  integrity sha512-Whhj8kN0l0ppoz2EJRMUQE8OaJUK5/SsMpRLCETD907Ikwdeo8W97Jm2m5pNsWw0XiRfCVa/t4kX7oHQkZI56w==
   dependencies:
     "@dnd-kit/core" "6.1.0"
     "@dnd-kit/sortable" "8.0.0"
@@ -912,7 +908,7 @@
     "@floating-ui/react-dom" "2.0.1"
     "@heroicons/react" "2.0.18"
     "@neo4j-cypher/react-codemirror" "^1.0.1"
-    "@neo4j-ndl/base" "^2.12.7"
+    "@neo4j-ndl/base" "^2.12.10"
     "@table-nav/core" "0.0.7"
     "@table-nav/react" "0.0.7"
     "@tanstack/react-table" "8.11.8"
@@ -1866,7 +1862,6 @@
   dependencies:
     "@react-types/shared" "^3.24.1"
 
-
 "@react-types/combobox@^3.12.1":
   version "3.12.1"
   resolved "https://registry.yarnpkg.com/@react-types/combobox/-/combobox-3.12.1.tgz#ab015d31c160aa0a21d696887ce81467c5996602"
@@ -2671,7 +2666,6 @@ caniuse-lite@^1.0.30001646:
   version "1.0.30001651"
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001651.tgz#52de59529e8b02b1aedcaaf5c05d9e23c0c28138"
   integrity sha512-9Cf+Xv1jJNe1xPZLGuUXLNkE1BoDkqRqYyFJ9TDYSqhduqA4hu4oR9HluGoWYQC/aj8WHjsGVV+bwkh0+tegRg==
-
 
 ccount@^2.0.0:
   version "2.0.1"
@@ -6136,7 +6130,6 @@ tailwindcss@^3.4.1:
   version "3.4.9"
   resolved "https://registry.yarnpkg.com/tailwindcss/-/tailwindcss-3.4.9.tgz#9e04cddce1924d530df62af37d3520f0e2a9d85e"
   integrity sha512-1SEOvRr6sSdV5IDf9iC+NU4dhwdqzF4zKKq3sAbasUWHEM6lsMhX+eNN5gkPx1BvLFEnZQEUFbXnGj8Qlp83Pg==
-
   dependencies:
     "@alloc/quick-lru" "^5.2.0"
     arg "^5.0.2"

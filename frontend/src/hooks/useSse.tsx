@@ -1,5 +1,6 @@
 import { useFileContext } from '../context/UsersFiles';
 import { eventResponsetypes } from '../types';
+import { batchSize } from '../utils/Constants';
 import { calculateProcessingTime } from '../utils/Utils';
 
 export default function useServerSideEvent(
@@ -61,8 +62,8 @@ export default function useServerSideEvent(
         });
       });
       setProcessedCount((prev) => {
-        if (prev == 2) {
-          return 1;
+        if (prev == batchSize) {
+          return batchSize-1;
         }
         return prev + 1;
       });
