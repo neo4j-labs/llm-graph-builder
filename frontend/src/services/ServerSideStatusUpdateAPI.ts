@@ -7,7 +7,6 @@ export function triggerStatusUpdateAPI(
   password: string,
   database: string,
   datahandler: (i: eventResponsetypes) => void,
-  errorHandler: () => void
 ) {
   let encodedstr;
   if (password) {
@@ -28,8 +27,5 @@ export function triggerStatusUpdateAPI(
     } else {
       datahandler(eventResponse);
     }
-  };
-  eventSource.onerror = () => {
-    errorHandler();
   };
 }
