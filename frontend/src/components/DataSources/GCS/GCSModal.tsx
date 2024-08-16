@@ -30,6 +30,8 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
     model: model,
     fileSource: 'gcs bucket',
     processingProgress: undefined,
+    retryOption: '',
+    retryOptionStatus: false,
   };
 
   const reset = () => {

@@ -38,6 +38,8 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       model: model,
       fileSource: 's3 bucket',
       processingProgress: undefined,
+      retryOption: '',
+      retryOptionStatus: false,
     };
     if (url) {
       setValid(validation(bucketUrl) && isFocused);

@@ -55,6 +55,8 @@ export default function useSourceInput(
         model: model,
         fileSource: fileSource,
         processingProgress: undefined,
+        retryOption: '',
+        retryOptionStatus: false,
       };
       if (url.trim() != '') {
         setIsValid(validator(url) && isFocused);

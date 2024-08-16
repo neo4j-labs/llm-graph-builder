@@ -31,8 +31,10 @@ import FallBackDialog from './UI/FallBackDialog';
 import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
 import { tokens } from '@neo4j-ndl/base';
+import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
+
 let afterFirstRender = false;
 
 const Content: React.FC<ContentProps> = ({
@@ -60,7 +62,6 @@ const Content: React.FC<ContentProps> = ({
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [retryFile, setRetryFile] = useState<string>('');
-  
 
   const {
     filesData,
@@ -635,6 +636,9 @@ const Content: React.FC<ContentProps> = ({
 
   return (
     <>
+      {retryFile.trim() != '' && (
+        <RetryConfirmationDialog fileId={retryFile} onClose={() => setRetryFile('')} open={true} />
+      )}
       {alertDetails.showAlert && (
         <CustomAlert
           severity={alertDetails.alertType}
@@ -761,7 +765,7 @@ const Content: React.FC<ContentProps> = ({
             setViewPoint('tableView');
           }}
           onRetry={(id) => {
-            setRetryFile(id)
+            setRetryFile(id);
           }}
           ref={childRef}
           handleGenerateGraph={processWaitingFilesOnRefresh}

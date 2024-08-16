@@ -24,6 +24,8 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   processingProgress?: number;
   access_token?: string;
   checked?: boolean;
+  retryOptionStatus: boolean;
+  retryOption: string;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
@@ -124,6 +126,7 @@ export interface SourceNode {
   total_chunks?: number;
   // total_pages?: number;
   access_token?: string;
+  retry_condition?: string;
 }
 
 export interface SideNavProps {

@@ -193,6 +193,8 @@ export default function DropZoneForSmallLayouts() {
         fileSource: 'local file',
         uploadprogess: 0,
         processingProgress: undefined,
+        retryOption: '',
+        retryOptionStatus: false,
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];

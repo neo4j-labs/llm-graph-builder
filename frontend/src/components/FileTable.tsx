@@ -650,6 +650,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                       : undefined,
                   // total_pages: item?.total_pages ?? 0,
                   access_token: item?.access_token ?? '',
+                  retryOption: item.retry_condition ?? '',
+                  retryOptionStatus: false,
                 });
               }
             });
