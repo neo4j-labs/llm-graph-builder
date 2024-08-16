@@ -51,17 +51,17 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - BACKEND_API_URL=${BACKEND_API_URL-http://localhost:8000}
-        - REACT_APP_SOURCES=${REACT_APP_SOURCES-local,youtube,wiki,s3}
-        - LLM_MODELS=${LLM_MODELS-diffbot,openai-gpt-3.5,openai-gpt-4o}
-        - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID-""}
-        - BLOOM_URL=${BLOOM_URL-https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true}
-        - TIME_PER_CHUNK=${TIME_PER_CHUNK-4}
-        - TIME_PER_PAGE=${TIME_PER_PAGE-50}
-        - CHUNK_SIZE=${CHUNK_SIZE-5242880}
-        - ENV=${ENV-DEV}
-        - CHAT_MODES=${CHAT_MODES-""}
-        - BATCH_SIZE=${BATCH_SIZE-2}
+        - VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-http://localhost:8000}
+        - VITE_REACT_APP_SOURCES=${VITE_REACT_APP_SOURCES-local,youtube,wiki,s3}
+        - VITE_LLM_MODELS=${VITE_LLM_MODELS-diffbot,openai-gpt-3.5,openai-gpt-4o}
+        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID-""}
+        - VITE_BLOOM_URL=${VITE_BLOOM_URL-https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true}
+        - VITE_TIME_PER_PAGE=${VITE_TIME_PER_PAGE-50}
+        - VITE_CHUNK_SIZE=${VITE_CHUNK_SIZE-5242880}
+        - VITE_LARGE_FILE_SIZE=${VITE_LARGE_FILE_SIZE-5242880}
+        - VITE_ENV=${VITE_ENV-DEV}
+        - VITE_CHAT_MODES=${VITE_CHAT_MODES-""}
+        - VITE_BATCH_SIZE=${VITE_BATCH_SIZE-2}
     volumes:
       - ./frontend:/app
       - /app/node_modules
