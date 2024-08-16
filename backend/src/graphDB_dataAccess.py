@@ -86,7 +86,7 @@ class graphDBdataAccess:
             if obj_source_node.total_chunks is not None and obj_source_node.total_chunks != 0:
                 params['total_chunks'] = obj_source_node.total_chunks
 
-            if obj_source_node.is_cancelled is not None and obj_source_node.is_cancelled != False:
+            if obj_source_node.is_cancelled is not None:
                 params['is_cancelled'] = obj_source_node.is_cancelled
 
             if obj_source_node.processed_chunk is not None and obj_source_node.processed_chunk != 0:
