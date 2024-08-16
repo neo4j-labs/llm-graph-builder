@@ -583,8 +583,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   waitingQueue.length && waitingQueue.find((f: CustomFile) => f.name === item.fileName);
                 if (waitingFile && item.status === 'Completed') {
                   setProcessedCount((prev) => {
-                    if (prev === 2) {
-                      return 1;
+                    if (prev === batchSize) {
+                      return batchSize-1;
                     }
                     return prev + 1;
                   });
@@ -654,8 +654,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                     // @ts-ignore
                     const errorfile = decodeURI(error?.config?.url?.split('?')[0].split('/').at(-1));
                     setProcessedCount((prev) => {
-                      if (prev == 2) {
-                        return 1;
+                      if (prev == batchSize) {
+                        return batchSize-1;
                       }
                       return prev + 1;
                     });
