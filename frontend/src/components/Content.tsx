@@ -339,14 +339,18 @@ const Content: React.FC<ContentProps> = ({
     return data;
   };
 
-  /**
-   *@param filesTobeProcessed files to process.
-   *we will check whether queue is empty or not if queue is not empty we process queued files.
-   *if queue is empty we check whether selected files count is greater than batch size we slice the selected till batch size and process them remaining files are pushed to queue.
-   *if selectedfiles count is less than batch size we check whether the sum of selectedfiles count and processing files count is greater than the batch size.
-   *if it is greater than batch size we slice the selectedfiles to the substraction of batchsize and selectedfileslength we process them remaining files are pushed to queue.
-   *if sum of selectedfiles count and processing files count is smaller than the batch size we process those
-   */
+ /**
+  * Processes files in batches, respecting a maximum batch size.
+  *
+  * This function prioritizes processing files from the queue if it's not empty.
+  * If the queue is empty, it processes the provided `filesTobeProcessed`:
+  *   - If the number of files exceeds the batch size, it processes a batch and queues the rest.
+  *   - If the number of files is within the batch size, it processes them all.
+  *   - If there are already files being processed, it adjusts the batch size to avoid exceeding the limit.
+  *
+  * @param filesTobeProcessed - The files to be processed.
+  * @param queueFiles - Whether to prioritize processing files from the queue. Defaults to false.
+  */
   const handleGenerateGraph = (filesTobeProcessed: CustomFile[], queueFiles: boolean = false) => {
     let data = [];
     const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
