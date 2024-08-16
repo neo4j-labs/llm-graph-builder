@@ -5,7 +5,7 @@ export default function Legend({
   title,
   count,
   type,
-  onClick
+  onClick,
 }: {
   bgColor: string;
   title: string;

@@ -77,16 +77,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     return [...new Set(relationships?.filter((r) => r.caption?.includes(label)).map((i) => i.id))].length;
   };
 
-
-
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-        ? queryMap.DocChunks
-        : graphType.includes('Entities')
-          ? queryMap.Entities
-          : '';
+      ? queryMap.DocChunks
+      : graphType.includes('Entities')
+      ? queryMap.Entities
+      : '';
 
   const handleZoomToFit = () => {
     nvlRef.current?.fit(
@@ -117,10 +115,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
-            userCredentials as UserCredentials,
-            graphQuery,
-            selectedRows?.map((f) => f.name)
-          )
+              userCredentials as UserCredentials,
+              graphQuery,
+              selectedRows?.map((f) => f.name)
+            )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -239,10 +237,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     return a.localeCompare(b);
   });
 
-  // get sorted relationships 
+  // get sorted relationships
   const relationshipsSorted = relationships.sort(sortAlphabetically);
 
-  // To get the relationship count 
+  // To get the relationship count
   const groupedAndSortedRelationships: ExtendedRelationship[] = Object.values(
     relationshipsSorted.reduce((acc: { [key: string]: ExtendedRelationship }, relType: Relationship) => {
       const key = relType.caption || '';
@@ -368,7 +366,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                         selectOnClick: true,
                       }}
                       nvlCallbacks={nvlCallbacks}
-
                     />
                     <IconButtonArray orientation='vertical' floating className='absolute bottom-4 right-4'>
                       {viewPoint !== 'chatInfoView' && (
@@ -461,7 +458,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                                     relationships as ExtendedRelationship[],
                                     relType.caption || ''
                                   )}
-                                  onClick={() => handleRelationshipClick(relType.caption || "")}
+                                  onClick={() => handleRelationshipClick(relType.caption || '')}
                                 />
                               ))}
                             </ShowAll>
