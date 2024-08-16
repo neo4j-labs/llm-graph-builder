@@ -433,6 +433,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                                   scheme={newScheme}
                                   count={nodeCount(nodes, nodeLabel)}
                                   onClick={() => handleNodeClick(nodeLabel)}
+                                   className = 'h-7'
                                 />
                               ))}
                             </ShowAll>
@@ -459,6 +460,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                                     relType.caption || ''
                                   )}
                                   onClick={() => handleRelationshipClick(relType.caption || '')}
+                                  className = 'h-8'
                                 />
                               ))}
                             </ShowAll>

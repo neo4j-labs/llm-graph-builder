@@ -6,6 +6,7 @@ export default function Legend({
   count,
   type,
   onClick,
+  className
 }: {
   bgColor: string;
   title: string;
@@ -16,7 +17,7 @@ export default function Legend({
   onClick?: (e: React.MouseEvent<HTMLElement>) => void;
 }) {
   return (
-    <GraphLabel type={type} className='legend' color={bgColor} onClick={onClick}>
+    <GraphLabel type={type} className={`${className} legend`} color={bgColor} onClick={onClick}>
       {title} {count !== undefined && `(${count})`}
     </GraphLabel>
   );
