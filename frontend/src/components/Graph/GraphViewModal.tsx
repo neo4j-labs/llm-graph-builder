@@ -239,10 +239,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     return a.localeCompare(b);
   });
 
-   // get sorted relationships 
+  // get sorted relationships 
   const relationshipsSorted = relationships.sort(sortAlphabetically);
 
-   // To get the relationship count 
+  // To get the relationship count 
   const groupedAndSortedRelationships: ExtendedRelationship[] = Object.values(
     relationshipsSorted.reduce((acc: { [key: string]: ExtendedRelationship }, relType: Relationship) => {
       const key = relType.caption || '';
@@ -274,7 +274,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
   };
 
-  //On Node Click , highlight the nodes
+  // On Node Click, highlighting the nodes and deactivating any active relationships
   const handleNodeClick = (nodeLabel: string) => {
     const updatedNodes = nodes.map((node) => {
       return {
@@ -283,10 +283,18 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         selected: node.labels.includes(nodeLabel),
       };
     });
+    // deactivating any active relationships
+    const updatedRelationships = relationships.map((rel) => {
+      return {
+        ...rel,
+        activated: false,
+        selected: false,
+      };
+    });
     setNodes(updatedNodes);
+    setRelationships(updatedRelationships);
   };
-
-  //On Relationship Click , highlight the nodes
+  // On Relationship Legend Click, highlight the relationships and deactivating any active nodes
   const handleRelationshipClick = (nodeLabel: string) => {
     const updatedRelations = relationships.map((rel) => {
       return {
@@ -295,7 +303,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         selected: rel?.caption?.includes(nodeLabel),
       };
     });
+    // // deactivating any active nodes
+    const updatedNodes = nodes.map((node) => {
+      return {
+        ...node,
+        activated: false,
+        selected: false,
+      };
+    });
     setRelationships(updatedRelations);
+    setNodes(updatedNodes);
   };
 
   return (
