@@ -171,6 +171,7 @@ export interface FileTableProps {
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
   onInspect: (id: string) => void;
   handleGenerateGraph: () => void;
+  onRetry: (id: string) => void;
 }
 
 export interface CustomModalProps {

@@ -36,7 +36,7 @@ import {
   ChildRef,
 } from '../types';
 import { useCredentials } from '../context/UserCredentials';
-import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
+import { ArrowPathIconSolid, MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
 import CustomAlert from './UI/Alert';
 import CustomProgressBar from './UI/CustomProgressBar';
 import subscribe from '../services/PollingAPI';
@@ -50,7 +50,7 @@ import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import IndeterminateCheckbox from './UI/CustomCheckBox';
 let onlyfortheFirstRender = true;
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
-  const { isExpanded, connectionStatus, setConnectionStatus, onInspect } = props;
+  const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
   const { userCredentials } = useCredentials();
@@ -161,6 +161,22 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               >
                 <StatusIndicator type={statusCheck(info.getValue())} />
                 {info.getValue()}
+                {(info.getValue() === 'Completed' ||
+                  info.getValue() === 'Failed' ||
+                  info.getValue() === 'Canceled') && (
+                  <span className='mx-1'>
+                    <IconButtonWithToolTip
+                      placement='right'
+                      text='retry'
+                      size='small'
+                      label='retry'
+                      clean
+                      onClick={() => onRetry(info?.row?.id as string)}
+                    >
+                      <ArrowPathIconSolid />
+                    </IconButtonWithToolTip>
+                  </span>
+                )}
               </div>
             );
           } else if (info.getValue() === 'Processing' && info.row.original.processingProgress === undefined) {
@@ -587,7 +603,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 if (waitingFile && item.status === 'Completed') {
                   setProcessedCount((prev) => {
                     if (prev === batchSize) {
-                      return batchSize-1;
+                      return batchSize - 1;
                     }
                     return prev + 1;
                   });
@@ -658,7 +674,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                     const errorfile = decodeURI(error?.config?.url?.split('?')[0].split('/').at(-1));
                     setProcessedCount((prev) => {
                       if (prev == batchSize) {
-                        return batchSize-1;
+                        return batchSize - 1;
                       }
                       return prev + 1;
                     });
@@ -825,7 +841,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       );
       setProcessedCount((prev) => {
         if (prev == batchSize) {
-          return batchSize-1;
+          return batchSize - 1;
         }
         return prev + 1;
       });

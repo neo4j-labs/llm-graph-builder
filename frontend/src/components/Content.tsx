@@ -59,6 +59,8 @@ const Content: React.FC<ContentProps> = ({
   const { setUserCredentials, userCredentials } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
+  const [retryFile, setRetryFile] = useState<string>('');
+  
 
   const {
     filesData,
@@ -209,7 +211,7 @@ const Content: React.FC<ContentProps> = ({
           userCredentials?.userName,
           userCredentials?.password,
           userCredentials?.database,
-          updateStatusForLargeFiles,
+          updateStatusForLargeFiles
         );
       }
 
@@ -339,18 +341,18 @@ const Content: React.FC<ContentProps> = ({
     return data;
   };
 
- /**
-  * Processes files in batches, respecting a maximum batch size.
-  *
-  * This function prioritizes processing files from the queue if it's not empty.
-  * If the queue is empty, it processes the provided `filesTobeProcessed`:
-  *   - If the number of files exceeds the batch size, it processes a batch and queues the rest.
-  *   - If the number of files is within the batch size, it processes them all.
-  *   - If there are already files being processed, it adjusts the batch size to avoid exceeding the limit.
-  *
-  * @param filesTobeProcessed - The files to be processed.
-  * @param queueFiles - Whether to prioritize processing files from the queue. Defaults to false.
-  */
+  /**
+   * Processes files in batches, respecting a maximum batch size.
+   *
+   * This function prioritizes processing files from the queue if it's not empty.
+   * If the queue is empty, it processes the provided `filesTobeProcessed`:
+   *   - If the number of files exceeds the batch size, it processes a batch and queues the rest.
+   *   - If the number of files is within the batch size, it processes them all.
+   *   - If there are already files being processed, it adjusts the batch size to avoid exceeding the limit.
+   *
+   * @param filesTobeProcessed - The files to be processed.
+   * @param queueFiles - Whether to prioritize processing files from the queue. Defaults to false.
+   */
   const handleGenerateGraph = (filesTobeProcessed: CustomFile[], queueFiles: boolean = false) => {
     let data = [];
     const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
@@ -757,6 +759,9 @@ const Content: React.FC<ContentProps> = ({
             setInspectedName(name);
             setOpenGraphView(true);
             setViewPoint('tableView');
+          }}
+          onRetry={(id) => {
+            setRetryFile(id)
           }}
           ref={childRef}
           handleGenerateGraph={processWaitingFilesOnRefresh}

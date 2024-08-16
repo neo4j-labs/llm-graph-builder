@@ -6,7 +6,7 @@ export function triggerStatusUpdateAPI(
   username: string,
   password: string,
   database: string,
-  datahandler: (i: eventResponsetypes) => void,
+  datahandler: (i: eventResponsetypes) => void
 ) {
   let encodedstr;
   if (password) {
