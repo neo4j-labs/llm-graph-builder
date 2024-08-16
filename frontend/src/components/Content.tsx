@@ -209,15 +209,7 @@ const Content: React.FC<ContentProps> = ({
           userCredentials?.userName,
           userCredentials?.password,
           userCredentials?.database,
-          updateStatusForLargeFiles,
-          () => {
-            setProcessedCount((prev) => {
-              if (prev == 2) {
-                return 1;
-              }
-              return prev + 1;
-            });
-          }
+          updateStatusForLargeFiles
         );
       }
 
@@ -358,29 +350,35 @@ const Content: React.FC<ContentProps> = ({
   const handleGenerateGraph = (filesTobeProcessed: CustomFile[], queueFiles: boolean = false) => {
     let data = [];
     const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
-    if (filesTobeProcessed.length && !queueFiles) {
-      if (processingFilesCount < batchSize) {
-        if (!queue.isEmpty()) {
-          data = scheduleBatchWiseProcess(filesTobeProcessed as CustomFile[], true);
-        } else if (filesTobeProcessed.length > batchSize) {
-          const filesToProcess = filesTobeProcessed?.slice(0, batchSize) as CustomFile[];
-          data = triggerBatchProcessing(filesToProcess, filesTobeProcessed as CustomFile[], true, false);
-          const remainingFiles = [...(filesTobeProcessed as CustomFile[])].splice(batchSize);
+    if (filesTobeProcessed.length && !queueFiles && processingFilesCount < batchSize) {
+      if (!queue.isEmpty()) {
+        data = scheduleBatchWiseProcess(filesTobeProcessed as CustomFile[], true);
+      } else if (filesTobeProcessed.length > batchSize) {
+        const filesToProcess = filesTobeProcessed?.slice(0, batchSize) as CustomFile[];
+        data = triggerBatchProcessing(filesToProcess, filesTobeProcessed as CustomFile[], true, false);
+        const remainingFiles = [...(filesTobeProcessed as CustomFile[])].splice(batchSize);
+        addFilesToQueue(remainingFiles);
+      } else {
+        let filesTobeSchedule: CustomFile[] = filesTobeProcessed;
+        // given files=2,processing files=1,batch size=2
+
+        if (filesTobeProcessed.length + processingFilesCount > batchSize) {
+          filesTobeSchedule = filesTobeProcessed.slice(
+            0,
+            filesTobeProcessed.length + processingFilesCount - batchSize
+          ) as CustomFile[];
+          const idstoexclude = new Set(filesTobeSchedule.map((f) => f.id));
+          const remainingFiles = [...(childRef.current?.getSelectedRows() as CustomFile[])].filter(
+            (f) => !idstoexclude.has(f.id)
+          );
           addFilesToQueue(remainingFiles);
-        } else {
-          let filesTobeSchedule: CustomFile[] = filesTobeProcessed;
-          if (filesTobeProcessed.length + processingFilesCount > batchSize) {
-            filesTobeSchedule = filesTobeProcessed.slice(0, batchSize - filesTobeProcessed.length) as CustomFile[];
-            const remainingFiles = [...(childRef.current?.getSelectedRows() as CustomFile[])].splice(1);
-            addFilesToQueue(remainingFiles);
-          }
-          data = triggerBatchProcessing(filesTobeSchedule, filesTobeProcessed, true, true);
         }
-        Promise.allSettled(data).then(async (_) => {
-          setextractLoading(false);
-          await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
-        });
+        data = triggerBatchProcessing(filesTobeSchedule, filesTobeProcessed, true, true);
       }
+      Promise.allSettled(data).then(async (_) => {
+        setextractLoading(false);
+        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+      });
     } else if (queueFiles && !queue.isEmpty()) {
       data = scheduleBatchWiseProcess(queue.items, true);
       Promise.allSettled(data).then(async (_) => {
