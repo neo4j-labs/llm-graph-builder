@@ -360,8 +360,6 @@ const Content: React.FC<ContentProps> = ({
         addFilesToQueue(remainingFiles);
       } else {
         let filesTobeSchedule: CustomFile[] = filesTobeProcessed;
-        // given files=2,processing files=1,batch size=2
-
         if (filesTobeProcessed.length + processingFilesCount > batchSize) {
           filesTobeSchedule = filesTobeProcessed.slice(
             0,

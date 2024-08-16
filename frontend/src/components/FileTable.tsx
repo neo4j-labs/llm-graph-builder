@@ -46,7 +46,7 @@ import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 import IconButtonWithToolTip from './UI/IconButtonToolTip';
-import { largeFileSize, llms } from '../utils/Constants';
+import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import IndeterminateCheckbox from './UI/CustomCheckBox';
 let onlyfortheFirstRender = true;
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
@@ -821,8 +821,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         })
       );
       setProcessedCount((prev) => {
-        if (prev == 2) {
-          return 1;
+        if (prev == batchSize) {
+          return batchSize-1;
         }
         return prev + 1;
       });
