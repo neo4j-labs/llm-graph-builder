@@ -1,4 +1,4 @@
-import { Banner, Dialog, Flex, IconButtonArray, LoadingSpinner, Typography } from '@neo4j-ndl/react';
+import { Banner, Dialog, Flex, IconButton, IconButtonArray, LoadingSpinner, TextInput, Typography } from '@neo4j-ndl/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ExtendedNode,
@@ -16,6 +16,7 @@ import {
   ArrowPathIconOutline,
   DragIcon,
   FitToScreenIcon,
+  MagnifyingGlassIconOutline,
   MagnifyingGlassMinusIconOutline,
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
@@ -56,6 +57,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const { userCredentials } = useCredentials();
   const [scheme, setScheme] = useState<Scheme>({});
   const [newScheme, setNewScheme] = useState<Scheme>({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchInitiated, setIsSearchInitiated] = useState(false);
   const handleCheckboxChange = (graph: GraphType) => {
     const currentIndex = graphType.indexOf(graph);
     const newGraphSelected = [...graphType];
@@ -81,10 +84,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-      ? queryMap.DocChunks
-      : graphType.includes('Entities')
-      ? queryMap.Entities
-      : '';
+        ? queryMap.DocChunks
+        : graphType.includes('Entities')
+          ? queryMap.Entities
+          : '';
 
   const handleZoomToFit = () => {
     nvlRef.current?.fit(
@@ -115,10 +118,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
-              userCredentials as UserCredentials,
-              graphQuery,
-              selectedRows?.map((f) => f.name)
-            )
+            userCredentials as UserCredentials,
+            graphQuery,
+            selectedRows?.map((f) => f.name)
+          )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -313,6 +316,36 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setNodes(updatedNodes);
   };
 
+  // search 
+  const filteredNodes = nodes.filter((node) => {
+    const searchTerm = searchQuery.toLowerCase();
+    if (node.id || node.caption) {
+      return node.id.toLowerCase().includes(searchTerm) || node?.caption.toLowerCase().includes(searchTerm)
+    }
+  });
+  const handleSearch = (searchQuery:string) => {
+    const lowerCaseQuery = searchQuery.toLowerCase();
+    const updatedNodes = nodes.map((node) => {
+      const isMatch =
+        node.id.toLowerCase().includes(lowerCaseQuery) ||
+        node.caption.toLowerCase().includes(lowerCaseQuery) ||
+         node.labels.some(label => label.toLowerCase().includes(lowerCaseQuery));
+      return {
+        ...node,
+        activated: searchQuery && isMatch,
+        selected: searchQuery && isMatch,
+      };
+    });
+    // If the search query is empty, deactivate all nodes
+    if (!searchQuery) {
+      updatedNodes.forEach((node) => {
+        node.activated = false;
+        node.selected = false;
+      });
+    }
+    setNodes(updatedNodes);
+   };
+
   return (
     <>
       <Dialog
@@ -419,6 +452,26 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                         <>
                           <Flex className='py-4 pt-3 ml-2'>
                             <Typography variant='h3'>{graphLabels.resultOverview}</Typography>
+                            <div
+                              className={`text-input-container`}
+                            >
+                              <TextInput
+                                type='text'
+                                value={searchQuery}
+                                onChange={(e) => {
+                                  setSearchQuery(e.target.value);
+                                }}
+                                placeholder='Search...'
+                                helpText='Search for nodes'
+                                fluid={true}
+                                leftIcon={
+                                  <IconButton aria-label='Search Icon' clean size='small' className='-mt-0.5' type='submit'>
+                                    <MagnifyingGlassIconOutline />
+                                  </IconButton>
+                                }
+                                onBlur={() => handleSearch(searchQuery)}
+                              />
+                            </div>
                             <Typography variant='subheading-small'>
                               {graphLabels.totalNodes} ({nodes.length})
                             </Typography>
@@ -433,7 +486,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                                   scheme={newScheme}
                                   count={nodeCount(nodes, nodeLabel)}
                                   onClick={() => handleNodeClick(nodeLabel)}
-                                   className = 'h-7'
+                                  className='h-7'
                                 />
                               ))}
                             </ShowAll>
@@ -460,7 +513,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                                     relType.caption || ''
                                   )}
                                   onClick={() => handleRelationshipClick(relType.caption || '')}
-                                  className = 'h-8'
+                                  className='h-8'
                                 />
                               ))}
                             </ShowAll>
