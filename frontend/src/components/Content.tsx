@@ -334,7 +334,8 @@ const Content: React.FC<ContentProps> = ({
   };
 
   const addFilesToQueue = (remainingFiles: CustomFile[]) => {
-    remainingFiles.forEach((f) => {
+    for (let index = 0; index < remainingFiles.length; index++) {
+      const f = remainingFiles[index];
       setFilesData((prev) =>
         prev.map((pf) => {
           if (pf.id === f.id) {
@@ -347,7 +348,7 @@ const Content: React.FC<ContentProps> = ({
         })
       );
       queue.enqueue(f);
-    });
+    }
   };
 
   const scheduleBatchWiseProcess = (selectedRows: CustomFile[], isSelectedFiles: boolean) => {
@@ -543,13 +544,14 @@ const Content: React.FC<ContentProps> = ({
 
   const filesForProcessing = useMemo(() => {
     let newstatusfiles: CustomFile[] = [];
-    if (childRef.current?.getSelectedRows().length) {
-      childRef.current?.getSelectedRows().forEach((f) => {
-        const parsedFile: CustomFile = f;
+    const selectedRows = childRef.current?.getSelectedRows();
+    if (selectedRows?.length) {
+      for (let index = 0; index < selectedRows.length; index++) {
+        const parsedFile: CustomFile = selectedRows[index];
         if (parsedFile.status === 'New' || parsedFile.status == 'Retry') {
           newstatusfiles.push(parsedFile);
         }
-      });
+      }
     } else if (filesData.length) {
       newstatusfiles = filesData.filter((f) => f.status === 'New' || f.status === 'Retry');
     }
@@ -571,9 +573,12 @@ const Content: React.FC<ContentProps> = ({
       if (response.data.status == 'Success') {
         showSuccessToast(response.data.message);
         const filenames = childRef.current?.getSelectedRows().map((str) => str.name);
-        filenames?.forEach((name) => {
-          setFilesData((prev) => prev.filter((f) => f.name != name));
-        });
+        if (filenames?.length) {
+          for (let index = 0; index < filenames.length; index++) {
+            const name = filenames[index];
+            setFilesData((prev) => prev.filter((f) => f.name != name));
+          }
+        }
       } else {
         let errorobj = { error: response.data.error, message: response.data.message };
         throw new Error(JSON.stringify(errorobj));
@@ -592,10 +597,11 @@ const Content: React.FC<ContentProps> = ({
   };
 
   const onClickHandler = () => {
-    if (childRef.current?.getSelectedRows().length) {
+    const selectedRows = childRef.current?.getSelectedRows();
+    if (selectedRows?.length) {
       let selectedLargeFiles: CustomFile[] = [];
-      childRef.current?.getSelectedRows().forEach((f) => {
-        const parsedData: CustomFile = f;
+      for (let index = 0; index < selectedRows.length; index++) {
+        const parsedData: CustomFile = selectedRows[index];
         if (
           parsedData.fileSource === 'local file' &&
           typeof parsedData.size === 'number' &&
@@ -604,13 +610,11 @@ const Content: React.FC<ContentProps> = ({
         ) {
           selectedLargeFiles.push(parsedData);
         }
-      });
+      }
       if (selectedLargeFiles.length) {
         setshowConfirmationModal(true);
       } else {
-        handleGenerateGraph(
-          childRef.current?.getSelectedRows().filter((f) => f.status === 'New' || f.status === 'Retry')
-        );
+        handleGenerateGraph(selectedRows.filter((f) => f.status === 'New' || f.status === 'Retry'));
       }
     } else if (filesData.length) {
       const largefiles = filesData.filter((f) => {

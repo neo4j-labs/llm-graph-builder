@@ -91,35 +91,38 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
           showAlert('error', `Invalid Folder Name`);
         }
         const copiedFilesData = [...filesData];
-        apiResponse?.data?.file_name?.forEach((item: fileName) => {
-          const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
-          if (filedataIndex == -1) {
-            copiedFilesData.unshift({
-              name: item.fileName,
-              size: item.fileSize ?? 0,
-              gcsBucket: item.gcsBucketName,
-              gcsBucketFolder: item.gcsBucketFolder,
-              google_project_id: item.gcsProjectId,
-              id: uuidv4(),
-              access_token: codeResponse.access_token,
-              ...defaultValues,
-            });
-          } else {
-            const tempFileData = copiedFilesData[filedataIndex];
-            copiedFilesData.splice(filedataIndex, 1);
-            copiedFilesData.unshift({
-              ...tempFileData,
-              status: defaultValues.status,
-              NodesCount: defaultValues.NodesCount,
-              relationshipCount: defaultValues.relationshipCount,
-              processing: defaultValues.processing,
-              model: defaultValues.model,
-              fileSource: defaultValues.fileSource,
-              processingProgress: defaultValues.processingProgress,
-              access_token: codeResponse.access_token,
-            });
+        if (apiResponse?.data?.file_name?.length) {
+          for (let index = 0; index < apiResponse?.data?.file_name.length; index++) {
+            const item: fileName = apiResponse?.data?.file_name[index];
+            const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
+            if (filedataIndex == -1) {
+              copiedFilesData.unshift({
+                name: item.fileName,
+                size: item.fileSize ?? 0,
+                gcsBucket: item.gcsBucketName,
+                gcsBucketFolder: item.gcsBucketFolder,
+                google_project_id: item.gcsProjectId,
+                id: uuidv4(),
+                access_token: codeResponse.access_token,
+                ...defaultValues,
+              });
+            } else {
+              const tempFileData = copiedFilesData[filedataIndex];
+              copiedFilesData.splice(filedataIndex, 1);
+              copiedFilesData.unshift({
+                ...tempFileData,
+                status: defaultValues.status,
+                NodesCount: defaultValues.NodesCount,
+                relationshipCount: defaultValues.relationshipCount,
+                processing: defaultValues.processing,
+                model: defaultValues.model,
+                fileSource: defaultValues.fileSource,
+                processingProgress: defaultValues.processingProgress,
+                access_token: codeResponse.access_token,
+              });
+            }
           }
-        });
+        }
         setFilesData(copiedFilesData);
         reset();
       } catch (error) {

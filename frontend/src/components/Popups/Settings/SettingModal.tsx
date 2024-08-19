@@ -63,9 +63,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     const nodesFromSchema = selectedOptions.map((s) => JSON.parse(s.value).nodelabels).flat();
     const relationsFromSchema = selectedOptions.map((s) => JSON.parse(s.value).relationshipTypes).flat();
     let nodeOptionsFromSchema: OptionType[] = [];
-    nodesFromSchema.forEach((n) => nodeOptionsFromSchema.push({ label: n, value: n }));
+    for (let index = 0; index < nodesFromSchema.length; index++) {
+      const n = nodesFromSchema[index];
+      nodeOptionsFromSchema.push({ label: n, value: n });
+    }
     let relationshipOptionsFromSchema: OptionType[] = [];
-    relationsFromSchema.forEach((r) => relationshipOptionsFromSchema.push({ label: r, value: r }));
+    for (let index = 0; index < relationsFromSchema.length; index++) {
+      const r = relationsFromSchema[index];
+      relationshipOptionsFromSchema.push({ label: r, value: r });
+    }
     setSelectedNodes((prev) => {
       const combinedData = [...prev, ...nodeOptionsFromSchema];
       const uniqueLabels = new Set();

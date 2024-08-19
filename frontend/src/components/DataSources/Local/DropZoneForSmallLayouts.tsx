@@ -19,11 +19,12 @@ export default function DropZoneForSmallLayouts() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   useEffect(() => {
     if (selectedFiles.length > 0) {
-      selectedFiles.forEach((file, uid) => {
-        if (filesData[uid]?.status == 'None' && isClicked) {
+      for (let index = 0; index < selectedFiles.length; index++) {
+        const file = selectedFiles[index];
+        if (filesData[index]?.status == 'None' && isClicked) {
           uploadFileInChunks(file);
         }
-      });
+      }
     }
   }, [selectedFiles]);
 
