@@ -6,7 +6,7 @@ const apiCall = async (
   url: string,
   method: Method,
   commonParams: UserCredentials,
-  additionalParams: FormDataParams
+  additionalParams: Partial<FormDataParams>
 ) => {
   try {
     const formData = new FormData();
@@ -14,7 +14,9 @@ const apiCall = async (
       formData.append(key, commonParams[key]);
     }
     for (const key in additionalParams) {
+      if (additionalParams.hasOwnProperty(key)) {
       formData.append(key, additionalParams[key]);
+      }
     }
     const response: AxiosResponse = await axios({
       method: method,

@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { CustomFile, CustomFileBase, ScanProps, UserCredentials, fileName } from '../types';
+import { CustomFile, CustomFileBase, ScanProps, UserCredentials } from '../types';
 import { useFileContext } from '../context/UsersFiles';
 import { useCredentials } from '../context/UserCredentials';
 import { urlScanAPI } from '../services/URLScan';

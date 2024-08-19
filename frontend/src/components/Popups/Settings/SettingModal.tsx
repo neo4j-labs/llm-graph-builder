@@ -1,6 +1,6 @@
 import { Dialog, Dropdown } from '@neo4j-ndl/react';
 import { OnChangeValue, ActionMeta } from 'react-select';
-import { OptionType, OptionTypeForExamples, SettingsModalProps, UserCredentials, schema } from '../../../types';
+import { OptionType, SettingsModalProps, UserCredentials, schema } from '../../../types';
 import { useFileContext } from '../../../context/UsersFiles';
 import { getNodeLabelsAndRelTypes } from '../../../services/GetNodeLabelsRelTypes';
 import { useCredentials } from '../../../context/UserCredentials';
@@ -129,8 +129,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const { showAlert } = useAlertContext();
 
   useEffect(() => {
-    const parsedData = schemaExamples.reduce((accu: OptionTypeForExamples[], example) => {
-      const examplevalues: OptionTypeForExamples = {
+    const parsedData = schemaExamples.reduce((accu: OptionType[], example) => {
+      const examplevalues: OptionType = {
         label: example.schema,
         value: JSON.stringify({
           nodelabels: example.labels,

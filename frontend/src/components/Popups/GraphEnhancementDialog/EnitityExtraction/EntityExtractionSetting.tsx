@@ -5,7 +5,7 @@ import { Dropdown, Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { OnChangeValue, ActionMeta } from 'react-select';
-import { OptionType, OptionTypeForExamples, schema, UserCredentials } from '../../../../types';
+import { OptionType, schema, UserCredentials } from '../../../../types';
 import { useAlertContext } from '../../../../context/Alert';
 import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
 import schemaExamples from '../../../../assets/schemas.json';
@@ -154,8 +154,8 @@ export default function EntityExtractionSetting({
   const { showAlert } = useAlertContext();
 
   useEffect(() => {
-    const parsedData = schemaExamples.reduce((accu: OptionTypeForExamples[], example) => {
-      const examplevalues: OptionTypeForExamples = {
+    const parsedData = schemaExamples.reduce((accu: OptionType[], example) => {
+      const examplevalues: OptionType = {
         label: example.schema,
         value: JSON.stringify({
           nodelabels: example.labels,
