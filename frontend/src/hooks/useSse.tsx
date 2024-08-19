@@ -22,7 +22,7 @@ export default function useServerSideEvent(
     } = eventSourceRes;
     const alertShownStatus = JSON.parse(localStorage.getItem('alertShown') || 'null');
 
-    if (status === 'Processing'||status==="Retry") {
+    if (status === 'Processing' || status === 'Retry') {
       if (alertShownStatus != null && alertShownStatus == false && total_chunks != null) {
         const { minutes, seconds } = calculateProcessingTime(fileSize, 0.2);
         alertHandler(minutes !== 0, minutes === 0 ? seconds : minutes, fileName);

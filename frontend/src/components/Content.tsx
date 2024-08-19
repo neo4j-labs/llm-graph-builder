@@ -3,7 +3,6 @@ import FileTable from './FileTable';
 import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
-import CustomAlert from './UI/Alert';
 import { extractAPI } from '../utils/FileAPI';
 import {
   BannerAlertProps,
@@ -12,7 +11,6 @@ import {
   CustomFile,
   OptionType,
   UserCredentials,
-  alertStateType,
   connectionState,
 } from '../types';
 import deleteAPI from '../services/DeleteFiles';
@@ -25,8 +23,6 @@ import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 import DropdownComponent from './Dropdown';
 import GraphViewModal from './Graph/GraphViewModal';
-import { OverridableStringUnion } from '@mui/types';
-import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
 import { lazy } from 'react';
 import FallBackDialog from './UI/FallBackDialog';
 import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
@@ -34,6 +30,7 @@ import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
 import { tokens } from '@neo4j-ndl/base';
 import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
 import retry from '../services/retry';
+import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/toasts';
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -90,26 +87,14 @@ const Content: React.FC<ContentProps> = ({
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
-  const [alertDetails, setalertDetails] = useState<alertStateType>({
-    showAlert: false,
-    alertType: 'error',
-    alertMessage: '',
-  });
+
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
-      setalertDetails({
-        showAlert: true,
-        alertType: 'info',
-        alertMessage: `${fileName} will take approx ${time} ${inMinutes ? 'Min' : 'Sec'}`,
-      });
+      showNormalToast(`${fileName} will take approx ${time} ${inMinutes ? 'Min' : 'Sec'}`);
       localStorage.setItem('alertShown', JSON.stringify(true));
     },
     (fileName) => {
-      setalertDetails({
-        showAlert: true,
-        alertType: 'error',
-        alertMessage: `${fileName} Failed to process`,
-      });
+      showErrorToast(`${fileName} Failed to process`);
     }
   );
   const childRef = useRef<ChildRef>(null);
@@ -209,17 +194,6 @@ const Content: React.FC<ContentProps> = ({
       })();
     }
   }, []);
-
-  const showAlert = (
-    alertmsg: string,
-    alerttype: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined
-  ) => {
-    setalertDetails({
-      showAlert: true,
-      alertMessage: alertmsg,
-      alertType: alerttype,
-    });
-  };
 
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
@@ -322,11 +296,7 @@ const Content: React.FC<ContentProps> = ({
         const { message } = error;
         const { fileName } = error;
         const errorMessage = error.message;
-        setalertDetails({
-          showAlert: true,
-          alertType: 'error',
-          alertMessage: message,
-        });
+        showErrorToast(message);
         setFilesData((prevfiles) =>
           prevfiles.map((curfile) => {
             if (curfile.name == fileName) {
@@ -350,11 +320,7 @@ const Content: React.FC<ContentProps> = ({
     newCheck: boolean
   ) => {
     const data = [];
-    setalertDetails({
-      showAlert: true,
-      alertMessage: `Processing ${batch.length} files at a time.`,
-      alertType: 'info',
-    });
+    showNormalToast(`Processing ${batch.length} files at a time.`);
     for (let i = 0; i < batch.length; i++) {
       if (newCheck) {
         if (batch[i]?.status === 'New' || batch[i].status === 'Retry') {
@@ -479,9 +445,6 @@ const Content: React.FC<ContentProps> = ({
       addFilesToQueue(selectedNewFiles as CustomFile[]);
     }
   }
-  const handleClose = () => {
-    setalertDetails((prev) => ({ ...prev, showAlert: false, alertMessage: '' }));
-  };
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
@@ -606,11 +569,7 @@ const Content: React.FC<ContentProps> = ({
       setRowSelection({});
       setdeleteLoading(false);
       if (response.data.status == 'Success') {
-        setalertDetails({
-          showAlert: true,
-          alertMessage: response.data.message,
-          alertType: 'success',
-        });
+        showSuccessToast(response.data.message);
         const filenames = childRef.current?.getSelectedRows().map((str) => str.name);
         filenames?.forEach((name) => {
           setFilesData((prev) => prev.filter((f) => f.name != name));
@@ -625,11 +584,7 @@ const Content: React.FC<ContentProps> = ({
       if (err instanceof Error) {
         const error = JSON.parse(err.message);
         const { message } = error;
-        setalertDetails({
-          showAlert: true,
-          alertType: 'error',
-          alertMessage: message,
-        });
+        showErrorToast(message);
         console.log(err);
       }
     }
@@ -707,22 +662,6 @@ const Content: React.FC<ContentProps> = ({
           alertStatus={alertStateForRetry}
         />
       )}
-      {alertDetails.showAlert && (
-        <CustomAlert
-          severity={alertDetails.alertType}
-          open={alertDetails.showAlert}
-          handleClose={handleClose}
-          alertMessage={alertDetails.alertMessage}
-        />
-      )}
-      {isSchema && (
-        <CustomAlert
-          severity={alertDetails.alertType}
-          open={alertDetails.showAlert}
-          handleClose={handleClose}
-          alertMessage={alertDetails.alertMessage}
-        />
-      )}
       {showConfirmationModal && filesForProcessing.length && (
         <Suspense fallback={<FallBackDialog />}>
           <ConfirmationDialog
@@ -750,7 +689,6 @@ const Content: React.FC<ContentProps> = ({
           open={showEnhancementDialog}
           onClose={toggleEnhancementDialog}
           closeSettingModal={closeSettingModal}
-          showAlert={showAlert}
         ></GraphEnhancementDialog>
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>

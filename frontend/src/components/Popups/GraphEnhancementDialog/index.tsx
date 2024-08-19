@@ -20,10 +20,6 @@ export default function GraphEnhancementDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  showAlert: (
-    alertmsg: string,
-    alerttype: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined
-  ) => void;
   closeSettingModal: () => void;
 }) {
   const { breakpoints } = tokens;

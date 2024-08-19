@@ -26,18 +26,9 @@ import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { statusCheck, capitalize } from '../utils/Utils';
-import {
-  SourceNode,
-  CustomFile,
-  FileTableProps,
-  UserCredentials,
-  statusupdate,
-  alertStateType,
-  ChildRef,
-} from '../types';
+import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, ChildRef } from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { ArrowPathIconSolid, MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
-import CustomAlert from './UI/Alert';
 import CustomProgressBar from './UI/CustomProgressBar';
 import subscribe from '../services/PollingAPI';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
@@ -48,6 +39,7 @@ import cancelAPI from '../services/CancelAPI';
 import IconButtonWithToolTip from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import IndeterminateCheckbox from './UI/CustomCheckBox';
+import { showErrorToast, showNormalToast } from '../utils/toasts';
 let onlyfortheFirstRender = true;
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry } = props;
@@ -62,29 +54,15 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const [fileSourceFilter, setFileSourceFilter] = useState<string>('');
   const [llmtypeFilter, setLLmtypeFilter] = useState<string>('');
   const skipPageResetRef = useRef<boolean>(false);
-  const [alertDetails, setalertDetails] = useState<alertStateType>({
-    showAlert: false,
-    alertType: 'error',
-    alertMessage: '',
-  });
 
   const tableRef = useRef(null);
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
-      setalertDetails({
-        showAlert: true,
-        alertType: 'info',
-        alertMessage: `${fileName} will take approx ${time} ${inMinutes ? 'Min' : 'Sec'}`,
-      });
-      localStorage.setItem('alertShown', JSON.stringify(true));
+      showNormalToast(`${fileName} will take approx ${time} ${inMinutes ? 'Min' : 'Sec'}`);
     },
     (fileName) => {
-      setalertDetails({
-        showAlert: true,
-        alertType: 'error',
-        alertMessage: `${fileName} Failed to process`,
-      });
+      showErrorToast(`${fileName} Failed to process`);
     }
   );
   const columns = useMemo(
@@ -236,14 +214,14 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 </div>
               </div>
             );
-          }else {
-             return (
+          } 
+            return (
               <div className='cellClass'>
                 <StatusIndicator type={statusCheck(info.getValue())} />
                 <i>{info.getValue()}</i>
-                </div>
-             )
-          }
+              </div>
+            );
+          
         },
         header: () => <span>Status</span>,
         footer: (info) => info.column.id,
@@ -631,7 +609,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                     ? item?.status
                     : item?.fileSource === 'local file'
                     ? item?.status
-                    : item?.status === 'Completed' || item.status === 'Failed' || item.status==="Retry"
+                    : item?.status === 'Completed' || item.status === 'Failed' || item.status === 'Retry'
                     ? item?.status
                     : item?.fileSource === 'Wikipedia' ||
                       item?.fileSource === 'youtube' ||
@@ -721,11 +699,10 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         }
         setIsLoading(false);
       } catch (error: any) {
-        setalertDetails({
-          showAlert: true,
-          alertType: 'error',
-          alertMessage: error.message,
-        });
+        if (error instanceof Error) {
+          showErrorToast(error.message);
+        }
+
         setIsLoading(false);
         setConnectionStatus(false);
         setFilesData([]);
@@ -745,11 +722,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         if (processingFilesCount === 1) {
           setProcessedCount(1);
         }
-        setalertDetails({
-          showAlert: true,
-          alertType: 'info',
-          alertMessage: `Files are in processing please wait till previous batch completes`,
-        });
+        showNormalToast(`Files are in processing please wait till previous batch completes`);
       } else {
         const waitingQueue: CustomFile[] = JSON.parse(
           localStorage.getItem('waitingQueue') ?? JSON.stringify({ queue: [] })
@@ -809,11 +782,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         const error = JSON.parse(err.message);
         if (Object.keys(error).includes('fileName')) {
           const { message } = error;
-          setalertDetails({
-            showAlert: true,
-            alertType: 'error',
-            alertMessage: message,
-          });
+          showErrorToast(message);
         }
       }
     }
@@ -910,24 +879,12 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
 
   const classNameCheck = isExpanded ? 'fileTableWithExpansion' : `filetable`;
 
-  const handleClose = () => {
-    setalertDetails((prev) => ({ ...prev, showAlert: false }));
-    localStorage.setItem('alertShown', JSON.stringify(true));
-  };
   useEffect(() => {
     setSelectedRows(table.getSelectedRowModel().rows.map((i) => i.id));
   }, [table.getSelectedRowModel()]);
 
   return (
     <>
-      {alertDetails.showAlert && (
-        <CustomAlert
-          open={alertDetails.showAlert}
-          handleClose={handleClose}
-          severity={alertDetails.alertType}
-          alertMessage={alertDetails.alertMessage}
-        />
-      )}
       {filesData ? (
         <>
           <div className={`${isExpanded ? 'w-[calc(100%-64px)]' : 'mx-auto w-[calc(100%-100px)]'}`}>
