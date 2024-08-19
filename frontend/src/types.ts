@@ -4,6 +4,7 @@ import React, { Dispatch, ReactNode, SetStateAction } from 'react';
 import { OverridableStringUnion } from '@mui/types';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { NonOAuthError } from '@react-oauth/google';
+import { BannerType } from '@neo4j-ndl/react';
 
 export interface CustomFileBase extends Partial<globalThis.File> {
   processing: number | string;
@@ -344,7 +345,11 @@ export type alertStateType = {
   alertType: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined;
   alertMessage: string;
 };
-
+export interface BannerAlertProps {
+  showAlert: boolean;
+  alertType: BannerType;
+  alertMessage: string;
+}
 export type Scheme = Record<string, string>;
 
 export type LabelCount = Record<string, number>;

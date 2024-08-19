@@ -6,6 +6,7 @@ import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './UI/Alert';
 import { extractAPI } from '../utils/FileAPI';
 import {
+  BannerAlertProps,
   ChildRef,
   ContentProps,
   CustomFile,
@@ -32,6 +33,7 @@ import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
 import { tokens } from '@neo4j-ndl/base';
 import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
+import retry from '../services/retry';
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -62,6 +64,12 @@ const Content: React.FC<ContentProps> = ({
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [retryFile, setRetryFile] = useState<string>('');
+  const [retryLoading, setRetryLoading] = useState<boolean>(false);
+  const [alertStateForRetry, setAlertStateForRetry] = useState<BannerAlertProps>({
+    showAlert: false,
+    alertType: 'neutral',
+    alertMessage: '',
+  });
 
   const {
     filesData,
@@ -105,16 +113,7 @@ const Content: React.FC<ContentProps> = ({
     }
   );
   const childRef = useRef<ChildRef>(null);
-  const showAlert = (
-    alertmsg: string,
-    alerttype: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined
-  ) => {
-    setalertDetails({
-      showAlert: true,
-      alertMessage: alertmsg,
-      alertType: alerttype,
-    });
-  };
+
   useEffect(() => {
     if (!init && !searchParams.has('connectURL')) {
       let session = localStorage.getItem('neo4j.connection');
@@ -159,6 +158,68 @@ const Content: React.FC<ContentProps> = ({
     }
     afterFirstRender = true;
   }, [queue.items.length, userCredentials]);
+
+  useEffect(() => {
+    const storedSchema = localStorage.getItem('isSchema');
+    if (storedSchema !== null) {
+      setIsSchema(JSON.parse(storedSchema));
+    }
+  }, [isSchema]);
+
+  useEffect(() => {
+    const connection = localStorage.getItem('neo4j.connection');
+    if (connection != null) {
+      (async () => {
+        const parsedData = JSON.parse(connection);
+        console.log(parsedData.uri);
+        const response = await connectAPI(parsedData.uri, parsedData.user, parsedData.password, parsedData.database);
+        if (response?.data?.status === 'Success') {
+          localStorage.setItem(
+            'neo4j.connection',
+            JSON.stringify({
+              ...parsedData,
+              userDbVectorIndex: response.data.data.db_vector_dimension,
+            })
+          );
+          if (
+            (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
+              response.data.data.db_vector_dimension == 0) &&
+            !response.data.data.chunks_exists
+          ) {
+            setConnectionStatus(true);
+            setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
+          } else {
+            setOpenConnection({
+              openPopUp: true,
+              chunksExists: response.data.data.chunks_exists as boolean,
+              vectorIndexMisMatch:
+                response.data.data.db_vector_dimension > 0 &&
+                response.data.data.db_vector_dimension != response.data.data.application_dimension,
+              chunksExistsWithDifferentDimension:
+                response.data.data.db_vector_dimension > 0 &&
+                response.data.data.db_vector_dimension != response.data.data.application_dimension &&
+                (response.data.data.chunks_exists ?? true),
+            });
+            setConnectionStatus(false);
+          }
+        } else {
+          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+          setConnectionStatus(false);
+        }
+      })();
+    }
+  }, []);
+
+  const showAlert = (
+    alertmsg: string,
+    alerttype: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined
+  ) => {
+    setalertDetails({
+      showAlert: true,
+      alertMessage: alertmsg,
+      alertType: alerttype,
+    });
+  };
 
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
@@ -454,6 +515,36 @@ const Content: React.FC<ContentProps> = ({
     setSelectedRels([]);
   };
 
+  const retryHandler = async (filename: string, retryoption: string) => {
+    try {
+      setRetryLoading(true);
+      const response = await retry(userCredentials as UserCredentials, filename, retryoption);
+      setRetryLoading(false);
+      if (response.data.status === 'Failure') {
+        throw new Error(response.data.error);
+      }
+      setFilesData((prev) => {
+        return prev.map((f) => {
+          return f.name === filename ? { ...f, status: 'Retry' } : f;
+        });
+      });
+      setAlertStateForRetry({
+        showAlert: true,
+        alertMessage: response.data.message as string,
+        alertType: 'success',
+      });
+    } catch (error) {
+      setRetryLoading(false);
+      if (error instanceof Error) {
+        setAlertStateForRetry({
+          showAlert: true,
+          alertMessage: error.message,
+          alertType: 'danger',
+        });
+      }
+    }
+  };
+
   const selectedfileslength = useMemo(
     () => childRef.current?.getSelectedRows().length,
     [childRef.current?.getSelectedRows()]
@@ -541,56 +632,6 @@ const Content: React.FC<ContentProps> = ({
     }
     setshowDeletePopUp(false);
   };
-  useEffect(() => {
-    const connection = localStorage.getItem('neo4j.connection');
-    if (connection != null) {
-      (async () => {
-        const parsedData = JSON.parse(connection);
-        console.log(parsedData.uri);
-        const response = await connectAPI(parsedData.uri, parsedData.user, parsedData.password, parsedData.database);
-        if (response?.data?.status === 'Success') {
-          localStorage.setItem(
-            'neo4j.connection',
-            JSON.stringify({
-              ...parsedData,
-              userDbVectorIndex: response.data.data.db_vector_dimension,
-            })
-          );
-          if (
-            (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
-              response.data.data.db_vector_dimension == 0) &&
-            !response.data.data.chunks_exists
-          ) {
-            setConnectionStatus(true);
-            setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
-          } else {
-            setOpenConnection({
-              openPopUp: true,
-              chunksExists: response.data.data.chunks_exists as boolean,
-              vectorIndexMisMatch:
-                response.data.data.db_vector_dimension > 0 &&
-                response.data.data.db_vector_dimension != response.data.data.application_dimension,
-              chunksExistsWithDifferentDimension:
-                response.data.data.db_vector_dimension > 0 &&
-                response.data.data.db_vector_dimension != response.data.data.application_dimension &&
-                (response.data.data.chunks_exists ?? true),
-            });
-            setConnectionStatus(false);
-          }
-        } else {
-          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-          setConnectionStatus(false);
-        }
-      })();
-    }
-  }, []);
-
-  useEffect(() => {
-    const storedSchema = localStorage.getItem('isSchema');
-    if (storedSchema !== null) {
-      setIsSchema(JSON.parse(storedSchema));
-    }
-  }, [isSchema]);
 
   const onClickHandler = () => {
     if (childRef.current?.getSelectedRows().length) {
@@ -637,7 +678,29 @@ const Content: React.FC<ContentProps> = ({
   return (
     <>
       {retryFile.trim() != '' && (
-        <RetryConfirmationDialog fileId={retryFile} onClose={() => setRetryFile('')} open={true} />
+        <RetryConfirmationDialog
+          retryLoading={retryLoading}
+          retryHandler={retryHandler}
+          fileId={retryFile}
+          onClose={() => {
+            setRetryFile('');
+            setAlertStateForRetry({
+              showAlert: false,
+              alertMessage: '',
+              alertType: 'neutral',
+            });
+            setRetryLoading(false);
+          }}
+          open={true}
+          onBannerClose={() => {
+            setAlertStateForRetry({
+              showAlert: false,
+              alertMessage: '',
+              alertType: 'neutral',
+            });
+          }}
+          alertStatus={alertStateForRetry}
+        />
       )}
       {alertDetails.showAlert && (
         <CustomAlert
