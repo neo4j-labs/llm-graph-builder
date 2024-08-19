@@ -236,6 +236,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 </div>
               </div>
             );
+          }else {
+             return (
+              <div className='cellClass'>
+                <StatusIndicator type={statusCheck(info.getValue())} />
+                <i>{info.getValue()}</i>
+                </div>
+             )
           }
         },
         header: () => <span>Status</span>,
@@ -624,7 +631,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                     ? item?.status
                     : item?.fileSource === 'local file'
                     ? item?.status
-                    : item?.status === 'Completed' || item.status === 'Failed'
+                    : item?.status === 'Completed' || item.status === 'Failed' || item.status==="Retry"
                     ? item?.status
                     : item?.fileSource === 'Wikipedia' ||
                       item?.fileSource === 'youtube' ||

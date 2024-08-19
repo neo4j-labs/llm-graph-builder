@@ -281,6 +281,7 @@ const Content: React.FC<ContentProps> = ({
         fileItem.model,
         userCredentials as UserCredentials,
         fileItem.fileSource,
+        fileItem.retryOption ?? '',
         fileItem.source_url,
         localStorage.getItem('accesskey'),
         localStorage.getItem('secretkey'),
@@ -356,7 +357,7 @@ const Content: React.FC<ContentProps> = ({
     });
     for (let i = 0; i < batch.length; i++) {
       if (newCheck) {
-        if (batch[i]?.status === 'New') {
+        if (batch[i]?.status === 'New' || batch[i].status === 'Retry') {
           data.push(extractData(batch[i].id, isSelectedFiles, selectedFiles as CustomFile[]));
         }
       } else {
@@ -472,7 +473,9 @@ const Content: React.FC<ContentProps> = ({
         await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       });
     } else {
-      const selectedNewFiles = childRef.current?.getSelectedRows().filter((f) => f.status === 'New');
+      const selectedNewFiles = childRef.current
+        ?.getSelectedRows()
+        .filter((f) => f.status === 'New' || f.status == 'Retry');
       addFilesToQueue(selectedNewFiles as CustomFile[]);
     }
   }
@@ -551,7 +554,7 @@ const Content: React.FC<ContentProps> = ({
   );
 
   const newFilecheck = useMemo(
-    () => childRef.current?.getSelectedRows().filter((f) => f.status === 'New').length,
+    () => childRef.current?.getSelectedRows().filter((f) => f.status === 'New' || f.status == 'Retry').length,
     [childRef.current?.getSelectedRows()]
   );
 
@@ -561,7 +564,7 @@ const Content: React.FC<ContentProps> = ({
   );
 
   const dropdowncheck = useMemo(
-    () => !filesData.some((f) => f.status === 'New' || f.status === 'Waiting'),
+    () => !filesData.some((f) => f.status === 'New' || f.status === 'Waiting' || f.status === 'Retry'),
     [filesData]
   );
 
@@ -580,12 +583,12 @@ const Content: React.FC<ContentProps> = ({
     if (childRef.current?.getSelectedRows().length) {
       childRef.current?.getSelectedRows().forEach((f) => {
         const parsedFile: CustomFile = f;
-        if (parsedFile.status === 'New') {
+        if (parsedFile.status === 'New' || parsedFile.status == 'Retry') {
           newstatusfiles.push(parsedFile);
         }
       });
     } else if (filesData.length) {
-      newstatusfiles = filesData.filter((f) => f.status === 'New');
+      newstatusfiles = filesData.filter((f) => f.status === 'New' || f.status === 'Retry');
     }
     return newstatusfiles;
   }, [filesData, childRef.current?.getSelectedRows()]);
@@ -641,7 +644,7 @@ const Content: React.FC<ContentProps> = ({
         if (
           parsedData.fileSource === 'local file' &&
           typeof parsedData.size === 'number' &&
-          parsedData.status === 'New' &&
+          (parsedData.status === 'New' || parsedData.status == 'Retry') &&
           parsedData.size > largeFileSize
         ) {
           selectedLargeFiles.push(parsedData);
@@ -650,16 +653,18 @@ const Content: React.FC<ContentProps> = ({
       if (selectedLargeFiles.length) {
         setshowConfirmationModal(true);
       } else {
-        handleGenerateGraph(childRef.current?.getSelectedRows().filter((f) => f.status === 'New'));
+        handleGenerateGraph(
+          childRef.current?.getSelectedRows().filter((f) => f.status === 'New' || f.status === 'Retry')
+        );
       }
     } else if (filesData.length) {
       const largefiles = filesData.filter((f) => {
-        if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
+        if (typeof f.size === 'number' && (f.status === 'New' || f.status == 'Retry') && f.size > largeFileSize) {
           return true;
         }
         return false;
       });
-      const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
+      const selectAllNewFiles = filesData.filter((f) => f.status === 'New' || f.status === 'Retry');
       const stringified = selectAllNewFiles.reduce((accu, f) => {
         const key = f.id;
         // @ts-ignore
@@ -670,7 +675,7 @@ const Content: React.FC<ContentProps> = ({
       if (largefiles.length) {
         setshowConfirmationModal(true);
       } else {
-        handleGenerateGraph(filesData.filter((f) => f.status === 'New'));
+        handleGenerateGraph(filesData.filter((f) => f.status === 'New' || f.status === 'Retry'));
       }
     }
   };

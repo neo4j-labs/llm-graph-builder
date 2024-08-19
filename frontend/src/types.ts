@@ -68,6 +68,7 @@ export type ExtractParams = {
   gcs_project_id?: string;
   language?: string;
   access_token?: string;
+  retry_condition: string;
 } & { [key: string]: any };
 
 export type UploadParams = {
