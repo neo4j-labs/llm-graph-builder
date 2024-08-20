@@ -148,7 +148,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 {info.getValue()}
                 {(info.getValue() === 'Completed' ||
                   info.getValue() === 'Failed' ||
-                  info.getValue() === 'Canceled') && (
+                  info.getValue() === 'Cancelled') && (
                   <span className='mx-1'>
                     <IconButtonWithToolTip
                       placement='right'
