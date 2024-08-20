@@ -7,6 +7,7 @@ import {
   LoadingSpinner,
   TextInput,
   Typography,
+  useDebounce,
 } from '@neo4j-ndl/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -44,7 +45,6 @@ import {
 } from '../../utils/Constants';
 import CheckboxSelection from './CheckboxSelection';
 import { ShowAll } from '../UI/ShowAll';
-import _ from 'lodash';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -68,6 +68,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [scheme, setScheme] = useState<Scheme>({});
   const [newScheme, setNewScheme] = useState<Scheme>({});
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedQuery = useDebounce(searchQuery, 300);
 
   // the checkbox selection
   const handleCheckboxChange = (graph: GraphType) => {
@@ -95,10 +96,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-      ? queryMap.DocChunks
-      : graphType.includes('Entities')
-      ? queryMap.Entities
-      : '';
+        ? queryMap.DocChunks
+        : graphType.includes('Entities')
+          ? queryMap.Entities
+          : '';
 
   // fit graph to original position
   const handleZoomToFit = () => {
@@ -133,10 +134,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
-              userCredentials as UserCredentials,
-              graphQuery,
-              selectedRows?.map((f) => f.name)
-            )
+            userCredentials as UserCredentials,
+            graphQuery,
+            selectedRows?.map((f) => f.name)
+          )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -194,8 +195,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   }, [open]);
 
   // The search and update nodes
-  const handleSearch = (searchQuery: string) => {
-    const query = searchQuery.toLowerCase();
+  const handleSearch = useCallback((value: string) => {
+    const query = value.toLowerCase();
     const updatedNodes = nodes.map((node) => {
       if (query === '') {
         return {
@@ -203,39 +204,42 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           activated: false,
           selected: false,
         };
-      } 
-        const { id, properties, caption } = node;
-        const propertiesMatch = properties?.id?.toLowerCase().includes(query);
-        const match = id.toLowerCase().includes(query) || propertiesMatch || caption?.toLowerCase().includes(query);
-        return {
-          ...node,
-          activated: match,
-          selected: match,
-        };
-      
+      }
+      const { id, properties, caption } = node;
+      const propertiesMatch = properties?.id?.toLowerCase().includes(query);
+      const match = id.toLowerCase().includes(query) || propertiesMatch || caption?.toLowerCase().includes(query);
+      return {
+        ...node,
+        activated: match,
+        selected: match,
+      };
+
     });
     setNodes(updatedNodes);
+  }, [nodes]);
+
+  useEffect(() => {
+    handleSearch(debouncedQuery)
+  }, [debouncedQuery])
+
+  const initGraph = (
+    graphType: GraphType[],
+    finalNodes: ExtendedNode[],
+    finalRels: Relationship[],
+    schemeVal: Scheme
+  ) => {
+    if (allNodes.length > 0 && allRelationships.length > 0) {
+      const { filteredNodes, filteredRelations, filteredScheme } = filterData(
+        graphType,
+        finalNodes ?? [],
+        finalRels ?? [],
+        schemeVal
+      );
+      setNodes(filteredNodes);
+      setRelationships(filteredRelations);
+      setNewScheme(filteredScheme);
+    }
   };
-
-  // Debounce the search function
-  const debouncedSearch = useCallback(_.debounce(handleSearch, 300), [nodes]);
-
-  const initGraph = useCallback(
-    _.throttle((graphType: GraphType[], finalNodes: ExtendedNode[], finalRels: Relationship[], schemeVal: Scheme) => {
-      if (allNodes.length > 0 && allRelationships.length > 0) {
-        const { filteredNodes, filteredRelations, filteredScheme } = filterData(
-          graphType,
-          finalNodes ?? [],
-          finalRels ?? [],
-          schemeVal
-        );
-        setNodes(filteredNodes);
-        setRelationships(filteredRelations);
-        setNewScheme(filteredScheme);
-      }
-    }, 300),
-    [allNodes, allRelationships]
-  );
 
   // Unmounting the component
   if (!open) {
@@ -470,7 +474,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                                 value={searchQuery}
                                 onChange={(e) => {
                                   setSearchQuery(e.target.value);
-                                  debouncedSearch(e.target.value);
                                 }}
                                 placeholder='Search On Node Properties'
                                 fluid={true}
