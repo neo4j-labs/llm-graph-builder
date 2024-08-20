@@ -16,6 +16,7 @@ from src.graph_query import get_graph_results
 from src.chunkid_entities import get_entities_from_chunkids
 from src.post_processing import create_fulltext, create_entity_embedding
 from sse_starlette.sse import EventSourceResponse
+from src.communities import create_communities
 import json
 from typing import List, Mapping
 from starlette.middleware.sessions import SessionMiddleware
@@ -240,6 +241,13 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         tasks = set(map(str.strip, json.loads(tasks)))
+
+        if "create_communities" in tasks:
+            model = "openai-gpt-4o"
+            await asyncio.to_thread(create_communities, uri, userName, password, database,graph,model)
+            josn_obj = {'api_name': 'post_processing/create_communities', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+            logger.log_struct(josn_obj)
+            logging.info(f'created communities')
 
         if "materialize_text_chunk_similarities" in tasks:
             await asyncio.to_thread(update_graph, graph)
