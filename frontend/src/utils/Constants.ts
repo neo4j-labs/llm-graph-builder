@@ -162,11 +162,6 @@ export const buttonCaptions = {
   ask: 'Ask',
 };
 
-export const taskParam: string[] = [
-  'materialize_text_chunk_similarities',
-  'enable_hybrid_search_and_fulltext_search_in_bloom',
-  'materialize_entity_similarities',
-];
 export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
   {
     title: 'materialize_text_chunk_similarities',
