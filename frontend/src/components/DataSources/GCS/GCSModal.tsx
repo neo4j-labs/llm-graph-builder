@@ -9,6 +9,7 @@ import CustomModal from '../../../HOC/CustomModal';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAlertContext } from '../../../context/Alert';
 import { buttonCaptions } from '../../../utils/Constants';
+import { showErrorToast, showNormalToast } from '../../../utils/toasts';
 
 const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) => {
   const [bucketName, setbucketName] = useState<string>('');
@@ -69,7 +70,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
           access_token: codeResponse.access_token,
         });
         if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
-          showAlert('error', apiResponse?.data?.message);
+          showErrorToast( apiResponse?.data?.message);
           setTimeout(() => {
             setStatus('unknown');
             reset();
@@ -79,16 +80,13 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
         }
         const apiResCheck = apiResponse?.data?.success_count && apiResponse.data.failed_count;
         if (apiResCheck) {
-          showAlert(
-            'info',
-            `Successfully Created Source Nodes for ${apiResponse.data.success_count} and Failed for ${apiResponse.data.failed_count} Files`
-          );
+          showNormalToast(`Successfully Created Source Nodes for ${apiResponse.data.success_count} and Failed for ${apiResponse.data.failed_count} Files`)
         } else if (apiResponse?.data?.success_count) {
-          showAlert('info', `Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
+          showNormalToast(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`)
         } else if (apiResponse.data.failed_count) {
-          showAlert('error', `Failed to Created Source Node for ${apiResponse.data.failed_count} Files`);
+          showErrorToast(`Failed to Created Source Node for ${apiResponse.data.failed_count} Files`)
         } else {
-          showAlert('error', `Invalid Folder Name`);
+          showErrorToast(`Invalid Folder Name`)
         }
         const copiedFilesData = [...filesData];
         if (apiResponse?.data?.file_name?.length) {
@@ -127,7 +125,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
         reset();
       } catch (error) {
         if (showAlert != undefined) {
-          showAlert('error', 'Some Error Occurred or Please Check your Instance Connection');
+          showNormalToast('Some Error Occurred or Please Check your Instance Connection')
         }
       }
       setTimeout(() => {
@@ -136,15 +134,12 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
       }, 500);
     },
     onError: (errorResponse) => {
-      showAlert(
-        'error',
-        errorResponse.error_description ?? 'Some Error Occurred or Please try signin with your google account'
-      );
+      showErrorToast( errorResponse.error_description ?? 'Some Error Occurred or Please try signin with your google account')
     },
     scope: 'https://www.googleapis.com/auth/devstorage.read_only',
     onNonOAuthError: (error: nonoautherror) => {
       console.log(error);
-      showAlert('info', error.message as string);
+      showNormalToast( error.message as string)
     },
   });
 

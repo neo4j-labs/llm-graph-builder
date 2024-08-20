@@ -6,10 +6,10 @@ import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { OnChangeValue, ActionMeta } from 'react-select';
 import { OptionType, schema, UserCredentials } from '../../../../types';
-import { useAlertContext } from '../../../../context/Alert';
 import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
 import schemaExamples from '../../../../assets/schemas.json';
 import { tokens } from '@neo4j-ndl/base';
+import { showNormalToast } from '../../../../utils/toasts';
 
 export default function EntityExtractionSetting({
   view,
@@ -151,7 +151,6 @@ export default function EntityExtractionSetting({
   const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
   const [defaultExamples, setdefaultExamples] = useState<OptionType[]>([]);
 
-  const { showAlert } = useAlertContext();
 
   useEffect(() => {
     const parsedData = schemaExamples.reduce((accu: OptionType[], example) => {
@@ -233,7 +232,7 @@ export default function EntityExtractionSetting({
       JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] })
     );
     localStorage.setItem('selectedSchemas', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
-    showAlert('info', `Successfully Removed the Schema settings`);
+    showNormalToast(`Successfully Removed the Schema settings`)
     if (view === 'Dialog' && onClose != undefined) {
       onClose();
     }
