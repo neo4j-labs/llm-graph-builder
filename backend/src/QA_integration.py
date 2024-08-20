@@ -30,18 +30,18 @@ CHAT_MAX_TOKENS = 1000
 
 
 # RETRIEVAL_QUERY = """
-# WITH node, score, apoc.text.join([ (node)-[:HAS_ENTITY]->(e) | head(labels(e)) + ": "+ e.id],", ") as entities
-# MATCH (node)-[:PART_OF]->(d:Document)
+# WITH node, score, apoc.text.join([ (node)-[:__HAS_ENTITY__]->(e) | head(labels(e)) + ": "+ e.id],", ") as entities
+# MATCH (node)-[:__PART_OF__]->(d:Document)
 # WITH d, apoc.text.join(collect(node.text + "\n" + entities),"\n----\n") as text, avg(score) as score
 # RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)} as metadata
 # """
 
 RETRIEVAL_QUERY = """
 WITH node as chunk, score
-MATCH (chunk)-[:PART_OF]->(d:Document)
+MATCH (chunk)-[:__PART_OF__]->(d:__Document__)
 CALL { WITH chunk
-MATCH (chunk)-[:HAS_ENTITY]->(e) 
-MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,3}(:!Chunk&!Document) 
+MATCH (chunk)-[:__HAS_ENTITY__]->(e) 
+MATCH path=(e)(()-[rels:!__HAS_ENTITY__&!__PART_OF__]-()){0,3}(:!__Chunk__&!__Document__) 
 UNWIND rels as r
 RETURN collect(distinct r) as rels
 }
@@ -83,7 +83,8 @@ def get_llm(model: str,max_tokens=1000) -> Any:
         "gemini-1.5-pro": "gemini-1.5-pro-preview-0409",
         "openai-gpt-4": "gpt-4-0125-preview",
         "diffbot" : "gpt-4-0125-preview",
-        "openai-gpt-4o":"gpt-4o"
+        "openai-gpt-4o":"gpt-4o",
+        "openai-gpt-4o-mini": "gpt-4o-mini",
          }
     if model in model_versions:
         model_version = model_versions[model]

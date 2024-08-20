@@ -66,6 +66,10 @@ def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name
             #             }
             #             )
             # logging.info('create vector index on chunk embedding')
+            result = graph.query("SHOW INDEXES YIELD * WHERE labelsOrTypes = ['__Chunk__'] and name = 'vector'")
+            if result:
+                logging.info(f"vector index dropped for 'Chunk'")
+                graph.query("DROP INDEX vector IF EXISTS;")
 
             graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
                             OPTIONS {indexConfig: {
@@ -124,9 +128,9 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
         if 'page_number' in chunk.metadata:
             chunk_data['page_number'] = chunk.metadata['page_number']
          
-        if 'start_time' in chunk.metadata and 'end_time' in chunk.metadata:
-            chunk_data['start_time'] = chunk.metadata['start_time']
-            chunk_data['end_time'] = chunk.metadata['end_time'] 
+        if 'start_timestamp' in chunk.metadata and 'end_timestamp' in chunk.metadata:
+            chunk_data['start_time'] = chunk.metadata['start_timestamp']
+            chunk_data['end_time'] = chunk.metadata['end_timestamp'] 
                
         batch_data.append(chunk_data)
         

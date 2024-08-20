@@ -1,6 +1,6 @@
 import { TextInput } from '@neo4j-ndl/react';
 import React, { useState } from 'react';
-import { CustomFile, CustomFileBase, S3ModalProps, UserCredentials } from '../../../types';
+import { CustomFile, CustomFileBase, S3File, S3ModalProps, UserCredentials } from '../../../types';
 import { urlScanAPI } from '../../../services/URLScan';
 import { useCredentials } from '../../../context/UserCredentials';
 import { validation } from '../../../utils/Utils';
@@ -8,11 +8,7 @@ import { useFileContext } from '../../../context/UsersFiles';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../../../HOC/CustomModal';
 import { buttonCaptions } from '../../../utils/Constants';
-interface S3File {
-  fileName: string;
-  fileSize: number;
-  url: string;
-}
+
 const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [bucketUrl, setBucketUrl] = useState<string>('');
   const [accessKey, setAccessKey] = useState<string>('');
@@ -100,7 +96,6 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               model: defaultValues.model,
               fileSource: defaultValues.fileSource,
               processingProgress: defaultValues.processingProgress,
-              // total_pages: 'N/A',
             });
           }
         });
