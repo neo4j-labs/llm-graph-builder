@@ -198,7 +198,7 @@ def create_community_summaries(graph, model):
         with ThreadPoolExecutor() as executor:
             futures = {executor.submit(process_community, community, community_chain): community for community in community_info_list}
 
-            for future in tqdm(as_completed(futures), total=len(futures), desc="Processing communities"):
+            for future in as_completed(futures):
                 try:
                     summaries.append(future.result())
                 except Exception as e:
