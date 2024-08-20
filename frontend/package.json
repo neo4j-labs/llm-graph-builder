@@ -37,6 +37,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.7",
     "@types/node": "^20.11.10",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",

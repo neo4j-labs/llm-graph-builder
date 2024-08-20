@@ -6,7 +6,7 @@ export default function Legend({
   count,
   type,
   onClick,
-  className
+  className,
 }: {
   bgColor: string;
   title: string;

@@ -1,4 +1,13 @@
-import { Banner, Dialog, Flex, IconButton, IconButtonArray, LoadingSpinner, TextInput, Typography } from '@neo4j-ndl/react';
+import {
+  Banner,
+  Dialog,
+  Flex,
+  IconButton,
+  IconButtonArray,
+  LoadingSpinner,
+  TextInput,
+  Typography,
+} from '@neo4j-ndl/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ExtendedNode,
@@ -35,6 +44,7 @@ import {
 } from '../../utils/Constants';
 import CheckboxSelection from './CheckboxSelection';
 import { ShowAll } from '../UI/ShowAll';
+import _ from 'lodash';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -58,7 +68,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [scheme, setScheme] = useState<Scheme>({});
   const [newScheme, setNewScheme] = useState<Scheme>({});
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSearchInitiated, setIsSearchInitiated] = useState(false);
+
+  // the checkbox selection
   const handleCheckboxChange = (graph: GraphType) => {
     const currentIndex = graphType.indexOf(graph);
     const newGraphSelected = [...graphType];
@@ -84,11 +95,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-        ? queryMap.DocChunks
-        : graphType.includes('Entities')
-          ? queryMap.Entities
-          : '';
+      ? queryMap.DocChunks
+      : graphType.includes('Entities')
+      ? queryMap.Entities
+      : '';
 
+  // fit graph to original position
   const handleZoomToFit = () => {
     nvlRef.current?.fit(
       allNodes.map((node) => node.id),
@@ -102,7 +114,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       handleZoomToFit();
     }, 10);
     return () => {
-      nvlRef.current?.destroy();
+      if (nvlRef.current) {
+        nvlRef.current?.destroy();
+      }
       setGraphType(intitalGraphType);
       clearTimeout(timeoutId);
       setScheme({});
@@ -110,6 +124,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setRelationships([]);
       setAllNodes([]);
       setAllRelationships([]);
+      setSearchQuery('');
     };
   }, []);
 
@@ -118,10 +133,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
-            userCredentials as UserCredentials,
-            graphQuery,
-            selectedRows?.map((f) => f.name)
-          )
+              userCredentials as UserCredentials,
+              graphQuery,
+              selectedRows?.map((f) => f.name)
+            )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -178,6 +193,50 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
   }, [open]);
 
+  // The search and update nodes
+  const handleSearch = (searchQuery: string) => {
+    const query = searchQuery.toLowerCase();
+    const updatedNodes = nodes.map((node) => {
+      if (query === '') {
+        return {
+          ...node,
+          activated: false,
+          selected: false,
+        };
+      } 
+        const { id, properties, caption } = node;
+        const propertiesMatch = properties?.id?.toLowerCase().includes(query);
+        const match = id.toLowerCase().includes(query) || propertiesMatch || caption?.toLowerCase().includes(query);
+        return {
+          ...node,
+          activated: match,
+          selected: match,
+        };
+      
+    });
+    setNodes(updatedNodes);
+  };
+
+  // Debounce the search function
+  const debouncedSearch = useCallback(_.debounce(handleSearch, 300), [nodes]);
+
+  const initGraph = useCallback(
+    _.throttle((graphType: GraphType[], finalNodes: ExtendedNode[], finalRels: Relationship[], schemeVal: Scheme) => {
+      if (allNodes.length > 0 && allRelationships.length > 0) {
+        const { filteredNodes, filteredRelations, filteredScheme } = filterData(
+          graphType,
+          finalNodes ?? [],
+          finalRels ?? [],
+          schemeVal
+        );
+        setNodes(filteredNodes);
+        setRelationships(filteredRelations);
+        setNewScheme(filteredScheme);
+      }
+    }, 300),
+    [allNodes, allRelationships]
+  );
+
   // Unmounting the component
   if (!open) {
     return <></>;
@@ -228,6 +287,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setRelationships([]);
     setAllNodes([]);
     setAllRelationships([]);
+    setSearchQuery('');
   };
 
   // sort the legends in with Chunk and Document always the first two values
@@ -255,25 +315,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       return acc;
     }, {})
   );
-
-  const initGraph = (
-    graphType: GraphType[],
-    finalNodes: ExtendedNode[],
-    finalRels: Relationship[],
-    schemeVal: Scheme
-  ) => {
-    if (allNodes.length > 0 && allRelationships.length > 0) {
-      const { filteredNodes, filteredRelations, filteredScheme } = filterData(
-        graphType,
-        finalNodes ?? [],
-        finalRels ?? [],
-        schemeVal
-      );
-      setNodes(filteredNodes);
-      setRelationships(filteredRelations);
-      setNewScheme(filteredScheme);
-    }
-  };
 
   // On Node Click, highlighting the nodes and deactivating any active relationships
   const handleNodeClick = (nodeLabel: string) => {
@@ -315,36 +356,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setRelationships(updatedRelations);
     setNodes(updatedNodes);
   };
-
-  // search 
-  const filteredNodes = nodes.filter((node) => {
-    const searchTerm = searchQuery.toLowerCase();
-    if (node.id || node.caption) {
-      return node.id.toLowerCase().includes(searchTerm) || node?.caption.toLowerCase().includes(searchTerm)
-    }
-  });
-  const handleSearch = (searchQuery:string) => {
-    const lowerCaseQuery = searchQuery.toLowerCase();
-    const updatedNodes = nodes.map((node) => {
-      const isMatch =
-        node.id.toLowerCase().includes(lowerCaseQuery) ||
-        node.caption.toLowerCase().includes(lowerCaseQuery) ||
-         node.labels.some(label => label.toLowerCase().includes(lowerCaseQuery));
-      return {
-        ...node,
-        activated: searchQuery && isMatch,
-        selected: searchQuery && isMatch,
-      };
-    });
-    // If the search query is empty, deactivate all nodes
-    if (!searchQuery) {
-      updatedNodes.forEach((node) => {
-        node.activated = false;
-        node.selected = false;
-      });
-    }
-    setNodes(updatedNodes);
-   };
 
   return (
     <>
@@ -450,26 +461,30 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                     <div className='legend_div'>
                       {nodeCheck.length > 0 && (
                         <>
-                          <Flex className='py-4 pt-3 ml-2'>
+                          <Flex className='py-3 pt-3 ml-2'>
                             <Typography variant='h3'>{graphLabels.resultOverview}</Typography>
-                            <div
-                              className={`text-input-container`}
-                            >
+                            <div className={`text-input-container`}>
                               <TextInput
+                                aria-label='search nodes'
                                 type='text'
                                 value={searchQuery}
                                 onChange={(e) => {
                                   setSearchQuery(e.target.value);
+                                  debouncedSearch(e.target.value);
                                 }}
-                                placeholder='Search...'
-                                helpText='Search for nodes'
+                                placeholder='Search On Node Properties'
                                 fluid={true}
                                 leftIcon={
-                                  <IconButton aria-label='Search Icon' clean size='small' className='-mt-0.5' type='submit'>
+                                  <IconButton
+                                    aria-label='Search Icon'
+                                    clean
+                                    size='small'
+                                    className='-mt-0.5'
+                                    type='submit'
+                                  >
                                     <MagnifyingGlassIconOutline />
                                   </IconButton>
                                 }
-                                onBlur={() => handleSearch(searchQuery)}
                               />
                             </div>
                             <Typography variant='subheading-small'>
@@ -486,7 +501,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                                   scheme={newScheme}
                                   count={nodeCount(nodes, nodeLabel)}
                                   onClick={() => handleNodeClick(nodeLabel)}
-                                  className='h-7'
                                 />
                               ))}
                             </ShowAll>
@@ -495,7 +509,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       )}
                       {relationshipsSorted.length > 0 && (
                         <>
-                          <Flex className='py-4 pt-3 ml-2'>
+                          <Flex className='py-3 pt-3 ml-2'>
                             <Typography variant='subheading-small'>
                               {graphLabels.totalRelationships} ({relationships.length})
                             </Typography>
