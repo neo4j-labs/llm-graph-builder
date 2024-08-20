@@ -64,7 +64,11 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     triggeredFrom: '',
     show: false,
   });
-  const [postProcessingTasks, setPostProcessingTasks] = useState<string[]>(['materialize_text_chunk_similarities','enable_hybrid_search_and_fulltext_search_in_bloom','materialize_entity_similarities']);
+  const [postProcessingTasks, setPostProcessingTasks] = useState<string[]>([
+    'materialize_text_chunk_similarities',
+    'enable_hybrid_search_and_fulltext_search_in_bloom',
+    'materialize_entity_similarities',
+  ]);
   const [processedCount, setProcessedCount] = useState<number>(0);
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
