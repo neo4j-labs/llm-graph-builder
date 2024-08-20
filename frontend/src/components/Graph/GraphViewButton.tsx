@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from '@neo4j-ndl/react';
 import GraphViewModal from './GraphViewModal';
-import { Node, Relationship } from '@neo4j-nvl/base';
+import { GraphViewButtonProps } from '../../types';
 
-interface GraphViewButtonProps {
-  nodeValues?: Node[];
-  relationshipValues?: Relationship[];
-}
 const GraphViewButton: React.FC<GraphViewButtonProps> = ({ nodeValues, relationshipValues }) => {
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');

@@ -1,18 +1,18 @@
 .filetable {
   /* width: calc(-360px + 100dvw); */
-  height: calc(-400px + 100dvh);
+  height: calc(-350px + 100dvh);
   border: 1px solid #d1d5db;
 }
 
 .fileTableWithExpansion {
   width: calc(-640px + 100dvw) !important;
-  height: calc(-400px + 100dvh);
+  height: calc(-350px + 100dvh);
   border: 1px solid #d1d5db;
 }
 
 .fileTableWithBothDrawers {
   width: calc(-650px + 100dvw) !important;
-  height: calc(-400px + 100dvh);
+  height: calc(-350px + 100dvh);
   border: 1px solid #d1d5db;
 }
 
@@ -347,14 +347,22 @@
   margin-bottom: 0 !important;
 }
 
-.node_label__value-container--has-value {
+.node_label__value-container--has-value ,.relationship_label__value-container--has-value{
   max-height: 215px;
   overflow-y: scroll !important;
   scrollbar-width: thin;
 }
-
-.relationship_label__value-container--has-value {
-  max-height: 215px;
+.entity_extraction_Tab_node_label__value-container--has-value,.entity_extraction_Tab_relationship_label__value-container--has-value{
+  max-height: 100px;
   overflow-y: scroll !important;
-  scrollbar-width: thin
+  scrollbar-width: thin;
+}
+.tablet_entity_extraction_Tab_node_label__value-container--has-value,.tablet_entity_extraction_Tab_relationship_label__value-container--has-value{
+  max-height: 80px;
+  overflow-y: scroll !important;
+  scrollbar-width: thin;
+}
+.widthunset{
+  width: initial !important;
+  height: initial !important;
 }

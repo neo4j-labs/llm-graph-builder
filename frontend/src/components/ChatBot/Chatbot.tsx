@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Button, Widget, Typography, Avatar, TextInput, IconButton, Modal, useCopyToClipboard } from '@neo4j-ndl/react';
+import React, { FC, lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { Widget, Typography, Avatar, TextInput, IconButton, Modal, useCopyToClipboard } from '@neo4j-ndl/react';
 import {
   XMarkIconOutline,
   ClipboardDocumentIconOutline,
@@ -12,15 +12,16 @@ import { useCredentials } from '../../context/UserCredentials';
 import { chatBotAPI } from '../../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../../context/UsersFiles';
-import InfoModal from './ChatInfoModal';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import IconButtonWithToolTip from '../UI/IconButtonToolTip';
 import { buttonCaptions, tooltips } from '../../utils/Constants';
 import useSpeechSynthesis from '../../hooks/useSpeech';
 import ButtonWithToolTip from '../UI/ButtonWithToolTip';
+import FallBackDialog from '../UI/FallBackDialog';
+const InfoModal = lazy(() => import('./ChatInfoModal'));
 
-const Chatbot: React.FC<ChatbotProps> = (props) => {
+const Chatbot: FC<ChatbotProps> = (props) => {
   const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, clear } = props;
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
@@ -38,6 +39,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
   const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
   const [chatsMode, setChatsMode] = useState<string>('graph+vector');
   const [graphEntitites, setgraphEntitites] = useState<[]>([]);
+  const [messageError, setmessageError] = useState<string>('');
 
   const [value, copy] = useCopyToClipboard();
   const { speak, cancel } = useSpeechSynthesis({
@@ -77,6 +79,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       mode?: string;
       cypher_query?: string;
       graphonly_entities?: [];
+      error?: string;
     },
     index = 0
   ) => {
@@ -106,6 +109,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
               mode: response?.mode,
               cypher_query: response?.cypher_query,
               graphonly_entities: response?.graphonly_entities,
+              error: response.error,
             },
           ]);
         } else {
@@ -127,6 +131,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
             lastmsg.mode = response?.mode;
             lastmsg.cypher_query = response.cypher_query;
             lastmsg.graphonly_entities = response.graphonly_entities;
+            lastmsg.error = response.error;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -159,6 +164,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
     let chatingMode;
     let cypher_query;
     let graphonly_entities;
+    let error;
     const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
     const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime };
     setListMessages([...listMessages, userMessage]);
@@ -183,6 +189,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
       chatingMode = chatresponse?.data?.data?.info?.mode;
       cypher_query = chatresponse?.data?.data?.info?.cypher_query ?? '';
       graphonly_entities = chatresponse?.data.data.info.context ?? [];
+      error = chatresponse.data.data.info.error ?? '';
       const finalbotReply = {
         reply: chatbotReply,
         sources: chatSources,
@@ -195,6 +202,7 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
         mode: chatingMode,
         cypher_query,
         graphonly_entities,
+        error,
       };
       simulateTypingEffect(finalbotReply);
     } catch (error) {
@@ -318,73 +326,70 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
                         {chat.datetime}
                       </Typography>
                     </div>
-                    {chat.user === 'chatbot' &&
-                      chat.id !== 2 &&
-                      chat.sources?.length !== 0 &&
-                      !chat.isLoading &&
-                      !chat.isTyping && (
-                        <div className='flex inline-block'>
-                          <ButtonWithToolTip
-                            className='w-4 h-4 inline-block p-6 mt-1.5'
-                            fill='text'
-                            placement='top'
-                            clean
-                            text='Retrieval Information'
-                            label='Retrieval Information'
-                            disabled={chat.isTyping || chat.isLoading}
-                            onClick={() => {
-                              setModelModal(chat.model ?? '');
-                              setSourcesModal(chat.sources ?? []);
-                              setResponseTime(chat.response_time ?? 0);
-                              setChunkModal(chat.chunk_ids ?? []);
-                              setTokensUsed(chat.total_tokens ?? 0);
-                              setcypherQuery(chat.cypher_query ?? '');
-                              setShowInfoModal(true);
-                              setChatsMode(chat.mode ?? '');
-                              setgraphEntitites(chat.graphonly_entities ?? []);
-                            }}
-                          >
-                            {' '}
-                            {buttonCaptions.details}
-                          </ButtonWithToolTip>
-                          <IconButtonWithToolTip
-                            label='copy text'
-                            placement='top'
-                            clean
-                            text={chat.copying ? tooltips.copied : tooltips.copy}
-                            onClick={() => handleCopy(chat.message, chat.id)}
-                            disabled={chat.isTyping || chat.isLoading}
-                          >
-                            <ClipboardDocumentIconOutline className='w-4 h-4 inline-block' />
-                          </IconButtonWithToolTip>
-                          {copyMessageId === chat.id && (
-                            <>
-                              <span className='pt-4 text-xs'>Copied!</span>
-                              <span style={{ display: 'none' }}>{value}</span>
-                            </>
+                    {chat.user === 'chatbot' && chat.id !== 2 && !chat.isLoading && !chat.isTyping && (
+                      <div className='flex inline-block'>
+                        <ButtonWithToolTip
+                          className='w-4 h-4 inline-block p-6 mt-1.5'
+                          fill='text'
+                          placement='top'
+                          clean
+                          text='Retrieval Information'
+                          label='Retrieval Information'
+                          disabled={chat.isTyping || chat.isLoading}
+                          onClick={() => {
+                            setModelModal(chat.model ?? '');
+                            setSourcesModal(chat.sources ?? []);
+                            setResponseTime(chat.response_time ?? 0);
+                            setChunkModal(chat.chunk_ids ?? []);
+                            setTokensUsed(chat.total_tokens ?? 0);
+                            setcypherQuery(chat.cypher_query ?? '');
+                            setShowInfoModal(true);
+                            setChatsMode(chat.mode ?? '');
+                            setgraphEntitites(chat.graphonly_entities ?? []);
+                            setmessageError(chat.error ?? '');
+                          }}
+                        >
+                          {' '}
+                          {buttonCaptions.details}
+                        </ButtonWithToolTip>
+                        <IconButtonWithToolTip
+                          label='copy text'
+                          placement='top'
+                          clean
+                          text={chat.copying ? tooltips.copied : tooltips.copy}
+                          onClick={() => handleCopy(chat.message, chat.id)}
+                          disabled={chat.isTyping || chat.isLoading}
+                        >
+                          <ClipboardDocumentIconOutline className='w-4 h-4 inline-block' />
+                        </IconButtonWithToolTip>
+                        {copyMessageId === chat.id && (
+                          <>
+                            <span className='pt-4 text-xs'>Copied!</span>
+                            <span style={{ display: 'none' }}>{value}</span>
+                          </>
+                        )}
+                        <IconButtonWithToolTip
+                          placement='top'
+                          clean
+                          onClick={() => {
+                            if (chat.speaking) {
+                              handleCancel(chat.id);
+                            } else {
+                              handleSpeak(chat.message, chat.id);
+                            }
+                          }}
+                          text={chat.speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
+                          disabled={listMessages.some((msg) => msg.speaking && msg.id !== chat.id)}
+                          label={chat.speaking ? 'stop speaking' : 'text to speech'}
+                        >
+                          {chat.speaking ? (
+                            <SpeakerXMarkIconOutline className='w-4 h-4 inline-block' />
+                          ) : (
+                            <SpeakerWaveIconOutline className='w-4 h-4 inline-block' />
                           )}
-                          <IconButtonWithToolTip
-                            placement='top'
-                            clean
-                            onClick={() => {
-                              if (chat.speaking) {
-                                handleCancel(chat.id);
-                              } else {
-                                handleSpeak(chat.message, chat.id);
-                              }
-                            }}
-                            text={chat.speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
-                            disabled={listMessages.some((msg) => msg.speaking && msg.id !== chat.id)}
-                            label={chat.speaking ? 'stop speaking' : 'text to speech'}
-                          >
-                            {chat.speaking ? (
-                              <SpeakerXMarkIconOutline className='w-4 h-4 inline-block' />
-                            ) : (
-                              <SpeakerWaveIconOutline className='w-4 h-4 inline-block' />
-                            )}
-                          </IconButtonWithToolTip>
-                        </div>
-                      )}
+                        </IconButtonWithToolTip>
+                      </div>
+                    )}
                   </div>
                 </Widget>
               </div>
@@ -393,50 +398,63 @@ const Chatbot: React.FC<ChatbotProps> = (props) => {
         </Widget>
       </div>
       <div className='n-bg-palette-neutral-bg-weak flex gap-2.5 bottom-0 p-2.5 w-full'>
-        <form onSubmit={handleSubmit} className='flex gap-2.5 w-full'>
+        <form onSubmit={handleSubmit} className={`flex gap-2.5 w-full ${!isFullScreen ? 'justify-between' : ''}`}>
           <TextInput
-            className='n-bg-palette-neutral-bg-default flex-grow-7 w-[70%]'
+            className={`n-bg-palette-neutral-bg-default flex-grow-7 ${
+              isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
+            }`}
             aria-label='chatbot-input'
             type='text'
             value={inputMessage}
             fluid
             onChange={handleInputChange}
+            name='chatbot-input'
           />
-          <Button type='submit' disabled={loading} size='medium'>
+          <ButtonWithToolTip
+            label='Q&A Button'
+            placement='top'
+            text={`Query Documents in ${chatMode} mode`}
+            type='submit'
+            disabled={loading}
+            size='medium'
+          >
             {buttonCaptions.ask} {selectedRows != undefined && selectedRows.length > 0 && `(${selectedRows.length})`}
-          </Button>
+          </ButtonWithToolTip>
         </form>
       </div>
-      <Modal
-        modalProps={{
-          id: 'retrieval-information',
-          className: 'n-p-token-4 n-bg-palette-neutral-bg-weak n-rounded-lg',
-        }}
-        onClose={() => setShowInfoModal(false)}
-        open={showInfoModal}
-      >
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <IconButton
-            size='large'
-            title='close pop up'
-            aria-label='close pop up'
-            clean
-            onClick={() => setShowInfoModal(false)}
-          >
-            <XMarkIconOutline />
-          </IconButton>
-        </div>
-        <InfoModal
-          sources={sourcesModal}
-          model={modelModal}
-          chunk_ids={chunkModal}
-          response_time={responseTime}
-          total_tokens={tokensUsed}
-          mode={chatsMode}
-          cypher_query={cypherQuery}
-          graphonly_entities={graphEntitites}
-        />
-      </Modal>
+      <Suspense fallback={<FallBackDialog />}>
+        <Modal
+          modalProps={{
+            id: 'retrieval-information',
+            className: 'n-p-token-4 n-bg-palette-neutral-bg-weak n-rounded-lg',
+          }}
+          onClose={() => setShowInfoModal(false)}
+          open={showInfoModal}
+        >
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <IconButton
+              size='large'
+              title='close pop up'
+              aria-label='close pop up'
+              clean
+              onClick={() => setShowInfoModal(false)}
+            >
+              <XMarkIconOutline />
+            </IconButton>
+          </div>
+          <InfoModal
+            sources={sourcesModal}
+            model={modelModal}
+            chunk_ids={chunkModal}
+            response_time={responseTime}
+            total_tokens={tokensUsed}
+            mode={chatsMode}
+            cypher_query={cypherQuery}
+            graphonly_entities={graphEntitites}
+            error={messageError}
+          />
+        </Modal>
+      </Suspense>
     </div>
   );
 };

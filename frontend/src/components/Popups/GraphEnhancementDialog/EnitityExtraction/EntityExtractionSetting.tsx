@@ -1,14 +1,15 @@
 import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
-import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
-import { appLabels, buttonCaptions, tooltips } from '../../../utils/Constants';
-import { Dropdown, Flex, Typography } from '@neo4j-ndl/react';
-import { useCredentials } from '../../../context/UserCredentials';
-import { useFileContext } from '../../../context/UsersFiles';
+import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
+import { appLabels, buttonCaptions, tooltips } from '../../../../utils/Constants';
+import { Dropdown, Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
+import { useCredentials } from '../../../../context/UserCredentials';
+import { useFileContext } from '../../../../context/UsersFiles';
 import { OnChangeValue, ActionMeta } from 'react-select';
-import { OptionType, OptionTypeForExamples, schema, UserCredentials } from '../../../types';
-import { useAlertContext } from '../../../context/Alert';
-import { getNodeLabelsAndRelTypes } from '../../../services/GetNodeLabelsRelTypes';
-import schemaExamples from '../../../assets/schemas.json';
+import { OptionType, OptionTypeForExamples, schema, UserCredentials } from '../../../../types';
+import { useAlertContext } from '../../../../context/Alert';
+import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
+import schemaExamples from '../../../../assets/schemas.json';
+import { tokens } from '@neo4j-ndl/base';
 
 export default function EntityExtractionSetting({
   view,
@@ -27,6 +28,7 @@ export default function EntityExtractionSetting({
   onContinue?: () => void;
   colseEnhanceGraphSchemaDialog?: () => void;
 }) {
+  const { breakpoints } = tokens;
   const {
     setSelectedRels,
     setSelectedNodes,
@@ -39,7 +41,7 @@ export default function EntityExtractionSetting({
   } = useFileContext();
   const { userCredentials } = useCredentials();
   const [loading, setLoading] = useState<boolean>(false);
-
+  const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const removeNodesAndRels = (nodelabels: string[], relationshipTypes: string[]) => {
     const labelsToRemoveSet = new Set(nodelabels);
     const relationshipLabelsToremoveSet = new Set(relationshipTypes);
@@ -73,6 +75,10 @@ export default function EntityExtractionSetting({
       removeNodesAndRels(removedNodelabels, removedRelations);
     }
     setSelectedSchemas(selectedOptions);
+    localStorage.setItem(
+      'selectedSchemas',
+      JSON.stringify({ db: userCredentials?.uri, selectedOptions: selectedOptions })
+    );
     const nodesFromSchema = selectedOptions.map((s) => JSON.parse(s.value).nodelabels).flat();
     const relationsFromSchema = selectedOptions.map((s) => JSON.parse(s.value).relationshipTypes).flat();
     let nodeOptionsFromSchema: OptionType[] = [];
@@ -155,7 +161,6 @@ export default function EntityExtractionSetting({
     }, []);
     setdefaultExamples(parsedData);
   }, []);
-
   useEffect(() => {
     if (userCredentials) {
       if (open && view === 'Dialog') {
@@ -206,6 +211,7 @@ export default function EntityExtractionSetting({
     setSelectedSchemas([]);
     setSelectedNodes(nodeLabelOptions);
     setSelectedRels(relationshipTypeOptions);
+    setIsSchema(true);
     localStorage.setItem('isSchema', JSON.stringify(true));
   }, [nodeLabelOptions, relationshipTypeOptions]);
 
@@ -220,11 +226,22 @@ export default function EntityExtractionSetting({
       'selectedRelationshipLabels',
       JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] })
     );
+    localStorage.setItem('selectedSchemas', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
     showAlert('info', `Successfully Removed the Schema settings`);
     if (view === 'Dialog' && onClose != undefined) {
       onClose();
     }
   };
+
+  // Load selectedSchemas from local storage on mount
+  useEffect(() => {
+    const storedSchemas = localStorage.getItem('selectedSchemas');
+    if (storedSchemas) {
+      const parsedSchemas = JSON.parse(storedSchemas);
+      setSelectedSchemas(parsedSchemas.selectedOptions);
+    }
+  }, []);
+
   return (
     <div>
       <Typography variant='body-medium'>
@@ -244,7 +261,7 @@ export default function EntityExtractionSetting({
         <Dropdown
           helpText='Schema Examples'
           label='Predefined Schema'
-          size={view === 'Tabs' ? 'large' : 'medium'}
+          size={view === 'Tabs' && !isTablet ? 'large' : isTablet ? 'small' : 'medium'}
           selectProps={{
             isClearable: true,
             isMulti: true,
@@ -261,28 +278,32 @@ export default function EntityExtractionSetting({
         <Dropdown
           helpText='You can select more than one values'
           label='Node Labels'
-          size={view === 'Tabs' ? 'large' : 'medium'}
+          size={view === 'Tabs' && !isTablet ? 'large' : isTablet ? 'small' : 'medium'}
           selectProps={{
             isClearable: true,
             isMulti: true,
             options: nodeLabelOptions,
             onChange: onChangenodes,
             value: selectedNodes,
-            classNamePrefix: 'node_label',
+            classNamePrefix: `${
+              isTablet ? 'tablet_entity_extraction_Tab_node_label' : 'entity_extraction_Tab_node_label'
+            }`,
           }}
           type='creatable'
         />
         <Dropdown
           helpText='You can select more than one values'
           label='Relationship Types'
-          size={view === 'Tabs' ? 'large' : 'medium'}
+          size={view === 'Tabs' && !isTablet ? 'large' : isTablet ? 'small' : 'medium'}
           selectProps={{
             isClearable: true,
             isMulti: true,
             options: relationshipTypeOptions,
             onChange: onChangerels,
             value: selectedRels,
-            classNamePrefix: 'relationship_label',
+            classNamePrefix: `${
+              isTablet ? 'tablet_entity_extraction_Tab_relationship_label' : 'entity_extraction_Tab_relationship_label'
+            }`,
           }}
           type='creatable'
         />

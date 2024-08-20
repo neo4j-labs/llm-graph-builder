@@ -1,6 +1,6 @@
-import { Banner, Dialog, Flex, IconButtonArray, LoadingSpinner } from '@neo4j-ndl/react';
+import { Banner, Dialog, Flex, IconButtonArray, LoadingSpinner, Typography } from '@neo4j-ndl/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { GraphType, GraphViewModalProps, OptionType, Scheme, UserCredentials } from '../../types';
+import { ExtendedNode, GraphType, GraphViewModalProps, Scheme, UserCredentials } from '../../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL from '@neo4j-nvl/base';
 import type { Node, Relationship } from '@neo4j-nvl/base';
@@ -17,19 +17,8 @@ import { filterData, processGraphData } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 import { LegendsChip } from './LegendsChip';
 import graphQueryAPI from '../../services/GraphQuery';
-import {
-  entityGraph,
-  graphQuery,
-  graphView,
-  intitalGraphType,
-  knowledgeGraph,
-  lexicalGraph,
-  mouseEventCallbacks,
-  nvlOptions,
-  queryMap,
-} from '../../utils/Constants';
-// import CheckboxSelection from './CheckboxSelection';
-import DropdownComponent from '../Dropdown';
+import { graphLabels, intitalGraphType, mouseEventCallbacks, nvlOptions, queryMap } from '../../utils/Constants';
+import CheckboxSelection from './CheckboxSelection';
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
   inspectedName,
@@ -40,10 +29,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   selectedRows,
 }) => {
   const nvlRef = useRef<NVL>(null);
-  const [nodes, setNodes] = useState<Node[]>([]);
+  const [nodes, setNodes] = useState<ExtendedNode[]>([]);
   const [relationships, setRelationships] = useState<Relationship[]>([]);
   const [graphType, setGraphType] = useState<GraphType[]>(intitalGraphType);
-  const [allNodes, setAllNodes] = useState<Node[]>([]);
+  const [allNodes, setAllNodes] = useState<ExtendedNode[]>([]);
   const [allRelationships, setAllRelationships] = useState<Relationship[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<'unknown' | 'success' | 'danger'>('unknown');
@@ -51,21 +40,27 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const { userCredentials } = useCredentials();
   const [scheme, setScheme] = useState<Scheme>({});
   const [newScheme, setNewScheme] = useState<Scheme>({});
-  const [dropdownVal, setDropdownVal] = useState<OptionType>({
-    label: 'Knowledge Graph',
-    value: queryMap.DocChunkEntities,
-  });
+  const handleCheckboxChange = (graph: GraphType) => {
+    const currentIndex = graphType.indexOf(graph);
+    const newGraphSelected = [...graphType];
+    if (currentIndex === -1) {
+      newGraphSelected.push(graph);
+      initGraph(newGraphSelected, allNodes, allRelationships, scheme);
+    } else {
+      newGraphSelected.splice(currentIndex, 1);
+      initGraph(newGraphSelected, allNodes, allRelationships, scheme);
+    }
+    setGraphType(newGraphSelected);
+  };
 
-  // const handleCheckboxChange = (graph: GraphType) => {
-  //   const currentIndex = graphType.indexOf(graph);
-  //   const newGraphSelected = [...graphType];
-  //   if (currentIndex === -1) {
-  //     newGraphSelected.push(graph);
-  //   } else {
-  //     newGraphSelected.splice(currentIndex, 1);
-  //   }
-  //   setGraphType(newGraphSelected);
-  // };
+  const graphQuery: string =
+    graphType.includes('DocumentChunk') && graphType.includes('Entities')
+      ? queryMap.DocChunkEntities
+      : graphType.includes('DocumentChunk')
+      ? queryMap.DocChunks
+      : graphType.includes('Entities')
+      ? queryMap.Entities
+      : '';
 
   const handleZoomToFit = () => {
     nvlRef.current?.fit(
@@ -74,7 +69,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     );
   };
 
-  // Destroy the component
+  // Unmounting the component
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       handleZoomToFit();
@@ -88,15 +83,13 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setRelationships([]);
       setAllNodes([]);
       setAllRelationships([]);
-      setDropdownVal({ label: 'Knowledge Graph', value: queryMap.DocChunkEntities });
     };
   }, []);
 
-  // To get nodes and relations on basis of view
   const fetchData = useCallback(async () => {
     try {
       const nodeRelationshipData =
-        viewPoint === 'showGraphView'
+        viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
               userCredentials as UserCredentials,
               graphQuery,
@@ -110,20 +103,24 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials]);
 
   // Api call to get the nodes and relations
-  const graphApi = async () => {
+  const graphApi = async (mode?: string) => {
     try {
       const result = await fetchData();
       if (result && result.data.data.nodes.length > 0) {
         const neoNodes = result.data.data.nodes.map((f: Node) => f);
         const neoRels = result.data.data.relationships.map((f: Relationship) => f);
         const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels);
+        if (mode === 'refreshMode') {
+          initGraph(graphType, finalNodes, finalRels, schemeVal);
+        } else {
+          setNodes(finalNodes);
+          setRelationships(finalRels);
+          setNewScheme(schemeVal);
+          setLoading(false);
+        }
         setAllNodes(finalNodes);
         setAllRelationships(finalRels);
         setScheme(schemeVal);
-        setNodes(finalNodes);
-        setRelationships(finalRels);
-        setNewScheme(schemeVal);
-        setLoading(false);
       } else {
         setLoading(false);
         setStatus('danger');
@@ -154,16 +151,17 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
   }, [open]);
 
+  // Unmounting the component
   if (!open) {
     return <></>;
   }
 
   const headerTitle =
-    viewPoint === 'showGraphView' || viewPoint === 'chatInfoView'
-      ? 'Generated Graph'
-      : `Inspect Generated Graph from ${inspectedName}`;
+    viewPoint === graphLabels.showGraphView || viewPoint === graphLabels.chatInfoView
+      ? graphLabels.generateGraph
+      : `${graphLabels.inspectGeneratedGraphFrom} ${inspectedName}`;
 
-  const dropDownView = viewPoint !== 'chatInfoView';
+  const checkBoxView = viewPoint !== graphLabels.chatInfoView;
 
   const nvlCallbacks = {
     onLayoutComputing(isComputing: boolean) {
@@ -185,9 +183,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
   // Refresh the graph with nodes and relations if file is processing
   const handleRefresh = () => {
-    graphApi();
-    setGraphType(intitalGraphType);
-    setDropdownVal({ label: 'Knowledge Graph', value: queryMap.DocChunkEntities });
+    graphApi('refreshMode');
+    setGraphType(graphType);
+    setNodes(nodes);
+    setRelationships(relationships);
+    setScheme(newScheme);
   };
 
   // when modal closes reset all states to default
@@ -199,35 +199,26 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setGraphType(intitalGraphType);
     setNodes([]);
     setRelationships([]);
-    setDropdownVal({ label: 'Knowledge Graph', value: queryMap.DocChunkEntities });
+    setAllNodes([]);
+    setAllRelationships([]);
   };
 
   // sort the legends in with Chunk and Document always the first two values
   const legendCheck = Object.keys(newScheme).sort((a, b) => {
-    if (a === 'Document' || a === 'Chunk') {
+    if (a === graphLabels.document || a === graphLabels.chunk) {
       return -1;
-    } else if (b === 'Document' || b === 'Chunk') {
+    } else if (b === graphLabels.document || b === graphLabels.chunk) {
       return 1;
     }
     return a.localeCompare(b);
   });
 
-  // setting the default dropdown values
-  const getDropdownDefaultValue = () => {
-    if (graphType.includes('Document') && graphType.includes('Chunk') && graphType.includes('Entities')) {
-      return knowledgeGraph;
-    }
-    if (graphType.includes('Document') && graphType.includes('Chunk')) {
-      return lexicalGraph;
-    }
-    if (graphType.includes('Entities')) {
-      return entityGraph;
-    }
-    return '';
-  };
-
-  // Make a function call to store the nodes and relations in their states
-  const initGraph = (graphType: GraphType[], finalNodes: Node[], finalRels: Relationship[], schemeVal: Scheme) => {
+  const initGraph = (
+    graphType: GraphType[],
+    finalNodes: ExtendedNode[],
+    finalRels: Relationship[],
+    schemeVal: Scheme
+  ) => {
     if (allNodes.length > 0 && allRelationships.length > 0) {
       const { filteredNodes, filteredRelations, filteredScheme } = filterData(
         graphType,
@@ -241,23 +232,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
   };
 
-  // handle dropdown value change and call the init graph method
-  const handleDropdownChange = (selectedOption: OptionType | null | void) => {
-    if (selectedOption?.value) {
-      const selectedValue = selectedOption.value;
-      let newGraphType: GraphType[] = [];
-      if (selectedValue === 'entities') {
-        newGraphType = ['Entities'];
-      } else if (selectedValue === queryMap.DocChunks) {
-        newGraphType = ['Document', 'Chunk'];
-      } else if (selectedValue === queryMap.DocChunkEntities) {
-        newGraphType = ['Document', 'Entities', 'Chunk'];
-      }
-      setGraphType(newGraphType);
-      setDropdownVal(selectedOption);
-      initGraph(newGraphType, allNodes, allRelationships, scheme);
-    }
-  };
   return (
     <>
       <Dialog
@@ -273,20 +247,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       >
         <Dialog.Header id='graph-title'>
           {headerTitle}
-          <Flex className='w-full' alignItems='center' justifyContent='flex-end' flexDirection='row'>
-            {/* {checkBoxView && (
-                <CheckboxSelection graphType={graphType} loading={loading} handleChange={handleCheckboxChange} />
-            )} */}
-            {dropDownView && (
-              <DropdownComponent
-                onSelect={handleDropdownChange}
-                options={graphView}
-                placeholder='Select Graph Type'
-                defaultValue={getDropdownDefaultValue()}
-                view='GraphView'
-                isDisabled={loading}
-                value={dropdownVal}
-              />
+          <Flex className='w-full' alignItems='center' flexDirection='row'>
+            {checkBoxView && (
+              <CheckboxSelection graphType={graphType} loading={loading} handleChange={handleCheckboxChange} />
             )}
           </Flex>
         </Dialog.Header>
@@ -300,9 +263,13 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               <div className='my-40 flex items-center justify-center'>
                 <Banner name='graph banner' description={statusMessage} type={status} />
               </div>
-            ) : nodes.length === 0 || relationships.length === 0 ? (
+            ) : nodes.length === 0 && relationships.length === 0 && graphType.length !== 0 ? (
               <div className='my-40 flex items-center justify-center'>
-                <Banner name='graph banner' description='No Entities Found' type='danger' />
+                <Banner name='graph banner' description={graphLabels.noEntities} type='danger' />
+              </div>
+            ) : graphType.length === 0 ? (
+              <div className='my-40 flex items-center justify-center'>
+                <Banner name='graph banner' description={graphLabels.selectCheckbox} type='danger' />
               </div>
             ) : (
               <>
@@ -367,7 +334,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                     handleClasses={{ left: 'ml-1' }}
                   >
                     <div className='legend_div'>
-                      <h4 className='py-4 pt-3 ml-2'>Result Overview</h4>
+                      <Flex className='py-4 pt-3 ml-2'>
+                        <Typography variant='h3'>{graphLabels.resultOverview}</Typography>
+                        <Typography variant='subheading-small'>
+                          {graphLabels.totalNodes} ({nodes.length})
+                        </Typography>
+                      </Flex>
                       <div className='flex gap-2 flex-wrap ml-2'>
                         {legendCheck.map((key, index) => (
                           <LegendsChip key={index} title={key} scheme={newScheme} nodes={nodes} />

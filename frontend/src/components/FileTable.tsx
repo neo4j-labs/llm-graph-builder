@@ -9,8 +9,7 @@ import {
   TextLink,
   Typography,
 } from '@neo4j-ndl/react';
-import { forwardRef, HTMLProps, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import React from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -27,7 +26,15 @@ import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
 import { statusCheck, capitalize } from '../utils/Utils';
-import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, alertStateType } from '../types';
+import {
+  SourceNode,
+  CustomFile,
+  FileTableProps,
+  UserCredentials,
+  statusupdate,
+  alertStateType,
+  ChildRef,
+} from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
 import CustomAlert from './UI/Alert';
@@ -39,20 +46,22 @@ import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 import IconButtonWithToolTip from './UI/IconButtonToolTip';
-import { largeFileSize } from '../utils/Constants';
-
-export interface ChildRef {
-  getSelectedRows: () => CustomFile[];
-}
-
+import { batchSize, largeFileSize, llms } from '../utils/Constants';
+import IndeterminateCheckbox from './UI/CustomCheckBox';
+let onlyfortheFirstRender = true;
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const { isExpanded, connectionStatus, setConnectionStatus, onInspect } = props;
-  const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows } = useFileContext();
+  const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
+    useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  // const [currentOuterHeight, setcurrentOuterHeight] = useState<number>(window.outerHeight);
+  const [statusFilter, setstatusFilter] = useState<string>('');
+  const [filetypeFilter, setFiletypeFilter] = useState<string>('');
+  const [fileSourceFilter, setFileSourceFilter] = useState<string>('');
+  const [llmtypeFilter, setLLmtypeFilter] = useState<string>('');
+  const skipPageResetRef = useRef<boolean>(false);
   const [alertDetails, setalertDetails] = useState<alertStateType>({
     showAlert: false,
     alertType: 'error',
@@ -78,7 +87,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       });
     }
   );
-
   const columns = useMemo(
     () => [
       {
@@ -215,6 +223,61 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         footer: (info) => info.column.id,
         filterFn: 'statusFilter' as any,
         size: 200,
+        meta: {
+          columnActions: {
+            actions: [
+              {
+                title: (
+                  <span className={`${statusFilter === 'All' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                    All Files
+                  </span>
+                ),
+                onClick: () => {
+                  setstatusFilter('All');
+                  table.getColumn('status')?.setFilterValue(true);
+                  skipPageResetRef.current = true;
+                },
+              },
+              {
+                title: (
+                  <span className={`${statusFilter === 'Completed' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                    <StatusIndicator type='success'></StatusIndicator> Completed Files
+                  </span>
+                ),
+                onClick: () => {
+                  setstatusFilter('Completed');
+                  table.getColumn('status')?.setFilterValue(true);
+                  skipPageResetRef.current = true;
+                },
+              },
+              {
+                title: (
+                  <span className={`${statusFilter === 'New' ? 'n-bg-palette-primary-bg-selected' : 'p-2'} p-2`}>
+                    <StatusIndicator type='info'></StatusIndicator> New Files
+                  </span>
+                ),
+                onClick: () => {
+                  setstatusFilter('New');
+                  table.getColumn('status')?.setFilterValue(true);
+                  skipPageResetRef.current = true;
+                },
+              },
+              {
+                title: (
+                  <span className={`${statusFilter === 'Failed' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                    <StatusIndicator type='danger'></StatusIndicator> Failed Files
+                  </span>
+                ),
+                onClick: () => {
+                  setstatusFilter('Failed');
+                  table.getColumn('status')?.setFilterValue(true);
+                  skipPageResetRef.current = true;
+                },
+              },
+            ],
+            defaultSortingActions: false,
+          },
+        },
       }),
       columnHelper.accessor((row) => row.uploadprogess, {
         id: 'uploadprogess',
@@ -265,22 +328,95 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 <span>
                   <TextLink externalLink href={info.row.original.source_url}>
                     {info.row.original.fileSource}
-                  </TextLink>{' '}
-                  /
+                  </TextLink>
                 </span>
-                <Typography variant='body-medium'>{info.row.original.type}</Typography>
               </Flex>
             );
           }
           return (
             <div>
-              <span>{info.row.original.fileSource} / </span>
+              <span>{info.row.original.fileSource}</span>
+            </div>
+          );
+        },
+        header: () => <span>Source</span>,
+        footer: (info) => info.column.id,
+        filterFn: 'fileSourceFilter' as any,
+        meta: {
+          columnActions: {
+            actions: [
+              {
+                title: (
+                  <span className={`${fileSourceFilter === 'All' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                    All Sources
+                  </span>
+                ),
+                onClick: () => {
+                  setFileSourceFilter('All');
+                  table.getColumn('source')?.setFilterValue(true);
+                },
+              },
+              ...Array.from(new Set(filesData.map((f) => f.fileSource))).map((t) => {
+                return {
+                  title: (
+                    <span className={`${t === fileSourceFilter ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                      {t}
+                    </span>
+                  ),
+                  onClick: () => {
+                    setFileSourceFilter(t as string);
+                    table.getColumn('source')?.setFilterValue(true);
+                    skipPageResetRef.current = true;
+                  },
+                };
+              }),
+            ],
+            defaultSortingActions: false,
+          },
+        },
+      }),
+      columnHelper.accessor((row) => row, {
+        id: 'type',
+        cell: (info) => {
+          return (
+            <div>
               <span>{info.row.original.type}</span>
             </div>
           );
         },
-        header: () => <span>Source/Type</span>,
+        header: () => <span>Type</span>,
         footer: (info) => info.column.id,
+        filterFn: 'fileTypeFilter' as any,
+        meta: {
+          columnActions: {
+            actions: [
+              {
+                title: (
+                  <span className={`${filetypeFilter === 'All' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                    All Types
+                  </span>
+                ),
+                onClick: () => {
+                  setFiletypeFilter('All');
+                  table.getColumn('type')?.setFilterValue(true);
+                },
+              },
+              ...Array.from(new Set(filesData.map((f) => f.type))).map((t) => {
+                return {
+                  title: (
+                    <span className={`${t === filetypeFilter ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>{t}</span>
+                  ),
+                  onClick: () => {
+                    setFiletypeFilter(t as string);
+                    table.getColumn('type')?.setFilterValue(true);
+                    skipPageResetRef.current = true;
+                  },
+                };
+              }),
+            ],
+            defaultSortingActions: false,
+          },
+        },
       }),
       columnHelper.accessor((row) => row.model, {
         id: 'model',
@@ -299,6 +435,38 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         },
         header: () => <span>Model</span>,
         footer: (info) => info.column.id,
+        filterFn: 'llmTypeFilter' as any,
+        meta: {
+          columnActions: {
+            actions: [
+              {
+                title: (
+                  <span className={`${llmtypeFilter === 'All' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                    All
+                  </span>
+                ),
+                onClick: () => {
+                  setLLmtypeFilter('All');
+                  table.getColumn('model')?.setFilterValue(true);
+                  skipPageResetRef.current = true;
+                },
+              },
+              ...llms.map((m) => {
+                return {
+                  title: (
+                    <span className={`${m === llmtypeFilter ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>{m}</span>
+                  ),
+                  onClick: () => {
+                    setLLmtypeFilter(m);
+                    table.getColumn('model')?.setFilterValue(true);
+                    skipPageResetRef.current = true;
+                  },
+                };
+              }),
+            ],
+            defaultSortingActions: false,
+          },
+        },
       }),
       columnHelper.accessor((row) => row.NodesCount, {
         id: 'NodesCount',
@@ -312,12 +480,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         header: () => <span>Relations</span>,
         footer: (info) => info.column.id,
       }),
-      // columnHelper.accessor((row) => row.total_pages, {
-      //   id: 'Total pages',
-      //   cell: (info) => <i>{info.getValue()}</i>,
-      //   header: () => <span>Total pages</span>,
-      //   footer: (info) => info.column.id,
-      // }),
       columnHelper.accessor((row) => row.status, {
         id: 'inspect',
         cell: (info) => (
@@ -339,10 +501,65 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         footer: (info) => info.column.id,
       }),
     ],
-    []
+    [filesData.length, statusFilter, filetypeFilter, llmtypeFilter, fileSourceFilter]
   );
 
+  const table = useReactTable({
+    data: filesData,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onColumnFiltersChange: setColumnFilters,
+    state: {
+      columnFilters,
+      rowSelection,
+    },
+    onRowSelectionChange: setRowSelection,
+    filterFns: {
+      statusFilter: (row, columnId, filterValue) => {
+        if (statusFilter === 'All') {
+          return row;
+        }
+        const value = filterValue ? row.original[columnId] === statusFilter : row.original[columnId];
+        return value;
+      },
+      fileTypeFilter: (row) => {
+        if (filetypeFilter === 'All') {
+          return true;
+        }
+        return row.original.type === filetypeFilter;
+      },
+      fileSourceFilter: (row) => {
+        if (fileSourceFilter === 'All') {
+          return true;
+        }
+        return row.original.fileSource === fileSourceFilter;
+      },
+      llmTypeFilter: (row) => {
+        if (llmtypeFilter === 'All') {
+          return true;
+        }
+        return row.original.model === llmtypeFilter;
+      },
+    },
+    enableGlobalFilter: false,
+    autoResetPageIndex: skipPageResetRef.current,
+    enableRowSelection: true,
+    enableMultiRowSelection: true,
+    getRowId: (row) => row.id,
+    enableSorting: true,
+    getSortedRowModel: getSortedRowModel(),
+  });
+
   useEffect(() => {
+    skipPageResetRef.current = false;
+  }, [filesData.length]);
+
+  useEffect(() => {
+    const waitingQueue: CustomFile[] = JSON.parse(
+      localStorage.getItem('waitingQueue') ?? JSON.stringify({ queue: [] })
+    ).queue;
     const fetchFiles = async () => {
       try {
         setIsLoading(true);
@@ -350,11 +567,29 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         if (!res.data) {
           throw new Error('Please check backend connection');
         }
+        const stringified = waitingQueue.reduce((accu, f) => {
+          const key = f.id;
+          // @ts-ignore
+          accu[key] = true;
+          return accu;
+        }, {});
+        setRowSelection(stringified);
         if (res.data.status !== 'Failed') {
           const prefiles: CustomFile[] = [];
           if (res.data.data.length) {
             res.data.data.forEach((item: SourceNode) => {
               if (item.fileName != undefined && item.fileName.length) {
+                const waitingFile =
+                  waitingQueue.length && waitingQueue.find((f: CustomFile) => f.name === item.fileName);
+                if (waitingFile && item.status === 'Completed') {
+                  setProcessedCount((prev) => {
+                    if (prev === batchSize) {
+                      return batchSize - 1;
+                    }
+                    return prev + 1;
+                  });
+                  queue.remove(item.fileName);
+                }
                 prefiles.push({
                   name: item?.fileName,
                   size: item?.fileSize ?? 0,
@@ -364,20 +599,22 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   NodesCount: item?.nodeCount ?? 0,
                   processing: item?.processingTime ?? 'None',
                   relationshipCount: item?.relationshipCount ?? 0,
-                  status:
-                    item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
-                      ? item?.status
-                      : item?.fileSource === 'local file'
-                      ? item?.status
-                      : item?.status === 'Completed' || item.status === 'Failed'
-                      ? item?.status
-                      : item?.fileSource == 'Wikipedia' ||
-                        item?.fileSource == 'youtube' ||
-                        item?.fileSource == 'gcs bucket'
-                      ? item?.status
-                      : 'N/A',
-                  model: item?.model ?? model,
-                  id: uuidv4(),
+                  status: waitingFile
+                    ? 'Waiting'
+                    : item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                    ? item?.status
+                    : item?.fileSource === 'local file'
+                    ? item?.status
+                    : item?.status === 'Completed' || item.status === 'Failed'
+                    ? item?.status
+                    : item?.fileSource === 'Wikipedia' ||
+                      item?.fileSource === 'youtube' ||
+                      item?.fileSource === 'gcs bucket' ||
+                      item?.fileSource === 'web-url'
+                    ? item?.status
+                    : 'N/A',
+                  model: waitingFile ? waitingFile.model : item?.model ?? model,
+                  id: !waitingFile ? uuidv4() : waitingFile.id,
                   source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
                   fileSource: item?.fileSource ?? 'None',
                   gcsBucket: item?.gcsBucket,
@@ -397,52 +634,60 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 });
               }
             });
+            res.data.data.forEach((item) => {
+              if (
+                item.status === 'Processing' &&
+                item.fileName != undefined &&
+                userCredentials &&
+                userCredentials.database
+              ) {
+                if (item?.fileSize < largeFileSize) {
+                  subscribe(
+                    item.fileName,
+                    userCredentials?.uri,
+                    userCredentials?.userName,
+                    userCredentials?.database,
+                    userCredentials?.password,
+                    updatestatus,
+                    updateProgress
+                  ).catch((error: AxiosError) => {
+                    // @ts-ignore
+                    const errorfile = decodeURI(error?.config?.url?.split('?')[0].split('/').at(-1));
+                    setProcessedCount((prev) => {
+                      if (prev == batchSize) {
+                        return batchSize - 1;
+                      }
+                      return prev + 1;
+                    });
+                    setFilesData((prevfiles) => {
+                      return prevfiles.map((curfile) => {
+                        if (curfile.name == errorfile) {
+                          return {
+                            ...curfile,
+                            status: 'Failed',
+                          };
+                        }
+                        return curfile;
+                      });
+                    });
+                  });
+                } else {
+                  triggerStatusUpdateAPI(
+                    item.fileName,
+                    userCredentials.uri,
+                    userCredentials.userName,
+                    userCredentials.password,
+                    userCredentials.database,
+                    updateStatusForLargeFiles
+                  );
+                }
+              }
+            });
+          } else {
+            queue.clear();
           }
           setIsLoading(false);
           setFilesData(prefiles);
-          res.data.data.forEach((item) => {
-            if (
-              item.status === 'Processing' &&
-              item.fileName != undefined &&
-              userCredentials &&
-              userCredentials.database
-            ) {
-              if (item?.fileSize < largeFileSize) {
-                subscribe(
-                  item.fileName,
-                  userCredentials?.uri,
-                  userCredentials?.userName,
-                  userCredentials?.database,
-                  userCredentials?.password,
-                  updatestatus,
-                  updateProgress
-                ).catch((error: AxiosError) => {
-                  // @ts-ignore
-                  const errorfile = decodeURI(error?.config?.url?.split('?')[0].split('/').at(-1));
-                  setFilesData((prevfiles) => {
-                    return prevfiles.map((curfile) => {
-                      if (curfile.name == errorfile) {
-                        return {
-                          ...curfile,
-                          status: 'Failed',
-                        };
-                      }
-                      return curfile;
-                    });
-                  });
-                });
-              } else {
-                triggerStatusUpdateAPI(
-                  item.fileName,
-                  userCredentials.uri,
-                  userCredentials.userName,
-                  userCredentials.password,
-                  userCredentials.database,
-                  updateStatusForLargeFiles
-                );
-              }
-            }
-          });
         } else {
           throw new Error(res?.data?.error);
         }
@@ -464,6 +709,30 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       setFilesData([]);
     }
   }, [connectionStatus, userCredentials]);
+
+  useEffect(() => {
+    if (connectionStatus && filesData.length && onlyfortheFirstRender) {
+      const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
+      if (processingFilesCount) {
+        if (processingFilesCount === 1) {
+          setProcessedCount(1);
+        }
+        setalertDetails({
+          showAlert: true,
+          alertType: 'info',
+          alertMessage: `Files are in processing please wait till previous batch completes`,
+        });
+      } else {
+        const waitingQueue: CustomFile[] = JSON.parse(
+          localStorage.getItem('waitingQueue') ?? JSON.stringify({ queue: [] })
+        ).queue;
+        if (waitingQueue.length) {
+          props.handleGenerateGraph();
+        }
+      }
+      onlyfortheFirstRender = false;
+    }
+  }, [connectionStatus, filesData.length]);
 
   const cancelHandler = async (fileName: string, id: string, fileSource: string) => {
     setFilesData((prevfiles) =>
@@ -551,6 +820,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           return curfile;
         })
       );
+      setProcessedCount((prev) => {
+        if (prev == batchSize) {
+          return batchSize - 1;
+        }
+        return prev + 1;
+      });
+      queue.remove(fileName);
     }
   };
 
@@ -575,39 +851,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     }
   };
 
-  // const pageSizeCalculation = Math.floor((currentOuterHeight - 402) / 45);
-
-  const table = useReactTable({
-    data: filesData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    // initialState: {
-    //   pagination: {
-    //     pageSize: pageSizeCalculation < 0 ? 9 : pageSizeCalculation,
-    //   },
-    // },
-    state: {
-      columnFilters,
-      rowSelection,
-    },
-    onRowSelectionChange: setRowSelection,
-    filterFns: {
-      statusFilter: (row, columnId, filterValue) => {
-        const value = filterValue ? row.original[columnId] === 'New' : row.original[columnId];
-        return value;
-      },
-    },
-    enableGlobalFilter: false,
-    autoResetPageIndex: false,
-    enableRowSelection: true,
-    enableMultiRowSelection: true,
-    getRowId: (row) => row.id,
-    enableSorting: true,
-    getSortedRowModel: getSortedRowModel(),
-  });
   useImperativeHandle(
     ref,
     () => ({
@@ -622,13 +865,12 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       const resizeObserver = new ResizeObserver((entries) => {
         entries.forEach((entry) => {
           const { height } = entry.contentRect;
-          // setcurrentOuterHeight(height);
           const rowHeight = document?.getElementsByClassName('ndl-data-grid-td')?.[0]?.clientHeight ?? 69;
           table.setPageSize(Math.floor(height / rowHeight));
         });
       });
 
-      const contentElement = document.getElementsByClassName('ndl-data-grid-scrollable')[0];
+      const [contentElement] = document.getElementsByClassName('ndl-data-grid-scrollable');
       resizeObserver.observe(contentElement);
 
       return () => {
@@ -637,13 +879,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       };
     }
   }, []);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    table.getColumn('status')?.setFilterValue(e.target.checked);
-    if (!table.getCanNextPage() || table.getPrePaginationRowModel().rows.length) {
-      table.setPageIndex(0);
-    }
-  };
 
   const classNameCheck = isExpanded ? 'fileTableWithExpansion' : `filetable`;
 
@@ -667,10 +902,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       )}
       {filesData ? (
         <>
-          <div className='flex items-center p-5 self-start gap-2'>
-            <input type='checkbox' onChange={handleChange} />
-            <label>Show files with status New </label>
-          </div>
           <div className={`${isExpanded ? 'w-[calc(100%-64px)]' : 'mx-auto w-[calc(100%-100px)]'}`}>
             <DataGrid
               ref={tableRef}
@@ -714,20 +945,3 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
 });
 
 export default FileTable;
-function IndeterminateCheckbox({
-  indeterminate,
-  className = '',
-  ...rest
-}: { indeterminate?: boolean } & HTMLProps<HTMLInputElement>) {
-  const ref = React.useRef<HTMLInputElement>(null!);
-
-  React.useEffect(() => {
-    if (typeof indeterminate === 'boolean') {
-      ref.current.indeterminate = !rest.checked && indeterminate;
-    }
-  }, [ref, indeterminate]);
-
-  return (
-    <Checkbox aria-label='row checkbox' type='checkbox' ref={ref} className={`${className} cursor-pointer`} {...rest} />
-  );
-}

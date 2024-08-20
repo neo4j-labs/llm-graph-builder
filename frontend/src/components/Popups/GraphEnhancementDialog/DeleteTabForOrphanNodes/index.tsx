@@ -1,4 +1,4 @@
-import { Checkbox, DataGrid, DataGridComponents, Flex, Typography } from '@neo4j-ndl/react';
+import { Checkbox, DataGrid, DataGridComponents, Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { UserCredentials, orphanNodeProps } from '../../../../types';
 import { getOrphanNodes } from '../../../../services/GetOrphanNodes';
@@ -18,6 +18,7 @@ import {
   getSortedRowModel,
 } from '@tanstack/react-table';
 import DeletePopUp from '../../DeletePopUp/DeletePopUp';
+import { tokens } from '@neo4j-ndl/base';
 export default function DeletePopUpForOrphanNodes({
   deleteHandler,
   loading,
@@ -25,6 +26,8 @@ export default function DeletePopUpForOrphanNodes({
   deleteHandler: (selectedEntities: string[]) => Promise<void>;
   loading: boolean;
 }) {
+  const { breakpoints } = tokens;
+  const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const [orphanNodes, setOrphanNodes] = useState<orphanNodeProps[]>([]);
   const [totalOrphanNodes, setTotalOrphanNodes] = useState<number>(0);
   const [isLoading, setLoading] = useState<boolean>(false);
@@ -200,13 +203,17 @@ export default function DeletePopUpForOrphanNodes({
       <div>
         <Flex flexDirection='column'>
           <Flex justifyContent='space-between' flexDirection='row'>
-            <Typography variant='subheading-large'>Orphan Nodes Deletion (100 nodes per batch)</Typography>
+            <Typography variant={isTablet ? 'subheading-medium' : 'subheading-large'}>
+              Orphan Nodes Deletion (100 nodes per batch)
+            </Typography>
             {totalOrphanNodes > 0 && (
-              <Typography variant='subheading-large'>Total Nodes: {totalOrphanNodes}</Typography>
+              <Typography variant={isTablet ? 'subheading-medium' : 'subheading-large'}>
+                Total Nodes: {totalOrphanNodes}
+              </Typography>
             )}
           </Flex>
           <Flex justifyContent='space-between' flexDirection='row'>
-            <Typography variant='body-medium'>
+            <Typography variant={isTablet ? 'body-small' : 'body-medium'}>
               This feature helps improve the accuracy of your knowledge graph by identifying and removing entities that
               are not connected to any other information. These "lonely" entities can be remnants of past analyses or
               errors in data processing. By removing them, we can create a cleaner and more efficient knowledge graph
