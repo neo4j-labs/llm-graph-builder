@@ -235,7 +235,6 @@
   width: max-content;
   text-overflow: ellipsis;
   white-space: nowrap;
-  overflow: hidden;
 }
 
 .ndl-widget-content>div {

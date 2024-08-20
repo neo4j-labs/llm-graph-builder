@@ -351,7 +351,6 @@ export interface LegendChipProps {
   type: 'node' | 'relationship' | 'propertyKey';
   count: number;
   onClick: (e: React.MouseEvent<HTMLElement>) => void;
-  className?: string;
 }
 export interface FileContextProviderProps {
   children: ReactNode;
