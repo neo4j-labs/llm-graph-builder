@@ -248,7 +248,7 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             logging.info(f'Updated KNN Graph')
         if "enable_hybrid_search_and_fulltext_search_in_bloom" in tasks:
             await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database,type="entities")
-            await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database,type="keyword")
+            # await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database,type="keyword")
             josn_obj = {'api_name': 'post_processing/enable_hybrid_search_and_fulltext_search_in_bloom', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logger.log_struct(josn_obj)
             logging.info(f'Full Text index created')
