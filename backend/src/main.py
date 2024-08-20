@@ -431,7 +431,8 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition):
     
     elif retry_condition ==  "start_from_last_processed_position":
       starting_chunk = graph.query(QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION, params={"filename":file_name})
-      return len(chunks), chunkId_chunkDoc_list[starting_chunk-1:]
+      print(f"last prcessed index {starting_chunk}")
+      return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
   
 def get_source_list_from_graph(uri,userName,password,db_name=None):
   """
