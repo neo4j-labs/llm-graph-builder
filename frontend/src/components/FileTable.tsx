@@ -584,7 +584,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 if (waitingFile && item.status === 'Completed') {
                   setProcessedCount((prev) => {
                     if (prev === batchSize) {
-                      return batchSize-1;
+                      return batchSize - 1;
                     }
                     return prev + 1;
                   });
@@ -613,7 +613,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                       item?.fileSource === 'web-url'
                     ? item?.status
                     : 'N/A',
-                  model: item?.model ?? model,
+                  model: waitingFile ? waitingFile.model : item?.model ?? model,
                   id: !waitingFile ? uuidv4() : waitingFile.id,
                   source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
                   fileSource: item?.fileSource ?? 'None',
@@ -655,7 +655,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                     const errorfile = decodeURI(error?.config?.url?.split('?')[0].split('/').at(-1));
                     setProcessedCount((prev) => {
                       if (prev == batchSize) {
-                        return batchSize-1;
+                        return batchSize - 1;
                       }
                       return prev + 1;
                     });
@@ -822,7 +822,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       );
       setProcessedCount((prev) => {
         if (prev == batchSize) {
-          return batchSize-1;
+          return batchSize - 1;
         }
         return prev + 1;
       });
