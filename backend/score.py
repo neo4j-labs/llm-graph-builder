@@ -362,8 +362,8 @@ async def connect(uri=Form(), userName=Form(), password=Form(), database=Form())
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph)
-        josn_obj = {'api_name':'connect','db_url':uri,'status':result, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(josn_obj)
+        json_obj = {'api_name':'connect','db_url':uri,'status':result, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+        logger.log_struct(json_obj)
         return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
