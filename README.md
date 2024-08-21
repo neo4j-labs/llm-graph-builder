@@ -149,7 +149,7 @@ Allow unauthenticated request : Yes
 | VITE_LLM_MODELS              | Mandatory          | diffbot,openai-gpt-3.5,openai-gpt-4o | Models available for selection on the frontend, used for entities extraction and Q&A
 | VITE_CHAT_MODES              | Mandatory          | vector,graph+vector,graph,hybrid | Chat modes available for Q&A
 | VITE_ENV                     | Mandatory          | DEV or PROD           | Environment variable for the app                                                                 |
-| VITE_TIME_PER_CHUNK          | Optional           | 4             | Time per chunk for processing                                                                    |
+| VITE_TIME_PER_PAGE          | Optional           | 50             | Time per page for processing                                                                    |
 | VITE_CHUNK_SIZE              | Optional           | 5242880       | Size of each chunk of file for upload                                                                |
 | VITE_GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
 | GCS_FILE_CACHE          | Optional           | False         | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
