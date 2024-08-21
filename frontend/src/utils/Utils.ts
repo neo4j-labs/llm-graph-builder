@@ -1,12 +1,12 @@
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import type { Relationship } from '@neo4j-nvl/base';
-import { Entity, ExtendedNode, GraphType, Messages, Scheme } from '../types';
+import { Entity, ExtendedNode, ExtendedRelationship, GraphType, Messages, Scheme } from '../types';
 
 // Get the Url
 export const url = () => {
   let url = window.location.href.replace('5173', '8000');
-  if (process.env.BACKEND_API_URL) {
-    url = process.env.BACKEND_API_URL;
+  if (process.env.VITE_BACKEND_API_URL) {
+    url = process.env.VITE_BACKEND_API_URL;
   }
   return !url || !url.match('/$') ? url : url.substring(0, url.length - 1);
 };
@@ -130,7 +130,7 @@ export function extractPdfFileName(url: string): string {
   return decodedFileName;
 }
 
-export const processGraphData = (neoNodes: ExtendedNode[], neoRels: Relationship[]) => {
+export const processGraphData = (neoNodes: ExtendedNode[], neoRels: ExtendedRelationship[]) => {
   const schemeVal: Scheme = {};
   let iterator = 0;
   const labels: string[] = neoNodes.map((f: any) => f.labels);
@@ -150,6 +150,7 @@ export const processGraphData = (neoNodes: ExtendedNode[], neoRels: Relationship
       color: schemeVal[g.labels[0]],
       icon: getIcon(g),
       labels: g.labels,
+      properties: g.properties,
     };
   });
   const finalNodes = newNodes.flat();
@@ -170,7 +171,7 @@ export const filterData = (
   allNodes: ExtendedNode[],
   allRelationships: Relationship[],
   scheme: Scheme
- ) => {
+) => {
   let filteredNodes: ExtendedNode[] = [];
   let filteredRelations: Relationship[] = [];
   let filteredScheme: Scheme = {};
@@ -178,7 +179,7 @@ export const filterData = (
   if (graphType.includes('DocumentChunk') && !graphType.includes('Entities')) {
     // Document + Chunk
     filteredNodes = allNodes.filter(
-      (node) => node.labels.includes('Document') || node.labels.includes('Chunk')
+      (node) => (node.labels.includes('Document') && node.properties.fileName) || node.labels.includes('Chunk')
     );
     const nodeIds = new Set(filteredNodes.map((node) => node.id));
     filteredRelations = allRelationships.filter(
@@ -190,9 +191,7 @@ export const filterData = (
     filteredScheme = { Document: scheme.Document, Chunk: scheme.Chunk };
   } else if (graphType.includes('Entities') && !graphType.includes('DocumentChunk')) {
     // Only Entity
-    const entityNodes = allNodes.filter(
-      (node) => !node.labels.includes('Document') && !node.labels.includes('Chunk')
-    );
+    const entityNodes = allNodes.filter((node) => !node.labels.includes('Document') && !node.labels.includes('Chunk'));
     filteredNodes = entityNodes ? entityNodes : [];
     const nodeIds = new Set(filteredNodes.map((node) => node.id));
     filteredRelations = allRelationships.filter(
@@ -209,7 +208,7 @@ export const filterData = (
     filteredScheme = scheme;
   }
   return { filteredNodes, filteredRelations, filteredScheme };
- };
+};
 
 export const getDateTime = () => {
   const date = new Date();
@@ -239,4 +238,10 @@ export const parseEntity = (entity: Entity) => {
 
 export const titleCheck = (title: string) => {
   return title === 'Chunk' || title === 'Document';
+};
+
+export const sortAlphabetically = (a: Relationship, b: Relationship) => {
+  const captionOne = a.caption?.toLowerCase() || '';
+  const captionTwo = b.caption?.toLowerCase() || '';
+  return captionOne.localeCompare(captionTwo);
 };

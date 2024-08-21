@@ -46,12 +46,13 @@ import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 import IconButtonWithToolTip from './UI/IconButtonToolTip';
-import { largeFileSize, llms } from '../utils/Constants';
+import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import IndeterminateCheckbox from './UI/CustomCheckBox';
-
+let onlyfortheFirstRender = true;
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const { isExpanded, connectionStatus, setConnectionStatus, onInspect } = props;
-  const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows } = useFileContext();
+  const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
+    useFileContext();
   const { userCredentials } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -358,7 +359,9 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               ...Array.from(new Set(filesData.map((f) => f.fileSource))).map((t) => {
                 return {
                   title: (
-                    <span className={`${t === fileSourceFilter ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>{t}</span>
+                    <span className={`${t === fileSourceFilter ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
+                      {t}
+                    </span>
                   ),
                   onClick: () => {
                     setFileSourceFilter(t as string);
@@ -554,6 +557,9 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   }, [filesData.length]);
 
   useEffect(() => {
+    const waitingQueue: CustomFile[] = JSON.parse(
+      localStorage.getItem('waitingQueue') ?? JSON.stringify({ queue: [] })
+    ).queue;
     const fetchFiles = async () => {
       try {
         setIsLoading(true);
@@ -561,11 +567,29 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         if (!res.data) {
           throw new Error('Please check backend connection');
         }
+        const stringified = waitingQueue.reduce((accu, f) => {
+          const key = f.id;
+          // @ts-ignore
+          accu[key] = true;
+          return accu;
+        }, {});
+        setRowSelection(stringified);
         if (res.data.status !== 'Failed') {
           const prefiles: CustomFile[] = [];
           if (res.data.data.length) {
             res.data.data.forEach((item: SourceNode) => {
               if (item.fileName != undefined && item.fileName.length) {
+                const waitingFile =
+                  waitingQueue.length && waitingQueue.find((f: CustomFile) => f.name === item.fileName);
+                if (waitingFile && item.status === 'Completed') {
+                  setProcessedCount((prev) => {
+                    if (prev === batchSize) {
+                      return batchSize - 1;
+                    }
+                    return prev + 1;
+                  });
+                  queue.remove(item.fileName);
+                }
                 prefiles.push({
                   name: item?.fileName,
                   size: item?.fileSize ?? 0,
@@ -575,20 +599,22 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   NodesCount: item?.nodeCount ?? 0,
                   processing: item?.processingTime ?? 'None',
                   relationshipCount: item?.relationshipCount ?? 0,
-                  status:
-                    item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
-                      ? item?.status
-                      : item?.fileSource === 'local file'
-                        ? item?.status
-                        : item?.status === 'Completed' || item.status === 'Failed'
-                          ? item?.status
-                          : item?.fileSource == 'Wikipedia' ||
-                            item?.fileSource == 'youtube' ||
-                            item?.fileSource == 'gcs bucket'
-                            ? item?.status
-                            : 'N/A',
-                  model: item?.model ?? model,
-                  id: uuidv4(),
+                  status: waitingFile
+                    ? 'Waiting'
+                    : item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                    ? item?.status
+                    : item?.fileSource === 'local file'
+                    ? item?.status
+                    : item?.status === 'Completed' || item.status === 'Failed'
+                    ? item?.status
+                    : item?.fileSource === 'Wikipedia' ||
+                      item?.fileSource === 'youtube' ||
+                      item?.fileSource === 'gcs bucket' ||
+                      item?.fileSource === 'web-url'
+                    ? item?.status
+                    : 'N/A',
+                  model: waitingFile ? waitingFile.model : item?.model ?? model,
+                  id: !waitingFile ? uuidv4() : waitingFile.id,
                   source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
                   fileSource: item?.fileSource ?? 'None',
                   gcsBucket: item?.gcsBucket,
@@ -599,8 +625,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   language: item?.language ?? '',
                   processingProgress:
                     item?.processed_chunk != undefined &&
-                      item?.total_chunks != undefined &&
-                      !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
+                    item?.total_chunks != undefined &&
+                    !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
                   // total_pages: item?.total_pages ?? 0,
@@ -608,52 +634,60 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 });
               }
             });
+            res.data.data.forEach((item) => {
+              if (
+                item.status === 'Processing' &&
+                item.fileName != undefined &&
+                userCredentials &&
+                userCredentials.database
+              ) {
+                if (item?.fileSize < largeFileSize) {
+                  subscribe(
+                    item.fileName,
+                    userCredentials?.uri,
+                    userCredentials?.userName,
+                    userCredentials?.database,
+                    userCredentials?.password,
+                    updatestatus,
+                    updateProgress
+                  ).catch((error: AxiosError) => {
+                    // @ts-ignore
+                    const errorfile = decodeURI(error?.config?.url?.split('?')[0].split('/').at(-1));
+                    setProcessedCount((prev) => {
+                      if (prev == batchSize) {
+                        return batchSize - 1;
+                      }
+                      return prev + 1;
+                    });
+                    setFilesData((prevfiles) => {
+                      return prevfiles.map((curfile) => {
+                        if (curfile.name == errorfile) {
+                          return {
+                            ...curfile,
+                            status: 'Failed',
+                          };
+                        }
+                        return curfile;
+                      });
+                    });
+                  });
+                } else {
+                  triggerStatusUpdateAPI(
+                    item.fileName,
+                    userCredentials.uri,
+                    userCredentials.userName,
+                    userCredentials.password,
+                    userCredentials.database,
+                    updateStatusForLargeFiles
+                  );
+                }
+              }
+            });
+          } else {
+            queue.clear();
           }
           setIsLoading(false);
           setFilesData(prefiles);
-          res.data.data.forEach((item) => {
-            if (
-              item.status === 'Processing' &&
-              item.fileName != undefined &&
-              userCredentials &&
-              userCredentials.database
-            ) {
-              if (item?.fileSize < largeFileSize) {
-                subscribe(
-                  item.fileName,
-                  userCredentials?.uri,
-                  userCredentials?.userName,
-                  userCredentials?.database,
-                  userCredentials?.password,
-                  updatestatus,
-                  updateProgress
-                ).catch((error: AxiosError) => {
-                  // @ts-ignore
-                  const errorfile = decodeURI(error?.config?.url?.split('?')[0].split('/').at(-1));
-                  setFilesData((prevfiles) => {
-                    return prevfiles.map((curfile) => {
-                      if (curfile.name == errorfile) {
-                        return {
-                          ...curfile,
-                          status: 'Failed',
-                        };
-                      }
-                      return curfile;
-                    });
-                  });
-                });
-              } else {
-                triggerStatusUpdateAPI(
-                  item.fileName,
-                  userCredentials.uri,
-                  userCredentials.userName,
-                  userCredentials.password,
-                  userCredentials.database,
-                  updateStatusForLargeFiles
-                );
-              }
-            }
-          });
         } else {
           throw new Error(res?.data?.error);
         }
@@ -675,6 +709,30 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       setFilesData([]);
     }
   }, [connectionStatus, userCredentials]);
+
+  useEffect(() => {
+    if (connectionStatus && filesData.length && onlyfortheFirstRender) {
+      const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
+      if (processingFilesCount) {
+        if (processingFilesCount === 1) {
+          setProcessedCount(1);
+        }
+        setalertDetails({
+          showAlert: true,
+          alertType: 'info',
+          alertMessage: `Files are in processing please wait till previous batch completes`,
+        });
+      } else {
+        const waitingQueue: CustomFile[] = JSON.parse(
+          localStorage.getItem('waitingQueue') ?? JSON.stringify({ queue: [] })
+        ).queue;
+        if (waitingQueue.length) {
+          props.handleGenerateGraph();
+        }
+      }
+      onlyfortheFirstRender = false;
+    }
+  }, [connectionStatus, filesData.length]);
 
   const cancelHandler = async (fileName: string, id: string, fileSource: string) => {
     setFilesData((prevfiles) =>
@@ -762,6 +820,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           return curfile;
         })
       );
+      setProcessedCount((prev) => {
+        if (prev == batchSize) {
+          return batchSize - 1;
+        }
+        return prev + 1;
+      });
+      queue.remove(fileName);
     }
   };
 

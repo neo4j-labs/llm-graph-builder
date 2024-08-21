@@ -19,7 +19,7 @@ import { postProcessing } from '../services/PostProcessing';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
-import { buttonCaptions, defaultLLM, largeFileSize, llms, tooltips } from '../utils/Constants';
+import { batchSize, buttonCaptions, defaultLLM, largeFileSize, llms, tooltips } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 import DropdownComponent from './Dropdown';
@@ -33,6 +33,7 @@ import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
 import { tokens } from '@neo4j-ndl/base';
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
+let afterFirstRender = false;
 
 const Content: React.FC<ContentProps> = ({
   isLeftExpanded,
@@ -47,9 +48,10 @@ const Content: React.FC<ContentProps> = ({
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<connectionState>({
-    isvectorIndexMatch: true,
     openPopUp: false,
-    novectorindexInDB: true,
+    chunksExists: false,
+    vectorIndexMisMatch: false,
+    chunksExistsWithDifferentDimension: false,
   });
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
@@ -68,6 +70,9 @@ const Content: React.FC<ContentProps> = ({
     setRowSelection,
     setSelectedRels,
     postProcessingTasks,
+    queue,
+    processedCount,
+    setProcessedCount,
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
@@ -135,13 +140,29 @@ const Content: React.FC<ContentProps> = ({
     });
   }, [model]);
 
+  useEffect(() => {
+    if (afterFirstRender) {
+      localStorage.setItem('processedCount', JSON.stringify({ db: userCredentials?.uri, count: processedCount }));
+    }
+    if (processedCount == batchSize) {
+      handleGenerateGraph([], true);
+    }
+  }, [processedCount, userCredentials]);
+
+  useEffect(() => {
+    if (afterFirstRender) {
+      localStorage.setItem('waitingQueue', JSON.stringify({ db: userCredentials?.uri, queue: queue.items }));
+    }
+    afterFirstRender = true;
+  }, [queue.items.length, userCredentials]);
+
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
       setModel(selectedOption?.value);
     }
   };
 
-  const extractData = async (uid: string, isselectedRows = false) => {
+  const extractData = async (uid: string, isselectedRows = false, filesTobeProcess: CustomFile[]) => {
     if (!isselectedRows) {
       const fileItem = filesData.find((f) => f.id == uid);
       if (fileItem) {
@@ -149,7 +170,7 @@ const Content: React.FC<ContentProps> = ({
         await extractHandler(fileItem, uid);
       }
     } else {
-      const fileItem = childRef.current?.getSelectedRows().find((f) => f.id == uid);
+      const fileItem = filesTobeProcess.find((f) => f.id == uid);
       if (fileItem) {
         setextractLoading(true);
         await extractHandler(fileItem, uid);
@@ -256,39 +277,146 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
-  const handleGenerateGraph = (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => {
+  const triggerBatchProcessing = (
+    batch: CustomFile[],
+    selectedFiles: CustomFile[],
+    isSelectedFiles: boolean,
+    newCheck: boolean
+  ) => {
     const data = [];
-    if (selectedfileslength && allowLargeFiles) {
-      for (let i = 0; i < selectedfileslength; i++) {
-        const row = childRef.current?.getSelectedRows()[i];
-        if (row?.status === 'New') {
-          data.push(extractData(row.id, true));
+    setalertDetails({
+      showAlert: true,
+      alertMessage: `Processing ${batch.length} files at a time.`,
+      alertType: 'info',
+    });
+    for (let i = 0; i < batch.length; i++) {
+      if (newCheck) {
+        if (batch[i]?.status === 'New') {
+          data.push(extractData(batch[i].id, isSelectedFiles, selectedFiles as CustomFile[]));
         }
+      } else {
+        data.push(extractData(batch[i].id, isSelectedFiles, selectedFiles as CustomFile[]));
+      }
+    }
+    return data;
+  };
+
+  const addFilesToQueue = (remainingFiles: CustomFile[]) => {
+    remainingFiles.forEach((f) => {
+      setFilesData((prev) =>
+        prev.map((pf) => {
+          if (pf.id === f.id) {
+            return {
+              ...pf,
+              status: 'Waiting',
+            };
+          }
+          return pf;
+        })
+      );
+      queue.enqueue(f);
+    });
+  };
+
+  const scheduleBatchWiseProcess = (selectedRows: CustomFile[], isSelectedFiles: boolean) => {
+    let data = [];
+    if (queue.size() > batchSize) {
+      const batch = queue.items.slice(0, batchSize);
+      data = triggerBatchProcessing(batch, selectedRows as CustomFile[], isSelectedFiles, false);
+    } else {
+      let mergedfiles = [...selectedRows];
+      let filesToProcess: CustomFile[] = [];
+      if (mergedfiles.length > batchSize) {
+        filesToProcess = mergedfiles.slice(0, batchSize);
+        const remainingFiles = [...(mergedfiles as CustomFile[])].splice(batchSize);
+        addFilesToQueue(remainingFiles);
+      } else {
+        filesToProcess = mergedfiles;
+      }
+      data = triggerBatchProcessing(filesToProcess, selectedRows as CustomFile[], isSelectedFiles, false);
+    }
+    return data;
+  };
+
+  /**
+   * Processes files in batches, respecting a maximum batch size.
+   *
+   * This function prioritizes processing files from the queue if it's not empty.
+   * If the queue is empty, it processes the provided `filesTobeProcessed`:
+   *   - If the number of files exceeds the batch size, it processes a batch and queues the rest.
+   *   - If the number of files is within the batch size, it processes them all.
+   *   - If there are already files being processed, it adjusts the batch size to avoid exceeding the limit.
+   *
+   * @param filesTobeProcessed - The files to be processed.
+   * @param queueFiles - Whether to prioritize processing files from the queue. Defaults to false.
+   */
+  const handleGenerateGraph = (filesTobeProcessed: CustomFile[], queueFiles: boolean = false) => {
+    let data = [];
+    const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
+    if (filesTobeProcessed.length && !queueFiles && processingFilesCount < batchSize) {
+      if (!queue.isEmpty()) {
+        data = scheduleBatchWiseProcess(filesTobeProcessed as CustomFile[], true);
+      } else if (filesTobeProcessed.length > batchSize) {
+        const filesToProcess = filesTobeProcessed?.slice(0, batchSize) as CustomFile[];
+        data = triggerBatchProcessing(filesToProcess, filesTobeProcessed as CustomFile[], true, false);
+        const remainingFiles = [...(filesTobeProcessed as CustomFile[])].splice(batchSize);
+        addFilesToQueue(remainingFiles);
+      } else {
+        let filesTobeSchedule: CustomFile[] = filesTobeProcessed;
+        if (filesTobeProcessed.length + processingFilesCount > batchSize) {
+          filesTobeSchedule = filesTobeProcessed.slice(
+            0,
+            filesTobeProcessed.length + processingFilesCount - batchSize
+          ) as CustomFile[];
+          const idstoexclude = new Set(filesTobeSchedule.map((f) => f.id));
+          const remainingFiles = [...(childRef.current?.getSelectedRows() as CustomFile[])].filter(
+            (f) => !idstoexclude.has(f.id)
+          );
+          addFilesToQueue(remainingFiles);
+        }
+        data = triggerBatchProcessing(filesTobeSchedule, filesTobeProcessed, true, true);
       }
       Promise.allSettled(data).then(async (_) => {
         setextractLoading(false);
         await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       });
-    } else if (selectedFilesFromAllfiles.length && allowLargeFiles) {
-      // @ts-ignore
-      for (let i = 0; i < selectedFilesFromAllfiles.length; i++) {
-        if (selectedFilesFromAllfiles[i]?.status === 'New') {
-          data.push(extractData(selectedFilesFromAllfiles[i].id as string));
-        }
-      }
+    } else if (queueFiles && !queue.isEmpty()) {
+      data = scheduleBatchWiseProcess(queue.items, true);
       Promise.allSettled(data).then(async (_) => {
         setextractLoading(false);
         await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       });
+    } else {
+      addFilesToQueue(filesTobeProcessed as CustomFile[]);
     }
   };
 
+  function processWaitingFilesOnRefresh() {
+    let data = [];
+    const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
+
+    if (!queue.isEmpty() && processingFilesCount < batchSize) {
+      if (queue.size() > batchSize) {
+        const batch = queue.items.slice(0, batchSize);
+        data = triggerBatchProcessing(batch, queue.items as CustomFile[], true, false);
+      } else {
+        data = triggerBatchProcessing(queue.items, queue.items as CustomFile[], true, false);
+      }
+      Promise.allSettled(data).then(async (_) => {
+        setextractLoading(false);
+        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+      });
+    } else {
+      const selectedNewFiles = childRef.current?.getSelectedRows().filter((f) => f.status === 'New');
+      addFilesToQueue(selectedNewFiles as CustomFile[]);
+    }
+  }
   const handleClose = () => {
     setalertDetails((prev) => ({ ...prev, showAlert: false, alertMessage: '' }));
   };
 
   const handleOpenGraphClick = () => {
-    const bloomUrl = process.env.BLOOM_URL;
+    const bloomUrl = process.env.VITE_BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
     const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
       userCredentials?.port ?? '7687'
@@ -313,6 +441,8 @@ const Content: React.FC<ContentProps> = ({
   };
 
   const disconnect = () => {
+    queue.clear();
+    setProcessedCount(0);
     setConnectionStatus(false);
     localStorage.removeItem('password');
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
@@ -335,7 +465,10 @@ const Content: React.FC<ContentProps> = ({
     [childRef.current?.getSelectedRows()]
   );
 
-  const dropdowncheck = useMemo(() => !filesData.some((f) => f.status === 'New'), [filesData]);
+  const dropdowncheck = useMemo(
+    () => !filesData.some((f) => f.status === 'New' || f.status === 'Waiting'),
+    [filesData]
+  );
 
   const disableCheck = useMemo(
     () => (!selectedfileslength ? dropdowncheck : !newFilecheck),
@@ -370,6 +503,8 @@ const Content: React.FC<ContentProps> = ({
         childRef.current?.getSelectedRows() as CustomFile[],
         deleteEntities
       );
+      queue.clear();
+      setProcessedCount(0);
       setRowSelection({});
       setdeleteLoading(false);
       if (response.data.status == 'Success') {
@@ -417,14 +552,24 @@ const Content: React.FC<ContentProps> = ({
               userDbVectorIndex: response.data.data.db_vector_dimension,
             })
           );
-          if (response.data.data.application_dimension === response.data.data.db_vector_dimension) {
+          if (
+            (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
+              response.data.data.db_vector_dimension == 0) &&
+            !response.data.data.chunks_exists
+          ) {
             setConnectionStatus(true);
             setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
           } else {
             setOpenConnection({
-              isvectorIndexMatch: false,
               openPopUp: true,
-              novectorindexInDB: response.data.data.db_vector_dimension === 0,
+              chunksExists: response.data.data.chunks_exists as boolean,
+              vectorIndexMisMatch:
+                response.data.data.db_vector_dimension > 0 &&
+                response.data.data.db_vector_dimension != response.data.data.application_dimension,
+              chunksExistsWithDifferentDimension:
+                response.data.data.db_vector_dimension > 0 &&
+                response.data.data.db_vector_dimension != response.data.data.application_dimension &&
+                (response.data.data.chunks_exists ?? true),
             });
             setConnectionStatus(false);
           }
@@ -448,17 +593,19 @@ const Content: React.FC<ContentProps> = ({
       let selectedLargeFiles: CustomFile[] = [];
       childRef.current?.getSelectedRows().forEach((f) => {
         const parsedData: CustomFile = f;
-        if (parsedData.fileSource === 'local file') {
-          if (typeof parsedData.size === 'number' && parsedData.status === 'New' && parsedData.size > largeFileSize) {
-            selectedLargeFiles.push(parsedData);
-          }
+        if (
+          parsedData.fileSource === 'local file' &&
+          typeof parsedData.size === 'number' &&
+          parsedData.status === 'New' &&
+          parsedData.size > largeFileSize
+        ) {
+          selectedLargeFiles.push(parsedData);
         }
       });
       if (selectedLargeFiles.length) {
         setshowConfirmationModal(true);
-        handleGenerateGraph(false, []);
       } else {
-        handleGenerateGraph(true, filesData);
+        handleGenerateGraph(childRef.current?.getSelectedRows().filter((f) => f.status === 'New'));
       }
     } else if (filesData.length) {
       const largefiles = filesData.filter((f) => {
@@ -477,9 +624,8 @@ const Content: React.FC<ContentProps> = ({
       setRowSelection(stringified);
       if (largefiles.length) {
         setshowConfirmationModal(true);
-        handleGenerateGraph(false, []);
       } else {
-        handleGenerateGraph(true, filesData);
+        handleGenerateGraph(filesData.filter((f) => f.status === 'New'));
       }
     }
   };
@@ -510,6 +656,7 @@ const Content: React.FC<ContentProps> = ({
             extractHandler={handleGenerateGraph}
             onClose={() => setshowConfirmationModal(false)}
             loading={extractLoading}
+            selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
           ></ConfirmationDialog>
         </Suspense>
       )}
@@ -538,8 +685,9 @@ const Content: React.FC<ContentProps> = ({
               open={openConnection.openPopUp}
               setOpenConnection={setOpenConnection}
               setConnectionStatus={setConnectionStatus}
-              isVectorIndexMatch={openConnection.isvectorIndexMatch}
-              noVectorIndexFound={openConnection.novectorindexInDB}
+              isVectorIndexMatch={openConnection.vectorIndexMisMatch}
+              chunksExistsWithoutEmbedding={openConnection.chunksExists}
+              chunksExistsWithDifferentEmbedding={openConnection.chunksExistsWithDifferentDimension}
             />
           </Suspense>
 
@@ -610,6 +758,7 @@ const Content: React.FC<ContentProps> = ({
             setViewPoint('tableView');
           }}
           ref={childRef}
+          handleGenerateGraph={processWaitingFilesOnRefresh}
         ></FileTable>
         <Flex
           className={`${
