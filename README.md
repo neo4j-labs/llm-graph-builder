@@ -143,23 +143,18 @@ Allow unauthenticated request : Yes
 | LANGCHAIN_PROJECT       | Optional           |               | Project for Langchain                                                                             |
 | LANGCHAIN_TRACING_V2    | Optional           | true          | Flag to enable Langchain tracing                                                                  |
 | LANGCHAIN_ENDPOINT      | Optional           | https://api.smith.langchain.com | Endpoint for Langchain API                                                            |
-| BACKEND_API_URL         | Optional           | http://localhost:8000 | URL for backend API                                                                       |
-| BLOOM_URL               | Optional           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
-| REACT_APP_SOURCES       | Optional           | local,youtube,wiki,s3 | List of input sources that will be available                                               |
-| LLM_MODELS              | Optional           | diffbot,openai-gpt-3.5,openai-gpt-4o | Models available for selection on the frontend, used for entities extraction and Q&A
-| CHAT_MODES              | Optional           | vector,graph+vector,graph | Chat modes available for Q&A
-| ENV                     | Optional           | DEV           | Environment variable for the app                                                                 |
-| TIME_PER_CHUNK          | Optional           | 4             | Time per chunk for processing                                                                    |
-| CHUNK_SIZE              | Optional           | 5242880       | Size of each chunk of file for upload                                                                |
-| GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
-| GCS_FILE_CACHE        | Optional           | False              | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
-| ENTITY_EMBEDDING        | Optional           | False              | If set to True, It will add embeddings for each entity in database |
-| LLM_MODEL_CONFIG_azure_ai_<azure_deployment_name>        | Optional           |              | Set azure config as - azure_deployment_name,azure_endpoint or base_url,azure_api_key,api_version|
-| LLM_MODEL_CONFIG_groq_<model_name>        | Optional           |               | Set groq config as - model_name,base_url,groq_api_key |
-| LLM_MODEL_CONFIG_anthropic_<model_name>        | Optional           |               | Set anthropic config as - model_name,anthropic_api_key |
-| LLM_MODEL_CONFIG_fireworks_<model_name>        | Optional           |               | Set fireworks config as - model_name,fireworks_api_key |
-| LLM_MODEL_CONFIG_bedrock_<model_name>        | Optional           |               | Set bedrock config as - model_name,aws_access_key_id,aws_secret__access_key,region_name |
-| LLM_MODEL_CONFIG_ollama_<model_name>        | Optional           |               | Set ollama config as - model_name,model_local_url |
+| VITE_BACKEND_API_URL         | Optional           | http://localhost:8000 | URL for backend API                                                                       |
+| VITE_BLOOM_URL               | Optional           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
+| VITE_REACT_APP_SOURCES       | Mandatory          | local,youtube,wiki,s3 | List of input sources that will be available                                               |
+| VITE_LLM_MODELS              | Mandatory          | diffbot,openai-gpt-3.5,openai-gpt-4o | Models available for selection on the frontend, used for entities extraction and Q&A
+| VITE_CHAT_MODES              | Mandatory          | vector,graph+vector,graph,hybrid | Chat modes available for Q&A
+| VITE_ENV                     | Mandatory          | DEV or PROD           | Environment variable for the app                                                                 |
+| VITE_TIME_PER_PAGE          | Optional           | 50             | Time per page for processing                                                                    |
+| VITE_CHUNK_SIZE              | Optional           | 5242880       | Size of each chunk of file for upload                                                                |
+| VITE_GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
+| GCS_FILE_CACHE          | Optional           | False         | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
+| ENTITY_EMBEDDING        | Optional           | False         | If set to True, It will add embeddings for each entity in database |
+| LLM_MODEL_CONFIG_ollama_<model_name>         | Optional      |               | Set ollama config as - model_name,model_local_url for local deployments |
 
 
 
