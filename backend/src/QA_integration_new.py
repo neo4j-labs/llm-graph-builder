@@ -46,26 +46,26 @@ SEARCH_KWARG_SCORE_THRESHOLD = 0.7
 
 def get_neo4j_retriever(graph, retrieval_query,document_names,mode,index_name="vector",keyword_index="keyword", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
     try:
-        if mode == "hybrid":
-            # neo_db = Neo4jVector.from_existing_graph(
-            #     embedding=EMBEDDING_FUNCTION,
-            #     index_name=index_name,
-            #     retrieval_query=retrieval_query,
-            #     graph=graph,
-            #     search_type="hybrid",
-            #     node_label="Chunk",
-            #     embedding_node_property="embedding",
-            #     text_node_properties=["text"]
-            #     # keyword_index_name=keyword_index
-            # )
-            neo_db = Neo4jVector.from_existing_index(
+        if mode == "hybrid" or mode == "hybrid+graph":
+            neo_db = Neo4jVector.from_existing_graph(
                 embedding=EMBEDDING_FUNCTION,
                 index_name=index_name,
                 retrieval_query=retrieval_query,
                 graph=graph,
                 search_type="hybrid",
+                node_label="Chunk",
+                embedding_node_property="embedding",
+                text_node_properties=["text"],
                 keyword_index_name=keyword_index
             )
+            # neo_db = Neo4jVector.from_existing_index(
+            #     embedding=EMBEDDING_FUNCTION,
+            #     index_name=index_name,
+            #     retrieval_query=retrieval_query,
+            #     graph=graph,
+            #     search_type="hybrid",
+            #     keyword_index_name=keyword_index
+            # )
             logging.info(f"Successfully retrieved Neo4jVector index '{index_name}' and keyword index '{keyword_index}'")
         else:
             neo_db = Neo4jVector.from_existing_index(
