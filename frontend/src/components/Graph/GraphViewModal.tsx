@@ -530,7 +530,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                                     relType.caption || ''
                                   )}
                                   onClick={() => handleRelationshipClick(relType.caption || '')}
-                                  className='h-8'
                                 />
                               ))}
                             </ShowAll>

@@ -10,6 +10,6 @@ export const LegendsChip: React.FunctionComponent<LegendChipProps> = ({
   className,
 }) => {
   return (
-    <Legend title={label} count={count} bgColor={scheme[label]} type={type} onClick={onClick} className={className} />
+    <Legend title={label} count={count} bgColor={scheme[label]} type={type} onClick={onClick}/>
   );
 };

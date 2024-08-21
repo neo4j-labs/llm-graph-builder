@@ -6,18 +6,16 @@ export default function Legend({
   count,
   type,
   onClick,
-  className,
 }: {
   bgColor: string;
   title: string;
   count?: number;
   type: 'node' | 'relationship' | 'propertyKey';
-  className?: string;
   tabIndex?: number;
   onClick?: (e: React.MouseEvent<HTMLElement>) => void;
 }) {
   return (
-    <GraphLabel type={type} className={`${className} legend`} color={bgColor} onClick={onClick}>
+    <GraphLabel type={type} className='legend' color={bgColor} onClick={onClick}>
       {title} {count !== undefined && `(${count})`}
     </GraphLabel>
   );
