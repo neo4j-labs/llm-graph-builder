@@ -81,6 +81,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       newGraphSelected.splice(currentIndex, 1);
       initGraph(newGraphSelected, allNodes, allRelationships, scheme);
     }
+    setSearchQuery('');
     setGraphType(newGraphSelected);
   };
 
