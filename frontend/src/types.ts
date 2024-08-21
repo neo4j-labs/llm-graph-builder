@@ -262,7 +262,7 @@ export interface GraphViewModalProps {
   setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
   viewPoint: string;
   nodeValues?: ExtendedNode[];
-  relationshipValues?: Relationship[];
+  relationshipValues?: ExtendedRelationship[];
   selectedRows?: CustomFile[] | undefined;
 }
 
@@ -347,13 +347,13 @@ export type alertStateType = {
 export type Scheme = Record<string, string>;
 
 export type LabelCount = Record<string, number>;
-interface NodeType extends Partial<Node> {
-  labels?: string[];
-}
+
 export interface LegendChipProps {
   scheme: Scheme;
-  title: string;
-  nodes: NodeType[];
+  label: string;
+  type: 'node' | 'relationship' | 'propertyKey';
+  count: number;
+  onClick: (e: React.MouseEvent<HTMLElement>) => void;
 }
 export interface FileContextProviderProps {
   children: ReactNode;
@@ -580,29 +580,6 @@ export type GraphStatsLabels = Record<
   }
 >;
 
-type NodeStyling = {
-  backgroundColor: string;
-  borderColor: string;
-  textColor: string;
-  caption: string;
-  diameter: string;
-};
-
-type RelationStyling = {
-  fontSize: string;
-  lineColor: string;
-  textColorExternal: string;
-  textColorInternal: string;
-  caption: string;
-  padding: string;
-  width: string;
-};
-
-export type GraphStyling = {
-  node: Record<string, Partial<NodeStyling>>;
-  relationship: Record<string, Partial<RelationStyling>>;
-};
-
 export interface ExtendedNode extends Node {
   labels: string[];
   properties: {
@@ -612,7 +589,7 @@ export interface ExtendedNode extends Node {
 }
 
 export interface ExtendedRelationship extends Relationship {
-  labels: string[];
+  count: number;
 }
 export interface connectionState {
   openPopUp: boolean;
@@ -657,7 +634,7 @@ export interface S3File {
 }
 export interface GraphViewButtonProps {
   nodeValues?: ExtendedNode[];
-  relationshipValues?: Relationship[];
+  relationshipValues?: ExtendedRelationship[];
 }
 export interface DrawerChatbotProps {
   isExpanded: boolean;

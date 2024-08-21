@@ -231,4 +231,8 @@ export const graphLabels = {
   totalNodes: 'Total Nodes',
   noEntities: 'No Entities Found',
   selectCheckbox: 'Select atleast one checkbox for graph view',
+  totalRelationships: 'Total Relationships',
+  nodeSize: 30
 };
+
+export const RESULT_STEP_SIZE = 25;
