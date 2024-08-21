@@ -304,6 +304,3 @@ QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION="""
                               RETURN c.id as id,c.position as position 
                               ORDER BY c.position LIMIT 1
                               """                                
-                                
-                                
-                                         

@@ -15,7 +15,7 @@ export default async function subscribe(
 
   const MAX_POLLING_ATTEMPTS = 10;
   let pollingAttempts = 0;
-  let delay = 2000;
+  let delay = 1000;
 
   while (pollingAttempts < MAX_POLLING_ATTEMPTS) {
     let currentdelay = delay;

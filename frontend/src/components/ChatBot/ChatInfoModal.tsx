@@ -18,13 +18,20 @@ import wikipedialogo from '../../assets/images/wikipedia.svg';
 import youtubelogo from '../../assets/images/youtube.svg';
 import gcslogo from '../../assets/images/gcs.webp';
 import s3logo from '../../assets/images/s3logo.png';
-import { Chunk, Entity, ExtendedNode, GroupedEntity, UserCredentials, chatInfoMessage } from '../../types';
+import {
+  Chunk,
+  Entity,
+  ExtendedNode,
+  ExtendedRelationship,
+  GroupedEntity,
+  UserCredentials,
+  chatInfoMessage,
+} from '../../types';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import HoverableLink from '../UI/HoverableLink';
 import GraphViewButton from '../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
 import { useCredentials } from '../../context/UserCredentials';
-import type { Relationship } from '@neo4j-nvl/base';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import ReactMarkdown from 'react-markdown';
 import { GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
@@ -51,7 +58,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
   const [nodes, setNodes] = useState<ExtendedNode[]>([]);
-  const [relationships, setRelationships] = useState<Relationship[]>([]);
+  const [relationships, setRelationships] = useState<ExtendedRelationship[]>([]);
   const [chunks, setChunks] = useState<Chunk[]>([]);
   const themeUtils = useContext(ThemeWrapperContext);
   const [, copy] = useCopyToClipboard();

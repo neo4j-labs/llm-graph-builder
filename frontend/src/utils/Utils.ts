@@ -2,6 +2,7 @@ import { calcWordColor } from '@neo4j-devtools/word-color';
 import type { Relationship } from '@neo4j-nvl/base';
 import { CustomFile, Entity, ExtendedNode, GraphType, Messages, Scheme, SourceNode, UserCredentials } from '../types';
 
+
 // Get the Url
 export const url = () => {
   let url = window.location.href.replace('5173', '8000');
@@ -130,7 +131,7 @@ export function extractPdfFileName(url: string): string {
   return decodedFileName;
 }
 
-export const processGraphData = (neoNodes: ExtendedNode[], neoRels: Relationship[]) => {
+export const processGraphData = (neoNodes: ExtendedNode[], neoRels: ExtendedRelationship[]) => {
   const schemeVal: Scheme = {};
   let iterator = 0;
   const labels: string[] = neoNodes.map((f: any) => f.labels);
@@ -240,6 +241,7 @@ export const parseEntity = (entity: Entity) => {
 export const titleCheck = (title: string) => {
   return title === 'Chunk' || title === 'Document';
 };
+
 export const getFileSourceStatus = (item: SourceNode) => {
   if (item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId) {
     return item?.status;
@@ -268,4 +270,11 @@ export const calculateProcessedCount = (prev: number, batchSize: number) =>
 
 export const isProcessingFileValid = (item: SourceNode, userCredentials: UserCredentials) => {
   return item.status === 'Processing' && item.fileName != undefined && userCredentials && userCredentials.database;
+
+
+export const sortAlphabetically = (a: Relationship, b: Relationship) => {
+  const captionOne = a.caption?.toLowerCase() || '';
+  const captionTwo = b.caption?.toLowerCase() || '';
+  return captionOne.localeCompare(captionTwo);
+
 };

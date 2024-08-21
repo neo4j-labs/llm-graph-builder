@@ -41,26 +41,26 @@ EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
 
 def get_neo4j_retriever(graph, retrieval_query,document_names,mode,index_name="vector",keyword_index="keyword", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
     try:
-        if mode == "hybrid":
-            # neo_db = Neo4jVector.from_existing_graph(
-            #     embedding=EMBEDDING_FUNCTION,
-            #     index_name=index_name,
-            #     retrieval_query=retrieval_query,
-            #     graph=graph,
-            #     search_type="hybrid",
-            #     node_label="Chunk",
-            #     embedding_node_property="embedding",
-            #     text_node_properties=["text"]
-            #     # keyword_index_name=keyword_index
-            # )
-            neo_db = Neo4jVector.from_existing_index(
+        if mode == "fulltext" or mode == "fulltext+graph":
+            neo_db = Neo4jVector.from_existing_graph(
                 embedding=EMBEDDING_FUNCTION,
                 index_name=index_name,
                 retrieval_query=retrieval_query,
                 graph=graph,
                 search_type="hybrid",
+                node_label="Chunk",
+                embedding_node_property="embedding",
+                text_node_properties=["text"],
                 keyword_index_name=keyword_index
             )
+            # neo_db = Neo4jVector.from_existing_index(
+            #     embedding=EMBEDDING_FUNCTION,
+            #     index_name=index_name,
+            #     retrieval_query=retrieval_query,
+            #     graph=graph,
+            #     search_type="hybrid",
+            #     keyword_index_name=keyword_index
+            # )
             logging.info(f"Successfully retrieved Neo4jVector index '{index_name}' and keyword index '{keyword_index}'")
         else:
             neo_db = Neo4jVector.from_existing_index(
@@ -374,7 +374,7 @@ def QA_RAG(graph, model, question, document_names,session_id, mode):
                 "user": "chatbot"
             } 
             return result
-        elif mode == "vector" or mode == "hybrid":
+        elif mode == "vector" or mode == "fulltext":
             retrieval_query = VECTOR_SEARCH_QUERY
         else:
             retrieval_query = VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT)
