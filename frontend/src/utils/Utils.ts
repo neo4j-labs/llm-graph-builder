@@ -239,3 +239,9 @@ export const parseEntity = (entity: Entity) => {
 export const titleCheck = (title: string) => {
   return title === 'Chunk' || title === 'Document';
 };
+
+export const sortAlphabetically = (a: Relationship, b: Relationship) => {
+  const captionOne = a.caption?.toLowerCase() || '';
+  const captionTwo = b.caption?.toLowerCase() || '';
+  return captionOne.localeCompare(captionTwo);
+};
