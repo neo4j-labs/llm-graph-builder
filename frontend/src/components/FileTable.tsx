@@ -46,7 +46,7 @@ import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 import IconButtonWithToolTip from './UI/IconButtonToolTip';
-import { largeFileSize, llms } from '../utils/Constants';
+import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import IndeterminateCheckbox from './UI/CustomCheckBox';
 let onlyfortheFirstRender = true;
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
@@ -117,10 +117,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 {...{
                   checked: row.getIsSelected(),
                   disabled:
-                    !row.getCanSelect() ||
-                    row.original.status == 'Uploading' ||
-                    row.original.status === 'Processing' ||
-                    row.original.status === 'Waiting',
+                    !row.getCanSelect() || row.original.status == 'Uploading' || row.original.status === 'Processing',
                   indeterminate: row.getIsSomeSelected(),
                   onChange: row.getToggleSelectedHandler(),
                 }}
@@ -586,8 +583,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   waitingQueue.length && waitingQueue.find((f: CustomFile) => f.name === item.fileName);
                 if (waitingFile && item.status === 'Completed') {
                   setProcessedCount((prev) => {
-                    if (prev === 2) {
-                      return 1;
+                    if (prev === batchSize) {
+                      return batchSize - 1;
                     }
                     return prev + 1;
                   });
@@ -616,7 +613,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                       item?.fileSource === 'web-url'
                     ? item?.status
                     : 'N/A',
-                  model: item?.model ?? model,
+                  model: waitingFile ? waitingFile.model : item?.model ?? model,
                   id: !waitingFile ? uuidv4() : waitingFile.id,
                   source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
                   fileSource: item?.fileSource ?? 'None',
@@ -637,66 +634,60 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 });
               }
             });
-          }
-          setIsLoading(false);
-          setFilesData(prefiles);
-          res.data.data.forEach((item) => {
-            if (
-              item.status === 'Processing' &&
-              item.fileName != undefined &&
-              userCredentials &&
-              userCredentials.database
-            ) {
-              if (item?.fileSize < largeFileSize) {
-                subscribe(
-                  item.fileName,
-                  userCredentials?.uri,
-                  userCredentials?.userName,
-                  userCredentials?.database,
-                  userCredentials?.password,
-                  updatestatus,
-                  updateProgress
-                ).catch((error: AxiosError) => {
-                  // @ts-ignore
-                  const errorfile = decodeURI(error?.config?.url?.split('?')[0].split('/').at(-1));
-                  setProcessedCount((prev) => {
-                    if (prev == 2) {
-                      return 1;
-                    }
-                    return prev + 1;
-                  });
-                  setFilesData((prevfiles) => {
-                    return prevfiles.map((curfile) => {
-                      if (curfile.name == errorfile) {
-                        return {
-                          ...curfile,
-                          status: 'Failed',
-                        };
-                      }
-                      return curfile;
-                    });
-                  });
-                });
-              } else {
-                triggerStatusUpdateAPI(
-                  item.fileName,
-                  userCredentials.uri,
-                  userCredentials.userName,
-                  userCredentials.password,
-                  userCredentials.database,
-                  updateStatusForLargeFiles,
-                  () => {
+            res.data.data.forEach((item) => {
+              if (
+                item.status === 'Processing' &&
+                item.fileName != undefined &&
+                userCredentials &&
+                userCredentials.database
+              ) {
+                if (item?.fileSize < largeFileSize) {
+                  subscribe(
+                    item.fileName,
+                    userCredentials?.uri,
+                    userCredentials?.userName,
+                    userCredentials?.database,
+                    userCredentials?.password,
+                    updatestatus,
+                    updateProgress
+                  ).catch((error: AxiosError) => {
+                    // @ts-ignore
+                    const errorfile = decodeURI(error?.config?.url?.split('?')[0].split('/').at(-1));
                     setProcessedCount((prev) => {
-                      if (prev == 2) {
-                        return 1;
+                      if (prev == batchSize) {
+                        return batchSize - 1;
                       }
                       return prev + 1;
                     });
-                  }
-                );
+                    setFilesData((prevfiles) => {
+                      return prevfiles.map((curfile) => {
+                        if (curfile.name == errorfile) {
+                          return {
+                            ...curfile,
+                            status: 'Failed',
+                          };
+                        }
+                        return curfile;
+                      });
+                    });
+                  });
+                } else {
+                  triggerStatusUpdateAPI(
+                    item.fileName,
+                    userCredentials.uri,
+                    userCredentials.userName,
+                    userCredentials.password,
+                    userCredentials.database,
+                    updateStatusForLargeFiles
+                  );
+                }
               }
-            }
-          });
+            });
+          } else {
+            queue.clear();
+          }
+          setIsLoading(false);
+          setFilesData(prefiles);
         } else {
           throw new Error(res?.data?.error);
         }
@@ -830,8 +821,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         })
       );
       setProcessedCount((prev) => {
-        if (prev == 2) {
-          return 1;
+        if (prev == batchSize) {
+          return batchSize - 1;
         }
         return prev + 1;
       });
