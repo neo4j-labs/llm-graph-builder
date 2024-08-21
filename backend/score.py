@@ -246,10 +246,12 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             json_obj = {'api_name': 'post_processing/update_similarity_graph', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logger.log_struct(json_obj)
             logging.info(f'Updated KNN Graph')
-        if "create_fulltext_index" in tasks:
-            await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database)
-            json_obj = {'api_name': 'post_processing/create_fulltext_index', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-            logger.log_struct(json_obj)
+
+        if "enable_hybrid_search_and_fulltext_search_in_bloom" in tasks:
+            await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database,type="entities")
+            # await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database,type="keyword")
+            josn_obj = {'api_name': 'post_processing/enable_hybrid_search_and_fulltext_search_in_bloom', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+            logger.log_struct(josn_obj)
             logging.info(f'Full Text index created')
         if os.environ.get('ENTITY_EMBEDDING','False').upper()=="TRUE" and "materialize_entity_similarities" in tasks:
             await asyncio.to_thread(create_entity_embedding, graph)
@@ -363,7 +365,7 @@ async def connect(uri=Form(), userName=Form(), password=Form(), database=Form())
         result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph)
         json_obj = {'api_name':'connect','db_url':uri,'status':result, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(json_obj)
-        return create_api_response('Success',message=result)
+        return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
         message="Connection failed to connect Neo4j database"
