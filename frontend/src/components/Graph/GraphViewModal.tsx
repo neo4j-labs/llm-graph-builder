@@ -522,7 +522,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                               {groupedAndSortedRelationships.map((relType, index) => (
                                 <LegendsChip
                                   key={index}
-                                  scheme={newScheme}
+                                  scheme={{}}
                                   label={relType.caption || ''}
                                   type='relationship'
                                   count={relationshipCount(
