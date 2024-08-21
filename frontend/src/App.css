@@ -364,3 +364,12 @@
   width: initial !important;
   height: initial !important;
 }
+
+.text-input-container {
+  transition: width 1.5s ease;
+  /* width: 100dvh; */
+}
+
+.text-input-container.search-initiated {
+  width: 60dvh;
+}

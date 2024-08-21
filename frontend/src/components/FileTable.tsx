@@ -613,7 +613,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                       item?.fileSource === 'web-url'
                     ? item?.status
                     : 'N/A',
-                  model: item?.model ?? model,
+                  model: waitingFile ? waitingFile.model : item?.model ?? model,
                   id: !waitingFile ? uuidv4() : waitingFile.id,
                   source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
                   fileSource: item?.fileSource ?? 'None',
