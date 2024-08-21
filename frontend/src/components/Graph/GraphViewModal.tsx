@@ -204,6 +204,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           ...node,
           activated: false,
           selected: false,
+          size: graphLabels.nodeSize
         };
       }
       const { id, properties, caption } = node;
@@ -213,10 +214,20 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         ...node,
         activated: match,
         selected: match,
+        size: (match && viewPoint === graphLabels.showGraphView) ? 100 : (match && viewPoint !== graphLabels.showGraphView) ? 50 : graphLabels.nodeSize
       };
 
     });
+    // deactivating any active relationships
+    const updatedRelationships = relationships.map((rel) => {
+      return {
+        ...rel,
+        activated: false,
+        selected: false,
+      };
+    });
     setNodes(updatedNodes);
+    setRelationships(updatedRelationships);
   }, [nodes]);
 
   useEffect(() => {
@@ -324,10 +335,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   // On Node Click, highlighting the nodes and deactivating any active relationships
   const handleNodeClick = (nodeLabel: string) => {
     const updatedNodes = nodes.map((node) => {
+      const isActive = node.labels.includes(nodeLabel);
       return {
         ...node,
-        activated: node.labels.includes(nodeLabel),
-        selected: node.labels.includes(nodeLabel),
+        activated: isActive,
+        selected: isActive,
+        size: (isActive && viewPoint === graphLabels.showGraphView) ? 100 : (isActive && viewPoint !== graphLabels.showGraphView) ? 50 : graphLabels.nodeSize
       };
     });
     // deactivating any active relationships
@@ -338,6 +351,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         selected: false,
       };
     });
+    if (searchQuery !== '') {
+      setSearchQuery('');
+    }
     setNodes(updatedNodes);
     setRelationships(updatedRelationships);
   };
@@ -356,8 +372,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         ...node,
         activated: false,
         selected: false,
+        size: graphLabels.nodeSize
       };
     });
+    if (searchQuery !== '') {
+      setSearchQuery('');
+    }
     setRelationships(updatedRelations);
     setNodes(updatedNodes);
   };
