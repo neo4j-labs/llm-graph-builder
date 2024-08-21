@@ -1,12 +1,14 @@
-import { useMemo } from 'react';
 import { LegendChipProps } from '../../types';
 import Legend from '../UI/Legend';
 
-export const LegendsChip: React.FunctionComponent<LegendChipProps> = ({ scheme, title, nodes }) => {
-  const chunkcount = useMemo(
-    () => [...new Set(nodes?.filter((n) => n?.labels?.includes(title)).map((i) => i.id))].length,
-    [nodes]
+export const LegendsChip: React.FunctionComponent<LegendChipProps> = ({
+  scheme,
+  label,
+  type,
+  count,
+  onClick,
+}) => {
+  return (
+    <Legend title={label} count={count} bgColor={scheme[label]} type={type} onClick={onClick}/>
   );
-
-  return <Legend title={title} chunkCount={chunkcount} bgColor={scheme[title]}></Legend>;
 };
