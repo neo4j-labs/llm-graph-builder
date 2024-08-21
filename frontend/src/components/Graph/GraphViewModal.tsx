@@ -97,10 +97,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-      ? queryMap.DocChunks
-      : graphType.includes('Entities')
-      ? queryMap.Entities
-      : '';
+        ? queryMap.DocChunks
+        : graphType.includes('Entities')
+          ? queryMap.Entities
+          : '';
 
   // fit graph to original position
   const handleZoomToFit = () => {
@@ -135,10 +135,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
-              userCredentials as UserCredentials,
-              graphQuery,
-              selectedRows?.map((f) => f.name)
-            )
+            userCredentials as UserCredentials,
+            graphQuery,
+            selectedRows?.map((f) => f.name)
+          )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -196,50 +196,43 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   }, [open]);
 
   // The search and update nodes
-  const handleSearch = useCallback(
-    (value: string) => {
-      const query = value.toLowerCase();
-      const updatedNodes = nodes.map((node) => {
-        if (query === '') {
-          return {
-            ...node,
-            activated: false,
-            selected: false,
-            size: graphLabels.nodeSize,
-          };
-        }
-        const { id, properties, caption } = node;
-        const propertiesMatch = properties?.id?.toLowerCase().includes(query);
-        const match = id.toLowerCase().includes(query) || propertiesMatch || caption?.toLowerCase().includes(query);
+  const handleSearch = useCallback((value: string) => {
+    const query = value.toLowerCase();
+    const updatedNodes = nodes.map((node) => {
+      if (query === '') {
         return {
           ...node,
-          activated: match,
-          selected: match,
-          size:
-            match && viewPoint === graphLabels.showGraphView
-              ? 100
-              : match && viewPoint !== graphLabels.showGraphView
-              ? 50
-              : graphLabels.nodeSize,
-        };
-      });
-      // deactivating any active relationships
-      const updatedRelationships = relationships.map((rel) => {
-        return {
-          ...rel,
           activated: false,
           selected: false,
+          size: graphLabels.nodeSize
         };
-      });
-      setNodes(updatedNodes);
-      setRelationships(updatedRelationships);
-    },
-    [nodes]
-  );
+      }
+      const { id, properties, caption } = node;
+      const propertiesMatch = properties?.id?.toLowerCase().includes(query);
+      const match = id.toLowerCase().includes(query) || propertiesMatch || caption?.toLowerCase().includes(query);
+      return {
+        ...node,
+        activated: match,
+        selected: match,
+        size: (match && viewPoint === graphLabels.showGraphView) ? 100 : (match && viewPoint !== graphLabels.showGraphView) ? 50 : graphLabels.nodeSize
+      };
+
+    });
+    // deactivating any active relationships
+    const updatedRelationships = relationships.map((rel) => {
+      return {
+        ...rel,
+        activated: false,
+        selected: false,
+      };
+    });
+    setNodes(updatedNodes);
+    setRelationships(updatedRelationships);
+  }, [nodes]);
 
   useEffect(() => {
-    handleSearch(debouncedQuery);
-  }, [debouncedQuery]);
+    handleSearch(debouncedQuery)
+  }, [debouncedQuery])
 
   const initGraph = (
     graphType: GraphType[],
@@ -347,12 +340,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         ...node,
         activated: isActive,
         selected: isActive,
-        size:
-          isActive && viewPoint === graphLabels.showGraphView
-            ? 100
-            : isActive && viewPoint !== graphLabels.showGraphView
-            ? 50
-            : graphLabels.nodeSize,
+        size: (isActive && viewPoint === graphLabels.showGraphView) ? 100 : (isActive && viewPoint !== graphLabels.showGraphView) ? 50 : graphLabels.nodeSize
       };
     });
     // deactivating any active relationships
@@ -384,7 +372,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         ...node,
         activated: false,
         selected: false,
-        size: graphLabels.nodeSize,
+        size: graphLabels.nodeSize
       };
     });
     if (searchQuery !== '') {
