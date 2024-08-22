@@ -175,16 +175,20 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           </Typography>
         </Box>
       </Box>
-      <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
-        {mode != 'graph' ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
-        {mode === 'graph+vector' || mode === 'graph' ? <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab> : <></>}
-        {mode === 'graph' && cypher_query?.trim().length ? (
-          <Tabs.Tab tabId={6}>Generated Cypher Query</Tabs.Tab>
-        ) : (
-          <></>
-        )}
-        {mode != 'graph' ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
-      </Tabs>
+      {error?.length > 0 ? (
+        <Banner type='danger'>{error}</Banner>
+      ) : (
+        <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
+          {mode != 'graph' ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
+          {mode === 'graph+vector' || mode === 'graph' || mode === 'graph+vector+fulltext' ? <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab> : <></>}
+          {mode === 'graph' && cypher_query?.trim().length ? (
+            <Tabs.Tab tabId={6}>Generated Cypher Query</Tabs.Tab>
+          ) : (
+            <></>
+          )}
+          {mode != 'graph' ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
+        </Tabs>
+      )}
       <Flex className='p-4'>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={3}>
           {sources.length ? (
