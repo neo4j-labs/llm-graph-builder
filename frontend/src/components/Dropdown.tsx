@@ -13,7 +13,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   isDisabled,
   value,
 }) => {
-  const [disableTooltip, toggleDisableState] = useReducer((state)=>!state,false)
+  const [disableTooltip, toggleDisableState] = useReducer((state) => !state, false);
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
   };
@@ -50,12 +50,12 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
                 menuPlacement: 'auto',
                 isDisabled: isDisabled,
                 value: value,
-                onMenuOpen:()=>{
-                  toggleDisableState()
+                onMenuOpen: () => {
+                  toggleDisableState();
                 },
-                onMenuClose:()=>{
-                  toggleDisableState()
-                }
+                onMenuClose: () => {
+                  toggleDisableState();
+                },
               }}
               size='medium'
               fluid
