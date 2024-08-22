@@ -175,7 +175,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       ) : (
         <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
           {mode != 'graph' ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
-          {mode === 'graph+vector' || mode === 'graph' ? <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab> : <></>}
+          {mode === 'graph+vector' || mode === 'graph' || mode === 'graph+vector+fulltext' ? <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab> : <></>}
           {mode === 'graph' && cypher_query?.trim().length ? (
             <Tabs.Tab tabId={6}>Generated Cypher Query</Tabs.Tab>
           ) : (

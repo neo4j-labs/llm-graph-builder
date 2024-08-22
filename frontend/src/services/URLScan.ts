@@ -1,6 +1,5 @@
-import axios from 'axios';
-import { url } from '../utils/Utils';
 import { ScanProps, ServerResponse } from '../types';
+import api from '../API/Index';
 
 const urlScanAPI = async (props: ScanProps) => {
   try {
@@ -46,7 +45,7 @@ const urlScanAPI = async (props: ScanProps) => {
       formData.append('access_token', props.access_token);
     }
 
-    const response: ServerResponse = await axios.post(`${url()}/url/scan`, formData, {
+    const response: ServerResponse = await api.post(`/url/scan`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

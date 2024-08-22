@@ -41,7 +41,7 @@ EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
 
 def get_neo4j_retriever(graph, retrieval_query,document_names,mode,index_name="vector",keyword_index="keyword", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
     try:
-        if mode == "fulltext" or mode == "fulltext+graph":
+        if mode == "fulltext" or mode == "graph + vector + fulltext":
             neo_db = Neo4jVector.from_existing_graph(
                 embedding=EMBEDDING_FUNCTION,
                 index_name=index_name,

@@ -31,7 +31,12 @@ export default function ChatModeToggle({
         () =>
           chatModes?.map((m) => {
             return {
-              title: capitalize(m),
+              title: m.includes('+')
+                ? m
+                    .split('+')
+                    .map((s) => capitalize(s))
+                    .join('+')
+                : capitalize(m),
               onClick: () => {
                 setchatMode(m);
               },
