@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { url } from '../utils/Utils';
+import api from '../API/Index';
 
 const connectAPI = async (connectionURI: string, username: string, password: string, database: string) => {
   try {
@@ -8,7 +7,7 @@ const connectAPI = async (connectionURI: string, username: string, password: str
     formData.append('database', database ?? '');
     formData.append('userName', username ?? '');
     formData.append('password', password ?? '');
-    const response = await axios.post(`${url()}/connect`, formData, {
+    const response = await api.post(`/connect`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

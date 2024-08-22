@@ -1,9 +1,8 @@
-import axios from 'axios';
-import { url } from '../utils/Utils';
+import api from '../API/Index';
 const healthStatus = async () => {
   try {
-    const healthUrl = `${url()}/health`;
-    const response = await axios.get(healthUrl);
+    const healthUrl = `/health`;
+    const response = await api.get(healthUrl);
     return response;
   } catch (error) {
     console.log('API status error', error);
