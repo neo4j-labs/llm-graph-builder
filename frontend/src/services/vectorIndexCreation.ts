@@ -1,6 +1,5 @@
-import axios from 'axios';
-import { url } from '../utils/Utils';
 import { commonserverresponse, UserCredentials } from '../types';
+import api from '../API/Index';
 
 export const createVectorIndex = async (userCredentials: UserCredentials, isVectorIndexExists: boolean) => {
   const formData = new FormData();
@@ -10,7 +9,7 @@ export const createVectorIndex = async (userCredentials: UserCredentials, isVect
   formData.append('password', userCredentials?.password ?? '');
   formData.append('isVectorIndexExist', JSON.stringify(isVectorIndexExists));
   try {
-    const response = await axios.post<commonserverresponse>(`${url()}/drop_create_vector_index`, formData);
+    const response = await api.post<commonserverresponse>(`/drop_create_vector_index`, formData);
     return response;
   } catch (error) {
     console.log(error);

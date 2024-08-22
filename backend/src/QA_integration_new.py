@@ -41,7 +41,7 @@ EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
 
 def get_neo4j_retriever(graph, retrieval_query,document_names,mode,index_name="vector",keyword_index="keyword", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
     try:
-        if mode == "hybrid" or mode == "hybrid+graph":
+        if mode == "fulltext" or mode == "graph + vector + fulltext":
             neo_db = Neo4jVector.from_existing_graph(
                 embedding=EMBEDDING_FUNCTION,
                 index_name=index_name,
@@ -374,7 +374,7 @@ def QA_RAG(graph, model, question, document_names,session_id, mode):
                 "user": "chatbot"
             } 
             return result
-        elif mode == "vector" or mode == "hybrid":
+        elif mode == "vector" or mode == "fulltext":
             retrieval_query = VECTOR_SEARCH_QUERY
         else:
             retrieval_query = VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT)
