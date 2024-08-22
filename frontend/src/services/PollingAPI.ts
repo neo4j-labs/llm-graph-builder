@@ -1,6 +1,5 @@
-import axios from 'axios';
-import { url } from '../utils/Utils';
 import { PollingAPI_Response, statusupdate } from '../types';
+import api from '../API/Index';
 
 export default async function subscribe(
   fileName: string,
@@ -19,8 +18,8 @@ export default async function subscribe(
 
   while (pollingAttempts < MAX_POLLING_ATTEMPTS) {
     let currentdelay = delay;
-    let response: PollingAPI_Response = await axios.get(
-      `${url()}/document_status/${fileName}?url=${uri}&userName=${username}&password=${encodedstr}&database=${database}`
+    let response: PollingAPI_Response = await api.get(
+      `/document_status/${fileName}?url=${uri}&userName=${username}&password=${encodedstr}&database=${database}`
     );
 
     if (response.data?.file_name?.status === 'Processing') {

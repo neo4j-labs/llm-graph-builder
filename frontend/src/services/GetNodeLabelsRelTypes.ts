@@ -1,6 +1,5 @@
-import axios from 'axios';
-import { url } from '../utils/Utils';
 import { ServerData, UserCredentials } from '../types';
+import api from '../API/Index';
 
 export const getNodeLabelsAndRelTypes = async (userCredentials: UserCredentials) => {
   const formData = new FormData();
@@ -9,7 +8,7 @@ export const getNodeLabelsAndRelTypes = async (userCredentials: UserCredentials)
   formData.append('userName', userCredentials?.userName ?? '');
   formData.append('password', userCredentials?.password ?? '');
   try {
-    const response = await axios.post<ServerData>(`${url()}/schema`, formData);
+    const response = await api.post<ServerData>(`/schema`, formData);
     return response;
   } catch (error) {
     console.log(error);
