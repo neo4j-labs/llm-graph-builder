@@ -761,6 +761,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             return curfile;
           })
         );
+        setProcessedCount((prev) => {
+          if (prev == batchSize) {
+            return batchSize - 1;
+          }
+          return prev + 1;
+        });
+        queue.remove(fileName)
       } else {
         let errorobj = { error: res.data.error, message: res.data.message, fileName };
         throw new Error(JSON.stringify(errorobj));
