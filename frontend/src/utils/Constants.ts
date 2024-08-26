@@ -51,8 +51,8 @@ export const llms =
         'bedrock_claude_3_5_sonnet',
       ];
 
-export const defaultLLM = llms?.includes('openai-gpt-4o-mini')
-  ? 'openai-gpt-4o-mini'
+export const defaultLLM = llms?.includes('openai-gpt-4o')
+  ? 'openai-gpt-4o'
   : llms?.includes('gemini-1.0-pro')
   ? 'gemini-1.0-pro'
   : 'diffbot';
