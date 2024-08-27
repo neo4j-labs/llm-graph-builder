@@ -381,7 +381,7 @@ const Content: React.FC<ContentProps> = ({
         setextractLoading(false);
         await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       });
-    } else if (queueFiles && !queue.isEmpty()&&processingFilesCount<batchSize) {
+    } else if (queueFiles && !queue.isEmpty() && processingFilesCount < batchSize) {
       data = scheduleBatchWiseProcess(queue.items, true);
       Promise.allSettled(data).then(async (_) => {
         setextractLoading(false);
