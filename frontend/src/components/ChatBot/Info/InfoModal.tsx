@@ -21,7 +21,6 @@ import HoverableLink from '../../UI/HoverableLink';
 import GraphViewButton from '../../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../../services/ChunkEntitiesInfo';
 import { useCredentials } from '../../../context/UserCredentials';
-import type { Node, Relationship } from '@neo4j-nvl/base';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import ReactMarkdown from 'react-markdown';
 import { GlobeAltIconOutline } from '@neo4j-ndl/react/icons';

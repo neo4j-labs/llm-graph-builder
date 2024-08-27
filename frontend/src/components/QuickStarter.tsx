@@ -11,7 +11,6 @@ const QuickStarter: React.FunctionComponent = () => {
   const themeUtils = React.useContext(ThemeWrapperContext);
   const [themeMode, setThemeMode] = useState<string>(themeUtils.colorMode);
   const [showSettingsModal, setshowSettingsModal] = useState<boolean>(false);
-  const [showOrphanNodeDeletionDialog, setshowOrphanNodeDeletionDialog] = useState<boolean>(false);
 
   const toggleColorMode = () => {
     setThemeMode((prevThemeMode) => {
@@ -25,6 +24,7 @@ const QuickStarter: React.FunctionComponent = () => {
   const closeSettingModal = () => {
     setshowSettingsModal(false);
   };
+
   return (
     <UserCredentialsWrapper>
       <FileContextProvider>
@@ -35,9 +35,6 @@ const QuickStarter: React.FunctionComponent = () => {
               openSettingsDialog={openSettingsModal}
               isSettingPanelExpanded={showSettingsModal}
               closeSettingModal={closeSettingModal}
-              closeOrphanNodeDeletionModal={closeOrphanNodeDeletionModal}
-              showOrphanNodeDeletionModal={showOrphanNodeDeletionDialog}
-              openOrphanNodeDeletionModal={openOrphanNodeDeletionModal}
             />
           </AlertContextWrapper>
         </MessageContextWrapper>
