@@ -23,6 +23,7 @@ const QuickStarter: React.FunctionComponent = () => {
   const closeSettingModal = () => {
     setshowSettingsModal(false);
   };
+
   return (
     <UserCredentialsWrapper>
       <FileContextProvider>
