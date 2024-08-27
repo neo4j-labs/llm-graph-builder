@@ -14,8 +14,14 @@ import { createPortal } from 'react-dom';
 import { useMessageContext } from '../../context/UserMessages';
 import { getIsLoading } from '../../utils/Utils';
 import ExpandedChatButtonContainer from '../ChatBot/ExpandedChatButtonContainer';
-import { tooltips } from '../../utils/Constants';
+import { APP_SOURCES, tooltips } from '../../utils/Constants';
 import ChatModeToggle from '../ChatBot/ChatModeToggle';
+import { RiChatSettingsLine } from 'react-icons/ri';
+import IconButtonWithToolTip from '../UI/IconButtonToolTip';
+import GCSButton from '../DataSources/GCS/GCSButton';
+import S3Component from '../DataSources/AWS/S3Bucket';
+import WebButton from '../DataSources/Web/WebButton';
+import DropZoneForSmallLayouts from '../DataSources/Local/DropZoneForSmallLayouts';
 
 const SideNav: React.FC<SideNavProps> = ({
   position,
@@ -37,7 +43,6 @@ const SideNav: React.FC<SideNavProps> = ({
   const [chatModeAnchor, setchatModeAnchor] = useState<HTMLElement | null>(null);
   const [showChatMode, setshowChatMode] = useState<boolean>(false);
   const largedesktops = useMediaQuery(`(min-width:1440px )`);
-  const { connectionStatus } = useCredentials();
 
   const date = new Date();
   useEffect(() => {

@@ -3,31 +3,36 @@ import { useDropzone } from 'react-dropzone';
 import { useFileContext } from '../../../context/UsersFiles';
 import { useEffect, useState } from 'react';
 import { useCredentials } from '../../../context/UserCredentials';
-import { CustomFile, CustomFileBase, UserCredentials } from '../../../types';
+import { alertStateType, CustomFile, CustomFileBase, UserCredentials } from '../../../types';
 import { chunkSize } from '../../../utils/Constants';
 import { uploadAPI } from '../../../utils/FileAPI';
+import CustomAlert from '../../UI/Alert';
 import { v4 as uuidv4 } from 'uuid';
 import { LoadingSpinner } from '@neo4j-ndl/react';
-import { showErrorToast, showSuccessToast } from '../../../utils/toasts';
 
 export default function DropZoneForSmallLayouts() {
   const { filesData, setFilesData, model } = useFileContext();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isClicked, setIsClicked] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
-
+  const [alertDetails, setalertDetails] = useState<alertStateType>({
+    showAlert: false,
+    alertType: 'error',
+    alertMessage: '',
+  });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   useEffect(() => {
     if (selectedFiles.length > 0) {
-      for (let index = 0; index < selectedFiles.length; index++) {
-        const file = selectedFiles[index];
-        if (filesData[index]?.status == 'None' && isClicked) {
+      selectedFiles.forEach((file, uid) => {
+        if (filesData[uid]?.status == 'None' && isClicked) {
           uploadFileInChunks(file);
         }
-      }
+      });
     }
   }, [selectedFiles]);
-
+  const handleClose = () => {
+    setalertDetails((prev) => ({ ...prev, showAlert: false, alertMessage: '' }));
+  };
   const uploadFileInChunks = (file: File) => {
     const totalChunks = Math.ceil(file.size / chunkSize);
     const chunkProgressIncrement = 100 / totalChunks;
@@ -105,15 +110,17 @@ export default function DropZoneForSmallLayouts() {
           }
         } catch (error) {
           setIsLoading(false);
-          if (error instanceof Error) {
-            showErrorToast('Error  Occurred');
-          }
+          setalertDetails({
+            showAlert: true,
+            alertType: 'error',
+            alertMessage: 'Error  Occurred',
+          });
           setFilesData((prevfiles) =>
             prevfiles.map((curfile) => {
               if (curfile.name == file.name) {
                 return {
                   ...curfile,
-                  status: 'Upload Failed',
+                  status: 'Failed',
                   type: `${file.name.substring(file.name.lastIndexOf('.') + 1, file.name.length).toUpperCase()}`,
                 };
               }
@@ -136,7 +143,11 @@ export default function DropZoneForSmallLayouts() {
         );
         setIsClicked(false);
         setIsLoading(false);
-        showSuccessToast(`${file.name} uploaded successfully`);
+        setalertDetails({
+          showAlert: true,
+          alertType: 'success',
+          alertMessage: `${file.name} uploaded successfully`,
+        });
       }
     };
 
@@ -158,7 +169,11 @@ export default function DropZoneForSmallLayouts() {
     },
     onDropRejected: (e) => {
       if (e.length) {
-        showErrorToast('Failed To Upload, Unsupported file extention');
+        setalertDetails({
+          showAlert: true,
+          alertType: 'error',
+          alertMessage: 'Failed To Upload, Unsupported file extention',
+        });
       }
     },
     disabled: isLoading,
@@ -178,13 +193,11 @@ export default function DropZoneForSmallLayouts() {
         fileSource: 'local file',
         uploadprogess: 0,
         processingProgress: undefined,
-        retryOption: '',
-        retryOptionStatus: false,
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
-      for (let index = 0; index < f.length; index++) {
-        const file = f[index];
+
+      f.forEach((file) => {
         const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === file?.name);
         if (filedataIndex == -1) {
           copiedFilesData.unshift({
@@ -210,13 +223,21 @@ export default function DropZoneForSmallLayouts() {
             processingProgress: defaultValues.processingProgress,
           });
         }
-      }
+      });
       setFilesData(copiedFilesData);
     }
   };
   console.log(acceptedFiles);
   return (
     <>
+      {alertDetails.showAlert && (
+        <CustomAlert
+          open={alertDetails.showAlert}
+          handleClose={handleClose}
+          severity={alertDetails.alertType}
+          alertMessage={alertDetails.alertMessage}
+        />
+      )}
       <div {...getRootProps({ className: 'dropzone' })}>
         <input {...getInputProps()} />
         {isLoading ? <LoadingSpinner size='medium' /> : <CloudArrowUpIconSolid />}

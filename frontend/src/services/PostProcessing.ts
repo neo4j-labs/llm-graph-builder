@@ -9,7 +9,7 @@ const postProcessing = async (userCredentials: UserCredentials, taskParam: strin
     formData.append('userName', userCredentials?.userName ?? '');
     formData.append('password', userCredentials?.password ?? '');
     formData.append('tasks', JSON.stringify(taskParam));
-    const response = await axios.post(`${url()}/post_processing`, formData, {
+    const response = await api.post(`/post_processing`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

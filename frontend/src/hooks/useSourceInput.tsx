@@ -141,6 +141,7 @@ export default function useSourceInput(
           setIsValid(false);
           setIsFocused(false);
         } catch (error) {
+          setIsLoading(false);
           setStatus('danger');
           setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
         }

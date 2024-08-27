@@ -182,6 +182,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       'selectedRelationshipLabels',
       JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] })
     );
+    localStorage.setItem('selectedSchemas', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
     showAlert('info', `Successfully Removed the Schema settings`);
     onClose();
   };

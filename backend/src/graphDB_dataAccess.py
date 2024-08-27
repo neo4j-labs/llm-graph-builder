@@ -307,25 +307,50 @@ class graphDBdataAccess:
                 """
         return_query_duplicate_nodes_total = "RETURN COUNT(DISTINCT(n)) as total"
         
-        return result, len(filename_list)
+        param = {"duplicate_score_value": score_value, "duplicate_text_distance" : text_distance}
+        
+        nodes_list = self.execute_query(query_duplicate_nodes.format(return_statement=return_query_duplicate_nodes),param=param)
+        total_nodes = self.execute_query(query_duplicate_nodes.format(return_statement=return_query_duplicate_nodes_total),param=param)
+        return nodes_list, total_nodes[0]
     
-    def list_unconnected_nodes(self):
+    def merge_duplicate_nodes(self,duplicate_nodes_list):
+        nodes_list = json.loads(duplicate_nodes_list)
+        print(f'Nodes list to merge {nodes_list}')
         query = """
-                MATCH (e:!Chunk&!Document) 
-                WHERE NOT exists { (e)--(:!Chunk&!Document) }
-                OPTIONAL MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(e)
-                RETURN e {.*, embedding:null, elementId:elementId(e), labels:labels(e)} as e, 
-                collect(distinct doc.fileName) as documents, count(distinct c) as chunkConnections
-                ORDER BY e.id ASC
-                LIMIT 100
-                """
-        return self.execute_query(query)
-    
-    def delete_unconnected_nodes(self,unconnected_entities_list):
-        entities_list = list(map(str.strip, json.loads(unconnected_entities_list)))
-        query = """
-        MATCH (e) WHERE elementId(e) IN $elementIds
-        DETACH DELETE e
+        UNWIND $rows AS row
+        CALL { with row
+        MATCH (first) WHERE elementId(first) = row.firstElementId
+        MATCH (rest) WHERE elementId(rest) IN row.similarElementIds
+        WITH first, collect (rest) as rest
+        WITH [first] + rest as nodes
+        CALL apoc.refactor.mergeNodes(nodes, 
+        {properties:"discard",mergeRels:true, produceSelfRel:false, preserveExistingSelfRels:false, singleElementAsArray:true}) 
+        YIELD node
+        RETURN size(nodes) as mergedCount
+        }
+        RETURN sum(mergedCount) as totalMerged
         """
-        param = {"elementIds":entities_list}
+        param = {"rows":nodes_list}
         return self.execute_query(query,param)
+    
+    def drop_create_vector_index(self, isVectorIndexExist):
+        """
+        drop and create the vector index when vector index dimesion are different.
+        """
+        embedding_model = os.getenv('EMBEDDING_MODEL')
+        embeddings, dimension = load_embedding_model(embedding_model)
+        
+        if isVectorIndexExist == 'true':
+            self.graph.query("""drop index vector""")
+        # self.graph.query("""drop index vector""")
+        self.graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
+                            OPTIONS {indexConfig: {
+                            `vector.dimensions`: $dimensions,
+                            `vector.similarity_function`: 'cosine'
+                            }}
+                        """,
+                        {
+                            "dimensions" : dimension
+                        }
+                        )
+        return "Drop and Re-Create vector index succesfully"

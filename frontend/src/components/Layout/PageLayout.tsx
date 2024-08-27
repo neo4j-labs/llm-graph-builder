@@ -8,7 +8,7 @@ import { clearChatAPI } from '../../services/QnaAPI';
 import { useCredentials } from '../../context/UserCredentials';
 import { UserCredentials } from '../../types';
 import { useMessageContext } from '../../context/UserMessages';
-import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
+import { AlertColor, AlertPropsColorOverrides, useMediaQuery } from '@mui/material';
 import { OverridableStringUnion } from '@mui/types';
 import { useFileContext } from '../../context/UsersFiles';
 import SchemaFromTextDialog from '../Popups/Settings/SchemaFromText';
@@ -31,11 +31,25 @@ export default function PageLayoutNew({
   const [showChatBot, setShowChatBot] = useState<boolean>(false);
   const [showDrawerChatbot, setShowDrawerChatbot] = useState<boolean>(true);
   const [clearHistoryData, setClearHistoryData] = useState<boolean>(false);
+  const [showEnhancementDialog, toggleEnhancementDialog] = useReducer((s) => !s, false);
+  const [shows3Modal, toggleS3Modal] = useReducer((s) => !s, false);
+  const [showGCSModal, toggleGCSModal] = useReducer((s) => !s, false);
+  const [showGenericModal, toggleGenericModal] = useReducer((s) => !s, false);
   const { userCredentials } = useCredentials();
-  const toggleLeftDrawer = () => setIsLeftExpanded(!isLeftExpanded);
-  const toggleRightDrawer = () => setIsRightExpanded(!isRightExpanded);
-  const [openTextSchemaDialog, setOpenTextSchemaDialog] = useState<boolean>(false);
-  const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
+  const toggleLeftDrawer = () => {
+    if (largedesktops) {
+      setIsLeftExpanded(!isLeftExpanded);
+    } else {
+      setIsLeftExpanded(false);
+    }
+  };
+  const toggleRightDrawer = () => {
+    if (largedesktops) {
+      setIsRightExpanded(!isRightExpanded);
+    } else {
+      setIsRightExpanded(false);
+    }
+  };
   const [alertDetails, setalertDetails] = useState<alertStateType>({
     showAlert: false,
     alertType: 'error',
@@ -73,11 +87,7 @@ export default function PageLayoutNew({
     });
   };
   const handleClose = () => {
-    setalertDetails({
-      showAlert: false,
-      alertType: 'info',
-      alertMessage: '',
-    });
+    setalertDetails((prev) => ({ ...prev, showAlert: false, alertMessage: '' }));
   };
   const orphanNodesDeleteHandler = async (selectedEntities: string[]) => {
     try {
@@ -91,6 +101,14 @@ export default function PageLayoutNew({
   };
   return (
     <div style={{ maxHeight: 'calc(100vh - 58px)' }} className='flex overflow-hidden'>
+      {alertDetails.showAlert && (
+        <CustomAlert
+          severity={alertDetails.alertType}
+          open={alertDetails.showAlert}
+          handleClose={handleClose}
+          alertMessage={alertDetails.alertMessage}
+        />
+      )}
       <SideNav
         toggles3Modal={toggleS3Modal}
         toggleGCSModal={toggleGCSModal}
@@ -115,7 +133,7 @@ export default function PageLayoutNew({
           setShowTextFromSchemaDialog({ triggeredFrom: '', show: false });
           switch (showTextFromSchemaDialog.triggeredFrom) {
             case 'enhancementtab':
-              setshowEnhancementDialog(true);
+              toggleEnhancementDialog();
               break;
             case 'schemadialog':
               openSettingsDialog();
@@ -142,6 +160,9 @@ export default function PageLayoutNew({
         openOrphanNodeDeletionModal={openOrphanNodeDeletionModal}
         isSchema={isSchema}
         setIsSchema={setIsSchema}
+        showEnhancementDialog={showEnhancementDialog}
+        toggleEnhancementDialog={toggleEnhancementDialog}
+        closeSettingModal={closeSettingModal}
       />
       {showDrawerChatbot && (
         <DrawerChatbot

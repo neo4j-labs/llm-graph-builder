@@ -25,15 +25,16 @@ import {
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
+import { statusCheck, capitalize } from '../utils/Utils';
 import {
-  statusCheck,
-  capitalize,
-  isFileCompleted,
-  calculateProcessedCount,
-  getFileSourceStatus,
-  isProcessingFileValid,
-} from '../utils/Utils';
-import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, ChildRef } from '../types';
+  SourceNode,
+  CustomFile,
+  FileTableProps,
+  UserCredentials,
+  statusupdate,
+  alertStateType,
+  ChildRef,
+} from '../types';
 import { useCredentials } from '../context/UserCredentials';
 import { ArrowPathIconSolid, MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
 import CustomProgressBar from './UI/CustomProgressBar';
@@ -46,10 +47,9 @@ import cancelAPI from '../services/CancelAPI';
 import IconButtonWithToolTip from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import IndeterminateCheckbox from './UI/CustomCheckBox';
-import { showErrorToast, showNormalToast } from '../utils/toasts';
 let onlyfortheFirstRender = true;
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
-  const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry } = props;
+  const { isExpanded, connectionStatus, setConnectionStatus, onInspect } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
   const { userCredentials } = useCredentials();
@@ -61,6 +61,11 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const [fileSourceFilter, setFileSourceFilter] = useState<string>('');
   const [llmtypeFilter, setLLmtypeFilter] = useState<string>('');
   const skipPageResetRef = useRef<boolean>(false);
+  const [alertDetails, setalertDetails] = useState<alertStateType>({
+    showAlert: false,
+    alertType: 'error',
+    alertMessage: '',
+  });
 
   const tableRef = useRef(null);
 
@@ -232,7 +237,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         header: () => <span>Status</span>,
         footer: (info) => info.column.id,
         filterFn: 'statusFilter' as any,
-        size: 250,
+        size: 200,
         meta: {
           columnActions: {
             actions: [
@@ -566,37 +571,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     skipPageResetRef.current = false;
   }, [filesData.length]);
 
-  const handleFileUploadError = (error: AxiosError) => {
-    // @ts-ignore
-    const errorfile = decodeURI(error?.config?.url?.split('?')[0].split('/').at(-1));
-    setProcessedCount((prev) => Math.max(prev - 1, 0));
-    setFilesData((prevfiles) =>
-      prevfiles.map((curfile) => (curfile.name === errorfile ? { ...curfile, status: 'Failed' } : curfile))
-    );
-  };
-
-  const handleSmallFile = (item: SourceNode, userCredentials: UserCredentials) => {
-    subscribe(
-      item.fileName,
-      userCredentials?.uri,
-      userCredentials?.userName,
-      userCredentials?.database,
-      userCredentials?.password,
-      updatestatus,
-      updateProgress
-    ).catch(handleFileUploadError);
-  };
-
-  const handleLargeFile = (item: SourceNode, userCredentials: UserCredentials) => {
-    triggerStatusUpdateAPI(
-      item.fileName,
-      userCredentials.uri,
-      userCredentials.userName,
-      userCredentials.password,
-      userCredentials.database,
-      updateStatusForLargeFiles
-    );
-  };
   useEffect(() => {
     const waitingQueue: CustomFile[] = JSON.parse(
       localStorage.getItem('waitingQueue') ?? JSON.stringify({ queue: [] })
@@ -622,10 +596,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               if (item.fileName != undefined && item.fileName.length) {
                 const waitingFile =
                   waitingQueue.length && waitingQueue.find((f: CustomFile) => f.name === item.fileName);
-                if (isFileCompleted(waitingFile as CustomFile, item)) {
-                  setProcessedCount((prev) => calculateProcessedCount(prev, batchSize));
-                  queue.remove(item.fileName);
-                }
                 if (waitingFile && item.status === 'Completed') {
                   setProcessedCount((prev) => {
                     if (prev === batchSize) {
@@ -644,8 +614,21 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   NodesCount: item?.nodeCount ?? 0,
                   processing: item?.processingTime ?? 'None',
                   relationshipCount: item?.relationshipCount ?? 0,
-                  status: waitingFile ? 'Waiting' : getFileSourceStatus(item),
-                  model: item?.model ?? model,
+                  status: waitingFile
+                    ? 'Waiting'
+                    : item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                    ? item?.status
+                    : item?.fileSource === 'local file'
+                    ? item?.status
+                    : item?.status === 'Completed' || item.status === 'Failed'
+                    ? item?.status
+                    : item?.fileSource === 'Wikipedia' ||
+                      item?.fileSource === 'youtube' ||
+                      item?.fileSource === 'gcs bucket' ||
+                      item?.fileSource === 'web-url'
+                    ? item?.status
+                    : 'N/A',
+                  model: waitingFile ? waitingFile.model : item?.model ?? model,
                   id: !waitingFile ? uuidv4() : waitingFile.id,
                   source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
                   fileSource: item?.fileSource ?? 'None',
@@ -668,10 +651,52 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               }
             });
             res.data.data.forEach((item) => {
-              if (isProcessingFileValid(item, userCredentials as UserCredentials)) {
-                item.fileSize < largeFileSize
-                  ? handleSmallFile(item, userCredentials as UserCredentials)
-                  : handleLargeFile(item, userCredentials as UserCredentials);
+              if (
+                item.status === 'Processing' &&
+                item.fileName != undefined &&
+                userCredentials &&
+                userCredentials.database
+              ) {
+                if (item?.fileSize < largeFileSize) {
+                  subscribe(
+                    item.fileName,
+                    userCredentials?.uri,
+                    userCredentials?.userName,
+                    userCredentials?.database,
+                    userCredentials?.password,
+                    updatestatus,
+                    updateProgress
+                  ).catch((error: AxiosError) => {
+                    // @ts-ignore
+                    const errorfile = decodeURI(error?.config?.url?.split('?')[0].split('/').at(-1));
+                    setProcessedCount((prev) => {
+                      if (prev == batchSize) {
+                        return batchSize - 1;
+                      }
+                      return prev + 1;
+                    });
+                    setFilesData((prevfiles) => {
+                      return prevfiles.map((curfile) => {
+                        if (curfile.name == errorfile) {
+                          return {
+                            ...curfile,
+                            status: 'Failed',
+                          };
+                        }
+                        return curfile;
+                      });
+                    });
+                  });
+                } else {
+                  triggerStatusUpdateAPI(
+                    item.fileName,
+                    userCredentials.uri,
+                    userCredentials.userName,
+                    userCredentials.password,
+                    userCredentials.database,
+                    updateStatusForLargeFiles
+                  );
+                }
               }
             });
           } else {
@@ -707,7 +732,11 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         if (processingFilesCount === 1) {
           setProcessedCount(1);
         }
-        showNormalToast(`Files are in processing please wait till previous batch completes`);
+        setalertDetails({
+          showAlert: true,
+          alertType: 'info',
+          alertMessage: `Files are in processing please wait till previous batch completes`,
+        });
       } else {
         const waitingQueue: CustomFile[] = JSON.parse(
           localStorage.getItem('waitingQueue') ?? JSON.stringify({ queue: [] })
@@ -924,20 +953,3 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
 });
 
 export default FileTable;
-function IndeterminateCheckbox({
-  indeterminate,
-  className = '',
-  ...rest
-}: { indeterminate?: boolean } & HTMLProps<HTMLInputElement>) {
-  const ref = React.useRef<HTMLInputElement>(null!);
-
-  React.useEffect(() => {
-    if (typeof indeterminate === 'boolean') {
-      ref.current.indeterminate = !rest.checked && indeterminate;
-    }
-  }, [ref, indeterminate]);
-
-  return (
-    <Checkbox aria-label='row checkbox' type='checkbox' ref={ref} className={`${className} cursor-pointer`} {...rest} />
-  );
-}

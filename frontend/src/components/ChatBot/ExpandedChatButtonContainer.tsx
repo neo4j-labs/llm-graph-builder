@@ -1,15 +1,9 @@
 import { TrashIconOutline, XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import ChatModeToggle from './ChatModeToggle';
 import { Box, IconButton } from '@neo4j-ndl/react';
-import { Messages } from '../../types';
+import { IconProps } from '../../types';
 import IconButtonWithToolTip from '../UI/IconButtonToolTip';
 import { tooltips } from '../../utils/Constants';
-
-interface IconProps {
-  closeChatBot: () => void;
-  deleteOnClick?: () => void;
-  messages: Messages[];
-}
 
 const ExpandedChatButtonContainer: React.FC<IconProps> = ({ closeChatBot, deleteOnClick, messages }) => {
   return (

@@ -5,11 +5,11 @@ import { Dropdown, Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { OnChangeValue, ActionMeta } from 'react-select';
-import { OptionType, schema, UserCredentials } from '../../../../types';
+import { OptionType, OptionTypeForExamples, schema, UserCredentials } from '../../../../types';
+import { useAlertContext } from '../../../../context/Alert';
 import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
 import schemaExamples from '../../../../assets/schemas.json';
 import { tokens } from '@neo4j-ndl/base';
-import { showNormalToast } from '../../../../utils/toasts';
 
 export default function EntityExtractionSetting({
   view,
@@ -231,7 +231,7 @@ export default function EntityExtractionSetting({
       JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] })
     );
     localStorage.setItem('selectedSchemas', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
-    showNormalToast(`Successfully Removed the Schema settings`);
+    showAlert('info', `Successfully Removed the Schema settings`);
     if (view === 'Dialog' && onClose != undefined) {
       onClose();
     }

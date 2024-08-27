@@ -7,7 +7,7 @@ export default function useServerSideEvent(
   alertHandler: (inMinutes: boolean, minutes: number, filename: string) => void,
   errorHandler: (filename: string) => void
 ) {
-  const { setFilesData, setProcessedCount } = useFileContext();
+  const { setFilesData, setProcessedCount, queue } = useFileContext();
   function updateStatusForLargeFiles(eventSourceRes: eventResponsetypes) {
     const {
       fileName,
@@ -67,6 +67,7 @@ export default function useServerSideEvent(
         }
         return prev + 1;
       });
+      queue.remove(fileName);
     } else if (eventSourceRes.status === 'Failed') {
       setFilesData((prevfiles) => {
         return prevfiles.map((curfile) => {

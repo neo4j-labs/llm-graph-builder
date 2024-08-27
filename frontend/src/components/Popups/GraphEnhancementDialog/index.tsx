@@ -6,6 +6,8 @@ import deleteOrphanAPI from '../../../services/DeleteOrphanNodes';
 import { UserCredentials } from '../../../types';
 import { useCredentials } from '../../../context/UserCredentials';
 import EntityExtractionSettings from './EnitityExtraction/EntityExtractionSetting';
+import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
+import { OverridableStringUnion } from '@mui/types';
 import { useFileContext } from '../../../context/UsersFiles';
 import DeduplicationTab from './Deduplication';
 import { tokens } from '@neo4j-ndl/base';
@@ -14,10 +16,14 @@ import PostProcessingCheckList from './PostProcessingCheckList';
 export default function GraphEnhancementDialog({
   open,
   onClose,
-  closeSettingModal
+  closeSettingModal,
 }: {
   open: boolean;
   onClose: () => void;
+  showAlert: (
+    alertmsg: string,
+    alerttype: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined
+  ) => void;
   closeSettingModal: () => void;
 }) {
   const { breakpoints } = tokens;
@@ -38,9 +44,9 @@ export default function GraphEnhancementDialog({
     }
   };
   useEffect(() => {
-    closeSettingModal()
-  }, [])
-  
+    closeSettingModal();
+  }, []);
+
   const [activeTab, setactiveTab] = useState<number>(0);
   return (
     <Dialog
@@ -96,7 +102,7 @@ export default function GraphEnhancementDialog({
         </Box>
       </Dialog.Header>
       <Dialog.Content className='flex flex-col n-gap-token- grow w-[90%] mx-auto'>
-        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={0}>
+        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4' value={activeTab} tabId={0}>
           <div className='w-[80%] mx-auto'>
             <EntityExtractionSettings
               view='Tabs'

@@ -9,42 +9,39 @@ export default function ChatModeToggle({ inSidenav = false }) {
   const { chatMode, setchatMode } = useFileContext();
 
   return (
-    <SegmentedControl
-      className={inSidenav ? 'flex-col !h-full !ml-1' : ''}
-      onChange={setchatMode}
-      hasOnlyIcons={true}
-      selected={chatMode}
-      size={'large'}
-    >
-      {ChatModeOptions.map((i, idx) => {
-        return (
-          <Tip key={`insidenav${idx}`} allowedPlacements={inSidenav ? ['left'] : ['bottom']}>
-            <Tip.Trigger>
-              <SegmentedControl.Item
-                className={
-                  idx == ChatModeOptions.length - 1 && inSidenav
-                    ? '!h-[85px]'
-                    : idx == ChatModeOptions.length - 1
-                    ? '!w-[80px]'
-                    : ''
-                }
-                value={i.value}
-              >
-                {i.Icon === 'abc' ? (
-                  <span className={!inSidenav ? 'flex justify-center' : ''}>
-                    <DbmsIcon className='n-size-token-7' />
-                    <span>+</span>
-                    <vector.Icon className='n-size-token-7' />
-                  </span>
-                ) : (
-                  <i.Icon className='n-size-token-7' />
-                )}
-              </SegmentedControl.Item>
-            </Tip.Trigger>
-            <Tip.Content className={!inSidenav ? `!z-[61]` : ''}>{capitalize(i.value)}</Tip.Content>
-          </Tip>
-        );
-      })}
-    </SegmentedControl>
+    <CustomMenu
+      closeHandler={closeHandler}
+      open={open}
+      MenuAnchor={menuAnchor}
+      anchorPortal={anchorPortal}
+      disableBackdrop={disableBackdrop}
+      items={useMemo(
+        () =>
+          chatModes?.map((m) => {
+            return {
+              title: m.includes('+')
+                ? m
+                    .split('+')
+                    .map((s) => capitalize(s))
+                    .join('+')
+                : capitalize(m),
+              onClick: () => {
+                setchatMode(m);
+              },
+              disabledCondition: false,
+              description: (
+                <span>
+                  {chatMode === m && (
+                    <>
+                      <StatusIndicator type={`${chatMode === m ? 'success' : 'unknown'}`} /> Selected
+                    </>
+                  )}
+                </span>
+              ),
+            };
+          }),
+        [chatMode, chatModes]
+      )}
+    ></CustomMenu>
   );
 }

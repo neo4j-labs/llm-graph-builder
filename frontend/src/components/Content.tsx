@@ -1,24 +1,28 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
-import ConnectionModal from './Popups/ConnectionModal/ConnectionModal';
-import LlmDropdown from './Dropdown';
+import { useEffect, useState, useMemo, useRef, Suspense } from 'react';
 import FileTable from './FileTable';
 import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import CustomAlert from './UI/Alert';
 import { extractAPI } from '../utils/FileAPI';
-import { ContentProps, CustomFile, Menuitems, OptionType, UserCredentials, alertStateType } from '../types';
+import {
+  ChildRef,
+  ContentProps,
+  CustomFile,
+  OptionType,
+  UserCredentials,
+  alertStateType,
+  connectionState,
+} from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
-import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
-import ConfirmationDialog from './Popups/LargeFilePopUp/ConfirmationDialog';
-import { buttonCaptions, largeFileSize, taskParam, tooltips } from '../utils/Constants';
+import { batchSize, buttonCaptions, defaultLLM, largeFileSize, llms, tooltips } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
-import SettingModalHOC from '../HOC/SettingModalHOC';
+import DropdownComponent from './Dropdown';
 import GraphViewModal from './Graph/GraphViewModal';
 import { OverridableStringUnion } from '@mui/types';
 import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
@@ -27,8 +31,6 @@ import FallBackDialog from './UI/FallBackDialog';
 import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
 import { tokens } from '@neo4j-ndl/base';
-import axios from 'axios';
-
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 let afterFirstRender = false;
@@ -36,11 +38,14 @@ let afterFirstRender = false;
 const Content: React.FC<ContentProps> = ({
   isLeftExpanded,
   isRightExpanded,
-  openTextSchema,
   isSchema,
   setIsSchema,
-  openOrphanNodeDeletionModal,
+  showEnhancementDialog,
+  toggleEnhancementDialog,
+  closeSettingModal,
 }) => {
+  const { breakpoints } = tokens;
+  const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const [init, setInit] = useState<boolean>(false);
   const [openConnection, setOpenConnection] = useState<connectionState>({
     openPopUp: false,
@@ -53,10 +58,6 @@ const Content: React.FC<ContentProps> = ({
   const { setUserCredentials, userCredentials, connectionStatus, setConnectionStatus } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
-  const [isLargeFile, setIsLargeFile] = useState<boolean>(false);
-  const [showSettingnModal, setshowSettingModal] = useState<boolean>(false);
-  const [openDeleteMenu, setopenDeleteMenu] = useState<boolean>(false);
-  const [deleteAnchor, setdeleteAnchor] = useState<HTMLElement | null>(null);
 
   const {
     filesData,
@@ -87,7 +88,16 @@ const Content: React.FC<ContentProps> = ({
     }
   );
   const childRef = useRef<ChildRef>(null);
-
+  const showAlert = (
+    alertmsg: string,
+    alerttype: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined
+  ) => {
+    setalertDetails({
+      showAlert: true,
+      alertMessage: alertmsg,
+      alertType: alerttype,
+    });
+  };
   useEffect(() => {
     if (!init && !searchParams.has('connectURL')) {
       let session = localStorage.getItem('neo4j.connection');
@@ -135,57 +145,6 @@ const Content: React.FC<ContentProps> = ({
     }
     afterFirstRender = true;
   }, [queue.items.length, userCredentials]);
-
-  useEffect(() => {
-    const storedSchema = localStorage.getItem('isSchema');
-    if (storedSchema !== null) {
-      setIsSchema(JSON.parse(storedSchema));
-    }
-  }, [isSchema]);
-
-  useEffect(() => {
-    const connection = localStorage.getItem('neo4j.connection');
-    if (connection != null) {
-      (async () => {
-        const parsedData = JSON.parse(connection);
-        console.log(parsedData.uri);
-        const response = await connectAPI(parsedData.uri, parsedData.user, parsedData.password, parsedData.database);
-        if (response?.data?.status === 'Success') {
-          localStorage.setItem(
-            'neo4j.connection',
-            JSON.stringify({
-              ...parsedData,
-              userDbVectorIndex: response.data.data.db_vector_dimension,
-            })
-          );
-          if (
-            (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
-              response.data.data.db_vector_dimension == 0) &&
-            !response.data.data.chunks_exists
-          ) {
-            setConnectionStatus(true);
-            setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
-          } else {
-            setOpenConnection({
-              openPopUp: true,
-              chunksExists: response.data.data.chunks_exists as boolean,
-              vectorIndexMisMatch:
-                response.data.data.db_vector_dimension > 0 &&
-                response.data.data.db_vector_dimension != response.data.data.application_dimension,
-              chunksExistsWithDifferentDimension:
-                response.data.data.db_vector_dimension > 0 &&
-                response.data.data.db_vector_dimension != response.data.data.application_dimension &&
-                (response.data.data.chunks_exists ?? true),
-            });
-            setConnectionStatus(false);
-          }
-        } else {
-          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-          setConnectionStatus(false);
-        }
-      })();
-    }
-  }, []);
 
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
@@ -325,34 +284,45 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
-  const handleGenerateGraph = (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => {
-    setIsLargeFile(false);
+  const triggerBatchProcessing = (
+    batch: CustomFile[],
+    selectedFiles: CustomFile[],
+    isSelectedFiles: boolean,
+    newCheck: boolean
+  ) => {
     const data = [];
-    showNormalToast(`Processing ${batch.length} files at a time.`);
+    setalertDetails({
+      showAlert: true,
+      alertMessage: `Processing ${batch.length} files at a time.`,
+      alertType: 'info',
+    });
     for (let i = 0; i < batch.length; i++) {
       if (newCheck) {
-        if (batch[i]?.status === 'New' || batch[i].status === 'Reprocess') {
+        if (batch[i]?.status === 'New') {
           data.push(extractData(batch[i].id, isSelectedFiles, selectedFiles as CustomFile[]));
         }
       } else {
         data.push(extractData(batch[i].id, isSelectedFiles, selectedFiles as CustomFile[]));
       }
-      Promise.allSettled(data).then(async (_) => {
-        setextractLoading(false);
-        await postProcessing(userCredentials as UserCredentials, taskParam);
-      });
-    } else if (selectedFilesFromAllfiles.length && allowLargeFiles) {
-      // @ts-ignore
-      for (let i = 0; i < selectedFilesFromAllfiles.length; i++) {
-        if (selectedFilesFromAllfiles[i]?.status === 'New') {
-          data.push(extractData(selectedFilesFromAllfiles[i].id as string));
-        }
-      }
-      Promise.allSettled(data).then(async (_) => {
-        setextractLoading(false);
-        await postProcessing(userCredentials as UserCredentials, taskParam);
-      });
     }
+    return data;
+  };
+
+  const addFilesToQueue = (remainingFiles: CustomFile[]) => {
+    remainingFiles.forEach((f) => {
+      setFilesData((prev) =>
+        prev.map((pf) => {
+          if (pf.id === f.id) {
+            return {
+              ...pf,
+              status: 'Waiting',
+            };
+          }
+          return pf;
+        })
+      );
+      queue.enqueue(f);
+    });
   };
 
   const scheduleBatchWiseProcess = (selectedRows: CustomFile[], isSelectedFiles: boolean) => {
@@ -444,12 +414,13 @@ const Content: React.FC<ContentProps> = ({
         await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       });
     } else {
-      const selectedNewFiles = childRef.current
-        ?.getSelectedRows()
-        .filter((f) => f.status === 'New' || f.status == 'Reprocess');
+      const selectedNewFiles = childRef.current?.getSelectedRows().filter((f) => f.status === 'New');
       addFilesToQueue(selectedNewFiles as CustomFile[]);
     }
   }
+  const handleClose = () => {
+    setalertDetails((prev) => ({ ...prev, showAlert: false, alertMessage: '' }));
+  };
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
@@ -538,7 +509,7 @@ const Content: React.FC<ContentProps> = ({
   );
 
   const dropdowncheck = useMemo(
-    () => !filesData.some((f) => f.status === 'New' || f.status === 'Waiting' || f.status === 'Reprocess'),
+    () => !filesData.some((f) => f.status === 'New' || f.status === 'Waiting'),
     [filesData]
   );
 
@@ -605,20 +576,45 @@ const Content: React.FC<ContentProps> = ({
     }
     setshowDeletePopUp(false);
   };
-
-  const onClickHandler = () => {
-    const selectedRows = childRef.current?.getSelectedRows();
-    if (selectedRows?.length) {
-      let selectedLargeFiles: CustomFile[] = [];
-      for (let index = 0; index < selectedRows.length; index++) {
-        const parsedData: CustomFile = selectedRows[index];
-        if (
-          parsedData.fileSource === 'local file' &&
-          typeof parsedData.size === 'number' &&
-          (parsedData.status === 'New' || parsedData.status == 'Reprocess') &&
-          parsedData.size > largeFileSize
-        ) {
-          selectedLargeFiles.push(parsedData);
+  useEffect(() => {
+    const connection = localStorage.getItem('neo4j.connection');
+    if (connection != null) {
+      (async () => {
+        const parsedData = JSON.parse(connection);
+        console.log(parsedData.uri);
+        const response = await connectAPI(parsedData.uri, parsedData.user, parsedData.password, parsedData.database);
+        if (response?.data?.status === 'Success') {
+          localStorage.setItem(
+            'neo4j.connection',
+            JSON.stringify({
+              ...parsedData,
+              userDbVectorIndex: response.data.data.db_vector_dimension,
+            })
+          );
+          if (
+            (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
+              response.data.data.db_vector_dimension == 0) &&
+            !response.data.data.chunks_exists
+          ) {
+            setConnectionStatus(true);
+            setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
+          } else {
+            setOpenConnection({
+              openPopUp: true,
+              chunksExists: response.data.data.chunks_exists as boolean,
+              vectorIndexMisMatch:
+                response.data.data.db_vector_dimension > 0 &&
+                response.data.data.db_vector_dimension != response.data.data.application_dimension,
+              chunksExistsWithDifferentDimension:
+                response.data.data.db_vector_dimension > 0 &&
+                response.data.data.db_vector_dimension != response.data.data.application_dimension &&
+                (response.data.data.chunks_exists ?? true),
+            });
+            setConnectionStatus(false);
+          }
+        } else {
+          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+          setConnectionStatus(false);
         }
       }
       if (selectedLargeFiles.length) {
@@ -676,125 +672,45 @@ const Content: React.FC<ContentProps> = ({
   }, []);
 
   const onClickHandler = () => {
-    if (isSchema) {
-      if (selectedRows.length) {
-        let selectedLargeFiles: CustomFile[] = [];
-        selectedRows.forEach((f) => {
-          const parsedData: CustomFile = JSON.parse(f);
-          if (parsedData.fileSource === 'local file') {
-            if (typeof parsedData.size === 'number' && parsedData.status === 'New' && parsedData.size > largeFileSize) {
-              selectedLargeFiles.push(parsedData);
-            }
-          }
-        });
-        // @ts-ignore
-        if (selectedLargeFiles.length) {
-          setIsLargeFile(true);
-          setshowConfirmationModal(true);
-          handleGenerateGraph(false, []);
-        } else {
-          setIsLargeFile(false);
-          handleGenerateGraph(true, filesData);
+    if (childRef.current?.getSelectedRows().length) {
+      let selectedLargeFiles: CustomFile[] = [];
+      childRef.current?.getSelectedRows().forEach((f) => {
+        const parsedData: CustomFile = f;
+        if (
+          parsedData.fileSource === 'local file' &&
+          typeof parsedData.size === 'number' &&
+          parsedData.status === 'New' &&
+          parsedData.size > largeFileSize
+        ) {
+          selectedLargeFiles.push(parsedData);
         }
-      } else if (filesData.length) {
-        const largefiles = filesData.filter((f) => {
-          if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
-            return true;
-          }
-          return false;
-        });
-        const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
-        const stringified = selectAllNewFiles.reduce((accu, f) => {
-          const key = JSON.stringify(f);
-          // @ts-ignore
-          accu[key] = true;
-          return accu;
-        }, {});
-        setRowSelection(stringified);
-        if (largefiles.length) {
-          setIsLargeFile(true);
-          setshowConfirmationModal(true);
-          handleGenerateGraph(false, []);
-        } else {
-          setIsLargeFile(false);
-          handleGenerateGraph(true, filesData);
-        }
+      });
+      if (selectedLargeFiles.length) {
+        setshowConfirmationModal(true);
+      } else {
+        handleGenerateGraph(childRef.current?.getSelectedRows().filter((f) => f.status === 'New'));
       }
-    } else {
-      if (selectedRows.length) {
-        let selectedLargeFiles: CustomFile[] = [];
-        selectedRows.forEach((f) => {
-          const parsedData: CustomFile = JSON.parse(f);
-          if (parsedData.fileSource === 'local file') {
-            if (typeof parsedData.size === 'number' && parsedData.status === 'New' && parsedData.size > largeFileSize) {
-              selectedLargeFiles.push(parsedData);
-            }
-          }
-        });
+    } else if (filesData.length) {
+      const largefiles = filesData.filter((f) => {
+        if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
+          return true;
+        }
+        return false;
+      });
+      const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
+      const stringified = selectAllNewFiles.reduce((accu, f) => {
+        const key = f.id;
         // @ts-ignore
-        if (selectedLargeFiles.length) {
-          setIsLargeFile(true);
-        } else {
-          setIsLargeFile(false);
-        }
-      } else if (filesData.length) {
-        const largefiles = filesData.filter((f) => {
-          if (typeof f.size === 'number' && f.status === 'New' && f.size > largeFileSize) {
-            return true;
-          }
-          return false;
-        });
-        const selectAllNewFiles = filesData.filter((f) => f.status === 'New');
-        const stringified = selectAllNewFiles.reduce((accu, f) => {
-          const key = JSON.stringify(f);
-          // @ts-ignore
-          accu[key] = true;
-          return accu;
-        }, {});
-        setRowSelection(stringified);
-        if (largefiles.length) {
-          setIsLargeFile(true);
-        } else {
-          setIsLargeFile(false);
-        }
+        accu[key] = true;
+        return accu;
+      }, {});
+      setRowSelection(stringified);
+      if (largefiles.length) {
+        setshowConfirmationModal(true);
+      } else {
+        handleGenerateGraph(filesData.filter((f) => f.status === 'New'));
       }
-      setshowSettingModal(true);
     }
-  };
-
-  const deleteMenuItems: Menuitems[] = useMemo(
-    () => [
-      {
-        title: `Delete Files ${selectedfileslength > 0 ? `(${selectedfileslength})` : ''}`,
-        onClick: () => setshowDeletePopUp(true),
-        disabledCondition: !selectedfileslength,
-        description: tooltips.deleteFile,
-      },
-      {
-        title: 'Delete Orphan Nodes',
-        onClick: () => openOrphanNodeDeletionModal(),
-        disabledCondition: false,
-      },
-    ],
-    [selectedfileslength]
-  );
-
-  const handleContinue = () => {
-    if (!isLargeFile) {
-      handleGenerateGraph(true, filesData);
-      setshowSettingModal(false);
-    } else {
-      setshowSettingModal(false);
-      setshowConfirmationModal(true);
-      handleGenerateGraph(false, []);
-    }
-    setIsSchema(true);
-    setalertDetails({
-      showAlert: true,
-      alertType: 'success',
-      alertMessage: 'Schema is set successfully',
-    });
-    localStorage.setItem('isSchema', JSON.stringify(true));
   };
 
   return (
@@ -837,16 +753,13 @@ const Content: React.FC<ContentProps> = ({
           view='contentView'
         ></DeletePopUp>
       )}
-      {showSettingnModal && (
-        <SettingModalHOC
-          settingView='contentView'
-          onClose={() => setshowSettingModal(false)}
-          onContinue={handleContinue}
-          open={showSettingnModal}
-          openTextSchema={openTextSchema}
-          isSchema={isSchema}
-          setIsSchema={setIsSchema}
-        />
+      {showEnhancementDialog && (
+        <GraphEnhancementDialog
+          open={showEnhancementDialog}
+          onClose={toggleEnhancementDialog}
+          closeSettingModal={closeSettingModal}
+          showAlert={showAlert}
+        ></GraphEnhancementDialog>
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row' flexWrap='wrap'>
@@ -941,8 +854,15 @@ const Content: React.FC<ContentProps> = ({
           justifyContent='space-between'
           flexDirection={isTablet ? 'column' : 'row'}
         >
-          <LlmDropdown onSelect={handleDropdownChange} />
-          <Flex flexDirection='row' gap='4' className='self-end'>
+          <DropdownComponent
+            onSelect={handleDropdownChange}
+            options={llms ?? ['']}
+            placeholder='Select LLM Model'
+            defaultValue={defaultLLM}
+            view='ContentView'
+            isDisabled={false}
+          />
+          <Flex flexDirection='row' gap='4' className='self-end' flexWrap='wrap'>
             <ButtonWithToolTip
               text={tooltips.generateGraph}
               placement='top'
@@ -976,22 +896,16 @@ const Content: React.FC<ContentProps> = ({
             >
               {buttonCaptions.exploreGraphWithBloom}
             </ButtonWithToolTip>
-            <CustomMenu
-              open={openDeleteMenu}
-              closeHandler={useCallback(() => {
-                setopenDeleteMenu(false);
-              }, [])}
-              items={deleteMenuItems}
-              MenuAnchor={deleteAnchor}
-              anchorOrigin={useMemo(() => ({ horizontal: 'left', vertical: 'bottom' }), [])}
-              transformOrigin={useMemo(() => ({ horizontal: 'right', vertical: 'top' }), [])}
-            ></CustomMenu>
-            <Button
-              label='Delete Menu trigger'
-              onClick={(e) => {
-                setdeleteAnchor(e.currentTarget);
-                setopenDeleteMenu(true);
-              }}
+            <ButtonWithToolTip
+              text={
+                !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
+              }
+              placement='top'
+              onClick={() => setshowDeletePopUp(true)}
+              disabled={!selectedfileslength}
+              className='ml-0.5'
+              label='Delete Files'
+              size={isTablet ? 'small' : 'medium'}
             >
               <TrashIconOutline className='n-size-token-7' />
               Delete <TrashIconOutline></TrashIconOutline>

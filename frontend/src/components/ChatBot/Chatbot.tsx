@@ -12,23 +12,17 @@ import { useCredentials } from '../../context/UserCredentials';
 import { chatBotAPI } from '../../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../../context/UsersFiles';
-import InfoModal from './Info/InfoModal';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import IconButtonWithToolTip from '../UI/IconButtonToolTip';
 import { buttonCaptions, tooltips } from '../../utils/Constants';
 import useSpeechSynthesis from '../../hooks/useSpeech';
 import ButtonWithToolTip from '../UI/ButtonWithToolTip';
+import FallBackDialog from '../UI/FallBackDialog';
+const InfoModal = lazy(() => import('./ChatInfoModal'));
 
 const Chatbot: FC<ChatbotProps> = (props) => {
-  const {
-    messages: listMessages,
-    setMessages: setListMessages,
-    isLoading,
-    isFullScreen,
-    clear,
-    connectionStatus,
-  } = props;
+  const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, clear } = props;
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
@@ -425,7 +419,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             placement='top'
             text={`Query Documents in ${chatMode} mode`}
             type='submit'
-            disabled={loading || !connectionStatus}
+            disabled={loading}
             size='medium'
           >
             {buttonCaptions.ask} {selectedRows != undefined && selectedRows.length > 0 && `(${selectedRows.length})`}
