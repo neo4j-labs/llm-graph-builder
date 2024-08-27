@@ -1,14 +1,10 @@
 import { createContext, useState, useContext, FunctionComponent, ReactNode } from 'react';
-import { UserCredentials } from '../types';
+import { ContextProps, UserCredentials } from '../types';
 
 type Props = {
   children: ReactNode;
 };
 
-interface ContextProps {
-  userCredentials: UserCredentials | null;
-  setUserCredentials: (UserCredentials: UserCredentials) => void;
-}
 export const UserConnection = createContext<ContextProps>({
   userCredentials: null,
   setUserCredentials: () => null,

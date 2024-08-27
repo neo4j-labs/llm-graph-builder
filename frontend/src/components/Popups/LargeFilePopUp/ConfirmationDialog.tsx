@@ -10,14 +10,16 @@ export default function ConfirmationDialog({
   onClose,
   loading,
   extractHandler,
+  selectedRows,
 }: {
   largeFiles: CustomFile[];
   open: boolean;
   onClose: () => void;
   loading: boolean;
-  extractHandler: (allowLargeFiles: boolean, selectedFilesFromAllfiles: CustomFile[]) => void;
+  extractHandler: (selectedFilesFromAllfiles: CustomFile[]) => void;
+  selectedRows: CustomFile[];
 }) {
-  const { setSelectedRows, filesData, setRowSelection, selectedRows } = useFileContext();
+  const { setSelectedRows, filesData, setRowSelection } = useFileContext();
   const [checked, setChecked] = useState<string[]>([...largeFiles.map((f) => f.id)]);
   const handleToggle = (ischecked: boolean, id: string) => {
     const newChecked = [...checked];
@@ -25,7 +27,7 @@ export default function ConfirmationDialog({
       const file = filesData.find((f) => f.id === id);
       newChecked.push(id);
       setSelectedRows((prev) => {
-        const fileindex = prev.findIndex((f) => JSON.parse(f).id === id);
+        const fileindex = prev.findIndex((f) => f === id);
         if (fileindex == -1) {
           return [...prev, JSON.stringify(file)];
         }
@@ -53,7 +55,7 @@ export default function ConfirmationDialog({
         return copiedobj;
       });
       setSelectedRows((prev) => {
-        const filteredrows = prev.filter((f) => JSON.parse(f).id != id);
+        const filteredrows = prev.filter((f) => f != id);
         return filteredrows;
       });
     }
@@ -73,7 +75,6 @@ export default function ConfirmationDialog({
       onClose={() => {
         setChecked([]);
         onClose();
-        extractHandler(false, []);
       }}
     >
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
@@ -87,7 +88,7 @@ export default function ConfirmationDialog({
         <Button
           onClick={() => {
             if (selectedRows.length) {
-              extractHandler(true, []);
+              extractHandler(selectedRows);
             } else {
               const tobeProcessFiles: CustomFile[] = [];
               checked.forEach((id: string) => {
@@ -96,7 +97,7 @@ export default function ConfirmationDialog({
                   tobeProcessFiles.push(file);
                 }
               });
-              extractHandler(true, tobeProcessFiles);
+              extractHandler(tobeProcessFiles);
             }
             setChecked([]);
             onClose();

@@ -1,6 +1,5 @@
-import axios from 'axios';
-import { url } from '../utils/Utils';
 import { UserCredentials } from '../types';
+import api from '../API/Index';
 
 export const chatBotAPI = async (
   userCredentials: UserCredentials,
@@ -22,7 +21,7 @@ export const chatBotAPI = async (
     formData.append('mode', mode);
     formData.append('document_names', JSON.stringify(document_names));
     const startTime = Date.now();
-    const response = await axios.post(`${url()}/chat_bot`, formData, {
+    const response = await api.post(`/chat_bot`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -44,7 +43,7 @@ export const clearChatAPI = async (userCredentials: UserCredentials, session_id:
     formData.append('userName', userCredentials?.userName ?? '');
     formData.append('password', userCredentials?.password ?? '');
     formData.append('session_id', session_id);
-    const response = await axios.post(`${url()}/clear_chat_bot`, formData, {
+    const response = await api.post(`/clear_chat_bot`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

@@ -46,13 +46,13 @@ class ParallelComponent:
         t=datetime.now()
         print("Vector embeddings start time",t)
         # retrieval_query="""
-        # MATCH (node)-[:PART_OF]->(d:Document)
+        # MATCH (node)-[:__PART_OF__]->(d:Document)
         # WITH d, apoc.text.join(collect(node.text),"\n----\n") as text, avg(score) as score
         # RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)} as metadata
         # """
         retrieval_query="""
-        WITH node, score, apoc.text.join([ (node)-[:HAS_ENTITY]->(e) | head(labels(e)) + ": "+ e.id],", ") as entities
-        MATCH (node)-[:PART_OF]->(d:Document)
+        WITH node, score, apoc.text.join([ (node)-[:__HAS_ENTITY__]->(e) | head(labels(e)) + ": "+ e.id],", ") as entities
+        MATCH (node)-[:__PART_OF__]->(d:__Document__)
         WITH d, apoc.text.join(collect(node.text + "\n" + entities),"\n----\n") as text, avg(score) as score
         RETURN text, score, {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)} as metadata
         """

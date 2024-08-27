@@ -31,7 +31,13 @@ export default function GenericModal({
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   return (
-    <Dialog open={open} onClose={closeHandler}>
+    <Dialog
+      open={open}
+      onClose={() => {
+        setIsLoading(false);
+        closeHandler();
+      }}
+    >
       <Dialog.Header>
         <Box className='flex flex-row pb-6 items-center mb-2'>
           <img src={Neo4jDataImportFromCloud} style={{ width: 95, height: 95, marginRight: 10 }} loading='lazy' />
@@ -67,17 +73,17 @@ export default function GenericModal({
         </Tabs>
         {APP_SOURCES != undefined && APP_SOURCES.includes('youtube') && (
           <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={0}>
-            <YoutubeInput setIsLoading={setIsLoading} />
+            <YoutubeInput loading={isLoading} setIsLoading={setIsLoading} />
           </Tabs.TabPanel>
         )}
         {APP_SOURCES != undefined && APP_SOURCES.includes('wiki') && (
           <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={1}>
-            <WikipediaInput setIsLoading={setIsLoading} />
+            <WikipediaInput loading={isLoading} setIsLoading={setIsLoading} />
           </Tabs.TabPanel>
         )}
         {APP_SOURCES != undefined && APP_SOURCES.includes('web') && (
           <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={2}>
-            <WebInput setIsLoading={setIsLoading} />
+            <WebInput loading={isLoading} setIsLoading={setIsLoading} />
           </Tabs.TabPanel>
         )}
       </Dialog.Header>

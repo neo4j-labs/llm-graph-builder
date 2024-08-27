@@ -8,7 +8,7 @@ match (chunk:Chunk) where chunk.id IN $chunksIds
 MATCH (chunk)-[:PART_OF]->(d:Document)
 CALL {WITH chunk
 MATCH (chunk)-[:HAS_ENTITY]->(e) 
-MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk&!Document) 
+MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk &! Document) 
 UNWIND rels as r
 RETURN collect(distinct r) as rels
 }
@@ -79,7 +79,7 @@ def process_chunk_data(chunk_data):
             for chunk in record["chunks"]:
                 chunk.update(doc_properties)
                 if chunk["fileSource"] == "youtube":
-                    chunk["start_time"] = time_to_seconds(chunk["start_time"])
+                    chunk["start_time"] = min(time_to_seconds(chunk["start_time"]),time_to_seconds(chunk["end_time"]))
                     chunk["end_time"] = time_to_seconds(chunk["end_time"])
                 chunk_properties.append(chunk)
 

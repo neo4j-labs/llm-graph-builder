@@ -8,7 +8,8 @@ from PyPDF2 import PdfReader
 import io
 from google.oauth2.credentials import Credentials
 import time
-from .local_file import load_document_content, get_pages_with_page_numbers
+import nltk
+from .local_file import load_document_content
 
 def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, creds):
     storage_client = storage.Client(project=gcs_project_id, credentials=creds)
@@ -44,7 +45,8 @@ def load_pdf(file_path):
     return PyMuPDFLoader(file_path)
 
 def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token=None):
-
+  nltk.download('punkt')
+  nltk.download('averaged_perceptron_tagger')
   if gcs_bucket_folder is not None:
     if gcs_bucket_folder.endswith('/'):
       blob_name = gcs_bucket_folder+gcs_blob_filename
@@ -59,8 +61,6 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
     storage_client = storage.Client(project=gcs_project_id)
     loader = GCSFileLoader(project_name=gcs_project_id, bucket=gcs_bucket_name, blob=blob_name, loader_func=load_document_content)
     pages = loader.load()
-    if (gcs_blob_filename.split('.')[-1]).lower() != 'pdf':
-      pages = get_pages_with_page_numbers(pages)
   else:
     creds= Credentials(access_token)
     storage_client = storage.Client(project=gcs_project_id, credentials=creds)

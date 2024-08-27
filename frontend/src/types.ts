@@ -89,6 +89,7 @@ export interface CustomAlertProps {
 }
 export interface DataComponentProps {
   openModal: () => void;
+  isLargeDesktop?: boolean;
 }
 
 export interface S3ModalProps {
@@ -99,11 +100,6 @@ export interface GCSModalProps {
   hideModal: () => void;
   open: boolean;
   openGCSModal: () => void;
-}
-export interface ConnectionModalProps {
-  open: boolean;
-  setOpenConnection: Dispatch<SetStateAction<boolean>>;
-  setConnectionStatus: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface SourceNode {
@@ -140,10 +136,20 @@ export interface SideNavProps {
   setIsRightExpanded?: Dispatch<SetStateAction<boolean>>;
   messages?: Messages[];
   clearHistoryData?: boolean;
+  toggles3Modal: () => void;
+  toggleGCSModal: () => void;
+  toggleGenericModal: () => void;
+  setIsleftExpanded?: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface DrawerProps {
   isExpanded: boolean;
+  shows3Modal: boolean;
+  showGCSModal: boolean;
+  showGenericModal: boolean;
+  toggleS3Modal: () => void;
+  toggleGCSModal: () => void;
+  toggleGenericModal: () => void;
 }
 
 export interface ContentProps {
@@ -155,8 +161,8 @@ export interface ContentProps {
   isSchema?: boolean;
   setIsSchema: Dispatch<SetStateAction<boolean>>;
   showEnhancementDialog: boolean;
-  setshowEnhancementDialog: Dispatch<SetStateAction<boolean>>;
-  closeSettingModal:()=>void
+  toggleEnhancementDialog: () => void;
+  closeSettingModal: () => void;
 }
 
 export interface FileTableProps {
@@ -164,6 +170,7 @@ export interface FileTableProps {
   connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
   onInspect: (id: string) => void;
+  handleGenerateGraph: () => void;
 }
 
 export interface CustomModalProps {
@@ -231,6 +238,7 @@ export interface Messages {
   mode?: string;
   cypher_query?: string;
   graphonly_entities?: [];
+  error?: string;
 }
 
 export type ChatbotProps = {
@@ -250,12 +258,12 @@ export interface GraphViewModalProps {
   inspectedName?: string;
   setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
   viewPoint: string;
-  nodeValues?: Node[];
-  relationshipValues?: Relationship[];
+  nodeValues?: ExtendedNode[];
+  relationshipValues?: ExtendedRelationship[];
   selectedRows?: CustomFile[] | undefined;
 }
 
-export type GraphType = 'Document' | 'Entities' | 'Chunk';
+export type GraphType = 'Entities' | 'DocumentChunk';
 
 export type PartialLabelNode = Partial<Node> & {
   labels: string;
@@ -336,13 +344,13 @@ export type alertStateType = {
 export type Scheme = Record<string, string>;
 
 export type LabelCount = Record<string, number>;
-interface NodeType extends Partial<Node> {
-  labels?: string[];
-}
+
 export interface LegendChipProps {
   scheme: Scheme;
-  title: string;
-  nodes: NodeType[];
+  label: string;
+  type: 'node' | 'relationship' | 'propertyKey';
+  count: number;
+  onClick: (e: React.MouseEvent<HTMLElement>) => void;
 }
 export interface FileContextProviderProps {
   children: ReactNode;
@@ -352,13 +360,14 @@ export interface orphanNode {
   elementId: string;
   description: string;
   labels: string[];
-  embedding: null | string;
+  embedding?: null | string;
 }
 export interface orphanNodeProps {
   documents: string[];
   chunkConnections: number;
   e: orphanNode;
   checked?: boolean;
+  similar?: orphanNode[];
 }
 export interface labelsAndTypes {
   labels: string[];
@@ -372,14 +381,33 @@ export interface commonserverresponse {
   error?: string;
   message?: string | orphanTotalNodes;
   file_name?: string;
-  data?: labelsAndTypes | labelsAndTypes[] | uploadData | orphanNodeProps[];
+  data?: labelsAndTypes | labelsAndTypes[] | uploadData | orphanNodeProps[] | dupNodes[];
 }
-
+export interface dupNodeProps {
+  id: string;
+  elementId: string;
+  labels: string[];
+  embedding?: null | string;
+}
+export interface dupNodes {
+  e: dupNodeProps;
+  similar: dupNodeProps[];
+  documents: string[];
+  chunkConnections: number;
+}
+export interface selectedDuplicateNodes {
+  firstElementId: string;
+  similarElementIds: string[];
+}
 export interface ScehmaFromText extends Partial<commonserverresponse> {
   data: labelsAndTypes;
 }
+
 export interface ServerData extends Partial<commonserverresponse> {
   data: labelsAndTypes[];
+}
+export interface duplicateNodesData extends Partial<commonserverresponse> {
+  data: dupNodes[];
 }
 export interface OrphanNodeResponse extends Partial<commonserverresponse> {
   data: orphanNodeProps[];
@@ -405,6 +433,7 @@ export interface chatInfoMessage extends Partial<Messages> {
   mode: string;
   cypher_query?: string;
   graphonly_entities: [];
+  error: string;
 }
 
 export interface eventResponsetypes {
@@ -438,7 +467,7 @@ export interface CHATINFO_RESPONSE {
   status: string;
   message: string;
   error?: string;
-  node: Node[];
+  node: ExtendedNode[];
   relationships: Relationship[];
   data?: any;
 }
@@ -549,25 +578,73 @@ export type GraphStatsLabels = Record<
   }
 >;
 
-type NodeStyling = {
-  backgroundColor: string;
-  borderColor: string;
-  textColor: string;
-  caption: string;
-  diameter: string;
-};
+export interface ExtendedNode extends Node {
+  labels: string[];
+  properties: {
+    fileName?: string;
+    [key: string]: any;
+  };
+}
 
-type RelationStyling = {
-  fontSize: string;
-  lineColor: string;
-  textColorExternal: string;
-  textColorInternal: string;
-  caption: string;
-  padding: string;
-  width: string;
-};
+export interface ExtendedRelationship extends Relationship {
+  count: number;
+}
+export interface connectionState {
+  openPopUp: boolean;
+  chunksExists: boolean;
+  vectorIndexMisMatch: boolean;
+  chunksExistsWithDifferentDimension: boolean;
+}
+export interface Message {
+  type: 'success' | 'info' | 'warning' | 'danger' | 'unknown';
+  content: string | React.ReactNode;
+}
 
-export type GraphStyling = {
-  node: Record<string, Partial<NodeStyling>>;
-  relationship: Record<string, Partial<RelationStyling>>;
-};
+export interface ConnectionModalProps {
+  open: boolean;
+  setOpenConnection: Dispatch<SetStateAction<connectionState>>;
+  setConnectionStatus: Dispatch<SetStateAction<boolean>>;
+  isVectorIndexMatch: boolean;
+  chunksExistsWithoutEmbedding: boolean;
+  chunksExistsWithDifferentEmbedding: boolean;
+}
+export interface ReusableDropdownProps extends DropdownProps {
+  options: string[] | OptionType[];
+  placeholder?: string;
+  defaultValue?: string;
+  children?: React.ReactNode;
+  view?: 'ContentView' | 'GraphView';
+  isDisabled: boolean;
+  value?: OptionType;
+}
+export interface ChildRef {
+  getSelectedRows: () => CustomFile[];
+}
+export interface IconProps {
+  closeChatBot: () => void;
+  deleteOnClick?: () => void;
+  messages: Messages[];
+}
+export interface S3File {
+  fileName: string;
+  fileSize: number;
+  url: string;
+}
+export interface GraphViewButtonProps {
+  nodeValues?: ExtendedNode[];
+  relationshipValues?: ExtendedRelationship[];
+}
+export interface DrawerChatbotProps {
+  isExpanded: boolean;
+  clearHistoryData: boolean;
+  messages: Messages[];
+}
+
+export interface ContextProps {
+  userCredentials: UserCredentials | null;
+  setUserCredentials: (UserCredentials: UserCredentials) => void;
+}
+export interface MessageContextType {
+  messages: Messages[] | [];
+  setMessages: Dispatch<SetStateAction<Messages[]>>;
+}
