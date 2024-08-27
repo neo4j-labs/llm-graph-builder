@@ -298,6 +298,7 @@ def processing_source(uri, userName, password, database, model, file_name, pages
   graphDb_data_Access = graphDBdataAccess(graph)
 
   result = graphDb_data_Access.get_current_status_document_node(file_name)
+  print(result)
   logging.info("Break down file into chunks")
   bad_chars = ['"', "\n", "'"]
   for i in range(0,len(pages)):

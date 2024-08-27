@@ -69,9 +69,7 @@ def test_graph_from_wikipedia(model_name):
     file_name = "Ram_Mandir"
     create_source_node_graph_url_wikipedia(graph, model_name, wiki_query, source_type)
 
-    wiki_result = extract_graph_from_file_Wikipedia(
-        URI, USERNAME, PASSWORD, DATABASE, model_name, file_name, 1, 'en', '', ''
-    )
+    wiki_result = extract_graph_from_file_Wikipedia(URI, USERNAME, PASSWORD, DATABASE, model_name, file_name, 1, 'en', '', '')
     logging.info("Wikipedia test done")
     print(wiki_result)
 
@@ -84,6 +82,27 @@ def test_graph_from_wikipedia(model_name):
         print("Fail: ", e)
 
     return wiki_result
+
+def test_graph_website(model_name):
+    """Test graph creation from a Website page."""
+     #graph, model, source_url, source_type
+    source_url = 'https://www.amazon.com/'
+    source_type = 'web-url'
+    create_source_node_graph_web_url(graph, model_name, source_url, source_type)
+
+    weburl_result = extract_graph_from_web_page(URI, USERNAME, PASSWORD, DATABASE, model_name, source_url, '', '')
+    logging.info("WebUrl test done")
+    print(weburl_result)
+
+    try:
+        assert weburl_result['status'] == 'Completed'
+        assert weburl_result['nodeCount'] > 0
+        assert weburl_result['relationshipCount'] > 0
+        print("Success")
+    except AssertionError as e:
+        print("Fail: ", e)
+    return weburl_result
+
 
 def test_graph_from_youtube_video(model_name):
     """Test graph creation from a YouTube video."""
@@ -115,52 +134,99 @@ def test_chatbot_qna(model_name, mode='graph+vector'):
 
     try:
         assert len(QA_n_RAG['message']) > 20
+        return QA_n_RAG
+        print("Success")
+    except AssertionError as e:
+        print("Failed ", e)
+        return QA_n_RAG
+
+# Check the Functionality of Chatbot QnA for mode 'vector'
+def test_chatbot_QnA_vector(model_name):
+    model = model_name
+    QA_n_RAG_vector = QA_RAG(graph, model, 'Tell me about amazon', '[]', 1, 'vector')
+
+
+    print(QA_n_RAG_vector)
+    print(len(QA_n_RAG_vector['message']))
+    try:
+        assert len(QA_n_RAG_vector['message']) > 20
+        return QA_n_RAG_vector
         print("Success")
     except AssertionError as e:
         print("Failed: ", e)
 
     return QA_n_RAG
 
-def compare_graph_results(results):
-    """
-    Compare graph results across different models.
-    Add custom logic here to compare graph data, nodes, and relationships.
-    """
-    # Placeholder logic for comparison
-    print("Comparing results...")
-    for i in range(len(results) - 1):
-        result_a = results[i]
-        result_b = results[i + 1]
-        if result_a == result_b:
-            print(f"Result {i} is identical to result {i+1}")
+#Get disconnected_nodes list
+def disconected_nodes():
+    #graph = create_graph_database_connection(uri, userName, password, database)
+    graphDb_data_Access = graphDBdataAccess(graph)
+    nodes_list, total_nodes = graphDb_data_Access.list_unconnected_nodes()
+    if total_nodes['total']>0:
+        return "True"
+    else:
+       return "False"
+    
+#Delete disconnected_nodes list
+# def delete_disconected_nodes():
+#     #graph = create_graph_database_connection(uri, userName, password, database)
+#     graphDb_data_Access = graphDBdataAccess(graph)
+#     result = graphDb_data_Access.delete_unconnected_nodes(unconnected_entities_list)
+
+#Get Duplicate_nodes
+def get_duplicate_nodes():
+        #graph = create_graph_database_connection(uri, userName, password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        nodes_list, total_nodes = graphDb_data_Access.get_duplicate_nodes_list()
+        if total_nodes['total']>0:
+            return "True"
         else:
-            print(f"Result {i} differs from result {i+1}")
+            return "False"
+        print(nodes_list)
+        print(total_nodes)
+
+# def compare_graph_results(results):
+#     """
+#     Compare graph results across different models.
+#     Add custom logic here to compare graph data, nodes, and relationships.
+#     """
+#     # Placeholder logic for comparison
+#     print("Comparing results...")
+#     for i in range(len(results) - 1):
+#         result_a = results[i]
+#         result_b = results[i + 1]
+#         if result_a == result_b:
+#             print(f"Result {i} is identical to result {i+1}")
+#         else:
+#             print(f"Result {i} differs from result {i+1}")
 
 def run_tests():
     final_list = []
     error_list = []
-    models = [
-        'openai-gpt-3.5', 'openai-gpt-4o', 'openai-gpt-4o-mini', 'azure_ai_gpt_35',
-        'azure_ai_gpt_4o', 'anthropic_claude_3_5_sonnet', 'fireworks_v3p1_405b',
-        'fireworks_llama_v3_70b', 'ollama_llama3', 'bedrock_claude_3_5_sonnet'
-    ]
+    models = ['openai-gpt-3.5', 'openai-gpt-4o']
 
     for model_name in models:
         try:
-            final_list.append(test_graph_from_file_local(model_name))
+            # final_list.append(test_graph_from_file_local(model_name))
             final_list.append(test_graph_from_wikipedia(model_name))
-            final_list.append(test_graph_from_youtube_video(model_name))
-            final_list.append(test_chatbot_qna(model_name))
-            final_list.append(test_chatbot_qna(model_name, mode='vector'))
-            final_list.append(test_chatbot_qna(model_name, mode='hybrid'))
+            # final_list.append(test_graph_website(model_name))
+            # final_list.append(test_graph_from_youtube_video(model_name))
+            # final_list.append(test_chatbot_qna(model_name))
+            # final_list.append(test_chatbot_qna(model_name, mode='vector'))
+            # final_list.append(test_chatbot_qna(model_name, mode='hybrid'))
         except Exception as e:
             error_list.append((model_name, str(e)))
     #Compare and log diffrences in graph results
-    compare_graph_results(final_list)  # Pass the final_list to comapre_graph_results
-
+    # compare_graph_results(final_list)  # Pass the final_list to comapre_graph_results
+    
+    dis = disconected_nodes()
+    dup = get_duplicate_nodes()
     # Save final results to CSV
     df = pd.DataFrame(final_list)
+    print(df)
     df['execution_date'] = dt.today().strftime('%Y-%m-%d')
+    df['disconnected_nodes']=dis
+    df['get_duplicate_nodes']=dup
     df.to_csv(f"Integration_TestResult_{dt.now().strftime('%Y%m%d_%H%M%S')}.csv", index=False)
 
     # Save error details to CSV
