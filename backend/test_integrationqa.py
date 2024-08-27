@@ -126,7 +126,7 @@ def test_graph_from_youtube_video(model_name):
 
     return youtube_result
 
-def test_chatbot_qna(model_name, mode='graph+vector'):
+def test_chatbot_qna(model_name, mode='vector'):
     """Test chatbot QnA functionality for different modes."""
     QA_n_RAG = QA_RAG(graph, model_name, 'Tell me about amazon', '[]', 1, mode)
     print(QA_n_RAG)
@@ -139,24 +139,7 @@ def test_chatbot_qna(model_name, mode='graph+vector'):
     except AssertionError as e:
         print("Failed ", e)
         return QA_n_RAG
-
-# Check the Functionality of Chatbot QnA for mode 'vector'
-def test_chatbot_QnA_vector(model_name):
-    model = model_name
-    QA_n_RAG_vector = QA_RAG(graph, model, 'Tell me about amazon', '[]', 1, 'vector')
-
-
-    print(QA_n_RAG_vector)
-    print(len(QA_n_RAG_vector['message']))
-    try:
-        assert len(QA_n_RAG_vector['message']) > 20
-        return QA_n_RAG_vector
-        print("Success")
-    except AssertionError as e:
-        print("Failed: ", e)
-
-    return QA_n_RAG
-
+    
 #Get disconnected_nodes list
 def disconected_nodes():
     #graph = create_graph_database_connection(uri, userName, password, database)
@@ -182,8 +165,6 @@ def get_duplicate_nodes():
             return "True"
         else:
             return "False"
-        print(nodes_list)
-        print(total_nodes)
 
 # def compare_graph_results(results):
 #     """
@@ -208,12 +189,12 @@ def run_tests():
     for model_name in models:
         try:
             # final_list.append(test_graph_from_file_local(model_name))
-            final_list.append(test_graph_from_wikipedia(model_name))
-            # final_list.append(test_graph_website(model_name))
+            # final_list.append(test_graph_from_wikipedia(model_name))
+            final_list.append(test_graph_website(model_name))
             # final_list.append(test_graph_from_youtube_video(model_name))
-            # final_list.append(test_chatbot_qna(model_name))
+            final_list.append(test_chatbot_qna(model_name))
             # final_list.append(test_chatbot_qna(model_name, mode='vector'))
-            # final_list.append(test_chatbot_qna(model_name, mode='hybrid'))
+            # final_list.append(test_chatbot_qna(model_name, mode='graph+vector+fulltext'))
         except Exception as e:
             error_list.append((model_name, str(e)))
     #Compare and log diffrences in graph results
