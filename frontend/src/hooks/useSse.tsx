@@ -67,7 +67,6 @@ export default function useServerSideEvent(
         }
         return prev + 1;
       });
-      queue.remove(fileName);
     } else if (eventSourceRes.status === 'Failed') {
       setFilesData((prevfiles) => {
         return prevfiles.map((curfile) => {
