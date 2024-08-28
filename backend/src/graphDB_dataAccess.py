@@ -89,7 +89,7 @@ class graphDBdataAccess:
             if obj_source_node.is_cancelled is not None:
                 params['is_cancelled'] = obj_source_node.is_cancelled
 
-            if obj_source_node.processed_chunk is not None and obj_source_node.processed_chunk != 0:
+            if obj_source_node.processed_chunk is not None :
                 params['processed_chunk'] = obj_source_node.processed_chunk
             
             if obj_source_node.retry_condition is not None :
