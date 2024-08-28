@@ -151,7 +151,6 @@ export default function EntityExtractionSetting({
   const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
   const [defaultExamples, setdefaultExamples] = useState<OptionType[]>([]);
 
-
   useEffect(() => {
     const parsedData = schemaExamples.reduce((accu: OptionType[], example) => {
       const examplevalues: OptionType = {
@@ -232,7 +231,7 @@ export default function EntityExtractionSetting({
       JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] })
     );
     localStorage.setItem('selectedSchemas', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
-    showNormalToast(`Successfully Removed the Schema settings`)
+    showNormalToast(`Successfully Removed the Schema settings`);
     if (view === 'Dialog' && onClose != undefined) {
       onClose();
     }

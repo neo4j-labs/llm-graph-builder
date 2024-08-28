@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef, Suspense } from 'react';
+import { useEffect, useState, useMemo, useRef, Suspense, useReducer } from 'react';
 import FileTable from './FileTable';
 import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
@@ -64,6 +64,7 @@ const Content: React.FC<ContentProps> = ({
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [retryFile, setRetryFile] = useState<string>('');
   const [retryLoading, setRetryLoading] = useState<boolean>(false);
+  const [showRetryPopup, toggleRetryPopup] = useReducer((state) => !state, false);
   const [alertStateForRetry, setAlertStateForRetry] = useState<BannerAlertProps>({
     showAlert: false,
     alertType: 'neutral',
@@ -307,11 +308,7 @@ const Content: React.FC<ContentProps> = ({
             const { message, fileName } = error;
             queue.remove(fileName);
             const errorMessage = error.message;
-            setalertDetails({
-              showAlert: true,
-              alertType: 'error',
-              alertMessage: message,
-            });
+            showErrorToast(message);
             setFilesData((prevfiles) =>
               prevfiles.map((curfile) => {
                 if (curfile.name == fileName) {
@@ -516,7 +513,13 @@ const Content: React.FC<ContentProps> = ({
       }
       setFilesData((prev) => {
         return prev.map((f) => {
-          return f.name === filename ? { ...f, status: 'Retry' } : f;
+          return f.name === filename
+            ? {
+                ...f,
+                status: 'Retry',
+                processingProgress: retryoption.includes('start_from_beginning') ? 0 : f.processingProgress,
+              }
+            : f;
         });
       });
       setAlertStateForRetry({
@@ -524,6 +527,9 @@ const Content: React.FC<ContentProps> = ({
         alertMessage: response.data.message as string,
         alertType: 'success',
       });
+      setTimeout(() => {
+        toggleRetryPopup();
+      }, 2000);
     } catch (error) {
       setRetryLoading(false);
       if (error instanceof Error) {
@@ -665,31 +671,29 @@ const Content: React.FC<ContentProps> = ({
 
   return (
     <>
-      {retryFile.trim() != '' && (
-        <RetryConfirmationDialog
-          retryLoading={retryLoading}
-          retryHandler={retryHandler}
-          fileId={retryFile}
-          onClose={() => {
-            setRetryFile('');
-            setAlertStateForRetry({
-              showAlert: false,
-              alertMessage: '',
-              alertType: 'neutral',
-            });
-            setRetryLoading(false);
-          }}
-          open={true}
-          onBannerClose={() => {
-            setAlertStateForRetry({
-              showAlert: false,
-              alertMessage: '',
-              alertType: 'neutral',
-            });
-          }}
-          alertStatus={alertStateForRetry}
-        />
-      )}
+      <RetryConfirmationDialog
+        retryLoading={retryLoading}
+        retryHandler={retryHandler}
+        fileId={retryFile}
+        onClose={() => {
+          setRetryFile('');
+          setAlertStateForRetry({
+            showAlert: false,
+            alertMessage: '',
+            alertType: 'neutral',
+          });
+          setRetryLoading(false);
+        }}
+        open={showRetryPopup}
+        onBannerClose={() => {
+          setAlertStateForRetry({
+            showAlert: false,
+            alertMessage: '',
+            alertType: 'neutral',
+          });
+        }}
+        alertStatus={alertStateForRetry}
+      />
       {showConfirmationModal && filesForProcessing.length && (
         <Suspense fallback={<FallBackDialog />}>
           <ConfirmationDialog
@@ -800,6 +804,7 @@ const Content: React.FC<ContentProps> = ({
           }}
           onRetry={(id) => {
             setRetryFile(id);
+            toggleRetryPopup();
           }}
           ref={childRef}
           handleGenerateGraph={processWaitingFilesOnRefresh}

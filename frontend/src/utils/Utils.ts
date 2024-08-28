@@ -1,7 +1,16 @@
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import type { Relationship } from '@neo4j-nvl/base';
-import { CustomFile, Entity, ExtendedNode, ExtendedRelationship, GraphType, Messages, Scheme, SourceNode, UserCredentials } from '../types';
-
+import {
+  CustomFile,
+  Entity,
+  ExtendedNode,
+  ExtendedRelationship,
+  GraphType,
+  Messages,
+  Scheme,
+  SourceNode,
+  UserCredentials,
+} from '../types';
 
 // Get the Url
 export const url = () => {
@@ -270,7 +279,7 @@ export const calculateProcessedCount = (prev: number, batchSize: number) =>
 
 export const isProcessingFileValid = (item: SourceNode, userCredentials: UserCredentials) => {
   return item.status === 'Processing' && item.fileName != undefined && userCredentials && userCredentials.database;
-}
+};
 export const sortAlphabetically = (a: Relationship, b: Relationship) => {
   const captionOne = a.caption?.toLowerCase() || '';
   const captionTwo = b.caption?.toLowerCase() || '';

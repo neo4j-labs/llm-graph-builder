@@ -37,7 +37,6 @@ export interface OptionType {
   readonly label: string;
 }
 
-
 export type UserCredentials = {
   uri: string;
   userName: string;
@@ -45,7 +44,7 @@ export type UserCredentials = {
   database: string;
 } & { [key: string]: any };
 
-export interface SourceNode extends Omit<CustomFileBase,'relationshipCount'> {
+export interface SourceNode extends Omit<CustomFileBase, 'relationshipCount'> {
   fileName: string;
   fileSize: number;
   fileType: string;
@@ -61,7 +60,7 @@ export interface SourceNode extends Omit<CustomFileBase,'relationshipCount'> {
   retry_condition?: string;
 }
 
-export type ExtractParams = Pick<CustomFile,'wiki_query'|'model'|'source_url'|'language'|'access_token'>&{
+export type ExtractParams = Pick<CustomFile, 'wiki_query' | 'model' | 'source_url' | 'language' | 'access_token'> & {
   file?: File;
   aws_access_key_id?: string | null;
   aws_secret_access_key?: string | null;
@@ -75,7 +74,7 @@ export type ExtractParams = Pick<CustomFile,'wiki_query'|'model'|'source_url'|'l
   allowedRelationship?: string[];
   gcs_project_id?: string;
   retry_condition: string;
-} & { [key: string]: any }
+} & { [key: string]: any };
 
 export type UploadParams = {
   file: Blob;
@@ -106,11 +105,9 @@ export interface S3ModalProps {
   hideModal: () => void;
   open: boolean;
 }
-export interface GCSModalProps extends Omit<S3ModalProps,''>{
+export interface GCSModalProps extends Omit<S3ModalProps, ''> {
   openGCSModal: () => void;
 }
-
-
 
 export interface SideNavProps {
   isExpanded: boolean;
@@ -235,8 +232,7 @@ export type ChatbotProps = {
   clear?: boolean;
   isFullScreen?: boolean;
 };
-export interface WikipediaModalTypes extends Omit<S3ModalProps,''> {
-}
+export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
 
 export interface GraphViewModalProps {
   open: boolean;
@@ -325,7 +321,7 @@ export type alertStateType = {
   alertType: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined;
   alertMessage: string;
 };
-export interface BannerAlertProps extends Omit<alertStateType,'alertType'>{
+export interface BannerAlertProps extends Omit<alertStateType, 'alertType'> {
   alertType: BannerType;
 }
 export type Scheme = Record<string, string>;
@@ -423,9 +419,9 @@ export interface chatInfoMessage extends Partial<Messages> {
   error: string;
 }
 
-export interface eventResponsetypes extends Omit<SourceNode,'total_chunks'|'processingTime'> {
+export interface eventResponsetypes extends Omit<SourceNode, 'total_chunks' | 'processingTime'> {
   total_chunks: number | null;
-  processingTime:number
+  processingTime: number;
 }
 
 export type Nullable<Type> = Type | null;

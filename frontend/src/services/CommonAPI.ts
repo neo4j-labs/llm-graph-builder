@@ -15,9 +15,7 @@ const apiCall = async (
       formData.append(key, commonParams[key]);
     }
     for (const key in additionalParams) {
-      if (additionalParams.hasOwnProperty(key)) {
-      formData.append(key, additionalParams[key]);
-      }
+        formData.append(key, additionalParams[key]);
     }
     const response: AxiosResponse = await api({
       method: method,
