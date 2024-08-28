@@ -99,7 +99,6 @@ generate a natural language summary of the provided information:
 Summary:"""  
 
 
-
 def get_gds_driver(uri, username, password, database):
     try:
         gds = GraphDataScience(
@@ -214,9 +213,9 @@ def process_community(community, community_chain):
         logging.error(f"Failed to process community {community.get('communityId', 'unknown')}: {e}")
         raise
 
-def create_community_summaries(graph, model):
+def create_community_summaries(gds, model):
     try:
-        community_info_list = graph.query(GET_COMMUNITY_INFO)
+        community_info_list = gds.run_cypher(GET_COMMUNITY_INFO)
         community_chain = get_community_chain(model)
         
         summaries = []
@@ -229,28 +228,28 @@ def create_community_summaries(graph, model):
                 except Exception as e:
                     logging.error(f"Failed to retrieve result for a community: {e}")
 
-        graph.query(STORE_COMMUNITY_SUMMARIES, params={"data": summaries})
+        gds.run_cypher(STORE_COMMUNITY_SUMMARIES, params={"data": summaries})
     except Exception as e:
         logging.error(f"Failed to create community summaries: {e}")
         raise
 
 
-def create_community_properties(graph, model):
+def create_community_properties(gds, model):
     try:
         # Create community levels
-        graph.query(CREATE_COMMUNITY_LEVELS)
+        gds.run_cypher(CREATE_COMMUNITY_LEVELS)
         logging.info("Successfully created community levels.")
 
         # Create community ranks
-        graph.query(CREATE_COMMUNITY_RANKS)
+        gds.run_cypher(CREATE_COMMUNITY_RANKS)
         logging.info("Successfully created community ranks.")
 
         # Create community weights
-        graph.query(CREATE_COMMUNITY_WEIGHTS)
+        gds.run_cypher(CREATE_COMMUNITY_WEIGHTS)
         logging.info("Successfully created community weights.")
 
         # Create community summaries
-        create_community_summaries(graph, model)
+        create_community_summaries(gds, model)
         logging.info("Successfully created community summaries.")
     except Exception as e:
         logging.error(f"Failed to create community properties: {e}")
@@ -263,8 +262,8 @@ def create_communities(uri, username, password, database,model):
         write_communities_sucess = write_communities(gds, graph_project)
         if write_communities_sucess:
             logging.info("Applying community constraint to the graph.")
-            graph.query(CREATE_COMMUNITY_CONSTRAINT)
-            create_community_properties(graph,model)
+            gds.run_cypher(CREATE_COMMUNITY_CONSTRAINT)
+            create_community_properties(gds,model)
             logging.info("Communities creation process completed successfully.")
         else:
             logging.warning("Failed to write communities. Constraint was not applied.")
