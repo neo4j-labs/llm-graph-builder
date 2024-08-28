@@ -28,9 +28,8 @@ import FallBackDialog from './UI/FallBackDialog';
 import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
 import { tokens } from '@neo4j-ndl/base';
-import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
-import retry from '../services/retry';
-import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/toasts';
+import axios from 'axios';
+
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -218,6 +217,7 @@ const Content: React.FC<ContentProps> = ({
   };
 
   const extractHandler = async (fileItem: CustomFile, uid: string) => {
+    queue.remove(fileItem.name as string);
     try {
       setFilesData((prevfiles) =>
         prevfiles.map((curfile) => {
@@ -291,24 +291,45 @@ const Content: React.FC<ContentProps> = ({
         });
       }
     } catch (err: any) {
-      const error = JSON.parse(err.message);
-      if (Object.keys(error).includes('fileName')) {
-        const { message } = error;
-        const { fileName } = error;
-        const errorMessage = error.message;
-        showErrorToast(message);
-        setFilesData((prevfiles) =>
-          prevfiles.map((curfile) => {
-            if (curfile.name == fileName) {
-              return {
-                ...curfile,
-                status: 'Failed',
-                errorMessage,
-              };
-            }
-            return curfile;
-          })
-        );
+      if (err instanceof Error) {
+        try {
+          const error = JSON.parse(err.message);
+          if (Object.keys(error).includes('fileName')) {
+            setProcessedCount((prev) => {
+              if (prev == batchSize) {
+                return batchSize - 1;
+              }
+              return prev + 1;
+            });
+            const { message, fileName } = error;
+            queue.remove(fileName);
+            const errorMessage = error.message;
+            setalertDetails({
+              showAlert: true,
+              alertType: 'error',
+              alertMessage: message,
+            });
+            setFilesData((prevfiles) =>
+              prevfiles.map((curfile) => {
+                if (curfile.name == fileName) {
+                  return { ...curfile, status: 'Failed', errorMessage };
+                }
+                return curfile;
+              })
+            );
+          } else {
+            console.error('Unexpected error format:', error);
+          }
+        } catch (parseError) {
+          if (axios.isAxiosError(err)) {
+            const axiosErrorMessage = err.response?.data?.message || err.message;
+            console.error('Axios error occurred:', axiosErrorMessage);
+          } else {
+            console.error('An unexpected error occurred:', err.message);
+          }
+        }
+      } else {
+        console.error('An unknown error occurred:', err);
       }
     }
   };
@@ -413,7 +434,7 @@ const Content: React.FC<ContentProps> = ({
         setextractLoading(false);
         await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       });
-    } else if (queueFiles && !queue.isEmpty()) {
+    } else if (queueFiles && !queue.isEmpty() && processingFilesCount < batchSize) {
       data = scheduleBatchWiseProcess(queue.items, true);
       Promise.allSettled(data).then(async (_) => {
         setextractLoading(false);

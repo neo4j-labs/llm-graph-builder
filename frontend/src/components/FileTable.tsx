@@ -644,8 +644,21 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   NodesCount: item?.nodeCount ?? 0,
                   processing: item?.processingTime ?? 'None',
                   relationshipCount: item?.relationshipCount ?? 0,
-                  status: waitingFile ? 'Waiting' : getFileSourceStatus(item),
-                  model: item?.model ?? model,
+                  status: waitingFile
+                    ? 'Waiting'
+                    : item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId
+                    ? item?.status
+                    : item?.fileSource === 'local file'
+                    ? item?.status
+                    : item?.status === 'Completed' || item.status === 'Failed'
+                    ? item?.status
+                    : item?.fileSource === 'Wikipedia' ||
+                      item?.fileSource === 'youtube' ||
+                      item?.fileSource === 'gcs bucket' ||
+                      item?.fileSource === 'web-url'
+                    ? item?.status
+                    : 'N/A',
+                  model: waitingFile ? waitingFile.model : item?.model ?? model,
                   id: !waitingFile ? uuidv4() : waitingFile.id,
                   source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
                   fileSource: item?.fileSource ?? 'None',
@@ -668,10 +681,52 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               }
             });
             res.data.data.forEach((item) => {
-              if (isProcessingFileValid(item, userCredentials as UserCredentials)) {
-                item.fileSize < largeFileSize
-                  ? handleSmallFile(item, userCredentials as UserCredentials)
-                  : handleLargeFile(item, userCredentials as UserCredentials);
+              if (
+                item.status === 'Processing' &&
+                item.fileName != undefined &&
+                userCredentials &&
+                userCredentials.database
+              ) {
+                if (item?.fileSize < largeFileSize) {
+                  subscribe(
+                    item.fileName,
+                    userCredentials?.uri,
+                    userCredentials?.userName,
+                    userCredentials?.database,
+                    userCredentials?.password,
+                    updatestatus,
+                    updateProgress
+                  ).catch((error: AxiosError) => {
+                    // @ts-ignore
+                    const errorfile = decodeURI(error?.config?.url?.split('?')[0].split('/').at(-1));
+                    setProcessedCount((prev) => {
+                      if (prev == batchSize) {
+                        return batchSize - 1;
+                      }
+                      return prev + 1;
+                    });
+                    setFilesData((prevfiles) => {
+                      return prevfiles.map((curfile) => {
+                        if (curfile.name == errorfile) {
+                          return {
+                            ...curfile,
+                            status: 'Failed',
+                          };
+                        }
+                        return curfile;
+                      });
+                    });
+                  });
+                } else {
+                  triggerStatusUpdateAPI(
+                    item.fileName,
+                    userCredentials.uri,
+                    userCredentials.userName,
+                    userCredentials.password,
+                    userCredentials.database,
+                    updateStatusForLargeFiles
+                  );
+                }
               }
             });
           } else {
@@ -747,6 +802,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             return curfile;
           })
         );
+        setProcessedCount((prev) => {
+          if (prev == batchSize) {
+            return batchSize - 1;
+          }
+          return prev + 1;
+        });
+        queue.remove(fileName);
       } else {
         let errorobj = { error: res.data.error, message: res.data.message, fileName };
         throw new Error(JSON.stringify(errorobj));

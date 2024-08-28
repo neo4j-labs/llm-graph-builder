@@ -277,33 +277,3 @@ as text,entities
 RETURN text, avg_score as score, {{length:size(text), source: COALESCE( CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkdetails: chunkdetails}} AS metadata
 """
 YOUTUBE_CHUNK_SIZE_SECONDS = 60
-
-QUERY_TO_GET_CHUNKS = """
-            MATCH (d:Document)
-            WHERE d.fileName = $filename
-            WITH d
-            OPTIONAL MATCH (d)<-[:PART_OF|FIRST_CHUNK]-(c:Chunk)
-            RETURN c.id as id, c.text as text, c.position as position 
-            """
-            
-QUERY_TO_DELETE_EXISTING_ENTITIES = """
-                                MATCH (d:Document {fileName:$filename})
-                                WITH d
-                                MATCH (d)<-[:PART_OF]-(c:Chunk)
-                                WITH d,c
-                                MATCH (c)-[:HAS_ENTITY]->(e)
-                                WHERE NOT EXISTS { (e)<-[:HAS_ENTITY]-()<-[:PART_OF]-(d2:Document) }
-                                DETACH DELETE e
-                                """   
-
-QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION="""
-                              MATCH (d:Document)
-                              WHERE d.fileName = $filename
-                              WITH d
-                              MATCH (c:Chunk) WHERE c.embedding is null 
-                              RETURN c.id as id,c.position as position 
-                              ORDER BY c.position LIMIT 1
-                              """                                
-                                
-                                
-                                         

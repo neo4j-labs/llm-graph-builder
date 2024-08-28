@@ -58,13 +58,17 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [selectedSchemas, setSelectedSchemas] = useState<readonly OptionType[]>([]);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [chatMode, setchatMode] = useState<string>('graph+vector');
+  const [chatMode, setchatMode] = useState<string>('graph+vector+fulltext');
   const [isSchema, setIsSchema] = useState<boolean>(false);
   const [showTextFromSchemaDialog, setShowTextFromSchemaDialog] = useState<showTextFromSchemaDialogType>({
     triggeredFrom: '',
     show: false,
   });
-  const [postProcessingTasks, setPostProcessingTasks] = useState<string[]>([]);
+  const [postProcessingTasks, setPostProcessingTasks] = useState<string[]>([
+    'materialize_text_chunk_similarities',
+    'enable_hybrid_search_and_fulltext_search_in_bloom',
+    'materialize_entity_similarities',
+  ]);
   const [processedCount, setProcessedCount] = useState<number>(0);
   useEffect(() => {
     if (selectedNodeLabelstr != null) {

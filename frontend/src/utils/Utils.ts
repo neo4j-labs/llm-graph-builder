@@ -1,6 +1,6 @@
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import type { Relationship } from '@neo4j-nvl/base';
-import { CustomFile, Entity, ExtendedNode, GraphType, Messages, Scheme, SourceNode, UserCredentials } from '../types';
+import { Entity, ExtendedNode, ExtendedRelationship, GraphType, Messages, Scheme } from '../types';
 
 // Get the Url
 export const url = () => {
@@ -130,7 +130,7 @@ export function extractPdfFileName(url: string): string {
   return decodedFileName;
 }
 
-export const processGraphData = (neoNodes: ExtendedNode[], neoRels: Relationship[]) => {
+export const processGraphData = (neoNodes: ExtendedNode[], neoRels: ExtendedRelationship[]) => {
   const schemeVal: Scheme = {};
   let iterator = 0;
   const labels: string[] = neoNodes.map((f: any) => f.labels);
@@ -240,32 +240,9 @@ export const parseEntity = (entity: Entity) => {
 export const titleCheck = (title: string) => {
   return title === 'Chunk' || title === 'Document';
 };
-export const getFileSourceStatus = (item: SourceNode) => {
-  if (item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId) {
-    return item?.status;
-  }
-  if (item?.fileSource === 'local file') {
-    return item?.status;
-  }
-  if (item?.status === 'Completed' || item.status === 'Failed' || item.status === 'Retry') {
-    return item?.status;
-  }
-  if (
-    item?.fileSource === 'Wikipedia' ||
-    item?.fileSource === 'youtube' ||
-    item?.fileSource === 'gcs bucket' ||
-    item?.fileSource === 'web-url'
-  ) {
-    return item?.status;
-  }
-  return 'N/A';
-};
-export const isFileCompleted = (waitingFile: CustomFile, item: SourceNode) =>
-  waitingFile && item.status === 'Completed';
 
-export const calculateProcessedCount = (prev: number, batchSize: number) =>
-  (prev === batchSize ? batchSize - 1 : prev + 1);
-
-export const isProcessingFileValid = (item: SourceNode, userCredentials: UserCredentials) => {
-  return item.status === 'Processing' && item.fileName != undefined && userCredentials && userCredentials.database;
+export const sortAlphabetically = (a: Relationship, b: Relationship) => {
+  const captionOne = a.caption?.toLowerCase() || '';
+  const captionTwo = b.caption?.toLowerCase() || '';
+  return captionOne.localeCompare(captionTwo);
 };
