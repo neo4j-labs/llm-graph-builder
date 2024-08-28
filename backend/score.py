@@ -244,7 +244,7 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
 
         if "create_communities" in tasks:
             model = "openai-gpt-4o"
-            await asyncio.to_thread(create_communities, uri, userName, password, database,graph,model)
+            await asyncio.to_thread(create_communities, uri, userName, password, database,model)
             josn_obj = {'api_name': 'post_processing/create_communities', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logger.log_struct(josn_obj)
             logging.info(f'created communities')
