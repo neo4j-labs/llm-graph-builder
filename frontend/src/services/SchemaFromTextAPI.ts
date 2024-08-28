@@ -1,6 +1,5 @@
-import axios from 'axios';
-import { url } from '../utils/Utils';
 import { ScehmaFromText } from '../types';
+import api from '../API/Index';
 
 export const getNodeLabelsAndRelTypesFromText = async (model: string, inputText: string, isSchemaText: boolean) => {
   const formData = new FormData();
@@ -9,7 +8,7 @@ export const getNodeLabelsAndRelTypesFromText = async (model: string, inputText:
   formData.append('is_schema_description_checked', JSON.stringify(isSchemaText));
 
   try {
-    const response = await axios.post<ScehmaFromText>(`${url()}/populate_graph_schema`, formData);
+    const response = await api.post<ScehmaFromText>(`/populate_graph_schema`, formData);
     return response;
   } catch (error) {
     console.log(error);
