@@ -7,7 +7,7 @@ export default function useServerSideEvent(
   alertHandler: (inMinutes: boolean, minutes: number, filename: string) => void,
   errorHandler: (filename: string) => void
 ) {
-  const { setFilesData, setProcessedCount, queue } = useFileContext();
+  const { setFilesData, setProcessedCount } = useFileContext();
   function updateStatusForLargeFiles(eventSourceRes: eventResponsetypes) {
     const {
       fileName,
