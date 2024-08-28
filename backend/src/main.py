@@ -315,7 +315,9 @@ def processing_source(uri, userName, password, database, model, file_name, pages
         if len(chunkId_chunkDoc_list) <= select_chunks_upto:
           select_chunks_upto = len(chunkId_chunkDoc_list)
         selected_chunks = chunkId_chunkDoc_list[i:select_chunks_upto]
-        result = graphDb_data_Access.get_current_status_document_node(file_name)
+        
+      logging.info(f"select_chunks_upto={select_chunks_upto}, update_graph_chunk_processed={update_graph_chunk_processed}, selected_chunks={len(selected_chunks)}")
+      result = graphDb_data_Access.get_current_status_document_node(file_name)
         is_cancelled_status = result[0]['is_cancelled']
         logging.info(f"Value of is_cancelled : {result[0]['is_cancelled']}")
         if bool(is_cancelled_status) == True:
@@ -331,9 +333,14 @@ def processing_source(uri, userName, password, database, model, file_name, pages
           obj_source_node.file_name = file_name
           obj_source_node.updated_at = end_time
           obj_source_node.processing_time = processed_time
-          obj_source_node.node_count = node_count
-          obj_source_node.processed_chunk = select_chunks_upto
-          obj_source_node.relationship_count = rel_count
+          if retry_condition is not None:
+            node_count = result[0]['nodeCount']+node_count
+              rel_count = result[0]['relationshipCount']+rel_count
+            if retry_condition == "start_from_last_processed_position":
+              select_chunks_upto = result[0]['processed_chunk']+update_graph_chunk_processed
+        obj_source_node.processed_chunk = select_chunks_upto
+          obj_source_node.node_count = node_count   
+        obj_source_node.relationship_count = rel_count
           graphDb_data_Access.update_source_node(obj_source_node)
       
       result = graphDb_data_Access.get_current_status_document_node(file_name)
@@ -443,15 +450,24 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition):
       
       
     if retry_condition == "start_from_beginning":
+      logging.info(f"Retry : start_from_beginning with chunks {len(chunkId_chunkDoc_list)}")
       return len(chunks), chunkId_chunkDoc_list
     
-    elif retry_condition == "delete_entities_and_start_from_beginning" :       
-      graph.query(QUERY_TO_DELETE_EXISTING_ENTITIES, params={"filename":file_name})
+    elif retry_condition == "delete_entities_and_start_from_beginning" :   
+      logging.info(f"Retry : delete_entities_and_start_from_beginning with chunks with chunks {len(chunkId_chunkDoc_list)}")    
+      result = graph.query(QUERY_TO_DELETE_EXISTING_ENTITIES, params={"filename":file_name})
+      logging.info(f"result = {result}")
       return len(chunks), chunkId_chunkDoc_list
     
     elif retry_condition ==  "start_from_last_processed_position":
+      logging.info(f"Retry : start_from_last_processed_position")
       starting_chunk = graph.query(QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION, params={"filename":file_name})
-      print(f"last prcessed index {starting_chunk}")
+      my_list = chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
+      print(f"last prcessed index {starting_chunk}, chunk list length : {len(my_list)}")
+      
+      my_list = chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
+      print(f"last prcessed index {starting_chunk}, chunk list length : {len(my_list)}")
+      
       return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
   
 def get_source_list_from_graph(uri,userName,password,db_name=None):
