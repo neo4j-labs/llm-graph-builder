@@ -274,7 +274,6 @@ def processing_source(uri, userName, password, database, model, file_name, pages
   total_chunks, chunkId_chunkDoc_list = get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition)
 
   result = graphDb_data_Access.get_current_status_document_node(file_name)
-  print(result)
   logging.info("Break down file into chunks")
   bad_chars = ['"', "\n", "'"]
   for i in range(0,len(pages)):
@@ -342,7 +341,6 @@ def processing_source(uri, userName, password, database, model, file_name, pages
           obj_source_node.node_count = node_count   
         obj_source_node.relationship_count = rel_count
           graphDb_data_Access.update_source_node(obj_source_node)
-      
       result = graphDb_data_Access.get_current_status_document_node(file_name)
       is_cancelled_status = result[0]['is_cancelled']
       if bool(is_cancelled_status) == True:
