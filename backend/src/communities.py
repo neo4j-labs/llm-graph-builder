@@ -8,13 +8,37 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm 
 
 
-COMMUNITY_PROJECT_NAME = "communities"
-NODE_PROJECTION = "__Entity__"
+COMMUNITY_PROJECTION_NAME = "communities"
+NODE_PROJECTION = "!Chunk&!Document&!__Community__"
 MAX_WORKERS = 10
+
+
+CREATE_COMMUNITY_GRAPH_PROJECTION = """
+MATCH (source:{node_projection})
+OPTIONAL MATCH (source)-[]->(target:{node_projection})
+WITH source, target, count(*) AS weight
+WITH gds.graph.project(
+    {project_name},
+    source,
+    target,
+    {{
+        relationshipProperties: {{ weight: weight }}
+    }},
+    {{
+        undirectedRelationshipTypes: ['*']
+    }}
+) AS g
+RETURN
+    g.graphName AS graph_name,
+    g.nodeCount AS nodes,
+    g.relationshipCount AS rels
+"""
+
 
 CREATE_COMMUNITY_CONSTRAINT = "CREATE CONSTRAINT IF NOT EXISTS FOR (c:__Community__) REQUIRE c.id IS UNIQUE;"
 CREATE_COMMUNITY_LEVELS = """
-MATCH (e:`__Entity__`)
+MATCH (e:!Chunk&!Document&!__Community__)
+WHERE e.communities is NOT NULL
 UNWIND range(0, size(e.communities) - 1 , 1) AS index
 CALL {
   WITH e, index
@@ -39,7 +63,7 @@ CALL {
 RETURN count(*)
 """
 CREATE_COMMUNITY_RANKS = """
-MATCH (c:__Community__)<-[:IN_COMMUNITY*]-(:__Entity__)<-[:MENTIONS]-(d:Document)
+MATCH (c:__Community__)<-[:IN_COMMUNITY*]-(:!Chunk&!Document&!__Community__)<-[:MENTIONS]-(d:Document)
 WITH c, count(distinct d) AS rank
 SET c.community_rank = rank;
 """
@@ -50,8 +74,7 @@ WITH n, count(distinct c) AS chunkCount
 SET n.weight = chunkCount"""
 
 GET_COMMUNITY_INFO = """
-MATCH (c:`__Community__`)<-[:IN_COMMUNITY*]-(e:__Entity__)
-WHERE c.level IN [0,1,4]
+MATCH (c:`__Community__`)<-[:IN_COMMUNITY*]-(e:!Chunk&!Document&!__Community__)
 WITH c, collect(e ) AS nodes
 WHERE size(nodes) > 1
 CALL apoc.path.subgraphAll(nodes[0], {
@@ -90,39 +113,43 @@ def get_gds_driver(uri, username, password, database):
         logging.error(f"Failed to create GDS driver: {e}")
         raise
 
-def create_community_graph_project(gds, project_name=COMMUNITY_PROJECT_NAME, node_projection=NODE_PROJECTION):
+def create_community_graph_projection(gds, project_name=COMMUNITY_PROJECTION_NAME, node_projection=NODE_PROJECTION):
     try:
         existing_projects = gds.graph.list()
         project_exists = existing_projects["graphName"].str.contains(project_name, regex=False).any()
         
         if project_exists:
-            logging.info(f"Project '{project_name}' already exists. Dropping it.")
+            logging.info(f"Projection '{project_name}' already exists. Dropping it.")
             gds.graph.drop(project_name)
         
         logging.info(f"Creating new graph project '{project_name}'.")
-        graph_project, result = gds.graph.project(
-            project_name, 
-            node_projection,
-            {
-                "_ALL_": {
-                    "type": "*",
-                    "orientation": "UNDIRECTED",
-                    "properties": {
-                        "weight": {
-                            "property": "*", 
-                            "aggregation": "COUNT"
-                        }
-                    }
-                }
-            }
-        )
-        logging.info(f"Graph project '{project_name}' created successfully.")
-        return graph_project, result
+        # graph_project, result = gds.graph.project(
+        #     project_name, 
+        #     node_projection,
+        #     {
+        #         "_ALL_": {
+        #             "type": "*",
+        #             "orientation": "UNDIRECTED",
+        #             "properties": {
+        #                 "weight": {
+        #                     "property": "*", 
+        #                     "aggregation": "COUNT"
+        #                 }
+        #             }
+        #         }
+        #     }
+        # )
+        projection_query = CREATE_COMMUNITY_GRAPH_PROJECTION.format(node_projection=node_projection,project_name=project_name)
+        graph_projection_result = gds.run_cypher(projection_query)
+        projection_result = graph_projection_result.to_dict(orient="records")[0]
+        logging.info(f"Graph projection '{projection_result['graph_name']}' created successfully with {projection_result['nodes']} nodes and {projection_result['rels']} relationships.")
+        graph_project = gds.graph.get(projection_result['graph_name'])
+        return graph_project
     except Exception as e:
         logging.error(f"Failed to create community graph project: {e}")
         raise
 
-def write_communities(gds, graph_project, project_name=COMMUNITY_PROJECT_NAME):
+def write_communities(gds, graph_project, project_name=COMMUNITY_PROJECTION_NAME):
     try:
         logging.info(f"Writing communities to the graph project '{project_name}'.")
         gds.leiden.write(
@@ -231,10 +258,10 @@ def create_community_properties(graph, model):
         logging.error(f"Failed to create community properties: {e}")
         raise
 
-def create_communities(uri, username, password, database,graph,model):
+def create_communities(uri, username, password, database,model):
     try:
         gds = get_gds_driver(uri, username, password, database)
-        graph_project, result = create_community_graph_project(gds)
+        graph_project = create_community_graph_projection(gds)
         write_communities_sucess = write_communities(gds, graph_project)
         if write_communities_sucess:
             logging.info("Applying community constraint to the graph.")
