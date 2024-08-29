@@ -518,8 +518,8 @@ const Content: React.FC<ContentProps> = ({
                 ...f,
                 status: 'Retry',
                 processingProgress: retryoption.includes('start_from_beginning') ? 0 : f.processingProgress,
-                NodesCount:retryoption===RETRY_OPIONS[1]?0:f.NodesCount,
-                relationshipCount:retryoption===RETRY_OPIONS[1]?0:f.relationshipCount,
+                NodesCount: retryoption === RETRY_OPIONS[1] ? 0 : f.NodesCount,
+                relationshipCount: retryoption === RETRY_OPIONS[1] ? 0 : f.relationshipCount,
               }
             : f;
         });

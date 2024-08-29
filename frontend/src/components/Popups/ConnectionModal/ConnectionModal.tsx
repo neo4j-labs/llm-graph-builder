@@ -266,9 +266,9 @@ export default function ConnectionModal({
       }
     }
     setTimeout(() => {
-     if(connectionMessage?.type!="danger"){
-      setMessage({ type: 'unknown', content: '' })
-     }
+      if (connectionMessage?.type != 'danger') {
+        setMessage({ type: 'unknown', content: '' });
+      }
       setPassword('');
     }, 3000);
   };

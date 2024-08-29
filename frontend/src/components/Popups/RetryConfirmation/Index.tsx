@@ -34,9 +34,10 @@ export default function RetryConfirmationDialog({
           </Banner>
         )}
         <Flex>
-          {RetryOptionsForFile.map((o) => {
+          {RetryOptionsForFile.map((o, i) => {
             return (
               <Radio
+                key={`${o}${i}`}
                 onChange={(e) => {
                   setFilesData((prev) => {
                     return prev.map((f) => {
@@ -50,6 +51,11 @@ export default function RetryConfirmationDialog({
                   .split('_')
                   .map((s) => capitalize(s))
                   .join(' ')}
+                onKeyDown={(e) => {
+                  if (e.code === 'Enter') {
+                    retryHandler(file?.name as string, file?.retryOption as string);
+                  }
+                }}
               />
             );
           })}

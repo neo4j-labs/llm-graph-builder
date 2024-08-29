@@ -167,6 +167,19 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
     reset();
     setStatus('unknown');
   }, []);
+  const handleKeyPress: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
+    if (e.code === 'Enter') {
+      e.preventDefault(); //
+      // @ts-ignore
+      const {form} = e.target;
+      const index = Array.prototype.indexOf.call(form, e.target);
+      if (index + 1 < form.elements.length) {
+        form.elements[index + 1].focus();
+      } else {
+        submitHandler();
+      }
+    }
+  };
   return (
     <CustomModal
       open={open}
@@ -178,47 +191,52 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
       submitLabel={buttonCaptions.submit}
     >
       <div className='w-full inline-block'>
-        <TextInput
-          id='project id'
-          value={projectId}
-          disabled={false}
-          label='Project ID'
-          aria-label='Project ID'
-          placeholder=''
-          autoFocus
-          fluid
-          required
-          onChange={(e) => {
-            setprojectId(e.target.value);
-          }}
-        ></TextInput>
-        <TextInput
-          id='bucketname'
-          value={bucketName}
-          disabled={false}
-          label='Bucket Name'
-          aria-label='Bucket Name'
-          placeholder=''
-          autoFocus
-          fluid
-          required
-          onChange={(e) => {
-            setbucketName(e.target.value);
-          }}
-        />
-        <TextInput
-          id='foldername'
-          value={folderName}
-          disabled={false}
-          label='Folder Name'
-          aria-label='Folder Name'
-          helpText='Optional'
-          placeholder=''
-          fluid
-          onChange={(e) => {
-            setFolderName(e.target.value);
-          }}
-        />
+        <form>
+          <TextInput
+            id='project id'
+            value={projectId}
+            disabled={false}
+            label='Project ID'
+            aria-label='Project ID'
+            placeholder=''
+            autoFocus
+            fluid
+            required
+            onChange={(e) => {
+              setprojectId(e.target.value);
+            }}
+            onKeyDown={handleKeyPress}
+          ></TextInput>
+          <TextInput
+            id='bucketname'
+            value={bucketName}
+            disabled={false}
+            label='Bucket Name'
+            aria-label='Bucket Name'
+            placeholder=''
+            autoFocus
+            fluid
+            required
+            onChange={(e) => {
+              setbucketName(e.target.value);
+            }}
+            onKeyDown={handleKeyPress}
+          />
+          <TextInput
+            id='foldername'
+            value={folderName}
+            disabled={false}
+            label='Folder Name'
+            aria-label='Folder Name'
+            helpText='Optional'
+            placeholder=''
+            fluid
+            onChange={(e) => {
+              setFolderName(e.target.value);
+            }}
+            onKeyDown={handleKeyPress}
+          />
+        </form>
       </div>
     </CustomModal>
   );
