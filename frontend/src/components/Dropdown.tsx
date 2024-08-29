@@ -1,6 +1,6 @@
 import { Dropdown, Tip } from '@neo4j-ndl/react';
 import { OptionType, ReusableDropdownProps } from '../types';
-import { useMemo } from 'react';
+import { useMemo, useReducer } from 'react';
 import { capitalize } from '../utils/Utils';
 
 const DropdownComponent: React.FC<ReusableDropdownProps> = ({
@@ -13,6 +13,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   isDisabled,
   value,
 }) => {
+  const [disableTooltip, toggleDisableState] = useReducer((state) => !state, false);
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
   };
@@ -20,7 +21,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   return (
     <>
       <div className={view === 'ContentView' ? 'w-[150px]' : ''}>
-        <Tip allowedPlacements={['top']}>
+        <Tip allowedPlacements={['top']} isDisabled={disableTooltip}>
           <Tip.Trigger>
             <Dropdown
               type='select'
@@ -49,6 +50,12 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
                 menuPlacement: 'auto',
                 isDisabled: isDisabled,
                 value: value,
+                onMenuOpen: () => {
+                  toggleDisableState();
+                },
+                onMenuClose: () => {
+                  toggleDisableState();
+                },
               }}
               size='medium'
               fluid
