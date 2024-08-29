@@ -129,12 +129,12 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     if (e.code === 'Enter') {
       e.preventDefault(); //
       // @ts-ignore
-      const {form} = e.target;
+      const { form } = e.target;
       const index = Array.prototype.indexOf.call(form, e.target);
       if (index + 1 < form.elements.length) {
         form.elements[index + 1].focus();
       } else {
-        submitHandler(bucketUrl)
+        submitHandler(bucketUrl);
       }
     }
   };
