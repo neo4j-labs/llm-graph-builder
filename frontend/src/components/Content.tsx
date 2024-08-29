@@ -18,7 +18,7 @@ import { postProcessing } from '../services/PostProcessing';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
-import { batchSize, buttonCaptions, defaultLLM, largeFileSize, llms, tooltips } from '../utils/Constants';
+import { batchSize, buttonCaptions, defaultLLM, largeFileSize, llms, RETRY_OPIONS, tooltips } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 import DropdownComponent from './Dropdown';
@@ -518,6 +518,8 @@ const Content: React.FC<ContentProps> = ({
                 ...f,
                 status: 'Retry',
                 processingProgress: retryoption.includes('start_from_beginning') ? 0 : f.processingProgress,
+                NodesCount:retryoption===RETRY_OPIONS[1]?0:f.NodesCount,
+                relationshipCount:retryoption===RETRY_OPIONS[1]?0:f.relationshipCount,
               }
             : f;
         });
