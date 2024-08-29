@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import logging
@@ -145,16 +146,24 @@ def disconected_nodes():
     #graph = create_graph_database_connection(uri, userName, password, database)
     graphDb_data_Access = graphDBdataAccess(graph)
     nodes_list, total_nodes = graphDb_data_Access.list_unconnected_nodes()
+    print(nodes_list[0]["e"]["elementId"])
+    
+    status = "False"
+
     if total_nodes['total']>0:
-        return "True"
+        status = "True"
     else:
-       return "False"
+        status = "False"
+
+    return nodes_list[0]["e"]["elementId"], status
     
 #Delete disconnected_nodes list
-# def delete_disconected_nodes():
-#     #graph = create_graph_database_connection(uri, userName, password, database)
-#     graphDb_data_Access = graphDBdataAccess(graph)
-#     result = graphDb_data_Access.delete_unconnected_nodes(unconnected_entities_list)
+def delete_disconected_nodes(lst_element_id):
+    print(f'disconnect elementid list {lst_element_id}')
+    #graph = create_graph_database_connection(uri, userName, password, database)
+    graphDb_data_Access = graphDBdataAccess(graph)
+    result = graphDb_data_Access.delete_unconnected_nodes(json.dumps(lst_element_id))
+    print(f'delete disconnect api result {result}')
 
 #Get Duplicate_nodes
 def get_duplicate_nodes():
@@ -165,6 +174,11 @@ def get_duplicate_nodes():
             return "True"
         else:
             return "False"
+
+#Merge Duplicate_nodes
+def test_merge_duplicate_nodes():
+    graphDb_data_Access = graphDBdataAccess(graph)
+    result = graphDb_data_Access.merge_duplicate_nodes(duplicate_nodes_list)
 
 # def compare_graph_results(results):
 #     """
@@ -188,25 +202,27 @@ def run_tests():
 
     for model_name in models:
         try:
-            # final_list.append(test_graph_from_file_local(model_name))
-            # final_list.append(test_graph_from_wikipedia(model_name))
+            final_list.append(test_graph_from_file_local(model_name))
+            final_list.append(test_graph_from_wikipedia(model_name))
             final_list.append(test_graph_website(model_name))
-            # final_list.append(test_graph_from_youtube_video(model_name))
+            final_list.append(test_graph_from_youtube_video(model_name))
             final_list.append(test_chatbot_qna(model_name))
-            # final_list.append(test_chatbot_qna(model_name, mode='vector'))
-            # final_list.append(test_chatbot_qna(model_name, mode='graph+vector+fulltext'))
+            final_list.append(test_chatbot_qna(model_name, mode='vector'))
+            final_list.append(test_chatbot_qna(model_name, mode='graph+vector+fulltext'))
         except Exception as e:
             error_list.append((model_name, str(e)))
     #Compare and log diffrences in graph results
     # compare_graph_results(final_list)  # Pass the final_list to comapre_graph_results
     
-    dis = disconected_nodes()
+    dis_elementid, dis_status = disconected_nodes()
+    lst_element_id = [dis_elementid]
+    delete_disconected_nodes(lst_element_id)
     dup = get_duplicate_nodes()
     # Save final results to CSV
     df = pd.DataFrame(final_list)
     print(df)
     df['execution_date'] = dt.today().strftime('%Y-%m-%d')
-    df['disconnected_nodes']=dis
+    df['disconnected_nodes']=dis_status
     df['get_duplicate_nodes']=dup
     df.to_csv(f"Integration_TestResult_{dt.now().strftime('%Y%m%d_%H%M%S')}.csv", index=False)
 
