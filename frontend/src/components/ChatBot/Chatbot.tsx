@@ -415,7 +415,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             placement='top'
             text={`Query Documents in ${chatMode} mode`}
             type='submit'
-            disabled={loading}
+            disabled={loading || !connectionStatus}
             size='medium'
           >
             {buttonCaptions.ask} {selectedRows != undefined && selectedRows.length > 0 && `(${selectedRows.length})`}
