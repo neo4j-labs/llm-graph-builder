@@ -16,24 +16,19 @@ MAX_WORKERS = 10
 CREATE_COMMUNITY_GRAPH_PROJECTION = """
 MATCH (source:{node_projection})
 OPTIONAL MATCH (source)-[]->(target:{node_projection})
-WITH source, target, count(*) AS weight
+WITH source, target, count(*) as weight
 WITH gds.graph.project(
-    {project_name},
-    source,
-    target,
-    {{
-        relationshipProperties: {{ weight: weight }}
-    }},
-    {{
-        undirectedRelationshipTypes: ['*']
-    }}
-) AS g
+               '{project_name}',
+               source,
+               target,
+               {{
+               relationshipProperties: {{ weight: weight }}
+               }},
+               {{undirectedRelationshipTypes: ['*']}}
+               ) AS g
 RETURN
-    g.graphName AS graph_name,
-    g.nodeCount AS nodes,
-    g.relationshipCount AS rels
+  g.graphName AS graph_name, g.nodeCount AS nodes, g.relationshipCount AS rels
 """
-
 
 CREATE_COMMUNITY_CONSTRAINT = "CREATE CONSTRAINT IF NOT EXISTS FOR (c:__Community__) REQUIRE c.id IS UNIQUE;"
 CREATE_COMMUNITY_LEVELS = """
@@ -63,7 +58,7 @@ CALL {
 RETURN count(*)
 """
 CREATE_COMMUNITY_RANKS = """
-MATCH (c:__Community__)<-[:IN_COMMUNITY*]-(:!Chunk&!Document&!__Community__)<-[:MENTIONS]-(d:Document)
+MATCH (c:__Community__)<-[:IN_COMMUNITY*]-(:!Chunk&!Document&!__Community__)<-[HAS_ENTITY]-(:Chunk)<-[]-(d:Document)
 WITH c, count(distinct d) AS rank
 SET c.community_rank = rank;
 """
@@ -74,8 +69,8 @@ WITH n, count(distinct c) AS chunkCount
 SET n.weight = chunkCount"""
 
 GET_COMMUNITY_INFO = """
-MATCH (c:`__Community__`)<-[:IN_COMMUNITY*]-(e:!Chunk&!Document&!__Community__)
-WITH c, collect(e ) AS nodes
+MATCH (c:`__Community__`)<-[:IN_COMMUNITY]-(e)
+WITH c, collect(e) AS nodes
 WHERE size(nodes) > 1
 CALL apoc.path.subgraphAll(nodes[0], {
 	whitelistNodes:nodes
@@ -83,7 +78,7 @@ CALL apoc.path.subgraphAll(nodes[0], {
 YIELD relationships
 RETURN c.id AS communityId,
        [n in nodes | {id: n.id, description: n.description, type: [el in labels(n) WHERE el <> '__Entity__'][0]}] AS nodes,
-       [r in relationships | {start: startNode(r).id, type: type(r), end: endNode(r).id, description: r.description}] AS rels
+       [r in relationships | {start: startNode(r).id, type: type(r), end: endNode(r).id}] AS rels
 """
 
 STORE_COMMUNITY_SUMMARIES = """
@@ -200,7 +195,6 @@ def prepare_string(community_data):
             relationship_type = rel['type']
             relationship_description = f", description: {rel['description']}" if 'description' in rel and rel['description'] else ""
             relationships_description += f"({start_node})-[:{relationship_type}]->({end_node}){relationship_description}\n"
-
         return nodes_description + "\n" + relationships_description
     except Exception as e:
         logging.error(f"Failed to prepare string from community data: {e}")
@@ -221,8 +215,11 @@ def create_community_summaries(gds, model):
         community_chain = get_community_chain(model)
         
         summaries = []
+        futures = []
         with ThreadPoolExecutor() as executor:
-            futures = {executor.submit(process_community, community, community_chain): community for community in community_info_list}
+            for _,community in community_info_list.iterrows():
+                future = executor.submit(process_community, community, community_chain)
+                futures.append(future)
 
             for future in as_completed(futures):
                 try:
