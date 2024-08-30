@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, FunctionComponent, ReactNode } from 'react';
+import { createContext, useState, useContext, FunctionComponent, ReactNode, useReducer } from 'react';
 import { ContextProps, UserCredentials } from '../types';
 
 type Props = {
@@ -17,7 +17,7 @@ export const useCredentials = () => {
 };
 const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
   const [userCredentials, setUserCredentials] = useState<UserCredentials | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
+  const [connectionStatus, setConnectionStatus] = useReducer((state) => !state, false);
   const value = {
     userCredentials,
     setUserCredentials,
