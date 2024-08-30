@@ -141,13 +141,12 @@ def test_chatbot_qna(model_name, mode='vector'):
         print("Failed ", e)
         return QA_n_RAG
     
-#Get disconnected_nodes list
+#Get Test disconnected_nodes list
 def disconected_nodes():
     #graph = create_graph_database_connection(uri, userName, password, database)
     graphDb_data_Access = graphDBdataAccess(graph)
     nodes_list, total_nodes = graphDb_data_Access.list_unconnected_nodes()
     print(nodes_list[0]["e"]["elementId"])
-    
     status = "False"
 
     if total_nodes['total']>0:
@@ -157,15 +156,19 @@ def disconected_nodes():
 
     return nodes_list[0]["e"]["elementId"], status
     
-#Delete disconnected_nodes list
+#Test Delete delete_disconnected_nodes list
 def delete_disconected_nodes(lst_element_id):
     print(f'disconnect elementid list {lst_element_id}')
     #graph = create_graph_database_connection(uri, userName, password, database)
     graphDb_data_Access = graphDBdataAccess(graph)
     result = graphDb_data_Access.delete_unconnected_nodes(json.dumps(lst_element_id))
     print(f'delete disconnect api result {result}')
+    if not result:
+        return "True"
+    else:
+        return "False"
 
-#Get Duplicate_nodes
+#Test Get Duplicate_nodes
 def get_duplicate_nodes():
         #graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
@@ -174,11 +177,12 @@ def get_duplicate_nodes():
             return "True"
         else:
             return "False"
-
-#Merge Duplicate_nodes
-def test_merge_duplicate_nodes():
-    graphDb_data_Access = graphDBdataAccess(graph)
-    result = graphDb_data_Access.merge_duplicate_nodes(duplicate_nodes_list)
+        
+#Test populate_graph_schema
+def test_populate_graph_schema_from_text(model):
+    result_schema = populate_graph_schema_from_text('When Amazon was founded in 1993 by creator Jeff Benzos, it was mostly an online bookstore. Initially Amazon’s growth was very slow, not turning a profit until over 7 years after its founding. This was thanks to the great momentum provided by the dot-com bubble.', model, True)
+    print(result_schema)
+    return result_schema
 
 # def compare_graph_results(results):
 #     """
@@ -202,28 +206,32 @@ def run_tests():
 
     for model_name in models:
         try:
-            final_list.append(test_graph_from_file_local(model_name))
-            final_list.append(test_graph_from_wikipedia(model_name))
-            final_list.append(test_graph_website(model_name))
-            final_list.append(test_graph_from_youtube_video(model_name))
-            final_list.append(test_chatbot_qna(model_name))
-            final_list.append(test_chatbot_qna(model_name, mode='vector'))
-            final_list.append(test_chatbot_qna(model_name, mode='graph+vector+fulltext'))
+              final_list.append(test_graph_from_file_local(model_name))
+              final_list.append(test_graph_from_wikipedia(model_name))
+              final_list.append(test_populate_graph_schema_from_text(model_name))
+              final_list.append(test_graph_website(model_name))
+              final_list.append(test_graph_from_youtube_video(model_name))
+              final_list.append(test_chatbot_qna(model_name))
+              final_list.append(test_chatbot_qna(model_name, mode='vector'))
+              final_list.append(test_chatbot_qna(model_name, mode='graph+vector+fulltext'))
         except Exception as e:
             error_list.append((model_name, str(e)))
-    #Compare and log diffrences in graph results
-    # compare_graph_results(final_list)  # Pass the final_list to comapre_graph_results
-    
+    # #Compare and log diffrences in graph results
+    # # compare_graph_results(final_list)  # Pass the final_list to comapre_graph_results
+    # test_populate_graph_schema_from_text('openai-gpt-4o')
     dis_elementid, dis_status = disconected_nodes()
     lst_element_id = [dis_elementid]
-    delete_disconected_nodes(lst_element_id)
+    delt = delete_disconected_nodes(lst_element_id)
     dup = get_duplicate_nodes()
+    # schma = test_populate_graph_schema_from_text(model)
     # Save final results to CSV
     df = pd.DataFrame(final_list)
     print(df)
     df['execution_date'] = dt.today().strftime('%Y-%m-%d')
     df['disconnected_nodes']=dis_status
     df['get_duplicate_nodes']=dup
+    df['delete_disconected_nodes']=delt
+    # df['test_populate_graph_schema_from_text'] = schma
     df.to_csv(f"Integration_TestResult_{dt.now().strftime('%Y%m%d_%H%M%S')}.csv", index=False)
 
     # Save error details to CSV
