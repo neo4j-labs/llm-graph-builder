@@ -60,41 +60,43 @@ export default function ConnectionModal({
   }, [open]);
 
   const recreateVectorIndex = useCallback(
-    async (isNewVectorIndex: boolean) => {
-      try {
-        setVectorIndexLoading(true);
-        const response = await createVectorIndex(userCredentials as UserCredentials, isNewVectorIndex);
-        setVectorIndexLoading(false);
-        if (response.data.status === 'Failed') {
-          throw new Error(response.data.error);
-        } else {
-          setMessage({
-            type: 'success',
-            content: 'Successfully created the vector index',
-          });
-          setConnectionStatus(true);
-          localStorage.setItem(
-            'neo4j.connection',
-            JSON.stringify({
-              uri: userCredentials?.uri,
-              user: userCredentials?.userName,
-              password: userCredentials?.password,
-              database: userCredentials?.database,
-              userDbVectorIndex: 384,
-            })
-          );
+    async (isNewVectorIndex: boolean, usercredential: UserCredentials) => {
+      if (usercredential != null && Object.values(usercredential).length) {
+        try {
+          setVectorIndexLoading(true);
+          const response = await createVectorIndex(usercredential as UserCredentials, isNewVectorIndex);
+          setVectorIndexLoading(false);
+          if (response.data.status === 'Failed') {
+            throw new Error(response.data.error);
+          } else {
+            setMessage({
+              type: 'success',
+              content: 'Successfully created the vector index',
+            });
+            setConnectionStatus(true);
+            localStorage.setItem(
+              'neo4j.connection',
+              JSON.stringify({
+                uri: usercredential?.uri,
+                user: usercredential?.userName,
+                password: usercredential?.password,
+                database: usercredential?.database,
+                userDbVectorIndex: 384,
+              })
+            );
+          }
+        } catch (error) {
+          setVectorIndexLoading(false);
+          if (error instanceof Error) {
+            console.log('Error in recreating the vector index', error.message);
+            setMessage({ type: 'danger', content: error.message });
+          }
         }
-      } catch (error) {
-        setVectorIndexLoading(false);
-        if (error instanceof Error) {
-          console.log('Error in recreating the vector index', error.message);
-          setMessage({ type: 'danger', content: error.message });
-        }
+        setTimeout(() => {
+          setMessage({ type: 'unknown', content: '' });
+          setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
+        }, 3000);
       }
-      setTimeout(() => {
-        setMessage({ type: 'unknown', content: '' });
-        setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
-      }, 3000);
     },
     [userCredentials, userDbVectorIndex]
   );
@@ -104,7 +106,9 @@ export default function ConnectionModal({
         type: 'danger',
         content: (
           <VectorIndexMisMatchAlert
-            recreateVectorIndex={() => recreateVectorIndex(chunksExistsWithDifferentEmbedding)}
+            recreateVectorIndex={() =>
+              recreateVectorIndex(chunksExistsWithDifferentEmbedding, userCredentials as UserCredentials)
+            }
             isVectorIndexAlreadyExists={chunksExistsWithDifferentEmbedding || isVectorIndexMatch}
             userVectorIndexDimension={JSON.parse(localStorage.getItem('neo4j.connection') ?? 'null').userDbVectorIndex}
             chunksExists={chunksExistsWithoutEmbedding}
@@ -112,7 +116,7 @@ export default function ConnectionModal({
         ),
       });
     }
-  }, [isVectorIndexMatch, chunksExistsWithDifferentEmbedding, chunksExistsWithoutEmbedding]);
+  }, [isVectorIndexMatch, chunksExistsWithDifferentEmbedding, chunksExistsWithoutEmbedding, userCredentials]);
 
   const parseAndSetURI = (uri: string, urlparams = false) => {
     const uriParts: string[] = uri.split('://');
@@ -188,7 +192,8 @@ export default function ConnectionModal({
 
   const submitConnection = async () => {
     const connectionURI = `${protocol}://${URI}${URI.split(':')[1] ? '' : `:${port}`}`;
-    setUserCredentials({ uri: connectionURI, userName: username, password: password, database: database, port: port });
+    const credential = { uri: connectionURI, userName: username, password: password, database: database, port: port };
+    setUserCredentials(credential);
     setIsLoading(true);
     try {
       const response = await connectAPI(connectionURI, username, password, database);
@@ -223,7 +228,7 @@ export default function ConnectionModal({
             type: 'danger',
             content: (
               <VectorIndexMisMatchAlert
-                recreateVectorIndex={() => recreateVectorIndex(false)}
+                recreateVectorIndex={() => recreateVectorIndex(false, credential)}
                 isVectorIndexAlreadyExists={response.data.data.db_vector_dimension != 0}
                 chunksExists={true}
               />
@@ -235,7 +240,7 @@ export default function ConnectionModal({
             type: 'danger',
             content: (
               <VectorIndexMisMatchAlert
-                recreateVectorIndex={() => recreateVectorIndex(true)}
+                recreateVectorIndex={() => recreateVectorIndex(true, credential)}
                 isVectorIndexAlreadyExists={
                   response.data.data.db_vector_dimension != 0 &&
                   response.data.data.db_vector_dimension != response.data.data.application_dimension
