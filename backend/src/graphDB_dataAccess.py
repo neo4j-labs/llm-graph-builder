@@ -71,10 +71,10 @@ class graphDBdataAccess:
             if obj_source_node.processing_time is not None and obj_source_node.processing_time != 0:
                 params['processingTime'] = round(obj_source_node.processing_time.total_seconds(),2)
 
-            if obj_source_node.node_count is not None and obj_source_node.node_count != 0:
+            if obj_source_node.node_count is not None :
                 params['nodeCount'] = obj_source_node.node_count
 
-            if obj_source_node.relationship_count is not None and obj_source_node.relationship_count != 0:
+            if obj_source_node.relationship_count is not None :
                 params['relationshipCount'] = obj_source_node.relationship_count
 
             if obj_source_node.model is not None and obj_source_node.model != '':

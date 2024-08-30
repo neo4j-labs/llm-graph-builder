@@ -303,4 +303,16 @@ QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION="""
                               MATCH (c:Chunk) WHERE c.embedding is null 
                               RETURN c.id as id,c.position as position 
                               ORDER BY c.position LIMIT 1
-                              """                                
+                              """   
+QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY = """
+                              MATCH (d:Document)
+                              WHERE d.fileName = $filename
+                              WITH d
+                              MATCH (d)<-[:PART_OF]-(c:Chunk) WHERE NOT exists {(c)-[:HAS_ENTITY]->()}
+                              RETURN c.id as id,c.position as position 
+                              ORDER BY c.position LIMIT 1
+                              """
+                              
+START_FROM_BEGINNING  = "start_from_beginning"     
+DELETE_ENTITIES_AND_START_FROM_BEGINNING = "delete_entities_and_start_from_beginning"
+START_FROM_LAST_PROCESSED_POSITION = "start_from_last_processed_position"                                                    
