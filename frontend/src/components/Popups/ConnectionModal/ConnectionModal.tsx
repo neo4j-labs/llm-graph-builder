@@ -104,7 +104,6 @@ export default function ConnectionModal({
         type: 'danger',
         content: (
           <VectorIndexMisMatchAlert
-            vectorIndexLoading={vectorIndexLoading}
             recreateVectorIndex={() => recreateVectorIndex(chunksExistsWithDifferentEmbedding)}
             isVectorIndexAlreadyExists={chunksExistsWithDifferentEmbedding || isVectorIndexMatch}
             userVectorIndexDimension={JSON.parse(localStorage.getItem('neo4j.connection') ?? 'null').userDbVectorIndex}
@@ -113,7 +112,7 @@ export default function ConnectionModal({
         ),
       });
     }
-  }, [isVectorIndexMatch, vectorIndexLoading, chunksExistsWithDifferentEmbedding, chunksExistsWithoutEmbedding]);
+  }, [isVectorIndexMatch, chunksExistsWithDifferentEmbedding, chunksExistsWithoutEmbedding]);
 
   const parseAndSetURI = (uri: string, urlparams = false) => {
     const uriParts: string[] = uri.split('://');
@@ -224,15 +223,7 @@ export default function ConnectionModal({
             type: 'danger',
             content: (
               <VectorIndexMisMatchAlert
-                vectorIndexLoading={vectorIndexLoading}
-                recreateVectorIndex={() =>
-                  recreateVectorIndex(
-                    !(
-                      response.data.data.db_vector_dimension > 0 &&
-                      response.data.data.db_vector_dimension != response.data.data.application_dimension
-                    )
-                  )
-                }
+                recreateVectorIndex={() => recreateVectorIndex(false)}
                 isVectorIndexAlreadyExists={response.data.data.db_vector_dimension != 0}
                 chunksExists={true}
               />
@@ -244,7 +235,6 @@ export default function ConnectionModal({
             type: 'danger',
             content: (
               <VectorIndexMisMatchAlert
-                vectorIndexLoading={vectorIndexLoading}
                 recreateVectorIndex={() => recreateVectorIndex(true)}
                 isVectorIndexAlreadyExists={
                   response.data.data.db_vector_dimension != 0 &&
@@ -268,9 +258,9 @@ export default function ConnectionModal({
       }
     }
     setTimeout(() => {
-     if(connectionMessage?.type!="danger"){
-      setMessage({ type: 'unknown', content: '' })
-     }
+      if (connectionMessage?.type != 'danger') {
+        setMessage({ type: 'unknown', content: '' });
+      }
       setPassword('');
     }, 3000);
   };
