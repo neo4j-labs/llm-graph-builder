@@ -197,6 +197,16 @@ export default function ConnectionModal({
       if (response?.data?.status !== 'Success') {
         throw new Error(response.data.error);
       } else {
+        localStorage.setItem(
+          'neo4j.connection',
+          JSON.stringify({
+            uri: connectionURI,
+            user: username,
+            password: password,
+            database: database,
+            userDbVectorIndex,
+          })
+        );
         setUserDbVectorIndex(response.data.data.db_vector_dimension);
         if (
           (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
@@ -228,6 +238,7 @@ export default function ConnectionModal({
               />
             ),
           });
+          return;
         } else {
           setMessage({
             type: 'danger',
@@ -244,17 +255,8 @@ export default function ConnectionModal({
               />
             ),
           });
+          return;
         }
-        localStorage.setItem(
-          'neo4j.connection',
-          JSON.stringify({
-            uri: connectionURI,
-            user: username,
-            password: password,
-            database: database,
-            userDbVectorIndex,
-          })
-        );
       }
     } catch (error) {
       setIsLoading(false);
