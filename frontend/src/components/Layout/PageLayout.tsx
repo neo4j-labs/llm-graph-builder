@@ -156,7 +156,12 @@ export default function PageLayoutNew({
         closeSettingModal={closeSettingModal}
       />
       {showDrawerChatbot && (
-        <DrawerChatbot messages={messages} isExpanded={isRightExpanded} clearHistoryData={clearHistoryData} connectionStatus={connectionStatus} />
+        <DrawerChatbot
+          messages={messages}
+          isExpanded={isRightExpanded}
+          clearHistoryData={clearHistoryData}
+          connectionStatus={connectionStatus}
+        />
       )}
       <SideNav
         messages={messages}

@@ -22,7 +22,7 @@ const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
     userCredentials,
     setUserCredentials,
     connectionStatus,
-    setConnectionStatus
+    setConnectionStatus,
   };
   return <UserConnection.Provider value={value}>{props.children}</UserConnection.Provider>;
 };

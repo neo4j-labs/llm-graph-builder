@@ -247,7 +247,7 @@ export type ChatbotProps = {
   isLoading: boolean;
   clear?: boolean;
   isFullScreen?: boolean;
-  connectionStatus:boolean;
+  connectionStatus: boolean;
 };
 export interface WikipediaModalTypes {
   hideModal: () => void;

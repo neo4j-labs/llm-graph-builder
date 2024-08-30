@@ -69,7 +69,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [newScheme, setNewScheme] = useState<Scheme>({});
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedQuery = useDebounce(searchQuery, 300);
-  const [disableRefresh, setDisableRefresh]= useState<boolean>(false);
+  const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
 
   // the checkbox selection
   const handleCheckboxChange = (graph: GraphType) => {
