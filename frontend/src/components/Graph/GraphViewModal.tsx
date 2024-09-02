@@ -69,6 +69,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [newScheme, setNewScheme] = useState<Scheme>({});
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedQuery = useDebounce(searchQuery, 300);
+  const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
 
   // the checkbox selection
   const handleCheckboxChange = (graph: GraphType) => {
@@ -165,6 +166,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         setAllNodes(finalNodes);
         setAllRelationships(finalRels);
         setScheme(schemeVal);
+        setDisableRefresh(false);
       } else {
         setLoading(false);
         setStatus('danger');
@@ -292,6 +294,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
   // Refresh the graph with nodes and relations if file is processing
   const handleRefresh = () => {
+    setDisableRefresh(true);
     graphApi('refreshMode');
     setGraphType(graphType);
     setNodes(nodes);
@@ -455,6 +458,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                           text='Refresh graph'
                           onClick={handleRefresh}
                           placement='left'
+                          disabled={disableRefresh}
                         >
                           <ArrowPathIconOutline />
                         </IconButtonWithToolTip>
