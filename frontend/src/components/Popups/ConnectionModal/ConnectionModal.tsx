@@ -285,7 +285,10 @@ export default function ConnectionModal({
     setMessage({ type: 'unknown', content: '' });
   }, []);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, nextRef?: React.RefObject<HTMLInputElement>) => {
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement | HTMLButtonElement>,
+    nextRef?: React.RefObject<HTMLInputElement | HTMLButtonElement>
+  ) => {
     if (e.code === 'Enter') {
       e.preventDefault();
       nextRef?.current?.focus();
@@ -421,7 +424,7 @@ export default function ConnectionModal({
                 type='password'
                 fluid
                 onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e)}
+                onKeyDown={(e) => handleKeyDown(e, connectRef)}
               />
             </div>
           </div>
