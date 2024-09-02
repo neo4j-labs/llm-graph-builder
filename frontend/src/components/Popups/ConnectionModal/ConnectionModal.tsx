@@ -1,5 +1,5 @@
 import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone, Typography, TextLink, Flex } from '@neo4j-ndl/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import connectAPI from '../../../services/ConnectAPI';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useSearchParams } from 'react-router-dom';
@@ -46,6 +46,17 @@ export default function ConnectionModal({
   const [searchParams, setSearchParams] = useSearchParams();
   const [userDbVectorIndex, setUserDbVectorIndex] = useState<number | undefined>(initialuserdbvectorindex ?? undefined);
   const [vectorIndexLoading, setVectorIndexLoading] = useState<boolean>(false);
+  const connectRef = useRef<HTMLButtonElement>(null);
+  const uriRef = useRef<HTMLInputElement>(null);
+  const databaseRef = useRef<HTMLInputElement>(null);
+  const userNameRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (connectRef.current) {
+      connectRef.current.focus();
+    }
+  })
 
   useEffect(() => {
     if (searchParams.has('connectURL')) {
@@ -274,6 +285,13 @@ export default function ConnectionModal({
     setMessage({ type: 'unknown', content: '' });
   }, []);
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, nextRef?: React.RefObject<HTMLInputElement>) => {
+    if (e.code === 'Enter') {
+      e.preventDefault();
+      nextRef?.current?.focus();
+    }
+  };
+
   const isDisabled = useMemo(() => !username || !URI || !password, [username, URI, password]);
 
   return (
@@ -348,6 +366,7 @@ export default function ConnectionModal({
             />
             <div className='ml-[5%] w-[70%] inline-block'>
               <TextInput
+                ref={uriRef}
                 id='url'
                 value={URI}
                 disabled={false}
@@ -357,10 +376,12 @@ export default function ConnectionModal({
                 onChange={(e) => setURI(e.target.value)}
                 onPaste={(e) => handleHostPasteChange(e)}
                 aria-label='Connection URI'
+                onKeyDown={(e) => handleKeyDown(e, databaseRef)}
               />
             </div>
           </div>
           <TextInput
+            ref={databaseRef}
             id='database'
             value={database}
             disabled={false}
@@ -371,10 +392,12 @@ export default function ConnectionModal({
             required
             onChange={(e) => setDatabase(e.target.value)}
             className='w-full'
+            onKeyDown={(e) => handleKeyDown(e, userNameRef)}
           />
           <div className='n-flex n-flex-row n-flex-wrap mb-2'>
             <div className='w-[48.5%] mr-1.5 inline-block'>
               <TextInput
+                ref={userNameRef}
                 id='username'
                 value={username}
                 disabled={false}
@@ -383,10 +406,12 @@ export default function ConnectionModal({
                 placeholder='neo4j'
                 fluid
                 onChange={(e) => setUsername(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, passwordRef)}
               />
             </div>
             <div className='w-[48.5%] ml-[1.5%] inline-block'>
               <TextInput
+                ref={passwordRef}
                 id='password'
                 value={password}
                 disabled={false}
@@ -396,11 +421,19 @@ export default function ConnectionModal({
                 type='password'
                 fluid
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e)}
               />
             </div>
           </div>
           <Flex flexDirection='row' justifyContent='flex-end'>
-            <Button loading={isLoading} disabled={isDisabled} onClick={() => submitConnection()}>
+            <Button loading={isLoading} disabled={isDisabled} onClick={() => submitConnection()}
+              ref={connectRef}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === 'Enter') {
+                  submitConnection();
+                }
+              }}>
               {buttonCaptions.connect}
             </Button>
           </Flex>
