@@ -322,7 +322,10 @@ const Content: React.FC<ContentProps> = ({
     return data;
   };
 
-  const addFilesToQueue = (remainingFiles: CustomFile[]) => {
+  const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
+    if (!remainingFiles.length) {
+      await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+    }
     remainingFiles.forEach((f) => {
       setFilesData((prev) =>
         prev.map((pf) => {
@@ -399,13 +402,11 @@ const Content: React.FC<ContentProps> = ({
       }
       Promise.allSettled(data).then(async (_) => {
         setextractLoading(false);
-        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       });
     } else if (queueFiles && !queue.isEmpty() && processingFilesCount < batchSize) {
       data = scheduleBatchWiseProcess(queue.items, true);
       Promise.allSettled(data).then(async (_) => {
         setextractLoading(false);
-        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       });
     } else {
       addFilesToQueue(filesTobeProcessed as CustomFile[]);
@@ -425,7 +426,6 @@ const Content: React.FC<ContentProps> = ({
       }
       Promise.allSettled(data).then(async (_) => {
         setextractLoading(false);
-        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       });
     } else {
       const selectedNewFiles = childRef.current?.getSelectedRows().filter((f) => f.status === 'New');
