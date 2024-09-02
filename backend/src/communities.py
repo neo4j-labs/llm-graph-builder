@@ -3,19 +3,19 @@ from graphdatascience import GraphDataScience
 from src.llm import get_llm
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser 
-from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from tqdm import tqdm 
+import os
+from src.shared.common_fn import load_embedding_model
 
 
 COMMUNITY_PROJECTION_NAME = "communities"
 NODE_PROJECTION = "!Chunk&!Document&!__Community__"
+NODE_PROJECTION_ENTITY = "__Entity__"
 MAX_WORKERS = 10
 
 
 CREATE_COMMUNITY_GRAPH_PROJECTION = """
-MATCH (source:{node_projection})
-OPTIONAL MATCH (source)-[]->(target:{node_projection})
+MATCH (source:{node_projection})-[]->(target:{node_projection})
 WITH source, target, count(*) as weight
 WITH gds.graph.project(
                '{project_name}',
@@ -32,7 +32,7 @@ RETURN
 
 CREATE_COMMUNITY_CONSTRAINT = "CREATE CONSTRAINT IF NOT EXISTS FOR (c:__Community__) REQUIRE c.id IS UNIQUE;"
 CREATE_COMMUNITY_LEVELS = """
-MATCH (e:!Chunk&!Document&!__Community__)
+MATCH (e:`__Entity__`)
 WHERE e.communities is NOT NULL
 UNWIND range(0, size(e.communities) - 1 , 1) AS index
 CALL {
@@ -52,7 +52,7 @@ CALL {
   ON CREATE SET current.level = index
   MERGE (previous:`__Community__` {id: toString(index - 1) + '-' + toString(e.communities[index - 1])})
   ON CREATE SET previous.level = index - 1
-  MERGE (previous)-[:IN_COMMUNITY]->(current)
+  MERGE (previous)-[:PARENT_COMMUNITY]->(current)
   RETURN count(*) AS count_1
 }
 RETURN count(*)
@@ -63,13 +63,26 @@ WITH c, count(distinct d) AS rank
 SET c.community_rank = rank;
 """
 
+CREATE_PARENT_COMMUNITY_RANKS = """
+MATCH (c:__Community__)<-[:PARENT_COMMUNITY*]-(:__Community__)<-[:IN_COMMUNITY*]-(:!Chunk&!Document&!__Community__)<-[HAS_ENTITY]-(:Chunk)<-[]-(d:Document)
+WITH c, count(distinct d) AS rank
+SET c.community_rank = rank;
+"""
+
 CREATE_COMMUNITY_WEIGHTS = """
 MATCH (n:`__Community__`)<-[:IN_COMMUNITY]-()<-[:HAS_ENTITY]-(c)
 WITH n, count(distinct c) AS chunkCount
-SET n.weight = chunkCount"""
+SET n.weight = chunkCount
+"""
+CREATE_PARENT_COMMUNITY_WEIGHTS = """
+MATCH (n:`__Community__`)<-[:PARENT_COMMUNITY*]-(:`__Community__`)<-[:IN_COMMUNITY]-()<-[:HAS_ENTITY]-(c)
+WITH n, count(distinct c) AS chunkCount
+SET n.weight = chunkCount
+"""
 
 GET_COMMUNITY_INFO = """
 MATCH (c:`__Community__`)<-[:IN_COMMUNITY]-(e)
+WHERE c.level = 0
 WITH c, collect(e) AS nodes
 WHERE size(nodes) > 1
 CALL apoc.path.subgraphAll(nodes[0], {
@@ -81,17 +94,64 @@ RETURN c.id AS communityId,
        [r in relationships | {start: startNode(r).id, type: type(r), end: endNode(r).id}] AS rels
 """
 
+GET_PARENT_COMMUNITY_INFO = """
+MATCH (p:`__Community__`)<-[:PARENT_COMMUNITY*]-(c:`__Community__`)
+WHERE p.summary is null and c.summary is not null
+RETURN p.id as communityId, collect(c.summary) as texts
+"""
+
+
 STORE_COMMUNITY_SUMMARIES = """
 UNWIND $data AS row
 MERGE (c:__Community__ {id:row.community})
 SET c.summary = row.summary
 """ 
 
+COMMUNITY_SYSTEM_TEMPLATE = "Given input triples, generate the information summary. No pre-amble."
+
 COMMUNITY_TEMPLATE = """Based on the provided nodes and relationships that belong to the same graph community,
 generate a natural language summary of the provided information:
 {community_info}
 
-Summary:"""  
+Summary:""" 
+
+PARENT_COMMUNITY_SYSTEM_TEMPLATE = "Given an input list of community summaries, generate a summary of the information"
+
+PARENT_COMMUNITY_TEMPLATE = """Based on the provided list of community summaries that belong to the same graph community, 
+generate a natural language summary of the information.Include all the necessary information as possible
+{community_info}
+
+Summary:""" 
+
+
+GET_COMMUNITY_DETAILS = """
+MATCH (c:`__Community__`)
+WHERE  c.embedding IS NULL AND c.summary IS NOT NULL
+RETURN c.id as communityId, c.summary as text
+"""
+
+WRITE_COMMUNITY_EMBEDDINGS = """
+UNWIND $rows AS row
+MATCH (c) WHERE c.id = row.communityId
+CALL db.create.setNodeVectorProperty(c, "embedding", row.embedding)
+"""  
+
+DROP_COMMUNITIES = "MATCH (c:`__Community__`) DETACH DELETE c"
+DROP_COMMUNITY_PROPERTY = "MATCH (e:`__Entity__`) REMOVE e.communities"
+
+
+ENTITY_VECTOR_INDEX_NAME = "entity_vector"
+ENTITY_VECTOR_EMBEDDING_DIMENSION = 384
+
+CREATE_ENTITY_VECTOR_INDEX = """
+CREATE VECTOR INDEX {index_name} IF NOT EXISTS FOR (e:__Entity__) ON e.embedding
+OPTIONS {{
+  indexConfig: {{
+    `vector.dimensions`: {embedding_dimension},
+    `vector.similarity_function`: 'cosine'
+  }}
+}}
+"""
 
 
 def get_gds_driver(uri, username, password, database):
@@ -117,22 +177,6 @@ def create_community_graph_projection(gds, project_name=COMMUNITY_PROJECTION_NAM
             gds.graph.drop(project_name)
         
         logging.info(f"Creating new graph project '{project_name}'.")
-        # graph_project, result = gds.graph.project(
-        #     project_name, 
-        #     node_projection,
-        #     {
-        #         "_ALL_": {
-        #             "type": "*",
-        #             "orientation": "UNDIRECTED",
-        #             "properties": {
-        #                 "weight": {
-        #                     "property": "*", 
-        #                     "aggregation": "COUNT"
-        #                 }
-        #             }
-        #         }
-        #     }
-        # )
         projection_query = CREATE_COMMUNITY_GRAPH_PROJECTION.format(node_projection=node_projection,project_name=project_name)
         graph_projection_result = gds.run_cypher(projection_query)
         projection_result = graph_projection_result.to_dict(orient="records")[0]
@@ -159,14 +203,17 @@ def write_communities(gds, graph_project, project_name=COMMUNITY_PROJECTION_NAME
         return False
 
 
-def get_community_chain(model, community_template=COMMUNITY_TEMPLATE):
+def get_community_chain(model, is_parent=False,community_template=COMMUNITY_TEMPLATE,system_template=COMMUNITY_SYSTEM_TEMPLATE):
     try:
+        if is_parent:
+            community_template=PARENT_COMMUNITY_TEMPLATE
+            system_template= PARENT_COMMUNITY_SYSTEM_TEMPLATE
         llm, model_name = get_llm(model)
         community_prompt = ChatPromptTemplate.from_messages(
             [
                 (
                     "system",
-                    "Given input triples, generate the information summary. No pre-amble.",
+                    system_template,
                 ),
                 ("human", community_template),
             ]
@@ -200,68 +247,154 @@ def prepare_string(community_data):
         logging.error(f"Failed to prepare string from community data: {e}")
         raise
 
-def process_community(community, community_chain):
+def process_community_info(community, chain, is_parent=False):
     try:
-        formatted_community_info = prepare_string(community)
-        summary = community_chain.invoke({'community_info': formatted_community_info})
+        if is_parent:
+            combined_text = " ".join(f"Summary {i+1}: {summary}" for i, summary in enumerate(community.get("texts", [])))
+        else:
+            combined_text = prepare_string(community)
+        summary = chain.invoke({'community_info': combined_text})
         return {"community": community['communityId'], "summary": summary}
     except Exception as e:
         logging.error(f"Failed to process community {community.get('communityId', 'unknown')}: {e}")
-        raise
+        return None
 
 def create_community_summaries(gds, model):
     try:
         community_info_list = gds.run_cypher(GET_COMMUNITY_INFO)
         community_chain = get_community_chain(model)
-        
-        summaries = []
-        futures = []
-        with ThreadPoolExecutor() as executor:
-            for _,community in community_info_list.iterrows():
-                future = executor.submit(process_community, community, community_chain)
-                futures.append(future)
 
+        summaries = []
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(process_community_info, community, community_chain) for _, community in community_info_list.items()]
+            
             for future in as_completed(futures):
-                try:
-                    summaries.append(future.result())
-                except Exception as e:
-                    logging.error(f"Failed to retrieve result for a community: {e}")
+                result = future.result()
+                if result:
+                    summaries.append(result)
+                else:
+                    logging.error("community summaries could not be processed.")
 
         gds.run_cypher(STORE_COMMUNITY_SUMMARIES, params={"data": summaries})
+
+        parent_community_info = gds.run_cypher(GET_PARENT_COMMUNITY_INFO)
+        parent_community_chain = get_community_chain(model, is_parent=True)
+
+        parent_summaries = []
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(process_community_info, community, parent_community_chain, is_parent=True) for _, community in parent_community_info.items()]
+            
+            for future in as_completed(futures):
+                result = future.result()
+                if result:
+                    parent_summaries.append(result)
+                else:
+                    logging.error("parent community summaries could not be processed.")
+
+        gds.run_cypher(STORE_COMMUNITY_SUMMARIES, params={"data": parent_summaries})
+
     except Exception as e:
         logging.error(f"Failed to create community summaries: {e}")
         raise
 
-
-def create_community_properties(gds, model):
+def create_community_embeddings(gds):
     try:
-        # Create community levels
-        gds.run_cypher(CREATE_COMMUNITY_LEVELS)
-        logging.info("Successfully created community levels.")
+        embedding_model = os.getenv('EMBEDDING_MODEL')
+        embeddings, dimension = load_embedding_model(embedding_model)
+        logging.info(f"Embedding model '{embedding_model}' loaded successfully.")
+        
+        logging.info("Fetching community details.")
+        rows = gds.run_cypher(GET_COMMUNITY_DETAILS)
+        rows = rows[['communityId', 'text']].to_dict(orient='records')
+        logging.info(f"Fetched {len(rows)} communities.")
+        
+        batch_size = 100
+        for i in range(0, len(rows), batch_size):
+            batch_rows = rows[i:i+batch_size]            
+            for row in batch_rows:
+                try:
+                    row['embedding'] = embeddings.embed_query(row['text'])
+                except Exception as e:
+                    logging.error(f"Failed to embed text for community ID {row['communityId']}: {e}")
+                    row['embedding'] = None
+            
+            try:
+                logging.info("Writing embeddings to the database.")
+                gds.run_cypher(WRITE_COMMUNITY_EMBEDDINGS, params={'rows': batch_rows})
+                logging.info("Embeddings written successfully.")
+            except Exception as e:
+                logging.error(f"Failed to write embeddings to the database: {e}")
+                continue
+        return dimension
+    except Exception as e:
+        logging.error(f"An error occurred during the community embedding process: {e}")
 
-        # Create community ranks
-        gds.run_cypher(CREATE_COMMUNITY_RANKS)
-        logging.info("Successfully created community ranks.")
+def create_entity_vector_index(gds, embedding_dimension=ENTITY_VECTOR_EMBEDDING_DIMENSION):
+    query = CREATE_ENTITY_VECTOR_INDEX.format(
+        index_name=ENTITY_VECTOR_INDEX_NAME,
+        embedding_dimension=embedding_dimension
+    ) 
+    try:
+        logging.info(f"Running Cypher query to create entity vector index: {query}")
+        gds.run_cypher(query)
+        logging.info("Entity vector index created successfully.")
+    except Exception as e:
+        logging.error(f"Error occurred while creating entity vector index: {e}", exc_info=True)
+        
+def create_community_properties(gds, model):
+    commands = [
+        (CREATE_COMMUNITY_CONSTRAINT, "created community constraint to the graph."),
+        (CREATE_COMMUNITY_LEVELS, "Successfully created community levels."),
+        (CREATE_COMMUNITY_RANKS, "Successfully created community ranks."),
+        (CREATE_PARENT_COMMUNITY_RANKS, "Successfully created parent community ranks."),
+        (CREATE_COMMUNITY_WEIGHTS, "Successfully created community weights."),
+        (CREATE_PARENT_COMMUNITY_WEIGHTS, "Successfully created parent community weights."),
+    ]
+    try:
+        for command, message in commands:
+            gds.run_cypher(command)
+            logging.info(message)
 
-        # Create community weights
-        gds.run_cypher(CREATE_COMMUNITY_WEIGHTS)
-        logging.info("Successfully created community weights.")
-
-        # Create community summaries
         create_community_summaries(gds, model)
         logging.info("Successfully created community summaries.")
+
+        embedding_dimension = create_community_embeddings(gds)
+        logging.info("Successfully created community embeddings.")
+
+        create_entity_vector_index(gds,embedding_dimension=embedding_dimension)
+        logging.info("Successfully created Entity Vector Index.")
+
     except Exception as e:
-        logging.error(f"Failed to create community properties: {e}")
+        logging.error(f"Error during community properties creation: {e}")
         raise
+
+
+def clear_communities(gds):
+    try:
+        logging.info("Starting to clear communities.")
+
+        logging.info("Dropping communities...")
+        gds.run_cypher(DROP_COMMUNITIES)
+        logging.info(f"Communities dropped successfully")
+
+        logging.info("Dropping community property from entities...")
+        gds.run_cypher(DROP_COMMUNITY_PROPERTY)
+        logging.info(f"Community property dropped successfully")
+
+    except Exception as e:
+        logging.error(f"An error occurred while clearing communities: {e}")
+        raise
+
 
 def create_communities(uri, username, password, database,model):
     try:
         gds = get_gds_driver(uri, username, password, database)
+        clear_communities(gds)
+
         graph_project = create_community_graph_projection(gds)
         write_communities_sucess = write_communities(gds, graph_project)
         if write_communities_sucess:
-            logging.info("Applying community constraint to the graph.")
-            gds.run_cypher(CREATE_COMMUNITY_CONSTRAINT)
+            logging.info("Starting Community properties creation process.")
             create_community_properties(gds,model)
             logging.info("Communities creation process completed successfully.")
         else:
