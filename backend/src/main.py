@@ -444,13 +444,10 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition):
       logging.info(f"Retry : start_from_last_processed_position")
       starting_chunk = graph.query(QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION, params={"filename":file_name})
       if starting_chunk[0]["position"] < len(chunkId_chunkDoc_list):
-        my_list = chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
-        logging.info(f"last prcessed index {starting_chunk}, chunk list length : {len(my_list)}")
         return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
       
       elif starting_chunk[0]["position"] == len(chunkId_chunkDoc_list):
         starting_chunk = graph.query(QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY, params={"filename":file_name})
-        print(f"Starting position of entities = {starting_chunk}")
         return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
       
       else:
@@ -620,14 +617,14 @@ def populate_graph_schema_from_text(text, model, is_schema_description_cheked):
 def set_status_retry(graph, file_name, retry_condition):
     graphDb_data_Access = graphDBdataAccess(graph)
     obj_source_node = sourceNode()
-    status = "Retry"
+    status = "Reprocess"
     obj_source_node.file_name = file_name
     obj_source_node.status = status
     obj_source_node.retry_condition = retry_condition
     obj_source_node.is_cancelled = False
-    if retry_condition != START_FROM_LAST_PROCESSED_POSITION:
-      obj_source_node.processed_chunk=0
-      if retry_condition == DELETE_ENTITIES_AND_START_FROM_BEGINNING:
+    if retry_condition == DELETE_ENTITIES_AND_START_FROM_BEGINNING or retry_condition == START_FROM_BEGINNING:
+        obj_source_node.processed_chunk=0
+    if retry_condition == DELETE_ENTITIES_AND_START_FROM_BEGINNING:
         graph.query(QUERY_TO_DELETE_EXISTING_ENTITIES, params={"filename":file_name})
         obj_source_node.node_count=0
         obj_source_node.relationship_count=0
