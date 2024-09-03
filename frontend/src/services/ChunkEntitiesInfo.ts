@@ -1,6 +1,5 @@
-import axios from 'axios';
-import { url } from '../utils/Utils';
 import { ChatInfo_APIResponse, UserCredentials } from '../types';
+import api from '../API/Index';
 
 const chunkEntitiesAPI = async (userCredentials: UserCredentials, chunk_ids: string) => {
   try {
@@ -10,7 +9,7 @@ const chunkEntitiesAPI = async (userCredentials: UserCredentials, chunk_ids: str
     formData.append('password', userCredentials?.password ?? '');
     formData.append('chunk_ids', chunk_ids);
 
-    const response: ChatInfo_APIResponse = await axios.post(`${url()}/chunk_entities`, formData, {
+    const response: ChatInfo_APIResponse = await api.post(`/chunk_entities`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

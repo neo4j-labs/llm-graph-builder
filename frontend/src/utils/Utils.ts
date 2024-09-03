@@ -1,6 +1,6 @@
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import type { Relationship } from '@neo4j-nvl/base';
-import { Entity, ExtendedNode, GraphType, Messages, Scheme } from '../types';
+import { Entity, ExtendedNode, ExtendedRelationship, GraphType, Messages, Scheme } from '../types';
 
 // Get the Url
 export const url = () => {
@@ -130,7 +130,7 @@ export function extractPdfFileName(url: string): string {
   return decodedFileName;
 }
 
-export const processGraphData = (neoNodes: ExtendedNode[], neoRels: Relationship[]) => {
+export const processGraphData = (neoNodes: ExtendedNode[], neoRels: ExtendedRelationship[]) => {
   const schemeVal: Scheme = {};
   let iterator = 0;
   const labels: string[] = neoNodes.map((f: any) => f.labels);
@@ -238,4 +238,10 @@ export const parseEntity = (entity: Entity) => {
 
 export const titleCheck = (title: string) => {
   return title === 'Chunk' || title === 'Document';
+};
+
+export const sortAlphabetically = (a: Relationship, b: Relationship) => {
+  const captionOne = a.caption?.toLowerCase() || '';
+  const captionTwo = b.caption?.toLowerCase() || '';
+  return captionOne.localeCompare(captionTwo);
 };

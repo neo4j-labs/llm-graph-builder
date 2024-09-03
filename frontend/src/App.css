@@ -233,10 +233,8 @@
   letter-spacing: 0;
   line-height: 1.25rem;
   width: max-content;
-  height: 30px;
   text-overflow: ellipsis;
   white-space: nowrap;
-  overflow: hidden;
 }
 
 .ndl-widget-content>div {
@@ -365,4 +363,13 @@
 .widthunset{
   width: initial !important;
   height: initial !important;
+}
+
+.text-input-container {
+  transition: width 1.5s ease;
+  /* width: 100dvh; */
+}
+
+.text-input-container.search-initiated {
+  width: 60dvh;
 }

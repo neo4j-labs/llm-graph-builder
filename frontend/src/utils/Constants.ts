@@ -51,15 +51,15 @@ export const llms =
         'bedrock_claude_3_5_sonnet',
       ];
 
-export const defaultLLM = llms?.includes('openai-gpt-4o-mini')
-  ? 'openai-gpt-4o-mini'
+export const defaultLLM = llms?.includes('openai-gpt-4o')
+  ? 'openai-gpt-4o'
   : llms?.includes('gemini-1.0-pro')
   ? 'gemini-1.0-pro'
   : 'diffbot';
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
     ? process.env.VITE_CHAT_MODES?.split(',')
-    : ['vector', 'graph', 'graph+vector', 'hybrid', 'hybrid+graph'];
+    : ['vector', 'graph', 'graph+vector', 'fulltext', 'graph+vector+fulltext'];
 export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.VITE_TIME_PER_PAGE ? parseInt(process.env.VITE_TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
@@ -231,4 +231,8 @@ export const graphLabels = {
   totalNodes: 'Total Nodes',
   noEntities: 'No Entities Found',
   selectCheckbox: 'Select atleast one checkbox for graph view',
+  totalRelationships: 'Total Relationships',
+  nodeSize: 30,
 };
+
+export const RESULT_STEP_SIZE = 25;

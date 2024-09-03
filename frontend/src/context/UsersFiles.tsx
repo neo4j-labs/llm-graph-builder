@@ -58,7 +58,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [selectedSchemas, setSelectedSchemas] = useState<readonly OptionType[]>([]);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [chatMode, setchatMode] = useState<string>('graph+vector');
+  const [chatMode, setchatMode] = useState<string>('graph+vector+fulltext');
   const [isSchema, setIsSchema] = useState<boolean>(false);
   const [showTextFromSchemaDialog, setShowTextFromSchemaDialog] = useState<showTextFromSchemaDialogType>({
     triggeredFrom: '',
