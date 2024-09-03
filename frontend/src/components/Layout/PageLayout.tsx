@@ -33,7 +33,7 @@ export default function PageLayoutNew({
   const [shows3Modal, toggleS3Modal] = useReducer((s) => !s, false);
   const [showGCSModal, toggleGCSModal] = useReducer((s) => !s, false);
   const [showGenericModal, toggleGenericModal] = useReducer((s) => !s, false);
-  const { userCredentials } = useCredentials();
+  const { userCredentials, connectionStatus } = useCredentials();
   const toggleLeftDrawer = () => {
     if (largedesktops) {
       setIsLeftExpanded(!isLeftExpanded);
@@ -156,7 +156,12 @@ export default function PageLayoutNew({
         closeSettingModal={closeSettingModal}
       />
       {showDrawerChatbot && (
-        <DrawerChatbot messages={messages} isExpanded={isRightExpanded} clearHistoryData={clearHistoryData} />
+        <DrawerChatbot
+          messages={messages}
+          isExpanded={isRightExpanded}
+          clearHistoryData={clearHistoryData}
+          connectionStatus={connectionStatus}
+        />
       )}
       <SideNav
         messages={messages}
