@@ -39,9 +39,10 @@ const IconButtonWithToolTip = ({
           {children}
         </IconButton>
       </Tip.Trigger>
-      {isHovered && (<Tip.Content isPortaled={false} style={{ whiteSpace: 'nowrap' }}>
-        {text}
-      </Tip.Content>
+      {isHovered && (
+        <Tip.Content isPortaled={false} style={{ whiteSpace: 'nowrap' }}>
+          {text}
+        </Tip.Content>
       )}
     </Tip>
   );

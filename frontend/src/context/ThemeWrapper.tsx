@@ -1,7 +1,7 @@
 import { ReactNode, createContext, useMemo, useState, useEffect } from 'react';
 import { NeedleThemeProvider, useMediaQuery } from '@neo4j-ndl/react';
 export const ThemeWrapperContext = createContext({
-  toggleColorMode: () => { },
+  toggleColorMode: () => {},
   colorMode: localStorage.getItem('mode') as 'light' | 'dark',
 });
 interface ThemeWrapperProps {
@@ -39,7 +39,7 @@ const ThemeWrapper = ({ children }: ThemeWrapperProps) => {
       document.body.classList.remove('ndl-theme-dark');
     }
   };
-  
+
   if (usingPreferredMode) {
     prefersDarkMode ? themeBodyInjection('light') : themeBodyInjection('dark');
   }

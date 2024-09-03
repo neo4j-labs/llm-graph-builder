@@ -52,7 +52,6 @@ export default function ConnectionModal({
   const userNameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
 
-
   useEffect(() => {
     if (searchParams.has('connectURL')) {
       const url = searchParams.get('connectURL');
@@ -292,8 +291,9 @@ export default function ConnectionModal({
         } else {
           submitConnection();
         }
+      } else {
+        nextRef?.current?.focus();
       }
-      else { nextRef?.current?.focus() };
     }
   };
 
@@ -433,14 +433,18 @@ export default function ConnectionModal({
             </div>
           </form>
           <Flex flexDirection='row' justifyContent='flex-end'>
-            <Button loading={isLoading} disabled={isDisabled} onClick={() => submitConnection()}
+            <Button
+              loading={isLoading}
+              disabled={isDisabled}
+              onClick={() => submitConnection()}
               ref={connectRef}
               onKeyDown={(e) => {
                 e.stopPropagation();
                 if (e.key === 'Enter') {
                   submitConnection();
                 }
-              }}>
+              }}
+            >
               {buttonCaptions.connect}
             </Button>
           </Flex>

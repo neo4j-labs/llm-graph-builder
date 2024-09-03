@@ -33,7 +33,7 @@ const ButtonWithToolTip = ({
   const [isHovered, setIsHovered] = useState<boolean>(false);
   return (
     <Tip allowedPlacements={[placement]} type='tooltip'>
-      <Tip.Trigger >
+      <Tip.Trigger>
         <Button
           aria-label={label}
           size={size}
@@ -50,9 +50,10 @@ const ButtonWithToolTip = ({
           {children}
         </Button>
       </Tip.Trigger>
-      {isHovered && (<Tip.Content isPortaled={false} style={{ whiteSpace: 'nowrap' }}>
-        {text}
-      </Tip.Content>
+      {isHovered && (
+        <Tip.Content isPortaled={false} style={{ whiteSpace: 'nowrap' }}>
+          {text}
+        </Tip.Content>
       )}
     </Tip>
   );
