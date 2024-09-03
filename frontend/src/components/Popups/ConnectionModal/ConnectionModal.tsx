@@ -52,11 +52,6 @@ export default function ConnectionModal({
   const userNameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (connectRef.current) {
-      connectRef.current.focus();
-    }
-  })
 
   useEffect(() => {
     if (searchParams.has('connectURL')) {
@@ -295,6 +290,23 @@ export default function ConnectionModal({
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>, nextRef?: React.RefObject<HTMLInputElement>) => {
+    if (e.code === 'Enter') {
+      e.preventDefault();
+      // @ts-ignore
+      const { form } = e.target;
+      if (form) {
+        const index = Array.prototype.indexOf.call(form, e.target);
+        if (index + 1 < form.elements.length) {
+          form.elements[index + 1].focus();
+        } else {
+          submitConnection();
+        }
+      }
+      else { nextRef?.current?.focus() };
+    }
+  };
+
   const isDisabled = useMemo(() => !username || !URI || !password, [username, URI, password]);
 
   return (
@@ -383,51 +395,53 @@ export default function ConnectionModal({
               />
             </div>
           </div>
-          <TextInput
-            ref={databaseRef}
-            id='database'
-            value={database}
-            disabled={false}
-            label='Database'
-            aria-label='Database'
-            placeholder='neo4j'
-            fluid
-            required
-            onChange={(e) => setDatabase(e.target.value)}
-            className='w-full'
-            onKeyDown={(e) => handleKeyDown(e, userNameRef)}
-          />
-          <div className='n-flex n-flex-row n-flex-wrap mb-2'>
-            <div className='w-[48.5%] mr-1.5 inline-block'>
-              <TextInput
-                ref={userNameRef}
-                id='username'
-                value={username}
-                disabled={false}
-                label='Username'
-                aria-label='Username'
-                placeholder='neo4j'
-                fluid
-                onChange={(e) => setUsername(e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, passwordRef)}
-              />
+          <form>
+            <TextInput
+              ref={databaseRef}
+              id='database'
+              value={database}
+              disabled={false}
+              label='Database'
+              aria-label='Database'
+              placeholder='neo4j'
+              fluid
+              required
+              onChange={(e) => setDatabase(e.target.value)}
+              className='w-full'
+              onKeyDown={handleKeyPress}
+            />
+            <div className='n-flex n-flex-row n-flex-wrap mb-2'>
+              <div className='w-[48.5%] mr-1.5 inline-block'>
+                <TextInput
+                  ref={userNameRef}
+                  id='username'
+                  value={username}
+                  disabled={false}
+                  label='Username'
+                  aria-label='Username'
+                  placeholder='neo4j'
+                  fluid
+                  onChange={(e) => setUsername(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                />
+              </div>
+              <div className='w-[48.5%] ml-[1.5%] inline-block'>
+                <TextInput
+                  ref={passwordRef}
+                  id='password'
+                  value={password}
+                  disabled={false}
+                  label='Password'
+                  aria-label='Password'
+                  placeholder='password'
+                  type='password'
+                  fluid
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                />
+              </div>
             </div>
-            <div className='w-[48.5%] ml-[1.5%] inline-block'>
-              <TextInput
-                ref={passwordRef}
-                id='password'
-                value={password}
-                disabled={false}
-                label='Password'
-                aria-label='Password'
-                placeholder='password'
-                type='password'
-                fluid
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, connectRef)}
-              />
-            </div>
-          </div>
+          </form>
           <Flex flexDirection='row' justifyContent='flex-end'>
             <Button loading={isLoading} disabled={isDisabled} onClick={() => submitConnection()}
               ref={connectRef}
