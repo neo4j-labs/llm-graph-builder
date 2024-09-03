@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef, Suspense, useReducer } from 'react';
+import { useEffect, useState, useMemo, useRef, Suspense, useReducer, useCallback } from 'react';
 import FileTable from './FileTable';
 import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
@@ -524,14 +524,8 @@ const Content: React.FC<ContentProps> = ({
             : f;
         });
       });
-      setAlertStateForRetry({
-        showAlert: true,
-        alertMessage: response.data.message as string,
-        alertType: 'success',
-      });
-      setTimeout(() => {
-        toggleRetryPopup();
-      }, 2000);
+      showSuccessToast(response.data.message as string);
+      retryOnclose();
     } catch (error) {
       setRetryLoading(false);
       if (error instanceof Error) {
@@ -671,29 +665,34 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
+  const retryOnclose = useCallback(() => {
+    setRetryFile('');
+    setAlertStateForRetry({
+      showAlert: false,
+      alertMessage: '',
+      alertType: 'neutral',
+    });
+    setRetryLoading(false);
+    toggleRetryPopup();
+  }, []);
+
+  const onBannerClose = useCallback(() => {
+    setAlertStateForRetry({
+      showAlert: false,
+      alertMessage: '',
+      alertType: 'neutral',
+    });
+  }, []);
+
   return (
     <>
       <RetryConfirmationDialog
         retryLoading={retryLoading}
         retryHandler={retryHandler}
         fileId={retryFile}
-        onClose={() => {
-          setRetryFile('');
-          setAlertStateForRetry({
-            showAlert: false,
-            alertMessage: '',
-            alertType: 'neutral',
-          });
-          setRetryLoading(false);
-        }}
+        onClose={retryOnclose}
         open={showRetryPopup}
-        onBannerClose={() => {
-          setAlertStateForRetry({
-            showAlert: false,
-            alertMessage: '',
-            alertType: 'neutral',
-          });
-        }}
+        onBannerClose={onBannerClose}
         alertStatus={alertStateForRetry}
       />
       {showConfirmationModal && filesForProcessing.length && (

@@ -1,8 +1,9 @@
-import { Banner, Button, Dialog, Flex, Radio } from '@neo4j-ndl/react';
+import { Banner, Dialog, Flex, Radio } from '@neo4j-ndl/react';
 import { RETRY_OPIONS } from '../../../utils/Constants';
 import { useFileContext } from '../../../context/UsersFiles';
 import { capitalize } from '../../../utils/Utils';
 import { BannerAlertProps } from '../../../types';
+import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
 
 export default function RetryConfirmationDialog({
   open,
@@ -52,7 +53,7 @@ export default function RetryConfirmationDialog({
                   .map((s) => capitalize(s))
                   .join(' ')}
                 onKeyDown={(e) => {
-                  if (e.code === 'Enter') {
+                  if (e.code === 'Enter' && file?.retryOption.length) {
                     retryHandler(file?.name as string, file?.retryOption as string);
                   }
                 }}
@@ -62,15 +63,19 @@ export default function RetryConfirmationDialog({
         </Flex>
         <Dialog.Actions>
           <Dialog.Actions className='!mt-3'>
-            <Button
+            <ButtonWithToolTip
+              placement='top'
+              label='Retry action button'
+              text={!file?.retryOption.length ? `please select one of the option` : 'Reset the status to retry'}
               loading={retryLoading}
+              disabled={!file?.retryOption.length}
               onClick={() => {
                 retryHandler(file?.name as string, file?.retryOption as string);
               }}
               size='large'
             >
               Continue
-            </Button>
+            </ButtonWithToolTip>
           </Dialog.Actions>
         </Dialog.Actions>
       </Dialog.Content>
