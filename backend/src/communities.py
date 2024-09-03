@@ -265,7 +265,7 @@ def create_community_summaries(gds, model):
 
         summaries = []
         with ThreadPoolExecutor() as executor:
-            futures = [executor.submit(process_community_info, community, community_chain) for _, community in community_info_list.items()]
+            futures = [executor.submit(process_community_info, community, community_chain) for community in community_info_list.to_dict(orient="records")]
             
             for future in as_completed(futures):
                 result = future.result()
@@ -281,7 +281,7 @@ def create_community_summaries(gds, model):
 
         parent_summaries = []
         with ThreadPoolExecutor() as executor:
-            futures = [executor.submit(process_community_info, community, parent_community_chain, is_parent=True) for _, community in parent_community_info.items()]
+            futures = [executor.submit(process_community_info, community, parent_community_chain, is_parent=True) for community in parent_community_info.to_dict(orient="records")]
             
             for future in as_completed(futures):
                 result = future.result()
