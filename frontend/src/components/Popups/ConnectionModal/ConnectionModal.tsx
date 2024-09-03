@@ -280,16 +280,6 @@ export default function ConnectionModal({
     setMessage({ type: 'unknown', content: '' });
   }, []);
 
-  const handleKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement | HTMLButtonElement>,
-    nextRef?: React.RefObject<HTMLInputElement | HTMLButtonElement>
-  ) => {
-    if (e.code === 'Enter') {
-      e.preventDefault();
-      nextRef?.current?.focus();
-    }
-  };
-
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>, nextRef?: React.RefObject<HTMLInputElement>) => {
     if (e.code === 'Enter') {
       e.preventDefault();
@@ -391,7 +381,7 @@ export default function ConnectionModal({
                 onChange={(e) => setURI(e.target.value)}
                 onPaste={(e) => handleHostPasteChange(e)}
                 aria-label='Connection URI'
-                onKeyDown={(e) => handleKeyDown(e, databaseRef)}
+                onKeyDown={(e) => handleKeyPress(e, databaseRef)}
               />
             </div>
           </div>
