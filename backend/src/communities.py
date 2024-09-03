@@ -225,7 +225,6 @@ def get_community_chain(model, is_parent=False,community_template=COMMUNITY_TEMP
         logging.error(f"Failed to create community chain: {e}")
         raise
 
-
 def prepare_string(community_data):
     try:
         nodes_description = "Nodes are:\n"
