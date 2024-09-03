@@ -52,7 +52,7 @@ export default function GraphEnhancementDialog({
     <Dialog
       modalProps={{
         id: 'graph-enhancement-popup',
-        className: 'n-p-token-4 n-rounded-lg h-[90%]',
+        className: 'n-p-token-4 n-rounded-lg',
       }}
       open={open}
       size='unset'
