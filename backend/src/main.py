@@ -1,6 +1,7 @@
 from langchain_community.graphs import Neo4jGraph
 from src.shared.constants import BUCKET_UPLOAD, PROJECT_ID
 from src.shared.schema_extraction import schema_extraction_from_text
+from langchain_community.document_loaders import GoogleApiClient, GoogleApiYoutubeLoader
 from dotenv import load_dotenv
 from datetime import datetime
 import logging
@@ -138,7 +139,19 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     obj_source_node.created_at = datetime.now()
     match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
     logging.info(f"match value: {match}")
-    obj_source_node.file_name = YouTube(obj_source_node.url).title
+    cred_path = os.path.join(os.getcwd(),"llm-experiments_credentials.json")
+    # print(cred_path)
+    video_id = parse_qs(urlparse(youtube_url)).get('v')
+    google_api_client = GoogleApiClient(service_account_path=Path(cred_path))
+    youtube_loader_channel = GoogleApiYoutubeLoader(
+    google_api_client=google_api_client,
+    video_ids=[video_id], add_video_info=True
+    )
+    youtube_transcript = youtube_loader_channel.load()
+    # print(f'youtube page_content: {youtube_transcript[0].page_content}')
+    # print(f'youtube id: {youtube_transcript[0].metadata["id"]}')
+    # print(f'youtube title: {youtube_transcript[0].metadata["snippet"]["title"]}')
+    obj_source_node.file_name = youtube_transcript[0].metadata["snippet"]["title"]
     transcript= get_youtube_combined_transcript(match.group(1))
     if transcript==None or len(transcript)==0:
       message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
