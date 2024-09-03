@@ -113,7 +113,7 @@ export default function DropZoneForSmallLayouts() {
               if (curfile.name == file.name) {
                 return {
                   ...curfile,
-                  status: 'Failed',
+                  status: 'Upload Failed',
                   type: `${file.name.substring(file.name.lastIndexOf('.') + 1, file.name.length).toUpperCase()}`,
                 };
               }

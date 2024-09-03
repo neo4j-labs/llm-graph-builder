@@ -58,6 +58,10 @@ export const statusCheck = (status: string) => {
       return 'warning';
     case 'Failed':
       return 'danger';
+    case 'Upload Failed':
+      return 'danger';
+    case 'Retry':
+      return 'info';
     default:
       return 'unknown';
   }
