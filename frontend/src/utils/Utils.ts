@@ -60,7 +60,7 @@ export const statusCheck = (status: string) => {
       return 'danger';
     case 'Upload Failed':
       return 'danger';
-    case 'Retry':
+    case 'Reprocess':
       return 'info';
     default:
       return 'unknown';
@@ -262,7 +262,7 @@ export const getFileSourceStatus = (item: SourceNode) => {
   if (item?.fileSource === 'local file') {
     return item?.status;
   }
-  if (item?.status === 'Completed' || item.status === 'Failed' || item.status === 'Retry') {
+  if (item?.status === 'Completed' || item.status === 'Failed' || item.status === 'Reprocess') {
     return item?.status;
   }
   if (

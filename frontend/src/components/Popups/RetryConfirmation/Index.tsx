@@ -66,7 +66,7 @@ export default function RetryConfirmationDialog({
             <ButtonWithToolTip
               placement='top'
               label='Retry action button'
-              text={!file?.retryOption.length ? `please select one of the option` : 'Reset the status to retry'}
+              text={!file?.retryOption.length ? `Please Select One Of The Option` : 'Reset The Status To Reprocess'}
               loading={retryLoading}
               disabled={!file?.retryOption.length}
               onClick={() => {
