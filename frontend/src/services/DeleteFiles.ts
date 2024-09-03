@@ -1,6 +1,5 @@
-import axios from 'axios';
-import { url } from '../utils/Utils';
 import { CustomFile, UserCredentials } from '../types';
+import api from '../API/Index';
 
 const deleteAPI = async (userCredentials: UserCredentials, selectedFiles: CustomFile[], deleteEntities: boolean) => {
   try {
@@ -14,7 +13,7 @@ const deleteAPI = async (userCredentials: UserCredentials, selectedFiles: Custom
     formData.append('deleteEntities', JSON.stringify(deleteEntities));
     formData.append('filenames', JSON.stringify(filenames));
     formData.append('source_types', JSON.stringify(source_types));
-    const response = await axios.post(`${url()}/delete_document_and_entities`, formData);
+    const response = await api.post(`/delete_document_and_entities`, formData);
     return response;
   } catch (error) {
     console.log('Error Posting the Question:', error);

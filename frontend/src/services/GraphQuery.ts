@@ -1,6 +1,5 @@
-import axios from 'axios';
-import { url } from '../utils/Utils';
 import { UserCredentials } from '../types';
+import api from '../API/Index';
 
 const graphQueryAPI = async (
   userCredentials: UserCredentials,
@@ -16,7 +15,7 @@ const graphQueryAPI = async (
     formData.append('query_type', query_type ?? 'entities');
     formData.append('document_names', JSON.stringify(document_names));
 
-    const response = await axios.post(`${url()}/graph_query`, formData, {
+    const response = await api.post(`/graph_query`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

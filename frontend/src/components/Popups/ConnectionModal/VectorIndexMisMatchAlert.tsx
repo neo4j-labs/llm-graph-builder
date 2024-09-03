@@ -2,21 +2,22 @@ import { Box, Flex } from '@neo4j-ndl/react';
 import Markdown from 'react-markdown';
 import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
 import { useCredentials } from '../../../context/UserCredentials';
+import { useState } from 'react';
 
 export default function VectorIndexMisMatchAlert({
-  vectorIndexLoading,
   recreateVectorIndex,
   isVectorIndexAlreadyExists,
   userVectorIndexDimension,
   chunksExists,
 }: {
-  vectorIndexLoading: boolean;
   recreateVectorIndex: () => Promise<void>;
   isVectorIndexAlreadyExists: boolean;
   userVectorIndexDimension?: number;
   chunksExists: boolean;
 }) {
   const { userCredentials } = useCredentials();
+  const [vectorIndexLoading, setVectorIndexLoading] = useState<boolean>(false);
+
   return (
     <Flex>
       <Box>
@@ -42,7 +43,11 @@ To proceed, please choose one of the following options:
           label='creates the supported vector index'
           placement='top'
           loading={vectorIndexLoading}
-          onClick={() => recreateVectorIndex()}
+          onClick={async () => {
+            setVectorIndexLoading(true);
+            await recreateVectorIndex();
+            setVectorIndexLoading(false);
+          }}
           className='!w-full'
           color='danger'
           disabled={userCredentials === null}
