@@ -1,25 +1,6 @@
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import type { Relationship } from '@neo4j-nvl/base';
-import {
-  CustomFile,
-  Entity,
-  ExtendedNode,
-  ExtendedRelationship,
-  GraphType,
-  Messages,
-  Scheme,
-  SourceNode,
-  UserCredentials,
-} from '../types';
-import Wikipediadarkmode from '../assets/images/wikipedia-darkmode.svg';
-import Wikipediadlogo from '../assets/images/wikipedia.svg';
-import webdarklogo from '../assets/images/web-darkmode.svg';
-import weblogo from '../assets/images/web.svg';
-import youtubedarklogo from '../assets/images/youtube-darkmode.svg';
-import youtubelightlogo from '../assets/images/youtube-lightmode.svg';
-import s3logo from '../assets/images/s3logo.png';
-import gcslogo from '../assets/images/gcs.webp';
-import { chatModeLables } from './Constants';
+import { Entity, ExtendedNode, ExtendedRelationship, GraphType, Messages, Scheme } from '../types';
 
 // Get the Url
 export const url = () => {
@@ -373,100 +354,8 @@ export const titleCheck = (title: string) => {
   return title === 'Chunk' || title === 'Document';
 };
 
-export const getFileSourceStatus = (item: SourceNode) => {
-  if (item?.fileSource === 's3 bucket' && localStorage.getItem('accesskey') === item?.awsAccessKeyId) {
-    return item?.status;
-  }
-  if (item?.fileSource === 'local file') {
-    return item?.status;
-  }
-  if (item?.status === 'Completed' || item.status === 'Failed' || item.status === 'Reprocess') {
-    return item?.status;
-  }
-  if (
-    item?.fileSource === 'Wikipedia' ||
-    item?.fileSource === 'youtube' ||
-    item?.fileSource === 'gcs bucket' ||
-    item?.fileSource === 'web-url'
-  ) {
-    return item?.status;
-  }
-  return 'N/A';
-};
-export const isFileCompleted = (waitingFile: CustomFile, item: SourceNode) =>
-  waitingFile && item.status === 'Completed';
-
-export const calculateProcessedCount = (prev: number, batchSize: number) =>
-  (prev === batchSize ? batchSize - 1 : prev + 1);
-
-export const isProcessingFileValid = (item: SourceNode, userCredentials: UserCredentials) => {
-  return item.status === 'Processing' && item.fileName != undefined && userCredentials && userCredentials.database;
-};
 export const sortAlphabetically = (a: Relationship, b: Relationship) => {
   const captionOne = a.caption?.toLowerCase() || '';
   const captionTwo = b.caption?.toLowerCase() || '';
   return captionOne.localeCompare(captionTwo);
 };
-
-export const capitalizeWithPlus = (s: string) => {
-  return s
-    .split('+')
-    .map((s) => capitalize(s))
-    .join('+');
-};
-
-export const getDescriptionForChatMode = (mode: string): string => {
-  switch (mode.toLowerCase()) {
-    case chatModeLables.vector:
-      return 'Utilizes vector indexing on text chunks to enable semantic similarity search.';
-    case chatModeLables.graph:
-      return 'Leverages text-to-cypher translation to query a database and retrieve relevant data, ensuring a highly targeted and contextually accurate response.';
-    case chatModeLables.graph_vector:
-      return 'Combines vector indexing on text chunks with graph connections, enhancing search results with contextual relevance by considering relationships between concepts.';
-    case chatModeLables.fulltext:
-      return 'Employs a fulltext index on text chunks for rapid keyword-based search, efficiently identifying documents containing specific words or phrases.';
-    case chatModeLables.graph_vector_fulltext:
-      return 'Merges vector indexing, graph connections, and fulltext indexing for a comprehensive search approach, combining semantic similarity, contextual relevance, and keyword-based search for optimal results.';
-    case chatModeLables.entity_vector:
-      return 'Combines entity node vector indexing with graph connections for accurate entity-based search, providing the most relevant response.';
-    default:
-      return 'Chat mode description not available'; // Fallback description
-  }
-};
-export const getLogo = (mode: string): Record<string, string> => {
-  if (mode === 'light') {
-    return {
-      Wikipedia: Wikipediadarkmode,
-      'web-url': webdarklogo,
-      's3 bucket': s3logo,
-      youtube: youtubedarklogo,
-      'gcs bucket': gcslogo,
-    };
-  }
-  return {
-    Wikipedia: Wikipediadlogo,
-    'web-url': weblogo,
-    's3 bucket': s3logo,
-    youtube: youtubelightlogo,
-    'gcs bucket': gcslogo,
-  };
-};
-
-export const generateYouTubeLink = (url: string, startTime: string) => {
-  try {
-    const urlObj = new URL(url);
-    urlObj.searchParams.set('t', startTime);
-    return urlObj.toString();
-  } catch (error) {
-    console.error('Invalid URL:', error);
-    return '';
-  }
-};
-export function isAllowedHost(url: string, allowedHosts: string[]) {
-  try {
-    const parsedUrl = new URL(url);
-    return allowedHosts.includes(parsedUrl.host);
-  } catch (e) {
-    return false;
-  }
-}

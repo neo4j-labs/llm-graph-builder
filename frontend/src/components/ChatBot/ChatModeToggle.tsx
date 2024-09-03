@@ -91,7 +91,33 @@ export default function ChatModeToggle({
       MenuAnchor={menuAnchor}
       anchorPortal={anchorPortal}
       disableBackdrop={disableBackdrop}
-      items={menuItems}
-    />
+      items={useMemo(
+        () =>
+          chatModes?.map((m) => {
+            return {
+              title: m.includes('+')
+                ? m
+                    .split('+')
+                    .map((s) => capitalize(s))
+                    .join('+')
+                : capitalize(m),
+              onClick: () => {
+                setchatMode(m);
+              },
+              disabledCondition: false,
+              description: (
+                <span>
+                  {chatMode === m && (
+                    <>
+                      <StatusIndicator type={`${chatMode === m ? 'success' : 'unknown'}`} /> Selected
+                    </>
+                  )}
+                </span>
+              ),
+            };
+          }),
+        [chatMode, chatModes]
+      )}
+    ></CustomMenu>
   );
 }

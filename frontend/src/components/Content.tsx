@@ -29,10 +29,6 @@ import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
 import { tokens } from '@neo4j-ndl/base';
 import axios from 'axios';
-import DatabaseStatusIcon from './UI/DatabaseStatusIcon';
-import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
-import retry from '../services/retry';
-import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/toasts';
 
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
@@ -377,8 +373,7 @@ const Content: React.FC<ContentProps> = ({
     if (!remainingFiles.length) {
       await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
     }
-    for (let index = 0; index < remainingFiles.length; index++) {
-      const f = remainingFiles[index];
+    remainingFiles.forEach((f) => {
       setFilesData((prev) =>
         prev.map((pf) => {
           if (pf.id === f.id) {

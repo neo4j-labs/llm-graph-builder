@@ -12,12 +12,16 @@ import {
 import { DocumentDuplicateIconOutline, ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
 import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
+import wikipedialogo from '../../assets/images/wikipedia.svg';
+import youtubelogo from '../../assets/images/youtube.svg';
+import gcslogo from '../../assets/images/gcs.webp';
+import s3logo from '../../assets/images/s3logo.png';
 import {
   Chunk,
-  Community,
   Entity,
   ExtendedNode,
   ExtendedRelationship,
+  GroupedEntity,
   UserCredentials,
   chatInfoMessage,
 } from '../../types';
@@ -25,6 +29,10 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import GraphViewButton from '../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
 import { useCredentials } from '../../context/UserCredentials';
+import { calcWordColor } from '@neo4j-devtools/word-color';
+import ReactMarkdown from 'react-markdown';
+import { GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
+import { parseEntity, youtubeLinkValidation } from '../../utils/Utils';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { tokens } from '@neo4j-ndl/base';
 import ChunkInfo from './ChunkInfo';
@@ -175,17 +183,13 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         <Banner type='danger'>{error}</Banner>
       ) : (
         <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
-          {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
-          {mode != chatModeLables.graph  ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
-          {mode === chatModeLables.graph_vector ||
-          mode === chatModeLables.graph ||
-          mode === chatModeLables.graph_vector_fulltext ||
-          mode === chatModeLables.entity_vector ? (
+          {mode != 'graph' ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
+          {mode === 'graph+vector' || mode === 'graph' || mode === 'graph+vector+fulltext' ? (
             <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
           ) : (
             <></>
           )}
-          {mode === chatModeLables.graph && cypher_query?.trim()?.length ? (
+          {mode === 'graph' && cypher_query?.trim().length ? (
             <Tabs.Tab tabId={6}>Generated Cypher Query</Tabs.Tab>
           ) : (
             <></>

@@ -30,7 +30,7 @@ import {
   MagnifyingGlassMinusIconOutline,
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
-import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
+import IconButtonWithToolTip from '../UI/IconButtonToolTip';
 import { filterData, processGraphData, sortAlphabetically } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 import { LegendsChip } from './LegendsChip';
@@ -68,8 +68,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [newScheme, setNewScheme] = useState<Scheme>({});
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedQuery = useDebounce(searchQuery, 300);
-  const [graphType, setGraphType] = useState<GraphType[]>(intitalGraphType(isGdsActive));
-  const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
 
   // the checkbox selection
   const handleCheckboxChange = (graph: GraphType) => {
@@ -120,7 +118,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       if (nvlRef.current) {
         nvlRef.current?.destroy();
       }
-      setGraphType(intitalGraphType(isGdsActive));
+      setGraphType(intitalGraphType);
       clearTimeout(timeoutId);
       setScheme({});
       setNodes([]);
@@ -263,6 +261,71 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     },
     [nodes]
   );
+
+  // The search and update nodes
+  const handleSearch = useCallback(
+    (value: string) => {
+      const query = value.toLowerCase();
+      const updatedNodes = nodes.map((node) => {
+        if (query === '') {
+          return {
+            ...node,
+            activated: false,
+            selected: false,
+            size: graphLabels.nodeSize,
+          };
+        }
+        const { id, properties, caption } = node;
+        const propertiesMatch = properties?.id?.toLowerCase().includes(query);
+        const match = id.toLowerCase().includes(query) || propertiesMatch || caption?.toLowerCase().includes(query);
+        return {
+          ...node,
+          activated: match,
+          selected: match,
+          size:
+            match && viewPoint === graphLabels.showGraphView
+              ? 100
+              : match && viewPoint !== graphLabels.showGraphView
+              ? 50
+              : graphLabels.nodeSize,
+        };
+      });
+      // deactivating any active relationships
+      const updatedRelationships = relationships.map((rel) => {
+        return {
+          ...rel,
+          activated: false,
+          selected: false,
+        };
+      });
+      setNodes(updatedNodes);
+      setRelationships(updatedRelationships);
+    },
+    [nodes]
+  );
+
+  useEffect(() => {
+    handleSearch(debouncedQuery);
+  }, [debouncedQuery]);
+
+  const initGraph = (
+    graphType: GraphType[],
+    finalNodes: ExtendedNode[],
+    finalRels: Relationship[],
+    schemeVal: Scheme
+  ) => {
+    if (allNodes.length > 0 && allRelationships.length > 0) {
+      const { filteredNodes, filteredRelations, filteredScheme } = filterData(
+        graphType,
+        finalNodes ?? [],
+        finalRels ?? [],
+        schemeVal
+      );
+      setNodes(filteredNodes);
+      setRelationships(filteredRelations);
+      setNewScheme(filteredScheme);
+    }
+  };
 
   // Unmounting the component
   if (!open) {

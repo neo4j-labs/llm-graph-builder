@@ -84,7 +84,7 @@ export default function ConnectionModal({
               JSON.stringify({
                 uri: usercredential?.uri,
                 user: usercredential?.userName,
-                password: btoa(usercredential?.password),
+                password: usercredential?.password,
                 database: usercredential?.database,
                 userDbVectorIndex: 384,
               })
@@ -207,17 +207,14 @@ export default function ConnectionModal({
       if (response?.data?.status !== 'Success') {
         throw new Error(response.data.error);
       } else {
-        const isgdsActive = response.data.data.gds_status;
-        setGdsActive(isgdsActive);
         localStorage.setItem(
           'neo4j.connection',
           JSON.stringify({
             uri: connectionURI,
             user: username,
-            password: btoa(password),
+            password: password,
             database: database,
             userDbVectorIndex,
-            isgdsActive,
           })
         );
         setUserDbVectorIndex(response.data.data.db_vector_dimension);

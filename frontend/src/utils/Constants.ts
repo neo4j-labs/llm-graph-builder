@@ -77,42 +77,8 @@ export const chatModeLables = {
 }
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
-    ? process.env.VITE_CHAT_MODES?.split(',').map((mode) => ({
-        mode: mode.trim(),
-        description: getDescriptionForChatMode(mode.trim()),
-      }))
-    : [
-        {
-          mode: chatModeLables.vector,
-          description: 'Performs semantic similarity search on text chunks using vector indexing.',
-        },
-        {
-          mode: chatModeLables.graph,
-          description:
-            'Translates text to Cypher queries for precise data retrieval from a graph database.'
-        },
-        {
-          mode: chatModeLables.graph_vector,
-          description:
-            'Combines vector indexing and graph connections for contextually enhanced semantic search.',
-        },
-        {
-          mode: chatModeLables.fulltext,
-          description:
-            'Conducts fast, keyword-based search using full-text indexing on text chunks.',
-        },
-        {
-          mode: chatModeLables.graph_vector_fulltext,
-          description:
-            'Integrates vector, graph, and full-text indexing for comprehensive search results.',
-        },
-        {
-          mode: chatModeLables.entity_vector,
-          description:
-            'Uses vector indexing on entity nodes for highly relevant entity-based search.',
-        },
-      ];
-
+    ? process.env.VITE_CHAT_MODES?.split(',')
+    : ['vector', 'graph', 'graph+vector', 'fulltext', 'graph+vector+fulltext'];
 export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.VITE_TIME_PER_PAGE ? parseInt(process.env.VITE_TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
@@ -299,17 +265,6 @@ export const graphLabels = {
   selectCheckbox: 'Select atleast one checkbox for graph view',
   totalRelationships: 'Total Relationships',
   nodeSize: 30,
-  docChunk: 'Document & Chunk',
-  community: 'Communities',
-  noNodesRels: 'No Nodes and No relationships',
 };
 
 export const RESULT_STEP_SIZE = 25;
-
-export const connectionLabels = {
-  notConnected: 'Not Connected',
-  graphDataScience: 'Graph Data Science',
-  graphDatabase: 'Graph Database',
-  greenStroke: 'green',
-  redStroke: 'red',
-};

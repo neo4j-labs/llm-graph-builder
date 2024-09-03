@@ -328,24 +328,30 @@ def processing_source(uri, userName, password, database, model, file_name, pages
 
   total_chunks, chunkId_chunkDoc_list = get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition)
   result = graphDb_data_Access.get_current_status_document_node(file_name)
- 
-  select_chunks_with_retry=0
-  node_count = 0
-  rel_count = 0
-      
+  print(result)
+  logging.info("Break down file into chunks")
+  bad_chars = ['"', "\n", "'"]
+  for i in range(0,len(pages)):
+    text = pages[i].page_content
+    for j in bad_chars:
+      if j == '\n':
+        text = text.replace(j, ' ')
+      else:
+        text = text.replace(j, '')
+    pages[i]=Document(page_content=str(text), metadata=pages[i].metadata)
+  create_chunks_obj = CreateChunksofDocument(pages, graph)
+  chunks = create_chunks_obj.split_file_into_chunks()
+  chunkId_chunkDoc_list = create_relation_between_chunks(graph,file_name,chunks)
+  
   if len(result) > 0:
     if result[0]['Status'] != 'Processing':      
       obj_source_node = sourceNode()
       status = "Processing"
       obj_source_node.file_name = file_name
       obj_source_node.status = status
-      obj_source_node.total_chunks = total_chunks
+      obj_source_node.total_chunks = len(chunks)
+      obj_source_node.total_pages = len(pages)
       obj_source_node.model = model
-      if retry_condition == START_FROM_LAST_PROCESSED_POSITION:
-          node_count = result[0]['nodeCount']
-          rel_count = result[0]['relationshipCount']
-          select_chunks_with_retry = result[0]['processed_chunk']
-      obj_source_node.processed_chunk = 0+select_chunks_with_retry
       logging.info(file_name)
       logging.info(obj_source_node)
       graphDb_data_Access.update_source_node(obj_source_node)
@@ -355,25 +361,23 @@ def processing_source(uri, userName, password, database, model, file_name, pages
       # selected_chunks = []
       is_cancelled_status = False
       job_status = "Completed"
+      node_count = 0
+      rel_count = 0
       for i in range(0, len(chunkId_chunkDoc_list), update_graph_chunk_processed):
         select_chunks_upto = i+update_graph_chunk_processed
         logging.info(f'Selected Chunks upto: {select_chunks_upto}')
         if len(chunkId_chunkDoc_list) <= select_chunks_upto:
           select_chunks_upto = len(chunkId_chunkDoc_list)
         selected_chunks = chunkId_chunkDoc_list[i:select_chunks_upto]
-        
         result = graphDb_data_Access.get_current_status_document_node(file_name)
         is_cancelled_status = result[0]['is_cancelled']
         logging.info(f"Value of is_cancelled : {result[0]['is_cancelled']}")
         if bool(is_cancelled_status) == True:
           job_status = "Cancelled"
           logging.info('Exit from running loop of processing file')
-          break
+          exit
         else:
-          processing_chunks_start_time = time.time()
           node_count,rel_count = processing_chunks(selected_chunks,graph,uri, userName, password, database,file_name,model,allowedNodes,allowedRelationship,node_count, rel_count)
-          processing_chunks_end_time = time.time() - processing_chunks_start_time
-          logging.info(f"{update_graph_chunk_processed} chunks processed upto {select_chunks_upto} completed in {processing_chunks_end_time:.2f} seconds for file name {file_name}")
           end_time = datetime.now()
           processed_time = end_time - start_time
           
@@ -381,14 +385,9 @@ def processing_source(uri, userName, password, database, model, file_name, pages
           obj_source_node.file_name = file_name
           obj_source_node.updated_at = end_time
           obj_source_node.processing_time = processed_time
-          obj_source_node.processed_chunk = select_chunks_upto+select_chunks_with_retry
-          if retry_condition == START_FROM_BEGINNING:
-            result = graph.query(QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT, params={"filename":file_name})
-            obj_source_node.node_count = result[0]['nodes']
-            obj_source_node.relationship_count = result[0]['rels']
-          else:  
-            obj_source_node.node_count = node_count
-            obj_source_node.relationship_count = rel_count
+          obj_source_node.node_count = node_count
+          obj_source_node.processed_chunk = select_chunks_upto
+          obj_source_node.relationship_count = rel_count
           graphDb_data_Access.update_source_node(obj_source_node)
       
       result = graphDb_data_Access.get_current_status_document_node(file_name)
@@ -418,8 +417,7 @@ def processing_source(uri, userName, password, database, model, file_name, pages
           delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
         else:
           delete_uploaded_local_file(merged_file_path, file_name)  
-      processing_source_func = time.time() - processing_source_start_time
-      logging.info(f"processing source function completed in {processing_source_func:.2f} seconds for file name {file_name}")  
+        
       return {
           "fileName": file_name,
           "nodeCount": node_count,
