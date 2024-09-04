@@ -232,7 +232,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         header: () => <span>Status</span>,
         footer: (info) => info.column.id,
         filterFn: 'statusFilter' as any,
-        size: 200,
+        size: 250,
         meta: {
           columnActions: {
             actions: [
