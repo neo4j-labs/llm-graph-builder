@@ -60,7 +60,7 @@ const Content: React.FC<ContentProps> = ({
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
-  const { setUserCredentials, userCredentials } = useCredentials();
+  const { setUserCredentials, userCredentials, isGdsActive } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
 
@@ -88,7 +88,6 @@ const Content: React.FC<ContentProps> = ({
     alertType: 'error',
     alertMessage: '',
   });
-  const isGdsActive = true;
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
       setalertDetails({

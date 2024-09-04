@@ -184,6 +184,10 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
                 semantic meaning. This facilitates tasks like clustering similar entities, identifying duplicates, and
                 performing similarity-based searches.`,
   },
+  {
+    title: 'create_communities',
+    description:'Create Communities identifies and groups similar entities, improving search accuracy and analysis.'
+  }
 ];
 
 export const batchSize: number = parseInt(process.env.VITE_BATCH_SIZE ?? '2');
