@@ -315,7 +315,7 @@ def processing_source(uri, userName, password, database, model, file_name, pages
       status = "Processing"
       obj_source_node.file_name = file_name
       obj_source_node.status = status
-      obj_source_node.total_chunks = len(chunks)
+      obj_source_node.total_chunks = total_chunks
       obj_source_node.model = model
       if retry_condition == START_FROM_LAST_PROCESSED_POSITION:
           node_count = result[0]['nodeCount']
