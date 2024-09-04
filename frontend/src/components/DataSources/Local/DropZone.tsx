@@ -1,26 +1,21 @@
 import { Dropzone, Flex, Typography } from '@neo4j-ndl/react';
-import React, { useState, useEffect, FunctionComponent } from 'react';
+import { useState, useEffect, FunctionComponent } from 'react';
 import Loader from '../../../utils/Loader';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useFileContext } from '../../../context/UsersFiles';
-import CustomAlert from '../../UI/Alert';
-import { CustomFile, CustomFileBase, UserCredentials, alertStateType } from '../../../types';
+import { CustomFile, CustomFileBase, UserCredentials } from '../../../types';
 import { buttonCaptions, chunkSize } from '../../../utils/Constants';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import IconButtonWithToolTip from '../../UI/IconButtonToolTip';
 import { uploadAPI } from '../../../utils/FileAPI';
+import { showErrorToast, showSuccessToast } from '../../../utils/toasts';
 
 const DropZone: FunctionComponent = () => {
   const { filesData, setFilesData, model } = useFileContext();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isClicked, setIsClicked] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
-  const [alertDetails, setalertDetails] = React.useState<alertStateType>({
-    showAlert: false,
-    alertType: 'error',
-    alertMessage: '',
-  });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const onDropHandler = (f: Partial<globalThis.File>[]) => {
@@ -37,11 +32,13 @@ const DropZone: FunctionComponent = () => {
         fileSource: 'local file',
         uploadprogess: 0,
         processingProgress: undefined,
+        retryOptionStatus: false,
+        retryOption: '',
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
-
-      f.forEach((file) => {
+      for (let index = 0; index < f.length; index++) {
+        const file = f[index];
         const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === file?.name);
         if (filedataIndex == -1) {
           copiedFilesData.unshift({
@@ -67,22 +64,19 @@ const DropZone: FunctionComponent = () => {
             processingProgress: defaultValues.processingProgress,
           });
         }
-      });
+      }
       setFilesData(copiedFilesData);
     }
   };
 
-  const handleClose = () => {
-    setalertDetails((prev) => ({ ...prev, showAlert: false, alertMessage: '' }));
-  };
-
   useEffect(() => {
     if (selectedFiles.length > 0) {
-      selectedFiles.forEach((file, uid) => {
-        if (filesData[uid]?.status == 'None' && isClicked) {
+      for (let index = 0; index < selectedFiles.length; index++) {
+        const file = selectedFiles[index];
+        if (filesData[index]?.status == 'None' && isClicked) {
           uploadFileInChunks(file);
         }
-      });
+      }
     }
   }, [selectedFiles]);
   const uploadFileInChunks = (file: File) => {
@@ -162,17 +156,15 @@ const DropZone: FunctionComponent = () => {
           }
         } catch (error) {
           setIsLoading(false);
-          setalertDetails({
-            showAlert: true,
-            alertType: 'error',
-            alertMessage: 'Error  Occurred',
-          });
+          if (error instanceof Error) {
+            showErrorToast(`Error Occurred: ${error.message}`, true);
+          }
           setFilesData((prevfiles) =>
             prevfiles.map((curfile) => {
               if (curfile.name == file.name) {
                 return {
                   ...curfile,
-                  status: 'Failed',
+                  status: 'Upload Failed',
                   type: `${file.name.substring(file.name.lastIndexOf('.') + 1, file.name.length).toUpperCase()}`,
                 };
               }
@@ -195,11 +187,7 @@ const DropZone: FunctionComponent = () => {
         );
         setIsClicked(false);
         setIsLoading(false);
-        setalertDetails({
-          showAlert: true,
-          alertType: 'success',
-          alertMessage: `${file.name} uploaded successfully`,
-        });
+        showSuccessToast(`${file.name} uploaded successfully`);
       }
     };
 
@@ -208,15 +196,6 @@ const DropZone: FunctionComponent = () => {
 
   return (
     <>
-      {alertDetails.showAlert && (
-        <CustomAlert
-          open={alertDetails.showAlert}
-          handleClose={handleClose}
-          severity={alertDetails.alertType}
-          alertMessage={alertDetails.alertMessage}
-        />
-      )}
-
       <Dropzone
         loadingComponent={isLoading && <Loader title='Uploading' />}
         isTesting={true}
@@ -262,11 +241,7 @@ const DropZone: FunctionComponent = () => {
           },
           onDropRejected: (e) => {
             if (e.length) {
-              setalertDetails({
-                showAlert: true,
-                alertType: 'error',
-                alertMessage: 'Failed To Upload, Unsupported file extention',
-              });
+              showErrorToast('Failed To Upload, Unsupported file extention');
             }
           },
         }}

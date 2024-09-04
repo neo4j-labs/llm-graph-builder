@@ -71,10 +71,10 @@ class graphDBdataAccess:
             if obj_source_node.processing_time is not None and obj_source_node.processing_time != 0:
                 params['processingTime'] = round(obj_source_node.processing_time.total_seconds(),2)
 
-            if obj_source_node.node_count is not None and obj_source_node.node_count != 0:
+            if obj_source_node.node_count is not None :
                 params['nodeCount'] = obj_source_node.node_count
 
-            if obj_source_node.relationship_count is not None and obj_source_node.relationship_count != 0:
+            if obj_source_node.relationship_count is not None :
                 params['relationshipCount'] = obj_source_node.relationship_count
 
             if obj_source_node.model is not None and obj_source_node.model != '':
@@ -86,11 +86,14 @@ class graphDBdataAccess:
             if obj_source_node.total_chunks is not None and obj_source_node.total_chunks != 0:
                 params['total_chunks'] = obj_source_node.total_chunks
 
-            if obj_source_node.is_cancelled is not None and obj_source_node.is_cancelled != False:
+            if obj_source_node.is_cancelled is not None:
                 params['is_cancelled'] = obj_source_node.is_cancelled
 
-            if obj_source_node.processed_chunk is not None and obj_source_node.processed_chunk != 0:
+            if obj_source_node.processed_chunk is not None :
                 params['processed_chunk'] = obj_source_node.processed_chunk
+            
+            if obj_source_node.retry_condition is not None :
+                params['retry_condition'] = obj_source_node.retry_condition    
 
             param= {"props":params}
             
