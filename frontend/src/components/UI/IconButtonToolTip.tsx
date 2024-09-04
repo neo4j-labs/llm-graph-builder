@@ -1,4 +1,5 @@
 import { IconButton, Tip } from '@neo4j-ndl/react';
+import { useState } from 'react';
 
 const IconButtonWithToolTip = ({
   text,
@@ -21,6 +22,7 @@ const IconButtonWithToolTip = ({
   placement?: 'bottom' | 'top' | 'right' | 'left';
   disabled?: boolean;
 }) => {
+  const [isHovered, setIsHovered] = useState<boolean>(false);
   return (
     <Tip allowedPlacements={[placement]}>
       <Tip.Trigger>
@@ -31,13 +33,17 @@ const IconButtonWithToolTip = ({
           grouped={grouped}
           onClick={onClick}
           disabled={disabled}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
         >
           {children}
         </IconButton>
       </Tip.Trigger>
-      <Tip.Content isPortaled={false} style={{ whiteSpace: 'nowrap' }}>
-        {text}
-      </Tip.Content>
+      {isHovered && (
+        <Tip.Content isPortaled={false} style={{ whiteSpace: 'nowrap' }}>
+          {text}
+        </Tip.Content>
+      )}
     </Tip>
   );
 };
