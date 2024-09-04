@@ -122,7 +122,6 @@ def merge_file_gcs(bucket_name, original_file_name: str, folder_name_sha1_hashed
       blob.upload_from_file(file_io)
       # pdf_reader = PdfReader(file_io)
       file_size = len(merged_file)
-      # total_pages = len(pdf_reader.pages)
       
       return file_size
   except Exception as e:
