@@ -5,11 +5,11 @@ import { Dropdown, Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { OnChangeValue, ActionMeta } from 'react-select';
-import { OptionType, OptionTypeForExamples, schema, UserCredentials } from '../../../../types';
-import { useAlertContext } from '../../../../context/Alert';
+import { OptionType, schema, UserCredentials } from '../../../../types';
 import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
 import schemaExamples from '../../../../assets/schemas.json';
 import { tokens } from '@neo4j-ndl/base';
+import { showNormalToast } from '../../../../utils/toasts';
 
 export default function EntityExtractionSetting({
   view,
@@ -82,9 +82,15 @@ export default function EntityExtractionSetting({
     const nodesFromSchema = selectedOptions.map((s) => JSON.parse(s.value).nodelabels).flat();
     const relationsFromSchema = selectedOptions.map((s) => JSON.parse(s.value).relationshipTypes).flat();
     let nodeOptionsFromSchema: OptionType[] = [];
-    nodesFromSchema.forEach((n) => nodeOptionsFromSchema.push({ label: n, value: n }));
+    for (let index = 0; index < nodesFromSchema.length; index++) {
+      const n = nodesFromSchema[index];
+      nodeOptionsFromSchema.push({ label: n, value: n });
+    }
     let relationshipOptionsFromSchema: OptionType[] = [];
-    relationsFromSchema.forEach((r) => relationshipOptionsFromSchema.push({ label: r, value: r }));
+    for (let index = 0; index < relationsFromSchema.length; index++) {
+      const r = relationsFromSchema[index];
+      relationshipOptionsFromSchema.push({ label: r, value: r });
+    }
     setSelectedNodes((prev) => {
       const combinedData = [...prev, ...nodeOptionsFromSchema];
       const uniqueLabels = new Set();
@@ -145,11 +151,9 @@ export default function EntityExtractionSetting({
   const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
   const [defaultExamples, setdefaultExamples] = useState<OptionType[]>([]);
 
-  const { showAlert } = useAlertContext();
-
   useEffect(() => {
-    const parsedData = schemaExamples.reduce((accu: OptionTypeForExamples[], example) => {
-      const examplevalues: OptionTypeForExamples = {
+    const parsedData = schemaExamples.reduce((accu: OptionType[], example) => {
+      const examplevalues: OptionType = {
         label: example.schema,
         value: JSON.stringify({
           nodelabels: example.labels,
@@ -227,7 +231,7 @@ export default function EntityExtractionSetting({
       JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] })
     );
     localStorage.setItem('selectedSchemas', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
-    showAlert('info', `Successfully Removed the Schema settings`);
+    showNormalToast(`Successfully Removed the Schema settings`);
     if (view === 'Dialog' && onClose != undefined) {
       onClose();
     }
@@ -308,7 +312,7 @@ export default function EntityExtractionSetting({
           type='creatable'
         />
 
-        <Flex className='!mt-4 flex items-center' flexDirection='row' justifyContent='flex-end'>
+        <Flex className='!mt-4 mb-2 flex items-center' flexDirection='row' justifyContent='flex-end'>
           <Flex flexDirection='row' gap='4'>
             <ButtonWithToolTip
               loading={loading}

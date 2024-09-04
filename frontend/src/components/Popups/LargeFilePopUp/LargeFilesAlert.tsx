@@ -7,6 +7,7 @@ import { chunkSize } from '../../../utils/Constants';
 import BellImage from '../../../assets/images/Stopwatch-blue.svg';
 import AlertIcon from '../../Layout/AlertIcon';
 import wikipedialogo from '../../../assets/images/wikipedia.svg';
+import wikipediadark from '../../../assets/images/wikipedia-darkmode.svg';
 import youtubelogo from '../../../assets/images/youtube.svg';
 import weblogo from '../../../assets/images/web.svg';
 import webdarkmode from '../../../assets/images/web-darkmode.svg';
@@ -20,7 +21,7 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
 
   const imageIcon: Record<string, string> = useMemo(
     () => ({
-      Wikipedia: wikipedialogo,
+      Wikipedia: colorMode === 'dark' ? wikipedialogo : wikipediadark,
       'gcs bucket': gcslogo,
       youtube: youtubelogo,
       's3 bucket': s3logo,

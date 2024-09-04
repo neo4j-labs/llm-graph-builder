@@ -23,3 +23,4 @@ class sourceNode:
     is_cancelled:bool=None
     processed_chunk:int=None
     access_token:str=None
+    retry_condition:str=None

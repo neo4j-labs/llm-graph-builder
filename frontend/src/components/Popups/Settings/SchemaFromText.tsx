@@ -3,24 +3,18 @@ import { useCallback, useState } from 'react';
 import { getNodeLabelsAndRelTypesFromText } from '../../../services/SchemaFromTextAPI';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useFileContext } from '../../../context/UsersFiles';
-import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
-import { OverridableStringUnion } from '@mui/types';
 import { buttonCaptions } from '../../../utils/Constants';
 import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
+import { showNormalToast, showSuccessToast } from '../../../utils/toasts';
 
 const SchemaFromTextDialog = ({
   open,
   onClose,
   openSettingsDialog,
-  showAlert,
 }: {
   open: boolean;
   onClose: () => void;
   openSettingsDialog: () => void;
-  showAlert: (
-    alertmsg: string,
-    alerttype: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined
-  ) => void;
 }) => {
   const [userText, setUserText] = useState<string>('');
   const [loading, setloading] = useState<boolean>(false);
@@ -75,19 +69,15 @@ const SchemaFromTextDialog = ({
           });
         }
         if (response.data?.data?.relationshipTypes.length && response.data?.data?.labels.length) {
-          showAlert(
-            `Successfully Created ${response.data?.data?.labels.length} Node labels and ${response.data?.data?.relationshipTypes.length} Relationship labels`,
-            'success'
+          showSuccessToast(
+            `Successfully Created ${response.data?.data?.labels.length} Node labels and ${response.data?.data?.relationshipTypes.length} Relationship labels`
           );
         } else if (response.data?.data?.relationshipTypes.length && !response.data?.data?.labels.length) {
-          showAlert(
-            `Successfully Created ${response.data?.data?.relationshipTypes.length} Relationship labels`,
-            'success'
-          );
+          showSuccessToast(`Successfully Created ${response.data?.data?.relationshipTypes.length} Relationship labels`);
         } else if (!response.data?.data?.relationshipTypes.length && response.data?.data?.labels.length) {
-          showAlert(`Successfully Created ${response.data?.data?.labels.length} Node labels`, 'success');
+          showSuccessToast(`Successfully Created ${response.data?.data?.labels.length} Node labels`);
         } else {
-          showAlert(`Please give meaningfull text`, 'success');
+          showNormalToast(`Please give meaningfull text`);
         }
       } else {
         throw new Error('Unable to create labels from ');
