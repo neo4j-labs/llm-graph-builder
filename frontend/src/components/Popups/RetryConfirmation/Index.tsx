@@ -27,7 +27,7 @@ export default function RetryConfirmationDialog({
   const RetryOptionsForFile = file?.status != 'Completed' ? RETRY_OPIONS : RETRY_OPIONS.slice(0, 2);
   return (
     <Dialog open={open} onClose={onClose}>
-      <Dialog.Header>Retry Options</Dialog.Header>
+      <Dialog.Header>Reprocess Options</Dialog.Header>
       <Dialog.Content>
         {alertStatus.showAlert && (
           <Banner closeable onClose={onBannerClose} className='my-4' type={alertStatus.alertType}>
