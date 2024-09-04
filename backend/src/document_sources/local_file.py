@@ -56,19 +56,19 @@ def get_pages_with_page_numbers(unstructured_pages):
             if page.metadata['page_number']==page_number:
                 page_content += page.page_content
                 metadata = {'source':page.metadata['source'],'page_number':page_number, 'filename':page.metadata['filename'],
-                        'filetype':page.metadata['filetype'], 'total_pages':unstructured_pages[-1].metadata['page_number']}
+                        'filetype':page.metadata['filetype']}
                 
             if page.metadata['page_number']>page_number:
                 page_number+=1
-                if not metadata:
-                    metadata = {'total_pages':unstructured_pages[-1].metadata['page_number']}
-                pages.append(Document(page_content = page_content, metadata=metadata))
+                # if not metadata:
+                #     metadata = {'total_pages':unstructured_pages[-1].metadata['page_number']}
+                pages.append(Document(page_content = page_content))
                 page_content='' 
                 
             if page == unstructured_pages[-1]:
-                if not metadata:
-                    metadata = {'total_pages':unstructured_pages[-1].metadata['page_number']}
-                pages.append(Document(page_content = page_content, metadata=metadata))
+                # if not metadata:
+                #     metadata = {'total_pages':unstructured_pages[-1].metadata['page_number']}
+                pages.append(Document(page_content = page_content))
                     
         elif page.metadata['category']=='PageBreak' and page!=unstructured_pages[0]:
             page_number+=1
@@ -80,7 +80,7 @@ def get_pages_with_page_numbers(unstructured_pages):
             page_content += page.page_content
             metadata_with_custom_page_number = {'source':page.metadata['source'],
                             'page_number':1, 'filename':page.metadata['filename'],
-                            'filetype':page.metadata['filetype'], 'total_pages':1}
+                            'filetype':page.metadata['filetype']}
             if page == unstructured_pages[-1]:
                     pages.append(Document(page_content = page_content, metadata=metadata_with_custom_page_number))
     return pages                

@@ -444,7 +444,6 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                     'relationshipCount':result[0]['relationshipCount'],
                     'model':result[0]['model'],
                     'total_chunks':result[0]['total_chunks'],
-                    'total_pages':result[0]['total_pages'],
                     'fileSize':result[0]['fileSize'],
                     'processed_chunk':result[0]['processed_chunk'],
                     'fileSource':result[0]['fileSource']
@@ -503,7 +502,6 @@ async def get_document_status(file_name, url, userName, password, database):
                 'relationshipCount':result[0]['relationshipCount'],
                 'model':result[0]['model'],
                 'total_chunks':result[0]['total_chunks'],
-                'total_pages':result[0]['total_pages'],
                 'fileSize':result[0]['fileSize'],
                 'processed_chunk':result[0]['processed_chunk']
                 }

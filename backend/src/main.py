@@ -82,7 +82,6 @@ def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id,
         obj_source_node.file_type = 'pdf'
         obj_source_node.file_size = file_info['file_size_bytes']
         obj_source_node.file_source = source_type
-        obj_source_node.total_pages = 'N/A'
         obj_source_node.model = model
         obj_source_node.url = str(source_url+file_name)
         obj_source_node.awsAccessKeyId = aws_access_key_id
@@ -112,7 +111,6 @@ def create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_na
       obj_source_node.file_size = file_metadata['fileSize']
       obj_source_node.url = file_metadata['url']
       obj_source_node.file_source = source_type
-      obj_source_node.total_pages = 'N/A'
       obj_source_node.model = model
       obj_source_node.file_type = 'pdf'
       obj_source_node.gcsBucket = gcs_bucket_name
@@ -145,7 +143,6 @@ def create_source_node_graph_web_url(graph, model, source_url, source_type):
     obj_source_node.file_type = 'text'
     obj_source_node.file_source = source_type
     obj_source_node.model = model
-    obj_source_node.total_pages = 1
     obj_source_node.url = urllib.parse.unquote(source_url)
     obj_source_node.created_at = datetime.now()
     obj_source_node.file_name = pages[0].metadata['title']
@@ -168,7 +165,6 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     obj_source_node.file_type = 'text'
     obj_source_node.file_source = source_type
     obj_source_node.model = model
-    obj_source_node.total_pages = 1
     obj_source_node.url = youtube_url
     obj_source_node.created_at = datetime.now()
     # source_url= youtube_url
@@ -194,31 +190,28 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
     success_count=0
     failed_count=0
     lst_file_name=[]
-    queries_list =  wiki_query.split(',')
-    wiki_query_ids, languages = check_url_source(source_type=source_type, queries_list=queries_list)
-    for query,language in zip(wiki_query_ids, languages):
-      logging.info(f"Creating source node for {query.strip()}, {language}")
-      pages = WikipediaLoader(query=query.strip(), lang=language, load_max_docs=1, load_all_available_meta=True).load()
-      try:
-        if not pages:
-          failed_count+=1
-          continue
-        obj_source_node = sourceNode()
-        obj_source_node.file_name = query.strip()
-        obj_source_node.file_type = 'text'
-        obj_source_node.file_source = source_type
-        obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
-        obj_source_node.model = model
-        obj_source_node.url = urllib.parse.unquote(pages[0].metadata['source'])
-        obj_source_node.created_at = datetime.now()
-        obj_source_node.language = language
-        graphDb_data_Access = graphDBdataAccess(graph)
-        graphDb_data_Access.create_source_node(obj_source_node)
-        success_count+=1
-        lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'language':obj_source_node.language, 'status':'Success'})
-      except Exception as e:
-        failed_count+=1
-        lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'language':obj_source_node.language, 'status':'Failed'})
+    #queries_list =  wiki_query.split(',')
+    wiki_query_id, language = check_url_source(source_type=source_type, wiki_query=wiki_query)
+    logging.info(f"Creating source node for {wiki_query_id.strip()}, {language}")
+    pages = WikipediaLoader(query=wiki_query_id.strip(), lang=language, load_max_docs=1, load_all_available_meta=True).load()
+    if pages==None or len(pages)==0:
+      failed_count+=1
+      message = f"Unable to read data for given Wikipedia url : {wiki_query}"
+      raise Exception(message)
+    else:
+      obj_source_node = sourceNode()
+      obj_source_node.file_name = wiki_query_id.strip()
+      obj_source_node.file_type = 'text'
+      obj_source_node.file_source = source_type
+      obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
+      obj_source_node.model = model
+      obj_source_node.url = urllib.parse.unquote(pages[0].metadata['source'])
+      obj_source_node.created_at = datetime.now()
+      obj_source_node.language = language
+      graphDb_data_Access = graphDBdataAccess(graph)
+      graphDb_data_Access.create_source_node(obj_source_node)
+      success_count+=1
+      lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'language':obj_source_node.language, 'status':'Success'})
     return lst_file_name,success_count,failed_count
     
 def extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, fileName, allowedNodes, allowedRelationship, retry_condition):
@@ -322,8 +315,7 @@ def processing_source(uri, userName, password, database, model, file_name, pages
       status = "Processing"
       obj_source_node.file_name = file_name
       obj_source_node.status = status
-      obj_source_node.total_chunks = total_chunks
-      obj_source_node.total_pages = len(pages)
+      obj_source_node.total_chunks = len(chunks)
       obj_source_node.model = model
       if retry_condition == START_FROM_LAST_PROCESSED_POSITION:
           node_count = result[0]['nodeCount']
