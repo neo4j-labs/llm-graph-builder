@@ -1,6 +1,6 @@
 import { DataComponentProps } from '../../types';
 import { Flex, Typography } from '@neo4j-ndl/react';
-import IconButtonWithToolTip from '../UI/IconButtonToolTip';
+import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import { APP_SOURCES } from '../../utils/Constants';
 import WebButton from '../DataSources/Web/WebButton';
