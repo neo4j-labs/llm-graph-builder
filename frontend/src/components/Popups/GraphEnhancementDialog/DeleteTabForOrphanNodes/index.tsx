@@ -179,9 +179,10 @@ export default function DeletePopUpForOrphanNodes({
     await deleteHandler(table.getSelectedRowModel().rows.map((r) => r.id));
     const selectedRows = table.getSelectedRowModel().rows.map((r) => r.id);
     setTotalOrphanNodes((prev) => prev - selectedRows.length);
-    selectedRows.forEach((eid: string) => {
+    for (let index = 0; index < selectedRows.length; index++) {
+      const eid: string = selectedRows[index];
       setOrphanNodes((prev) => prev.filter((node) => node.e.elementId != eid));
-    });
+    }
     setshowDeletePopUp(false);
     if (totalOrphanNodes) {
       await fetchOrphanNodes();

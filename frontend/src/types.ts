@@ -4,6 +4,7 @@ import React, { Dispatch, ReactNode, SetStateAction } from 'react';
 import { OverridableStringUnion } from '@mui/types';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { NonOAuthError } from '@react-oauth/google';
+import { BannerType } from '@neo4j-ndl/react';
 
 export interface CustomFileBase extends Partial<globalThis.File> {
   processing: number | string;
@@ -25,18 +26,14 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   processingProgress?: number;
   access_token?: string;
   checked?: boolean;
+  retryOptionStatus: boolean;
+  retryOption: string;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
-  // total_pages: number | 'N/A';
 }
 
 export interface OptionType {
-  readonly value: string;
-  readonly label: string;
-}
-
-export interface OptionTypeForExamples {
   readonly value: string;
   readonly label: string;
 }
@@ -48,14 +45,27 @@ export type UserCredentials = {
   database: string;
 } & { [key: string]: any };
 
-export type ExtractParams = {
+export interface SourceNode extends Omit<CustomFileBase, 'relationshipCount'> {
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  nodeCount?: number;
+  processingTime?: string;
+  relationshipCount?: number;
+  url?: string;
+  awsAccessKeyId?: string;
+  uploadprogress?: number;
+  gcsProjectId?: string;
+  processed_chunk?: number;
+  total_chunks?: number;
+  retry_condition?: string;
+}
+
+export type ExtractParams = Pick<CustomFile, 'wiki_query' | 'model' | 'source_url' | 'language' | 'access_token'> & {
   file?: File;
-  model: string;
-  source_url?: string;
   aws_access_key_id?: string | null;
   aws_secret_access_key?: string | null;
   max_sources?: number;
-  wiki_query?: string;
   gcs_bucket_name?: string;
   gcs_bucket_folder?: string;
   gcs_blob_filename?: string;
@@ -64,7 +74,7 @@ export type ExtractParams = {
   allowedNodes?: string[];
   allowedRelationship?: string[];
   gcs_project_id?: string;
-  language?: string;
+  retry_condition: string;
 } & { [key: string]: any };
 
 export type UploadParams = {
@@ -96,41 +106,10 @@ export interface S3ModalProps {
   hideModal: () => void;
   open: boolean;
 }
-export interface GCSModalProps {
-  hideModal: () => void;
-  open: boolean;
+export interface GCSModalProps extends Omit<S3ModalProps, ''> {
   openGCSModal: () => void;
 }
 
-export interface GraphViewModalProps {
-  open: boolean;
-  inspectedName: string;
-  setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
-}
-
-export interface SourceNode {
-  fileName: string;
-  fileSize: number;
-  fileType: string;
-  nodeCount?: number;
-  processingTime?: string;
-  relationshipCount?: number;
-  model: string;
-  status: string;
-  url?: string;
-  awsAccessKeyId?: string;
-  fileSource: string;
-  gcsBucket?: string;
-  gcsBucketFolder?: string;
-  errorMessage?: string;
-  uploadprogress?: number;
-  gcsProjectId?: string;
-  language?: string;
-  processed_chunk?: number;
-  total_chunks?: number;
-  // total_pages?: number;
-  access_token?: string;
-}
 export interface SideNavProps {
   isExpanded: boolean;
   position: 'left' | 'right';
@@ -176,6 +155,7 @@ export interface FileTableProps {
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
   onInspect: (id: string) => void;
   handleGenerateGraph: () => void;
+  onRetry: (id: string) => void;
 }
 
 export interface CustomModalProps {
@@ -253,10 +233,7 @@ export type ChatbotProps = {
   isFullScreen?: boolean;
   connectionStatus: boolean;
 };
-export interface WikipediaModalTypes {
-  hideModal: () => void;
-  open: boolean;
-}
+export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
 
 export interface GraphViewModalProps {
   open: boolean;
@@ -345,7 +322,9 @@ export type alertStateType = {
   alertType: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined;
   alertMessage: string;
 };
-
+export interface BannerAlertProps extends Omit<alertStateType, 'alertType'> {
+  alertType: BannerType;
+}
 export type Scheme = Record<string, string>;
 
 export type LabelCount = Record<string, number>;
@@ -441,18 +420,11 @@ export interface chatInfoMessage extends Partial<Messages> {
   error: string;
 }
 
-export interface eventResponsetypes {
-  fileName: string;
-  status: string;
-  processingTime: number;
-  nodeCount: number;
-  relationshipCount: number;
-  model: string;
+export interface eventResponsetypes extends Omit<SourceNode, 'total_chunks' | 'processingTime'> {
   total_chunks: number | null;
-  // total_pages: number;
-  fileSize: number;
-  processed_chunk?: number;
+  processingTime: number;
 }
+
 export type Nullable<Type> = Type | null;
 
 export type LabelColors = 'default' | 'success' | 'info' | 'warning' | 'danger' | undefined;

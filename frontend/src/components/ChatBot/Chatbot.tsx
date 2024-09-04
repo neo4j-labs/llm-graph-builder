@@ -55,13 +55,15 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     },
   });
   let selectedFileNames: CustomFile[] = [];
-  selectedRows.forEach((id) => {
-    filesData.forEach((f) => {
+  for (let index = 0; index < selectedRows.length; index++) {
+    const id = selectedRows[index];
+    for (let index = 0; index < filesData.length; index++) {
+      const f = filesData[index];
       if (f.id === id) {
         selectedFileNames.push(f);
       }
-    });
-  });
+    }
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);

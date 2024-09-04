@@ -6,8 +6,6 @@ import deleteOrphanAPI from '../../../services/DeleteOrphanNodes';
 import { UserCredentials } from '../../../types';
 import { useCredentials } from '../../../context/UserCredentials';
 import EntityExtractionSettings from './EnitityExtraction/EntityExtractionSetting';
-import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
-import { OverridableStringUnion } from '@mui/types';
 import { useFileContext } from '../../../context/UsersFiles';
 import DeduplicationTab from './Deduplication';
 import { tokens } from '@neo4j-ndl/base';
@@ -20,11 +18,7 @@ export default function GraphEnhancementDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  showAlert: (
-    alertmsg: string,
-    alerttype: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined
-  ) => void;
-  closeSettingModal:()=>void
+  closeSettingModal: () => void;
 }) {
   const { breakpoints } = tokens;
   const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);

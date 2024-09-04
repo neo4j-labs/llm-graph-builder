@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { CustomFile, CustomFileBase, ScanProps, UserCredentials, fileName } from '../types';
+import { CustomFile, CustomFileBase, ScanProps, UserCredentials } from '../types';
 import { useFileContext } from '../context/UsersFiles';
 import { useCredentials } from '../context/UserCredentials';
 import { urlScanAPI } from '../services/URLScan';
@@ -55,6 +55,8 @@ export default function useSourceInput(
         model: model,
         fileSource: fileSource,
         processingProgress: undefined,
+        retryOption: '',
+        retryOptionStatus: false,
       };
       if (url.trim() != '') {
         setIsValid(validator(url) && isFocused);
@@ -105,37 +107,40 @@ export default function useSourceInput(
           }
 
           const copiedFilesData: CustomFile[] = [...filesData];
-          apiResponse?.data?.file_name?.forEach((item: fileName) => {
-            const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
-            if (filedataIndex == -1) {
-              const baseValues = {
-                name: item.fileName,
-                size: item.fileSize,
-                source_url: item.url,
-                id: uuidv4(),
-                language: item.language,
-                // total_pages: 1,
-                ...defaultValues,
-              };
-              if (isWikiQuery) {
-                baseValues.wiki_query = item.fileName;
+          if (apiResponse?.data?.file_name?.length) {
+            for (let index = 0; index < apiResponse?.data?.file_name.length; index++) {
+              const item = apiResponse?.data?.file_name[index];
+              const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
+              if (filedataIndex == -1) {
+                const baseValues = {
+                  name: item.fileName,
+                  size: item.fileSize,
+                  source_url: item.url,
+                  id: uuidv4(),
+                  language: item.language,
+                  // total_pages: 1,
+                  ...defaultValues,
+                };
+                if (isWikiQuery) {
+                  baseValues.wiki_query = item.fileName;
+                }
+                copiedFilesData.unshift(baseValues);
+              } else {
+                const tempFileData = copiedFilesData[filedataIndex];
+                copiedFilesData.splice(filedataIndex, 1);
+                copiedFilesData.unshift({
+                  ...tempFileData,
+                  status: defaultValues.status,
+                  NodesCount: defaultValues.NodesCount,
+                  relationshipCount: defaultValues.relationshipCount,
+                  processing: defaultValues.processing,
+                  model: defaultValues.model,
+                  fileSource: defaultValues.fileSource,
+                  processingProgress: defaultValues.processingProgress,
+                });
               }
-              copiedFilesData.unshift(baseValues);
-            } else {
-              const tempFileData = copiedFilesData[filedataIndex];
-              copiedFilesData.splice(filedataIndex, 1);
-              copiedFilesData.unshift({
-                ...tempFileData,
-                status: defaultValues.status,
-                NodesCount: defaultValues.NodesCount,
-                relationshipCount: defaultValues.relationshipCount,
-                processing: defaultValues.processing,
-                model: defaultValues.model,
-                fileSource: defaultValues.fileSource,
-                processingProgress: defaultValues.processingProgress,
-              });
             }
-          });
+          }
           setFilesData(copiedFilesData);
           setInputVal('');
           setIsValid(false);

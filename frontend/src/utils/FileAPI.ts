@@ -18,6 +18,7 @@ export const extractAPI = async (
   model: string,
   userCredentials: UserCredentials,
   source_type: string,
+  retry_condition: string,
   source_url?: string,
   aws_access_key_id?: string | null,
   aws_secret_access_key?: string | null,
@@ -34,7 +35,17 @@ export const extractAPI = async (
   const commonParams: UserCredentials = userCredentials;
   let additionalParams: ExtractParams;
   if (source_type === 's3 bucket') {
-    additionalParams = { model, source_url, aws_secret_access_key, aws_access_key_id, source_type, file_name };
+    additionalParams = {
+      model,
+      source_url,
+      aws_secret_access_key,
+      aws_access_key_id,
+      source_type,
+      file_name,
+      allowedNodes,
+      allowedRelationship,
+      retry_condition,
+    };
   } else if (source_type === 'Wikipedia') {
     additionalParams = {
       model,
@@ -44,6 +55,7 @@ export const extractAPI = async (
       allowedNodes,
       allowedRelationship,
       language,
+      retry_condition,
     };
   } else if (source_type === 'gcs bucket') {
     additionalParams = {
@@ -56,6 +68,8 @@ export const extractAPI = async (
       allowedNodes,
       allowedRelationship,
       gcs_project_id,
+      access_token,
+      retry_condition,
     };
   } else if (source_type === 'youtube') {
     additionalParams = {
@@ -65,6 +79,7 @@ export const extractAPI = async (
       file_name,
       allowedNodes,
       allowedRelationship,
+      retry_condition,
     };
   } else if (source_type === 'web-url') {
     additionalParams = {
@@ -74,9 +89,17 @@ export const extractAPI = async (
       file_name,
       allowedNodes,
       allowedRelationship,
+      retry_condition,
     };
   } else {
-    additionalParams = { model, source_type, file_name };
+    additionalParams = {
+      model,
+      source_type,
+      file_name,
+      allowedNodes,
+      allowedRelationship,
+      retry_condition,
+    };
   }
   const response = await apiCall(urlExtract, method, commonParams, additionalParams);
   return response;
