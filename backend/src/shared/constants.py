@@ -97,13 +97,6 @@ CHAT_TOKEN_CUT_OFF = {
      ("ollama_llama3") : 2  
 } 
 
-
-CHAT_TOKEN_CUT_OFF = {
-     ("openai-gpt-3.5",'azure_ai_gpt_35',"gemini-1.0-pro","gemini-1.5-pro","groq-llama3",'groq_llama3_70b','anthropic_claude_3_5_sonnet','fireworks_llama_v3_70b','bedrock_claude_3_5_sonnet', ) : 4, 
-     ("openai-gpt-4","diffbot" ,'azure_ai_gpt_4o',"openai-gpt-4o", "openai-gpt-4o-mini") : 28,
-     ("ollama_llama3") : 2  
-} 
-
 ### CHAT TEMPLATES 
 CHAT_SYSTEM_TEMPLATE = """
 You are an AI-powered question-answering agent. Your task is to provide accurate and comprehensive responses to user queries based on the given context, chat history, and available resources.
@@ -232,7 +225,62 @@ RETURN text, avg_score as score, {length:size(text), source: COALESCE( CASE WHEN
 RETURN text, avg_score as score, {{length:size(text), source: COALESCE( CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkdetails: chunkdetails}} AS metadata
 """
 
-LOCAL_COMMUNITY_SEARCH_QUERY = """"""
+
+### Local community search
+LOCAL_COMMUNITY_TOP_CHUNKS = 3
+LOCAL_COMMUNITY_TOP_COMMUNITIES = 3
+LOCAL_COMMUNITY_TOP_OUTSIDE_RELS = 10
+LOCAL_COMMUNITY_TOP_INSIDE_RELS = 10
+LOCAL_COMMUNITY_TOP_ENTITIES = 10
+
+LOCAL_COMMUNITY_SEARCH_QUERY = """
+WITH collect(node) as nodes
+WITH
+collect {
+    UNWIND nodes as n
+    MATCH (n)<-[:HAS_ENTITY]->(c:Chunk)
+    WITH c, count(distinct n) as freq
+    RETURN c.text AS chunkText
+    ORDER BY freq DESC
+    LIMIT $topChunks
+} AS text_mapping,
+// Entity - Report Mapping
+collect {
+    UNWIND nodes as n
+    MATCH (n)-[:IN_COMMUNITY]->(c:__Community__)
+    WITH c, c.rank as rank, c.weight AS weight
+    RETURN c.summary 
+    ORDER BY rank, weight DESC
+    LIMIT $topCommunities
+} AS report_mapping,
+// Outside Relationships 
+collect {
+    UNWIND nodes as n
+    MATCH (n)-[r:RELATED]-(m) 
+    WHERE NOT m IN nodes
+    RETURN r.description AS descriptionText
+    ORDER BY r.rank, r.weight DESC 
+    LIMIT $topOutsideRels
+} as outsideRels,
+// Inside Relationships 
+collect {
+    UNWIND nodes as n
+    MATCH (n)-[r:RELATED]-(m) 
+    WHERE m IN nodes
+    RETURN r.description AS descriptionText
+    ORDER BY r.rank, r.weight DESC 
+    LIMIT $topInsideRels
+} as insideRels,
+// Entities description
+collect {
+    UNWIND nodes as n
+    RETURN n.description AS descriptionText
+} as entities
+// We don't have covariates or claims here
+RETURN {Chunks: text_mapping, Reports: report_mapping, 
+       Relationships: outsideRels + insideRels, 
+       Entities: entities} AS text, 1.0 AS score, {} AS metadata
+"""
 
 CHAT_MODE_CONFIG_MAP= {
         "vector": {
