@@ -276,4 +276,7 @@ as text,entities
 
 RETURN text, avg_score as score, {{length:size(text), source: COALESCE( CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkdetails: chunkdetails}} AS metadata
 """
+
+LOCAL_COMMUNITY_SEARCH_QUERY = """"""
+
 YOUTUBE_CHUNK_SIZE_SECONDS = 60

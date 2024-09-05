@@ -1,5 +1,4 @@
 from langchain_community.vectorstores.neo4j_vector import Neo4jVector
-from langchain.graphs import Neo4jGraph
 import os
 from dotenv import load_dotenv
 import logging
@@ -38,50 +37,178 @@ load_dotenv()
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
 
-
-def get_neo4j_retriever(graph, retrieval_query,document_names,mode,index_name="vector",keyword_index="keyword", search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
+def get_total_tokens(ai_response, llm):
     try:
-        if mode == "fulltext" or mode == "graph + vector + fulltext":
-            neo_db = Neo4jVector.from_existing_graph(
-                embedding=EMBEDDING_FUNCTION,
-                index_name=index_name,
-                retrieval_query=retrieval_query,
-                graph=graph,
-                search_type="hybrid",
-                node_label="Chunk",
-                embedding_node_property="embedding",
-                text_node_properties=["text"],
-                keyword_index_name=keyword_index
-            )
-            # neo_db = Neo4jVector.from_existing_index(
-            #     embedding=EMBEDDING_FUNCTION,
-            #     index_name=index_name,
-            #     retrieval_query=retrieval_query,
-            #     graph=graph,
-            #     search_type="hybrid",
-            #     keyword_index_name=keyword_index
-            # )
-            logging.info(f"Successfully retrieved Neo4jVector index '{index_name}' and keyword index '{keyword_index}'")
+        if isinstance(llm, (ChatOpenAI, AzureChatOpenAI, ChatFireworks, ChatGroq)):
+            total_tokens = ai_response.response_metadata.get('token_usage', {}).get('total_tokens', 0)
+        
+        elif isinstance(llm, ChatVertexAI):
+            total_tokens = ai_response.response_metadata.get('usage_metadata', {}).get('prompt_token_count', 0)
+        
+        elif isinstance(llm, ChatBedrock):
+            total_tokens = ai_response.response_metadata.get('usage', {}).get('total_tokens', 0)
+        
+        elif isinstance(llm, ChatAnthropic):
+            input_tokens = int(ai_response.response_metadata.get('usage', {}).get('input_tokens', 0))
+            output_tokens = int(ai_response.response_metadata.get('usage', {}).get('output_tokens', 0))
+            total_tokens = input_tokens + output_tokens
+        
+        elif isinstance(llm, ChatOllama):
+            total_tokens = ai_response.response_metadata.get("prompt_eval_count", 0)
+        
         else:
-            neo_db = Neo4jVector.from_existing_index(
-                embedding=EMBEDDING_FUNCTION,
-                index_name=index_name,
-                retrieval_query=retrieval_query,
-                graph=graph
-            )
-            logging.info(f"Successfully retrieved Neo4jVector index '{index_name}'")
-        document_names= list(map(str.strip, json.loads(document_names)))
-        if document_names:
-            retriever = neo_db.as_retriever(search_type="similarity_score_threshold",search_kwargs={'k': search_k, "score_threshold": score_threshold,'filter':{'fileName': {'$in': document_names}}})
-            logging.info(f"Successfully created retriever for index '{index_name}' with search_k={search_k}, score_threshold={score_threshold} for documents {document_names}")
-        else:
-            retriever = neo_db.as_retriever(search_type="similarity_score_threshold",search_kwargs={'k': search_k, "score_threshold": score_threshold})
-            logging.info(f"Successfully created retriever for index '{index_name}' with search_k={search_k}, score_threshold={score_threshold}")
-        return retriever
+            logging.warning(f"Unrecognized language model: {type(llm)}. Returning 0 tokens.")
+            total_tokens = 0
+
     except Exception as e:
-        logging.error(f"Error retrieving Neo4jVector index '{index_name}' or creating retriever: {e}")
-        raise Exception("An error occurred while retrieving the Neo4jVector index '{index_name}' or creating the retriever. Please drop and create a new vector index: {e}") from e 
+        logging.error(f"Error retrieving total tokens: {e}")
+        total_tokens = 0
+
+    return total_tokens
+
+def clear_chat_history(graph, session_id):
+    try:
+        history = Neo4jChatMessageHistory(
+            graph=graph,
+            session_id=session_id
+        )
+        
+        history.clear()
+
+        return {
+            "session_id": session_id, 
+            "message": "The chat history has been cleared.", 
+            "user": "chatbot"
+        }
     
+    except Exception as e:
+        logging.error(f"Error clearing chat history for session {session_id}: {e}")
+        return {
+            "session_id": session_id, 
+            "message": "Failed to clear chat history.", 
+            "user": "chatbot"
+        }
+
+def get_sources_and_chunks(sources_used, docs):
+    chunkdetails_list = []
+
+    sources_used_set = set(sources_used)
+
+    for doc in docs:
+        try:
+            source = doc.metadata.get("source")
+            chunkdetails = doc.metadata.get("chunkdetails", [])
+            
+            if source in sources_used_set:
+                formatted_chunkdetails = [
+                    {**chunkdetail, "score": round(chunkdetail.get("score", 0), 4)}
+                    for chunkdetail in chunkdetails
+                ]
+                chunkdetails_list.extend(formatted_chunkdetails)
+        
+        except Exception as e:
+            logging.error(f"Error processing document: {e}", exc_info=True)
+
+    result = {
+        'sources': sources_used,
+        'chunkdetails': chunkdetails_list
+    }
+    return result
+
+
+def get_rag_chain(llm, system_template=CHAT_SYSTEM_TEMPLATE):
+    try:
+        question_answering_prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", system_template),
+                MessagesPlaceholder(variable_name="messages"),
+                (
+                    "human",
+                    "User question: {input}"
+                ),
+            ]
+        )
+
+        question_answering_chain = question_answering_prompt | llm
+
+        return question_answering_chain
+
+    except Exception as e:
+        logging.error(f"Error creating RAG chain: {e}")
+        raise
+
+def format_documents(documents, model):
+    prompt_token_cutoff = 4
+    for model_names, value in CHAT_TOKEN_CUT_OFF.items():
+        if model in model_names:
+            prompt_token_cutoff = value
+            break
+
+    sorted_documents = sorted(documents, key=lambda doc: doc.state.get("query_similarity_score", 0), reverse=True)
+    sorted_documents = sorted_documents[:prompt_token_cutoff]
+
+    formatted_docs = []
+    sources = set()
+
+    for doc in sorted_documents:
+        try:
+            source = doc.metadata.get('source', 'unknown')
+            sources.add(source)
+            
+            formatted_doc = (
+                "Document start\n"
+                f"This Document belongs to the source {source}\n"
+                f"Content: {doc.page_content}\n"
+                "Document end\n"
+            )
+            formatted_docs.append(formatted_doc)
+        
+        except Exception as e:
+            logging.error(f"Error formatting document: {e}")
+    
+    return "\n\n".join(formatted_docs), sources
+
+def process_documents(docs, question, messages, llm, model):
+    start_time = time.time()
+    
+    try:
+        formatted_docs, sources = format_documents(docs, model)
+        
+        rag_chain = get_rag_chain(llm=llm)
+        
+        ai_response = rag_chain.invoke({
+            "messages": messages[:-1],
+            "context": formatted_docs,
+            "input": question
+        })
+        
+        result = get_sources_and_chunks(sources, docs)
+        content = ai_response.content
+        total_tokens = get_total_tokens(ai_response, llm)
+        
+        predict_time = time.time() - start_time
+        logging.info(f"Final response predicted in {predict_time:.2f} seconds")
+
+    except Exception as e:
+        logging.error(f"Error processing documents: {e}")
+        raise
+    
+    return content, result, total_tokens
+
+def retrieve_documents(doc_retriever, messages):
+
+    start_time = time.time()
+    try:
+        docs = doc_retriever.invoke({"messages": messages})
+        doc_retrieval_time = time.time() - start_time
+        logging.info(f"Documents retrieved in {doc_retrieval_time:.2f} seconds")
+        
+    except Exception as e:
+        logging.error(f"Error retrieving documents: {e}")
+        raise
+    
+    return docs
+
 def create_document_retriever_chain(llm, retriever):
     try:
         logging.info("Starting to create document retriever chain")
@@ -124,182 +251,176 @@ def create_document_retriever_chain(llm, retriever):
         logging.error(f"Error creating document retriever chain: {e}", exc_info=True)
         raise
 
-
-def create_neo4j_chat_message_history(graph, session_id):
-    """
-    Creates and returns a Neo4jChatMessageHistory instance.
-
-    """
+def initialize_neo4j_vector(graph, chat_mode_settings):
     try:
+        mode = chat_mode_settings.get('mode', 'undefined')
+        retrieval_query = chat_mode_settings.get("retrieval_query")
+        index_name = chat_mode_settings.get("index_name")
+        keyword_index = chat_mode_settings.get("keyword_index", "")
 
-        history = Neo4jChatMessageHistory(
-            graph=graph,
-            session_id=session_id
-        )
-        return history
+        if not retrieval_query or not index_name:
+            raise ValueError("Required settings 'retrieval_query' or 'index_name' are missing.")
+
+        if mode in ["fulltext", "graph+vector+fulltext"]:
+            neo_db = Neo4jVector.from_existing_graph(
+                embedding=EMBEDDING_FUNCTION,
+                index_name=index_name,
+                retrieval_query=retrieval_query,
+                graph=graph,
+                search_type="hybrid",
+                node_label="Chunk",
+                embedding_node_property="embedding",
+                text_node_properties=["text"],
+                keyword_index_name=keyword_index
+            )
+            logging.info(f"Successfully retrieved Neo4jVector Fulltext index '{index_name}' and keyword index '{keyword_index}'")
+        else:
+            neo_db = Neo4jVector.from_existing_index(
+                embedding=EMBEDDING_FUNCTION,
+                index_name=index_name,
+                retrieval_query=retrieval_query,
+                graph=graph
+            )
+            logging.info(f"Successfully retrieved Neo4jVector index '{index_name}'")
 
     except Exception as e:
-        logging.error(f"Error creating Neo4jChatMessageHistory: {e}")
-        raise 
+        logging.error(f"Error retrieving Neo4jVector index : {e}")
+        raise
+    return neo_db
 
-def format_documents(documents,model):
-    prompt_token_cutoff = 4
-    for models,value in CHAT_TOKEN_CUT_OFF.items():
-        if model in models:
-            prompt_token_cutoff = value
-
-    sorted_documents = sorted(documents, key=lambda doc: doc.state["query_similarity_score"], reverse=True)
-    sorted_documents = sorted_documents[:prompt_token_cutoff]
-
-    formatted_docs = []
-    sources = set()
-
-    for doc in sorted_documents:
-        source = doc.metadata['source']
-        sources.add(source)
-
-        formatted_doc = (
-            "Document start\n"
-            f"This Document belongs to the source {source}\n"
-            f"Content: {doc.page_content}\n"
-            "Document end\n"
-        )
-        formatted_docs.append(formatted_doc)
-
-    return "\n\n".join(formatted_docs), sources
-
-def get_rag_chain(llm,system_template=CHAT_SYSTEM_TEMPLATE):
-    question_answering_prompt = ChatPromptTemplate.from_messages(
-    [
-        ("system", system_template),
-        MessagesPlaceholder(variable_name="messages"),
-        (
-                "human",
-                "User question: {input}"
-            ),
-    ]
-    )
-    question_answering_chain = question_answering_prompt | llm 
-
-    return question_answering_chain
-
-def get_sources_and_chunks(sources_used, docs):
-    chunkdetails_list = []
-    sources_used_set = set(sources_used)
-
-    for doc in docs:
-        source = doc.metadata["source"]
-        chunkdetails = doc.metadata["chunkdetails"]
-        if source in sources_used_set:
-            chunkdetails = [{**chunkdetail, "score": round(chunkdetail["score"], 4)} for chunkdetail in chunkdetails]
-            chunkdetails_list.extend(chunkdetails)
-
-    result = {
-        'sources': sources_used,
-        'chunkdetails': chunkdetails_list
-    }
-    return result
-
-def summarize_messages(llm,history,stored_messages):
-    if len(stored_messages) == 0:
-        return False
-    summarization_prompt = ChatPromptTemplate.from_messages(
-        [
-            MessagesPlaceholder(variable_name="chat_history"),
-            (
-                "human",
-                "Summarize the above chat messages into a concise message, focusing on key points and relevant details that could be useful for future conversations. Exclude all introductions and extraneous information."
-            ),
-        ]
-    )
-
-    summarization_chain = summarization_prompt | llm
-
-    summary_message = summarization_chain.invoke({"chat_history": stored_messages})
-
-    history.clear()
-    history.add_user_message("Our current convertaion summary till now")
-    history.add_message(summary_message)
-    return True
-
-
-def get_total_tokens(ai_response,llm):
-    
-    if isinstance(llm,(ChatOpenAI,AzureChatOpenAI,ChatFireworks,ChatGroq)):
-        total_tokens = ai_response.response_metadata['token_usage']['total_tokens']
-    elif isinstance(llm,(ChatVertexAI)):
-        total_tokens = ai_response.response_metadata['usage_metadata']['prompt_token_count']
-    elif isinstance(llm,(ChatBedrock)):
-        total_tokens = ai_response.response_metadata['usage']['total_tokens']
-    elif isinstance(llm,(ChatAnthropic)):
-        input_tokens = int(ai_response.response_metadata['usage']['input_tokens'])
-        output_tokens = int(ai_response.response_metadata['usage']['output_tokens'])
-        total_tokens = input_tokens + output_tokens
-    elif isinstance(llm,(ChatOllama)):
-        total_tokens = ai_response.response_metadata["prompt_eval_count"]
-    else:
-        total_tokens = 0
-    return total_tokens
-
-
-def clear_chat_history(graph,session_id):
-    history = Neo4jChatMessageHistory(
-        graph=graph,
-        session_id=session_id
-        )
-    history.clear()
-    return {
-            "session_id": session_id, 
-            "message": "The chat History is cleared", 
-            "user": "chatbot"
+def create_retriever(neo_db, document_names, search_k, score_threshold):
+    if document_names:
+        retriever = neo_db.as_retriever(
+            search_type="similarity_score_threshold",
+            search_kwargs={
+                'k': search_k,
+                'score_threshold': score_threshold,
+                'filter': {'fileName': {'$in': document_names}}
             }
+        )
+        logging.info(f"Successfully created retriever with search_k={search_k}, score_threshold={score_threshold} for documents {document_names}")
+    else:
+        retriever = neo_db.as_retriever(
+            search_type="similarity_score_threshold",
+            search_kwargs={'k': search_k, 'score_threshold': score_threshold}
+        )
+        logging.info(f"Successfully created retriever with search_k={search_k}, score_threshold={score_threshold}")
+    return retriever
 
-def setup_chat(model, graph, document_names,retrieval_query,mode):
+def get_neo4j_retriever(graph, document_names,chat_mode_settings, search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
+    try:
+
+        neo_db = initialize_neo4j_vector(graph, chat_mode_settings)
+        document_names= list(map(str.strip, json.loads(document_names)))
+        retriever = create_retriever(neo_db, document_names, search_k, score_threshold)
+        return retriever
+    except Exception as e:
+        logging.error(f"Error retrieving Neo4jVector index  or creating retriever: {e}")
+        raise Exception("An error occurred while retrieving the Neo4jVector index or creating the retriever. Please drop and create a new vector index: {e}") from e 
+
+
+def setup_chat(model, graph, document_names, chat_mode_settings):
     start_time = time.time()
-    if model in ["diffbot"]:
-        model = "openai-gpt-4o"
-    llm,model_name = get_llm(model)
-    logging.info(f"Model called in chat {model} and model version is {model_name}")
-    retriever = get_neo4j_retriever(graph=graph,retrieval_query=retrieval_query,document_names=document_names,mode=mode)
-    doc_retriever = create_document_retriever_chain(llm, retriever)
-    chat_setup_time = time.time() - start_time
-    logging.info(f"Chat setup completed in {chat_setup_time:.2f} seconds")
+    try:
+        if model == "diffbot":
+            model = "openai-gpt-4o"
+        
+        llm, model_name = get_llm(model=model)
+        logging.info(f"Model called in chat: {model} (version: {model_name})")
+
+        retriever = get_neo4j_retriever(graph=graph, chat_mode_settings=chat_mode_settings, document_names=document_names)
+        doc_retriever = create_document_retriever_chain(llm, retriever)
+        
+        chat_setup_time = time.time() - start_time
+        logging.info(f"Chat setup completed in {chat_setup_time:.2f} seconds")
+        
+    except Exception as e:
+        logging.error(f"Error during chat setup: {e}", exc_info=True)
+        raise
     
     return llm, doc_retriever, model_name
 
-def retrieve_documents(doc_retriever, messages):
-    start_time = time.time()
-    docs = doc_retriever.invoke({"messages": messages})
-    doc_retrieval_time = time.time() - start_time
-    logging.info(f"Documents retrieved in {doc_retrieval_time:.2f} seconds") 
-    return docs
-
-def process_documents(docs, question, messages, llm,model):
-    start_time = time.time()
-    formatted_docs, sources = format_documents(docs,model)
-    rag_chain = get_rag_chain(llm=llm)
-    ai_response = rag_chain.invoke({
-        "messages": messages[:-1],
-        "context": formatted_docs,
-        "input": question 
-    })
-    result = get_sources_and_chunks(sources, docs)
-    content = ai_response.content
-    total_tokens = get_total_tokens(ai_response,llm)
-
+def process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings):
+    try:
+        llm, doc_retriever, model_version = setup_chat(model, graph, document_names,chat_mode_settings)
+        
+        docs = retrieve_documents(doc_retriever, messages)
+        
+        if docs:
+            content, result, total_tokens = process_documents(docs, question, messages, llm, model)
+        else:
+            content = "I couldn't find any relevant documents to answer your question."
+            result = {"sources": [], "chunkdetails": []}
+            total_tokens = 0
+        
+        ai_response = AIMessage(content=result["message"])
+        messages.append(ai_response)
+        summarize_and_log(history, messages, llm)
+        
+        return {
+            "session_id": "",  
+            "message": content,
+            "info": {
+                "sources": result["sources"],
+                "model": model_version,
+                "chunkdetails": result["chunkdetails"],
+                "total_tokens": total_tokens,
+                "response_time": 0,
+                "mode": chat_mode_settings["mode"]
+            },
+            "user": "chatbot"
+        }
     
-    predict_time = time.time() - start_time
-    logging.info(f"Final Response predicted in {predict_time:.2f} seconds")
+    except Exception as e:
+        logging.exception(f"Error processing chat response at {datetime.now()}: {str(e)}")
+        return {
+            "session_id": "",
+            "message": "Something went wrong",
+            "info": {
+                "sources": [],
+                "chunkdetails": [],
+                "total_tokens": 0,
+                "response_time": 0,
+                "error": f"{type(e).__name__}: {str(e)}",
+                "mode": chat_mode_settings["mode"]
+            },
+            "user": "chatbot"
+        }
+
+def summarize_and_log(history, stored_messages, llm):
+    if not stored_messages:
+        logging.info("No messages to summarize.")
+        return False
+
+    try:
+        start_time = time.time()
+
+        summarization_prompt = ChatPromptTemplate.from_messages(
+            [
+                MessagesPlaceholder(variable_name="chat_history"),
+                (
+                    "human",
+                    "Summarize the above chat messages into a concise message, focusing on key points and relevant details that could be useful for future conversations. Exclude all introductions and extraneous information."
+                ),
+            ]
+        )
+        summarization_chain = summarization_prompt | llm
+
+        summary_message = summarization_chain.invoke({"chat_history": stored_messages})
+
+        history.clear()
+        history.add_user_message("Our current conversation summary till now")
+        history.add_message(summary_message)
+
+        history_summarized_time = time.time() - start_time
+        logging.info(f"Chat History summarized in {history_summarized_time:.2f} seconds")
+
+        return True
+
+    except Exception as e:
+        logging.error(f"An error occurred while summarizing messages: {e}")
+        return False
     
-    return content, result, total_tokens
-
-def summarize_and_log(history, messages, llm):
-    start_time = time.time()
-    summarize_messages(llm, history, messages)
-    history_summarized_time = time.time() - start_time
-    logging.info(f"Chat History summarized in {history_summarized_time:.2f} seconds")
-
-
 def create_graph_chain(model, graph):
     try:
         logging.info(f"Graph QA Chain using LLM model: {model}")
@@ -346,79 +467,109 @@ def get_graph_response(graph_chain, question):
     except Exception as e:
         logging.error("An error occurred while getting the graph response : {e}")
 
-def QA_RAG(graph, model, question, document_names,session_id, mode):
+def process_graph_response(model, graph, question, messages, history):
     try:
-        logging.info(f"Chat Mode : {mode}")
-        history = create_neo4j_chat_message_history(graph, session_id)
-        messages = history.messages
-        user_question = HumanMessage(content=question)
-        messages.append(user_question)
-
-        if mode == "graph":
-            graph_chain, qa_llm,model_version = create_graph_chain(model,graph)
-            graph_response = get_graph_response(graph_chain,question)
-            ai_response = AIMessage(content=graph_response["response"]) if graph_response["response"] else AIMessage(content="Something went wrong")
-            messages.append(ai_response)
-            summarize_and_log(history, messages, qa_llm)
-
-            result = {
-                "session_id": session_id, 
-                "message": graph_response["response"], 
-                "info": {
-                    "model": model_version,
-                    'cypher_query':graph_response["cypher_query"],
-                    "context" : graph_response["context"],
-                    "mode" : mode,
-                    "response_time": 0
-                },
-                "user": "chatbot"
-            } 
-            return result
-        elif mode == "vector" or mode == "fulltext":
-            retrieval_query = VECTOR_SEARCH_QUERY
-        else:
-            retrieval_query = VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT)
-
-        llm, doc_retriever, model_version = setup_chat(model, graph, document_names,retrieval_query,mode)
+        graph_chain, qa_llm, model_version = create_graph_chain(model, graph)
         
-        docs = retrieve_documents(doc_retriever, messages)
-                
-        if docs:
-            content, result, total_tokens = process_documents(docs, question, messages, llm,model)
-        else:
-            content = "I couldn't find any relevant documents to answer your question."
-            result = {"sources": [], "chunkdetails": []}
-            total_tokens = 0
+        graph_response = get_graph_response(graph_chain, question)
         
-        ai_response = AIMessage(content=content)
+        ai_response_content = graph_response.get("response", "Something went wrong")
+        ai_response = AIMessage(content=ai_response_content)
+        
         messages.append(ai_response)
-        summarize_and_log(history, messages, llm)
+        summarize_and_log(history, messages, qa_llm)
         
-        return {
-            "session_id": session_id, 
-            "message": content, 
+        result = {
+            "session_id": "", 
+            "message": ai_response_content,
             "info": {
-                "sources": result["sources"],
                 "model": model_version,
-                "chunkdetails": result["chunkdetails"],
-                "total_tokens": total_tokens,
-                "response_time": 0,
-                "mode": mode
+                "cypher_query": graph_response.get("cypher_query", ""),
+                "context": graph_response.get("context", ""),
+                "mode": "graph",
+                "response_time": 0
             },
             "user": "chatbot"
         }
-
+        
+        return result
+    
     except Exception as e:
-        logging.exception(f"Exception in QA component at {datetime.now()}: {str(e)}")
-        error_name = type(e).__name__
+        logging.exception(f"Error processing graph response at {datetime.now()}: {str(e)}")
         return {
-            "session_id": session_id, 
+            "session_id": "",  
             "message": "Something went wrong",
             "info": {
-                "sources": [],
-                "chunkids": [],
-                "error": f"{error_name} :- {str(e)}",
-                "mode": mode
+                "model": model_version,
+                "cypher_query": "",
+                "context": "",
+                "mode": "graph",
+                "response_time": 0,
+                "error": f"{type(e).__name__}: {str(e)}"
             },
             "user": "chatbot"
         }
+
+def create_neo4j_chat_message_history(graph, session_id):
+    """
+    Creates and returns a Neo4jChatMessageHistory instance.
+
+    """
+    try:
+
+        history = Neo4jChatMessageHistory(
+            graph=graph,
+            session_id=session_id
+        )
+        return history
+
+    except Exception as e:
+        logging.error(f"Error creating Neo4jChatMessageHistory: {e}")
+        raise 
+
+def get_chat_mode_settings(mode):
+    chat_mode_settings = {}
+
+    # logging.info(f"Received mode: {mode}") 
+    
+    try:
+        if mode in ["vector", "fulltext"]:
+            chat_mode_settings["retrieval_query"] = VECTOR_SEARCH_QUERY
+            chat_mode_settings["index_name"] = "vector"
+            chat_mode_settings["keyword_index"] = "keyword"
+        elif mode == "local_community_search":
+            chat_mode_settings["retrieval_query"] = LOCAL_COMMUNITY_SEARCH_QUERY
+            chat_mode_settings["index_name"] = "entity_vector"
+            chat_mode_settings["keyword_index"] = ""
+        elif mode in ['graph+vector', 'graph+vector+fulltext']:
+            chat_mode_settings["retrieval_query"] = VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT)
+            chat_mode_settings["index_name"] = "vector"
+            chat_mode_settings["keyword_index"] = "keyword"
+        else:
+            raise ValueError(f"Invalid mode: {mode}")
+        
+        logging.info(f"Chat mode settings: {chat_mode_settings}")
+    
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}", exc_info=True)
+        raise e
+
+    return chat_mode_settings
+    
+def QA_RAG(graph, model, question, document_names, session_id, mode):
+    logging.info(f"Chat Mode: {mode}")
+    chat_mode_settings = get_chat_mode_settings(mode=mode)
+
+    history = create_neo4j_chat_message_history(graph, session_id)
+    messages = history.messages
+
+    user_question = HumanMessage(content=question)
+    messages.append(user_question)
+
+    if mode == "graph":
+        result = process_graph_response(model, graph, question, messages, history)
+    else:
+        result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings)
+
+    result["session_id"] = session_id
+    return result
