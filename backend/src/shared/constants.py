@@ -234,4 +234,42 @@ RETURN text, avg_score as score, {{length:size(text), source: COALESCE( CASE WHE
 
 LOCAL_COMMUNITY_SEARCH_QUERY = """"""
 
+CHAT_MODE_CONFIG_MAP= {
+        "vector": {
+            "retrieval_query": VECTOR_SEARCH_QUERY,
+            "index_name": "vector",
+            "keyword_index": None,
+            "document_filter": True
+        },
+        "fulltext": {
+            "retrieval_query": VECTOR_SEARCH_QUERY,  
+            "index_name": "vector",  
+            "keyword_index": "keyword", 
+            "document_filter": False
+        },
+        "local_community_search": {
+            "retrieval_query": LOCAL_COMMUNITY_SEARCH_QUERY,
+            "index_name": "entity_vector",
+            "keyword_index": None,
+            "document_filter": False
+        },
+        "graph+vector": {
+            "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT),
+            "index_name": "vector",
+            "keyword_index": None,
+            "document_filter": True
+        },
+        "graph+vector+fulltext": {
+            "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT),
+            "index_name": "vector",
+            "keyword_index": "keyword",
+            "document_filter": False
+        },
+        "default": {
+            "retrieval_query": VECTOR_SEARCH_QUERY,
+            "index_name": "vector",
+            "keyword_index": None,
+            "document_filter": True
+        }
+    }
 YOUTUBE_CHUNK_SIZE_SECONDS = 60
