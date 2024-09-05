@@ -432,25 +432,25 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                     logging.info(" SSE Client disconnected")
                     break
                 # get the current status of document node
-                graph = create_graph_database_connection(uri, userName, decoded_password, database)
-                graphDb_data_Access = graphDBdataAccess(graph)
-                result = graphDb_data_Access.get_current_status_document_node(file_name)
-                print(f'Result of document status in SSE : {result}')
-                if len(result) > 0:
-                    status = json.dumps({'fileName':file_name, 
-                    'status':result[0]['Status'],
-                    'processingTime':result[0]['processingTime'],
-                    'nodeCount':result[0]['nodeCount'],
-                    'relationshipCount':result[0]['relationshipCount'],
-                    'model':result[0]['model'],
-                    'total_chunks':result[0]['total_chunks'],
-                    'fileSize':result[0]['fileSize'],
-                    'processed_chunk':result[0]['processed_chunk'],
-                    'fileSource':result[0]['fileSource']
-                    })
+                
                 else:
-                    status = json.dumps({'fileName':file_name, 'status':'Failed'})
-                yield status
+                    graph = create_graph_database_connection(uri, userName, decoded_password, database)
+                    graphDb_data_Access = graphDBdataAccess(graph)
+                    result = graphDb_data_Access.get_current_status_document_node(file_name)
+                    print(f'Result of document status in SSE : {result}')
+                    if len(result) > 0:
+                        status = json.dumps({'fileName':file_name, 
+                        'status':result[0]['Status'],
+                        'processingTime':result[0]['processingTime'],
+                        'nodeCount':result[0]['nodeCount'],
+                        'relationshipCount':result[0]['relationshipCount'],
+                        'model':result[0]['model'],
+                        'total_chunks':result[0]['total_chunks'],
+                        'fileSize':result[0]['fileSize'],
+                        'processed_chunk':result[0]['processed_chunk'],
+                        'fileSource':result[0]['fileSource']
+                        })
+                    yield status
             except asyncio.CancelledError:
                 logging.info("SSE Connection cancelled")
     
