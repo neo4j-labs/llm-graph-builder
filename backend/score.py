@@ -436,7 +436,8 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                 graph = create_graph_database_connection(uri, userName, decoded_password, database)
                 graphDb_data_Access = graphDBdataAccess(graph)
                 result = graphDb_data_Access.get_current_status_document_node(file_name)
-                if result is not None:
+                print(f'Result of document status in SSE : {result}')
+                if len(result) > 0:
                     status = json.dumps({'fileName':file_name, 
                     'status':result[0]['Status'],
                     'processingTime':result[0]['processingTime'],
@@ -494,7 +495,7 @@ async def get_document_status(file_name, url, userName, password, database):
         graph = create_graph_database_connection(uri, userName, decoded_password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         result = graphDb_data_Access.get_current_status_document_node(file_name)
-        if result is not None:
+        if len(result) > 0:
             status = {'fileName':file_name, 
                 'status':result[0]['Status'],
                 'processingTime':result[0]['processingTime'],
@@ -507,6 +508,7 @@ async def get_document_status(file_name, url, userName, password, database):
                 }
         else:
             status = {'fileName':file_name, 'status':'Failed'}
+        print(f'Result of document status in refresh : {result}')
         return create_api_response('Success',message="",file_name=status)
     except Exception as e:
         message=f"Unable to get the document status"
