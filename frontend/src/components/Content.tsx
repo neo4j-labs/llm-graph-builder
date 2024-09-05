@@ -125,7 +125,10 @@ const Content: React.FC<ContentProps> = ({
   useEffect(() => {
     setFilesData((prevfiles) => {
       return prevfiles.map((curfile) => {
-        return { ...curfile, model: curfile.status === 'New' ? model : curfile.model };
+        return {
+          ...curfile,
+          model: curfile.status === 'New' || curfile.status === 'Reprocess' ? model : curfile.model,
+        };
       });
     });
   }, [model]);
