@@ -533,48 +533,8 @@ def create_neo4j_chat_message_history(graph, session_id):
         logging.error(f"Error creating Neo4jChatMessageHistory: {e}")
         raise 
 
-def get_chat_mode_settings(mode):
-
-    settings_map = {
-        "vector": {
-            "retrieval_query": VECTOR_SEARCH_QUERY,
-            "index_name": "vector",
-            "keyword_index": None,
-            "document_filter": True
-        },
-        "fulltext": {
-            "retrieval_query": VECTOR_SEARCH_QUERY,  
-            "index_name": "vector",  
-            "keyword_index": "keyword", 
-            "document_filter": False
-        },
-        "local_community_search": {
-            "retrieval_query": LOCAL_COMMUNITY_SEARCH_QUERY,
-            "index_name": "entity_vector",
-            "keyword_index": None,
-            "document_filter": False
-        },
-        "graph+vector": {
-            "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT),
-            "index_name": "vector",
-            "keyword_index": None,
-            "document_filter": True
-        },
-        "graph+vector+fulltext": {
-            "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT),
-            "index_name": "vector",
-            "keyword_index": "keyword",
-            "document_filter": False
-        }
-    }
-    
-    default_settings = {
-        "retrieval_query": VECTOR_SEARCH_QUERY,
-        "index_name": "vector",
-        "keyword_index": None,
-        "document_filter": False
-    }
-    
+def get_chat_mode_settings(mode,settings_map=CHAT_MODE_CONFIG_MAP):
+    default_settings = settings_map["default"]
     try:
         chat_mode_settings = settings_map.get(mode, default_settings)
         chat_mode_settings["mode"] = mode
