@@ -240,3 +240,11 @@ export const graphLabels = {
 };
 
 export const RESULT_STEP_SIZE = 25;
+
+export const connectionLabels = {
+  notConnected: 'Not Connected',
+  graphDataScience: 'Graph Data Science',
+  graphDatabase: 'Graph Database',
+  greenStroke: 'green',
+  redStroke: 'red',
+};

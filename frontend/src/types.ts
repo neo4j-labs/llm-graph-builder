@@ -650,3 +650,9 @@ export interface MessageContextType {
   messages: Messages[] | [];
   setMessages: Dispatch<SetStateAction<Messages[]>>;
 }
+
+export interface DatabaseStatusProps {
+  isConnected: boolean;
+  isGdsActive: boolean;
+  uri: string | null;
+}
