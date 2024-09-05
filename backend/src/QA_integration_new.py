@@ -1,29 +1,26 @@
-from langchain_community.vectorstores.neo4j_vector import Neo4jVector
 import os
-from dotenv import load_dotenv
-import logging
-from langchain_community.chat_message_histories import Neo4jChatMessageHistory
-from src.llm import get_llm
-from src.shared.common_fn import load_embedding_model
-import re
-from typing import Any
+import json
 from datetime import datetime
 import time
+from typing import Any
+
+from dotenv import load_dotenv
+import logging
+
+# LangChain imports
+from langchain_community.vectorstores.neo4j_vector import Neo4jVector
+from langchain_community.chat_message_histories import Neo4jChatMessageHistory
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableBranch
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain_community.document_transformers import EmbeddingsRedundantFilter
-from langchain.retrievers.document_compressors import EmbeddingsFilter
-from langchain.retrievers.document_compressors import DocumentCompressorPipeline
+from langchain.retrievers.document_compressors import EmbeddingsFilter, DocumentCompressorPipeline
 from langchain_text_splitters import TokenTextSplitter
-from langchain_core.messages import HumanMessage,AIMessage
-from src.shared.constants import *
-from src.llm import get_llm
+from langchain_core.messages import HumanMessage, AIMessage
 from langchain.chains import GraphCypherQAChain
-import json
 
-## Chat models
+# LangChain chat models
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from langchain_google_vertexai import ChatVertexAI
 from langchain_groq import ChatGroq
@@ -31,6 +28,11 @@ from langchain_anthropic import ChatAnthropic
 from langchain_fireworks import ChatFireworks
 from langchain_aws import ChatBedrock
 from langchain_community.chat_models import ChatOllama
+
+# Local imports
+from src.llm import get_llm
+from src.shared.common_fn import load_embedding_model
+from src.shared.constants import *
 
 load_dotenv() 
 
@@ -91,23 +93,27 @@ def clear_chat_history(graph, session_id):
 
 def get_sources_and_chunks(sources_used, docs):
     chunkdetails_list = []
-
     sources_used_set = set(sources_used)
+    seen_ids_and_scores = set()  
 
     for doc in docs:
         try:
             source = doc.metadata.get("source")
             chunkdetails = doc.metadata.get("chunkdetails", [])
-            
+
             if source in sources_used_set:
-                formatted_chunkdetails = [
-                    {**chunkdetail, "score": round(chunkdetail.get("score", 0), 4)}
-                    for chunkdetail in chunkdetails
-                ]
-                chunkdetails_list.extend(formatted_chunkdetails)
-        
+                for chunkdetail in chunkdetails:
+                    id = chunkdetail.get("id")
+                    score = round(chunkdetail.get("score", 0), 4)
+
+                    id_and_score = (id, score)
+
+                    if id_and_score not in seen_ids_and_scores:
+                        seen_ids_and_scores.add(id_and_score)
+                        chunkdetails_list.append({**chunkdetail, "score": score})
+
         except Exception as e:
-            logging.error(f"Error processing document: {e}", exc_info=True)
+            logging.error(f"Error processing document: {e}")
 
     result = {
         'sources': sources_used,
@@ -261,7 +267,7 @@ def initialize_neo4j_vector(graph, chat_mode_settings):
         if not retrieval_query or not index_name:
             raise ValueError("Required settings 'retrieval_query' or 'index_name' are missing.")
 
-        if mode in ["fulltext", "graph+vector+fulltext"]:
+        if keyword_index:
             neo_db = Neo4jVector.from_existing_graph(
                 embedding=EMBEDDING_FUNCTION,
                 index_name=index_name,
@@ -281,15 +287,15 @@ def initialize_neo4j_vector(graph, chat_mode_settings):
                 retrieval_query=retrieval_query,
                 graph=graph
             )
+            
             logging.info(f"Successfully retrieved Neo4jVector index '{index_name}'")
-
     except Exception as e:
         logging.error(f"Error retrieving Neo4jVector index : {e}")
         raise
     return neo_db
 
-def create_retriever(neo_db, document_names, search_k, score_threshold):
-    if document_names:
+def create_retriever(neo_db, document_names, chat_mode_settings,search_k, score_threshold):
+    if document_names and chat_mode_settings["document_filter"]:
         retriever = neo_db.as_retriever(
             search_type="similarity_score_threshold",
             search_kwargs={
@@ -312,7 +318,7 @@ def get_neo4j_retriever(graph, document_names,chat_mode_settings, search_k=CHAT_
 
         neo_db = initialize_neo4j_vector(graph, chat_mode_settings)
         document_names= list(map(str.strip, json.loads(document_names)))
-        retriever = create_retriever(neo_db, document_names, search_k, score_threshold)
+        retriever = create_retriever(neo_db, document_names,chat_mode_settings, search_k, score_threshold)
         return retriever
     except Exception as e:
         logging.error(f"Error retrieving Neo4jVector index  or creating retriever: {e}")
@@ -353,7 +359,7 @@ def process_chat_response(messages,history, question, model, graph, document_nam
             result = {"sources": [], "chunkdetails": []}
             total_tokens = 0
         
-        ai_response = AIMessage(content=result["message"])
+        ai_response = AIMessage(content=content)
         messages.append(ai_response)
         summarize_and_log(history, messages, llm)
         
@@ -528,37 +534,61 @@ def create_neo4j_chat_message_history(graph, session_id):
         raise 
 
 def get_chat_mode_settings(mode):
-    chat_mode_settings = {}
 
-    # logging.info(f"Received mode: {mode}") 
+    settings_map = {
+        "vector": {
+            "retrieval_query": VECTOR_SEARCH_QUERY,
+            "index_name": "vector",
+            "keyword_index": None,
+            "document_filter": True
+        },
+        "fulltext": {
+            "retrieval_query": VECTOR_SEARCH_QUERY,  
+            "index_name": "vector",  
+            "keyword_index": "keyword", 
+            "document_filter": False
+        },
+        "local_community_search": {
+            "retrieval_query": LOCAL_COMMUNITY_SEARCH_QUERY,
+            "index_name": "entity_vector",
+            "keyword_index": None,
+            "document_filter": False
+        },
+        "graph+vector": {
+            "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT),
+            "index_name": "vector",
+            "keyword_index": None,
+            "document_filter": True
+        },
+        "graph+vector+fulltext": {
+            "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT),
+            "index_name": "vector",
+            "keyword_index": "keyword",
+            "document_filter": False
+        }
+    }
+    
+    default_settings = {
+        "retrieval_query": VECTOR_SEARCH_QUERY,
+        "index_name": "vector",
+        "keyword_index": None,
+        "document_filter": False
+    }
     
     try:
-        if mode in ["vector", "fulltext"]:
-            chat_mode_settings["retrieval_query"] = VECTOR_SEARCH_QUERY
-            chat_mode_settings["index_name"] = "vector"
-            chat_mode_settings["keyword_index"] = "keyword"
-        elif mode == "local_community_search":
-            chat_mode_settings["retrieval_query"] = LOCAL_COMMUNITY_SEARCH_QUERY
-            chat_mode_settings["index_name"] = "entity_vector"
-            chat_mode_settings["keyword_index"] = ""
-        elif mode in ['graph+vector', 'graph+vector+fulltext']:
-            chat_mode_settings["retrieval_query"] = VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT)
-            chat_mode_settings["index_name"] = "vector"
-            chat_mode_settings["keyword_index"] = "keyword"
-        else:
-            raise ValueError(f"Invalid mode: {mode}")
+        chat_mode_settings = settings_map.get(mode, default_settings)
+        chat_mode_settings["mode"] = mode
         
         logging.info(f"Chat mode settings: {chat_mode_settings}")
     
     except Exception as e:
         logging.error(f"Unexpected error: {e}", exc_info=True)
-        raise e
+        raise
 
     return chat_mode_settings
     
 def QA_RAG(graph, model, question, document_names, session_id, mode):
     logging.info(f"Chat Mode: {mode}")
-    chat_mode_settings = get_chat_mode_settings(mode=mode)
 
     history = create_neo4j_chat_message_history(graph, session_id)
     messages = history.messages
@@ -569,7 +599,9 @@ def QA_RAG(graph, model, question, document_names, session_id, mode):
     if mode == "graph":
         result = process_graph_response(model, graph, question, messages, history)
     else:
+        chat_mode_settings = get_chat_mode_settings(mode=mode)
         result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings)
 
     result["session_id"] = session_id
+    
     return result
