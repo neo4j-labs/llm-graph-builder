@@ -32,8 +32,7 @@ import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
 import { tokens } from '@neo4j-ndl/base';
 import axios from 'axios';
-import { CircleStackIconOutline, ScienceMoleculeIcon } from '@neo4j-ndl/react/icons';
-import { IconWithToolTip } from './UI/IconButtonToolTip';
+import DatabaseStatusIcon from './UI/DatabaseIcon';
 
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
@@ -88,6 +87,7 @@ const Content: React.FC<ContentProps> = ({
     alertType: 'error',
     alertMessage: '',
   });
+  const isGdsActive = true;
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
       setalertDetails({
@@ -653,6 +653,8 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
+  console.log('isGds', isGdsActive);
+
   return (
     <>
       {alertDetails.showAlert && (
@@ -716,30 +718,11 @@ const Content: React.FC<ContentProps> = ({
           <div className='connectionstatus__container'>
             <span className='h6 px-1'>Neo4j connection</span>
             <Typography variant='body-medium'>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                {!connectionStatus ? (
-                  <StatusIndicator type='danger' />
-                ) : (
-                  <>
-                    <StatusIndicator type='success' />
-                    {isGdsActive ? (
-                      <IconWithToolTip label='DataScience' text='Graph Data Science' placement='top'>
-                        <span>
-                          <ScienceMoleculeIcon className='n-size-token-6' />
-                        </span>
-                      </IconWithToolTip>
-                    ) : (
-                      <IconWithToolTip label='Database' text='Graph Database' placement='top'>
-                        <span>
-                          <CircleStackIconOutline className='n-size-token-6' />
-                        </span>
-                      </IconWithToolTip>
-                    )}
-                    <span className='n-body-small ml-1'>{userCredentials?.uri}</span>
-                  </>
-                )}
-                {!connectionStatus && <span className='n-body-small ml-1'>Not Connected</span>}
-              </div>
+              <DatabaseStatusIcon
+                isConnected={connectionStatus}
+                isGdsActive={isGdsActive}
+                uri={userCredentials && userCredentials?.uri}
+              />
               <div className='pt-1'>
                 {!isSchema ? (
                   <StatusIndicator type='danger' />
