@@ -513,7 +513,7 @@ const Content: React.FC<ContentProps> = ({
       if (response.data.status === 'Failure') {
         throw new Error(response.data.error);
       }
-      const isStartFromBegining = retryoption === RETRY_OPIONS[0];
+      const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption===RETRY_OPIONS[1];
       setFilesData((prev) => {
         return prev.map((f) => {
           return f.name === filename
