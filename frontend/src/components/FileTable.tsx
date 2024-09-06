@@ -146,7 +146,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               >
                 <StatusIndicator type={statusCheck(info.getValue())} />
                 {info.getValue()}
-                {(info.getValue() === 'Completed' ||
+                {/* {(info.getValue() === 'Completed' ||
                   info.getValue() === 'Failed' ||
                   info.getValue() === 'Cancelled') && (
                   <span className='mx-1'>
@@ -161,7 +161,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                       <ArrowPathIconSolid />
                     </IconButtonWithToolTip>
                   </span>
-                )}
+                )} */}
               </div>
             );
           } else if (info.getValue() === 'Processing' && info.row.original.processingProgress === undefined) {
