@@ -59,7 +59,7 @@ const Content: React.FC<ContentProps> = ({
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
-  const { setUserCredentials, userCredentials, isGdsActive } = useCredentials();
+  const { setUserCredentials, userCredentials, isGdsActive, setGdsActive } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
 
@@ -127,6 +127,9 @@ const Content: React.FC<ContentProps> = ({
           database: neo4jConnection.database,
           port: neo4jConnection.uri.split(':')[2],
         });
+        if (neo4jConnection.isgdsActive !== undefined) {
+          setGdsActive(neo4jConnection.isgdsActive);
+        }
       } else {
         setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
       }
@@ -651,8 +654,6 @@ const Content: React.FC<ContentProps> = ({
       }
     }
   };
-
-  console.log('isGds', isGdsActive);
 
   return (
     <>

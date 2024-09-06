@@ -186,8 +186,8 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
   },
   {
     title: 'create_communities',
-    description:'Create Communities identifies and groups similar entities, improving search accuracy and analysis.'
-  }
+    description: 'Create Communities identifies and groups similar entities, improving search accuracy and analysis.',
+  },
 ];
 
 export const batchSize: number = parseInt(process.env.VITE_BATCH_SIZE ?? '2');

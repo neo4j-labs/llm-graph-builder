@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, FunctionComponent, ReactNode, useReducer } from 'react';
+import { createContext, useState, useContext, FunctionComponent, ReactNode } from 'react';
 import { ContextProps, UserCredentials } from '../types';
 
 type Props = {
@@ -8,8 +8,8 @@ type Props = {
 export const UserConnection = createContext<ContextProps>({
   userCredentials: null,
   setUserCredentials: () => null,
-  isGdsActive: null,
-  setGdsActive: () => null,
+  isGdsActive: false,
+  setGdsActive: () => false,
 });
 export const useCredentials = () => {
   const userCredentials = useContext(UserConnection);
@@ -17,12 +17,12 @@ export const useCredentials = () => {
 };
 const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
   const [userCredentials, setUserCredentials] = useState<UserCredentials | null>(null);
-  const [isGdsActive, setGdsActive] = useReducer((s) => !s, false);
+  const [isGdsActive, setGdsActive] = useState<boolean>(false);
   const value = {
     userCredentials,
     setUserCredentials,
     isGdsActive,
-    setGdsActive
+    setGdsActive,
   };
   return <UserConnection.Provider value={value}>{props.children}</UserConnection.Provider>;
 };
