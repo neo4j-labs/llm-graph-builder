@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, FunctionComponent, ReactNode } from 'react';
+import { createContext, useState, useContext, FunctionComponent, ReactNode, useReducer } from 'react';
 import { ContextProps, UserCredentials } from '../types';
 
 type Props = {

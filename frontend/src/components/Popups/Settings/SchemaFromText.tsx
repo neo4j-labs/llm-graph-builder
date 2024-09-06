@@ -3,10 +3,9 @@ import { useCallback, useState } from 'react';
 import { getNodeLabelsAndRelTypesFromText } from '../../../services/SchemaFromTextAPI';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useFileContext } from '../../../context/UsersFiles';
-import { AlertColor, AlertPropsColorOverrides } from '@mui/material';
-import { OverridableStringUnion } from '@mui/types';
 import { buttonCaptions } from '../../../utils/Constants';
 import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
+import { showNormalToast, showSuccessToast } from '../../../utils/toasts';
 
 const SchemaFromTextDialog = ({
   open,

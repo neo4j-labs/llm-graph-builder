@@ -110,30 +110,6 @@ export interface GCSModalProps extends Omit<S3ModalProps, ''> {
   openGCSModal: () => void;
 }
 
-export interface SourceNode {
-  fileName: string;
-  fileSize: number;
-  fileType: string;
-  nodeCount?: number;
-  processingTime?: string;
-  relationshipCount?: number;
-  model: string;
-  status: string;
-  url?: string;
-  awsAccessKeyId?: string;
-  fileSource: string;
-  gcsBucket?: string;
-  gcsBucketFolder?: string;
-  errorMessage?: string;
-  uploadprogress?: number;
-  gcsProjectId?: string;
-  language?: string;
-  processed_chunk?: number;
-  total_chunks?: number;
-  // total_pages?: number;
-  access_token?: string;
-}
-
 export interface SideNavProps {
   isExpanded: boolean;
   position: 'left' | 'right';
@@ -179,6 +155,7 @@ export interface FileTableProps {
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
   onInspect: (id: string) => void;
   handleGenerateGraph: () => void;
+  onRetry: (id: string) => void;
 }
 
 export interface CustomModalProps {
@@ -639,11 +616,14 @@ export interface DrawerChatbotProps {
   isExpanded: boolean;
   clearHistoryData: boolean;
   messages: Messages[];
+  connectionStatus: boolean;
 }
 
 export interface ContextProps {
   userCredentials: UserCredentials | null;
   setUserCredentials: (UserCredentials: UserCredentials) => void;
+  connectionStatus: boolean;
+  setConnectionStatus: Dispatch<SetStateAction<boolean>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];

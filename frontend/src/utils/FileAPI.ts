@@ -98,15 +98,6 @@ export const extractAPI = async (
       allowedRelationship,
       retry_condition,
     };
-  } else if (source_type === 'web-url') {
-    additionalParams = {
-      model,
-      source_url,
-      source_type,
-      file_name,
-      allowedNodes,
-      allowedRelationship,
-    };
   } else {
     additionalParams = {
       model,

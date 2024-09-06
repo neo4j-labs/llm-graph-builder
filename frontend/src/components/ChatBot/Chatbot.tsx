@@ -22,7 +22,14 @@ import FallBackDialog from '../UI/FallBackDialog';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
 
 const Chatbot: FC<ChatbotProps> = (props) => {
-  const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, clear } = props;
+  const {
+    messages: listMessages,
+    setMessages: setListMessages,
+    isLoading,
+    isFullScreen,
+    clear,
+    connectionStatus,
+  } = props;
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
@@ -419,7 +426,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             placement='top'
             text={`Query Documents in ${chatMode} mode`}
             type='submit'
-            disabled={loading}
+            disabled={loading || !connectionStatus}
             size='medium'
           >
             {buttonCaptions.ask} {selectedRows != undefined && selectedRows.length > 0 && `(${selectedRows.length})`}

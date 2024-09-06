@@ -1,15 +1,15 @@
 import { Dropzone, Flex, Typography } from '@neo4j-ndl/react';
-import React, { useState, useEffect, FunctionComponent } from 'react';
+import { useState, useEffect, FunctionComponent } from 'react';
 import Loader from '../../../utils/Loader';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useFileContext } from '../../../context/UsersFiles';
-import CustomAlert from '../../UI/Alert';
-import { CustomFile, CustomFileBase, UserCredentials, alertStateType } from '../../../types';
+import { CustomFile, CustomFileBase, UserCredentials } from '../../../types';
 import { buttonCaptions, chunkSize } from '../../../utils/Constants';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import IconButtonWithToolTip from '../../UI/IconButtonToolTip';
 import { uploadAPI } from '../../../utils/FileAPI';
+import { showErrorToast, showSuccessToast } from '../../../utils/toasts';
 
 const DropZone: FunctionComponent = () => {
   const { filesData, setFilesData, model } = useFileContext();
@@ -67,10 +67,6 @@ const DropZone: FunctionComponent = () => {
       }
       setFilesData(copiedFilesData);
     }
-  };
-
-  const handleClose = () => {
-    setalertDetails((prev) => ({ ...prev, showAlert: false, alertMessage: '' }));
   };
 
   useEffect(() => {

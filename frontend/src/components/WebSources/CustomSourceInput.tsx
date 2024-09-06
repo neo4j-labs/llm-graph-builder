@@ -48,6 +48,11 @@ export default function CustomSourceInput({
             onChange={onChangeHandler}
             errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
             onPaste={onPasteHandler}
+            onKeyDown={(e) => {
+              if (e.code === 'Enter') {
+                submitHandler(value);
+              }
+            }}
           />
         </div>
       </Box>

@@ -1,6 +1,6 @@
 import { Dialog, Dropdown } from '@neo4j-ndl/react';
 import { OnChangeValue, ActionMeta } from 'react-select';
-import { OptionType, OptionTypeForExamples, SettingsModalProps, UserCredentials, schema } from '../../../types';
+import { OptionType, SettingsModalProps, UserCredentials, schema } from '../../../types';
 import { useFileContext } from '../../../context/UsersFiles';
 import { getNodeLabelsAndRelTypes } from '../../../services/GetNodeLabelsRelTypes';
 import { useCredentials } from '../../../context/UserCredentials';

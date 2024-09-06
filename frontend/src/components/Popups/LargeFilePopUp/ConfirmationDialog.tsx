@@ -97,7 +97,7 @@ export default function ConfirmationDialog({
                 if (file) {
                   tobeProcessFiles.push(file);
                 }
-              });
+              }
               extractHandler(tobeProcessFiles);
             }
             setChecked([]);

@@ -44,6 +44,8 @@ const ButtonWithToolTip = ({
           fill={fill}
           type={type}
           color={color}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
         >
           {children}
         </Button>
