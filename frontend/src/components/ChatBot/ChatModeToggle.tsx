@@ -4,6 +4,7 @@ import { useFileContext } from '../../context/UsersFiles';
 import CustomMenu from '../UI/Menu';
 import { chatModes } from '../../utils/Constants';
 import { capitalize } from '@mui/material';
+import { capitalizeWithPlus } from '../../utils/Utils';
 
 export default function ChatModeToggle({
   menuAnchor,
@@ -18,7 +19,8 @@ export default function ChatModeToggle({
   anchorPortal?: boolean;
   disableBackdrop?: boolean;
 }) {
-  const { setchatMode, chatMode } = useFileContext();
+  const { setchatMode, chatMode, postProcessingTasks } = useFileContext();
+  const isCommunityAllowed = postProcessingTasks.includes('create_communities');
 
   return (
     <CustomMenu
@@ -27,16 +29,11 @@ export default function ChatModeToggle({
       MenuAnchor={menuAnchor}
       anchorPortal={anchorPortal}
       disableBackdrop={disableBackdrop}
-      items={useMemo(
-        () =>
-          chatModes?.map((m) => {
+      items={useMemo(() => {
+        if (isCommunityAllowed) {
+          return chatModes?.map((m) => {
             return {
-              title: m.includes('+')
-                ? m
-                    .split('+')
-                    .map((s) => capitalize(s))
-                    .join('+')
-                : capitalize(m),
+              title: m.includes('+') ? capitalizeWithPlus(m) : capitalize(m),
               onClick: () => {
                 setchatMode(m);
               },
@@ -51,9 +48,30 @@ export default function ChatModeToggle({
                 </span>
               ),
             };
-          }),
-        [chatMode, chatModes]
-      )}
+          });
+        } 
+          return chatModes
+            ?.filter((s) => !s.includes('community'))
+            ?.map((m) => {
+              return {
+                title: m.includes('+') ? capitalizeWithPlus(m) : capitalize(m),
+                onClick: () => {
+                  setchatMode(m);
+                },
+                disabledCondition: false,
+                description: (
+                  <span>
+                    {chatMode === m && (
+                      <>
+                        <StatusIndicator type={`${chatMode === m ? 'success' : 'unknown'}`} /> Selected
+                      </>
+                    )}
+                  </span>
+                ),
+              };
+            });
+        
+      }, [chatMode, chatModes,isCommunityAllowed])}
     ></CustomMenu>
   );
 }
