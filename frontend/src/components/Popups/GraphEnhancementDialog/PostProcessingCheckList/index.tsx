@@ -40,7 +40,7 @@ export default function PostProcessingCheckList() {
                         setPostProcessingTasks((prev) => prev.filter((s) => s !== job.title));
                       }
                     }}
-                    disabled={isCreateCommunities && !isGdsActive} // Disable if GDS is not active
+                    disabled={isCreateCommunities && !isGdsActive}
                   />
                   <Typography variant={tablet ? 'body-small' : 'body-medium'}>{job.description}</Typography>
                 </Flex>

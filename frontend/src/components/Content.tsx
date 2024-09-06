@@ -32,7 +32,7 @@ import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
 import { tokens } from '@neo4j-ndl/base';
 import axios from 'axios';
-import DatabaseStatusIcon from './UI/DatabaseIcon';
+import DatabaseStatusIcon from './UI/DatabaseStatusIcon';
 
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
