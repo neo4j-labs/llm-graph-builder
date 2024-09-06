@@ -1,11 +1,11 @@
 MODEL_VERSIONS = {
-        "openai-gpt-3.5": "gpt-3.5-turbo-16k",
+        "openai-gpt-3.5": "gpt-3.5-turbo-0125",
         "gemini-1.0-pro": "gemini-1.0-pro-001",
         "gemini-1.5-pro": "gemini-1.5-pro-preview-0514",
-        "openai-gpt-4": "gpt-4-0125-preview",
-        "diffbot" : "gpt-4o",
-        "openai-gpt-4o-mini": "gpt-4o-mini",
-        "openai-gpt-4o":"gpt-4o",
+        "openai-gpt-4": "gpt-4-turbo-2024-04-09",
+        "diffbot" : "gpt-4-turbo-2024-04-09",
+        "openai-gpt-4o-mini": "gpt-4o-mini-2024-07-18",
+        "openai-gpt-4o":"gpt-4o-2024-08-06",
         "groq-llama3" : "llama3-70b-8192"
          }
 OPENAI_MODELS = ["openai-gpt-3.5", "openai-gpt-4o", "openai-gpt-4o-mini"]
@@ -277,3 +277,42 @@ as text,entities
 RETURN text, avg_score as score, {{length:size(text), source: COALESCE( CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkdetails: chunkdetails}} AS metadata
 """
 YOUTUBE_CHUNK_SIZE_SECONDS = 60
+
+QUERY_TO_GET_CHUNKS = """
+            MATCH (d:Document)
+            WHERE d.fileName = $filename
+            WITH d
+            OPTIONAL MATCH (d)<-[:PART_OF|FIRST_CHUNK]-(c:Chunk)
+            RETURN c.id as id, c.text as text, c.position as position 
+            """
+            
+QUERY_TO_DELETE_EXISTING_ENTITIES = """
+                                MATCH (d:Document {fileName:$filename})
+                                WITH d
+                                MATCH (d)<-[:PART_OF]-(c:Chunk)
+                                WITH d,c
+                                MATCH (c)-[:HAS_ENTITY]->(e)
+                                WHERE NOT EXISTS { (e)<-[:HAS_ENTITY]-()<-[:PART_OF]-(d2:Document) }
+                                DETACH DELETE e
+                                """   
+
+QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION="""
+                              MATCH (d:Document)
+                              WHERE d.fileName = $filename
+                              WITH d
+                              MATCH (c:Chunk) WHERE c.embedding is null 
+                              RETURN c.id as id,c.position as position 
+                              ORDER BY c.position LIMIT 1
+                              """   
+QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY = """
+                              MATCH (d:Document)
+                              WHERE d.fileName = $filename
+                              WITH d
+                              MATCH (d)<-[:PART_OF]-(c:Chunk) WHERE NOT exists {(c)-[:HAS_ENTITY]->()}
+                              RETURN c.id as id,c.position as position 
+                              ORDER BY c.position LIMIT 1
+                              """
+                              
+START_FROM_BEGINNING  = "start_from_beginning"     
+DELETE_ENTITIES_AND_START_FROM_BEGINNING = "delete_entities_and_start_from_beginning"
+START_FROM_LAST_PROCESSED_POSITION = "start_from_last_processed_position"                                                    

@@ -46,7 +46,6 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -137,7 +136,8 @@ async def extract_knowledge_graph_from_file(
     allowedNodes=Form(None),
     allowedRelationship=Form(None),
     language=Form(None),
-    access_token=Form(None)
+    access_token=Form(None),
+    retry_condition=Form(None)
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
@@ -161,30 +161,30 @@ async def extract_knowledge_graph_from_file(
             merged_file_path = os.path.join(MERGED_DIR,file_name)
             logging.info(f'File path:{merged_file_path}')
             result = await asyncio.to_thread(
-                extract_graph_from_file_local_file, uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship)
+                extract_graph_from_file_local_file, uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 's3 bucket' and source_url:
             result = await asyncio.to_thread(
-                extract_graph_from_file_s3, uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, allowedNodes, allowedRelationship)
+                extract_graph_from_file_s3, uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition)
         
         elif source_type == 'web-url':
             result = await asyncio.to_thread(
-                extract_graph_from_web_page, uri, userName, password, database, model, source_url, allowedNodes, allowedRelationship)
+                extract_graph_from_web_page, uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 'youtube' and source_url:
             result = await asyncio.to_thread(
-                extract_graph_from_file_youtube, uri, userName, password, database, model, source_url, allowedNodes, allowedRelationship)
+                extract_graph_from_file_youtube, uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 'Wikipedia' and wiki_query:
             result = await asyncio.to_thread(
-                extract_graph_from_file_Wikipedia, uri, userName, password, database, model, wiki_query, max_sources, language, allowedNodes, allowedRelationship)
+                extract_graph_from_file_Wikipedia, uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
             result = await asyncio.to_thread(
-                extract_graph_from_file_gcs, uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, allowedNodes, allowedRelationship)
+                extract_graph_from_file_gcs, uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, retry_condition)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
-        
+    
         if result is not None:
             result['db_url'] = uri
             result['api_name'] = 'extract'
@@ -433,25 +433,25 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                     logging.info(" SSE Client disconnected")
                     break
                 # get the current status of document node
-                graph = create_graph_database_connection(uri, userName, decoded_password, database)
-                graphDb_data_Access = graphDBdataAccess(graph)
-                result = graphDb_data_Access.get_current_status_document_node(file_name)
-                if result is not None:
-                    status = json.dumps({'fileName':file_name, 
-                    'status':result[0]['Status'],
-                    'processingTime':result[0]['processingTime'],
-                    'nodeCount':result[0]['nodeCount'],
-                    'relationshipCount':result[0]['relationshipCount'],
-                    'model':result[0]['model'],
-                    'total_chunks':result[0]['total_chunks'],
-                    'total_pages':result[0]['total_pages'],
-                    'fileSize':result[0]['fileSize'],
-                    'processed_chunk':result[0]['processed_chunk'],
-                    'fileSource':result[0]['fileSource']
-                    })
+                
                 else:
-                    status = json.dumps({'fileName':file_name, 'status':'Failed'})
-                yield status
+                    graph = create_graph_database_connection(uri, userName, decoded_password, database)
+                    graphDb_data_Access = graphDBdataAccess(graph)
+                    result = graphDb_data_Access.get_current_status_document_node(file_name)
+                    print(f'Result of document status in SSE : {result}')
+                    if len(result) > 0:
+                        status = json.dumps({'fileName':file_name, 
+                        'status':result[0]['Status'],
+                        'processingTime':result[0]['processingTime'],
+                        'nodeCount':result[0]['nodeCount'],
+                        'relationshipCount':result[0]['relationshipCount'],
+                        'model':result[0]['model'],
+                        'total_chunks':result[0]['total_chunks'],
+                        'fileSize':result[0]['fileSize'],
+                        'processed_chunk':result[0]['processed_chunk'],
+                        'fileSource':result[0]['fileSource']
+                        })
+                    yield status
             except asyncio.CancelledError:
                 logging.info("SSE Connection cancelled")
     
@@ -495,7 +495,7 @@ async def get_document_status(file_name, url, userName, password, database):
         graph = create_graph_database_connection(uri, userName, decoded_password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         result = graphDb_data_Access.get_current_status_document_node(file_name)
-        if result is not None:
+        if len(result) > 0:
             status = {'fileName':file_name, 
                 'status':result[0]['Status'],
                 'processingTime':result[0]['processingTime'],
@@ -503,13 +503,13 @@ async def get_document_status(file_name, url, userName, password, database):
                 'relationshipCount':result[0]['relationshipCount'],
                 'model':result[0]['model'],
                 'total_chunks':result[0]['total_chunks'],
-                'total_pages':result[0]['total_pages'],
                 'fileSize':result[0]['fileSize'],
                 'processed_chunk':result[0]['processed_chunk'],
                 'fileSource':result[0]['fileSource']
                 }
         else:
             status = {'fileName':file_name, 'status':'Failed'}
+        print(f'Result of document status in refresh : {result}')
         return create_api_response('Success',message="",file_name=status)
     except Exception as e:
         message=f"Unable to get the document status"
@@ -626,6 +626,22 @@ async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), da
         return create_api_response(job_status, message=message, error=error_message)
     finally:
         gc.collect()
+        
+@app.post("/retry_processing")
+async def retry_processing(uri=Form(), userName=Form(), password=Form(), database=Form(), file_name=Form(), retry_condition=Form()):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
+        #set_status_retry(graph,file_name,retry_condition)
+        return create_api_response('Success',message=f"Status set to Reprocess for filename : {file_name}")
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to set status to Retry"
+        error_message = str(e)
+        logging.exception(f'{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()        
 
 if __name__ == "__main__":
     uvicorn.run(app)

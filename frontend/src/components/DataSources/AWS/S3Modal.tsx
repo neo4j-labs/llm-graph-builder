@@ -38,6 +38,8 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       model: model,
       fileSource: 's3 bucket',
       processingProgress: undefined,
+      retryOption: '',
+      retryOptionStatus: false,
     };
     if (url) {
       setValid(validation(bucketUrl) && isFocused);
@@ -123,7 +125,19 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     reset();
     setStatus('unknown');
   };
-
+  const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
+    if (e.code === 'Enter') {
+      e.preventDefault(); //
+      // @ts-ignore
+      const { form } = e.target;
+      const index = Array.prototype.indexOf.call(form, e.target);
+      if (index + 1 < form.elements.length) {
+        form.elements[index + 1].focus();
+      } else {
+        submitHandler(bucketUrl);
+      }
+    }
+  };
   return (
     <CustomModal
       open={open}
@@ -135,55 +149,60 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       submitLabel={buttonCaptions.submit}
     >
       <div className='w-full inline-block'>
-        <TextInput
-          id='url'
-          value={bucketUrl}
-          disabled={false}
-          label='Bucket URL'
-          aria-label='Bucket URL'
-          placeholder='s3://data.neo4j.com/pdf/'
-          autoFocus
-          fluid
-          required
-          errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
-          onBlur={() => setValid(validation(bucketUrl) && isFocused)}
-          onChange={(e) => {
-            setisFocused(true);
-            setBucketUrl(e.target.value);
-          }}
-        />
-      </div>
-      <div className='flex justify-between items-center w-full gap-4 mt-3'>
-        <TextInput
-          id='access key'
-          value={accessKey}
-          disabled={false}
-          label='Access Key'
-          aria-label='Access Key'
-          className='w-full'
-          placeholder=''
-          fluid
-          required
-          type={'password'}
-          onChange={(e) => {
-            setAccessKey(e.target.value);
-          }}
-        />
-        <TextInput
-          id='secret key'
-          value={secretKey}
-          disabled={false}
-          label='Secret Key'
-          aria-label='Secret Key'
-          className='w-full'
-          placeholder=''
-          fluid
-          required
-          type={'password'}
-          onChange={(e) => {
-            setSecretKey(e.target.value);
-          }}
-        />
+        <form>
+          <TextInput
+            id='url'
+            value={bucketUrl}
+            disabled={false}
+            label='Bucket URL'
+            aria-label='Bucket URL'
+            placeholder='s3://data.neo4j.com/pdf/'
+            autoFocus
+            fluid
+            required
+            errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
+            onBlur={() => setValid(validation(bucketUrl) && isFocused)}
+            onChange={(e) => {
+              setisFocused(true);
+              setBucketUrl(e.target.value);
+            }}
+            onKeyDown={handleKeyDown}
+          />
+          <div className='flex justify-between items-center w-full gap-4 mt-3'>
+            <TextInput
+              id='access key'
+              value={accessKey}
+              disabled={false}
+              label='Access Key'
+              aria-label='Access Key'
+              className='w-full'
+              placeholder=''
+              fluid
+              required
+              type={'password'}
+              onChange={(e) => {
+                setAccessKey(e.target.value);
+              }}
+              onKeyDown={handleKeyDown}
+            />
+            <TextInput
+              id='secret key'
+              value={secretKey}
+              disabled={false}
+              label='Secret Key'
+              aria-label='Secret Key'
+              className='w-full'
+              placeholder=''
+              fluid
+              required
+              type={'password'}
+              onChange={(e) => {
+                setSecretKey(e.target.value);
+              }}
+              onKeyDown={handleKeyDown}
+            />
+          </div>
+        </form>
       </div>
     </CustomModal>
   );

@@ -4,7 +4,7 @@ from src.api_response import create_api_response
 
 def get_documents_from_Wikipedia(wiki_query:str, language:str):
   try:
-    pages = WikipediaLoader(query=wiki_query.strip(), lang=language, load_max_docs=1, load_all_available_meta=False).load()
+    pages = WikipediaLoader(query=wiki_query.strip(), lang=language, load_all_available_meta=False).load()
     file_name = wiki_query.strip()
     logging.info(f"Total Pages from Wikipedia = {len(pages)}") 
     return file_name, pages

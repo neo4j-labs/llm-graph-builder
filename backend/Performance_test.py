@@ -95,6 +95,7 @@ def performance_main():
             futures.append(executor.submit(post_request_chunk))
 
         #  Chatbot request futures
+        #  Chatbot request futures
         # for message in CHATBOT_MESSAGES:
         #     futures.append(executor.submit(chatbot_request, message))
         

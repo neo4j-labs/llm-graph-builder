@@ -6,13 +6,11 @@ import Content from '../Content';
 import SettingsModal from '../Popups/Settings/SettingModal';
 import { clearChatAPI } from '../../services/QnaAPI';
 import { useCredentials } from '../../context/UserCredentials';
-import { UserCredentials, alertStateType } from '../../types';
+import { UserCredentials } from '../../types';
 import { useMessageContext } from '../../context/UserMessages';
-import { AlertColor, AlertPropsColorOverrides, useMediaQuery } from '@mui/material';
-import { OverridableStringUnion } from '@mui/types';
+import { useMediaQuery } from '@mui/material';
 import { useFileContext } from '../../context/UsersFiles';
 import SchemaFromTextDialog from '../Popups/Settings/SchemaFromText';
-import CustomAlert from '../UI/Alert';
 
 export default function PageLayoutNew({
   isSettingPanelExpanded,
@@ -33,7 +31,7 @@ export default function PageLayoutNew({
   const [shows3Modal, toggleS3Modal] = useReducer((s) => !s, false);
   const [showGCSModal, toggleGCSModal] = useReducer((s) => !s, false);
   const [showGenericModal, toggleGenericModal] = useReducer((s) => !s, false);
-  const { userCredentials } = useCredentials();
+  const { userCredentials, connectionStatus } = useCredentials();
   const toggleLeftDrawer = () => {
     if (largedesktops) {
       setIsLeftExpanded(!isLeftExpanded);
@@ -48,11 +46,7 @@ export default function PageLayoutNew({
       setIsRightExpanded(false);
     }
   };
-  const [alertDetails, setalertDetails] = useState<alertStateType>({
-    showAlert: false,
-    alertType: 'error',
-    alertMessage: '',
-  });
+
   const { messages } = useMessageContext();
   const { isSchema, setIsSchema, setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
 
@@ -72,30 +66,8 @@ export default function PageLayoutNew({
     }
   };
 
-  const showAlert = (
-    alertmsg: string,
-    alerttype: OverridableStringUnion<AlertColor, AlertPropsColorOverrides> | undefined
-  ) => {
-    setalertDetails({
-      showAlert: true,
-      alertMessage: alertmsg,
-      alertType: alerttype,
-    });
-  };
-  const handleClose = () => {
-    setalertDetails((prev) => ({ ...prev, showAlert: false, alertMessage: '' }));
-  };
-
   return (
     <div style={{ maxHeight: 'calc(100vh - 58px)' }} className='flex overflow-hidden'>
-      {alertDetails.showAlert && (
-        <CustomAlert
-          severity={alertDetails.alertType}
-          open={alertDetails.showAlert}
-          handleClose={handleClose}
-          alertMessage={alertDetails.alertMessage}
-        />
-      )}
       <SideNav
         toggles3Modal={toggleS3Modal}
         toggleGCSModal={toggleGCSModal}
@@ -129,7 +101,6 @@ export default function PageLayoutNew({
               break;
           }
         }}
-        showAlert={showAlert}
       ></SchemaFromTextDialog>
       <SettingsModal
         openTextSchema={() => {
@@ -156,7 +127,12 @@ export default function PageLayoutNew({
         closeSettingModal={closeSettingModal}
       />
       {showDrawerChatbot && (
-        <DrawerChatbot messages={messages} isExpanded={isRightExpanded} clearHistoryData={clearHistoryData} />
+        <DrawerChatbot
+          messages={messages}
+          isExpanded={isRightExpanded}
+          clearHistoryData={clearHistoryData}
+          connectionStatus={connectionStatus}
+        />
       )}
       <SideNav
         messages={messages}

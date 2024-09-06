@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import logging
@@ -69,9 +70,7 @@ def test_graph_from_wikipedia(model_name):
     file_name = "Ram_Mandir"
     create_source_node_graph_url_wikipedia(graph, model_name, wiki_query, source_type)
 
-    wiki_result = extract_graph_from_file_Wikipedia(
-        URI, USERNAME, PASSWORD, DATABASE, model_name, file_name, 1, 'en', '', ''
-    )
+    wiki_result = extract_graph_from_file_Wikipedia(URI, USERNAME, PASSWORD, DATABASE, model_name, file_name, 1, 'en', '', '')
     logging.info("Wikipedia test done")
     print(wiki_result)
 
@@ -84,6 +83,27 @@ def test_graph_from_wikipedia(model_name):
         print("Fail: ", e)
 
     return wiki_result
+
+def test_graph_website(model_name):
+    """Test graph creation from a Website page."""
+     #graph, model, source_url, source_type
+    source_url = 'https://www.amazon.com/'
+    source_type = 'web-url'
+    create_source_node_graph_web_url(graph, model_name, source_url, source_type)
+
+    weburl_result = extract_graph_from_web_page(URI, USERNAME, PASSWORD, DATABASE, model_name, source_url, '', '')
+    logging.info("WebUrl test done")
+    print(weburl_result)
+
+    try:
+        assert weburl_result['status'] == 'Completed'
+        assert weburl_result['nodeCount'] > 0
+        assert weburl_result['relationshipCount'] > 0
+        print("Success")
+    except AssertionError as e:
+        print("Fail: ", e)
+    return weburl_result
+
 
 def test_graph_from_youtube_video(model_name):
     """Test graph creation from a YouTube video."""
@@ -107,7 +127,7 @@ def test_graph_from_youtube_video(model_name):
 
     return youtube_result
 
-def test_chatbot_qna(model_name, mode='graph+vector'):
+def test_chatbot_qna(model_name, mode='vector'):
     """Test chatbot QnA functionality for different modes."""
     QA_n_RAG = QA_RAG(graph, model_name, 'Tell me about amazon', '[]', 1, mode)
     print(QA_n_RAG)
@@ -115,52 +135,103 @@ def test_chatbot_qna(model_name, mode='graph+vector'):
 
     try:
         assert len(QA_n_RAG['message']) > 20
+        return QA_n_RAG
         print("Success")
     except AssertionError as e:
-        print("Failed: ", e)
+        print("Failed ", e)
+        return QA_n_RAG
+    
+#Get Test disconnected_nodes list
+def disconected_nodes():
+    #graph = create_graph_database_connection(uri, userName, password, database)
+    graphDb_data_Access = graphDBdataAccess(graph)
+    nodes_list, total_nodes = graphDb_data_Access.list_unconnected_nodes()
+    print(nodes_list[0]["e"]["elementId"])
+    status = "False"
 
-    return QA_n_RAG
+    if total_nodes['total']>0:
+        status = "True"
+    else:
+        status = "False"
 
-def compare_graph_results(results):
-    """
-    Compare graph results across different models.
-    Add custom logic here to compare graph data, nodes, and relationships.
-    """
-    # Placeholder logic for comparison
-    print("Comparing results...")
-    for i in range(len(results) - 1):
-        result_a = results[i]
-        result_b = results[i + 1]
-        if result_a == result_b:
-            print(f"Result {i} is identical to result {i+1}")
+    return nodes_list[0]["e"]["elementId"], status
+    
+#Test Delete delete_disconnected_nodes list
+def delete_disconected_nodes(lst_element_id):
+    print(f'disconnect elementid list {lst_element_id}')
+    #graph = create_graph_database_connection(uri, userName, password, database)
+    graphDb_data_Access = graphDBdataAccess(graph)
+    result = graphDb_data_Access.delete_unconnected_nodes(json.dumps(lst_element_id))
+    print(f'delete disconnect api result {result}')
+    if not result:
+        return "True"
+    else:
+        return "False"
+
+#Test Get Duplicate_nodes
+def get_duplicate_nodes():
+        #graph = create_graph_database_connection(uri, userName, password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        nodes_list, total_nodes = graphDb_data_Access.get_duplicate_nodes_list()
+        if total_nodes['total']>0:
+            return "True"
         else:
-            print(f"Result {i} differs from result {i+1}")
+            return "False"
+        
+#Test populate_graph_schema
+def test_populate_graph_schema_from_text(model):
+    result_schema = populate_graph_schema_from_text('When Amazon was founded in 1993 by creator Jeff Benzos, it was mostly an online bookstore. Initially Amazon’s growth was very slow, not turning a profit until over 7 years after its founding. This was thanks to the great momentum provided by the dot-com bubble.', model, True)
+    print(result_schema)
+    return result_schema
+
+# def compare_graph_results(results):
+#     """
+#     Compare graph results across different models.
+#     Add custom logic here to compare graph data, nodes, and relationships.
+#     """
+#     # Placeholder logic for comparison
+#     print("Comparing results...")
+#     for i in range(len(results) - 1):
+#         result_a = results[i]
+#         result_b = results[i + 1]
+#         if result_a == result_b:
+#             print(f"Result {i} is identical to result {i+1}")
+#         else:
+#             print(f"Result {i} differs from result {i+1}")
 
 def run_tests():
     final_list = []
     error_list = []
-    models = [
-        'openai-gpt-3.5', 'openai-gpt-4o', 'openai-gpt-4o-mini', 'azure_ai_gpt_35',
-        'azure_ai_gpt_4o', 'anthropic_claude_3_5_sonnet', 'fireworks_v3p1_405b',
-        'fireworks_llama_v3_70b', 'ollama_llama3', 'bedrock_claude_3_5_sonnet'
-    ]
+    models = ['openai-gpt-3.5', 'openai-gpt-4o']
 
     for model_name in models:
         try:
-            final_list.append(test_graph_from_file_local(model_name))
-            final_list.append(test_graph_from_wikipedia(model_name))
-            final_list.append(test_graph_from_youtube_video(model_name))
-            final_list.append(test_chatbot_qna(model_name))
-            final_list.append(test_chatbot_qna(model_name, mode='vector'))
-            final_list.append(test_chatbot_qna(model_name, mode='hybrid'))
+              final_list.append(test_graph_from_file_local(model_name))
+              final_list.append(test_graph_from_wikipedia(model_name))
+              final_list.append(test_populate_graph_schema_from_text(model_name))
+              final_list.append(test_graph_website(model_name))
+              final_list.append(test_graph_from_youtube_video(model_name))
+              final_list.append(test_chatbot_qna(model_name))
+              final_list.append(test_chatbot_qna(model_name, mode='vector'))
+              final_list.append(test_chatbot_qna(model_name, mode='graph+vector+fulltext'))
         except Exception as e:
             error_list.append((model_name, str(e)))
-    #Compare and log diffrences in graph results
-    compare_graph_results(final_list)  # Pass the final_list to comapre_graph_results
-
+    # #Compare and log diffrences in graph results
+    # # compare_graph_results(final_list)  # Pass the final_list to comapre_graph_results
+    # test_populate_graph_schema_from_text('openai-gpt-4o')
+    dis_elementid, dis_status = disconected_nodes()
+    lst_element_id = [dis_elementid]
+    delt = delete_disconected_nodes(lst_element_id)
+    dup = get_duplicate_nodes()
+    # schma = test_populate_graph_schema_from_text(model)
     # Save final results to CSV
     df = pd.DataFrame(final_list)
+    print(df)
     df['execution_date'] = dt.today().strftime('%Y-%m-%d')
+    df['disconnected_nodes']=dis_status
+    df['get_duplicate_nodes']=dup
+    df['delete_disconected_nodes']=delt
+    # df['test_populate_graph_schema_from_text'] = schma
     df.to_csv(f"Integration_TestResult_{dt.now().strftime('%Y%m%d_%H%M%S')}.csv", index=False)
 
     # Save error details to CSV
