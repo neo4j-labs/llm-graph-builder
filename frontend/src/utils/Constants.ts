@@ -78,7 +78,7 @@ export const chatModeLables = {
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
     ? process.env.VITE_CHAT_MODES?.split(',')
-    : ['vector', 'graph', 'graph+vector', 'fulltext', 'graph+vector+fulltext'];
+    : ['vector', 'graph', 'graph+vector', 'fulltext', 'graph+vector+fulltext', 'local community', 'global community'];
 export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.VITE_TIME_PER_PAGE ? parseInt(process.env.VITE_TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
@@ -207,11 +207,6 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
     title: 'create_communities',
     description: 'Create Communities identifies and groups similar entities, improving search accuracy and analysis.',
   },
-];
-export const RETRY_OPIONS = [
-  'start_from_beginning',
-  'delete_entities_and_start_from_beginning',
-  'start_from_last_processed_position',
 ];
 export const batchSize: number = parseInt(process.env.VITE_BATCH_SIZE ?? '2');
 

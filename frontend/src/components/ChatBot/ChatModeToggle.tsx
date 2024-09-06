@@ -5,7 +5,6 @@ import CustomMenu from '../UI/Menu';
 import { chatModeLables, chatModes } from '../../utils/Constants';
 import { capitalize } from '@mui/material';
 import { capitalizeWithPlus } from '../../utils/Utils';
-import { useCredentials } from '../../context/UserCredentials';
 export default function ChatModeToggle({
   menuAnchor,
   closeHandler = () => { },
@@ -19,70 +18,8 @@ export default function ChatModeToggle({
   anchorPortal?: boolean;
   disableBackdrop?: boolean;
 }) {
-  const { setchatMode, chatMode, postProcessingTasks, selectedRows } = useFileContext();
+  const { setchatMode, chatMode, postProcessingTasks } = useFileContext();
   const isCommunityAllowed = postProcessingTasks.includes('create_communities');
-  const { isGdsActive } = useCredentials();
-
-  useEffect(() => {
-    if (selectedRows.length !== 0) {
-      setchatMode(chatModeLables.graph_vector);
-    } else {
-      setchatMode(chatModeLables.graph_vector_fulltext);
-    }
-  }, [selectedRows]);
-
-  const memoizedChatModes = useMemo(() => {
-    return isGdsActive && isCommunityAllowed
-      ? chatModes
-      : chatModes?.filter((m) => !m.mode.includes(chatModeLables.entity_vector));
-  }, [isGdsActive, isCommunityAllowed]);
-  const menuItems = useMemo(() => {
-    return memoizedChatModes?.map((m) => {
-      const isDisabled = Boolean(selectedRows.length && !(m.mode === chatModeLables.vector || m.mode === chatModeLables.graph_vector));
-      const handleModeChange = () => {
-        if (isDisabled) {
-          setchatMode(chatModeLables.graph_vector);
-        } else {
-          setchatMode(m.mode);
-        }
-        closeHandler();
-      };
-      return {
-        title: (
-          <div>
-            <Typography variant='subheading-small'>
-              {m.mode.includes('+') ? capitalizeWithPlus(m.mode) : capitalize(m.mode)}
-            </Typography>
-            <div>
-              <Typography variant='body-small'>{m.description}</Typography>
-            </div>
-          </div>
-        ),
-        onClick: handleModeChange,
-        disabledCondition: isDisabled,
-        description: (
-          <span>
-            {chatMode === m.mode && (
-              <>
-                <StatusIndicator type='success' /> {chatModeLables.selected}
-              </>
-            )}
-            {isDisabled && (
-              <>
-                <StatusIndicator type='warning' /> {chatModeLables.unavailableChatMode}
-              </>
-            )}
-          </span>
-        ),
-      };
-    });
-  }, [chatMode, memoizedChatModes, setchatMode, closeHandler, selectedRows]);
-
-  useEffect(() => {
-    if (!selectedRows.length && !chatMode) {
-      setchatMode(chatMode);
-    }
-  }, [setchatMode, selectedRows, chatMode]);
 
   return (
     <CustomMenu
@@ -91,16 +28,11 @@ export default function ChatModeToggle({
       MenuAnchor={menuAnchor}
       anchorPortal={anchorPortal}
       disableBackdrop={disableBackdrop}
-      items={useMemo(
-        () =>
-          chatModes?.map((m) => {
+      items={useMemo(() => {
+        if (isCommunityAllowed) {
+          return chatModes?.map((m) => {
             return {
-              title: m.includes('+')
-                ? m
-                    .split('+')
-                    .map((s) => capitalize(s))
-                    .join('+')
-                : capitalize(m),
+              title: m.includes('+') ? capitalizeWithPlus(m) : capitalize(m),
               onClick: () => {
                 setchatMode(m);
               },
@@ -115,9 +47,30 @@ export default function ChatModeToggle({
                 </span>
               ),
             };
-          }),
-        [chatMode, chatModes]
-      )}
+          });
+        } 
+          return chatModes
+            ?.filter((s) => !s.includes('community'))
+            ?.map((m) => {
+              return {
+                title: m.includes('+') ? capitalizeWithPlus(m) : capitalize(m),
+                onClick: () => {
+                  setchatMode(m);
+                },
+                disabledCondition: false,
+                description: (
+                  <span>
+                    {chatMode === m && (
+                      <>
+                        <StatusIndicator type={`${chatMode === m ? 'success' : 'unknown'}`} /> Selected
+                      </>
+                    )}
+                  </span>
+                ),
+              };
+            });
+        
+      }, [chatMode, chatModes,isCommunityAllowed])}
     ></CustomMenu>
   );
 }

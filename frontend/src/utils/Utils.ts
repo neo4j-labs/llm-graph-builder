@@ -359,3 +359,10 @@ export const sortAlphabetically = (a: Relationship, b: Relationship) => {
   const captionTwo = b.caption?.toLowerCase() || '';
   return captionOne.localeCompare(captionTwo);
 };
+
+export const capitalizeWithPlus = (s: string) => {
+  return s
+    .split('+')
+    .map((s) => capitalize(s))
+    .join('+');
+};

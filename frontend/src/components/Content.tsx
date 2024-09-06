@@ -56,8 +56,8 @@ const Content: React.FC<ContentProps> = ({
   });
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
-  const { setUserCredentials, userCredentials, connectionStatus, setConnectionStatus, isGdsActive, setGdsActive } =
-    useCredentials();
+  const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
+  const { setUserCredentials, userCredentials, isGdsActive } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [retryFile, setRetryFile] = useState<string>('');
