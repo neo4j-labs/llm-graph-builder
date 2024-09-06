@@ -87,6 +87,7 @@ const Content: React.FC<ContentProps> = ({
     alertType: 'error',
     alertMessage: '',
   });
+  const isGdsActive = true;
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
       setalertDetails({
@@ -654,6 +655,8 @@ const Content: React.FC<ContentProps> = ({
       }
     }
   };
+
+  console.log('isGds', isGdsActive);
 
   return (
     <>
