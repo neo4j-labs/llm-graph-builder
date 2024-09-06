@@ -29,6 +29,7 @@ import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
 import { tokens } from '@neo4j-ndl/base';
 import axios from 'axios';
+import DatabaseStatusIcon from './UI/DatabaseIcon';
 
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
@@ -86,7 +87,12 @@ const Content: React.FC<ContentProps> = ({
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
-
+  const [alertDetails, setalertDetails] = useState<alertStateType>({
+    showAlert: false,
+    alertType: 'error',
+    alertMessage: '',
+  });
+  const isGdsActive = true;
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
       showNormalToast(`${fileName} will take approx ${time} ${inMinutes ? 'Min' : 'Sec'}`);
@@ -680,24 +686,7 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
-  const retryOnclose = useCallback(() => {
-    setRetryFile('');
-    setAlertStateForRetry({
-      showAlert: false,
-      alertMessage: '',
-      alertType: 'neutral',
-    });
-    setRetryLoading(false);
-    toggleRetryPopup();
-  }, []);
-
-  const onBannerClose = useCallback(() => {
-    setAlertStateForRetry({
-      showAlert: false,
-      alertMessage: '',
-      alertType: 'neutral',
-    });
-  }, []);
+  console.log('isGds', isGdsActive);
 
   return (
     <>

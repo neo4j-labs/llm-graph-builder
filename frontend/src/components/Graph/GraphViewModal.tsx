@@ -30,7 +30,7 @@ import {
   MagnifyingGlassMinusIconOutline,
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
-import IconButtonWithToolTip from '../UI/IconButtonToolTip';
+import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { filterData, processGraphData, sortAlphabetically } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 import { LegendsChip } from './LegendsChip';
