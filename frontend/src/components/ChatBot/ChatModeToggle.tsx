@@ -5,7 +5,7 @@ import CustomMenu from '../UI/Menu';
 import { chatModes } from '../../utils/Constants';
 import { capitalize } from '@mui/material';
 import { capitalizeWithPlus } from '../../utils/Utils';
-
+import { useCredentials } from '../../context/UserCredentials';
 export default function ChatModeToggle({
   menuAnchor,
   closeHandler = () => {},
@@ -21,7 +21,7 @@ export default function ChatModeToggle({
 }) {
   const { setchatMode, chatMode, postProcessingTasks } = useFileContext();
   const isCommunityAllowed = postProcessingTasks.includes('create_communities');
-
+  const { isGdsActive } = useCredentials();
   return (
     <CustomMenu
       closeHandler={closeHandler}
@@ -30,7 +30,7 @@ export default function ChatModeToggle({
       anchorPortal={anchorPortal}
       disableBackdrop={disableBackdrop}
       items={useMemo(() => {
-        if (isCommunityAllowed) {
+        if (isGdsActive && isCommunityAllowed) {
           return chatModes?.map((m) => {
             return {
               title: m.includes('+') ? capitalizeWithPlus(m) : capitalize(m),
@@ -49,29 +49,28 @@ export default function ChatModeToggle({
               ),
             };
           });
-        } 
-          return chatModes
-            ?.filter((s) => !s.includes('community'))
-            ?.map((m) => {
-              return {
-                title: m.includes('+') ? capitalizeWithPlus(m) : capitalize(m),
-                onClick: () => {
-                  setchatMode(m);
-                },
-                disabledCondition: false,
-                description: (
-                  <span>
-                    {chatMode === m && (
-                      <>
-                        <StatusIndicator type={`${chatMode === m ? 'success' : 'unknown'}`} /> Selected
-                      </>
-                    )}
-                  </span>
-                ),
-              };
-            });
-        
-      }, [chatMode, chatModes,isCommunityAllowed])}
-    ></CustomMenu>
+        }
+        return chatModes
+          ?.filter((s) => !s.includes('community'))
+          ?.map((m) => {
+            return {
+              title: m.includes('+') ? capitalizeWithPlus(m) : capitalize(m),
+              onClick: () => {
+                setchatMode(m);
+              },
+              disabledCondition: false,
+              description: (
+                <span>
+                  {chatMode === m && (
+                    <>
+                      <StatusIndicator type={`${chatMode === m ? 'success' : 'unknown'}`} /> Selected
+                    </>
+                  )}
+                </span>
+              ),
+            };
+          });
+      }, [chatMode, chatModes, isCommunityAllowed, isGdsActive])}
+    />
   );
 }

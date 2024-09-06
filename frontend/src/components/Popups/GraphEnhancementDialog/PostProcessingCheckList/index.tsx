@@ -32,7 +32,11 @@ export default function PostProcessingCheckList() {
                           .join(' ')}
                       </Typography>
                     }
-                    checked={postProcessingTasks.includes(job.title)}
+                    checked={
+                      isCreateCommunities
+                        ? isGdsActive && postProcessingTasks.includes(job.title)
+                        : postProcessingTasks.includes(job.title)
+                    }
                     onChange={(e) => {
                       if (e.target.checked) {
                         setPostProcessingTasks((prev) => [...prev, job.title]);
