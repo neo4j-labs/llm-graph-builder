@@ -17,7 +17,7 @@ import ExpandedChatButtonContainer from '../ChatBot/ExpandedChatButtonContainer'
 import { APP_SOURCES, tooltips } from '../../utils/Constants';
 import ChatModeToggle from '../ChatBot/ChatModeToggle';
 import { RiChatSettingsLine } from 'react-icons/ri';
-import IconButtonWithToolTip from '../UI/IconButtonToolTip';
+import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import GCSButton from '../DataSources/GCS/GCSButton';
 import S3Component from '../DataSources/AWS/S3Bucket';
 import WebButton from '../DataSources/Web/WebButton';

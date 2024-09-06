@@ -32,6 +32,7 @@ import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
 import { tokens } from '@neo4j-ndl/base';
 import axios from 'axios';
+import DatabaseStatusIcon from './UI/DatabaseIcon';
 
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
@@ -86,6 +87,7 @@ const Content: React.FC<ContentProps> = ({
     alertType: 'error',
     alertMessage: '',
   });
+  const isGdsActive = true;
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
       setalertDetails({
@@ -651,6 +653,8 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
+  console.log('isGds', isGdsActive);
+
   return (
     <>
       {alertDetails.showAlert && (
@@ -711,16 +715,14 @@ const Content: React.FC<ContentProps> = ({
               chunksExistsWithDifferentEmbedding={openConnection.chunksExistsWithDifferentDimension}
             />
           </Suspense>
-
           <div className='connectionstatus__container'>
             <span className='h6 px-1'>Neo4j connection</span>
             <Typography variant='body-medium'>
-              {!connectionStatus ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
-              {connectionStatus ? (
-                <span className='n-body-small'>{userCredentials?.uri}</span>
-              ) : (
-                <span className='n-body-small'>Not Connected</span>
-              )}
+              <DatabaseStatusIcon
+                isConnected={connectionStatus}
+                isGdsActive={isGdsActive}
+                uri={userCredentials && userCredentials?.uri}
+              />
               <div className='pt-1'>
                 {!isSchema ? (
                   <StatusIndicator type='danger' />
