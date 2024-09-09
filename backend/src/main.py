@@ -143,17 +143,16 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     print(f'Credential file path {cred_path}')
     video_id = parse_qs(urlparse(youtube_url).query).get('v')
     print(f'Video Id Youtube: {video_id}')
-    google_api_client = GoogleApiClient(service_account_path=Path(cred_path))
-    youtube_loader_channel = GoogleApiYoutubeLoader(
-    google_api_client=google_api_client,
-    video_ids=[video_id[0].strip()], add_video_info=True
-    )
-    youtube_transcript = youtube_loader_channel.load()
-    # print(f'youtube page_content: {youtube_transcript[0].page_content}')
-    # print(f'youtube id: {youtube_transcript[0].metadata["id"]}')
-    # print(f'youtube title: {youtube_transcript[0].metadata["snippet"]["title"]}')
-    obj_source_node.file_name = youtube_transcript[0].metadata["snippet"]["title"]
+    # google_api_client = GoogleApiClient(service_account_path=Path(cred_path))
+    # youtube_loader_channel = GoogleApiYoutubeLoader(
+    # google_api_client=google_api_client,
+    # video_ids=[video_id[0].strip()], add_video_info=True
+    # )
+    # youtube_transcript = youtube_loader_channel.load()
+    
+    obj_source_node.file_name = match.group(1)#youtube_transcript[0].metadata["snippet"]["title"]
     transcript= get_youtube_combined_transcript(match.group(1))
+    # print(transcript)
     if transcript==None or len(transcript)==0:
       message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
       raise Exception(message)
