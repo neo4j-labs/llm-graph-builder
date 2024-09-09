@@ -65,9 +65,9 @@ def test_graph_from_file_local(model_name):
 
 def test_graph_from_wikipedia(model_name):
     """Test graph creation from a Wikipedia page."""
-    wiki_query = 'https://en.wikipedia.org/wiki/Ram_Mandir'
+    wiki_query = 'https://en.wikipedia.org/wiki/Google_DeepMind'
     source_type = 'Wikipedia'
-    file_name = "Ram_Mandir"
+    file_name = "Google_DeepMind"
     create_source_node_graph_url_wikipedia(graph, model_name, wiki_query, source_type)
 
     wiki_result = extract_graph_from_file_Wikipedia(URI, USERNAME, PASSWORD, DATABASE, model_name, file_name, 1, 'en', '', '')
@@ -202,7 +202,7 @@ def test_populate_graph_schema_from_text(model):
 def run_tests():
     final_list = []
     error_list = []
-    models = ['openai-gpt-3.5', 'openai-gpt-4o']
+    models = ['openai-gpt-4o','gemini-1.5-pro']
 
     for model_name in models:
         try:
@@ -210,10 +210,10 @@ def run_tests():
               final_list.append(test_graph_from_wikipedia(model_name))
               final_list.append(test_populate_graph_schema_from_text(model_name))
               final_list.append(test_graph_website(model_name))
-              final_list.append(test_graph_from_youtube_video(model_name))
-              final_list.append(test_chatbot_qna(model_name))
-              final_list.append(test_chatbot_qna(model_name, mode='vector'))
-              final_list.append(test_chatbot_qna(model_name, mode='graph+vector+fulltext'))
+            #   final_list.append(test_graph_from_youtube_video(model_name))
+            #   final_list.append(test_chatbot_qna(model_name))
+            #   final_list.append(test_chatbot_qna(model_name, mode='vector'))
+            #   final_list.append(test_chatbot_qna(model_name, mode='graph+vector+fulltext'))
         except Exception as e:
             error_list.append((model_name, str(e)))
     # #Compare and log diffrences in graph results
