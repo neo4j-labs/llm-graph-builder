@@ -54,11 +54,31 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [scheme, setScheme] = useState<Scheme>({});
   const [newScheme, setNewScheme] = useState<Scheme>({});
   const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedQuery] = useDebounceValue(searchQuery, 300);
-  const [graphType, setGraphType] = useState<GraphType[]>([]);
+  const debouncedQuery = useDebounce(searchQuery, 300);
   const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
-  const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
-  const [mode, setMode] = useState<boolean>(false);
+
+  // the checkbox selection
+  const handleCheckboxChange = (graph: GraphType) => {
+    const currentIndex = graphType.indexOf(graph);
+    const newGraphSelected = [...graphType];
+    if (currentIndex === -1) {
+      newGraphSelected.push(graph);
+      initGraph(newGraphSelected, allNodes, allRelationships, scheme);
+    } else {
+      newGraphSelected.splice(currentIndex, 1);
+      initGraph(newGraphSelected, allNodes, allRelationships, scheme);
+    }
+    setSearchQuery('');
+    setGraphType(newGraphSelected);
+  };
+
+  const nodeCount = (nodes: ExtendedNode[], label: string): number => {
+    return [...new Set(nodes?.filter((n) => n.labels?.includes(label)).map((i) => i.id))].length;
+  };
+
+  const relationshipCount = (relationships: ExtendedRelationship[], label: string): number => {
+    return [...new Set(relationships?.filter((r) => r.caption?.includes(label)).map((i) => i.id))].length;
+  };
 
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
@@ -300,7 +320,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   // Refresh the graph with nodes and relations if file is processing
   const handleRefresh = () => {
     setDisableRefresh(true);
-    setMode(true);
     graphApi('refreshMode');
   };
 

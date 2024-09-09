@@ -6,26 +6,19 @@ import { useFileContext } from '../context/UsersFiles';
 import { extractAPI } from '../utils/FileAPI';
 import {
   BannerAlertProps,
+  ChildRef,
   ContentProps,
   CustomFile,
   OptionType,
   UserCredentials,
-  chunkdata,
-  FileTableHandle,
+  connectionState,
 } from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
-import {
-  batchSize,
-  buttonCaptions,
-  chatModeLables,
-  largeFileSize,
-  llms,
-  RETRY_OPIONS,
-  tooltips,
-} from '../utils/Constants';
+import { useSearchParams } from 'react-router-dom';
+import { batchSize, buttonCaptions, defaultLLM, largeFileSize, llms, RETRY_OPIONS, tooltips } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import DropdownComponent from './Dropdown';
 import GraphViewModal from './Graph/GraphViewModal';
@@ -34,6 +27,9 @@ import FallBackDialog from './UI/FallBackDialog';
 import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
 import { tokens } from '@neo4j-ndl/base';
+import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
+import retry from '../services/retry';
+import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/toasts';
 import axios from 'axios';
 import DatabaseStatusIcon from './UI/DatabaseStatusIcon';
 import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
@@ -63,20 +59,18 @@ const Content: React.FC<ContentProps> = ({
   // const [init, setInit] = useState<boolean>(false);
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
-  const [documentName, setDocumentName] = useState<string>('');
-  const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser, isGCSActive } =
-    useCredentials();
+  const { setUserCredentials, userCredentials, connectionStatus, setConnectionStatus } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [showExpirationModal, setshowExpirationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [retryFile, setRetryFile] = useState<string>('');
   const [retryLoading, setRetryLoading] = useState<boolean>(false);
   const [showRetryPopup, toggleRetryPopup] = useReducer((state) => !state, false);
-  const [showChunkPopup, toggleChunkPopup] = useReducer((state) => !state, false);
-  const [chunksLoading, toggleChunksLoading] = useReducer((state) => !state, false);
-  const [currentPage, setCurrentPage] = useState<number>(0);
-  const [totalPageCount, setTotalPageCount] = useState<number | null>(null);
-  const [textChunks, setTextChunks] = useState<chunkdata[]>([]);
+  const [alertStateForRetry, setAlertStateForRetry] = useState<BannerAlertProps>({
+    showAlert: false,
+    alertType: 'neutral',
+    alertMessage: '',
+  });
 
   const [alertStateForRetry, setAlertStateForRetry] = useState<BannerAlertProps>({
     showAlert: false,
@@ -104,6 +98,7 @@ const Content: React.FC<ContentProps> = ({
   );
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
+  const [searchParams] = useSearchParams();
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
@@ -114,16 +109,39 @@ const Content: React.FC<ContentProps> = ({
       showErrorToast(`${fileName} Failed to process`);
     }
   );
-  const childRef = useRef<FileTableHandle>(null);
+  const childRef = useRef<ChildRef>(null);
 
-  const incrementPage = async () => {
-    setCurrentPage((prev) => prev + 1);
-    await getChunks(documentName, currentPage + 1);
-  };
-  const decrementPage = async () => {
-    setCurrentPage((prev) => prev - 1);
-    await getChunks(documentName, currentPage - 1);
-  };
+  useEffect(() => {
+    if (!init && !searchParams.has('connectURL')) {
+      let session = localStorage.getItem('neo4j.connection');
+      if (session) {
+        let neo4jConnection = JSON.parse(session);
+        setUserCredentials({
+          uri: neo4jConnection.uri,
+          userName: neo4jConnection.user,
+          password: neo4jConnection.password,
+          database: neo4jConnection.database,
+          port: neo4jConnection.uri.split(':')[2],
+        });
+      } else {
+        setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+      }
+      setInit(true);
+    } else {
+      setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+    }
+  }, []);
+
+  useEffect(() => {
+    setFilesData((prevfiles) => {
+      return prevfiles.map((curfile) => {
+        return {
+          ...curfile,
+          model: curfile.status === 'New' || curfile.status === 'Reprocess' ? model : curfile.model,
+        };
+      });
+    });
+  }, [model]);
 
   useEffect(() => {
     if (afterFirstRender) {
@@ -190,6 +208,50 @@ const Content: React.FC<ContentProps> = ({
       setIsSchema(JSON.parse(storedSchema));
     }
   }, [isSchema]);
+
+  useEffect(() => {
+    const connection = localStorage.getItem('neo4j.connection');
+    if (connection != null) {
+      (async () => {
+        const parsedData = JSON.parse(connection);
+        console.log(parsedData.uri);
+        const response = await connectAPI(parsedData.uri, parsedData.user, parsedData.password, parsedData.database);
+        if (response?.data?.status === 'Success') {
+          localStorage.setItem(
+            'neo4j.connection',
+            JSON.stringify({
+              ...parsedData,
+              userDbVectorIndex: response.data.data.db_vector_dimension,
+            })
+          );
+          if (
+            (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
+              response.data.data.db_vector_dimension == 0) &&
+            !response.data.data.chunks_exists
+          ) {
+            setConnectionStatus(true);
+            setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
+          } else {
+            setOpenConnection({
+              openPopUp: true,
+              chunksExists: response.data.data.chunks_exists as boolean,
+              vectorIndexMisMatch:
+                response.data.data.db_vector_dimension > 0 &&
+                response.data.data.db_vector_dimension != response.data.data.application_dimension,
+              chunksExistsWithDifferentDimension:
+                response.data.data.db_vector_dimension > 0 &&
+                response.data.data.db_vector_dimension != response.data.data.application_dimension &&
+                (response.data.data.chunks_exists ?? true),
+            });
+            setConnectionStatus(false);
+          }
+        } else {
+          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+          setConnectionStatus(false);
+        }
+      })();
+    }
+  }, []);
 
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
@@ -272,7 +334,7 @@ const Content: React.FC<ContentProps> = ({
         userCredentials as UserCredentials,
         fileItem.fileSource,
         fileItem.retryOption ?? '',
-        fileItem.sourceUrl,
+        fileItem.source_url,
         localStorage.getItem('accesskey'),
         atob(localStorage.getItem('secretkey') ?? ''),
         fileItem.name ?? '',
@@ -321,11 +383,7 @@ const Content: React.FC<ContentProps> = ({
             const { message, fileName } = error;
             queue.remove(fileName);
             const errorMessage = error.message;
-            setalertDetails({
-              showAlert: true,
-              alertType: 'error',
-              alertMessage: message,
-            });
+            showErrorToast(message);
             setFilesData((prevfiles) =>
               prevfiles.map((curfile) => {
                 if (curfile.name == fileName) {
@@ -361,7 +419,7 @@ const Content: React.FC<ContentProps> = ({
     showNormalToast(`Processing ${batch.length} files at a time.`);
     for (let i = 0; i < batch.length; i++) {
       if (newCheck) {
-        if (batch[i]?.status === 'New' || batch[i].status === 'Ready to Reprocess') {
+        if (batch[i]?.status === 'New' || batch[i].status === 'Reprocess') {
           data.push(extractData(batch[i].id, isSelectedFiles, selectedFiles as CustomFile[]));
         }
       } else {
@@ -371,45 +429,7 @@ const Content: React.FC<ContentProps> = ({
     return data;
   };
 
-  const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
-    if (!remainingFiles.length) {
-      showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
-      try {
-        const response = await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
-        if (response.data.status === 'Success') {
-          const communityfiles = response.data?.data;
-          if (Array.isArray(communityfiles) && communityfiles.length) {
-            communityfiles?.forEach((c: any) => {
-              setFilesData((prev) => {
-                return prev.map((f) => {
-                  if (f.name === c.filename) {
-                    return {
-                      ...f,
-                      chunkNodeCount: c.chunkNodeCount ?? 0,
-                      entityNodeCount: c.entityNodeCount ?? 0,
-                      communityNodeCount: c.communityNodeCount ?? 0,
-                      chunkRelCount: c.chunkRelCount ?? 0,
-                      entityEntityRelCount: c.entityEntityRelCount ?? 0,
-                      communityRelCount: c.communityRelCount ?? 0,
-                      nodesCount: c.nodeCount,
-                      relationshipsCount: c.relationshipCount,
-                    };
-                  }
-                  return f;
-                });
-              });
-            });
-          }
-          showSuccessToast('All Q&A functionality is available now.');
-        } else {
-          throw new Error(response.data.error);
-        }
-      } catch (error) {
-        if (error instanceof Error) {
-          showSuccessToast(error.message);
-        }
-      }
-    }
+  const addFilesToQueue = (remainingFiles: CustomFile[]) => {
     for (let index = 0; index < remainingFiles.length; index++) {
       const f = remainingFiles[index];
       setFilesData((prev) =>
@@ -515,10 +535,10 @@ const Content: React.FC<ContentProps> = ({
     } else {
       const selectedNewFiles = childRef.current
         ?.getSelectedRows()
-        .filter((f) => f.status === 'New' || f.status == 'Ready to Reprocess');
+        .filter((f) => f.status === 'New' || f.status == 'Reprocess');
       addFilesToQueue(selectedNewFiles as CustomFile[]);
     }
-  };
+  }
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
@@ -585,14 +605,49 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
+  const retryHandler = async (filename: string, retryoption: string) => {
+    try {
+      setRetryLoading(true);
+      const response = await retry(userCredentials as UserCredentials, filename, retryoption);
+      setRetryLoading(false);
+      if (response.data.status === 'Failure') {
+        throw new Error(response.data.error);
+      }
+      const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption===RETRY_OPIONS[1];
+      setFilesData((prev) => {
+        return prev.map((f) => {
+          return f.name === filename
+            ? {
+                ...f,
+                status: 'Reprocess',
+                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                NodesCount: isStartFromBegining ? 0 : f.NodesCount,
+                relationshipCount: isStartFromBegining ? 0 : f.relationshipCount,
+              }
+            : f;
+        });
+      });
+      showSuccessToast(response.data.message as string);
+      retryOnclose();
+    } catch (error) {
+      setRetryLoading(false);
+      if (error instanceof Error) {
+        setAlertStateForRetry({
+          showAlert: true,
+          alertMessage: error.message,
+          alertType: 'danger',
+        });
+      }
+    }
+  };
+
   const selectedfileslength = useMemo(
     () => childRef.current?.getSelectedRows().length,
     [childRef.current?.getSelectedRows()]
   );
 
   const newFilecheck = useMemo(
-    () =>
-      childRef.current?.getSelectedRows().filter((f) => f.status === 'New' || f.status == 'Ready to Reprocess').length,
+    () => childRef.current?.getSelectedRows().filter((f) => f.status === 'New' || f.status == 'Reprocess').length,
     [childRef.current?.getSelectedRows()]
   );
 
@@ -602,7 +657,7 @@ const Content: React.FC<ContentProps> = ({
   );
 
   const dropdowncheck = useMemo(
-    () => !filesData.some((f) => f.status === 'New' || f.status === 'Waiting' || f.status === 'Ready to Reprocess'),
+    () => !filesData.some((f) => f.status === 'New' || f.status === 'Waiting' || f.status === 'Reprocess'),
     [filesData]
   );
 
@@ -622,12 +677,12 @@ const Content: React.FC<ContentProps> = ({
     if (selectedRows?.length) {
       for (let index = 0; index < selectedRows.length; index++) {
         const parsedFile: CustomFile = selectedRows[index];
-        if (parsedFile.status === 'New' || parsedFile.status == 'Ready to Reprocess') {
+        if (parsedFile.status === 'New' || parsedFile.status == 'Reprocess') {
           newstatusfiles.push(parsedFile);
         }
       }
     } else if (filesData.length) {
-      newstatusfiles = filesData.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess');
+      newstatusfiles = filesData.filter((f) => f.status === 'New' || f.status === 'Reprocess');
     }
     return newstatusfiles;
   }, [filesData, childRef.current?.getSelectedRows()]);
@@ -673,25 +728,33 @@ const Content: React.FC<ContentProps> = ({
   const onClickHandler = () => {
     const selectedRows = childRef.current?.getSelectedRows();
     if (selectedRows?.length) {
-      const expiredFilesExists = selectedRows.some(
-        (c) => isFileReadyToProcess(c, true) && isExpired(c?.createdAt as Date)
-      );
-      const largeFileExists = selectedRows.some(
-        (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
-      );
-      if (expiredFilesExists) {
+      let selectedLargeFiles: CustomFile[] = [];
+      for (let index = 0; index < selectedRows.length; index++) {
+        const parsedData: CustomFile = selectedRows[index];
+        if (
+          parsedData.fileSource === 'local file' &&
+          typeof parsedData.size === 'number' &&
+          (parsedData.status === 'New' || parsedData.status == 'Reprocess') &&
+          parsedData.size > largeFileSize
+        ) {
+          selectedLargeFiles.push(parsedData);
+        }
+      }
+      if (selectedLargeFiles.length) {
         setshowConfirmationModal(true);
       } else if (largeFileExists && isGCSActive) {
         setshowExpirationModal(true);
       } else {
-        handleGenerateGraph(selectedRows.filter((f) => isFileReadyToProcess(f, false)));
+        handleGenerateGraph(selectedRows.filter((f) => f.status === 'New' || f.status === 'Reprocess'));
       }
     } else if (filesData.length) {
-      const expiredFileExists = filesData.some((c) => isFileReadyToProcess(c, true) && isExpired(c.createdAt as Date));
-      const largeFileExists = filesData.some(
-        (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
-      );
-      const selectAllNewFiles = filesData.filter((f) => isFileReadyToProcess(f, false));
+      const largefiles = filesData.filter((f) => {
+        if (typeof f.size === 'number' && (f.status === 'New' || f.status == 'Reprocess') && f.size > largeFileSize) {
+          return true;
+        }
+        return false;
+      });
+      const selectAllNewFiles = filesData.filter((f) => f.status === 'New' || f.status === 'Reprocess');
       const stringified = selectAllNewFiles.reduce((accu, f) => {
         const key = f.id;
         // @ts-ignore
@@ -704,10 +767,29 @@ const Content: React.FC<ContentProps> = ({
       } else if (expiredFileExists && isGCSActive) {
         setshowExpirationModal(true);
       } else {
-        handleGenerateGraph(filesData.filter((f) => isFileReadyToProcess(f, false)));
+        handleGenerateGraph(filesData.filter((f) => f.status === 'New' || f.status === 'Reprocess'));
       }
     }
   };
+
+  const retryOnclose = useCallback(() => {
+    setRetryFile('');
+    setAlertStateForRetry({
+      showAlert: false,
+      alertMessage: '',
+      alertType: 'neutral',
+    });
+    setRetryLoading(false);
+    toggleRetryPopup();
+  }, []);
+
+  const onBannerClose = useCallback(() => {
+    setAlertStateForRetry({
+      showAlert: false,
+      alertMessage: '',
+      alertType: 'neutral',
+    });
+  }, []);
 
   return (
     <>
@@ -755,17 +837,12 @@ const Content: React.FC<ContentProps> = ({
           view='contentView'
         ></DeletePopUp>
       )}
-      {showChunkPopup && (
-        <ChunkPopUp
-          chunksLoading={chunksLoading}
-          onClose={() => toggleChunkPopup()}
-          showChunkPopup={showChunkPopup}
-          chunks={textChunks}
-          incrementPage={incrementPage}
-          decrementPage={decrementPage}
-          currentPage={currentPage}
-          totalPageCount={totalPageCount}
-        ></ChunkPopUp>
+      {showEnhancementDialog && (
+        <GraphEnhancementDialog
+          open={showEnhancementDialog}
+          onClose={toggleEnhancementDialog}
+          closeSettingModal={closeSettingModal}
+        ></GraphEnhancementDialog>
       )}
       {showEnhancementDialog && (
         <GraphEnhancementDialog open={showEnhancementDialog} onClose={toggleEnhancementDialog}></GraphEnhancementDialog>
@@ -858,17 +935,6 @@ const Content: React.FC<ContentProps> = ({
           onRetry={(id) => {
             setRetryFile(id);
             toggleRetryPopup();
-          }}
-          onChunkView={async (name) => {
-            setDocumentName(name);
-            if (name != documentName) {
-              toggleChunkPopup();
-              if (totalPageCount) {
-                setTotalPageCount(null);
-              }
-              setCurrentPage(1);
-              await getChunks(name, 1);
-            }
           }}
           ref={childRef}
           handleGenerateGraph={processWaitingFilesOnRefresh}

@@ -1,6 +1,6 @@
-import { Button, Dialog, TextInput, Select, Banner, Dropzone, Typography, TextLink, Flex } from '@neo4j-ndl/react';
+import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone, Typography, TextLink, Flex } from '@neo4j-ndl/react';
 import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import { connectAPI } from '../../../services/ConnectAPI';
+import connectAPI from '../../../services/ConnectAPI';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useSearchParams } from 'react-router-dom';
 import { buttonCaptions } from '../../../utils/Constants';
@@ -85,7 +85,7 @@ export default function ConnectionModal({
               JSON.stringify({
                 uri: usercredential?.uri,
                 user: usercredential?.userName,
-                password: btoa(usercredential?.password),
+                password: usercredential?.password,
                 database: usercredential?.database,
                 userDbVectorIndex: 384,
               })
@@ -123,12 +123,6 @@ export default function ConnectionModal({
       });
     }
   }, [isVectorIndexMatch, chunksExistsWithDifferentEmbedding, chunksExistsWithoutEmbedding, userCredentials]);
-
-  useEffect(() => {
-    if (errorMessage) {
-      setMessage({ type: 'danger', content: errorMessage });
-    }
-  }, [errorMessage]);
 
   const parseAndSetURI = (uri: string, urlparams = false) => {
     const uriParts: string[] = uri.split('://');
@@ -214,24 +208,14 @@ export default function ConnectionModal({
       if (response?.data?.status !== 'Success') {
         throw new Error(response.data.error);
       } else {
-        const isgdsActive = response.data.data.gds_status;
-        const isReadOnlyUser = !response.data.data.write_access;
-        const isGCSActive = response.data.data.gcs_file_cache === 'True';
-        setIsGCSActive(isGCSActive);
-        setGdsActive(isgdsActive);
-        setIsReadOnlyUser(isReadOnlyUser);
-
         localStorage.setItem(
           'neo4j.connection',
           JSON.stringify({
             uri: connectionURI,
             user: username,
-            password: btoa(password),
+            password: password,
             database: database,
             userDbVectorIndex,
-            isgdsActive,
-            isReadOnlyUser,
-            isGCSActive,
           })
         );
         setUserDbVectorIndex(response.data.data.db_vector_dimension);
@@ -397,79 +381,69 @@ export default function ConnectionModal({
             <div className='ml-[5%] w-[70%] inline-block'>
               <TextInput
                 ref={uriRef}
-                htmlAttributes={{
-                  id: 'url',
-                  autoFocus: true,
-                  onPaste: (e) => handleHostPasteChange(e),
-                  onKeyDown: (e) => handleKeyPress(e, databaseRef),
-                  'aria-label': 'Connection URI',
-                }}
+                id='url'
                 value={URI}
                 isDisabled={false}
                 label='URI'
                 isFluid={true}
                 onChange={(e) => setURI(e.target.value)}
+                onPaste={(e) => handleHostPasteChange(e)}
+                aria-label='Connection URI'
+                onKeyDown={(e) => handleKeyPress(e, databaseRef)}
               />
             </div>
           </div>
           <form>
             <TextInput
               ref={databaseRef}
-              htmlAttributes={{
-                id: 'database',
-                onKeyDown: handleKeyPress,
-                'aria-label': 'Database',
-                placeholder: 'neo4j',
-              }}
+              id='database'
               value={database}
-              isDisabled={false}
+              disabled={false}
               label='Database'
-              isFluid={true}
-              isRequired={true}
+              aria-label='Database'
+              placeholder='neo4j'
+              fluid
+              required
               onChange={(e) => setDatabase(e.target.value)}
               className='w-full'
+              onKeyDown={handleKeyPress}
             />
             <div className='n-flex n-flex-row n-flex-wrap mb-2'>
               <div className='w-[48.5%] mr-1.5 inline-block'>
                 <TextInput
                   ref={userNameRef}
-                  htmlAttributes={{
-                    id: 'username',
-                    onKeyDown: handleKeyPress,
-                    'aria-label': 'Username',
-                    placeholder: 'neo4j',
-                  }}
+                  id='username'
                   value={username}
-                  isDisabled={false}
+                  disabled={false}
                   label='Username'
-                  isFluid={true}
+                  aria-label='Username'
+                  placeholder='neo4j'
+                  fluid
                   onChange={(e) => setUsername(e.target.value)}
+                  onKeyDown={handleKeyPress}
                 />
               </div>
               <div className='w-[48.5%] ml-[1.5%] inline-block'>
                 <TextInput
                   ref={passwordRef}
-                  htmlAttributes={{
-                    id: 'password',
-                    onKeyDown: handleKeyPress,
-                    type: 'password',
-                    'aria-label': 'Password',
-                    placeholder: 'password',
-                    autoComplete: 'current-password',
-                  }}
+                  id='password'
                   value={password}
-                  isDisabled={false}
+                  disabled={false}
                   label='Password'
-                  isFluid={true}
+                  aria-label='Password'
+                  placeholder='password'
+                  type='password'
+                  fluid
                   onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={handleKeyPress}
                 />
               </div>
             </div>
           </form>
           <Flex flexDirection='row' justifyContent='flex-end'>
             <Button
-              isLoading={isLoading}
-              isDisabled={isDisabled}
+              loading={isLoading}
+              disabled={isDisabled}
               onClick={() => submitConnection()}
               ref={connectRef}
               onKeyDown={(e) => {

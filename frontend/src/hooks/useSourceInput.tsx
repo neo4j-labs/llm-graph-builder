@@ -57,12 +57,6 @@ export default function useSourceInput(
         processingProgress: undefined,
         retryOption: '',
         retryOptionStatus: false,
-        chunkNodeCount: 0,
-        chunkRelCount: 0,
-        entityNodeCount: 0,
-        entityEntityRelCount: 0,
-        communityNodeCount: 0,
-        communityRelCount: 0,
       };
       if (url.trim() != '') {
         setIsValid(validator(url) && isFocused);
@@ -121,15 +115,14 @@ export default function useSourceInput(
                 const baseValues = {
                   name: item.fileName,
                   size: item.fileSize,
-                  sourceUrl: item.url,
+                  source_url: item.url,
                   id: uuidv4(),
                   language: item.language,
-                  uploadProgress: 100,
                   // total_pages: 1,
                   ...defaultValues,
                 };
                 if (isWikiQuery) {
-                  baseValues.wikiQuery = item.fileName;
+                  baseValues.wiki_query = item.fileName;
                 }
                 copiedFilesData.unshift(baseValues);
               } else {
@@ -138,13 +131,12 @@ export default function useSourceInput(
                 copiedFilesData.unshift({
                   ...tempFileData,
                   status: defaultValues.status,
-                  nodesCount: defaultValues.nodesCount,
-                  relationshipsCount: defaultValues.relationshipsCount,
-                  processingTotalTime: defaultValues.processingTotalTime,
+                  NodesCount: defaultValues.NodesCount,
+                  relationshipCount: defaultValues.relationshipCount,
+                  processing: defaultValues.processing,
                   model: defaultValues.model,
                   fileSource: defaultValues.fileSource,
                   processingProgress: defaultValues.processingProgress,
-                  uploadProgress: 100,
                 });
               }
             }

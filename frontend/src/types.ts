@@ -5,8 +5,6 @@ import { OverridableStringUnion } from '@mui/types';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { NonOAuthError } from '@react-oauth/google';
 import { BannerType } from '@neo4j-ndl/react';
-import Queue from './utils/Queue';
-import FileTable from './components/FileTable';
 
 export interface CustomFileBase extends Partial<globalThis.File> {
   processingTotalTime: number | string;
@@ -25,17 +23,10 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   googleProjectId?: string;
   language?: string;
   processingProgress?: number;
-  accessToken?: string;
-  isChecked?: boolean;
+  access_token?: string;
+  checked?: boolean;
   retryOptionStatus: boolean;
   retryOption: string;
-  chunkNodeCount: number;
-  chunkRelCount: number;
-  entityNodeCount: number;
-  entityEntityRelCount: number;
-  communityNodeCount: number;
-  communityRelCount: number;
-  createdAt?: Date;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
@@ -53,12 +44,12 @@ export type UserCredentials = {
   database: string;
 } & { [key: string]: any };
 
-export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount' | 'createdAt'> {
+export interface SourceNode extends Omit<CustomFileBase, 'relationshipCount'> {
   fileName: string;
   fileSize: number;
   fileType: string;
   nodeCount?: number;
-  processingTime: string;
+  processingTime?: string;
   relationshipCount?: number;
   url?: string;
   awsAccessKeyId?: string;
@@ -67,10 +58,9 @@ export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount' | 
   processed_chunk?: number;
   total_chunks?: number;
   retry_condition?: string;
-  createdAt: filedate;
 }
 
-export type ExtractParams = Pick<CustomFile, 'wikiQuery' | 'model' | 'sourceUrl' | 'language' | 'accessToken'> & {
+export type ExtractParams = Pick<CustomFile, 'wiki_query' | 'model' | 'source_url' | 'language' | 'access_token'> & {
   file?: File;
   aws_access_key_id?: string | null;
   aws_secret_access_key?: string | null;
@@ -251,8 +241,6 @@ export type ChatbotProps = {
   clear?: boolean;
   isFullScreen?: boolean;
   connectionStatus: boolean;
-  isChatOnly?: boolean;
-  isDeleteChatLoading: boolean;
 };
 export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
 
@@ -733,30 +721,11 @@ export interface DrawerChatbotProps {
   connectionStatus: boolean;
 }
 
-export interface ChatOnlyProps {
-  clearHistoryData: boolean;
-  messages: Messages[];
-  connectionStatus: boolean;
-  isReadOnlyUser: boolean;
-}
-
 export interface ContextProps {
   userCredentials: UserCredentials | null;
   setUserCredentials: (UserCredentials: UserCredentials) => void;
-  isGdsActive: boolean;
-  setGdsActive: Dispatch<SetStateAction<boolean>>;
-  isReadOnlyUser: boolean;
-  setIsReadOnlyUser: Dispatch<SetStateAction<boolean>>;
   connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
-  isBackendConnected: boolean;
-  setIsBackendConnected: Dispatch<SetStateAction<boolean>>;
-  errorMessage: string;
-  setErrorMessage: Dispatch<SetStateAction<string>>;
-  showDisconnectButton: boolean;
-  setShowDisconnectButton: Dispatch<SetStateAction<boolean>>;
-  isGCSActive: boolean;
-  setIsGCSActive: Dispatch<SetStateAction<boolean>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];

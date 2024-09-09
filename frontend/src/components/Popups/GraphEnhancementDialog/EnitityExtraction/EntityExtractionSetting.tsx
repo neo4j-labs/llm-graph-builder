@@ -151,6 +151,20 @@ export default function EntityExtractionSetting({
   const defaultExamples = useMemo(() => getDefaultSchemaExamples(), []);
 
   useEffect(() => {
+    const parsedData = schemaExamples.reduce((accu: OptionType[], example) => {
+      const examplevalues: OptionType = {
+        label: example.schema,
+        value: JSON.stringify({
+          nodelabels: example.labels,
+          relationshipTypes: example.relationshipTypes,
+        }),
+      };
+      accu.push(examplevalues);
+      return accu;
+    }, []);
+    setdefaultExamples(parsedData);
+  }, []);
+  useEffect(() => {
     if (userCredentials) {
       if (open && view === 'Dialog') {
         const getOptions = async () => {
@@ -225,8 +239,8 @@ export default function EntityExtractionSetting({
     );
     localStorage.setItem('selectedSchemas', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
     showNormalToast(`Successfully Removed the Schema settings`);
-    if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
-      closeEnhanceGraphSchemaDialog();
+    if (view === 'Dialog' && onClose != undefined) {
+      onClose();
     }
   };
   const handleApply = () => {

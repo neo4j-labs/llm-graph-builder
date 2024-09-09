@@ -11,7 +11,15 @@ import DeduplicationTab from './Deduplication';
 import { tokens } from '@neo4j-ndl/base';
 import PostProcessingCheckList from './PostProcessingCheckList';
 
-export default function GraphEnhancementDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+export default function GraphEnhancementDialog({
+  open,
+  onClose,
+  closeSettingModal,
+}: {
+  open: boolean;
+  onClose: () => void;
+  closeSettingModal: () => void;
+}) {
   const { breakpoints } = tokens;
   const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
   const { setShowTextFromSchemaDialog } = useFileContext();

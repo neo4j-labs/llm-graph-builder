@@ -5,22 +5,12 @@ import {
   Entity,
   ExtendedNode,
   ExtendedRelationship,
-  filedate,
   GraphType,
   Messages,
   Scheme,
   SourceNode,
   UserCredentials,
 } from '../types';
-import Wikipediadarkmode from '../assets/images/wikipedia-darkmode.svg';
-import Wikipediadlogo from '../assets/images/wikipedia.svg';
-import webdarklogo from '../assets/images/web-darkmode.svg';
-import weblogo from '../assets/images/web.svg';
-import youtubedarklogo from '../assets/images/youtube-darkmode.svg';
-import youtubelightlogo from '../assets/images/youtube-lightmode.svg';
-import s3logo from '../assets/images/s3logo.png';
-import gcslogo from '../assets/images/gcs.webp';
-import { chatModeLables, EXPIRATION_DAYS } from './Constants';
 
 // Get the Url
 export const url = () => {
@@ -71,7 +61,7 @@ export const statusCheck = (status: string) => {
       return 'danger';
     case 'Upload Failed':
       return 'danger';
-    case 'Ready to Reprocess':
+    case 'Reprocess':
       return 'info';
     default:
       return 'unknown';
@@ -161,7 +151,7 @@ export function extractPdfFileName(url: string): string {
 export const processGraphData = (neoNodes: ExtendedNode[], neoRels: ExtendedRelationship[]) => {
   const schemeVal: Scheme = {};
   let iterator = 0;
-  const labels: string[] = neoNodes.flatMap((f: any) => f.labels);
+  const labels: string[] = neoNodes.map((f: any) => f.labels);
   for (let index = 0; index < labels.length; index++) {
     const label = labels[index];
     if (schemeVal[label] == undefined) {
@@ -380,7 +370,7 @@ export const getFileSourceStatus = (item: SourceNode) => {
   if (item?.fileSource === 'local file') {
     return item?.status;
   }
-  if (item?.status === 'Completed' || item.status === 'Failed' || item.status === 'Ready to Reprocess') {
+  if (item?.status === 'Completed' || item.status === 'Failed' || item.status === 'Reprocess') {
     return item?.status;
   }
   if (

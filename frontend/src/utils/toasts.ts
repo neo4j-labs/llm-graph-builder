@@ -1,5 +1,4 @@
 import { toast } from '@neo4j-ndl/react';
-import { ReactNode } from 'react';
 
 export const showErrorToast = (message: string, shouldAutoClose: boolean = true) => {
   return toast.danger(message, {
@@ -15,7 +14,7 @@ export const showSuccessToast = (message: string) => {
   });
 };
 
-export const showNormalToast = (message: string | ReactNode) => {
+export const showNormalToast = (message: string) => {
   return toast.neutral(message, {
     isCloseable: true,
     shouldAutoClose: true,

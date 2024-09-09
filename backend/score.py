@@ -212,25 +212,31 @@ async def extract_knowledge_graph_from_file(
         if source_type == 'local file':
             merged_file_path = os.path.join(MERGED_DIR,file_name)
             logging.info(f'File path:{merged_file_path}')
-            uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, retry_condition)
+            result = await asyncio.to_thread(
+                extract_graph_from_file_local_file, uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 's3 bucket' and source_url:
-            uri_latency, result = await extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition)
+            result = await asyncio.to_thread(
+                extract_graph_from_file_s3, uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition)
         
         elif source_type == 'web-url':
-            uri_latency, result = await extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
+            result = await asyncio.to_thread(
+                extract_graph_from_web_page, uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 'youtube' and source_url:
-            uri_latency, result = await extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
+            result = await asyncio.to_thread(
+                extract_graph_from_file_youtube, uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 'Wikipedia' and wiki_query:
-            uri_latency, result = await extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, retry_condition)
+            result = await asyncio.to_thread(
+                extract_graph_from_file_Wikipedia, uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
-            uri_latency, result = await extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, retry_condition)
+            result = await asyncio.to_thread(
+                extract_graph_from_file_gcs, uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, retry_condition)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
-        extract_api_time = time.time() - start_time
+    
         if result is not None:
             logging.info("Going for counting nodes and relationships in extract")
             count_node_time = time.time()
@@ -584,7 +590,10 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                 # get the current status of document node
                 
                 else:
+                    graph = create_graph_database_connection(uri, userName, decoded_password, database)
+                    graphDb_data_Access = graphDBdataAccess(graph)
                     result = graphDb_data_Access.get_current_status_document_node(file_name)
+                    print(f'Result of document status in SSE : {result}')
                     if len(result) > 0:
                         status = json.dumps({'fileName':file_name, 
                         'status':result[0]['Status'],
@@ -595,13 +604,7 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                         'total_chunks':result[0]['total_chunks'],
                         'fileSize':result[0]['fileSize'],
                         'processed_chunk':result[0]['processed_chunk'],
-                        'fileSource':result[0]['fileSource'],
-                        'chunkNodeCount' : result[0]['chunkNodeCount'],
-                        'chunkRelCount' : result[0]['chunkRelCount'],
-                        'entityNodeCount' : result[0]['entityNodeCount'],
-                        'entityEntityRelCount' : result[0]['entityEntityRelCount'],
-                        'communityNodeCount' : result[0]['communityNodeCount'],
-                        'communityRelCount' : result[0]['communityRelCount']
+                        'fileSource':result[0]['fileSource']
                         })
                     yield status
             except asyncio.CancelledError:
@@ -671,7 +674,7 @@ async def get_document_status(file_name, url, userName, password, database):
                 }
         else:
             status = {'fileName':file_name, 'status':'Failed'}
-        logging.info(f'Result of document status in refresh : {result}')
+        print(f'Result of document status in refresh : {result}')
         return create_api_response('Success',message="",file_name=status)
     except Exception as e:
         message=f"Unable to get the document status"
@@ -829,15 +832,10 @@ async def drop_create_vector_index(uri=Form(), userName=Form(), password=Form(),
 @app.post("/retry_processing")
 async def retry_processing(uri=Form(), userName=Form(), password=Form(), database=Form(), file_name=Form(), retry_condition=Form()):
     try:
-        start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
-        end = time.time()
-        elapsed_time = end - start
-        json_obj = {'api_name':'retry_processing', 'db_url':uri, 'userName':userName, 'database':database, 'file_name':file_name,'retry_condition':retry_condition,
-                            'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
-        logger.log_struct(json_obj, "INFO")
-        return create_api_response('Success',message=f"Status set to Ready to Reprocess for filename : {file_name}")
+        #set_status_retry(graph,file_name,retry_condition)
+        return create_api_response('Success',message=f"Status set to Reprocess for filename : {file_name}")
     except Exception as e:
         job_status = "Failed"
         message="Unable to set status to Retry"
@@ -845,168 +843,7 @@ async def retry_processing(uri=Form(), userName=Form(), password=Form(), databas
         logging.exception(f'{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
     finally:
-        gc.collect()    
-
-@app.post('/metric')
-async def calculate_metric(question: str = Form(),
-                           context: str = Form(),
-                           answer: str = Form(),
-                           model: str = Form(),
-                           mode: str = Form()):
-    try:
-        start = time.time()
-        context_list = [str(item).strip() for item in json.loads(context)] if context else []
-        answer_list = [str(item).strip() for item in json.loads(answer)] if answer else []
-        mode_list = [str(item).strip() for item in json.loads(mode)] if mode else []
-
-        result = await asyncio.to_thread(
-            get_ragas_metrics, question, context_list, answer_list, model
-        )
-        if result is None or "error" in result:
-            return create_api_response(
-                'Failed',
-                message='Failed to calculate evaluation metrics.',
-                error=result.get("error", "Ragas evaluation returned null")
-            )
-        data = {mode: {metric: result[metric][i] for metric in result} for i, mode in enumerate(mode_list)}
-        end = time.time()
-        elapsed_time = end - start
-        json_obj = {'api_name':'metric', 'question':question, 'context':context, 'answer':answer, 'model':model,'mode':mode,
-                            'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
-        logger.log_struct(json_obj, "INFO")
-        return create_api_response('Success', data=data)
-    except Exception as e:
-        logging.exception(f"Error while calculating evaluation metrics: {e}")
-        return create_api_response(
-            'Failed',
-            message="Error while calculating evaluation metrics",
-            error=str(e)
-        )
-    finally:
-        gc.collect()
-       
-
-@app.post('/additional_metrics')
-async def calculate_additional_metrics(question: str = Form(),
-                                        context: str = Form(),
-                                        answer: str = Form(),
-                                        reference: str = Form(),
-                                        model: str = Form(),
-                                        mode: str = Form(),
-):
-   try:
-       context_list = [str(item).strip() for item in json.loads(context)] if context else []
-       answer_list = [str(item).strip() for item in json.loads(answer)] if answer else []
-       mode_list = [str(item).strip() for item in json.loads(mode)] if mode else []
-       result = await get_additional_metrics(question, context_list,answer_list, reference, model)
-       if result is None or "error" in result:
-           return create_api_response(
-               'Failed',
-               message='Failed to calculate evaluation metrics.',
-               error=result.get("error", "Ragas evaluation returned null")
-           )
-       data = {mode: {metric: result[i][metric] for metric in result[i]} for i, mode in enumerate(mode_list)}
-       return create_api_response('Success', data=data)
-   except Exception as e:
-       logging.exception(f"Error while calculating evaluation metrics: {e}")
-       return create_api_response(
-           'Failed',
-           message="Error while calculating evaluation metrics",
-           error=str(e)
-       )
-   finally:
-       gc.collect()
-
-@app.post("/fetch_chunktext")
-async def fetch_chunktext(
-   uri: str = Form(),
-   database: str = Form(),
-   userName: str = Form(),
-   password: str = Form(),
-   document_name: str = Form(),
-   page_no: int = Form(1)
-):
-   try:
-       payload_json_obj = {
-           'api_name': 'fetch_chunktext',
-           'db_url': uri,
-           'userName': userName,
-           'database': database,
-           'document_name': document_name,
-           'page_no': page_no,
-           'logging_time': formatted_time(datetime.now(timezone.utc))
-       }
-       logger.log_struct(payload_json_obj, "INFO")
-       start = time.time()
-       result = await asyncio.to_thread(
-           get_chunktext_results,
-           uri=uri,
-           username=userName,
-           password=password,
-           database=database,
-           document_name=document_name,
-           page_no=page_no
-       )
-       end = time.time()
-       elapsed_time = end - start
-       json_obj = {
-           'api_name': 'fetch_chunktext',
-           'db_url': uri,
-           'userName': userName,
-           'database': database,
-           'document_name': document_name,
-           'page_no': page_no,
-           'logging_time': formatted_time(datetime.now(timezone.utc)),
-           'elapsed_api_time': f'{elapsed_time:.2f}'
-       }
-       logger.log_struct(json_obj, "INFO")
-       return create_api_response('Success', data=result, message=f"Total elapsed API time {elapsed_time:.2f}")
-   except Exception as e:
-       job_status = "Failed"
-       message = "Unable to get chunk text response"
-       error_message = str(e)
-       logging.exception(f'Exception in fetch_chunktext: {error_message}')
-       return create_api_response(job_status, message=message, error=error_message)
-   finally:
-       gc.collect()
-
-
-@app.post("/backend_connection_configuration")
-async def backend_connection_configuration():
-    try:
-        uri = os.getenv('NEO4J_URI')
-        username= os.getenv('NEO4J_USERNAME')
-        database= os.getenv('NEO4J_DATABASE')
-        password= os.getenv('NEO4J_PASSWORD')
-        gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-        if all([uri, username, database, password]):
-            print(f'uri:{uri}, usrName:{username}, database :{database}, password: {password}')
-            graph = Neo4jGraph()
-            logging.info(f'login connection status of object: {graph}')
-            if graph is not None:
-                graph_connection = True        
-                encoded_password = encode_password(password)
-                graphDb_data_Access = graphDBdataAccess(graph)
-                result = graphDb_data_Access.connection_check_and_get_vector_dimensions(database)
-                result["graph_connection"] = graph_connection
-                result["uri"] = uri
-                result["user_name"] = username
-                result["database"] = database
-                result["password"] = encoded_password
-                result['gcs_file_cache'] = gcs_file_cache
-                return create_api_response('Success',message=f"Backend connection successful",data=result)
-        else:
-            graph_connection = False
-            return create_api_response('Success',message=f"Backend connection is not successful",data=graph_connection)
-    except Exception as e:
-        graph_connection = False
-        job_status = "Failed"
-        message="Unable to connect backend DB"
-        error_message = str(e)
-        logging.exception(f'{error_message}')
-        return create_api_response(job_status, message=message, error=error_message.rstrip('.') + ', or fill from the login dialog.', data=graph_connection)
-    finally:
-        gc.collect()    
+        gc.collect()        
 
 if __name__ == "__main__":
     uvicorn.run(app)

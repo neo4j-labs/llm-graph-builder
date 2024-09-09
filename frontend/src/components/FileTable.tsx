@@ -38,21 +38,15 @@ import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
 import {
   statusCheck,
+  capitalize,
   isFileCompleted,
   calculateProcessedCount,
   getFileSourceStatus,
   isProcessingFileValid,
-  capitalizeWithUnderscore,
-  getParsedDate,
 } from '../utils/Utils';
 import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, ChildRef } from '../types';
 import { useCredentials } from '../context/UserCredentials';
-import {
-  ArrowPathIconSolid,
-  ClipboardDocumentIconSolid,
-  MagnifyingGlassCircleIconSolid,
-  DocumentTextIconSolid,
-} from '@neo4j-ndl/react/icons';
+import { ArrowPathIconSolid, MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
 import CustomProgressBar from './UI/CustomProgressBar';
 import subscribe from '../services/PollingAPI';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
@@ -62,14 +56,11 @@ import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
+import IndeterminateCheckbox from './UI/CustomCheckBox';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
-import { ThemeWrapperContext } from '../context/ThemeWrapper';
-import BreakDownPopOver from './BreakDownPopOver';
-
 let onlyfortheFirstRender = true;
-
-const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, ref) => {
-  const { connectionStatus, setConnectionStatus, onInspect, onRetry, onChunkView } = props;
+const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
+  const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
   const { userCredentials, isReadOnlyUser } = useCredentials();
@@ -81,10 +72,6 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   const [fileSourceFilter, setFileSourceFilter] = useState<string>('');
   const [llmtypeFilter, setLLmtypeFilter] = useState<string>('');
   const skipPageResetRef = useRef<boolean>(false);
-  const [_, copy] = useCopyToClipboard();
-  const { colorMode } = useContext(ThemeWrapperContext);
-  const [copyRow, setCopyRow] = useState<boolean>(false);
-  const largedesktops = useMediaQuery(`(min-width:1440px )`);
 
   const tableRef = useRef(null);
 
@@ -131,16 +118,17 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
         cell: ({ row }: { row: Row<CustomFile> }) => {
           return (
             <div className='px-1'>
-              <Checkbox
-                ariaLabel='row-selection'
-                isChecked={row.getIsSelected()}
-                isDisabled={
-                  !row.getCanSelect() ||
-                  row.original.status == 'Uploading' ||
-                  row.original.status === 'Processing' ||
-                  row.original.status === 'Waiting'
-                }
-                onChange={row.getToggleSelectedHandler()}
+              <IndeterminateCheckbox
+                {...{
+                  checked: row.getIsSelected(),
+                  disabled:
+                    !row.getCanSelect() ||
+                    row.original.status == 'Uploading' ||
+                    row.original.status === 'Processing' ||
+                    row.original.status === 'Waiting',
+                  indeterminate: row.getIsSomeSelected(),
+                  onChange: row.getToggleSelectedHandler(),
+                }}
               />
             </div>
           );
@@ -176,25 +164,24 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                 className='cellClass flex gap-1 items-center'
                 title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
               >
-                <div>
-                  <StatusIndicator type={statusCheck(info.getValue())} />
-                </div>
-                <div>{info.getValue()}</div>
-                {(info.getValue() === 'Completed' || info.getValue() === 'Failed' || info.getValue() === 'Cancelled') &&
-                  !isReadOnlyUser && (
-                    <span className='mx-1'>
-                      <IconButtonWithToolTip
-                        placement='right'
-                        text='Ready to Reprocess'
-                        size='small'
-                        label='Ready to Reprocess'
-                        clean
-                        onClick={() => onRetry(info?.row?.id as string)}
-                      >
-                        <ArrowPathIconSolid className='n-size-token-4' />
-                      </IconButtonWithToolTip>
-                    </span>
-                  )}
+                <StatusIndicator type={statusCheck(info.getValue())} />
+                {info.getValue()}
+                {/* {(info.getValue() === 'Completed' ||
+                  info.getValue() === 'Failed' ||
+                  info.getValue() === 'Cancelled') && (
+                  <span className='mx-1'>
+                    <IconButtonWithToolTip
+                      placement='right'
+                      text='Reprocess'
+                      size='small'
+                      label='reprocess'
+                      clean
+                      onClick={() => onRetry(info?.row?.id as string)}
+                    >
+                      <ArrowPathIconSolid />
+                    </IconButtonWithToolTip>
+                  </span>
+                )} */}
               </div>
             );
           } else if (info.getValue() === 'Processing' && info.row.original.processingProgress === undefined) {
@@ -264,11 +251,9 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             );
           }
           return (
-            <div className='cellClass flex gap-1'>
-              <div>
-                <StatusIndicator type={statusCheck(info.getValue())} />
-              </div>
-              <div>{info.getValue()}</div>
+            <div className='cellClass'>
+              <StatusIndicator type={statusCheck(info.getValue())} />
+              <i>{info.getValue()}</i>
             </div>
           );
         },
@@ -744,9 +729,9 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   type: item?.fileType?.includes('.')
                     ? item?.fileType?.substring(1)?.toUpperCase() ?? 'None'
                     : item?.fileType?.toUpperCase() ?? 'None',
-                  nodesCount: item?.nodeCount ?? 0,
-                  processingTotalTime: item?.processingTime ?? 'None',
-                  relationshipsCount: item?.relationshipCount ?? 0,
+                  NodesCount: item?.nodeCount ?? 0,
+                  processing: item?.processingTime ?? 'None',
+                  relationshipCount: item?.relationshipCount ?? 0,
                   status: waitingFile ? 'Waiting' : getFileSourceStatus(item),
                   model: item?.model ?? model,
                   id: !waitingFile ? uuidv4() : waitingFile.id,
@@ -764,16 +749,9 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                     !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
-                  accessToken: item?.accessToken ?? '',
+                  access_token: item?.access_token ?? '',
                   retryOption: item.retry_condition ?? '',
                   retryOptionStatus: false,
-                  chunkNodeCount: item.chunkNodeCount ?? 0,
-                  chunkRelCount: item.chunkRelCount ?? 0,
-                  entityNodeCount: item.entityNodeCount ?? 0,
-                  entityEntityRelCount: item.entityEntityRelCount ?? 0,
-                  communityNodeCount: item.communityNodeCount ?? 0,
-                  communityRelCount: item.communityRelCount ?? 0,
-                  createdAt: item.createdAt != undefined ? getParsedDate(item?.createdAt) : undefined,
                 });
               }
             });
@@ -794,7 +772,6 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
         }
         setIsLoading(false);
       } catch (error: any) {
-        console.log(error);
         if (error instanceof Error) {
           showErrorToast(error.message);
         }
@@ -990,6 +967,30 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
     }),
     [table]
   );
+  useEffect(() => {
+    if (tableRef.current) {
+      // Component has content, calculate maximum height for table
+      // Observes the height of the content and calculates own height accordingly
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (let index = 0; index < entries.length; index++) {
+          const entry = entries[index];
+          const { height } = entry.contentRect;
+          const rowHeight = document?.getElementsByClassName('ndl-data-grid-td')?.[0]?.clientHeight ?? 69;
+          table.setPageSize(Math.floor(height / rowHeight));
+        }
+      });
+
+      const [contentElement] = document.getElementsByClassName('ndl-data-grid-scrollable');
+      resizeObserver.observe(contentElement);
+
+      return () => {
+        // Stop observing content after cleanup
+        resizeObserver.unobserve(contentElement);
+      };
+    }
+  }, []);
+
+  const classNameCheck = isExpanded ? 'fileTableWithExpansion' : `filetable`;
 
   useEffect(() => {
     setSelectedRows(table.getSelectedRowModel().rows.map((i) => i.id));

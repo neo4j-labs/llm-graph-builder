@@ -25,7 +25,6 @@ import S3Component from '../DataSources/AWS/S3Bucket';
 import WebButton from '../DataSources/Web/WebButton';
 import DropZoneForSmallLayouts from '../DataSources/Local/DropZoneForSmallLayouts';
 import { useCredentials } from '../../context/UserCredentials';
-import TooltipWrapper from '../UI/TipWrapper';
 
 const SideNav: React.FC<SideNavProps> = ({
   position,
@@ -46,9 +45,22 @@ const SideNav: React.FC<SideNavProps> = ({
   const { setMessages, isDeleteChatLoading } = useMessageContext();
   const [showChatMode, setshowChatMode] = useState<boolean>(false);
   const largedesktops = useMediaQuery(`(min-width:1440px )`);
-  const { connectionStatus, isReadOnlyUser } = useCredentials();
-  const downloadLinkRef = useRef<HTMLAnchorElement>(null);
-  const anchorMenuRef = useRef<HTMLAnchorElement>(null);
+  const { connectionStatus } = useCredentials();
+
+  const date = new Date();
+  useEffect(() => {
+    if (clearHistoryData) {
+      setMessages([
+        {
+          datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
+          id: 2,
+          message:
+            ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
+          user: 'chatbot',
+        },
+      ]);
+    }
+  }, [clearHistoryData]);
 
   const handleExpandClick = () => {
     setIsChatModalOpen(true);
@@ -267,7 +279,6 @@ const SideNav: React.FC<SideNavProps> = ({
                 setMessages={setMessages}
                 isLoading={getIsLoading(messages ?? [])}
                 connectionStatus={connectionStatus}
-                isDeleteChatLoading={isDeleteChatLoading}
               />
             </Dialog.Content>
           </Dialog>,

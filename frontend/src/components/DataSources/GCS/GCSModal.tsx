@@ -33,12 +33,6 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
     processingProgress: undefined,
     retryOption: '',
     retryOptionStatus: false,
-    chunkNodeCount: 0,
-    chunkRelCount: 0,
-    entityNodeCount: 0,
-    entityEntityRelCount: 0,
-    communityNodeCount: 0,
-    communityRelCount: 0,
   };
 
   const reset = () => {
@@ -96,11 +90,10 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
                 size: item.fileSize ?? 0,
                 gcsBucket: item.gcsBucketName,
                 gcsBucketFolder: item.gcsBucketFolder,
-                googleProjectId: item.gcsProjectId,
+                google_project_id: item.gcsProjectId,
                 id: uuidv4(),
-                accessToken: codeResponse.access_token,
+                access_token: codeResponse.access_token,
                 ...defaultValues,
-                uploadProgress: 100,
               });
             } else {
               const tempFileData = copiedFilesData[filedataIndex];
@@ -108,14 +101,13 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
               copiedFilesData.unshift({
                 ...tempFileData,
                 status: defaultValues.status,
-                nodesCount: defaultValues.nodesCount,
-                relationshipsCount: defaultValues.relationshipsCount,
-                processingTotalTime: defaultValues.processingTotalTime,
+                NodesCount: defaultValues.NodesCount,
+                relationshipCount: defaultValues.relationshipCount,
+                processing: defaultValues.processing,
                 model: defaultValues.model,
                 fileSource: defaultValues.fileSource,
                 processingProgress: defaultValues.processingProgress,
-                accessToken: codeResponse.access_token,
-                uploadProgress: 100,
+                access_token: codeResponse.access_token,
               });
             }
           }
@@ -190,55 +182,48 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
       <div className='w-full inline-block'>
         <form>
           <TextInput
-            htmlAttributes={{
-              id: 'project id',
-              autoFocus: true,
-              onKeyDown: handleKeyPress,
-              'aria-label': 'Project ID',
-              placeholder: '',
-            }}
+            id='project id'
             value={projectId}
-            isDisabled={false}
+            disabled={false}
             label='Project ID'
-            isFluid={true}
-            isRequired={true}
+            aria-label='Project ID'
+            placeholder=''
+            autoFocus
+            fluid
+            required
             onChange={(e) => {
               setprojectId(e.target.value);
             }}
+            onKeyDown={handleKeyPress}
           ></TextInput>
           <TextInput
-            htmlAttributes={{
-              id: 'bucketname',
-              autoFocus: true,
-              onKeyDown: handleKeyPress,
-              'aria-label': 'Bucket Name',
-              placeholder: '',
-            }}
+            id='bucketname'
             value={bucketName}
-            isDisabled={false}
+            disabled={false}
             label='Bucket Name'
-            isFluid={true}
-            isRequired={true}
+            aria-label='Bucket Name'
+            placeholder=''
+            autoFocus
+            fluid
+            required
             onChange={(e) => {
               setbucketName(e.target.value);
             }}
+            onKeyDown={handleKeyPress}
           />
           <TextInput
-            htmlAttributes={{
-              id: 'foldername',
-              autoFocus: true,
-              onKeyDown: handleKeyPress,
-              'aria-label': 'Folder Name',
-              placeholder: '',
-            }}
+            id='foldername'
             value={folderName}
-            isDisabled={false}
+            disabled={false}
             label='Folder Name'
+            aria-label='Folder Name'
             helpText='Optional'
-            isFluid={true}
+            placeholder=''
+            fluid
             onChange={(e) => {
               setFolderName(e.target.value);
             }}
+            onKeyDown={handleKeyPress}
           />
         </form>
       </div>
