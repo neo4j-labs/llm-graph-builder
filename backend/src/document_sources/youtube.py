@@ -65,13 +65,13 @@ def get_documents_from_youtube(url):
       #                                                 add_video_info=True,
       #                                                 transcript_format=TranscriptFormat.CHUNKS,
       #                                                 chunk_size_seconds=YOUTUBE_CHUNK_SIZE_SECONDS)
-      video_id = parse_qs(urlparse(url)).get('v')
+      video_id = parse_qs(urlparse(url).query).get('v')
       cred_path = os.path.join(os.getcwd(),"llm-experiments_credentials.json")
-      # print(cred_path)
+      print(f'Credential file path on youtube.py {cred_path}')
       google_api_client = GoogleApiClient(service_account_path=Path(cred_path))
       youtube_loader_channel = GoogleApiYoutubeLoader(
       google_api_client=google_api_client,
-      video_ids=[video_id], add_video_info=True
+      video_ids=[video_id[0].strip()], add_video_info=True
       )
       youtube_transcript = youtube_loader_channel.load()
       # pages = youtube_loader.load()

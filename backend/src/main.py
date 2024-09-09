@@ -140,12 +140,13 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
     logging.info(f"match value: {match}")
     cred_path = os.path.join(os.getcwd(),"llm-experiments_credentials.json")
-    # print(cred_path)
-    video_id = parse_qs(urlparse(youtube_url)).get('v')
+    print(f'Credential file path {cred_path}')
+    video_id = parse_qs(urlparse(youtube_url).query).get('v')
+    print(f'Video Id Youtube: {video_id}')
     google_api_client = GoogleApiClient(service_account_path=Path(cred_path))
     youtube_loader_channel = GoogleApiYoutubeLoader(
     google_api_client=google_api_client,
-    video_ids=[video_id], add_video_info=True
+    video_ids=[video_id[0].strip()], add_video_info=True
     )
     youtube_transcript = youtube_loader_channel.load()
     # print(f'youtube page_content: {youtube_transcript[0].page_content}')
