@@ -64,7 +64,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<'unknown' | 'success' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
-  const { userCredentials } = useCredentials();
+  const { userCredentials, isGdsActive } = useCredentials();
   const [scheme, setScheme] = useState<Scheme>({});
   const [newScheme, setNewScheme] = useState<Scheme>({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -394,6 +394,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setNodes(updatedNodes);
   };
 
+  console.log('gds', isGdsActive);
   return (
     <>
       <Dialog
@@ -411,7 +412,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           {headerTitle}
           <Flex className='w-full' alignItems='center' flexDirection='row'>
             {checkBoxView && (
-              <CheckboxSelection graphType={graphType} loading={loading} handleChange={handleCheckboxChange} />
+              <CheckboxSelection
+                graphType={graphType}
+                loading={loading}
+                handleChange={handleCheckboxChange}
+                isgds={isGdsActive}
+              />
             )}
           </Flex>
         </Dialog.Header>
@@ -427,7 +433,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               </div>
             ) : nodes.length === 0 && relationships.length === 0 && graphType.length !== 0 ? (
               <div className='my-40 flex items-center justify-center'>
-                <Banner name='graph banner' description={graphLabels.noEntities} type='danger' />
+                <Banner name='graph banner' description={graphLabels.noNodesRels} type='danger' />
+              </div>
+            ) : nodes.length === 0 && relationships.length === 0 ? (
+              <div className='my-40 flex items-center justify-center'>
+                <Banner name='graph banner' description={graphLabels.noNodesRels} type='danger' />
               </div>
             ) : graphType.length === 0 ? (
               <div className='my-40 flex items-center justify-center'>

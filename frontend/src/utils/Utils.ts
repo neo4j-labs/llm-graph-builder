@@ -176,7 +176,7 @@ export const filterData = (
   let filteredRelations: Relationship[] = [];
   let filteredScheme: Scheme = {};
   const entityTypes = Object.keys(scheme).filter((type) => type !== 'Document' && type !== 'Chunk');
-  if (graphType.includes('DocumentChunk') && !graphType.includes('Entities')) {
+  if (graphType.includes('DocumentChunk') && !graphType.includes('Entities') && !graphType.includes('Communities')) {
     // Document + Chunk
     filteredNodes = allNodes.filter(
       (node) => (node.labels.includes('Document') && node.properties.fileName) || node.labels.includes('Chunk')
@@ -189,7 +189,11 @@ export const filterData = (
         nodeIds.has(rel.to)
     );
     filteredScheme = { Document: scheme.Document, Chunk: scheme.Chunk };
-  } else if (graphType.includes('Entities') && !graphType.includes('DocumentChunk')) {
+  } else if (
+    graphType.includes('Entities') &&
+    !graphType.includes('DocumentChunk') &&
+    !graphType.includes('Communities')
+  ) {
     // Only Entity
     const entityNodes = allNodes.filter((node) => !node.labels.includes('Document') && !node.labels.includes('Chunk'));
     filteredNodes = entityNodes ? entityNodes : [];
@@ -201,8 +205,43 @@ export const filterData = (
         nodeIds.has(rel.to)
     );
     filteredScheme = Object.fromEntries(entityTypes.map((key) => [key, scheme[key]])) as Scheme;
-  } else if (graphType.includes('DocumentChunk') && graphType.includes('Entities')) {
-    // Document + Chunk + Entity
+  } else if (
+    graphType.includes('Communities') &&
+    !graphType.includes('DocumentChunk') &&
+    !graphType.includes('Entities')
+  ) {
+    // Communities
+    filteredNodes = allNodes.filter((node) => node.labels.includes('__Community__') && node.properties.summary);
+    const nodeIds = new Set(filteredNodes.map((node) => node.id));
+    filteredRelations = allRelationships.filter(
+      (rel) =>
+        ['IN_COMMUNITY', 'PARENT_COMMUNITY'].includes(rel.caption ?? '') && nodeIds.has(rel.from) && nodeIds.has(rel.to)
+    );
+    filteredScheme = { Communities: scheme.__Community__ };
+  } else if (
+    graphType.includes('DocumentChunk') &&
+    graphType.includes('Entities') &&
+    !graphType.includes('Communities')
+  ) {
+    console.log('no communities');
+  } else if (
+    graphType.includes('Entities') &&
+    graphType.includes('Communities') &&
+    !graphType.includes('DocumentChunk')
+  ) {
+    console.log('no documentChunk');
+  } else if (
+    graphType.includes('DocumentChunk') &&
+    graphType.includes('Communities') &&
+    !graphType.includes('Entities')
+  ) {
+    console.log('no entities');
+  } else if (
+    graphType.includes('DocumentChunk') &&
+    graphType.includes('Entities') &&
+    graphType.includes('Communities')
+  ) {
+    // Document + Chunk + Entity+ communities
     filteredNodes = allNodes;
     filteredRelations = allRelationships;
     filteredScheme = scheme;

@@ -215,7 +215,7 @@ export const graphView: OptionType[] = [
   { label: 'Entity Graph', value: queryMap.Entities },
   { label: 'Knowledge Graph', value: queryMap.DocChunkEntities },
 ];
-export const intitalGraphType: GraphType[] = ['DocumentChunk', 'Entities'];
+export const intitalGraphType: GraphType[] = ['DocumentChunk', 'Entities', 'Communities'];
 
 export const appLabels = {
   ownSchema: 'Or Define your own Schema',
@@ -237,6 +237,9 @@ export const graphLabels = {
   selectCheckbox: 'Select atleast one checkbox for graph view',
   totalRelationships: 'Total Relationships',
   nodeSize: 30,
+  docChunk: 'Document & Chunk',
+  community: 'Communities',
+  noNodesRels: 'No Nodes and No relationships',
 };
 
 export const RESULT_STEP_SIZE = 25;
