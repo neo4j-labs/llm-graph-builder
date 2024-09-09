@@ -7,6 +7,7 @@ from src.shared.constants import (BUCKET_UPLOAD, PROJECT_ID, QUERY_TO_GET_CHUNKS
                                   START_FROM_LAST_PROCESSED_POSITION,
                                   DELETE_ENTITIES_AND_START_FROM_BEGINNING)
 from src.shared.schema_extraction import schema_extraction_from_text
+from langchain_community.document_loaders import GoogleApiClient, GoogleApiYoutubeLoader
 from dotenv import load_dotenv
 from datetime import datetime
 import logging
@@ -171,8 +172,20 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     # source_url= youtube_url
     match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
     logging.info(f"match value: {match}")
-    obj_source_node.file_name = YouTube(obj_source_node.url).title
+    cred_path = os.path.join(os.getcwd(),"llm-experiments_credentials.json")
+    print(f'Credential file path {cred_path}')
+    video_id = parse_qs(urlparse(youtube_url).query).get('v')
+    print(f'Video Id Youtube: {video_id}')
+    # google_api_client = GoogleApiClient(service_account_path=Path(cred_path))
+    # youtube_loader_channel = GoogleApiYoutubeLoader(
+    # google_api_client=google_api_client,
+    # video_ids=[video_id[0].strip()], add_video_info=True
+    # )
+    # youtube_transcript = youtube_loader_channel.load()
+    
+    obj_source_node.file_name = match.group(1)#youtube_transcript[0].metadata["snippet"]["title"]
     transcript= get_youtube_combined_transcript(match.group(1))
+    # print(transcript)
     if transcript==None or len(transcript)==0:
       # job_status = "Failed"
       message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
