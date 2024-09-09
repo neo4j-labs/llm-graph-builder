@@ -8,10 +8,7 @@ export function triggerStatusUpdateAPI(
   database: string,
   datahandler: (i: eventResponsetypes) => void
 ) {
-  let encodedstr;
-  if (password) {
-    encodedstr = btoa(password);
-  }
+  let encodedstr: string = password ? btoa(password) : '';
   const eventSource = new EventSource(
     `${url()}/update_extract_status/${name}?url=${uri}&userName=${username}&password=${encodedstr}&database=${database}`
   );

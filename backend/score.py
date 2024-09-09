@@ -46,7 +46,6 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -434,25 +433,25 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                     logging.info(" SSE Client disconnected")
                     break
                 # get the current status of document node
-                graph = create_graph_database_connection(uri, userName, decoded_password, database)
-                graphDb_data_Access = graphDBdataAccess(graph)
-                result = graphDb_data_Access.get_current_status_document_node(file_name)
-                if result is not None:
-                    status = json.dumps({'fileName':file_name, 
-                    'status':result[0]['Status'],
-                    'processingTime':result[0]['processingTime'],
-                    'nodeCount':result[0]['nodeCount'],
-                    'relationshipCount':result[0]['relationshipCount'],
-                    'model':result[0]['model'],
-                    'total_chunks':result[0]['total_chunks'],
-                    'total_pages':result[0]['total_pages'],
-                    'fileSize':result[0]['fileSize'],
-                    'processed_chunk':result[0]['processed_chunk'],
-                    'fileSource':result[0]['fileSource']
-                    })
+                
                 else:
-                    status = json.dumps({'fileName':file_name, 'status':'Failed'})
-                yield status
+                    graph = create_graph_database_connection(uri, userName, decoded_password, database)
+                    graphDb_data_Access = graphDBdataAccess(graph)
+                    result = graphDb_data_Access.get_current_status_document_node(file_name)
+                    print(f'Result of document status in SSE : {result}')
+                    if len(result) > 0:
+                        status = json.dumps({'fileName':file_name, 
+                        'status':result[0]['Status'],
+                        'processingTime':result[0]['processingTime'],
+                        'nodeCount':result[0]['nodeCount'],
+                        'relationshipCount':result[0]['relationshipCount'],
+                        'model':result[0]['model'],
+                        'total_chunks':result[0]['total_chunks'],
+                        'fileSize':result[0]['fileSize'],
+                        'processed_chunk':result[0]['processed_chunk'],
+                        'fileSource':result[0]['fileSource']
+                        })
+                    yield status
             except asyncio.CancelledError:
                 logging.info("SSE Connection cancelled")
     
@@ -496,7 +495,7 @@ async def get_document_status(file_name, url, userName, password, database):
         graph = create_graph_database_connection(uri, userName, decoded_password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         result = graphDb_data_Access.get_current_status_document_node(file_name)
-        if result is not None:
+        if len(result) > 0:
             status = {'fileName':file_name, 
                 'status':result[0]['Status'],
                 'processingTime':result[0]['processingTime'],
@@ -504,13 +503,13 @@ async def get_document_status(file_name, url, userName, password, database):
                 'relationshipCount':result[0]['relationshipCount'],
                 'model':result[0]['model'],
                 'total_chunks':result[0]['total_chunks'],
-                'total_pages':result[0]['total_pages'],
                 'fileSize':result[0]['fileSize'],
                 'processed_chunk':result[0]['processed_chunk'],
                 'fileSource':result[0]['fileSource']
                 }
         else:
             status = {'fileName':file_name, 'status':'Failed'}
+        print(f'Result of document status in refresh : {result}')
         return create_api_response('Success',message="",file_name=status)
     except Exception as e:
         message=f"Unable to get the document status"

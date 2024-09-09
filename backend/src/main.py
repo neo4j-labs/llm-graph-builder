@@ -52,7 +52,6 @@ def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id,
         obj_source_node.file_type = 'pdf'
         obj_source_node.file_size = file_info['file_size_bytes']
         obj_source_node.file_source = source_type
-        obj_source_node.total_pages = 'N/A'
         obj_source_node.model = model
         obj_source_node.url = str(source_url+file_name)
         obj_source_node.awsAccessKeyId = aws_access_key_id
@@ -82,7 +81,6 @@ def create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_na
       obj_source_node.file_size = file_metadata['fileSize']
       obj_source_node.url = file_metadata['url']
       obj_source_node.file_source = source_type
-      obj_source_node.total_pages = 'N/A'
       obj_source_node.model = model
       obj_source_node.file_type = 'pdf'
       obj_source_node.gcsBucket = gcs_bucket_name
@@ -116,7 +114,6 @@ def create_source_node_graph_web_url(graph, model, source_url, source_type):
     obj_source_node.file_type = 'text'
     obj_source_node.file_source = source_type
     obj_source_node.model = model
-    obj_source_node.total_pages = 1
     obj_source_node.url = urllib.parse.unquote(source_url)
     obj_source_node.created_at = datetime.now()
     obj_source_node.file_name = pages[0].metadata['title']
@@ -139,7 +136,6 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     obj_source_node.file_type = 'text'
     obj_source_node.file_source = source_type
     obj_source_node.model = model
-    obj_source_node.total_pages = 1
     obj_source_node.url = youtube_url
     obj_source_node.created_at = datetime.now()
     match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
@@ -177,7 +173,6 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
       obj_source_node.file_type = 'text'
       obj_source_node.file_source = source_type
       obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
-      obj_source_node.total_pages = len(pages)
       obj_source_node.model = model
       obj_source_node.url = urllib.parse.unquote(pages[0].metadata['source'])
       obj_source_node.created_at = datetime.now()
@@ -290,7 +285,6 @@ def processing_source(uri, userName, password, database, model, file_name, pages
       obj_source_node.file_name = file_name
       obj_source_node.status = status
       obj_source_node.total_chunks = total_chunks
-      obj_source_node.total_pages = len(pages)
       obj_source_node.model = model
       if retry_condition == START_FROM_LAST_PROCESSED_POSITION:
           node_count = result[0]['nodeCount']
@@ -306,7 +300,7 @@ def processing_source(uri, userName, password, database, model, file_name, pages
       # selected_chunks = []
       is_cancelled_status = False
       job_status = "Completed"
-      
+
       for i in range(0, len(chunkId_chunkDoc_list), update_graph_chunk_processed):
         select_chunks_upto = i+update_graph_chunk_processed
         logging.info(f'Selected Chunks upto: {select_chunks_upto}')
@@ -314,7 +308,6 @@ def processing_source(uri, userName, password, database, model, file_name, pages
           select_chunks_upto = len(chunkId_chunkDoc_list)
         selected_chunks = chunkId_chunkDoc_list[i:select_chunks_upto]
         
-        logging.info(f"select_chunks_upto={select_chunks_upto}, update_graph_chunk_processed={update_graph_chunk_processed}, selected_chunks={len(selected_chunks)}")
         result = graphDb_data_Access.get_current_status_document_node(file_name)
         is_cancelled_status = result[0]['is_cancelled']
         logging.info(f"Value of is_cancelled : {result[0]['is_cancelled']}")

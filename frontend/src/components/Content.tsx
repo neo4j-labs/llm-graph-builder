@@ -58,8 +58,7 @@ const Content: React.FC<ContentProps> = ({
   });
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
-  const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
-  const { setUserCredentials, userCredentials } = useCredentials();
+  const { setUserCredentials, userCredentials, connectionStatus, setConnectionStatus } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [retryFile, setRetryFile] = useState<string>('');
@@ -126,7 +125,10 @@ const Content: React.FC<ContentProps> = ({
   useEffect(() => {
     setFilesData((prevfiles) => {
       return prevfiles.map((curfile) => {
-        return { ...curfile, model: curfile.status === 'New' ? model : curfile.model };
+        return {
+          ...curfile,
+          model: curfile.status === 'New' || curfile.status === 'Reprocess' ? model : curfile.model,
+        };
       });
     });
   }, [model]);
@@ -511,15 +513,16 @@ const Content: React.FC<ContentProps> = ({
       if (response.data.status === 'Failure') {
         throw new Error(response.data.error);
       }
+      const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption===RETRY_OPIONS[1];
       setFilesData((prev) => {
         return prev.map((f) => {
           return f.name === filename
             ? {
                 ...f,
                 status: 'Reprocess',
-                processingProgress: retryoption.includes('start_from_beginning') ? 0 : f.processingProgress,
-                NodesCount: retryoption === RETRY_OPIONS[1] ? 0 : f.NodesCount,
-                relationshipCount: retryoption === RETRY_OPIONS[1] ? 0 : f.relationshipCount,
+                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                NodesCount: isStartFromBegining ? 0 : f.NodesCount,
+                relationshipCount: isStartFromBegining ? 0 : f.relationshipCount,
               }
             : f;
         });

@@ -37,14 +37,14 @@ class graphDBdataAccess:
                             d.processingTime = $pt, d.errorMessage = $e_message, d.nodeCount= $n_count, 
                             d.relationshipCount = $r_count, d.model= $model, d.gcsBucket=$gcs_bucket, 
                             d.gcsBucketFolder= $gcs_bucket_folder, d.language= $language,d.gcsProjectId= $gcs_project_id,
-                            d.is_cancelled=False, d.total_chunks=0, d.processed_chunk=0, d.total_pages=$total_pages,
+                            d.is_cancelled=False, d.total_chunks=0, d.processed_chunk=0,
                             d.access_token=$access_token""",
                             {"fn":obj_source_node.file_name, "fs":obj_source_node.file_size, "ft":obj_source_node.file_type, "st":job_status, 
                             "url":obj_source_node.url,
                             "awsacc_key_id":obj_source_node.awsAccessKeyId, "f_source":obj_source_node.file_source, "c_at":obj_source_node.created_at,
                             "u_at":obj_source_node.created_at, "pt":0, "e_message":'', "n_count":0, "r_count":0, "model":obj_source_node.model,
                             "gcs_bucket": obj_source_node.gcsBucket, "gcs_bucket_folder": obj_source_node.gcsBucketFolder, 
-                            "language":obj_source_node.language, "gcs_project_id":obj_source_node.gcsProjectId, "total_pages": obj_source_node.total_pages,
+                            "language":obj_source_node.language, "gcs_project_id":obj_source_node.gcsProjectId,
                             "access_token":obj_source_node.access_token})
         except Exception as e:
             error_message = str(e)
@@ -79,9 +79,6 @@ class graphDBdataAccess:
 
             if obj_source_node.model is not None and obj_source_node.model != '':
                 params['model'] = obj_source_node.model
-
-            if obj_source_node.total_pages is not None and obj_source_node.total_pages != 0:
-                params['total_pages'] = obj_source_node.total_pages
 
             if obj_source_node.total_chunks is not None and obj_source_node.total_chunks != 0:
                 params['total_chunks'] = obj_source_node.total_chunks
@@ -190,7 +187,7 @@ class graphDBdataAccess:
         query = """
                 MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, 
                 d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount,
-                d.total_pages AS total_pages, d.total_chunks AS total_chunks , d.fileSize as fileSize, 
+                d.total_chunks AS total_chunks , d.fileSize as fileSize, 
                 d.is_cancelled as is_cancelled, d.processed_chunk as processed_chunk, d.fileSource as fileSource
                 """
         param = {"file_name" : file_name}
