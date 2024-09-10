@@ -191,7 +191,7 @@ export const filterData = (
     filteredScheme = { Document: scheme.Document, Chunk: scheme.Chunk };
     // Only Entity
   } else if (graphType.includes('Entities') && !graphType.includes('DocumentChunk') && !graphType.includes('Communities')) {
-    const entityNodes = allNodes.filter((node) => !node.labels.includes('Document') && !node.labels.includes('Chunk'));
+    const entityNodes = allNodes.filter((node) => !node.labels.includes('Document') && !node.labels.includes('Chunk') && !node.labels.includes('__Community__'));
     filteredNodes = entityNodes ? entityNodes : [];
     const nodeIds = new Set(filteredNodes.map((node) => node.id));
     filteredRelations = allRelationships.filter(
@@ -215,8 +215,7 @@ export const filterData = (
     filteredNodes = allNodes.filter(
       (node) =>
         (node.labels.includes('Document') && node.properties.fileName) ||
-        node.labels.includes('Chunk') ||
-        !node.labels.includes('Document') && !node.labels.includes('Chunk')
+        node.labels.includes('Chunk')
     );
     const nodeIds = new Set(filteredNodes.map((node) => node.id));
     filteredRelations = allRelationships.filter(
