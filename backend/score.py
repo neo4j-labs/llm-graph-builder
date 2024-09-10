@@ -249,13 +249,6 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
         graph = create_graph_database_connection(uri, userName, password, database)
         tasks = set(map(str.strip, json.loads(tasks)))
 
-        if "create_communities" in tasks:
-            model = "openai-gpt-4o"
-            await asyncio.to_thread(create_communities, uri, userName, password, database,model)
-            josn_obj = {'api_name': 'post_processing/create_communities', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-            logger.log_struct(josn_obj)
-            logging.info(f'created communities')
-
         if "materialize_text_chunk_similarities" in tasks:
             await asyncio.to_thread(update_graph, graph)
             json_obj = {'api_name': 'post_processing/update_similarity_graph', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
@@ -273,6 +266,7 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             json_obj = {'api_name': 'post_processing/create_entity_embedding', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logger.log_struct(json_obj)
             logging.info(f'Entity Embeddings created')
+            
         if "create_communities" in tasks:
             model = "openai-gpt-4o"
             await asyncio.to_thread(create_communities, uri, userName, password, database,model)
