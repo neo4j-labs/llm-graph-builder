@@ -174,7 +174,7 @@ def format_documents(documents, model):
     
     return "\n\n".join(formatted_docs), sources
 
-def process_documents(docs, question, messages, llm, model):
+def process_documents(docs, question, messages, llm, model,chat_mode_settings):
     start_time = time.time()
     
     try:
@@ -187,8 +187,10 @@ def process_documents(docs, question, messages, llm, model):
             "context": formatted_docs,
             "input": question
         })
-        
-        result = get_sources_and_chunks(sources, docs)
+        if chat_mode_settings == "local_community_search":
+            result = {"sources": [], "chunkdetails": []}
+        else:
+            result = get_sources_and_chunks(sources, docs)
         content = ai_response.content
         total_tokens = get_total_tokens(ai_response, llm)
         
@@ -315,9 +317,10 @@ def create_retriever(neo_db, document_names, chat_mode_settings,search_k, score_
 
 def get_neo4j_retriever(graph, document_names,chat_mode_settings, search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
     try:
-
+        
         neo_db = initialize_neo4j_vector(graph, chat_mode_settings)
         document_names= list(map(str.strip, json.loads(document_names)))
+        search_k = LOCAL_COMMUNITY_TOP_K if chat_mode_settings["mode"] == "local_community_search" else CHAT_SEARCH_KWARG_K
         retriever = create_retriever(neo_db, document_names,chat_mode_settings, search_k, score_threshold)
         return retriever
     except Exception as e:
@@ -328,8 +331,7 @@ def get_neo4j_retriever(graph, document_names,chat_mode_settings, search_k=CHAT_
 def setup_chat(model, graph, document_names, chat_mode_settings):
     start_time = time.time()
     try:
-        if model == "diffbot":
-            model = "openai-gpt-4o"
+        model = "openai-gpt-4o" if model == "diffbot" else model
         
         llm, model_name = get_llm(model=model)
         logging.info(f"Model called in chat: {model} (version: {model_name})")
@@ -351,9 +353,9 @@ def process_chat_response(messages,history, question, model, graph, document_nam
         llm, doc_retriever, model_version = setup_chat(model, graph, document_names,chat_mode_settings)
         
         docs = retrieve_documents(doc_retriever, messages)
-        
+
         if docs:
-            content, result, total_tokens = process_documents(docs, question, messages, llm, model)
+            content, result, total_tokens = process_documents(docs, question, messages, llm, model,chat_mode_settings)
         else:
             content = "I couldn't find any relevant documents to answer your question."
             result = {"sources": [], "chunkdetails": []}
@@ -449,7 +451,6 @@ def create_graph_chain(model, graph):
     except Exception as e:
         logging.error(f"An error occurred while creating the GraphCypherQAChain instance. : {e}") 
 
-
 def get_graph_response(graph_chain, question):
     try:
         cypher_res = graph_chain.invoke({"query": question})
@@ -471,7 +472,7 @@ def get_graph_response(graph_chain, question):
         }
     
     except Exception as e:
-        logging.error("An error occurred while getting the graph response : {e}")
+        logging.error(f"An error occurred while getting the graph response : {e}")
 
 def process_graph_response(model, graph, question, messages, history):
     try:
