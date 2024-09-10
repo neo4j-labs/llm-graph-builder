@@ -16,6 +16,7 @@ BUCKET_FAILED_FILE = 'llm-graph-builder-failed'
 PROJECT_ID = 'llm-experiments-387609' 
 GRAPH_CHUNK_LIMIT = 50 
 
+
 #query 
 GRAPH_QUERY = """
 MATCH docs = (d:Document) 
@@ -45,7 +46,7 @@ CALL {{
   }}
   RETURN entities , entityRels, collect(DISTINCT e) as entity
 }}
-WITH  docs,chunks,chunkRels, collect(entities) as entities, collect(entityRels) as entityRels,entity
+WITH  docs,chunks,chunkRels, collect(entities) as entities, collect(entityRels) as entityRels, entity
 
 WITH *
 
@@ -53,11 +54,11 @@ CALL {{
   with entity
   unwind entity as n
   OPTIONAL MATCH community=(n:__Entity__)-[:IN_COMMUNITY]->(p:__Community__)
-  OPTIONAL MATCH parentcommunity=(p)-[:PARENT_COMMUNITY]->(p2:__Community__) 
-  return community,parentcommunity
+  OPTIONAL MATCH parentcommunity=(p)-[:PARENT_COMMUNITY*]->(p2:__Community__) 
+  return collect(community) as communities , collect(parentcommunity) as parentCommunities
 }}
 
-WITH apoc.coll.flatten(docs + chunks + chunkRels + entities + entityRels + community+ parentcommunity, true) as paths
+WITH apoc.coll.flatten(docs + chunks + chunkRels + entities + entityRels + communities + parentCommunities, true) as paths
 
 // distinct nodes and rels
 CALL {{ WITH paths UNWIND paths AS path UNWIND nodes(path) as node WITH distinct node 

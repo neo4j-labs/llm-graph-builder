@@ -61,15 +61,18 @@ def process_node(node):
           with datetime objects formatted as ISO strings.
     """
     try:
+        labels = set(node.labels)
+        labels.discard("__Entity__")
+        
         node_element = {
             "element_id": node.element_id,
-            "labels": list(node.labels),
+            "labels": list(labels),
             "properties": {}
         }
         # logging.info(f"Processing node with element ID: {node.element_id}")
 
         for key in node:
-            if key in ["embedding", "text"]:
+            if key in ["embedding", "text", "summary"]:
                 continue
             value = node.get(key)
             if isinstance(value, time.DateTime):
