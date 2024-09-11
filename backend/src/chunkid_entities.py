@@ -146,12 +146,3 @@ def get_entities_from_chunkids(uri, username, password, database ,chunk_ids,is_e
     except Exception as e:
         logging.error(f"chunkid_entities module: An error occurred in get_entities_from_chunkids. Error: {str(e)}")
         raise Exception(f"chunkid_entities module: An error occurred in get_entities_from_chunkids. Please check the logs for more details.") from e
-    
-
-
-uri = "neo4j+s://demo.neo4jlabs.com"
-userName = "persistent"
-password = "848345f99c41b3844dc02bb4e6295f3e"
-database = "persistent2"
-ids = "4:b104b2e7-e2ed-4902-b78b-7ad1518ca04f:23","4:b104b2e7-e2ed-4902-b78b-7ad1518ca04f:224"
-get_entities_from_chunkids(uri=uri, username=userName, password=password,database=database,chunk_ids=ids,is_entity=True)
