@@ -394,7 +394,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setNodes(updatedNodes);
   };
 
-  console.log('gds', isGdsActive);
+  console.log('rels', relationships);
+  
+  console.log('nodes', nodes);
   return (
     <>
       <Dialog
@@ -432,10 +434,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 <Banner name='graph banner' description={statusMessage} type={status} />
               </div>
             ) : nodes.length === 0 && relationships.length === 0 && graphType.length !== 0 ? (
-              <div className='my-40 flex items-center justify-center'>
-                <Banner name='graph banner' description={graphLabels.noNodesRels} type='danger' />
-              </div>
-            ) : nodes.length === 0 && relationships.length === 0 ? (
               <div className='my-40 flex items-center justify-center'>
                 <Banner name='graph banner' description={graphLabels.noNodesRels} type='danger' />
               </div>
