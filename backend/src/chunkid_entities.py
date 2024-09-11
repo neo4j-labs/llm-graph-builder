@@ -81,28 +81,64 @@ def process_chunk_data(chunk_data):
     except Exception as e:
         logging.error(f"chunkid_entities module: An error occurred while extracting the Chunk text from records: {e}")
 
-def process_chunkids(driver,chunk_ids):
-    logging.info(f"Starting graph query process for chunk ids")
-    chunk_ids_list = chunk_ids.split(",")
-    records, summary, keys = driver.execute_query(CHUNK_QUERY, chunksIds=chunk_ids_list)
-    result = process_records(records)
-    logging.info(f"Nodes and relationships are processed")
-    result["chunk_data"] = process_chunk_data(records)
-    logging.info(f"Query process completed successfully for chunk ids")
-    return result
+def process_chunkids(driver, chunk_ids):
+    """
+    Processes chunk IDs to retrieve chunk data.
+    """
+    try:
+        logging.info(f"Starting graph query process for chunk ids: {chunk_ids}")
+        chunk_ids_list = chunk_ids.split(",")
 
-def process_entityids(driver,chunk_ids):
-    logging.info(f"Starting graph query process for entity ids")
-    entity_ids_list = chunk_ids.split(",")
-    query_body = LOCAL_COMMUNITY_SEARCH_QUERY.format(topChunks=LOCAL_COMMUNITY_TOP_CHUNKS,topCommunities=LOCAL_COMMUNITY_TOP_COMMUNITIES,topOutsideRels=LOCAL_COMMUNITY_TOP_OUTSIDE_RELS)
-    query = LOCAL_COMMUNITY_DETAILS_QUERY_PREFIX+ query_body +LOCAL_COMMUNITY_DETAILS_QUERY_SUFFIX
-    records, summary, keys = driver.execute_query(query, entityIds=entity_ids_list)
-    result = process_records(records)
-    logging.info(f"Nodes and relationships are processed")
-    result["chunk_data"] = process_chunk_data(records)
-    result["community_data"] = records["communities"]
-    logging.info(f"Query process completed successfully for chunk ids")
-    return result
+        records, summary, keys = driver.execute_query(CHUNK_QUERY, chunksIds=chunk_ids_list)
+        result = process_records(records)
+        logging.info(f"Nodes and relationships are processed")
+
+        result["chunk_data"] = process_chunk_data(records)
+        logging.info(f"Query process completed successfully for chunk ids: {chunk_ids}")
+        return result
+    except Exception as e:
+        logging.error(f"chunkid_entities module: Error processing chunk ids: {chunk_ids}. Error: {e}")
+        raise  
+
+def remove_duplicate_nodes(nodes):
+    unique_nodes = []
+    seen_element_ids = set()
+
+    for node in nodes:
+        element_id = node['element_id']
+        if element_id not in seen_element_ids:
+            unique_nodes.append(node)
+            seen_element_ids.add(element_id)
+
+    return unique_nodes
+
+def process_entityids(driver, chunk_ids):
+    """
+    Processes entity IDs to retrieve local community data.
+    """
+    try:
+        logging.info(f"Starting graph query process for entity ids: {chunk_ids}")
+        entity_ids_list = chunk_ids.split(",")
+        query_body = LOCAL_COMMUNITY_SEARCH_QUERY.format(
+            topChunks=LOCAL_COMMUNITY_TOP_CHUNKS,
+            topCommunities=LOCAL_COMMUNITY_TOP_COMMUNITIES,
+            topOutsideRels=LOCAL_COMMUNITY_TOP_OUTSIDE_RELS
+        )
+        query = LOCAL_COMMUNITY_DETAILS_QUERY_PREFIX + query_body + LOCAL_COMMUNITY_DETAILS_QUERY_SUFFIX
+
+        records, summary, keys = driver.execute_query(query, entityIds=entity_ids_list)
+
+        result = process_records(records)
+        result["nodes"].extend(records[0]["nodes"])
+        result["nodes"] = remove_duplicate_nodes(result["nodes"])
+        logging.info(f"Nodes and relationships are processed")
+        result["chunk_data"] = records[0]["chunks"]
+        result["community_data"] = records[0]["communities"]
+        logging.info(f"Query process completed successfully for chunk ids: {chunk_ids}")
+        return result
+    except Exception as e:
+        logging.error(f"chunkid_entities module: Error processing entity ids: {chunk_ids}. Error: {e}")
+        raise  
 
 def get_entities_from_chunkids(uri, username, password, database ,chunk_ids,is_entity=False):
     """

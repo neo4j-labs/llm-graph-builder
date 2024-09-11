@@ -296,7 +296,7 @@ WITH node, 1.0 as score
 LOCAL_COMMUNITY_DETAILS_QUERY_SUFFIX = """
 RETURN  [chunk in chunks | chunk {.*, embedding:null}] as chunks,
 [community in communities | community {.*, embedding:null}] as communities,
-[node in nodes+outside[0].nodes | node {.*, label:labels(node),embedding:null}] as nodes, 
+[node in nodes+outside[0].nodes | {element_id:elementId(node), labels:labels(node), properties:{id:node.id,description:node.description}}] as nodes, 
 [r in rels+outside[0].rels | {startNode:{element_id:elementId(startNode(r)), labels:labels(startNode(r)), properties:{id:startNode(r).id,description:startNode(r).description}},
                      endNode:{element_id:elementId(endNode(r)), labels:labels(endNode(r)), properties:{id:endNode(r).id,description:endNode(r).description}},
                      relationship: {type:type(r), element_id:elementId(r)}}] as entities
