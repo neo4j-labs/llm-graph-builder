@@ -22,7 +22,6 @@ export default function ChatModeToggle({
   const { setchatMode, chatMode, postProcessingTasks } = useFileContext();
   const isCommunityAllowed = postProcessingTasks.includes('create_communities');
   const { isGdsActive } = useCredentials();
-  
   return (
     <CustomMenu
       closeHandler={closeHandler}

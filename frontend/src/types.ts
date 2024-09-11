@@ -263,7 +263,7 @@ export interface GraphViewModalProps {
   selectedRows?: CustomFile[] | undefined;
 }
 
-export type GraphType = 'Entities' | 'DocumentChunk';
+export type GraphType = 'Entities' | 'DocumentChunk' | 'Communities';
 
 export type PartialLabelNode = Partial<Node> & {
   labels: string;
@@ -273,6 +273,7 @@ export interface CheckboxSectionProps {
   graphType: GraphType[];
   loading: boolean;
   handleChange: (graph: GraphType) => void;
+  isgds: boolean;
 }
 
 export interface fileName {
