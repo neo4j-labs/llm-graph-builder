@@ -207,6 +207,8 @@ export default function ConnectionModal({
       if (response?.data?.status !== 'Success') {
         throw new Error(response.data.error);
       } else {
+        const isgdsActive = response.data.data.gds_status;
+        setGdsActive(isgdsActive);
         localStorage.setItem(
           'neo4j.connection',
           JSON.stringify({
@@ -215,6 +217,7 @@ export default function ConnectionModal({
             password: password,
             database: database,
             userDbVectorIndex,
+            isgdsActive,
           })
         );
         setUserDbVectorIndex(response.data.data.db_vector_dimension);
