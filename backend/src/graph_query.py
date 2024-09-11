@@ -63,8 +63,6 @@ def process_node(node):
     try:
         labels = set(node.labels)
         labels.discard("__Entity__")
-        if not labels:
-            labels.add('*')
         
         node_element = {
             "element_id": node.element_id,

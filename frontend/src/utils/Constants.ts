@@ -39,42 +39,26 @@ export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
-        'diffbot',
-        'openai-gpt-3.5',
-        'openai-gpt-4o',
-        'openai-gpt-4o-mini',
-        'gemini-1.0-pro',
-        'gemini-1.5-pro',
-        'azure_ai_gpt_35',
-        'azure_ai_gpt_4o',
-        'ollama_llama3',
-        'groq_llama3_70b',
-        'anthropic_claude_3_5_sonnet',
-        'fireworks_v3p1_405b',
-        'bedrock_claude_3_5_sonnet',
-      ];
+      'diffbot',
+      'openai-gpt-3.5',
+      'openai-gpt-4o',
+      'openai-gpt-4o-mini',
+      'gemini-1.0-pro',
+      'gemini-1.5-pro',
+      'azure_ai_gpt_35',
+      'azure_ai_gpt_4o',
+      'ollama_llama3',
+      'groq_llama3_70b',
+      'anthropic_claude_3_5_sonnet',
+      'fireworks_v3p1_405b',
+      'bedrock_claude_3_5_sonnet',
+    ];
 
 export const defaultLLM = llms?.includes('openai-gpt-4o')
   ? 'openai-gpt-4o'
   : llms?.includes('gemini-1.0-pro')
-  ? 'gemini-1.0-pro'
-  : 'diffbot';
-
-// export const chatModes =
-//   process.env?.VITE_CHAT_MODES?.trim() != ''
-//     ? process.env.VITE_CHAT_MODES?.split(',')
-//     : ['vector', 'graph', 'graph+vector', 'fulltext', 'graph+vector+fulltext', 'local community', 'global community'];
-
-export const chatModeLables = {
-  vector: 'vector',
-  graph : 'graph',
-  graph_vector: 'graph+vector',
-  fulltext: 'fulltext',
-  graph_vector_fulltext: 'graph+vector+fulltext',
-  entity_vector:'entity search+vector',
-  unavailableChatMode: 'Chat mode is unavailable when rows are selected',
-  selected:'Selected'
-}
+    ? 'gemini-1.0-pro'
+    : 'diffbot';
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
     ? process.env.VITE_CHAT_MODES?.split(',')
@@ -260,6 +244,9 @@ export const graphLabels = {
   selectCheckbox: 'Select atleast one checkbox for graph view',
   totalRelationships: 'Total Relationships',
   nodeSize: 30,
+  docChunk: 'Document & Chunk',
+  community: 'Communities',
+  noNodesRels: 'No Nodes and No relationships',
 };
 
 export const RESULT_STEP_SIZE = 25;

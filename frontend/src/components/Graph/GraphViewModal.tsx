@@ -68,6 +68,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [newScheme, setNewScheme] = useState<Scheme>({});
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedQuery = useDebounce(searchQuery, 300);
+  const [graphType, setGraphType] = useState<GraphType[]>(intitalGraphType(isGdsActive));
 
   // the checkbox selection
   const handleCheckboxChange = (graph: GraphType) => {
@@ -96,10 +97,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-      ? queryMap.DocChunks
-      : graphType.includes('Entities')
-      ? queryMap.Entities
-      : '';
+        ? queryMap.DocChunks
+        : graphType.includes('Entities')
+          ? queryMap.Entities
+          : '';
 
   // fit graph to original position
   const handleZoomToFit = () => {
@@ -118,7 +119,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       if (nvlRef.current) {
         nvlRef.current?.destroy();
       }
-      setGraphType(intitalGraphType);
+      setGraphType(intitalGraphType(isGdsActive));
       clearTimeout(timeoutId);
       setScheme({});
       setNodes([]);
@@ -134,10 +135,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
-              userCredentials as UserCredentials,
-              graphQuery,
-              selectedRows?.map((f) => f.name)
-            )
+            userCredentials as UserCredentials,
+            graphQuery,
+            selectedRows?.map((f) => f.name)
+          )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -180,7 +181,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   useEffect(() => {
     if (open) {
       setLoading(true);
-      setGraphType(intitalGraphType(isGdsActive));
+      setGraphType(intitalGraphType(isGdsActive))
       if (viewPoint !== 'chatInfoView') {
         graphApi();
       } else {
@@ -195,6 +196,48 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       }
     }
   }, [open, isGdsActive]);
+
+  // The search and update nodes
+  const handleSearch = useCallback(
+    (value: string) => {
+      const query = value.toLowerCase();
+      const updatedNodes = nodes.map((node) => {
+        if (query === '') {
+          return {
+            ...node,
+            activated: false,
+            selected: false,
+            size: graphLabels.nodeSize,
+          };
+        }
+        const { id, properties, caption } = node;
+        const propertiesMatch = properties?.id?.toLowerCase().includes(query);
+        const match = id.toLowerCase().includes(query) || propertiesMatch || caption?.toLowerCase().includes(query);
+        return {
+          ...node,
+          activated: match,
+          selected: match,
+          size:
+            match && viewPoint === graphLabels.showGraphView
+              ? 100
+              : match && viewPoint !== graphLabels.showGraphView
+                ? 50
+                : graphLabels.nodeSize,
+        };
+      });
+      // deactivating any active relationships
+      const updatedRelationships = relationships.map((rel) => {
+        return {
+          ...rel,
+          activated: false,
+          selected: false,
+        };
+      });
+      setNodes(updatedNodes);
+      setRelationships(updatedRelationships);
+    },
+    [nodes]
+  );
 
   useEffect(() => {
     handleSearch(debouncedQuery);
@@ -213,113 +256,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         finalRels ?? [],
         schemeVal,
         isGdsActive
-      );
-      setNodes(filteredNodes);
-      setRelationships(filteredRelations);
-      setNewScheme(filteredScheme);
-    }
-  };
-
-  // The search and update nodes
-  const handleSearch = useCallback(
-    (value: string) => {
-      const query = value.toLowerCase();
-      const updatedNodes = nodes.map((node) => {
-        if (query === '') {
-          return {
-            ...node,
-            activated: false,
-            selected: false,
-            size: graphLabels.nodeSize,
-          };
-        }
-        const { id, properties, caption } = node;
-        const propertiesMatch = properties?.id?.toLowerCase().includes(query);
-        const match = id.toLowerCase().includes(query) || propertiesMatch || caption?.toLowerCase().includes(query);
-        return {
-          ...node,
-          activated: match,
-          selected: match,
-          size:
-            match && viewPoint === graphLabels.showGraphView
-              ? 100
-              : match && viewPoint !== graphLabels.showGraphView
-              ? 50
-              : graphLabels.nodeSize,
-        };
-      });
-      // deactivating any active relationships
-      const updatedRelationships = relationships.map((rel) => {
-        return {
-          ...rel,
-          activated: false,
-          selected: false,
-        };
-      });
-      setNodes(updatedNodes);
-      setRelationships(updatedRelationships);
-    },
-    [nodes]
-  );
-
-  // The search and update nodes
-  const handleSearch = useCallback(
-    (value: string) => {
-      const query = value.toLowerCase();
-      const updatedNodes = nodes.map((node) => {
-        if (query === '') {
-          return {
-            ...node,
-            activated: false,
-            selected: false,
-            size: graphLabels.nodeSize,
-          };
-        }
-        const { id, properties, caption } = node;
-        const propertiesMatch = properties?.id?.toLowerCase().includes(query);
-        const match = id.toLowerCase().includes(query) || propertiesMatch || caption?.toLowerCase().includes(query);
-        return {
-          ...node,
-          activated: match,
-          selected: match,
-          size:
-            match && viewPoint === graphLabels.showGraphView
-              ? 100
-              : match && viewPoint !== graphLabels.showGraphView
-              ? 50
-              : graphLabels.nodeSize,
-        };
-      });
-      // deactivating any active relationships
-      const updatedRelationships = relationships.map((rel) => {
-        return {
-          ...rel,
-          activated: false,
-          selected: false,
-        };
-      });
-      setNodes(updatedNodes);
-      setRelationships(updatedRelationships);
-    },
-    [nodes]
-  );
-
-  useEffect(() => {
-    handleSearch(debouncedQuery);
-  }, [debouncedQuery]);
-
-  const initGraph = (
-    graphType: GraphType[],
-    finalNodes: ExtendedNode[],
-    finalRels: Relationship[],
-    schemeVal: Scheme
-  ) => {
-    if (allNodes.length > 0 && allRelationships.length > 0) {
-      const { filteredNodes, filteredRelations, filteredScheme } = filterData(
-        graphType,
-        finalNodes ?? [],
-        finalRels ?? [],
-        schemeVal
       );
       setNodes(filteredNodes);
       setRelationships(filteredRelations);
@@ -419,8 +355,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           isActive && viewPoint === graphLabels.showGraphView
             ? 100
             : isActive && viewPoint !== graphLabels.showGraphView
-            ? 50
-            : graphLabels.nodeSize,
+              ? 50
+              : graphLabels.nodeSize,
       };
     });
     // deactivating any active relationships
@@ -462,7 +398,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setNodes(updatedNodes);
   };
 
-  // const isCommunity = allNodes.some(n=>n.labels.includes('__Community__'));
+  console.log('rels', relationships);
+
+  console.log('nodes', nodes);
   return (
     <>
       <Dialog
@@ -484,7 +422,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 graphType={graphType}
                 loading={loading}
                 handleChange={handleCheckboxChange}
-                isgds={allNodes.some((n) => n.labels.includes('__Community__'))}
+                isgds={isGdsActive}
               />
             )}
           </Flex>
