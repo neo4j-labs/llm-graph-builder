@@ -117,10 +117,10 @@ def get_sources_and_chunks(sources_used, docs):
 
     result = {
         'sources': sources_used,
-        'chunkdetails': chunkdetails_list
+        'chunkdetails': chunkdetails_list,
+        "entities" : list()
     }
     return result
-
 
 def get_rag_chain(llm, system_template=CHAT_SYSTEM_TEMPLATE):
     try:
@@ -155,12 +155,15 @@ def format_documents(documents, model):
 
     formatted_docs = []
     sources = set()
+    lc_entities = {}
 
     for doc in sorted_documents:
         try:
-            source = doc.metadata.get('source', 'unknown')
+            source = doc.metadata.get('source', "unknown")
             sources.add(source)
-            
+
+            lc_entities = doc.metadata if 'entities'in doc.metadata.keys() else lc_entities
+
             formatted_doc = (
                 "Document start\n"
                 f"This Document belongs to the source {source}\n"
@@ -172,13 +175,13 @@ def format_documents(documents, model):
         except Exception as e:
             logging.error(f"Error formatting document: {e}")
     
-    return "\n\n".join(formatted_docs), sources
+    return "\n\n".join(formatted_docs), sources,lc_entities
 
 def process_documents(docs, question, messages, llm, model,chat_mode_settings):
     start_time = time.time()
     
     try:
-        formatted_docs, sources = format_documents(docs, model)
+        formatted_docs, sources,lc_entities = format_documents(docs, model)
         
         rag_chain = get_rag_chain(llm=llm)
         
@@ -187,8 +190,10 @@ def process_documents(docs, question, messages, llm, model,chat_mode_settings):
             "context": formatted_docs,
             "input": question
         })
-        if chat_mode_settings == "local_community_search":
-            result = {"sources": [], "chunkdetails": []}
+        if chat_mode_settings["mode"] == "local_community_search":
+            result = {'sources': list(),
+                      'chunkdetails': list()}
+            result.update(lc_entities)
         else:
             result = get_sources_and_chunks(sources, docs)
         content = ai_response.content
@@ -352,8 +357,7 @@ def process_chat_response(messages,history, question, model, graph, document_nam
     try:
         llm, doc_retriever, model_version = setup_chat(model, graph, document_names,chat_mode_settings)
         
-        docs = retrieve_documents(doc_retriever, messages)
-
+        docs = retrieve_documents(doc_retriever, messages)        
         if docs:
             content, result, total_tokens = process_documents(docs, question, messages, llm, model,chat_mode_settings)
         else:
@@ -374,7 +378,8 @@ def process_chat_response(messages,history, question, model, graph, document_nam
                 "chunkdetails": result["chunkdetails"],
                 "total_tokens": total_tokens,
                 "response_time": 0,
-                "mode": chat_mode_settings["mode"]
+                "mode": chat_mode_settings["mode"],
+                "entities" : result["entities"]
             },
             "user": "chatbot"
         }
@@ -390,7 +395,8 @@ def process_chat_response(messages,history, question, model, graph, document_nam
                 "total_tokens": 0,
                 "response_time": 0,
                 "error": f"{type(e).__name__}: {str(e)}",
-                "mode": chat_mode_settings["mode"]
+                "mode": chat_mode_settings["mode"],
+                "entities": []
             },
             "user": "chatbot"
         }

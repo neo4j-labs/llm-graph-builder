@@ -207,36 +207,29 @@ LOCAL_COMMUNITY_TOP_COMMUNITIES = 3
 LOCAL_COMMUNITY_TOP_OUTSIDE_RELS = 10
 
 LOCAL_COMMUNITY_SEARCH_QUERY = """
-WITH collect(node) as nodes, avg(score) as score
-WITH score,
+WITH collect(node) as nodes, avg(score) as score, collect({{id: elementId(node), score:score}}) as metadata
+WITH score, nodes,metadata,
 collect {{
     UNWIND nodes as n
     MATCH (n)<-[:HAS_ENTITY]->(c:Chunk)
     WITH c, count(distinct n) as freq
-    RETURN c.text AS chunkText
+    RETURN c
     ORDER BY freq DESC
     LIMIT {topChunks}
-}} AS text_mapping,
+}} AS chunks,
 collect {{
     UNWIND nodes as n
     MATCH (n)-[:IN_COMMUNITY]->(c:__Community__)
     WITH c, c.rank as rank, c.weight AS weight
-    RETURN c.summary 
+    RETURN c
     ORDER BY rank, weight DESC
     LIMIT {topCommunities}
 }} AS communities,
 collect {{
-    UNWIND nodes as n
-    RETURN n.id + " " + coalesce(n.description, "") AS descriptionText
-}} as entities,
-collect {{
    unwind nodes as n
    unwind nodes as m
-   match path = (n)-[r]->(m)
-   WITH n,r,m 
-   // ORDER BY r.score DESC LIMIT 10 // doesn't exist in ours
-   WITH distinct r
-   RETURN startNode(r).id+" "+type(r)+" "+endNode(r).id as relText
+   match (n)-[r]->(m)
+   RETURN distinct r
    // todo should we have a limit here?
 }} as rels,
 collect {{
@@ -246,14 +239,17 @@ collect {{
    with m, collect(distinct r) as rels, count(*) as freq
    ORDER BY freq DESC LIMIT {topOutsideRels}
    WITH collect(m) as outsideNodes, apoc.coll.flatten(collect(rels)) as rels
-   RETURN {{nodes: [n in outsideNodes | n.id + " " + coalesce(n.description, "")], 
-    rels: [r in rels | startNode(r).id+" "+type(r)+" "+endNode(r).id]}}
-}} as outsideRels
+   RETURN {{ nodes: outsideNodes, rels: rels }}
+}} as outside
 
-RETURN {{chunks: text_mapping, communities: communities, 
-       entities: entities,
-       relationships: rels,
-	   outside: outsideRels}} AS text, score, {{}} AS metadata ;
+RETURN {{chunks: [c in chunks | c.text], 
+        communities: [c in communities | c.summary], 
+        entities: [n in nodes | apoc.coll.removeAll(labels(n),["__Entity__"])[0] + ":"+ n.id + " " + coalesce(n.description, "")],
+        relationships: [r in rels | startNode(r).id+" "+type(r)+" "+endNode(r).id],
+	    outside: {{
+          nodes: [n in outside[0].nodes | apoc.coll.removeAll(labels(n),["__Entity__"])[0] + ":"+n.id + " " + coalesce(n.description, "")],
+          relationships: [r in outside[0].rels | apoc.coll.removeAll(labels(startNode(r)),["__Entity__"])[0] + ":"+startNode(r).id+" "+type(r)+" "+apoc.coll.removeAll(labels(startNode(r)),["__Entity__"])[0] + ":"+endNode(r).id]}}
+       }} AS text, score, {{entities:metadata}} as metadata 
 """
 
 CHAT_MODE_CONFIG_MAP= {
@@ -271,8 +267,8 @@ CHAT_MODE_CONFIG_MAP= {
         },
         "local_community_search": {
             "retrieval_query": LOCAL_COMMUNITY_SEARCH_QUERY.format(topChunks=LOCAL_COMMUNITY_TOP_CHUNKS,
-                                    topCommunities=LOCAL_COMMUNITY_TOP_COMMUNITIES,
-                                     topOutsideRels=LOCAL_COMMUNITY_TOP_OUTSIDE_RELS),
+                                                                   topCommunities=LOCAL_COMMUNITY_TOP_COMMUNITIES,
+                                                                   topOutsideRels=LOCAL_COMMUNITY_TOP_OUTSIDE_RELS),
             "index_name": "entity_vector",
             "keyword_index": None,
             "document_filter": False
