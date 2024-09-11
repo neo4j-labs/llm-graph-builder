@@ -36,26 +36,26 @@ export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
-        'diffbot',
-        'openai-gpt-3.5',
-        'openai-gpt-4o',
-        'openai-gpt-4o-mini',
-        'gemini-1.0-pro',
-        'gemini-1.5-pro',
-        'azure_ai_gpt_35',
-        'azure_ai_gpt_4o',
-        'ollama_llama3',
-        'groq_llama3_70b',
-        'anthropic_claude_3_5_sonnet',
-        'fireworks_v3p1_405b',
-        'bedrock_claude_3_5_sonnet',
-      ];
+      'diffbot',
+      'openai-gpt-3.5',
+      'openai-gpt-4o',
+      'openai-gpt-4o-mini',
+      'gemini-1.0-pro',
+      'gemini-1.5-pro',
+      'azure_ai_gpt_35',
+      'azure_ai_gpt_4o',
+      'ollama_llama3',
+      'groq_llama3_70b',
+      'anthropic_claude_3_5_sonnet',
+      'fireworks_v3p1_405b',
+      'bedrock_claude_3_5_sonnet',
+    ];
 
 export const defaultLLM = llms?.includes('openai-gpt-4o')
   ? 'openai-gpt-4o'
   : llms?.includes('gemini-1.0-pro')
-  ? 'gemini-1.0-pro'
-  : 'diffbot';
+    ? 'gemini-1.0-pro'
+    : 'diffbot';
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
     ? process.env.VITE_CHAT_MODES?.split(',')
@@ -215,7 +215,12 @@ export const graphView: OptionType[] = [
   { label: 'Entity Graph', value: queryMap.Entities },
   { label: 'Knowledge Graph', value: queryMap.DocChunkEntities },
 ];
-export const intitalGraphType: GraphType[] = ['DocumentChunk', 'Entities', 'Communities'];
+
+export const intitalGraphType = (isGDSActive: boolean): GraphType[] => {
+  return isGDSActive
+    ? ['DocumentChunk', 'Entities', 'Communities'] // GDS is active, include communities
+    : ['DocumentChunk', 'Entities']; // GDS is inactive, exclude communities
+};
 
 export const appLabels = {
   ownSchema: 'Or Define your own Schema',
