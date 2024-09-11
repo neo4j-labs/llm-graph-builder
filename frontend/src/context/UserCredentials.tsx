@@ -8,8 +8,8 @@ type Props = {
 export const UserConnection = createContext<ContextProps>({
   userCredentials: null,
   setUserCredentials: () => null,
-  isGdsActive: null,
-  setGdsActive: () => null,
+  isGdsActive: false,
+  setGdsActive: () => false,
 });
 export const useCredentials = () => {
   const userCredentials = useContext(UserConnection);
@@ -17,7 +17,7 @@ export const useCredentials = () => {
 };
 const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
   const [userCredentials, setUserCredentials] = useState<UserCredentials | null>(null);
-  const [isGdsActive, setGdsActive] = useReducer((s) => !s, false);
+  const [isGdsActive, setGdsActive] = useState<boolean>(false);
   const value = {
     userCredentials,
     setUserCredentials,

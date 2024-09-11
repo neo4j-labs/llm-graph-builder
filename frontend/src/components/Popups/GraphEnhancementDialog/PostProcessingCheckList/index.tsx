@@ -32,7 +32,11 @@ export default function PostProcessingCheckList() {
                           .join(' ')}
                       </Typography>
                     }
-                    checked={postProcessingTasks.includes(job.title)}
+                    checked={
+                      isCreateCommunities
+                        ? isGdsActive && postProcessingTasks.includes(job.title)
+                        : postProcessingTasks.includes(job.title)
+                    }
                     onChange={(e) => {
                       if (e.target.checked) {
                         setPostProcessingTasks((prev) => [...prev, job.title]);
@@ -40,7 +44,7 @@ export default function PostProcessingCheckList() {
                         setPostProcessingTasks((prev) => prev.filter((s) => s !== job.title));
                       }
                     }}
-                    disabled={isCreateCommunities && !isGdsActive} // Disable if GDS is not active
+                    disabled={isCreateCommunities && !isGdsActive}
                   />
                   <Typography variant={tablet ? 'body-small' : 'body-medium'}>{job.description}</Typography>
                 </Flex>

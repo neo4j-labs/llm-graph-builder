@@ -643,8 +643,8 @@ export interface DrawerChatbotProps {
 export interface ContextProps {
   userCredentials: UserCredentials | null;
   setUserCredentials: (UserCredentials: UserCredentials) => void;
-  isGdsActive: boolean | null;
-  setGdsActive: () => void;
+  isGdsActive: boolean;
+  setGdsActive: Dispatch<SetStateAction<boolean>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];
