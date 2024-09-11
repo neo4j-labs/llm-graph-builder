@@ -74,7 +74,7 @@ match (chunk:Chunk) where chunk.id IN $chunksIds
 MATCH (chunk)-[:PART_OF]->(d:Document)
 CALL {WITH chunk
 MATCH (chunk)-[:HAS_ENTITY]->(e) 
-MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk &! Document &! `__Community__`) 
+MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk &! Document) 
 UNWIND rels as r
 RETURN collect(distinct r) as rels
 }
@@ -232,7 +232,6 @@ RETURN text, avg_score as score, {length:size(text), source: COALESCE( CASE WHEN
 RETURN text, avg_score as score, {{length:size(text), source: COALESCE( CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkdetails: chunkdetails}} AS metadata
 """
 
-
 ### Local community search
 LOCAL_COMMUNITY_TOP_K = 10
 LOCAL_COMMUNITY_TOP_CHUNKS = 3
@@ -274,7 +273,10 @@ collect {{
    WITH collect(m) as outsideNodes, apoc.coll.flatten(collect(rels)) as rels
    RETURN {{ nodes: outsideNodes, rels: rels }}
 }} as outside
+"""
 
+
+LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX = """
 RETURN {{chunks: [c in chunks | c.text], 
         communities: [c in communities | c.summary], 
         entities: [n in nodes | apoc.coll.removeAll(labels(n),["__Entity__"])[0] + ":"+ n.id + " " + coalesce(n.description, "")],
@@ -284,6 +286,22 @@ RETURN {{chunks: [c in chunks | c.text],
           relationships: [r in outside[0].rels | apoc.coll.removeAll(labels(startNode(r)),["__Entity__"])[0] + ":"+startNode(r).id+" "+type(r)+" "+apoc.coll.removeAll(labels(startNode(r)),["__Entity__"])[0] + ":"+endNode(r).id]}}
        }} AS text, score, {{entities:metadata}} as metadata 
 """
+
+LOCAL_COMMUNITY_DETAILS_QUERY_PREFIX = """
+UNWIND $entityIds as id
+MATCH (node) WHERE elementId(node) = id
+WITH node, 1.0 as score
+"""
+
+LOCAL_COMMUNITY_DETAILS_QUERY_SUFFIX = """
+RETURN  [chunk in chunks | chunk {.*, embedding:null}] as chunks,
+[community in communities | community {.*, embedding:null}] as communities,
+[node in nodes+outside[0].nodes | node {.*, label:labels(node),embedding:null}] as nodes, 
+[r in rels+outside[0].rels | {startNode:{element_id:elementId(startNode(r)), labels:labels(startNode(r)), properties:{id:startNode(r).id,description:startNode(r).description}},
+                     endNode:{element_id:elementId(endNode(r)), labels:labels(endNode(r)), properties:{id:endNode(r).id,description:endNode(r).description}},
+                     relationship: {type:type(r), element_id:elementId(r)}}] as entities
+"""
+
 
 CHAT_MODE_CONFIG_MAP= {
         "vector": {
@@ -301,7 +319,7 @@ CHAT_MODE_CONFIG_MAP= {
         "local_community_search": {
             "retrieval_query": LOCAL_COMMUNITY_SEARCH_QUERY.format(topChunks=LOCAL_COMMUNITY_TOP_CHUNKS,
                                                                    topCommunities=LOCAL_COMMUNITY_TOP_COMMUNITIES,
-                                                                   topOutsideRels=LOCAL_COMMUNITY_TOP_OUTSIDE_RELS),
+                                                                   topOutsideRels=LOCAL_COMMUNITY_TOP_OUTSIDE_RELS)+LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX,
             "index_name": "entity_vector",
             "keyword_index": None,
             "document_filter": False
