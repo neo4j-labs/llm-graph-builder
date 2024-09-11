@@ -1,5 +1,6 @@
 import { NvlOptions } from '@neo4j-nvl/base';
 import { GraphType, OptionType } from '../types';
+import { getDescriptionForChatMode } from './Utils';
 
 export const document = `+ [docs]`;
 
@@ -28,10 +29,12 @@ export const docChunkEntities = `+[chunks]
 + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
 //chunks with entities
 + collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
+
 export const APP_SOURCES =
   process.env.VITE_REACT_APP_SOURCES !== ''
     ? (process.env.VITE_REACT_APP_SOURCES?.split(',') as string[])
     : ['gcs', 's3', 'local', 'wiki', 'youtube', 'web'];
+
 export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
@@ -56,10 +59,28 @@ export const defaultLLM = llms?.includes('openai-gpt-4o')
   : llms?.includes('gemini-1.0-pro')
     ? 'gemini-1.0-pro'
     : 'diffbot';
+  
+// export const chatModes =
+//   process.env?.VITE_CHAT_MODES?.trim() != ''
+//     ? process.env.VITE_CHAT_MODES?.split(',')
+//     : ['vector', 'graph', 'graph+vector', 'fulltext', 'graph+vector+fulltext', 'local community', 'global community'];
+
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
-    ? process.env.VITE_CHAT_MODES?.split(',')
-    : ['vector', 'graph', 'graph+vector', 'fulltext', 'graph+vector+fulltext', 'local community', 'global community'];
+    ? process.env.VITE_CHAT_MODES?.split(',').map((mode) => ({
+      mode: mode.trim(),
+      description: getDescriptionForChatMode(mode.trim()),  // Helper function for descriptions
+    }))
+    : [
+      { mode: 'vector', description: 'Vector-based chat for enhanced processing' },
+      { mode: 'graph', description: 'Graph-based chat for structured conversations' },
+      { mode: 'graph+vector', description: 'Combines both Graph and Vector capabilities' },
+      { mode: 'fulltext', description: 'Full-text-based chat for in-depth search' },
+      { mode: 'graph+vector+fulltext', description: 'A mix of all modes for full functionality' },
+      { mode: 'local community', description: 'Community chat for local interactions' },
+      { mode: 'global community', description: 'Community chat for global interactions' }
+    ];
+
 export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.VITE_TIME_PER_PAGE ? parseInt(process.env.VITE_TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;

@@ -550,7 +550,7 @@ export interface SettingsModalProps {
   onClear?: () => void;
 }
 export interface Menuitems {
-  title: string;
+  title: string | JSX.Element;
   onClick: () => void;
   disabledCondition: boolean;
   description?: string | React.ReactNode;

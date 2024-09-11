@@ -315,3 +315,24 @@ export const capitalizeWithPlus = (s: string) => {
     .map((s) => capitalize(s))
     .join('+');
 };
+
+export const getDescriptionForChatMode = (mode: string): string => {
+  switch (mode.toLowerCase()) {
+    case 'vector':
+      return 'Vector-based chat for enhanced processing';
+    case 'graph':
+      return 'Graph-based chat for structured conversations';
+    case 'graph+vector':
+      return 'Combines both Graph and Vector capabilities';
+    case 'fulltext':
+      return 'Full-text-based chat for in-depth search';
+    case 'graph+vector+fulltext':
+      return 'A mix of all modes for full functionality';
+    case 'local community':
+      return 'Community chat for local interactions';
+    case 'global community':
+      return 'Community chat for global interactions';
+    default:
+      return 'Chat mode description not available';  // Fallback description
+  }
+}

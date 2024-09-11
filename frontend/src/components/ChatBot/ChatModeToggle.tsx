@@ -1,4 +1,4 @@
-import { StatusIndicator } from '@neo4j-ndl/react';
+import { StatusIndicator, Tip } from '@neo4j-ndl/react';
 import { useMemo } from 'react';
 import { useFileContext } from '../../context/UsersFiles';
 import CustomMenu from '../UI/Menu';
@@ -8,16 +8,18 @@ import { capitalizeWithPlus } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 export default function ChatModeToggle({
   menuAnchor,
-  closeHandler = () => {},
+  closeHandler = () => { },
   open,
   anchorPortal = true,
   disableBackdrop = false,
+  disableTooltip = false
 }: {
   menuAnchor: HTMLElement | null;
   closeHandler?: () => void;
   open: boolean;
   anchorPortal?: boolean;
   disableBackdrop?: boolean;
+  disableTooltip?: boolean;
 }) {
   const { setchatMode, chatMode, postProcessingTasks } = useFileContext();
   const isCommunityAllowed = postProcessingTasks.includes('create_communities');
@@ -33,16 +35,23 @@ export default function ChatModeToggle({
         if (isGdsActive && isCommunityAllowed) {
           return chatModes?.map((m) => {
             return {
-              title: m.includes('+') ? capitalizeWithPlus(m) : capitalize(m),
+              title: (
+                <Tip allowedPlacements={['left']} isDisabled={disableTooltip}>
+                  <Tip.Trigger>
+                    <span>{m.mode.includes('+') ? capitalizeWithPlus(m.mode) : capitalize(m.mode)}</span>
+                  </Tip.Trigger>
+                  <Tip.Content>{m.description}</Tip.Content>
+                </Tip>
+              ),
               onClick: () => {
-                setchatMode(m);
+                setchatMode(m.mode);
               },
               disabledCondition: false,
               description: (
                 <span>
-                  {chatMode === m && (
+                  {chatMode === m.mode && (
                     <>
-                      <StatusIndicator type={`${chatMode === m ? 'success' : 'unknown'}`} /> Selected
+                      <StatusIndicator type={`${chatMode === m.mode ? 'success' : 'unknown'}`} /> Selected
                     </>
                   )}
                 </span>
@@ -51,19 +60,26 @@ export default function ChatModeToggle({
           });
         }
         return chatModes
-          ?.filter((s) => !s.includes('community'))
+          ?.filter((s) => !s.mode.includes('community'))
           ?.map((m) => {
             return {
-              title: m.includes('+') ? capitalizeWithPlus(m) : capitalize(m),
+              title: (
+                <Tip allowedPlacements={['left']} isDisabled={disableTooltip}>
+                  <Tip.Trigger>
+                    <span>{m.mode.includes('+') ? capitalizeWithPlus(m.mode) : capitalize(m.mode)}</span>
+                  </Tip.Trigger>
+                  <Tip.Content>{m.description}</Tip.Content>
+                </Tip>
+              ),
               onClick: () => {
-                setchatMode(m);
+                setchatMode(m.mode);
               },
               disabledCondition: false,
               description: (
                 <span>
-                  {chatMode === m && (
+                  {chatMode === m.mode && (
                     <>
-                      <StatusIndicator type={`${chatMode === m ? 'success' : 'unknown'}`} /> Selected
+                      <StatusIndicator type={`${chatMode === m.mode ? 'success' : 'unknown'}`} /> Selected
                     </>
                   )}
                 </span>
