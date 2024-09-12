@@ -155,7 +155,7 @@ def format_documents(documents, model):
 
     formatted_docs = []
     sources = set()
-    lc_entities = {}
+    lc_entities = {'entities':list()}
 
     for doc in sorted_documents:
         try:
@@ -357,12 +357,12 @@ def process_chat_response(messages,history, question, model, graph, document_nam
     try:
         llm, doc_retriever, model_version = setup_chat(model, graph, document_names,chat_mode_settings)
         
-        docs = retrieve_documents(doc_retriever, messages)        
+        docs = retrieve_documents(doc_retriever, messages)   
         if docs:
             content, result, total_tokens = process_documents(docs, question, messages, llm, model,chat_mode_settings)
         else:
             content = "I couldn't find any relevant documents to answer your question."
-            result = {"sources": [], "chunkdetails": []}
+            result = {"sources": [], "chunkdetails": [],"entities":[]}
             total_tokens = 0
         
         ai_response = AIMessage(content=content)
