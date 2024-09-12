@@ -140,6 +140,27 @@ class graphDBdataAccess:
                                 )
         else:
             logging.info("Vector index does not exist, So KNN graph not update")
+
+    def check_gds_version(self):
+        try:
+            gds_procedure_count = """
+            SHOW PROCEDURES
+            YIELD name
+            WHERE name STARTS WITH "gds."
+            RETURN COUNT(*) AS totalGdsProcedures
+            """
+            result = self.graph.query(gds_procedure_count)
+            total_gds_procedures = result[0]['totalGdsProcedures'] if result else 0
+
+            if total_gds_procedures > 0:
+                logging.info("GDS is available in the database.")
+                return True
+            else:
+                logging.info("GDS is not available in the database.")
+                return False
+        except Exception as e:
+            logging.error(f"An error occurred while checking GDS version: {e}")
+            return False
             
     def connection_check_and_get_vector_dimensions(self):
         """
@@ -166,19 +187,20 @@ class graphDBdataAccess:
         embedding_model = os.getenv('EMBEDDING_MODEL')
         embeddings, application_dimension = load_embedding_model(embedding_model)
         logging.info(f'embedding model:{embeddings} and dimesion:{application_dimension}')
-        # print(chunks_exists)
+
+        gds_status = self.check_gds_version()
         
         if self.graph:
             if len(db_vector_dimension) > 0:
-                return {'db_vector_dimension': db_vector_dimension[0]['vector_dimensions'], 'application_dimension':application_dimension, 'message':"Connection Successful"}
+                return {'db_vector_dimension': db_vector_dimension[0]['vector_dimensions'], 'application_dimension':application_dimension, 'message':"Connection Successful","gds_status":gds_status}
             else:
                 if len(db_vector_dimension) == 0 and len(result_chunks) == 0:
                     logging.info("Chunks and vector index does not exists in database")
-                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":False}
+                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":False,"gds_status":gds_status}
                 elif len(db_vector_dimension) == 0 and result_chunks[0]['hasEmbedding']==0 and result_chunks[0]['chunks'] > 0:
-                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":True}
+                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":True,"gds_status":gds_status}
                 else:
-                    return {'message':"Connection Successful"}
+                    return {'message':"Connection Successful","gds_status":gds_status}
 
     def execute_query(self, query, param=None):
         return self.graph.query(query, param)

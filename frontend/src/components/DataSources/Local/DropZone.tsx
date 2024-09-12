@@ -8,7 +8,7 @@ import CustomAlert from '../../UI/Alert';
 import { CustomFile, CustomFileBase, UserCredentials, alertStateType } from '../../../types';
 import { buttonCaptions, chunkSize } from '../../../utils/Constants';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
-import IconButtonWithToolTip from '../../UI/IconButtonToolTip';
+import { IconButtonWithToolTip } from '../../UI/IconButtonToolTip';
 import { uploadAPI } from '../../../utils/FileAPI';
 
 const DropZone: FunctionComponent = () => {

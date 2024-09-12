@@ -41,7 +41,7 @@ export default function ConnectionModal({
   const [username, setUsername] = useState<string>(initialusername ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
-  const { setUserCredentials, userCredentials } = useCredentials();
+  const { setUserCredentials, userCredentials, setGdsActive } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [userDbVectorIndex, setUserDbVectorIndex] = useState<number | undefined>(initialuserdbvectorindex ?? undefined);
@@ -201,6 +201,8 @@ export default function ConnectionModal({
       if (response?.data?.status !== 'Success') {
         throw new Error(response.data.error);
       } else {
+        const isgdsActive = response.data.data.gds_status;
+        setGdsActive(isgdsActive);
         localStorage.setItem(
           'neo4j.connection',
           JSON.stringify({
@@ -209,6 +211,7 @@ export default function ConnectionModal({
             password: password,
             database: database,
             userDbVectorIndex,
+            isgdsActive,
           })
         );
         setUserDbVectorIndex(response.data.data.db_vector_dimension);

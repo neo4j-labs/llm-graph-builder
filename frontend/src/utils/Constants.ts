@@ -36,30 +36,30 @@ export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
-        'diffbot',
-        'openai-gpt-3.5',
-        'openai-gpt-4o',
-        'openai-gpt-4o-mini',
-        'gemini-1.0-pro',
-        'gemini-1.5-pro',
-        'azure_ai_gpt_35',
-        'azure_ai_gpt_4o',
-        'ollama_llama3',
-        'groq_llama3_70b',
-        'anthropic_claude_3_5_sonnet',
-        'fireworks_v3p1_405b',
-        'bedrock_claude_3_5_sonnet',
-      ];
+      'diffbot',
+      'openai-gpt-3.5',
+      'openai-gpt-4o',
+      'openai-gpt-4o-mini',
+      'gemini-1.0-pro',
+      'gemini-1.5-pro',
+      'azure_ai_gpt_35',
+      'azure_ai_gpt_4o',
+      'ollama_llama3',
+      'groq_llama3_70b',
+      'anthropic_claude_3_5_sonnet',
+      'fireworks_v3p1_405b',
+      'bedrock_claude_3_5_sonnet',
+    ];
 
 export const defaultLLM = llms?.includes('openai-gpt-4o')
   ? 'openai-gpt-4o'
   : llms?.includes('gemini-1.0-pro')
-  ? 'gemini-1.0-pro'
-  : 'diffbot';
+    ? 'gemini-1.0-pro'
+    : 'diffbot';
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
     ? process.env.VITE_CHAT_MODES?.split(',')
-    : ['vector', 'graph', 'graph+vector', 'fulltext', 'graph+vector+fulltext'];
+    : ['vector', 'graph', 'graph+vector', 'fulltext', 'graph+vector+fulltext', 'local community', 'global community'];
 export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.VITE_TIME_PER_PAGE ? parseInt(process.env.VITE_TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
@@ -184,6 +184,10 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
                 semantic meaning. This facilitates tasks like clustering similar entities, identifying duplicates, and
                 performing similarity-based searches.`,
   },
+  {
+    title: 'create_communities',
+    description: 'Create Communities identifies and groups similar entities, improving search accuracy and analysis.',
+  },
 ];
 
 export const batchSize: number = parseInt(process.env.VITE_BATCH_SIZE ?? '2');
@@ -211,7 +215,12 @@ export const graphView: OptionType[] = [
   { label: 'Entity Graph', value: queryMap.Entities },
   { label: 'Knowledge Graph', value: queryMap.DocChunkEntities },
 ];
-export const intitalGraphType: GraphType[] = ['DocumentChunk', 'Entities'];
+
+export const intitalGraphType = (isGDSActive: boolean): GraphType[] => {
+  return isGDSActive
+    ? ['DocumentChunk', 'Entities', 'Communities'] // GDS is active, include communities
+    : ['DocumentChunk', 'Entities']; // GDS is inactive, exclude communities
+};
 
 export const appLabels = {
   ownSchema: 'Or Define your own Schema',
@@ -233,6 +242,17 @@ export const graphLabels = {
   selectCheckbox: 'Select atleast one checkbox for graph view',
   totalRelationships: 'Total Relationships',
   nodeSize: 30,
+  docChunk: 'Document & Chunk',
+  community: 'Communities',
+  noNodesRels: 'No Nodes and No relationships',
 };
 
 export const RESULT_STEP_SIZE = 25;
+
+export const connectionLabels = {
+  notConnected: 'Not Connected',
+  graphDataScience: 'Graph Data Science',
+  graphDatabase: 'Graph Database',
+  greenStroke: 'green',
+  redStroke: 'red',
+};

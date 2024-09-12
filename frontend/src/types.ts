@@ -263,7 +263,7 @@ export interface GraphViewModalProps {
   selectedRows?: CustomFile[] | undefined;
 }
 
-export type GraphType = 'Entities' | 'DocumentChunk';
+export type GraphType = 'Entities' | 'DocumentChunk' | 'Communities';
 
 export type PartialLabelNode = Partial<Node> & {
   labels: string;
@@ -273,6 +273,7 @@ export interface CheckboxSectionProps {
   graphType: GraphType[];
   loading: boolean;
   handleChange: (graph: GraphType) => void;
+  isgds: boolean;
 }
 
 export interface fileName {
@@ -643,8 +644,16 @@ export interface DrawerChatbotProps {
 export interface ContextProps {
   userCredentials: UserCredentials | null;
   setUserCredentials: (UserCredentials: UserCredentials) => void;
+  isGdsActive: boolean;
+  setGdsActive: Dispatch<SetStateAction<boolean>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];
   setMessages: Dispatch<SetStateAction<Messages[]>>;
+}
+
+export interface DatabaseStatusProps {
+  isConnected: boolean;
+  isGdsActive: boolean;
+  uri: string | null;
 }

@@ -14,7 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../../context/UsersFiles';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
-import IconButtonWithToolTip from '../UI/IconButtonToolTip';
+import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { buttonCaptions, tooltips } from '../../utils/Constants';
 import useSpeechSynthesis from '../../hooks/useSpeech';
 import ButtonWithToolTip from '../UI/ButtonWithToolTip';
