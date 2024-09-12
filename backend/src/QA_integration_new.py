@@ -377,7 +377,7 @@ def QA_RAG(graph, model, question, document_names,session_id, mode):
         elif mode == "vector" or mode == "fulltext":
             retrieval_query = VECTOR_SEARCH_QUERY
         else:
-            retrieval_query = VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT)
+            retrieval_query = VECTOR_GRAPH_SEARCH_QUERY
 
         llm, doc_retriever, model_version = setup_chat(model, graph, document_names,retrieval_query,mode)
         
