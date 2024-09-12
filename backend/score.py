@@ -154,6 +154,7 @@ async def extract_knowledge_graph_from_file(
           Nodes and Relations created in Neo4j databse for the pdf file
     """
     try:
+        start_time = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)   
         graphDb_data_Access = graphDBdataAccess(graph)
         
@@ -193,6 +194,8 @@ async def extract_knowledge_graph_from_file(
             result['source_type'] = source_type
             result['logging_time'] = formatted_time(datetime.now(timezone.utc))
         logger.log_struct(result)
+        extract_api_time = time.time() - start_time
+        logging.info(f"extraction completed in {extract_api_time:.2f} seconds for file name {file_name}")
         return create_api_response('Success', data=result, file_source= source_type)
     except Exception as e:
         message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content "

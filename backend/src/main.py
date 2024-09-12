@@ -281,6 +281,7 @@ def processing_source(uri, userName, password, database, model, file_name, pages
      status and model as attributes.
   """
   start_time = datetime.now()
+  processing_source_start_time = time.time()
   graph = create_graph_database_connection(uri, userName, password, database)
   graphDb_data_Access = graphDBdataAccess(graph)
 
@@ -329,7 +330,10 @@ def processing_source(uri, userName, password, database, model, file_name, pages
           logging.info('Exit from running loop of processing file')
           break
         else:
+          processing_chunks_start_time = time.time()
           node_count,rel_count = processing_chunks(selected_chunks,graph,uri, userName, password, database,file_name,model,allowedNodes,allowedRelationship,node_count, rel_count)
+          processing_chunks_end_time = time.time() - processing_chunks_start_time
+          logging.info(f"{update_graph_chunk_processed} chunks processed upto {select_chunks_upto} completed in {processing_chunks_end_time:.2f} seconds for file name {file_name}")
           end_time = datetime.now()
           processed_time = end_time - start_time
           
@@ -369,7 +373,8 @@ def processing_source(uri, userName, password, database, model, file_name, pages
           delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
         else:
           delete_uploaded_local_file(merged_file_path, file_name)  
-        
+      processing_source_func = time.time() - processing_source_start_time
+      logging.info(f"processing source function completed in {processing_source_func:.2f} seconds for file name {file_name}")  
       return {
           "fileName": file_name,
           "nodeCount": node_count,
