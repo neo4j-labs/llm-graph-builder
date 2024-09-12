@@ -316,7 +316,7 @@ CHAT_MODE_CONFIG_MAP= {
             "keyword_index": "keyword", 
             "document_filter": False
         },
-        "local_community_search": {
+        "entity search+vector": {
             "retrieval_query": LOCAL_COMMUNITY_SEARCH_QUERY.format(topChunks=LOCAL_COMMUNITY_TOP_CHUNKS,
                                                                    topCommunities=LOCAL_COMMUNITY_TOP_COMMUNITIES,
                                                                    topOutsideRels=LOCAL_COMMUNITY_TOP_OUTSIDE_RELS)+LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX,
