@@ -1862,6 +1862,7 @@
   dependencies:
     "@react-types/shared" "^3.24.1"
 
+
 "@react-types/combobox@^3.12.1":
   version "3.12.1"
   resolved "https://registry.yarnpkg.com/@react-types/combobox/-/combobox-3.12.1.tgz#ab015d31c160aa0a21d696887ce81467c5996602"

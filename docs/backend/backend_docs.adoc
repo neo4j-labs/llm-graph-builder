@@ -580,7 +580,6 @@ The API provides a continuous update on the extraction status of a specified fil
     "relationshipCount": 0, 
     "model": "OpenAI GPT 3.5", 
     "total_chunks": 3, 
-    "total_pages": 1, 
     "fileSize": 92373, 
     "processed_chunk": 0
 }

@@ -67,20 +67,23 @@ def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name
             #             )
             # logging.info('create vector index on chunk embedding')
             result = graph.query("SHOW INDEXES YIELD * WHERE labelsOrTypes = ['__Chunk__'] and name = 'vector'")
+            vector_index = graph.query("SHOW INDEXES YIELD * WHERE labelsOrTypes = ['Chunk'] and type = 'VECTOR' AND name = 'vector' return options")
             if result:
                 logging.info(f"vector index dropped for 'Chunk'")
                 graph.query("DROP INDEX vector IF EXISTS;")
 
-            graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
-                            OPTIONS {indexConfig: {
-                            `vector.dimensions`: $dimensions,
-                            `vector.similarity_function`: 'cosine'
-                            }}
-                        """,
-                        {
-                            "dimensions" : dimension
-                        }
-                        )
+            if len(vector_index) == 0:
+                logging.info(f'vector index is not exist, will create in next query')
+                graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
+                                OPTIONS {indexConfig: {
+                                `vector.dimensions`: $dimensions,
+                                `vector.similarity_function`: 'cosine'
+                                }}
+                            """,
+                            {
+                                "dimensions" : dimension
+                            }
+                            )
     
     query_to_create_embedding = """
         UNWIND $data AS row

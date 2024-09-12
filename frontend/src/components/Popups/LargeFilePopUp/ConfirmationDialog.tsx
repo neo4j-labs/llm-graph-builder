@@ -91,12 +91,13 @@ export default function ConfirmationDialog({
               extractHandler(selectedRows);
             } else {
               const tobeProcessFiles: CustomFile[] = [];
-              checked.forEach((id: string) => {
+              for (let index = 0; index < checked.length; index++) {
+                const id = checked[index];
                 const file = filesData.find((f) => f.id === id);
                 if (file) {
                   tobeProcessFiles.push(file);
                 }
-              });
+              }
               extractHandler(tobeProcessFiles);
             }
             setChecked([]);

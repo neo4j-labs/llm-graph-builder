@@ -25,6 +25,7 @@ export const extractAPI = async (
   model: string,
   userCredentials: UserCredentials,
   source_type: string,
+  retry_condition: string,
   source_url?: string,
   aws_access_key_id?: string | null,
   aws_secret_access_key?: string | null,
@@ -51,6 +52,7 @@ export const extractAPI = async (
       file_name,
       allowedNodes,
       allowedRelationship,
+      retry_condition,
     };
   } else if (source_type === 'Wikipedia') {
     additionalParams = {
@@ -61,6 +63,7 @@ export const extractAPI = async (
       allowedNodes,
       allowedRelationship,
       language,
+      retry_condition,
     };
   } else if (source_type === 'gcs bucket') {
     additionalParams = {
@@ -74,6 +77,7 @@ export const extractAPI = async (
       allowedRelationship,
       gcs_project_id,
       access_token,
+      retry_condition,
     };
   } else if (source_type === 'youtube') {
     additionalParams = {
@@ -83,6 +87,7 @@ export const extractAPI = async (
       file_name,
       allowedNodes,
       allowedRelationship,
+      retry_condition,
     };
   } else if (source_type === 'web-url') {
     additionalParams = {
@@ -92,6 +97,7 @@ export const extractAPI = async (
       file_name,
       allowedNodes,
       allowedRelationship,
+      retry_condition,
     };
   } else {
     additionalParams = {
@@ -100,6 +106,7 @@ export const extractAPI = async (
       file_name,
       allowedNodes,
       allowedRelationship,
+      retry_condition,
     };
   }
   const response = await apiCall(urlExtract, method, commonParams, additionalParams);
