@@ -273,14 +273,14 @@ collect {{
 
 
 LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX = """
-RETURN {{chunks: [c in chunks | c.text], 
+RETURN {chunks: [c in chunks | c.text], 
         communities: [c in communities | c.summary], 
         entities: [n in nodes | apoc.coll.removeAll(labels(n),["__Entity__"])[0] + ":"+ n.id + " " + coalesce(n.description, "")],
         relationships: [r in rels | startNode(r).id+" "+type(r)+" "+endNode(r).id],
-	    outside: {{
+	    outside: {
           nodes: [n in outside[0].nodes | apoc.coll.removeAll(labels(n),["__Entity__"])[0] + ":"+n.id + " " + coalesce(n.description, "")],
-          relationships: [r in outside[0].rels | apoc.coll.removeAll(labels(startNode(r)),["__Entity__"])[0] + ":"+startNode(r).id+" "+type(r)+" "+apoc.coll.removeAll(labels(startNode(r)),["__Entity__"])[0] + ":"+endNode(r).id]}}
-       }} AS text, score, {{entities:metadata}} as metadata 
+          relationships: [r in outside[0].rels | apoc.coll.removeAll(labels(startNode(r)),["__Entity__"])[0] + ":"+startNode(r).id+" "+type(r)+" "+apoc.coll.removeAll(labels(startNode(r)),["__Entity__"])[0] + ":"+endNode(r).id]}
+       } AS text, score, {entities:metadata} as metadata 
 """
 
 LOCAL_COMMUNITY_DETAILS_QUERY_PREFIX = """
