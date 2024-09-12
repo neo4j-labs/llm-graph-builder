@@ -191,7 +191,8 @@ async def extract_knowledge_graph_from_file(
             result['source_url'] = source_url
             result['wiki_query'] = wiki_query
             result['source_type'] = source_type
-        logger.log_struct(result)
+            result['logging_time'] = formatted_time(datetime.now(timezone.utc))
+        logger.log_struct({"severity":"INFO","jsonPayload":result})
         extract_api_time = time.time() - start_time
         logging.info(f"extraction completed in {extract_api_time:.2f} seconds for file name {file_name}")
         return create_api_response('Success', data=result, file_source= source_type)
@@ -210,7 +211,7 @@ async def extract_knowledge_graph_from_file(
                 logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
                 delete_uploaded_local_file(merged_file_path,file_name)
         json_obj = {'message':message,'error_message':error_message, 'file_name': file_name,'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(json_obj)
+        logger.log_struct({"severity":"ERROR","jsonPayload":json_obj})
         logging.exception(f'File Failed in extraction: {json_obj}')
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = file_name)
     finally:
@@ -227,7 +228,7 @@ async def get_source_list(uri:str, userName:str, password:str, database:str=None
             uri = uri.replace(" ","+")
         result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
         json_obj = {'api_name':'sources_list','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(json_obj)
+        logger.log_struct({"severity":"INFO","jsonPayload":json_obj})
         return create_api_response("Success",data=result)
     except Exception as e:
         job_status = "Failed"
@@ -241,24 +242,23 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         tasks = set(map(str.strip, json.loads(tasks)))
-
+        
         if "materialize_text_chunk_similarities" in tasks:
             await asyncio.to_thread(update_graph, graph)
             json_obj = {'api_name': 'post_processing/update_similarity_graph', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-            logger.log_struct(json_obj)
             logging.info(f'Updated KNN Graph')
 
         if "enable_hybrid_search_and_fulltext_search_in_bloom" in tasks:
             await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database,type="entities")
             # await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database,type="keyword")
-            josn_obj = {'api_name': 'post_processing/enable_hybrid_search_and_fulltext_search_in_bloom', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-            logger.log_struct(josn_obj)
+            json_obj = {'api_name': 'post_processing/enable_hybrid_search_and_fulltext_search_in_bloom', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logging.info(f'Full Text index created')
         if os.environ.get('ENTITY_EMBEDDING','False').upper()=="TRUE" and "materialize_entity_similarities" in tasks:
             await asyncio.to_thread(create_entity_embedding, graph)
             json_obj = {'api_name': 'post_processing/create_entity_embedding', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-            logger.log_struct(json_obj)
             logging.info(f'Entity Embeddings created')
+
+        logger.log_struct({"severity":"INFO","jsonPayload":json_obj})
         return create_api_response('Success', message='All tasks completed successfully')
     
     except Exception as e:
@@ -285,7 +285,8 @@ async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(),
         result["info"]["response_time"] = round(total_call_time, 2)
         
         json_obj = {'api_name':'chat_bot','db_url':uri,'session_id':session_id, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(json_obj)
+        logger.log_struct({"severity":"INFO","jsonPayload":json_obj})
+        
         return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
@@ -302,7 +303,7 @@ async def chunk_entities(uri=Form(),userName=Form(), password=Form(), chunk_ids=
         logging.info(f"URI: {uri}, Username: {userName}, chunk_ids: {chunk_ids}")
         result = await asyncio.to_thread(get_entities_from_chunkids,uri=uri, username=userName, password=password, chunk_ids=chunk_ids)
         json_obj = {'api_name':'chunk_entities','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(json_obj)
+        logger.log_struct({"severity":"INFO","jsonPayload":json_obj})
         return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
@@ -330,7 +331,7 @@ async def graph_query(
             document_names=document_names
         )
         json_obj = {'api_name':'graph_query','db_url':uri,'document_names':document_names, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(json_obj)
+        logger.log_struct({"severity":"INFO","jsonPayload":json_obj})
         return create_api_response('Success', data=result)
     except Exception as e:
         job_status = "Failed"
@@ -363,7 +364,7 @@ async def connect(uri=Form(), userName=Form(), password=Form(), database=Form())
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph)
         json_obj = {'api_name':'connect','db_url':uri,'status':result, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(json_obj)
+        logger.log_struct({"severity":"INFO","jsonPayload":json_obj})
         return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
@@ -380,7 +381,7 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, uri, CHUNK_DIR, MERGED_DIR)
         json_obj = {'api_name':'upload','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(json_obj)
+        logger.log_struct({"severity":"INFO","jsonPayload":json_obj})
         if int(chunkNumber) == int(totalChunks):
             return create_api_response('Success',data=result, message='Source Node Created Successfully')
         else:
@@ -402,7 +403,7 @@ async def get_structured_schema(uri=Form(), userName=Form(), password=Form(), da
         result = await asyncio.to_thread(get_labels_and_relationtypes, graph)
         logging.info(f'Schema result from DB: {result}')
         json_obj = {'api_name':'schema','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(json_obj)
+        logger.log_struct({"severity":"INFO","jsonPayload":json_obj})
         return create_api_response('Success', data=result)
     except Exception as e:
         message="Unable to get the labels and relationtypes from neo4j database"
@@ -471,7 +472,7 @@ async def delete_document_and_entities(uri=Form(),
         # entities_count = result[0]['deletedEntities'] if 'deletedEntities' in result[0] else 0
         message = f"Deleted {files_list_size} documents with entities from database"
         json_obj = {'api_name':'delete_document_and_entities','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(json_obj)
+        logger.log_struct({"severity":"INFO","jsonPayload":json_obj})
         return create_api_response('Success',message=message)
     except Exception as e:
         job_status = "Failed"
