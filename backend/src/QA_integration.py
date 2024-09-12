@@ -190,7 +190,7 @@ def process_documents(docs, question, messages, llm, model,chat_mode_settings):
             "context": formatted_docs,
             "input": question
         })
-        if chat_mode_settings["mode"] == "local_community_search":
+        if chat_mode_settings["mode"] == "entity search+vector":
             result = {'sources': list(),
                       'chunkdetails': list()}
             result.update(lc_entities)
@@ -325,7 +325,7 @@ def get_neo4j_retriever(graph, document_names,chat_mode_settings, search_k=CHAT_
         
         neo_db = initialize_neo4j_vector(graph, chat_mode_settings)
         document_names= list(map(str.strip, json.loads(document_names)))
-        search_k = LOCAL_COMMUNITY_TOP_K if chat_mode_settings["mode"] == "local_community_search" else CHAT_SEARCH_KWARG_K
+        search_k = LOCAL_COMMUNITY_TOP_K if chat_mode_settings["mode"] == "entity search+vector" else CHAT_SEARCH_KWARG_K
         retriever = create_retriever(neo_db, document_names,chat_mode_settings, search_k, score_threshold)
         return retriever
     except Exception as e:
