@@ -27,7 +27,6 @@ const SchemaFromTextDialog = ({
     try {
       setloading(true);
       const response = await getNodeLabelsAndRelTypesFromText(model, userText, isSchema);
-      console.log({ response });
       setloading(false);
       if (response.data.status === 'Success') {
         if (response.data?.data?.labels.length) {

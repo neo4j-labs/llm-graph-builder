@@ -59,7 +59,8 @@ const Content: React.FC<ContentProps> = ({
   });
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
-  const { setUserCredentials, userCredentials, connectionStatus, setConnectionStatus, isGdsActive, setGdsActive } = useCredentials();
+  const { setUserCredentials, userCredentials, connectionStatus, setConnectionStatus, isGdsActive, setGdsActive } =
+    useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [retryFile, setRetryFile] = useState<string>('');
@@ -477,8 +478,9 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -488,10 +490,10 @@ const Content: React.FC<ContentProps> = ({
     isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
       : isRightExpanded
-        ? 'contentWithChatBot'
-        : !isLeftExpanded && !isRightExpanded
-          ? 'w-[calc(100%-128px)]'
-          : 'contentWithDropzoneExpansion';
+      ? 'contentWithChatBot'
+      : !isLeftExpanded && !isRightExpanded
+      ? 'w-[calc(100%-128px)]'
+      : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -521,12 +523,12 @@ const Content: React.FC<ContentProps> = ({
         return prev.map((f) => {
           return f.name === filename
             ? {
-              ...f,
-              status: 'Reprocess',
-              processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-              NodesCount: isStartFromBegining ? 0 : f.NodesCount,
-              relationshipCount: isStartFromBegining ? 0 : f.relationshipCount,
-            }
+                ...f,
+                status: 'Reprocess',
+                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                NodesCount: isStartFromBegining ? 0 : f.NodesCount,
+                relationshipCount: isStartFromBegining ? 0 : f.relationshipCount,
+              }
             : f;
         });
       });
@@ -815,8 +817,9 @@ const Content: React.FC<ContentProps> = ({
           handleGenerateGraph={processWaitingFilesOnRefresh}
         ></FileTable>
         <Flex
-          className={`${!isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-            } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+          className={`${
+            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection={isTablet ? 'column' : 'row'}
         >

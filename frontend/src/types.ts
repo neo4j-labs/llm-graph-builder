@@ -223,6 +223,7 @@ export interface Messages {
   cypher_query?: string;
   graphonly_entities?: [];
   error?: string;
+  entities?: chunk[];
 }
 
 export type ChatbotProps = {
@@ -464,7 +465,13 @@ export type Entity = {
     id: string;
   };
 };
-
+export type Community = {
+  id: string;
+  summary: string;
+  weight: number;
+  level: number;
+  community_rank: number;
+};
 export type GroupedEntity = {
   texts: Set<string>;
   color: string;

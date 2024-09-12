@@ -20,6 +20,7 @@ import gcslogo from '../../assets/images/gcs.webp';
 import s3logo from '../../assets/images/s3logo.png';
 import {
   Chunk,
+  Community,
   Entity,
   ExtendedNode,
   ExtendedRelationship,
@@ -55,6 +56,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const [activeTab, setActiveTab] = useState<number>(error.length ? 10 : mode === 'graph' ? 4 : 3);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
+  const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
   const [nodes, setNodes] = useState<ExtendedNode[]>([]);
@@ -89,11 +91,17 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   useEffect(() => {
     if (mode != 'graph' || error?.trim() !== '') {
       setLoading(true);
-      chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids.map((c) => c.id).join(','))
+      chunkEntitiesAPI(
+        userCredentials as UserCredentials,
+        chunk_ids.map((c) => c.id).join(','),
+        userCredentials?.database,
+        mode === 'entity search+vector'
+      )
         .then((response) => {
           setInfoEntities(response.data.data.nodes);
           setNodes(response.data.data.nodes);
           setRelationships(response.data.data.relationships);
+          setCommunities(response.data.data.community_data);
           const chunks = response.data.data.chunk_data.map((chunk: any) => {
             const chunkScore = chunk_ids.find((chunkdetail) => chunkdetail.id === chunk.id);
             return {
@@ -175,6 +183,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         <Banner type='danger'>{error}</Banner>
       ) : (
         <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
+          {mode === 'entity search+vector' ? <Tabs.Tab tabId={7}>Communities</Tabs.Tab> : <></>}
           {mode != 'graph' ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
           {mode === 'graph+vector' || mode === 'graph' || mode === 'graph+vector+fulltext' ? (
             <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
@@ -435,6 +444,23 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             theme={themeUtils.colorMode}
             className='min-h-40'
           />
+        </Tabs.TabPanel>
+        <Tabs.TabPanel value={activeTab} tabId={7}>
+          {loading ? (
+            <Box className='flex justify-center items-center'>
+              <LoadingSpinner size='small' />
+            </Box>
+          ) : (
+            <div className='p-4 h-80 overflow-auto'>
+              <ul className='list-disc list-inside'>
+                {communities.map((community) => (
+                  <li key={community.id} className='mb-2'>
+                    <ReactMarkdown>{community.summary}</ReactMarkdown>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </Tabs.TabPanel>
       </Flex>
       {activeTab == 4 && nodes.length && relationships.length ? (

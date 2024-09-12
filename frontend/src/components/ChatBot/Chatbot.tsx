@@ -89,6 +89,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       cypher_query?: string;
       graphonly_entities?: [];
       error?: string;
+      entitiysearchonly_entities?: chunk[];
     },
     index = 0
   ) => {
@@ -119,6 +120,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               cypher_query: response?.cypher_query,
               graphonly_entities: response?.graphonly_entities,
               error: response.error,
+              entitiysearchonly_entities: response.entitiysearchonly_entities,
             },
           ]);
         } else {
@@ -141,6 +143,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             lastmsg.cypher_query = response.cypher_query;
             lastmsg.graphonly_entities = response.graphonly_entities;
             lastmsg.error = response.error;
+            lastmsg.entities = response.entitiysearchonly_entities;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -174,6 +177,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     let cypher_query;
     let graphonly_entities;
     let error;
+    let entitiysearchonly_entities;
     const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
     const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime };
     setListMessages([...listMessages, userMessage]);
@@ -198,6 +202,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       chatingMode = chatresponse?.data?.data?.info?.mode;
       cypher_query = chatresponse?.data?.data?.info?.cypher_query ?? '';
       graphonly_entities = chatresponse?.data.data.info.context ?? [];
+      entitiysearchonly_entities = chatresponse?.data.data.info.entities;
       error = chatresponse.data.data.info.error ?? '';
       const finalbotReply = {
         reply: chatbotReply,
@@ -212,6 +217,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
         cypher_query,
         graphonly_entities,
         error,
+        entitiysearchonly_entities,
       };
       simulateTypingEffect(finalbotReply);
     } catch (error) {
@@ -349,7 +355,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                             setModelModal(chat.model ?? '');
                             setSourcesModal(chat.sources ?? []);
                             setResponseTime(chat.response_time ?? 0);
-                            setChunkModal(chat.chunk_ids ?? []);
+                            setChunkModal(
+                              chatMode === 'entity search+vector' ? chat.entities ?? [] : chat.chunk_ids ?? []
+                            );
                             setTokensUsed(chat.total_tokens ?? 0);
                             setcypherQuery(chat.cypher_query ?? '');
                             setShowInfoModal(true);
