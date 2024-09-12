@@ -275,7 +275,6 @@ collect {{
 }} as outside
 """
 
-
 LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX = """
 RETURN {chunks: [c in chunks | c.text], 
         communities: [c in communities | c.summary], 
