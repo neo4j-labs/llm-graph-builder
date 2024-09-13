@@ -100,12 +100,12 @@ def process_chunkids(driver, chunk_ids):
         logging.error(f"chunkid_entities module: Error processing chunk ids: {chunk_ids}. Error: {e}")
         raise  
 
-def remove_duplicate_nodes(nodes):
+def remove_duplicate_nodes(nodes,property="element_id"):
     unique_nodes = []
     seen_element_ids = set()
 
     for node in nodes:
-        element_id = node['element_id']
+        element_id = node[property]
         if element_id not in seen_element_ids:
             unique_nodes.append(node)
             seen_element_ids.add(element_id)
