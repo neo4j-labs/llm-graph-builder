@@ -7,7 +7,7 @@ const apiCall = async (
   url: string,
   method: Method,
   commonParams: UserCredentials,
-  additionalParams: FormDataParams
+  additionalParams: Partial<FormDataParams>
 ) => {
   try {
     const formData = new FormData();

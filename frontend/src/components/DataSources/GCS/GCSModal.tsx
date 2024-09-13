@@ -9,6 +9,7 @@ import CustomModal from '../../../HOC/CustomModal';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAlertContext } from '../../../context/Alert';
 import { buttonCaptions } from '../../../utils/Constants';
+import { showErrorToast, showNormalToast } from '../../../utils/toasts';
 
 const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) => {
   const [bucketName, setbucketName] = useState<string>('');
@@ -30,6 +31,8 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
     model: model,
     fileSource: 'gcs bucket',
     processingProgress: undefined,
+    retryOption: '',
+    retryOptionStatus: false,
   };
 
   const reset = () => {
@@ -67,7 +70,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
           access_token: codeResponse.access_token,
         });
         if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
-          showAlert('error', apiResponse?.data?.message);
+          showErrorToast(apiResponse?.data?.message);
           setTimeout(() => {
             setStatus('unknown');
             reset();
@@ -77,52 +80,54 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
         }
         const apiResCheck = apiResponse?.data?.success_count && apiResponse.data.failed_count;
         if (apiResCheck) {
-          showAlert(
-            'info',
+          showNormalToast(
             `Successfully Created Source Nodes for ${apiResponse.data.success_count} and Failed for ${apiResponse.data.failed_count} Files`
           );
         } else if (apiResponse?.data?.success_count) {
-          showAlert('info', `Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
+          showNormalToast(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
         } else if (apiResponse.data.failed_count) {
-          showAlert('error', `Failed to Created Source Node for ${apiResponse.data.failed_count} Files`);
+          showErrorToast(`Failed to Created Source Node for ${apiResponse.data.failed_count} Files`);
         } else {
-          showAlert('error', `Invalid Folder Name`);
+          showErrorToast(`Invalid Folder Name`);
         }
         const copiedFilesData = [...filesData];
-        apiResponse?.data?.file_name?.forEach((item: fileName) => {
-          const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
-          if (filedataIndex == -1) {
-            copiedFilesData.unshift({
-              name: item.fileName,
-              size: item.fileSize ?? 0,
-              gcsBucket: item.gcsBucketName,
-              gcsBucketFolder: item.gcsBucketFolder,
-              google_project_id: item.gcsProjectId,
-              id: uuidv4(),
-              access_token: codeResponse.access_token,
-              ...defaultValues,
-            });
-          } else {
-            const tempFileData = copiedFilesData[filedataIndex];
-            copiedFilesData.splice(filedataIndex, 1);
-            copiedFilesData.unshift({
-              ...tempFileData,
-              status: defaultValues.status,
-              NodesCount: defaultValues.NodesCount,
-              relationshipCount: defaultValues.relationshipCount,
-              processing: defaultValues.processing,
-              model: defaultValues.model,
-              fileSource: defaultValues.fileSource,
-              processingProgress: defaultValues.processingProgress,
-              access_token: codeResponse.access_token,
-            });
+        if (apiResponse?.data?.file_name?.length) {
+          for (let index = 0; index < apiResponse?.data?.file_name.length; index++) {
+            const item: fileName = apiResponse?.data?.file_name[index];
+            const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item.fileName);
+            if (filedataIndex == -1) {
+              copiedFilesData.unshift({
+                name: item.fileName,
+                size: item.fileSize ?? 0,
+                gcsBucket: item.gcsBucketName,
+                gcsBucketFolder: item.gcsBucketFolder,
+                google_project_id: item.gcsProjectId,
+                id: uuidv4(),
+                access_token: codeResponse.access_token,
+                ...defaultValues,
+              });
+            } else {
+              const tempFileData = copiedFilesData[filedataIndex];
+              copiedFilesData.splice(filedataIndex, 1);
+              copiedFilesData.unshift({
+                ...tempFileData,
+                status: defaultValues.status,
+                NodesCount: defaultValues.NodesCount,
+                relationshipCount: defaultValues.relationshipCount,
+                processing: defaultValues.processing,
+                model: defaultValues.model,
+                fileSource: defaultValues.fileSource,
+                processingProgress: defaultValues.processingProgress,
+                access_token: codeResponse.access_token,
+              });
+            }
           }
-        });
+        }
         setFilesData(copiedFilesData);
         reset();
       } catch (error) {
         if (showAlert != undefined) {
-          showAlert('error', 'Some Error Occurred or Please Check your Instance Connection');
+          showNormalToast('Some Error Occurred or Please Check your Instance Connection');
         }
       }
       setTimeout(() => {
@@ -131,15 +136,14 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
       }, 500);
     },
     onError: (errorResponse) => {
-      showAlert(
-        'error',
+      showErrorToast(
         errorResponse.error_description ?? 'Some Error Occurred or Please try signin with your google account'
       );
     },
     scope: 'https://www.googleapis.com/auth/devstorage.read_only',
     onNonOAuthError: (error: nonoautherror) => {
       console.log(error);
-      showAlert('info', error.message as string);
+      showNormalToast(error.message as string);
     },
   });
 
@@ -163,6 +167,19 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
     reset();
     setStatus('unknown');
   }, []);
+  const handleKeyPress: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
+    if (e.code === 'Enter') {
+      e.preventDefault(); //
+      // @ts-ignore
+      const { form } = e.target;
+      const index = Array.prototype.indexOf.call(form, e.target);
+      if (index + 1 < form.elements.length) {
+        form.elements[index + 1].focus();
+      } else {
+        submitHandler();
+      }
+    }
+  };
   return (
     <CustomModal
       open={open}
@@ -174,47 +191,52 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
       submitLabel={buttonCaptions.submit}
     >
       <div className='w-full inline-block'>
-        <TextInput
-          id='project id'
-          value={projectId}
-          disabled={false}
-          label='Project ID'
-          aria-label='Project ID'
-          placeholder=''
-          autoFocus
-          fluid
-          required
-          onChange={(e) => {
-            setprojectId(e.target.value);
-          }}
-        ></TextInput>
-        <TextInput
-          id='bucketname'
-          value={bucketName}
-          disabled={false}
-          label='Bucket Name'
-          aria-label='Bucket Name'
-          placeholder=''
-          autoFocus
-          fluid
-          required
-          onChange={(e) => {
-            setbucketName(e.target.value);
-          }}
-        />
-        <TextInput
-          id='foldername'
-          value={folderName}
-          disabled={false}
-          label='Folder Name'
-          aria-label='Folder Name'
-          helpText='Optional'
-          placeholder=''
-          fluid
-          onChange={(e) => {
-            setFolderName(e.target.value);
-          }}
-        />
+        <form>
+          <TextInput
+            id='project id'
+            value={projectId}
+            disabled={false}
+            label='Project ID'
+            aria-label='Project ID'
+            placeholder=''
+            autoFocus
+            fluid
+            required
+            onChange={(e) => {
+              setprojectId(e.target.value);
+            }}
+            onKeyDown={handleKeyPress}
+          ></TextInput>
+          <TextInput
+            id='bucketname'
+            value={bucketName}
+            disabled={false}
+            label='Bucket Name'
+            aria-label='Bucket Name'
+            placeholder=''
+            autoFocus
+            fluid
+            required
+            onChange={(e) => {
+              setbucketName(e.target.value);
+            }}
+            onKeyDown={handleKeyPress}
+          />
+          <TextInput
+            id='foldername'
+            value={folderName}
+            disabled={false}
+            label='Folder Name'
+            aria-label='Folder Name'
+            helpText='Optional'
+            placeholder=''
+            fluid
+            onChange={(e) => {
+              setFolderName(e.target.value);
+            }}
+            onKeyDown={handleKeyPress}
+          />
+        </form>
       </div>
     </CustomModal>
   );

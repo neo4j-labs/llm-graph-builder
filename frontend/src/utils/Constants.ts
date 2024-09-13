@@ -210,7 +210,11 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
     description: 'Create Communities identifies and groups similar entities, improving search accuracy and analysis.',
   },
 ];
-
+export const RETRY_OPIONS = [
+  'start_from_beginning',
+  'delete_entities_and_start_from_beginning',
+  'start_from_last_processed_position',
+];
 export const batchSize: number = parseInt(process.env.VITE_BATCH_SIZE ?? '2');
 
 export const nvlOptions: NvlOptions = {

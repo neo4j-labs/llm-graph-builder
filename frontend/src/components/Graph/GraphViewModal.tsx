@@ -69,6 +69,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedQuery = useDebounce(searchQuery, 300);
   const [graphType, setGraphType] = useState<GraphType[]>(intitalGraphType(isGdsActive));
+  const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
 
   // the checkbox selection
   const handleCheckboxChange = (graph: GraphType) => {
@@ -165,6 +166,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         setAllNodes(finalNodes);
         setAllRelationships(finalRels);
         setScheme(schemeVal);
+        setDisableRefresh(false);
       } else {
         setLoading(false);
         setStatus('danger');
@@ -195,6 +197,30 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       }
     }
   }, [open, isGdsActive]);
+
+  useEffect(() => {
+    handleSearch(debouncedQuery);
+  }, [debouncedQuery]);
+
+  const initGraph = (
+    graphType: GraphType[],
+    finalNodes: ExtendedNode[],
+    finalRels: Relationship[],
+    schemeVal: Scheme
+  ) => {
+    if (allNodes.length > 0 && allRelationships.length > 0) {
+      const { filteredNodes, filteredRelations, filteredScheme } = filterData(
+        graphType,
+        finalNodes ?? [],
+        finalRels ?? [],
+        schemeVal,
+        isGdsActive
+      );
+      setNodes(filteredNodes);
+      setRelationships(filteredRelations);
+      setNewScheme(filteredScheme);
+    }
+  };
 
   // The search and update nodes
   const handleSearch = useCallback(
@@ -238,29 +264,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     [nodes]
   );
 
-  useEffect(() => {
-    handleSearch(debouncedQuery);
-  }, [debouncedQuery]);
-
-  const initGraph = (
-    graphType: GraphType[],
-    finalNodes: ExtendedNode[],
-    finalRels: Relationship[],
-    schemeVal: Scheme
-  ) => {
-    if (allNodes.length > 0 && allRelationships.length > 0) {
-      const { filteredNodes, filteredRelations, filteredScheme } = filterData(
-        graphType,
-        finalNodes ?? [],
-        finalRels ?? [],
-        schemeVal,
-        isGdsActive
-      );
-      setNodes(filteredNodes);
-      setRelationships(filteredRelations);
-      setNewScheme(filteredScheme);
-    }
-  };
 
   // Unmounting the component
   if (!open) {
@@ -294,6 +297,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
   // Refresh the graph with nodes and relations if file is processing
   const handleRefresh = () => {
+    setDisableRefresh(true);
     graphApi('refreshMode');
     setGraphType(graphType);
     setNodes(nodes);
@@ -465,6 +469,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                           text='Refresh graph'
                           onClick={handleRefresh}
                           placement='left'
+                          disabled={disableRefresh}
                         >
                           <ArrowPathIconOutline />
                         </IconButtonWithToolTip>

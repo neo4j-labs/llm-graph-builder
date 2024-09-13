@@ -9,6 +9,9 @@ import time
 
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
+EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
+EMBEDDING_FUNCTION , EMBEDDING_DIMENSION = load_embedding_model(EMBEDDING_MODEL)
+
 def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_documents_chunk_chunk_Id : list):
     batch_data = []
     logging.info("Create HAS_ENTITY relationship between chunks and entities")
@@ -39,9 +42,9 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
 def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name):
     #create embedding
     isEmbedding = os.getenv('IS_EMBEDDING')
-    embedding_model = os.getenv('EMBEDDING_MODEL')
+    # embedding_model = os.getenv('EMBEDDING_MODEL')
     
-    embeddings, dimension = load_embedding_model(embedding_model)
+    embeddings, dimension = EMBEDDING_FUNCTION , EMBEDDING_DIMENSION
     logging.info(f'embedding model:{embeddings} and dimesion:{dimension}')
     data_for_query = []
     logging.info(f"update embedding and vector index for chunks")
@@ -67,20 +70,23 @@ def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name
             #             )
             # logging.info('create vector index on chunk embedding')
             result = graph.query("SHOW INDEXES YIELD * WHERE labelsOrTypes = ['__Chunk__'] and name = 'vector'")
+            vector_index = graph.query("SHOW INDEXES YIELD * WHERE labelsOrTypes = ['Chunk'] and type = 'VECTOR' AND name = 'vector' return options")
             if result:
                 logging.info(f"vector index dropped for 'Chunk'")
                 graph.query("DROP INDEX vector IF EXISTS;")
 
-            graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
-                            OPTIONS {indexConfig: {
-                            `vector.dimensions`: $dimensions,
-                            `vector.similarity_function`: 'cosine'
-                            }}
-                        """,
-                        {
-                            "dimensions" : dimension
-                        }
-                        )
+            if len(vector_index) == 0:
+                logging.info(f'vector index is not exist, will create in next query')
+                graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
+                                OPTIONS {indexConfig: {
+                                `vector.dimensions`: $dimensions,
+                                `vector.similarity_function`: 'cosine'
+                                }}
+                            """,
+                            {
+                                "dimensions" : dimension
+                            }
+                            )
     
     query_to_create_embedding = """
         UNWIND $data AS row
