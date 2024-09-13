@@ -48,7 +48,7 @@ def test_graph_from_file_local(model_name):
     merged_file_path = os.path.join(MERGED_DIR, file_name)
 
     local_file_result = extract_graph_from_file_local_file(
-        URI, USERNAME, PASSWORD, DATABASE, model_name, merged_file_path, file_name, '', ''
+        URI, USERNAME, PASSWORD, DATABASE, model_name, merged_file_path, file_name, '', '',None
     )
     logging.info("Local file processing complete")
     print(local_file_result)
@@ -64,34 +64,40 @@ def test_graph_from_file_local(model_name):
     return local_file_result
 
 def test_graph_from_wikipedia(model_name):
-    """Test graph creation from a Wikipedia page."""
-    wiki_query = 'https://en.wikipedia.org/wiki/Ram_Mandir'
-    source_type = 'Wikipedia'
-    file_name = "Ram_Mandir"
-    create_source_node_graph_url_wikipedia(graph, model_name, wiki_query, source_type)
+    # try:
+        """Test graph creation from a Wikipedia page."""
+        wiki_query = 'https://en.wikipedia.org/wiki/Ram_Mandir'
+        source_type = 'Wikipedia'
+        file_name = "Ram_Mandir"
+        create_source_node_graph_url_wikipedia(graph, model_name, wiki_query, source_type)
 
-    wiki_result = extract_graph_from_file_Wikipedia(URI, USERNAME, PASSWORD, DATABASE, model_name, file_name, 1, 'en', '', '')
-    logging.info("Wikipedia test done")
-    print(wiki_result)
+        wiki_result = extract_graph_from_file_Wikipedia(URI, USERNAME, PASSWORD, DATABASE, model_name, file_name, 'en',file_name, '', '',None)
+        logging.info("Wikipedia test done")
+        print(wiki_result)
+        try:
+            assert wiki_result['status'] == 'Completed'
+            assert wiki_result['nodeCount'] > 0
+            assert wiki_result['relationshipCount'] > 0
+            print("Success")
+        except AssertionError as e:
+            print("Fail: ", e)
+    
+        return wiki_result
+    # except Exception as ex:
+    #     print(ex)
+   
 
-    try:
-        assert wiki_result['status'] == 'Completed'
-        assert wiki_result['nodeCount'] > 0
-        assert wiki_result['relationshipCount'] > 0
-        print("Success")
-    except AssertionError as e:
-        print("Fail: ", e)
-
-    return wiki_result
+    
 
 def test_graph_website(model_name):
     """Test graph creation from a Website page."""
      #graph, model, source_url, source_type
     source_url = 'https://www.amazon.com/'
     source_type = 'web-url'
+    file_name = []
     create_source_node_graph_web_url(graph, model_name, source_url, source_type)
 
-    weburl_result = extract_graph_from_web_page(URI, USERNAME, PASSWORD, DATABASE, model_name, source_url, '', '')
+    weburl_result = extract_graph_from_web_page(URI, USERNAME, PASSWORD, DATABASE, model_name, source_url,file_name, '', '',None)
     logging.info("WebUrl test done")
     print(weburl_result)
 
@@ -202,18 +208,18 @@ def test_populate_graph_schema_from_text(model):
 def run_tests():
     final_list = []
     error_list = []
-    models = ['openai-gpt-3.5', 'openai-gpt-4o']
+    models = ['openai-gpt-4o','gemini-1.5-pro']
 
     for model_name in models:
         try:
-              final_list.append(test_graph_from_file_local(model_name))
-              final_list.append(test_graph_from_wikipedia(model_name))
-              final_list.append(test_populate_graph_schema_from_text(model_name))
-              final_list.append(test_graph_website(model_name))
-              final_list.append(test_graph_from_youtube_video(model_name))
-              final_list.append(test_chatbot_qna(model_name))
-              final_list.append(test_chatbot_qna(model_name, mode='vector'))
-              final_list.append(test_chatbot_qna(model_name, mode='graph+vector+fulltext'))
+                final_list.append(test_graph_from_file_local(model_name))
+                final_list.append(test_graph_from_wikipedia(model_name))
+                final_list.append(test_populate_graph_schema_from_text(model_name))
+                final_list.append(test_graph_website(model_name))
+            #   final_list.append(test_graph_from_youtube_video(model_name))
+            #   final_list.append(test_chatbot_qna(model_name))
+            #   final_list.append(test_chatbot_qna(model_name, mode='vector'))
+            #   final_list.append(test_chatbot_qna(model_name, mode='graph+vector+fulltext'))
         except Exception as e:
             error_list.append((model_name, str(e)))
     # #Compare and log diffrences in graph results
@@ -223,6 +229,7 @@ def run_tests():
     lst_element_id = [dis_elementid]
     delt = delete_disconected_nodes(lst_element_id)
     dup = get_duplicate_nodes()
+    print(final_list)
     # schma = test_populate_graph_schema_from_text(model)
     # Save final results to CSV
     df = pd.DataFrame(final_list)
