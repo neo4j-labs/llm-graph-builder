@@ -325,6 +325,7 @@ async def chunk_entities(uri=Form(),userName=Form(), password=Form(), database=F
 @app.post("/graph_query")
 async def graph_query(
     uri: str = Form(),
+    database: str = Form(),
     userName: str = Form(),
     password: str = Form(),
     document_names: str = Form(None),
@@ -336,6 +337,7 @@ async def graph_query(
             uri=uri,
             username=userName,
             password=password,
+            database=database,
             document_names=document_names
         )
         json_obj = {'api_name':'graph_query','db_url':uri,'document_names':document_names, 'logging_time': formatted_time(datetime.now(timezone.utc))}
