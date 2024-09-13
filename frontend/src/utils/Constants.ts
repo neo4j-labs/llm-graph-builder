@@ -39,27 +39,27 @@ export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
-      'diffbot',
-      'openai-gpt-3.5',
-      'openai-gpt-4o',
-      'openai-gpt-4o-mini',
-      'gemini-1.0-pro',
-      'gemini-1.5-pro',
-      'azure_ai_gpt_35',
-      'azure_ai_gpt_4o',
-      'ollama_llama3',
-      'groq_llama3_70b',
-      'anthropic_claude_3_5_sonnet',
-      'fireworks_v3p1_405b',
-      'bedrock_claude_3_5_sonnet',
-    ];
+        'diffbot',
+        'openai-gpt-3.5',
+        'openai-gpt-4o',
+        'openai-gpt-4o-mini',
+        'gemini-1.0-pro',
+        'gemini-1.5-pro',
+        'azure_ai_gpt_35',
+        'azure_ai_gpt_4o',
+        'ollama_llama3',
+        'groq_llama3_70b',
+        'anthropic_claude_3_5_sonnet',
+        'fireworks_v3p1_405b',
+        'bedrock_claude_3_5_sonnet',
+      ];
 
 export const defaultLLM = llms?.includes('openai-gpt-4o')
   ? 'openai-gpt-4o'
   : llms?.includes('gemini-1.0-pro')
-    ? 'gemini-1.0-pro'
-    : 'diffbot';
-  
+  ? 'gemini-1.0-pro'
+  : 'diffbot';
+
 // export const chatModes =
 //   process.env?.VITE_CHAT_MODES?.trim() != ''
 //     ? process.env.VITE_CHAT_MODES?.split(',')
@@ -68,18 +68,18 @@ export const defaultLLM = llms?.includes('openai-gpt-4o')
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
     ? process.env.VITE_CHAT_MODES?.split(',').map((mode) => ({
-      mode: mode.trim(),
-      description: getDescriptionForChatMode(mode.trim()),  // Helper function for descriptions
-    }))
+        mode: mode.trim(),
+        description: getDescriptionForChatMode(mode.trim()),
+      }))
     : [
-      { mode: 'vector', description: 'Vector-based chat for enhanced processing' },
-      { mode: 'graph', description: 'Graph-based chat for structured conversations' },
-      { mode: 'graph+vector', description: 'Combines both Graph and Vector capabilities' },
-      { mode: 'fulltext', description: 'Full-text-based chat for in-depth search' },
-      { mode: 'graph+vector+fulltext', description: 'A mix of all modes for full functionality' },
-      { mode: 'local community', description: 'Community chat for local interactions' },
-      { mode: 'global community', description: 'Community chat for global interactions' }
-    ];
+        { mode: 'vector', description: 'Vector-based chat for enhanced processing' },
+        { mode: 'graph', description: 'Graph-based chat for structured conversations' },
+        { mode: 'graph+vector', description: 'Combines both Graph and Vector capabilities' },
+        { mode: 'fulltext', description: 'Full-text-based chat for in-depth search' },
+        { mode: 'graph+vector+fulltext', description: 'A mix of all modes for full functionality' },
+        { mode: 'entity search + vector', description: 'Community chat for local interactions' },
+        { mode: 'global search + vector', description: 'Community chat for global interactions' },
+      ];
 
 export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.VITE_TIME_PER_PAGE ? parseInt(process.env.VITE_TIME_PER_PAGE) : 50;

@@ -1,4 +1,4 @@
-import { StatusIndicator, Tip } from '@neo4j-ndl/react';
+import { StatusIndicator } from '@neo4j-ndl/react';
 import { useMemo } from 'react';
 import { useFileContext } from '../../context/UsersFiles';
 import CustomMenu from '../UI/Menu';
@@ -8,18 +8,16 @@ import { capitalizeWithPlus } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 export default function ChatModeToggle({
   menuAnchor,
-  closeHandler = () => { },
+  closeHandler = () => {},
   open,
   anchorPortal = true,
   disableBackdrop = false,
-  disableTooltip = false
 }: {
   menuAnchor: HTMLElement | null;
   closeHandler?: () => void;
   open: boolean;
   anchorPortal?: boolean;
   disableBackdrop?: boolean;
-  disableTooltip?: boolean;
 }) {
   const { setchatMode, chatMode, postProcessingTasks } = useFileContext();
   const isCommunityAllowed = postProcessingTasks.includes('create_communities');
@@ -36,12 +34,12 @@ export default function ChatModeToggle({
           return chatModes?.map((m) => {
             return {
               title: (
-                <Tip allowedPlacements={['left']} isDisabled={disableTooltip}>
-                  <Tip.Trigger>
-                    <span>{m.mode.includes('+') ? capitalizeWithPlus(m.mode) : capitalize(m.mode)}</span>
-                  </Tip.Trigger>
-                  <Tip.Content>{m.description}</Tip.Content>
-                </Tip>
+                <div>
+                  <span className='font-bold'>
+                    {m.mode.includes('+') ? capitalizeWithPlus(m.mode) : capitalize(m.mode)}
+                  </span>
+                  <p>{m.description}</p>
+                </div>
               ),
               onClick: () => {
                 setchatMode(m.mode);
@@ -64,12 +62,12 @@ export default function ChatModeToggle({
           ?.map((m) => {
             return {
               title: (
-                <Tip allowedPlacements={['left']} isDisabled={disableTooltip}>
-                  <Tip.Trigger>
-                    <span>{m.mode.includes('+') ? capitalizeWithPlus(m.mode) : capitalize(m.mode)}</span>
-                  </Tip.Trigger>
-                  <Tip.Content>{m.description}</Tip.Content>
-                </Tip>
+                <div>
+                  <span className='font-bold'>
+                    {m.mode.includes('+') ? capitalizeWithPlus(m.mode) : capitalize(m.mode)}
+                  </span>
+                  <p>{m.description}</p>
+                </div>
               ),
               onClick: () => {
                 setchatMode(m.mode);
