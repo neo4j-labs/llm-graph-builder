@@ -88,16 +88,21 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     ],
     [copiedText, cypher_query]
   );
+
   useEffect(() => {
     if (mode != 'graph' || error?.trim() !== '') {
-      setLoading(true);
-      chunkEntitiesAPI(
-        userCredentials as UserCredentials,
-        chunk_ids.map((c) => c.id).join(','),
-        userCredentials?.database,
-        mode === 'entity search+vector'
-      )
-        .then((response) => {
+      (async () => {
+        setLoading(true);
+        try {
+          const response = await chunkEntitiesAPI(
+            userCredentials as UserCredentials,
+            chunk_ids.map((c) => c.id).join(','),
+            userCredentials?.database,
+            mode === 'entity search+vector'
+          );
+          if (response.data.status === 'Failure') {
+            throw new Error(response.data.error);
+          }
           setInfoEntities(response.data.data.nodes);
           setNodes(response.data.data.nodes);
           setRelationships(response.data.data.relationships);
@@ -112,17 +117,17 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           const sortedchunks = chunks.sort((a: any, b: any) => b.score - a.score);
           setChunks(sortedchunks);
           setLoading(false);
-        })
-        .catch((error) => {
+        } catch (error) {
           console.error('Error fetching entities:', error);
           setLoading(false);
-        });
+        }
+      })();
     }
-
     () => {
       setcopiedText(false);
     };
   }, [chunk_ids, mode, error]);
+
   const groupedEntities = useMemo<{ [key: string]: GroupedEntity }>(() => {
     return infoEntities.reduce((acc, entity) => {
       const { label, text } = parseEntity(entity);
@@ -134,9 +139,11 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       return acc;
     }, {} as Record<string, { texts: Set<string>; color: string }>);
   }, [infoEntities]);
+
   const onChangeTabs = (tabId: number) => {
     setActiveTab(tabId);
   };
+
   const labelCounts = useMemo(() => {
     const counts: { [label: string]: number } = {};
     for (let index = 0; index < infoEntities.length; index++) {
@@ -147,6 +154,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     }
     return counts;
   }, [infoEntities]);
+
   const sortedLabels = useMemo(() => {
     return Object.keys(labelCounts).sort((a, b) => labelCounts[b] - labelCounts[a]);
   }, [labelCounts]);
@@ -161,6 +169,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       return '';
     }
   };
+
   return (
     <Box className='n-bg-palette-neutral-bg-weak p-4'>
       <Box className='flex flex-row pb-6 items-center mb-2'>
@@ -445,23 +454,27 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             className='min-h-40'
           />
         </Tabs.TabPanel>
-        <Tabs.TabPanel value={activeTab} tabId={7}>
-          {loading ? (
-            <Box className='flex justify-center items-center'>
-              <LoadingSpinner size='small' />
-            </Box>
-          ) : (
-            <div className='p-4 h-80 overflow-auto'>
-              <ul className='list-disc list-inside'>
-                {communities.map((community) => (
-                  <li key={community.id} className='mb-2'>
-                    <ReactMarkdown>{community.summary}</ReactMarkdown>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </Tabs.TabPanel>
+        {mode === 'entity search+vector' ? (
+          <Tabs.TabPanel value={activeTab} tabId={7}>
+            {loading ? (
+              <Box className='flex justify-center items-center'>
+                <LoadingSpinner size='small' />
+              </Box>
+            ) : (
+              <div className='p-4 h-80 overflow-auto'>
+                <ul className='list-disc list-inside'>
+                  {communities.map((community) => (
+                    <li key={community.id} className='mb-2'>
+                      <ReactMarkdown>{community.summary}</ReactMarkdown>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </Tabs.TabPanel>
+        ) : (
+          <></>
+        )}
       </Flex>
       {activeTab == 4 && nodes.length && relationships.length ? (
         <Box className='button-container flex mt-2 justify-center'>
