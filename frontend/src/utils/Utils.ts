@@ -395,19 +395,17 @@ export const capitalizeWithPlus = (s: string) => {
 export const getDescriptionForChatMode = (mode: string): string => {
   switch (mode.toLowerCase()) {
     case 'vector':
-      return 'Vector-based chat for enhanced processing';
+      return 'Utilizes vector indexing on text chunks to enable semantic similarity search.';
     case 'graph':
-      return 'Graph-based chat for structured conversations';
+      return 'Leverages text-to-cypher translation to query a database and retrieve relevant data, ensuring a highly targeted and contextually accurate response.';
     case 'graph+vector':
-      return 'Combines both Graph and Vector capabilities';
+      return 'Combines vector indexing on text chunks with graph connections, enhancing search results with contextual relevance by considering relationships between concepts.';
     case 'fulltext':
-      return 'Full-text-based chat for in-depth search';
+      return 'Employs a fulltext index on text chunks for rapid keyword-based search, efficiently identifying documents containing specific words or phrases.';
     case 'graph+vector+fulltext':
-      return 'A mix of all modes for full functionality';
-    case 'local search + vector':
-      return 'Community chat for local interactions';
-    case 'global search + vector':
-      return 'Community chat for global interactions';
+      return 'Merges vector indexing, graph connections, and fulltext indexing for a comprehensive search approach, combining semantic similarity, contextual relevance, and keyword-based search for optimal results.';
+    case 'entity search+vector':
+      return 'Combines entity node vector indexing with graph connections for accurate entity-based search, providing the most relevant response.';
     default:
       return 'Chat mode description not available'; // Fallback description
   }

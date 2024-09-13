@@ -373,3 +373,9 @@
 .text-input-container.search-initiated {
   width: 60dvh;
 }
+
+.custom-menu {
+  min-width:250px;
+  width:auto;
+  max-width: 400px;
+}

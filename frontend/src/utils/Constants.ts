@@ -72,13 +72,12 @@ export const chatModes =
         description: getDescriptionForChatMode(mode.trim()),
       }))
     : [
-        { mode: 'vector', description: 'Vector-based chat for enhanced processing' },
-        { mode: 'graph', description: 'Graph-based chat for structured conversations' },
-        { mode: 'graph+vector', description: 'Combines both Graph and Vector capabilities' },
-        { mode: 'fulltext', description: 'Full-text-based chat for in-depth search' },
-        { mode: 'graph+vector+fulltext', description: 'A mix of all modes for full functionality' },
-        { mode: 'entity search + vector', description: 'Community chat for local interactions' },
-        { mode: 'global search + vector', description: 'Community chat for global interactions' },
+        { mode: 'vector', description: 'Utilizes vector indexing on text chunks to enable semantic similarity search.' },
+        { mode: 'graph', description: 'Leverages text-to-cypher translation to query a database and retrieve relevant data, ensuring a highly targeted and contextually accurate response.' },
+        { mode: 'graph+vector', description: 'Combines vector indexing on text chunks with graph connections, enhancing search results with contextual relevance by considering relationships between concepts.' },
+        { mode: 'fulltext', description: 'Employs a fulltext index on text chunks for rapid keyword-based search, efficiently identifying documents containing specific words or phrases.' },
+        { mode: 'graph+vector+fulltext', description: 'Merges vector indexing, graph connections, and fulltext indexing for a comprehensive search approach, combining semantic similarity, contextual relevance, and keyword-based search for optimal results.' },
+        { mode: 'entity search+vector', description: 'Combines entity node vector indexing with graph connections for accurate entity-based search, providing the most relevant response.' },
       ];
 
 export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
@@ -281,3 +280,8 @@ export const connectionLabels = {
   greenStroke: 'green',
   redStroke: 'red',
 };
+
+export const transformOriginOffsetFromAnchorOrigin = {
+  vertical: 250,
+  horizontal: 250
+}

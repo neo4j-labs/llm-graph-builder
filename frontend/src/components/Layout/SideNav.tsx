@@ -226,7 +226,8 @@ const SideNav: React.FC<SideNavProps> = ({
           )}
         </SideNavigation.List>
       </SideNavigation>
-      {isChatModalOpen &&
+      {
+        isChatModalOpen &&
         createPortal(
           <Dialog
             modalProps={{
@@ -256,8 +257,9 @@ const SideNav: React.FC<SideNavProps> = ({
             </Dialog.Content>
           </Dialog>,
           document.body
-        )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 export default SideNav;

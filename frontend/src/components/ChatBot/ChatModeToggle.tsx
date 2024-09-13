@@ -8,7 +8,7 @@ import { capitalizeWithPlus } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 export default function ChatModeToggle({
   menuAnchor,
-  closeHandler = () => {},
+  closeHandler = () => { },
   open,
   anchorPortal = true,
   disableBackdrop = false,
@@ -22,6 +22,38 @@ export default function ChatModeToggle({
   const { setchatMode, chatMode, postProcessingTasks } = useFileContext();
   const isCommunityAllowed = postProcessingTasks.includes('create_communities');
   const { isGdsActive } = useCredentials();
+  // Memoized chat modes list
+  const memoizedChatModes = useMemo(() => {
+    return isGdsActive && isCommunityAllowed
+      ? chatModes
+      : chatModes?.filter((m) => !m.mode.includes('community'));
+  }, [isGdsActive, isCommunityAllowed]);
+  // Memoized menu items to prevent re-rendering
+  const menuItems = useMemo(() => {
+    return memoizedChatModes?.map((m) => ({
+      title: (
+        <div>
+          <span className="font-bold">
+            {m.mode.includes('+') ? capitalizeWithPlus(m.mode) : capitalize(m.mode)}
+          </span>
+          <p>{m.description}</p>
+        </div>
+      ),
+      onClick: () => {
+        setchatMode(m.mode); // Set the selected mode
+      },
+      disabledCondition: false,
+      description: (
+        <span>
+          {chatMode === m.mode && (
+            <>
+              <StatusIndicator type="success" /> Selected
+            </>
+          )}
+        </span>
+      ),
+    }));
+  }, [chatMode, memoizedChatModes, setchatMode]);
   return (
     <CustomMenu
       closeHandler={closeHandler}
@@ -29,62 +61,7 @@ export default function ChatModeToggle({
       MenuAnchor={menuAnchor}
       anchorPortal={anchorPortal}
       disableBackdrop={disableBackdrop}
-      items={useMemo(() => {
-        if (isGdsActive && isCommunityAllowed) {
-          return chatModes?.map((m) => {
-            return {
-              title: (
-                <div>
-                  <span className='font-bold'>
-                    {m.mode.includes('+') ? capitalizeWithPlus(m.mode) : capitalize(m.mode)}
-                  </span>
-                  <p>{m.description}</p>
-                </div>
-              ),
-              onClick: () => {
-                setchatMode(m.mode);
-              },
-              disabledCondition: false,
-              description: (
-                <span>
-                  {chatMode === m.mode && (
-                    <>
-                      <StatusIndicator type={`${chatMode === m.mode ? 'success' : 'unknown'}`} /> Selected
-                    </>
-                  )}
-                </span>
-              ),
-            };
-          });
-        }
-        return chatModes
-          ?.filter((s) => !s.mode.includes('community'))
-          ?.map((m) => {
-            return {
-              title: (
-                <div>
-                  <span className='font-bold'>
-                    {m.mode.includes('+') ? capitalizeWithPlus(m.mode) : capitalize(m.mode)}
-                  </span>
-                  <p>{m.description}</p>
-                </div>
-              ),
-              onClick: () => {
-                setchatMode(m.mode);
-              },
-              disabledCondition: false,
-              description: (
-                <span>
-                  {chatMode === m.mode && (
-                    <>
-                      <StatusIndicator type={`${chatMode === m.mode ? 'success' : 'unknown'}`} /> Selected
-                    </>
-                  )}
-                </span>
-              ),
-            };
-          });
-      }, [chatMode, chatModes, isCommunityAllowed, isGdsActive])}
+      items={menuItems}
     />
   );
 }
