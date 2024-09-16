@@ -601,10 +601,6 @@ export interface IconProps {
   closeChatBot: () => void;
   deleteOnClick?: () => void;
   messages: Messages[];
-  transformOriginOffsetFromAnchorOrigin?: {
-    vertical: number;
-    horizontal: number;
-  }
 }
 export interface S3File {
   fileName: string;
@@ -641,7 +637,3 @@ export interface DatabaseStatusProps {
   uri: string | null;
 }
 
-export interface transformOriginOffsetFromAnchorOrigin {
-  vertical: number;
-  horizontal: number;
-}

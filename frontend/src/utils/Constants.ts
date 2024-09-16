@@ -280,8 +280,3 @@ export const connectionLabels = {
   greenStroke: 'green',
   redStroke: 'red',
 };
-
-export const transformOriginOffsetFromAnchorOrigin = {
-  vertical: 250,
-  horizontal: 250
-}
