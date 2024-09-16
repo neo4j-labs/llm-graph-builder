@@ -292,7 +292,7 @@ LOCAL_COMMUNITY_DETAILS_QUERY_SUFFIX = """
 WITH *
 UNWIND chunks as c
 MATCH (c)-[:PART_OF]->(d:Document)
-RETURN [c {.*, embedding:null, fileName:d.fileName, fileType:d.fileType}] as chunks,
+RETURN [c {.*, embedding:null, fileName:d.fileName, fileType:d.fileSource}] as chunks,
 [community in communities | community {.*, embedding:null}] as communities,
 [node in nodes+outside[0].nodes | {element_id:elementId(node), labels:labels(node), properties:{id:node.id,description:node.description}}] as nodes, 
 [r in rels+outside[0].rels | {startNode:{element_id:elementId(startNode(r)), labels:labels(startNode(r)), properties:{id:startNode(r).id,description:startNode(r).description}},

@@ -84,7 +84,7 @@ export type UploadParams = {
   originalname: string;
 } & { [key: string]: any };
 
-export type FormDataParams = ExtractParams | UploadParams;
+export type ForDataParams = ExtractParams | UploadParams;
 
 export interface DropdownProps {
   onSelect: (option: OptionType | null | void) => void;
@@ -509,6 +509,7 @@ export interface Chunk {
   url?: string;
   fileSource: string;
   score?: string;
+  fileType: string;
 }
 
 export interface SpeechSynthesisProps {

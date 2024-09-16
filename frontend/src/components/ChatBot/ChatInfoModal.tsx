@@ -36,7 +36,7 @@ import { useCredentials } from '../../context/UserCredentials';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import ReactMarkdown from 'react-markdown';
 import { GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
-import { parseEntity, youtubeLinkValidation } from '../../utils/Utils';
+import { getLogo, parseEntity, youtubeLinkValidation } from '../../utils/Utils';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import { tokens } from '@neo4j-ndl/base';
@@ -54,7 +54,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
-  const [activeTab, setActiveTab] = useState<number>(error.length ? 10 : mode === 'graph' ? 4 : 3);
+  const [activeTab, setActiveTab] = useState<number>(
+    error.length ? 10 : mode === 'graph' ? 4 : mode === 'entity search+vector' ? 7 : 3
+  );
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -209,7 +211,38 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       )}
       <Flex className='p-4'>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={3}>
-          {sources.length ? (
+          {mode === 'entity search+vector' ? (
+            <ul>
+              {chunks
+                .map((c) => ({ fileName: c.fileName, fileSource: c.fileType }))
+                .map((s, index) => {
+                  console.log(s.fileSource, getLogo(themeUtils.colorMode)[s.fileSource]);
+                  return (
+                    <li key={index} className='flex flex-row inline-block justify-between items-center p-2'>
+                      <div className='flex flex-row inline-block justify-between items-center'>
+                        {s.fileSource === 'local file' ? (
+                          <DocumentTextIconOutline className='n-size-token-7 mr-2' />
+                        ) : (
+                          <img
+                            src={getLogo(themeUtils.colorMode)[s.fileSource]}
+                            width={20}
+                            height={20}
+                            className='mr-2'
+                            alt='S3 Logo'
+                          />
+                        )}
+                        <Typography
+                          variant='body-medium'
+                          className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                        >
+                          {s.fileName}
+                        </Typography>
+                      </div>
+                    </li>
+                  );
+                })}
+            </ul>
+          ) : sources.length ? (
             <ul className='list-class list-none'>
               {sources.map((link, index) => {
                 return (
@@ -463,9 +496,15 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             ) : (
               <div className='p-4 h-80 overflow-auto'>
                 <ul className='list-disc list-inside'>
-                  {communities.map((community) => (
-                    <li key={community.id} className='mb-2'>
-                      <ReactMarkdown>{community.summary}</ReactMarkdown>
+                  {communities.map((community, index) => (
+                    <li key={`${community.id}${index}`} className='mb-2'>
+                      <div>
+                        <Flex flexDirection='row' gap='2'>
+                          <Typography variant='subheading-medium'>ID : </Typography>
+                          <Typography variant='subheading-medium'>{community.id}</Typography>
+                        </Flex>
+                        <ReactMarkdown>{community.summary}</ReactMarkdown>
+                      </div>
                     </li>
                   ))}
                 </ul>
