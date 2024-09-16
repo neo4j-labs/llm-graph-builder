@@ -203,6 +203,7 @@ const SideNav: React.FC<SideNavProps> = ({
               </Tip>
               {!isChatModalOpen && (
                 <SideNavigation.Item
+                  selected={showChatMode}
                   onClick={(e) => {
                     setchatModeAnchor(e.currentTarget);
                     setshowChatMode(true);
