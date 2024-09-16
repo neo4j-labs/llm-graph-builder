@@ -23,6 +23,8 @@ const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
     setUserCredentials,
     isGdsActive,
     setGdsActive,
+    connectionStatus,
+    setConnectionStatus,
   };
 
   return <UserConnection.Provider value={value}>{props.children}</UserConnection.Provider>;

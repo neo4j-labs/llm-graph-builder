@@ -9,7 +9,12 @@ import {
   Banner,
   useMediaQuery,
 } from '@neo4j-ndl/react';
-import { DocumentDuplicateIconOutline, ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
+import {
+  DocumentDuplicateIconOutline,
+  DocumentTextIconOutline,
+  ClipboardDocumentCheckIconOutline,
+  GlobeAltIconOutline,
+} from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
 import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
 import wikipedialogo from '../../assets/images/wikipedia.svg';
@@ -18,6 +23,7 @@ import gcslogo from '../../assets/images/gcs.webp';
 import s3logo from '../../assets/images/s3logo.png';
 import {
   Chunk,
+  Community,
   Entity,
   ExtendedNode,
   ExtendedRelationship,
@@ -31,8 +37,7 @@ import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
 import { useCredentials } from '../../context/UserCredentials';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import ReactMarkdown from 'react-markdown';
-import { GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
-import { parseEntity, youtubeLinkValidation } from '../../utils/Utils';
+import { getLogo, parseEntity, youtubeLinkValidation } from '../../utils/Utils';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { tokens } from '@neo4j-ndl/base';
 import ChunkInfo from './ChunkInfo';
@@ -90,7 +95,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   );
 
   useEffect(() => {
-    if (mode != chatModeLables.graph || error?.trim() !== '') {
+    if (mode != 'graph' || error?.trim() !== '') {
       (async () => {
         setLoading(true);
         try {
@@ -98,56 +103,27 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             userCredentials as UserCredentials,
             chunk_ids.map((c) => c.id).join(','),
             userCredentials?.database,
-            mode === chatModeLables.entity_vector
+            mode === 'entity search+vector'
           );
           if (response.data.status === 'Failure') {
             throw new Error(response.data.error);
           }
-          const nodesData = response?.data?.data?.nodes;
-          const relationshipsData = response?.data?.data?.relationships;
-          const communitiesData = response?.data?.data?.community_data;
-          const chunksData = response?.data?.data?.chunk_data;
-
-          setInfoEntities(
-            nodesData.map((n: Entity) => {
-              if (!n.labels.length && mode === chatModeLables.entity_vector) {
-                return {
-                  ...n,
-                  labels: ['Entity'],
-                };
-              }
-              return n;
-            })
-          );
-          setNodes(
-            nodesData.map((n: ExtendedNode) => {
-              if (!n.labels.length && mode === chatModeLables.entity_vector) {
-                return {
-                  ...n,
-                  labels: ['Entity'],
-                };
-              }
-              return n ?? [];
-            })
-          );
-          setRelationships(relationshipsData ?? []);
-          setCommunities(communitiesData ?? []);
-          setChunks(
-            chunksData
-              .map((chunk: any) => {
-                const chunkScore = chunk_ids.find((chunkdetail) => chunkdetail.id === chunk.id);
-                return (
-                  {
-                    ...chunk,
-                    score: chunkScore?.score,
-                  } ?? []
-                );
-              })
-              .sort((a: any, b: any) => b.score - a.score)
-          );
+          setInfoEntities(response.data.data.nodes);
+          setNodes(response.data.data.nodes);
+          setRelationships(response.data.data.relationships);
+          setCommunities(response.data.data.community_data);
+          const chunks = response.data.data.chunk_data.map((chunk: any) => {
+            const chunkScore = chunk_ids.find((chunkdetail) => chunkdetail.id === chunk.id);
+            return {
+              ...chunk,
+              score: chunkScore?.score,
+            };
+          });
+          const sortedchunks = chunks.sort((a: any, b: any) => b.score - a.score);
+          setChunks(sortedchunks);
           setLoading(false);
         } catch (error) {
-          console.error('Error fetching information:', error);
+          console.error('Error fetching entities:', error);
           setLoading(false);
         }
       })();
@@ -157,8 +133,46 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     };
   }, [chunk_ids, mode, error]);
 
+  const groupedEntities = useMemo<{ [key: string]: GroupedEntity }>(() => {
+    return infoEntities.reduce((acc, entity) => {
+      const { label, text } = parseEntity(entity);
+      if (!acc[label]) {
+        const newColor = calcWordColor(label);
+        acc[label] = { texts: new Set(), color: newColor };
+      }
+      acc[label].texts.add(text);
+      return acc;
+    }, {} as Record<string, { texts: Set<string>; color: string }>);
+  }, [infoEntities]);
+
   const onChangeTabs = (tabId: number) => {
     setActiveTab(tabId);
+  };
+
+  const labelCounts = useMemo(() => {
+    const counts: { [label: string]: number } = {};
+    for (let index = 0; index < infoEntities.length; index++) {
+      const entity = infoEntities[index];
+      const { labels } = entity;
+      const [label] = labels;
+      counts[label] = counts[label] ? counts[label] + 1 : 1;
+    }
+    return counts;
+  }, [infoEntities]);
+
+  const sortedLabels = useMemo(() => {
+    return Object.keys(labelCounts).sort((a, b) => labelCounts[b] - labelCounts[a]);
+  }, [labelCounts]);
+
+  const generateYouTubeLink = (url: string, startTime: string) => {
+    try {
+      const urlObj = new URL(url);
+      urlObj.searchParams.set('t', startTime);
+      return urlObj.toString();
+    } catch (error) {
+      console.error('Invalid URL:', error);
+      return '';
+    }
   };
 
   return (
@@ -184,7 +198,11 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       ) : (
         <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
           {mode != 'graph' ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
-          {mode === 'graph+vector' || mode === 'graph' || mode === 'graph+vector+fulltext' ? (
+          {mode != 'graph' ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
+          {mode === 'graph+vector' ||
+          mode === 'graph' ||
+          mode === 'graph+vector+fulltext' ||
+          mode === 'entity search+vector' ? (
             <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
           ) : (
             <></>
@@ -194,12 +212,141 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           ) : (
             <></>
           )}
-          {mode === chatModeLables.entity_vector? <Tabs.Tab tabId={7}>Communities</Tabs.Tab> : <></>}
+          {mode === 'entity search+vector' ? <Tabs.Tab tabId={7}>Communities</Tabs.Tab> : <></>}
         </Tabs>
       )}
       <Flex className='p-4'>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={3}>
-          <SourcesInfo loading={loading} sources={sources} mode={mode} chunks={chunks} />
+          {loading ? (
+            <Box className='flex justify-center items-center'>
+              <LoadingSpinner size='small' />
+            </Box>
+          ) : mode === 'entity search+vector' && chunks.length ? (
+            <ul>
+              {chunks
+                .map((c) => ({ fileName: c.fileName, fileSource: c.fileType }))
+                .map((s, index) => {
+                  return (
+                    <li key={index} className='flex flex-row inline-block justify-between items-center p-2'>
+                      <div className='flex flex-row inline-block justify-between items-center'>
+                        {s.fileSource === 'local file' ? (
+                          <DocumentTextIconOutline className='n-size-token-7 mr-2' />
+                        ) : (
+                          <img
+                            src={getLogo(themeUtils.colorMode)[s.fileSource]}
+                            width={20}
+                            height={20}
+                            className='mr-2'
+                            alt='S3 Logo'
+                          />
+                        )}
+                        <Typography
+                          variant='body-medium'
+                          className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                        >
+                          {s.fileName}
+                        </Typography>
+                      </div>
+                    </li>
+                  );
+                })}
+            </ul>
+          ) : sources.length ? (
+            <ul className='list-class list-none'>
+              {sources.map((link, index) => {
+                return (
+                  <li key={index} className='flex flex-row inline-block justify-between items-center p-2'>
+                    {link?.startsWith('http') || link?.startsWith('https') ? (
+                      <>
+                        {link?.includes('wikipedia.org') && (
+                          <div className='flex flex-row inline-block justify-between items-center'>
+                            <img src={wikipedialogo} width={20} height={20} className='mr-2' alt='Wikipedia Logo' />
+                            <TextLink href={link} externalLink={true}>
+                              <HoverableLink url={link}>
+                                <Typography
+                                  variant='body-medium'
+                                  className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                                >
+                                  {link}
+                                </Typography>
+                              </HoverableLink>
+                            </TextLink>
+                          </div>
+                        )}
+                        {link?.includes('storage.googleapis.com') && (
+                          <div className='flex flex-row inline-block justify-between items-center'>
+                            <img
+                              src={gcslogo}
+                              width={20}
+                              height={20}
+                              className='mr-2'
+                              alt='Google Cloud Storage Logo'
+                            />
+                            <Typography
+                              variant='body-medium'
+                              className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                            >
+                              {decodeURIComponent(link).split('/').at(-1)?.split('?')[0] ?? 'GCS File'}
+                            </Typography>
+                          </div>
+                        )}
+                        {youtubeLinkValidation(link) && (
+                          <>
+                            <div className='flex flex-row inline-block justiy-between items-center'>
+                              <img src={youtubelogo} width={20} height={20} className='mr-2' />
+                              <TextLink href={link} externalLink={true}>
+                                <HoverableLink url={link}>
+                                  <Typography
+                                    variant='body-medium'
+                                    className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                                  >
+                                    {link}
+                                  </Typography>
+                                </HoverableLink>
+                              </TextLink>
+                            </div>
+                          </>
+                        )}
+                        {!link?.startsWith('s3://') &&
+                          !link?.includes('storage.googleapis.com') &&
+                          !link?.includes('wikipedia.org') &&
+                          !link?.includes('youtube.com') && (
+                            <div className='flex flex-row inline-block justify-between items-center'>
+                              <GlobeAltIconOutline className='n-size-token-7' />
+                              <TextLink href={link} externalLink={true}>
+                                <Typography variant='body-medium'>{link}</Typography>
+                              </TextLink>
+                            </div>
+                          )}
+                      </>
+                    ) : link?.startsWith('s3://') ? (
+                      <div className='flex flex-row inline-block justify-between items-center'>
+                        <img src={s3logo} width={20} height={20} className='mr-2' alt='S3 Logo' />
+                        <Typography
+                          variant='body-medium'
+                          className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                        >
+                          {decodeURIComponent(link).split('/').at(-1) ?? 'S3 File'}
+                        </Typography>
+                      </div>
+                    ) : (
+                      <div className='flex flex-row inline-block justify-between items-center'>
+                        <DocumentTextIconOutline className='n-size-token-7 mr-2' />
+                        <Typography
+                          variant='body-medium'
+                          className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                        >
+                          {link}
+                        </Typography>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <span className='h6 text-center'>No Sources Found</span>
+          )}
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={4}>
           <EntitiesInfo
@@ -221,9 +368,29 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             className='min-h-40'
           />
         </Tabs.TabPanel>
-        {mode === chatModeLables.entity_vector ? (
-          <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={7}>
-            <CommunitiesInfo loading={loading} communities={communities} />
+        {mode === 'entity search+vector' ? (
+          <Tabs.TabPanel value={activeTab} tabId={7}>
+            {loading ? (
+              <Box className='flex justify-center items-center'>
+                <LoadingSpinner size='small' />
+              </Box>
+            ) : (
+              <div className='p-4 h-80 overflow-auto'>
+                <ul className='list-disc list-inside'>
+                  {communities.map((community, index) => (
+                    <li key={`${community.id}${index}`} className='mb-2'>
+                      <div>
+                        <Flex flexDirection='row' gap='2'>
+                          <Typography variant='subheading-medium'>ID : </Typography>
+                          <Typography variant='subheading-medium'>{community.id}</Typography>
+                        </Flex>
+                        <ReactMarkdown>{community.summary}</ReactMarkdown>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </Tabs.TabPanel>
         ) : (
           <></>
