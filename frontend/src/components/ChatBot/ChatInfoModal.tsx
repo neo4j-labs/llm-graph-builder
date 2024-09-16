@@ -11,7 +11,12 @@ import {
   Banner,
   useMediaQuery,
 } from '@neo4j-ndl/react';
-import { DocumentDuplicateIconOutline, DocumentTextIconOutline } from '@neo4j-ndl/react/icons';
+import {
+  DocumentDuplicateIconOutline,
+  DocumentTextIconOutline,
+  ClipboardDocumentCheckIconOutline,
+  GlobeAltIconOutline,
+} from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
 import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
 import wikipedialogo from '../../assets/images/wikipedia.svg';
@@ -20,6 +25,7 @@ import gcslogo from '../../assets/images/gcs.webp';
 import s3logo from '../../assets/images/s3logo.png';
 import {
   Chunk,
+  Community,
   Entity,
   ExtendedNode,
   ExtendedRelationship,
@@ -34,10 +40,8 @@ import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
 import { useCredentials } from '../../context/UserCredentials';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import ReactMarkdown from 'react-markdown';
-import { GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
-import { parseEntity, youtubeLinkValidation } from '../../utils/Utils';
+import { getLogo, parseEntity, youtubeLinkValidation } from '../../utils/Utils';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
-import { ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import { tokens } from '@neo4j-ndl/base';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
@@ -55,6 +59,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const [activeTab, setActiveTab] = useState<number>(error.length ? 10 : mode === 'graph' ? 4 : 3);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
+  const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
   const [nodes, setNodes] = useState<ExtendedNode[]>([]);
@@ -86,14 +91,25 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     ],
     [copiedText, cypher_query]
   );
+
   useEffect(() => {
     if (mode != 'graph' || error?.trim() !== '') {
-      setLoading(true);
-      chunkEntitiesAPI(userCredentials as UserCredentials, chunk_ids.map((c) => c.id).join(','))
-        .then((response) => {
+      (async () => {
+        setLoading(true);
+        try {
+          const response = await chunkEntitiesAPI(
+            userCredentials as UserCredentials,
+            chunk_ids.map((c) => c.id).join(','),
+            userCredentials?.database,
+            mode === 'entity search+vector'
+          );
+          if (response.data.status === 'Failure') {
+            throw new Error(response.data.error);
+          }
           setInfoEntities(response.data.data.nodes);
           setNodes(response.data.data.nodes);
           setRelationships(response.data.data.relationships);
+          setCommunities(response.data.data.community_data);
           const chunks = response.data.data.chunk_data.map((chunk: any) => {
             const chunkScore = chunk_ids.find((chunkdetail) => chunkdetail.id === chunk.id);
             return {
@@ -104,17 +120,17 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           const sortedchunks = chunks.sort((a: any, b: any) => b.score - a.score);
           setChunks(sortedchunks);
           setLoading(false);
-        })
-        .catch((error) => {
+        } catch (error) {
           console.error('Error fetching entities:', error);
           setLoading(false);
-        });
+        }
+      })();
     }
-
     () => {
       setcopiedText(false);
     };
   }, [chunk_ids, mode, error]);
+
   const groupedEntities = useMemo<{ [key: string]: GroupedEntity }>(() => {
     return infoEntities.reduce((acc, entity) => {
       const { label, text } = parseEntity(entity);
@@ -126,9 +142,11 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       return acc;
     }, {} as Record<string, { texts: Set<string>; color: string }>);
   }, [infoEntities]);
+
   const onChangeTabs = (tabId: number) => {
     setActiveTab(tabId);
   };
+
   const labelCounts = useMemo(() => {
     const counts: { [label: string]: number } = {};
     for (let index = 0; index < infoEntities.length; index++) {
@@ -139,6 +157,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     }
     return counts;
   }, [infoEntities]);
+
   const sortedLabels = useMemo(() => {
     return Object.keys(labelCounts).sort((a, b) => labelCounts[b] - labelCounts[a]);
   }, [labelCounts]);
@@ -153,6 +172,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       return '';
     }
   };
+
   return (
     <Box className='n-bg-palette-neutral-bg-weak p-4'>
       <Box className='flex flex-row pb-6 items-center mb-2'>
@@ -176,7 +196,11 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       ) : (
         <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
           {mode != 'graph' ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
-          {mode === 'graph+vector' || mode === 'graph' || mode === 'graph+vector+fulltext' ? (
+          {mode != 'graph' ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
+          {mode === 'graph+vector' ||
+          mode === 'graph' ||
+          mode === 'graph+vector+fulltext' ||
+          mode === 'entity search+vector' ? (
             <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
           ) : (
             <></>
@@ -186,12 +210,46 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           ) : (
             <></>
           )}
-          {mode != 'graph' ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
+          {mode === 'entity search+vector' ? <Tabs.Tab tabId={7}>Communities</Tabs.Tab> : <></>}
         </Tabs>
       )}
       <Flex className='p-4'>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={3}>
-          {sources.length ? (
+          {loading ? (
+            <Box className='flex justify-center items-center'>
+              <LoadingSpinner size='small' />
+            </Box>
+          ) : mode === 'entity search+vector' && chunks.length ? (
+            <ul>
+              {chunks
+                .map((c) => ({ fileName: c.fileName, fileSource: c.fileType }))
+                .map((s, index) => {
+                  return (
+                    <li key={index} className='flex flex-row inline-block justify-between items-center p-2'>
+                      <div className='flex flex-row inline-block justify-between items-center'>
+                        {s.fileSource === 'local file' ? (
+                          <DocumentTextIconOutline className='n-size-token-7 mr-2' />
+                        ) : (
+                          <img
+                            src={getLogo(themeUtils.colorMode)[s.fileSource]}
+                            width={20}
+                            height={20}
+                            className='mr-2'
+                            alt='S3 Logo'
+                          />
+                        )}
+                        <Typography
+                          variant='body-medium'
+                          className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                        >
+                          {s.fileName}
+                        </Typography>
+                      </div>
+                    </li>
+                  );
+                })}
+            </ul>
+          ) : sources.length ? (
             <ul className='list-class list-none'>
               {sources.map((link, index) => {
                 return (
@@ -436,6 +494,33 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             className='min-h-40'
           />
         </Tabs.TabPanel>
+        {mode === 'entity search+vector' ? (
+          <Tabs.TabPanel value={activeTab} tabId={7}>
+            {loading ? (
+              <Box className='flex justify-center items-center'>
+                <LoadingSpinner size='small' />
+              </Box>
+            ) : (
+              <div className='p-4 h-80 overflow-auto'>
+                <ul className='list-disc list-inside'>
+                  {communities.map((community, index) => (
+                    <li key={`${community.id}${index}`} className='mb-2'>
+                      <div>
+                        <Flex flexDirection='row' gap='2'>
+                          <Typography variant='subheading-medium'>ID : </Typography>
+                          <Typography variant='subheading-medium'>{community.id}</Typography>
+                        </Flex>
+                        <ReactMarkdown>{community.summary}</ReactMarkdown>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </Tabs.TabPanel>
+        ) : (
+          <></>
+        )}
       </Flex>
       {activeTab == 4 && nodes.length && relationships.length ? (
         <Box className='button-container flex mt-2 justify-center'>

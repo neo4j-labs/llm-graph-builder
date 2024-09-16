@@ -98,10 +98,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-        ? queryMap.DocChunks
-        : graphType.includes('Entities')
-          ? queryMap.Entities
-          : '';
+      ? queryMap.DocChunks
+      : graphType.includes('Entities')
+      ? queryMap.Entities
+      : '';
 
   // fit graph to original position
   const handleZoomToFit = () => {
@@ -136,10 +136,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
-            userCredentials as UserCredentials,
-            graphQuery,
-            selectedRows?.map((f) => f.name)
-          )
+              userCredentials as UserCredentials,
+              graphQuery,
+              selectedRows?.map((f) => f.name)
+            )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -182,7 +182,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   useEffect(() => {
     if (open) {
       setLoading(true);
-      setGraphType(intitalGraphType(isGdsActive))
+      setGraphType(intitalGraphType(isGdsActive));
       if (viewPoint !== 'chatInfoView') {
         graphApi();
       } else {
@@ -246,8 +246,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             match && viewPoint === graphLabels.showGraphView
               ? 100
               : match && viewPoint !== graphLabels.showGraphView
-                ? 50
-                : graphLabels.nodeSize,
+              ? 50
+              : graphLabels.nodeSize,
         };
       });
       // deactivating any active relationships
@@ -263,7 +263,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     },
     [nodes]
   );
-
 
   // Unmounting the component
   if (!open) {
@@ -357,8 +356,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           isActive && viewPoint === graphLabels.showGraphView
             ? 100
             : isActive && viewPoint !== graphLabels.showGraphView
-              ? 50
-              : graphLabels.nodeSize,
+            ? 50
+            : graphLabels.nodeSize,
       };
     });
     // deactivating any active relationships
@@ -399,10 +398,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setRelationships(updatedRelations);
     setNodes(updatedNodes);
   };
-
-  console.log('rels', relationships);
-
-  console.log('nodes', nodes);
   return (
     <>
       <Dialog
