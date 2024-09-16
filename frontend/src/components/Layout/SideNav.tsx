@@ -218,6 +218,7 @@ const SideNav: React.FC<SideNavProps> = ({
                         closeHandler={() => setshowChatMode(false)}
                         menuAnchor={chatModeAnchor}
                         disableBackdrop={true}
+                        anchorPortal={true}
                       ></ChatModeToggle>
                     </>
                   }

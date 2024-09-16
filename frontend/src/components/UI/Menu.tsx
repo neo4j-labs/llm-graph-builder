@@ -22,7 +22,9 @@ export default function CustomMenu({
   return (
     <Menu
       open={open}
-      onClose={closeHandler}
+      onClose={() => {
+        closeHandler();
+      }}
       anchorOrigin={anchorOrigin}
       transformOrigin={transformOrigin}
       anchorPortal={anchorPortal}
@@ -36,12 +38,13 @@ export default function CustomMenu({
           title={i.title}
           onClick={() => {
             i.onClick();
+            closeHandler();
           }}
           disabled={i.disabledCondition}
           className={i.isSelected ? i.selectedClassName : ''}
           description={i.description}
         />
       ))}
-    </Menu>
+    </Menu >
   );
 }

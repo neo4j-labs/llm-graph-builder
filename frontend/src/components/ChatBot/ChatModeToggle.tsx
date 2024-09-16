@@ -1,4 +1,4 @@
-import { StatusIndicator } from '@neo4j-ndl/react';
+import { StatusIndicator, Typography } from '@neo4j-ndl/react';
 import { useMemo } from 'react';
 import { useFileContext } from '../../context/UsersFiles';
 import CustomMenu from '../UI/Menu';
@@ -22,25 +22,26 @@ export default function ChatModeToggle({
   const { setchatMode, chatMode, postProcessingTasks } = useFileContext();
   const isCommunityAllowed = postProcessingTasks.includes('create_communities');
   const { isGdsActive } = useCredentials();
-  // Memoized chat modes list
   const memoizedChatModes = useMemo(() => {
     return isGdsActive && isCommunityAllowed
       ? chatModes
       : chatModes?.filter((m) => !m.mode.includes('community'));
   }, [isGdsActive, isCommunityAllowed]);
-  // Memoized menu items to prevent re-rendering
   const menuItems = useMemo(() => {
     return memoizedChatModes?.map((m) => ({
       title: (
         <div>
-          <span className="font-bold">
+          <Typography variant="subheading-small">
             {m.mode.includes('+') ? capitalizeWithPlus(m.mode) : capitalize(m.mode)}
-          </span>
-          <p>{m.description}</p>
+          </Typography>
+          <div>
+            <Typography variant="body-small">{m.description}</Typography>
+          </div>
         </div>
       ),
       onClick: () => {
-        setchatMode(m.mode); // Set the selected mode
+        setchatMode(m.mode);
+        closeHandler(); // Close the menu after setting the chat mode
       },
       disabledCondition: false,
       description: (
@@ -53,7 +54,7 @@ export default function ChatModeToggle({
         </span>
       ),
     }));
-  }, [chatMode, memoizedChatModes, setchatMode]);
+  }, [chatMode, memoizedChatModes, setchatMode, closeHandler]);
   return (
     <CustomMenu
       closeHandler={closeHandler}
