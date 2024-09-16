@@ -25,7 +25,7 @@ export default function ChatModeToggle({
   const memoizedChatModes = useMemo(() => {
     return isGdsActive && isCommunityAllowed
       ? chatModes
-      : chatModes?.filter((m) => !m.mode.includes('community'));
+      : chatModes?.filter((m) => !m.mode.includes('entity search+vector'));
   }, [isGdsActive, isCommunityAllowed]);
   const menuItems = useMemo(() => {
     return memoizedChatModes?.map((m) => ({
