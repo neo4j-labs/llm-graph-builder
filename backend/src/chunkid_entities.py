@@ -129,11 +129,12 @@ def process_entityids(driver, chunk_ids):
         records, summary, keys = driver.execute_query(query, entityIds=entity_ids_list)
 
         result = process_records(records)
-        result["nodes"].extend(records[0]["nodes"])
-        result["nodes"] = remove_duplicate_nodes(result["nodes"])
-        logging.info(f"Nodes and relationships are processed")
-        result["chunk_data"] = records[0]["chunks"]
-        result["community_data"] = records[0]["communities"]
+        if records:
+            result["nodes"].extend(records[0]["nodes"])
+            result["nodes"] = remove_duplicate_nodes(result["nodes"])
+            logging.info(f"Nodes and relationships are processed")
+            result["chunk_data"] = records[0]["chunks"]
+            result["community_data"] = records[0]["communities"]
         logging.info(f"Query process completed successfully for chunk ids: {chunk_ids}")
         return result
     except Exception as e:
