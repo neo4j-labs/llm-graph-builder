@@ -373,6 +373,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setRelationships(updatedRelations);
     setNodes(updatedNodes);
   };
+
+  // const isCommunity = allNodes.some(n=>n.labels.includes('__Community__'));
   return (
     <>
       <Dialog
@@ -394,7 +396,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 graphType={graphType}
                 loading={loading}
                 handleChange={handleCheckboxChange}
-                isgds={isGdsActive}
+                isgds={allNodes.some(n=>n.labels.includes('__Community__'))}
               />
             )}
           </Flex>
