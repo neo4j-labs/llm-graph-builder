@@ -1,5 +1,6 @@
 import { NvlOptions } from '@neo4j-nvl/base';
 import { GraphType, OptionType } from '../types';
+import { getDescriptionForChatMode } from './Utils';
 
 export const document = `+ [docs]`;
 
@@ -28,10 +29,12 @@ export const docChunkEntities = `+[chunks]
 + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
 //chunks with entities
 + collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
+
 export const APP_SOURCES =
   process.env.VITE_REACT_APP_SOURCES !== ''
     ? (process.env.VITE_REACT_APP_SOURCES?.split(',') as string[])
     : ['gcs', 's3', 'local', 'wiki', 'youtube', 'web'];
+
 export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
@@ -56,18 +59,50 @@ export const defaultLLM = llms?.includes('openai-gpt-4o')
   : llms?.includes('gemini-1.0-pro')
   ? 'gemini-1.0-pro'
   : 'diffbot';
+
+// export const chatModes =
+//   process.env?.VITE_CHAT_MODES?.trim() != ''
+//     ? process.env.VITE_CHAT_MODES?.split(',')
+//     : ['vector', 'graph', 'graph+vector', 'fulltext', 'graph+vector+fulltext', 'local community', 'global community'];
+
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
-    ? process.env.VITE_CHAT_MODES?.split(',')
+    ? process.env.VITE_CHAT_MODES?.split(',').map((mode) => ({
+        mode: mode.trim(),
+        description: getDescriptionForChatMode(mode.trim()),
+      }))
     : [
-        'vector',
-        'graph',
-        'graph+vector',
-        'fulltext',
-        'graph+vector+fulltext',
-        'entity search+vector',
-        'global community',
+        {
+          mode: 'vector',
+          description: 'Utilizes vector indexing on text chunks to enable semantic similarity search.',
+        },
+        {
+          mode: 'graph',
+          description:
+            'Leverages text-to-cypher translation to query a database and retrieve relevant data, ensuring a highly targeted and contextually accurate response.',
+        },
+        {
+          mode: 'graph+vector',
+          description:
+            'Combines vector indexing on text chunks with graph connections, enhancing search results with contextual relevance by considering relationships between concepts.',
+        },
+        {
+          mode: 'fulltext',
+          description:
+            'Employs a fulltext index on text chunks for rapid keyword-based search, efficiently identifying documents containing specific words or phrases.',
+        },
+        {
+          mode: 'graph+vector+fulltext',
+          description:
+            'Merges vector indexing, graph connections, and fulltext indexing for a comprehensive search approach, combining semantic similarity, contextual relevance, and keyword-based search for optimal results.',
+        },
+        {
+          mode: 'entity search+vector',
+          description:
+            'Combines entity node vector indexing with graph connections for accurate entity-based search, providing the most relevant response.',
+        },
       ];
+
 export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.VITE_TIME_PER_PAGE ? parseInt(process.env.VITE_TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
