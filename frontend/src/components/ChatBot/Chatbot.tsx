@@ -356,7 +356,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                             setSourcesModal(chat.sources ?? []);
                             setResponseTime(chat.response_time ?? 0);
                             setChunkModal(
-                              chatMode === 'entity search+vector' ? chat.entities ?? [] : chat.chunk_ids ?? []
+                              chat.mode === 'entity search+vector' ? chat.entities ?? [] : chat.chunk_ids ?? []
                             );
                             setTokensUsed(chat.total_tokens ?? 0);
                             setcypherQuery(chat.cypher_query ?? '');
