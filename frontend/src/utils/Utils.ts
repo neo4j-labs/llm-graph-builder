@@ -1,6 +1,24 @@
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import type { Relationship } from '@neo4j-nvl/base';
-import { CustomFile, Entity, ExtendedNode, ExtendedRelationship, GraphType, Messages, Scheme, SourceNode, UserCredentials } from '../types';
+import {
+  CustomFile,
+  Entity,
+  ExtendedNode,
+  ExtendedRelationship,
+  GraphType,
+  Messages,
+  Scheme,
+  SourceNode,
+  UserCredentials,
+} from '../types';
+import Wikipediadarkmode from '../assets/images/wikipedia-darkmode.svg';
+import Wikipediadlogo from '../assets/images/wikipedia.svg';
+import webdarklogo from '../assets/images/web-darkmode.svg';
+import weblogo from '../assets/images/web.svg';
+import youtubedarklogo from '../assets/images/youtube-darkmode.svg';
+import youtubelightlogo from '../assets/images/youtube-lightmode.svg';
+import s3logo from '../assets/images/s3logo.png';
+import gcslogo from '../assets/images/gcs.webp';
 
 // Get the Url
 export const url = () => {
@@ -409,4 +427,22 @@ export const getDescriptionForChatMode = (mode: string): string => {
     default:
       return 'Chat mode description not available'; // Fallback description
   }
+}
+export const getLogo = (mode: string): Record<string, string> => {
+  if (mode === 'light') {
+    return {
+      Wikipedia: Wikipediadarkmode,
+      'web-url': webdarklogo,
+      's3 bucket': s3logo,
+      youtube: youtubedarklogo,
+      'gcs bucket': gcslogo,
+    };
+  }
+  return {
+    Wikipedia: Wikipediadlogo,
+    'web-url': weblogo,
+    's3 bucket': s3logo,
+    youtube: youtubelightlogo,
+    'gcs bucket': gcslogo,
+  };
 };

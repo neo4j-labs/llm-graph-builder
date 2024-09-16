@@ -84,7 +84,7 @@ export type UploadParams = {
   originalname: string;
 } & { [key: string]: any };
 
-export type FormDataParams = ExtractParams | UploadParams;
+export type ForDataParams = ExtractParams | UploadParams;
 
 export interface DropdownProps {
   onSelect: (option: OptionType | null | void) => void;
@@ -223,6 +223,7 @@ export interface Messages {
   cypher_query?: string;
   graphonly_entities?: [];
   error?: string;
+  entities?: chunk[];
 }
 
 export type ChatbotProps = {
@@ -464,7 +465,13 @@ export type Entity = {
     id: string;
   };
 };
-
+export type Community = {
+  id: string;
+  summary: string;
+  weight: number;
+  level: number;
+  community_rank: number;
+};
 export type GroupedEntity = {
   texts: Set<string>;
   color: string;
@@ -502,6 +509,7 @@ export interface Chunk {
   url?: string;
   fileSource: string;
   score?: string;
+  fileType: string;
 }
 
 export interface SpeechSynthesisProps {

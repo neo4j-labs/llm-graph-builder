@@ -264,7 +264,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     [nodes]
   );
 
-
   // Unmounting the component
   if (!open) {
     return <></>;
@@ -399,10 +398,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setRelationships(updatedRelations);
     setNodes(updatedNodes);
   };
-
-  console.log('rels', relationships);
-
-  console.log('nodes', nodes);
   return (
     <>
       <Dialog
