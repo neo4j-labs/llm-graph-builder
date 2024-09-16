@@ -199,7 +199,10 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
           {mode === 'entity search+vector' ? <Tabs.Tab tabId={7}>Communities</Tabs.Tab> : <></>}
           {mode != 'graph' ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
-          {mode === 'graph+vector' || mode === 'graph' || mode === 'graph+vector+fulltext' ? (
+          {mode === 'graph+vector' ||
+          mode === 'graph' ||
+          mode === 'graph+vector+fulltext' ||
+          mode === 'entity search+vector' ? (
             <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
           ) : (
             <></>
