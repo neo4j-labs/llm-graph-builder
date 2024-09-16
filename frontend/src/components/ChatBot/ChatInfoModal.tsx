@@ -11,7 +11,12 @@ import {
   Banner,
   useMediaQuery,
 } from '@neo4j-ndl/react';
-import { DocumentDuplicateIconOutline, DocumentTextIconOutline } from '@neo4j-ndl/react/icons';
+import {
+  DocumentDuplicateIconOutline,
+  DocumentTextIconOutline,
+  ClipboardDocumentCheckIconOutline,
+  GlobeAltIconOutline,
+} from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
 import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
 import wikipedialogo from '../../assets/images/wikipedia.svg';
@@ -35,10 +40,8 @@ import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
 import { useCredentials } from '../../context/UserCredentials';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import ReactMarkdown from 'react-markdown';
-import { GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
 import { getLogo, parseEntity, youtubeLinkValidation } from '../../utils/Utils';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
-import { ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import { tokens } from '@neo4j-ndl/base';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
@@ -211,12 +214,11 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       )}
       <Flex className='p-4'>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={3}>
-          {mode === 'entity search+vector' ? (
+          {mode === 'entity search+vector' && chunks.length ? (
             <ul>
               {chunks
                 .map((c) => ({ fileName: c.fileName, fileSource: c.fileType }))
                 .map((s, index) => {
-                  console.log(s.fileSource, getLogo(themeUtils.colorMode)[s.fileSource]);
                   return (
                     <li key={index} className='flex flex-row inline-block justify-between items-center p-2'>
                       <div className='flex flex-row inline-block justify-between items-center'>

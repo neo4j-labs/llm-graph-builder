@@ -418,13 +418,12 @@ export const getLogo = (mode: string): Record<string, string> => {
       youtube: youtubedarklogo,
       'gcs bucket': gcslogo,
     };
-  } 
-    return {
-      Wikipedia: Wikipediadlogo,
-      'web-url': weblogo,
-      's3 bucket': s3logo,
-      youtube: youtubelightlogo,
-      'gcs bucket': gcslogo,
-    };
-  
+  }
+  return {
+    Wikipedia: Wikipediadlogo,
+    'web-url': weblogo,
+    's3 bucket': s3logo,
+    youtube: youtubelightlogo,
+    'gcs bucket': gcslogo,
+  };
 };
