@@ -117,11 +117,12 @@ def process_entityids(driver, chunk_ids):
         records, summary, keys = driver.execute_query(query, entityIds=entity_ids_list)
 
         result = process_records(records)
-        result["nodes"].extend(records[0]["nodes"])
-        result["nodes"] = remove_duplicate_nodes(result["nodes"])
-        logging.info(f"Nodes and relationships are processed")
-        result["chunk_data"] = records[0]["chunks"]
-        result["community_data"] = records[0]["communities"]
+        if records:
+            result["nodes"].extend(records[0]["nodes"])
+            result["nodes"] = remove_duplicate_nodes(result["nodes"])
+            logging.info(f"Nodes and relationships are processed")
+            result["chunk_data"] = records[0]["chunks"]
+            result["community_data"] = records[0]["communities"]
         logging.info(f"Query process completed successfully for chunk ids: {chunk_ids}")
         return result
     except Exception as e:
@@ -146,6 +147,7 @@ def get_entities_from_chunkids(uri, username, password, database ,chunk_ids,is_e
         driver = get_graphDB_driver(uri, username, password,database)
         if not is_entity:
             if chunk_ids:
+                logging.info(f"chunkid_entities module: Starting for chunk ids : {chunk_ids}")
                 result = process_chunkids(driver,chunk_ids)
             else:
                 logging.info(f"chunkid_entities module: No chunk ids are passed")
@@ -157,6 +159,7 @@ def get_entities_from_chunkids(uri, username, password, database ,chunk_ids,is_e
             return result
         if chunk_ids:
             result = process_entityids(driver,chunk_ids)
+            logging.info(f"chunkid_entities module: Starting for entity ids : {chunk_ids}")
         else:
             logging.info(f"chunkid_entities module: No entity ids are passed")
             result = {
