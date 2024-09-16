@@ -8,7 +8,7 @@ import { capitalizeWithPlus } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 export default function ChatModeToggle({
   menuAnchor,
-  closeHandler = () => { },
+  closeHandler = () => {},
   open,
   anchorPortal = true,
   disableBackdrop = false,
@@ -31,11 +31,11 @@ export default function ChatModeToggle({
     return memoizedChatModes?.map((m) => ({
       title: (
         <div>
-          <Typography variant="subheading-small">
+          <Typography variant='subheading-small'>
             {m.mode.includes('+') ? capitalizeWithPlus(m.mode) : capitalize(m.mode)}
           </Typography>
           <div>
-            <Typography variant="body-small">{m.description}</Typography>
+            <Typography variant='body-small'>{m.description}</Typography>
           </div>
         </div>
       ),
@@ -48,7 +48,7 @@ export default function ChatModeToggle({
         <span>
           {chatMode === m.mode && (
             <>
-              <StatusIndicator type="success" /> Selected
+              <StatusIndicator type='success' /> Selected
             </>
           )}
         </span>

@@ -45,6 +45,6 @@ export default function CustomMenu({
           description={i.description}
         />
       ))}
-    </Menu >
+    </Menu>
   );
 }
