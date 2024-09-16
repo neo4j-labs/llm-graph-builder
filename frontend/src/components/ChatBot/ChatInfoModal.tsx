@@ -57,9 +57,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
-  const [activeTab, setActiveTab] = useState<number>(
-    error.length ? 10 : mode === 'graph' ? 4 : mode === 'entity search+vector' ? 7 : 3
-  );
+  const [activeTab, setActiveTab] = useState<number>(error.length ? 10 : mode === 'graph' ? 4 : 3);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -217,7 +215,11 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       )}
       <Flex className='p-4'>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={3}>
-          {mode === 'entity search+vector' && chunks.length ? (
+          {loading ? (
+            <Box className='flex justify-center items-center'>
+              <LoadingSpinner size='small' />
+            </Box>
+          ) : mode === 'entity search+vector' && chunks.length ? (
             <ul>
               {chunks
                 .map((c) => ({ fileName: c.fileName, fileSource: c.fileType }))
