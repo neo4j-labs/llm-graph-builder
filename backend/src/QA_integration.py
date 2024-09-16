@@ -288,16 +288,26 @@ def initialize_neo4j_vector(graph, chat_mode_settings):
             )
             logging.info(f"Successfully retrieved Neo4jVector Fulltext index '{index_name}' and keyword index '{keyword_index}'")
         else:
-            neo_db = Neo4jVector.from_existing_index(
+            # neo_db = Neo4jVector.from_existing_index(
+            #     embedding=EMBEDDING_FUNCTION,
+            #     index_name=index_name,
+            #     retrieval_query=retrieval_query,
+            #     graph=graph
+            # )
+            neo_db = Neo4jVector.from_existing_graph(
                 embedding=EMBEDDING_FUNCTION,
                 index_name=index_name,
                 retrieval_query=retrieval_query,
-                graph=graph
+                graph=graph,
+                node_label="Chunk",
+                embedding_node_property="embedding",
+                text_node_properties=["text"]
             )
             
             logging.info(f"Successfully retrieved Neo4jVector index '{index_name}'")
     except Exception as e:
-        logging.error(f"Error retrieving Neo4jVector index : {e}")
+        index_name = chat_mode_settings.get("index_name")
+        logging.error(f"Error retrieving Neo4jVector index {index_name} : {e}")
         raise
     return neo_db
 
@@ -329,8 +339,9 @@ def get_neo4j_retriever(graph, document_names,chat_mode_settings, search_k=CHAT_
         retriever = create_retriever(neo_db, document_names,chat_mode_settings, search_k, score_threshold)
         return retriever
     except Exception as e:
-        logging.error(f"Error retrieving Neo4jVector index  or creating retriever: {e}")
-        raise Exception("An error occurred while retrieving the Neo4jVector index or creating the retriever. Please drop and create a new vector index: {e}") from e 
+        index_name = chat_mode_settings.get("index_name")
+        logging.error(f"Error retrieving Neo4jVector index  {index_name} or creating retriever: {e}")
+        raise Exception(f"An error occurred while retrieving the Neo4jVector index or creating the retriever. Please drop and create a new vector index '{index_name}': {e}") from e 
 
 
 def setup_chat(model, graph, document_names, chat_mode_settings):
