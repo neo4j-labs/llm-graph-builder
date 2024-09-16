@@ -26,6 +26,11 @@ from src.logger import CustomLogger
 from datetime import datetime, timezone
 import time
 import gc
+from Secweb import SecWeb
+from Secweb.StrictTransportSecurity import HSTS
+from Secweb.ContentSecurityPolicy import ContentSecurityPolicy
+from Secweb.XContentTypeOptions import XContentTypeOptions
+from Secweb.XFrameOptions import XFrame
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
@@ -42,6 +47,11 @@ def sick():
     return False
 
 app = FastAPI()
+SecWeb(app=app, Option={'referrer': False, 'xframe': False})
+app.add_middleware(HSTS, Option={'max-age': 4, 'preload': True})
+app.add_middleware(ContentSecurityPolicy, Option={'default-src': ["'self'"], 'base-uri': ["'self'"], 'block-all-mixed-content': []}, script_nonce=False, style_nonce=False, report_only=False)
+app.add_middleware(XContentTypeOptions)
+app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
 
 app.add_middleware(
     CORSMiddleware,
