@@ -107,6 +107,10 @@ def remove_duplicate_nodes(nodes,property="element_id"):
     for node in nodes:
         element_id = node[property]
         if element_id not in seen_element_ids:
+            if "labels" in node.keys():
+                labels = set(node["labels"])
+                labels.discard("__Entity__")
+                node["labels"] = list(labels)
             unique_nodes.append(node)
             seen_element_ids.add(element_id)
 
