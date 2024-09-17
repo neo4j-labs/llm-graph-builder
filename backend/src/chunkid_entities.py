@@ -19,10 +19,18 @@ def process_records(records):
                 relationship = element['relationship']
 
                 if start_node['element_id'] not in seen_nodes:
+                    if "labels" in start_node.keys():
+                        labels = set(start_node["labels"])
+                        labels.discard("__Entity__")
+                        start_node["labels"] = list(labels)
                     nodes.append(start_node)
                     seen_nodes.add(start_node['element_id'])
 
                 if end_node['element_id'] not in seen_nodes:
+                    if "labels" in end_node.keys():
+                        labels = set(end_node["labels"])
+                        labels.discard("__Entity__")
+                        end_node["labels"] = list(labels)
                     nodes.append(end_node)
                     seen_nodes.add(end_node['element_id'])
 
