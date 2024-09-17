@@ -359,8 +359,11 @@ export const capitalize = (word: string): string => {
 };
 export const parseEntity = (entity: Entity) => {
   const { labels, properties } = entity;
-  const [label] = labels;
+  let [label] = labels;
   const text = properties.id;
+  if (!label) {
+    label = 'Entity';
+  }
   return { label, text };
 };
 
@@ -392,7 +395,7 @@ export const isFileCompleted = (waitingFile: CustomFile, item: SourceNode) =>
   waitingFile && item.status === 'Completed';
 
 export const calculateProcessedCount = (prev: number, batchSize: number) =>
-  prev === batchSize ? batchSize - 1 : prev + 1;
+  (prev === batchSize ? batchSize - 1 : prev + 1);
 
 export const isProcessingFileValid = (item: SourceNode, userCredentials: UserCredentials) => {
   return item.status === 'Processing' && item.fileName != undefined && userCredentials && userCredentials.database;
@@ -429,6 +432,7 @@ export const getDescriptionForChatMode = (mode: string): string => {
   }
 };
 export const getLogo = (mode: string): Record<string, string> => {
+  console.log(mode);
   if (mode === 'light') {
     return {
       Wikipedia: Wikipediadarkmode,
