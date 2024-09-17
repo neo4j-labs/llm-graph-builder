@@ -316,7 +316,12 @@ QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY = """
                               RETURN c.id as id,c.position as position 
                               ORDER BY c.position LIMIT 1
                               """
-                              
+QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT = """
+                              MATCH (d:Document)<-[:PART_OF]-(:Chunk)-[:HAS_ENTITY]->(e) where d.fileName=$filename
+                              OPTIONAL MATCH (d)<-[:PART_OF]-(:Chunk)-[:HAS_ENTITY]->(e2:!Chunk)-[rel]-(e)
+                              RETURN count(DISTINCT e) as nodes, count(DISTINCT rel) as rels
+                              """                              
+
 START_FROM_BEGINNING  = "start_from_beginning"     
 DELETE_ENTITIES_AND_START_FROM_BEGINNING = "delete_entities_and_start_from_beginning"
 START_FROM_LAST_PROCESSED_POSITION = "start_from_last_processed_position"                                                    
