@@ -35,7 +35,7 @@ import {
 } from '../utils/Utils';
 import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, ChildRef } from '../types';
 import { useCredentials } from '../context/UserCredentials';
-import {MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
+import { ArrowPathIconSolid, MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
 import CustomProgressBar from './UI/CustomProgressBar';
 import subscribe from '../services/PollingAPI';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
@@ -49,7 +49,7 @@ import IndeterminateCheckbox from './UI/CustomCheckBox';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
 let onlyfortheFirstRender = true;
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
-  const { isExpanded, connectionStatus, setConnectionStatus, onInspect } = props;
+  const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
   const { userCredentials } = useCredentials();
@@ -146,7 +146,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               >
                 <StatusIndicator type={statusCheck(info.getValue())} />
                 {info.getValue()}
-                {/* {(info.getValue() === 'Completed' ||
+                {(info.getValue() === 'Completed' ||
                   info.getValue() === 'Failed' ||
                   info.getValue() === 'Cancelled') && (
                   <span className='mx-1'>
@@ -161,7 +161,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                       <ArrowPathIconSolid />
                     </IconButtonWithToolTip>
                   </span>
-                )} */}
+                )}
               </div>
             );
           } else if (info.getValue() === 'Processing' && info.row.original.processingProgress === undefined) {
