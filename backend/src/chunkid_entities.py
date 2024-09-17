@@ -22,8 +22,6 @@ def process_records(records):
                     if "labels" in start_node.keys():
                         labels = set(start_node["labels"])
                         labels.discard("__Entity__")
-                        if not labels:
-                            labels.add('*')
                         start_node["labels"] = list(labels)
                     nodes.append(start_node)
                     seen_nodes.add(start_node['element_id'])
@@ -32,8 +30,6 @@ def process_records(records):
                     if "labels" in end_node.keys():
                         labels = set(end_node["labels"])
                         labels.discard("__Entity__")
-                        if not labels:
-                            labels.add('*')
                         end_node["labels"] = list(labels)
                     nodes.append(end_node)
                     seen_nodes.add(end_node['element_id'])
