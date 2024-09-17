@@ -10,6 +10,7 @@ import {
   useCopyToClipboard,
   Banner,
   useMediaQuery,
+  GraphLabel,
 } from '@neo4j-ndl/react';
 import {
   DocumentDuplicateIconOutline,
@@ -43,6 +44,7 @@ import ReactMarkdown from 'react-markdown';
 import { getLogo, parseEntity, youtubeLinkValidation } from '../../utils/Utils';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { tokens } from '@neo4j-ndl/base';
+import { graphLabels } from '../../utils/Constants';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
   sources,
@@ -113,9 +115,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                   ...n,
                   labels: ['Entity'],
                 };
-              } 
-                return n;
-              
+              }
+              return n;
+
             })
           );
           setNodes(
@@ -125,9 +127,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                   ...n,
                   labels: ['Entity'],
                 };
-              } 
-                return n;
-              
+              }
+              return n;
+
             })
           );
           setRelationships(response.data.data.relationships);
@@ -222,9 +224,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           {mode != 'graph' ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
           {mode != 'graph' ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
           {mode === 'graph+vector' ||
-          mode === 'graph' ||
-          mode === 'graph+vector+fulltext' ||
-          mode === 'entity search+vector' ? (
+            mode === 'graph' ||
+            mode === 'graph+vector+fulltext' ||
+            mode === 'entity search+vector' ? (
             <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
           ) : (
             <></>
@@ -378,37 +380,43 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             <ul className='list-none p-4 max-h-80 overflow-auto'>
               {mode == 'graph'
                 ? graphonly_entities.map((label, index) => (
+                  <li
+                    key={index}
+                    className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%)] overflow-hidden'
+                  >
+                    <div style={{ backgroundColor: calcWordColor(Object.keys(label)[0]) }} className='legend mr-2'>
+                      {
+                        // @ts-ignore
+                        label[Object.keys(label)[0]].id ?? Object.keys(label)[0]
+                      }
+                    </div>
+                  </li>
+                ))
+                : sortedLabels.map((label, index) => {
+                  const entity = groupedEntities[label == 'undefined' ? 'Entity' : label];
+                  return (
                     <li
                       key={index}
                       className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%)] overflow-hidden'
                     >
-                      <div style={{ backgroundColor: calcWordColor(Object.keys(label)[0]) }} className='legend mr-2'>
-                        {
-                          // @ts-ignore
-                          label[Object.keys(label)[0]].id ?? Object.keys(label)[0]
-                        }
-                      </div>
-                    </li>
-                  ))
-                : sortedLabels.map((label, index) => {
-                    const entity = groupedEntities[label == 'undefined' ? 'Entity' : label];
-                    return (
-                      <li
-                        key={index}
-                        className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%)] overflow-hidden'
+                      <GraphLabel
+                        type='node'
+                        className='legend'
+                        color={`${entity.color}`}
+                        selected={false}
+                        onClick={(e) => e.preventDefault()}
                       >
-                        <div key={index} style={{ backgroundColor: `${entity.color}` }} className='legend mr-2'>
-                          {label} ({labelCounts[label]})
-                        </div>
-                        <Typography
-                          className='entity-text text-ellipsis whitespace-nowrap max-w-[calc(100%-120px)] overflow-hidden'
-                          variant='body-medium'
-                        >
-                          {Array.from(entity.texts).slice(0, 3).join(', ')}
-                        </Typography>
-                      </li>
-                    );
-                  })}
+                        {label === '__Community__' ? graphLabels.community : label} ({labelCounts[label]})
+                      </GraphLabel>
+                      <Typography
+                        className='ml-2  text-ellipsis whitespace-nowrap max-w-[calc(100%-120px)] overflow-hidden'
+                        variant='body-medium'
+                      >
+                        {Array.from(entity.texts).slice(0, 3).join(', ')}
+                      </Typography>
+                    </li>
+                  );
+                })}
             </ul>
           ) : (
             <span className='h6 text-center'>No Entities Found</span>
