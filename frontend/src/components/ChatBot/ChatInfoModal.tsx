@@ -59,7 +59,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
-  const [activeTab, setActiveTab] = useState<number>(error?.length ? 10 : mode === chatModeLables.graph ? 4 : 3);
+  const [activeTab, setActiveTab] = useState<number>(error?.length ? 10 : mode === 'graph' ? 4 : 3);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -108,8 +108,30 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           if (response.data.status === 'Failure') {
             throw new Error(response.data.error);
           }
-          setInfoEntities(response.data.data.nodes);
-          setNodes(response.data.data.nodes);
+          setInfoEntities(
+            response.data.data.nodes.map((n: Entity) => {
+              if (!n.labels.length && mode === 'entity search+vector') {
+                return {
+                  ...n,
+                  labels: ['Entity'],
+                };
+              } 
+                return n;
+              
+            })
+          );
+          setNodes(
+            response.data.data.nodes.map((n: ExtendedNode) => {
+              if (!n.labels.length && mode === 'entity search+vector') {
+                return {
+                  ...n,
+                  labels: ['Entity'],
+                };
+              } 
+                return n;
+              
+            })
+          );
           setRelationships(response.data.data.relationships);
           setCommunities(response.data.data.community_data);
           const chunks = response.data.data.chunk_data.map((chunk: any) => {
@@ -134,15 +156,17 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   }, [chunk_ids, mode, error]);
 
   const groupedEntities = useMemo<{ [key: string]: GroupedEntity }>(() => {
-    return infoEntities.reduce((acc, entity) => {
+    const items = infoEntities.reduce((acc, entity) => {
       const { label, text } = parseEntity(entity);
       if (!acc[label]) {
+        console.log({ label, text });
         const newColor = calcWordColor(label);
         acc[label] = { texts: new Set(), color: newColor };
       }
       acc[label].texts.add(text);
       return acc;
     }, {} as Record<string, { texts: Set<string>; color: string }>);
+    return items;
   }, [infoEntities]);
 
   const onChangeTabs = (tabId: number) => {
@@ -151,7 +175,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
 
   const labelCounts = useMemo(() => {
     const counts: { [label: string]: number } = {};
-    for (let index = 0; index < infoEntities.length; index++) {
+    for (let index = 0; index < infoEntities?.length; index++) {
       const entity = infoEntities[index];
       const { labels } = entity;
       const [label] = labels;
@@ -207,7 +231,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           ) : (
             <></>
           )}
-          {mode === 'graph' && cypher_query?.trim().length ? (
+          {mode === 'graph' && cypher_query?.trim()?.length ? (
             <Tabs.Tab tabId={6}>Generated Cypher Query</Tabs.Tab>
           ) : (
             <></>
@@ -221,10 +245,10 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             <Box className='flex justify-center items-center'>
               <LoadingSpinner size='small' />
             </Box>
-          ) : mode === 'entity search+vector' && chunks.length ? (
+          ) : mode === 'entity search+vector' && chunks?.length ? (
             <ul>
               {chunks
-                .map((c) => ({ fileName: c.fileName, fileSource: c.fileType }))
+                .map((c) => ({ fileName: c.fileName, fileSource: c.fileSource }))
                 .map((s, index) => {
                   return (
                     <li key={index} className='flex flex-row inline-block justify-between items-center p-2'>
@@ -237,7 +261,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                             width={20}
                             height={20}
                             className='mr-2'
-                            alt='S3 Logo'
                           />
                         )}
                         <Typography
@@ -251,7 +274,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                   );
                 })}
             </ul>
-          ) : sources.length ? (
+          ) : sources?.length ? (
             <ul className='list-class list-none'>
               {sources.map((link, index) => {
                 return (
@@ -349,15 +372,142 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           )}
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={4}>
-          <EntitiesInfo
-            loading={loading}
-            mode={mode}
-            graphonly_entities={graphonly_entities}
-            infoEntities={infoEntities}
-          />
+          {loading ? (
+            <Box className='flex justify-center items-center'>
+              <LoadingSpinner size='small' />
+            </Box>
+          ) : Object.keys(groupedEntities)?.length > 0 || Object.keys(graphonly_entities)?.length > 0 ? (
+            <ul className='list-none p-4 max-h-80 overflow-auto'>
+              {mode == 'graph'
+                ? graphonly_entities.map((label, index) => (
+                    <li
+                      key={index}
+                      className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%)] overflow-hidden'
+                    >
+                      <div style={{ backgroundColor: calcWordColor(Object.keys(label)[0]) }} className='legend mr-2'>
+                        {
+                          // @ts-ignore
+                          label[Object.keys(label)[0]].id ?? Object.keys(label)[0]
+                        }
+                      </div>
+                    </li>
+                  ))
+                : sortedLabels.map((label, index) => {
+                    const entity = groupedEntities[label == 'undefined' ? 'Entity' : label];
+                    return (
+                      <li
+                        key={index}
+                        className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%)] overflow-hidden'
+                      >
+                        <div key={index} style={{ backgroundColor: `${entity.color}` }} className='legend mr-2'>
+                          {label} ({labelCounts[label]})
+                        </div>
+                        <Typography
+                          className='entity-text text-ellipsis whitespace-nowrap max-w-[calc(100%-120px)] overflow-hidden'
+                          variant='body-medium'
+                        >
+                          {Array.from(entity.texts).slice(0, 3).join(', ')}
+                        </Typography>
+                      </li>
+                    );
+                  })}
+            </ul>
+          ) : (
+            <span className='h6 text-center'>No Entities Found</span>
+          )}
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={5}>
-          <ChunkInfo chunks={chunks} loading={loading} />
+          {loading ? (
+            <Box className='flex justify-center items-center'>
+              <LoadingSpinner size='small' />
+            </Box>
+          ) : chunks?.length > 0 ? (
+            <div className='p-4 h-80 overflow-auto'>
+              <ul className='list-disc list-inside'>
+                {chunks.map((chunk) => (
+                  <li key={chunk.id} className='mb-2'>
+                    {chunk?.page_number ? (
+                      <>
+                        <div className='flex flex-row inline-block justiy-between items-center'>
+                          <DocumentTextIconOutline className='w-4 h-4 inline-block mr-2' />
+                          <Typography
+                            variant='subheading-medium'
+                            className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden'
+                          >
+                            {/* {chunk?.fileName}, Page: {chunk?.page_number} */}
+                            {chunk?.fileName}
+                          </Typography>
+                        </div>
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      </>
+                    ) : chunk?.url && chunk?.start_time ? (
+                      <>
+                        <div className='flex flex-row inline-block justiy-between items-center'>
+                          <img src={youtubelogo} width={20} height={20} className='mr-2' />
+                          <TextLink href={generateYouTubeLink(chunk?.url, chunk?.start_time)} externalLink={true}>
+                            <Typography
+                              variant='body-medium'
+                              className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                            >
+                              {chunk?.fileName}
+                            </Typography>
+                          </TextLink>
+                        </div>
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      </>
+                    ) : chunk?.url && chunk?.url.includes('wikipedia.org') ? (
+                      <>
+                        <div className='flex flex-row inline-block justiy-between items-center'>
+                          <img src={wikipedialogo} width={20} height={20} className='mr-2' />
+                          <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
+                        </div>
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      </>
+                    ) : chunk?.url && chunk?.url.includes('storage.googleapis.com') ? (
+                      <>
+                        <div className='flex flex-row inline-block justiy-between items-center'>
+                          <img src={gcslogo} width={20} height={20} className='mr-2' />
+                          <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
+                        </div>
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      </>
+                    ) : chunk?.url && chunk?.url.startsWith('s3://') ? (
+                      <>
+                        <div className='flex flex-row inline-block justiy-between items-center'>
+                          <img src={s3logo} width={20} height={20} className='mr-2' />
+                          <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
+                        </div>
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      </>
+                    ) : chunk?.url &&
+                      !chunk?.url.startsWith('s3://') &&
+                      !chunk?.url.includes('storage.googleapis.com') &&
+                      !chunk?.url.includes('wikipedia.org') &&
+                      !chunk?.url.includes('youtube.com') ? (
+                      <>
+                        <div className='flex flex-row inline-block items-center'>
+                          <GlobeAltIconOutline className='n-size-token-7' />
+                          <TextLink href={chunk?.url} externalLink={true}>
+                            <Typography variant='body-medium'>{chunk?.url}</Typography>
+                          </TextLink>
+                        </div>
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      </>
+                    ) : chunk.fileSource === 'local file' ? (
+                      <>
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      </>
+                    ) : (
+                      <></>
+                    )}
+                    <ReactMarkdown>{chunk?.text}</ReactMarkdown>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <span className='h6 text-center'>No Chunks Found</span>
+          )}
         </Tabs.TabPanel>
         <Tabs.TabPanel value={activeTab} tabId={6}>
           <CypherCodeBlock

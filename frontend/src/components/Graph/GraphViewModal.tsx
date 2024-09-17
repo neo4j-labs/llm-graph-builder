@@ -396,7 +396,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 graphType={graphType}
                 loading={loading}
                 handleChange={handleCheckboxChange}
-                isgds={allNodes.some(n=>n.labels.includes('__Community__'))}
+                isgds={allNodes.some((n) => n.labels.includes('__Community__'))}
               />
             )}
           </Flex>
