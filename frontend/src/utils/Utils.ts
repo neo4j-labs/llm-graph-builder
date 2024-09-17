@@ -433,7 +433,6 @@ export const getDescriptionForChatMode = (mode: string): string => {
   }
 };
 export const getLogo = (mode: string): Record<string, string> => {
-  console.log(mode);
   if (mode === 'light') {
     return {
       Wikipedia: Wikipediadarkmode,
