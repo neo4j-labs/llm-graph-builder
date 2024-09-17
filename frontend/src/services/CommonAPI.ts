@@ -1,5 +1,5 @@
 import { AxiosResponse, Method } from 'axios';
-import { UserCredentials, FormDataParams } from '../types';
+import { UserCredentials, FormDataParams  } from '../types';
 import api from '../API/Index';
 
 // API Call
