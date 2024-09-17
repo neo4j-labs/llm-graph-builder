@@ -644,3 +644,22 @@ export interface DatabaseStatusProps {
   isGdsActive: boolean;
   uri: string | null;
 }
+
+export type SourcesProps = {
+  loading: boolean;
+  mode: string;
+  sources: string[];
+  chunks: Chunk[];
+};
+
+export type ChunkProps = {
+  loading: boolean;
+  chunks: Chunk[];
+};
+
+export type EntitiesProps = {
+  loading: boolean;
+  mode: string;
+  graphonly_entities: [];
+  infoEntities: Entity[];
+};

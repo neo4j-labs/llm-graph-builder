@@ -395,7 +395,7 @@ export const isFileCompleted = (waitingFile: CustomFile, item: SourceNode) =>
   waitingFile && item.status === 'Completed';
 
 export const calculateProcessedCount = (prev: number, batchSize: number) =>
-  (prev === batchSize ? batchSize - 1 : prev + 1);
+  prev === batchSize ? batchSize - 1 : prev + 1;
 
 export const isProcessingFileValid = (item: SourceNode, userCredentials: UserCredentials) => {
   return item.status === 'Processing' && item.fileName != undefined && userCredentials && userCredentials.database;
@@ -448,4 +448,15 @@ export const getLogo = (mode: string): Record<string, string> => {
     youtube: youtubelightlogo,
     'gcs bucket': gcslogo,
   };
+};
+
+export const generateYouTubeLink = (url: string, startTime: string) => {
+  try {
+    const urlObj = new URL(url);
+    urlObj.searchParams.set('t', startTime);
+    return urlObj.toString();
+  } catch (error) {
+    console.error('Invalid URL:', error);
+    return '';
+  }
 };

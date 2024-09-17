@@ -8,7 +8,7 @@ import { capitalizeWithPlus } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 export default function ChatModeToggle({
   menuAnchor,
-  closeHandler = () => { },
+  closeHandler = () => {},
   open,
   anchorPortal = true,
   disableBackdrop = false,
