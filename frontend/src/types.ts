@@ -85,7 +85,7 @@ export type UploadParams = {
   originalname: string;
 } & { [key: string]: any };
 
-export type ForDataParams = ExtractParams | UploadParams;
+export type FormDataParams = ExtractParams | UploadParams;
 
 export interface DropdownProps {
   onSelect: (option: OptionType | null | void) => void;
