@@ -138,7 +138,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           );
           setLoading(false);
         } catch (error) {
-          console.error('Error fetching infomration:', error);
+          console.error('Error fetching information:', error);
           setLoading(false);
         }
       })();
