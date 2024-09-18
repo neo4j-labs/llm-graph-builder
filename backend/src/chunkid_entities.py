@@ -135,6 +135,9 @@ def process_entityids(driver, chunk_ids):
             logging.info(f"Nodes and relationships are processed")
             result["chunk_data"] = records[0]["chunks"]
             result["community_data"] = records[0]["communities"]
+        else:
+            result["chunk_data"] = list()
+            result["community_data"] = list()
         logging.info(f"Query process completed successfully for chunk ids: {chunk_ids}")
         return result
     except Exception as e:

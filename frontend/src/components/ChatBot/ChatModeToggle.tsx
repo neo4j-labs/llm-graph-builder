@@ -8,7 +8,7 @@ import { capitalizeWithPlus } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 export default function ChatModeToggle({
   menuAnchor,
-  closeHandler = () => {},
+  closeHandler = () => { },
   open,
   anchorPortal = true,
   disableBackdrop = false,
@@ -19,7 +19,7 @@ export default function ChatModeToggle({
   anchorPortal?: boolean;
   disableBackdrop?: boolean;
 }) {
-  const { setchatMode, chatMode, postProcessingTasks } = useFileContext();
+  const { setchatMode, chatMode, postProcessingTasks, selectedRows } = useFileContext();
   const isCommunityAllowed = postProcessingTasks.includes('create_communities');
   const { isGdsActive } = useCredentials();
   const memoizedChatModes = useMemo(() => {
@@ -27,34 +27,44 @@ export default function ChatModeToggle({
       ? chatModes
       : chatModes?.filter((m) => !m.mode.includes('entity search+vector'));
   }, [isGdsActive, isCommunityAllowed]);
+
+
   const menuItems = useMemo(() => {
-    return memoizedChatModes?.map((m) => ({
-      title: (
-        <div>
-          <Typography variant='subheading-small'>
-            {m.mode.includes('+') ? capitalizeWithPlus(m.mode) : capitalize(m.mode)}
-          </Typography>
+    return memoizedChatModes?.map((m) => {
+      const isDisabled = Boolean(selectedRows.length && !(m.mode === 'vector' || m.mode === 'graph+vector'));
+      return {
+        title: (
           <div>
-            <Typography variant='body-small'>{m.description}</Typography>
+            <Typography variant='subheading-small'>
+              {m.mode.includes('+') ? capitalizeWithPlus(m.mode) : capitalize(m.mode)}
+            </Typography>
+            <div>
+              <Typography variant='body-small'>{m.description}</Typography>
+            </div>
           </div>
-        </div>
-      ),
-      onClick: () => {
-        setchatMode(m.mode);
-        closeHandler(); // Close the menu after setting the chat mode
-      },
-      disabledCondition: false,
-      description: (
-        <span>
-          {chatMode === m.mode && (
-            <>
-              <StatusIndicator type='success' /> Selected
-            </>
-          )}
-        </span>
-      ),
-    }));
-  }, [chatMode, memoizedChatModes, setchatMode, closeHandler]);
+        ),
+        onClick: () => {
+          setchatMode(m.mode);
+          closeHandler();
+        },
+        disabledCondition: isDisabled,
+        description: (
+          <span>
+            {chatMode === m.mode && (
+              <>
+                <StatusIndicator type='success' /> Selected
+              </>
+            )}
+            {isDisabled && (
+              <>
+                <StatusIndicator type='warning' /> Chatmode not available
+              </>
+            )}
+          </span>
+        ),
+      };
+    });
+  }, [chatMode, memoizedChatModes, setchatMode, closeHandler, selectedRows]);
   return (
     <CustomMenu
       closeHandler={closeHandler}
