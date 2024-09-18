@@ -145,7 +145,10 @@ const Content: React.FC<ContentProps> = ({
     if (processedCount == batchSize) {
       handleGenerateGraph([], true);
     }
-  }, [processedCount, userCredentials]);
+    if (processedCount === 1 && queue.isEmpty()) {
+      (async () => await postProcessing(userCredentials as UserCredentials, postProcessingTasks))();
+    }
+  }, [processedCount, userCredentials, queue]);
 
   useEffect(() => {
     if (afterFirstRender) {
@@ -363,7 +366,7 @@ const Content: React.FC<ContentProps> = ({
 
   const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
     if (!remainingFiles.length) {
-      await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+      (async () => await postProcessing(userCredentials as UserCredentials, postProcessingTasks))();
     }
     for (let index = 0; index < remainingFiles.length; index++) {
       const f = remainingFiles[index];

@@ -113,9 +113,8 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                   ...n,
                   labels: ['Entity'],
                 };
-              } 
-                return n;
-              
+              }
+              return n;
             })
           );
           setNodes(
@@ -125,9 +124,8 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                   ...n,
                   labels: ['Entity'],
                 };
-              } 
-                return n;
-              
+              }
+              return n;
             })
           );
           setRelationships(response.data.data.relationships);
