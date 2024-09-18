@@ -45,6 +45,7 @@ export default function PostProcessingCheckList() {
                       }
                     }}
                     disabled={isCreateCommunities && !isGdsActive}
+                    aria-label='checkbox-postProcessing'
                   />
                   <Typography variant={tablet ? 'body-small' : 'body-medium'}>{job.description}</Typography>
                 </Flex>
