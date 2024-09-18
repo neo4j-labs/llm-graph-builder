@@ -3,7 +3,6 @@ import {
   Typography,
   Flex,
   Tabs,
-  LoadingSpinner,
   CypherCodeBlock,
   CypherCodeBlockProps,
   useCopyToClipboard,
@@ -26,12 +25,12 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import GraphViewButton from '../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
 import { useCredentials } from '../../context/UserCredentials';
-import ReactMarkdown from 'react-markdown';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { tokens } from '@neo4j-ndl/base';
 import ChunkInfo from './ChunkInfo';
 import EntitiesInfo from './EntitiesInfo';
 import SourcesInfo from './SourcesInfo';
+import CommunitiesInfo from './Communities';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
   sources,
@@ -95,8 +94,13 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           if (response.data.status === 'Failure') {
             throw new Error(response.data.error);
           }
+          const nodesData = response?.data?.data?.nodes;
+          const relationshipsData = response?.data?.data?.relationships;
+          const communitiesData = response?.data?.data?.community_data;
+          const chunksData = response?.data?.data?.chunk_data;
+
           setInfoEntities(
-            response.data.data.nodes.map((n: Entity) => {
+            nodesData.map((n: Entity) => {
               if (!n.labels.length && mode === 'entity search+vector') {
                 return {
                   ...n,
@@ -107,27 +111,29 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             })
           );
           setNodes(
-            response.data.data.nodes.map((n: ExtendedNode) => {
+            nodesData.map((n: ExtendedNode) => {
               if (!n.labels.length && mode === 'entity search+vector') {
                 return {
                   ...n,
                   labels: ['Entity'],
                 };
               }
-              return n;
+              return n ?? [];
             })
           );
-          setRelationships(response.data.data.relationships);
-          setCommunities(response.data.data.community_data);
-          const chunks = response.data.data.chunk_data.map((chunk: any) => {
-            const chunkScore = chunk_ids.find((chunkdetail) => chunkdetail.id === chunk.id);
-            return {
-              ...chunk,
-              score: chunkScore?.score,
-            };
-          });
-          const sortedchunks = chunks.sort((a: any, b: any) => b.score - a.score);
-          setChunks(sortedchunks);
+          setRelationships(relationshipsData ?? []);
+          setCommunities(communitiesData ?? []);
+          setChunks(
+            chunksData.map((chunk: any) => {
+              const chunkScore = chunk_ids.find((chunkdetail) =>
+                chunkdetail.id
+                === chunk.id);
+              return {
+                ...chunk,
+                score: chunkScore?.score,
+              } ?? [];
+            }).sort((a: any, b: any) => b.score - a.score)
+          );
           setLoading(false);
         } catch (error) {
           console.error('Error fetching infomration:', error);
@@ -169,9 +175,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           {mode != 'graph' ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
           {mode != 'graph' ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
           {mode === 'graph+vector' ||
-          mode === 'graph' ||
-          mode === 'graph+vector+fulltext' ||
-          mode === 'entity search+vector' ? (
+            mode === 'graph' ||
+            mode === 'graph+vector+fulltext' ||
+            mode === 'entity search+vector' ? (
             <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
           ) : (
             <></>
@@ -209,32 +215,10 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           />
         </Tabs.TabPanel>
         {mode === 'entity search+vector' ? (
-          <Tabs.TabPanel value={activeTab} tabId={7}>
-            {loading ? (
-              <Box className='flex justify-center items-center'>
-                <LoadingSpinner size='small' />
-              </Box>
-            ) : (
-              <div className='p-4 h-80 overflow-auto'>
-                <ul className='list-disc list-inside'>
-                  {communities.map((community, index) => (
-                    <li key={`${community.id}${index}`} className='mb-2'>
-                      <div>
-                        <Flex flexDirection='row' gap='2'>
-                          <Typography variant='subheading-medium'>ID : </Typography>
-                          <Typography variant='subheading-medium'>{community.id}</Typography>
-                        </Flex>
-                        <ReactMarkdown>{community.summary}</ReactMarkdown>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+          <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={7}>
+            <CommunitiesInfo loading={loading} communities={communities} />
           </Tabs.TabPanel>
-        ) : (
-          <></>
-        )}
+        ) : (<></>)}
       </Flex>
       {activeTab == 4 && nodes?.length && relationships?.length ? (
         <Box className='button-container flex mt-2 justify-center'>

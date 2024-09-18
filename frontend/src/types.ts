@@ -234,7 +234,7 @@ export type ChatbotProps = {
   isFullScreen?: boolean;
   connectionStatus: boolean;
 };
-export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
+export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> { }
 
 export interface GraphViewModalProps {
   open: boolean;
@@ -662,4 +662,9 @@ export type EntitiesProps = {
   mode: string;
   graphonly_entities: [];
   infoEntities: Entity[];
+};
+
+export type CommunitiesProps = {
+  loading: boolean;
+  communities: Community[]
 };

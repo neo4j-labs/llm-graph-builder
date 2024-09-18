@@ -29,7 +29,6 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks }) => {
                         variant='subheading-medium'
                         className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden'
                       >
-                        {/* {chunk?.fileName}, Page: {chunk?.page_number} */}
                         {chunk?.fileName}
                       </Typography>
                     </div>
