@@ -7,7 +7,7 @@ import youtubelogo from '../../assets/images/youtube.svg';
 import gcslogo from '../../assets/images/gcs.webp';
 import s3logo from '../../assets/images/s3logo.png';
 import ReactMarkdown from 'react-markdown';
-import { generateYouTubeLink, getLogo, isAllowedHost } from '../../utils/Utils';
+import { generateYouTubeLink, getLogo } from '../../utils/Utils';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 
 const ChunkInfo: FC<ChunkProps> = ({ loading, chunks }) => {
@@ -52,7 +52,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks }) => {
                     </div>
                     <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                   </>
-                ) : chunk?.url && new URL(chunk.url).host === 'wikipedia.org' ? (
+                ) : chunk?.url && chunk?.url.includes('wikipedia.org') ? (
                   <>
                     <div className='flex flex-row inline-block justiy-between items-center'>
                       <img src={wikipedialogo} width={20} height={20} className='mr-2' />
@@ -60,7 +60,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks }) => {
                     </div>
                     <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                   </>
-                ) : chunk?.url && new URL(chunk.url).host === 'storage.googleapis.com' ? (
+                ) : chunk?.url && chunk?.url.includes('storage.googleapis.com') ? (
                   <>
                     <div className='flex flex-row inline-block justiy-between items-center'>
                       <img src={gcslogo} width={20} height={20} className='mr-2' />
@@ -78,7 +78,9 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks }) => {
                   </>
                 ) : chunk?.url &&
                   !chunk?.url.startsWith('s3://') &&
-                  !isAllowedHost(chunk?.url, ['storage.googleapis.com', 'wikipedia.org', 'youtube.com']) ? (
+                  !chunk?.url.includes('storage.googleapis.com') &&
+                  !chunk?.url.includes('wikipedia.org') &&
+                  !chunk?.url.includes('youtube.com') ? (
                   <>
                     <div className='flex flex-row inline-block items-center'>
                       <GlobeAltIconOutline className='n-size-token-7' />

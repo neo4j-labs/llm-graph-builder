@@ -450,3 +450,14 @@ export const getLogo = (mode: string): Record<string, string> => {
     'gcs bucket': gcslogo,
   };
 };
+
+export const generateYouTubeLink = (url: string, startTime: string) => {
+  try {
+    const urlObj = new URL(url);
+    urlObj.searchParams.set('t', startTime);
+    return urlObj.toString();
+  } catch (error) {
+    console.error('Invalid URL:', error);
+    return '';
+  }
+};
