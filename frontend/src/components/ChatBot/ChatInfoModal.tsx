@@ -124,15 +124,17 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           setRelationships(relationshipsData ?? []);
           setCommunities(communitiesData ?? []);
           setChunks(
-            chunksData.map((chunk: any) => {
-              const chunkScore = chunk_ids.find((chunkdetail) =>
-                chunkdetail.id
-                === chunk.id);
-              return {
-                ...chunk,
-                score: chunkScore?.score,
-              } ?? [];
-            }).sort((a: any, b: any) => b.score - a.score)
+            chunksData
+              .map((chunk: any) => {
+                const chunkScore = chunk_ids.find((chunkdetail) => chunkdetail.id === chunk.id);
+                return (
+                  {
+                    ...chunk,
+                    score: chunkScore?.score,
+                  } ?? []
+                );
+              })
+              .sort((a: any, b: any) => b.score - a.score)
           );
           setLoading(false);
         } catch (error) {
@@ -175,9 +177,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           {mode != 'graph' ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
           {mode != 'graph' ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
           {mode === 'graph+vector' ||
-            mode === 'graph' ||
-            mode === 'graph+vector+fulltext' ||
-            mode === 'entity search+vector' ? (
+          mode === 'graph' ||
+          mode === 'graph+vector+fulltext' ||
+          mode === 'entity search+vector' ? (
             <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
           ) : (
             <></>
@@ -218,7 +220,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={7}>
             <CommunitiesInfo loading={loading} communities={communities} />
           </Tabs.TabPanel>
-        ) : (<></>)}
+        ) : (
+          <></>
+        )}
       </Flex>
       {activeTab == 4 && nodes?.length && relationships?.length ? (
         <Box className='button-container flex mt-2 justify-center'>
