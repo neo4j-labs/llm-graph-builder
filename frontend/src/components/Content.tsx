@@ -146,9 +146,7 @@ const Content: React.FC<ContentProps> = ({
       handleGenerateGraph([], true);
     }
     if (processedCount === 1 && queue.isEmpty()) {
-      (async () => {
-        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
-      })();
+      (async () => await postProcessing(userCredentials as UserCredentials, postProcessingTasks))();
     }
   }, [processedCount, userCredentials, queue]);
 
@@ -376,7 +374,7 @@ const Content: React.FC<ContentProps> = ({
 
   const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
     if (!remainingFiles.length) {
-      await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+      (async () => await postProcessing(userCredentials as UserCredentials, postProcessingTasks))();
     }
     remainingFiles.forEach((f) => {
       setFilesData((prev) =>
