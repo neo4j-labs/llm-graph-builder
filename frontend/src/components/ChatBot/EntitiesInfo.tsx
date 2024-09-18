@@ -10,7 +10,6 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
     const items = infoEntities.reduce((acc, entity) => {
       const { label, text } = parseEntity(entity);
       if (!acc[label]) {
-        console.log({ label, text });
         const newColor = calcWordColor(label);
         acc[label] = { texts: new Set(), color: newColor };
       }
