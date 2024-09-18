@@ -491,14 +491,31 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                         </div>
                         <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                       </>
-                    ) : chunk.fileSource === 'local file' ? (
-                      <>
-                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
-                      </>
                     ) : (
-                      <></>
+                      <>
+                        <div className='flex flex-row inline-block items-center'>
+                          {chunk.fileSource === 'local file' ? (
+                            <DocumentTextIconOutline className='n-size-token-7 mr-2' />
+                          ) : (
+                            <img
+                              src={getLogo(themeUtils.colorMode)[chunk.fileSource]}
+                              width={20}
+                              height={20}
+                              className='mr-2'
+                            />
+                          )}
+                          <Typography
+                            variant='body-medium'
+                            className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                          >
+                            {chunk.fileName}
+                          </Typography>
+                        </div>
+                      </>
                     )}
-                    <ReactMarkdown>{chunk?.text}</ReactMarkdown>
+                    <span>
+                      Text: <ReactMarkdown>{chunk?.text}</ReactMarkdown>
+                    </span>
                   </li>
                 ))}
               </ul>
