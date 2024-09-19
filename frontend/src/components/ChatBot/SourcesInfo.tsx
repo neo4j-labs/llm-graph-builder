@@ -2,7 +2,7 @@ import { FC, useContext } from 'react';
 import { SourcesProps } from '../../types';
 import { Box, LoadingSpinner, TextLink, Typography } from '@neo4j-ndl/react';
 import { DocumentTextIconOutline, GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
-import { getLogo, youtubeLinkValidation } from '../../utils/Utils';
+import { getLogo, isAllowedHost, youtubeLinkValidation } from '../../utils/Utils';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import HoverableLink from '../UI/HoverableLink';
 import wikipedialogo from '../../assets/images/wikipedia.svg';
@@ -49,7 +49,7 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
               <li key={index} className='flex flex-row inline-block justify-between items-center p-2'>
                 {link?.startsWith('http') || link?.startsWith('https') ? (
                   <>
-                    {link?.includes('wikipedia.org') && (
+                    {isAllowedHost(link, ['wikipedia.org']) && (
                       <div className='flex flex-row inline-block justify-between items-center'>
                         <img src={wikipedialogo} width={20} height={20} className='mr-2' alt='Wikipedia Logo' />
                         <TextLink href={link} externalLink={true}>
@@ -64,7 +64,7 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
                         </TextLink>
                       </div>
                     )}
-                    {link?.includes('storage.googleapis.com') && (
+                    {isAllowedHost(link, ['storage.googleapis.com']) && (
                       <div className='flex flex-row inline-block justify-between items-center'>
                         <img src={gcslogo} width={20} height={20} className='mr-2' alt='Google Cloud Storage Logo' />
                         <Typography
@@ -93,9 +93,7 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
                       </>
                     )}
                     {!link?.startsWith('s3://') &&
-                      !link?.includes('storage.googleapis.com') &&
-                      !link?.includes('wikipedia.org') &&
-                      !link?.includes('youtube.com') && (
+                      !isAllowedHost(link, ['storage.googleapis.com', 'wikipedia.org', 'youtube.com']) && (
                         <div className='flex flex-row inline-block justify-between items-center'>
                           <GlobeAltIconOutline className='n-size-token-7' />
                           <TextLink href={link} externalLink={true}>
