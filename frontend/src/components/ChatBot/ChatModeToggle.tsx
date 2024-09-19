@@ -25,23 +25,23 @@ export default function ChatModeToggle({
 
   useEffect(() => {
     if (selectedRows.length !== 0) {
-      setchatMode('graph+vector');
+      setchatMode(chatModeLables.graph_vector);
     } else {
-      setchatMode('graph+vector+fulltext');
+      setchatMode(chatModeLables.graph_vector_fulltext);
     }
   }, [selectedRows]);
 
   const memoizedChatModes = useMemo(() => {
     return isGdsActive && isCommunityAllowed
       ? chatModes
-      : chatModes?.filter((m) => !m.mode.includes('entity search+vector'));
+      : chatModes?.filter((m) => !m.mode.includes(chatModeLables.entity_vector));
   }, [isGdsActive, isCommunityAllowed]);
   const menuItems = useMemo(() => {
     return memoizedChatModes?.map((m) => {
-      const isDisabled = Boolean(selectedRows.length && !(m.mode === 'vector' || m.mode === 'graph+vector'));
+      const isDisabled = Boolean(selectedRows.length && !(m.mode === chatModeLables.vector || m.mode === chatModeLables.graph_vector));
       const handleModeChange = () => {
         if (isDisabled) {
-          setchatMode('graph+vector');
+          setchatMode(chatModeLables.graph_vector);
         } else {
           setchatMode(m.mode);
         }
@@ -64,12 +64,12 @@ export default function ChatModeToggle({
           <span>
             {chatMode === m.mode && (
               <>
-                <StatusIndicator type='success' /> Selected
+                <StatusIndicator type='success' /> {chatModeLables.selected}
               </>
             )}
             {isDisabled && (
               <>
-                <StatusIndicator type='warning' /> Chatmode not available
+                <StatusIndicator type='warning' /> {chatModeLables.unavailableChatMode}
               </>
             )}
           </span>
