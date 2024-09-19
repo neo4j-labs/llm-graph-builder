@@ -111,7 +111,7 @@ const Content: React.FC<ContentProps> = ({
         setUserCredentials({
           uri: neo4jConnection.uri,
           userName: neo4jConnection.user,
-          password: neo4jConnection.password,
+          password: atob(neo4jConnection.password),
           database: neo4jConnection.database,
           port: neo4jConnection.uri.split(':')[2],
         });
@@ -172,13 +172,19 @@ const Content: React.FC<ContentProps> = ({
       (async () => {
         const parsedData = JSON.parse(connection);
         console.log(parsedData.uri);
-        const response = await connectAPI(parsedData.uri, parsedData.user, parsedData.password, parsedData.database);
+        const response = await connectAPI(
+          parsedData.uri,
+          parsedData.user,
+          atob(parsedData.password),
+          parsedData.database
+        );
         if (response?.data?.status === 'Success') {
           localStorage.setItem(
             'neo4j.connection',
             JSON.stringify({
               ...parsedData,
               userDbVectorIndex: response.data.data.db_vector_dimension,
+              password: btoa(atob(parsedData.password)),
             })
           );
           if (
