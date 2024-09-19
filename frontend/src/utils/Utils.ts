@@ -461,3 +461,11 @@ export const generateYouTubeLink = (url: string, startTime: string) => {
     return '';
   }
 };
+export function isAllowedHost(url: string, allowedHosts: string[]) {
+  try {
+    const parsedUrl = new URL(url);
+    return allowedHosts.includes(parsedUrl.host);
+  } catch (e) {
+    return false;
+  }
+}

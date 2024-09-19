@@ -8,7 +8,7 @@ import { capitalizeWithPlus } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 export default function ChatModeToggle({
   menuAnchor,
-  closeHandler = () => { },
+  closeHandler = () => {},
   open,
   anchorPortal = true,
   disableBackdrop = false,
@@ -27,7 +27,6 @@ export default function ChatModeToggle({
       ? chatModes
       : chatModes?.filter((m) => !m.mode.includes('entity search+vector'));
   }, [isGdsActive, isCommunityAllowed]);
-
 
   const menuItems = useMemo(() => {
     return memoizedChatModes?.map((m) => {
