@@ -19,6 +19,7 @@ from langchain.retrievers.document_compressors import EmbeddingsFilter, Document
 from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain.chains import GraphCypherQAChain
+from langchain_community.chat_message_histories import ChatMessageHistory
 
 # LangChain chat models
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
@@ -37,7 +38,29 @@ from src.shared.constants import *
 load_dotenv() 
 
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
-EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL)
+EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL) 
+
+
+
+class SessionChatHistory:
+    history_dict = {}
+
+    @classmethod
+    def get_chat_history(cls, session_id):
+        """Retrieve or create chat message history for a given session ID."""
+        if session_id not in cls.history_dict:
+            logging.info(f"Creating new ChatMessageHistory Local for session ID: {session_id}")
+            cls.history_dict[session_id] = ChatMessageHistory()
+        else:
+            logging.info(f"Retrieved existing ChatMessageHistory Local for session ID: {session_id}")
+        return cls.history_dict[session_id]
+
+def get_history_by_session_id(session_id):
+    try:
+        return SessionChatHistory.get_chat_history(session_id)
+    except Exception as e:
+        logging.error(f"Failed to get history for session ID '{session_id}': {e}")
+        raise
 
 def get_total_tokens(ai_response, llm):
     try:
@@ -68,12 +91,15 @@ def get_total_tokens(ai_response, llm):
 
     return total_tokens
 
-def clear_chat_history(graph, session_id):
+def clear_chat_history(graph, session_id,local=False):
     try:
-        history = Neo4jChatMessageHistory(
-            graph=graph,
-            session_id=session_id
-        )
+        if not local:
+            history = Neo4jChatMessageHistory(
+                graph=graph,
+                session_id=session_id
+            )
+        else:
+            history = get_history_by_session_id(session_id)
         
         history.clear()
 
@@ -534,17 +560,20 @@ def process_graph_response(model, graph, question, messages, history):
             "user": "chatbot"
         }
 
-def create_neo4j_chat_message_history(graph, session_id):
+def create_neo4j_chat_message_history(graph, session_id, local=False):
     """
     Creates and returns a Neo4jChatMessageHistory instance.
 
     """
     try:
-
-        history = Neo4jChatMessageHistory(
-            graph=graph,
-            session_id=session_id
-        )
+        if not local: 
+            history = Neo4jChatMessageHistory(
+                graph=graph,
+                session_id=session_id
+            )
+            return history
+        
+        history = get_history_by_session_id(session_id)
         return history
 
     except Exception as e:
