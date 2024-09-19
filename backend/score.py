@@ -48,10 +48,10 @@ def sick():
 
 app = FastAPI()
 SecWeb(app=app, Option={'referrer': False, 'xframe': False})
-app.add_middleware(HSTS, Option={'max-age': 4})
-app.add_middleware(ContentSecurityPolicy, Option={'default-src': ["'self'"], 'base-uri': ["'self'"], 'block-all-mixed-content': [], 'clearSiteData': {'cache': False, 'storage': False}, 'cacheControl': {'public': False, 's-maxage': 0}}, script_nonce=False, style_nonce=False, report_only=False)
-app.add_middleware(XContentTypeOptions)
-app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
+# app.add_middleware(HSTS, Option={'max-age': 4})
+# app.add_middleware(ContentSecurityPolicy, Option={'default-src': ["'self'"], 'base-uri': ["'self'"], 'block-all-mixed-content': []}, script_nonce=False, style_nonce=False, report_only=False)
+# app.add_middleware(XContentTypeOptions)
+# app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
 
 app.add_middleware(
     CORSMiddleware,
