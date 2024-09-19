@@ -84,7 +84,7 @@ export default function ConnectionModal({
               JSON.stringify({
                 uri: usercredential?.uri,
                 user: usercredential?.userName,
-                password: usercredential?.password,
+                password: btoa(usercredential?.password),
                 database: usercredential?.database,
                 userDbVectorIndex: 384,
               })
@@ -214,7 +214,7 @@ export default function ConnectionModal({
           JSON.stringify({
             uri: connectionURI,
             user: username,
-            password: password,
+            password: btoa(password),
             database: database,
             userDbVectorIndex,
             isgdsActive,
