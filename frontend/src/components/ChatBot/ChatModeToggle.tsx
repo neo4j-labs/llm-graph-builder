@@ -1,5 +1,5 @@
 import { StatusIndicator, Typography } from '@neo4j-ndl/react';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useFileContext } from '../../context/UsersFiles';
 import CustomMenu from '../UI/Menu';
 import { chatModeLables, chatModes } from '../../utils/Constants';
@@ -8,7 +8,7 @@ import { capitalizeWithPlus } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 export default function ChatModeToggle({
   menuAnchor,
-  closeHandler = () => {},
+  closeHandler = () => { },
   open,
   anchorPortal = true,
   disableBackdrop = false,
@@ -22,15 +22,31 @@ export default function ChatModeToggle({
   const { setchatMode, chatMode, postProcessingTasks, selectedRows } = useFileContext();
   const isCommunityAllowed = postProcessingTasks.includes('create_communities');
   const { isGdsActive } = useCredentials();
+
+  useEffect(() => {
+    if (selectedRows.length !== 0) {
+      setchatMode('graph+vector');
+    } else {
+      setchatMode('graph+vector+fulltext');
+    }
+  }, [selectedRows]);
+
   const memoizedChatModes = useMemo(() => {
     return isGdsActive && isCommunityAllowed
       ? chatModes
       : chatModes?.filter((m) => !m.mode.includes('entity search+vector'));
   }, [isGdsActive, isCommunityAllowed]);
-
   const menuItems = useMemo(() => {
     return memoizedChatModes?.map((m) => {
       const isDisabled = Boolean(selectedRows.length && !(m.mode === 'vector' || m.mode === 'graph+vector'));
+      const handleModeChange = () => {
+        if (isDisabled) {
+          setchatMode('graph+vector');
+        } else {
+          setchatMode(m.mode);
+        }
+        closeHandler();
+      };
       return {
         title: (
           <div>
@@ -42,10 +58,7 @@ export default function ChatModeToggle({
             </div>
           </div>
         ),
-        onClick: () => {
-          setchatMode(m.mode);
-          closeHandler();
-        },
+        onClick: handleModeChange,
         disabledCondition: isDisabled,
         description: (
           <span>
@@ -64,6 +77,13 @@ export default function ChatModeToggle({
       };
     });
   }, [chatMode, memoizedChatModes, setchatMode, closeHandler, selectedRows]);
+
+  useEffect(() => {
+    if (!selectedRows.length && !chatMode) {
+      setchatMode(chatMode);
+    }
+  }, [setchatMode, selectedRows, chatMode]);
+
   return (
     <CustomMenu
       closeHandler={closeHandler}
