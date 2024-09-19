@@ -287,13 +287,14 @@ def initialize_neo4j_vector(graph, chat_mode_settings):
                 keyword_index_name=keyword_index
             )
             logging.info(f"Successfully retrieved Neo4jVector Fulltext index '{index_name}' and keyword index '{keyword_index}'")
+        elif mode == "entity search+vector":
+            neo_db = Neo4jVector.from_existing_index(
+                embedding=EMBEDDING_FUNCTION,
+                index_name=index_name,
+                retrieval_query=retrieval_query,
+                graph=graph
+            )
         else:
-            # neo_db = Neo4jVector.from_existing_index(
-            #     embedding=EMBEDDING_FUNCTION,
-            #     index_name=index_name,
-            #     retrieval_query=retrieval_query,
-            #     graph=graph
-            # )
             neo_db = Neo4jVector.from_existing_graph(
                 embedding=EMBEDDING_FUNCTION,
                 index_name=index_name,
@@ -303,7 +304,6 @@ def initialize_neo4j_vector(graph, chat_mode_settings):
                 embedding_node_property="embedding",
                 text_node_properties=["text"]
             )
-            
             logging.info(f"Successfully retrieved Neo4jVector index '{index_name}'")
     except Exception as e:
         index_name = chat_mode_settings.get("index_name")
