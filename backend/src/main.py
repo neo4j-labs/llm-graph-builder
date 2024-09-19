@@ -144,23 +144,33 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     logging.info(f"match value: {match}")
     cred_path = os.path.join(os.getcwd(),"llm-experiments_credentials.json")
     print(f'Credential file path {cred_path}')
+    if os.path.exists(cred_path):
+      logging.info("File path exist")
+      with open(cred_path,'r') as secret_file:
+        secret_data = json.load(secret_file)
+        logging.info(f"Project id : {secret_data['project_id']}")
+        logging.info(f"Universal domain: {secret_data['universe_domain']}")
+    else:
+      logging.warning("credntial file path not exist")
+
     video_id = parse_qs(urlparse(youtube_url).query).get('v')
     print(f'Video Id Youtube: {video_id}')
-    # google_api_client = GoogleApiClient(service_account_path=Path(cred_path))
-    # youtube_loader_channel = GoogleApiYoutubeLoader(
-    # google_api_client=google_api_client,
-    # video_ids=[video_id[0].strip()], add_video_info=True
-    # )
-    # youtube_transcript = youtube_loader_channel.load()
-    
+    google_api_client = GoogleApiClient(service_account_path=Path(cred_path))
+    youtube_loader_channel = GoogleApiYoutubeLoader(
+    google_api_client=google_api_client,
+    video_ids=[video_id[0].strip()], add_video_info=True
+    )
+    youtube_transcript = youtube_loader_channel.load()
+    page_content = youtube_transcript[0].page_content
+
     obj_source_node.file_name = match.group(1)#youtube_transcript[0].metadata["snippet"]["title"]
-    transcript= get_youtube_combined_transcript(match.group(1))
+    # transcript= get_youtube_combined_transcript(match.group(1))
     # print(transcript)
-    if transcript==None or len(transcript)==0:
+    if page_content==None or len(page_content)==0:
       message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
       raise Exception(message)
     else:  
-      obj_source_node.file_size = sys.getsizeof(transcript)
+      obj_source_node.file_size = sys.getsizeof(page_content)
     
     graphDb_data_Access = graphDBdataAccess(graph)
     graphDb_data_Access.create_source_node(obj_source_node)
