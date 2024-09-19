@@ -15,7 +15,7 @@ import { useFileContext } from '../../context/UsersFiles';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
-import { buttonCaptions, tooltips } from '../../utils/Constants';
+import { buttonCaptions, chatModeLables, tooltips } from '../../utils/Constants';
 import useSpeechSynthesis from '../../hooks/useSpeech';
 import ButtonWithToolTip from '../UI/ButtonWithToolTip';
 import FallBackDialog from '../UI/FallBackDialog';
@@ -44,7 +44,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [tokensUsed, setTokensUsed] = useState<number>(0);
   const [cypherQuery, setcypherQuery] = useState<string>('');
   const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
-  const [chatsMode, setChatsMode] = useState<string>('graph+vector');
+  const [chatsMode, setChatsMode] = useState<string>(chatModeLables.graph_vector);
   const [graphEntitites, setgraphEntitites] = useState<[]>([]);
   const [messageError, setmessageError] = useState<string>('');
 

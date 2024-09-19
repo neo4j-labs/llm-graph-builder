@@ -2,7 +2,7 @@ import { StatusIndicator, Typography } from '@neo4j-ndl/react';
 import { useMemo, useEffect } from 'react';
 import { useFileContext } from '../../context/UsersFiles';
 import CustomMenu from '../UI/Menu';
-import { chatModes } from '../../utils/Constants';
+import { chatModeLables, chatModes } from '../../utils/Constants';
 import { capitalize } from '@mui/material';
 import { capitalizeWithPlus } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
@@ -25,23 +25,23 @@ export default function ChatModeToggle({
 
   useEffect(() => {
     if (selectedRows.length !== 0) {
-      setchatMode('graph+vector');
+      setchatMode(chatModeLables.graph_vector);
     } else {
-      setchatMode('graph+vector+fulltext');
+      setchatMode(chatModeLables.graph_vector_fulltext);
     }
   }, [selectedRows]);
 
   const memoizedChatModes = useMemo(() => {
     return isGdsActive && isCommunityAllowed
       ? chatModes
-      : chatModes?.filter((m) => !m.mode.includes('entity search+vector'));
+      : chatModes?.filter((m) => !m.mode.includes(chatModeLables.entity_vector));
   }, [isGdsActive, isCommunityAllowed]);
   const menuItems = useMemo(() => {
     return memoizedChatModes?.map((m) => {
-      const isDisabled = Boolean(selectedRows.length && !(m.mode === 'vector' || m.mode === 'graph+vector'));
+      const isDisabled = Boolean(selectedRows.length && !(m.mode === chatModeLables.vector || m.mode === chatModeLables.graph_vector));
       const handleModeChange = () => {
         if (isDisabled) {
-          setchatMode('graph+vector');
+          setchatMode(chatModeLables.graph_vector);
         } else {
           setchatMode(m.mode);
         }
@@ -64,12 +64,12 @@ export default function ChatModeToggle({
           <span>
             {chatMode === m.mode && (
               <>
-                <StatusIndicator type='success' /> Selected
+                <StatusIndicator type='success' /> {chatModeLables.selected}
               </>
             )}
             {isDisabled && (
               <>
-                <StatusIndicator type='warning' /> Chatmode not available
+                <StatusIndicator type='warning' /> {chatModeLables.unavailableChatMode}
               </>
             )}
           </span>

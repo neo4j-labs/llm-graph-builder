@@ -19,6 +19,7 @@ import youtubedarklogo from '../assets/images/youtube-darkmode.svg';
 import youtubelightlogo from '../assets/images/youtube-lightmode.svg';
 import s3logo from '../assets/images/s3logo.png';
 import gcslogo from '../assets/images/gcs.webp';
+import { chatModeLables } from './Constants';
 
 // Get the Url
 export const url = () => {
@@ -415,17 +416,17 @@ export const capitalizeWithPlus = (s: string) => {
 
 export const getDescriptionForChatMode = (mode: string): string => {
   switch (mode.toLowerCase()) {
-    case 'vector':
+    case chatModeLables.vector:
       return 'Utilizes vector indexing on text chunks to enable semantic similarity search.';
-    case 'graph':
+    case chatModeLables.graph:
       return 'Leverages text-to-cypher translation to query a database and retrieve relevant data, ensuring a highly targeted and contextually accurate response.';
-    case 'graph+vector':
+    case chatModeLables.graph_vector:
       return 'Combines vector indexing on text chunks with graph connections, enhancing search results with contextual relevance by considering relationships between concepts.';
-    case 'fulltext':
+    case chatModeLables.fulltext:
       return 'Employs a fulltext index on text chunks for rapid keyword-based search, efficiently identifying documents containing specific words or phrases.';
-    case 'graph+vector+fulltext':
+    case chatModeLables.graph_vector_fulltext:
       return 'Merges vector indexing, graph connections, and fulltext indexing for a comprehensive search approach, combining semantic similarity, contextual relevance, and keyword-based search for optimal results.';
-    case 'entity search+vector':
+    case chatModeLables.entity_vector:
       return 'Combines entity node vector indexing with graph connections for accurate entity-based search, providing the most relevant response.';
     default:
       return 'Chat mode description not available'; // Fallback description
