@@ -84,7 +84,7 @@ export default function ConnectionModal({
               JSON.stringify({
                 uri: usercredential?.uri,
                 user: usercredential?.userName,
-                password: usercredential?.password,
+                password: btoa(usercredential?.password),
                 database: usercredential?.database,
                 userDbVectorIndex: 384,
               })
@@ -189,6 +189,7 @@ export default function ConnectionModal({
           setMessage({ type: 'danger', content: 'Please drop a valid file' });
         }
       } catch (err: any) {
+        console.log({ err });
         setMessage({ type: 'danger', content: err.message });
       }
     }
@@ -213,7 +214,7 @@ export default function ConnectionModal({
           JSON.stringify({
             uri: connectionURI,
             user: username,
-            password: password,
+            password: btoa(password),
             database: database,
             userDbVectorIndex,
             isgdsActive,
@@ -262,6 +263,7 @@ export default function ConnectionModal({
         }
       }
     } catch (error) {
+      console.log({ error });
       setIsLoading(false);
       if (error instanceof Error) {
         setMessage({ type: 'danger', content: error.message });
