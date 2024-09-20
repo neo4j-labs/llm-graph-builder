@@ -142,20 +142,20 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     obj_source_node.created_at = datetime.now()
     match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
     logging.info(f"match value: {match}")
-    cred_path = os.path.join(os.getcwd(),"llm-experiments_credentials.json")
-    print(f'Credential file path {cred_path}')
-    if os.path.exists(cred_path):
+    file_path = os.path.join(os.path.dirname(__file__),"llm-experiments_credentials.json")
+    logging.info(f'Credential file path {file_path}')
+    if os.path.exists(file_path):
       logging.info("File path exist")
-      with open(cred_path,'r') as secret_file:
-        secret_data = json.load(secret_file)
-        logging.info(f"Project id : {secret_data['project_id']}")
-        logging.info(f"Universal domain: {secret_data['universe_domain']}")
+      with open(file_path,'r') as file:
+        data = json.load(file)
+        logging.info(f"Project id : {data['project_id']}")
+        logging.info(f"Universal domain: {data['universe_domain']}")
     else:
       logging.warning("credntial file path not exist")
 
     video_id = parse_qs(urlparse(youtube_url).query).get('v')
     print(f'Video Id Youtube: {video_id}')
-    google_api_client = GoogleApiClient(service_account_path=Path(cred_path))
+    google_api_client = GoogleApiClient(service_account_path=Path(file_path))
     youtube_loader_channel = GoogleApiYoutubeLoader(
     google_api_client=google_api_client,
     video_ids=[video_id[0].strip()], add_video_info=True
