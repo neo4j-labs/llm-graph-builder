@@ -2,7 +2,7 @@ from fastapi import FastAPI, File, UploadFile, Form, Request
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
-from src.QA_integration_new import *
+from src.QA_integration import *
 from src.entities.user_credential import user_credential
 from src.shared.common_fn import *
 import uvicorn
@@ -16,6 +16,7 @@ from src.graph_query import get_graph_results
 from src.chunkid_entities import get_entities_from_chunkids
 from src.post_processing import create_fulltext
 from sse_starlette.sse import EventSourceResponse
+from src.communities import create_communities
 import json
 from typing import List, Mapping
 from starlette.middleware.sessions import SessionMiddleware
@@ -47,11 +48,6 @@ def sick():
     return False
 
 app = FastAPI()
-SecWeb(app=app, Option={'referrer': False, 'xframe': False})
-# app.add_middleware(HSTS, Option={'max-age': 4})
-# app.add_middleware(ContentSecurityPolicy, Option={'default-src': ["'self'"], 'base-uri': ["'self'"], 'block-all-mixed-content': []}, script_nonce=False, style_nonce=False, report_only=False)
-# app.add_middleware(XContentTypeOptions)
-# app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
 
 app.add_middleware(
     CORSMiddleware,
@@ -267,8 +263,12 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             await asyncio.to_thread(create_entity_embedding, graph)
             json_obj = {'api_name': 'post_processing/create_entity_embedding', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logging.info(f'Entity Embeddings created')
-
-        logger.log_struct(json_obj, "INFO")
+        if "create_communities" in tasks:
+            model = "openai-gpt-4o"
+            await asyncio.to_thread(create_communities, uri, userName, password, database,model)
+            josn_obj = {'api_name': 'post_processing/create_communities', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+            logger.log_struct(josn_obj)
+            logging.info(f'created communities')
         return create_api_response('Success', message='All tasks completed successfully')
     
     except Exception as e:
@@ -308,10 +308,10 @@ async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(),
         gc.collect()
 
 @app.post("/chunk_entities")
-async def chunk_entities(uri=Form(),userName=Form(), password=Form(), chunk_ids=Form(None)):
+async def chunk_entities(uri=Form(),userName=Form(), password=Form(), database=Form(), chunk_ids=Form(None),is_entity=Form()):
     try:
         logging.info(f"URI: {uri}, Username: {userName}, chunk_ids: {chunk_ids}")
-        result = await asyncio.to_thread(get_entities_from_chunkids,uri=uri, username=userName, password=password, chunk_ids=chunk_ids)
+        result = await asyncio.to_thread(get_entities_from_chunkids,uri=uri, username=userName, password=password, database=database,chunk_ids=chunk_ids,is_entity=json.loads(is_entity.lower()))
         json_obj = {'api_name':'chunk_entities','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result)
@@ -327,6 +327,7 @@ async def chunk_entities(uri=Form(),userName=Form(), password=Form(), chunk_ids=
 @app.post("/graph_query")
 async def graph_query(
     uri: str = Form(),
+    database: str = Form(),
     userName: str = Form(),
     password: str = Form(),
     document_names: str = Form(None),
@@ -338,6 +339,7 @@ async def graph_query(
             uri=uri,
             username=userName,
             password=password,
+            database=database,
             document_names=document_names
         )
         json_obj = {'api_name':'graph_query','db_url':uri,'document_names':document_names, 'logging_time': formatted_time(datetime.now(timezone.utc))}
@@ -448,7 +450,7 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                     graph = create_graph_database_connection(uri, userName, decoded_password, database)
                     graphDb_data_Access = graphDBdataAccess(graph)
                     result = graphDb_data_Access.get_current_status_document_node(file_name)
-                    print(f'Result of document status in SSE : {result}')
+                    # print(f'Result of document status in SSE : {result}')
                     if len(result) > 0:
                         status = json.dumps({'fileName':file_name, 
                         'status':result[0]['Status'],

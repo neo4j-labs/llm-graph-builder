@@ -12,6 +12,9 @@ import hashlib
 
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
+EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
+EMBEDDING_FUNCTION , EMBEDDING_DIMENSION = load_embedding_model(EMBEDDING_MODEL)
+
 def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_documents_chunk_chunk_Id : list):
     batch_data = []
     logging.info("Create HAS_ENTITY relationship between chunks and entities")
@@ -62,9 +65,9 @@ def load_embedding_model(embedding_model_name: str):
 def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name):
     #create embedding
     isEmbedding = os.getenv('IS_EMBEDDING')
-    embedding_model = os.getenv('EMBEDDING_MODEL')
+    # embedding_model = os.getenv('EMBEDDING_MODEL')
     
-    embeddings, dimension = load_embedding_model(embedding_model)
+    embeddings, dimension = EMBEDDING_FUNCTION , EMBEDDING_DIMENSION
     logging.info(f'embedding model:{embeddings} and dimesion:{dimension}')
     for row in chunkId_chunkDoc_list:
         # for graph_document in row['graph_doc']:
