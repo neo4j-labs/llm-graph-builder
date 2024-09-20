@@ -223,6 +223,7 @@ export interface Messages {
   cypher_query?: string;
   graphonly_entities?: [];
   error?: string;
+  entities?: chunk[];
 }
 
 export type ChatbotProps = {
@@ -245,7 +246,7 @@ export interface GraphViewModalProps {
   selectedRows?: CustomFile[] | undefined;
 }
 
-export type GraphType = 'Entities' | 'DocumentChunk';
+export type GraphType = 'Entities' | 'DocumentChunk' | 'Communities';
 
 export type PartialLabelNode = Partial<Node> & {
   labels: string;
@@ -255,6 +256,7 @@ export interface CheckboxSectionProps {
   graphType: GraphType[];
   loading: boolean;
   handleChange: (graph: GraphType) => void;
+  isgds: boolean;
 }
 
 export interface fileName {
@@ -463,7 +465,13 @@ export type Entity = {
     id: string;
   };
 };
-
+export type Community = {
+  id: string;
+  summary: string;
+  weight: number;
+  level: number;
+  community_rank: number;
+};
 export type GroupedEntity = {
   texts: Set<string>;
   color: string;
@@ -501,6 +509,7 @@ export interface Chunk {
   url?: string;
   fileSource: string;
   score?: string;
+  fileType: string;
 }
 
 export interface SpeechSynthesisProps {
@@ -525,7 +534,7 @@ export interface SettingsModalProps {
   onClear?: () => void;
 }
 export interface Menuitems {
-  title: string;
+  title: string | JSX.Element;
   onClick: () => void;
   disabledCondition: boolean;
   description?: string | React.ReactNode;
@@ -620,6 +629,8 @@ export interface DrawerChatbotProps {
 export interface ContextProps {
   userCredentials: UserCredentials | null;
   setUserCredentials: (UserCredentials: UserCredentials) => void;
+  isGdsActive: boolean;
+  setGdsActive: Dispatch<SetStateAction<boolean>>;
   connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
 }
@@ -627,3 +638,33 @@ export interface MessageContextType {
   messages: Messages[] | [];
   setMessages: Dispatch<SetStateAction<Messages[]>>;
 }
+
+export interface DatabaseStatusProps {
+  isConnected: boolean;
+  isGdsActive: boolean;
+  uri: string | null;
+}
+
+export type SourcesProps = {
+  loading: boolean;
+  mode: string;
+  sources: string[];
+  chunks: Chunk[];
+};
+
+export type ChunkProps = {
+  loading: boolean;
+  chunks: Chunk[];
+};
+
+export type EntitiesProps = {
+  loading: boolean;
+  mode: string;
+  graphonly_entities: [];
+  infoEntities: Entity[];
+};
+
+export type CommunitiesProps = {
+  loading: boolean;
+  communities: Community[];
+};

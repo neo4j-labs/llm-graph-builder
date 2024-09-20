@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, Dispatch, SetStateAction, FC, useEffect } from 'react';
 import { CustomFile, FileContextProviderProps, OptionType } from '../types';
-import { defaultLLM } from '../utils/Constants';
+import { chatModeLables, defaultLLM } from '../utils/Constants';
 import { useCredentials } from './UserCredentials';
 import Queue from '../utils/Queue';
 interface showTextFromSchemaDialogType {
@@ -58,7 +58,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [selectedSchemas, setSelectedSchemas] = useState<readonly OptionType[]>([]);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [chatMode, setchatMode] = useState<string>('graph+vector+fulltext');
+  const [chatMode, setchatMode] = useState<string>(chatModeLables.graph_vector_fulltext);
   const [isSchema, setIsSchema] = useState<boolean>(false);
   const [showTextFromSchemaDialog, setShowTextFromSchemaDialog] = useState<showTextFromSchemaDialogType>({
     triggeredFrom: '',
@@ -68,6 +68,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     'materialize_text_chunk_similarities',
     'enable_hybrid_search_and_fulltext_search_in_bloom',
     'materialize_entity_similarities',
+    'create_communities',
   ]);
   const [processedCount, setProcessedCount] = useState<number>(0);
   useEffect(() => {

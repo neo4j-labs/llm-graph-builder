@@ -153,9 +153,11 @@ def get_graph_document_list(
             node_properties = False
         else:
             node_properties = ["description"]
+            relationship_properties = ["description"]
         llm_transformer = LLMGraphTransformer(
             llm=llm,
             node_properties=node_properties,
+            relationship_properties=relationship_properties,
             allowed_nodes=allowedNodes,
             allowed_relationships=allowedRelationship,
         )
