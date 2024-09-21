@@ -26,10 +26,20 @@ from src.logger import CustomLogger
 from datetime import datetime, timezone
 import time
 import gc
+from neo4j import GraphDatabase
+from dotenv import load_dotenv
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
+
+# Tải các biến môi trường từ file .env
+load_dotenv()
+
+# Lấy các biến môi trường
+NEO4J_URI = os.getenv('NEO4J_URI')
+NEO4J_USERNAME = os.getenv('NEO4J_USERNAME')
+NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD')
 
 def healthy_condition():
     output = {"healthy": True}
@@ -58,6 +68,9 @@ app.add_api_route("/health", health([healthy_condition, healthy]))
 
 app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
 
+# Tạo driver Neo4j
+def get_neo4j_driver():
+    return GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
 
 @app.post("/url/scan")
 async def create_source_knowledge_graph_url(
@@ -361,17 +374,16 @@ async def clear_chat_bot(uri=Form(),userName=Form(), password=Form(), database=F
 @app.post("/connect")
 async def connect(uri=Form(), userName=Form(), password=Form(), database=Form()):
     try:
-        graph = create_graph_database_connection(uri, userName, password, database)
-        result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph)
-        json_obj = {'api_name':'connect','db_url':uri,'status':result, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(json_obj)
-        return create_api_response('Success',data=result)
+        driver = GraphDatabase.driver(uri, auth=(userName, password))
+        # Kiểm tra kết nối
+        with driver.session() as session:
+            result = session.run("RETURN 1")
+            if result.single():
+                return create_api_response('Success', message="Kết nối thành công")
     except Exception as e:
-        job_status = "Failed"
-        message="Connection failed to connect Neo4j database"
-        error_message = str(e)
-        logging.exception(f'Connection failed to connect Neo4j database:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        return create_api_response('Failed', message=str(e))
+    finally:
+        driver.close()
 
 @app.post("/upload")
 async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber=Form(None), totalChunks=Form(None), 
@@ -641,7 +653,8 @@ async def retry_processing(uri=Form(), userName=Form(), password=Form(), databas
         logging.exception(f'{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
     finally:
-        gc.collect()        
+        gc.collect()
+        
 
 if __name__ == "__main__":
     uvicorn.run(app)
