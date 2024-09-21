@@ -1,32 +1,28 @@
+import os
 import time
 from neo4j import GraphDatabase
+from dotenv import load_dotenv
 
-# Database configurations
-neo4j_configurations = [
-    {
-        'name': 'Neo4j Config 1',
-        'NEO4J_URI': 'neo4j+s://73b760b4.databases.neo4j.io',
-        'NEO4J_USERNAME': 'neo4j',
-        'NEO4J_PASSWORD': 'HqwAzfG83XwcEQ-mvEG4yNpcRTHMpsgZaYW3qIGJh2I'
-    },
-    # {
-    #     'name': 'Neo4j Config 2',
-    #     'uri': 'bolt://another-host:7687',
-    #     'user': 'neo4j',
-    #     'password': 'password2'
-    # }
-]
+# Tải các biến môi trường từ file .env
+load_dotenv()
 
-# Function to create a Neo4j driver
-def create_driver(uri, user, password):
-    return GraphDatabase.driver(uri, auth=(user, password))
+# Lấy các biến môi trường
+NEO4J_URI = os.getenv('NEO4J_URI')
+NEO4J_USERNAME = os.getenv('NEO4J_USERNAME')
+NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD')
 
-# Function to clear the database
+# Hàm tạo driver
+def create_driver():
+    if not all([NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD]):
+        raise ValueError("Thiếu một hoặc nhiều biến môi trường cần thiết: NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD")
+    driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
+    return driver
+
+# Ví dụ sử dụng driver
 def clear_database(driver):
     with driver.session() as session:
         session.run("MATCH (n) DETACH DELETE n")
 
-# Performance test function
 def performance_test(driver, query, num_operations):
     with driver.session() as session:
         start_time = time.time()
@@ -35,38 +31,23 @@ def performance_test(driver, query, num_operations):
         end_time = time.time()
     return end_time - start_time
 
-# Query to execute
-query = "CREATE (n:Person {id: $id, name: $name})"
-
-# Number of operations to perform
-num_operations = 1000
-
 def dbtest_main():
-    results = []
+    try:
+        driver = create_driver()
+    except ValueError as ve:
+        print(f"Lỗi cấu hình: {ve}")
+        return
 
-    for config in neo4j_configurations:
-        print(f"Testing {config['name']}...")
-        
-        # Create driver
-        driver = create_driver(config['uri'], config['user'], config['password'])
-        
-        # Clear database before test
+    try:
+        print("Testing Neo4j Config...")
         clear_database(driver)
-        
-        # Run performance test
-        elapsed_time = performance_test(driver, query, num_operations)
-        
-        # Store result
-        results.append((config['name'], elapsed_time))
-        
-        # Close driver
+        query = "CREATE (n:Person {id: $id, name: $name})"
+        elapsed_time = performance_test(driver, query, 1000)
+        print(f"Performance Test Completed in {elapsed_time:.4f} seconds")
+    except Exception as e:
+        print(f"Đã xảy ra lỗi: {e}")
+    finally:
         driver.close()
-        
-        print(f"{config['name']} completed in {elapsed_time:.4f} seconds")
-
-    print("\nPerformance Test Results:")
-    for name, time_taken in results:
-        print(f"{name}: {time_taken:.4f} seconds")
 
 if __name__ == "__main__":
     dbtest_main()
