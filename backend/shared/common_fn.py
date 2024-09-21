@@ -1,4 +1,5 @@
 import hashlib
+from google.cloud import storage
 import logging
 from src.document_sources.youtube import create_youtube_url
 from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
@@ -137,3 +138,15 @@ def create_gcs_bucket_folder_name_hashed(uri, file_name):
 def formatted_time(current_time):
   formatted_time = current_time.strftime('%Y-%m-%d %H:%M:%S %Z')
   return formatted_time
+
+def delete_file_from_gcs(bucket_name,folder_name, file_name):
+  try:
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    folder_file_name = folder_name +'/'+file_name
+    blob = bucket.blob(folder_file_name)
+    if blob.exists():
+      blob.delete()
+    logging.info('File deleted from GCS successfully')
+  except Exception as e:
+    raise Exception(e)

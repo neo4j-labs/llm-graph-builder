@@ -1,6 +1,6 @@
 import logging
+from backend.shared.constants import *
 from src.graph_query import *
-from src.shared.constants import * 
 
 def process_records(records):
     """

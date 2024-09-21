@@ -1,5 +1,17 @@
+import re
+import sys
+import shutil
+import urllib.parse
+import warnings
+import logging
+from dotenv import load_dotenv
+from datetime import datetime
+
 from langchain_community.graphs import Neo4jGraph
-from src.shared.constants import (BUCKET_UPLOAD, PROJECT_ID, QUERY_TO_GET_CHUNKS, 
+from langchain_community.document_loaders import WikipediaLoader, WebBaseLoader
+
+from backend.shared.common_fn import *
+from backend.shared.constants import (BUCKET_UPLOAD, PROJECT_ID, QUERY_TO_GET_CHUNKS, 
                                   QUERY_TO_DELETE_EXISTING_ENTITIES, 
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION,
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY,
@@ -7,31 +19,19 @@ from src.shared.constants import (BUCKET_UPLOAD, PROJECT_ID, QUERY_TO_GET_CHUNKS
                                   START_FROM_LAST_PROCESSED_POSITION,
                                   DELETE_ENTITIES_AND_START_FROM_BEGINNING,
                                   QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT)
-from src.shared.schema_extraction import schema_extraction_from_text
-from langchain_community.document_loaders import GoogleApiClient, GoogleApiYoutubeLoader
-from dotenv import load_dotenv
-from datetime import datetime
-import logging
+
 from src.create_chunks import CreateChunksofDocument
-from src.graphDB_dataAccess import graphDBdataAccess
 from src.document_sources.local_file import get_documents_from_file_by_path
-from src.entities.source_node import sourceNode
-from src.llm import get_graph_from_llm
 from src.document_sources.gcs_bucket import *
 from src.document_sources.s3_bucket import *
 from src.document_sources.wikipedia import *
 from src.document_sources.youtube import *
-from src.shared.common_fn import *
-from src.make_relationships import *
 from src.document_sources.web_pages import *
-import re
-from langchain_community.document_loaders import WikipediaLoader, WebBaseLoader
-import warnings
-from pytube import YouTube
-import sys
-import shutil
-import urllib.parse
-import json
+from src.make_relationships import *
+
+from backend.shared.entities.source_node import sourceNode
+from backend.shared.llm import get_graph_from_llm
+from backend.shared.graphDB_dataAccess import graphDBdataAccess
 
 warnings.filterwarnings("ignore")
 load_dotenv()
@@ -484,47 +484,47 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition):
       logging.info(f"Retry : start_from_beginning with chunks {len(chunkId_chunkDoc_list)}")    
       return len(chunks), chunkId_chunkDoc_list
   
-def get_source_list_from_graph(uri,userName,password,db_name=None):
-  """
-  Args:
-    uri: URI of the graph to extract
-    db_name: db_name is database name to connect to graph db
-    userName: Username to use for graph creation ( if None will use username from config file )
-    password: Password to use for graph creation ( if None will use password from config file )
-    file: File object containing the PDF file to be used
-    model: Type of model to use ('Diffbot'or'OpenAI GPT')
-  Returns:
-   Returns a list of sources that are in the database by querying the graph and
-   sorting the list by the last updated date. 
- """
-  logging.info("Get existing files list from graph")
-  graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-  graph_DB_dataAccess = graphDBdataAccess(graph)
-  if not graph._driver._closed:
-      logging.info(f"closing connection for sources_list api")
-      graph._driver.close()
-  return graph_DB_dataAccess.get_source_list()
+# def get_source_list_from_graph(uri,userName,password,db_name=None):
+#   """
+#   Args:
+#     uri: URI of the graph to extract
+#     db_name: db_name is database name to connect to graph db
+#     userName: Username to use for graph creation ( if None will use username from config file )
+#     password: Password to use for graph creation ( if None will use password from config file )
+#     file: File object containing the PDF file to be used
+#     model: Type of model to use ('Diffbot'or'OpenAI GPT')
+#   Returns:
+#    Returns a list of sources that are in the database by querying the graph and
+#    sorting the list by the last updated date. 
+#  """
+#   logging.info("Get existing files list from graph")
+#   graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
+#   graph_DB_dataAccess = graphDBdataAccess(graph)
+#   if not graph._driver._closed:
+#       logging.info(f"closing connection for sources_list api")
+#       graph._driver.close()
+#   return graph_DB_dataAccess.get_source_list()
 
-def update_graph(graph):
-  """
-  Update the graph node with SIMILAR relationship where embedding scrore match
-  """
-  graph_DB_dataAccess = graphDBdataAccess(graph)
-  graph_DB_dataAccess.update_KNN_graph()
+# def update_graph(graph):
+#   """
+#   Update the graph node with SIMILAR relationship where embedding scrore match
+#   """
+#   graph_DB_dataAccess = graphDBdataAccess(graph)
+#   graph_DB_dataAccess.update_KNN_graph()
 
   
-def connection_check_and_get_vector_dimensions(graph):
-  """
-  Args:
-    uri: URI of the graph to extract
-    userName: Username to use for graph creation ( if None will use username from config file )
-    password: Password to use for graph creation ( if None will use password from config file )
-    db_name: db_name is database name to connect to graph db
-  Returns:
-   Returns a status of connection from NEO4j is success or failure
- """
-  graph_DB_dataAccess = graphDBdataAccess(graph)
-  return graph_DB_dataAccess.connection_check_and_get_vector_dimensions()
+# def connection_check_and_get_vector_dimensions(graph):
+#   """
+#   Args:
+#     uri: URI of the graph to extract
+#     userName: Username to use for graph creation ( if None will use username from config file )
+#     password: Password to use for graph creation ( if None will use password from config file )
+#     db_name: db_name is database name to connect to graph db
+#   Returns:
+#    Returns a status of connection from NEO4j is success or failure
+#  """
+#   graph_DB_dataAccess = graphDBdataAccess(graph)
+#   return graph_DB_dataAccess.connection_check_and_get_vector_dimensions()
 
 def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
 
@@ -586,60 +586,60 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
       return {'file_size': file_size, 'file_name': originalname, 'file_extension':file_extension, 'message':f"Chunk {chunk_number}/{total_chunks} saved"}
   return f"Chunk {chunk_number}/{total_chunks} saved"
 
-def get_labels_and_relationtypes(graph):
-  query = """
-          RETURN collect { 
-          CALL db.labels() yield label 
-          WHERE NOT label  IN ['Chunk','_Bloom_Perspective_'] 
-          return label order by label limit 100 } as labels, 
-          collect { 
-          CALL db.relationshipTypes() yield relationshipType  as type 
-          WHERE NOT type  IN ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_'] 
-          return type order by type LIMIT 100 } as relationshipTypes
-          """
-  graphDb_data_Access = graphDBdataAccess(graph)
-  result = graphDb_data_Access.execute_query(query)
-  if result is None:
-     result=[]
-  return result
+# def get_labels_and_relationtypes(graph):
+#   query = """
+#           RETURN collect { 
+#           CALL db.labels() yield label 
+#           WHERE NOT label  IN ['Chunk','_Bloom_Perspective_'] 
+#           return label order by label limit 100 } as labels, 
+#           collect { 
+#           CALL db.relationshipTypes() yield relationshipType  as type 
+#           WHERE NOT type  IN ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_'] 
+#           return type order by type LIMIT 100 } as relationshipTypes
+#           """
+#   graphDb_data_Access = graphDBdataAccess(graph)
+#   result = graphDb_data_Access.execute_query(query)
+#   if result is None:
+#      result=[]
+#   return result
 
-def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
+# def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
   
-  filename_list= list(map(str.strip, json.loads(filenames)))
-  source_types_list= list(map(str.strip, json.loads(source_types)))
-  gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
+#   filename_list= list(map(str.strip, json.loads(filenames)))
+#   source_types_list= list(map(str.strip, json.loads(source_types)))
+#   gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
   
-  for (file_name,source_type) in zip(filename_list, source_types_list):
-      obj_source_node = sourceNode()
-      obj_source_node.file_name = file_name
-      obj_source_node.is_cancelled = True
-      obj_source_node.status = 'Cancelled'
-      obj_source_node.updated_at = datetime.now()
-      graphDb_data_Access = graphDBdataAccess(graph)
-      graphDb_data_Access.update_source_node(obj_source_node)
-      obj_source_node = None
-      merged_file_path = os.path.join(merged_dir, file_name)
-      if source_type == 'local file' and gcs_file_cache == 'True':
-          folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
-          delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
-      else:
-        logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
-        delete_uploaded_local_file(merged_file_path,file_name)
-  return "Cancelled the processing job successfully"
+#   for (file_name,source_type) in zip(filename_list, source_types_list):
+#       obj_source_node = sourceNode()
+#       obj_source_node.file_name = file_name
+#       obj_source_node.is_cancelled = True
+#       obj_source_node.status = 'Cancelled'
+#       obj_source_node.updated_at = datetime.now()
+#       graphDb_data_Access = graphDBdataAccess(graph)
+#       graphDb_data_Access.update_source_node(obj_source_node)
+#       obj_source_node = None
+#       merged_file_path = os.path.join(merged_dir, file_name)
+#       if source_type == 'local file' and gcs_file_cache == 'True':
+#           folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
+#           delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
+#       else:
+#         logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+#         delete_uploaded_local_file(merged_file_path,file_name)
+#   return "Cancelled the processing job successfully"
 
-def populate_graph_schema_from_text(text, model, is_schema_description_cheked):
-  """_summary_
+# def populate_graph_schema_from_text(text, model, is_schema_description_cheked):
+#   """_summary_
 
-  Args:
-      graph (Neo4Graph): Neo4jGraph connection object
-      input_text (str): rendom text from PDF or user input.
-      model (str): AI model to use extraction from text
+#   Args:
+#       graph (Neo4Graph): Neo4jGraph connection object
+#       input_text (str): rendom text from PDF or user input.
+#       model (str): AI model to use extraction from text
 
-  Returns:
-      data (list): list of lebels and relationTypes
-  """
-  result = schema_extraction_from_text(text, model, is_schema_description_cheked)
-  return {"labels": result.labels, "relationshipTypes": result.relationshipTypes}
+#   Returns:
+#       data (list): list of lebels and relationTypes
+#   """
+#   result = schema_extraction_from_text(text, model, is_schema_description_cheked)
+#   return {"labels": result.labels, "relationshipTypes": result.relationshipTypes}
 
 def set_status_retry(graph, file_name, retry_condition):
     graphDb_data_Access = graphDBdataAccess(graph)

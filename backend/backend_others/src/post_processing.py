@@ -1,9 +1,10 @@
-from neo4j import GraphDatabase
-import logging
-import time
-from langchain_community.graphs import Neo4jGraph
 import os
-from src.shared.common_fn import load_embedding_model
+import time
+import logging
+from neo4j import GraphDatabase
+from langchain_community.graphs import Neo4jGraph
+
+from backend.shared.common_fn import load_embedding_model
 
 DROP_INDEX_QUERY = "DROP INDEX entities IF EXISTS;"
 LABELS_QUERY = "CALL db.labels()"

@@ -1,11 +1,12 @@
+import os
 import logging
 from graphdatascience import GraphDataScience
-from src.llm import get_llm
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser 
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import os
-from src.shared.common_fn import load_embedding_model
+
+from backend.shared.common_fn import load_embedding_model
+from backend.shared.llm import get_llm
 
 
 COMMUNITY_PROJECTION_NAME = "communities"

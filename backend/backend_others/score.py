@@ -1,37 +1,37 @@
-from fastapi import FastAPI, File, UploadFile, Form, Request
-from fastapi_health import health
-from fastapi.middleware.cors import CORSMiddleware
-from src.main import *
-from src.QA_integration import *
-from src.entities.user_credential import user_credential
-from src.shared.common_fn import *
+import logging
+import os
+import time
+import gc
 import uvicorn
 import asyncio
 import base64
-from langserve import add_routes
-from langchain_google_vertexai import ChatVertexAI
-from src.api_response import create_api_response
-from src.graphDB_dataAccess import graphDBdataAccess
-from src.graph_query import get_graph_results
-from src.chunkid_entities import get_entities_from_chunkids
-from src.post_processing import create_fulltext, create_entity_embedding
-from sse_starlette.sse import EventSourceResponse
-from src.communities import create_communities
 import json
 from typing import List, Mapping
+from fastapi import FastAPI, Form, Request
+from fastapi_health import health
+from fastapi.middleware.cors import CORSMiddleware
+from langserve import add_routes
+from langchain_google_vertexai import ChatVertexAI
+from sse_starlette.sse import EventSourceResponse
 from starlette.middleware.sessions import SessionMiddleware
-import google_auth_oauthlib.flow
-from google.oauth2.credentials import Credentials
-import os
-from src.logger import CustomLogger
+
 from datetime import datetime, timezone
-import time
-import gc
-from Secweb import SecWeb
-from Secweb.StrictTransportSecurity import HSTS
-from Secweb.ContentSecurityPolicy import ContentSecurityPolicy
-from Secweb.XContentTypeOptions import XContentTypeOptions
-from Secweb.XFrameOptions import XFrame
+from .src.QA_integration import *
+from .src.chunkid_entities import get_entities_from_chunkids
+from .src.communities import create_communities
+from .src.graph_query import get_graph_results
+from src.main import *
+from .src.post_processing import *
+from .. import create_api_response
+from .. import create_graph_database_connection, formatted_time
+from .. import graphDBdataAccess
+from .. import CustomLogger
+
+# from Secweb import SecWeb
+# from Secweb.StrictTransportSecurity import HSTS
+# from Secweb.ContentSecurityPolicy import ContentSecurityPolicy
+# from Secweb.XContentTypeOptions import XContentTypeOptions
+# from Secweb.XFrameOptions import XFrame
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
@@ -70,166 +70,166 @@ app.add_api_route("/health", health([healthy_condition, healthy]))
 app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
 
 
-@app.post("/url/scan")
-async def create_source_knowledge_graph_url(
-    request: Request,
-    uri=Form(),
-    userName=Form(),
-    password=Form(),
-    source_url=Form(None),
-    database=Form(),
-    aws_access_key_id=Form(None),
-    aws_secret_access_key=Form(None),
-    wiki_query=Form(None),
-    model=Form(),
-    gcs_bucket_name=Form(None),
-    gcs_bucket_folder=Form(None),
-    source_type=Form(None),
-    gcs_project_id=Form(None),
-    access_token=Form(None)
-    ):
+# @app.post("/url/scan")
+# async def create_source_knowledge_graph_url(
+#     request: Request,
+#     uri=Form(),
+#     userName=Form(),
+#     password=Form(),
+#     source_url=Form(None),
+#     database=Form(),
+#     aws_access_key_id=Form(None),
+#     aws_secret_access_key=Form(None),
+#     wiki_query=Form(None),
+#     model=Form(),
+#     gcs_bucket_name=Form(None),
+#     gcs_bucket_folder=Form(None),
+#     source_type=Form(None),
+#     gcs_project_id=Form(None),
+#     access_token=Form(None)
+#     ):
     
-    try:
-        if source_url is not None:
-            source = source_url
-        else:
-            source = wiki_query
+#     try:
+#         if source_url is not None:
+#             source = source_url
+#         else:
+#             source = wiki_query
             
-        graph = create_graph_database_connection(uri, userName, password, database)
-        if source_type == 's3 bucket' and aws_access_key_id and aws_secret_access_key:
-            lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_url_s3,graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type
-            )
-        elif source_type == 'gcs bucket':
-            lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, source_type,Credentials(access_token)
-            )
-        elif source_type == 'web-url':
-            lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_web_url,graph, model, source_url, source_type
-            )  
-        elif source_type == 'youtube':
-            lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_url_youtube,graph, model, source_url, source_type
-            )
-        elif source_type == 'Wikipedia':
-            lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_url_wikipedia,graph, model, wiki_query, source_type
-            )
-        else:
-            return create_api_response('Failed',message='source_type is other than accepted source')
+#         graph = create_graph_database_connection(uri, userName, password, database)
+#         if source_type == 's3 bucket' and aws_access_key_id and aws_secret_access_key:
+#             lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_url_s3,graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type
+#             )
+#         elif source_type == 'gcs bucket':
+#             lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, source_type,Credentials(access_token)
+#             )
+#         elif source_type == 'web-url':
+#             lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_web_url,graph, model, source_url, source_type
+#             )  
+#         elif source_type == 'youtube':
+#             lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_url_youtube,graph, model, source_url, source_type
+#             )
+#         elif source_type == 'Wikipedia':
+#             lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_url_wikipedia,graph, model, wiki_query, source_type
+#             )
+#         else:
+#             return create_api_response('Failed',message='source_type is other than accepted source')
 
-        message = f"Source Node created successfully for source type: {source_type} and source: {source}"
-        json_obj = {'api_name':'url_scan','db_url':uri,'url_scanned_file':lst_file_name, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(json_obj, "INFO")
-        return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name)    
-    except Exception as e:
-        error_message = str(e)
-        message = f" Unable to create source node for source type: {source_type} and source: {source}"
-        json_obj = {'error_message':error_message, 'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(json_obj, "ERROR")
-        logging.exception(f'Exception Stack trace:')
-        return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=source_type)
-    finally:
-        gc.collect()
+#         message = f"Source Node created successfully for source type: {source_type} and source: {source}"
+#         json_obj = {'api_name':'url_scan','db_url':uri,'url_scanned_file':lst_file_name, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+#         logger.log_struct(json_obj, "INFO")
+#         return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name)    
+#     except Exception as e:
+#         error_message = str(e)
+#         message = f" Unable to create source node for source type: {source_type} and source: {source}"
+#         json_obj = {'error_message':error_message, 'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+#         logger.log_struct(json_obj, "ERROR")
+#         logging.exception(f'Exception Stack trace:')
+#         return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=source_type)
+#     finally:
+#         gc.collect()
 
-@app.post("/extract")
-async def extract_knowledge_graph_from_file(
-    uri=Form(),
-    userName=Form(),
-    password=Form(),
-    model=Form(),
-    database=Form(),
-    source_url=Form(None),
-    aws_access_key_id=Form(None),
-    aws_secret_access_key=Form(None),
-    wiki_query=Form(None),
-    max_sources=Form(None),
-    gcs_project_id=Form(None),
-    gcs_bucket_name=Form(None),
-    gcs_bucket_folder=Form(None),
-    gcs_blob_filename=Form(None),
-    source_type=Form(None),
-    file_name=Form(None),
-    allowedNodes=Form(None),
-    allowedRelationship=Form(None),
-    language=Form(None),
-    access_token=Form(None),
-    retry_condition=Form(None)
-):
-    """
-    Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
-    PDF file based on the model.
+# @app.post("/extract")
+# async def extract_knowledge_graph_from_file(
+#     uri=Form(),
+#     userName=Form(),
+#     password=Form(),
+#     model=Form(),
+#     database=Form(),
+#     source_url=Form(None),
+#     aws_access_key_id=Form(None),
+#     aws_secret_access_key=Form(None),
+#     wiki_query=Form(None),
+#     max_sources=Form(None),
+#     gcs_project_id=Form(None),
+#     gcs_bucket_name=Form(None),
+#     gcs_bucket_folder=Form(None),
+#     gcs_blob_filename=Form(None),
+#     source_type=Form(None),
+#     file_name=Form(None),
+#     allowedNodes=Form(None),
+#     allowedRelationship=Form(None),
+#     language=Form(None),
+#     access_token=Form(None),
+#     retry_condition=Form(None)
+# ):
+#     """
+#     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
+#     PDF file based on the model.
 
-    Args:
-          uri: URI of the graph to extract
-          userName: Username to use for graph creation
-          password: Password to use for graph creation
-          file: File object containing the PDF file
-          model: Type of model to use ('Diffbot'or'OpenAI GPT')
+#     Args:
+#           uri: URI of the graph to extract
+#           userName: Username to use for graph creation
+#           password: Password to use for graph creation
+#           file: File object containing the PDF file
+#           model: Type of model to use ('Diffbot'or'OpenAI GPT')
 
-    Returns:
-          Nodes and Relations created in Neo4j databse for the pdf file
-    """
-    try:
-        start_time = time.time()
-        graph = create_graph_database_connection(uri, userName, password, database)   
-        graphDb_data_Access = graphDBdataAccess(graph)
+#     Returns:
+#           Nodes and Relations created in Neo4j databse for the pdf file
+#     """
+#     try:
+#         start_time = time.time()
+#         graph = create_graph_database_connection(uri, userName, password, database)   
+#         graphDb_data_Access = graphDBdataAccess(graph)
         
-        if source_type == 'local file':
-            merged_file_path = os.path.join(MERGED_DIR,file_name)
-            logging.info(f'File path:{merged_file_path}')
-            result = await asyncio.to_thread(
-                extract_graph_from_file_local_file, uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, retry_condition)
+#         if source_type == 'local file':
+#             merged_file_path = os.path.join(MERGED_DIR,file_name)
+#             logging.info(f'File path:{merged_file_path}')
+#             result = await asyncio.to_thread(
+#                 extract_graph_from_file_local_file, uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, retry_condition)
 
-        elif source_type == 's3 bucket' and source_url:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_s3, uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition)
+#         elif source_type == 's3 bucket' and source_url:
+#             result = await asyncio.to_thread(
+#                 extract_graph_from_file_s3, uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition)
         
-        elif source_type == 'web-url':
-            result = await asyncio.to_thread(
-                extract_graph_from_web_page, uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
+#         elif source_type == 'web-url':
+#             result = await asyncio.to_thread(
+#                 extract_graph_from_web_page, uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
 
-        elif source_type == 'youtube' and source_url:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_youtube, uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
+#         elif source_type == 'youtube' and source_url:
+#             result = await asyncio.to_thread(
+#                 extract_graph_from_file_youtube, uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
 
-        elif source_type == 'Wikipedia' and wiki_query:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_Wikipedia, uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, retry_condition)
+#         elif source_type == 'Wikipedia' and wiki_query:
+#             result = await asyncio.to_thread(
+#                 extract_graph_from_file_Wikipedia, uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, retry_condition)
 
-        elif source_type == 'gcs bucket' and gcs_bucket_name:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_gcs, uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, retry_condition)
-        else:
-            return create_api_response('Failed',message='source_type is other than accepted source')
+#         elif source_type == 'gcs bucket' and gcs_bucket_name:
+#             result = await asyncio.to_thread(
+#                 extract_graph_from_file_gcs, uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, retry_condition)
+#         else:
+#             return create_api_response('Failed',message='source_type is other than accepted source')
     
-        if result is not None:
-            result['db_url'] = uri
-            result['api_name'] = 'extract'
-            result['source_url'] = source_url
-            result['wiki_query'] = wiki_query
-            result['source_type'] = source_type
-            result['logging_time'] = formatted_time(datetime.now(timezone.utc))
-        logger.log_struct(result, "INFO")
-        extract_api_time = time.time() - start_time
-        logging.info(f"extraction completed in {extract_api_time:.2f} seconds for file name {file_name}")
-        return create_api_response('Success', data=result, file_source= source_type)
-    except Exception as e:
-        message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content "
-        error_message = str(e)
-        graphDb_data_Access.update_exception_db(file_name,error_message)
-        gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-        if source_type == 'local file':
-            if gcs_file_cache == 'True':
-                folder_name = create_gcs_bucket_folder_name_hashed(uri,file_name)
-                copy_failed_file(BUCKET_UPLOAD, BUCKET_FAILED_FILE, folder_name, file_name)
-                time.sleep(5)
-                delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
-            else:
-                logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
-                delete_uploaded_local_file(merged_file_path,file_name)
-        json_obj = {'message':message,'error_message':error_message, 'file_name': file_name,'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(json_obj, "ERROR")
-        logging.exception(f'File Failed in extraction: {json_obj}')
-        return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = file_name)
-    finally:
-        gc.collect()
+#         if result is not None:
+#             result['db_url'] = uri
+#             result['api_name'] = 'extract'
+#             result['source_url'] = source_url
+#             result['wiki_query'] = wiki_query
+#             result['source_type'] = source_type
+#             result['logging_time'] = formatted_time(datetime.now(timezone.utc))
+#         logger.log_struct(result, "INFO")
+#         extract_api_time = time.time() - start_time
+#         logging.info(f"extraction completed in {extract_api_time:.2f} seconds for file name {file_name}")
+#         return create_api_response('Success', data=result, file_source= source_type)
+#     except Exception as e:
+#         message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content "
+#         error_message = str(e)
+#         graphDb_data_Access.update_exception_db(file_name,error_message)
+#         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
+#         if source_type == 'local file':
+#             if gcs_file_cache == 'True':
+#                 folder_name = create_gcs_bucket_folder_name_hashed(uri,file_name)
+#                 copy_failed_file(BUCKET_UPLOAD, BUCKET_FAILED_FILE, folder_name, file_name)
+#                 time.sleep(5)
+#                 delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
+#             else:
+#                 logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+#                 delete_uploaded_local_file(merged_file_path,file_name)
+#         json_obj = {'message':message,'error_message':error_message, 'file_name': file_name,'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+#         logger.log_struct(json_obj, "ERROR")
+#         logging.exception(f'File Failed in extraction: {json_obj}')
+#         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = file_name)
+#     finally:
+#         gc.collect()
             
 @app.get("/sources_list")
 async def get_source_list(uri:str, userName:str, password:str, database:str=None):
@@ -395,28 +395,28 @@ async def connect(uri=Form(), userName=Form(), password=Form(), database=Form())
         logging.exception(f'Connection failed to connect Neo4j database:{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
 
-@app.post("/upload")
-async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber=Form(None), totalChunks=Form(None), 
-                                        originalname=Form(None), model=Form(None), uri=Form(), userName=Form(), 
-                                        password=Form(), database=Form()):
-    try:
-        graph = create_graph_database_connection(uri, userName, password, database)
-        result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, uri, CHUNK_DIR, MERGED_DIR)
-        json_obj = {'api_name':'upload','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(json_obj, "INFO")
-        if int(chunkNumber) == int(totalChunks):
-            return create_api_response('Success',data=result, message='Source Node Created Successfully')
-        else:
-            return create_api_response('Success', message=result)
-    except Exception as e:
-        # job_status = "Failed"
-        message="Unable to upload large file into chunks. "
-        error_message = str(e)
-        logging.info(message)
-        logging.exception(f'Exception:{error_message}')
-        return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = originalname)
-    finally:
-        gc.collect()
+# @app.post("/upload")
+# async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber=Form(None), totalChunks=Form(None), 
+#                                         originalname=Form(None), model=Form(None), uri=Form(), userName=Form(), 
+#                                         password=Form(), database=Form()):
+#     try:
+#         graph = create_graph_database_connection(uri, userName, password, database)
+#         result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, uri, CHUNK_DIR, MERGED_DIR)
+#         json_obj = {'api_name':'upload','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+#         logger.log_struct(json_obj, "INFO")
+#         if int(chunkNumber) == int(totalChunks):
+#             return create_api_response('Success',data=result, message='Source Node Created Successfully')
+#         else:
+#             return create_api_response('Success', message=result)
+#     except Exception as e:
+#         # job_status = "Failed"
+#         message="Unable to upload large file into chunks. "
+#         error_message = str(e)
+#         logging.info(message)
+#         logging.exception(f'Exception:{error_message}')
+#         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = originalname)
+#     finally:
+#         gc.collect()
             
 @app.post("/schema")
 async def get_structured_schema(uri=Form(), userName=Form(), password=Form(), database=Form()):
@@ -649,21 +649,21 @@ async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), da
     finally:
         gc.collect()
         
-@app.post("/retry_processing")
-async def retry_processing(uri=Form(), userName=Form(), password=Form(), database=Form(), file_name=Form(), retry_condition=Form()):
-    try:
-        graph = create_graph_database_connection(uri, userName, password, database)
-        await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
-        #set_status_retry(graph,file_name,retry_condition)
-        return create_api_response('Success',message=f"Status set to Reprocess for filename : {file_name}")
-    except Exception as e:
-        job_status = "Failed"
-        message="Unable to set status to Retry"
-        error_message = str(e)
-        logging.exception(f'{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
-    finally:
-        gc.collect()        
+# @app.post("/retry_processing")
+# async def retry_processing(uri=Form(), userName=Form(), password=Form(), database=Form(), file_name=Form(), retry_condition=Form()):
+#     try:
+#         graph = create_graph_database_connection(uri, userName, password, database)
+#         await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
+#         #set_status_retry(graph,file_name,retry_condition)
+#         return create_api_response('Success',message=f"Status set to Reprocess for filename : {file_name}")
+#     except Exception as e:
+#         job_status = "Failed"
+#         message="Unable to set status to Retry"
+#         error_message = str(e)
+#         logging.exception(f'{error_message}')
+#         return create_api_response(job_status, message=message, error=error_message)
+#     finally:
+#         gc.collect()        
 
 if __name__ == "__main__":
     uvicorn.run(app)
