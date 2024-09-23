@@ -176,7 +176,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       ) : (
         <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
           {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
-          {mode != chatModeLables.graph  ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
+          {mode != chatModeLables.graph ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
           {mode === chatModeLables.graph_vector ||
           mode === chatModeLables.graph ||
           mode === chatModeLables.graph_vector_fulltext ||
@@ -190,7 +190,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           ) : (
             <></>
           )}
-          {mode === chatModeLables.entity_vector? <Tabs.Tab tabId={7}>Communities</Tabs.Tab> : <></>}
+          {mode === chatModeLables.entity_vector ? <Tabs.Tab tabId={7}>Communities</Tabs.Tab> : <></>}
         </Tabs>
       )}
       <Flex className='p-4'>

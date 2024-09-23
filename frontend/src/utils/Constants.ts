@@ -67,14 +67,14 @@ export const defaultLLM = llms?.includes('openai-gpt-4o')
 
 export const chatModeLables = {
   vector: 'vector',
-  graph : 'graph',
+  graph: 'graph',
   graph_vector: 'graph+vector',
   fulltext: 'fulltext',
   graph_vector_fulltext: 'graph+vector+fulltext',
-  entity_vector:'entity search+vector',
+  entity_vector: 'entity search+vector',
   unavailableChatMode: 'Chat mode is unavailable when rows are selected',
-  selected:'Selected'
-}
+  selected: 'Selected',
+};
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
     ? process.env.VITE_CHAT_MODES?.split(',').map((mode) => ({
@@ -88,28 +88,23 @@ export const chatModes =
         },
         {
           mode: chatModeLables.graph,
-          description:
-            'Translates text to Cypher queries for precise data retrieval from a graph database.'
+          description: 'Translates text to Cypher queries for precise data retrieval from a graph database.',
         },
         {
           mode: chatModeLables.graph_vector,
-          description:
-            'Combines vector indexing and graph connections for contextually enhanced semantic search.',
+          description: 'Combines vector indexing and graph connections for contextually enhanced semantic search.',
         },
         {
           mode: chatModeLables.fulltext,
-          description:
-            'Conducts fast, keyword-based search using full-text indexing on text chunks.',
+          description: 'Conducts fast, keyword-based search using full-text indexing on text chunks.',
         },
         {
           mode: chatModeLables.graph_vector_fulltext,
-          description:
-            'Integrates vector, graph, and full-text indexing for comprehensive search results.',
+          description: 'Integrates vector, graph, and full-text indexing for comprehensive search results.',
         },
         {
           mode: chatModeLables.entity_vector,
-          description:
-            'Uses vector indexing on entity nodes for highly relevant entity-based search.',
+          description: 'Uses vector indexing on entity nodes for highly relevant entity-based search.',
         },
       ];
 
