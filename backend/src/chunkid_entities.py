@@ -118,13 +118,13 @@ def remove_duplicate_nodes(nodes,property="element_id"):
 
     return unique_nodes
 
-def process_entityids(driver, chunk_ids):
+def process_entityids(driver, entity_ids):
     """
     Processes entity IDs to retrieve local community data.
     """
     try:
-        logging.info(f"Starting graph query process for entity ids: {chunk_ids}")
-        entity_ids_list = chunk_ids.split(",")
+        logging.info(f"Starting graph query process for entity ids: {entity_ids}")
+        entity_ids_list = entity_ids.split(",")
         query_body = LOCAL_COMMUNITY_SEARCH_QUERY.format(
             topChunks=LOCAL_COMMUNITY_TOP_CHUNKS,
             topCommunities=LOCAL_COMMUNITY_TOP_COMMUNITIES,
@@ -138,19 +138,44 @@ def process_entityids(driver, chunk_ids):
         if records:
             result["nodes"].extend(records[0]["nodes"])
             result["nodes"] = remove_duplicate_nodes(result["nodes"])
+
             logging.info(f"Nodes and relationships are processed")
+
             result["chunk_data"] = records[0]["chunks"]
             result["community_data"] = records[0]["communities"]
         else:
             result["chunk_data"] = list()
             result["community_data"] = list()
-        logging.info(f"Query process completed successfully for chunk ids: {chunk_ids}")
+        logging.info(f"Query process completed successfully for chunk ids: {entity_ids}")
         return result
     except Exception as e:
-        logging.error(f"chunkid_entities module: Error processing entity ids: {chunk_ids}. Error: {e}")
+        logging.error(f"chunkid_entities module: Error processing entity ids: {entity_ids}. Error: {e}")
         raise  
 
-def get_entities_from_chunkids(uri, username, password, database ,chunk_ids,is_entity=False):
+def process_communityids(driver, community_ids):
+    """
+    Processes community IDs to retrieve local community data.
+    """
+    try:
+        logging.info(f"Starting graph query process for community ids: {community_ids}")
+        community_ids_list = community_ids.split(",")
+        query = GLOBAL_COMMUNITY_DETAILS_QUERY
+
+        records, summary, keys = driver.execute_query(query, communityIds=community_ids_list)
+
+        result = process_records(records)
+        result = {"nodes": [],"relationships": [],"chunk_data":[]}
+        if records:
+            result["community_data"] = records[0]["communities"]
+        else:
+            result["community_data"] = list()
+        logging.info(f"Query process completed successfully for community ids: {community_ids}")
+        return result
+    except Exception as e:
+        logging.error(f"chunkid_entities module: Error processing community ids: {community_ids}. Error: {e}")
+        raise 
+
+def get_entities_from_chunkids(uri, username, password, database ,node_ids,type):
     """
     Retrieve and process nodes and relationships from a graph database given a list of chunk IDs.
 
@@ -158,7 +183,7 @@ def get_entities_from_chunkids(uri, username, password, database ,chunk_ids,is_e
     uri (str): The URI of the graph database.
     username (str): The username for the database authentication.
     password (str): The password for the database authentication.
-    chunk_ids (str): A comma-separated string of chunk IDs.
+    node_ids (str): A comma-separated string of Node IDs.
 
     Returns:
     dict: A dictionary with 'nodes' and 'relationships' keys containing processed data, or an error message.
@@ -166,10 +191,10 @@ def get_entities_from_chunkids(uri, username, password, database ,chunk_ids,is_e
     try:
 
         driver = get_graphDB_driver(uri, username, password,database)
-        if not is_entity:
-            if chunk_ids:
-                logging.info(f"chunkid_entities module: Starting for chunk ids : {chunk_ids}")
-                result = process_chunkids(driver,chunk_ids)
+        if type == "chunk":
+            if node_ids:
+                logging.info(f"chunkid_entities module: Starting for chunk ids : {node_ids}")
+                result = process_chunkids(driver,node_ids)
             else:
                 logging.info(f"chunkid_entities module: No chunk ids are passed")
                 result = {
@@ -178,18 +203,32 @@ def get_entities_from_chunkids(uri, username, password, database ,chunk_ids,is_e
                     "chunk_data":[]
                 }
             return result
-        if chunk_ids:
-            result = process_entityids(driver,chunk_ids)
-            logging.info(f"chunkid_entities module: Starting for entity ids : {chunk_ids}")
+        elif type == "entity":
+            if node_ids:
+                result = process_entityids(driver,node_ids)
+                logging.info(f"chunkid_entities module: Starting for entity ids : {node_ids}")
+            else:
+                logging.info(f"chunkid_entities module: No entity ids are passed")
+                result = {
+                    "nodes": [],
+                    "relationships": [],
+                    "chunk_data":[],
+                    "community_data":[]
+                }
+            return result
         else:
-            logging.info(f"chunkid_entities module: No entity ids are passed")
-            result = {
-                "nodes": [],
-                "relationships": [],
-                "chunk_data":[],
-                "community_data":[]
-            }
-        return result
+            if node_ids:
+                result = process_communityids(driver,node_ids)
+                logging.info(f"chunkid_entities module: Starting for community ids : {node_ids}")
+            else:
+                logging.info(f"chunkid_entities module: No community ids are passed")
+                result = {
+                    "nodes": [],
+                    "relationships": [],
+                    "chunk_data":[],
+                    "community_data":[]
+                }
+            return result
 
     except Exception as e:
         logging.error(f"chunkid_entities module: An error occurred in get_entities_from_chunkids. Error: {str(e)}")

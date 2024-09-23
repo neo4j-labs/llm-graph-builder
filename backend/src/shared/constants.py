@@ -412,6 +412,15 @@ RETURN text,
        {communitydetails: communityDetails} AS metadata
 """
 
+
+
+GLOBAL_COMMUNITY_DETAILS_QUERY = """
+MATCH (community:__Community__)
+WHERE elementId(community) IN $communityIds
+WITH collect(distinct community) AS communities
+RETURN [community IN communities | 
+        community {.*, embedding: null, elementid: elementId(community)}] AS communities
+"""
 CHAT_MODE_CONFIG_MAP= {
         "vector": {
             "retrieval_query": VECTOR_SEARCH_QUERY,
