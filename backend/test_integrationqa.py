@@ -13,7 +13,6 @@ from langserve import add_routes
 
 # Load environment variables if needed
 load_dotenv()
-
 # Constants
 URI = ''
 USERNAME = ''
@@ -200,9 +199,9 @@ def test_populate_graph_schema_from_text(model):
 #             print(f"Result {i} differs from result {i+1}")
 
 def run_tests():
-    final_list = []
-    error_list = []
-    models = ['openai-gpt-3.5', 'openai-gpt-4o']
+   final_list = []
+   error_list = []
+   models = ['openai-gpt-3.5','openai-gpt-4o']
 
     for model_name in models:
         try:
