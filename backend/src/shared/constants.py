@@ -87,7 +87,6 @@ RETURN d as doc, [chunk in chunks | chunk {.*, embedding:null}] as chunks,
 
 ## CHAT SETUP
 CHAT_MAX_TOKENS = 1000
-CHAT_SEARCH_KWARG_K = 10
 CHAT_SEARCH_KWARG_SCORE_THRESHOLD = 0.5
 CHAT_DOC_SPLIT_SIZE = 3000
 CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD = 0.10
@@ -149,7 +148,11 @@ Note: This system does not generate answers based solely on internal knowledge. 
 
 QUESTION_TRANSFORM_TEMPLATE = "Given the below conversation, generate a search query to look up in order to get information relevant to the conversation. Only respond with the query, nothing else." 
 
-## CHAT QUERIES 
+## CHAT QUERIES
+
+
+VECTOR_SEARCH_TOP_K = 10
+
 VECTOR_SEARCH_QUERY = """
 WITH node AS chunk, score
 MATCH (chunk)-[:PART_OF]->(d:Document)
@@ -391,38 +394,87 @@ RETURN
     ] AS entities
 """
 
+GOBAL_SEARCH_TOP_K = 10
+
+GLOBAL_VECTOR_SEARCH_QUERY = """
+WITH collect(distinct {community: node, score: score}) AS communities,
+     avg(score) AS avg_score
+
+WITH avg_score,
+     [c IN communities | c.community.summary] AS texts,
+     [c IN communities | {id: elementId(c.community), score: c.score}] AS communityDetails
+
+WITH avg_score, communityDetails,
+     apoc.text.join(texts, "\n----\n") AS text
+
+RETURN text,
+       avg_score AS score,
+       {communitydetails: communityDetails} AS metadata
+"""
+
 CHAT_MODE_CONFIG_MAP= {
         "vector": {
             "retrieval_query": VECTOR_SEARCH_QUERY,
+            "top_k": VECTOR_SEARCH_TOP_K,
             "index_name": "vector",
             "keyword_index": None,
-            "document_filter": True
+            "document_filter": True,
+            "node_label": "Chunk",
+            "embedding_node_property":"embedding",
+            "text_node_properties":["text"],
+
         },
         "fulltext": {
             "retrieval_query": VECTOR_SEARCH_QUERY,  
+            "top_k": VECTOR_SEARCH_TOP_K,
             "index_name": "vector",  
             "keyword_index": "keyword", 
-            "document_filter": False
+            "document_filter": False,            
+            "node_label": "Chunk",
+            "embedding_node_property":"embedding",
+            "text_node_properties":["text"],
         },
         "entity search+vector": {
             "retrieval_query": LOCAL_COMMUNITY_SEARCH_QUERY.format(topChunks=LOCAL_COMMUNITY_TOP_CHUNKS,
                                                                    topCommunities=LOCAL_COMMUNITY_TOP_COMMUNITIES,
                                                                    topOutsideRels=LOCAL_COMMUNITY_TOP_OUTSIDE_RELS)+LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX,
+            "top_k": LOCAL_COMMUNITY_TOP_K,
             "index_name": "entity_vector",
             "keyword_index": None,
-            "document_filter": False
+            "document_filter": False,            
+            "node_label": "__Entity__",
+            "embedding_node_property":"embedding",
+            "text_node_properties":["id"],
         },
         "graph+vector": {
             "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT),
+            "top_k": VECTOR_SEARCH_TOP_K,
             "index_name": "vector",
             "keyword_index": None,
-            "document_filter": True
+            "document_filter": True,            
+            "node_label": "Chunk",
+            "embedding_node_property":"embedding",
+            "text_node_properties":["text"],
         },
         "graph+vector+fulltext": {
             "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT),
+            "top_k": VECTOR_SEARCH_TOP_K,
             "index_name": "vector",
             "keyword_index": "keyword",
-            "document_filter": False
+            "document_filter": False,            
+            "node_label": "Chunk",
+            "embedding_node_property":"embedding",
+            "text_node_properties":["text"],
+        },
+        "global search+vector+fulltext": {
+            "retrieval_query": GLOBAL_VECTOR_SEARCH_QUERY,
+            "top_k": GOBAL_SEARCH_TOP_K,
+            "index_name": "community_vector",
+            "keyword_index": "community_keyword",
+            "document_filter": False,            
+            "node_label": "__Community__",
+            "embedding_node_property":"embedding",
+            "text_node_properties":["summary"],
         },
         "default": {
             "retrieval_query": VECTOR_SEARCH_QUERY,
