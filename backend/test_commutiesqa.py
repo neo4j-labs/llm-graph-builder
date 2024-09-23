@@ -7,8 +7,10 @@ from datetime import datetime as dt
 from dotenv import load_dotenv
 from score import *
 from src.main import *
-from src.QA_integration_new import QA_RAG
+from src.QA_integration import QA_RAG
 from langserve import add_routes
+from graphdatascience import GraphDataScience
+from src.entities.source_node import sourceNode
 
 # Load environment variables if needed
 load_dotenv()
@@ -16,7 +18,7 @@ load_dotenv()
 URI = ''
 USERNAME = ''
 PASSWORD = ''
-DATABASE = 'neo4j'
+DATABASE = 'persistent1'
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
 
@@ -200,18 +202,18 @@ def test_populate_graph_schema_from_text(model):
 def run_tests():
    final_list = []
    error_list = []
-   models = ['openai-gpt-3.5','openai-gpt-4o']
+   models = ['openai-gpt-3.5','openai-gpt-4o','openai-gpt-4o-mini','gemini-1.5-pro','azure_ai_gpt_35','azure_ai_gpt_4o','ollama_llama3','groq_llama3_70b','anthropic_claude_3_5_sonnet','fireworks_v3p1_405b','bedrock_claude_3_5_sonnet']
 
    for model_name in models:
        try:
-                final_list.append(test_graph_from_file_local(model_name))
-                final_list.append(test_graph_from_wikipedia(model_name))
-                final_list.append(test_populate_graph_schema_from_text(model_name))
-                final_list.append(test_graph_website(model_name))
-                final_list.append(test_graph_from_youtube_video(model_name))
-                final_list.append(test_chatbot_qna(model_name))
-                final_list.append(test_chatbot_qna(model_name, mode='vector'))
-                final_list.append(test_chatbot_qna(model_name, mode='graph+vector+fulltext'))
+                # final_list.append(test_graph_from_file_local(model_name))
+                # final_list.append(test_graph_from_wikipedia(model_name))
+                # final_list.append(test_populate_graph_schema_from_text(model_name))
+                # final_list.append(test_graph_website(model_name))
+                # final_list.append(test_graph_from_youtube_video(model_name))
+                final_list.append(test_chatbot_qna(model_name, mode='entity search+vector'))
+                                
+                                  
        except Exception as e:
            error_list.append((model_name, str(e)))
    # #Compare and log diffrences in graph results
@@ -220,7 +222,7 @@ def run_tests():
    dis_elementid, dis_status = disconected_nodes()
    lst_element_id = [dis_elementid]
    delt = delete_disconected_nodes(lst_element_id)
-   dup = get_duplicate_nodes()
+#    dup = get_duplicate_nodes()
    print(final_list)
    # schma = test_populate_graph_schema_from_text(model)
    # Save final results to CSV
@@ -228,7 +230,7 @@ def run_tests():
    print(df)
    df['execution_date'] = dt.today().strftime('%Y-%m-%d')
    df['disconnected_nodes']=dis_status
-   df['get_duplicate_nodes']=dup
+#    df['get_duplicate_nodes']=dup
    df['delete_disconected_nodes']=delt
    # df['test_populate_graph_schema_from_text'] = schma
    df.to_csv(f"Integration_TestResult_{dt.now().strftime('%Y%m%d_%H%M%S')}.csv", index=False)
