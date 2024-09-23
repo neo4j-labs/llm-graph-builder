@@ -8,7 +8,7 @@ import { capitalizeWithPlus } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 export default function ChatModeToggle({
   menuAnchor,
-  closeHandler = () => { },
+  closeHandler = () => {},
   open,
   anchorPortal = true,
   disableBackdrop = false,
@@ -38,7 +38,9 @@ export default function ChatModeToggle({
   }, [isGdsActive, isCommunityAllowed]);
   const menuItems = useMemo(() => {
     return memoizedChatModes?.map((m) => {
-      const isDisabled = Boolean(selectedRows.length && !(m.mode === chatModeLables.vector || m.mode === chatModeLables.graph_vector));
+      const isDisabled = Boolean(
+        selectedRows.length && !(m.mode === chatModeLables.vector || m.mode === chatModeLables.graph_vector)
+      );
       const handleModeChange = () => {
         if (isDisabled) {
           setchatMode(chatModeLables.graph_vector);
