@@ -791,7 +791,7 @@ const Content: React.FC<ContentProps> = ({
           <div>
             <ButtonWithToolTip
               placement='top'
-              text='Configure Graph Schema, Delete disconnected Entities, Merge duplicate Entities'
+              text='Enhance graph quality'
               label='Graph Enhancemnet Settings'
               className='mr-2.5'
               onClick={toggleEnhancementDialog}
