@@ -147,7 +147,9 @@ const Content: React.FC<ContentProps> = ({
     }
     if (processedCount === 1 && queue.isEmpty()) {
       (async () => {
+        showNormalToast('Some Q&A functionality will only be available afterwards.');
         await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+        showSuccessToast('All Q&A functionality is available now.');
       })();
     }
   }, [processedCount, userCredentials, queue]);
@@ -374,7 +376,9 @@ const Content: React.FC<ContentProps> = ({
 
   const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
     if (!remainingFiles.length) {
+      showNormalToast('Some Q&A functionality will only be available afterwards.');
       await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+      showSuccessToast('All Q&A functionality is available now.');
     }
     for (let index = 0; index < remainingFiles.length; index++) {
       const f = remainingFiles[index];
@@ -787,7 +791,7 @@ const Content: React.FC<ContentProps> = ({
           <div>
             <ButtonWithToolTip
               placement='top'
-              text='Configure Graph Schema, Delete disconnected Entities, Merge duplicate Entities'
+              text='Enhance graph quality'
               label='Graph Enhancemnet Settings'
               className='mr-2.5'
               onClick={toggleEnhancementDialog}

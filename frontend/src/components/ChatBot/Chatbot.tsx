@@ -19,6 +19,8 @@ import { buttonCaptions, chatModeLables, tooltips } from '../../utils/Constants'
 import useSpeechSynthesis from '../../hooks/useSpeech';
 import ButtonWithToolTip from '../UI/ButtonWithToolTip';
 import FallBackDialog from '../UI/FallBackDialog';
+import { capitalizeWithPlus } from '../../utils/Utils';
+import { capitalize } from '@mui/material';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
 
 const Chatbot: FC<ChatbotProps> = (props) => {
@@ -44,7 +46,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [tokensUsed, setTokensUsed] = useState<number>(0);
   const [cypherQuery, setcypherQuery] = useState<string>('');
   const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
-  const [chatsMode, setChatsMode] = useState<string>(chatModeLables.graph_vector);
+  const [chatsMode, setChatsMode] = useState<string>(chatModeLables.graph_vector_fulltext);
   const [graphEntitites, setgraphEntitites] = useState<[]>([]);
   const [messageError, setmessageError] = useState<string>('');
 
@@ -179,7 +181,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     let error;
     let entitiysearchonly_entities;
     const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-    const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime };
+    const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime, mode: chatMode };
     setListMessages([...listMessages, userMessage]);
     try {
       setInputMessage('');
@@ -325,6 +327,15 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                   className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
                     chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
                   } `}
+                  subheader={
+                    chat.user !== 'chatbot' && chat.mode?.length ? (
+                      <Typography variant='subheading-small'>
+                        Chat Mode: {chat.mode.includes('+') ? capitalizeWithPlus(chat.mode) : capitalize(chat.mode)}
+                      </Typography>
+                    ) : (
+                      ''
+                    )
+                  }
                 >
                   <div
                     className={`${
@@ -430,7 +441,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           <ButtonWithToolTip
             label='Q&A Button'
             placement='top'
-            text={`Query Documents in ${chatMode} mode`}
+            text={`Ask a question.`}
             type='submit'
             disabled={loading || !connectionStatus}
             size='medium'
