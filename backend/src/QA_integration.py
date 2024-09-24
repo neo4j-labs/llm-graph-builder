@@ -204,7 +204,8 @@ def process_documents(docs, question, messages, llm, model,chat_mode_settings):
         elif chat_mode_settings["mode"] == "global search+vector+fulltext":
             result.update(global_communities)
         else:
-            result = get_sources_and_chunks(sources, docs)
+            source_details = get_sources_and_chunks(sources, docs)
+            result.update(source_details)
 
         content = ai_response.content
         total_tokens = get_total_tokens(ai_response, llm)

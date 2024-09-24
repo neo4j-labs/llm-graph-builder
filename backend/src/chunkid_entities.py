@@ -160,10 +160,8 @@ def process_communityids(driver, community_ids):
         logging.info(f"Starting graph query process for community ids: {community_ids}")
         community_ids_list = community_ids.split(",")
         query = GLOBAL_COMMUNITY_DETAILS_QUERY
+        records, summary, keys = driver.execute_query(query, communityids=community_ids_list)
 
-        records, summary, keys = driver.execute_query(query, communityIds=community_ids_list)
-
-        result = process_records(records)
         result = {"nodes": [],"relationships": [],"chunk_data":[]}
         if records:
             result["community_data"] = records[0]["communities"]
@@ -218,8 +216,8 @@ def get_entities_from_chunkids(uri, username, password, database ,node_ids,type)
             return result
         else:
             if node_ids:
-                result = process_communityids(driver,node_ids)
                 logging.info(f"chunkid_entities module: Starting for community ids : {node_ids}")
+                result = process_communityids(driver,node_ids)
             else:
                 logging.info(f"chunkid_entities module: No community ids are passed")
                 result = {
