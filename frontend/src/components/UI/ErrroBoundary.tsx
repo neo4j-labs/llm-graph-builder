@@ -25,7 +25,7 @@ export default class ErrorBoundary extends React.Component<any, any> {
               this.state.errorMessage === 'Missing required parameter client_id.'
                 ? 'Please Provide The Google Client ID For GCS Source'
                 : this.state.errorName === 'InvalidCharacterError'
-                ? 'Please Clear the Local Storage'
+                ? "We've updated our security measures. To ensure smooth access, please clear your local storage"
                 : 'Sorry there was a problem loading this page'
             }
             title='Something went wrong'
@@ -35,7 +35,7 @@ export default class ErrorBoundary extends React.Component<any, any> {
               this.state.errorName === 'InvalidCharacterError'
                 ? [
                     {
-                      label: 'Clear local storage',
+                      label: 'Clear Storage',
                       onClick: () => {
                         localStorage.clear();
                         window.location.reload();
