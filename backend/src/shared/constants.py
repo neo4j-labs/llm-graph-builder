@@ -21,49 +21,72 @@ GRAPH_CHUNK_LIMIT = 50
 GRAPH_QUERY = """
 MATCH docs = (d:Document) 
 WHERE d.fileName IN $document_names
-WITH docs, d ORDER BY d.createdAt DESC
-// fetch chunks for documents, currently with limit
+WITH docs, d 
+ORDER BY d.createdAt DESC
+
+// Fetch chunks for documents, currently with limit
 CALL {{
   WITH d
-  OPTIONAL MATCH chunks=(d)<-[:PART_OF|FIRST_CHUNK]-(c:Chunk)
+  OPTIONAL MATCH chunks = (d)<-[:PART_OF|FIRST_CHUNK]-(c:Chunk)
   RETURN c, chunks LIMIT {graph_chunk_limit}
 }}
 
-WITH collect(distinct docs) as docs, collect(distinct chunks) as chunks, collect(distinct c) as selectedChunks
-WITH docs, chunks, selectedChunks
-// select relationships between selected chunks
-WITH *, 
-[ c in selectedChunks | [p=(c)-[:NEXT_CHUNK|SIMILAR]-(other) WHERE other IN selectedChunks | p]] as chunkRels
+WITH collect(distinct docs) AS docs, 
+     collect(distinct chunks) AS chunks, 
+     collect(distinct c) AS selectedChunks
 
-// fetch entities and relationships between entities
+// Select relationships between selected chunks
+WITH *, 
+     [c IN selectedChunks | 
+       [p = (c)-[:NEXT_CHUNK|SIMILAR]-(other) 
+       WHERE other IN selectedChunks | p]] AS chunkRels
+
+// Fetch entities and relationships between entities
 CALL {{
   WITH selectedChunks
-  UNWIND selectedChunks as c
-
-  OPTIONAL MATCH entities=(c:Chunk)-[:HAS_ENTITY]->(e)
-  OPTIONAL MATCH entityRels=(e)--(e2:!Chunk) WHERE exists {{
+  UNWIND selectedChunks AS c
+  OPTIONAL MATCH entities = (c:Chunk)-[:HAS_ENTITY]->(e)
+  OPTIONAL MATCH entityRels = (e)--(e2:!Chunk) 
+  WHERE exists {{
     (e2)<-[:HAS_ENTITY]-(other) WHERE other IN selectedChunks
   }}
-  RETURN entities , entityRels, collect(DISTINCT e) as entity
+  RETURN entities, entityRels, collect(DISTINCT e) AS entity
 }}
-WITH  docs,chunks,chunkRels, collect(entities) as entities, collect(entityRels) as entityRels, entity
+
+WITH docs, chunks, chunkRels, 
+     collect(entities) AS entities, 
+     collect(entityRels) AS entityRels, 
+     entity
 
 WITH *
 
 CALL {{
-  with entity
-  unwind entity as n
-  OPTIONAL MATCH community=(n:__Entity__)-[:IN_COMMUNITY]->(p:__Community__)
-  OPTIONAL MATCH parentcommunity=(p)-[:PARENT_COMMUNITY*]->(p2:__Community__) 
-  return collect(community) as communities , collect(parentcommunity) as parentCommunities
+  WITH entity
+  UNWIND entity AS n
+  OPTIONAL MATCH community = (n:__Entity__)-[:IN_COMMUNITY]->(p:__Community__)
+  OPTIONAL MATCH parentcommunity = (p)-[:PARENT_COMMUNITY*]->(p2:__Community__) 
+  RETURN collect(community) AS communities, 
+         collect(parentcommunity) AS parentCommunities
 }}
 
-WITH apoc.coll.flatten(docs + chunks + chunkRels + entities + entityRels + communities + parentCommunities, true) as paths
+WITH apoc.coll.flatten(docs + chunks + chunkRels + entities + entityRels + communities + parentCommunities, true) AS paths
 
-// distinct nodes and rels
-CALL {{ WITH paths UNWIND paths AS path UNWIND nodes(path) as node WITH distinct node 
-       RETURN collect(node /* {{.*, labels:labels(node), elementId:elementId(node), embedding:null, text:null}} */) AS nodes }}
-CALL {{ WITH paths UNWIND paths AS path UNWIND relationships(path) as rel RETURN collect(distinct rel) AS rels }}  
+// Distinct nodes and relationships
+CALL {{
+  WITH paths 
+  UNWIND paths AS path 
+  UNWIND nodes(path) AS node 
+  WITH distinct node 
+  RETURN collect(node /* {{.*, labels:labels(node), elementId:elementId(node), embedding:null, text:null}} */) AS nodes 
+}}
+
+CALL {{
+  WITH paths 
+  UNWIND paths AS path 
+  UNWIND relationships(path) AS rel 
+  RETURN collect(distinct rel) AS rels 
+}}  
+
 RETURN nodes, rels
 
 """
