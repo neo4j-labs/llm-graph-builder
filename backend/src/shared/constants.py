@@ -149,87 +149,144 @@ Note: This system does not generate answers based solely on internal knowledge. 
 QUESTION_TRANSFORM_TEMPLATE = "Given the below conversation, generate a search query to look up in order to get information relevant to the conversation. Only respond with the query, nothing else." 
 
 ## CHAT QUERIES
-
-
 VECTOR_SEARCH_TOP_K = 10
 
 VECTOR_SEARCH_QUERY = """
 WITH node AS chunk, score
 MATCH (chunk)-[:PART_OF]->(d:Document)
-WITH d, collect(distinct {chunk: chunk, score: score}) as chunks, avg(score) as avg_score
+WITH d, 
+     collect(distinct {chunk: chunk, score: score}) AS chunks, 
+     avg(score) AS avg_score
+
 WITH d, avg_score, 
-     [c in chunks | c.chunk.text] as texts, 
-     [c in chunks | {id: c.chunk.id, score: c.score}] as chunkdetails
-WITH d, avg_score, chunkdetails,
-     apoc.text.join(texts, "\n----\n") as text
-RETURN text, avg_score AS score, 
-       {source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkdetails: chunkdetails} as metadata
+     [c IN chunks | c.chunk.text] AS texts, 
+     [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails
+
+WITH d, avg_score, chunkdetails, 
+     apoc.text.join(texts, "\n----\n") AS text
+
+RETURN text, 
+       avg_score AS score, 
+       {source: COALESCE(CASE WHEN d.url CONTAINS "None" 
+                             THEN d.fileName 
+                             ELSE d.url 
+                       END, 
+                       d.fileName), 
+        chunkdetails: chunkdetails} AS metadata
 """ 
 
+### Vector graph search 
 VECTOR_GRAPH_SEARCH_ENTITY_LIMIT = 25
+VECTOR_GRAPH_SEARCH_EMBEDDING_MIN_MATCH = 0.3
+VECTOR_GRAPH_SEARCH_EMBEDDING_MAX_MATCH = 0.9
+VECTOR_GRAPH_SEARCH_ENTITY_LIMIT_MINMAX_CASE = 20
+VECTOR_GRAPH_SEARCH_ENTITY_LIMIT_MAX_CASE = 40
 
-VECTOR_GRAPH_SEARCH_QUERY = """
+VECTOR_GRAPH_SEARCH_QUERY_PREFIX = """
 WITH node as chunk, score
 // find the document of the chunk
 MATCH (chunk)-[:PART_OF]->(d:Document)
-
 // aggregate chunk-details
-WITH d, collect(DISTINCT {{chunk: chunk, score: score}}) AS chunks, avg(score) as avg_score
+WITH d, collect(DISTINCT {chunk: chunk, score: score}) AS chunks, avg(score) as avg_score
 // fetch entities
-CALL {{ WITH chunks
+CALL { WITH chunks
 UNWIND chunks as chunkScore
 WITH chunkScore.chunk as chunk
-// entities connected to the chunk
-// todo only return entities that are actually in the chunk, remember we connect all extracted entities to all chunks
-// todo sort by relevancy (embeddding comparision?) cut off after X (e.g. 25) nodes?
-OPTIONAL MATCH (chunk)-[:HAS_ENTITY]->(e)
-WITH e, count(*) as numChunks 
-ORDER BY numChunks DESC LIMIT {no_of_entites}
-// depending on match to query embedding either 1 or 2 step expansion
-WITH CASE WHEN true // vector.similarity.cosine($embedding, e.embedding ) <= 0.95
-THEN 
-collect {{ OPTIONAL MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){{0,1}}(:!Chunk&!Document) RETURN path }}
-ELSE 
-collect {{ OPTIONAL MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){{0,2}}(:!Chunk&!Document) RETURN path }} 
-END as paths, e
-WITH apoc.coll.toSet(apoc.coll.flatten(collect(distinct paths))) as paths, collect(distinct e) as entities
-// de-duplicate nodes and relationships across chunks
-RETURN collect{{ unwind paths as p unwind relationships(p) as r return distinct r}} as rels,
-collect{{ unwind paths as p unwind nodes(p) as n return distinct n}} as nodes, entities
-}}
+"""
 
-// generate metadata and text components for chunks, nodes and relationships
+VECTOR_GRAPH_SEARCH_ENTITY_QUERY = """
+    OPTIONAL MATCH (chunk)-[:HAS_ENTITY]->(e)
+    WITH e, count(*) AS numChunks 
+    ORDER BY numChunks DESC 
+    LIMIT {no_of_entites}
+
+    WITH 
+    CASE 
+        WHEN e.embedding IS NULL OR ({embedding_match_min} <= vector.similarity.cosine($embedding, e.embedding) AND vector.similarity.cosine($embedding, e.embedding) <= {embedding_match_max}) THEN 
+            collect {{
+                OPTIONAL MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){{0,1}}(:!Chunk&!Document&!__Community__) 
+                RETURN path LIMIT {entity_limit_minmax_case}
+            }}
+        WHEN e.embedding IS NOT NULL AND vector.similarity.cosine($embedding, e.embedding) >  {embedding_match_max} THEN
+            collect {{
+                OPTIONAL MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){{0,2}}(:!Chunk&!Document&!__Community__) 
+                RETURN path LIMIT {entity_limit_max_case} 
+            }} 
+        ELSE 
+            collect {{ 
+                MATCH path=(e) 
+                RETURN path 
+            }}
+    END AS paths, e
+"""
+
+VECTOR_GRAPH_SEARCH_QUERY_SUFFIX = """
+    WITH apoc.coll.toSet(apoc.coll.flatten(collect(DISTINCT paths))) AS paths, 
+         collect(DISTINCT e) AS entities
+
+    // De-duplicate nodes and relationships across chunks
+    RETURN 
+        collect {
+            UNWIND paths AS p 
+            UNWIND relationships(p) AS r 
+            RETURN DISTINCT r
+        } AS rels,
+        collect {
+            UNWIND paths AS p 
+            UNWIND nodes(p) AS n 
+            RETURN DISTINCT n
+        } AS nodes, 
+        entities
+}
+
+// Generate metadata and text components for chunks, nodes, and relationships
 WITH d, avg_score,
      [c IN chunks | c.chunk.text] AS texts, 
-     [c IN chunks | {{id: c.chunk.id, score: c.score}}] AS chunkdetails, 
-  apoc.coll.sort([n in nodes | 
+     [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails,
+     [n IN nodes | elementId(n)] AS entityIds,
+     [r IN rels | elementId(r)] AS relIds,
+     apoc.coll.sort([
+         n IN nodes | 
+         coalesce(apoc.coll.removeAll(labels(n), ['__Entity__'])[0], "") + ":" + 
+         n.id + 
+         (CASE WHEN n.description IS NOT NULL THEN " (" + n.description + ")" ELSE "" END)
+     ]) AS nodeTexts,
+     apoc.coll.sort([
+         r IN rels | 
+         coalesce(apoc.coll.removeAll(labels(startNode(r)), ['__Entity__'])[0], "") + ":" + 
+         startNode(r).id + " " + type(r) + " " + 
+         coalesce(apoc.coll.removeAll(labels(endNode(r)), ['__Entity__'])[0], "") + ":" + endNode(r).id
+     ]) AS relTexts,
+     entities
 
-coalesce(apoc.coll.removeAll(labels(n),['__Entity__'])[0],"") +":"+ 
-n.id + (case when n.description is not null then " ("+ n.description+")" else "" end)]) as nodeTexts,
-	apoc.coll.sort([r in rels 
-    // optional filter if we limit the node-set
-    // WHERE startNode(r) in nodes AND endNode(r) in nodes 
-  | 
-coalesce(apoc.coll.removeAll(labels(startNode(r)),['__Entity__'])[0],"") +":"+ 
-startNode(r).id +
-" " + type(r) + " " + 
-coalesce(apoc.coll.removeAll(labels(endNode(r)),['__Entity__'])[0],"") +":" + endNode(r).id
-]) as relTexts
-, entities
-// combine texts into response-text
+// Combine texts into response text
+WITH d, avg_score, chunkdetails, entityIds, relIds,
+     "Text Content:\n" + apoc.text.join(texts, "\n----\n") +
+     "\n----\nEntities:\n" + apoc.text.join(nodeTexts, "\n") +
+     "\n----\nRelationships:\n" + apoc.text.join(relTexts, "\n") AS text, 
+     entities
 
-WITH d, avg_score,chunkdetails,
-"Text Content:\\n" +
-apoc.text.join(texts,"\\n----\\n") +
-"\\n----\\nEntities:\\n"+
-apoc.text.join(nodeTexts,"\\n") +
-"\\n----\\nRelationships:\\n" +
-apoc.text.join(relTexts,"\\n")
-
-as text,entities
-
-RETURN text, avg_score as score, {{length:size(text), source: COALESCE( CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), chunkdetails: chunkdetails}} AS metadata
+RETURN 
+    text, 
+    avg_score AS score, 
+    {
+        length: size(text), 
+        source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), 
+        chunkdetails: chunkdetails, 
+        entities : {
+            entityids: entityIds, 
+            relationshipids: relIds
+        }
+    } AS metadata
 """
+
+VECTOR_GRAPH_SEARCH_QUERY = VECTOR_GRAPH_SEARCH_QUERY_PREFIX+ VECTOR_GRAPH_SEARCH_ENTITY_QUERY.format(
+    no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT,
+    embedding_match_min=VECTOR_GRAPH_SEARCH_EMBEDDING_MIN_MATCH,
+    embedding_match_max=VECTOR_GRAPH_SEARCH_EMBEDDING_MAX_MATCH,
+    entity_limit_minmax_case=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT_MINMAX_CASE,
+    entity_limit_max_case=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT_MAX_CASE
+) + VECTOR_GRAPH_SEARCH_QUERY_SUFFIX
 
 ### Local community search
 LOCAL_COMMUNITY_TOP_K = 10
@@ -394,7 +451,12 @@ RETURN
     ] AS entities
 """
 
-GOBAL_SEARCH_TOP_K = 10
+LOCAL_COMMUNITY_SEARCH_QUERY_FORMATTED = LOCAL_COMMUNITY_SEARCH_QUERY.format(
+    topChunks=LOCAL_COMMUNITY_TOP_CHUNKS,
+    topCommunities=LOCAL_COMMUNITY_TOP_COMMUNITIES,
+    topOutsideRels=LOCAL_COMMUNITY_TOP_OUTSIDE_RELS)+LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX
+
+GLOBAL_SEARCH_TOP_K = 10
 
 GLOBAL_VECTOR_SEARCH_QUERY = """
 WITH collect(distinct {community: node, score: score}) AS communities,
@@ -416,7 +478,7 @@ RETURN text,
 
 GLOBAL_COMMUNITY_DETAILS_QUERY = """
 MATCH (community:__Community__)
-WHERE elementId(community) IN $communityIds
+WHERE elementId(community) IN $communityids
 WITH collect(distinct community) AS communities
 RETURN [community IN communities | 
         community {.*, embedding: null, elementid: elementId(community)}] AS communities
@@ -444,9 +506,7 @@ CHAT_MODE_CONFIG_MAP= {
             "text_node_properties":["text"],
         },
         "entity search+vector": {
-            "retrieval_query": LOCAL_COMMUNITY_SEARCH_QUERY.format(topChunks=LOCAL_COMMUNITY_TOP_CHUNKS,
-                                                                   topCommunities=LOCAL_COMMUNITY_TOP_COMMUNITIES,
-                                                                   topOutsideRels=LOCAL_COMMUNITY_TOP_OUTSIDE_RELS)+LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX,
+            "retrieval_query": LOCAL_COMMUNITY_SEARCH_QUERY_FORMATTED,
             "top_k": LOCAL_COMMUNITY_TOP_K,
             "index_name": "entity_vector",
             "keyword_index": None,
@@ -456,7 +516,7 @@ CHAT_MODE_CONFIG_MAP= {
             "text_node_properties":["id"],
         },
         "graph+vector": {
-            "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT),
+            "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY,
             "top_k": VECTOR_SEARCH_TOP_K,
             "index_name": "vector",
             "keyword_index": None,
@@ -466,7 +526,7 @@ CHAT_MODE_CONFIG_MAP= {
             "text_node_properties":["text"],
         },
         "graph+vector+fulltext": {
-            "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY.format(no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT),
+            "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY,
             "top_k": VECTOR_SEARCH_TOP_K,
             "index_name": "vector",
             "keyword_index": "keyword",
@@ -477,7 +537,7 @@ CHAT_MODE_CONFIG_MAP= {
         },
         "global search+vector+fulltext": {
             "retrieval_query": GLOBAL_VECTOR_SEARCH_QUERY,
-            "top_k": GOBAL_SEARCH_TOP_K,
+            "top_k": GLOBAL_SEARCH_TOP_K,
             "index_name": "community_vector",
             "keyword_index": "community_keyword",
             "document_filter": False,            

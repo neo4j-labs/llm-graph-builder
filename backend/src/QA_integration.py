@@ -121,7 +121,6 @@ def get_sources_and_chunks(sources_used, docs):
     result = {
         'sources': sources_used,
         'chunkdetails': chunkdetails_list,
-        "entities" : list()
     }
     return result
 
@@ -156,10 +155,10 @@ def format_documents(documents, model):
     sorted_documents = sorted(documents, key=lambda doc: doc.state.get("query_similarity_score", 0), reverse=True)
     sorted_documents = sorted_documents[:prompt_token_cutoff]
 
-    formatted_docs = []
+    formatted_docs = list()
     sources = set()
-    local_search_entities = {'entities':list()}
-    global_communities = {"communitydetails":list()}
+    entities = dict()
+    global_communities = list()
 
 
     for doc in sorted_documents:
@@ -167,8 +166,8 @@ def format_documents(documents, model):
             source = doc.metadata.get('source', "unknown")
             sources.add(source)
 
-            local_search_entities = doc.metadata if 'entities'in doc.metadata.keys() else local_search_entities
-            global_communities = doc.metadata if 'communitydetails'in doc.metadata.keys() else global_communities
+            entities = doc.metadata['entities'] if 'entities'in doc.metadata.keys() else entities
+            global_communities = doc.metadata["communitydetails"] if 'communitydetails'in doc.metadata.keys() else global_communities
 
             formatted_doc = (
                 "Document start\n"
@@ -181,13 +180,13 @@ def format_documents(documents, model):
         except Exception as e:
             logging.error(f"Error formatting document: {e}")
     
-    return "\n\n".join(formatted_docs), sources,local_search_entities,global_communities
+    return "\n\n".join(formatted_docs), sources,entities,global_communities
 
 def process_documents(docs, question, messages, llm, model,chat_mode_settings):
     start_time = time.time()
     
     try:
-        formatted_docs, sources, local_search_entities,global_communities = format_documents(docs, model)
+        formatted_docs, sources, entitydetails, communities = format_documents(docs, model)
         
         rag_chain = get_rag_chain(llm=llm)
         
@@ -197,14 +196,23 @@ def process_documents(docs, question, messages, llm, model,chat_mode_settings):
             "input": question
         })
 
-        result = {'sources': [], 'chunkdetails': [], 'entities': [], 'communitydetails': []}
+        result = {'sources': list(), 'nodedetails': dict(), 'entities': dict()}
+        node_details = {"chunkdetails":list(),"entitydetails":list(),"communitydetails":list()}
+        entities = {'entityids':list(),"relationshipids":list()}
 
         if chat_mode_settings["mode"] == "entity search+vector":
-            result.update(local_search_entities)
+            node_details["entitydetails"] = entitydetails
+
         elif chat_mode_settings["mode"] == "global search+vector+fulltext":
-            result.update(global_communities)
+            node_details["communitydetails"] = communities
         else:
-            result = get_sources_and_chunks(sources, docs)
+            sources_and_chunks = get_sources_and_chunks(sources, docs)
+            result['sources'] = sources_and_chunks['sources']
+            node_details["chunkdetails"] = sources_and_chunks["chunkdetails"]
+            entities.update(entitydetails)
+
+        result["nodedetails"] = node_details
+        result["entities"] = entities
 
         content = ai_response.content
         total_tokens = get_total_tokens(ai_response, llm)
@@ -380,7 +388,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
             content, result, total_tokens = process_documents(docs, question, messages, llm, model, chat_mode_settings)
         else:
             content = "I couldn't find any relevant documents to answer your question."
-            result = {"sources": [], "chunkdetails": [], "entities": [],"communitydetails": []}
+            result = {"sources": list(), "nodedetails": list(), "entities": list()}
             total_tokens = 0
         
         ai_response = AIMessage(content=content)
@@ -390,19 +398,18 @@ def process_chat_response(messages, history, question, model, graph, document_na
         summarization_thread.start()
         logging.info("Summarization thread started.")
         # summarize_and_log(history, messages, llm)
-
+        
         return {
             "session_id": "",  
             "message": content,
             "info": {
                 "sources": result["sources"],
                 "model": model_version,
-                "chunkdetails": result["chunkdetails"],
+                "nodedetails": result["nodedetails"],
                 "total_tokens": total_tokens,
                 "response_time": 0,
                 "mode": chat_mode_settings["mode"],
                 "entities": result["entities"],
-                "communitydetails":result["communitydetails"],
             },
             "user": "chatbot"
         }
@@ -414,13 +421,12 @@ def process_chat_response(messages, history, question, model, graph, document_na
             "message": "Something went wrong",
             "info": {
                 "sources": [],
-                "chunkdetails": [],
+                "nodedetails": [],
                 "total_tokens": 0,
                 "response_time": 0,
                 "error": f"{type(e).__name__}: {str(e)}",
                 "mode": chat_mode_settings["mode"],
                 "entities": [],
-                "communitydetails":[],
             },
             "user": "chatbot"
         }
