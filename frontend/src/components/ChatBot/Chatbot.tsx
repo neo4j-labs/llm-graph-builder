@@ -42,14 +42,14 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [sourcesModal, setSourcesModal] = useState<string[]>([]);
   const [modelModal, setModelModal] = useState<string>('');
   const [responseTime, setResponseTime] = useState<number>(0);
-  const [chunkModal, setChunkModal] = useState<chunk[]>([]);
+  const [chunkModal, setChunkModal] = useState<string[]>([]);
   const [tokensUsed, setTokensUsed] = useState<number>(0);
   const [cypherQuery, setcypherQuery] = useState<string>('');
   const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
   const [chatsMode, setChatsMode] = useState<string>(chatModeLables.graph_vector_fulltext);
   const [graphEntitites, setgraphEntitites] = useState<[]>([]);
   const [messageError, setmessageError] = useState<string>('');
-  const [entitiesModal, setEntitiesModal] = useState<entity[]>([]);
+  const [entitiesModal, setEntitiesModal] = useState<string[]>([]);
 
   const [value, copy] = useCopyToClipboard();
   const { speak, cancel } = useSpeechSynthesis({
@@ -83,7 +83,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       reply: string;
       sources?: string[];
       model?: string;
-      chunk_ids?: chunk[];
+      chunk_ids?: string[];
       total_tokens?: number;
       response_time?: number;
       speaking?: boolean;
@@ -92,7 +92,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       cypher_query?: string;
       graphonly_entities?: [];
       error?: string;
-      entitiysearchonly_entities?: chunk[];
+      entitiysearchonly_entities?: string[];
     },
     index = 0
   ) => {
@@ -218,7 +218,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
         reply: chatbotReply,
         sources: chatSources,
         model: chatModel,
-        chunk_ids: chatChunks.map((chunk: chunk) => chunk.id), // Extract chunk IDs here
+        chunk_ids: chatnodedetails, // Extract chunk IDs here
         total_tokens: chatTokensUsed,
         response_time: chatTimeTaken,
         speaking: false,

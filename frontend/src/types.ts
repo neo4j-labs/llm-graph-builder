@@ -216,7 +216,7 @@ export interface Messages {
   isLoading?: boolean;
   response_time?: number;
   nodedetails?: nodeDetailsProps[];
-  chunk_ids?: chunk[];
+  chunk_ids?: string[];
   total_tokens?: number;
   speaking?: boolean;
   copying?: boolean;
@@ -224,7 +224,7 @@ export interface Messages {
   cypher_query?: string;
   graphonly_entities?: [];
   error?: string;
-  entities?: chunk[];
+  entities?: string[];
 }
 
 export type ChatbotProps = {
@@ -415,13 +415,13 @@ export interface chatInfoMessage extends Partial<Messages> {
   sources: string[];
   model: string;
   response_time: number;
-  chunk_ids: chunk[];
+  chunk_ids: string[];
   total_tokens: number;
   mode: string;
   cypher_query?: string;
   graphonly_entities: [];
   error: string;
-  entities_ids:chunk[];
+  entities_ids:string[];
 }
 
 export interface eventResponsetypes extends Omit<SourceNode, 'total_chunks' | 'processingTime'> {
