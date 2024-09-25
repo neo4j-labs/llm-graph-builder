@@ -9,13 +9,14 @@ from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransf
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 from langchain_experimental.graph_transformers import LLMGraphTransformer
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_anthropic import ChatAnthropic
 from langchain_fireworks import ChatFireworks
 from langchain_aws import ChatBedrock
 from langchain_community.chat_models import ChatOllama
 import boto3
 import google.auth
-from src.shared.constants import MODEL_VERSIONS
+from src.shared.constants import MODEL_VERSIONS, PROMPT_TO_ALL_LLMs
 
 
 def get_llm(model: str):
@@ -158,7 +159,8 @@ def get_graph_document_list(
             node_properties=node_properties,
             allowed_nodes=allowedNodes,
             allowed_relationships=allowedRelationship,
-            ignore_tool_usage = True
+            ignore_tool_usage=True,
+            prompt = ChatPromptTemplate.from_messages(["system",PROMPT_TO_ALL_LLMs])
         )
     with ThreadPoolExecutor(max_workers=10) as executor:
         for chunk in combined_chunk_document_list:

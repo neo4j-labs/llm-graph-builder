@@ -412,14 +412,14 @@ def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password, datab
           node_type= node.type
           if (node_id, node_type) not in distinct_nodes:
             distinct_nodes.add((node_id, node_type))
-  #get all relations
-  for relation in graph_document.relationships:
-        relations.append(relation.type)
+    #get all relations
+    for relation in graph_document.relationships:
+          relations.append(relation.type)
 
-  node_count += len(distinct_nodes)
-  rel_count += len(relations)
-  print(f'node count internal func:{node_count}')
-  print(f'relation count internal func:{rel_count}')
+    node_count += len(distinct_nodes)
+    rel_count += len(relations)
+    print(f'node count internal func:{node_count}')
+    print(f'relation count internal func:{rel_count}')
   return node_count,rel_count
 
 def get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition):
