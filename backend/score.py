@@ -318,10 +318,9 @@ async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(),
         gc.collect()
 
 @app.post("/chunk_entities")
-async def chunk_entities(uri=Form(),userName=Form(), password=Form(), database=Form(), node_ids=Form(None),type=Form()):
+async def chunk_entities(uri=Form(),userName=Form(), password=Form(), database=Form(), nodedetails=Form(None),entities=Form(),mode=Form()):
     try:
-        logging.info(f"URI: {uri}, Username: {userName}, node_ids: {node_ids}")
-        result = await asyncio.to_thread(get_entities_from_chunkids,uri=uri, username=userName, password=password, database=database,node_ids=node_ids,type=type)
+        result = await asyncio.to_thread(get_entities_from_chunkids,uri=uri, username=userName, password=password, database=database,nodedetails=nodedetails,entities=entities,mode=mode)
         json_obj = {'api_name':'chunk_entities','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result)

@@ -173,6 +173,9 @@ def get_entities_from_chunkids(uri, username, password, database ,nodedetails,en
         driver = get_graphDB_driver(uri, username, password,database)
         default_response = {"nodes": list(),"relationships": list(),"chunk_data": list(),"community_data": list(),}
 
+        nodedetails = json.loads(nodedetails)
+        entities = json.loads(entities)
+
         if mode == CHAT_GLOBAL_VECTOR_FULLTEXT_MODE:
 
             if "communitydetails" in nodedetails and nodedetails["communitydetails"]:
