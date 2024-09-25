@@ -43,6 +43,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   cypher_query,
   graphonly_entities,
   error,
+  entities_ids
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
@@ -86,11 +87,8 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       (async () => {
         setLoading(true);
         try {
-          const response = await chunkEntitiesAPI(
-            userCredentials as UserCredentials,
-            chunk_ids.map((c) => c.id).join(','),
-            userCredentials?.database,
-            mode === chatModeLables.entity_vector
+          const response = await chunkEntitiesAPI(userCredentials as UserCredentials, userCredentials?.database, chunk_ids.join(','),entities_ids.join(','),
+            mode,
           );
           if (response.data.status === 'Failure') {
             throw new Error(response.data.error);
@@ -178,9 +176,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
           {mode != chatModeLables.graph ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
           {mode === chatModeLables.graph_vector ||
-          mode === chatModeLables.graph ||
-          mode === chatModeLables.graph_vector_fulltext ||
-          mode === chatModeLables.entity_vector ? (
+            mode === chatModeLables.graph ||
+            mode === chatModeLables.graph_vector_fulltext ||
+            mode === chatModeLables.entity_vector ? (
             <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
           ) : (
             <></>

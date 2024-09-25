@@ -7,7 +7,7 @@ import {
   SpeakerXMarkIconOutline,
 } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../../assets/images/chatbot-ai.png';
-import { ChatbotProps, CustomFile, UserCredentials, chunk } from '../../types';
+import { ChatbotProps, CustomFile, UserCredentials, chunk, entity } from '../../types';
 import { useCredentials } from '../../context/UserCredentials';
 import { chatBotAPI } from '../../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
@@ -49,6 +49,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [chatsMode, setChatsMode] = useState<string>(chatModeLables.graph_vector_fulltext);
   const [graphEntitites, setgraphEntitites] = useState<[]>([]);
   const [messageError, setmessageError] = useState<string>('');
+  const [entitiesModal, setEntitiesModal] = useState<entity[]>([]);
 
   const [value, copy] = useCopyToClipboard();
   const { speak, cancel } = useSpeechSynthesis({
@@ -172,6 +173,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     let chatbotReply;
     let chatSources;
     let chatModel;
+    let chatnodedetails;
     let chatChunks;
     let chatTimeTaken;
     let chatTokensUsed;
@@ -180,6 +182,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     let graphonly_entities;
     let error;
     let entitiysearchonly_entities;
+    let chatEntities;
     const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
     const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime, mode: chatMode };
     setListMessages([...listMessages, userMessage]);
@@ -198,7 +201,11 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       chatbotReply = chatresponse?.data?.data?.message;
       chatSources = chatresponse?.data?.data?.info.sources;
       chatModel = chatresponse?.data?.data?.info.model;
-      chatChunks = chatresponse?.data?.data?.info.chunkdetails;
+      chatnodedetails = chatresponse?.data?.data?.info.nodedetails;
+      chatChunks = chatnodedetails?.chunkdetails?.map((chunk: chunk) => ({
+        id: chunk.id,
+        score: chunk.score,
+      }));
       chatTokensUsed = chatresponse?.data?.data?.info.total_tokens;
       chatTimeTaken = chatresponse?.data?.data?.info.response_time;
       chatingMode = chatresponse?.data?.data?.info?.mode;
@@ -206,11 +213,12 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       graphonly_entities = chatresponse?.data.data.info.context ?? [];
       entitiysearchonly_entities = chatresponse?.data.data.info.entities;
       error = chatresponse.data.data.info.error ?? '';
+      chatEntities = chatresponse.data.data.info.entities;
       const finalbotReply = {
         reply: chatbotReply,
         sources: chatSources,
         model: chatModel,
-        chunk_ids: chatChunks,
+        chunk_ids: chatChunks.map((chunk: chunk) => chunk.id), // Extract chunk IDs here
         total_tokens: chatTokensUsed,
         response_time: chatTimeTaken,
         speaking: false,
@@ -220,6 +228,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
         graphonly_entities,
         error,
         entitiysearchonly_entities,
+        chatEntities
       };
       simulateTypingEffect(finalbotReply);
     } catch (error) {
@@ -326,7 +335,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                   isElevated={true}
                   className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
                     chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
-                  } `}
+                    } `}
                   subheader={
                     chat.user !== 'chatbot' && chat.mode?.length ? (
                       <Typography variant='subheading-small'>
@@ -340,9 +349,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                   <div
                     className={`${
                       listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
-                        ? 'loader'
-                        : ''
-                    }`}
+                      ? 'loader'
+                      : ''
+                      }`}
                   >
                     <ReactMarkdown>{chat.message}</ReactMarkdown>
                   </div>
@@ -374,6 +383,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                             setShowInfoModal(true);
                             setChatsMode(chat.mode ?? '');
                             setgraphEntitites(chat.graphonly_entities ?? []);
+                            setEntitiesModal(chat.entities ?? []);
                             setmessageError(chat.error ?? '');
                           }}
                         >
@@ -430,7 +440,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           <TextInput
             className={`n-bg-palette-neutral-bg-default flex-grow-7 ${
               isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
-            }`}
+              }`}
             aria-label='chatbot-input'
             type='text'
             value={inputMessage}
@@ -474,6 +484,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             sources={sourcesModal}
             model={modelModal}
             chunk_ids={chunkModal}
+            entities_ids={entitiesModal}
             response_time={responseTime}
             total_tokens={tokensUsed}
             mode={chatsMode}

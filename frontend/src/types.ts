@@ -215,6 +215,7 @@ export interface Messages {
   model?: string;
   isLoading?: boolean;
   response_time?: number;
+  nodedetails?: nodeDetailsProps[];
   chunk_ids?: chunk[];
   total_tokens?: number;
   speaking?: boolean;
@@ -420,6 +421,7 @@ export interface chatInfoMessage extends Partial<Messages> {
   cypher_query?: string;
   graphonly_entities: [];
   error: string;
+  entities_ids:chunk[];
 }
 
 export interface eventResponsetypes extends Omit<SourceNode, 'total_chunks' | 'processingTime'> {
@@ -668,3 +670,24 @@ export type CommunitiesProps = {
   loading: boolean;
   communities: Community[];
 };
+
+export interface entity {
+  id: string;
+  score: number;
+};
+
+export interface community {
+  id: string;
+  score: number;
+}
+
+export type nodeDetailsProps = {
+  chunkDetails?: chunk[],
+  entitydetails?: entity[],
+  communitydetails?: community[]
+}
+
+export type entityProps = {
+  entityids: [],
+  relationshipids:[]
+}

@@ -3,18 +3,20 @@ import api from '../API/Index';
 
 const chunkEntitiesAPI = async (
   userCredentials: UserCredentials,
-  chunk_ids: string,
   database: string = 'neo4j',
-  is_entity: boolean = false
+  chunk_ids: string,
+  entities:string,
+  mode: string,
 ) => {
   try {
     const formData = new FormData();
     formData.append('uri', userCredentials?.uri ?? '');
     formData.append('userName', userCredentials?.userName ?? '');
     formData.append('password', userCredentials?.password ?? '');
-    formData.append('chunk_ids', chunk_ids);
     formData.append('database', database);
-    formData.append('is_entity', String(is_entity));
+    formData.append('nodedetails', chunk_ids);
+    formData.append('entities', entities);
+    formData.append('mode', mode);
 
     const response: ChatInfo_APIResponse = await api.post(`/chunk_entities`, formData, {
       headers: {
