@@ -257,6 +257,8 @@ export interface CheckboxSectionProps {
   loading: boolean;
   handleChange: (graph: GraphType) => void;
   isgds: boolean;
+  isDocChunk: boolean;
+  isEntity:boolean;
 }
 
 export interface fileName {
