@@ -200,10 +200,10 @@ def process_documents(docs, question, messages, llm, model,chat_mode_settings):
         node_details = {"chunkdetails":list(),"entitydetails":list(),"communitydetails":list()}
         entities = {'entityids':list(),"relationshipids":list()}
 
-        if chat_mode_settings["mode"] == "entity search+vector":
+        if chat_mode_settings["mode"] == CHAT_ENTITY_VECTOR_MODE:
             node_details["entitydetails"] = entitydetails
 
-        elif chat_mode_settings["mode"] == "global search+vector+fulltext":
+        elif chat_mode_settings["mode"] == CHAT_GLOBAL_VECTOR_FULLTEXT_MODE:
             node_details["communitydetails"] = communities
         else:
             sources_and_chunks = get_sources_and_chunks(sources, docs)
@@ -576,7 +576,7 @@ def create_neo4j_chat_message_history(graph, session_id):
         raise 
 
 def get_chat_mode_settings(mode,settings_map=CHAT_MODE_CONFIG_MAP):
-    default_settings = settings_map["default"]
+    default_settings = settings_map[CHAT_DEFAULT_MODE]
     try:
         chat_mode_settings = settings_map.get(mode, default_settings)
         chat_mode_settings["mode"] = mode
@@ -598,7 +598,7 @@ def QA_RAG(graph, model, question, document_names, session_id, mode):
     user_question = HumanMessage(content=question)
     messages.append(user_question)
 
-    if mode == "graph":
+    if mode == CHAT_GRAPH_MODE:
         result = process_graph_response(model, graph, question, messages, history)
     else:
         chat_mode_settings = get_chat_mode_settings(mode=mode)

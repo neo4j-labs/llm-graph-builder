@@ -69,20 +69,72 @@ RETURN nodes, rels
 """
 
 CHUNK_QUERY = """
-match (chunk:Chunk) where chunk.id IN $chunksIds
-
+MATCH (chunk:Chunk)
+WHERE chunk.id IN $chunksIds
 MATCH (chunk)-[:PART_OF]->(d:Document)
-CALL {WITH chunk
-MATCH (chunk)-[:HAS_ENTITY]->(e) 
-MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){0,2}(:!Chunk &! Document &! `__Community__`) 
-UNWIND rels as r
-RETURN collect(distinct r) as rels
-}
-WITH d, collect(distinct chunk) as chunks, apoc.coll.toSet(apoc.coll.flatten(collect(rels))) as rels
-RETURN d as doc, [chunk in chunks | chunk {.*, embedding:null}] as chunks,
-       [r in rels | {startNode:{element_id:elementId(startNode(r)), labels:labels(startNode(r)), properties:{id:startNode(r).id,description:startNode(r).description}},
-                     endNode:{element_id:elementId(endNode(r)), labels:labels(endNode(r)), properties:{id:endNode(r).id,description:endNode(r).description}},
-                     relationship: {type:type(r), element_id:elementId(r)}}] as entities
+
+WITH d, 
+     collect(distinct chunk) AS chunks
+
+// Collect relationships and nodes
+WITH d, chunks, 
+     collect {
+         MATCH ()-[r]->() 
+         WHERE elementId(r) IN $relationshipIds
+         RETURN r
+     } AS rels,
+     collect {
+         MATCH (e) 
+         WHERE elementId(e) IN $entityIds
+         RETURN e
+     } AS nodes
+
+WITH d, 
+     chunks, 
+     apoc.coll.toSet(apoc.coll.flatten(rels)) AS rels, 
+     nodes
+
+RETURN 
+    d AS doc, 
+    [chunk IN chunks | 
+        chunk {.*, embedding: null}
+    ] AS chunks,
+    [
+        node IN nodes | 
+        {
+            element_id: elementId(node),
+            labels: labels(node),
+            properties: {
+                id: node.id,
+                description: node.description
+            }
+        }
+    ] AS nodes,
+    [
+        r IN rels | 
+        {
+            startNode: {
+                element_id: elementId(startNode(r)),
+                labels: labels(startNode(r)),
+                properties: {
+                    id: startNode(r).id,
+                    description: startNode(r).description
+                }
+            },
+            endNode: {
+                element_id: elementId(endNode(r)),
+                labels: labels(endNode(r)),
+                properties: {
+                    id: endNode(r).id,
+                    description: endNode(r).description
+                }
+            },
+            relationship: {
+                type: type(r),
+                element_id: elementId(r)
+            }
+        }
+    ] AS entities
 """
 
 ## CHAT SETUP
@@ -90,12 +142,6 @@ CHAT_MAX_TOKENS = 1000
 CHAT_SEARCH_KWARG_SCORE_THRESHOLD = 0.5
 CHAT_DOC_SPLIT_SIZE = 3000
 CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD = 0.10
-CHAT_TOKEN_CUT_OFF = {
-     ("openai-gpt-3.5",'azure_ai_gpt_35',"gemini-1.0-pro","gemini-1.5-pro","groq-llama3",'groq_llama3_70b','anthropic_claude_3_5_sonnet','fireworks_llama_v3_70b','bedrock_claude_3_5_sonnet', ) : 4, 
-     ("openai-gpt-4","diffbot" ,'azure_ai_gpt_4o',"openai-gpt-4o", "openai-gpt-4o-mini") : 28,
-     ("ollama_llama3") : 2  
-} 
-
 
 CHAT_TOKEN_CUT_OFF = {
      ("openai-gpt-3.5",'azure_ai_gpt_35',"gemini-1.0-pro","gemini-1.5-pro","groq-llama3",'groq_llama3_70b','anthropic_claude_3_5_sonnet','fireworks_llama_v3_70b','bedrock_claude_3_5_sonnet', ) : 4, 
@@ -483,8 +529,20 @@ WITH collect(distinct community) AS communities
 RETURN [community IN communities | 
         community {.*, embedding: null, elementid: elementId(community)}] AS communities
 """
+
+## CHAT MODES 
+
+CHAT_VECTOR_MODE = "vector"
+CHAT_FULLTEXT_MODE = "fulltext"
+CHAT_ENTITY_VECTOR_MODE = "entity search+vector"
+CHAT_VECTOR_GRAPH_MODE = "graph+vector"
+CHAT_VECTOR_GRAPH_FULLTEXT_MODE = "graph+vector+fulltext"
+CHAT_GLOBAL_VECTOR_FULLTEXT_MODE = "global search+vector+fulltext"
+CHAT_GRAPH_MODE = "graph"
+CHAT_DEFAULT_MODE = "graph+vector+fulltext"
+
 CHAT_MODE_CONFIG_MAP= {
-        "vector": {
+        CHAT_VECTOR_MODE : {
             "retrieval_query": VECTOR_SEARCH_QUERY,
             "top_k": VECTOR_SEARCH_TOP_K,
             "index_name": "vector",
@@ -495,7 +553,7 @@ CHAT_MODE_CONFIG_MAP= {
             "text_node_properties":["text"],
 
         },
-        "fulltext": {
+        CHAT_FULLTEXT_MODE : {
             "retrieval_query": VECTOR_SEARCH_QUERY,  
             "top_k": VECTOR_SEARCH_TOP_K,
             "index_name": "vector",  
@@ -505,7 +563,7 @@ CHAT_MODE_CONFIG_MAP= {
             "embedding_node_property":"embedding",
             "text_node_properties":["text"],
         },
-        "entity search+vector": {
+        CHAT_ENTITY_VECTOR_MODE : {
             "retrieval_query": LOCAL_COMMUNITY_SEARCH_QUERY_FORMATTED,
             "top_k": LOCAL_COMMUNITY_TOP_K,
             "index_name": "entity_vector",
@@ -515,7 +573,7 @@ CHAT_MODE_CONFIG_MAP= {
             "embedding_node_property":"embedding",
             "text_node_properties":["id"],
         },
-        "graph+vector": {
+        CHAT_VECTOR_GRAPH_MODE : {
             "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY,
             "top_k": VECTOR_SEARCH_TOP_K,
             "index_name": "vector",
@@ -525,7 +583,7 @@ CHAT_MODE_CONFIG_MAP= {
             "embedding_node_property":"embedding",
             "text_node_properties":["text"],
         },
-        "graph+vector+fulltext": {
+        CHAT_VECTOR_GRAPH_FULLTEXT_MODE : {
             "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY,
             "top_k": VECTOR_SEARCH_TOP_K,
             "index_name": "vector",
@@ -535,7 +593,7 @@ CHAT_MODE_CONFIG_MAP= {
             "embedding_node_property":"embedding",
             "text_node_properties":["text"],
         },
-        "global search+vector+fulltext": {
+        CHAT_GLOBAL_VECTOR_FULLTEXT_MODE : {
             "retrieval_query": GLOBAL_VECTOR_SEARCH_QUERY,
             "top_k": GLOBAL_SEARCH_TOP_K,
             "index_name": "community_vector",
@@ -545,12 +603,6 @@ CHAT_MODE_CONFIG_MAP= {
             "embedding_node_property":"embedding",
             "text_node_properties":["summary"],
         },
-        "default": {
-            "retrieval_query": VECTOR_SEARCH_QUERY,
-            "index_name": "vector",
-            "keyword_index": None,
-            "document_filter": True
-        }
     }
 YOUTUBE_CHUNK_SIZE_SECONDS = 60
 
