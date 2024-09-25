@@ -301,7 +301,7 @@ async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(),
             graph = create_graph_database_connection(uri, userName, password, database)
             graph_DB_dataAccess = graphDBdataAccess(graph)
             write_access = graph_DB_dataAccess.check_account_access(database=database)
-        result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access=write_access)
+        result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access)
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
