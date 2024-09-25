@@ -1,10 +1,10 @@
-import { ChatInfo_APIResponse, UserCredentials } from '../types';
+import { ChatInfo_APIResponse, nodeDetailsProps, UserCredentials } from '../types';
 import api from '../API/Index';
 
 const chunkEntitiesAPI = async (
   userCredentials: UserCredentials,
   database: string = 'neo4j',
-  chunk_ids: (string)[],
+  nodeDetails: (nodeDetailsProps),
   entities:(string)[],
   mode: string,
 ) => {
@@ -14,7 +14,7 @@ const chunkEntitiesAPI = async (
     formData.append('userName', userCredentials?.userName ?? '');
     formData.append('password', userCredentials?.password ?? '');
     formData.append('database', database);
-    formData.append('nodedetails', JSON.stringify(chunk_ids));
+    formData.append('nodedetails', JSON.stringify(nodeDetails));
     formData.append('entities', JSON.stringify(entities));
     formData.append('mode', mode);
 

@@ -38,7 +38,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   model,
   total_tokens,
   response_time,
-  chunk_ids,
+  nodeDetails,
   mode,
   cypher_query,
   graphonly_entities,
@@ -87,7 +87,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       (async () => {
         setLoading(true);
         try {
-          const response = await chunkEntitiesAPI(userCredentials as UserCredentials, userCredentials?.database, chunk_ids,entities_ids,
+          const response = await chunkEntitiesAPI(userCredentials as UserCredentials, userCredentials?.database, nodeDetails, entities_ids,
             mode,
           );
           if (response.data.status === 'Failure') {
@@ -125,13 +125,13 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           setChunks(
             chunksData
               .map((chunk: any) => {
-                const chunkScore = chunk_ids.find((chunkdetail) => chunkdetail.id === chunk.id);
-                return (
-                  {
-                    ...chunk,
-                    score: chunkScore?.score,
-                  } ?? []
-                );
+                const chunkScore = nodeDetails?.chunkdetails?.find((c: any) =>
+                  c.id
+                  === chunk.id);
+                return {
+                  ...chunk,
+                  score: chunkScore?.score
+                };
               })
               .sort((a: any, b: any) => b.score - a.score)
           );
@@ -145,7 +145,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     () => {
       setcopiedText(false);
     };
-  }, [chunk_ids, mode, error]);
+  }, [nodeDetails, mode, error]);
 
   const onChangeTabs = (tabId: number) => {
     setActiveTab(tabId);

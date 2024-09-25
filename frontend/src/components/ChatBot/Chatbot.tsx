@@ -7,7 +7,7 @@ import {
   SpeakerXMarkIconOutline,
 } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../../assets/images/chatbot-ai.png';
-import { ChatbotProps, CustomFile, UserCredentials, chunk, entity } from '../../types';
+import { ChatbotProps, CustomFile, UserCredentials,nodeDetailsProps } from '../../types';
 import { useCredentials } from '../../context/UserCredentials';
 import { chatBotAPI } from '../../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
@@ -42,7 +42,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [sourcesModal, setSourcesModal] = useState<string[]>([]);
   const [modelModal, setModelModal] = useState<string>('');
   const [responseTime, setResponseTime] = useState<number>(0);
-  const [chunkModal, setChunkModal] = useState<string[]>([]);
   const [tokensUsed, setTokensUsed] = useState<number>(0);
   const [cypherQuery, setcypherQuery] = useState<string>('');
   const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
@@ -50,6 +49,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [graphEntitites, setgraphEntitites] = useState<[]>([]);
   const [messageError, setmessageError] = useState<string>('');
   const [entitiesModal, setEntitiesModal] = useState<string[]>([]);
+  const [nodeDetailsModal, setNodeDetailsModal] = useState<nodeDetailsProps>({});
 
   const [value, copy] = useCopyToClipboard();
   const { speak, cancel } = useSpeechSynthesis({
@@ -83,7 +83,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       reply: string;
       sources?: string[];
       model?: string;
-      chunk_ids?: string[];
       total_tokens?: number;
       response_time?: number;
       speaking?: boolean;
@@ -93,6 +92,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       graphonly_entities?: [];
       error?: string;
       entitiysearchonly_entities?: string[];
+      nodeDetails?: nodeDetailsProps;
     },
     index = 0
   ) => {
@@ -114,7 +114,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               isLoading: true,
               sources: response?.sources,
               model: response?.model,
-              chunks: response?.chunk_ids,
               total_tokens: response.total_tokens,
               response_time: response?.response_time,
               speaking: false,
@@ -124,6 +123,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               graphonly_entities: response?.graphonly_entities,
               error: response.error,
               entitiysearchonly_entities: response.entitiysearchonly_entities,
+              nodeDetails: response?.nodeDetails
             },
           ]);
         } else {
@@ -137,7 +137,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             lastmsg.isLoading = false;
             lastmsg.sources = response?.sources;
             lastmsg.model = response?.model;
-            lastmsg.chunk_ids = response?.chunk_ids;
             lastmsg.total_tokens = response?.total_tokens;
             lastmsg.response_time = response?.response_time;
             lastmsg.speaking = false;
@@ -147,6 +146,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             lastmsg.graphonly_entities = response.graphonly_entities;
             lastmsg.error = response.error;
             lastmsg.entities = response.entitiysearchonly_entities;
+            lastmsg.nodeDetails = response?.nodeDetails;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -174,7 +174,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     let chatSources;
     let chatModel;
     let chatnodedetails;
-    let chatChunks;
     let chatTimeTaken;
     let chatTokensUsed;
     let chatingMode;
@@ -202,10 +201,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       chatSources = chatresponse?.data?.data?.info.sources;
       chatModel = chatresponse?.data?.data?.info.model;
       chatnodedetails = chatresponse?.data?.data?.info.nodedetails;
-      chatChunks = chatnodedetails?.chunkdetails?.map((chunk: chunk) => ({
-        id: chunk.id,
-        score: chunk.score,
-      }));
       chatTokensUsed = chatresponse?.data?.data?.info.total_tokens;
       chatTimeTaken = chatresponse?.data?.data?.info.response_time;
       chatingMode = chatresponse?.data?.data?.info?.mode;
@@ -218,7 +213,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
         reply: chatbotReply,
         sources: chatSources,
         model: chatModel,
-        chunk_ids: chatnodedetails, // Extract chunk IDs here
         total_tokens: chatTokensUsed,
         response_time: chatTimeTaken,
         speaking: false,
@@ -228,7 +222,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
         graphonly_entities,
         error,
         entitiysearchonly_entities,
-        chatEntities
+        chatEntities,
+        nodeDetails: chatnodedetails
       };
       simulateTypingEffect(finalbotReply);
     } catch (error) {
@@ -375,9 +370,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                             setModelModal(chat.model ?? '');
                             setSourcesModal(chat.sources ?? []);
                             setResponseTime(chat.response_time ?? 0);
-                            setChunkModal(
-                              chat.mode === 'entity search+vector' ? chat.entities ?? [] : chat.chunk_ids ?? []
-                            );
                             setTokensUsed(chat.total_tokens ?? 0);
                             setcypherQuery(chat.cypher_query ?? '');
                             setShowInfoModal(true);
@@ -385,6 +377,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                             setgraphEntitites(chat.graphonly_entities ?? []);
                             setEntitiesModal(chat.entities ?? []);
                             setmessageError(chat.error ?? '');
+                            setNodeDetailsModal(chat.nodeDetails ?? {})
                           }}
                         >
                           {' '}
@@ -483,7 +476,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           <InfoModal
             sources={sourcesModal}
             model={modelModal}
-            chunk_ids={chunkModal}
             entities_ids={entitiesModal}
             response_time={responseTime}
             total_tokens={tokensUsed}
@@ -491,6 +483,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             cypher_query={cypherQuery}
             graphonly_entities={graphEntitites}
             error={messageError}
+            nodeDetails={nodeDetailsModal}
           />
         </Modal>
       </Suspense>
