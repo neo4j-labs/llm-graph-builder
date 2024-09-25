@@ -34,7 +34,7 @@ from langchain_community.chat_models import ChatOllama
 from src.llm import get_llm
 from src.shared.common_fn import load_embedding_model
 from src.shared.constants import *
-
+from src.graphDB_dataAccess import graphDBdataAccess
 load_dotenv() 
 
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
@@ -560,13 +560,13 @@ def process_graph_response(model, graph, question, messages, history):
             "user": "chatbot"
         }
 
-def create_neo4j_chat_message_history(graph, session_id, local=False):
+def create_neo4j_chat_message_history(graph, session_id, write_access=True):
     """
     Creates and returns a Neo4jChatMessageHistory instance.
 
     """
     try:
-        if not local: 
+        if write_access: 
             history = Neo4jChatMessageHistory(
                 graph=graph,
                 session_id=session_id
@@ -594,10 +594,10 @@ def get_chat_mode_settings(mode,settings_map=CHAT_MODE_CONFIG_MAP):
 
     return chat_mode_settings
     
-def QA_RAG(graph, model, question, document_names, session_id, mode):
+def QA_RAG(graph,model, question, document_names, session_id, mode, write_access=True):
     logging.info(f"Chat Mode: {mode}")
 
-    history = create_neo4j_chat_message_history(graph, session_id)
+    history = create_neo4j_chat_message_history(graph, session_id, write_access)
     messages = history.messages
 
     user_question = HumanMessage(content=question)

@@ -296,7 +296,9 @@ async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(),
             graph = Neo4jGraph( url=uri,username=userName,password=password,database=database,sanitize = True, refresh_schema=True)
         else:
             graph = create_graph_database_connection(uri, userName, password, database)
-        result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode)
+            graph_DB_dataAccess = graphDBdataAccess(graph)
+            write_access = graph_DB_dataAccess.check_account_access(database=database)
+        result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access)
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
@@ -382,7 +384,7 @@ async def clear_chat_bot(uri=Form(),userName=Form(), password=Form(), database=F
 async def connect(uri=Form(), userName=Form(), password=Form(), database=Form()):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
-        result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph)
+        result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database)
         json_obj = {'api_name':'connect','db_url':uri,'status':result, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result)
