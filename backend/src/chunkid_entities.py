@@ -173,7 +173,7 @@ def process_communityids(driver, community_ids):
         logging.error(f"chunkid_entities module: Error processing community ids: {community_ids}. Error: {e}")
         raise 
 
-def get_entities_from_chunkids(uri, username, password, database ,node_ids,type):
+def get_entities_from_chunkids(uri, username, password, database ,nodedetails,entities,mode):
     """
     Retrieve and process nodes and relationships from a graph database given a list of chunk IDs.
 
