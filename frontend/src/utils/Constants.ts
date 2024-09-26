@@ -65,6 +65,16 @@ export const defaultLLM = llms?.includes('openai-gpt-4o')
 //     ? process.env.VITE_CHAT_MODES?.split(',')
 //     : ['vector', 'graph', 'graph+vector', 'fulltext', 'graph+vector+fulltext', 'local community', 'global community'];
 
+export const chatModeLables = {
+  vector: 'vector',
+  graph: 'graph',
+  graph_vector: 'graph+vector',
+  fulltext: 'fulltext',
+  graph_vector_fulltext: 'graph+vector+fulltext',
+  entity_vector: 'entity search+vector',
+  unavailableChatMode: 'Chat mode is unavailable when rows are selected',
+  selected: 'Selected',
+};
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
     ? process.env.VITE_CHAT_MODES?.split(',').map((mode) => ({
@@ -73,33 +83,28 @@ export const chatModes =
       }))
     : [
         {
-          mode: 'vector',
-          description: 'Utilizes vector indexing on text chunks to enable semantic similarity search.',
+          mode: chatModeLables.vector,
+          description: 'Performs semantic similarity search on text chunks using vector indexing.',
         },
         {
-          mode: 'graph',
-          description:
-            'Leverages text-to-cypher translation to query a database and retrieve relevant data, ensuring a highly targeted and contextually accurate response.',
+          mode: chatModeLables.graph,
+          description: 'Translates text to Cypher queries for precise data retrieval from a graph database.',
         },
         {
-          mode: 'graph+vector',
-          description:
-            'Combines vector indexing on text chunks with graph connections, enhancing search results with contextual relevance by considering relationships between concepts.',
+          mode: chatModeLables.graph_vector,
+          description: 'Combines vector indexing and graph connections for contextually enhanced semantic search.',
         },
         {
-          mode: 'fulltext',
-          description:
-            'Employs a fulltext index on text chunks for rapid keyword-based search, efficiently identifying documents containing specific words or phrases.',
+          mode: chatModeLables.fulltext,
+          description: 'Conducts fast, keyword-based search using full-text indexing on text chunks.',
         },
         {
-          mode: 'graph+vector+fulltext',
-          description:
-            'Merges vector indexing, graph connections, and fulltext indexing for a comprehensive search approach, combining semantic similarity, contextual relevance, and keyword-based search for optimal results.',
+          mode: chatModeLables.graph_vector_fulltext,
+          description: 'Integrates vector, graph, and full-text indexing for comprehensive search results.',
         },
         {
-          mode: 'entity search+vector',
-          description:
-            'Combines entity node vector indexing with graph connections for accurate entity-based search, providing the most relevant response.',
+          mode: chatModeLables.entity_vector,
+          description: 'Uses vector indexing on entity nodes for highly relevant entity-based search.',
         },
       ];
 
@@ -158,25 +163,25 @@ export const queryMap: {
 };
 
 export const tooltips = {
-  generateGraph: 'Select one or more (new) files to turn into a graph.',
+  generateGraph: 'Generate graph from selected files',
   deleteFile: 'Select one or more files to delete.',
-  showGraph: 'Select one or more files to preview the generated graph.',
-  bloomGraph: 'Open Neo4j Bloom for advanced graph interaction and exploration.',
+  showGraph: 'Preview generated graph.',
+  bloomGraph: 'Visualize the graph in Bloom',
   deleteSelectedFiles: 'File/Files to be deleted',
   documentation: 'Documentation',
   github: 'GitHub Issues',
   theme: 'Light / Dark mode',
   settings: 'Entity Graph Extraction Settings',
-  chat: 'Ask questions about the processed documents.',
-  sources: 'Upload files of different formats.',
+  chat: 'Start a chat',
+  sources: 'Upload files',
   deleteChat: 'Delete',
   maximise: 'Maximise',
   copy: 'Copy to Clipboard',
   copied: 'Copied',
   stopSpeaking: 'Stop Speaking',
   textTospeech: 'Text to Speech',
-  createSchema: 'Create your own schema by passing text',
-  useExistingSchema: 'Use the already existing schema from DB',
+  createSchema: 'Define schema from text.',
+  useExistingSchema: 'Fetch schema from database',
   clearChat: 'Clear Chat History',
   continue: 'Continue',
   clearGraphSettings: 'Clear configured Graph Schema',

@@ -1,11 +1,14 @@
 import os
 import json
-from datetime import datetime
 import time
-from typing import Any
-
-from dotenv import load_dotenv
 import logging
+
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+from typing import Any
+from dotenv import load_dotenv
+
 
 # LangChain imports
 from langchain_community.vectorstores.neo4j_vector import Neo4jVector
@@ -313,13 +316,14 @@ def initialize_neo4j_vector(graph, chat_mode_settings):
                 keyword_index_name=keyword_index
             )
             logging.info(f"Successfully retrieved Neo4jVector Fulltext index '{index_name}' and keyword index '{keyword_index}'")
+        elif mode == "entity search+vector":
+            neo_db = Neo4jVector.from_existing_index(
+                embedding=EMBEDDING_FUNCTION,
+                index_name=index_name,
+                retrieval_query=retrieval_query,
+                graph=graph
+            )
         else:
-            # neo_db = Neo4jVector.from_existing_index(
-            #     embedding=EMBEDDING_FUNCTION,
-            #     index_name=index_name,
-            #     retrieval_query=retrieval_query,
-            #     graph=graph
-            # )
             neo_db = Neo4jVector.from_existing_graph(
                 embedding=EMBEDDING_FUNCTION,
                 index_name=index_name,
@@ -329,7 +333,6 @@ def initialize_neo4j_vector(graph, chat_mode_settings):
                 embedding_node_property="embedding",
                 text_node_properties=["text"]
             )
-            
             logging.info(f"Successfully retrieved Neo4jVector index '{index_name}'")
     except Exception as e:
         index_name = chat_mode_settings.get("index_name")
@@ -390,22 +393,26 @@ def setup_chat(model, graph, document_names, chat_mode_settings):
     
     return llm, doc_retriever, model_name
 
-def process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings):
+def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings):
     try:
-        llm, doc_retriever, model_version = setup_chat(model, graph, document_names,chat_mode_settings)
+        llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings)
         
         docs = retrieve_documents(doc_retriever, messages)   
         if docs:
-            content, result, total_tokens = process_documents(docs, question, messages, llm, model,chat_mode_settings)
+            content, result, total_tokens = process_documents(docs, question, messages, llm, model, chat_mode_settings)
         else:
             content = "I couldn't find any relevant documents to answer your question."
-            result = {"sources": [], "chunkdetails": [],"entities":[]}
+            result = {"sources": [], "chunkdetails": [], "entities": []}
             total_tokens = 0
         
         ai_response = AIMessage(content=content)
         messages.append(ai_response)
-        summarize_and_log(history, messages, llm)
-        
+
+        summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, llm))
+        summarization_thread.start()
+        logging.info("Summarization thread started.")
+        # summarize_and_log(history, messages, llm)
+
         return {
             "session_id": "",  
             "message": content,
@@ -416,7 +423,7 @@ def process_chat_response(messages,history, question, model, graph, document_nam
                 "total_tokens": total_tokens,
                 "response_time": 0,
                 "mode": chat_mode_settings["mode"],
-                "entities" : result["entities"]
+                "entities": result["entities"]
             },
             "user": "chatbot"
         }
@@ -439,6 +446,7 @@ def process_chat_response(messages,history, question, model, graph, document_nam
         }
 
 def summarize_and_log(history, stored_messages, llm):
+    logging.info("Starting summarization in a separate thread.")
     if not stored_messages:
         logging.info("No messages to summarize.")
         return False
@@ -459,9 +467,10 @@ def summarize_and_log(history, stored_messages, llm):
 
         summary_message = summarization_chain.invoke({"chat_history": stored_messages})
 
-        history.clear()
-        history.add_user_message("Our current conversation summary till now")
-        history.add_message(summary_message)
+        with threading.Lock():
+            history.clear()
+            history.add_user_message("Our current conversation summary till now")
+            history.add_message(summary_message)
 
         history_summarized_time = time.time() - start_time
         logging.info(f"Chat History summarized in {history_summarized_time:.2f} seconds")
@@ -469,8 +478,8 @@ def summarize_and_log(history, stored_messages, llm):
         return True
 
     except Exception as e:
-        logging.error(f"An error occurred while summarizing messages: {e}")
-        return False
+        logging.error(f"An error occurred while summarizing messages: {e}", exc_info=True)
+        return False 
     
 def create_graph_chain(model, graph):
     try:
@@ -527,7 +536,10 @@ def process_graph_response(model, graph, question, messages, history):
         ai_response = AIMessage(content=ai_response_content)
         
         messages.append(ai_response)
-        summarize_and_log(history, messages, qa_llm)
+        # summarize_and_log(history, messages, qa_llm)
+        summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, qa_llm))
+        summarization_thread.start()
+        logging.info("Summarization thread started.")
         
         result = {
             "session_id": "", 

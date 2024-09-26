@@ -127,7 +127,7 @@ const SchemaFromTextDialog = ({
           <ButtonWithToolTip
             placement='top'
             label='Analyze button'
-            text={userText.trim() === '' ? 'please fill the text to extract graph schema' : buttonCaptions.analyze}
+            text={userText.trim() === '' ? 'please fill the text to extract graph schema' : 'Analyze text for schema'}
             loading={loading}
             disabled={userText.trim() === '' || loading}
             onClick={clickHandler}

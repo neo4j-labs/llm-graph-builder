@@ -142,20 +142,31 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     obj_source_node.created_at = datetime.now()
     match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
     logging.info(f"match value: {match}")
-    cred_path = os.path.join(os.getcwd(),"llm-experiments_credentials.json")
-    print(f'Credential file path {cred_path}')
+    # file_path = os.path.join(os.path.dirname(__file__),"llm-experiments_credentials.json")
+    # logging.info(f'file path {file_path}')
+    
+    # if os.path.exists(file_path):
+    #   logging.info("File path exist")
+    #   with open(file_path,'r') as file:
+    #     data = json.load(file)
+    #     # logging.info(f"Project id : {data['project_id']}")
+    #     # logging.info(f"Universal domain: {data['universe_domain']}")
+    # else:
+    #   logging.warning("credntial file path not exist")
+
     video_id = parse_qs(urlparse(youtube_url).query).get('v')
     print(f'Video Id Youtube: {video_id}')
-    # google_api_client = GoogleApiClient(service_account_path=Path(cred_path))
+    # google_api_client = GoogleApiClient(service_account_path=Path(file_path))
     # youtube_loader_channel = GoogleApiYoutubeLoader(
     # google_api_client=google_api_client,
     # video_ids=[video_id[0].strip()], add_video_info=True
     # )
     # youtube_transcript = youtube_loader_channel.load()
-    
+    # page_content = youtube_transcript[0].page_content
+
     obj_source_node.file_name = match.group(1)#youtube_transcript[0].metadata["snippet"]["title"]
     transcript= get_youtube_combined_transcript(match.group(1))
-    # print(transcript)
+    print(transcript)
     if transcript==None or len(transcript)==0:
       message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
       raise Exception(message)
@@ -579,11 +590,11 @@ def get_labels_and_relationtypes(graph):
   query = """
           RETURN collect { 
           CALL db.labels() yield label 
-          WHERE NOT label  IN ['Chunk','_Bloom_Perspective_'] 
+          WHERE NOT label  IN ['Chunk','_Bloom_Perspective_', '__Community__', '__Entity__'] 
           return label order by label limit 100 } as labels, 
           collect { 
           CALL db.relationshipTypes() yield relationshipType  as type 
-          WHERE NOT type  IN ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_'] 
+          WHERE NOT type  IN ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_','FIRST_CHUNK'] 
           return type order by type LIMIT 100 } as relationshipTypes
           """
   graphDb_data_Access = graphDBdataAccess(graph)

@@ -235,51 +235,97 @@ LOCAL_COMMUNITY_TOP_COMMUNITIES = 3
 LOCAL_COMMUNITY_TOP_OUTSIDE_RELS = 10
 
 LOCAL_COMMUNITY_SEARCH_QUERY = """
-WITH collect(node) as nodes, avg(score) as score, collect({{id: elementId(node), score:score}}) as metadata
-WITH score, nodes,metadata,
-collect {{
-    UNWIND nodes as n
-    MATCH (n)<-[:HAS_ENTITY]->(c:Chunk)
-    WITH c, count(distinct n) as freq
-    RETURN c
-    ORDER BY freq DESC
-    LIMIT {topChunks}
-}} AS chunks,
-collect {{
-    UNWIND nodes as n
-    MATCH (n)-[:IN_COMMUNITY]->(c:__Community__)
-    WITH c, c.community_rank as rank, c.weight AS weight
-    RETURN c
-    ORDER BY rank, weight DESC
-    LIMIT {topCommunities}
-}} AS communities,
-collect {{
-   unwind nodes as n
-   unwind nodes as m
-   match (n)-[r]->(m)
-   RETURN distinct r
-   // todo should we have a limit here?
-}} as rels,
-collect {{
-   unwind nodes as n
-   match path = (n)-[r]-(m:__Entity__)
-   where not m in nodes
-   with m, collect(distinct r) as rels, count(*) as freq
-   ORDER BY freq DESC LIMIT {topOutsideRels}
-   WITH collect(m) as outsideNodes, apoc.coll.flatten(collect(rels)) as rels
-   RETURN {{ nodes: outsideNodes, rels: rels }}
-}} as outside
+WITH collect(node) AS nodes, 
+     avg(score) AS score, 
+     collect({{id: elementId(node), score: score}}) AS metadata
+
+WITH score, nodes, metadata,
+
+     collect {{
+         UNWIND nodes AS n
+         MATCH (n)<-[:HAS_ENTITY]->(c:Chunk)
+         WITH c, count(distinct n) AS freq
+         RETURN c
+         ORDER BY freq DESC
+         LIMIT {topChunks}
+     }} AS chunks,
+
+     collect {{
+         UNWIND nodes AS n
+         MATCH (n)-[:IN_COMMUNITY]->(c:__Community__)
+         WITH c, c.community_rank AS rank, c.weight AS weight
+         RETURN c
+         ORDER BY rank, weight DESC
+         LIMIT {topCommunities}
+     }} AS communities,
+
+     collect {{
+         UNWIND nodes AS n
+         UNWIND nodes AS m
+         MATCH (n)-[r]->(m)
+         RETURN DISTINCT r
+         // TODO: need to add limit
+     }} AS rels,
+
+     collect {{
+         UNWIND nodes AS n
+         MATCH path = (n)-[r]-(m:__Entity__)
+         WHERE NOT m IN nodes
+         WITH m, collect(distinct r) AS rels, count(*) AS freq
+         ORDER BY freq DESC 
+         LIMIT {topOutsideRels}
+         WITH collect(m) AS outsideNodes, apoc.coll.flatten(collect(rels)) AS rels
+         RETURN {{ nodes: outsideNodes, rels: rels }}
+     }} AS outside
 """
 
 LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX = """
-RETURN {chunks: [c in chunks | c.text], 
-        communities: [c in communities | c.summary], 
-        entities: [n in nodes | apoc.coll.removeAll(labels(n),["__Entity__"])[0] + ":"+ n.id + " " + coalesce(n.description, "")],
-        relationships: [r in rels | startNode(r).id+" "+type(r)+" "+endNode(r).id],
-	    outside: {
-          nodes: [n in outside[0].nodes | apoc.coll.removeAll(labels(n),["__Entity__"])[0] + ":"+n.id + " " + coalesce(n.description, "")],
-          relationships: [r in outside[0].rels | apoc.coll.removeAll(labels(startNode(r)),["__Entity__"])[0] + ":"+startNode(r).id+" "+type(r)+" "+apoc.coll.removeAll(labels(startNode(r)),["__Entity__"])[0] + ":"+endNode(r).id]}
-       } AS text, score, {entities:metadata} as metadata 
+RETURN {
+  chunks: [c IN chunks | c.text],
+  communities: [c IN communities | c.summary],
+  entities: [
+    n IN nodes | 
+    CASE 
+      WHEN size(labels(n)) > 1 THEN 
+        apoc.coll.removeAll(labels(n), ["__Entity__"])[0] + ":" + n.id + " " + coalesce(n.description, "")
+      ELSE 
+        n.id + " " + coalesce(n.description, "")
+    END
+  ],
+  relationships: [
+    r IN rels | 
+    startNode(r).id + " " + type(r) + " " + endNode(r).id
+  ],
+  outside: {
+    nodes: [
+      n IN outside[0].nodes | 
+      CASE 
+        WHEN size(labels(n)) > 1 THEN 
+          apoc.coll.removeAll(labels(n), ["__Entity__"])[0] + ":" + n.id + " " + coalesce(n.description, "")
+        ELSE 
+          n.id + " " + coalesce(n.description, "")
+      END
+    ],
+    relationships: [
+      r IN outside[0].rels | 
+      CASE 
+        WHEN size(labels(startNode(r))) > 1 THEN 
+          apoc.coll.removeAll(labels(startNode(r)), ["__Entity__"])[0] + ":" + startNode(r).id + " "
+        ELSE 
+          startNode(r).id + " "
+      END + 
+      type(r) + " " +
+      CASE 
+        WHEN size(labels(endNode(r))) > 1 THEN 
+          apoc.coll.removeAll(labels(endNode(r)), ["__Entity__"])[0] + ":" + endNode(r).id
+        ELSE 
+          endNode(r).id
+      END
+    ]
+  }
+} AS text,
+score,
+{entities: metadata} AS metadata
 """
 
 LOCAL_COMMUNITY_DETAILS_QUERY_PREFIX = """
@@ -289,14 +335,60 @@ WITH node, 1.0 as score
 """
 LOCAL_COMMUNITY_DETAILS_QUERY_SUFFIX = """
 WITH *
-UNWIND chunks as c
+UNWIND chunks AS c
 MATCH (c)-[:PART_OF]->(d:Document)
-RETURN [c {.*, embedding:null, fileName:d.fileName, fileSource:d.fileSource}] as chunks,
-[community in communities | community {.*, embedding:null}] as communities,
-[node in nodes+outside[0].nodes | {element_id:elementId(node), labels:labels(node), properties:{id:node.id,description:node.description}}] as nodes, 
-[r in rels+outside[0].rels | {startNode:{element_id:elementId(startNode(r)), labels:labels(startNode(r)), properties:{id:startNode(r).id,description:startNode(r).description}},
-                     endNode:{element_id:elementId(endNode(r)), labels:labels(endNode(r)), properties:{id:endNode(r).id,description:endNode(r).description}},
-                     relationship: {type:type(r), element_id:elementId(r)}}] as entities
+RETURN 
+    [
+        c {
+            .*,
+            embedding: null,
+            fileName: d.fileName,
+            fileSource: d.fileSource
+        }
+    ] AS chunks,
+    [
+        community IN communities | 
+        community {
+            .*,
+            embedding: null
+        }
+    ] AS communities,
+    [
+        node IN nodes + outside[0].nodes | 
+        {
+            element_id: elementId(node),
+            labels: labels(node),
+            properties: {
+                id: node.id,
+                description: node.description
+            }
+        }
+    ] AS nodes, 
+    [
+        r IN rels + outside[0].rels | 
+        {
+            startNode: {
+                element_id: elementId(startNode(r)),
+                labels: labels(startNode(r)),
+                properties: {
+                    id: startNode(r).id,
+                    description: startNode(r).description
+                }
+            },
+            endNode: {
+                element_id: elementId(endNode(r)),
+                labels: labels(endNode(r)),
+                properties: {
+                    id: endNode(r).id,
+                    description: endNode(r).description
+                }
+            },
+            relationship: {
+                type: type(r),
+                element_id: elementId(r)
+            }
+        }
+    ] AS entities
 """
 
 CHAT_MODE_CONFIG_MAP= {
