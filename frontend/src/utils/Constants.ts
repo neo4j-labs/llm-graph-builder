@@ -45,12 +45,13 @@ export const llms =
         'openai-gpt-4o-mini',
         'gemini-1.0-pro',
         'gemini-1.5-pro',
+        'gemini-1.5-flash',
         'azure_ai_gpt_35',
         'azure_ai_gpt_4o',
         'ollama_llama3',
         'groq_llama3_70b',
         'anthropic_claude_3_5_sonnet',
-        'fireworks_llama_v3p1_405b',
+        'fireworks_llama_v3p2_90b',
         'bedrock_claude_3_5_sonnet',
       ];
 

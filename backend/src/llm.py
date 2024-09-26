@@ -29,7 +29,7 @@ def get_llm(model: str):
         model_name = MODEL_VERSIONS[model]
         llm = ChatVertexAI(
             model_name=model_name,
-            convert_system_message_to_human=True,
+            #convert_system_message_to_human=True,
             credentials=credentials,
             project=project_id,
             temperature=0,
@@ -152,6 +152,7 @@ def get_graph_document_list(
     else:
         if "get_name" in dir(llm) and llm.get_name() != "ChatOenAI" or llm.get_name() != "ChatVertexAI" or llm.get_name() != "AzureChatOpenAI":
             node_properties = False
+            relationship_properties = False
         else:
             node_properties = ["description"]
             relationship_properties = ["description"]
@@ -162,7 +163,7 @@ def get_graph_document_list(
             allowed_nodes=allowedNodes,
             allowed_relationships=allowedRelationship,
             ignore_tool_usage=True,
-            prompt = ChatPromptTemplate.from_messages(["system",PROMPT_TO_ALL_LLMs])
+            #prompt = ChatPromptTemplate.from_messages(["system",PROMPT_TO_ALL_LLMs])
         )
     with ThreadPoolExecutor(max_workers=10) as executor:
         for chunk in combined_chunk_document_list:
