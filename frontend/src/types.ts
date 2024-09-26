@@ -258,6 +258,8 @@ export interface CheckboxSectionProps {
   loading: boolean;
   handleChange: (graph: GraphType) => void;
   isgds: boolean;
+  isDocChunk: boolean;
+  isEntity:boolean;
 }
 
 export interface fileName {
@@ -633,6 +635,8 @@ export interface ContextProps {
   setUserCredentials: (UserCredentials: UserCredentials) => void;
   isGdsActive: boolean;
   setGdsActive: Dispatch<SetStateAction<boolean>>;
+  isReadOnlyUser: boolean;
+  setIsReadOnlyUser: Dispatch<SetStateAction<boolean>>;
   connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
 }

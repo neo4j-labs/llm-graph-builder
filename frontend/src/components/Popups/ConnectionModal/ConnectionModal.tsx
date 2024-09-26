@@ -41,7 +41,7 @@ export default function ConnectionModal({
   const [username, setUsername] = useState<string>(initialusername ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
-  const { setUserCredentials, userCredentials, setGdsActive } = useCredentials();
+  const { setUserCredentials, userCredentials, setGdsActive, setIsReadOnlyUser } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [userDbVectorIndex, setUserDbVectorIndex] = useState<number | undefined>(initialuserdbvectorindex ?? undefined);
@@ -208,7 +208,10 @@ export default function ConnectionModal({
         throw new Error(response.data.error);
       } else {
         const isgdsActive = response.data.data.gds_status;
+        const isReadOnlyUser = !response.data.data.write_access;
         setGdsActive(isgdsActive);
+        console.log({ isReadOnlyUser });
+        setIsReadOnlyUser(isReadOnlyUser);
         localStorage.setItem(
           'neo4j.connection',
           JSON.stringify({
@@ -218,6 +221,7 @@ export default function ConnectionModal({
             database: database,
             userDbVectorIndex,
             isgdsActive,
+            isReadOnlyUser,
           })
         );
         setUserDbVectorIndex(response.data.data.db_vector_dimension);
