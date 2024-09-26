@@ -233,7 +233,7 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
                 performing similarity-based searches.`,
   },
   {
-    title: 'Enable community creation across entities to use GraphRAG capabilities both local and global search. ',
+    title: 'enable_communities',
     description: 'Enable community creation across entities to use GraphRAG capabilities both local and global search.',
   },
 ];
