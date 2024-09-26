@@ -14,7 +14,7 @@ from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.graph_query import get_graph_results
 from src.chunkid_entities import get_entities_from_chunkids
-from src.post_processing import create_fulltext, create_entity_embedding
+from src.post_processing import create_fulltext_indexes, create_entity_embedding
 from sse_starlette.sse import EventSourceResponse
 from src.communities import create_communities
 import json
@@ -263,14 +263,15 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             logging.info(f'Updated KNN Graph')
 
         if "enable_hybrid_search_and_fulltext_search_in_bloom" in tasks:
-            await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database,type="entities")
-            # await asyncio.to_thread(create_fulltext, uri=uri, username=userName, password=password, database=database,type="keyword")
+            await asyncio.to_thread(create_fulltext_indexes, uri=uri, username=userName, password=password, database=database)
             json_obj = {'api_name': 'post_processing/enable_hybrid_search_and_fulltext_search_in_bloom', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logging.info(f'Full Text index created')
+
         if os.environ.get('ENTITY_EMBEDDING','False').upper()=="TRUE" and "materialize_entity_similarities" in tasks:
             await asyncio.to_thread(create_entity_embedding, graph)
             json_obj = {'api_name': 'post_processing/create_entity_embedding', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logging.info(f'Entity Embeddings created')
+
         if "create_communities" in tasks:
             model = "openai-gpt-4o"
             await asyncio.to_thread(create_communities, uri, userName, password, database,model)
@@ -298,7 +299,9 @@ async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(),
             graph = Neo4jGraph( url=uri,username=userName,password=password,database=database,sanitize = True, refresh_schema=True)
         else:
             graph = create_graph_database_connection(uri, userName, password, database)
-        result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode)
+            graph_DB_dataAccess = graphDBdataAccess(graph)
+            write_access = graph_DB_dataAccess.check_account_access(database=database)
+        result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access=write_access)
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
@@ -384,7 +387,7 @@ async def clear_chat_bot(uri=Form(),userName=Form(), password=Form(), database=F
 async def connect(uri=Form(), userName=Form(), password=Form(), database=Form()):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
-        result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph)
+        result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database)
         json_obj = {'api_name':'connect','db_url':uri,'status':result, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result)
