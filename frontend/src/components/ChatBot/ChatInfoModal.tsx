@@ -47,7 +47,15 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
-  const [activeTab, setActiveTab] = useState<number>(error?.length ? 10 : mode === chatModeLables.graph ? 4 : 3);
+  const [activeTab, setActiveTab] = useState<number>(
+    error?.length
+      ? 10
+      : mode === chatModeLables.global_vector
+        ? 7
+        : mode === chatModeLables.graph
+          ? 4
+          : 3
+  );
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -173,22 +181,33 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         <Banner type='danger'>{error}</Banner>
       ) : (
         <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
-          {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
-          {mode != chatModeLables.graph ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
-          {mode === chatModeLables.graph_vector ||
-            mode === chatModeLables.graph ||
-            mode === chatModeLables.graph_vector_fulltext ||
-            mode === chatModeLables.entity_vector ? (
-            <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
+          {mode === chatModeLables.global_vector ? (
+            // Only show the Communities tab if mode is global
+            <Tabs.Tab tabId={7}>Communities</Tabs.Tab>
           ) : (
-            <></>
+            <>
+              {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
+              {mode != chatModeLables.graph ? <Tabs.Tab tabId={4}>Chunks</Tabs.Tab> : <></>}
+              {mode === chatModeLables.graph_vector ||
+                mode === chatModeLables.graph ||
+                mode === chatModeLables.graph_vector_fulltext ||
+                mode === chatModeLables.entity_vector ? (
+                <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
+              ) : (
+                <></>
+              )}
+              {mode === chatModeLables.graph && cypher_query?.trim()?.length ? (
+                <Tabs.Tab tabId={6}>Generated Cypher Query</Tabs.Tab>
+              ) : (
+                <></>
+              )}
+              {mode === chatModeLables.entity_vector ? (
+                <Tabs.Tab tabId={7}>Communities</Tabs.Tab>
+              ) : (
+                <></>
+              )}
+            </>
           )}
-          {mode === chatModeLables.graph && cypher_query?.trim()?.length ? (
-            <Tabs.Tab tabId={6}>Generated Cypher Query</Tabs.Tab>
-          ) : (
-            <></>
-          )}
-          {mode === chatModeLables.entity_vector ? <Tabs.Tab tabId={7}>Communities</Tabs.Tab> : <></>}
         </Tabs>
       )}
       <Flex className='p-4'>
@@ -196,15 +215,15 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           <SourcesInfo loading={loading} sources={sources} mode={mode} chunks={chunks} />
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={4}>
+          <ChunkInfo chunks={chunks} loading={loading} />
+        </Tabs.TabPanel>
+        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={5}>
           <EntitiesInfo
             loading={loading}
             mode={mode}
             graphonly_entities={graphonly_entities}
             infoEntities={infoEntities}
           />
-        </Tabs.TabPanel>
-        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={5}>
-          <ChunkInfo chunks={chunks} loading={loading} />
         </Tabs.TabPanel>
         <Tabs.TabPanel value={activeTab} tabId={6}>
           <CypherCodeBlock
@@ -215,7 +234,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             className='min-h-40'
           />
         </Tabs.TabPanel>
-        {mode === chatModeLables.entity_vector ? (
+        {mode === chatModeLables.entity_vector || mode === chatModeLables.global_vector ? (
           <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={7}>
             <CommunitiesInfo loading={loading} communities={communities} />
           </Tabs.TabPanel>
