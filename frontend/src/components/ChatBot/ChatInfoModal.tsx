@@ -187,7 +187,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           ) : (
             <>
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
-              {mode != chatModeLables.graph ? <Tabs.Tab tabId={4}>Chunks</Tabs.Tab> : <></>}
+              {mode != chatModeLables.graph ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
               {mode === chatModeLables.graph_vector ||
                 mode === chatModeLables.graph ||
                 mode === chatModeLables.graph_vector_fulltext ||
@@ -215,15 +215,15 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           <SourcesInfo loading={loading} sources={sources} mode={mode} chunks={chunks} />
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={4}>
-          <ChunkInfo chunks={chunks} loading={loading} />
-        </Tabs.TabPanel>
-        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={5}>
           <EntitiesInfo
             loading={loading}
             mode={mode}
             graphonly_entities={graphonly_entities}
             infoEntities={infoEntities}
           />
+        </Tabs.TabPanel>
+        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={5}>
+          <ChunkInfo chunks={chunks} loading={loading} />
         </Tabs.TabPanel>
         <Tabs.TabPanel value={activeTab} tabId={6}>
           <CypherCodeBlock
