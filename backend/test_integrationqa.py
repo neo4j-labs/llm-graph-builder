@@ -201,37 +201,42 @@ def test_populate_graph_schema_from_text(model):
 def run_tests():
    final_list = []
    error_list = []
-   models = ['openai-gpt-3.5','openai-gpt-4o']
+   models = ['openai-gpt-3.5','openai-gpt-4o','openai-gpt-4o-mini','gemini-1.0-pro','gemini-1.5-pro','azure_ai_gpt_35','azure_ai_gpt_4o','ollama_llama3','groq_llama3_70b','anthropic_claude_3_5_sonnet','fireworks_v3p1_405b','bedrock_claude_3_5_sonnet']
 
-    for model_name in models:
-        try:
-              final_list.append(test_graph_from_file_local(model_name))
-              final_list.append(test_graph_from_wikipedia(model_name))
-              final_list.append(test_populate_graph_schema_from_text(model_name))
-              final_list.append(test_graph_website(model_name))
-              final_list.append(test_graph_from_youtube_video(model_name))
-              final_list.append(test_chatbot_qna(model_name))
-              final_list.append(test_chatbot_qna(model_name, mode='vector'))
-              final_list.append(test_chatbot_qna(model_name, mode='graph+vector+fulltext'))
-        except Exception as e:
-            error_list.append((model_name, str(e)))
-    # #Compare and log diffrences in graph results
-    # # compare_graph_results(final_list)  # Pass the final_list to comapre_graph_results
-    # test_populate_graph_schema_from_text('openai-gpt-4o')
-    dis_elementid, dis_status = disconected_nodes()
-    lst_element_id = [dis_elementid]
-    delt = delete_disconected_nodes(lst_element_id)
-    dup = get_duplicate_nodes()
-    # schma = test_populate_graph_schema_from_text(model)
-    # Save final results to CSV
-    df = pd.DataFrame(final_list)
-    print(df)
-    df['execution_date'] = dt.today().strftime('%Y-%m-%d')
-    df['disconnected_nodes']=dis_status
-    df['get_duplicate_nodes']=dup
-    df['delete_disconected_nodes']=delt
-    # df['test_populate_graph_schema_from_text'] = schma
-    df.to_csv(f"Integration_TestResult_{dt.now().strftime('%Y%m%d_%H%M%S')}.csv", index=False)
+   for model_name in models:
+       try:
+                final_list.append(test_graph_from_file_local(model_name))
+                final_list.append(test_graph_from_wikipedia(model_name))
+                final_list.append(test_populate_graph_schema_from_text(model_name))
+                final_list.append(test_graph_website(model_name))
+                # final_list.append(test_graph_from_youtube_video(model_name))
+                final_list.append(test_chatbot_qna(model_name))
+                final_list.append(test_chatbot_qna(model_name, mode='vector'))
+                final_list.append(test_chatbot_qna(model_name, mode='graph+vector'))
+                final_list.append(test_chatbot_qna(model_name, mode='fulltext'))
+                final_list.append(test_chatbot_qna(model_name, mode='graph+vector+fulltext'))
+                final_list.append(test_chatbot_qna(model_name, mode='entity search+vector'))
+                
+       except Exception as e:
+           error_list.append((model_name, str(e)))
+   # #Compare and log diffrences in graph results
+   # # compare_graph_results(final_list)  # Pass the final_list to comapre_graph_results
+   # test_populate_graph_schema_from_text('openai-gpt-4o')
+   dis_elementid, dis_status = disconected_nodes()
+   lst_element_id = [dis_elementid]
+   delt = delete_disconected_nodes(lst_element_id)
+   dup = get_duplicate_nodes()
+   print(final_list)
+   # schma = test_populate_graph_schema_from_text(model)
+   # Save final results to CSV
+   df = pd.DataFrame(final_list)
+   print(df)
+   df['execution_date'] = dt.today().strftime('%Y-%m-%d')
+   df['disconnected_nodes']=dis_status
+   df['get_duplicate_nodes']=dup
+   df['delete_disconected_nodes']=delt
+   # df['test_populate_graph_schema_from_text'] = schma
+   df.to_csv(f"Integration_TestResult_{dt.now().strftime('%Y%m%d_%H%M%S')}.csv", index=False)
 
     # Save error details to CSV
     df_errors = pd.DataFrame(error_list, columns=['Model', 'Error'])
