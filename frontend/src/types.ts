@@ -633,6 +633,10 @@ export interface ContextProps {
   setUserCredentials: (UserCredentials: UserCredentials) => void;
   isGdsActive: boolean;
   setGdsActive: Dispatch<SetStateAction<boolean>>;
+  isReadOnlyUser: boolean;
+  setIsReadOnlyUser: Dispatch<SetStateAction<boolean>>;
+  connectionStatus: boolean;
+  setConnectionStatus: Dispatch<SetStateAction<boolean>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];

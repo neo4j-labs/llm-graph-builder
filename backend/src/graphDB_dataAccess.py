@@ -144,6 +144,32 @@ class graphDBdataAccess:
         else:
             logging.info("Vector index does not exist, So KNN graph not update")
 
+    def check_account_access(self, database):
+        query = """
+        SHOW USER PRIVILEGES 
+        YIELD * 
+        WHERE graph = $database AND action IN ['read'] 
+        RETURN COUNT(*) AS readAccessCount
+        """
+        try:
+            logging.info(f"Checking access for database: {database}")
+
+            result = self.graph.query(query, params={"database": database})
+            read_access_count = result[0]["readAccessCount"] if result else 0
+
+            logging.info(f"Read access count: {read_access_count}")
+
+            if read_access_count > 0:
+                logging.info("The account has read access.")
+                return False
+            else:
+                logging.info("The account has write access.")
+                return True
+
+        except Exception as e:
+            logging.error(f"Error checking account access: {e}")
+            return False
+
     def check_gds_version(self):
         try:
             gds_procedure_count = """
@@ -168,7 +194,7 @@ class graphDBdataAccess:
             logging.error(f"An error occurred while checking GDS version: {e}")
             return False
             
-    def connection_check_and_get_vector_dimensions(self):
+    def connection_check_and_get_vector_dimensions(self,database):
         """
         Get the vector index dimension from database and application configuration and DB connection status
         
@@ -195,18 +221,19 @@ class graphDBdataAccess:
         logging.info(f'embedding model:{embeddings} and dimesion:{application_dimension}')
 
         gds_status = self.check_gds_version()
+        write_access = self.check_account_access(database=database)
         
         if self.graph:
             if len(db_vector_dimension) > 0:
-                return {'db_vector_dimension': db_vector_dimension[0]['vector_dimensions'], 'application_dimension':application_dimension, 'message':"Connection Successful","gds_status":gds_status}
+                return {'db_vector_dimension': db_vector_dimension[0]['vector_dimensions'], 'application_dimension':application_dimension, 'message':"Connection Successful","gds_status":gds_status,"write_access":write_access}
             else:
                 if len(db_vector_dimension) == 0 and len(result_chunks) == 0:
                     logging.info("Chunks and vector index does not exists in database")
-                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":False,"gds_status":gds_status}
+                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":False,"gds_status":gds_status,"write_access":write_access}
                 elif len(db_vector_dimension) == 0 and result_chunks[0]['hasEmbedding']==0 and result_chunks[0]['chunks'] > 0:
-                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":True,"gds_status":gds_status}
+                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":True,"gds_status":gds_status,"write_access":write_access}
                 else:
-                    return {'message':"Connection Successful","gds_status":gds_status}
+                    return {'message':"Connection Successful","gds_status": gds_status,"write_access":write_access}
 
     def execute_query(self, query, param=None):
         return self.graph.query(query, param)
