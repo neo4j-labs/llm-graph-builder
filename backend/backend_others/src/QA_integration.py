@@ -27,7 +27,7 @@ from langchain_aws import ChatBedrock
 from langchain_community.chat_models import ChatOllama
 
 # Local imports
-from ...shared.llm import get_llm
+from shared.llm import get_llm
 from ...shared.common_fn import load_embedding_model
 from ...shared.entities import *
 

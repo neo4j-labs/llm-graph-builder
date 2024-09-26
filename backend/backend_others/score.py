@@ -16,7 +16,7 @@ from sse_starlette.sse import EventSourceResponse
 from starlette.middleware.sessions import SessionMiddleware
 
 from datetime import datetime, timezone
-from .src.QA_integration import *
+from src.QA_integration import *
 from .src.chunkid_entities import get_entities_from_chunkids
 from .src.communities import create_communities
 from .src.graph_query import get_graph_results
