@@ -121,7 +121,6 @@ def get_sources_and_chunks(sources_used, docs):
     result = {
         'sources': sources_used,
         'chunkdetails': chunkdetails_list,
-        "entities" : list()
     }
     return result
 
@@ -156,16 +155,19 @@ def format_documents(documents, model):
     sorted_documents = sorted(documents, key=lambda doc: doc.state.get("query_similarity_score", 0), reverse=True)
     sorted_documents = sorted_documents[:prompt_token_cutoff]
 
-    formatted_docs = []
+    formatted_docs = list()
     sources = set()
-    lc_entities = {'entities':list()}
+    entities = dict()
+    global_communities = list()
+
 
     for doc in sorted_documents:
         try:
             source = doc.metadata.get('source', "unknown")
             sources.add(source)
 
-            lc_entities = doc.metadata if 'entities'in doc.metadata.keys() else lc_entities
+            entities = doc.metadata['entities'] if 'entities'in doc.metadata.keys() else entities
+            global_communities = doc.metadata["communitydetails"] if 'communitydetails'in doc.metadata.keys() else global_communities
 
             formatted_doc = (
                 "Document start\n"
@@ -178,13 +180,13 @@ def format_documents(documents, model):
         except Exception as e:
             logging.error(f"Error formatting document: {e}")
     
-    return "\n\n".join(formatted_docs), sources,lc_entities
+    return "\n\n".join(formatted_docs), sources,entities,global_communities
 
 def process_documents(docs, question, messages, llm, model,chat_mode_settings):
     start_time = time.time()
     
     try:
-        formatted_docs, sources,lc_entities = format_documents(docs, model)
+        formatted_docs, sources, entitydetails, communities = format_documents(docs, model)
         
         rag_chain = get_rag_chain(llm=llm)
         
@@ -193,12 +195,25 @@ def process_documents(docs, question, messages, llm, model,chat_mode_settings):
             "context": formatted_docs,
             "input": question
         })
-        if chat_mode_settings["mode"] == "entity search+vector":
-            result = {'sources': list(),
-                      'chunkdetails': list()}
-            result.update(lc_entities)
+
+        result = {'sources': list(), 'nodedetails': dict(), 'entities': dict()}
+        node_details = {"chunkdetails":list(),"entitydetails":list(),"communitydetails":list()}
+        entities = {'entityids':list(),"relationshipids":list()}
+
+        if chat_mode_settings["mode"] == CHAT_ENTITY_VECTOR_MODE:
+            node_details["entitydetails"] = entitydetails
+
+        elif chat_mode_settings["mode"] == CHAT_GLOBAL_VECTOR_FULLTEXT_MODE:
+            node_details["communitydetails"] = communities
         else:
-            result = get_sources_and_chunks(sources, docs)
+            sources_and_chunks = get_sources_and_chunks(sources, docs)
+            result['sources'] = sources_and_chunks['sources']
+            node_details["chunkdetails"] = sources_and_chunks["chunkdetails"]
+            entities.update(entitydetails)
+
+        result["nodedetails"] = node_details
+        result["entities"] = entities
+
         content = ai_response.content
         total_tokens = get_total_tokens(ai_response, llm)
         
@@ -269,10 +284,13 @@ def create_document_retriever_chain(llm, retriever):
 
 def initialize_neo4j_vector(graph, chat_mode_settings):
     try:
-        mode = chat_mode_settings.get('mode', 'undefined')
         retrieval_query = chat_mode_settings.get("retrieval_query")
         index_name = chat_mode_settings.get("index_name")
         keyword_index = chat_mode_settings.get("keyword_index", "")
+        node_label = chat_mode_settings.get("node_label")
+        embedding_node_property = chat_mode_settings.get("embedding_node_property")
+        text_node_properties = chat_mode_settings.get("text_node_properties")
+
 
         if not retrieval_query or not index_name:
             raise ValueError("Required settings 'retrieval_query' or 'index_name' are missing.")
@@ -284,28 +302,21 @@ def initialize_neo4j_vector(graph, chat_mode_settings):
                 retrieval_query=retrieval_query,
                 graph=graph,
                 search_type="hybrid",
-                node_label="Chunk",
-                embedding_node_property="embedding",
-                text_node_properties=["text"],
+                node_label=node_label,
+                embedding_node_property=embedding_node_property,
+                text_node_properties=text_node_properties,
                 keyword_index_name=keyword_index
             )
             logging.info(f"Successfully retrieved Neo4jVector Fulltext index '{index_name}' and keyword index '{keyword_index}'")
-        elif mode == "entity search+vector":
-            neo_db = Neo4jVector.from_existing_index(
-                embedding=EMBEDDING_FUNCTION,
-                index_name=index_name,
-                retrieval_query=retrieval_query,
-                graph=graph
-            )
         else:
             neo_db = Neo4jVector.from_existing_graph(
                 embedding=EMBEDDING_FUNCTION,
                 index_name=index_name,
                 retrieval_query=retrieval_query,
                 graph=graph,
-                node_label="Chunk",
-                embedding_node_property="embedding",
-                text_node_properties=["text"]
+                node_label=node_label,
+                embedding_node_property=embedding_node_property,
+                text_node_properties=text_node_properties
             )
             logging.info(f"Successfully retrieved Neo4jVector index '{index_name}'")
     except Exception as e:
@@ -333,12 +344,12 @@ def create_retriever(neo_db, document_names, chat_mode_settings,search_k, score_
         logging.info(f"Successfully created retriever with search_k={search_k}, score_threshold={score_threshold}")
     return retriever
 
-def get_neo4j_retriever(graph, document_names,chat_mode_settings, search_k=CHAT_SEARCH_KWARG_K, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
+def get_neo4j_retriever(graph, document_names,chat_mode_settings, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
     try:
-        
+
         neo_db = initialize_neo4j_vector(graph, chat_mode_settings)
         document_names= list(map(str.strip, json.loads(document_names)))
-        search_k = LOCAL_COMMUNITY_TOP_K if chat_mode_settings["mode"] == "entity search+vector" else CHAT_SEARCH_KWARG_K
+        search_k = chat_mode_settings["top_k"]
         retriever = create_retriever(neo_db, document_names,chat_mode_settings, search_k, score_threshold)
         return retriever
     except Exception as e:
@@ -371,12 +382,13 @@ def process_chat_response(messages, history, question, model, graph, document_na
     try:
         llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings)
         
-        docs = retrieve_documents(doc_retriever, messages)   
+        docs = retrieve_documents(doc_retriever, messages)  
+
         if docs:
             content, result, total_tokens = process_documents(docs, question, messages, llm, model, chat_mode_settings)
         else:
             content = "I couldn't find any relevant documents to answer your question."
-            result = {"sources": [], "chunkdetails": [], "entities": []}
+            result = {"sources": list(), "nodedetails": list(), "entities": list()}
             total_tokens = 0
         
         ai_response = AIMessage(content=content)
@@ -386,18 +398,18 @@ def process_chat_response(messages, history, question, model, graph, document_na
         summarization_thread.start()
         logging.info("Summarization thread started.")
         # summarize_and_log(history, messages, llm)
-
+        
         return {
             "session_id": "",  
             "message": content,
             "info": {
                 "sources": result["sources"],
                 "model": model_version,
-                "chunkdetails": result["chunkdetails"],
+                "nodedetails": result["nodedetails"],
                 "total_tokens": total_tokens,
                 "response_time": 0,
                 "mode": chat_mode_settings["mode"],
-                "entities": result["entities"]
+                "entities": result["entities"],
             },
             "user": "chatbot"
         }
@@ -409,12 +421,12 @@ def process_chat_response(messages, history, question, model, graph, document_na
             "message": "Something went wrong",
             "info": {
                 "sources": [],
-                "chunkdetails": [],
+                "nodedetails": [],
                 "total_tokens": 0,
                 "response_time": 0,
                 "error": f"{type(e).__name__}: {str(e)}",
                 "mode": chat_mode_settings["mode"],
-                "entities": []
+                "entities": [],
             },
             "user": "chatbot"
         }
@@ -564,7 +576,7 @@ def create_neo4j_chat_message_history(graph, session_id):
         raise 
 
 def get_chat_mode_settings(mode,settings_map=CHAT_MODE_CONFIG_MAP):
-    default_settings = settings_map["default"]
+    default_settings = settings_map[CHAT_DEFAULT_MODE]
     try:
         chat_mode_settings = settings_map.get(mode, default_settings)
         chat_mode_settings["mode"] = mode
@@ -586,7 +598,7 @@ def QA_RAG(graph, model, question, document_names, session_id, mode):
     user_question = HumanMessage(content=question)
     messages.append(user_question)
 
-    if mode == "graph":
+    if mode == CHAT_GRAPH_MODE:
         result = process_graph_response(model, graph, question, messages, history)
     else:
         chat_mode_settings = get_chat_mode_settings(mode=mode)

@@ -201,7 +201,7 @@ export interface Source {
   source_name: string;
   start_time?: string;
 }
-export interface chunk {
+export interface ChunkDetail {
   id: string;
   score: number;
 }
@@ -215,7 +215,8 @@ export interface Messages {
   model?: string;
   isLoading?: boolean;
   response_time?: number;
-  chunk_ids?: chunk[];
+  nodeDetails?: nodeDetailsProps;
+  chunk_ids?: string[];
   total_tokens?: number;
   speaking?: boolean;
   copying?: boolean;
@@ -223,7 +224,7 @@ export interface Messages {
   cypher_query?: string;
   graphonly_entities?: [];
   error?: string;
-  entities?: chunk[];
+  entities?: string[];
 }
 
 export type ChatbotProps = {
@@ -416,12 +417,13 @@ export interface chatInfoMessage extends Partial<Messages> {
   sources: string[];
   model: string;
   response_time: number;
-  chunk_ids: chunk[];
   total_tokens: number;
   mode: string;
   cypher_query?: string;
   graphonly_entities: [];
   error: string;
+  entities_ids:string[];
+  nodeDetails: nodeDetailsProps;
 }
 
 export interface eventResponsetypes extends Omit<SourceNode, 'total_chunks' | 'processingTime'> {
@@ -670,3 +672,24 @@ export type CommunitiesProps = {
   loading: boolean;
   communities: Community[];
 };
+
+export interface entity{
+  id: string;
+  score: number;
+};
+
+export interface community {
+  id: string;
+  score: number;
+}
+
+export interface nodeDetailsProps {
+  chunkdetails?: ChunkDetail[],
+  entitydetails?: entity[],
+  communitydetails?: community[]
+}
+
+export type entityProps = {
+  entityids: [],
+  relationshipids:[]
+}
