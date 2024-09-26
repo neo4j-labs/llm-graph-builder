@@ -32,6 +32,8 @@ from Secweb.StrictTransportSecurity import HSTS
 from Secweb.ContentSecurityPolicy import ContentSecurityPolicy
 from Secweb.XContentTypeOptions import XContentTypeOptions
 from Secweb.XFrameOptions import XFrame
+from time import time
+from src.shared.latency_middleware import LatencyMiddleware
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
@@ -48,6 +50,7 @@ def sick():
     return False
 
 app = FastAPI()
+app.add_middleware(LatencyMiddleware)
 # SecWeb(app=app, Option={'referrer': False, 'xframe': False})
 # app.add_middleware(HSTS, Option={'max-age': 4})
 # app.add_middleware(ContentSecurityPolicy, Option={'default-src': ["'self'"], 'base-uri': ["'self'"], 'block-all-mixed-content': []}, script_nonce=False, style_nonce=False, report_only=False)
