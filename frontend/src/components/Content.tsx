@@ -200,6 +200,12 @@ const Content: React.FC<ContentProps> = ({
               password: btoa(atob(parsedData.password)),
             })
           );
+          if (response.data.data.gds_status !== undefined) {
+            setGdsActive(response.data.data.gds_status);
+          }
+          if (response.data.data.write_access !== undefined) {
+            setIsReadOnlyUser(response.data.data.write_access);
+          }
           if (
             (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
               response.data.data.db_vector_dimension == 0) &&
@@ -879,7 +885,7 @@ const Content: React.FC<ContentProps> = ({
               }
               placement='top'
               onClick={() => setshowDeletePopUp(true)}
-              disabled={!selectedfileslength||isReadOnlyUser}
+              disabled={!selectedfileslength || isReadOnlyUser}
               className='ml-0.5'
               label='Delete Files'
               size={isTablet ? 'small' : 'medium'}
