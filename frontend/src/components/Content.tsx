@@ -59,8 +59,16 @@ const Content: React.FC<ContentProps> = ({
   });
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
-  const { setUserCredentials, userCredentials, connectionStatus, setConnectionStatus, isGdsActive, setGdsActive } =
-    useCredentials();
+  const {
+    setUserCredentials,
+    userCredentials,
+    connectionStatus,
+    setConnectionStatus,
+    isGdsActive,
+    setGdsActive,
+    setIsReadOnlyUser,
+    isReadOnlyUser,
+  } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [retryFile, setRetryFile] = useState<string>('');
@@ -117,6 +125,9 @@ const Content: React.FC<ContentProps> = ({
         });
         if (neo4jConnection.isgdsActive !== undefined) {
           setGdsActive(neo4jConnection.isgdsActive);
+        }
+        if (neo4jConnection.isReadOnlyUser !== undefined) {
+          setIsReadOnlyUser(neo4jConnection.isReadOnlyUser);
         }
       } else {
         setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
@@ -189,6 +200,12 @@ const Content: React.FC<ContentProps> = ({
               password: btoa(atob(parsedData.password)),
             })
           );
+          if (response.data.data.gds_status !== undefined) {
+            setGdsActive(response.data.data.gds_status);
+          }
+          if (response.data.data.write_access !== undefined) {
+            setIsReadOnlyUser(response.data.data.write_access);
+          }
           if (
             (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
               response.data.data.db_vector_dimension == 0) &&
@@ -760,7 +777,7 @@ const Content: React.FC<ContentProps> = ({
             />
           </Suspense>
           <div className='connectionstatus__container'>
-            <span className='h6 px-1'>Neo4j connection</span>
+            <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
             <Typography variant='body-medium'>
               <DatabaseStatusIcon
                 isConnected={connectionStatus}
@@ -795,7 +812,7 @@ const Content: React.FC<ContentProps> = ({
               label='Graph Enhancemnet Settings'
               className='mr-2.5'
               onClick={toggleEnhancementDialog}
-              disabled={!connectionStatus}
+              disabled={!connectionStatus || isReadOnlyUser}
               size={isTablet ? 'small' : 'medium'}
             >
               Graph Enhancement
@@ -887,7 +904,7 @@ const Content: React.FC<ContentProps> = ({
               }
               placement='top'
               onClick={() => setshowDeletePopUp(true)}
-              disabled={!selectedfileslength}
+              disabled={!selectedfileslength || isReadOnlyUser}
               className='ml-0.5'
               label='Delete Files'
               size={isTablet ? 'small' : 'medium'}

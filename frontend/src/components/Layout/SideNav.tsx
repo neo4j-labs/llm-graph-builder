@@ -44,7 +44,7 @@ const SideNav: React.FC<SideNavProps> = ({
   const [chatModeAnchor, setchatModeAnchor] = useState<HTMLElement | null>(null);
   const [showChatMode, setshowChatMode] = useState<boolean>(false);
   const largedesktops = useMediaQuery(`(min-width:1440px )`);
-  const { connectionStatus } = useCredentials();
+  const { connectionStatus, isReadOnlyUser } = useCredentials();
 
   const date = new Date();
   useEffect(() => {
@@ -125,7 +125,7 @@ const SideNav: React.FC<SideNavProps> = ({
             />
           )}
 
-          {!largedesktops && position === 'left' && (
+          {!largedesktops && position === 'left' && !isReadOnlyUser && (
             <SideNavigation.Item
               icon={
                 <Tip allowedPlacements={['right']}>
@@ -137,7 +137,7 @@ const SideNav: React.FC<SideNavProps> = ({
               }
             />
           )}
-          {!largedesktops && APP_SOURCES.includes('gcs') && position === 'left' && (
+          {!largedesktops && APP_SOURCES.includes('gcs') && position === 'left' && !isReadOnlyUser && (
             <SideNavigation.Item
               icon={
                 <Tip allowedPlacements={['right']}>
@@ -149,7 +149,7 @@ const SideNav: React.FC<SideNavProps> = ({
               }
             />
           )}
-          {!largedesktops && APP_SOURCES.includes('s3') && position === 'left' && (
+          {!largedesktops && APP_SOURCES.includes('s3') && position === 'left' && !isReadOnlyUser && (
             <SideNavigation.Item
               icon={
                 <Tip allowedPlacements={['right']}>
@@ -161,7 +161,7 @@ const SideNav: React.FC<SideNavProps> = ({
               }
             />
           )}
-          {!largedesktops && APP_SOURCES.includes('web') && position === 'left' && (
+          {!largedesktops && APP_SOURCES.includes('web') && position === 'left' && !isReadOnlyUser && (
             <SideNavigation.Item
               icon={
                 <Tip allowedPlacements={['right']}>
