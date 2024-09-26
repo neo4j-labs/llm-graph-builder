@@ -11,8 +11,8 @@ class CustomLogger:
         else:
             self.logger = None
 
-    def log_struct(self, message):
+    def log_struct(self, message, severity="DEFAULT"):
         if self.is_gcp_log_enabled and message is not None:
-            self.logger.log_struct(message)
+            self.logger.log_struct({"message": message, "severity": severity})
         else:
-            print(message)
+            print(f"[{severity}]{message}")

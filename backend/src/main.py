@@ -5,7 +5,8 @@ from src.shared.constants import (BUCKET_UPLOAD, PROJECT_ID, QUERY_TO_GET_CHUNKS
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY,
                                   START_FROM_BEGINNING,
                                   START_FROM_LAST_PROCESSED_POSITION,
-                                  DELETE_ENTITIES_AND_START_FROM_BEGINNING)
+                                  DELETE_ENTITIES_AND_START_FROM_BEGINNING,
+                                  QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT)
 from src.shared.schema_extraction import schema_extraction_from_text
 from langchain_community.document_loaders import GoogleApiClient, GoogleApiYoutubeLoader
 from dotenv import load_dotenv
@@ -141,20 +142,31 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     obj_source_node.created_at = datetime.now()
     match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
     logging.info(f"match value: {match}")
-    cred_path = os.path.join(os.getcwd(),"llm-experiments_credentials.json")
-    print(f'Credential file path {cred_path}')
+    # file_path = os.path.join(os.path.dirname(__file__),"llm-experiments_credentials.json")
+    # logging.info(f'file path {file_path}')
+    
+    # if os.path.exists(file_path):
+    #   logging.info("File path exist")
+    #   with open(file_path,'r') as file:
+    #     data = json.load(file)
+    #     # logging.info(f"Project id : {data['project_id']}")
+    #     # logging.info(f"Universal domain: {data['universe_domain']}")
+    # else:
+    #   logging.warning("credntial file path not exist")
+
     video_id = parse_qs(urlparse(youtube_url).query).get('v')
     print(f'Video Id Youtube: {video_id}')
-    # google_api_client = GoogleApiClient(service_account_path=Path(cred_path))
+    # google_api_client = GoogleApiClient(service_account_path=Path(file_path))
     # youtube_loader_channel = GoogleApiYoutubeLoader(
     # google_api_client=google_api_client,
     # video_ids=[video_id[0].strip()], add_video_info=True
     # )
     # youtube_transcript = youtube_loader_channel.load()
-    
+    # page_content = youtube_transcript[0].page_content
+
     obj_source_node.file_name = match.group(1)#youtube_transcript[0].metadata["snippet"]["title"]
     transcript= get_youtube_combined_transcript(match.group(1))
-    # print(transcript)
+    print(transcript)
     if transcript==None or len(transcript)==0:
       message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
       raise Exception(message)
@@ -281,6 +293,7 @@ def processing_source(uri, userName, password, database, model, file_name, pages
      status and model as attributes.
   """
   start_time = datetime.now()
+  processing_source_start_time = time.time()
   graph = create_graph_database_connection(uri, userName, password, database)
   graphDb_data_Access = graphDBdataAccess(graph)
 
@@ -313,7 +326,6 @@ def processing_source(uri, userName, password, database, model, file_name, pages
       # selected_chunks = []
       is_cancelled_status = False
       job_status = "Completed"
-
       for i in range(0, len(chunkId_chunkDoc_list), update_graph_chunk_processed):
         select_chunks_upto = i+update_graph_chunk_processed
         logging.info(f'Selected Chunks upto: {select_chunks_upto}')
@@ -329,7 +341,10 @@ def processing_source(uri, userName, password, database, model, file_name, pages
           logging.info('Exit from running loop of processing file')
           break
         else:
+          processing_chunks_start_time = time.time()
           node_count,rel_count = processing_chunks(selected_chunks,graph,uri, userName, password, database,file_name,model,allowedNodes,allowedRelationship,node_count, rel_count)
+          processing_chunks_end_time = time.time() - processing_chunks_start_time
+          logging.info(f"{update_graph_chunk_processed} chunks processed upto {select_chunks_upto} completed in {processing_chunks_end_time:.2f} seconds for file name {file_name}")
           end_time = datetime.now()
           processed_time = end_time - start_time
           
@@ -338,8 +353,13 @@ def processing_source(uri, userName, password, database, model, file_name, pages
           obj_source_node.updated_at = end_time
           obj_source_node.processing_time = processed_time
           obj_source_node.processed_chunk = select_chunks_upto+select_chunks_with_retry
-          obj_source_node.node_count = node_count
-          obj_source_node.relationship_count = rel_count
+          if retry_condition == START_FROM_BEGINNING:
+            result = graph.query(QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT, params={"filename":file_name})
+            obj_source_node.node_count = result[0]['nodes']
+            obj_source_node.relationship_count = result[0]['rels']
+          else:  
+            obj_source_node.node_count = node_count
+            obj_source_node.relationship_count = rel_count
           graphDb_data_Access.update_source_node(obj_source_node)
       
       result = graphDb_data_Access.get_current_status_document_node(file_name)
@@ -369,7 +389,8 @@ def processing_source(uri, userName, password, database, model, file_name, pages
           delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
         else:
           delete_uploaded_local_file(merged_file_path, file_name)  
-        
+      processing_source_func = time.time() - processing_source_start_time
+      logging.info(f"processing source function completed in {processing_source_func:.2f} seconds for file name {file_name}")  
       return {
           "fileName": file_name,
           "nodeCount": node_count,
@@ -569,11 +590,11 @@ def get_labels_and_relationtypes(graph):
   query = """
           RETURN collect { 
           CALL db.labels() yield label 
-          WHERE NOT label  IN ['Chunk','_Bloom_Perspective_'] 
+          WHERE NOT label  IN ['Chunk','_Bloom_Perspective_', '__Community__', '__Entity__'] 
           return label order by label limit 100 } as labels, 
           collect { 
           CALL db.relationshipTypes() yield relationshipType  as type 
-          WHERE NOT type  IN ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_'] 
+          WHERE NOT type  IN ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_','FIRST_CHUNK'] 
           return type order by type LIMIT 100 } as relationshipTypes
           """
   graphDb_data_Access = graphDBdataAccess(graph)

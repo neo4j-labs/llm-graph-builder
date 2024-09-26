@@ -1,5 +1,6 @@
 import { NvlOptions } from '@neo4j-nvl/base';
 import { GraphType, OptionType } from '../types';
+import { getDescriptionForChatMode } from './Utils';
 
 export const document = `+ [docs]`;
 
@@ -28,10 +29,12 @@ export const docChunkEntities = `+[chunks]
 + collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
 //chunks with entities
 + collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
+
 export const APP_SOURCES =
   process.env.VITE_REACT_APP_SOURCES !== ''
     ? (process.env.VITE_REACT_APP_SOURCES?.split(',') as string[])
     : ['gcs', 's3', 'local', 'wiki', 'youtube', 'web'];
+
 export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
@@ -56,10 +59,55 @@ export const defaultLLM = llms?.includes('openai-gpt-4o')
   : llms?.includes('gemini-1.0-pro')
   ? 'gemini-1.0-pro'
   : 'diffbot';
+
+// export const chatModes =
+//   process.env?.VITE_CHAT_MODES?.trim() != ''
+//     ? process.env.VITE_CHAT_MODES?.split(',')
+//     : ['vector', 'graph', 'graph+vector', 'fulltext', 'graph+vector+fulltext', 'local community', 'global community'];
+
+export const chatModeLables = {
+  vector: 'vector',
+  graph: 'graph',
+  graph_vector: 'graph+vector',
+  fulltext: 'fulltext',
+  graph_vector_fulltext: 'graph+vector+fulltext',
+  entity_vector: 'entity search+vector',
+  unavailableChatMode: 'Chat mode is unavailable when rows are selected',
+  selected: 'Selected',
+};
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
-    ? process.env.VITE_CHAT_MODES?.split(',')
-    : ['vector', 'graph', 'graph+vector', 'fulltext', 'graph+vector+fulltext'];
+    ? process.env.VITE_CHAT_MODES?.split(',').map((mode) => ({
+        mode: mode.trim(),
+        description: getDescriptionForChatMode(mode.trim()),
+      }))
+    : [
+        {
+          mode: chatModeLables.vector,
+          description: 'Performs semantic similarity search on text chunks using vector indexing.',
+        },
+        {
+          mode: chatModeLables.graph,
+          description: 'Translates text to Cypher queries for precise data retrieval from a graph database.',
+        },
+        {
+          mode: chatModeLables.graph_vector,
+          description: 'Combines vector indexing and graph connections for contextually enhanced semantic search.',
+        },
+        {
+          mode: chatModeLables.fulltext,
+          description: 'Conducts fast, keyword-based search using full-text indexing on text chunks.',
+        },
+        {
+          mode: chatModeLables.graph_vector_fulltext,
+          description: 'Integrates vector, graph, and full-text indexing for comprehensive search results.',
+        },
+        {
+          mode: chatModeLables.entity_vector,
+          description: 'Uses vector indexing on entity nodes for highly relevant entity-based search.',
+        },
+      ];
+
 export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.VITE_TIME_PER_PAGE ? parseInt(process.env.VITE_TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
@@ -115,25 +163,25 @@ export const queryMap: {
 };
 
 export const tooltips = {
-  generateGraph: 'Select one or more (new) files to turn into a graph.',
+  generateGraph: 'Generate graph from selected files',
   deleteFile: 'Select one or more files to delete.',
-  showGraph: 'Select one or more files to preview the generated graph.',
-  bloomGraph: 'Open Neo4j Bloom for advanced graph interaction and exploration.',
+  showGraph: 'Preview generated graph.',
+  bloomGraph: 'Visualize the graph in Bloom',
   deleteSelectedFiles: 'File/Files to be deleted',
   documentation: 'Documentation',
   github: 'GitHub Issues',
   theme: 'Light / Dark mode',
   settings: 'Entity Graph Extraction Settings',
-  chat: 'Ask questions about the processed documents.',
-  sources: 'Upload files of different formats.',
+  chat: 'Start a chat',
+  sources: 'Upload files',
   deleteChat: 'Delete',
   maximise: 'Maximise',
   copy: 'Copy to Clipboard',
   copied: 'Copied',
   stopSpeaking: 'Stop Speaking',
   textTospeech: 'Text to Speech',
-  createSchema: 'Create your own schema by passing text',
-  useExistingSchema: 'Use the already existing schema from DB',
+  createSchema: 'Define schema from text.',
+  useExistingSchema: 'Fetch schema from database',
   clearChat: 'Clear Chat History',
   continue: 'Continue',
   clearGraphSettings: 'Clear configured Graph Schema',
@@ -184,6 +232,10 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
                 semantic meaning. This facilitates tasks like clustering similar entities, identifying duplicates, and
                 performing similarity-based searches.`,
   },
+  {
+    title: 'create_communities',
+    description: 'Create Communities identifies and groups similar entities, improving search accuracy and analysis.',
+  },
 ];
 export const RETRY_OPIONS = [
   'start_from_beginning',
@@ -215,7 +267,12 @@ export const graphView: OptionType[] = [
   { label: 'Entity Graph', value: queryMap.Entities },
   { label: 'Knowledge Graph', value: queryMap.DocChunkEntities },
 ];
-export const intitalGraphType: GraphType[] = ['DocumentChunk', 'Entities'];
+
+export const intitalGraphType = (isGDSActive: boolean): GraphType[] => {
+  return isGDSActive
+    ? ['DocumentChunk', 'Entities', 'Communities'] // GDS is active, include communities
+    : ['DocumentChunk', 'Entities']; // GDS is inactive, exclude communities
+};
 
 export const appLabels = {
   ownSchema: 'Or Define your own Schema',
@@ -237,6 +294,17 @@ export const graphLabels = {
   selectCheckbox: 'Select atleast one checkbox for graph view',
   totalRelationships: 'Total Relationships',
   nodeSize: 30,
+  docChunk: 'Document & Chunk',
+  community: 'Communities',
+  noNodesRels: 'No Nodes and No relationships',
 };
 
 export const RESULT_STEP_SIZE = 25;
+
+export const connectionLabels = {
+  notConnected: 'Not Connected',
+  graphDataScience: 'Graph Data Science',
+  graphDatabase: 'Graph Database',
+  greenStroke: 'green',
+  redStroke: 'red',
+};

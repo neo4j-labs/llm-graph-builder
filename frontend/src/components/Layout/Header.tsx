@@ -8,7 +8,7 @@ import {
 } from '@neo4j-ndl/react/icons';
 import { Typography } from '@neo4j-ndl/react';
 import { useCallback, useEffect } from 'react';
-import IconButtonWithToolTip from '../UI/IconButtonToolTip';
+import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { tooltips } from '../../utils/Constants';
 import { useFileContext } from '../../context/UsersFiles';
 

@@ -28,10 +28,11 @@ import FallBackDialog from './UI/FallBackDialog';
 import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
 import { tokens } from '@neo4j-ndl/base';
+import axios from 'axios';
+import DatabaseStatusIcon from './UI/DatabaseStatusIcon';
 import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
 import retry from '../services/retry';
 import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/toasts';
-import axios from 'axios';
 
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
@@ -58,7 +59,8 @@ const Content: React.FC<ContentProps> = ({
   });
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
-  const { setUserCredentials, userCredentials, connectionStatus, setConnectionStatus } = useCredentials();
+  const { setUserCredentials, userCredentials, connectionStatus, setConnectionStatus, isGdsActive, setGdsActive } =
+    useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [retryFile, setRetryFile] = useState<string>('');
@@ -109,10 +111,13 @@ const Content: React.FC<ContentProps> = ({
         setUserCredentials({
           uri: neo4jConnection.uri,
           userName: neo4jConnection.user,
-          password: neo4jConnection.password,
+          password: atob(neo4jConnection.password),
           database: neo4jConnection.database,
           port: neo4jConnection.uri.split(':')[2],
         });
+        if (neo4jConnection.isgdsActive !== undefined) {
+          setGdsActive(neo4jConnection.isgdsActive);
+        }
       } else {
         setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
       }
@@ -140,7 +145,14 @@ const Content: React.FC<ContentProps> = ({
     if (processedCount == batchSize) {
       handleGenerateGraph([], true);
     }
-  }, [processedCount, userCredentials]);
+    if (processedCount === 1 && queue.isEmpty()) {
+      (async () => {
+        showNormalToast('Some Q&A functionality will only be available afterwards.');
+        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+        showSuccessToast('All Q&A functionality is available now.');
+      })();
+    }
+  }, [processedCount, userCredentials, queue]);
 
   useEffect(() => {
     if (afterFirstRender) {
@@ -162,13 +174,19 @@ const Content: React.FC<ContentProps> = ({
       (async () => {
         const parsedData = JSON.parse(connection);
         console.log(parsedData.uri);
-        const response = await connectAPI(parsedData.uri, parsedData.user, parsedData.password, parsedData.database);
+        const response = await connectAPI(
+          parsedData.uri,
+          parsedData.user,
+          atob(parsedData.password),
+          parsedData.database
+        );
         if (response?.data?.status === 'Success') {
           localStorage.setItem(
             'neo4j.connection',
             JSON.stringify({
               ...parsedData,
               userDbVectorIndex: response.data.data.db_vector_dimension,
+              password: btoa(atob(parsedData.password)),
             })
           );
           if (
@@ -356,7 +374,12 @@ const Content: React.FC<ContentProps> = ({
     return data;
   };
 
-  const addFilesToQueue = (remainingFiles: CustomFile[]) => {
+  const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
+    if (!remainingFiles.length) {
+      showNormalToast('Some Q&A functionality will only be available afterwards.');
+      await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+      showSuccessToast('All Q&A functionality is available now.');
+    }
     for (let index = 0; index < remainingFiles.length; index++) {
       const f = remainingFiles[index];
       setFilesData((prev) =>
@@ -434,13 +457,11 @@ const Content: React.FC<ContentProps> = ({
       }
       Promise.allSettled(data).then(async (_) => {
         setextractLoading(false);
-        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       });
     } else if (queueFiles && !queue.isEmpty() && processingFilesCount < batchSize) {
       data = scheduleBatchWiseProcess(queue.items, true);
       Promise.allSettled(data).then(async (_) => {
         setextractLoading(false);
-        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       });
     } else {
       addFilesToQueue(filesTobeProcessed as CustomFile[]);
@@ -460,7 +481,6 @@ const Content: React.FC<ContentProps> = ({
       }
       Promise.allSettled(data).then(async (_) => {
         setextractLoading(false);
-        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       });
     } else {
       const selectedNewFiles = childRef.current
@@ -513,7 +533,7 @@ const Content: React.FC<ContentProps> = ({
       if (response.data.status === 'Failure') {
         throw new Error(response.data.error);
       }
-      const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption===RETRY_OPIONS[1];
+      const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption === RETRY_OPIONS[1];
       setFilesData((prev) => {
         return prev.map((f) => {
           return f.name === filename
@@ -739,16 +759,14 @@ const Content: React.FC<ContentProps> = ({
               chunksExistsWithDifferentEmbedding={openConnection.chunksExistsWithDifferentDimension}
             />
           </Suspense>
-
           <div className='connectionstatus__container'>
             <span className='h6 px-1'>Neo4j connection</span>
             <Typography variant='body-medium'>
-              {!connectionStatus ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
-              {connectionStatus ? (
-                <span className='n-body-small'>{userCredentials?.uri}</span>
-              ) : (
-                <span className='n-body-small'>Not Connected</span>
-              )}
+              <DatabaseStatusIcon
+                isConnected={connectionStatus}
+                isGdsActive={isGdsActive}
+                uri={userCredentials && userCredentials?.uri}
+              />
               <div className='pt-1'>
                 {!isSchema ? (
                   <StatusIndicator type='danger' />
@@ -773,7 +791,7 @@ const Content: React.FC<ContentProps> = ({
           <div>
             <ButtonWithToolTip
               placement='top'
-              text='Configure Graph Schema, Delete disconnected Entities, Merge duplicate Entities'
+              text='Enhance graph quality'
               label='Graph Enhancemnet Settings'
               className='mr-2.5'
               onClick={toggleEnhancementDialog}

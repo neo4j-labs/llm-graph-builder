@@ -43,7 +43,7 @@ import useServerSideEvent from '../hooks/useSse';
 import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
-import IconButtonWithToolTip from './UI/IconButtonToolTip';
+import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import IndeterminateCheckbox from './UI/CustomCheckBox';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
@@ -146,7 +146,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               >
                 <StatusIndicator type={statusCheck(info.getValue())} />
                 {info.getValue()}
-                {/* {(info.getValue() === 'Completed' ||
+                {(info.getValue() === 'Completed' ||
                   info.getValue() === 'Failed' ||
                   info.getValue() === 'Cancelled') && (
                   <span className='mx-1'>
@@ -161,7 +161,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                       <ArrowPathIconSolid />
                     </IconButtonWithToolTip>
                   </span>
-                )} */}
+                )}
               </div>
             );
           } else if (info.getValue() === 'Processing' && info.row.original.processingProgress === undefined) {

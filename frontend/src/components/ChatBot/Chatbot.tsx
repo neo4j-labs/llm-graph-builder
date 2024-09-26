@@ -14,11 +14,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../../context/UsersFiles';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
-import IconButtonWithToolTip from '../UI/IconButtonToolTip';
-import { buttonCaptions, tooltips } from '../../utils/Constants';
+import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
+import { buttonCaptions, chatModeLables, tooltips } from '../../utils/Constants';
 import useSpeechSynthesis from '../../hooks/useSpeech';
 import ButtonWithToolTip from '../UI/ButtonWithToolTip';
 import FallBackDialog from '../UI/FallBackDialog';
+import { capitalizeWithPlus } from '../../utils/Utils';
+import { capitalize } from '@mui/material';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
 
 const Chatbot: FC<ChatbotProps> = (props) => {
@@ -44,7 +46,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [tokensUsed, setTokensUsed] = useState<number>(0);
   const [cypherQuery, setcypherQuery] = useState<string>('');
   const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
-  const [chatsMode, setChatsMode] = useState<string>('graph+vector');
+  const [chatsMode, setChatsMode] = useState<string>(chatModeLables.graph_vector_fulltext);
   const [graphEntitites, setgraphEntitites] = useState<[]>([]);
   const [messageError, setmessageError] = useState<string>('');
 
@@ -89,6 +91,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       cypher_query?: string;
       graphonly_entities?: [];
       error?: string;
+      entitiysearchonly_entities?: chunk[];
     },
     index = 0
   ) => {
@@ -119,6 +122,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               cypher_query: response?.cypher_query,
               graphonly_entities: response?.graphonly_entities,
               error: response.error,
+              entitiysearchonly_entities: response.entitiysearchonly_entities,
             },
           ]);
         } else {
@@ -141,6 +145,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             lastmsg.cypher_query = response.cypher_query;
             lastmsg.graphonly_entities = response.graphonly_entities;
             lastmsg.error = response.error;
+            lastmsg.entities = response.entitiysearchonly_entities;
             return msgs.map((msg, index) => {
               if (index === msgs.length - 1) {
                 return lastmsg;
@@ -174,8 +179,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     let cypher_query;
     let graphonly_entities;
     let error;
+    let entitiysearchonly_entities;
     const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-    const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime };
+    const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime, mode: chatMode };
     setListMessages([...listMessages, userMessage]);
     try {
       setInputMessage('');
@@ -198,6 +204,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       chatingMode = chatresponse?.data?.data?.info?.mode;
       cypher_query = chatresponse?.data?.data?.info?.cypher_query ?? '';
       graphonly_entities = chatresponse?.data.data.info.context ?? [];
+      entitiysearchonly_entities = chatresponse?.data.data.info.entities;
       error = chatresponse.data.data.info.error ?? '';
       const finalbotReply = {
         reply: chatbotReply,
@@ -212,6 +219,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
         cypher_query,
         graphonly_entities,
         error,
+        entitiysearchonly_entities,
       };
       simulateTypingEffect(finalbotReply);
     } catch (error) {
@@ -319,6 +327,15 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                   className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
                     chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
                   } `}
+                  subheader={
+                    chat.user !== 'chatbot' && chat.mode?.length ? (
+                      <Typography variant='subheading-small'>
+                        Chat Mode: {chat.mode.includes('+') ? capitalizeWithPlus(chat.mode) : capitalize(chat.mode)}
+                      </Typography>
+                    ) : (
+                      ''
+                    )
+                  }
                 >
                   <div
                     className={`${
@@ -349,7 +366,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                             setModelModal(chat.model ?? '');
                             setSourcesModal(chat.sources ?? []);
                             setResponseTime(chat.response_time ?? 0);
-                            setChunkModal(chat.chunk_ids ?? []);
+                            setChunkModal(
+                              chat.mode === 'entity search+vector' ? chat.entities ?? [] : chat.chunk_ids ?? []
+                            );
                             setTokensUsed(chat.total_tokens ?? 0);
                             setcypherQuery(chat.cypher_query ?? '');
                             setShowInfoModal(true);
@@ -422,7 +441,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           <ButtonWithToolTip
             label='Q&A Button'
             placement='top'
-            text={`Query Documents in ${chatMode} mode`}
+            text={`Ask a question.`}
             type='submit'
             disabled={loading || !connectionStatus}
             size='medium'
