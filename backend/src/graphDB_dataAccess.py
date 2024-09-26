@@ -148,7 +148,7 @@ class graphDBdataAccess:
         query = """
         SHOW USER PRIVILEGES 
         YIELD * 
-        WHERE graph = $database AND action IN ['read', 'write'] 
+        WHERE graph = $database AND action IN ['read'] 
         RETURN COUNT(*) AS readAccessCount
         """
         try:
