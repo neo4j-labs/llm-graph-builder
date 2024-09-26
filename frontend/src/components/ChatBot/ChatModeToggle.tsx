@@ -20,7 +20,7 @@ export default function ChatModeToggle({
   disableBackdrop?: boolean;
 }) {
   const { setchatMode, chatMode, postProcessingTasks, selectedRows } = useFileContext();
-  const isCommunityAllowed = postProcessingTasks.includes('create_communities');
+  const isCommunityAllowed = postProcessingTasks.includes('enable_communities');
   const { isGdsActive } = useCredentials();
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export default function ChatModeToggle({
     } else {
       setchatMode(chatModeLables.graph_vector_fulltext);
     }
-  }, [selectedRows]);
+  }, [selectedRows.length]);
 
   const memoizedChatModes = useMemo(() => {
     return isGdsActive && isCommunityAllowed

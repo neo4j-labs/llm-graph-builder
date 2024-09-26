@@ -20,7 +20,7 @@ export default function PostProcessingCheckList() {
           </Flex>
           <Flex justifyContent='space-between' flexDirection='column' gap='6'>
             {POST_PROCESSING_JOBS.map((job, idx) => {
-              const isCreateCommunities = job.title === 'create_communities';
+              const isCreateCommunities = job.title === 'enable_communities';
               return (
                 <Flex key={`${job.title}${idx}`}>
                   <Checkbox

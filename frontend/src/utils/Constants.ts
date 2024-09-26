@@ -233,8 +233,8 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
                 performing similarity-based searches.`,
   },
   {
-    title: 'create_communities',
-    description: 'Create Communities identifies and groups similar entities, improving search accuracy and analysis.',
+    title: 'Enable community creation across entities to use GraphRAG capabilities both local and global search. ',
+    description: 'Enable community creation across entities to use GraphRAG capabilities both local and global search.',
   },
 ];
 export const RETRY_OPIONS = [
