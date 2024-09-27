@@ -95,7 +95,6 @@ const Content: React.FC<ContentProps> = ({
     queue,
     processedCount,
     setProcessedCount,
-    setPostProcessingVal
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
@@ -162,7 +161,7 @@ const Content: React.FC<ContentProps> = ({
       (async () => {
         showNormalToast('Some Q&A functionality will only be available afterwards.');
         await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
-          showSuccessToast('All Q&A functionality is available now.');
+        showSuccessToast('All Q&A functionality is available now.');
       })();
     }
   }, [processedCount, userCredentials, queue]);
@@ -186,7 +185,6 @@ const Content: React.FC<ContentProps> = ({
     if (connection != null) {
       (async () => {
         const parsedData = JSON.parse(connection);
-        console.log(parsedData.uri);
         const response = await connectAPI(
           parsedData.uri,
           parsedData.user,
@@ -474,12 +472,12 @@ const Content: React.FC<ContentProps> = ({
         }
         data = triggerBatchProcessing(filesTobeSchedule, filesTobeProcessed, true, true);
       }
-      Promise.allSettled(data).then(async (_) => {
+      Promise.allSettled(data).then((_) => {
         setextractLoading(false);
       });
     } else if (queueFiles && !queue.isEmpty() && processingFilesCount < batchSize) {
       data = scheduleBatchWiseProcess(queue.items, true);
-      Promise.allSettled(data).then(async (_) => {
+      Promise.allSettled(data).then((_) => {
         setextractLoading(false);
       });
     } else {
@@ -498,7 +496,7 @@ const Content: React.FC<ContentProps> = ({
       } else {
         data = triggerBatchProcessing(queue.items, queue.items as CustomFile[], true, false);
       }
-      Promise.allSettled(data).then(async (_) => {
+      Promise.allSettled(data).then((_) => {
         setextractLoading(false);
       });
     } else {
@@ -512,8 +510,9 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -523,10 +522,10 @@ const Content: React.FC<ContentProps> = ({
     isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
       : isRightExpanded
-        ? 'contentWithChatBot'
-        : !isLeftExpanded && !isRightExpanded
-          ? 'w-[calc(100%-128px)]'
-          : 'contentWithDropzoneExpansion';
+      ? 'contentWithChatBot'
+      : !isLeftExpanded && !isRightExpanded
+      ? 'w-[calc(100%-128px)]'
+      : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -557,12 +556,12 @@ const Content: React.FC<ContentProps> = ({
         return prev.map((f) => {
           return f.name === filename
             ? {
-              ...f,
-              status: 'Reprocess',
-              processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-              NodesCount: isStartFromBegining ? 0 : f.NodesCount,
-              relationshipCount: isStartFromBegining ? 0 : f.relationshipCount,
-            }
+                ...f,
+                status: 'Reprocess',
+                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                NodesCount: isStartFromBegining ? 0 : f.NodesCount,
+                relationshipCount: isStartFromBegining ? 0 : f.relationshipCount,
+              }
             : f;
         });
       });
@@ -851,8 +850,9 @@ const Content: React.FC<ContentProps> = ({
           handleGenerateGraph={processWaitingFilesOnRefresh}
         ></FileTable>
         <Flex
-          className={`${!isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-            } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+          className={`${
+            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection={isTablet ? 'column' : 'row'}
         >
@@ -870,7 +870,7 @@ const Content: React.FC<ContentProps> = ({
               placement='top'
               label='generate graph'
               onClick={onClickHandler}
-              disabled={disableCheck}
+              disabled={disableCheck || isReadOnlyUser}
               className='mr-0.5'
               size={isTablet ? 'small' : 'medium'}
             >

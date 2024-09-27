@@ -15,7 +15,7 @@ const MessageContextWrapper: FC<MessagesContextProviderProps> = ({ children }) =
     messages,
     setMessages,
     clearHistoryData,
-    setClearHistoryData
+    setClearHistoryData,
   };
   return <MessageContext.Provider value={value}>{children}</MessageContext.Provider>;
 };

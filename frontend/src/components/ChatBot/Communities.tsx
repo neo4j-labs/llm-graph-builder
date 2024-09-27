@@ -4,7 +4,6 @@ import ReactMarkdown from 'react-markdown';
 import { CommunitiesProps } from '../../types';
 
 const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities }) => {
-  console.log('communities', communities);
   return (
     <>
       {loading ? (

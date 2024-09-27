@@ -3,15 +3,24 @@ import React from 'react';
 import { CheckboxSectionProps } from '../../types';
 import { graphLabels } from '../../utils/Constants';
 
-const CheckboxSelection: React.FC<CheckboxSectionProps> = ({ graphType, loading, handleChange, isgds, isDocChunk, isEntity }) => (
+const CheckboxSelection: React.FC<CheckboxSectionProps> = ({
+  graphType,
+  loading,
+  handleChange,
+  isgds,
+  isDocChunk,
+  isEntity,
+}) => (
   <div className='flex gap-5 mt-2 justify-between'>
     <div className='flex gap-5'>
-      {isDocChunk && (<Checkbox
-        checked={graphType.includes('DocumentChunk')}
-        label={graphLabels.docChunk}
-        disabled={loading}
-        onChange={() => handleChange('DocumentChunk')}
-      />)}
+      {isDocChunk && (
+        <Checkbox
+          checked={graphType.includes('DocumentChunk')}
+          label={graphLabels.docChunk}
+          disabled={loading}
+          onChange={() => handleChange('DocumentChunk')}
+        />
+      )}
       {isEntity && (
         <Checkbox
           checked={graphType.includes('Entities')}

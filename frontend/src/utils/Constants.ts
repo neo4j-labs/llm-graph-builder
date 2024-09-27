@@ -43,7 +43,6 @@ export const llms =
         'openai-gpt-3.5',
         'openai-gpt-4o',
         'openai-gpt-4o-mini',
-        'gemini-1.0-pro',
         'gemini-1.5-pro',
         'gemini-1.5-flash',
         'azure_ai_gpt_35',
@@ -57,14 +56,9 @@ export const llms =
 
 export const defaultLLM = llms?.includes('openai-gpt-4o')
   ? 'openai-gpt-4o'
-  : llms?.includes('gemini-1.0-pro')
-  ? 'gemini-1.0-pro'
+  : llms?.includes('gemini-1.5-pro')
+  ? 'gemini-1.5-pro'
   : 'diffbot';
-
-// export const chatModes =
-//   process.env?.VITE_CHAT_MODES?.trim() != ''
-//     ? process.env.VITE_CHAT_MODES?.split(',')
-//     : ['vector', 'graph', 'graph+vector', 'fulltext', 'graph+vector+fulltext', 'local community', 'global community'];
 
 export const chatModeLables = {
   vector: 'vector',
@@ -75,7 +69,7 @@ export const chatModeLables = {
   entity_vector: 'entity search+vector',
   unavailableChatMode: 'Chat mode is unavailable when rows are selected',
   selected: 'Selected',
-  global_vector: 'global search+vector+fulltext'
+  global_vector: 'global search+vector+fulltext',
 };
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
@@ -109,9 +103,10 @@ export const chatModes =
           description: 'Uses vector indexing on entity nodes for highly relevant entity-based search.',
         },
         {
-          mode : chatModeLables.global_vector,
-          description: 'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.'
-        }
+          mode: chatModeLables.global_vector,
+          description:
+            'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.',
+        },
       ];
 
 export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
