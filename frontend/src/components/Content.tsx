@@ -204,7 +204,7 @@ const Content: React.FC<ContentProps> = ({
             setGdsActive(response.data.data.gds_status);
           }
           if (response.data.data.write_access !== undefined) {
-            setIsReadOnlyUser(response.data.data.write_access);
+            setIsReadOnlyUser(!response.data.data.write_access);
           }
           if (
             (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
