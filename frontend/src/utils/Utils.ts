@@ -248,7 +248,6 @@ export const filterData = (
         nodeIds.has(rel.to)
     );
     filteredScheme = Object.fromEntries(entityTypes.map((key) => [key, scheme[key]])) as Scheme;
-    console.log('labels', entityNodes);
     // Only Communities
   } else if (
     graphType.includes('Communities') &&
@@ -340,7 +339,6 @@ export const filterData = (
     filteredNodes = allNodes;
     filteredRelations = allRelationships;
     filteredScheme = scheme;
-    console.log('entity', filteredScheme);
   }
   return { filteredNodes, filteredRelations, filteredScheme };
 };

@@ -43,7 +43,6 @@ export const llms =
         'openai-gpt-3.5',
         'openai-gpt-4o',
         'openai-gpt-4o-mini',
-        'gemini-1.0-pro',
         'gemini-1.5-pro',
         'gemini-1.5-flash',
         'azure_ai_gpt_35',
@@ -57,14 +56,9 @@ export const llms =
 
 export const defaultLLM = llms?.includes('openai-gpt-4o')
   ? 'openai-gpt-4o'
-  : llms?.includes('gemini-1.0-pro')
-  ? 'gemini-1.0-pro'
+  : llms?.includes('gemini-1.5-pro')
+  ? 'gemini-1.5-pro'
   : 'diffbot';
-
-// export const chatModes =
-//   process.env?.VITE_CHAT_MODES?.trim() != ''
-//     ? process.env.VITE_CHAT_MODES?.split(',')
-//     : ['vector', 'graph', 'graph+vector', 'fulltext', 'graph+vector+fulltext', 'local community', 'global community'];
 
 export const chatModeLables = {
   vector: 'vector',
