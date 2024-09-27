@@ -97,10 +97,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-        ? queryMap.DocChunks
-        : graphType.includes('Entities')
-          ? queryMap.Entities
-          : '';
+      ? queryMap.DocChunks
+      : graphType.includes('Entities')
+      ? queryMap.Entities
+      : '';
 
   // fit graph to original position
   const handleZoomToFit = () => {
@@ -135,10 +135,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
-            userCredentials as UserCredentials,
-            graphQuery,
-            selectedRows?.map((f) => f.name)
-          )
+              userCredentials as UserCredentials,
+              graphQuery,
+              selectedRows?.map((f) => f.name)
+            )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -151,9 +151,13 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     try {
       const result = await fetchData();
       if (result && result.data.data.nodes.length > 0) {
-        const neoNodes = result.data.data.nodes.map((f: Node) => f).filter((node: ExtendedNode) => node.labels.length === 1);
-        const nodeIds = new Set(neoNodes.map((node:any) => node.element_id));
-        const neoRels = result.data.data.relationships.map((f: Relationship) => f).filter((rel: any) => nodeIds.has(rel.end_node_element_id) && nodeIds.has(rel.start_node_element_id));
+        const neoNodes = result.data.data.nodes
+          .map((f: Node) => f)
+          .filter((node: ExtendedNode) => node.labels.length === 1);
+        const nodeIds = new Set(neoNodes.map((node: any) => node.element_id));
+        const neoRels = result.data.data.relationships
+          .map((f: Relationship) => f)
+          .filter((rel: any) => nodeIds.has(rel.end_node_element_id) && nodeIds.has(rel.start_node_element_id));
         const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels);
 
         if (mode === 'refreshMode') {
@@ -223,8 +227,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             match && viewPoint === graphLabels.showGraphView
               ? 100
               : match && viewPoint !== graphLabels.showGraphView
-                ? 50
-                : graphLabels.nodeSize,
+              ? 50
+              : graphLabels.nodeSize,
         };
       });
       // deactivating any active relationships
@@ -333,8 +337,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           isActive && viewPoint === graphLabels.showGraphView
             ? 100
             : isActive && viewPoint !== graphLabels.showGraphView
-              ? 50
-              : graphLabels.nodeSize,
+            ? 50
+            : graphLabels.nodeSize,
       };
     });
     // deactivating any active relationships

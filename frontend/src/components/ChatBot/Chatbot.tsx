@@ -58,8 +58,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     },
   });
 
-  let selectedFileNames: CustomFile[] = filesData.filter(f =>
-    selectedRows.includes(f.id) && ['Completed'].includes(f.status)
+  let selectedFileNames: CustomFile[] = filesData.filter(
+    (f) => selectedRows.includes(f.id) && ['Completed'].includes(f.status)
   );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,7 +117,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               graphonly_entities: response?.graphonly_entities,
               error: response.error,
               entitiysearchonly_entities: response.entitiysearchonly_entities,
-              nodeDetails: response?.nodeDetails
+              nodeDetails: response?.nodeDetails,
             },
           ]);
         } else {
@@ -210,7 +210,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
         error,
         entitiysearchonly_entities,
         chatEntities,
-        nodeDetails: chatnodedetails
+        nodeDetails: chatnodedetails,
       };
       simulateTypingEffect(finalbotReply);
     } catch (error) {
@@ -316,8 +316,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
-                    } `}
+                  className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
+                    chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                  } `}
                   subheader={
                     chat.user !== 'chatbot' && chat.mode?.length ? (
                       <Typography variant='subheading-small'>
@@ -329,10 +330,11 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                   }
                 >
                   <div
-                    className={`${listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
-                      ? 'loader'
-                      : ''
-                      }`}
+                    className={`${
+                      listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
+                        ? 'loader'
+                        : ''
+                    }`}
                   >
                     {chat.message.split(/`(.+?)`/).map((part, index) =>
                       (index % 2 === 1 ? (
@@ -371,7 +373,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                             setgraphEntitites(chat.graphonly_entities ?? []);
                             setEntitiesModal(chat.entities ?? []);
                             setmessageError(chat.error ?? '');
-                            setNodeDetailsModal(chat.nodeDetails ?? {})
+                            setNodeDetailsModal(chat.nodeDetails ?? {});
                           }}
                         >
                           {' '}
@@ -425,8 +427,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       <div className='n-bg-palette-neutral-bg-weak flex gap-2.5 bottom-0 p-2.5 w-full'>
         <form onSubmit={handleSubmit} className={`flex gap-2.5 w-full ${!isFullScreen ? 'justify-between' : ''}`}>
           <TextInput
-            className={`n-bg-palette-neutral-bg-default flex-grow-7 ${isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
-              }`}
+            className={`n-bg-palette-neutral-bg-default flex-grow-7 ${
+              isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
+            }`}
             aria-label='chatbot-input'
             type='text'
             value={inputMessage}
@@ -442,7 +445,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             disabled={loading || !connectionStatus}
             size='medium'
           >
-            {buttonCaptions.ask} {selectedFileNames != undefined && selectedFileNames.length > 0 && `(${selectedFileNames.length})`}
+            {buttonCaptions.ask}{' '}
+            {selectedFileNames != undefined && selectedFileNames.length > 0 && `(${selectedFileNames.length})`}
           </ButtonWithToolTip>
         </form>
       </div>

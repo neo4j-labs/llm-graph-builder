@@ -434,7 +434,7 @@ export const getDescriptionForChatMode = (mode: string): string => {
     case chatModeLables.entity_vector:
       return 'Combines entity node vector indexing with graph connections for accurate entity-based search, providing the most relevant response.';
     case chatModeLables.global_vector:
-       return 'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.'
+      return 'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.';
     default:
       return 'Chat mode description not available'; // Fallback description
   }

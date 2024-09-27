@@ -43,18 +43,12 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   cypher_query,
   graphonly_entities,
   error,
-  entities_ids
+  entities_ids,
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const [activeTab, setActiveTab] = useState<number>(
-    error?.length
-      ? 10
-      : mode === chatModeLables.global_vector
-        ? 7
-        : mode === chatModeLables.graph
-          ? 4
-          : 3
+    error?.length ? 10 : mode === chatModeLables.global_vector ? 7 : mode === chatModeLables.graph ? 4 : 3
   );
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
@@ -95,8 +89,12 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       (async () => {
         setLoading(true);
         try {
-          const response = await chunkEntitiesAPI(userCredentials as UserCredentials, userCredentials?.database, nodeDetails, entities_ids,
-            mode,
+          const response = await chunkEntitiesAPI(
+            userCredentials as UserCredentials,
+            userCredentials?.database,
+            nodeDetails,
+            entities_ids,
+            mode
           );
           if (response.data.status === 'Failure') {
             throw new Error(response.data.error);
@@ -129,26 +127,25 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             })
           );
           setRelationships(relationshipsData ?? []);
-          setCommunities(communitiesData.map((community: any) => {
-            const communityScore = nodeDetails?.communitydetails?.find((c: any) =>
-              c.id === community.element_id);
-            return {
-              ...community,
-              score: communityScore?.score || 1
-            };
-          })
-            .sort((a: any, b: any) => b.score - a.score)
+          setCommunities(
+            communitiesData
+              .map((community: any) => {
+                const communityScore = nodeDetails?.communitydetails?.find((c: any) => c.id === community.element_id);
+                return {
+                  ...community,
+                  score: communityScore?.score || 1,
+                };
+              })
+              .sort((a: any, b: any) => b.score - a.score)
           );
 
           setChunks(
             chunksData
               .map((chunk: any) => {
-                const chunkScore = nodeDetails?.chunkdetails?.find((c: any) =>
-                  c.id
-                  === chunk.id);
+                const chunkScore = nodeDetails?.chunkdetails?.find((c: any) => c.id === chunk.id);
                 return {
                   ...chunk,
-                  score: chunkScore?.score
+                  score: chunkScore?.score,
                 };
               })
               .sort((a: any, b: any) => b.score - a.score)
@@ -199,9 +196,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
               {mode === chatModeLables.graph_vector ||
-                mode === chatModeLables.graph ||
-                mode === chatModeLables.graph_vector_fulltext ||
-                mode === chatModeLables.entity_vector ? (
+              mode === chatModeLables.graph ||
+              mode === chatModeLables.graph_vector_fulltext ||
+              mode === chatModeLables.entity_vector ? (
                 <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
               ) : (
                 <></>
@@ -211,11 +208,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               ) : (
                 <></>
               )}
-              {mode === chatModeLables.entity_vector ? (
-                <Tabs.Tab tabId={7}>Communities</Tabs.Tab>
-              ) : (
-                <></>
-              )}
+              {mode === chatModeLables.entity_vector ? <Tabs.Tab tabId={7}>Communities</Tabs.Tab> : <></>}
             </>
           )}
         </Tabs>

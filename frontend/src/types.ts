@@ -240,7 +240,7 @@ export type ChatbotProps = {
   isFullScreen?: boolean;
   connectionStatus: boolean;
 };
-export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> { }
+export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
 
 export interface GraphViewModalProps {
   open: boolean;
@@ -648,7 +648,7 @@ export interface MessageContextType {
   messages: Messages[] | [];
   setMessages: Dispatch<SetStateAction<Messages[]>>;
   clearHistoryData: boolean;
-  setClearHistoryData: Dispatch<SetStateAction<boolean>>
+  setClearHistoryData: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface DatabaseStatusProps {
@@ -684,7 +684,7 @@ export type CommunitiesProps = {
 export interface entity {
   id: string;
   score: number;
-};
+}
 
 export interface community {
   id: string;
@@ -692,15 +692,15 @@ export interface community {
 }
 
 export interface nodeDetailsProps {
-  chunkdetails?: ChunkDetail[],
-  entitydetails?: entity[],
-  communitydetails?: community[]
+  chunkdetails?: ChunkDetail[];
+  entitydetails?: entity[];
+  communitydetails?: community[];
 }
 
 export type entityProps = {
-  entityids: [],
-  relationshipids: []
-}
+  entityids: [];
+  relationshipids: [];
+};
 
 export interface showTextFromSchemaDialogType {
   triggeredFrom: string;

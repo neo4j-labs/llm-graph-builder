@@ -4,9 +4,9 @@ import api from '../API/Index';
 const chunkEntitiesAPI = async (
   userCredentials: UserCredentials,
   database: string = 'neo4j',
-  nodeDetails: (nodeDetailsProps),
-  entities:(string)[],
-  mode: string,
+  nodeDetails: nodeDetailsProps,
+  entities: string[],
+  mode: string
 ) => {
   try {
     const formData = new FormData();
