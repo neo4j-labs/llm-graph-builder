@@ -210,7 +210,6 @@ export default function ConnectionModal({
         const isgdsActive = response.data.data.gds_status;
         const isReadOnlyUser = !response.data.data.write_access;
         setGdsActive(isgdsActive);
-        console.log({ isReadOnlyUser });
         setIsReadOnlyUser(isReadOnlyUser);
         localStorage.setItem(
           'neo4j.connection',
