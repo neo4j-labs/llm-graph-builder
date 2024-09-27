@@ -7,7 +7,7 @@ import {
   SpeakerXMarkIconOutline,
 } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../../assets/images/chatbot-ai.png';
-import { ChatbotProps, CustomFile, UserCredentials,nodeDetailsProps } from '../../types';
+import { ChatbotProps, CustomFile, UserCredentials, nodeDetailsProps } from '../../types';
 import { useCredentials } from '../../context/UserCredentials';
 import { chatBotAPI } from '../../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
@@ -57,16 +57,10 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
     },
   });
-  let selectedFileNames: CustomFile[] = [];
-  for (let index = 0; index < selectedRows.length; index++) {
-    const id = selectedRows[index];
-    for (let index = 0; index < filesData.length; index++) {
-      const f = filesData[index];
-      if (f.id === id) {
-        selectedFileNames.push(f);
-      }
-    }
-  }
+
+  let selectedFileNames: CustomFile[] = filesData.filter(f =>
+    selectedRows.includes(f.id) && ['Completed'].includes(f.status)
+  );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
@@ -328,8 +322,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                 <Widget
                   header=''
                   isElevated={true}
-                  className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
-                    chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                  className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
                     } `}
                   subheader={
                     chat.user !== 'chatbot' && chat.mode?.length ? (
@@ -342,8 +335,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                   }
                 >
                   <div
-                    className={`${
-                      listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
+                    className={`${listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
                       ? 'loader'
                       : ''
                       }`}
@@ -431,8 +423,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       <div className='n-bg-palette-neutral-bg-weak flex gap-2.5 bottom-0 p-2.5 w-full'>
         <form onSubmit={handleSubmit} className={`flex gap-2.5 w-full ${!isFullScreen ? 'justify-between' : ''}`}>
           <TextInput
-            className={`n-bg-palette-neutral-bg-default flex-grow-7 ${
-              isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
+            className={`n-bg-palette-neutral-bg-default flex-grow-7 ${isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
               }`}
             aria-label='chatbot-input'
             type='text'
@@ -449,7 +440,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             disabled={loading || !connectionStatus}
             size='medium'
           >
-            {buttonCaptions.ask} {selectedRows != undefined && selectedRows.length > 0 && `(${selectedRows.length})`}
+            {buttonCaptions.ask} {selectedFileNames != undefined && selectedFileNames.length > 0 && `(${selectedFileNames.length})`}
           </ButtonWithToolTip>
         </form>
       </div>
