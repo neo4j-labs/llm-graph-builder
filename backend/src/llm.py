@@ -9,13 +9,14 @@ from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransf
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 from langchain_experimental.graph_transformers import LLMGraphTransformer
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_anthropic import ChatAnthropic
 from langchain_fireworks import ChatFireworks
 from langchain_aws import ChatBedrock
 from langchain_community.chat_models import ChatOllama
 import boto3
 import google.auth
-from src.shared.constants import MODEL_VERSIONS
+from src.shared.constants import MODEL_VERSIONS, PROMPT_TO_ALL_LLMs
 
 
 def get_llm(model: str):
@@ -28,7 +29,7 @@ def get_llm(model: str):
         model_name = MODEL_VERSIONS[model]
         llm = ChatVertexAI(
             model_name=model_name,
-            convert_system_message_to_human=True,
+            #convert_system_message_to_human=True,
             credentials=credentials,
             project=project_id,
             temperature=0,
@@ -149,8 +150,9 @@ def get_graph_document_list(
     if "diffbot_api_key" in dir(llm):
         llm_transformer = llm
     else:
-        if "get_name" in dir(llm) and llm.get_name() == "ChatOllama":
+        if "get_name" in dir(llm) and llm.get_name() != "ChatOenAI" or llm.get_name() != "ChatVertexAI" or llm.get_name() != "AzureChatOpenAI":
             node_properties = False
+            relationship_properties = False
         else:
             node_properties = ["description"]
             relationship_properties = ["description"]
@@ -160,6 +162,8 @@ def get_graph_document_list(
             relationship_properties=relationship_properties,
             allowed_nodes=allowedNodes,
             allowed_relationships=allowedRelationship,
+            ignore_tool_usage=True,
+            #prompt = ChatPromptTemplate.from_messages(["system",PROMPT_TO_ALL_LLMs])
         )
     with ThreadPoolExecutor(max_workers=10) as executor:
         for chunk in combined_chunk_document_list:
