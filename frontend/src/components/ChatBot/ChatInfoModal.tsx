@@ -32,6 +32,7 @@ import EntitiesInfo from './EntitiesInfo';
 import SourcesInfo from './SourcesInfo';
 import CommunitiesInfo from './Communities';
 import { chatModeLables } from '../../utils/Constants';
+import { Relationship } from '@neo4j-nvl/base';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
   sources,
@@ -99,8 +100,11 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           if (response.data.status === 'Failure') {
             throw new Error(response.data.error);
           }
-          const nodesData = response?.data?.data?.nodes;
-          const relationshipsData = response?.data?.data?.relationships;
+          const nodesData = response?.data?.data?.nodes.map((f: Node) => f)
+            .filter((node: ExtendedNode) => node.labels.length === 1);
+          const nodeIds = new Set(nodesData.map((node: any) => node.element_id));
+          const relationshipsData = response?.data?.data?.relationships.map((f: Relationship) => f)
+            .filter((rel: any) => nodeIds.has(rel.end_node_element_id) && nodeIds.has(rel.start_node_element_id));;
           const communitiesData = response?.data?.data?.community_data;
           const chunksData = response?.data?.data?.chunk_data;
 
