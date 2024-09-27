@@ -154,7 +154,7 @@ const Content: React.FC<ContentProps> = ({
     if (afterFirstRender) {
       localStorage.setItem('processedCount', JSON.stringify({ db: userCredentials?.uri, count: processedCount }));
     }
-    if (processedCount == batchSize) {
+    if (processedCount == batchSize && !isReadOnlyUser) {
       handleGenerateGraph([], true);
     }
     if (processedCount === 1 && queue.isEmpty()) {
@@ -164,7 +164,7 @@ const Content: React.FC<ContentProps> = ({
         showSuccessToast('All Q&A functionality is available now.');
       })();
     }
-  }, [processedCount, userCredentials, queue]);
+  }, [processedCount, userCredentials, queue, isReadOnlyUser]);
 
   useEffect(() => {
     if (afterFirstRender) {

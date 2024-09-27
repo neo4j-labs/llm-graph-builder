@@ -701,7 +701,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   }, [connectionStatus, userCredentials]);
 
   useEffect(() => {
-    if (connectionStatus && filesData.length && onlyfortheFirstRender) {
+    if (connectionStatus && filesData.length && onlyfortheFirstRender && !isReadOnlyUser) {
       const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
       if (processingFilesCount) {
         if (processingFilesCount === 1) {
@@ -718,7 +718,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       }
       onlyfortheFirstRender = false;
     }
-  }, [connectionStatus, filesData.length]);
+  }, [connectionStatus, filesData.length, isReadOnlyUser]);
 
   const cancelHandler = async (fileName: string, id: string, fileSource: string) => {
     setFilesData((prevfiles) =>
