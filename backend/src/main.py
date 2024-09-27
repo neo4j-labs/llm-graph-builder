@@ -322,28 +322,35 @@ def processing_source(uri, userName, password, database, model, file_name, pages
    	 Json response to API with fileName, nodeCount, relationshipCount, processingTime, 
      status and model as attributes.
   """
+  uri_latency = {}
   start_time = datetime.now()
   processing_source_start_time = time.time()
+  start_create_connection = time.time()
   graph = create_graph_database_connection(uri, userName, password, database)
+  end_create_connection = time.time()
+  elapsed_create_connection = end_create_connection - start_create_connection
+  logging.info(f'Time taken database connection: {elapsed_create_connection:.2f} seconds')
+  uri_latency["create_connection"] = f'{elapsed_create_connection:.2f}'
   graphDb_data_Access = graphDBdataAccess(graph)
 
+  start_get_chunkId_chunkDoc_list = time.time()
   total_chunks, chunkId_chunkDoc_list = get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition)
+  end_get_chunkId_chunkDoc_list = time.time()
+  elapsed_get_chunkId_chunkDoc_list = end_get_chunkId_chunkDoc_list - start_get_chunkId_chunkDoc_list
+  logging.info(f'Time taken to create list chunkids with chunk document: {elapsed_get_chunkId_chunkDoc_list:.2f} seconds')
+  uri_latency["create_list_chunk_and_document"] = f'{elapsed_get_chunkId_chunkDoc_list:.2f}'
+
+  start_status_document_node = time.time()
   result = graphDb_data_Access.get_current_status_document_node(file_name)
-  print(result)
-  logging.info("Break down file into chunks")
-  bad_chars = ['"', "\n", "'"]
-  for i in range(0,len(pages)):
-    text = pages[i].page_content
-    for j in bad_chars:
-      if j == '\n':
-        text = text.replace(j, ' ')
-      else:
-        text = text.replace(j, '')
-    pages[i]=Document(page_content=str(text), metadata=pages[i].metadata)
-  create_chunks_obj = CreateChunksofDocument(pages, graph)
-  chunks = create_chunks_obj.split_file_into_chunks()
-  chunkId_chunkDoc_list = create_relation_between_chunks(graph,file_name,chunks)
-  
+  end_status_document_node = time.time()
+  elapsed_status_document_node = end_status_document_node - start_status_document_node
+  logging.info(f'Time taken to get the current status of document node: {elapsed_status_document_node:.2f} seconds')
+  uri_latency["get_status_document_node"] = f'{elapsed_status_document_node:.2f}'
+
+  select_chunks_with_retry=0
+  node_count = 0
+  rel_count = 0
+      
   if len(result) > 0:
     if result[0]['Status'] != 'Processing':      
       obj_source_node = sourceNode()
@@ -355,8 +362,14 @@ def processing_source(uri, userName, password, database, model, file_name, pages
       obj_source_node.model = model
       logging.info(file_name)
       logging.info(obj_source_node)
-      graphDb_data_Access.update_source_node(obj_source_node)
       
+      start_update_source_node = time.time()
+      graphDb_data_Access.update_source_node(obj_source_node)
+      end_update_source_node = time.time()
+      elapsed_update_source_node = end_update_source_node - start_update_source_node
+      logging.info(f'Time taken to update the document source node: {elapsed_update_source_node:.2f} seconds')
+      uri_latency["update_source_node"] = f'{elapsed_update_source_node:.2f}'
+
       logging.info('Update the status as Processing')
       update_graph_chunk_processed = int(os.environ.get('UPDATE_GRAPH_CHUNKS_PROCESSED'))
       # selected_chunks = []
@@ -378,7 +391,13 @@ def processing_source(uri, userName, password, database, model, file_name, pages
           logging.info('Exit from running loop of processing file')
           exit
         else:
-          node_count,rel_count = processing_chunks(selected_chunks,graph,uri, userName, password, database,file_name,model,allowedNodes,allowedRelationship,node_count, rel_count)
+          processing_chunks_start_time = time.time()
+          node_count,rel_count,latency_processed_chunk = processing_chunks(selected_chunks,graph,uri, userName, password, database,file_name,model,allowedNodes,allowedRelationship,node_count, rel_count)
+          processing_chunks_end_time = time.time()
+          processing_chunks_elapsed_end_time = processing_chunks_end_time - processing_chunks_start_time
+          logging.info(f"Time taken {update_graph_chunk_processed} chunks processed upto {select_chunks_upto} completed in {processing_chunks_elapsed_end_time:.2f} seconds for file name {file_name}")
+          uri_latency[f'processed_combine_chunk_{i}'] = f'{processing_chunks_elapsed_end_time:.2f}'
+          uri_latency[f'processed_chunk_detail_{i}'] = latency_processed_chunk
           end_time = datetime.now()
           processed_time = end_time - start_time
           
@@ -418,16 +437,18 @@ def processing_source(uri, userName, password, database, model, file_name, pages
           delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
         else:
           delete_uploaded_local_file(merged_file_path, file_name)  
-        
-      return {
-          "fileName": file_name,
-          "nodeCount": node_count,
-          "relationshipCount": rel_count,
-          "processingTime": round(processed_time.total_seconds(),2),
-          "status" : job_status,
-          "model" : model,
-          "success_count" : 1
-      }
+      processing_source_func = time.time() - processing_source_start_time
+      logging.info(f"Time taken to processing source function completed in {processing_source_func:.2f} seconds for file name {file_name}")  
+      uri_latency["Processed_source"] = f'{processing_source_func:.2f}'
+      uri_latency["fileName"] = file_name
+      uri_latency["nodeCount"] = node_count
+      uri_latency["relationshipCount"] = rel_count
+      uri_latency["total_processing_time"] = round(processed_time.total_seconds(),2)
+      uri_latency["status"] = job_status
+      uri_latency["model"] = model
+      uri_latency["success_count"] = 1
+      
+      return uri_latency
     else:
       logging.info('File does not process because it\'s already in Processing status')
   else:
@@ -442,15 +463,38 @@ def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password, datab
       graph = create_graph_database_connection(uri, userName, password, database)
   else:
     graph = create_graph_database_connection(uri, userName, password, database)
-      
+  
+  start_update_embedding = time.time()
   update_embedding_create_vector_index( graph, chunkId_chunkDoc_list, file_name)
+  end_update_embedding = time.time()
+  elapsed_update_embedding = end_update_embedding - start_update_embedding
+  logging.info(f'Time taken to update embedding in chunk node: {elapsed_update_embedding:.2f} seconds')
+  latency_processing_chunk = {"update_embedding" : f'{elapsed_update_embedding:.2f}'} 
   logging.info("Get graph document list from models")
+  
+  start_entity_extraction = time.time()
   graph_documents =  get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
+  end_entity_extraction = time.time()
+  elapsed_entity_extraction = end_entity_extraction - start_entity_extraction
+  logging.info(f'Time taken to extract enitities from LLM Graph Builder: {elapsed_entity_extraction:.2f} seconds')
+  latency_processing_chunk["entity_extraction"] = f'{elapsed_entity_extraction:.2f}'
   cleaned_graph_documents = handle_backticks_nodes_relationship_id_type(graph_documents)
+  
+  start_save_graphDocuments = time.time()
   save_graphDocuments_in_neo4j(graph, cleaned_graph_documents)
+  end_save_graphDocuments = time.time()
+  elapsed_save_graphDocuments = end_save_graphDocuments - start_save_graphDocuments
+  logging.info(f'Time taken to save graph document in neo4j: {elapsed_save_graphDocuments:.2f} seconds')
+  latency_processing_chunk["save_graphDocuments"] = f'{elapsed_save_graphDocuments:.2f}'
+
   chunks_and_graphDocuments_list = get_chunk_and_graphDocument(cleaned_graph_documents, chunkId_chunkDoc_list)
+
+  start_relationship = time.time()
   merge_relationship_between_chunk_and_entites(graph, chunks_and_graphDocuments_list)
-  # return graph_documents
+  end_relationship = time.time()
+  elapsed_relationship = end_relationship - start_relationship
+  logging.info(f'Time taken to create relationship between chunk and entities: {elapsed_relationship:.2f} seconds')
+  latency_processing_chunk["relationship_between_chunk_entity"] = f'{elapsed_relationship:.2f}'
   
   distinct_nodes = set()
   relations = []
@@ -469,7 +513,7 @@ def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password, datab
     rel_count += len(relations)
     print(f'node count internal func:{node_count}')
     print(f'relation count internal func:{rel_count}')
-  return node_count,rel_count
+  return node_count,rel_count,latency_processing_chunk
 
 def get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition):
   if retry_condition is None:
