@@ -643,6 +643,8 @@ export interface ContextProps {
 export interface MessageContextType {
   messages: Messages[] | [];
   setMessages: Dispatch<SetStateAction<Messages[]>>;
+  clearHistoryData:boolean;
+  setClearHistoryData: Dispatch<SetStateAction<boolean>>
 }
 
 export interface DatabaseStatusProps {
