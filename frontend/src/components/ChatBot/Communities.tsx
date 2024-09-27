@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import { CommunitiesProps } from '../../types';
 
 const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities }) => {
+  console.log('communities', communities);
   return (
     <>
       {loading ? (
@@ -19,6 +20,10 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities }) => {
                   <Flex flexDirection='row' gap='2'>
                     <Typography variant='subheading-medium'>ID : </Typography>
                     <Typography variant='subheading-medium'>{community.id}</Typography>
+                  </Flex>
+                  <Flex flexDirection='row' gap='2'>
+                    <Typography variant='subheading-medium'>Score : </Typography>
+                    <Typography variant='subheading-medium'>{community.score}</Typography>
                   </Flex>
                   <ReactMarkdown>{community.summary}</ReactMarkdown>
                 </div>
