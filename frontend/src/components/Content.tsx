@@ -870,7 +870,7 @@ const Content: React.FC<ContentProps> = ({
               placement='top'
               label='generate graph'
               onClick={onClickHandler}
-              disabled={disableCheck}
+              disabled={disableCheck || isReadOnlyUser}
               className='mr-0.5'
               size={isTablet ? 'small' : 'medium'}
             >

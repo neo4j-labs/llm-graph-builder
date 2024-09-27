@@ -52,7 +52,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
-  const { userCredentials } = useCredentials();
+  const { userCredentials, isReadOnlyUser } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -148,7 +148,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 {info.getValue()}
                 {(info.getValue() === 'Completed' ||
                   info.getValue() === 'Failed' ||
-                  info.getValue() === 'Cancelled') && (
+                  (info.getValue() === 'Cancelled' && !isReadOnlyUser)) && (
                   <span className='mx-1'>
                     <IconButtonWithToolTip
                       placement='right'

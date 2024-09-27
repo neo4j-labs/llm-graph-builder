@@ -134,9 +134,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           setCommunities(
             (communitiesData || [])
               .map((community: { element_id: string }) => {
-                const communityScore = nodeDetails?.communitydetails?.find((c: { id: string }) =>
-                  c.id
-                  === community.element_id);
+                const communityScore = nodeDetails?.communitydetails?.find(
+                  (c: { id: string }) => c.id === community.element_id
+                );
                 return {
                   ...community,
                   score: communityScore?.score ?? 1,
@@ -202,9 +202,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
               {mode === chatModeLables.graph_vector ||
-                mode === chatModeLables.graph ||
-                mode === chatModeLables.graph_vector_fulltext ||
-                mode === chatModeLables.entity_vector ? (
+              mode === chatModeLables.graph ||
+              mode === chatModeLables.graph_vector_fulltext ||
+              mode === chatModeLables.entity_vector ? (
                 <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
               ) : (
                 <></>
