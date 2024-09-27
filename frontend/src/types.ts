@@ -5,6 +5,7 @@ import { OverridableStringUnion } from '@mui/types';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { NonOAuthError } from '@react-oauth/google';
 import { BannerType } from '@neo4j-ndl/react';
+import Queue from './utils/Queue';
 
 export interface CustomFileBase extends Partial<globalThis.File> {
   processing: number | string;
@@ -235,7 +236,7 @@ export type ChatbotProps = {
   isFullScreen?: boolean;
   connectionStatus: boolean;
 };
-export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
+export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> { }
 
 export interface GraphViewModalProps {
   open: boolean;
@@ -259,7 +260,7 @@ export interface CheckboxSectionProps {
   handleChange: (graph: GraphType) => void;
   isgds: boolean;
   isDocChunk: boolean;
-  isEntity:boolean;
+  isEntity: boolean;
 }
 
 export interface fileName {
@@ -422,7 +423,7 @@ export interface chatInfoMessage extends Partial<Messages> {
   cypher_query?: string;
   graphonly_entities: [];
   error: string;
-  entities_ids:string[];
+  entities_ids: string[];
   nodeDetails: nodeDetailsProps;
 }
 
@@ -475,6 +476,7 @@ export type Community = {
   weight: number;
   level: number;
   community_rank: number;
+  score?: number;
 };
 export type GroupedEntity = {
   texts: Set<string>;
@@ -643,7 +645,7 @@ export interface ContextProps {
 export interface MessageContextType {
   messages: Messages[] | [];
   setMessages: Dispatch<SetStateAction<Messages[]>>;
-  clearHistoryData:boolean;
+  clearHistoryData: boolean;
   setClearHistoryData: Dispatch<SetStateAction<boolean>>
 }
 
@@ -677,7 +679,7 @@ export type CommunitiesProps = {
   communities: Community[];
 };
 
-export interface entity{
+export interface entity {
   id: string;
   score: number;
 };
@@ -695,5 +697,44 @@ export interface nodeDetailsProps {
 
 export type entityProps = {
   entityids: [],
-  relationshipids:[]
+  relationshipids: []
+}
+
+export interface showTextFromSchemaDialogType {
+  triggeredFrom: string;
+  show: boolean;
+}
+export interface FileContextType {
+  files: (File | null)[] | [];
+  filesData: CustomFile[] | [];
+  setFiles: Dispatch<SetStateAction<(File | null)[]>>;
+  setFilesData: Dispatch<SetStateAction<CustomFile[]>>;
+  model: string;
+  setModel: Dispatch<SetStateAction<string>>;
+  graphType: string;
+  setGraphType: Dispatch<SetStateAction<string>>;
+  selectedNodes: readonly OptionType[];
+  setSelectedNodes: Dispatch<SetStateAction<readonly OptionType[]>>;
+  selectedRels: readonly OptionType[];
+  setSelectedRels: Dispatch<SetStateAction<readonly OptionType[]>>;
+  rowSelection: Record<string, boolean>;
+  setRowSelection: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  selectedRows: string[];
+  setSelectedRows: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedSchemas: readonly OptionType[];
+  setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
+  chatMode: string;
+  setchatMode: Dispatch<SetStateAction<string>>;
+  isSchema: boolean;
+  setIsSchema: React.Dispatch<React.SetStateAction<boolean>>;
+  showTextFromSchemaDialog: showTextFromSchemaDialogType;
+  setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
+  postProcessingTasks: string[];
+  setPostProcessingTasks: React.Dispatch<React.SetStateAction<string[]>>;
+  queue: Queue;
+  setQueue: Dispatch<SetStateAction<Queue>>;
+  processedCount: number;
+  setProcessedCount: Dispatch<SetStateAction<number>>;
+  postProcessingVal: boolean;
+  setPostProcessingVal: Dispatch<SetStateAction<boolean>>;
 }

@@ -129,7 +129,17 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             })
           );
           setRelationships(relationshipsData ?? []);
-          setCommunities(communitiesData ?? []);
+          setCommunities(communitiesData.map((community: any) => {
+            const communityScore = nodeDetails?.communitydetails?.find((c: any) =>
+              c.id === community.element_id);
+            return {
+              ...community,
+              score: communityScore?.score || 1
+            };
+          })
+            .sort((a: any, b: any) => b.score - a.score)
+          );
+
           setChunks(
             chunksData
               .map((chunk: any) => {

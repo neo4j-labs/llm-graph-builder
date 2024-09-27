@@ -80,7 +80,7 @@ const Content: React.FC<ContentProps> = ({
     alertType: 'neutral',
     alertMessage: '',
   });
-  const {setClearHistoryData } = useMessageContext();
+  const { setClearHistoryData } = useMessageContext();
   const {
     filesData,
     setFilesData,
@@ -95,6 +95,7 @@ const Content: React.FC<ContentProps> = ({
     queue,
     processedCount,
     setProcessedCount,
+    setPostProcessingVal
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
@@ -161,7 +162,7 @@ const Content: React.FC<ContentProps> = ({
       (async () => {
         showNormalToast('Some Q&A functionality will only be available afterwards.');
         await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
-        showSuccessToast('All Q&A functionality is available now.');
+          showSuccessToast('All Q&A functionality is available now.');
       })();
     }
   }, [processedCount, userCredentials, queue]);
