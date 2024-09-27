@@ -1,5 +1,11 @@
 import { createContext, useContext, useState, FC, useEffect } from 'react';
-import { CustomFile, FileContextProviderProps, FileContextType, OptionType, showTextFromSchemaDialogType } from '../types';
+import {
+  CustomFile,
+  FileContextProviderProps,
+  FileContextType,
+  OptionType,
+  showTextFromSchemaDialogType,
+} from '../types';
 import { chatModeLables, defaultLLM } from '../utils/Constants';
 import { useCredentials } from './UserCredentials';
 import Queue from '../utils/Queue';
@@ -85,7 +91,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     processedCount,
     setProcessedCount,
     postProcessingVal,
-    setPostProcessingVal
+    setPostProcessingVal,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

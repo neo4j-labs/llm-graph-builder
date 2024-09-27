@@ -8,7 +8,7 @@ import { capitalizeWithPlus } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 export default function ChatModeToggle({
   menuAnchor,
-  closeHandler = () => { },
+  closeHandler = () => {},
   open,
   anchorPortal = true,
   disableBackdrop = false,
@@ -35,20 +35,17 @@ export default function ChatModeToggle({
     return isGdsActive && isCommunityAllowed
       ? chatModes
       : chatModes?.filter(
-        (m) =>
-          !m.mode.includes(chatModeLables.entity_vector) &&
-          !m.mode.includes(chatModeLables.global_vector)
-      );
+          (m) => !m.mode.includes(chatModeLables.entity_vector) && !m.mode.includes(chatModeLables.global_vector)
+        );
   }, [isGdsActive, isCommunityAllowed]);
   const menuItems = useMemo(() => {
     return memoizedChatModes?.map((m) => {
       const isDisabled = Boolean(
-        selectedRows.length &&
-        !(m.mode === chatModeLables.vector || m.mode === chatModeLables.graph_vector)
+        selectedRows.length && !(m.mode === chatModeLables.vector || m.mode === chatModeLables.graph_vector)
       );
       const handleModeChange = () => {
         if (isDisabled) {
-          setchatMode(chatModeLables.graph_vector); 
+          setchatMode(chatModeLables.graph_vector);
         } else {
           setchatMode(m.mode);
         }
@@ -57,11 +54,11 @@ export default function ChatModeToggle({
       return {
         title: (
           <div>
-            <Typography variant="subheading-small">
+            <Typography variant='subheading-small'>
               {m.mode.includes('+') ? capitalizeWithPlus(m.mode) : capitalize(m.mode)}
             </Typography>
             <div>
-              <Typography variant="body-small">{m.description}</Typography>
+              <Typography variant='body-small'>{m.description}</Typography>
             </div>
           </div>
         ),
@@ -71,12 +68,12 @@ export default function ChatModeToggle({
           <span>
             {chatMode === m.mode && (
               <>
-                <StatusIndicator type="success" /> {chatModeLables.selected}
+                <StatusIndicator type='success' /> {chatModeLables.selected}
               </>
             )}
             {isDisabled && (
               <>
-                <StatusIndicator type="warning" /> {chatModeLables.unavailableChatMode}
+                <StatusIndicator type='warning' /> {chatModeLables.unavailableChatMode}
               </>
             )}
           </span>

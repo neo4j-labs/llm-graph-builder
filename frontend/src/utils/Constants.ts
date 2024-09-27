@@ -75,7 +75,7 @@ export const chatModeLables = {
   entity_vector: 'entity search+vector',
   unavailableChatMode: 'Chat mode is unavailable when rows are selected',
   selected: 'Selected',
-  global_vector: 'global search+vector+fulltext'
+  global_vector: 'global search+vector+fulltext',
 };
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
@@ -109,9 +109,10 @@ export const chatModes =
           description: 'Uses vector indexing on entity nodes for highly relevant entity-based search.',
         },
         {
-          mode : chatModeLables.global_vector,
-          description: 'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.'
-        }
+          mode: chatModeLables.global_vector,
+          description:
+            'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.',
+        },
       ];
 
 export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
