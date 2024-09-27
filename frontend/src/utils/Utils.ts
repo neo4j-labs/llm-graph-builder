@@ -179,6 +179,7 @@ export const processGraphData = (neoNodes: ExtendedNode[], neoRels: ExtendedRela
     };
   });
   const finalNodes = newNodes.flat();
+  // Process relationships
   const newRels: Relationship[] = neoRels.map((relations: any) => {
     return {
       id: relations.element_id,
@@ -214,6 +215,7 @@ export const filterData = (
     (type) => type !== 'Document' && type !== 'Chunk' && type !== '__Community__'
   );
   // Only Document + Chunk
+  // const processedEntities = entityTypes.flatMap(item => item.includes(',') ? item.split(',') : item);
   if (
     graphType.includes('DocumentChunk') &&
     !graphType.includes('Entities') &&
@@ -246,6 +248,7 @@ export const filterData = (
         nodeIds.has(rel.to)
     );
     filteredScheme = Object.fromEntries(entityTypes.map((key) => [key, scheme[key]])) as Scheme;
+    console.log('labels', entityNodes);
     // Only Communities
   } else if (
     graphType.includes('Communities') &&
@@ -337,6 +340,7 @@ export const filterData = (
     filteredNodes = allNodes;
     filteredRelations = allRelationships;
     filteredScheme = scheme;
+    console.log('entity', filteredScheme);
   }
   return { filteredNodes, filteredRelations, filteredScheme };
 };
@@ -429,6 +433,8 @@ export const getDescriptionForChatMode = (mode: string): string => {
       return 'Merges vector indexing, graph connections, and fulltext indexing for a comprehensive search approach, combining semantic similarity, contextual relevance, and keyword-based search for optimal results.';
     case chatModeLables.entity_vector:
       return 'Combines entity node vector indexing with graph connections for accurate entity-based search, providing the most relevant response.';
+    case chatModeLables.global_vector:
+       return 'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.'
     default:
       return 'Chat mode description not available'; // Fallback description
   }
@@ -470,3 +476,10 @@ export function isAllowedHost(url: string, allowedHosts: string[]) {
     return false;
   }
 }
+
+export const getCheckboxConditions = (allNodes: ExtendedNode[]) => {
+  const isDocChunk = allNodes.some((n) => n.labels?.includes('Document'));
+  const isEntity = allNodes.some((n) => !n.labels?.includes('Document') || !n.labels?.includes('Chunk'));
+  const isgds = allNodes.some((n) => n.labels?.includes('__Community__'));
+  return { isDocChunk, isEntity, isgds };
+};

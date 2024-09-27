@@ -75,6 +75,7 @@ export const chatModeLables = {
   entity_vector: 'entity search+vector',
   unavailableChatMode: 'Chat mode is unavailable when rows are selected',
   selected: 'Selected',
+  global_vector: 'global search+vector+fulltext'
 };
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
@@ -107,6 +108,10 @@ export const chatModes =
           mode: chatModeLables.entity_vector,
           description: 'Uses vector indexing on entity nodes for highly relevant entity-based search.',
         },
+        {
+          mode : chatModeLables.global_vector,
+          description: 'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.'
+        }
       ];
 
 export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
@@ -234,8 +239,8 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
                 performing similarity-based searches.`,
   },
   {
-    title: 'create_communities',
-    description: 'Create Communities identifies and groups similar entities, improving search accuracy and analysis.',
+    title: 'enable_communities',
+    description: 'Enable community creation across entities to use GraphRAG capabilities both local and global search.',
   },
 ];
 export const batchSize: number = parseInt(process.env.VITE_BATCH_SIZE ?? '2');

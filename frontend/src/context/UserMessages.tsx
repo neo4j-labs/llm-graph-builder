@@ -9,10 +9,13 @@ const MessageContextWrapper: FC<MessagesContextProviderProps> = ({ children }) =
   const [messages, setMessages] = useState<Messages[] | []>([
     { ...chatbotmessages.listMessages[1], datetime: getDateTime() },
   ]);
+  const [clearHistoryData, setClearHistoryData] = useState<boolean>(false);
 
   const value: MessageContextType = {
     messages,
     setMessages,
+    clearHistoryData,
+    setClearHistoryData
   };
   return <MessageContext.Provider value={value}>{children}</MessageContext.Provider>;
 };
