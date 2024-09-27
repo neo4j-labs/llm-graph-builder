@@ -1,7 +1,8 @@
 MODEL_VERSIONS = {
         "openai-gpt-3.5": "gpt-3.5-turbo-0125",
         "gemini-1.0-pro": "gemini-1.0-pro-001",
-        "gemini-1.5-pro": "gemini-1.5-pro-preview-0514",
+        "gemini-1.5-pro": "gemini-1.5-pro-002",
+        "gemini-1.5-flash": "gemini-1.5-flash-002",
         "openai-gpt-4": "gpt-4-turbo-2024-04-09",
         "diffbot" : "gpt-4-turbo-2024-04-09",
         "openai-gpt-4o-mini": "gpt-4o-mini-2024-07-18",
@@ -9,7 +10,7 @@ MODEL_VERSIONS = {
         "groq-llama3" : "llama3-70b-8192"
          }
 OPENAI_MODELS = ["openai-gpt-3.5", "openai-gpt-4o", "openai-gpt-4o-mini"]
-GEMINI_MODELS = ["gemini-1.0-pro", "gemini-1.5-pro"]
+GEMINI_MODELS = ["gemini-1.0-pro", "gemini-1.5-pro", "gemini-1.5-flash"]
 GROQ_MODELS = ["groq-llama3"]
 BUCKET_UPLOAD = 'llm-graph-builder-upload'
 BUCKET_FAILED_FILE = 'llm-graph-builder-failed'
@@ -92,14 +93,14 @@ CHAT_SEARCH_KWARG_SCORE_THRESHOLD = 0.5
 CHAT_DOC_SPLIT_SIZE = 3000
 CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD = 0.10
 CHAT_TOKEN_CUT_OFF = {
-     ("openai-gpt-3.5",'azure_ai_gpt_35',"gemini-1.0-pro","gemini-1.5-pro","groq-llama3",'groq_llama3_70b','anthropic_claude_3_5_sonnet','fireworks_llama_v3_70b','bedrock_claude_3_5_sonnet', ) : 4, 
+     ("openai-gpt-3.5",'azure_ai_gpt_35',"gemini-1.0-pro","gemini-1.5-pro","gemini-1.5-flash","groq-llama3",'groq_llama3_70b','anthropic_claude_3_5_sonnet','fireworks_llama_v3_70b','bedrock_claude_3_5_sonnet', ) : 4, 
      ("openai-gpt-4","diffbot" ,'azure_ai_gpt_4o',"openai-gpt-4o", "openai-gpt-4o-mini") : 28,
      ("ollama_llama3") : 2  
 } 
 
 
 CHAT_TOKEN_CUT_OFF = {
-     ("openai-gpt-3.5",'azure_ai_gpt_35',"gemini-1.0-pro","gemini-1.5-pro","groq-llama3",'groq_llama3_70b','anthropic_claude_3_5_sonnet','fireworks_llama_v3_70b','bedrock_claude_3_5_sonnet', ) : 4, 
+     ("openai-gpt-3.5",'azure_ai_gpt_35',"gemini-1.0-pro","gemini-1.5-pro", "gemini-1.5-flash","groq-llama3",'groq_llama3_70b','anthropic_claude_3_5_sonnet','fireworks_llama_v3_70b','bedrock_claude_3_5_sonnet', ) : 4, 
      ("openai-gpt-4","diffbot" ,'azure_ai_gpt_4o',"openai-gpt-4o", "openai-gpt-4o-mini") : 28,
      ("ollama_llama3") : 2  
 } 
@@ -476,3 +477,46 @@ QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT = """
 START_FROM_BEGINNING  = "start_from_beginning"     
 DELETE_ENTITIES_AND_START_FROM_BEGINNING = "delete_entities_and_start_from_beginning"
 START_FROM_LAST_PROCESSED_POSITION = "start_from_last_processed_position"                                                    
+
+PROMPT_TO_ALL_LLMs = """
+"# Knowledge Graph Instructions for LLMs\n"
+    "## 1. Overview\n"
+    "You are a top-tier algorithm designed for extracting information in structured "
+    "formats to build a knowledge graph.\n"
+    "Try to capture as much information from the text as possible without "
+    "sacrificing accuracy. Do not add any information that is not explicitly "
+    "mentioned in the text.\n"
+    "- **Nodes** represent entities and concepts.\n"
+    "- The aim is to achieve simplicity and clarity in the knowledge graph, making it\n"
+    "accessible for a vast audience.\n"
+    "## 2. Labeling Nodes\n"
+    "- **Consistency**: Ensure you use available types for node labels.\n"
+    "Ensure you use basic or elementary types for node labels.\n"
+    "- For example, when you identify an entity representing a person, "
+    "always label it as **'person'**. Avoid using more specific terms "
+    "like 'mathematician' or 'scientist'."
+    "- **Node IDs**: Never utilize integers as node IDs. Node IDs should be "
+    "names or human-readable identifiers found in the text.\n"
+    "- **Relationships** represent connections between entities or concepts.\n"
+    "Ensure consistency and generality in relationship types when constructing "
+    "knowledge graphs. Instead of using specific and momentary types "
+    "such as 'BECAME_PROFESSOR', use more general and timeless relationship types "
+    "like 'PROFESSOR'. Make sure to use general and timeless relationship types!\n"
+    "## 3. Coreference Resolution\n"
+    "- **Maintain Entity Consistency**: When extracting entities, it's vital to "
+    "ensure consistency.\n"
+    'If an entity, such as "John Doe", is mentioned multiple times in the text '
+    'but is referred to by different names or pronouns (e.g., "Joe", "he"),'
+    "always use the most complete identifier for that entity throughout the "
+    'knowledge graph. In this example, use "John Doe" as the entity ID.\n'
+    "Remember, the knowledge graph should be coherent and easily understandable, "
+    "so maintaining consistency in entity references is crucial.\n"
+    "## 4. Node Properties\n"
+    "- Dates, URLs, Time, and Numerical Values: Instead of creating separate nodes for 
+    these elements, represent them as properties of existing nodes."
+    "- Example: Instead of creating a node labeled "2023-03-15" and connecting it to another node 
+    with the relationship "BORN_ON", add a property called "born_on" to the person node with the 
+    value "2023-03-15"."
+    "## 5. Strict Compliance\n"
+    "Adhere to the rules strictly. Non-compliance will result in termination."
+    """
