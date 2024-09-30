@@ -68,7 +68,7 @@ export const chatModeLables = {
   fulltext: 'fulltext',
   graph_vector_fulltext: 'graph+vector+fulltext',
   entity_vector: 'entity search+vector',
-  unavailableChatMode: 'Chat mode is unavailable when rows are selected',
+  unavailableChatMode: 'Chat mode is unavailable when files are selected',
   selected: 'Selected',
   global_vector: 'global search+vector+fulltext',
 };
