@@ -33,6 +33,7 @@ import DatabaseStatusIcon from './UI/DatabaseStatusIcon';
 import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
 import retry from '../services/retry';
 import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/toasts';
+import { useMessageContext } from '../context/UserMessages';
 
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
@@ -79,7 +80,7 @@ const Content: React.FC<ContentProps> = ({
     alertType: 'neutral',
     alertMessage: '',
   });
-
+  const { setClearHistoryData } = useMessageContext();
   const {
     filesData,
     setFilesData,
@@ -153,7 +154,7 @@ const Content: React.FC<ContentProps> = ({
     if (afterFirstRender) {
       localStorage.setItem('processedCount', JSON.stringify({ db: userCredentials?.uri, count: processedCount }));
     }
-    if (processedCount == batchSize) {
+    if (processedCount == batchSize && !isReadOnlyUser) {
       handleGenerateGraph([], true);
     }
     if (processedCount === 1 && queue.isEmpty()) {
@@ -163,7 +164,7 @@ const Content: React.FC<ContentProps> = ({
         showSuccessToast('All Q&A functionality is available now.');
       })();
     }
-  }, [processedCount, userCredentials, queue]);
+  }, [processedCount, userCredentials, queue, isReadOnlyUser]);
 
   useEffect(() => {
     if (afterFirstRender) {
@@ -184,7 +185,6 @@ const Content: React.FC<ContentProps> = ({
     if (connection != null) {
       (async () => {
         const parsedData = JSON.parse(connection);
-        console.log(parsedData.uri);
         const response = await connectAPI(
           parsedData.uri,
           parsedData.user,
@@ -204,7 +204,7 @@ const Content: React.FC<ContentProps> = ({
             setGdsActive(response.data.data.gds_status);
           }
           if (response.data.data.write_access !== undefined) {
-            setIsReadOnlyUser(response.data.data.write_access);
+            setIsReadOnlyUser(!response.data.data.write_access);
           }
           if (
             (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
@@ -472,12 +472,12 @@ const Content: React.FC<ContentProps> = ({
         }
         data = triggerBatchProcessing(filesTobeSchedule, filesTobeProcessed, true, true);
       }
-      Promise.allSettled(data).then(async (_) => {
+      Promise.allSettled(data).then((_) => {
         setextractLoading(false);
       });
     } else if (queueFiles && !queue.isEmpty() && processingFilesCount < batchSize) {
       data = scheduleBatchWiseProcess(queue.items, true);
-      Promise.allSettled(data).then(async (_) => {
+      Promise.allSettled(data).then((_) => {
         setextractLoading(false);
       });
     } else {
@@ -496,7 +496,7 @@ const Content: React.FC<ContentProps> = ({
       } else {
         data = triggerBatchProcessing(queue.items, queue.items as CustomFile[], true, false);
       }
-      Promise.allSettled(data).then(async (_) => {
+      Promise.allSettled(data).then((_) => {
         setextractLoading(false);
       });
     } else {
@@ -540,6 +540,7 @@ const Content: React.FC<ContentProps> = ({
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
+    setClearHistoryData(true);
   };
 
   const retryHandler = async (filename: string, retryoption: string) => {
@@ -869,7 +870,7 @@ const Content: React.FC<ContentProps> = ({
               placement='top'
               label='generate graph'
               onClick={onClickHandler}
-              disabled={disableCheck}
+              disabled={disableCheck || isReadOnlyUser}
               className='mr-0.5'
               size={isTablet ? 'small' : 'medium'}
             >

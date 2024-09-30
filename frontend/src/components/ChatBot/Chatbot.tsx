@@ -7,7 +7,7 @@ import {
   SpeakerXMarkIconOutline,
 } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../../assets/images/chatbot-ai.png';
-import { ChatbotProps, CustomFile, UserCredentials,nodeDetailsProps } from '../../types';
+import { ChatbotProps, CustomFile, UserCredentials, nodeDetailsProps } from '../../types';
 import { useCredentials } from '../../context/UserCredentials';
 import { chatBotAPI } from '../../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
@@ -57,16 +57,10 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
     },
   });
-  let selectedFileNames: CustomFile[] = [];
-  for (let index = 0; index < selectedRows.length; index++) {
-    const id = selectedRows[index];
-    for (let index = 0; index < filesData.length; index++) {
-      const f = filesData[index];
-      if (f.id === id) {
-        selectedFileNames.push(f);
-      }
-    }
-  }
+
+  let selectedFileNames: CustomFile[] = filesData.filter(
+    (f) => selectedRows.includes(f.id) && ['Completed'].includes(f.status)
+  );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
@@ -123,7 +117,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               graphonly_entities: response?.graphonly_entities,
               error: response.error,
               entitiysearchonly_entities: response.entitiysearchonly_entities,
-              nodeDetails: response?.nodeDetails
+              nodeDetails: response?.nodeDetails,
             },
           ]);
         } else {
@@ -223,7 +217,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
         error,
         entitiysearchonly_entities,
         chatEntities,
-        nodeDetails: chatnodedetails
+        nodeDetails: chatnodedetails,
       };
       simulateTypingEffect(finalbotReply);
     } catch (error) {
@@ -377,7 +371,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                             setgraphEntitites(chat.graphonly_entities ?? []);
                             setEntitiesModal(chat.entities ?? []);
                             setmessageError(chat.error ?? '');
-                            setNodeDetailsModal(chat.nodeDetails ?? {})
+                            setNodeDetailsModal(chat.nodeDetails ?? {});
                           }}
                         >
                           {' '}
@@ -449,7 +443,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             disabled={loading || !connectionStatus}
             size='medium'
           >
-            {buttonCaptions.ask} {selectedRows != undefined && selectedRows.length > 0 && `(${selectedRows.length})`}
+            {buttonCaptions.ask}{' '}
+            {selectedFileNames != undefined && selectedFileNames.length > 0 && `(${selectedFileNames.length})`}
           </ButtonWithToolTip>
         </form>
       </div>

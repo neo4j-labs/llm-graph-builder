@@ -24,17 +24,19 @@ export default function ChatModeToggle({
   const { isGdsActive } = useCredentials();
 
   useEffect(() => {
-    if (selectedRows.length !== 0) {
-      setchatMode(chatModeLables.graph_vector);
-    } else {
-      setchatMode(chatModeLables.graph_vector_fulltext);
+    // If rows are selected, the mode is valid (either vector or graph+vector)
+    if (selectedRows.length > 0) {
+      if (!(chatMode === chatModeLables.vector || chatMode === chatModeLables.graph_vector)) {
+        setchatMode(chatModeLables.graph_vector);
+      }
     }
-  }, [selectedRows.length]);
-
+  }, [selectedRows.length, chatMode, setchatMode]);
   const memoizedChatModes = useMemo(() => {
     return isGdsActive && isCommunityAllowed
       ? chatModes
-      : chatModes?.filter((m) => !m.mode.includes(chatModeLables.entity_vector) && !m.mode.includes(chatModeLables.global_vector));
+      : chatModes?.filter(
+          (m) => !m.mode.includes(chatModeLables.entity_vector) && !m.mode.includes(chatModeLables.global_vector)
+        );
   }, [isGdsActive, isCommunityAllowed]);
   const menuItems = useMemo(() => {
     return memoizedChatModes?.map((m) => {
@@ -82,10 +84,9 @@ export default function ChatModeToggle({
 
   useEffect(() => {
     if (!selectedRows.length && !chatMode) {
-      setchatMode(chatMode);
+      setchatMode(chatModeLables.graph_vector_fulltext);
     }
-  }, [setchatMode, selectedRows, chatMode]);
-
+  }, [setchatMode, selectedRows.length, chatMode]);
   return (
     <CustomMenu
       closeHandler={closeHandler}

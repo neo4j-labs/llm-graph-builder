@@ -4,7 +4,7 @@ import { Box, IconButton } from '@neo4j-ndl/react';
 import { IconProps } from '../../types';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { tooltips } from '../../utils/Constants';
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { RiChatSettingsLine } from 'react-icons/ri';
 
 const ExpandedChatButtonContainer: React.FC<IconProps> = ({ closeChatBot, deleteOnClick, messages }) => {
@@ -51,4 +51,4 @@ const ExpandedChatButtonContainer: React.FC<IconProps> = ({ closeChatBot, delete
   );
 };
 
-export default ExpandedChatButtonContainer;
+export default memo(ExpandedChatButtonContainer);

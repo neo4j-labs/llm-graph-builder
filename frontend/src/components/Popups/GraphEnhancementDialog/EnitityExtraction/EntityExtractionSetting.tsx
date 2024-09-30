@@ -217,6 +217,14 @@ export default function EntityExtractionSetting({
     setSelectedRels(relationshipTypeOptions);
     setIsSchema(true);
     localStorage.setItem('isSchema', JSON.stringify(true));
+    localStorage.setItem(
+      'selectedNodeLabels',
+      JSON.stringify({ db: userCredentials?.uri, selectedOptions: nodeLabelOptions })
+    );
+    localStorage.setItem(
+      'selectedRelationshipLabels',
+      JSON.stringify({ db: userCredentials?.uri, selectedOptions: relationshipTypeOptions })
+    );
   }, [nodeLabelOptions, relationshipTypeOptions]);
 
   const handleClear = () => {
