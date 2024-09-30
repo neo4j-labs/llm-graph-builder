@@ -1,6 +1,7 @@
 import { NvlOptions } from '@neo4j-nvl/base';
 import { GraphType, OptionType } from '../types';
-import { getDescriptionForChatMode } from './Utils';
+import { getDateTime, getDescriptionForChatMode } from './Utils';
+import chatbotmessages from '../assets/ChatbotMessages.json';
 
 export const document = `+ [docs]`;
 
@@ -308,4 +309,7 @@ export const connectionLabels = {
   graphDatabase: 'Graph Database',
   greenStroke: 'green',
   redStroke: 'red',
+};
+export const getDefaultMessage = () => {
+  return [{ ...chatbotmessages.listMessages[1], datetime: getDateTime() }];
 };
