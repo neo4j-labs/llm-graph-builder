@@ -740,3 +740,4 @@ export interface FileContextType {
   postProcessingVal: boolean;
   setPostProcessingVal: Dispatch<SetStateAction<boolean>>;
 }
+export declare type Side = 'top' | 'right' | 'bottom' | 'left';

@@ -1,10 +1,10 @@
 import { Button, Dialog, Typography } from '@neo4j-ndl/react';
 import { CustomFile } from '../../../types';
 import LargeFilesAlert from './LargeFilesAlert';
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useFileContext } from '../../../context/UsersFiles';
 
-export default function ConfirmationDialog({
+function ConfirmationDialog({
   largeFiles,
   open,
   onClose,
@@ -111,3 +111,4 @@ export default function ConfirmationDialog({
     </Dialog>
   );
 }
+export default memo(ConfirmationDialog);
