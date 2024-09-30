@@ -2,8 +2,13 @@ import { Box, LoadingSpinner, Flex, Typography } from '@neo4j-ndl/react';
 import { FC } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { CommunitiesProps } from '../../types';
+import GraphViewButton from '../Graph/GraphViewButton';
 
-const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities }) => {
+const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, nodeValues, relationshipValues }) => {
+
+  console.log('nodesVal', nodeValues);
+  console.log('relval', relationshipValues)
+
   return (
     <>
       {loading ? (
@@ -17,8 +22,7 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities }) => {
               <li key={`${community.id}${index}`} className='mb-2'>
                 <div>
                   <Flex flexDirection='row' gap='2'>
-                    <Typography variant='subheading-medium'>ID : </Typography>
-                    <Typography variant='subheading-medium'>{community.id}</Typography>
+                    <GraphViewButton nodeValues={nodeValues} relationshipValues={relationshipValues} fill='text' label={`ID : ${community.id}`} />
                   </Flex>
                   <Flex flexDirection='row' gap='2'>
                     <Typography variant='subheading-medium'>Score : </Typography>
@@ -36,5 +40,4 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities }) => {
     </>
   );
 };
-
 export default CommunitiesInfo;

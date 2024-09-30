@@ -62,6 +62,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
 
+  console.log('node', nodeDetails);
+
+
   const actions: CypherCodeBlockProps['actions'] = useMemo(
     () => [
       {
@@ -121,6 +124,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               return n;
             })
           );
+          
           setNodes(
             nodesData.map((n: ExtendedNode) => {
               if (!n.labels.length && mode === chatModeLables.entity_vector) {
@@ -132,7 +136,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               return n ?? [];
             })
           );
+
           setRelationships(relationshipsData ?? []);
+
           setCommunities(
             (communitiesData || [])
               .map((community: { element_id: string }) => {
@@ -247,7 +253,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         </Tabs.TabPanel>
         {mode === chatModeLables.entity_vector || mode === chatModeLables.global_vector ? (
           <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={7}>
-            <CommunitiesInfo loading={loading} communities={communities} />
+            <CommunitiesInfo loading={loading} communities={communities} nodeValues= {nodes} relationshipValues={relationships}  />
           </Tabs.TabPanel>
         ) : (
           <></>
@@ -255,7 +261,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       </Flex>
       {activeTab == 4 && nodes?.length && relationships?.length ? (
         <Box className='button-container flex mt-2 justify-center'>
-          <GraphViewButton nodeValues={nodes} relationshipValues={relationships} />
+          <GraphViewButton nodeValues={nodes} relationshipValues={relationships} label='Graph Entities used for Answer Generation' />
         </Box>
       ) : (
         <></>
