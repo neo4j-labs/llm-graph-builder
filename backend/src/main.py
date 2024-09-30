@@ -339,6 +339,7 @@ def processing_source(uri, userName, password, database, model, file_name, pages
   elapsed_get_chunkId_chunkDoc_list = end_get_chunkId_chunkDoc_list - start_get_chunkId_chunkDoc_list
   logging.info(f'Time taken to create list chunkids with chunk document: {elapsed_get_chunkId_chunkDoc_list:.2f} seconds')
   uri_latency["create_list_chunk_and_document"] = f'{elapsed_get_chunkId_chunkDoc_list:.2f}'
+  uri_latency["total_chunks"] = total_chunks
 
   start_status_document_node = time.time()
   result = graphDb_data_Access.get_current_status_document_node(file_name)
@@ -396,8 +397,8 @@ def processing_source(uri, userName, password, database, model, file_name, pages
           processing_chunks_end_time = time.time()
           processing_chunks_elapsed_end_time = processing_chunks_end_time - processing_chunks_start_time
           logging.info(f"Time taken {update_graph_chunk_processed} chunks processed upto {select_chunks_upto} completed in {processing_chunks_elapsed_end_time:.2f} seconds for file name {file_name}")
-          uri_latency[f'processed_combine_chunk_{i}'] = f'{processing_chunks_elapsed_end_time:.2f}'
-          uri_latency[f'processed_chunk_detail_{i}'] = latency_processed_chunk
+          uri_latency[f'processed_combine_chunk_{i}-{select_chunks_upto}'] = f'{processing_chunks_elapsed_end_time:.2f}'
+          uri_latency[f'processed_chunk_detail_{i}-{select_chunks_upto}'] = latency_processed_chunk
           end_time = datetime.now()
           processed_time = end_time - start_time
           
@@ -440,6 +441,7 @@ def processing_source(uri, userName, password, database, model, file_name, pages
       processing_source_func = time.time() - processing_source_start_time
       logging.info(f"Time taken to processing source function completed in {processing_source_func:.2f} seconds for file name {file_name}")  
       uri_latency["Processed_source"] = f'{processing_source_func:.2f}'
+      uri_latency["Per_entity_latency"] = f'{int(processing_source_func)/node_count:.2f}/s'
       uri_latency["fileName"] = file_name
       uri_latency["nodeCount"] = node_count
       uri_latency["relationshipCount"] = rel_count
