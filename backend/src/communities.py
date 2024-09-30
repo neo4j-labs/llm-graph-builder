@@ -12,6 +12,8 @@ COMMUNITY_PROJECTION_NAME = "communities"
 NODE_PROJECTION = "!Chunk&!Document&!__Community__"
 NODE_PROJECTION_ENTITY = "__Entity__"
 MAX_WORKERS = 10
+MAX_COMMUNITY_LEVELS = 3 
+MIN_COMMUNITY_SIZE = 1
 
 
 CREATE_COMMUNITY_GRAPH_PROJECTION = """
@@ -194,7 +196,9 @@ def write_communities(gds, graph_project, project_name=COMMUNITY_PROJECTION_NAME
             graph_project,
             writeProperty=project_name,
             includeIntermediateCommunities=True,
-            relationshipWeightProperty="weight"
+            relationshipWeightProperty="weight",
+            maxLevels=MAX_COMMUNITY_LEVELS,
+            minCommunitySize=MIN_COMMUNITY_SIZE,
         )
         logging.info("Communities written successfully.")
         return True
