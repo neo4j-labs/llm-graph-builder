@@ -32,21 +32,25 @@ import EntitiesInfo from './EntitiesInfo';
 import SourcesInfo from './SourcesInfo';
 import CommunitiesInfo from './Communities';
 import { chatModeLables } from '../../utils/Constants';
+import { Relationship } from '@neo4j-nvl/base';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
   sources,
   model,
   total_tokens,
   response_time,
-  chunk_ids,
+  nodeDetails,
   mode,
   cypher_query,
   graphonly_entities,
   error,
+  entities_ids,
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
-  const [activeTab, setActiveTab] = useState<number>(error?.length ? 10 : mode === chatModeLables.graph ? 4 : 3);
+  const [activeTab, setActiveTab] = useState<number>(
+    error?.length ? 10 : mode === chatModeLables.global_vector ? 7 : mode === chatModeLables.graph ? 4 : 3
+  );
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -88,15 +92,21 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         try {
           const response = await chunkEntitiesAPI(
             userCredentials as UserCredentials,
-            chunk_ids.map((c) => c.id).join(','),
             userCredentials?.database,
-            mode === chatModeLables.entity_vector
+            nodeDetails,
+            entities_ids,
+            mode
           );
           if (response.data.status === 'Failure') {
             throw new Error(response.data.error);
           }
-          const nodesData = response?.data?.data?.nodes;
-          const relationshipsData = response?.data?.data?.relationships;
+          const nodesData = response?.data?.data?.nodes
+            .map((f: Node) => f)
+            .filter((node: ExtendedNode) => node.labels.length === 1);
+          const nodeIds = new Set(nodesData.map((node: any) => node.element_id));
+          const relationshipsData = response?.data?.data?.relationships
+            .map((f: Relationship) => f)
+            .filter((rel: any) => nodeIds.has(rel.end_node_element_id) && nodeIds.has(rel.start_node_element_id));
           const communitiesData = response?.data?.data?.community_data;
           const chunksData = response?.data?.data?.chunk_data;
 
@@ -123,17 +133,28 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             })
           );
           setRelationships(relationshipsData ?? []);
-          setCommunities(communitiesData ?? []);
+          setCommunities(
+            (communitiesData || [])
+              .map((community: { element_id: string }) => {
+                const communityScore = nodeDetails?.communitydetails?.find(
+                  (c: { id: string }) => c.id === community.element_id
+                );
+                return {
+                  ...community,
+                  score: communityScore?.score ?? 1,
+                };
+              })
+              .sort((a: any, b: any) => b.score - a.score)
+          );
+
           setChunks(
             chunksData
               .map((chunk: any) => {
-                const chunkScore = chunk_ids.find((chunkdetail) => chunkdetail.id === chunk.id);
-                return (
-                  {
-                    ...chunk,
-                    score: chunkScore?.score,
-                  } ?? []
-                );
+                const chunkScore = nodeDetails?.chunkdetails?.find((c: any) => c.id === chunk.id);
+                return {
+                  ...chunk,
+                  score: chunkScore?.score,
+                };
               })
               .sort((a: any, b: any) => b.score - a.score)
           );
@@ -147,7 +168,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     () => {
       setcopiedText(false);
     };
-  }, [chunk_ids, mode, error]);
+  }, [nodeDetails, mode, error]);
 
   const onChangeTabs = (tabId: number) => {
     setActiveTab(tabId);
@@ -175,22 +196,29 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         <Banner type='danger'>{error}</Banner>
       ) : (
         <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
-          {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
-          {mode != chatModeLables.graph ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
-          {mode === chatModeLables.graph_vector ||
-          mode === chatModeLables.graph ||
-          mode === chatModeLables.graph_vector_fulltext ||
-          mode === chatModeLables.entity_vector ? (
-            <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
+          {mode === chatModeLables.global_vector ? (
+            // Only show the Communities tab if mode is global
+            <Tabs.Tab tabId={7}>Communities</Tabs.Tab>
           ) : (
-            <></>
+            <>
+              {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
+              {mode != chatModeLables.graph ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
+              {mode === chatModeLables.graph_vector ||
+              mode === chatModeLables.graph ||
+              mode === chatModeLables.graph_vector_fulltext ||
+              mode === chatModeLables.entity_vector ? (
+                <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
+              ) : (
+                <></>
+              )}
+              {mode === chatModeLables.graph && cypher_query?.trim()?.length ? (
+                <Tabs.Tab tabId={6}>Generated Cypher Query</Tabs.Tab>
+              ) : (
+                <></>
+              )}
+              {mode === chatModeLables.entity_vector ? <Tabs.Tab tabId={7}>Communities</Tabs.Tab> : <></>}
+            </>
           )}
-          {mode === chatModeLables.graph && cypher_query?.trim()?.length ? (
-            <Tabs.Tab tabId={6}>Generated Cypher Query</Tabs.Tab>
-          ) : (
-            <></>
-          )}
-          {mode === chatModeLables.entity_vector ? <Tabs.Tab tabId={7}>Communities</Tabs.Tab> : <></>}
         </Tabs>
       )}
       <Flex className='p-4'>
@@ -217,7 +245,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             className='min-h-40'
           />
         </Tabs.TabPanel>
-        {mode === chatModeLables.entity_vector ? (
+        {mode === chatModeLables.entity_vector || mode === chatModeLables.global_vector ? (
           <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={7}>
             <CommunitiesInfo loading={loading} communities={communities} />
           </Tabs.TabPanel>

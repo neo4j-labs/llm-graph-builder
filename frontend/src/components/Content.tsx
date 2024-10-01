@@ -33,6 +33,8 @@ import DatabaseStatusIcon from './UI/DatabaseStatusIcon';
 import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
 import retry from '../services/retry';
 import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/toasts';
+import { useMessageContext } from '../context/UserMessages';
+import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
 
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
@@ -59,8 +61,16 @@ const Content: React.FC<ContentProps> = ({
   });
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
-  const { setUserCredentials, userCredentials, connectionStatus, setConnectionStatus, isGdsActive, setGdsActive } =
-    useCredentials();
+  const {
+    setUserCredentials,
+    userCredentials,
+    connectionStatus,
+    setConnectionStatus,
+    isGdsActive,
+    setGdsActive,
+    setIsReadOnlyUser,
+    isReadOnlyUser,
+  } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [retryFile, setRetryFile] = useState<string>('');
@@ -71,7 +81,7 @@ const Content: React.FC<ContentProps> = ({
     alertType: 'neutral',
     alertMessage: '',
   });
-
+  const { setClearHistoryData } = useMessageContext();
   const {
     filesData,
     setFilesData,
@@ -118,6 +128,9 @@ const Content: React.FC<ContentProps> = ({
         if (neo4jConnection.isgdsActive !== undefined) {
           setGdsActive(neo4jConnection.isgdsActive);
         }
+        if (neo4jConnection.isReadOnlyUser !== undefined) {
+          setIsReadOnlyUser(neo4jConnection.isReadOnlyUser);
+        }
       } else {
         setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
       }
@@ -142,17 +155,17 @@ const Content: React.FC<ContentProps> = ({
     if (afterFirstRender) {
       localStorage.setItem('processedCount', JSON.stringify({ db: userCredentials?.uri, count: processedCount }));
     }
-    if (processedCount == batchSize) {
+    if (processedCount == batchSize && !isReadOnlyUser) {
       handleGenerateGraph([], true);
     }
     if (processedCount === 1 && queue.isEmpty()) {
       (async () => {
-        showNormalToast('Some Q&A functionality will only be available afterwards.');
+        showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
         await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
         showSuccessToast('All Q&A functionality is available now.');
       })();
     }
-  }, [processedCount, userCredentials, queue]);
+  }, [processedCount, userCredentials, queue, isReadOnlyUser, isGdsActive]);
 
   useEffect(() => {
     if (afterFirstRender) {
@@ -173,7 +186,6 @@ const Content: React.FC<ContentProps> = ({
     if (connection != null) {
       (async () => {
         const parsedData = JSON.parse(connection);
-        console.log(parsedData.uri);
         const response = await connectAPI(
           parsedData.uri,
           parsedData.user,
@@ -189,6 +201,12 @@ const Content: React.FC<ContentProps> = ({
               password: btoa(atob(parsedData.password)),
             })
           );
+          if (response.data.data.gds_status !== undefined) {
+            setGdsActive(response.data.data.gds_status);
+          }
+          if (response.data.data.write_access !== undefined) {
+            setIsReadOnlyUser(!response.data.data.write_access);
+          }
           if (
             (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
               response.data.data.db_vector_dimension == 0) &&
@@ -376,7 +394,7 @@ const Content: React.FC<ContentProps> = ({
 
   const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
     if (!remainingFiles.length) {
-      showNormalToast('Some Q&A functionality will only be available afterwards.');
+      showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
       await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       showSuccessToast('All Q&A functionality is available now.');
     }
@@ -455,12 +473,12 @@ const Content: React.FC<ContentProps> = ({
         }
         data = triggerBatchProcessing(filesTobeSchedule, filesTobeProcessed, true, true);
       }
-      Promise.allSettled(data).then(async (_) => {
+      Promise.allSettled(data).then((_) => {
         setextractLoading(false);
       });
     } else if (queueFiles && !queue.isEmpty() && processingFilesCount < batchSize) {
       data = scheduleBatchWiseProcess(queue.items, true);
-      Promise.allSettled(data).then(async (_) => {
+      Promise.allSettled(data).then((_) => {
         setextractLoading(false);
       });
     } else {
@@ -479,7 +497,7 @@ const Content: React.FC<ContentProps> = ({
       } else {
         data = triggerBatchProcessing(queue.items, queue.items as CustomFile[], true, false);
       }
-      Promise.allSettled(data).then(async (_) => {
+      Promise.allSettled(data).then((_) => {
         setextractLoading(false);
       });
     } else {
@@ -523,6 +541,7 @@ const Content: React.FC<ContentProps> = ({
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
+    setClearHistoryData(true);
   };
 
   const retryHandler = async (filename: string, retryoption: string) => {
@@ -760,7 +779,7 @@ const Content: React.FC<ContentProps> = ({
             />
           </Suspense>
           <div className='connectionstatus__container'>
-            <span className='h6 px-1'>Neo4j connection</span>
+            <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
             <Typography variant='body-medium'>
               <DatabaseStatusIcon
                 isConnected={connectionStatus}
@@ -795,7 +814,7 @@ const Content: React.FC<ContentProps> = ({
               label='Graph Enhancemnet Settings'
               className='mr-2.5'
               onClick={toggleEnhancementDialog}
-              disabled={!connectionStatus}
+              disabled={!connectionStatus || isReadOnlyUser}
               size={isTablet ? 'small' : 'medium'}
             >
               Graph Enhancement
@@ -852,7 +871,7 @@ const Content: React.FC<ContentProps> = ({
               placement='top'
               label='generate graph'
               onClick={onClickHandler}
-              disabled={disableCheck}
+              disabled={disableCheck || isReadOnlyUser}
               className='mr-0.5'
               size={isTablet ? 'small' : 'medium'}
             >
@@ -887,7 +906,7 @@ const Content: React.FC<ContentProps> = ({
               }
               placement='top'
               onClick={() => setshowDeletePopUp(true)}
-              disabled={!selectedfileslength}
+              disabled={!selectedfileslength || isReadOnlyUser}
               className='ml-0.5'
               label='Delete Files'
               size={isTablet ? 'small' : 'medium'}

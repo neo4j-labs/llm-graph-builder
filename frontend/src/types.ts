@@ -5,6 +5,7 @@ import { OverridableStringUnion } from '@mui/types';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { NonOAuthError } from '@react-oauth/google';
 import { BannerType } from '@neo4j-ndl/react';
+import Queue from './utils/Queue';
 
 export interface CustomFileBase extends Partial<globalThis.File> {
   processing: number | string;
@@ -201,7 +202,7 @@ export interface Source {
   source_name: string;
   start_time?: string;
 }
-export interface chunk {
+export interface ChunkDetail {
   id: string;
   score: number;
 }
@@ -215,7 +216,8 @@ export interface Messages {
   model?: string;
   isLoading?: boolean;
   response_time?: number;
-  chunk_ids?: chunk[];
+  nodeDetails?: nodeDetailsProps;
+  chunk_ids?: string[];
   total_tokens?: number;
   speaking?: boolean;
   copying?: boolean;
@@ -223,7 +225,7 @@ export interface Messages {
   cypher_query?: string;
   graphonly_entities?: [];
   error?: string;
-  entities?: chunk[];
+  entities?: string[];
 }
 
 export type ChatbotProps = {
@@ -257,6 +259,8 @@ export interface CheckboxSectionProps {
   loading: boolean;
   handleChange: (graph: GraphType) => void;
   isgds: boolean;
+  isDocChunk: boolean;
+  isEntity: boolean;
 }
 
 export interface fileName {
@@ -414,12 +418,13 @@ export interface chatInfoMessage extends Partial<Messages> {
   sources: string[];
   model: string;
   response_time: number;
-  chunk_ids: chunk[];
   total_tokens: number;
   mode: string;
   cypher_query?: string;
   graphonly_entities: [];
   error: string;
+  entities_ids: string[];
+  nodeDetails: nodeDetailsProps;
 }
 
 export interface eventResponsetypes extends Omit<SourceNode, 'total_chunks' | 'processingTime'> {
@@ -471,6 +476,7 @@ export type Community = {
   weight: number;
   level: number;
   community_rank: number;
+  score?: number;
 };
 export type GroupedEntity = {
   texts: Set<string>;
@@ -631,12 +637,16 @@ export interface ContextProps {
   setUserCredentials: (UserCredentials: UserCredentials) => void;
   isGdsActive: boolean;
   setGdsActive: Dispatch<SetStateAction<boolean>>;
+  isReadOnlyUser: boolean;
+  setIsReadOnlyUser: Dispatch<SetStateAction<boolean>>;
   connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];
   setMessages: Dispatch<SetStateAction<Messages[]>>;
+  clearHistoryData: boolean;
+  setClearHistoryData: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface DatabaseStatusProps {
@@ -668,3 +678,64 @@ export type CommunitiesProps = {
   loading: boolean;
   communities: Community[];
 };
+
+export interface entity {
+  id: string;
+  score: number;
+}
+
+export interface community {
+  id: string;
+  score: number;
+}
+
+export interface nodeDetailsProps {
+  chunkdetails?: ChunkDetail[];
+  entitydetails?: entity[];
+  communitydetails?: community[];
+}
+
+export type entityProps = {
+  entityids: [];
+  relationshipids: [];
+};
+
+export interface showTextFromSchemaDialogType {
+  triggeredFrom: string;
+  show: boolean;
+}
+export interface FileContextType {
+  files: (File | null)[] | [];
+  filesData: CustomFile[] | [];
+  setFiles: Dispatch<SetStateAction<(File | null)[]>>;
+  setFilesData: Dispatch<SetStateAction<CustomFile[]>>;
+  model: string;
+  setModel: Dispatch<SetStateAction<string>>;
+  graphType: string;
+  setGraphType: Dispatch<SetStateAction<string>>;
+  selectedNodes: readonly OptionType[];
+  setSelectedNodes: Dispatch<SetStateAction<readonly OptionType[]>>;
+  selectedRels: readonly OptionType[];
+  setSelectedRels: Dispatch<SetStateAction<readonly OptionType[]>>;
+  rowSelection: Record<string, boolean>;
+  setRowSelection: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  selectedRows: string[];
+  setSelectedRows: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedSchemas: readonly OptionType[];
+  setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
+  chatMode: string;
+  setchatMode: Dispatch<SetStateAction<string>>;
+  isSchema: boolean;
+  setIsSchema: React.Dispatch<React.SetStateAction<boolean>>;
+  showTextFromSchemaDialog: showTextFromSchemaDialogType;
+  setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
+  postProcessingTasks: string[];
+  setPostProcessingTasks: React.Dispatch<React.SetStateAction<string[]>>;
+  queue: Queue;
+  setQueue: Dispatch<SetStateAction<Queue>>;
+  processedCount: number;
+  setProcessedCount: Dispatch<SetStateAction<number>>;
+  postProcessingVal: boolean;
+  setPostProcessingVal: Dispatch<SetStateAction<boolean>>;
+}
+export declare type Side = 'top' | 'right' | 'bottom' | 'left';

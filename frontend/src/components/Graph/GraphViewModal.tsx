@@ -31,7 +31,7 @@ import {
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
-import { filterData, processGraphData, sortAlphabetically } from '../../utils/Utils';
+import { filterData, getCheckboxConditions, processGraphData, sortAlphabetically } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 import { LegendsChip } from './LegendsChip';
 import graphQueryAPI from '../../services/GraphQuery';
@@ -152,9 +152,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     try {
       const result = await fetchData();
       if (result && result.data.data.nodes.length > 0) {
-        const neoNodes = result.data.data.nodes.map((f: Node) => f);
-        const neoRels = result.data.data.relationships.map((f: Relationship) => f);
+        const neoNodes = result.data.data.nodes
+          .map((f: Node) => f)
+          .filter((node: ExtendedNode) => node.labels.length === 1);
+        const nodeIds = new Set(neoNodes.map((node: any) => node.element_id));
+        const neoRels = result.data.data.relationships
+          .map((f: Relationship) => f)
+          .filter((rel: any) => nodeIds.has(rel.end_node_element_id) && nodeIds.has(rel.start_node_element_id));
         const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels);
+
         if (mode === 'refreshMode') {
           initGraph(graphType, finalNodes, finalRels, schemeVal);
         } else {
@@ -421,7 +427,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 graphType={graphType}
                 loading={loading}
                 handleChange={handleCheckboxChange}
-                isgds={allNodes.some((n) => n.labels.includes('__Community__'))}
+                {...getCheckboxConditions(allNodes)}
               />
             )}
           </Flex>

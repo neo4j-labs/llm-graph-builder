@@ -1,6 +1,7 @@
 import { NvlOptions } from '@neo4j-nvl/base';
 import { GraphType, OptionType } from '../types';
-import { getDescriptionForChatMode } from './Utils';
+import { getDateTime, getDescriptionForChatMode } from './Utils';
+import chatbotmessages from '../assets/ChatbotMessages.json';
 
 export const document = `+ [docs]`;
 
@@ -43,7 +44,6 @@ export const llms =
         'openai-gpt-3.5',
         'openai-gpt-4o',
         'openai-gpt-4o-mini',
-        'gemini-1.0-pro',
         'gemini-1.5-pro',
         'gemini-1.5-flash',
         'azure_ai_gpt_35',
@@ -57,14 +57,9 @@ export const llms =
 
 export const defaultLLM = llms?.includes('openai-gpt-4o')
   ? 'openai-gpt-4o'
-  : llms?.includes('gemini-1.0-pro')
-  ? 'gemini-1.0-pro'
+  : llms?.includes('gemini-1.5-pro')
+  ? 'gemini-1.5-pro'
   : 'diffbot';
-
-// export const chatModes =
-//   process.env?.VITE_CHAT_MODES?.trim() != ''
-//     ? process.env.VITE_CHAT_MODES?.split(',')
-//     : ['vector', 'graph', 'graph+vector', 'fulltext', 'graph+vector+fulltext', 'local community', 'global community'];
 
 export const chatModeLables = {
   vector: 'vector',
@@ -75,6 +70,7 @@ export const chatModeLables = {
   entity_vector: 'entity search+vector',
   unavailableChatMode: 'Chat mode is unavailable when rows are selected',
   selected: 'Selected',
+  global_vector: 'global search+vector+fulltext',
 };
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
@@ -106,6 +102,11 @@ export const chatModes =
         {
           mode: chatModeLables.entity_vector,
           description: 'Uses vector indexing on entity nodes for highly relevant entity-based search.',
+        },
+        {
+          mode: chatModeLables.global_vector,
+          description:
+            'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.',
         },
       ];
 
@@ -234,8 +235,8 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
                 performing similarity-based searches.`,
   },
   {
-    title: 'create_communities',
-    description: 'Create Communities identifies and groups similar entities, improving search accuracy and analysis.',
+    title: 'enable_communities',
+    description: 'Enable community creation across entities to use GraphRAG capabilities both local and global search.',
   },
 ];
 export const RETRY_OPIONS = [
@@ -308,4 +309,7 @@ export const connectionLabels = {
   graphDatabase: 'Graph Database',
   greenStroke: 'green',
   redStroke: 'red',
+};
+export const getDefaultMessage = () => {
+  return [{ ...chatbotmessages.listMessages[1], datetime: getDateTime() }];
 };

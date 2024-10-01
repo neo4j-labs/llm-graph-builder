@@ -23,6 +23,7 @@ import S3Component from '../DataSources/AWS/S3Bucket';
 import WebButton from '../DataSources/Web/WebButton';
 import DropZoneForSmallLayouts from '../DataSources/Local/DropZoneForSmallLayouts';
 import { useCredentials } from '../../context/UserCredentials';
+import TipWrapper from '../UI/TipWrapper';
 
 const SideNav: React.FC<SideNavProps> = ({
   position,
@@ -44,7 +45,7 @@ const SideNav: React.FC<SideNavProps> = ({
   const [chatModeAnchor, setchatModeAnchor] = useState<HTMLElement | null>(null);
   const [showChatMode, setshowChatMode] = useState<boolean>(false);
   const largedesktops = useMediaQuery(`(min-width:1440px )`);
-  const { connectionStatus } = useCredentials();
+  const { connectionStatus, isReadOnlyUser } = useCredentials();
 
   const date = new Date();
   useEffect(() => {
@@ -101,12 +102,9 @@ const SideNav: React.FC<SideNavProps> = ({
             <SideNavigation.Item
               onClick={handleClick}
               icon={
-                <Tip allowedPlacements={['right']}>
-                  <Tip.Trigger>
-                    <CloudArrowUpIconSolid />
-                  </Tip.Trigger>
-                  <Tip.Content>{tooltips.sources}</Tip.Content>
-                </Tip>
+                <TipWrapper tooltip={tooltips.sources} placement='right'>
+                  <CloudArrowUpIconSolid />
+                </TipWrapper>
               }
             />
           )}
@@ -115,61 +113,46 @@ const SideNav: React.FC<SideNavProps> = ({
             <SideNavigation.Item
               onClick={handleClick}
               icon={
-                <Tip allowedPlacements={['left']}>
-                  <Tip.Trigger>
-                    <ChatBubbleOvalLeftEllipsisIconOutline />
-                  </Tip.Trigger>
-                  <Tip.Content>{tooltips.chat}</Tip.Content>
-                </Tip>
+                <TipWrapper tooltip={tooltips.chat} placement='right'>
+                  <ChatBubbleOvalLeftEllipsisIconOutline />
+                </TipWrapper>
               }
             />
           )}
 
-          {!largedesktops && position === 'left' && (
+          {!largedesktops && position === 'left' && !isReadOnlyUser && (
             <SideNavigation.Item
               icon={
-                <Tip allowedPlacements={['right']}>
-                  <Tip.Trigger>
-                    <DropZoneForSmallLayouts />
-                  </Tip.Trigger>
-                  <Tip.Content>Local files</Tip.Content>
-                </Tip>
+                <TipWrapper tooltip='Local Files' placement='right'>
+                  <DropZoneForSmallLayouts />
+                </TipWrapper>
               }
             />
           )}
-          {!largedesktops && APP_SOURCES.includes('gcs') && position === 'left' && (
+          {!largedesktops && APP_SOURCES.includes('gcs') && position === 'left' && !isReadOnlyUser && (
             <SideNavigation.Item
               icon={
-                <Tip allowedPlacements={['right']}>
-                  <Tip.Trigger>
-                    <GCSButton isLargeDesktop={largedesktops} openModal={toggleGCSModal}></GCSButton>
-                  </Tip.Trigger>
-                  <Tip.Content>GCS Files</Tip.Content>
-                </Tip>
+                <TipWrapper tooltip='GCS Files' placement='right'>
+                  <GCSButton isLargeDesktop={largedesktops} openModal={toggleGCSModal}></GCSButton>
+                </TipWrapper>
               }
             />
           )}
-          {!largedesktops && APP_SOURCES.includes('s3') && position === 'left' && (
+          {!largedesktops && APP_SOURCES.includes('s3') && position === 'left' && !isReadOnlyUser && (
             <SideNavigation.Item
               icon={
-                <Tip allowedPlacements={['right']}>
-                  <Tip.Trigger>
-                    <S3Component isLargeDesktop={largedesktops} openModal={toggles3Modal}></S3Component>
-                  </Tip.Trigger>
-                  <Tip.Content>S3 Files</Tip.Content>
-                </Tip>
+                <TipWrapper tooltip='S3 Files' placement='right'>
+                  <S3Component isLargeDesktop={largedesktops} openModal={toggles3Modal}></S3Component>
+                </TipWrapper>
               }
             />
           )}
-          {!largedesktops && APP_SOURCES.includes('web') && position === 'left' && (
+          {!largedesktops && APP_SOURCES.includes('web') && position === 'left' && !isReadOnlyUser && (
             <SideNavigation.Item
               icon={
-                <Tip allowedPlacements={['right']}>
-                  <Tip.Trigger>
-                    <WebButton isLargeDesktop={largedesktops} openModal={toggleGenericModal}></WebButton>
-                  </Tip.Trigger>
-                  <Tip.Content>Web Sources</Tip.Content>
-                </Tip>
+                <TipWrapper tooltip='Web Sources' placement='right'>
+                  <WebButton isLargeDesktop={largedesktops} openModal={toggleGenericModal}></WebButton>
+                </TipWrapper>
               }
             ></SideNavigation.Item>
           )}
@@ -203,7 +186,6 @@ const SideNav: React.FC<SideNavProps> = ({
               </Tip>
               {!isChatModalOpen && (
                 <SideNavigation.Item
-                  selected={showChatMode}
                   onClick={(e) => {
                     setchatModeAnchor(e.currentTarget);
                     setshowChatMode(true);

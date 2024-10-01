@@ -52,7 +52,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
-  const { userCredentials } = useCredentials();
+  const { userCredentials, isReadOnlyUser } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -148,7 +148,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 {info.getValue()}
                 {(info.getValue() === 'Completed' ||
                   info.getValue() === 'Failed' ||
-                  info.getValue() === 'Cancelled') && (
+                  (info.getValue() === 'Cancelled' && !isReadOnlyUser)) && (
                   <span className='mx-1'>
                     <IconButtonWithToolTip
                       placement='right'
@@ -701,7 +701,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   }, [connectionStatus, userCredentials]);
 
   useEffect(() => {
-    if (connectionStatus && filesData.length && onlyfortheFirstRender) {
+    if (connectionStatus && filesData.length && onlyfortheFirstRender && !isReadOnlyUser) {
       const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
       if (processingFilesCount) {
         if (processingFilesCount === 1) {
@@ -718,7 +718,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       }
       onlyfortheFirstRender = false;
     }
-  }, [connectionStatus, filesData.length]);
+  }, [connectionStatus, filesData.length, isReadOnlyUser]);
 
   const cancelHandler = async (fileName: string, id: string, fileSource: string) => {
     setFilesData((prevfiles) =>
