@@ -1,5 +1,5 @@
 import React, { FC, lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { Widget, Typography, Avatar, TextInput, IconButton, Modal, useCopyToClipboard } from '@neo4j-ndl/react';
+import { Widget, Typography, Avatar, TextInput, IconButton, Modal, useCopyToClipboard, Flex } from '@neo4j-ndl/react';
 import {
   XMarkIconOutline,
   ClipboardDocumentIconOutline,
@@ -21,6 +21,7 @@ import ButtonWithToolTip from '../UI/ButtonWithToolTip';
 import FallBackDialog from '../UI/FallBackDialog';
 import { capitalizeWithPlus, getDateTime } from '../../utils/Utils';
 import { capitalize } from '@mui/material';
+import ChatModesSwitch from './ChatModesSwitch';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
 
 const Chatbot: FC<ChatbotProps> = (props) => {
@@ -340,7 +341,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                       </Typography>
                     </div>
                     {chat.user === 'chatbot' && chat.id !== 2 && !chat.isLoading && !chat.isTyping && (
-                      <div className='flex inline-block'>
+                      <Flex flexDirection='row' justifyContent='space-between' alignItems='center'>
                         <ButtonWithToolTip
                           className='w-4 h-4 inline-block p-6 mt-1.5'
                           fill='text'
@@ -374,7 +375,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                           onClick={() => handleCopy(chat.modes[chat.currentMode]?.message, chat.id)}
                           disabled={chat.isTyping || chat.isLoading}
                         >
-                          <ClipboardDocumentIconOutline className='w-4 h-4 inline-block' />
+                          <ClipboardDocumentIconOutline />
                         </IconButtonWithToolTip>
                         {chat.copying && <span className='pt-4 text-xs'>Copied!</span>}
                         <IconButtonWithToolTip
@@ -391,28 +392,16 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                           disabled={listMessages.some((msg) => msg.speaking && msg.id !== chat.id)}
                           label={chat.speaking ? 'stop speaking' : 'text to speech'}
                         >
-                          {chat.speaking ? (
-                            <SpeakerXMarkIconOutline className='w-4 h-4 inline-block' />
-                          ) : (
-                            <SpeakerWaveIconOutline className='w-4 h-4 inline-block' />
-                          )}
+                          {chat.speaking ? <SpeakerXMarkIconOutline /> : <SpeakerWaveIconOutline />}
                         </IconButtonWithToolTip>
-                      </div>
-                    )}
-                    {Object.keys(chat.modes).length > 1 && (
-                      <div className='mt-2'>
-                        {Object.keys(chat.modes).map((mode) => (
-                          <button
-                            key={mode}
-                            onClick={() => handleSwitchMode(chat.id, mode)}
-                            className={`mr-2 px-2 py-1 rounded ${
-                              chat.currentMode === mode ? 'bg-blue-500 text-white' : 'bg-gray-200'
-                            }`}
-                          >
-                            {capitalize(mode)}
-                          </button>
-                        ))}
-                      </div>
+                        {Object.keys(chat.modes).length > 1 && (
+                          <ChatModesSwitch
+                            currentMode={chat.currentMode}
+                            switchToNextMode={() => {}}
+                            switchToPreviousMode={() => {}}
+                          />
+                        )}
+                      </Flex>
                     )}
                   </div>
                 </Widget>
