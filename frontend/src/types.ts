@@ -723,8 +723,8 @@ export interface FileContextType {
   setSelectedRows: React.Dispatch<React.SetStateAction<string[]>>;
   selectedSchemas: readonly OptionType[];
   setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
-  chatMode: string;
-  setchatMode: Dispatch<SetStateAction<string>>;
+  chatModes: string[];
+  setchatModes: Dispatch<SetStateAction<string[]>>;
   isSchema: boolean;
   setIsSchema: React.Dispatch<React.SetStateAction<boolean>>;
   showTextFromSchemaDialog: showTextFromSchemaDialogType;
