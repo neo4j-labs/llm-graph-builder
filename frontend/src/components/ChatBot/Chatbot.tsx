@@ -397,8 +397,13 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         {Object.keys(chat.modes).length > 1 && (
                           <ChatModesSwitch
                             currentMode={chat.currentMode}
-                            switchToNextMode={() => {}}
-                            switchToPreviousMode={() => {}}
+                            switchToOtherMode={(index: number) => {
+                              const modes = Object.keys(chat.modes);
+                              const modeswtich = modes[index];
+                              handleSwitchMode(chat.id, modeswtich);
+                            }}
+                            currentModeIndex={Object.keys(chat.modes).indexOf(chat.currentMode)}
+                            modescount={Object.keys(chat.modes).length}
                           />
                         )}
                       </Flex>
