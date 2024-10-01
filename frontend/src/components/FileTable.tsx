@@ -146,22 +146,21 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               >
                 <StatusIndicator type={statusCheck(info.getValue())} />
                 {info.getValue()}
-                {(info.getValue() === 'Completed' ||
-                  info.getValue() === 'Failed' ||
-                  (info.getValue() === 'Cancelled' && !isReadOnlyUser)) && (
-                  <span className='mx-1'>
-                    <IconButtonWithToolTip
-                      placement='right'
-                      text='Reprocess'
-                      size='small'
-                      label='reprocess'
-                      clean
-                      onClick={() => onRetry(info?.row?.id as string)}
-                    >
-                      <ArrowPathIconSolid />
-                    </IconButtonWithToolTip>
-                  </span>
-                )}
+                {(info.getValue() === 'Completed' || info.getValue() === 'Failed' || info.getValue() === 'Cancelled') &&
+                  !isReadOnlyUser && (
+                    <span className='mx-1'>
+                      <IconButtonWithToolTip
+                        placement='right'
+                        text='Reprocess'
+                        size='small'
+                        label='reprocess'
+                        clean
+                        onClick={() => onRetry(info?.row?.id as string)}
+                      >
+                        <ArrowPathIconSolid />
+                      </IconButtonWithToolTip>
+                    </span>
+                  )}
               </div>
             );
           } else if (info.getValue() === 'Processing' && info.row.original.processingProgress === undefined) {
@@ -511,7 +510,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         footer: (info) => info.column.id,
       }),
     ],
-    [filesData.length, statusFilter, filetypeFilter, llmtypeFilter, fileSourceFilter]
+    [filesData.length, statusFilter, filetypeFilter, llmtypeFilter, fileSourceFilter, isReadOnlyUser]
   );
 
   const table = useReactTable({
