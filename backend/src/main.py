@@ -489,10 +489,10 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password,
     for relation in graph_document.relationships:
           relations.append(relation.type)
 
-      node_count += len(distinct_nodes)
-      rel_count += len(relations)
-      print(f'node count internal func:{node_count}')
-      print(f'relation count internal func:{rel_count}')
+    node_count += len(distinct_nodes)
+    rel_count += len(relations)
+    print(f'node count internal func:{node_count}')
+    print(f'relation count internal func:{rel_count}')
   return node_count,rel_count,latency_processing_chunk
 
 def get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition):
