@@ -434,8 +434,8 @@ def process_chat_response(messages, history, question, model, graph, document_na
             formatted_docs = ""
 
         question = transformed_question if transformed_question else question
-        metrics = get_ragas_metrics(question,formatted_docs,content)
-        print(metrics)
+        # metrics = get_ragas_metrics(question,formatted_docs,content)
+        # print(metrics)
 
         ai_response = AIMessage(content=content)
         messages.append(ai_response)
@@ -449,7 +449,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
             "session_id": "",  
             "message": content,
             "info": {
-                "metrics" : metrics,
+                # "metrics" : metrics,
                 "sources": result["sources"],
                 "model": model_version,
                 "nodedetails": result["nodedetails"],
