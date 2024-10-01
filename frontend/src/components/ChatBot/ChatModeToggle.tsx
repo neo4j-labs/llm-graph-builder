@@ -48,10 +48,10 @@ export default function ChatModeToggle({
         if (isDisabled) {
           setchatModes([chatModeLables.graph_vector]);
         } else if (chatModes.includes(m.mode)) {
-            setchatModes((prev) => prev.filter((i) => i != m.mode));
-          } else {
-            setchatModes((prev) => [...prev, m.mode]);
-          }
+          setchatModes((prev) => prev.filter((i) => i != m.mode));
+        } else {
+          setchatModes((prev) => [...prev, m.mode]);
+        }
         closeHandler();
       };
       return {

@@ -7,7 +7,7 @@ import {
   SpeakerXMarkIconOutline,
 } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../../assets/images/chatbot-ai.png';
-import { ChatbotProps, CustomFile, UserCredentials, nodeDetailsProps } from '../../types';
+import { ChatbotProps, CustomFile, Messages, ResponseMode, UserCredentials, nodeDetailsProps } from '../../types';
 import { useCredentials } from '../../context/UserCredentials';
 import { chatBotAPI } from '../../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
@@ -35,7 +35,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
-  const { model, chatMode, selectedRows, filesData } = useFileContext();
+  const { model, chatModes, selectedRows, filesData } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
@@ -65,6 +65,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
   };
+
   useEffect(() => {
     if (!sessionStorage.getItem('session_id')) {
       const id = uuidv4();
@@ -72,89 +73,32 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       sessionStorage.setItem('session_id', id);
     }
   }, []);
-  const simulateTypingEffect = (
-    response: {
-      reply: string;
-      sources?: string[];
-      model?: string;
-      total_tokens?: number;
-      response_time?: number;
-      speaking?: boolean;
-      copying?: boolean;
-      mode?: string;
-      cypher_query?: string;
-      graphonly_entities?: [];
-      error?: string;
-      entitiysearchonly_entities?: string[];
-      nodeDetails?: nodeDetailsProps;
-    },
-    index = 0
-  ) => {
-    if (index < response.reply.length) {
+
+  const simulateTypingEffect = (messageId: number, response: ResponseMode, mode: string, index = 0) => {
+    if (index < response.message.length) {
       const nextIndex = index + 1;
-      const currentTypedText = response.reply.substring(0, nextIndex);
-      if (index === 0) {
-        const date = new Date();
-        const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-        if (response.reply.length <= 1) {
-          setListMessages((msgs) => [
-            ...msgs,
-            {
-              id: Date.now(),
-              user: 'chatbot',
-              message: currentTypedText,
-              datetime: datetime,
-              isTyping: false,
-              isLoading: true,
-              sources: response?.sources,
-              model: response?.model,
-              total_tokens: response.total_tokens,
-              response_time: response?.response_time,
-              speaking: false,
-              copying: false,
-              mode: response?.mode,
-              cypher_query: response?.cypher_query,
-              graphonly_entities: response?.graphonly_entities,
-              error: response.error,
-              entitiysearchonly_entities: response.entitiysearchonly_entities,
-              nodeDetails: response?.nodeDetails,
-            },
-          ]);
-        } else {
-          setListMessages((msgs) => {
-            const lastmsg = { ...msgs[msgs.length - 1] };
-            lastmsg.id = Date.now();
-            lastmsg.user = 'chatbot';
-            lastmsg.message = currentTypedText;
-            lastmsg.datetime = datetime;
-            lastmsg.isTyping = true;
-            lastmsg.isLoading = false;
-            lastmsg.sources = response?.sources;
-            lastmsg.model = response?.model;
-            lastmsg.total_tokens = response?.total_tokens;
-            lastmsg.response_time = response?.response_time;
-            lastmsg.speaking = false;
-            lastmsg.copying = false;
-            lastmsg.mode = response?.mode;
-            lastmsg.cypher_query = response.cypher_query;
-            lastmsg.graphonly_entities = response.graphonly_entities;
-            lastmsg.error = response.error;
-            lastmsg.entities = response.entitiysearchonly_entities;
-            lastmsg.nodeDetails = response?.nodeDetails;
-            return msgs.map((msg, index) => {
-              if (index === msgs.length - 1) {
-                return lastmsg;
-              }
-              return msg;
-            });
-          });
-        }
-      } else {
-        setListMessages((msgs) => msgs.map((msg) => (msg.isTyping ? { ...msg, message: currentTypedText } : msg)));
-      }
-      setTimeout(() => simulateTypingEffect(response, nextIndex), 20);
+      const currentTypedText = response.message.substring(0, nextIndex);
+      setListMessages((msgs) =>
+        msgs.map((msg) => {
+          if (msg.id === messageId) {
+            return {
+              ...msg,
+              modes: {
+                ...msg.modes,
+                [mode]: {
+                  ...msg.modes[mode],
+                  message: currentTypedText,
+                },
+              },
+              isTyping: true,
+            };
+          }
+          return msg;
+        })
+      );
+      setTimeout(() => simulateTypingEffect(messageId, response, mode, nextIndex), 20);
     } else {
-      setListMessages((msgs) => msgs.map((msg) => (msg.isTyping ? { ...msg, isTyping: false } : msg)));
+      setListMessages((msgs) => msgs.map((msg) => (msg.id === messageId ? { ...msg, isTyping: false } : msg)));
     }
   };
   let date = new Date();
@@ -164,68 +108,107 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     if (!inputMessage.trim()) {
       return;
     }
-    let chatbotReply;
-    let chatSources;
-    let chatModel;
-    let chatnodedetails;
-    let chatTimeTaken;
-    let chatTokensUsed;
-    let chatingMode;
-    let cypher_query;
-    let graphonly_entities;
-    let error;
-    let entitiysearchonly_entities;
-    let chatEntities;
     const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-    const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime, mode: chatMode };
+    const userMessage: Messages = {
+      id: Date.now(),
+      user: 'user',
+      datetime: datetime,
+      currentMode: chatModes[0],
+      modes: {},
+    };
+    userMessage.modes[chatModes[0]] = { message: inputMessage };
     setListMessages([...listMessages, userMessage]);
+    const chatbotMessageId = Date.now() + 1;
+    const chatbotMessage: Messages = {
+      id: chatbotMessageId,
+      user: 'chatbot',
+      datetime: new Date().toLocaleString(),
+      isTyping: true,
+      isLoading: true,
+      modes: {},
+      currentMode: chatModes[0],
+    };
+    setListMessages((prev) => [...prev, chatbotMessage]);
     try {
-      setInputMessage('');
-      simulateTypingEffect({ reply: ' ' });
-      const chatbotAPI = await chatBotAPI(
-        userCredentials as UserCredentials,
-        inputMessage,
-        sessionId,
-        model,
-        chatMode,
-        selectedFileNames?.map((f) => f.name)
+      const apiCalls = chatModes.map((mode) =>
+        chatBotAPI(
+          userCredentials as UserCredentials,
+          inputMessage,
+          sessionId,
+          model,
+          mode,
+          selectedFileNames?.map((f) => f.name)
+        )
       );
-      const chatresponse = chatbotAPI?.response;
-      chatbotReply = chatresponse?.data?.data?.message;
-      chatSources = chatresponse?.data?.data?.info.sources;
-      chatModel = chatresponse?.data?.data?.info.model;
-      chatnodedetails = chatresponse?.data?.data?.info.nodedetails;
-      chatTokensUsed = chatresponse?.data?.data?.info.total_tokens;
-      chatTimeTaken = chatresponse?.data?.data?.info.response_time;
-      chatingMode = chatresponse?.data?.data?.info?.mode;
-      cypher_query = chatresponse?.data?.data?.info?.cypher_query ?? '';
-      graphonly_entities = chatresponse?.data.data.info.context ?? [];
-      entitiysearchonly_entities = chatresponse?.data.data.info.entities;
-      error = chatresponse.data.data.info.error ?? '';
-      chatEntities = chatresponse.data.data.info.entities;
-      const finalbotReply = {
-        reply: chatbotReply,
-        sources: chatSources,
-        model: chatModel,
-        total_tokens: chatTokensUsed,
-        response_time: chatTimeTaken,
-        speaking: false,
-        copying: false,
-        mode: chatingMode,
-        cypher_query,
-        graphonly_entities,
-        error,
-        entitiysearchonly_entities,
-        chatEntities,
-        nodeDetails: chatnodedetails,
-      };
-      simulateTypingEffect(finalbotReply);
-    } catch (error) {
-      chatbotReply = "Oops! It seems we couldn't retrieve the answer. Please try again later";
       setInputMessage('');
-      simulateTypingEffect({ reply: chatbotReply });
+      const results = await Promise.allSettled(apiCalls);
+      results.forEach((result, index) => {
+        const mode = chatModes[index];
+        if (result.status === 'fulfilled') {
+          // @ts-ignore
+          const response = result.value.response.data.data;
+          const responseMode: ResponseMode = {
+            message: response.message,
+            sources: response.info.sources,
+            model: response.info.model,
+            total_tokens: response.info.total_tokens,
+            response_time: response.info.response_time,
+            cypher_query: response.info.cypher_query,
+            graphonly_entities: response.info.context,
+            entities: response.info.entities,
+            nodeDetails: response.info.nodedetails,
+            error: response.info.error,
+          };
+          if (index === 0) {
+            simulateTypingEffect(chatbotMessageId, responseMode, mode);
+          } else {
+            setListMessages((prev) =>
+              prev.map((msg) =>
+                (msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg)
+              )
+            );
+          }
+        } else {
+          console.error(`API call failed for mode ${mode}:`, result.reason);
+          setListMessages((prev) =>
+            prev.map((msg) =>
+              (msg.id === chatbotMessageId
+                ? {
+                    ...msg,
+                    modes: {
+                      ...msg.modes,
+                      [mode]: { message: 'Failed to fetch response for this mode.', error: result.reason },
+                    },
+                  }
+                : msg)
+            )
+          );
+        }
+      });
+      setListMessages((prev) =>
+        prev.map((msg) => (msg.id === chatbotMessageId ? { ...msg, isLoading: false, isTyping: false } : msg))
+      );
+    } catch (error) {
+      console.error('Error in handling chat:', error);
+      if (error instanceof Error) {
+        setListMessages((prev) =>
+          prev.map((msg) =>
+            (msg.id === chatbotMessageId
+              ? {
+                  ...msg,
+                  isLoading: false,
+                  isTyping: false,
+                  modes: {
+                    default: { message: 'An error occurred while processing your request.', error: error.message },
+                  },
+                }
+              : msg)
+          )
+        );
+      }
     }
   };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -281,6 +264,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     });
   };
 
+  const handleSwitchMode = (messageId: number, newMode: string) => {
+    setListMessages((prev) => prev.map((msg) => (msg.id === messageId ? { ...msg, currentMode: newMode } : msg)));
+  };
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
       <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3 pr-3'>
@@ -324,11 +310,14 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                   isElevated={true}
                   className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
                     chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
-                  } `}
+                  }`}
                   subheader={
-                    chat.user !== 'chatbot' && chat.mode?.length ? (
+                    chat.user !== 'chatbot' && chat.currentMode ? (
                       <Typography variant='subheading-small'>
-                        Chat Mode: {chat.mode.includes('+') ? capitalizeWithPlus(chat.mode) : capitalize(chat.mode)}
+                        Chat Mode:{' '}
+                        {chat.currentMode.includes('+')
+                          ? capitalizeWithPlus(chat.currentMode)
+                          : capitalize(chat.currentMode)}
                       </Typography>
                     ) : (
                       ''
@@ -337,12 +326,10 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                 >
                   <div
                     className={`${
-                      listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
-                        ? 'loader'
-                        : ''
+                      chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
                     }`}
                   >
-                    <ReactMarkdown>{chat.message}</ReactMarkdown>
+                    <ReactMarkdown>{chat.modes[chat.currentMode]?.message || ''}</ReactMarkdown>
                   </div>
                   <div>
                     <div>
@@ -361,20 +348,20 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                           label='Retrieval Information'
                           disabled={chat.isTyping || chat.isLoading}
                           onClick={() => {
-                            setModelModal(chat.model ?? '');
-                            setSourcesModal(chat.sources ?? []);
-                            setResponseTime(chat.response_time ?? 0);
-                            setTokensUsed(chat.total_tokens ?? 0);
-                            setcypherQuery(chat.cypher_query ?? '');
+                            const currentMode = chat.modes[chat.currentMode];
+                            setModelModal(currentMode.model ?? '');
+                            setSourcesModal(currentMode.sources ?? []);
+                            setResponseTime(currentMode.response_time ?? 0);
+                            setTokensUsed(currentMode.total_tokens ?? 0);
+                            setcypherQuery(currentMode.cypher_query ?? '');
                             setShowInfoModal(true);
-                            setChatsMode(chat.mode ?? '');
-                            setgraphEntitites(chat.graphonly_entities ?? []);
-                            setEntitiesModal(chat.entities ?? []);
-                            setmessageError(chat.error ?? '');
-                            setNodeDetailsModal(chat.nodeDetails ?? {});
+                            setChatsMode(chat.currentMode ?? '');
+                            setgraphEntitites(currentMode.graphonly_entities ?? []);
+                            setEntitiesModal(currentMode.entities ?? []);
+                            setmessageError(currentMode.error ?? '');
+                            setNodeDetailsModal(currentMode.nodeDetails ?? {});
                           }}
                         >
-                          {' '}
                           {buttonCaptions.details}
                         </ButtonWithToolTip>
                         <IconButtonWithToolTip
@@ -382,17 +369,12 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                           placement='top'
                           clean
                           text={chat.copying ? tooltips.copied : tooltips.copy}
-                          onClick={() => handleCopy(chat.message, chat.id)}
+                          onClick={() => handleCopy(chat.modes[chat.currentMode]?.message, chat.id)}
                           disabled={chat.isTyping || chat.isLoading}
                         >
                           <ClipboardDocumentIconOutline className='w-4 h-4 inline-block' />
                         </IconButtonWithToolTip>
-                        {copyMessageId === chat.id && (
-                          <>
-                            <span className='pt-4 text-xs'>Copied!</span>
-                            <span style={{ display: 'none' }}>{value}</span>
-                          </>
-                        )}
+                        {chat.copying && <span className='pt-4 text-xs'>Copied!</span>}
                         <IconButtonWithToolTip
                           placement='top'
                           clean
@@ -400,7 +382,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                             if (chat.speaking) {
                               handleCancel(chat.id);
                             } else {
-                              handleSpeak(chat.message, chat.id);
+                              handleSpeak(chat.modes[chat.currentMode]?.message, chat.id);
                             }
                           }}
                           text={chat.speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
@@ -413,6 +395,21 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                             <SpeakerWaveIconOutline className='w-4 h-4 inline-block' />
                           )}
                         </IconButtonWithToolTip>
+                      </div>
+                    )}
+                    {Object.keys(chat.modes).length > 1 && (
+                      <div className='mt-2'>
+                        {Object.keys(chat.modes).map((mode) => (
+                          <button
+                            key={mode}
+                            onClick={() => handleSwitchMode(chat.id, mode)}
+                            className={`mr-2 px-2 py-1 rounded ${
+                              chat.currentMode === mode ? 'bg-blue-500 text-white' : 'bg-gray-200'
+                            }`}
+                          >
+                            {capitalize(mode)}
+                          </button>
+                        ))}
                       </div>
                     )}
                   </div>
