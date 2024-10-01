@@ -19,7 +19,7 @@ import { buttonCaptions, chatModeLables, tooltips } from '../../utils/Constants'
 import useSpeechSynthesis from '../../hooks/useSpeech';
 import ButtonWithToolTip from '../UI/ButtonWithToolTip';
 import FallBackDialog from '../UI/FallBackDialog';
-import { capitalizeWithPlus } from '../../utils/Utils';
+import { capitalizeWithPlus, getDateTime } from '../../utils/Utils';
 import { capitalize } from '@mui/material';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
 
@@ -44,14 +44,13 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [responseTime, setResponseTime] = useState<number>(0);
   const [tokensUsed, setTokensUsed] = useState<number>(0);
   const [cypherQuery, setcypherQuery] = useState<string>('');
-  const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
   const [chatsMode, setChatsMode] = useState<string>(chatModeLables.graph_vector_fulltext);
   const [graphEntitites, setgraphEntitites] = useState<[]>([]);
   const [messageError, setmessageError] = useState<string>('');
   const [entitiesModal, setEntitiesModal] = useState<string[]>([]);
   const [nodeDetailsModal, setNodeDetailsModal] = useState<nodeDetailsProps>({});
 
-  const [value, copy] = useCopyToClipboard();
+  const [_, copy] = useCopyToClipboard();
   const { speak, cancel } = useSpeechSynthesis({
     onEnd: () => {
       setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
@@ -74,10 +73,16 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     }
   }, []);
 
-  const simulateTypingEffect = (messageId: number, response: ResponseMode, mode: string, index = 0) => {
+  const simulateTypingEffect = (
+    messageId: number,
+    response: ResponseMode,
+    mode: string,
+    message: string,
+    index = 0
+  ) => {
     if (index < response.message.length) {
       const nextIndex = index + 1;
-      const currentTypedText = response.message.substring(0, nextIndex);
+      const currentTypedText = message.substring(0, nextIndex);
       setListMessages((msgs) =>
         msgs.map((msg) => {
           if (msg.id === messageId) {
@@ -86,7 +91,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               modes: {
                 ...msg.modes,
                 [mode]: {
-                  ...msg.modes[mode],
+                  ...response,
                   message: currentTypedText,
                 },
               },
@@ -96,19 +101,18 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           return msg;
         })
       );
-      setTimeout(() => simulateTypingEffect(messageId, response, mode, nextIndex), 20);
+      setTimeout(() => simulateTypingEffect(messageId, response, mode, message, nextIndex), 20);
     } else {
       setListMessages((msgs) => msgs.map((msg) => (msg.id === messageId ? { ...msg, isTyping: false } : msg)));
     }
   };
-  let date = new Date();
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     if (!inputMessage.trim()) {
       return;
     }
-    const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+    const datetime = getDateTime();
     const userMessage: Messages = {
       id: Date.now(),
       user: 'user',
@@ -160,7 +164,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             error: response.info.error,
           };
           if (index === 0) {
-            simulateTypingEffect(chatbotMessageId, responseMode, mode);
+            simulateTypingEffect(chatbotMessageId, responseMode, mode, responseMode.message);
           } else {
             setListMessages((prev) =>
               prev.map((msg) =>
@@ -237,9 +241,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
         return msg;
       })
     );
-    setCopyMessageId(id);
     setTimeout(() => {
-      setCopyMessageId(null);
       setListMessages((msgs) =>
         msgs.map((msg) => {
           if (msg.id === id) {
