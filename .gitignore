@@ -1,6 +1,15 @@
 .DS_Store
+
+# ignore persistence volumes
+neo4j-persistence/data
+neo4j-persistence/logs  
+neo4j-persistence/plugins
+.env
+
+
+
 # Byte-compiled / optimized / DLL files
-__pycache__/
+__pycache__/s
 *.py[cod]
 *$py.class
 .vennv

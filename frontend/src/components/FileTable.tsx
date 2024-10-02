@@ -35,7 +35,7 @@ import {
 } from '../utils/Utils';
 import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, ChildRef } from '../types';
 import { useCredentials } from '../context/UserCredentials';
-import { ArrowPathIconSolid, MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
+import {  MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons'; // removed MagnifyingGlassCircleIconSolid that was never used and causing compilations error from docker compose
 import CustomProgressBar from './UI/CustomProgressBar';
 import subscribe from '../services/PollingAPI';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
@@ -48,8 +48,8 @@ import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import IndeterminateCheckbox from './UI/CustomCheckBox';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
 let onlyfortheFirstRender = true;
-const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
-  const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry } = props;
+const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => { // removed onRetry that was never used to remove complain from docker compose
+  const { isExpanded, connectionStatus, setConnectionStatus, onInspect } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
   const { userCredentials } = useCredentials();

@@ -1,0 +1,26 @@
+services:
+
+  neo4j:
+    extends:
+      file:  ../docker-compose.local.yml
+      service: neo4j
+
+  backend:
+    extends:
+      file: ../docker-compose.local.yml
+      service: backend
+      ports:
+          - "8000:8000"
+          - "5678:5678"  # Expose debug port
+      depends_on:
+        - neo4j
+
+  frontend:
+    extends:
+      file: ../docker-compose.local.yml
+      service: frontend
+    depends_on:
+      - backend
+
+networks:
+  net:

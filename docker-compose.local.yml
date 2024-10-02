@@ -1,0 +1,47 @@
+services:
+  neo4j:
+    image: neo4j:latest
+    container_name: neo4j-graph-llm-builder
+    environment:
+      - NEO4J_AUTH=${NEO4J_USERNAME-neo4j}/${NEO4J_PASSWORD-password}
+      - JAVA_HOME=/opt/java/openjdk
+      - NEO4J_PLUGINS=["apoc", "graph-data-science"]  # Include GDS library
+      - NEO4J_apoc_export_file_enabled=true
+      - NEO4J_apoc_import_file_enabled=true
+      - NEO4J_apoc_import_file_use__neo4j__config=true
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+      - NEO4J_TARBALL=neo4j-community-5.11.0-unix.tar.gz
+      - NEO4J_EDITION=community
+      - NEO4J_HOME=/var/lib/neo4j
+      - NEO4J_dbms_index_fulltext_enabled=true  # Enable full-text indexes
+      - NEO4J_dbms_index_vector_enabled=true    # Enable vector indexes
+    volumes:
+      - ./neo4j-persistence/data:/data
+      - ./neo4j-persistence/logs:/logs
+      - ./neo4j-persistence/plugins:/plugins
+      - ./neo4j-persistence/conf:/conf
+    ports:
+      - "7473:7473"
+      - "7474:7474"
+      - "7687:7687"
+    restart: no
+    command: ["neo4j", "console", "--config-dir=/conf"]
+    networks:
+      - net
+
+  backend:
+    extends:
+      file: docker-compose.yml
+      service: backend
+    depends_on:
+      - neo4j
+
+  frontend:
+    extends:
+      file: docker-compose.yml
+      service: frontend
+    depends_on:
+      - backend
+
+networks:
+  net:
