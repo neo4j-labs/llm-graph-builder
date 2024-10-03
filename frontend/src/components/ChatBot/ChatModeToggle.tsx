@@ -2,10 +2,11 @@ import { StatusIndicator, Typography } from '@neo4j-ndl/react';
 import { useMemo, useEffect } from 'react';
 import { useFileContext } from '../../context/UsersFiles';
 import CustomMenu from '../UI/Menu';
-import { chatModeLables, chatModes } from '../../utils/Constants';
+import { chatModeLables, chatModes as AvailableModes } from '../../utils/Constants';
 import { capitalize } from '@mui/material';
 import { capitalizeWithPlus } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
+
 export default function ChatModeToggle({
   menuAnchor,
   closeHandler = () => {},
@@ -19,22 +20,22 @@ export default function ChatModeToggle({
   anchorPortal?: boolean;
   disableBackdrop?: boolean;
 }) {
-  const { setchatMode, chatMode, postProcessingTasks, selectedRows } = useFileContext();
+  const { setchatModes, chatModes, postProcessingTasks, selectedRows } = useFileContext();
   const isCommunityAllowed = postProcessingTasks.includes('enable_communities');
   const { isGdsActive } = useCredentials();
 
   useEffect(() => {
     // If rows are selected, the mode is valid (either vector or graph+vector)
     if (selectedRows.length > 0) {
-      if (!(chatMode === chatModeLables.vector || chatMode === chatModeLables.graph_vector)) {
-        setchatMode(chatModeLables.graph_vector);
+      if (!(chatModes.includes(chatModeLables.vector) || chatModes.includes(chatModeLables.graph_vector))) {
+        setchatModes([chatModeLables.graph_vector]);
       }
     }
-  }, [selectedRows.length, chatMode, setchatMode]);
+  }, [selectedRows.length, chatModes.length]);
   const memoizedChatModes = useMemo(() => {
     return isGdsActive && isCommunityAllowed
-      ? chatModes
-      : chatModes?.filter(
+      ? AvailableModes
+      : AvailableModes?.filter(
           (m) => !m.mode.includes(chatModeLables.entity_vector) && !m.mode.includes(chatModeLables.global_vector)
         );
   }, [isGdsActive, isCommunityAllowed]);
@@ -45,9 +46,11 @@ export default function ChatModeToggle({
       );
       const handleModeChange = () => {
         if (isDisabled) {
-          setchatMode(chatModeLables.graph_vector);
+          setchatModes([chatModeLables.graph_vector]);
+        } else if (chatModes.includes(m.mode)) {
+          setchatModes((prev) => prev.filter((i) => i != m.mode));
         } else {
-          setchatMode(m.mode);
+          setchatModes((prev) => [...prev, m.mode]);
         }
         closeHandler();
       };
@@ -66,7 +69,7 @@ export default function ChatModeToggle({
         disabledCondition: isDisabled,
         description: (
           <span>
-            {chatMode === m.mode && (
+            {chatModes.includes(m.mode) && (
               <>
                 <StatusIndicator type='success' /> {chatModeLables.selected}
               </>
@@ -80,13 +83,13 @@ export default function ChatModeToggle({
         ),
       };
     });
-  }, [chatMode, memoizedChatModes, setchatMode, closeHandler, selectedRows]);
+  }, [chatModes.length, memoizedChatModes, closeHandler, selectedRows]);
 
   useEffect(() => {
-    if (!selectedRows.length && !chatMode) {
-      setchatMode(chatModeLables.graph_vector_fulltext);
+    if (!selectedRows.length && !chatModes.length) {
+      setchatModes([chatModeLables.graph_vector_fulltext]);
     }
-  }, [setchatMode, selectedRows.length, chatMode]);
+  }, [selectedRows.length, chatModes.length]);
   return (
     <CustomMenu
       closeHandler={closeHandler}
