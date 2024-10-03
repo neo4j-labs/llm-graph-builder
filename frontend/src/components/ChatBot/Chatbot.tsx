@@ -1,11 +1,16 @@
-import React, { FC, lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { Widget, Typography, Avatar, TextInput, IconButton, Modal, useCopyToClipboard, Flex } from '@neo4j-ndl/react';
+import React, { FC, lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import {
-  XMarkIconOutline,
-  ClipboardDocumentIconOutline,
-  SpeakerWaveIconOutline,
-  SpeakerXMarkIconOutline,
-} from '@neo4j-ndl/react/icons';
+  Widget,
+  Typography,
+  Avatar,
+  TextInput,
+  IconButton,
+  Modal,
+  useCopyToClipboard,
+  Flex,
+  Box,
+} from '@neo4j-ndl/react';
+import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../../assets/images/chatbot-ai.png';
 import { ChatbotProps, CustomFile, Messages, ResponseMode, UserCredentials, nodeDetailsProps } from '../../types';
 import { useCredentials } from '../../context/UserCredentials';
@@ -14,14 +19,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../../context/UsersFiles';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
-import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
-import { buttonCaptions, chatModeLables, tooltips } from '../../utils/Constants';
+import { buttonCaptions, chatModeLables } from '../../utils/Constants';
 import useSpeechSynthesis from '../../hooks/useSpeech';
 import ButtonWithToolTip from '../UI/ButtonWithToolTip';
 import FallBackDialog from '../UI/FallBackDialog';
-import { capitalizeWithPlus, getDateTime } from '../../utils/Utils';
-import { capitalize } from '@mui/material';
+import { getDateTime } from '../../utils/Utils';
 import ChatModesSwitch from './ChatModesSwitch';
+import CommonActions from './CommonChatActions';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
 
 const Chatbot: FC<ChatbotProps> = (props) => {
@@ -270,148 +274,153 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const handleSwitchMode = (messageId: number, newMode: string) => {
     setListMessages((prev) => prev.map((msg) => (msg.id === messageId ? { ...msg, currentMode: newMode } : msg)));
   };
+
+  const detailsHandler = useCallback((chat: Messages) => {
+    const currentMode = chat.modes[chat.currentMode];
+    setModelModal(currentMode.model ?? '');
+    setSourcesModal(currentMode.sources ?? []);
+    setResponseTime(currentMode.response_time ?? 0);
+    setTokensUsed(currentMode.total_tokens ?? 0);
+    setcypherQuery(currentMode.cypher_query ?? '');
+    setShowInfoModal(true);
+    setChatsMode(chat.currentMode ?? '');
+    setgraphEntitites(currentMode.graphonly_entities ?? []);
+    setEntitiesModal(currentMode.entities ?? []);
+    setmessageError(currentMode.error ?? '');
+    setNodeDetailsModal(currentMode.nodeDetails ?? {});
+  }, []);
+
+  const speechHandler = useCallback((chat: Messages) => {
+    if (chat.speaking) {
+      handleCancel(chat.id);
+    } else {
+      handleSpeak(chat.modes[chat.currentMode]?.message, chat.id);
+    }
+  }, []);
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
       <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3 pr-3'>
         <Widget className='n-bg-palette-neutral-bg-weak w-full' header='' isElevated={false}>
           <div className='flex flex-col gap-4 gap-y-4'>
-            {listMessages.map((chat, index) => (
-              <div
-                ref={messagesEndRef}
-                key={chat.id}
-                className={clsx(`flex gap-2.5`, {
-                  'flex-row': chat.user === 'chatbot',
-                  'flex-row-reverse': chat.user !== 'chatbot',
-                })}
-              >
-                <div className='w-8 h-8'>
-                  {chat.user === 'chatbot' ? (
-                    <Avatar
-                      className='-ml-4'
-                      hasStatus
-                      name='KM'
-                      shape='square'
-                      size='x-large'
-                      source={ChatBotAvatar}
-                      status={connectionStatus ? 'online' : 'offline'}
-                      type='image'
-                    />
-                  ) : (
-                    <Avatar
-                      className=''
-                      hasStatus
-                      name='KM'
-                      shape='square'
-                      size='x-large'
-                      status={connectionStatus ? 'online' : 'offline'}
-                      type='image'
-                    />
-                  )}
-                </div>
-                <Widget
-                  header=''
-                  isElevated={true}
-                  className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
-                    chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
-                  }`}
-                  subheader={
-                    chat.user !== 'chatbot' && chat.currentMode ? (
-                      <Typography variant='subheading-small'>
-                        Chat Mode:{' '}
-                        {chat.currentMode.includes('+')
-                          ? capitalizeWithPlus(chat.currentMode)
-                          : capitalize(chat.currentMode)}
-                      </Typography>
-                    ) : (
-                      ''
-                    )
-                  }
+            {listMessages.map((chat, index) => {
+              const messagechatModes = Object.keys(chat.modes);
+              return (
+                <div
+                  ref={messagesEndRef}
+                  key={chat.id}
+                  className={clsx(`flex gap-2.5`, {
+                    'flex-row': chat.user === 'chatbot',
+                    'flex-row-reverse': chat.user !== 'chatbot',
+                  })}
                 >
-                  <div
-                    className={`${
-                      chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
-                    }`}
-                  >
-                    <ReactMarkdown>{chat.modes[chat.currentMode]?.message || ''}</ReactMarkdown>
-                  </div>
-                  <div>
-                    <div>
-                      <Typography variant='body-small' className='pt-2 font-bold'>
-                        {chat.datetime}
-                      </Typography>
-                    </div>
-                    {chat.user === 'chatbot' && chat.id !== 2 && !chat.isLoading && !chat.isTyping && (
-                      <Flex flexDirection='row' justifyContent='space-between' alignItems='center'>
-                        <ButtonWithToolTip
-                          className='w-4 h-4 inline-block p-6 mt-1.5'
-                          fill='text'
-                          placement='top'
-                          clean
-                          text='Retrieval Information'
-                          label='Retrieval Information'
-                          disabled={chat.isTyping || chat.isLoading}
-                          onClick={() => {
-                            const currentMode = chat.modes[chat.currentMode];
-                            setModelModal(currentMode.model ?? '');
-                            setSourcesModal(currentMode.sources ?? []);
-                            setResponseTime(currentMode.response_time ?? 0);
-                            setTokensUsed(currentMode.total_tokens ?? 0);
-                            setcypherQuery(currentMode.cypher_query ?? '');
-                            setShowInfoModal(true);
-                            setChatsMode(chat.currentMode ?? '');
-                            setgraphEntitites(currentMode.graphonly_entities ?? []);
-                            setEntitiesModal(currentMode.entities ?? []);
-                            setmessageError(currentMode.error ?? '');
-                            setNodeDetailsModal(currentMode.nodeDetails ?? {});
-                          }}
-                        >
-                          {buttonCaptions.details}
-                        </ButtonWithToolTip>
-                        <IconButtonWithToolTip
-                          label='copy text'
-                          placement='top'
-                          clean
-                          text={chat.copying ? tooltips.copied : tooltips.copy}
-                          onClick={() => handleCopy(chat.modes[chat.currentMode]?.message, chat.id)}
-                          disabled={chat.isTyping || chat.isLoading}
-                        >
-                          <ClipboardDocumentIconOutline />
-                        </IconButtonWithToolTip>
-                        {chat.copying && <span className='pt-4 text-xs'>Copied!</span>}
-                        <IconButtonWithToolTip
-                          placement='top'
-                          clean
-                          onClick={() => {
-                            if (chat.speaking) {
-                              handleCancel(chat.id);
-                            } else {
-                              handleSpeak(chat.modes[chat.currentMode]?.message, chat.id);
-                            }
-                          }}
-                          text={chat.speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
-                          disabled={listMessages.some((msg) => msg.speaking && msg.id !== chat.id)}
-                          label={chat.speaking ? 'stop speaking' : 'text to speech'}
-                        >
-                          {chat.speaking ? <SpeakerXMarkIconOutline /> : <SpeakerWaveIconOutline />}
-                        </IconButtonWithToolTip>
-                        {Object.keys(chat.modes).length > 1 && (
-                          <ChatModesSwitch
-                            currentMode={chat.currentMode}
-                            switchToOtherMode={(index: number) => {
-                              const modes = Object.keys(chat.modes);
-                              const modeswtich = modes[index];
-                              handleSwitchMode(chat.id, modeswtich);
-                            }}
-                            currentModeIndex={Object.keys(chat.modes).indexOf(chat.currentMode)}
-                            modescount={Object.keys(chat.modes).length}
-                          />
-                        )}
-                      </Flex>
+                  <div className='w-8 h-8'>
+                    {chat.user === 'chatbot' ? (
+                      <Avatar
+                        className='-ml-4'
+                        hasStatus
+                        name='KM'
+                        shape='square'
+                        size='x-large'
+                        source={ChatBotAvatar}
+                        status={connectionStatus ? 'online' : 'offline'}
+                        type='image'
+                      />
+                    ) : (
+                      <Avatar
+                        className=''
+                        hasStatus
+                        name='KM'
+                        shape='square'
+                        size='x-large'
+                        status={connectionStatus ? 'online' : 'offline'}
+                        type='image'
+                      />
                     )}
                   </div>
-                </Widget>
-              </div>
-            ))}
+                  <Widget
+                    header=''
+                    isElevated={true}
+                    className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
+                      chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                    }`}
+                  >
+                    <div
+                      className={`${
+                        chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
+                      }`}
+                    >
+                      <ReactMarkdown>{chat.modes[chat.currentMode]?.message || ''}</ReactMarkdown>
+                    </div>
+                    <div>
+                      <div>
+                        <Typography variant='body-small' className='pt-2 font-bold'>
+                          {chat.datetime}
+                        </Typography>
+                      </div>
+                      {chat.user === 'chatbot' &&
+                        chat.id !== 2 &&
+                        !chat.isLoading &&
+                        !chat.isTyping &&
+                        (!isFullScreen ? (
+                          <Flex
+                            flexDirection='row'
+                            justifyContent={messagechatModes.length > 1 ? 'space-between' : 'unset'}
+                            alignItems='center'
+                          >
+                            <CommonActions
+                              chat={chat}
+                              copyHandler={handleCopy}
+                              detailsHandler={detailsHandler}
+                              listMessages={listMessages}
+                              speechHandler={speechHandler}
+                            ></CommonActions>
+                            {messagechatModes.length > 1 && (
+                              <ChatModesSwitch
+                                currentMode={chat.currentMode}
+                                switchToOtherMode={(index: number) => {
+                                  const modes = Object.keys(chat.modes);
+                                  const modeswtich = modes[index];
+                                  handleSwitchMode(chat.id, modeswtich);
+                                }}
+                                isFullScreen={false}
+                                currentModeIndex={messagechatModes.indexOf(chat.currentMode)}
+                                modescount={messagechatModes.length}
+                              />
+                            )}
+                          </Flex>
+                        ) : (
+                          <Flex flexDirection='row' justifyContent='space-between' alignItems='center'>
+                            <Flex flexDirection='row' justifyContent='space-between' alignItems='center'>
+                              <CommonActions
+                                chat={chat}
+                                copyHandler={handleCopy}
+                                detailsHandler={detailsHandler}
+                                listMessages={listMessages}
+                                speechHandler={speechHandler}
+                              ></CommonActions>
+                            </Flex>
+                            <Box>
+                              {messagechatModes.length > 1 && (
+                                <ChatModesSwitch
+                                  currentMode={chat.currentMode}
+                                  switchToOtherMode={(index: number) => {
+                                    const modes = Object.keys(chat.modes);
+                                    const modeswtich = modes[index];
+                                    handleSwitchMode(chat.id, modeswtich);
+                                  }}
+                                  isFullScreen={isFullScreen}
+                                  currentModeIndex={messagechatModes.indexOf(chat.currentMode)}
+                                  modescount={messagechatModes.length}
+                                />
+                              )}
+                            </Box>
+                          </Flex>
+                        ))}
+                    </div>
+                  </Widget>
+                </div>
+              );
+            })}
           </div>
         </Widget>
       </div>
