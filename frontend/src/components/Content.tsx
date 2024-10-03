@@ -34,6 +34,7 @@ import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
 import retry from '../services/retry';
 import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/toasts';
 import { useMessageContext } from '../context/UserMessages';
+import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
 
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
@@ -159,12 +160,12 @@ const Content: React.FC<ContentProps> = ({
     }
     if (processedCount === 1 && queue.isEmpty()) {
       (async () => {
-        showNormalToast('Some Q&A functionality will only be available afterwards.');
+        showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
         await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
         showSuccessToast('All Q&A functionality is available now.');
       })();
     }
-  }, [processedCount, userCredentials, queue, isReadOnlyUser]);
+  }, [processedCount, userCredentials, queue, isReadOnlyUser, isGdsActive]);
 
   useEffect(() => {
     if (afterFirstRender) {
@@ -393,7 +394,7 @@ const Content: React.FC<ContentProps> = ({
 
   const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
     if (!remainingFiles.length) {
-      showNormalToast('Some Q&A functionality will only be available afterwards.');
+      showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
       await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       showSuccessToast('All Q&A functionality is available now.');
     }
