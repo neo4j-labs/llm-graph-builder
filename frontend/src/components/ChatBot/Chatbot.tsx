@@ -56,7 +56,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [nodeDetailsModal, setNodeDetailsModal] = useState<nodeDetailsProps>({});
 
   const [_, copy] = useCopyToClipboard();
-  const { speak, cancel } = useSpeechSynthesis({
+  const { speak, cancel, speaking } = useSpeechSynthesis({
     onEnd: () => {
       setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
     },
@@ -101,6 +101,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                 },
               },
               isTyping: true,
+              speaking: false,
+              copying: false,
             };
           }
           return msg;
@@ -225,7 +227,10 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                   isLoading: false,
                   isTyping: false,
                   modes: {
-                    default: { message: 'An error occurred while processing your request.', error: error.message },
+                    [chatModes[0]]: {
+                      message: 'An error occurred while processing your request.',
+                      error: error.message,
+                    },
                   },
                 }
               : msg)
@@ -280,8 +285,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     setListMessages((msgs) => msgs.map((msg) => (msg.id === id ? { ...msg, speaking: false } : msg)));
   };
 
-  const handleSpeak = (chatMessage: any, id: number) => {
-    speak({ text: chatMessage });
+  const handleSpeak = (chatMessage: string, id: number) => {
+    speak({ text: chatMessage }, typeof window !== 'undefined' && window.speechSynthesis != undefined);
     setListMessages((msgs) => {
       const messageWithSpeaking = msgs.find((msg) => msg.speaking);
       return msgs.map((msg) => (msg.id === id && !messageWithSpeaking ? { ...msg, speaking: true } : msg));
@@ -289,7 +294,15 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   };
 
   const handleSwitchMode = (messageId: number, newMode: string) => {
-    setListMessages((prev) => prev.map((msg) => (msg.id === messageId ? { ...msg, currentMode: newMode } : msg)));
+    if (speaking) {
+      cancel();
+      handleCancel(messageId);
+    }
+    setListMessages((prev) =>
+      prev.map((msg) =>
+        (msg.id === messageId ? { ...msg, currentMode: newMode, speaking: msg.speaking ? false : msg.speaking } : msg)
+      )
+    );
   };
 
   const detailsHandler = useCallback((chat: Messages) => {
