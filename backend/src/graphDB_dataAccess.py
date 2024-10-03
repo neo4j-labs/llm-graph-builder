@@ -293,17 +293,29 @@ class graphDBdataAccess:
     
     def list_unconnected_nodes(self):
         query = """
-                MATCH (e:!Chunk&!Document) 
-                WHERE NOT exists { (e)--(:!Chunk&!Document) }
-                OPTIONAL MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(e)
-                RETURN e {.*, embedding:null, elementId:elementId(e), labels:labels(e)} as e, 
-                collect(distinct doc.fileName) as documents, count(distinct c) as chunkConnections
-                ORDER BY e.id ASC
-                LIMIT 100
-                """
+        MATCH (e:!Chunk&!Document&!`__Community__`) 
+        WHERE NOT exists { (e)--(:!Chunk&!Document&!`__Community__`) }
+        OPTIONAL MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(e)
+        RETURN 
+        e {
+            .*,
+            embedding: null,
+            elementId: elementId(e),
+            labels: CASE 
+            WHEN size(labels(e)) > 1 THEN 
+                apoc.coll.removeAll(labels(e), ["__Entity__"])
+            ELSE 
+                ["Entity"]
+            END
+        } AS e, 
+        collect(distinct doc.fileName) AS documents, 
+        count(distinct c) AS chunkConnections
+        ORDER BY e.id ASC
+        LIMIT 100
+        """
         query_total_nodes = """
-        MATCH (e:!Chunk&!Document) 
-        WHERE NOT exists { (e)--(:!Chunk&!Document) }
+        MATCH (e:!Chunk&!Document&!`__Community__`) 
+        WHERE NOT exists { (e)--(:!Chunk&!Document&!`__Community__`) }
         RETURN count(*) as total
         """
         nodes_list = self.execute_query(query)
