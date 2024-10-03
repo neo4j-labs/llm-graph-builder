@@ -432,7 +432,6 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
         elapsed_time = end - start
         json_obj = {'api_name':'upload','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
-        result['elapsed_api_time'] = f'{elapsed_time:.2f}'
         if int(chunkNumber) == int(totalChunks):
             return create_api_response('Success',data=result, message='Source Node Created Successfully')
         else:

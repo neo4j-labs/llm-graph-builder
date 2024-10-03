@@ -441,7 +441,10 @@ def processing_source(uri, userName, password, database, model, file_name, pages
       processing_source_func = time.time() - processing_source_start_time
       logging.info(f"Time taken to processing source function completed in {processing_source_func:.2f} seconds for file name {file_name}")  
       uri_latency["Processed_source"] = f'{processing_source_func:.2f}'
-      uri_latency["Per_entity_latency"] = f'{int(processing_source_func)/node_count:.2f}/s'
+      if node_count == 0:
+        uri_latency["Per_entity_latency"] = 'N/A'
+      else:  
+        uri_latency["Per_entity_latency"] = f'{int(processing_source_func)/node_count}/s'
       uri_latency["fileName"] = file_name
       uri_latency["nodeCount"] = node_count
       uri_latency["relationshipCount"] = rel_count
