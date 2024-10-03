@@ -335,7 +335,7 @@ class graphDBdataAccess:
         score_value = float(os.environ.get('DUPLICATE_SCORE_VALUE'))
         text_distance = int(os.environ.get('DUPLICATE_TEXT_DISTANCE'))
         query_duplicate_nodes = """
-                MATCH (n:!Chunk&!Document) with n 
+                MATCH (n:!Chunk&!Document&!`__Community__`) with n 
                 WHERE n.embedding is not null and n.id is not null // and size(n.id) > 3
                 WITH n ORDER BY count {{ (n)--() }} DESC, size(n.id) DESC // updated
                 WITH collect(n) as nodes
