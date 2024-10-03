@@ -155,27 +155,44 @@ const Chatbot: FC<ChatbotProps> = (props) => {
         const mode = chatModes[index];
         if (result.status === 'fulfilled') {
           // @ts-ignore
-          const response = result.value.response.data.data;
-          const responseMode: ResponseMode = {
-            message: response.message,
-            sources: response.info.sources,
-            model: response.info.model,
-            total_tokens: response.info.total_tokens,
-            response_time: response.info.response_time,
-            cypher_query: response.info.cypher_query,
-            graphonly_entities: response.info.context,
-            entities: response.info.entities,
-            nodeDetails: response.info.nodedetails,
-            error: response.info.error,
-          };
-          if (index === 0) {
-            simulateTypingEffect(chatbotMessageId, responseMode, mode, responseMode.message);
+          if (result.value.response.data.status === 'Success') {
+            const response = result.value.response.data.data;
+            const responseMode: ResponseMode = {
+              message: response.message,
+              sources: response.info.sources,
+              model: response.info.model,
+              total_tokens: response.info.total_tokens,
+              response_time: response.info.response_time,
+              cypher_query: response.info.cypher_query,
+              graphonly_entities: response.info.context,
+              entities: response.info.entities,
+              nodeDetails: response.info.nodedetails,
+              error: response.info.error,
+            };
+            if (index === 0) {
+              simulateTypingEffect(chatbotMessageId, responseMode, mode, responseMode.message);
+            } else {
+              setListMessages((prev) =>
+                prev.map((msg) =>
+                  (msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg)
+                )
+              );
+            }
           } else {
-            setListMessages((prev) =>
-              prev.map((msg) =>
-                (msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg)
-              )
-            );
+            const response = result.value.response.data;
+            const responseMode: ResponseMode = {
+              message: response.message,
+              error: response.error,
+            };
+            if (index === 0) {
+              simulateTypingEffect(chatbotMessageId, responseMode, response.data, responseMode.message);
+            } else {
+              setListMessages((prev) =>
+                prev.map((msg) =>
+                  (msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg)
+                )
+              );
+            }
           }
         } else {
           console.error(`API call failed for mode ${mode}:`, result.reason);
