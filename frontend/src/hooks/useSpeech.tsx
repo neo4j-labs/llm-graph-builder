@@ -14,7 +14,6 @@ const useSpeechSynthesis = (props: SpeechSynthesisProps = {}) => {
     if (!isSupported) {
       return;
     }
-    console.log({ text });
     setSpeaking(true);
     const utterance = new SpeechSynthesisUtterance();
     utterance.text = text;

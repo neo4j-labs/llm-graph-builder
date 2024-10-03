@@ -294,15 +294,15 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   };
 
   const handleSwitchMode = (messageId: number, newMode: string) => {
-    if (speaking) {
+    const activespeechId = listMessages.find((msg) => msg.speaking)?.id;
+    if (speaking && messageId === activespeechId) {
       cancel();
-      handleCancel(messageId);
+      setListMessages((prev) =>
+        prev.map((msg) => (msg.id === messageId ? { ...msg, currentMode: newMode, speaking: false } : msg))
+      );
+    } else {
+      setListMessages((prev) => prev.map((msg) => (msg.id === messageId ? { ...msg, currentMode: newMode } : msg)));
     }
-    setListMessages((prev) =>
-      prev.map((msg) =>
-        (msg.id === messageId ? { ...msg, currentMode: newMode, speaking: msg.speaking ? false : msg.speaking } : msg)
-      )
-    );
   };
 
   const detailsHandler = useCallback((chat: Messages) => {
