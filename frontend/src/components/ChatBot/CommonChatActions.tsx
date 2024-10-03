@@ -41,7 +41,6 @@ export default function CommonActions({
       >
         <ClipboardDocumentIconOutline />
       </IconButtonWithToolTip>
-      {chat.copying && <span className='pt-4 text-xs'>Copied!</span>}
       <IconButtonWithToolTip
         placement='top'
         clean
