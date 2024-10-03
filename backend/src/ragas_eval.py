@@ -159,9 +159,10 @@ def  get_ragas_metrics(question,context,answer,model):
 
         score =  evaluate(dataset=dataset,metrics=[faithfulness, answer_relevancy, context_utilization],llm=llm,embeddings=embeddings)
         
+        score_dict = score.to_pandas()[['faithfulness','answer_relevancy','context_utilization']].to_dict(orient="index")[0]
         logging.info("Evaluation completed successfully.")
-        print("Type of score : ",type(score))
-        return score
+        print("Type of score : ",type(score_dict))
+        return score_dict
         
     except Exception as e:
         logging.error(f"An error occurred during metrics evaluation: {e}")
