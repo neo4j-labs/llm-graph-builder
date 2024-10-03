@@ -436,7 +436,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
         question = transformed_question if transformed_question else question
         # metrics = get_ragas_metrics(question,formatted_docs,content)
         # print(metrics)
-
+        
         ai_response = AIMessage(content=content)
         messages.append(ai_response)
 
@@ -444,7 +444,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
         summarization_thread.start()
         logging.info("Summarization thread started.")
         # summarize_and_log(history, messages, llm)
-        
+        metric_details = {"question":question,"contexts":formatted_docs,"answer":content}
         return {
             "session_id": "",  
             "message": content,
@@ -457,7 +457,9 @@ def process_chat_response(messages, history, question, model, graph, document_na
                 "response_time": 0,
                 "mode": chat_mode_settings["mode"],
                 "entities": result["entities"],
+                "metric_details": metric_details,
             },
+            
             "user": "chatbot"
         }
     
@@ -475,6 +477,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
                 "error": f"{type(e).__name__}: {str(e)}",
                 "mode": chat_mode_settings["mode"],
                 "entities": [],
+                "metric_details": {},
             },
             "user": "chatbot"
         }

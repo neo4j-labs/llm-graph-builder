@@ -665,7 +665,27 @@ async def retry_processing(uri=Form(), userName=Form(), password=Form(), databas
         logging.exception(f'{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
     finally:
-        gc.collect()        
+        gc.collect()    
+
+@app.post('/metric')
+async def calculate_metric(question=Form(),context=Form(),answer=Form(),model=Form()):
+    try:
+      result = await asyncio.to_thread(get_ragas_metrics,question,context,answer,model)
+      score_dict = {}
+      score_dict['faithfulness'] = result['faithfulness']
+      score_dict['answer_relevancy'] = result['answer_relevancy']
+      score_dict['context_utilization'] = result['context_utilization']
+      print("Type of score dict in score :",type(score_dict))
+      return create_api_response('Success',data=score_dict,message=f"Status set to Reprocess for filename : {result}")
+
+    except Exception as e:
+        job_status = "Failed"
+        message="Error while calculating evaluation metrics"
+        error_message = str(e)
+        logging.exception(f'{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()
 
 if __name__ == "__main__":
     uvicorn.run(app)
