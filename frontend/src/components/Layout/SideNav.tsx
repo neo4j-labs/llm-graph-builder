@@ -113,7 +113,7 @@ const SideNav: React.FC<SideNavProps> = ({
             <SideNavigation.Item
               onClick={handleClick}
               icon={
-                <TipWrapper tooltip={tooltips.chat} placement='right'>
+                <TipWrapper tooltip={tooltips.chat} placement='left'>
                   <ChatBubbleOvalLeftEllipsisIconOutline />
                 </TipWrapper>
               }
