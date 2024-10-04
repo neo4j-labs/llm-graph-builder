@@ -719,14 +719,9 @@ async def retry_processing(uri=Form(), userName=Form(), password=Form(), databas
 async def calculate_metric(question=Form(),context=Form(),answer=Form(),model=Form()):
     try:
       result = await asyncio.to_thread(get_ragas_metrics,question,context,answer,model)
-      #result = get_ragas_metrics(question,context,answer,model)
-    #   score_dict = {}
-    #   score_dict['faithfulness'] = result['faithfulness']
-    #   score_dict['answer_relevancy'] = result['answer_relevancy']
-    #   score_dict['context_utilization'] = result['context_utilization']
-      print("Type of score dict in score :",type(result))
+      if result is None: 
+            return create_api_response('Failed', message='Failed to calculate metrics.'error="Ragas evaluation returned null")
       return create_api_response('Success',data=result,message=f"Status set to Reprocess for filename : {result}")
-
     except Exception as e:
         job_status = "Failed"
         message="Error while calculating evaluation metrics"
