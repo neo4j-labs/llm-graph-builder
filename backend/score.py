@@ -720,7 +720,7 @@ async def calculate_metric(question=Form(),context=Form(),answer=Form(),model=Fo
     try:
       result = await asyncio.to_thread(get_ragas_metrics,question,context,answer,model)
       if result is None: 
-            return create_api_response('Failed', message='Failed to calculate metrics.'error="Ragas evaluation returned null")
+            return create_api_response('Failed', message='Failed to calculate metrics.',error="Ragas evaluation returned null")
       return create_api_response('Success',data=result,message=f"Status set to Reprocess for filename : {result}")
     except Exception as e:
         job_status = "Failed"
