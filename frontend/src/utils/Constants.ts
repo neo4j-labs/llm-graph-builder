@@ -306,5 +306,5 @@ export const connectionLabels = {
   redStroke: 'red',
 };
 export const getDefaultMessage = () => {
-  return [{ ...chatbotmessages.listMessages[1], datetime: getDateTime() }];
+  return [{ ...chatbotmessages.listMessages[0], datetime: getDateTime() }];
 };

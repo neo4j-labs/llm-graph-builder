@@ -211,26 +211,31 @@ export interface ChunkDetail {
   id: string;
   score: number;
 }
-export interface Messages {
-  id: number;
+export type ResponseMode = {
   message: string;
-  user: string;
-  datetime: string;
-  isTyping?: boolean;
   sources?: string[];
   model?: string;
-  isLoading?: boolean;
+  total_tokens?: number;
   response_time?: number;
+  cypher_query?: string;
   nodeDetails?: nodeDetailsProps;
   chunk_ids?: string[];
-  total_tokens?: number;
-  speaking?: boolean;
-  copying?: boolean;
-  mode?: string;
-  cypher_query?: string;
   graphonly_entities?: [];
   error?: string;
   entities?: string[];
+};
+export interface Messages {
+  id: number;
+  user: string;
+  datetime: string;
+  isTyping?: boolean;
+  isLoading?: boolean;
+  speaking?: boolean;
+  copying?: boolean;
+  modes: {
+    [key: string]: ResponseMode;
+  };
+  currentMode: string;
 }
 export type ChatbotProps = {
   messages: Messages[];
@@ -725,8 +730,8 @@ export interface FileContextType {
   setSelectedRows: React.Dispatch<React.SetStateAction<string[]>>;
   selectedSchemas: readonly OptionType[];
   setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
-  chatMode: string;
-  setchatMode: Dispatch<SetStateAction<string>>;
+  chatModes: string[];
+  setchatModes: Dispatch<SetStateAction<string[]>>;
   isSchema: boolean;
   setIsSchema: React.Dispatch<React.SetStateAction<boolean>>;
   showTextFromSchemaDialog: showTextFromSchemaDialogType;

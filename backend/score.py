@@ -329,7 +329,7 @@ async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(),
         message="Unable to get chat response"
         error_message = str(e)
         logging.exception(f'Exception in chat bot:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        return create_api_response(job_status, message=message, error=error_message,data=mode)
     finally:
         gc.collect()
 

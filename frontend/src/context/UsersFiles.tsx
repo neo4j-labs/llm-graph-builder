@@ -29,7 +29,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [selectedSchemas, setSelectedSchemas] = useState<readonly OptionType[]>([]);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [chatMode, setchatMode] = useState<string>(chatModeLables.graph_vector_fulltext);
+  const [chatModes, setchatModes] = useState<string[]>([chatModeLables.graph_vector_fulltext]);
   const [isSchema, setIsSchema] = useState<boolean>(false);
   const [showTextFromSchemaDialog, setShowTextFromSchemaDialog] = useState<showTextFromSchemaDialogType>({
     triggeredFrom: '',
@@ -78,8 +78,8 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setSelectedRows,
     selectedSchemas,
     setSelectedSchemas,
-    chatMode,
-    setchatMode,
+    chatModes,
+    setchatModes,
     isSchema,
     setIsSchema,
     setShowTextFromSchemaDialog,
