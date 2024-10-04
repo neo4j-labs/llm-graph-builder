@@ -78,40 +78,49 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     }
   }, []);
 
-  const simulateTypingEffect = (
-    messageId: number,
-    response: ResponseMode,
-    mode: string,
-    message: string,
-    index = 0
-  ) => {
-    if (index < response.message.length) {
-      const nextIndex = index + 1;
-      const currentTypedText = message.substring(0, nextIndex);
-      setListMessages((msgs) =>
-        msgs.map((msg) => {
-          if (msg.id === messageId) {
-            return {
-              ...msg,
-              modes: {
-                ...msg.modes,
-                [mode]: {
-                  ...response,
-                  message: currentTypedText,
-                },
-              },
-              isTyping: true,
-              speaking: false,
-              copying: false,
-            };
-          }
-          return msg;
-        })
-      );
-      setTimeout(() => simulateTypingEffect(messageId, response, mode, message, nextIndex), 20);
-    } else {
-      setListMessages((msgs) => msgs.map((msg) => (msg.id === messageId ? { ...msg, isTyping: false } : msg)));
-    }
+  const simulateTypingEffect = (messageId: number, response: ResponseMode, mode: string, message: string) => {
+    let index = 0;
+    let lastTimestamp: number | null = null;
+    const TYPING_INTERVAL = 20;
+    const animate = (timestamp: number) => {
+      if (lastTimestamp === null) {
+        lastTimestamp = timestamp;
+      }
+      const elapsed = timestamp - lastTimestamp;
+      if (elapsed >= TYPING_INTERVAL) {
+        if (index < message.length) {
+          const nextIndex = index + 1;
+          const currentTypedText = message.substring(0, nextIndex);
+          setListMessages((msgs) =>
+            msgs.map((msg) => {
+              if (msg.id === messageId) {
+                return {
+                  ...msg,
+                  modes: {
+                    ...msg.modes,
+                    [mode]: {
+                      ...response,
+                      message: currentTypedText,
+                    },
+                  },
+                  isTyping: true,
+                  speaking: false,
+                  copying: false,
+                };
+              }
+              return msg;
+            })
+          );
+          index = nextIndex;
+          lastTimestamp = timestamp;
+        } else {
+          setListMessages((msgs) => msgs.map((msg) => (msg.id === messageId ? { ...msg, isTyping: false } : msg)));
+          return;
+        }
+      }
+      requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
   };
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
@@ -294,15 +303,15 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   };
 
   const handleSwitchMode = (messageId: number, newMode: string) => {
-    if (speaking) {
+    const activespeechId = listMessages.find((msg) => msg.speaking)?.id;
+    if (speaking && messageId === activespeechId) {
       cancel();
-      handleCancel(messageId);
+      setListMessages((prev) =>
+        prev.map((msg) => (msg.id === messageId ? { ...msg, currentMode: newMode, speaking: false } : msg))
+      );
+    } else {
+      setListMessages((prev) => prev.map((msg) => (msg.id === messageId ? { ...msg, currentMode: newMode } : msg)));
     }
-    setListMessages((prev) =>
-      prev.map((msg) =>
-        (msg.id === messageId ? { ...msg, currentMode: newMode, speaking: msg.speaking ? false : msg.speaking } : msg)
-      )
-    );
   };
 
   const detailsHandler = useCallback((chat: Messages) => {
