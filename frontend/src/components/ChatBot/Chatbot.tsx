@@ -54,6 +54,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [messageError, setmessageError] = useState<string>('');
   const [entitiesModal, setEntitiesModal] = useState<string[]>([]);
   const [nodeDetailsModal, setNodeDetailsModal] = useState<nodeDetailsProps>({});
+  const [metricQuestion, setMetricQuestion] = useState<string>('');
+  const [metricAnswer, setMetricAnswer] = useState<string>('');
+  const [metricContext, setMetricContext] = useState<string>('');
 
   const [_, copy] = useCopyToClipboard();
   const { speak, cancel, speaking } = useSpeechSynthesis({
@@ -179,6 +182,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               entities: response.info.entities,
               nodeDetails: response.info.nodedetails,
               error: response.info.error,
+              metric_question: response.info.metric_details.question,
+              metric_answer: response.info.metric_details.answer,
+              metric_contexts: response.info.metric_details.contexts,
             };
             if (index === 0) {
               simulateTypingEffect(chatbotMessageId, responseMode, mode, responseMode.message);
@@ -327,6 +333,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     setEntitiesModal(currentMode.entities ?? []);
     setmessageError(currentMode.error ?? '');
     setNodeDetailsModal(currentMode.nodeDetails ?? {});
+    setMetricQuestion(currentMode.metric_question ?? '');
+    setMetricContext(currentMode.metric_contexts ?? '');
+    setMetricAnswer(currentMode.metric_answer ?? '');
   }, []);
 
   const speechHandler = useCallback((chat: Messages) => {
@@ -520,6 +529,10 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             graphonly_entities={graphEntitites}
             error={messageError}
             nodeDetails={nodeDetailsModal}
+            metricanswer={metricAnswer}
+            metriccontexts={metricContext}
+            metricquestion={metricQuestion}
+            metricmodel={model}
           />
         </Modal>
       </Suspense>

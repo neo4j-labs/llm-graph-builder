@@ -18,6 +18,7 @@ import {
   Entity,
   ExtendedNode,
   ExtendedRelationship,
+  MetricsState,
   UserCredentials,
   chatInfoMessage,
 } from '../../types';
@@ -33,6 +34,8 @@ import SourcesInfo from './SourcesInfo';
 import CommunitiesInfo from './Communities';
 import { chatModeLables } from '../../utils/Constants';
 import { Relationship } from '@neo4j-nvl/base';
+import { getChatMetrics } from '../../services/GetRagasMetric';
+import MetricsTab from './MetricsTab';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
   sources,
@@ -45,6 +48,10 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   graphonly_entities,
   error,
   entities_ids,
+  metricanswer,
+  metriccontexts,
+  metricquestion,
+  metricmodel,
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
@@ -61,6 +68,8 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const themeUtils = useContext(ThemeWrapperContext);
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
+  const [metricDetails, setMetricDetails] = useState<MetricsState | null>(null);
+  const [metricsLoading, setMetricsLoading] = useState<boolean>(false);
 
   const actions: CypherCodeBlockProps['actions'] = useMemo(
     () => [
@@ -165,6 +174,24 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         }
       })();
     }
+    (async () => {
+      try {
+        setMetricsLoading(true);
+        const response = await getChatMetrics(metricquestion, metriccontexts, metricanswer, metricmodel);
+        setMetricsLoading(false);
+        if (response.data.status === 'Success') {
+          setMetricDetails({ ...response.data.data, error: '' });
+        } else {
+          throw new Error(response.data.error);
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          setMetricsLoading(false);
+          console.log('Error in getting chat metrics', error);
+          setMetricDetails({ error: error.message, faithfulness: 0, answer_relevancy: 0, context_utilization: 0 });
+        }
+      }
+    })();
     () => {
       setcopiedText(false);
     };
@@ -185,7 +212,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         <Box className='flex flex-col'>
           <Typography variant='h2'>Retrieval information</Typography>
           <Typography variant='body-medium' className='mb-2'>
-            To generate this response, the process took <span className='font-bold'>{response_time} seconds,</span>{' '}
+            To generate this response, the process took <span className='font-bold'>{response_time} seconds,</span>
             utilizing <span className='font-bold'>{total_tokens}</span> tokens with the model{' '}
             <span className='font-bold'>{model}</span> in{' '}
             <span className='font-bold'>{mode !== 'vector' ? mode.replace(/\+/g, ' & ') : mode}</span> mode.
@@ -197,7 +224,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       ) : (
         <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
           {mode === chatModeLables.global_vector ? (
-            // Only show the Communities tab if mode is global
             <Tabs.Tab tabId={7}>Communities</Tabs.Tab>
           ) : (
             <>
@@ -217,6 +243,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                 <></>
               )}
               {mode === chatModeLables.entity_vector ? <Tabs.Tab tabId={7}>Communities</Tabs.Tab> : <></>}
+              <Tabs.Tab tabId={8}>Metrics</Tabs.Tab>
             </>
           )}
         </Tabs>
@@ -224,6 +251,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       <Flex className='p-4'>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={3}>
           <SourcesInfo loading={loading} sources={sources} mode={mode} chunks={chunks} />
+        </Tabs.TabPanel>
+        <Tabs.TabPanel tabId={8} value={activeTab}>
+          <MetricsTab metricsLoading={metricsLoading} metricDetails={metricDetails} />
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={4}>
           <EntitiesInfo

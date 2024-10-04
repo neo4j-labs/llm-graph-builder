@@ -218,6 +218,9 @@ export type ResponseMode = {
   graphonly_entities?: [];
   error?: string;
   entities?: string[];
+  metric_question?: string;
+  metric_contexts?: string;
+  metric_answer?: string;
 };
 export interface Messages {
   id: number;
@@ -407,6 +410,14 @@ export interface duplicateNodesData extends Partial<commonserverresponse> {
 export interface OrphanNodeResponse extends Partial<commonserverresponse> {
   data: orphanNodeProps[];
 }
+export type metricdetails = {
+  faithfulness: number;
+  answer_relevancy: number;
+  context_utilization: number;
+};
+export interface MetricsResponse extends Omit<commonserverresponse, 'data'> {
+  data: metricdetails;
+}
 export interface schema {
   nodelabels: string[];
   relationshipTypes: string[];
@@ -430,6 +441,10 @@ export interface chatInfoMessage extends Partial<Messages> {
   error: string;
   entities_ids: string[];
   nodeDetails: nodeDetailsProps;
+  metricquestion: string;
+  metricanswer: string;
+  metriccontexts: string;
+  metricmodel: string;
 }
 
 export interface eventResponsetypes extends Omit<SourceNode, 'total_chunks' | 'processingTime'> {
@@ -744,3 +759,6 @@ export interface FileContextType {
   setPostProcessingVal: Dispatch<SetStateAction<boolean>>;
 }
 export declare type Side = 'top' | 'right' | 'bottom' | 'left';
+export interface MetricsState extends metricdetails {
+  error?: string;
+}
