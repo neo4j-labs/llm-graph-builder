@@ -117,7 +117,16 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           index = nextIndex;
           lastTimestamp = timestamp;
         } else {
-          setListMessages((msgs) => msgs.map((msg) => (msg.id === messageId ? { ...msg, isTyping: false } : msg)));
+          setListMessages((msgs) => {
+            const activeMessage = msgs.find((message) => message.id === messageId);
+            let sortedModes: Record<string, ResponseMode>;
+            if (activeMessage) {
+              sortedModes = Object.fromEntries(
+                chatModes.filter((m) => m in activeMessage.modes).map((key) => [key, activeMessage?.modes[key]])
+              );
+            }
+            return msgs.map((msg) => (msg.id === messageId ? { ...msg, isTyping: false, modes: sortedModes } : msg));
+          });
           return;
         }
       }
