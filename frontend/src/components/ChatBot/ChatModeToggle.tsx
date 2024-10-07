@@ -27,6 +27,17 @@ export default function ChatModeToggle({
   useEffect(() => {
     // If rows are selected, the mode is valid (either vector or graph+vector)
     if (selectedRows.length > 0) {
+      if (
+        chatModes.includes(chatModeLables.graph) ||
+        chatModes.includes(chatModeLables.fulltext) ||
+        chatModes.includes(chatModeLables.graph_vector_fulltext)
+      ) {
+        setchatModes((prev) =>
+          prev.filter(
+            (m) => ![chatModeLables.graph, chatModeLables.fulltext, chatModeLables.graph_vector_fulltext].includes(m)
+          )
+        );
+      }
       if (!(chatModes.includes(chatModeLables.vector) || chatModes.includes(chatModeLables.graph_vector))) {
         setchatModes([chatModeLables.graph_vector]);
       }
