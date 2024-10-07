@@ -144,7 +144,7 @@ def create_vector_fulltext_indexes(uri, username, password, database):
         create_vector_index(driver, CHUNK_VECTOR_INDEX_NAME,CHUNK_VECTOR_EMBEDDING_DIMENSION)
         logging.info("Vector index for chunk created successfully.")
     except Exception as e:
-        logging.error(f"Failed to create vector index for '{chunk_vector_index_name}': {e}")
+        logging.error(f"Failed to create vector index for '{CHUNK_VECTOR_INDEX_NAME}': {e}")
 
     try:
         driver.close()

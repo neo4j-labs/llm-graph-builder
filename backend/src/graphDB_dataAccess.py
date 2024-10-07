@@ -336,8 +336,8 @@ class graphDBdataAccess:
         text_distance = int(os.environ.get('DUPLICATE_TEXT_DISTANCE'))
         query_duplicate_nodes = """
                 MATCH (n:!Chunk&!Document&!`__Community__`) with n 
-                WHERE n.embedding is not null and n.id is not null // and size(n.id) > 3
-                WITH n ORDER BY count {{ (n)--() }} DESC, size(n.id) DESC // updated
+                WHERE n.embedding is not null and n.id is not null // and size(toString(n.id)) > 3
+                WITH n ORDER BY count {{ (n)--() }} DESC, size(toString(n.id)) DESC // updated
                 WITH collect(n) as nodes
                 UNWIND nodes as n
                 WITH n, [other in nodes 
@@ -347,9 +347,9 @@ class graphDBdataAccess:
                 AND 
                 (
                 // either contains each other as substrings or has a text edit distinct of less than 3
-                (size(other.id) > 2 AND toLower(n.id) CONTAINS toLower(other.id)) OR 
-                (size(n.id) > 2 AND toLower(other.id) CONTAINS toLower(n.id))
-                OR (size(n.id)>5 AND apoc.text.distance(toLower(n.id), toLower(other.id)) < $duplicate_text_distance)
+                (size(toString(other.id)) > 2 AND toLower(n.id) CONTAINS toLower(other.id)) OR 
+                (size(toString(n.id)) > 2 AND toLower(other.id) CONTAINS toLower(n.id))
+                OR (size(toString(n.id))>5 AND apoc.text.distance(toLower(n.id), toLower(other.id)) < $duplicate_text_distance)
                 OR
                 vector.similarity.cosine(other.embedding, n.embedding) > $duplicate_score_value
                 )] as similar
