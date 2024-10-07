@@ -257,12 +257,6 @@ export const nvlOptions: NvlOptions = {
   initialZoom: 1,
 };
 
-export const mouseEventCallbacks = {
-  onPan: true,
-  onZoom: true,
-  onDrag: true,
-};
-
 // export const graphQuery: string = queryMap.DocChunkEntities;
 export const graphView: OptionType[] = [
   { label: 'Lexical Graph', value: queryMap.DocChunks },

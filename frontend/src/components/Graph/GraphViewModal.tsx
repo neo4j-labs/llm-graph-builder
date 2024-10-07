@@ -2,15 +2,13 @@ import {
   Banner,
   Dialog,
   Flex,
-  IconButton,
   IconButtonArray,
   LoadingSpinner,
-  TextInput,
-  Typography,
   useDebounce,
 } from '@neo4j-ndl/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  EntityType,
   ExtendedNode,
   ExtendedRelationship,
   GraphType,
@@ -21,30 +19,29 @@ import {
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL from '@neo4j-nvl/base';
 import type { Node, Relationship } from '@neo4j-nvl/base';
-import { Resizable } from 're-resizable';
 import {
   ArrowPathIconOutline,
-  DragIcon,
   FitToScreenIcon,
-  MagnifyingGlassIconOutline,
   MagnifyingGlassMinusIconOutline,
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
-import { filterData, getCheckboxConditions, processGraphData, sortAlphabetically } from '../../utils/Utils';
+import { filterData, getCheckboxConditions, processGraphData } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
-import { LegendsChip } from './LegendsChip';
+
 import graphQueryAPI from '../../services/GraphQuery';
 import {
   graphLabels,
   intitalGraphType,
-  mouseEventCallbacks,
   nvlOptions,
   queryMap,
-  RESULT_STEP_SIZE,
 } from '../../utils/Constants';
 import CheckboxSelection from './CheckboxSelection';
-import { ShowAll } from '../UI/ShowAll';
+
+import ResultOverview from './ResultOverview';
+import { ResizePanelDetails } from './ResizePanel';
+import { NvlDetailsPanel } from './ResultProperties';
+
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -57,7 +54,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 }) => {
   const nvlRef = useRef<NVL>(null);
   const [nodes, setNodes] = useState<ExtendedNode[]>([]);
-  const [relationships, setRelationships] = useState<Relationship[]>([]);
+  const [relationships, setRelationships] = useState<ExtendedRelationship[]>([]);
   const [allNodes, setAllNodes] = useState<ExtendedNode[]>([]);
   const [allRelationships, setAllRelationships] = useState<Relationship[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -70,6 +67,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const debouncedQuery = useDebounce(searchQuery, 300);
   const [graphType, setGraphType] = useState<GraphType[]>(intitalGraphType(isGdsActive));
   const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
+  const [selected, setSelected] = useState<{ type: EntityType; id: string }>({ type: 'node', id: '' });
 
   // the checkbox selection
   const handleCheckboxChange = (graph: GraphType) => {
@@ -86,22 +84,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setGraphType(newGraphSelected);
   };
 
-  const nodeCount = (nodes: ExtendedNode[], label: string): number => {
-    return [...new Set(nodes?.filter((n) => n.labels?.includes(label)).map((i) => i.id))].length;
-  };
 
-  const relationshipCount = (relationships: ExtendedRelationship[], label: string): number => {
-    return [...new Set(relationships?.filter((r) => r.caption?.includes(label)).map((i) => i.id))].length;
-  };
 
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-      ? queryMap.DocChunks
-      : graphType.includes('Entities')
-      ? queryMap.Entities
-      : '';
+        ? queryMap.DocChunks
+        : graphType.includes('Entities')
+          ? queryMap.Entities
+          : '';
 
   // fit graph to original position
   const handleZoomToFit = () => {
@@ -136,10 +128,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
-              userCredentials as UserCredentials,
-              graphQuery,
-              selectedRows?.map((f) => f.name)
-            )
+            userCredentials as UserCredentials,
+            graphQuery,
+            selectedRows?.map((f) => f.name)
+          )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -252,8 +244,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             match && viewPoint === graphLabels.showGraphView
               ? 100
               : match && viewPoint !== graphLabels.showGraphView
-              ? 50
-              : graphLabels.nodeSize,
+                ? 50
+                : graphLabels.nodeSize,
         };
       });
       // deactivating any active relationships
@@ -324,88 +316,31 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setSearchQuery('');
   };
 
-  // sort the legends in with Chunk and Document always the first two values
-  const nodeCheck = Object.keys(newScheme).sort((a, b) => {
-    if (a === graphLabels.document || a === graphLabels.chunk) {
-      return -1;
-    } else if (b === graphLabels.document || b === graphLabels.chunk) {
-      return 1;
+  const selectedItem = useMemo(() => {
+    if (selected === undefined) {
+      return undefined;
     }
-    return a.localeCompare(b);
-  });
-
-  // get sorted relationships
-  const relationshipsSorted = relationships.sort(sortAlphabetically);
-
-  // To get the relationship count
-  const groupedAndSortedRelationships: ExtendedRelationship[] = Object.values(
-    relationshipsSorted.reduce((acc: { [key: string]: ExtendedRelationship }, relType: Relationship) => {
-      const key = relType.caption || '';
-      if (!acc[key]) {
-        acc[key] = { ...relType, count: 0 };
-      }
-
-      acc[key]!.count += relationshipCount(relationships as ExtendedRelationship[], key);
-      return acc;
-    }, {})
-  );
-
-  // On Node Click, highlighting the nodes and deactivating any active relationships
-  const handleNodeClick = (nodeLabel: string) => {
-    const updatedNodes = nodes.map((node) => {
-      const isActive = node.labels.includes(nodeLabel);
-      return {
-        ...node,
-        activated: isActive,
-        selected: isActive,
-        size:
-          isActive && viewPoint === graphLabels.showGraphView
-            ? 100
-            : isActive && viewPoint !== graphLabels.showGraphView
-            ? 50
-            : graphLabels.nodeSize,
-      };
-    });
-    // deactivating any active relationships
-    const updatedRelationships = relationships.map((rel) => {
-      return {
-        ...rel,
-        activated: false,
-        selected: false,
-      };
-    });
-    if (searchQuery !== '') {
-      setSearchQuery('');
+    if (selected.type === 'node') {
+      return nodes.find((node) => node.id === selected.id);
     }
-    setNodes(updatedNodes);
-    setRelationships(updatedRelationships);
-  };
-  // On Relationship Legend Click, highlight the relationships and deactivating any active nodes
-  const handleRelationshipClick = (nodeLabel: string) => {
-    const updatedRelations = relationships.map((rel) => {
-      return {
-        ...rel,
-        activated: rel?.caption?.includes(nodeLabel),
-        selected: rel?.caption?.includes(nodeLabel),
-      };
-    });
-    // // deactivating any active nodes
-    const updatedNodes = nodes.map((node) => {
-      return {
-        ...node,
-        activated: false,
-        selected: false,
-        size: graphLabels.nodeSize,
-      };
-    });
-    if (searchQuery !== '') {
-      setSearchQuery('');
-    }
-    setRelationships(updatedRelations);
-    setNodes(updatedNodes);
+    return relationships.find((relationship) => relationship.id === selected.id);
+  }, [selected, relationships, nodes]);
+
+  const mouseEventCallbacks = {
+    onNodeClick: (clickedNode: Node) => {
+      setSelected({ type: 'node', id: clickedNode.id });
+    },
+    onRelationshipClick: (clickedRelationship: Relationship) => {
+      setSelected({ type: 'relationship', id: clickedRelationship.id });
+    },
+    onCanvasClick: () => {
+      setSelected(undefined);
+    },
+    onPan: true,
+    onZoom: true,
+    onDrag: true,
   };
 
-  // const isCommunity = allNodes.some(n=>n.labels.includes('__Community__'));
   return (
     <>
       <Dialog
@@ -493,102 +428,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       </IconButtonWithToolTip>
                     </IconButtonArray>
                   </div>
-                  <Resizable
-                    defaultSize={{
-                      width: 400,
-                      height: '100%',
-                    }}
-                    minWidth={230}
-                    maxWidth='72%'
-                    enable={{
-                      top: false,
-                      right: false,
-                      bottom: false,
-                      left: true,
-                      topRight: false,
-                      bottomRight: false,
-                      bottomLeft: false,
-                      topLeft: false,
-                    }}
-                    handleComponent={{ left: <DragIcon className='absolute top-1/2 h-6 w-6' /> }}
-                    handleClasses={{ left: 'ml-1' }}
-                  >
-                    <div className='legend_div'>
-                      {nodeCheck.length > 0 && (
-                        <>
-                          <Flex className='py-3 pt-3 ml-2'>
-                            <Typography variant='h3'>{graphLabels.resultOverview}</Typography>
-                            <div className={`text-input-container`}>
-                              <TextInput
-                                aria-label='search nodes'
-                                type='text'
-                                value={searchQuery}
-                                onChange={(e) => {
-                                  setSearchQuery(e.target.value);
-                                }}
-                                placeholder='Search On Node Properties'
-                                fluid={true}
-                                leftIcon={
-                                  <IconButton
-                                    aria-label='Search Icon'
-                                    clean
-                                    size='small'
-                                    className='-mt-0.5'
-                                    type='submit'
-                                  >
-                                    <MagnifyingGlassIconOutline />
-                                  </IconButton>
-                                }
-                              />
-                            </div>
-                            <Typography variant='subheading-small'>
-                              {graphLabels.totalNodes} ({nodes.length})
-                            </Typography>
-                          </Flex>
-                          <div className='flex gap-2 flex-wrap ml-2'>
-                            <ShowAll initiallyShown={RESULT_STEP_SIZE}>
-                              {nodeCheck.map((nodeLabel, index) => (
-                                <LegendsChip
-                                  type='node'
-                                  key={index}
-                                  label={nodeLabel}
-                                  scheme={newScheme}
-                                  count={nodeCount(nodes, nodeLabel)}
-                                  onClick={() => handleNodeClick(nodeLabel)}
-                                />
-                              ))}
-                            </ShowAll>
-                          </div>
-                        </>
-                      )}
-                      {relationshipsSorted.length > 0 && (
-                        <>
-                          <Flex className='py-3 pt-3 ml-2'>
-                            <Typography variant='subheading-small'>
-                              {graphLabels.totalRelationships} ({relationships.length})
-                            </Typography>
-                          </Flex>
-                          <div className='flex gap-2 flex-wrap ml-2'>
-                            <ShowAll initiallyShown={RESULT_STEP_SIZE}>
-                              {groupedAndSortedRelationships.map((relType, index) => (
-                                <LegendsChip
-                                  key={index}
-                                  scheme={{}}
-                                  label={relType.caption || ''}
-                                  type='relationship'
-                                  count={relationshipCount(
-                                    relationships as ExtendedRelationship[],
-                                    relType.caption || ''
-                                  )}
-                                  onClick={() => handleRelationshipClick(relType.caption || '')}
-                                />
-                              ))}
-                            </ShowAll>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </Resizable>
+                  {true && (
+                    <ResizePanelDetails open={true}>
+                      {/* {selectedItem !== undefined ? ( */}
+                      {true ? (
+                        <NvlDetailsPanel inspectedItem={selectedItem} paneWidth={400} enableStylePicker={false} newScheme={newScheme} />
+                      ) : (
+                        <ResultOverview nodes={nodes} relationships={relationships} newScheme={newScheme} searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+                          viewPoint={viewPoint} setNodes={setNodes} setRelationships={setRelationships} />)}
+                    </ResizePanelDetails>
+                  )}
                 </div>
               </>
             )}

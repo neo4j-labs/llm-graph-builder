@@ -583,7 +583,7 @@ export interface ExtendedNode extends Node {
 }
 
 export interface ExtendedRelationship extends Relationship {
-  count: number;
+  count?: number;
 }
 export interface connectionState {
   openPopUp: boolean;
@@ -744,3 +744,15 @@ export interface FileContextType {
   setPostProcessingVal: Dispatch<SetStateAction<boolean>>;
 }
 export declare type Side = 'top' | 'right' | 'bottom' | 'left';
+
+export type EntityType = 'node' | 'relationship';
+
+
+export type BasicRelationship = {
+  id: string;
+  startNodeId: string;
+  endNodeId: string;
+  type: string;
+  properties: Record<string, string>;
+  propertyTypes: Record<string, string>;
+};
