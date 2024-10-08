@@ -6,6 +6,7 @@ from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_up
 from src.document_sources.gcs_bucket import delete_file_from_gcs
 from src.shared.constants import BUCKET_UPLOAD
 from src.entities.source_node import sourceNode
+from src.communities import MAX_COMMUNITY_LEVELS
 import json
 from dotenv import load_dotenv
 
@@ -281,10 +282,23 @@ class graphDBdataAccess:
             match (c)-[:HAS_ENTITY]->(e)
             where not exists { (e)<-[:HAS_ENTITY]-()-[:PART_OF]->(d2) where not d2 in documents }
             detach delete e
-            """    
+            """ 
+        query_to_delete_communities = """
+            MATCH (c:`__Community__`) 
+            WHERE NOT EXISTS { ()-[:IN_COMMUNITY]->(c) } AND c.level = 0 
+            DETACH DELETE c 
+
+            WITH *
+            UNWIND range(1, $max_level) AS level
+            MATCH (c:`__Community__`) 
+            WHERE c.level = level AND NOT EXISTS { (c)<-[:PARENT_COMMUNITY]-(child) } 
+            DETACH DELETE c
+        """   
         param = {"filename_list" : filename_list, "source_types_list": source_types_list}
+        community_param = {"max_level":MAX_COMMUNITY_LEVELS}
         if deleteEntities == "true":
             result = self.execute_query(query_to_delete_document_and_entities, param)
+            _ = self.execute_query(query_to_delete_communities,community_param)
             logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' from database")
         else :
             result = self.execute_query(query_to_delete_document, param)    
