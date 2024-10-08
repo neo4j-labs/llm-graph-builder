@@ -306,8 +306,9 @@ async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(),
             graph = Neo4jGraph( url=uri,username=userName,password=password,database=database,sanitize = True, refresh_schema=True)
         else:
             graph = create_graph_database_connection(uri, userName, password, database)
-            graph_DB_dataAccess = graphDBdataAccess(graph)
-            write_access = graph_DB_dataAccess.check_account_access(database=database)
+        
+        graph_DB_dataAccess = graphDBdataAccess(graph)
+        write_access = graph_DB_dataAccess.check_account_access(database=database)
         result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access=write_access)
 
         total_call_time = time.time() - qa_rag_start_time

@@ -505,6 +505,7 @@ def create_graph_chain(model, graph):
             validate_cypher= True,
             graph=graph,
             # verbose=True, 
+            allow_dangerous_requests=True,
             return_intermediate_steps = True,
             top_k=3
         )
