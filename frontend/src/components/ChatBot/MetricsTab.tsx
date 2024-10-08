@@ -1,6 +1,6 @@
 import { Banner, DataGrid, DataGridComponents, Typography } from '@neo4j-ndl/react';
 import { MetricsState } from '../../types';
-import { useMemo, useRef } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -10,7 +10,7 @@ import {
   getSortedRowModel,
 } from '@tanstack/react-table';
 import { capitalize } from '../../utils/Utils';
-export default function MetricsTab({
+function MetricsTab({
   metricsLoading,
   metricDetails,
 }: {
@@ -110,3 +110,4 @@ export default function MetricsTab({
     </>
   );
 }
+export default memo(MetricsTab);

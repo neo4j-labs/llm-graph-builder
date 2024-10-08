@@ -406,7 +406,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
                       }`}
                     >
-                      <ReactMarkdown>{chat.modes[chat.currentMode]?.message || ''}</ReactMarkdown>
+                      <ReactMarkdown className={!isFullScreen ? 'max-w-[250px]' : ''}>
+                        {chat.modes[chat.currentMode]?.message || ''}
+                      </ReactMarkdown>
                     </div>
                     <div>
                       <div>
