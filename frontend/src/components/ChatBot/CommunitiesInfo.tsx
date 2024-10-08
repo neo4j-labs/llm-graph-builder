@@ -22,7 +22,7 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities }) => {
                   </Flex>
                   <Flex flexDirection='row' gap='2'>
                     <Typography variant='subheading-medium'>Score : </Typography>
-                    {community.score && (<Typography variant='subheading-medium'>{community.score}</Typography>)}
+                    {community.score && <Typography variant='subheading-medium'>{community.score}</Typography>}
                   </Flex>
                   <ReactMarkdown>{community.summary}</ReactMarkdown>
                 </div>

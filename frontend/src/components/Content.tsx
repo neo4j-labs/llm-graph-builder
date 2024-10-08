@@ -18,7 +18,16 @@ import { postProcessing } from '../services/PostProcessing';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
-import { batchSize, buttonCaptions, chatModeLables, defaultLLM, largeFileSize, llms, RETRY_OPIONS, tooltips } from '../utils/Constants';
+import {
+  batchSize,
+  buttonCaptions,
+  chatModeLables,
+  defaultLLM,
+  largeFileSize,
+  llms,
+  RETRY_OPIONS,
+  tooltips,
+} from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 import DropdownComponent from './Dropdown';
@@ -96,7 +105,7 @@ const Content: React.FC<ContentProps> = ({
     queue,
     processedCount,
     setProcessedCount,
-    setchatMode
+    setchatMode,
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
@@ -543,7 +552,7 @@ const Content: React.FC<ContentProps> = ({
     setSelectedNodes([]);
     setSelectedRels([]);
     setClearHistoryData(true);
-    setchatMode(chatModeLables.graph_vector_fulltext)
+    setchatMode(chatModeLables.graph_vector_fulltext);
   };
 
   const retryHandler = async (filename: string, retryoption: string) => {

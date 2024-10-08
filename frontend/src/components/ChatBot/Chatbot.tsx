@@ -324,7 +324,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                   isElevated={true}
                   className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
                     chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
-                    } `}
+                  } `}
                   subheader={
                     chat.user !== 'chatbot' && chat.mode?.length ? (
                       <Typography variant='subheading-small'>
@@ -338,9 +338,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                   <div
                     className={`${
                       listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
-                      ? 'loader'
-                      : ''
-                      }`}
+                        ? 'loader'
+                        : ''
+                    }`}
                   >
                     <ReactMarkdown>{chat.message}</ReactMarkdown>
                   </div>
@@ -427,7 +427,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           <TextInput
             className={`n-bg-palette-neutral-bg-default flex-grow-7 ${
               isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
-              }`}
+            }`}
             aria-label='chatbot-input'
             type='text'
             value={inputMessage}
