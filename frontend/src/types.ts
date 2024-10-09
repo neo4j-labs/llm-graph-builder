@@ -241,7 +241,7 @@ export type ChatbotProps = {
   isFullScreen?: boolean;
   connectionStatus: boolean;
 };
-export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
+export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> { }
 
 export interface GraphViewModalProps {
   open: boolean;
@@ -344,8 +344,8 @@ export interface LegendChipProps {
   scheme: Scheme;
   label: string;
   type: 'node' | 'relationship' | 'propertyKey';
-  count: number;
-  onClick: (e: React.MouseEvent<HTMLElement>) => void;
+  count?: number;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
 }
 export interface FileContextProviderProps {
   children: ReactNode;
@@ -559,13 +559,6 @@ export interface Origin {
   horizontal: Horizontal;
 }
 
-export type BasicNode = {
-  id: string;
-  labels: string[];
-  properties: Record<string, string>;
-  propertyTypes: Record<string, string>;
-};
-
 export type GraphStatsLabels = Record<
   string,
   {
@@ -750,9 +743,29 @@ export type EntityType = 'node' | 'relationship';
 
 export type BasicRelationship = {
   id: string;
-  startNodeId: string;
-  endNodeId: string;
+  to: string;
+  from: string;
   type: string;
+  caption: string;
+};
+
+export type BasicNode = {
+  id: string;
+  type: string;
+  labels: string[];
   properties: Record<string, string>;
   propertyTypes: Record<string, string>;
+};
+
+
+export type GraphPropertiesTableProps = {
+  propertiesWithTypes: {
+    key: string;
+    value: string;
+  }[];
+};
+
+export type GraphPropertiesPanelProps = {
+  inspectedItem: BasicNode | BasicRelationship;
+  newScheme: Scheme;
 };

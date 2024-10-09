@@ -8,6 +8,8 @@ import {
 } from '@neo4j-ndl/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  BasicNode,
+  BasicRelationship,
   EntityType,
   ExtendedNode,
   ExtendedRelationship,
@@ -40,7 +42,7 @@ import CheckboxSelection from './CheckboxSelection';
 
 import ResultOverview from './ResultOverview';
 import { ResizePanelDetails } from './ResizePanel';
-import { NvlDetailsPanel } from './ResultProperties';
+import GraphPropertiesPanel from './GraphPropertiesPanel';
 
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
@@ -67,7 +69,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const debouncedQuery = useDebounce(searchQuery, 300);
   const [graphType, setGraphType] = useState<GraphType[]>(intitalGraphType(isGdsActive));
   const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
-  const [selected, setSelected] = useState<{ type: EntityType; id: string }>({ type: 'node', id: '' });
+  const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
 
   // the checkbox selection
   const handleCheckboxChange = (graph: GraphType) => {
@@ -220,6 +222,17 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
   };
 
+
+  const selectedItem = useMemo(() => {
+    if (selected === undefined) {
+      return undefined;
+    }
+    if (selected.type === 'node') {
+      return nodes.find((node) => node.id === selected.id);
+    }
+    return relationships.find((relationship) => relationship.id === selected.id);
+  }, [selected, relationships, nodes]);
+
   // The search and update nodes
   const handleSearch = useCallback(
     (value: string) => {
@@ -316,15 +329,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setSearchQuery('');
   };
 
-  const selectedItem = useMemo(() => {
-    if (selected === undefined) {
-      return undefined;
-    }
-    if (selected.type === 'node') {
-      return nodes.find((node) => node.id === selected.id);
-    }
-    return relationships.find((relationship) => relationship.id === selected.id);
-  }, [selected, relationships, nodes]);
 
   const mouseEventCallbacks = {
     onNodeClick: (clickedNode: Node) => {
@@ -428,16 +432,13 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       </IconButtonWithToolTip>
                     </IconButtonArray>
                   </div>
-                  {true && (
-                    <ResizePanelDetails open={true}>
-                      {/* {selectedItem !== undefined ? ( */}
-                      {true ? (
-                        <NvlDetailsPanel inspectedItem={selectedItem} paneWidth={400} enableStylePicker={false} newScheme={newScheme} />
-                      ) : (
-                        <ResultOverview nodes={nodes} relationships={relationships} newScheme={newScheme} searchQuery={searchQuery} setSearchQuery={setSearchQuery}
-                          viewPoint={viewPoint} setNodes={setNodes} setRelationships={setRelationships} />)}
-                    </ResizePanelDetails>
-                  )}
+                  <ResizePanelDetails open={true}>
+                    {selectedItem !== undefined ? (
+                      <GraphPropertiesPanel inspectedItem={selectedItem as BasicNode | BasicRelationship} newScheme={newScheme} />
+                    ) : (
+                      <ResultOverview nodes={nodes} relationships={relationships} newScheme={newScheme} searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+                        viewPoint={viewPoint} setNodes={setNodes} setRelationships={setRelationships} />)}
+                  </ResizePanelDetails>
                 </div>
               </>
             )}
