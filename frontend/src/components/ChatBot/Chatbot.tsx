@@ -114,7 +114,16 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           index = nextIndex;
           lastTimestamp = timestamp;
         } else {
-          setListMessages((msgs) => msgs.map((msg) => (msg.id === messageId ? { ...msg, isTyping: false } : msg)));
+          setListMessages((msgs) => {
+            const activeMessage = msgs.find((message) => message.id === messageId);
+            let sortedModes: Record<string, ResponseMode>;
+            if (activeMessage) {
+              sortedModes = Object.fromEntries(
+                chatModes.filter((m) => m in activeMessage.modes).map((key) => [key, activeMessage?.modes[key]])
+              );
+            }
+            return msgs.map((msg) => (msg.id === messageId ? { ...msg, isTyping: false, modes: sortedModes } : msg));
+          });
           return;
         }
       }
@@ -164,6 +173,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       const results = await Promise.allSettled(apiCalls);
       results.forEach((result, index) => {
         const mode = chatModes[index];
+        console.log({ mode });
         if (result.status === 'fulfilled') {
           // @ts-ignore
           if (result.value.response.data.status === 'Success') {
@@ -222,9 +232,10 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           );
         }
       });
-      setListMessages((prev) =>
-        prev.map((msg) => (msg.id === chatbotMessageId ? { ...msg, isLoading: false, isTyping: false } : msg))
-      );
+
+      setListMessages((prev) => {
+        return prev.map((msg) => (msg.id === chatbotMessageId ? { ...msg, isLoading: false, isTyping: false } : msg));
+      });
     } catch (error) {
       console.error('Error in handling chat:', error);
       if (error instanceof Error) {
