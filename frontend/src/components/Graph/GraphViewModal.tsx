@@ -67,7 +67,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [newScheme, setNewScheme] = useState<Scheme>({});
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedQuery = useDebounce(searchQuery, 300);
-  const [graphType, setGraphType] = useState<GraphType[]>(intitalGraphType(isGdsActive));
+  //const [graphType, setGraphType] = useState<GraphType[]>(intitalGraphType(isGdsActive && allNodes.some((n) => n.labels?.includes('__Community__'))));
+  const [graphType, setGraphType] = useState<GraphType[]>([]);
   const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
   const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
 
@@ -366,7 +367,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 graphType={graphType}
                 loading={loading}
                 handleChange={handleCheckboxChange}
-                {...getCheckboxConditions(allNodes)}
+                {...getCheckboxConditions(allNodes, isGdsActive)}
               />
             )}
           </Flex>

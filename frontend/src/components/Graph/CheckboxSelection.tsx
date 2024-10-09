@@ -31,7 +31,7 @@ const CheckboxSelection: React.FC<CheckboxSectionProps> = ({
       )}
       {isgds && (
         <Checkbox
-          checked={graphType.includes('Communities')}
+          checked={graphType.includes('Communities') && isgds}
           label={graphLabels.community}
           disabled={loading}
           onChange={() => handleChange('Communities')}
