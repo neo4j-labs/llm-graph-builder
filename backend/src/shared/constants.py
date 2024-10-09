@@ -219,7 +219,7 @@ Note: This system does not generate answers based solely on internal knowledge. 
 QUESTION_TRANSFORM_TEMPLATE = "Given the below conversation, generate a search query to look up in order to get information relevant to the conversation. Only respond with the query, nothing else." 
 
 ## CHAT QUERIES
-VECTOR_SEARCH_TOP_K = 10
+VECTOR_SEARCH_TOP_K = 5
 
 VECTOR_SEARCH_QUERY = """
 WITH node AS chunk, score
@@ -246,11 +246,11 @@ RETURN text,
 """ 
 
 ### Vector graph search 
-VECTOR_GRAPH_SEARCH_ENTITY_LIMIT = 25
+VECTOR_GRAPH_SEARCH_ENTITY_LIMIT = 40
 VECTOR_GRAPH_SEARCH_EMBEDDING_MIN_MATCH = 0.3
 VECTOR_GRAPH_SEARCH_EMBEDDING_MAX_MATCH = 0.9
-VECTOR_GRAPH_SEARCH_ENTITY_LIMIT_MINMAX_CASE = 10
-VECTOR_GRAPH_SEARCH_ENTITY_LIMIT_MAX_CASE = 25
+VECTOR_GRAPH_SEARCH_ENTITY_LIMIT_MINMAX_CASE = 20
+VECTOR_GRAPH_SEARCH_ENTITY_LIMIT_MAX_CASE = 40
 
 VECTOR_GRAPH_SEARCH_QUERY_PREFIX = """
 WITH node as chunk, score

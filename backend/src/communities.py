@@ -12,6 +12,8 @@ COMMUNITY_PROJECTION_NAME = "communities"
 NODE_PROJECTION = "!Chunk&!Document&!__Community__"
 NODE_PROJECTION_ENTITY = "__Entity__"
 MAX_WORKERS = 10
+MAX_COMMUNITY_LEVELS = 3 
+MIN_COMMUNITY_SIZE = 1
 
 
 CREATE_COMMUNITY_GRAPH_PROJECTION = """
@@ -143,7 +145,8 @@ DROP_COMMUNITY_PROPERTY = "MATCH (e:`__Entity__`) REMOVE e.communities"
 ENTITY_VECTOR_INDEX_NAME = "entity_vector"
 ENTITY_VECTOR_EMBEDDING_DIMENSION = 384
 
-CREATE_ENTITY_VECTOR_INDEX = """
+DROP_ENTITY_VECTOR_INDEX_QUERY = f"DROP INDEX {ENTITY_VECTOR_INDEX_NAME} IF EXISTS;"
+CREATE_ENTITY_VECTOR_INDEX_QUERY = """
 CREATE VECTOR INDEX {index_name} IF NOT EXISTS FOR (e:__Entity__) ON e.embedding
 OPTIONS {{
   indexConfig: {{
@@ -151,7 +154,26 @@ OPTIONS {{
     `vector.similarity_function`: 'cosine'
   }}
 }}
-"""
+""" 
+
+COMMUNITY_VECTOR_INDEX_NAME = "community_vector"
+COMMUNITY_VECTOR_EMBEDDING_DIMENSION = 384
+
+DROP_COMMUNITY_VECTOR_INDEX_QUERY = f"DROP INDEX {COMMUNITY_VECTOR_INDEX_NAME} IF EXISTS;"
+CREATE_COMMUNITY_VECTOR_INDEX_QUERY = """
+CREATE VECTOR INDEX {index_name} IF NOT EXISTS FOR (c:__Community__) ON c.embedding
+OPTIONS {{
+  indexConfig: {{
+    `vector.dimensions`: {embedding_dimension},
+    `vector.similarity_function`: 'cosine'
+  }}
+}}
+""" 
+
+COMMUNITY_FULLTEXT_INDEX_NAME = "community_keyword"
+COMMUNITY_FULLTEXT_INDEX_DROP_QUERY = f"DROP INDEX  {COMMUNITY_FULLTEXT_INDEX_NAME} IF EXISTS;"
+COMMUNITY_INDEX_FULL_TEXT_QUERY = f"CREATE FULLTEXT INDEX {COMMUNITY_FULLTEXT_INDEX_NAME} FOR (n:`__Community__`) ON EACH [n.summary]" 
+
 
 
 def get_gds_driver(uri, username, password, database):
@@ -194,7 +216,9 @@ def write_communities(gds, graph_project, project_name=COMMUNITY_PROJECTION_NAME
             graph_project,
             writeProperty=project_name,
             includeIntermediateCommunities=True,
-            relationshipWeightProperty="weight"
+            relationshipWeightProperty="weight",
+            maxLevels=MAX_COMMUNITY_LEVELS,
+            minCommunitySize=MIN_COMMUNITY_SIZE,
         )
         logging.info("Communities written successfully.")
         return True
@@ -328,18 +352,69 @@ def create_community_embeddings(gds):
     except Exception as e:
         logging.error(f"An error occurred during the community embedding process: {e}")
 
-def create_entity_vector_index(gds, embedding_dimension=ENTITY_VECTOR_EMBEDDING_DIMENSION):
-    query = CREATE_ENTITY_VECTOR_INDEX.format(
-        index_name=ENTITY_VECTOR_INDEX_NAME,
-        embedding_dimension=embedding_dimension
-    ) 
+
+def create_vector_index(gds, index_type,embedding_dimension=None):
+    drop_query = ""
+    query = ""
+    
+    if index_type == ENTITY_VECTOR_INDEX_NAME:
+        drop_query = DROP_ENTITY_VECTOR_INDEX_QUERY
+        query = CREATE_ENTITY_VECTOR_INDEX_QUERY.format(
+            index_name=ENTITY_VECTOR_INDEX_NAME,
+            embedding_dimension=embedding_dimension if embedding_dimension else ENTITY_VECTOR_EMBEDDING_DIMENSION
+        )
+    elif index_type == COMMUNITY_VECTOR_INDEX_NAME:
+        drop_query = DROP_COMMUNITY_VECTOR_INDEX_QUERY
+        query = CREATE_COMMUNITY_VECTOR_INDEX_QUERY.format(
+            index_name=COMMUNITY_VECTOR_INDEX_NAME,
+            embedding_dimension=embedding_dimension if embedding_dimension else COMMUNITY_VECTOR_EMBEDDING_DIMENSION
+        )
+    else:
+        logging.error(f"Invalid index type provided: {index_type}")
+        return
+
     try:
-        logging.info(f"Running Cypher query to create entity vector index: {query}")
+        logging.info("Starting the process to create vector index.")
+
+        logging.info(f"Executing drop query: {drop_query}")
+        gds.run_cypher(drop_query)
+
+        logging.info(f"Executing create query: {query}")
         gds.run_cypher(query)
-        logging.info("Entity vector index created successfully.")
+
+        logging.info(f"Vector index '{index_type}' created successfully.")
+    
     except Exception as e:
-        logging.error(f"Error occurred while creating entity vector index: {e}", exc_info=True)
-        
+        logging.error("An error occurred while creating the vector index.", exc_info=True)
+        logging.error(f"Error details: {str(e)}")
+
+
+def create_fulltext_index(gds, index_type):
+    drop_query = ""
+    query = ""
+    
+    if index_type == COMMUNITY_FULLTEXT_INDEX_NAME:
+        drop_query = COMMUNITY_FULLTEXT_INDEX_DROP_QUERY
+        query = COMMUNITY_INDEX_FULL_TEXT_QUERY
+    else:
+        logging.error(f"Invalid index type provided: {index_type}")
+        return
+
+    try:
+        logging.info("Starting the process to create full-text index.")
+
+        logging.info(f"Executing drop query: {drop_query}")
+        gds.run_cypher(drop_query)
+
+        logging.info(f"Executing create query: {query}")
+        gds.run_cypher(query)
+
+        logging.info(f"Full-text index '{index_type}' created successfully.")
+
+    except Exception as e:
+        logging.error("An error occurred while creating the full-text index.", exc_info=True)
+        logging.error(f"Error details: {str(e)}")
+
 def create_community_properties(gds, model):
     commands = [
         (CREATE_COMMUNITY_CONSTRAINT, "created community constraint to the graph."),
@@ -360,8 +435,14 @@ def create_community_properties(gds, model):
         embedding_dimension = create_community_embeddings(gds)
         logging.info("Successfully created community embeddings.")
 
-        create_entity_vector_index(gds,embedding_dimension=embedding_dimension)
+        create_vector_index(gds=gds,index_type=ENTITY_VECTOR_INDEX_NAME,embedding_dimension=embedding_dimension)
         logging.info("Successfully created Entity Vector Index.")
+
+        create_vector_index(gds=gds,index_type=COMMUNITY_VECTOR_INDEX_NAME,embedding_dimension=embedding_dimension)
+        logging.info("Successfully created community Vector Index.")
+
+        create_fulltext_index(gds=gds,index_type=COMMUNITY_FULLTEXT_INDEX_NAME)
+        logging.info("Successfully created community fulltext Index.")
 
     except Exception as e:
         logging.error(f"Error during community properties creation: {e}")
