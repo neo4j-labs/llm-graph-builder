@@ -445,6 +445,22 @@ export interface chatInfoMessage extends Partial<Messages> {
   metricanswer: string;
   metriccontexts: string;
   metricmodel: string;
+  nodes: ExtendedNode[];
+  relationships: ExtendedRelationship[];
+  chunks: Chunk[];
+  metricDetails: MetricsState | null;
+  infoEntities: Entity[];
+  communities: Community[];
+  infoLoading: boolean;
+  metricsLoading: boolean;
+  saveInfoEntitites: (entities: Entity[]) => void;
+  saveNodes: (chatNodes: ExtendedNode[]) => void;
+  saveChatRelationships: (chatRels: ExtendedRelationship[]) => void;
+  saveChunks: (chatChunks: Chunk[]) => void;
+  saveMetrics: (metricInfo: MetricsState) => void;
+  saveCommunities: (chatCommunities: Community[]) => void;
+  toggleInfoLoading: React.DispatchWithoutAction;
+  toggleMetricsLoading: React.DispatchWithoutAction;
 }
 
 export interface eventResponsetypes extends Omit<SourceNode, 'total_chunks' | 'processingTime'> {
