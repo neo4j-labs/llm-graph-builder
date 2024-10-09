@@ -141,7 +141,7 @@ def get_combined_chunks(chunkId_chunkDoc_list):
     return combined_chunk_document_list
 
 
-def get_graph_document_list(
+async def get_graph_document_list(
     llm, combined_chunk_document_list, allowedNodes, allowedRelationship
 ):
     futures = []
@@ -165,23 +165,23 @@ def get_graph_document_list(
             ignore_tool_usage=True,
             #prompt = ChatPromptTemplate.from_messages(["system",PROMPT_TO_ALL_LLMs])
         )
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        for chunk in combined_chunk_document_list:
-            chunk_doc = Document(
-                page_content=chunk.page_content.encode("utf-8"), metadata=chunk.metadata
-            )
-            futures.append(
-                executor.submit(llm_transformer.convert_to_graph_documents, [chunk_doc])
-            )
+    # with ThreadPoolExecutor(max_workers=10) as executor:
+    #     for chunk in combined_chunk_document_list:
+    #         chunk_doc = Document(
+    #             page_content=chunk.page_content.encode("utf-8"), metadata=chunk.metadata
+    #         )
+    #         futures.append(
+    #             executor.submit(llm_transformer.convert_to_graph_documents, [chunk_doc])
+    #         )
 
-        for i, future in enumerate(concurrent.futures.as_completed(futures)):
-            graph_document = future.result()
-            graph_document_list.append(graph_document[0])
-
+    #     for i, future in enumerate(concurrent.futures.as_completed(futures)):
+    #         graph_document = future.result()
+    #         graph_document_list.append(graph_document[0])
+    graph_document_list = await llm_transformer.aconvert_to_graph_documents(combined_chunk_document_list)
     return graph_document_list
 
 
-def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship):
+async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship):
     
     llm, model_name = get_llm(model)
     combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
@@ -195,7 +195,7 @@ def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelati
     else:
         allowedRelationship = allowedRelationship.split(',')
         
-    graph_document_list = get_graph_document_list(
+    graph_document_list = await get_graph_document_list(
         llm, combined_chunk_document_list, allowedNodes, allowedRelationship
     )
     return graph_document_list
