@@ -41,11 +41,11 @@ export const llms =
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
         'diffbot',
-        'openai-gpt-3.5',
-        'openai-gpt-4o',
-        'openai-gpt-4o-mini',
-        'gemini-1.5-pro',
-        'gemini-1.5-flash',
+        'openai_gpt_3_5',
+        'openai_gpt_4o',
+        'openai_gpt_4o_mini',
+        'gemini_1_5_pro',
+        'gemini_1_5_flash',
         'azure_ai_gpt_35',
         'azure_ai_gpt_4o',
         'ollama_llama3',
