@@ -21,7 +21,6 @@ import s3logo from '../assets/images/s3logo.png';
 import gcslogo from '../assets/images/gcs.webp';
 import { chatModeLables } from './Constants';
 
-
 // Get the Url
 export const url = () => {
   let url = window.location.href.replace('5173', '8000');
@@ -206,7 +205,7 @@ export const filterData = (
   graphType: GraphType[],
   allNodes: ExtendedNode[],
   allRelationships: Relationship[],
-  scheme: Scheme,
+  scheme: Scheme
 ) => {
   let filteredNodes: ExtendedNode[] = [];
   let filteredRelations: Relationship[] = [];
@@ -216,9 +215,7 @@ export const filterData = (
   );
   // Only Document + Chunk
   // const processedEntities = entityTypes.flatMap(item => item.includes(',') ? item.split(',') : item);
-  if (
-    graphType.includes('DocumentChunk') && !graphType.includes('Entities') && !graphType.includes('Communities')
-  ) {
+  if (graphType.includes('DocumentChunk') && !graphType.includes('Entities') && !graphType.includes('Communities')) {
     filteredNodes = allNodes.filter(
       (node) => (node.labels.includes('Document') && node.properties.fileName) || node.labels.includes('Chunk')
     );
@@ -231,8 +228,15 @@ export const filterData = (
     );
     filteredScheme = { Document: scheme.Document, Chunk: scheme.Chunk };
     // Only Entity
-  } else if (graphType.includes('Entities') && !graphType.includes('DocumentChunk') && !graphType.includes('Communities')) {
-    const entityNodes = allNodes.filter((node) => !node.labels.includes('Document') && !node.labels.includes('Chunk') && !node.labels.includes('__Community__'));
+  } else if (
+    graphType.includes('Entities') &&
+    !graphType.includes('DocumentChunk') &&
+    !graphType.includes('Communities')
+  ) {
+    const entityNodes = allNodes.filter(
+      (node) =>
+        !node.labels.includes('Document') && !node.labels.includes('Chunk') && !node.labels.includes('__Community__')
+    );
     filteredNodes = entityNodes ? entityNodes : [];
     const nodeIds = new Set(filteredNodes.map((node) => node.id));
     filteredRelations = allRelationships.filter(
@@ -259,7 +263,7 @@ export const filterData = (
   } else if (
     graphType.includes('DocumentChunk') &&
     graphType.includes('Entities') &&
-    (!graphType.includes('Communities'))
+    !graphType.includes('Communities')
   ) {
     filteredNodes = allNodes.filter(
       (node) =>
@@ -389,7 +393,7 @@ export const isFileCompleted = (waitingFile: CustomFile, item: SourceNode) =>
   waitingFile && item.status === 'Completed';
 
 export const calculateProcessedCount = (prev: number, batchSize: number) =>
-  (prev === batchSize ? batchSize - 1 : prev + 1);
+  prev === batchSize ? batchSize - 1 : prev + 1;
 
 export const isProcessingFileValid = (item: SourceNode, userCredentials: UserCredentials) => {
   return item.status === 'Processing' && item.fileName != undefined && userCredentials && userCredentials.database;
@@ -467,24 +471,28 @@ export function isAllowedHost(url: string, allowedHosts: string[]) {
 
 export const getCheckboxConditions = (allNodes: ExtendedNode[]) => {
   const isDocChunk = allNodes.some((n) => n.labels?.includes('Document') || n.labels?.includes('Chunk'));
-  const isEntity = allNodes.some((n) => !n.labels?.includes('Document') && !n.labels?.includes('Chunk') && !n.labels?.includes('__Community__'));
+  const isEntity = allNodes.some(
+    (n) => !n.labels?.includes('Document') && !n.labels?.includes('Chunk') && !n.labels?.includes('__Community__')
+  );
   const isCommunity = allNodes.some((n) => n.labels?.includes('__Community__'));
   return { isDocChunk, isEntity, isCommunity };
 };
 
-export const graphTypeFromNodes = (allNodes:ExtendedNode[])=>{
-  const graphType: GraphType[] =[];
+export const graphTypeFromNodes = (allNodes: ExtendedNode[]) => {
+  const graphType: GraphType[] = [];
   const hasDocChunk = allNodes.some((n) => n.labels?.includes('Document') || n.labels?.includes('Chunk'));
-  const hasEntity = allNodes.some((n) => !n.labels?.includes('Document') && !n.labels?.includes('Chunk') && !n.labels?.includes('__Community__'));
+  const hasEntity = allNodes.some(
+    (n) => !n.labels?.includes('Document') && !n.labels?.includes('Chunk') && !n.labels?.includes('__Community__')
+  );
   const hasCommunity = allNodes.some((n) => n.labels?.includes('__Community__'));
-  if(hasDocChunk){
+  if (hasDocChunk) {
     graphType.push('DocumentChunk');
   }
-  if(hasEntity){
+  if (hasEntity) {
     graphType.push('Entities');
   }
-  if(hasCommunity){
+  if (hasCommunity) {
     graphType.push('Communities');
   }
   return graphType;
-}
+};

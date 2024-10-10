@@ -12,26 +12,26 @@ export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
-      'diffbot',
-      'openai-gpt-3.5',
-      'openai-gpt-4o',
-      'openai-gpt-4o-mini',
-      'gemini-1.5-pro',
-      'gemini-1.5-flash',
-      'azure_ai_gpt_35',
-      'azure_ai_gpt_4o',
-      'ollama_llama3',
-      'groq_llama3_70b',
-      'anthropic_claude_3_5_sonnet',
-      'fireworks_llama_v3p2_90b',
-      'bedrock_claude_3_5_sonnet',
-    ];
+        'diffbot',
+        'openai-gpt-3.5',
+        'openai-gpt-4o',
+        'openai-gpt-4o-mini',
+        'gemini-1.5-pro',
+        'gemini-1.5-flash',
+        'azure_ai_gpt_35',
+        'azure_ai_gpt_4o',
+        'ollama_llama3',
+        'groq_llama3_70b',
+        'anthropic_claude_3_5_sonnet',
+        'fireworks_llama_v3p2_90b',
+        'bedrock_claude_3_5_sonnet',
+      ];
 
 export const defaultLLM = llms?.includes('openai-gpt-4o')
   ? 'openai-gpt-4o'
   : llms?.includes('gemini-1.5-pro')
-    ? 'gemini-1.5-pro'
-    : 'diffbot';
+  ? 'gemini-1.5-pro'
+  : 'diffbot';
 
 export const chatModeLables = {
   vector: 'vector',
@@ -47,40 +47,40 @@ export const chatModeLables = {
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
     ? process.env.VITE_CHAT_MODES?.split(',').map((mode) => ({
-      mode: mode.trim(),
-      description: getDescriptionForChatMode(mode.trim()),
-    }))
+        mode: mode.trim(),
+        description: getDescriptionForChatMode(mode.trim()),
+      }))
     : [
-      {
-        mode: chatModeLables.vector,
-        description: 'Performs semantic similarity search on text chunks using vector indexing.',
-      },
-      {
-        mode: chatModeLables.graph,
-        description: 'Translates text to Cypher queries for precise data retrieval from a graph database.',
-      },
-      {
-        mode: chatModeLables.graph_vector,
-        description: 'Combines vector indexing and graph connections for contextually enhanced semantic search.',
-      },
-      {
-        mode: chatModeLables.fulltext,
-        description: 'Conducts fast, keyword-based search using full-text indexing on text chunks.',
-      },
-      {
-        mode: chatModeLables.graph_vector_fulltext,
-        description: 'Integrates vector, graph, and full-text indexing for comprehensive search results.',
-      },
-      {
-        mode: chatModeLables.entity_vector,
-        description: 'Uses vector indexing on entity nodes for highly relevant entity-based search.',
-      },
-      {
-        mode: chatModeLables.global_vector,
-        description:
-          'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.',
-      },
-    ];
+        {
+          mode: chatModeLables.vector,
+          description: 'Performs semantic similarity search on text chunks using vector indexing.',
+        },
+        {
+          mode: chatModeLables.graph,
+          description: 'Translates text to Cypher queries for precise data retrieval from a graph database.',
+        },
+        {
+          mode: chatModeLables.graph_vector,
+          description: 'Combines vector indexing and graph connections for contextually enhanced semantic search.',
+        },
+        {
+          mode: chatModeLables.fulltext,
+          description: 'Conducts fast, keyword-based search using full-text indexing on text chunks.',
+        },
+        {
+          mode: chatModeLables.graph_vector_fulltext,
+          description: 'Integrates vector, graph, and full-text indexing for comprehensive search results.',
+        },
+        {
+          mode: chatModeLables.entity_vector,
+          description: 'Uses vector indexing on entity nodes for highly relevant entity-based search.',
+        },
+        {
+          mode: chatModeLables.global_vector,
+          description:
+            'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.',
+        },
+      ];
 
 export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.VITE_TIME_PER_PAGE ? parseInt(process.env.VITE_TIME_PER_PAGE) : 50;
@@ -166,7 +166,7 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
 ];
 export const batchSize: number = parseInt(process.env.VITE_BATCH_SIZE ?? '2');
 
-//Graph Constants
+// Graph Constants
 export const document = `+ [docs]`;
 
 export const chunks = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain

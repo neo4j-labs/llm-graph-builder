@@ -11,11 +11,11 @@ export default function SelectedJobList({
 }) {
   const ongoingPostProcessingTasks = useMemo(
     () =>
-      (isGdsActive
+      isGdsActive
         ? postProcessingTasks.includes('enable_communities')
           ? postProcessingTasks
           : postProcessingTasks.filter((s) => s != 'enable_communities')
-        : postProcessingTasks.filter((s) => s != 'enable_communities')),
+        : postProcessingTasks.filter((s) => s != 'enable_communities'),
     [isGdsActive, postProcessingTasks]
   );
   return (
