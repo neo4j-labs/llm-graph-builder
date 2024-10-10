@@ -22,7 +22,8 @@ from langchain.retrievers.document_compressors import EmbeddingsFilter, Document
 from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain.chains import GraphCypherQAChain
-from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_community.chat_message_histories import ChatMessageHistory 
+from langchain_core.callbacks import StdOutCallbackHandler, BaseCallbackHandler
 
 # LangChain chat models
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
@@ -38,12 +39,11 @@ from src.llm import get_llm
 from src.shared.common_fn import load_embedding_model
 from src.shared.constants import *
 from src.graphDB_dataAccess import graphDBdataAccess
+from src.ragas_eval import get_ragas_metrics
 load_dotenv() 
 
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL) 
-
-
 
 class SessionChatHistory:
     history_dict = {}
@@ -57,6 +57,17 @@ class SessionChatHistory:
         else:
             logging.info(f"Retrieved existing ChatMessageHistory Local for session ID: {session_id}")
         return cls.history_dict[session_id]
+
+class CustomCallback(BaseCallbackHandler):
+
+    def __init__(self):
+        self.transformed_question = None
+    
+    def on_llm_end(
+        self,response, **kwargs: Any
+    ) -> None:
+        logging.info("question transformed")
+        self.transformed_question = response.generations[0][0].text.strip()
 
 def get_history_by_session_id(session_id):
     try:
@@ -250,13 +261,17 @@ def process_documents(docs, question, messages, llm, model,chat_mode_settings):
         logging.error(f"Error processing documents: {e}")
         raise
     
-    return content, result, total_tokens
+    return content, result, total_tokens, formatted_docs
 
 def retrieve_documents(doc_retriever, messages):
 
     start_time = time.time()
     try:
-        docs = doc_retriever.invoke({"messages": messages})
+        handler = CustomCallback()
+        docs = doc_retriever.invoke({"messages": messages},{"callbacks":[handler]})
+        transformed_question = handler.transformed_question
+        if transformed_question:
+            logging.info(f"Transformed question : {transformed_question}")
         doc_retrieval_time = time.time() - start_time
         logging.info(f"Documents retrieved in {doc_retrieval_time:.2f} seconds")
         
@@ -264,7 +279,7 @@ def retrieve_documents(doc_retriever, messages):
         logging.error(f"Error retrieving documents: {e}")
         raise
     
-    return docs
+    return docs,transformed_question
 
 def create_document_retriever_chain(llm, retriever):
     try:
@@ -408,14 +423,19 @@ def process_chat_response(messages, history, question, model, graph, document_na
     try:
         llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings)
         
-        docs = retrieve_documents(doc_retriever, messages)  
+        docs,transformed_question = retrieve_documents(doc_retriever, messages)  
 
         if docs:
-            content, result, total_tokens = process_documents(docs, question, messages, llm, model, chat_mode_settings)
+            content, result, total_tokens,formatted_docs = process_documents(docs, question, messages, llm, model, chat_mode_settings)
         else:
             content = "I couldn't find any relevant documents to answer your question."
             result = {"sources": list(), "nodedetails": list(), "entities": list()}
             total_tokens = 0
+            formatted_docs = ""
+
+        question = transformed_question if transformed_question else question
+        # metrics = get_ragas_metrics(question,formatted_docs,content)
+        # print(metrics)
         
         ai_response = AIMessage(content=content)
         messages.append(ai_response)
@@ -424,11 +444,12 @@ def process_chat_response(messages, history, question, model, graph, document_na
         summarization_thread.start()
         logging.info("Summarization thread started.")
         # summarize_and_log(history, messages, llm)
-        
+        metric_details = {"question":question,"contexts":formatted_docs,"answer":content}
         return {
             "session_id": "",  
             "message": content,
             "info": {
+                # "metrics" : metrics,
                 "sources": result["sources"],
                 "model": model_version,
                 "nodedetails": result["nodedetails"],
@@ -436,7 +457,9 @@ def process_chat_response(messages, history, question, model, graph, document_na
                 "response_time": 0,
                 "mode": chat_mode_settings["mode"],
                 "entities": result["entities"],
+                "metric_details": metric_details,
             },
+            
             "user": "chatbot"
         }
     
@@ -446,6 +469,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
             "session_id": "",
             "message": "Something went wrong",
             "info": {
+                "metrics" : [],
                 "sources": [],
                 "nodedetails": [],
                 "total_tokens": 0,
@@ -453,6 +477,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
                 "error": f"{type(e).__name__}: {str(e)}",
                 "mode": chat_mode_settings["mode"],
                 "entities": [],
+                "metric_details": {},
             },
             "user": "chatbot"
         }
@@ -505,6 +530,7 @@ def create_graph_chain(model, graph):
             validate_cypher= True,
             graph=graph,
             # verbose=True, 
+            allow_dangerous_requests=True,
             return_intermediate_steps = True,
             top_k=3
         )

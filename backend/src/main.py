@@ -208,7 +208,7 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
       lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'language':obj_source_node.language, 'status':'Success'})
     return lst_file_name,success_count,failed_count
     
-def extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, fileName, allowedNodes, allowedRelationship, retry_condition):
+async def extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, fileName, allowedNodes, allowedRelationship, retry_condition):
 
   logging.info(f'Process file name :{fileName}')
   if retry_condition is None:
@@ -220,11 +220,11 @@ def extract_graph_from_file_local_file(uri, userName, password, database, model,
       file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,fileName)
     if pages==None or len(pages)==0:
       raise Exception(f'File content is not available for file : {file_name}')
-    return processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship, True, merged_file_path)
+    return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship, True, merged_file_path)
   else:
-    return processing_source(uri, userName, password, database, model, fileName, [], allowedNodes, allowedRelationship, True, merged_file_path, retry_condition)
+    return await processing_source(uri, userName, password, database, model, fileName, [], allowedNodes, allowedRelationship, True, merged_file_path, retry_condition)
   
-def extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition):
+async def extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition):
   if retry_condition is None:
     if(aws_access_key_id==None or aws_secret_access_key==None):
       raise Exception('Please provide AWS access and secret keys')
@@ -234,49 +234,49 @@ def extract_graph_from_file_s3(uri, userName, password, database, model, source_
 
     if pages==None or len(pages)==0:
       raise Exception(f'File content is not available for file : {file_name}')
-    return processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship)
+    return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship)
   else:
-    return processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, retry_condition=retry_condition)
+    return await processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, retry_condition=retry_condition)
   
-def extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition):
+async def extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition):
   if retry_condition is None:
     file_name, pages = get_documents_from_web_page(source_url)
 
     if pages==None or len(pages)==0:
       raise Exception(f'Content is not available for given URL : {file_name}')
-    return processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship)
+    return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship)
   else:
-    return processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, retry_condition=retry_condition)
+    return await processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, retry_condition=retry_condition)
   
-def extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition):
+async def extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition):
   if retry_condition is None:
     file_name, pages = get_documents_from_youtube(source_url)
 
     if pages==None or len(pages)==0:
       raise Exception(f'Youtube transcript is not available for file : {file_name}')
-    return processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship)
+    return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship)
   else:
-     return processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, retry_condition=retry_condition)
+     return await processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, retry_condition=retry_condition)
     
-def extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, retry_condition):
+async def extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, retry_condition):
   if retry_condition is None:
     file_name, pages = get_documents_from_Wikipedia(wiki_query, language)
     if pages==None or len(pages)==0:
       raise Exception(f'Wikipedia page is not available for file : {file_name}')
-    return processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship)
+    return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship)
   else:
-    return processing_source(uri, userName, password, database, model, file_name,[], allowedNodes, allowedRelationship, retry_condition=retry_condition)
+    return await processing_source(uri, userName, password, database, model, file_name,[], allowedNodes, allowedRelationship, retry_condition=retry_condition)
 
-def extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, retry_condition):
+async def extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, retry_condition):
   if retry_condition is None:
     file_name, pages = get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token)
     if pages==None or len(pages)==0:
       raise Exception(f'File content is not available for file : {file_name}')
-    return processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship)
+    return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship)
   else:
-    return processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, retry_condition=retry_condition)
+    return await processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, retry_condition=retry_condition)
   
-def processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship, is_uploaded_from_local=None, merged_file_path=None, retry_condition=None):
+async def processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship, is_uploaded_from_local=None, merged_file_path=None, retry_condition=None):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -366,7 +366,7 @@ def processing_source(uri, userName, password, database, model, file_name, pages
           break
         else:
           processing_chunks_start_time = time.time()
-          node_count,rel_count,latency_processed_chunk = processing_chunks(selected_chunks,graph,uri, userName, password, database,file_name,model,allowedNodes,allowedRelationship,node_count, rel_count)
+          node_count,rel_count,latency_processed_chunk = await processing_chunks(selected_chunks,graph,uri, userName, password, database,file_name,model,allowedNodes,allowedRelationship,node_count, rel_count)
           processing_chunks_end_time = time.time()
           processing_chunks_elapsed_end_time = processing_chunks_end_time - processing_chunks_start_time
           logging.info(f"Time taken {update_graph_chunk_processed} chunks processed upto {select_chunks_upto} completed in {processing_chunks_elapsed_end_time:.2f} seconds for file name {file_name}")
@@ -439,7 +439,7 @@ def processing_source(uri, userName, password, database, model, file_name, pages
     logging.error(error_message)
     raise Exception(error_message)
 
-def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password, database,file_name,model,allowedNodes,allowedRelationship, node_count, rel_count):
+async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password, database,file_name,model,allowedNodes,allowedRelationship, node_count, rel_count):
   #create vector index and update chunk node with embedding
   if graph is not None:
     if graph._driver._closed:
@@ -456,7 +456,7 @@ def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password, datab
   logging.info("Get graph document list from models")
   
   start_entity_extraction = time.time()
-  graph_documents =  get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
+  graph_documents =  await get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship)
   end_entity_extraction = time.time()
   elapsed_entity_extraction = end_entity_extraction - start_entity_extraction
   logging.info(f'Time taken to extract enitities from LLM Graph Builder: {elapsed_entity_extraction:.2f} seconds')
@@ -518,26 +518,30 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition):
   else:  
     chunkId_chunkDoc_list=[]
     chunks =  graph.query(QUERY_TO_GET_CHUNKS, params={"filename":file_name})
-    for chunk in chunks:
-      chunk_doc = Document(page_content=chunk['text'], metadata={'id':chunk['id'], 'position':chunk['position']})
-      chunkId_chunkDoc_list.append({'chunk_id': chunk['id'], 'chunk_doc': chunk_doc})
     
-    if retry_condition ==  START_FROM_LAST_PROCESSED_POSITION:
-      logging.info(f"Retry : start_from_last_processed_position")
-      starting_chunk = graph.query(QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION, params={"filename":file_name})
-      if starting_chunk[0]["position"] < len(chunkId_chunkDoc_list):
-        return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
+    if chunks[0]['text'] is None or chunks[0]['text']=="" :
+      raise Exception(f"Chunks are not created for {file_name}. Please re-upload file and try.")    
+    else:
+      for chunk in chunks:
+        chunk_doc = Document(page_content=chunk['text'], metadata={'id':chunk['id'], 'position':chunk['position']})
+        chunkId_chunkDoc_list.append({'chunk_id': chunk['id'], 'chunk_doc': chunk_doc})
       
-      elif starting_chunk[0]["position"] == len(chunkId_chunkDoc_list):
-        starting_chunk = graph.query(QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY, params={"filename":file_name})
-        return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
+      if retry_condition ==  START_FROM_LAST_PROCESSED_POSITION:
+        logging.info(f"Retry : start_from_last_processed_position")
+        starting_chunk = graph.query(QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION, params={"filename":file_name})
+        if starting_chunk[0]["position"] < len(chunkId_chunkDoc_list):
+          return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
+        
+        elif starting_chunk[0]["position"] == len(chunkId_chunkDoc_list):
+          starting_chunk = graph.query(QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY, params={"filename":file_name})
+          return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
+        
+        else:
+          raise Exception(f"All chunks of {file_name} are alreday processed. If you want to re-process, Please start from begnning")    
       
       else:
-        raise Exception(f"All chunks of {file_name} are alreday processed. If you want to re-process, Please start from begnning")    
-    
-    else:
-      logging.info(f"Retry : start_from_beginning with chunks {len(chunkId_chunkDoc_list)}")    
-      return len(chunks), chunkId_chunkDoc_list
+        logging.info(f"Retry : start_from_beginning with chunks {len(chunkId_chunkDoc_list)}")    
+        return len(chunks), chunkId_chunkDoc_list
   
 def get_source_list_from_graph(uri,userName,password,db_name=None):
   """

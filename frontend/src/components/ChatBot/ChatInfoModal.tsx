@@ -8,19 +8,12 @@ import {
   useCopyToClipboard,
   Banner,
   useMediaQuery,
+  Button,
 } from '@neo4j-ndl/react';
 import { DocumentDuplicateIconOutline, ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
 import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
-import {
-  Chunk,
-  Community,
-  Entity,
-  ExtendedNode,
-  ExtendedRelationship,
-  UserCredentials,
-  chatInfoMessage,
-} from '../../types';
+import { Entity, ExtendedNode, UserCredentials, chatInfoMessage } from '../../types';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import GraphViewButton from '../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
@@ -33,6 +26,9 @@ import SourcesInfo from './SourcesInfo';
 import CommunitiesInfo from './Communities';
 import { chatModeLables } from '../../utils/Constants';
 import { Relationship } from '@neo4j-nvl/base';
+import { getChatMetrics } from '../../services/GetRagasMetric';
+import MetricsTab from './MetricsTab';
+import { Stack } from '@mui/material';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
   sources,
@@ -45,22 +41,37 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   graphonly_entities,
   error,
   entities_ids,
+  metricanswer,
+  metriccontexts,
+  metricquestion,
+  metricmodel,
+  saveNodes,
+  saveChunks,
+  saveChatRelationships,
+  saveCommunities,
+  saveInfoEntitites,
+  saveMetrics,
+  toggleInfoLoading,
+  toggleMetricsLoading,
+  nodes,
+  chunks,
+  infoEntities,
+  communities,
+  metricDetails,
+  relationships,
+  infoLoading,
+  metricsLoading,
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const [activeTab, setActiveTab] = useState<number>(
     error?.length ? 10 : mode === chatModeLables.global_vector ? 7 : mode === chatModeLables.graph ? 4 : 3
   );
-  const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
-  const [communities, setCommunities] = useState<Community[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
-  const [nodes, setNodes] = useState<ExtendedNode[]>([]);
-  const [relationships, setRelationships] = useState<ExtendedRelationship[]>([]);
-  const [chunks, setChunks] = useState<Chunk[]>([]);
   const themeUtils = useContext(ThemeWrapperContext);
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
+  const [showMetricsTable, setShowMetricsTable] = useState<boolean>(false);
 
   const actions: CypherCodeBlockProps['actions'] = useMemo(
     () => [
@@ -88,7 +99,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   useEffect(() => {
     if (mode != chatModeLables.graph || error?.trim() !== '') {
       (async () => {
-        setLoading(true);
+        toggleInfoLoading();
         try {
           const response = await chunkEntitiesAPI(
             userCredentials as UserCredentials,
@@ -110,7 +121,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           const communitiesData = response?.data?.data?.community_data;
           const chunksData = response?.data?.data?.chunk_data;
 
-          setInfoEntities(
+          saveInfoEntitites(
             nodesData.map((n: Entity) => {
               if (!n.labels.length && mode === chatModeLables.entity_vector) {
                 return {
@@ -121,7 +132,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               return n;
             })
           );
-          setNodes(
+          saveNodes(
             nodesData.map((n: ExtendedNode) => {
               if (!n.labels.length && mode === chatModeLables.entity_vector) {
                 return {
@@ -132,8 +143,8 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               return n ?? [];
             })
           );
-          setRelationships(relationshipsData ?? []);
-          setCommunities(
+          saveChatRelationships(relationshipsData ?? []);
+          saveCommunities(
             (communitiesData || [])
               .map((community: { element_id: string }) => {
                 const communityScore = nodeDetails?.communitydetails?.find(
@@ -147,7 +158,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               .sort((a: any, b: any) => b.score - a.score)
           );
 
-          setChunks(
+          saveChunks(
             chunksData
               .map((chunk: any) => {
                 const chunkScore = nodeDetails?.chunkdetails?.find((c: any) => c.id === chunk.id);
@@ -158,20 +169,40 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               })
               .sort((a: any, b: any) => b.score - a.score)
           );
-          setLoading(false);
+          toggleInfoLoading();
         } catch (error) {
           console.error('Error fetching information:', error);
-          setLoading(false);
+          toggleInfoLoading();
         }
       })();
     }
     () => {
       setcopiedText(false);
+      setShowMetricsTable(false);
     };
   }, [nodeDetails, mode, error]);
 
   const onChangeTabs = (tabId: number) => {
     setActiveTab(tabId);
+  };
+  const loadMetrics = async () => {
+    setShowMetricsTable(true);
+    try {
+      toggleMetricsLoading();
+      const response = await getChatMetrics(metricquestion, metriccontexts, metricanswer, metricmodel);
+      toggleMetricsLoading();
+      if (response.data.status === 'Success') {
+        saveMetrics({ ...response.data.data, error: '' });
+      } else {
+        throw new Error(response.data.error);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        toggleMetricsLoading();
+        console.log('Error in getting chat metrics', error);
+        saveMetrics({ error: error.message, faithfulness: 0, answer_relevancy: 0, context_utilization: 0 });
+      }
+    }
   };
 
   return (
@@ -185,7 +216,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         <Box className='flex flex-col'>
           <Typography variant='h2'>Retrieval information</Typography>
           <Typography variant='body-medium' className='mb-2'>
-            To generate this response, the process took <span className='font-bold'>{response_time} seconds,</span>{' '}
+            To generate this response, the process took <span className='font-bold'>{response_time} seconds,</span>
             utilizing <span className='font-bold'>{total_tokens}</span> tokens with the model{' '}
             <span className='font-bold'>{model}</span> in{' '}
             <span className='font-bold'>{mode !== 'vector' ? mode.replace(/\+/g, ' & ') : mode}</span> mode.
@@ -197,7 +228,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       ) : (
         <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
           {mode === chatModeLables.global_vector ? (
-            // Only show the Communities tab if mode is global
             <Tabs.Tab tabId={7}>Communities</Tabs.Tab>
           ) : (
             <>
@@ -217,24 +247,38 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                 <></>
               )}
               {mode === chatModeLables.entity_vector ? <Tabs.Tab tabId={7}>Communities</Tabs.Tab> : <></>}
+              <Tabs.Tab tabId={8}>Evaluation Metrics</Tabs.Tab>
             </>
           )}
         </Tabs>
       )}
       <Flex className='p-4'>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={3}>
-          <SourcesInfo loading={loading} sources={sources} mode={mode} chunks={chunks} />
+          <SourcesInfo loading={infoLoading} sources={sources} mode={mode} chunks={chunks} />
+        </Tabs.TabPanel>
+        <Tabs.TabPanel tabId={8} value={activeTab}>
+          <Stack spacing={2}>
+            <Typography variant='body-large'>
+              We use several key metrics to assess the quality of our chat responses. Click the button below to view
+              detailed scores for this interaction. These scores help us continuously improve the accuracy and
+              helpfulness of our chatbots.
+            </Typography>
+            {showMetricsTable && <MetricsTab metricsLoading={metricsLoading} metricDetails={metricDetails} />}
+            <Button disabled={metricsLoading} className='w-max self-center mt-4' onClick={loadMetrics}>
+              View Detailed Metrics
+            </Button>
+          </Stack>
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={4}>
           <EntitiesInfo
-            loading={loading}
+            loading={infoLoading}
             mode={mode}
             graphonly_entities={graphonly_entities}
             infoEntities={infoEntities}
           />
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={5}>
-          <ChunkInfo chunks={chunks} loading={loading} />
+          <ChunkInfo chunks={chunks} loading={infoLoading} />
         </Tabs.TabPanel>
         <Tabs.TabPanel value={activeTab} tabId={6}>
           <CypherCodeBlock
@@ -247,7 +291,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         </Tabs.TabPanel>
         {mode === chatModeLables.entity_vector || mode === chatModeLables.global_vector ? (
           <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={7}>
-            <CommunitiesInfo loading={loading} communities={communities} />
+            <CommunitiesInfo loading={infoLoading} communities={communities} />
           </Tabs.TabPanel>
         ) : (
           <></>

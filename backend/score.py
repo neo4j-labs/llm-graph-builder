@@ -14,7 +14,7 @@ from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.graph_query import get_graph_results
 from src.chunkid_entities import get_entities_from_chunkids
-from src.post_processing import create_fulltext_indexes, create_entity_embedding
+from src.post_processing import create_vector_fulltext_indexes, create_entity_embedding
 from sse_starlette.sse import EventSourceResponse
 from src.communities import create_communities
 import json
@@ -32,6 +32,8 @@ from Secweb.StrictTransportSecurity import HSTS
 from Secweb.ContentSecurityPolicy import ContentSecurityPolicy
 from Secweb.XContentTypeOptions import XContentTypeOptions
 from Secweb.XFrameOptions import XFrame
+
+from src.ragas_eval import *
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
@@ -178,28 +180,22 @@ async def extract_knowledge_graph_from_file(
         if source_type == 'local file':
             merged_file_path = os.path.join(MERGED_DIR,file_name)
             logging.info(f'File path:{merged_file_path}')
-            result = await asyncio.to_thread(
-                extract_graph_from_file_local_file, uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, retry_condition)
+            result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 's3 bucket' and source_url:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_s3, uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition)
+            result = await extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition)
         
         elif source_type == 'web-url':
-            result = await asyncio.to_thread(
-                extract_graph_from_web_page, uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
+            result = await extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 'youtube' and source_url:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_youtube, uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
+            result = await extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 'Wikipedia' and wiki_query:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_Wikipedia, uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, retry_condition)
+            result = await extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_gcs, uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, retry_condition)
+            result = await extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, retry_condition)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
         extract_api_time = time.time() - start_time
@@ -270,7 +266,7 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             logging.info(f'Updated KNN Graph')
 
         if "enable_hybrid_search_and_fulltext_search_in_bloom" in tasks:
-            await asyncio.to_thread(create_fulltext_indexes, uri=uri, username=userName, password=password, database=database)
+            await asyncio.to_thread(create_vector_fulltext_indexes, uri=uri, username=userName, password=password, database=database)
             json_obj = {'api_name': 'post_processing/enable_hybrid_search_and_fulltext_search_in_bloom', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logging.info(f'Full Text index created')
 
@@ -306,8 +302,9 @@ async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(),
             graph = Neo4jGraph( url=uri,username=userName,password=password,database=database,sanitize = True, refresh_schema=True)
         else:
             graph = create_graph_database_connection(uri, userName, password, database)
-            graph_DB_dataAccess = graphDBdataAccess(graph)
-            write_access = graph_DB_dataAccess.check_account_access(database=database)
+        
+        graph_DB_dataAccess = graphDBdataAccess(graph)
+        write_access = graph_DB_dataAccess.check_account_access(database=database)
         result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access=write_access)
 
         total_call_time = time.time() - qa_rag_start_time
@@ -323,7 +320,7 @@ async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(),
         message="Unable to get chat response"
         error_message = str(e)
         logging.exception(f'Exception in chat bot:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        return create_api_response(job_status, message=message, error=error_message,data=mode)
     finally:
         gc.collect()
 
@@ -712,7 +709,23 @@ async def retry_processing(uri=Form(), userName=Form(), password=Form(), databas
         logging.exception(f'{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
     finally:
-        gc.collect()        
+        gc.collect()    
+
+@app.post('/metric')
+async def calculate_metric(question=Form(),context=Form(),answer=Form(),model=Form()):
+    try:
+      result = await asyncio.to_thread(get_ragas_metrics,question,context,answer,model)
+      if result is None: 
+            return create_api_response('Failed', message='Failed to calculate metrics.',error="Ragas evaluation returned null")
+      return create_api_response('Success',data=result,message=f"Status set to Reprocess for filename : {result}")
+    except Exception as e:
+        job_status = "Failed"
+        message="Error while calculating evaluation metrics"
+        error_message = str(e)
+        logging.exception(f'{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()
 
 if __name__ == "__main__":
     uvicorn.run(app)

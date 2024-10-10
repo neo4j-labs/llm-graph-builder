@@ -3,34 +3,6 @@ import { GraphType, OptionType } from '../types';
 import { getDateTime, getDescriptionForChatMode } from './Utils';
 import chatbotmessages from '../assets/ChatbotMessages.json';
 
-export const document = `+ [docs]`;
-
-export const chunks = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
-+ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks`;
-
-export const entities = `+ collect { OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!Chunk) RETURN p}`;
-
-export const docEntities = `+ [docs] 
-+ collect { MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)--(:!Chunk) RETURN p }`;
-
-export const docChunks = `+[chunks]
-+collect {MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p} //first chunk
-+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
-+ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunk`;
-
-export const chunksEntities = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
-
-+ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
-//chunks with entities
-+ collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
-
-export const docChunkEntities = `+[chunks]
-+collect {MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p} //first chunk
-+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
-+ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
-//chunks with entities
-+ collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
-
 export const APP_SOURCES =
   process.env.VITE_REACT_APP_SOURCES !== ''
     ? (process.env.VITE_REACT_APP_SOURCES?.split(',') as string[])
@@ -116,53 +88,6 @@ export const timePerByte = 0.2;
 export const largeFileSize = process.env.VITE_LARGE_FILE_SIZE
   ? parseInt(process.env.VITE_LARGE_FILE_SIZE)
   : 5 * 1024 * 1024;
-export const NODES_OPTIONS = [
-  {
-    label: 'Person',
-    value: 'Person',
-  },
-  {
-    label: 'Organization',
-    value: 'Organization',
-  },
-  {
-    label: 'Event',
-    value: 'Event',
-  },
-];
-
-export const RELATION_OPTIONS = [
-  {
-    label: 'WORKS_AT',
-    value: 'WORKS_AT',
-  },
-  {
-    label: 'IS_CEO',
-    value: 'IS_CEO',
-  },
-  {
-    label: 'HOSTS_EVENT',
-    value: 'HOSTS_EVENT',
-  },
-];
-
-export const queryMap: {
-  Document: string;
-  Chunks: string;
-  Entities: string;
-  DocEntities: string;
-  DocChunks: string;
-  ChunksEntities: string;
-  DocChunkEntities: string;
-} = {
-  Document: 'document',
-  Chunks: 'chunks',
-  Entities: 'entities',
-  DocEntities: 'docEntities',
-  DocChunks: 'docChunks',
-  ChunksEntities: 'chunksEntities',
-  DocChunkEntities: 'docChunkEntities',
-};
 
 export const tooltips = {
   generateGraph: 'Generate graph from selected files',
@@ -246,6 +171,35 @@ export const RETRY_OPIONS = [
 ];
 export const batchSize: number = parseInt(process.env.VITE_BATCH_SIZE ?? '2');
 
+// Graph Constants
+export const document = `+ [docs]`;
+
+export const chunks = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
++ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks`;
+
+export const entities = `+ collect { OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!Chunk) RETURN p}`;
+
+export const docEntities = `+ [docs] 
++ collect { MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)--(:!Chunk) RETURN p }`;
+
+export const docChunks = `+[chunks]
++collect {MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p} //first chunk
++ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
++ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunk`;
+
+export const chunksEntities = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
+
++ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
+//chunks with entities
++ collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
+
+export const docChunkEntities = `+[chunks]
++collect {MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p} //first chunk
++ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
++ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
+//chunks with entities
++ collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
+
 export const nvlOptions: NvlOptions = {
   allowDynamicMinZoom: true,
   disableWebGL: true,
@@ -257,10 +211,22 @@ export const nvlOptions: NvlOptions = {
   initialZoom: 1,
 };
 
-export const mouseEventCallbacks = {
-  onPan: true,
-  onZoom: true,
-  onDrag: true,
+export const queryMap: {
+  Document: string;
+  Chunks: string;
+  Entities: string;
+  DocEntities: string;
+  DocChunks: string;
+  ChunksEntities: string;
+  DocChunkEntities: string;
+} = {
+  Document: 'document',
+  Chunks: 'chunks',
+  Entities: 'entities',
+  DocEntities: 'docEntities',
+  DocChunks: 'docChunks',
+  ChunksEntities: 'chunksEntities',
+  DocChunkEntities: 'docChunkEntities',
 };
 
 // export const graphQuery: string = queryMap.DocChunkEntities;
@@ -274,11 +240,6 @@ export const intitalGraphType = (isGDSActive: boolean): GraphType[] => {
   return isGDSActive
     ? ['DocumentChunk', 'Entities', 'Communities'] // GDS is active, include communities
     : ['DocumentChunk', 'Entities']; // GDS is inactive, exclude communities
-};
-
-export const appLabels = {
-  ownSchema: 'Or Define your own Schema',
-  predefinedSchema: 'Select a Pre-defined Schema',
 };
 
 export const graphLabels = {
@@ -310,6 +271,12 @@ export const connectionLabels = {
   greenStroke: 'green',
   redStroke: 'red',
 };
+
 export const getDefaultMessage = () => {
-  return [{ ...chatbotmessages.listMessages[1], datetime: getDateTime() }];
+  return [{ ...chatbotmessages.listMessages[0], datetime: getDateTime() }];
+};
+
+export const appLabels = {
+  ownSchema: 'Or Define your own Schema',
+  predefinedSchema: 'Select a Pre-defined Schema',
 };

@@ -6,6 +6,7 @@ from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_up
 from src.document_sources.gcs_bucket import delete_file_from_gcs
 from src.shared.constants import BUCKET_UPLOAD
 from src.entities.source_node import sourceNode
+from src.communities import MAX_COMMUNITY_LEVELS
 import json
 from dotenv import load_dotenv
 
@@ -281,10 +282,23 @@ class graphDBdataAccess:
             match (c)-[:HAS_ENTITY]->(e)
             where not exists { (e)<-[:HAS_ENTITY]-()-[:PART_OF]->(d2) where not d2 in documents }
             detach delete e
-            """    
+            """ 
+        query_to_delete_communities = """
+            MATCH (c:`__Community__`) 
+            WHERE NOT EXISTS { ()-[:IN_COMMUNITY]->(c) } AND c.level = 0 
+            DETACH DELETE c 
+
+            WITH *
+            UNWIND range(1, $max_level) AS level
+            MATCH (c:`__Community__`) 
+            WHERE c.level = level AND NOT EXISTS { (c)<-[:PARENT_COMMUNITY]-(child) } 
+            DETACH DELETE c
+        """   
         param = {"filename_list" : filename_list, "source_types_list": source_types_list}
+        community_param = {"max_level":MAX_COMMUNITY_LEVELS}
         if deleteEntities == "true":
             result = self.execute_query(query_to_delete_document_and_entities, param)
+            _ = self.execute_query(query_to_delete_communities,community_param)
             logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' from database")
         else :
             result = self.execute_query(query_to_delete_document, param)    
@@ -293,17 +307,29 @@ class graphDBdataAccess:
     
     def list_unconnected_nodes(self):
         query = """
-                MATCH (e:!Chunk&!Document) 
-                WHERE NOT exists { (e)--(:!Chunk&!Document) }
-                OPTIONAL MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(e)
-                RETURN e {.*, embedding:null, elementId:elementId(e), labels:labels(e)} as e, 
-                collect(distinct doc.fileName) as documents, count(distinct c) as chunkConnections
-                ORDER BY e.id ASC
-                LIMIT 100
-                """
+        MATCH (e:!Chunk&!Document&!`__Community__`) 
+        WHERE NOT exists { (e)--(:!Chunk&!Document&!`__Community__`) }
+        OPTIONAL MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(e)
+        RETURN 
+        e {
+            .*,
+            embedding: null,
+            elementId: elementId(e),
+            labels: CASE 
+            WHEN size(labels(e)) > 1 THEN 
+                apoc.coll.removeAll(labels(e), ["__Entity__"])
+            ELSE 
+                ["Entity"]
+            END
+        } AS e, 
+        collect(distinct doc.fileName) AS documents, 
+        count(distinct c) AS chunkConnections
+        ORDER BY e.id ASC
+        LIMIT 100
+        """
         query_total_nodes = """
-        MATCH (e:!Chunk&!Document) 
-        WHERE NOT exists { (e)--(:!Chunk&!Document) }
+        MATCH (e:!Chunk&!Document&!`__Community__`) 
+        WHERE NOT exists { (e)--(:!Chunk&!Document&!`__Community__`) }
         RETURN count(*) as total
         """
         nodes_list = self.execute_query(query)
@@ -323,9 +349,9 @@ class graphDBdataAccess:
         score_value = float(os.environ.get('DUPLICATE_SCORE_VALUE'))
         text_distance = int(os.environ.get('DUPLICATE_TEXT_DISTANCE'))
         query_duplicate_nodes = """
-                MATCH (n:!Chunk&!Document) with n 
-                WHERE n.embedding is not null and n.id is not null // and size(n.id) > 3
-                WITH n ORDER BY count {{ (n)--() }} DESC, size(n.id) DESC // updated
+                MATCH (n:!Chunk&!Document&!`__Community__`) with n 
+                WHERE n.embedding is not null and n.id is not null // and size(toString(n.id)) > 3
+                WITH n ORDER BY count {{ (n)--() }} DESC, size(toString(n.id)) DESC // updated
                 WITH collect(n) as nodes
                 UNWIND nodes as n
                 WITH n, [other in nodes 
@@ -335,9 +361,9 @@ class graphDBdataAccess:
                 AND 
                 (
                 // either contains each other as substrings or has a text edit distinct of less than 3
-                (size(other.id) > 2 AND toLower(n.id) CONTAINS toLower(other.id)) OR 
-                (size(n.id) > 2 AND toLower(other.id) CONTAINS toLower(n.id))
-                OR (size(n.id)>5 AND apoc.text.distance(toLower(n.id), toLower(other.id)) < $duplicate_text_distance)
+                (size(toString(other.id)) > 2 AND toLower(n.id) CONTAINS toLower(other.id)) OR 
+                (size(toString(n.id)) > 2 AND toLower(other.id) CONTAINS toLower(n.id))
+                OR (size(toString(n.id))>5 AND apoc.text.distance(toLower(n.id), toLower(other.id)) < $duplicate_text_distance)
                 OR
                 vector.similarity.cosine(other.embedding, n.embedding) > $duplicate_score_value
                 )] as similar
