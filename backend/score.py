@@ -351,8 +351,7 @@ async def chunk_entities(uri=Form(),userName=Form(), password=Form(), database=F
 async def get_neighbours(uri=Form(),userName=Form(), password=Form(), database=Form(), elementId=Form(None)):
     try:
         start = time.time()
-        graph = create_graph_database_connection(uri, userName, password, database)
-        result = await asyncio.to_thread(get_neighbour_nodes,graph=graph, element_id=elementId)
+        result = await asyncio.to_thread(get_neighbour_nodes,uri=uri, username=userName, password=password,database=database, element_id=elementId)
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'get_neighbours','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}

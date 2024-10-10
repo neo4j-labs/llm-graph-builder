@@ -46,14 +46,28 @@ RETURN
 """
 
 
-def get_neighbour_nodes(graph, element_id, query=NEIGHBOURS_FROM_ELEMENT_ID_QUERY):
-    param = {"element_id": element_id}
+def get_neighbour_nodes(uri, username, password, database, element_id, query=NEIGHBOURS_FROM_ELEMENT_ID_QUERY):
+    driver = None
+
     try:
         logging.info(f"Querying neighbours for element_id: {element_id}")
-        result = graph.query(query, param)
+        driver = get_graphDB_driver(uri, username, password, database)
+        driver.verify_connectivity()
+        logging.info("Database connectivity verified.")
+
+        records, summary, keys = driver.execute_query(query,element_id=element_id)
+        nodes = records[0].get("nodes", [])
+        relationships = records[0].get("relationships", [])
+        result = {"nodes": nodes, "relationships": relationships}
+        
         logging.info(f"Successfully retrieved neighbours for element_id: {element_id}")
-        print(result)
         return result
+    
     except Exception as e:
         logging.error(f"Error retrieving neighbours for element_id: {element_id}: {e}")
-        return {"nodes":[],"relationships":[]}
+        return {"nodes": [], "relationships": []}
+    
+    finally:
+        if driver is not None:
+            driver.close()
+            logging.info("Database driver closed.")
