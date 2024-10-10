@@ -28,7 +28,7 @@ import {
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
-import { filterData, getCheckboxConditions, processGraphData } from '../../utils/Utils';
+import { filterData, getCheckboxConditions, graphTypeFromNodes, processGraphData } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 
 import graphQueryAPI from '../../services/GraphQuery';
@@ -62,32 +62,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<'unknown' | 'success' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
-  const { userCredentials, isGdsActive } = useCredentials();
+  const { userCredentials } = useCredentials();
   const [scheme, setScheme] = useState<Scheme>({});
   const [newScheme, setNewScheme] = useState<Scheme>({});
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedQuery = useDebounce(searchQuery, 300);
-  //const [graphType, setGraphType] = useState<GraphType[]>(intitalGraphType(isGdsActive && allNodes.some((n) => n.labels?.includes('__Community__'))));
   const [graphType, setGraphType] = useState<GraphType[]>([]);
   const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
   const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
-
-  // the checkbox selection
-  const handleCheckboxChange = (graph: GraphType) => {
-    const currentIndex = graphType.indexOf(graph);
-    const newGraphSelected = [...graphType];
-    if (currentIndex === -1) {
-      newGraphSelected.push(graph);
-      initGraph(newGraphSelected, allNodes, allRelationships, scheme);
-    } else {
-      newGraphSelected.splice(currentIndex, 1);
-      initGraph(newGraphSelected, allNodes, allRelationships, scheme);
-    }
-    setSearchQuery('');
-    setGraphType(newGraphSelected);
-  };
-
-
 
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
@@ -105,7 +87,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       {}
     );
   };
-
+console.log('graphType', graphType);
   // Unmounting the component
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -115,7 +97,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       if (nvlRef.current) {
         nvlRef.current?.destroy();
       }
-      setGraphType(intitalGraphType(isGdsActive));
+      setGraphType([]);
       clearTimeout(timeoutId);
       setScheme({});
       setNodes([]);
@@ -123,8 +105,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setAllNodes([]);
       setAllRelationships([]);
       setSearchQuery('');
+      setSelected(undefined);
     };
   }, []);
+
+  useEffect(() => {
+    const updateGraphType = graphTypeFromNodes(allNodes);
+    if (Array.isArray(updateGraphType)) {
+      setGraphType(updateGraphType);
+    }
+  }, [allNodes])
 
   const fetchData = useCallback(async () => {
     try {
@@ -183,7 +173,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   useEffect(() => {
     if (open) {
       setLoading(true);
-      setGraphType(intitalGraphType(isGdsActive));
+      setGraphType([]);
       if (viewPoint !== 'chatInfoView') {
         graphApi();
       } else {
@@ -197,7 +187,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         setLoading(false);
       }
     }
-  }, [open, isGdsActive]);
+  }, [open]);
 
   useEffect(() => {
     handleSearch(debouncedQuery);
@@ -215,7 +205,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         finalNodes ?? [],
         finalRels ?? [],
         schemeVal,
-        isGdsActive
       );
       setNodes(filteredNodes);
       setRelationships(filteredRelations);
@@ -242,7 +231,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         if (query === '') {
           return {
             ...node,
-            activated: false,
             selected: false,
             size: graphLabels.nodeSize,
           };
@@ -252,7 +240,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         const match = id.toLowerCase().includes(query) || propertiesMatch || caption?.toLowerCase().includes(query);
         return {
           ...node,
-          activated: match,
           selected: match,
           size:
             match && viewPoint === graphLabels.showGraphView
@@ -266,7 +253,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const updatedRelationships = relationships.map((rel) => {
         return {
           ...rel,
-          activated: false,
           selected: false,
         };
       });
@@ -288,6 +274,26 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
   const checkBoxView = viewPoint !== graphLabels.chatInfoView;
 
+  // the checkbox selection
+  const handleCheckboxChange = (graph: GraphType) => {
+    const currentIndex = graphType.indexOf(graph);
+    const newGraphSelected = [...graphType];
+    if (currentIndex === -1) {
+      newGraphSelected.push(graph);
+      initGraph(newGraphSelected, allNodes, allRelationships, scheme);
+    } else {
+      newGraphSelected.splice(currentIndex, 1);
+      initGraph(newGraphSelected, allNodes, allRelationships, scheme);
+    }
+    setSearchQuery('');
+    setGraphType(newGraphSelected);
+    setSelected(undefined);
+    if (nvlRef.current && nvlRef?.current?.getScale() > 1) {
+      handleZoomToFit();
+    }
+  };
+
+  //Callback 
   const nvlCallbacks = {
     onLayoutComputing(isComputing: boolean) {
       if (!isComputing) {
@@ -322,12 +328,13 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setStatusMessage('');
     setGraphViewOpen(false);
     setScheme({});
-    setGraphType(intitalGraphType(isGdsActive));
+    setGraphType([]);
     setNodes([]);
     setRelationships([]);
     setAllNodes([]);
     setAllRelationships([]);
     setSearchQuery('');
+    setSelected(undefined);
   };
 
 
@@ -367,7 +374,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 graphType={graphType}
                 loading={loading}
                 handleChange={handleCheckboxChange}
-                {...getCheckboxConditions(allNodes, isGdsActive)}
+                {...getCheckboxConditions(allNodes)}
               />
             )}
           </Flex>

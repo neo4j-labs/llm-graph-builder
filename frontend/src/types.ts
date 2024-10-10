@@ -266,7 +266,7 @@ export interface CheckboxSectionProps {
   graphType: GraphType[];
   loading: boolean;
   handleChange: (graph: GraphType) => void;
-  isgds: boolean;
+  isCommunity: boolean;
   isDocChunk: boolean;
   isEntity: boolean;
 }

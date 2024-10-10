@@ -66,7 +66,6 @@ const ResultOverview: React.FunctionComponent<OverViewProps> = ({ nodes, relatio
         const updatedRelations = relationships.map((rel) => {
             return {
                 ...rel,
-                activated: rel?.caption?.includes(nodeLabel),
                 selected: rel?.caption?.includes(nodeLabel),
             };
         });
@@ -75,7 +74,6 @@ const ResultOverview: React.FunctionComponent<OverViewProps> = ({ nodes, relatio
         const updatedNodes = nodes.map((node) => {
             return {
                 ...node,
-                activated: false,
                 selected: false,
                 size: graphLabels.nodeSize,
             };
@@ -95,7 +93,6 @@ const ResultOverview: React.FunctionComponent<OverViewProps> = ({ nodes, relatio
             const isActive = node.labels.includes(nodeLabel);
             return {
                 ...node,
-                activated: isActive,
                 selected: isActive,
                 size:
                     isActive && viewPoint === graphLabels.showGraphView
@@ -109,7 +106,6 @@ const ResultOverview: React.FunctionComponent<OverViewProps> = ({ nodes, relatio
         const updatedRelationships = relationships.map((rel) => {
             return {
                 ...rel,
-                activated: false,
                 selected: false,
             };
         });
