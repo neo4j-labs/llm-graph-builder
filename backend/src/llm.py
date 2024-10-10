@@ -24,9 +24,11 @@ def get_llm(model: str):
     env_key = "LLM_MODEL_CONFIG_" + model
     env_value = os.environ.get(env_key)
     logging.info("Model: {}".format(env_key))
+    
     if "gemini" in model:
+        model_name = env_value
         credentials, project_id = google.auth.default()
-        model_name = MODEL_VERSIONS[model]
+        #model_name = MODEL_VERSIONS[model]
         llm = ChatVertexAI(
             model_name=model_name,
             #convert_system_message_to_human=True,
@@ -42,9 +44,10 @@ def get_llm(model: str):
             },
         )
     elif "openai" in model:
-        model_name = MODEL_VERSIONS[model]
+        #model_name = MODEL_VERSIONS[model]
+        model_name, api_key = env_value.split(",")
         llm = ChatOpenAI(
-            api_key=os.environ.get("OPENAI_API_KEY"),
+            api_key=api_key,
             model=model_name,
             temperature=0,
         )
@@ -93,9 +96,10 @@ def get_llm(model: str):
         llm = ChatOllama(base_url=base_url, model=model_name)
 
     elif "diffbot" in model:
-        model_name = "diffbot"
+        #model_name = "diffbot"
+        model_name, api_key = env_value.split(",")
         llm = DiffbotGraphTransformer(
-            diffbot_api_key=os.environ.get("DIFFBOT_API_KEY"),
+            diffbot_api_key=api_key,
             extract_types=["entities", "facts"],
         )
     
