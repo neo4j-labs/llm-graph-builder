@@ -466,7 +466,7 @@ export function isAllowedHost(url: string, allowedHosts: string[]) {
 
 export const getCheckboxConditions = (allNodes: ExtendedNode[]) => {
   const isDocChunk = allNodes.some((n) => n.labels?.includes('Document') || n.labels?.includes('Chunk'));
-  const isEntity = allNodes.some((n) => !n.labels?.includes('Document') || !n.labels?.includes('Chunk') || n.labels?.includes('__Community__'));
+  const isEntity = allNodes.some((n) => !n.labels?.includes('Document') && !n.labels?.includes('Chunk') && !n.labels?.includes('__Community__'));
   const isCommunity = allNodes.some((n) => n.labels?.includes('__Community__'));
   return { isDocChunk, isEntity, isCommunity };
 };
@@ -474,7 +474,7 @@ export const getCheckboxConditions = (allNodes: ExtendedNode[]) => {
 export const graphTypeFromNodes = (allNodes:ExtendedNode[])=>{
   const graphType: GraphType[] =[];
   const hasDocChunk = allNodes.some((n) => n.labels?.includes('Document') || n.labels?.includes('Chunk'));
-  const hasEntity = allNodes.some((n) => !n.labels?.includes('Document') || !n.labels?.includes('Chunk') || n.labels?.includes('__Community__'));
+  const hasEntity = allNodes.some((n) => !n.labels?.includes('Document') && !n.labels?.includes('Chunk') && !n.labels?.includes('__Community__'));
   const hasCommunity = allNodes.some((n) => n.labels?.includes('__Community__'));
   if(hasDocChunk){
     graphType.push('DocumentChunk');
