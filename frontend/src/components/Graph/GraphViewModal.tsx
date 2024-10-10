@@ -1,11 +1,4 @@
-import {
-  Banner,
-  Dialog,
-  Flex,
-  IconButtonArray,
-  LoadingSpinner,
-  useDebounce,
-} from '@neo4j-ndl/react';
+import { Banner, Dialog, Flex, IconButtonArray, LoadingSpinner, useDebounce } from '@neo4j-ndl/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BasicNode,
@@ -32,18 +25,12 @@ import { filterData, getCheckboxConditions, graphTypeFromNodes, processGraphData
 import { useCredentials } from '../../context/UserCredentials';
 
 import graphQueryAPI from '../../services/GraphQuery';
-import {
-  graphLabels,
-  intitalGraphType,
-  nvlOptions,
-  queryMap,
-} from '../../utils/Constants';
+import { graphLabels, nvlOptions, queryMap } from '../../utils/Constants';
 import CheckboxSelection from './CheckboxSelection';
 
 import ResultOverview from './ResultOverview';
 import { ResizePanelDetails } from './ResizePanel';
 import GraphPropertiesPanel from './GraphPropertiesPanel';
-
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -75,10 +62,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-        ? queryMap.DocChunks
-        : graphType.includes('Entities')
-          ? queryMap.Entities
-          : '';
+      ? queryMap.DocChunks
+      : graphType.includes('Entities')
+      ? queryMap.Entities
+      : '';
 
   // fit graph to original position
   const handleZoomToFit = () => {
@@ -87,7 +74,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       {}
     );
   };
-console.log('graphType', graphType);
+  console.log('graphType', graphType);
   // Unmounting the component
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -114,17 +101,17 @@ console.log('graphType', graphType);
     if (Array.isArray(updateGraphType)) {
       setGraphType(updateGraphType);
     }
-  }, [allNodes])
+  }, [allNodes]);
 
   const fetchData = useCallback(async () => {
     try {
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
-            userCredentials as UserCredentials,
-            graphQuery,
-            selectedRows?.map((f) => f.name)
-          )
+              userCredentials as UserCredentials,
+              graphQuery,
+              selectedRows?.map((f) => f.name)
+            )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -204,14 +191,13 @@ console.log('graphType', graphType);
         graphType,
         finalNodes ?? [],
         finalRels ?? [],
-        schemeVal,
+        schemeVal
       );
       setNodes(filteredNodes);
       setRelationships(filteredRelations);
       setNewScheme(filteredScheme);
     }
   };
-
 
   const selectedItem = useMemo(() => {
     if (selected === undefined) {
@@ -245,8 +231,8 @@ console.log('graphType', graphType);
             match && viewPoint === graphLabels.showGraphView
               ? 100
               : match && viewPoint !== graphLabels.showGraphView
-                ? 50
-                : graphLabels.nodeSize,
+              ? 50
+              : graphLabels.nodeSize,
         };
       });
       // deactivating any active relationships
@@ -293,7 +279,7 @@ console.log('graphType', graphType);
     }
   };
 
-  //Callback 
+  // Callback
   const nvlCallbacks = {
     onLayoutComputing(isComputing: boolean) {
       if (!isComputing) {
@@ -336,7 +322,6 @@ console.log('graphType', graphType);
     setSearchQuery('');
     setSelected(undefined);
   };
-
 
   const mouseEventCallbacks = {
     onNodeClick: (clickedNode: Node) => {
@@ -442,10 +427,22 @@ console.log('graphType', graphType);
                   </div>
                   <ResizePanelDetails open={true}>
                     {selectedItem !== undefined ? (
-                      <GraphPropertiesPanel inspectedItem={selectedItem as BasicNode | BasicRelationship} newScheme={newScheme} />
+                      <GraphPropertiesPanel
+                        inspectedItem={selectedItem as BasicNode | BasicRelationship}
+                        newScheme={newScheme}
+                      />
                     ) : (
-                      <ResultOverview nodes={nodes} relationships={relationships} newScheme={newScheme} searchQuery={searchQuery} setSearchQuery={setSearchQuery}
-                        viewPoint={viewPoint} setNodes={setNodes} setRelationships={setRelationships} />)}
+                      <ResultOverview
+                        nodes={nodes}
+                        relationships={relationships}
+                        newScheme={newScheme}
+                        searchQuery={searchQuery}
+                        setSearchQuery={setSearchQuery}
+                        viewPoint={viewPoint}
+                        setNodes={setNodes}
+                        setRelationships={setRelationships}
+                      />
+                    )}
                   </ResizePanelDetails>
                 </div>
               </>

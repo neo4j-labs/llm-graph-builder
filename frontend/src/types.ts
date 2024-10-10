@@ -244,7 +244,7 @@ export type ChatbotProps = {
   isFullScreen?: boolean;
   connectionStatus: boolean;
 };
-export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> { }
+export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
 
 export interface GraphViewModalProps {
   open: boolean;
@@ -790,7 +790,6 @@ export type BasicNode = {
   properties: Record<string, string>;
   propertyTypes: Record<string, string>;
 };
-
 
 export type GraphPropertiesTableProps = {
   propertiesWithTypes: {
