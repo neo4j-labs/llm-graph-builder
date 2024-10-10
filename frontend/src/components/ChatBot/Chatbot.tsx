@@ -1,4 +1,4 @@
-import React, { FC, lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import React, { FC, lazy, Suspense, useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import {
   Widget,
   Typography,
@@ -9,10 +9,24 @@ import {
   useCopyToClipboard,
   Flex,
   Box,
+  TextLink,
 } from '@neo4j-ndl/react';
-import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
+import { ArrowDownTrayIconOutline, XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../../assets/images/chatbot-ai.png';
-import { ChatbotProps, CustomFile, Messages, ResponseMode, UserCredentials, nodeDetailsProps } from '../../types';
+import {
+  ChatbotProps,
+  Chunk,
+  Community,
+  CustomFile,
+  Entity,
+  ExtendedNode,
+  ExtendedRelationship,
+  Messages,
+  MetricsState,
+  ResponseMode,
+  UserCredentials,
+  nodeDetailsProps,
+} from '../../types';
 import { useCredentials } from '../../context/UserCredentials';
 import { chatBotAPI } from '../../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
@@ -54,6 +68,19 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [messageError, setmessageError] = useState<string>('');
   const [entitiesModal, setEntitiesModal] = useState<string[]>([]);
   const [nodeDetailsModal, setNodeDetailsModal] = useState<nodeDetailsProps>({});
+  const [metricQuestion, setMetricQuestion] = useState<string>('');
+  const [metricAnswer, setMetricAnswer] = useState<string>('');
+  const [metricContext, setMetricContext] = useState<string>('');
+  const [nodes, setNodes] = useState<ExtendedNode[]>([]);
+  const [relationships, setRelationships] = useState<ExtendedRelationship[]>([]);
+  const [chunks, setChunks] = useState<Chunk[]>([]);
+  const [metricDetails, setMetricDetails] = useState<MetricsState | null>(null);
+  const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [infoLoading, toggleInfoLoading] = useReducer((s) => !s, false);
+  const [metricsLoading, toggleMetricsLoading] = useReducer((s) => !s, false);
+  const downloadLinkRef = useRef<HTMLAnchorElement>(null);
+  const [activeChat, setActiveChat] = useState<Messages>();
 
   const [_, copy] = useCopyToClipboard();
   const { speak, cancel, speaking } = useSpeechSynthesis({
@@ -70,6 +97,27 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     setInputMessage(e.target.value);
   };
 
+  const saveInfoEntitites = (entities: Entity[]) => {
+    setInfoEntities(entities);
+  };
+
+  const saveNodes = (chatNodes: ExtendedNode[]) => {
+    setNodes(chatNodes);
+  };
+
+  const saveChatRelationships = (chatRels: ExtendedRelationship[]) => {
+    setRelationships(chatRels);
+  };
+
+  const saveChunks = (chatChunks: Chunk[]) => {
+    setChunks(chatChunks);
+  };
+  const saveMetrics = (metricInfo: MetricsState) => {
+    setMetricDetails(metricInfo);
+  };
+  const saveCommunities = (chatCommunities: Community[]) => {
+    setCommunities(chatCommunities);
+  };
   useEffect(() => {
     if (!sessionStorage.getItem('session_id')) {
       const id = uuidv4();
@@ -173,7 +221,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       const results = await Promise.allSettled(apiCalls);
       results.forEach((result, index) => {
         const mode = chatModes[index];
-        console.log({ mode });
         if (result.status === 'fulfilled') {
           // @ts-ignore
           if (result.value.response.data.status === 'Success') {
@@ -189,13 +236,16 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               entities: response.info.entities,
               nodeDetails: response.info.nodedetails,
               error: response.info.error,
+              metric_question: response.info.metric_details.question,
+              metric_answer: response.info.metric_details.answer,
+              metric_contexts: response.info.metric_details.contexts,
             };
             if (index === 0) {
               simulateTypingEffect(chatbotMessageId, responseMode, mode, responseMode.message);
             } else {
               setListMessages((prev) =>
                 prev.map((msg) =>
-                  (msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg)
+                  msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg
                 )
               );
             }
@@ -210,7 +260,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             } else {
               setListMessages((prev) =>
                 prev.map((msg) =>
-                  (msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg)
+                  msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg
                 )
               );
             }
@@ -219,7 +269,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           console.error(`API call failed for mode ${mode}:`, result.reason);
           setListMessages((prev) =>
             prev.map((msg) =>
-              (msg.id === chatbotMessageId
+              msg.id === chatbotMessageId
                 ? {
                     ...msg,
                     modes: {
@@ -227,21 +277,20 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                       [mode]: { message: 'Failed to fetch response for this mode.', error: result.reason },
                     },
                   }
-                : msg)
+                : msg
             )
           );
         }
       });
-
-      setListMessages((prev) => {
-        return prev.map((msg) => (msg.id === chatbotMessageId ? { ...msg, isLoading: false, isTyping: false } : msg));
-      });
+      setListMessages((prev) =>
+        prev.map((msg) => (msg.id === chatbotMessageId ? { ...msg, isLoading: false, isTyping: false } : msg))
+      );
     } catch (error) {
       console.error('Error in handling chat:', error);
       if (error instanceof Error) {
         setListMessages((prev) =>
           prev.map((msg) =>
-            (msg.id === chatbotMessageId
+            msg.id === chatbotMessageId
               ? {
                   ...msg,
                   isLoading: false,
@@ -253,7 +302,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                     },
                   },
                 }
-              : msg)
+              : msg
           )
         );
       }
@@ -338,6 +387,10 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     setEntitiesModal(currentMode.entities ?? []);
     setmessageError(currentMode.error ?? '');
     setNodeDetailsModal(currentMode.nodeDetails ?? {});
+    setMetricQuestion(currentMode.metric_question ?? '');
+    setMetricContext(currentMode.metric_contexts ?? '');
+    setMetricAnswer(currentMode.metric_answer ?? '');
+    setActiveChat(chat);
   }, []);
 
   const speechHandler = useCallback((chat: Messages) => {
@@ -347,6 +400,15 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       handleSpeak(chat.modes[chat.currentMode]?.message, chat.id);
     }
   }, []);
+  const downloadClickHandler = useCallback(function downloadClickHandler<Type>(JsonData: Type) {
+    const textFile = new Blob([JSON.stringify(JsonData)], { type: 'application/json' });
+    if (downloadLinkRef && downloadLinkRef.current) {
+      downloadLinkRef.current.href = URL.createObjectURL(textFile);
+      downloadLinkRef.current.download = 'data.json';
+      downloadLinkRef.current.click();
+    }
+  }, []);
+
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
       <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3 pr-3'>
@@ -399,7 +461,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
                       }`}
                     >
-                      <ReactMarkdown>{chat.modes[chat.currentMode]?.message || ''}</ReactMarkdown>
+                      <ReactMarkdown className={!isFullScreen ? 'max-w-[250px]' : ''}>
+                        {chat.modes[chat.currentMode]?.message || ''}
+                      </ReactMarkdown>
                     </div>
                     <div>
                       <div>
@@ -509,7 +573,31 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           onClose={() => setShowInfoModal(false)}
           open={showInfoModal}
         >
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+            <IconButton
+              size='large'
+              title='download chat info'
+              clean
+              disabled={metricsLoading || infoLoading}
+              onClick={() => {
+                downloadClickHandler({
+                  chatResponse: activeChat,
+                  chunks,
+                  metricDetails,
+                  communities,
+                  responseTime,
+                  entities: infoEntities,
+                  nodes,
+                  tokensUsed,
+                  model,
+                });
+              }}
+            >
+              <ArrowDownTrayIconOutline />
+              <TextLink ref={downloadLinkRef} className='!hidden'>
+                ""
+              </TextLink>
+            </IconButton>
             <IconButton
               size='large'
               title='close pop up'
@@ -531,6 +619,26 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             graphonly_entities={graphEntitites}
             error={messageError}
             nodeDetails={nodeDetailsModal}
+            metricanswer={metricAnswer}
+            metriccontexts={metricContext}
+            metricquestion={metricQuestion}
+            metricmodel={model}
+            nodes={nodes}
+            infoEntities={infoEntities}
+            relationships={relationships}
+            chunks={chunks}
+            metricDetails={metricDetails}
+            communities={communities}
+            infoLoading={infoLoading}
+            metricsLoading={metricsLoading}
+            saveInfoEntitites={saveInfoEntitites}
+            saveChatRelationships={saveChatRelationships}
+            saveChunks={saveChunks}
+            saveCommunities={saveCommunities}
+            saveMetrics={saveMetrics}
+            saveNodes={saveNodes}
+            toggleInfoLoading={toggleInfoLoading}
+            toggleMetricsLoading={toggleMetricsLoading}
           />
         </Modal>
       </Suspense>
