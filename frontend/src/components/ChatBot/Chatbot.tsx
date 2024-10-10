@@ -245,7 +245,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             } else {
               setListMessages((prev) =>
                 prev.map((msg) =>
-                  (msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg)
+                  msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg
                 )
               );
             }
@@ -260,7 +260,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             } else {
               setListMessages((prev) =>
                 prev.map((msg) =>
-                  (msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg)
+                  msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg
                 )
               );
             }
@@ -269,7 +269,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           console.error(`API call failed for mode ${mode}:`, result.reason);
           setListMessages((prev) =>
             prev.map((msg) =>
-              (msg.id === chatbotMessageId
+              msg.id === chatbotMessageId
                 ? {
                     ...msg,
                     modes: {
@@ -277,7 +277,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                       [mode]: { message: 'Failed to fetch response for this mode.', error: result.reason },
                     },
                   }
-                : msg)
+                : msg
             )
           );
         }
@@ -290,7 +290,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       if (error instanceof Error) {
         setListMessages((prev) =>
           prev.map((msg) =>
-            (msg.id === chatbotMessageId
+            msg.id === chatbotMessageId
               ? {
                   ...msg,
                   isLoading: false,
@@ -302,7 +302,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                     },
                   },
                 }
-              : msg)
+              : msg
           )
         );
       }
@@ -400,14 +400,14 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       handleSpeak(chat.modes[chat.currentMode]?.message, chat.id);
     }
   }, []);
-  function downloadClickHandler<Type>(JsonData: Type) {
+  const downloadClickHandler = useCallback(function downloadClickHandler<Type>(JsonData: Type) {
     const textFile = new Blob([JSON.stringify(JsonData)], { type: 'application/json' });
     if (downloadLinkRef && downloadLinkRef.current) {
       downloadLinkRef.current.href = URL.createObjectURL(textFile);
       downloadLinkRef.current.download = 'data.json';
       downloadLinkRef.current.click();
     }
-  }
+  }, []);
 
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
