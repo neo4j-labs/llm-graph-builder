@@ -1,4 +1,4 @@
-import { Banner, DataGrid, DataGridComponents, Typography } from '@neo4j-ndl/react';
+import { Banner, Box, DataGrid, DataGridComponents, Typography } from '@neo4j-ndl/react';
 import { MetricsState } from '../../types';
 import { memo, useMemo, useRef } from 'react';
 import {
@@ -71,7 +71,7 @@ function MetricsTab({
     getSortedRowModel: getSortedRowModel(),
   });
   return (
-    <>
+    <Box>
       {metricDetails != null && metricDetails?.error?.trim() != '' ? (
         <Banner type='danger'>{metricDetails?.error}</Banner>
       ) : (
@@ -107,7 +107,7 @@ function MetricsTab({
           }}
         />
       )}
-    </>
+    </Box>
   );
 }
 export default memo(MetricsTab);
