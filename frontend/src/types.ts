@@ -248,7 +248,7 @@ export type ChatbotProps = {
   isFullScreen?: boolean;
   connectionStatus: boolean;
 };
-export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
+export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> { }
 
 export interface GraphViewModalProps {
   open: boolean;
@@ -270,7 +270,7 @@ export interface CheckboxSectionProps {
   graphType: GraphType[];
   loading: boolean;
   handleChange: (graph: GraphType) => void;
-  isgds: boolean;
+  isCommunity: boolean;
   isDocChunk: boolean;
   isEntity: boolean;
 }
@@ -351,8 +351,8 @@ export interface LegendChipProps {
   scheme: Scheme;
   label: string;
   type: 'node' | 'relationship' | 'propertyKey';
-  count: number;
-  onClick: (e: React.MouseEvent<HTMLElement>) => void;
+  count?: number;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
 }
 export interface FileContextProviderProps {
   children: ReactNode;
@@ -432,6 +432,10 @@ export interface SourceListServerData {
   status: string;
   error?: string;
   message?: string;
+}
+
+export interface MetricsState extends metricdetails {
+  error?: string;
 }
 
 export interface chatInfoMessage extends Partial<Messages> {
@@ -592,13 +596,6 @@ export interface Origin {
   horizontal: Horizontal;
 }
 
-export type BasicNode = {
-  id: string;
-  labels: string[];
-  properties: Record<string, string>;
-  propertyTypes: Record<string, string>;
-};
-
 export type GraphStatsLabels = Record<
   string,
   {
@@ -616,7 +613,7 @@ export interface ExtendedNode extends Node {
 }
 
 export interface ExtendedRelationship extends Relationship {
-  count: number;
+  count?: number;
 }
 export interface connectionState {
   openPopUp: boolean;
@@ -777,6 +774,34 @@ export interface FileContextType {
   setPostProcessingVal: Dispatch<SetStateAction<boolean>>;
 }
 export declare type Side = 'top' | 'right' | 'bottom' | 'left';
-export interface MetricsState extends metricdetails {
-  error?: string;
-}
+
+export type EntityType = 'node' | 'relationship';
+
+export type BasicRelationship = {
+  id: string;
+  to: string;
+  from: string;
+  type: string;
+  caption: string;
+};
+
+export type BasicNode = {
+  id: string;
+  type: string;
+  labels: string[];
+  properties: Record<string, string>;
+  propertyTypes: Record<string, string>;
+};
+
+
+export type GraphPropertiesTableProps = {
+  propertiesWithTypes: {
+    key: string;
+    value: string;
+  }[];
+};
+
+export type GraphPropertiesPanelProps = {
+  inspectedItem: BasicNode | BasicRelationship;
+  newScheme: Scheme;
+};

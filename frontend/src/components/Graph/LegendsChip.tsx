@@ -6,7 +6,7 @@ export const LegendsChip: React.FunctionComponent<LegendChipProps> = ({ scheme, 
   return (
     <Legend
       title={label === '__Community__' ? graphLabels.community : label}
-      count={count}
+      {...(count !== undefined && { count })}
       bgColor={scheme[label]}
       type={type}
       onClick={onClick}
