@@ -142,7 +142,7 @@ export default function DropZoneForSmallLayouts() {
 
     uploadNextChunk();
   };
-  const { acceptedFiles, getRootProps, getInputProps } = useDropzone({
+  const { getRootProps, getInputProps } = useDropzone({
     accept: {
       'application/pdf': ['.pdf'],
       'image/*': ['.jpeg', '.jpg', '.png', '.svg'],
@@ -214,7 +214,6 @@ export default function DropZoneForSmallLayouts() {
       setFilesData(copiedFilesData);
     }
   };
-  console.log(acceptedFiles);
   return (
     <>
       <div {...getRootProps({ className: 'dropzone' })}>

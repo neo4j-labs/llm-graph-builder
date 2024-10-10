@@ -127,8 +127,6 @@ Allow unauthenticated request : Yes
 ## ENV
 | Env Variable Name       | Mandatory/Optional | Default Value | Description                                                                                      |
 |-------------------------|--------------------|---------------|--------------------------------------------------------------------------------------------------|
-| OPENAI_API_KEY          | Mandatory          |               | API key for OpenAI                                                                               |
-| DIFFBOT_API_KEY         | Mandatory          |               | API key for Diffbot                                                                              |
 | EMBEDDING_MODEL         | Optional           | all-MiniLM-L6-v2 | Model for generating the text embedding (all-MiniLM-L6-v2 , openai , vertexai)                |
 | IS_EMBEDDING            | Optional           | true          | Flag to enable text embedding                                                                    |
 | KNN_MIN_SCORE           | Optional           | 0.94          | Minimum score for KNN algorithm                                                                  |

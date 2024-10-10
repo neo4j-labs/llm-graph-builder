@@ -1,6 +1,6 @@
 import { Dropdown, Tip } from '@neo4j-ndl/react';
 import { OptionType, ReusableDropdownProps } from '../types';
-import { useMemo, useReducer } from 'react';
+import { memo, useMemo, useReducer } from 'react';
 import { capitalize } from '../utils/Utils';
 
 const DropdownComponent: React.FC<ReusableDropdownProps> = ({
@@ -68,4 +68,4 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
     </>
   );
 };
-export default DropdownComponent;
+export default memo(DropdownComponent);

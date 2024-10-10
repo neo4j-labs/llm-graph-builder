@@ -43,7 +43,7 @@ import useServerSideEvent from '../hooks/useSse';
 import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
-import IconButtonWithToolTip from './UI/IconButtonToolTip';
+import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import IndeterminateCheckbox from './UI/CustomCheckBox';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
@@ -52,7 +52,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
-  const { userCredentials } = useCredentials();
+  const { userCredentials, isReadOnlyUser } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -146,22 +146,21 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               >
                 <StatusIndicator type={statusCheck(info.getValue())} />
                 {info.getValue()}
-                {/* {(info.getValue() === 'Completed' ||
-                  info.getValue() === 'Failed' ||
-                  info.getValue() === 'Cancelled') && (
-                  <span className='mx-1'>
-                    <IconButtonWithToolTip
-                      placement='right'
-                      text='Reprocess'
-                      size='small'
-                      label='reprocess'
-                      clean
-                      onClick={() => onRetry(info?.row?.id as string)}
-                    >
-                      <ArrowPathIconSolid />
-                    </IconButtonWithToolTip>
-                  </span>
-                )} */}
+                {(info.getValue() === 'Completed' || info.getValue() === 'Failed' || info.getValue() === 'Cancelled') &&
+                  !isReadOnlyUser && (
+                    <span className='mx-1'>
+                      <IconButtonWithToolTip
+                        placement='right'
+                        text='Reprocess'
+                        size='small'
+                        label='reprocess'
+                        clean
+                        onClick={() => onRetry(info?.row?.id as string)}
+                      >
+                        <ArrowPathIconSolid />
+                      </IconButtonWithToolTip>
+                    </span>
+                  )}
               </div>
             );
           } else if (info.getValue() === 'Processing' && info.row.original.processingProgress === undefined) {
@@ -511,7 +510,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         footer: (info) => info.column.id,
       }),
     ],
-    [filesData.length, statusFilter, filetypeFilter, llmtypeFilter, fileSourceFilter]
+    [filesData.length, statusFilter, filetypeFilter, llmtypeFilter, fileSourceFilter, isReadOnlyUser]
   );
 
   const table = useReactTable({
@@ -701,7 +700,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   }, [connectionStatus, userCredentials]);
 
   useEffect(() => {
-    if (connectionStatus && filesData.length && onlyfortheFirstRender) {
+    if (connectionStatus && filesData.length && onlyfortheFirstRender && !isReadOnlyUser) {
       const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
       if (processingFilesCount) {
         if (processingFilesCount === 1) {
@@ -718,7 +717,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       }
       onlyfortheFirstRender = false;
     }
-  }, [connectionStatus, filesData.length]);
+  }, [connectionStatus, filesData.length, isReadOnlyUser]);
 
   const cancelHandler = async (fileName: string, id: string, fileSource: string) => {
     setFilesData((prevfiles) =>

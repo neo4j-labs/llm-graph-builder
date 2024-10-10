@@ -8,7 +8,7 @@ from src.shared.constants import GRAPH_CHUNK_LIMIT,GRAPH_QUERY
 
 # watch("neo4j")
 
-def get_graphDB_driver(uri, username, password):
+def get_graphDB_driver(uri, username, password,database="neo4j"):
     """
     Creates and returns a Neo4j database driver instance configured with the provided credentials.
 
@@ -20,9 +20,9 @@ def get_graphDB_driver(uri, username, password):
         logging.info(f"Attempting to connect to the Neo4j database at {uri}")
         enable_user_agent = os.environ.get("ENABLE_USER_AGENT", "False").lower() in ("true", "1", "yes")
         if enable_user_agent:
-            driver = GraphDatabase.driver(uri, auth=(username, password), user_agent=os.environ.get('NEO4J_USER_AGENT'))
+            driver = GraphDatabase.driver(uri, auth=(username, password),database=database, user_agent=os.environ.get('NEO4J_USER_AGENT'))
         else:
-            driver = GraphDatabase.driver(uri, auth=(username, password))
+            driver = GraphDatabase.driver(uri, auth=(username, password),database=database)
         logging.info("Connection successful")
         return driver
     except Exception as e:
@@ -61,15 +61,20 @@ def process_node(node):
           with datetime objects formatted as ISO strings.
     """
     try:
+        labels = set(node.labels)
+        labels.discard("__Entity__")
+        if not labels:
+            labels.add('*')
+        
         node_element = {
             "element_id": node.element_id,
-            "labels": list(node.labels),
+            "labels": list(labels),
             "properties": {}
         }
         # logging.info(f"Processing node with element ID: {node.element_id}")
 
         for key in node:
-            if key in ["embedding", "text"]:
+            if key in ["embedding", "text", "summary"]:
                 continue
             value = node.get(key)
             if isinstance(value, time.DateTime):
@@ -178,7 +183,7 @@ def get_completed_documents(driver):
     return documents
 
 
-def get_graph_results(uri, username, password,document_names):
+def get_graph_results(uri, username, password,database,document_names):
     """
     Retrieves graph data by executing a specified Cypher query using credentials and parameters provided.
     Processes the results to extract nodes and relationships and packages them in a structured output.
@@ -195,7 +200,7 @@ def get_graph_results(uri, username, password,document_names):
     """
     try:
         logging.info(f"Starting graph query process")
-        driver = get_graphDB_driver(uri, username, password)  
+        driver = get_graphDB_driver(uri, username, password,database)  
         document_names= list(map(str.strip, json.loads(document_names)))
         query = GRAPH_QUERY.format(graph_chunk_limit=GRAPH_CHUNK_LIMIT)
         records, summary , keys = execute_query(driver, query.strip(), document_names)

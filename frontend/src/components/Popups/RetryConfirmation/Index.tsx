@@ -4,8 +4,9 @@ import { useFileContext } from '../../../context/UsersFiles';
 import { capitalize } from '../../../utils/Utils';
 import { BannerAlertProps } from '../../../types';
 import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
+import { memo } from 'react';
 
-export default function RetryConfirmationDialog({
+function RetryConfirmationDialog({
   open,
   onClose,
   fileId,
@@ -82,3 +83,4 @@ export default function RetryConfirmationDialog({
     </Dialog>
   );
 }
+export default memo(RetryConfirmationDialog);

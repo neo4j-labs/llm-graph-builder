@@ -9,7 +9,7 @@ const cancelAPI = async (filenames: string[], source_types: string[]) => {
       formData.append('uri', credentials?.uri ?? '');
       formData.append('database', credentials?.database ?? '');
       formData.append('userName', credentials?.user ?? '');
-      formData.append('password', credentials?.password ?? '');
+      formData.append('password', atob(credentials?.password) ?? '');
     }
     formData.append('filenames', JSON.stringify(filenames));
     formData.append('source_types', JSON.stringify(source_types));

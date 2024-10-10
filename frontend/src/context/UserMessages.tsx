@@ -1,18 +1,18 @@
 import { createContext, useState, useContext, FC } from 'react';
 import { MessagesContextProviderProps, Messages, MessageContextType } from '../types';
-import chatbotmessages from '../assets/ChatbotMessages.json';
-import { getDateTime } from '../utils/Utils';
+import { getDefaultMessage } from '../utils/Constants';
 
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
 
 const MessageContextWrapper: FC<MessagesContextProviderProps> = ({ children }) => {
-  const [messages, setMessages] = useState<Messages[] | []>([
-    { ...chatbotmessages.listMessages[1], datetime: getDateTime() },
-  ]);
+  const [messages, setMessages] = useState<Messages[] | []>(getDefaultMessage);
+  const [clearHistoryData, setClearHistoryData] = useState<boolean>(false);
 
   const value: MessageContextType = {
     messages,
     setMessages,
+    clearHistoryData,
+    setClearHistoryData,
   };
   return <MessageContext.Provider value={value}>{children}</MessageContext.Provider>;
 };
