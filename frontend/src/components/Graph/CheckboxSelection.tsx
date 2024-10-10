@@ -7,7 +7,7 @@ const CheckboxSelection: React.FC<CheckboxSectionProps> = ({
   graphType,
   loading,
   handleChange,
-  isgds,
+  isCommunity,
   isDocChunk,
   isEntity,
 }) => (
@@ -29,7 +29,7 @@ const CheckboxSelection: React.FC<CheckboxSectionProps> = ({
           onChange={() => handleChange('Entities')}
         />
       )}
-      {isgds && (
+      {isCommunity && (
         <Checkbox
           checked={graphType.includes('Communities')}
           label={graphLabels.community}
