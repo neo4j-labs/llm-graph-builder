@@ -8,6 +8,7 @@ import {
   useCopyToClipboard,
   Banner,
   useMediaQuery,
+  Button,
 } from '@neo4j-ndl/react';
 import { DocumentDuplicateIconOutline, ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
@@ -27,6 +28,7 @@ import { chatModeLables } from '../../utils/Constants';
 import { Relationship } from '@neo4j-nvl/base';
 import { getChatMetrics } from '../../services/GetRagasMetric';
 import MetricsTab from './MetricsTab';
+import { Stack } from '@mui/material';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
   sources,
@@ -69,6 +71,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const themeUtils = useContext(ThemeWrapperContext);
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
+  const [showMetricsTable, setShowMetricsTable] = useState<boolean>(false);
 
   const actions: CypherCodeBlockProps['actions'] = useMemo(
     () => [
@@ -173,31 +176,33 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         }
       })();
     }
-    (async () => {
-      try {
-        toggleMetricsLoading();
-        const response = await getChatMetrics(metricquestion, metriccontexts, metricanswer, metricmodel);
-        toggleMetricsLoading();
-        if (response.data.status === 'Success') {
-          saveMetrics({ ...response.data.data, error: '' });
-        } else {
-          throw new Error(response.data.error);
-        }
-      } catch (error) {
-        if (error instanceof Error) {
-          toggleMetricsLoading();
-          console.log('Error in getting chat metrics', error);
-          saveMetrics({ error: error.message, faithfulness: 0, answer_relevancy: 0, context_utilization: 0 });
-        }
-      }
-    })();
     () => {
       setcopiedText(false);
+      setShowMetricsTable(false);
     };
   }, [nodeDetails, mode, error]);
 
   const onChangeTabs = (tabId: number) => {
     setActiveTab(tabId);
+  };
+  const loadMetrics = async () => {
+    setShowMetricsTable(true);
+    try {
+      toggleMetricsLoading();
+      const response = await getChatMetrics(metricquestion, metriccontexts, metricanswer, metricmodel);
+      toggleMetricsLoading();
+      if (response.data.status === 'Success') {
+        saveMetrics({ ...response.data.data, error: '' });
+      } else {
+        throw new Error(response.data.error);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        toggleMetricsLoading();
+        console.log('Error in getting chat metrics', error);
+        saveMetrics({ error: error.message, faithfulness: 0, answer_relevancy: 0, context_utilization: 0 });
+      }
+    }
   };
 
   return (
@@ -252,7 +257,17 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           <SourcesInfo loading={infoLoading} sources={sources} mode={mode} chunks={chunks} />
         </Tabs.TabPanel>
         <Tabs.TabPanel tabId={8} value={activeTab}>
-          <MetricsTab metricsLoading={metricsLoading} metricDetails={metricDetails} />
+          <Stack spacing={2}>
+            <Typography variant='body-large'>
+              We use several key metrics to assess the quality of our chat responses. Click the button below to view
+              detailed scores for this interaction. These scores help us continuously improve the accuracy and
+              helpfulness of our chatbots.
+            </Typography>
+            {showMetricsTable && <MetricsTab metricsLoading={metricsLoading} metricDetails={metricDetails} />}
+            <Button disabled={metricsLoading} className='w-max self-center mt-4' onClick={loadMetrics}>
+              View Detailed Metrics
+            </Button>
+          </Stack>
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={4}>
           <EntitiesInfo
