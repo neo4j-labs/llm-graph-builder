@@ -33,6 +33,8 @@ from Secweb.ContentSecurityPolicy import ContentSecurityPolicy
 from Secweb.XContentTypeOptions import XContentTypeOptions
 from Secweb.XFrameOptions import XFrame
 
+from src.ragas_eval import *
+
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
@@ -300,8 +302,9 @@ async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(),
             graph = Neo4jGraph( url=uri,username=userName,password=password,database=database,sanitize = True, refresh_schema=True)
         else:
             graph = create_graph_database_connection(uri, userName, password, database)
-            graph_DB_dataAccess = graphDBdataAccess(graph)
-            write_access = graph_DB_dataAccess.check_account_access(database=database)
+        
+        graph_DB_dataAccess = graphDBdataAccess(graph)
+        write_access = graph_DB_dataAccess.check_account_access(database=database)
         result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access=write_access)
 
         total_call_time = time.time() - qa_rag_start_time
@@ -705,7 +708,23 @@ async def retry_processing(uri=Form(), userName=Form(), password=Form(), databas
         logging.exception(f'{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
     finally:
-        gc.collect()        
+        gc.collect()    
+
+@app.post('/metric')
+async def calculate_metric(question=Form(),context=Form(),answer=Form(),model=Form()):
+    try:
+      result = await asyncio.to_thread(get_ragas_metrics,question,context,answer,model)
+      if result is None: 
+            return create_api_response('Failed', message='Failed to calculate metrics.',error="Ragas evaluation returned null")
+      return create_api_response('Success',data=result,message=f"Status set to Reprocess for filename : {result}")
+    except Exception as e:
+        job_status = "Failed"
+        message="Error while calculating evaluation metrics"
+        error_message = str(e)
+        logging.exception(f'{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()
 
 if __name__ == "__main__":
     uvicorn.run(app)
