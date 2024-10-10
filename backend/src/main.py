@@ -518,26 +518,30 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition):
   else:  
     chunkId_chunkDoc_list=[]
     chunks =  graph.query(QUERY_TO_GET_CHUNKS, params={"filename":file_name})
-    for chunk in chunks:
-      chunk_doc = Document(page_content=chunk['text'], metadata={'id':chunk['id'], 'position':chunk['position']})
-      chunkId_chunkDoc_list.append({'chunk_id': chunk['id'], 'chunk_doc': chunk_doc})
     
-    if retry_condition ==  START_FROM_LAST_PROCESSED_POSITION:
-      logging.info(f"Retry : start_from_last_processed_position")
-      starting_chunk = graph.query(QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION, params={"filename":file_name})
-      if starting_chunk[0]["position"] < len(chunkId_chunkDoc_list):
-        return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
+    if chunks[0]['text'] is None or chunks[0]['text']=="" :
+      raise Exception(f"Chunks are not created for {file_name}. Please re-upload file and try.")    
+    else:
+      for chunk in chunks:
+        chunk_doc = Document(page_content=chunk['text'], metadata={'id':chunk['id'], 'position':chunk['position']})
+        chunkId_chunkDoc_list.append({'chunk_id': chunk['id'], 'chunk_doc': chunk_doc})
       
-      elif starting_chunk[0]["position"] == len(chunkId_chunkDoc_list):
-        starting_chunk = graph.query(QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY, params={"filename":file_name})
-        return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
+      if retry_condition ==  START_FROM_LAST_PROCESSED_POSITION:
+        logging.info(f"Retry : start_from_last_processed_position")
+        starting_chunk = graph.query(QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION, params={"filename":file_name})
+        if starting_chunk[0]["position"] < len(chunkId_chunkDoc_list):
+          return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
+        
+        elif starting_chunk[0]["position"] == len(chunkId_chunkDoc_list):
+          starting_chunk = graph.query(QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY, params={"filename":file_name})
+          return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
+        
+        else:
+          raise Exception(f"All chunks of {file_name} are alreday processed. If you want to re-process, Please start from begnning")    
       
       else:
-        raise Exception(f"All chunks of {file_name} are alreday processed. If you want to re-process, Please start from begnning")    
-    
-    else:
-      logging.info(f"Retry : start_from_beginning with chunks {len(chunkId_chunkDoc_list)}")    
-      return len(chunks), chunkId_chunkDoc_list
+        logging.info(f"Retry : start_from_beginning with chunks {len(chunkId_chunkDoc_list)}")    
+        return len(chunks), chunkId_chunkDoc_list
   
 def get_source_list_from_graph(uri,userName,password,db_name=None):
   """
