@@ -22,7 +22,7 @@ export default function ChatModeToggle({
 }) {
   const { setchatModes, chatModes, postProcessingTasks, selectedRows } = useFileContext();
   const isCommunityAllowed = postProcessingTasks.includes('enable_communities');
-  const { isGdsActive } = useCredentials();
+  const { isGdsActive, userCredentials } = useCredentials();
 
   useEffect(() => {
     // If rows are selected, the mode is valid (either vector or graph+vector)
@@ -43,6 +43,7 @@ export default function ChatModeToggle({
       }
     }
   }, [selectedRows.length, chatModes.length]);
+  
   const memoizedChatModes = useMemo(() => {
     return isGdsActive && isCommunityAllowed
       ? AvailableModes
