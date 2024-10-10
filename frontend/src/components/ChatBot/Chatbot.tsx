@@ -581,19 +581,21 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               disabled={metricsLoading || infoLoading}
               onClick={() => {
                 downloadClickHandler({
-                  activeChat,
+                  chatResponse: activeChat,
                   chunks,
                   metricDetails,
                   communities,
                   responseTime,
+                  entities: infoEntities,
+                  nodes,
                   tokensUsed,
-                  model
+                  model,
                 });
               }}
             >
-                <ArrowDownTrayIconOutline />
-
-              <TextLink ref={downloadLinkRef}  className='!hidden'>""
+              <ArrowDownTrayIconOutline />
+              <TextLink ref={downloadLinkRef} className='!hidden'>
+                ""
               </TextLink>
             </IconButton>
             <IconButton
