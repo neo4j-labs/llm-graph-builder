@@ -32,7 +32,7 @@ export const defaultLLM = llms?.includes('openai_gpt_4o')
   : llms?.includes('gemini_1.5_pro')
   ? 'gemini_1.5_pro'
   : 'diffbot';
-
+export const supportedLLmsForRagas = ['openai_gpt_3.5', 'openai_gpt_4o', 'openai_gpt_4o_mini', 'groq_llama3_70b'];
 export const chatModeLables = {
   vector: 'vector',
   graph: 'graph',
