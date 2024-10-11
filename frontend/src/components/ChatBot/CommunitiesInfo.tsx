@@ -2,14 +2,9 @@ import { Box, LoadingSpinner, Flex, Typography } from '@neo4j-ndl/react';
 import { FC } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { CommunitiesProps } from '../../types';
-import GraphViewButton from '../Graph/GraphViewButton';
+import { chatModeLables } from '../../utils/Constants';
 
-const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, nodeValues, relationshipValues }) => {
-
-  console.log('nodesVal', nodeValues);
-  console.log('relval', relationshipValues)
-
-  console.log('communities', communities);
+const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) => {
   return (
     <>
       {loading ? (
@@ -23,12 +18,13 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, nodeValue
               <li key={`${community.id}${index}`} className='mb-2'>
                 <div>
                   <Flex flexDirection='row' gap='2'>
-                    <GraphViewButton nodeValues={nodeValues} relationshipValues={relationshipValues} fill='text' label={`ID : ${community.id}`} />
+                    <Typography variant='subheading-medium'>ID : </Typography>
+                    <Typography variant='subheading-medium'>{community.id}</Typography>
                   </Flex>
-                  <Flex flexDirection='row' gap='2'>
+                  {mode === chatModeLables.global_vector && community.score && (<Flex flexDirection='row' gap='2'>
                     <Typography variant='subheading-medium'>Score : </Typography>
-                    <Typography variant='subheading-medium'>{community.score}</Typography>
-                  </Flex>
+                   <Typography variant='subheading-medium'>{community.score}</Typography>
+                  </Flex>)}
                   <ReactMarkdown>{community.summary}</ReactMarkdown>
                 </div>
               </li>

@@ -206,26 +206,34 @@ export interface ChunkDetail {
   id: string;
   score: number;
 }
-export interface Messages {
-  id: number;
+export type ResponseMode = {
   message: string;
-  user: string;
-  datetime: string;
-  isTyping?: boolean;
   sources?: string[];
   model?: string;
-  isLoading?: boolean;
+  total_tokens?: number;
   response_time?: number;
+  cypher_query?: string;
   nodeDetails?: nodeDetailsProps;
   chunk_ids?: string[];
-  total_tokens?: number;
-  speaking?: boolean;
-  copying?: boolean;
-  mode?: string;
-  cypher_query?: string;
   graphonly_entities?: [];
   error?: string;
   entities?: string[];
+  metric_question?: string;
+  metric_contexts?: string;
+  metric_answer?: string;
+};
+export interface Messages {
+  id: number;
+  user: string;
+  datetime: string;
+  isTyping?: boolean;
+  isLoading?: boolean;
+  speaking?: boolean;
+  copying?: boolean;
+  modes: {
+    [key: string]: ResponseMode;
+  };
+  currentMode: string;
 }
 
 export type ChatbotProps = {
@@ -258,7 +266,7 @@ export interface CheckboxSectionProps {
   graphType: GraphType[];
   loading: boolean;
   handleChange: (graph: GraphType) => void;
-  isgds: boolean;
+  isCommunity: boolean;
   isDocChunk: boolean;
   isEntity: boolean;
 }
@@ -339,8 +347,8 @@ export interface LegendChipProps {
   scheme: Scheme;
   label: string;
   type: 'node' | 'relationship' | 'propertyKey';
-  count: number;
-  onClick: (e: React.MouseEvent<HTMLElement>) => void;
+  count?: number;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
 }
 export interface FileContextProviderProps {
   children: ReactNode;
@@ -402,6 +410,14 @@ export interface duplicateNodesData extends Partial<commonserverresponse> {
 export interface OrphanNodeResponse extends Partial<commonserverresponse> {
   data: orphanNodeProps[];
 }
+export type metricdetails = {
+  faithfulness: number;
+  answer_relevancy: number;
+  context_utilization: number;
+};
+export interface MetricsResponse extends Omit<commonserverresponse, 'data'> {
+  data: metricdetails;
+}
 export interface schema {
   nodelabels: string[];
   relationshipTypes: string[];
@@ -412,6 +428,10 @@ export interface SourceListServerData {
   status: string;
   error?: string;
   message?: string;
+}
+
+export interface MetricsState extends metricdetails {
+  error?: string;
 }
 
 export interface chatInfoMessage extends Partial<Messages> {
@@ -425,6 +445,26 @@ export interface chatInfoMessage extends Partial<Messages> {
   error: string;
   entities_ids: string[];
   nodeDetails: nodeDetailsProps;
+  metricquestion: string;
+  metricanswer: string;
+  metriccontexts: string;
+  metricmodel: string;
+  nodes: ExtendedNode[];
+  relationships: ExtendedRelationship[];
+  chunks: Chunk[];
+  metricDetails: MetricsState | null;
+  infoEntities: Entity[];
+  communities: Community[];
+  infoLoading: boolean;
+  metricsLoading: boolean;
+  saveInfoEntitites: (entities: Entity[]) => void;
+  saveNodes: (chatNodes: ExtendedNode[]) => void;
+  saveChatRelationships: (chatRels: ExtendedRelationship[]) => void;
+  saveChunks: (chatChunks: Chunk[]) => void;
+  saveMetrics: (metricInfo: MetricsState) => void;
+  saveCommunities: (chatCommunities: Community[]) => void;
+  toggleInfoLoading: React.DispatchWithoutAction;
+  toggleMetricsLoading: React.DispatchWithoutAction;
 }
 
 export interface eventResponsetypes extends Omit<SourceNode, 'total_chunks' | 'processingTime'> {
@@ -554,13 +594,6 @@ export interface Origin {
   horizontal: Horizontal;
 }
 
-export type BasicNode = {
-  id: string;
-  labels: string[];
-  properties: Record<string, string>;
-  propertyTypes: Record<string, string>;
-};
-
 export type GraphStatsLabels = Record<
   string,
   {
@@ -578,7 +611,7 @@ export interface ExtendedNode extends Node {
 }
 
 export interface ExtendedRelationship extends Relationship {
-  count: number;
+  count?: number;
 }
 export interface connectionState {
   openPopUp: boolean;
@@ -665,6 +698,7 @@ export type SourcesProps = {
 export type ChunkProps = {
   loading: boolean;
   chunks: Chunk[];
+  mode:string;
 };
 
 export type EntitiesProps = {
@@ -677,6 +711,7 @@ export type EntitiesProps = {
 export type CommunitiesProps = {
   loading: boolean;
   communities: Community[];
+  mode:string;
 };
 
 export interface entity {
@@ -723,8 +758,8 @@ export interface FileContextType {
   setSelectedRows: React.Dispatch<React.SetStateAction<string[]>>;
   selectedSchemas: readonly OptionType[];
   setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
-  chatMode: string;
-  setchatMode: Dispatch<SetStateAction<string>>;
+  chatModes: string[];
+  setchatModes: Dispatch<SetStateAction<string[]>>;
   isSchema: boolean;
   setIsSchema: React.Dispatch<React.SetStateAction<boolean>>;
   showTextFromSchemaDialog: showTextFromSchemaDialogType;
@@ -739,3 +774,33 @@ export interface FileContextType {
   setPostProcessingVal: Dispatch<SetStateAction<boolean>>;
 }
 export declare type Side = 'top' | 'right' | 'bottom' | 'left';
+
+export type EntityType = 'node' | 'relationship';
+
+export type BasicRelationship = {
+  id: string;
+  to: string;
+  from: string;
+  type: string;
+  caption: string;
+};
+
+export type BasicNode = {
+  id: string;
+  type: string;
+  labels: string[];
+  properties: Record<string, string>;
+  propertyTypes: Record<string, string>;
+};
+
+export type GraphPropertiesTableProps = {
+  propertiesWithTypes: {
+    key: string;
+    value: string;
+  }[];
+};
+
+export type GraphPropertiesPanelProps = {
+  inspectedItem: BasicNode | BasicRelationship;
+  newScheme: Scheme;
+};

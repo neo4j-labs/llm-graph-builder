@@ -18,7 +18,16 @@ import { postProcessing } from '../services/PostProcessing';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
-import { batchSize, buttonCaptions, defaultLLM, largeFileSize, llms, RETRY_OPIONS, tooltips } from '../utils/Constants';
+import {
+  batchSize,
+  buttonCaptions,
+  chatModeLables,
+  defaultLLM,
+  largeFileSize,
+  llms,
+  RETRY_OPIONS,
+  tooltips,
+} from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 import DropdownComponent from './Dropdown';
@@ -34,6 +43,7 @@ import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
 import retry from '../services/retry';
 import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/toasts';
 import { useMessageContext } from '../context/UserMessages';
+import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
 
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
@@ -95,6 +105,7 @@ const Content: React.FC<ContentProps> = ({
     queue,
     processedCount,
     setProcessedCount,
+    setchatModes,
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
@@ -159,12 +170,12 @@ const Content: React.FC<ContentProps> = ({
     }
     if (processedCount === 1 && queue.isEmpty()) {
       (async () => {
-        showNormalToast('Some Q&A functionality will only be available afterwards.');
+        showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
         await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
         showSuccessToast('All Q&A functionality is available now.');
       })();
     }
-  }, [processedCount, userCredentials, queue, isReadOnlyUser]);
+  }, [processedCount, userCredentials, queue, isReadOnlyUser, isGdsActive]);
 
   useEffect(() => {
     if (afterFirstRender) {
@@ -393,7 +404,7 @@ const Content: React.FC<ContentProps> = ({
 
   const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
     if (!remainingFiles.length) {
-      showNormalToast('Some Q&A functionality will only be available afterwards.');
+      showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
       await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       showSuccessToast('All Q&A functionality is available now.');
     }
@@ -541,6 +552,7 @@ const Content: React.FC<ContentProps> = ({
     setSelectedNodes([]);
     setSelectedRels([]);
     setClearHistoryData(true);
+    setchatModes([chatModeLables.graph_vector_fulltext]);
   };
 
   const retryHandler = async (filename: string, retryoption: string) => {

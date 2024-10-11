@@ -204,8 +204,7 @@ export const filterData = (
   graphType: GraphType[],
   allNodes: ExtendedNode[],
   allRelationships: Relationship[],
-  scheme: Scheme,
-  isGdsActive: boolean
+  scheme: Scheme
 ) => {
   let filteredNodes: ExtendedNode[] = [];
   let filteredRelations: Relationship[] = [];
@@ -215,11 +214,7 @@ export const filterData = (
   );
   // Only Document + Chunk
   // const processedEntities = entityTypes.flatMap(item => item.includes(',') ? item.split(',') : item);
-  if (
-    graphType.includes('DocumentChunk') &&
-    !graphType.includes('Entities') &&
-    (!graphType.includes('Communities') || !isGdsActive)
-  ) {
+  if (graphType.includes('DocumentChunk') && !graphType.includes('Entities') && !graphType.includes('Communities')) {
     filteredNodes = allNodes.filter(
       (node) => (node.labels.includes('Document') && node.properties.fileName) || node.labels.includes('Chunk')
     );
@@ -235,9 +230,12 @@ export const filterData = (
   } else if (
     graphType.includes('Entities') &&
     !graphType.includes('DocumentChunk') &&
-    (!graphType.includes('Communities') || !isGdsActive)
+    !graphType.includes('Communities')
   ) {
-    const entityNodes = allNodes.filter((node) => !node.labels.includes('Document') && !node.labels.includes('Chunk'));
+    const entityNodes = allNodes.filter(
+      (node) =>
+        !node.labels.includes('Document') && !node.labels.includes('Chunk') && !node.labels.includes('__Community__')
+    );
     filteredNodes = entityNodes ? entityNodes : [];
     const nodeIds = new Set(filteredNodes.map((node) => node.id));
     filteredRelations = allRelationships.filter(
@@ -251,8 +249,7 @@ export const filterData = (
   } else if (
     graphType.includes('Communities') &&
     !graphType.includes('DocumentChunk') &&
-    !graphType.includes('Entities') &&
-    isGdsActive
+    !graphType.includes('Entities')
   ) {
     filteredNodes = allNodes.filter((node) => node.labels.includes('__Community__'));
     const nodeIds = new Set(filteredNodes.map((node) => node.id));
@@ -265,7 +262,7 @@ export const filterData = (
   } else if (
     graphType.includes('DocumentChunk') &&
     graphType.includes('Entities') &&
-    (!graphType.includes('Communities') || !isGdsActive)
+    !graphType.includes('Communities')
   ) {
     filteredNodes = allNodes.filter(
       (node) =>
@@ -289,8 +286,7 @@ export const filterData = (
   } else if (
     graphType.includes('Entities') &&
     graphType.includes('Communities') &&
-    !graphType.includes('DocumentChunk') &&
-    isGdsActive
+    !graphType.includes('DocumentChunk')
   ) {
     const entityNodes = allNodes.filter((node) => !node.labels.includes('Document') && !node.labels.includes('Chunk'));
     const communityNodes = allNodes.filter((node) => node.labels.includes('__Community__'));
@@ -310,8 +306,7 @@ export const filterData = (
   } else if (
     graphType.includes('DocumentChunk') &&
     graphType.includes('Communities') &&
-    !graphType.includes('Entities') &&
-    isGdsActive
+    !graphType.includes('Entities')
   ) {
     const documentChunkNodes = allNodes.filter(
       (node) => (node.labels.includes('Document') && node.properties.fileName) || node.labels.includes('Chunk')
@@ -332,12 +327,12 @@ export const filterData = (
   } else if (
     graphType.includes('DocumentChunk') &&
     graphType.includes('Entities') &&
-    graphType.includes('Communities') &&
-    isGdsActive
+    graphType.includes('Communities')
   ) {
     filteredNodes = allNodes;
     filteredRelations = allRelationships;
     filteredScheme = scheme;
+    console.log('entity', filteredScheme);
   }
   return { filteredNodes, filteredRelations, filteredScheme };
 };
@@ -475,8 +470,29 @@ export function isAllowedHost(url: string, allowedHosts: string[]) {
 }
 
 export const getCheckboxConditions = (allNodes: ExtendedNode[]) => {
-  const isDocChunk = allNodes.some((n) => n.labels?.includes('Document'));
-  const isEntity = allNodes.some((n) => !n.labels?.includes('Document') || !n.labels?.includes('Chunk'));
-  const isgds = allNodes.some((n) => n.labels?.includes('__Community__'));
-  return { isDocChunk, isEntity, isgds };
+  const isDocChunk = allNodes.some((n) => n.labels?.includes('Document') || n.labels?.includes('Chunk'));
+  const isEntity = allNodes.some(
+    (n) => !n.labels?.includes('Document') && !n.labels?.includes('Chunk') && !n.labels?.includes('__Community__')
+  );
+  const isCommunity = allNodes.some((n) => n.labels?.includes('__Community__'));
+  return { isDocChunk, isEntity, isCommunity };
+};
+
+export const graphTypeFromNodes = (allNodes: ExtendedNode[]) => {
+  const graphType: GraphType[] = [];
+  const hasDocChunk = allNodes.some((n) => n.labels?.includes('Document') || n.labels?.includes('Chunk'));
+  const hasEntity = allNodes.some(
+    (n) => !n.labels?.includes('Document') && !n.labels?.includes('Chunk') && !n.labels?.includes('__Community__')
+  );
+  const hasCommunity = allNodes.some((n) => n.labels?.includes('__Community__'));
+  if (hasDocChunk) {
+    graphType.push('DocumentChunk');
+  }
+  if (hasEntity) {
+    graphType.push('Entities');
+  }
+  if (hasCommunity) {
+    graphType.push('Communities');
+  }
+  return graphType;
 };

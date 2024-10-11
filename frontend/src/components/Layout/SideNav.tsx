@@ -54,9 +54,14 @@ const SideNav: React.FC<SideNavProps> = ({
         {
           datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
           id: 2,
-          message:
-            ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
+          modes: {
+            'graph+vector+fulltext': {
+              message:
+                ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
+            },
+          },
           user: 'chatbot',
+          currentMode: 'graph+vector+fulltext',
         },
       ]);
     }
@@ -113,7 +118,7 @@ const SideNav: React.FC<SideNavProps> = ({
             <SideNavigation.Item
               onClick={handleClick}
               icon={
-                <TipWrapper tooltip={tooltips.chat} placement='right'>
+                <TipWrapper tooltip={tooltips.chat} placement='left'>
                   <ChatBubbleOvalLeftEllipsisIconOutline />
                 </TipWrapper>
               }

@@ -14,7 +14,7 @@ from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.graph_query import get_graph_results
 from src.chunkid_entities import get_entities_from_chunkids
-from src.post_processing import create_fulltext_indexes, create_entity_embedding
+from src.post_processing import create_vector_fulltext_indexes, create_entity_embedding
 from sse_starlette.sse import EventSourceResponse
 from src.communities import create_communities
 import json
@@ -32,6 +32,8 @@ from Secweb.StrictTransportSecurity import HSTS
 from Secweb.ContentSecurityPolicy import ContentSecurityPolicy
 from Secweb.XContentTypeOptions import XContentTypeOptions
 from Secweb.XFrameOptions import XFrame
+
+from src.ragas_eval import *
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
@@ -90,6 +92,7 @@ async def create_source_knowledge_graph_url(
     ):
     
     try:
+        start = time.time()
         if source_url is not None:
             source = source_url
         else:
@@ -115,9 +118,12 @@ async def create_source_knowledge_graph_url(
             return create_api_response('Failed',message='source_type is other than accepted source')
 
         message = f"Source Node created successfully for source type: {source_type} and source: {source}"
-        json_obj = {'api_name':'url_scan','db_url':uri,'url_scanned_file':lst_file_name, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'url_scan','db_url':uri,'url_scanned_file':lst_file_name, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
-        return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name)    
+        result ={'elapsed_api_time' : f'{elapsed_time:.2f}'}
+        return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name,data=result)    
     except Exception as e:
         error_message = str(e)
         message = f" Unable to create source node for source type: {source_type} and source: {source}"
@@ -174,31 +180,25 @@ async def extract_knowledge_graph_from_file(
         if source_type == 'local file':
             merged_file_path = os.path.join(MERGED_DIR,file_name)
             logging.info(f'File path:{merged_file_path}')
-            result = await asyncio.to_thread(
-                extract_graph_from_file_local_file, uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, retry_condition)
+            result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 's3 bucket' and source_url:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_s3, uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition)
+            result = await extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition)
         
         elif source_type == 'web-url':
-            result = await asyncio.to_thread(
-                extract_graph_from_web_page, uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
+            result = await extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 'youtube' and source_url:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_youtube, uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
+            result = await extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 'Wikipedia' and wiki_query:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_Wikipedia, uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, retry_condition)
+            result = await extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_gcs, uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, retry_condition)
+            result = await extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, retry_condition)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
-    
+        extract_api_time = time.time() - start_time
         if result is not None:
             result['db_url'] = uri
             result['api_name'] = 'extract'
@@ -206,8 +206,8 @@ async def extract_knowledge_graph_from_file(
             result['wiki_query'] = wiki_query
             result['source_type'] = source_type
             result['logging_time'] = formatted_time(datetime.now(timezone.utc))
+            result['elapsed_api_time'] = f'{extract_api_time:.2f}'
         logger.log_struct(result, "INFO")
-        extract_api_time = time.time() - start_time
         logging.info(f"extraction completed in {extract_api_time:.2f} seconds for file name {file_name}")
         return create_api_response('Success', data=result, file_source= source_type)
     except Exception as e:
@@ -237,13 +237,16 @@ async def get_source_list(uri:str, userName:str, password:str, database:str=None
     Calls 'get_source_list_from_graph' which returns list of sources which already exist in databse
     """
     try:
+        start = time.time()
         decoded_password = decode_password(password)
         if " " in uri:
             uri = uri.replace(" ","+")
         result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
-        json_obj = {'api_name':'sources_list','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'sources_list','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
-        return create_api_response("Success",data=result)
+        return create_api_response("Success",data=result, message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
         job_status = "Failed"
         message="Unable to fetch source list"
@@ -263,7 +266,7 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             logging.info(f'Updated KNN Graph')
 
         if "enable_hybrid_search_and_fulltext_search_in_bloom" in tasks:
-            await asyncio.to_thread(create_fulltext_indexes, uri=uri, username=userName, password=password, database=database)
+            await asyncio.to_thread(create_vector_fulltext_indexes, uri=uri, username=userName, password=password, database=database)
             json_obj = {'api_name': 'post_processing/enable_hybrid_search_and_fulltext_search_in_bloom', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logging.info(f'Full Text index created')
 
@@ -299,15 +302,16 @@ async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(),
             graph = Neo4jGraph( url=uri,username=userName,password=password,database=database,sanitize = True, refresh_schema=True)
         else:
             graph = create_graph_database_connection(uri, userName, password, database)
-            graph_DB_dataAccess = graphDBdataAccess(graph)
-            write_access = graph_DB_dataAccess.check_account_access(database=database)
+        
+        graph_DB_dataAccess = graphDBdataAccess(graph)
+        write_access = graph_DB_dataAccess.check_account_access(database=database)
         result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access=write_access)
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
         result["info"]["response_time"] = round(total_call_time, 2)
         
-        json_obj = {'api_name':'chat_bot','db_url':uri,'session_id':session_id, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+        json_obj = {'api_name':'chat_bot','db_url':uri,'session_id':session_id, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{total_call_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         
         return create_api_response('Success',data=result)
@@ -316,17 +320,20 @@ async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(),
         message="Unable to get chat response"
         error_message = str(e)
         logging.exception(f'Exception in chat bot:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        return create_api_response(job_status, message=message, error=error_message,data=mode)
     finally:
         gc.collect()
 
 @app.post("/chunk_entities")
 async def chunk_entities(uri=Form(),userName=Form(), password=Form(), database=Form(), nodedetails=Form(None),entities=Form(),mode=Form()):
     try:
+        start = time.time()
         result = await asyncio.to_thread(get_entities_from_chunkids,uri=uri, username=userName, password=password, database=database,nodedetails=nodedetails,entities=entities,mode=mode)
-        json_obj = {'api_name':'chunk_entities','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'chunk_entities','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
-        return create_api_response('Success',data=result)
+        return create_api_response('Success',data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
         job_status = "Failed"
         message="Unable to extract entities from chunk ids"
@@ -345,7 +352,8 @@ async def graph_query(
     document_names: str = Form(None),
 ):
     try:
-        print(document_names)
+        # print(document_names)
+        start = time.time()
         result = await asyncio.to_thread(
             get_graph_results,
             uri=uri,
@@ -354,9 +362,11 @@ async def graph_query(
             database=database,
             document_names=document_names
         )
-        json_obj = {'api_name':'graph_query','db_url':uri,'document_names':document_names, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'graph_query','db_url':uri,'document_names':document_names, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
-        return create_api_response('Success', data=result)
+        return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
         job_status = "Failed"
         message = "Unable to get graph query response"
@@ -385,10 +395,14 @@ async def clear_chat_bot(uri=Form(),userName=Form(), password=Form(), database=F
 @app.post("/connect")
 async def connect(uri=Form(), userName=Form(), password=Form(), database=Form()):
     try:
+        start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database)
-        json_obj = {'api_name':'connect','db_url':uri,'status':result, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'connect','db_url':uri,'status':result, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
+        result['elapsed_api_time'] = f'{elapsed_time:.2f}'
         return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
@@ -402,10 +416,14 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
                                         originalname=Form(None), model=Form(None), uri=Form(), userName=Form(), 
                                         password=Form(), database=Form()):
     try:
+        start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, uri, CHUNK_DIR, MERGED_DIR)
-        json_obj = {'api_name':'upload','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'upload','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
+        # result['elapsed_api_time'] = f'{elapsed_time:.2f}'
         if int(chunkNumber) == int(totalChunks):
             return create_api_response('Success',data=result, message='Source Node Created Successfully')
         else:
@@ -423,12 +441,15 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
 @app.post("/schema")
 async def get_structured_schema(uri=Form(), userName=Form(), password=Form(), database=Form()):
     try:
+        start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(get_labels_and_relationtypes, graph)
+        end = time.time()
+        elapsed_time = end - start
         logging.info(f'Schema result from DB: {result}')
-        json_obj = {'api_name':'schema','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+        json_obj = {'api_name':'schema','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
-        return create_api_response('Success', data=result)
+        return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
         message="Unable to get the labels and relationtypes from neo4j database"
         error_message = str(e)
@@ -490,12 +511,15 @@ async def delete_document_and_entities(uri=Form(),
                                        source_types=Form(),
                                        deleteEntities=Form()):
     try:
+        start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         result, files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filenames, source_types, deleteEntities, MERGED_DIR, uri)
         # entities_count = result[0]['deletedEntities'] if 'deletedEntities' in result[0] else 0
         message = f"Deleted {files_list_size} documents with entities from database"
-        json_obj = {'api_name':'delete_document_and_entities','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'delete_document_and_entities','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',message=message)
     except Exception as e:
@@ -574,9 +598,14 @@ async def populate_graph_schema(input_text=Form(None), model=Form(None), is_sche
 @app.post("/get_unconnected_nodes_list")
 async def get_unconnected_nodes_list(uri=Form(), userName=Form(), password=Form(), database=Form()):
     try:
+        start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         nodes_list, total_nodes = graphDb_data_Access.list_unconnected_nodes()
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'get_unconnected_nodes_list','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=nodes_list,message=total_nodes)
     except Exception as e:
         job_status = "Failed"
@@ -590,9 +619,14 @@ async def get_unconnected_nodes_list(uri=Form(), userName=Form(), password=Form(
 @app.post("/delete_unconnected_nodes")
 async def delete_orphan_nodes(uri=Form(), userName=Form(), password=Form(), database=Form(),unconnected_entities_list=Form()):
     try:
+        start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         result = graphDb_data_Access.delete_unconnected_nodes(unconnected_entities_list)
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'delete_unconnected_nodes','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result,message="Unconnected entities delete successfully")
     except Exception as e:
         job_status = "Failed"
@@ -606,9 +640,14 @@ async def delete_orphan_nodes(uri=Form(), userName=Form(), password=Form(), data
 @app.post("/get_duplicate_nodes")
 async def get_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), database=Form()):
     try:
+        start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         nodes_list, total_nodes = graphDb_data_Access.get_duplicate_nodes_list()
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'get_duplicate_nodes','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=nodes_list, message=total_nodes)
     except Exception as e:
         job_status = "Failed"
@@ -622,9 +661,14 @@ async def get_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), data
 @app.post("/merge_duplicate_nodes")
 async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), database=Form(),duplicate_nodes_list=Form()):
     try:
+        start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         result = graphDb_data_Access.merge_duplicate_nodes(duplicate_nodes_list)
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'merge_duplicate_nodes','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result,message="Duplicate entities merged successfully")
     except Exception as e:
         job_status = "Failed"
@@ -665,7 +709,27 @@ async def retry_processing(uri=Form(), userName=Form(), password=Form(), databas
         logging.exception(f'{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
     finally:
-        gc.collect()        
+        gc.collect()    
+
+@app.post('/metric')
+async def calculate_metric(question=Form(), context=Form(), answer=Form(), model=Form()):
+   try:
+       result = await asyncio.to_thread(get_ragas_metrics, question, context, answer, model)
+       if result is None or "error" in result:
+           return create_api_response(
+               'Failed',
+               message='Failed to calculate evaluation metrics.',
+               error=result.get("error", "Ragas evaluation returned null")
+           )
+       return create_api_response('Success', data=result)
+   except Exception as e:
+       job_status = "Failed"
+       message = "Error while calculating evaluation metrics"
+       error_message = str(e)
+       logging.exception(f'{error_message}')
+       return create_api_response(job_status, message=message, error=error_message)
+   finally:
+       gc.collect()
 
 if __name__ == "__main__":
     uvicorn.run(app)

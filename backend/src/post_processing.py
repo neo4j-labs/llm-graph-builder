@@ -16,6 +16,55 @@ HYBRID_SEARCH_FULL_TEXT_QUERY = "CREATE FULLTEXT INDEX keyword FOR (n:Chunk) ON 
 COMMUNITY_INDEX_DROP_QUERY = "DROP INDEX community_keyword IF EXISTS;"
 COMMUNITY_INDEX_FULL_TEXT_QUERY = "CREATE FULLTEXT INDEX community_keyword FOR (n:`__Community__`) ON EACH [n.summary]" 
 
+CHUNK_VECTOR_INDEX_NAME = "vector"
+CHUNK_VECTOR_EMBEDDING_DIMENSION = 384
+
+DROP_CHUNK_VECTOR_INDEX_QUERY = f"DROP INDEX {CHUNK_VECTOR_INDEX_NAME} IF EXISTS;"
+CREATE_CHUNK_VECTOR_INDEX_QUERY = """
+CREATE VECTOR INDEX {index_name} IF NOT EXISTS FOR (c:Chunk) ON c.embedding
+OPTIONS {{
+  indexConfig: {{
+    `vector.dimensions`: {embedding_dimension},
+    `vector.similarity_function`: 'cosine'
+  }}
+}}
+"""
+
+def create_vector_index(driver, index_type, embedding_dimension=None):
+    drop_query = ""
+    query = ""
+    
+    if index_type == CHUNK_VECTOR_INDEX_NAME:
+        drop_query = DROP_CHUNK_VECTOR_INDEX_QUERY
+        query = CREATE_CHUNK_VECTOR_INDEX_QUERY.format(
+            index_name=CHUNK_VECTOR_INDEX_NAME,
+            embedding_dimension=embedding_dimension if embedding_dimension else CHUNK_VECTOR_EMBEDDING_DIMENSION
+        )
+    else:
+        logging.error(f"Invalid index type provided: {index_type}")
+        return
+
+    try:
+        logging.info("Starting the process to create vector index.")
+        with driver.session() as session:
+            try:
+                start_step = time.time()
+                session.run(drop_query)
+                logging.info(f"Dropped existing index (if any) in {time.time() - start_step:.2f} seconds.")
+            except Exception as e:
+                logging.error(f"Failed to drop index: {e}")
+                return
+
+            try:
+                start_step = time.time()
+                session.run(query)
+                logging.info(f"Created vector index in {time.time() - start_step:.2f} seconds.")
+            except Exception as e:
+                logging.error(f"Failed to create vector index: {e}")
+                return  
+    except Exception as e:
+        logging.error("An error occurred while creating the vector index.", exc_info=True)
+        logging.error(f"Error details: {str(e)}")
 
 def create_fulltext(driver,type):
 
@@ -70,8 +119,8 @@ def create_fulltext(driver,type):
         logging.info(f"Process completed in {time.time() - start_time:.2f} seconds.")
 
 
-def create_fulltext_indexes(uri, username, password, database):
-    types = ["entities", "hybrid", "community"]
+def create_vector_fulltext_indexes(uri, username, password, database):
+    types = ["entities", "hybrid"]
     logging.info("Starting the process of creating full-text indexes.")
 
     try:
@@ -79,7 +128,7 @@ def create_fulltext_indexes(uri, username, password, database):
         driver.verify_connectivity()
         logging.info("Database connectivity verified.")
     except Exception as e:
-        logging.error(f"An unexpected error occurred: {e}")
+        logging.error(f"Error connecting to the database: {e}")
         return
 
     for index_type in types:
@@ -90,11 +139,22 @@ def create_fulltext_indexes(uri, username, password, database):
         except Exception as e:
             logging.error(f"Failed to create full-text index for type '{index_type}': {e}")
 
-    logging.info("Full-text indexes creation process completed.")
-    driver.close()
-    logging.info("Driver closed.")
-        
-    
+    try:
+        logging.info(f"Creating a vector index for type '{CHUNK_VECTOR_INDEX_NAME}'.")
+        create_vector_index(driver, CHUNK_VECTOR_INDEX_NAME,CHUNK_VECTOR_EMBEDDING_DIMENSION)
+        logging.info("Vector index for chunk created successfully.")
+    except Exception as e:
+        logging.error(f"Failed to create vector index for '{CHUNK_VECTOR_INDEX_NAME}': {e}")
+
+    try:
+        driver.close()
+        logging.info("Driver closed successfully.")
+    except Exception as e:
+        logging.error(f"Error closing the driver: {e}")
+
+    logging.info("Full-text and vector index creation process completed.")
+
+
 def create_entity_embedding(graph:Neo4jGraph):
     rows = fetch_entities_for_embedding(graph)
     for i in range(0, len(rows), 1000):
