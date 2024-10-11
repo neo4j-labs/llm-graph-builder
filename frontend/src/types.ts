@@ -700,6 +700,7 @@ export type SourcesProps = {
 export type ChunkProps = {
   loading: boolean;
   chunks: Chunk[];
+  mode:string;
 };
 
 export type EntitiesProps = {
@@ -712,6 +713,7 @@ export type EntitiesProps = {
 export type CommunitiesProps = {
   loading: boolean;
   communities: Community[];
+  mode:string;
 };
 
 export interface entity {
