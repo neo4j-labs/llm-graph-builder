@@ -8,7 +8,6 @@ import {
   useCopyToClipboard,
   Banner,
   useMediaQuery,
-  Button,
 } from '@neo4j-ndl/react';
 import { DocumentDuplicateIconOutline, ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
