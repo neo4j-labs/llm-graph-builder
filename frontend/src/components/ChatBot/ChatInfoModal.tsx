@@ -234,9 +234,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
               {mode === chatModeLables.graph_vector ||
-              mode === chatModeLables.graph ||
-              mode === chatModeLables.graph_vector_fulltext ||
-              mode === chatModeLables.entity_vector ? (
+                mode === chatModeLables.graph ||
+                mode === chatModeLables.graph_vector_fulltext ||
+                mode === chatModeLables.entity_vector ? (
                 <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
               ) : (
                 <></>
@@ -278,7 +278,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           />
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={5}>
-          <ChunkInfo chunks={chunks} loading={infoLoading} />
+          <ChunkInfo chunks={chunks} loading={infoLoading} mode={mode}/>
         </Tabs.TabPanel>
         <Tabs.TabPanel value={activeTab} tabId={6}>
           <CypherCodeBlock
@@ -291,7 +291,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         </Tabs.TabPanel>
         {mode === chatModeLables.entity_vector || mode === chatModeLables.global_vector ? (
           <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={7}>
-            <CommunitiesInfo loading={infoLoading} communities={communities} />
+            <CommunitiesInfo loading={infoLoading} communities={communities} mode={mode} />
           </Tabs.TabPanel>
         ) : (
           <></>
