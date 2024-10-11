@@ -323,7 +323,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         </Tabs.TabPanel>
         {mode === chatModeLables.entity_vector || mode === chatModeLables.global_vector ? (
           <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={7}>
-            <CommunitiesInfo loading={infoLoading} communities={communities} mode={mode}  nodeValues= {nodes} relationshipValues={relationships} />
+            <CommunitiesInfo loading={infoLoading} communities={communities} mode={mode} />
           </Tabs.TabPanel>
         ) : (
           <></>
@@ -331,7 +331,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       </Flex>
       {activeTab == 4 && nodes?.length && relationships?.length ? (
         <Box className='button-container flex mt-2 justify-center'>
-          <GraphViewButton nodeValues={nodes} relationshipValues={relationships} label='Graph Entities used for Answer Generation' />
+          <GraphViewButton nodeValues={nodes} relationshipValues={relationships} label='Graph Entities used for Answer Generation' viewType='Entities' />
         </Box>
       ) : (
         <></>

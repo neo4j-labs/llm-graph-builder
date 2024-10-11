@@ -24,7 +24,7 @@ import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { filterData, getCheckboxConditions, graphTypeFromNodes, processGraphData } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 
-import graphQueryAPI from '../../services/GraphQuery';
+import {graphQueryAPI} from '../../services/GraphQuery';
 import { graphLabels, nvlOptions, queryMap } from '../../utils/Constants';
 import CheckboxSelection from './CheckboxSelection';
 
@@ -74,7 +74,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       {}
     );
   };
-  console.log('graphType', graphType);
+
   // Unmounting the component
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -378,7 +378,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               <div className='my-40 flex items-center justify-center'>
                 <Banner name='graph banner' description={graphLabels.noNodesRels} type='danger' />
               </div>
-            ) : graphType.length === 0 ? (
+            ) : graphType.length === 0 && checkBoxView ? (
               <div className='my-40 flex items-center justify-center'>
                 <Banner name='graph banner' description={graphLabels.selectCheckbox} type='danger' />
               </div>

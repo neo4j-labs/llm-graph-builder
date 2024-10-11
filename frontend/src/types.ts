@@ -659,6 +659,7 @@ export interface GraphViewButtonProps {
   relationshipValues?: ExtendedRelationship[];
   fill?: "text" | "filled" | "outlined" ;
   label: string;
+  viewType: string
 }
 export interface DrawerChatbotProps {
   isExpanded: boolean;
@@ -714,8 +715,8 @@ export type CommunitiesProps = {
   loading: boolean;
   communities: Community[];
   mode:string;
-  nodeValues: ExtendedNode[];
-  relationshipValues: ExtendedRelationship[];
+  // nodeValues: ExtendedNode[];
+  // relationshipValues: ExtendedRelationship[];
 };
 
 export interface entity {
