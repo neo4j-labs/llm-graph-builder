@@ -6,41 +6,28 @@ MATCH (n)
 WHERE elementId(n) = $element_id
 
 MATCH (n)<-[rels]->(m)  
-WITH n, ([n]+ COLLECT(DISTINCT m)) AS allNodes, COLLECT(DISTINCT rels) AS allRels
+WITH n, 
+     ([n] + COLLECT(DISTINCT m)) AS allNodes, 
+     COLLECT(DISTINCT rels) AS allRels
 
-WITH n, allNodes, allRels,
-     apoc.map.fromPairs(
-         [node IN allNodes | [elementId(node), 
-           node {
-               .*,
-               embedding: null,
-               text: null,
-               summary: null,
-               labels: [coalesce(apoc.coll.removeAll(labels(node), ['__Entity__'])[0], "*")],
-               elementId: elementId(node)
-           }]
-         ]
-     ) AS nodeMap
 RETURN 
-    [node IN allNodes | nodeMap[elementId(node)]] AS nodes,
+    [node IN allNodes | 
+        node {
+            .*,
+            embedding: null,
+            text: null,
+            summary: null,
+            labels: [coalesce(apoc.coll.removeAll(labels(node), ['__Entity__'])[0], "*")],
+            elementId: elementId(node)
+        }
+    ] AS nodes,
+    
     [r IN allRels | 
         {
-            startNode: apoc.map.merge(nodeMap[elementId(startNode(r))] , {
-                properties: { 
-                    id: coalesce(startNode(r).id, NULL), 
-                    description: coalesce(startNode(r).description, NULL)
-                }
-            }), 
-            endNode: apoc.map.merge(nodeMap[elementId(endNode(r))] , {
-                properties: { 
-                    id: coalesce(endNode(r).id, NULL), 
-                    description: coalesce(endNode(r).description, NULL)
-                }
-            }), 
-            relationship: { 
-                type: type(r), 
-                element_id: elementId(r) 
-            }
+            startNode: elementId(startNode(r)),
+            endNode: elementId(endNode(r)),
+            type: type(r)
+            // elementId: elementId(r) // Uncomment if you need the elementId of the relationship
         }
     ] AS relationships
 """
