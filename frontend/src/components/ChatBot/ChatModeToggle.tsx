@@ -43,7 +43,7 @@ export default function ChatModeToggle({
       }
     }
   }, [selectedRows.length, chatModes.length]);
-  
+
   const memoizedChatModes = useMemo(() => {
     return isGdsActive && isCommunityAllowed
       ? AvailableModes

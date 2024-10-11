@@ -12,7 +12,7 @@ export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
-       'diffbot',
+        'diffbot',
         'openai_gpt_3.5',
         'openai_gpt_4o',
         'openai_gpt_4o_mini',
@@ -27,10 +27,10 @@ export const llms =
         'bedrock_claude_3_5_sonnet',
       ];
 
-export const defaultLLM = llms?.includes('openai-gpt_4o')
-  ? 'openai-gpt_4o'
-  : llms?.includes('gemini-1.5_pro')
-  ? 'gemini-1.5_pro'
+export const defaultLLM = llms?.includes('openai_gpt_4o')
+  ? 'openai_gpt_4o'
+  : llms?.includes('gemini_1.5_pro')
+  ? 'gemini_1.5_pro'
   : 'diffbot';
 
 export const chatModeLables = {
