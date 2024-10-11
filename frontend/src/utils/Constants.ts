@@ -27,10 +27,10 @@ export const llms =
         'bedrock_claude_3_5_sonnet',
       ];
 
-export const defaultLLM = llms?.includes('openai-gpt-4o')
-  ? 'openai-gpt-4o'
-  : llms?.includes('gemini-1.5-pro')
-  ? 'gemini-1.5-pro'
+export const defaultLLM = llms?.includes('openai-gpt_4o')
+  ? 'openai-gpt_4o'
+  : llms?.includes('gemini-1.5_pro')
+  ? 'gemini-1.5_pro'
   : 'diffbot';
 
 export const chatModeLables = {
