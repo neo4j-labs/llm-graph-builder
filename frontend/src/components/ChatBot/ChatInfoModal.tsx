@@ -97,7 +97,10 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   );
 
   useEffect(() => {
-    if (mode != chatModeLables.graph || error?.trim() !== '') {
+    if (
+      (mode != chatModeLables.graph || error?.trim() !== '') &&
+      (!nodes.length || !infoEntities.length || !chunks.length)
+    ) {
       (async () => {
         toggleInfoLoading();
         try {
@@ -258,21 +261,29 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         </Tabs.TabPanel>
         <Tabs.TabPanel tabId={8} value={activeTab}>
           <Stack spacing={2}>
-            <Typography variant='body-large'>
-              We use several key metrics to assess the quality of our chat responses. Click the button below to view
-              detailed scores for this interaction. These scores help us continuously improve the accuracy and
-              helpfulness of our chatbots.
-            </Typography>
-            <Typography variant='body-large'>
-              Faithfulness: Determines How accurately the answer reflects the provided information
-            </Typography>
-            <Typography variant='body-large'>
-              Answer Relevancy: Determines How well the answer addresses the user's question.
-            </Typography>
-            <Typography variant='body-large'>
-              Context Utilization: Determines How effectively the system uses the retrieved information to answer the
-              question.
-            </Typography>
+            <Stack spacing={2}>
+              <Box>
+                <Typography variant='body-large'>
+                  We use several key metrics to assess the quality of our chat responses. Click the button below to view
+                  detailed scores for this interaction. These scores help us continuously improve the accuracy and
+                  helpfulness of our chatbots.
+                </Typography>
+              </Box>
+              <Stack>
+                <Typography variant='body-large'>
+                  <span className='font-bold'>Faithfulness</span>: Determines How accurately the answer reflects the
+                  provided information
+                </Typography>
+                <Typography variant='body-large'>
+                  <span className='font-bold'>Answer Relevancy</span>: Determines How well the answer addresses the
+                  user's question.
+                </Typography>
+                <Typography variant='body-large'>
+                  <span className='font-bold'>Context Utilization</span>: Determines How effectively the system uses the
+                  retrieved information to answer thequestion.
+                </Typography>
+              </Stack>
+            </Stack>
             {showMetricsTable && <MetricsTab metricsLoading={metricsLoading} metricDetails={metricDetails} />}
             {!metricDetails && (
               <Button disabled={metricsLoading} className='w-max self-center mt-4' onClick={loadMetrics}>
