@@ -24,11 +24,12 @@ import ChunkInfo from './ChunkInfo';
 import EntitiesInfo from './EntitiesInfo';
 import SourcesInfo from './SourcesInfo';
 import CommunitiesInfo from './Communities';
-import { chatModeLables } from '../../utils/Constants';
+import { chatModeLables, supportedLLmsForRagas } from '../../utils/Constants';
 import { Relationship } from '@neo4j-nvl/base';
 import { getChatMetrics } from '../../services/GetRagasMetric';
 import MetricsTab from './MetricsTab';
 import { Stack } from '@mui/material';
+import ButtonWithToolTip from '../UI/ButtonWithToolTip';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
   sources,
@@ -286,9 +287,15 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             </Stack>
             {showMetricsTable && <MetricsTab metricsLoading={metricsLoading} metricDetails={metricDetails} />}
             {!metricDetails && (
-              <Button disabled={metricsLoading} className='w-max self-center mt-4' onClick={loadMetrics}>
+              <ButtonWithToolTip
+                label='Metrics Action Button'
+                text={!supportedLLmsForRagas.includes(metricmodel) ? 'please choose different model' : ''}
+                disabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
+                className='w-max self-center mt-4'
+                onClick={loadMetrics}
+              >
                 View Detailed Metrics
-              </Button>
+              </ButtonWithToolTip>
             )}
           </Stack>
         </Tabs.TabPanel>
