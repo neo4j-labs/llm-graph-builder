@@ -71,7 +71,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const themeUtils = useContext(ThemeWrapperContext);
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
-  const [showMetricsTable, setShowMetricsTable] = useState<boolean>(false);
+  const [showMetricsTable, setShowMetricsTable] = useState<boolean>(Boolean(metricDetails));
 
   const actions: CypherCodeBlockProps['actions'] = useMemo(
     () => [
@@ -178,7 +178,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     }
     () => {
       setcopiedText(false);
-      setShowMetricsTable(false);
+      toggleMetricsLoading();
     };
   }, [nodeDetails, mode, error]);
 
@@ -263,10 +263,22 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               detailed scores for this interaction. These scores help us continuously improve the accuracy and
               helpfulness of our chatbots.
             </Typography>
+            <Typography variant='body-large'>
+              Faithfulness: Determines How accurately the answer reflects the provided information
+            </Typography>
+            <Typography variant='body-large'>
+              Answer Relevancy: Determines How well the answer addresses the user's question.
+            </Typography>
+            <Typography variant='body-large'>
+              Context Utilization: Determines How effectively the system uses the retrieved information to answer the
+              question.
+            </Typography>
             {showMetricsTable && <MetricsTab metricsLoading={metricsLoading} metricDetails={metricDetails} />}
-            <Button disabled={metricsLoading} className='w-max self-center mt-4' onClick={loadMetrics}>
-              View Detailed Metrics
-            </Button>
+            {!metricDetails && (
+              <Button disabled={metricsLoading} className='w-max self-center mt-4' onClick={loadMetrics}>
+                View Detailed Metrics
+              </Button>
+            )}
           </Stack>
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={4}>
