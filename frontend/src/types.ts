@@ -657,6 +657,8 @@ export interface S3File {
 export interface GraphViewButtonProps {
   nodeValues?: ExtendedNode[];
   relationshipValues?: ExtendedRelationship[];
+  fill?: "text" | "filled" | "outlined" ;
+  label: string;
 }
 export interface DrawerChatbotProps {
   isExpanded: boolean;
@@ -712,6 +714,8 @@ export type CommunitiesProps = {
   loading: boolean;
   communities: Community[];
   mode:string;
+  nodeValues: ExtendedNode[];
+  relationshipValues: ExtendedRelationship[];
 };
 
 export interface entity {
