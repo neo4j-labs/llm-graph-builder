@@ -13,11 +13,11 @@ export const llms =
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
         'diffbot',
-        'openai-gpt-3.5',
-        'openai-gpt-4o',
-        'openai-gpt-4o-mini',
-        'gemini-1.5-pro',
-        'gemini-1.5-flash',
+        'openai_gpt_3.5',
+        'openai_gpt_4o',
+        'openai_gpt_4o_mini',
+        'gemini_1.5_pro',
+        'gemini_1.5_flash',
         'azure_ai_gpt_35',
         'azure_ai_gpt_4o',
         'ollama_llama3',
@@ -27,12 +27,12 @@ export const llms =
         'bedrock_claude_3_5_sonnet',
       ];
 
-export const defaultLLM = llms?.includes('openai-gpt-4o')
-  ? 'openai-gpt-4o'
-  : llms?.includes('gemini-1.5-pro')
-  ? 'gemini-1.5-pro'
+export const defaultLLM = llms?.includes('openai_gpt_4o')
+  ? 'openai_gpt_4o'
+  : llms?.includes('gemini_1.5_pro')
+  ? 'gemini_1.5_pro'
   : 'diffbot';
-
+export const supportedLLmsForRagas = ['openai_gpt_3.5', 'openai_gpt_4o', 'openai_gpt_4o_mini', 'groq_llama3_70b'];
 export const chatModeLables = {
   vector: 'vector',
   graph: 'graph',
