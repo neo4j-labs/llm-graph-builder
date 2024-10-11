@@ -105,7 +105,7 @@ const Content: React.FC<ContentProps> = ({
     queue,
     processedCount,
     setProcessedCount,
-    setchatMode,
+    setchatModes
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
@@ -552,7 +552,7 @@ const Content: React.FC<ContentProps> = ({
     setSelectedNodes([]);
     setSelectedRels([]);
     setClearHistoryData(true);
-    setchatMode(chatModeLables.graph_vector_fulltext);
+    setchatModes([chatModeLables.graph_vector_fulltext]);
   };
 
   const retryHandler = async (filename: string, retryoption: string) => {
