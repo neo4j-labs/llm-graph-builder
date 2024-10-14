@@ -18,16 +18,20 @@ RETURN
             text: null,
             summary: null,
             labels: [coalesce(apoc.coll.removeAll(labels(node), ['__Entity__'])[0], "*")],
-            elementId: elementId(node)
+            element_id: elementId(node),
+            properties: { 
+            id: node.id, 
+            description: node.description
+            }
         }
     ] AS nodes,
     
     [r IN allRels | 
         {
-            startNode: elementId(startNode(r)),
-            endNode: elementId(endNode(r)),
-            type: type(r)
-            // elementId: elementId(r) // Uncomment if you need the elementId of the relationship
+            start_node_element_id: elementId(startNode(r)),
+            end_node_element_id: elementId(endNode(r)),
+            type: type(r),
+            element_id: elementId(r)
         }
     ] AS relationships
 """
