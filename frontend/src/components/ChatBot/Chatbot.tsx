@@ -37,7 +37,7 @@ import { buttonCaptions, chatModeLables } from '../../utils/Constants';
 import useSpeechSynthesis from '../../hooks/useSpeech';
 import ButtonWithToolTip from '../UI/ButtonWithToolTip';
 import FallBackDialog from '../UI/FallBackDialog';
-import { getDateTime } from '../../utils/Utils';
+import { downloadClickHandler, getDateTime } from '../../utils/Utils';
 import ChatModesSwitch from './ChatModesSwitch';
 import CommonActions from './CommonChatActions';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
@@ -407,15 +407,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     }
   }, []);
 
-  const downloadClickHandler = useCallback(function downloadClickHandler<Type>(JsonData: Type) {
-    const textFile = new Blob([JSON.stringify(JsonData)], { type: 'application/json' });
-    if (downloadLinkRef && downloadLinkRef.current) {
-      downloadLinkRef.current.href = URL.createObjectURL(textFile);
-      downloadLinkRef.current.download = 'graph-builder-chat-details.json';
-      downloadLinkRef.current.click();
-    }
-  }, []);
-
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
       <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3 pr-3'>
@@ -590,17 +581,21 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               clean
               disabled={metricsLoading || infoLoading}
               onClick={() => {
-                downloadClickHandler({
-                  chatResponse: activeChat,
-                  chunks,
-                  metricDetails,
-                  communities,
-                  responseTime,
-                  entities: infoEntities,
-                  nodes,
-                  tokensUsed,
-                  model,
-                });
+                downloadClickHandler(
+                  {
+                    chatResponse: activeChat,
+                    chunks,
+                    metricDetails,
+                    communities,
+                    responseTime,
+                    entities: infoEntities,
+                    nodes,
+                    tokensUsed,
+                    model,
+                  },
+                  downloadLinkRef,
+                  'graph-builder-chat-details.json'
+                );
               }}
             >
               <ArrowDownTrayIconOutline />

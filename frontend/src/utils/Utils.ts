@@ -497,3 +497,15 @@ export const graphTypeFromNodes = (allNodes: ExtendedNode[]) => {
   }
   return graphType;
 };
+export function downloadClickHandler<Type>(
+  JsonData: Type,
+  downloadLinkRef: React.RefObject<HTMLAnchorElement>,
+  filename: string
+) {
+  const textFile = new Blob([JSON.stringify(JsonData)], { type: 'application/json' });
+  if (downloadLinkRef && downloadLinkRef.current) {
+    downloadLinkRef.current.href = URL.createObjectURL(textFile);
+    downloadLinkRef.current.download = filename;
+    downloadLinkRef.current.click();
+  }
+}
