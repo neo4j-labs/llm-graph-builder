@@ -90,9 +90,12 @@ def create_fulltext(driver,type):
                     for label in FILTER_LABELS:
                         if label in labels:
                             labels.remove(label)
-                    
-                    labels_str = ":" + "|".join([f"`{label}`" for label in labels])
-                    logging.info(f"Fetched labels in {time.time() - start_step:.2f} seconds.")
+                    if labels:
+                        labels_str = ":" + "|".join([f"`{label}`" for label in labels])
+                        logging.info(f"Fetched labels in {time.time() - start_step:.2f} seconds.")
+                    else:
+                        logging.info("Full text index is not created as labels are empty")
+                        return
             except Exception as e:
                 logging.error(f"Failed to fetch labels: {e}")
                 return
