@@ -28,17 +28,19 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                 {chunk?.page_number ? (
                   <>
                     <div className='flex flex-row inline-block items-center'>
-                    <DocumentTextIconOutline className='w-4 h-4 inline-block mr-2' />
-                    <Typography
+                      <DocumentTextIconOutline className='w-4 h-4 inline-block mr-2' />
+                      <Typography
                         variant='subheading-medium'
                         className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden'
                       >
                         {chunk?.fileName}
                       </Typography>
                     </div>
-                    {mode !== chatModeLables.global_vector && mode !== chatModeLables.entity_vector && mode !== chatModeLables.graph && (
-                      <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
-                    )}
+                    {mode !== chatModeLables.global_vector &&
+                      mode !== chatModeLables.entity_vector &&
+                      mode !== chatModeLables.graph && (
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      )}
                   </>
                 ) : chunk?.url && chunk?.start_time ? (
                   <>
@@ -53,9 +55,11 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                         </Typography>
                       </TextLink>
                     </div>
-                    {mode !== chatModeLables.global_vector && mode !== chatModeLables.entity_vector && mode !== chatModeLables.graph && (
-                      <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
-                    )}
+                    {mode !== chatModeLables.global_vector &&
+                      mode !== chatModeLables.entity_vector &&
+                      mode !== chatModeLables.graph && (
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      )}
                   </>
                 ) : chunk?.url && new URL(chunk.url).host === 'wikipedia.org' ? (
                   <>
@@ -63,9 +67,11 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       <img src={wikipedialogo} width={20} height={20} className='mr-2' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
-                    {mode !== chatModeLables.global_vector && mode !== chatModeLables.entity_vector && mode !== chatModeLables.graph && (
-                      <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
-                    )}
+                    {mode !== chatModeLables.global_vector &&
+                      mode !== chatModeLables.entity_vector &&
+                      mode !== chatModeLables.graph && (
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      )}
                   </>
                 ) : chunk?.url && new URL(chunk.url).host === 'storage.googleapis.com' ? (
                   <>
@@ -73,9 +79,11 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       <img src={gcslogo} width={20} height={20} className='mr-2' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
-                    {mode !== chatModeLables.global_vector && mode !== chatModeLables.entity_vector && mode !== chatModeLables.graph && (
-                      <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
-                    )}
+                    {mode !== chatModeLables.global_vector &&
+                      mode !== chatModeLables.entity_vector &&
+                      mode !== chatModeLables.graph && (
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      )}
                   </>
                 ) : chunk?.url && chunk?.url.startsWith('s3://') ? (
                   <>
@@ -83,9 +91,11 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       <img src={s3logo} width={20} height={20} className='mr-2' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
-                    {mode !== chatModeLables.global_vector && mode !== chatModeLables.entity_vector && mode !== chatModeLables.graph && (
-                      <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
-                    )}
+                    {mode !== chatModeLables.global_vector &&
+                      mode !== chatModeLables.entity_vector &&
+                      mode !== chatModeLables.graph && (
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      )}
                   </>
                 ) : chunk?.url &&
                   !chunk?.url.startsWith('s3://') &&
@@ -97,9 +107,11 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                         <Typography variant='body-medium'>{chunk?.url}</Typography>
                       </TextLink>
                     </div>
-                    {mode !== chatModeLables.global_vector && mode !== chatModeLables.entity_vector && mode !== chatModeLables.graph && (
-                      <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
-                    )}
+                    {mode !== chatModeLables.global_vector &&
+                      mode !== chatModeLables.entity_vector &&
+                      mode !== chatModeLables.graph && (
+                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                      )}
                   </>
                 ) : (
                   <>

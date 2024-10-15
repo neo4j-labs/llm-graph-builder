@@ -10,9 +10,11 @@ export default function CommonActions({
   speechHandler,
   copyHandler,
   listMessages,
+  activeChat,
 }: {
   chat: Messages;
-  detailsHandler: (chat: Messages) => void;
+  activeChat: Messages | null;
+  detailsHandler: (chat: Messages, activeChat: Messages | null) => void;
   speechHandler: (chat: Messages) => void;
   copyHandler: (message: string, id: number) => void;
   listMessages: Messages[];
@@ -27,7 +29,7 @@ export default function CommonActions({
         text='Retrieval Information'
         label='Retrieval Information'
         disabled={chat.isTyping || chat.isLoading}
-        onClick={() => detailsHandler(chat)}
+        onClick={() => detailsHandler(chat, activeChat)}
       >
         {buttonCaptions.details}
       </ButtonWithToolTip>
