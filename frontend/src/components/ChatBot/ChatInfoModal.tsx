@@ -8,6 +8,7 @@ import {
   useCopyToClipboard,
   Banner,
   useMediaQuery,
+  Button,
 } from '@neo4j-ndl/react';
 import { DocumentDuplicateIconOutline, ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
@@ -28,7 +29,6 @@ import { Relationship } from '@neo4j-nvl/base';
 import { getChatMetrics } from '../../services/GetRagasMetric';
 import MetricsTab from './MetricsTab';
 import { Stack } from '@mui/material';
-import ButtonWithToolTip from '../UI/ButtonWithToolTip';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
   sources,
@@ -237,9 +237,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
               {mode === chatModeLables.graph_vector ||
-                mode === chatModeLables.graph ||
-                mode === chatModeLables.graph_vector_fulltext ||
-                mode === chatModeLables.entity_vector ? (
+              mode === chatModeLables.graph ||
+              mode === chatModeLables.graph_vector_fulltext ||
+              mode === chatModeLables.entity_vector ? (
                 <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
               ) : (
                 <></>
@@ -262,11 +262,15 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         <Tabs.TabPanel tabId={8} value={activeTab}>
           <Stack spacing={2}>
             <Stack spacing={2}>
+              {!supportedLLmsForRagas.includes(metricmodel) && (
+                <Banner type='warning'>LLM Model Not Supported ,Please Choose Different Model</Banner>
+              )}
               <Box>
                 <Typography variant='body-large'>
                   We use several key metrics to assess the quality of our chat responses. Click the button below to view
                   detailed scores for this interaction. These scores help us continuously improve the accuracy and
-                  helpfulness of our chatbots.
+                  helpfulness of our chatbots.This usually takes about <span className='font-bold'>20</span> seconds.
+                  You'll see detailed scores shortly.
                 </Typography>
               </Box>
               <Stack>
@@ -286,15 +290,14 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             </Stack>
             {showMetricsTable && <MetricsTab metricsLoading={metricsLoading} metricDetails={metricDetails} />}
             {!metricDetails && (
-              <ButtonWithToolTip
+              <Button
                 label='Metrics Action Button'
-                text={!supportedLLmsForRagas.includes(metricmodel) ? 'please choose different model' : ''}
                 disabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
                 className='w-max self-center mt-4'
                 onClick={loadMetrics}
               >
                 View Detailed Metrics
-              </ButtonWithToolTip>
+              </Button>
             )}
           </Stack>
         </Tabs.TabPanel>
@@ -307,7 +310,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           />
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={5}>
-          <ChunkInfo chunks={chunks} loading={infoLoading} mode={mode}/>
+          <ChunkInfo chunks={chunks} loading={infoLoading} mode={mode} />
         </Tabs.TabPanel>
         <Tabs.TabPanel value={activeTab} tabId={6}>
           <CypherCodeBlock

@@ -74,7 +74,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       {}
     );
   };
-  console.log('graphType', graphType);
   // Unmounting the component
   useEffect(() => {
     const timeoutId = setTimeout(() => {

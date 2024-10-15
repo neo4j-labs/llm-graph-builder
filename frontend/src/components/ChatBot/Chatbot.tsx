@@ -80,7 +80,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [infoLoading, toggleInfoLoading] = useReducer((s) => !s, false);
   const [metricsLoading, toggleMetricsLoading] = useReducer((s) => !s, false);
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
-  const [activeChat, setActiveChat] = useState<Messages>();
+  const [activeChat, setActiveChat] = useState<Messages | null>(null);
 
   const [_, copy] = useCopyToClipboard();
   const { speak, cancel, speaking } = useSpeechSynthesis({
@@ -232,13 +232,13 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               total_tokens: response.info.total_tokens,
               response_time: response.info.response_time,
               cypher_query: response.info.cypher_query,
-              graphonly_entities: response.info.context??[],
-              entities: response.info.entities??[],
+              graphonly_entities: response.info.context ?? [],
+              entities: response.info.entities ?? [],
               nodeDetails: response.info.nodedetails,
               error: response.info.error,
-              metric_question: response.info?.metric_details?.question??'',
-              metric_answer: response.info?.metric_details?.answer??'',
-              metric_contexts: response.info?.metric_details?.contexts??'',
+              metric_question: response.info?.metric_details?.question ?? '',
+              metric_answer: response.info?.metric_details?.answer ?? '',
+              metric_contexts: response.info?.metric_details?.contexts ?? '',
             };
             if (index === 0) {
               simulateTypingEffect(chatbotMessageId, responseMode, mode, responseMode.message);
@@ -374,7 +374,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     }
   };
 
-  const detailsHandler = useCallback((chat: Messages) => {
+  const detailsHandler = useCallback((chat: Messages, previousActiveChat: Messages | null) => {
     const currentMode = chat.modes[chat.currentMode];
     setModelModal(currentMode.model ?? '');
     setSourcesModal(currentMode.sources ?? []);
@@ -391,6 +391,12 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     setMetricContext(currentMode.metric_contexts ?? '');
     setMetricAnswer(currentMode.metric_answer ?? '');
     setActiveChat(chat);
+    if (previousActiveChat != null && chat.id != previousActiveChat?.id) {
+      setNodes([]);
+      setChunks([]);
+      setInfoEntities([]);
+      setMetricDetails(null);
+    }
   }, []);
 
   const speechHandler = useCallback((chat: Messages) => {
@@ -487,6 +493,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                               detailsHandler={detailsHandler}
                               listMessages={listMessages}
                               speechHandler={speechHandler}
+                              activeChat={activeChat}
                             ></CommonActions>
                             {messagechatModes.length > 1 && (
                               <ChatModesSwitch
@@ -511,6 +518,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                                 detailsHandler={detailsHandler}
                                 listMessages={listMessages}
                                 speechHandler={speechHandler}
+                                activeChat={activeChat}
                               ></CommonActions>
                             </Flex>
                             <Box>

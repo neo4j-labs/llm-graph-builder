@@ -21,10 +21,12 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
                     <Typography variant='subheading-medium'>ID : </Typography>
                     <Typography variant='subheading-medium'>{community.id}</Typography>
                   </Flex>
-                  {mode === chatModeLables.global_vector && community.score && (<Flex flexDirection='row' gap='2'>
-                    <Typography variant='subheading-medium'>Score : </Typography>
-                   <Typography variant='subheading-medium'>{community.score}</Typography>
-                  </Flex>)}
+                  {mode === chatModeLables.global_vector && community.score && (
+                    <Flex flexDirection='row' gap='2'>
+                      <Typography variant='subheading-medium'>Score : </Typography>
+                      <Typography variant='subheading-medium'>{community.score}</Typography>
+                    </Flex>
+                  )}
                   <ReactMarkdown>{community.summary}</ReactMarkdown>
                 </div>
               </li>
