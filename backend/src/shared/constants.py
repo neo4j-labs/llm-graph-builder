@@ -477,7 +477,7 @@ RETURN
         }
     ] AS chunks,
     [
-        community IN communities | 
+        community IN communities WHERE community IS NOT NULL | 
         community {
             .*,
             embedding: null
