@@ -29,11 +29,11 @@ import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
 import {
   statusCheck,
-  capitalize,
   isFileCompleted,
   calculateProcessedCount,
   getFileSourceStatus,
   isProcessingFileValid,
+  capitalizeWithUnderscore,
 } from '../utils/Utils';
 import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, ChildRef } from '../types';
 import { useCredentials } from '../context/UserCredentials';
@@ -467,16 +467,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         id: 'model',
         cell: (info) => {
           const model = info.getValue();
-          return (
-            <i>
-              {(model.includes('LLM_MODEL_CONFIG_')
-                ? capitalize(model.split('LLM_MODEL_CONFIG_').at(-1) as string)
-                : capitalize(model)
-              )
-                .split('_')
-                .join(' ')}
-            </i>
-          );
+          return <i>{capitalizeWithUnderscore(model)}</i>;
         },
         header: () => <span>Model</span>,
         footer: (info) => info.column.id,

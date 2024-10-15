@@ -410,6 +410,7 @@ export const capitalizeWithPlus = (s: string) => {
     .map((s) => capitalize(s))
     .join('+');
 };
+export const capitalizeWithUnderscore = (s: string) => capitalize(s).split('_').join(' ');
 
 export const getDescriptionForChatMode = (mode: string): string => {
   switch (mode.toLowerCase()) {

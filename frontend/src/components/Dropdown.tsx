@@ -1,7 +1,7 @@
 import { Dropdown, Tip } from '@neo4j-ndl/react';
 import { OptionType, ReusableDropdownProps } from '../types';
 import { memo, useMemo, useReducer } from 'react';
-import { capitalize } from '../utils/Utils';
+import { capitalize, capitalizeWithUnderscore } from '../utils/Utils';
 
 const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   options,
@@ -31,14 +31,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
                 onChange: handleChange,
                 options: allOptions?.map((option) => {
                   const label =
-                    typeof option === 'string'
-                      ? (option.includes('LLM_MODEL_CONFIG_')
-                          ? capitalize(option.split('LLM_MODEL_CONFIG_').at(-1) as string)
-                          : capitalize(option)
-                        )
-                          .split('_')
-                          .join(' ')
-                      : capitalize(option.label);
+                    typeof option === 'string' ? capitalizeWithUnderscore(option) : capitalize(option.label);
                   const value = typeof option === 'string' ? option : option.value;
                   return {
                     label,
