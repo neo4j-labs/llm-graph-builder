@@ -406,6 +406,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       handleSpeak(chat.modes[chat.currentMode]?.message, chat.id);
     }
   }, []);
+  
   const downloadClickHandler = useCallback(function downloadClickHandler<Type>(JsonData: Type) {
     const textFile = new Blob([JSON.stringify(JsonData)], { type: 'application/json' });
     if (downloadLinkRef && downloadLinkRef.current) {
@@ -580,6 +581,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           }}
           onClose={() => setShowInfoModal(false)}
           open={showInfoModal}
+          size={activeChat?.currentMode === chatModeLables.entity_vector ? 'large' : 'medium'}
         >
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <IconButton
