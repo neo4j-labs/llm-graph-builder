@@ -382,7 +382,7 @@ WITH score, nodes, metadata,
 
      collect {{
          UNWIND nodes AS n
-         MATCH (n)-[:IN_COMMUNITY]->(c:__Community__)
+         OPTIONAL MATCH (n)-[:IN_COMMUNITY]->(c:__Community__)
          WITH c, c.community_rank AS rank, c.weight AS weight
          RETURN c
          ORDER BY rank, weight DESC
