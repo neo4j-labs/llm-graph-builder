@@ -1,24 +1,45 @@
-import React, { FC, lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { Widget, Typography, Avatar, TextInput, IconButton, Modal, useCopyToClipboard } from '@neo4j-ndl/react';
+import React, { FC, lazy, Suspense, useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import {
-  XMarkIconOutline,
-  ClipboardDocumentIconOutline,
-  SpeakerWaveIconOutline,
-  SpeakerXMarkIconOutline,
-} from '@neo4j-ndl/react/icons';
+  Widget,
+  Typography,
+  Avatar,
+  TextInput,
+  IconButton,
+  Modal,
+  useCopyToClipboard,
+  Flex,
+  Box,
+  TextLink,
+} from '@neo4j-ndl/react';
+import { ArrowDownTrayIconOutline, XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../../assets/images/chatbot-ai.png';
-import { ChatbotProps, CustomFile, UserCredentials, chunk } from '../../types';
+import {
+  ChatbotProps,
+  Chunk,
+  Community,
+  CustomFile,
+  Entity,
+  ExtendedNode,
+  ExtendedRelationship,
+  Messages,
+  MetricsState,
+  ResponseMode,
+  UserCredentials,
+  nodeDetailsProps,
+} from '../../types';
 import { useCredentials } from '../../context/UserCredentials';
 import { chatBotAPI } from '../../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../../context/UsersFiles';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
-import IconButtonWithToolTip from '../UI/IconButtonToolTip';
-import { buttonCaptions, tooltips } from '../../utils/Constants';
+import { buttonCaptions, chatModeLables } from '../../utils/Constants';
 import useSpeechSynthesis from '../../hooks/useSpeech';
 import ButtonWithToolTip from '../UI/ButtonWithToolTip';
 import FallBackDialog from '../UI/FallBackDialog';
+import { downloadClickHandler, getDateTime } from '../../utils/Utils';
+import ChatModesSwitch from './ChatModesSwitch';
+import CommonActions from './CommonChatActions';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
 
 const Chatbot: FC<ChatbotProps> = (props) => {
@@ -33,40 +54,69 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
-  const { model, chatMode, selectedRows, filesData } = useFileContext();
+  const { model, chatModes, selectedRows, filesData } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
   const [sourcesModal, setSourcesModal] = useState<string[]>([]);
   const [modelModal, setModelModal] = useState<string>('');
   const [responseTime, setResponseTime] = useState<number>(0);
-  const [chunkModal, setChunkModal] = useState<chunk[]>([]);
   const [tokensUsed, setTokensUsed] = useState<number>(0);
   const [cypherQuery, setcypherQuery] = useState<string>('');
-  const [copyMessageId, setCopyMessageId] = useState<number | null>(null);
-  const [chatsMode, setChatsMode] = useState<string>('graph+vector');
+  const [chatsMode, setChatsMode] = useState<string>(chatModeLables.graph_vector_fulltext);
   const [graphEntitites, setgraphEntitites] = useState<[]>([]);
   const [messageError, setmessageError] = useState<string>('');
+  const [entitiesModal, setEntitiesModal] = useState<string[]>([]);
+  const [nodeDetailsModal, setNodeDetailsModal] = useState<nodeDetailsProps>({});
+  const [metricQuestion, setMetricQuestion] = useState<string>('');
+  const [metricAnswer, setMetricAnswer] = useState<string>('');
+  const [metricContext, setMetricContext] = useState<string>('');
+  const [nodes, setNodes] = useState<ExtendedNode[]>([]);
+  const [relationships, setRelationships] = useState<ExtendedRelationship[]>([]);
+  const [chunks, setChunks] = useState<Chunk[]>([]);
+  const [metricDetails, setMetricDetails] = useState<MetricsState | null>(null);
+  const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [infoLoading, toggleInfoLoading] = useReducer((s) => !s, false);
+  const [metricsLoading, toggleMetricsLoading] = useReducer((s) => !s, false);
+  const downloadLinkRef = useRef<HTMLAnchorElement>(null);
+  const [activeChat, setActiveChat] = useState<Messages | null>(null);
 
-  const [value, copy] = useCopyToClipboard();
-  const { speak, cancel } = useSpeechSynthesis({
+  const [_, copy] = useCopyToClipboard();
+  const { speak, cancel, speaking } = useSpeechSynthesis({
     onEnd: () => {
       setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
     },
   });
-  let selectedFileNames: CustomFile[] = [];
-  for (let index = 0; index < selectedRows.length; index++) {
-    const id = selectedRows[index];
-    for (let index = 0; index < filesData.length; index++) {
-      const f = filesData[index];
-      if (f.id === id) {
-        selectedFileNames.push(f);
-      }
-    }
-  }
+
+  let selectedFileNames: CustomFile[] = filesData.filter(
+    (f) => selectedRows.includes(f.id) && ['Completed'].includes(f.status)
+  );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
+  };
+
+  const saveInfoEntitites = (entities: Entity[]) => {
+    setInfoEntities(entities);
+  };
+
+  const saveNodes = (chatNodes: ExtendedNode[]) => {
+    setNodes(chatNodes);
+  };
+
+  const saveChatRelationships = (chatRels: ExtendedRelationship[]) => {
+    setRelationships(chatRels);
+  };
+
+  const saveChunks = (chatChunks: Chunk[]) => {
+    setChunks(chatChunks);
+  };
+  const saveMetrics = (metricInfo: MetricsState) => {
+    setMetricDetails(metricInfo);
+  };
+  const saveCommunities = (chatCommunities: Community[]) => {
+    setCommunities(chatCommunities);
   };
   useEffect(() => {
     if (!sessionStorage.getItem('session_id')) {
@@ -75,151 +125,190 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       sessionStorage.setItem('session_id', id);
     }
   }, []);
-  const simulateTypingEffect = (
-    response: {
-      reply: string;
-      sources?: string[];
-      model?: string;
-      chunk_ids?: chunk[];
-      total_tokens?: number;
-      response_time?: number;
-      speaking?: boolean;
-      copying?: boolean;
-      mode?: string;
-      cypher_query?: string;
-      graphonly_entities?: [];
-      error?: string;
-    },
-    index = 0
-  ) => {
-    if (index < response.reply.length) {
-      const nextIndex = index + 1;
-      const currentTypedText = response.reply.substring(0, nextIndex);
-      if (index === 0) {
-        const date = new Date();
-        const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-        if (response.reply.length <= 1) {
-          setListMessages((msgs) => [
-            ...msgs,
-            {
-              id: Date.now(),
-              user: 'chatbot',
-              message: currentTypedText,
-              datetime: datetime,
-              isTyping: false,
-              isLoading: true,
-              sources: response?.sources,
-              model: response?.model,
-              chunks: response?.chunk_ids,
-              total_tokens: response.total_tokens,
-              response_time: response?.response_time,
-              speaking: false,
-              copying: false,
-              mode: response?.mode,
-              cypher_query: response?.cypher_query,
-              graphonly_entities: response?.graphonly_entities,
-              error: response.error,
-            },
-          ]);
-        } else {
-          setListMessages((msgs) => {
-            const lastmsg = { ...msgs[msgs.length - 1] };
-            lastmsg.id = Date.now();
-            lastmsg.user = 'chatbot';
-            lastmsg.message = currentTypedText;
-            lastmsg.datetime = datetime;
-            lastmsg.isTyping = true;
-            lastmsg.isLoading = false;
-            lastmsg.sources = response?.sources;
-            lastmsg.model = response?.model;
-            lastmsg.chunk_ids = response?.chunk_ids;
-            lastmsg.total_tokens = response?.total_tokens;
-            lastmsg.response_time = response?.response_time;
-            lastmsg.speaking = false;
-            lastmsg.copying = false;
-            lastmsg.mode = response?.mode;
-            lastmsg.cypher_query = response.cypher_query;
-            lastmsg.graphonly_entities = response.graphonly_entities;
-            lastmsg.error = response.error;
-            return msgs.map((msg, index) => {
-              if (index === msgs.length - 1) {
-                return lastmsg;
+
+  const simulateTypingEffect = (messageId: number, response: ResponseMode, mode: string, message: string) => {
+    let index = 0;
+    let lastTimestamp: number | null = null;
+    const TYPING_INTERVAL = 20;
+    const animate = (timestamp: number) => {
+      if (lastTimestamp === null) {
+        lastTimestamp = timestamp;
+      }
+      const elapsed = timestamp - lastTimestamp;
+      if (elapsed >= TYPING_INTERVAL) {
+        if (index < message.length) {
+          const nextIndex = index + 1;
+          const currentTypedText = message.substring(0, nextIndex);
+          setListMessages((msgs) =>
+            msgs.map((msg) => {
+              if (msg.id === messageId) {
+                return {
+                  ...msg,
+                  modes: {
+                    ...msg.modes,
+                    [mode]: {
+                      ...response,
+                      message: currentTypedText,
+                    },
+                  },
+                  isTyping: true,
+                  speaking: false,
+                  copying: false,
+                };
               }
               return msg;
-            });
+            })
+          );
+          index = nextIndex;
+          lastTimestamp = timestamp;
+        } else {
+          setListMessages((msgs) => {
+            const activeMessage = msgs.find((message) => message.id === messageId);
+            let sortedModes: Record<string, ResponseMode>;
+            if (activeMessage) {
+              sortedModes = Object.fromEntries(
+                chatModes.filter((m) => m in activeMessage.modes).map((key) => [key, activeMessage?.modes[key]])
+              );
+            }
+            return msgs.map((msg) => (msg.id === messageId ? { ...msg, isTyping: false, modes: sortedModes } : msg));
           });
+          return;
         }
-      } else {
-        setListMessages((msgs) => msgs.map((msg) => (msg.isTyping ? { ...msg, message: currentTypedText } : msg)));
       }
-      setTimeout(() => simulateTypingEffect(response, nextIndex), 20);
-    } else {
-      setListMessages((msgs) => msgs.map((msg) => (msg.isTyping ? { ...msg, isTyping: false } : msg)));
-    }
+      requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
   };
-  let date = new Date();
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     if (!inputMessage.trim()) {
       return;
     }
-    let chatbotReply;
-    let chatSources;
-    let chatModel;
-    let chatChunks;
-    let chatTimeTaken;
-    let chatTokensUsed;
-    let chatingMode;
-    let cypher_query;
-    let graphonly_entities;
-    let error;
-    const datetime = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-    const userMessage = { id: Date.now(), user: 'user', message: inputMessage, datetime: datetime };
+    const datetime = getDateTime();
+    const userMessage: Messages = {
+      id: Date.now(),
+      user: 'user',
+      datetime: datetime,
+      currentMode: chatModes[0],
+      modes: {},
+    };
+    userMessage.modes[chatModes[0]] = { message: inputMessage };
     setListMessages([...listMessages, userMessage]);
+    const chatbotMessageId = Date.now() + 1;
+    const chatbotMessage: Messages = {
+      id: chatbotMessageId,
+      user: 'chatbot',
+      datetime: new Date().toLocaleString(),
+      isTyping: true,
+      isLoading: true,
+      modes: {},
+      currentMode: chatModes[0],
+    };
+    setListMessages((prev) => [...prev, chatbotMessage]);
     try {
-      setInputMessage('');
-      simulateTypingEffect({ reply: ' ' });
-      const chatbotAPI = await chatBotAPI(
-        userCredentials as UserCredentials,
-        inputMessage,
-        sessionId,
-        model,
-        chatMode,
-        selectedFileNames?.map((f) => f.name)
+      const apiCalls = chatModes.map((mode) =>
+        chatBotAPI(
+          userCredentials as UserCredentials,
+          inputMessage,
+          sessionId,
+          model,
+          mode,
+          selectedFileNames?.map((f) => f.name)
+        )
       );
-      const chatresponse = chatbotAPI?.response;
-      chatbotReply = chatresponse?.data?.data?.message;
-      chatSources = chatresponse?.data?.data?.info.sources;
-      chatModel = chatresponse?.data?.data?.info.model;
-      chatChunks = chatresponse?.data?.data?.info.chunkdetails;
-      chatTokensUsed = chatresponse?.data?.data?.info.total_tokens;
-      chatTimeTaken = chatresponse?.data?.data?.info.response_time;
-      chatingMode = chatresponse?.data?.data?.info?.mode;
-      cypher_query = chatresponse?.data?.data?.info?.cypher_query ?? '';
-      graphonly_entities = chatresponse?.data.data.info.context ?? [];
-      error = chatresponse.data.data.info.error ?? '';
-      const finalbotReply = {
-        reply: chatbotReply,
-        sources: chatSources,
-        model: chatModel,
-        chunk_ids: chatChunks,
-        total_tokens: chatTokensUsed,
-        response_time: chatTimeTaken,
-        speaking: false,
-        copying: false,
-        mode: chatingMode,
-        cypher_query,
-        graphonly_entities,
-        error,
-      };
-      simulateTypingEffect(finalbotReply);
-    } catch (error) {
-      chatbotReply = "Oops! It seems we couldn't retrieve the answer. Please try again later";
       setInputMessage('');
-      simulateTypingEffect({ reply: chatbotReply });
+      const results = await Promise.allSettled(apiCalls);
+      results.forEach((result, index) => {
+        const mode = chatModes[index];
+        if (result.status === 'fulfilled') {
+          // @ts-ignore
+          if (result.value.response.data.status === 'Success') {
+            const response = result.value.response.data.data;
+            const responseMode: ResponseMode = {
+              message: response.message,
+              sources: response.info.sources,
+              model: response.info.model,
+              total_tokens: response.info.total_tokens,
+              response_time: response.info.response_time,
+              cypher_query: response.info.cypher_query,
+              graphonly_entities: response.info.context ?? [],
+              entities: response.info.entities ?? [],
+              nodeDetails: response.info.nodedetails,
+              error: response.info.error,
+              metric_question: response.info?.metric_details?.question ?? '',
+              metric_answer: response.info?.metric_details?.answer ?? '',
+              metric_contexts: response.info?.metric_details?.contexts ?? '',
+            };
+            if (index === 0) {
+              simulateTypingEffect(chatbotMessageId, responseMode, mode, responseMode.message);
+            } else {
+              setListMessages((prev) =>
+                prev.map((msg) =>
+                  (msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg)
+                )
+              );
+            }
+          } else {
+            const response = result.value.response.data;
+            const responseMode: ResponseMode = {
+              message: response.message,
+              error: response.error,
+            };
+            if (index === 0) {
+              simulateTypingEffect(chatbotMessageId, responseMode, response.data, responseMode.message);
+            } else {
+              setListMessages((prev) =>
+                prev.map((msg) =>
+                  (msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg)
+                )
+              );
+            }
+          }
+        } else {
+          console.error(`API call failed for mode ${mode}:`, result.reason);
+          setListMessages((prev) =>
+            prev.map((msg) =>
+              (msg.id === chatbotMessageId
+                ? {
+                    ...msg,
+                    modes: {
+                      ...msg.modes,
+                      [mode]: { message: 'Failed to fetch response for this mode.', error: result.reason },
+                    },
+                  }
+                : msg)
+            )
+          );
+        }
+      });
+      setListMessages((prev) =>
+        prev.map((msg) => (msg.id === chatbotMessageId ? { ...msg, isLoading: false, isTyping: false } : msg))
+      );
+    } catch (error) {
+      console.error('Error in handling chat:', error);
+      if (error instanceof Error) {
+        setListMessages((prev) =>
+          prev.map((msg) =>
+            (msg.id === chatbotMessageId
+              ? {
+                  ...msg,
+                  isLoading: false,
+                  isTyping: false,
+                  modes: {
+                    [chatModes[0]]: {
+                      message: 'An error occurred while processing your request.',
+                      error: error.message,
+                    },
+                  },
+                }
+              : msg)
+          )
+        );
+      }
     }
   };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -248,9 +337,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
         return msg;
       })
     );
-    setCopyMessageId(id);
     setTimeout(() => {
-      setCopyMessageId(null);
       setListMessages((msgs) =>
         msgs.map((msg) => {
           if (msg.id === id) {
@@ -267,142 +354,187 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     setListMessages((msgs) => msgs.map((msg) => (msg.id === id ? { ...msg, speaking: false } : msg)));
   };
 
-  const handleSpeak = (chatMessage: any, id: number) => {
-    speak({ text: chatMessage });
+  const handleSpeak = (chatMessage: string, id: number) => {
+    speak({ text: chatMessage }, typeof window !== 'undefined' && window.speechSynthesis != undefined);
     setListMessages((msgs) => {
       const messageWithSpeaking = msgs.find((msg) => msg.speaking);
       return msgs.map((msg) => (msg.id === id && !messageWithSpeaking ? { ...msg, speaking: true } : msg));
     });
   };
 
+  const handleSwitchMode = (messageId: number, newMode: string) => {
+    const activespeechId = listMessages.find((msg) => msg.speaking)?.id;
+    if (speaking && messageId === activespeechId) {
+      cancel();
+      setListMessages((prev) =>
+        prev.map((msg) => (msg.id === messageId ? { ...msg, currentMode: newMode, speaking: false } : msg))
+      );
+    } else {
+      setListMessages((prev) => prev.map((msg) => (msg.id === messageId ? { ...msg, currentMode: newMode } : msg)));
+    }
+  };
+
+  const detailsHandler = useCallback((chat: Messages, previousActiveChat: Messages | null) => {
+    const currentMode = chat.modes[chat.currentMode];
+    setModelModal(currentMode.model ?? '');
+    setSourcesModal(currentMode.sources ?? []);
+    setResponseTime(currentMode.response_time ?? 0);
+    setTokensUsed(currentMode.total_tokens ?? 0);
+    setcypherQuery(currentMode.cypher_query ?? '');
+    setShowInfoModal(true);
+    setChatsMode(chat.currentMode ?? '');
+    setgraphEntitites(currentMode.graphonly_entities ?? []);
+    setEntitiesModal(currentMode.entities ?? []);
+    setmessageError(currentMode.error ?? '');
+    setNodeDetailsModal(currentMode.nodeDetails ?? {});
+    setMetricQuestion(currentMode.metric_question ?? '');
+    setMetricContext(currentMode.metric_contexts ?? '');
+    setMetricAnswer(currentMode.metric_answer ?? '');
+    setActiveChat(chat);
+    if (previousActiveChat != null && chat.id != previousActiveChat?.id) {
+      setNodes([]);
+      setChunks([]);
+      setInfoEntities([]);
+      setMetricDetails(null);
+    }
+  }, []);
+
+  const speechHandler = useCallback((chat: Messages) => {
+    if (chat.speaking) {
+      handleCancel(chat.id);
+    } else {
+      handleSpeak(chat.modes[chat.currentMode]?.message, chat.id);
+    }
+  }, []);
+
   return (
     <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
       <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3 pr-3'>
         <Widget className='n-bg-palette-neutral-bg-weak w-full' header='' isElevated={false}>
           <div className='flex flex-col gap-4 gap-y-4'>
-            {listMessages.map((chat, index) => (
-              <div
-                ref={messagesEndRef}
-                key={chat.id}
-                className={clsx(`flex gap-2.5`, {
-                  'flex-row': chat.user === 'chatbot',
-                  'flex-row-reverse': chat.user !== 'chatbot',
-                })}
-              >
-                <div className='w-8 h-8'>
-                  {chat.user === 'chatbot' ? (
-                    <Avatar
-                      className='-ml-4'
-                      hasStatus
-                      name='KM'
-                      shape='square'
-                      size='x-large'
-                      source={ChatBotAvatar}
-                      status={connectionStatus ? 'online' : 'offline'}
-                      type='image'
-                    />
-                  ) : (
-                    <Avatar
-                      className=''
-                      hasStatus
-                      name='KM'
-                      shape='square'
-                      size='x-large'
-                      status={connectionStatus ? 'online' : 'offline'}
-                      type='image'
-                    />
-                  )}
-                </div>
-                <Widget
-                  header=''
-                  isElevated={true}
-                  className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
-                    chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
-                  } `}
+            {listMessages.map((chat, index) => {
+              const messagechatModes = Object.keys(chat.modes);
+              return (
+                <div
+                  ref={messagesEndRef}
+                  key={chat.id}
+                  className={clsx(`flex gap-2.5`, {
+                    'flex-row': chat.user === 'chatbot',
+                    'flex-row-reverse': chat.user !== 'chatbot',
+                  })}
                 >
-                  <div
-                    className={`${
-                      listMessages[index].isLoading && index === listMessages.length - 1 && chat.user == 'chatbot'
-                        ? 'loader'
-                        : ''
-                    }`}
-                  >
-                    <ReactMarkdown>{chat.message}</ReactMarkdown>
-                  </div>
-                  <div>
-                    <div>
-                      <Typography variant='body-small' className='pt-2 font-bold'>
-                        {chat.datetime}
-                      </Typography>
-                    </div>
-                    {chat.user === 'chatbot' && chat.id !== 2 && !chat.isLoading && !chat.isTyping && (
-                      <div className='flex inline-block'>
-                        <ButtonWithToolTip
-                          className='w-4 h-4 inline-block p-6 mt-1.5'
-                          fill='text'
-                          placement='top'
-                          clean
-                          text='Retrieval Information'
-                          label='Retrieval Information'
-                          disabled={chat.isTyping || chat.isLoading}
-                          onClick={() => {
-                            setModelModal(chat.model ?? '');
-                            setSourcesModal(chat.sources ?? []);
-                            setResponseTime(chat.response_time ?? 0);
-                            setChunkModal(chat.chunk_ids ?? []);
-                            setTokensUsed(chat.total_tokens ?? 0);
-                            setcypherQuery(chat.cypher_query ?? '');
-                            setShowInfoModal(true);
-                            setChatsMode(chat.mode ?? '');
-                            setgraphEntitites(chat.graphonly_entities ?? []);
-                            setmessageError(chat.error ?? '');
-                          }}
-                        >
-                          {' '}
-                          {buttonCaptions.details}
-                        </ButtonWithToolTip>
-                        <IconButtonWithToolTip
-                          label='copy text'
-                          placement='top'
-                          clean
-                          text={chat.copying ? tooltips.copied : tooltips.copy}
-                          onClick={() => handleCopy(chat.message, chat.id)}
-                          disabled={chat.isTyping || chat.isLoading}
-                        >
-                          <ClipboardDocumentIconOutline className='w-4 h-4 inline-block' />
-                        </IconButtonWithToolTip>
-                        {copyMessageId === chat.id && (
-                          <>
-                            <span className='pt-4 text-xs'>Copied!</span>
-                            <span style={{ display: 'none' }}>{value}</span>
-                          </>
-                        )}
-                        <IconButtonWithToolTip
-                          placement='top'
-                          clean
-                          onClick={() => {
-                            if (chat.speaking) {
-                              handleCancel(chat.id);
-                            } else {
-                              handleSpeak(chat.message, chat.id);
-                            }
-                          }}
-                          text={chat.speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
-                          disabled={listMessages.some((msg) => msg.speaking && msg.id !== chat.id)}
-                          label={chat.speaking ? 'stop speaking' : 'text to speech'}
-                        >
-                          {chat.speaking ? (
-                            <SpeakerXMarkIconOutline className='w-4 h-4 inline-block' />
-                          ) : (
-                            <SpeakerWaveIconOutline className='w-4 h-4 inline-block' />
-                          )}
-                        </IconButtonWithToolTip>
-                      </div>
+                  <div className='w-8 h-8'>
+                    {chat.user === 'chatbot' ? (
+                      <Avatar
+                        className='-ml-4'
+                        hasStatus
+                        name='KM'
+                        shape='square'
+                        size='x-large'
+                        source={ChatBotAvatar}
+                        status={connectionStatus ? 'online' : 'offline'}
+                        type='image'
+                      />
+                    ) : (
+                      <Avatar
+                        className=''
+                        hasStatus
+                        name='KM'
+                        shape='square'
+                        size='x-large'
+                        status={connectionStatus ? 'online' : 'offline'}
+                        type='image'
+                      />
                     )}
                   </div>
-                </Widget>
-              </div>
-            ))}
+                  <Widget
+                    header=''
+                    isElevated={true}
+                    className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
+                      chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                    }`}
+                  >
+                    <div
+                      className={`${
+                        chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
+                      }`}
+                    >
+                      <ReactMarkdown className={!isFullScreen ? 'max-w-[250px]' : ''}>
+                        {chat.modes[chat.currentMode]?.message || ''}
+                      </ReactMarkdown>
+                    </div>
+                    <div>
+                      <div>
+                        <Typography variant='body-small' className='pt-2 font-bold'>
+                          {chat.datetime}
+                        </Typography>
+                      </div>
+                      {chat.user === 'chatbot' &&
+                        chat.id !== 2 &&
+                        !chat.isLoading &&
+                        !chat.isTyping &&
+                        (!isFullScreen ? (
+                          <Flex
+                            flexDirection='row'
+                            justifyContent={messagechatModes.length > 1 ? 'space-between' : 'unset'}
+                            alignItems='center'
+                          >
+                            <CommonActions
+                              chat={chat}
+                              copyHandler={handleCopy}
+                              detailsHandler={detailsHandler}
+                              listMessages={listMessages}
+                              speechHandler={speechHandler}
+                              activeChat={activeChat}
+                            ></CommonActions>
+                            {messagechatModes.length > 1 && (
+                              <ChatModesSwitch
+                                currentMode={chat.currentMode}
+                                switchToOtherMode={(index: number) => {
+                                  const modes = Object.keys(chat.modes);
+                                  const modeswtich = modes[index];
+                                  handleSwitchMode(chat.id, modeswtich);
+                                }}
+                                isFullScreen={false}
+                                currentModeIndex={messagechatModes.indexOf(chat.currentMode)}
+                                modescount={messagechatModes.length}
+                              />
+                            )}
+                          </Flex>
+                        ) : (
+                          <Flex flexDirection='row' justifyContent='space-between' alignItems='center'>
+                            <Flex flexDirection='row' justifyContent='space-between' alignItems='center'>
+                              <CommonActions
+                                chat={chat}
+                                copyHandler={handleCopy}
+                                detailsHandler={detailsHandler}
+                                listMessages={listMessages}
+                                speechHandler={speechHandler}
+                                activeChat={activeChat}
+                              ></CommonActions>
+                            </Flex>
+                            <Box>
+                              {messagechatModes.length > 1 && (
+                                <ChatModesSwitch
+                                  currentMode={chat.currentMode}
+                                  switchToOtherMode={(index: number) => {
+                                    const modes = Object.keys(chat.modes);
+                                    const modeswtich = modes[index];
+                                    handleSwitchMode(chat.id, modeswtich);
+                                  }}
+                                  isFullScreen={isFullScreen}
+                                  currentModeIndex={messagechatModes.indexOf(chat.currentMode)}
+                                  modescount={messagechatModes.length}
+                                />
+                              )}
+                            </Box>
+                          </Flex>
+                        ))}
+                    </div>
+                  </Widget>
+                </div>
+              );
+            })}
           </div>
         </Widget>
       </div>
@@ -422,12 +554,13 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           <ButtonWithToolTip
             label='Q&A Button'
             placement='top'
-            text={`Query Documents in ${chatMode} mode`}
+            text={`Ask a question.`}
             type='submit'
             disabled={loading || !connectionStatus}
             size='medium'
           >
-            {buttonCaptions.ask} {selectedRows != undefined && selectedRows.length > 0 && `(${selectedRows.length})`}
+            {buttonCaptions.ask}{' '}
+            {selectedFileNames != undefined && selectedFileNames.length > 0 && `(${selectedFileNames.length})`}
           </ButtonWithToolTip>
         </form>
       </div>
@@ -439,8 +572,37 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           }}
           onClose={() => setShowInfoModal(false)}
           open={showInfoModal}
+          size={activeChat?.currentMode === chatModeLables.entity_vector ? 'large' : 'medium'}
         >
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+            <IconButton
+              size='large'
+              title='download chat info'
+              clean
+              disabled={metricsLoading || infoLoading}
+              onClick={() => {
+                downloadClickHandler(
+                  {
+                    chatResponse: activeChat,
+                    chunks,
+                    metricDetails,
+                    communities,
+                    responseTime,
+                    entities: infoEntities,
+                    nodes,
+                    tokensUsed,
+                    model,
+                  },
+                  downloadLinkRef,
+                  'graph-builder-chat-details.json'
+                );
+              }}
+            >
+              <ArrowDownTrayIconOutline />
+              <TextLink ref={downloadLinkRef} className='!hidden'>
+                ""
+              </TextLink>
+            </IconButton>
             <IconButton
               size='large'
               title='close pop up'
@@ -454,13 +616,34 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           <InfoModal
             sources={sourcesModal}
             model={modelModal}
-            chunk_ids={chunkModal}
+            entities_ids={entitiesModal}
             response_time={responseTime}
             total_tokens={tokensUsed}
             mode={chatsMode}
             cypher_query={cypherQuery}
             graphonly_entities={graphEntitites}
             error={messageError}
+            nodeDetails={nodeDetailsModal}
+            metricanswer={metricAnswer}
+            metriccontexts={metricContext}
+            metricquestion={metricQuestion}
+            metricmodel={model}
+            nodes={nodes}
+            infoEntities={infoEntities}
+            relationships={relationships}
+            chunks={chunks}
+            metricDetails={metricDetails}
+            communities={communities}
+            infoLoading={infoLoading}
+            metricsLoading={metricsLoading}
+            saveInfoEntitites={saveInfoEntitites}
+            saveChatRelationships={saveChatRelationships}
+            saveChunks={saveChunks}
+            saveCommunities={saveCommunities}
+            saveMetrics={saveMetrics}
+            saveNodes={saveNodes}
+            toggleInfoLoading={toggleInfoLoading}
+            toggleMetricsLoading={toggleMetricsLoading}
           />
         </Modal>
       </Suspense>

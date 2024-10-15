@@ -9,13 +9,14 @@ from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransf
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 from langchain_experimental.graph_transformers import LLMGraphTransformer
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_anthropic import ChatAnthropic
 from langchain_fireworks import ChatFireworks
 from langchain_aws import ChatBedrock
 from langchain_community.chat_models import ChatOllama
 import boto3
 import google.auth
-from src.shared.constants import MODEL_VERSIONS
+from src.shared.constants import MODEL_VERSIONS, PROMPT_TO_ALL_LLMs
 
 
 def get_llm(model: str):
@@ -23,12 +24,14 @@ def get_llm(model: str):
     env_key = "LLM_MODEL_CONFIG_" + model
     env_value = os.environ.get(env_key)
     logging.info("Model: {}".format(env_key))
+    
     if "gemini" in model:
+        model_name = env_value
         credentials, project_id = google.auth.default()
-        model_name = MODEL_VERSIONS[model]
+        #model_name = MODEL_VERSIONS[model]
         llm = ChatVertexAI(
             model_name=model_name,
-            convert_system_message_to_human=True,
+            #convert_system_message_to_human=True,
             credentials=credentials,
             project=project_id,
             temperature=0,
@@ -41,9 +44,10 @@ def get_llm(model: str):
             },
         )
     elif "openai" in model:
-        model_name = MODEL_VERSIONS[model]
+        #model_name = MODEL_VERSIONS[model]
+        model_name, api_key = env_value.split(",")
         llm = ChatOpenAI(
-            api_key=os.environ.get("OPENAI_API_KEY"),
+            api_key=api_key,
             model=model_name,
             temperature=0,
         )
@@ -92,9 +96,10 @@ def get_llm(model: str):
         llm = ChatOllama(base_url=base_url, model=model_name)
 
     elif "diffbot" in model:
-        model_name = "diffbot"
+        #model_name = "diffbot"
+        model_name, api_key = env_value.split(",")
         llm = DiffbotGraphTransformer(
-            diffbot_api_key=os.environ.get("DIFFBOT_API_KEY"),
+            diffbot_api_key=api_key,
             extract_types=["entities", "facts"],
         )
     
@@ -140,42 +145,50 @@ def get_combined_chunks(chunkId_chunkDoc_list):
     return combined_chunk_document_list
 
 
-def get_graph_document_list(
+async def get_graph_document_list(
     llm, combined_chunk_document_list, allowedNodes, allowedRelationship
 ):
     futures = []
     graph_document_list = []
-
     if "diffbot_api_key" in dir(llm):
         llm_transformer = llm
     else:
-        if "get_name" in dir(llm) and llm.get_name() == "ChatOllama":
+        if "get_name" in dir(llm) and llm.get_name() != "ChatOenAI" or llm.get_name() != "ChatVertexAI" or llm.get_name() != "AzureChatOpenAI":
             node_properties = False
+            relationship_properties = False
         else:
             node_properties = ["description"]
+            relationship_properties = ["description"]
         llm_transformer = LLMGraphTransformer(
             llm=llm,
             node_properties=node_properties,
+            relationship_properties=relationship_properties,
             allowed_nodes=allowedNodes,
             allowed_relationships=allowedRelationship,
+            ignore_tool_usage=True,
+            #prompt = ChatPromptTemplate.from_messages(["system",PROMPT_TO_ALL_LLMs])
         )
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        for chunk in combined_chunk_document_list:
-            chunk_doc = Document(
-                page_content=chunk.page_content.encode("utf-8"), metadata=chunk.metadata
-            )
-            futures.append(
-                executor.submit(llm_transformer.convert_to_graph_documents, [chunk_doc])
-            )
+    # with ThreadPoolExecutor(max_workers=10) as executor:
+    #     for chunk in combined_chunk_document_list:
+    #         chunk_doc = Document(
+    #             page_content=chunk.page_content.encode("utf-8"), metadata=chunk.metadata
+    #         )
+    #         futures.append(
+    #             executor.submit(llm_transformer.convert_to_graph_documents, [chunk_doc])
+    #         )
 
-        for i, future in enumerate(concurrent.futures.as_completed(futures)):
-            graph_document = future.result()
-            graph_document_list.append(graph_document[0])
-
+    #     for i, future in enumerate(concurrent.futures.as_completed(futures)):
+    #         graph_document = future.result()
+    #         graph_document_list.append(graph_document[0])
+    
+    if isinstance(llm,DiffbotGraphTransformer):
+        graph_document_list = llm_transformer.convert_to_graph_documents(combined_chunk_document_list)
+    else:
+        graph_document_list = await llm_transformer.aconvert_to_graph_documents(combined_chunk_document_list)
     return graph_document_list
 
 
-def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship):
+async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship):
     
     llm, model_name = get_llm(model)
     combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
@@ -189,7 +202,7 @@ def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelati
     else:
         allowedRelationship = allowedRelationship.split(',')
         
-    graph_document_list = get_graph_document_list(
+    graph_document_list = await get_graph_document_list(
         llm, combined_chunk_document_list, allowedNodes, allowedRelationship
     )
     return graph_document_list

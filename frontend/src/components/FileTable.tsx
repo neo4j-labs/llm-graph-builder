@@ -7,9 +7,11 @@ import {
   ProgressBar,
   StatusIndicator,
   TextLink,
+  Tip,
   Typography,
+  useCopyToClipboard,
 } from '@neo4j-ndl/react';
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { forwardRef, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -27,15 +29,19 @@ import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
 import {
   statusCheck,
-  capitalize,
   isFileCompleted,
   calculateProcessedCount,
   getFileSourceStatus,
   isProcessingFileValid,
+  capitalizeWithUnderscore,
 } from '../utils/Utils';
 import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, ChildRef } from '../types';
 import { useCredentials } from '../context/UserCredentials';
-import { ArrowPathIconSolid, MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
+import {
+  ArrowPathIconSolid,
+  ClipboardDocumentIconOutline,
+  MagnifyingGlassCircleIconSolid,
+} from '@neo4j-ndl/react/icons';
 import CustomProgressBar from './UI/CustomProgressBar';
 import subscribe from '../services/PollingAPI';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
@@ -43,16 +49,18 @@ import useServerSideEvent from '../hooks/useSse';
 import { AxiosError } from 'axios';
 import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
-import IconButtonWithToolTip from './UI/IconButtonToolTip';
+import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import IndeterminateCheckbox from './UI/CustomCheckBox';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
+import { ThemeWrapperContext } from '../context/ThemeWrapper';
 let onlyfortheFirstRender = true;
+
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
-  const { userCredentials } = useCredentials();
+  const { userCredentials, isReadOnlyUser } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -61,6 +69,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const [fileSourceFilter, setFileSourceFilter] = useState<string>('');
   const [llmtypeFilter, setLLmtypeFilter] = useState<string>('');
   const skipPageResetRef = useRef<boolean>(false);
+  const [_, copy] = useCopyToClipboard();
+  const { colorMode } = useContext(ThemeWrapperContext);
 
   const tableRef = useRef(null);
 
@@ -72,6 +82,10 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       showErrorToast(`${fileName} Failed to process`);
     }
   );
+
+  const handleCopy = (message: string) => {
+    copy(message);
+  };
   const columns = useMemo(
     () => [
       {
@@ -140,29 +154,50 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         cell: (info) => {
           if (info.getValue() != 'Processing') {
             return (
-              <div
-                className='cellClass'
-                title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
-              >
-                <StatusIndicator type={statusCheck(info.getValue())} />
-                {info.getValue()}
-                {/* {(info.getValue() === 'Completed' ||
-                  info.getValue() === 'Failed' ||
-                  info.getValue() === 'Cancelled') && (
-                  <span className='mx-1'>
-                    <IconButtonWithToolTip
-                      placement='right'
-                      text='Reprocess'
-                      size='small'
-                      label='reprocess'
+              <Tip allowedPlacements={['left']}>
+                <div
+                  className='cellClass'
+                  title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
+                >
+                  <Tip.Trigger>
+                    <StatusIndicator type={statusCheck(info.getValue())} />
+                    {info.getValue()}
+                  </Tip.Trigger>
+                  {(info.getValue() === 'Completed' ||
+                    info.getValue() === 'Failed' ||
+                    (info.getValue() === 'Cancelled' && !isReadOnlyUser)) && (
+                    <span className='mx-1'>
+                      <IconButtonWithToolTip
+                        placement='right'
+                        text='Reprocess'
+                        size='small'
+                        label='reprocess'
+                        clean
+                        onClick={() => onRetry(info?.row?.id as string)}
+                      >
+                        <ArrowPathIconSolid />
+                      </IconButtonWithToolTip>
+                    </span>
+                  )}
+                </div>
+
+                {info.row.original?.status === 'Failed' && (
+                  <Tip.Content>
+                    <IconButton
+                      aria-label='error copy'
                       clean
-                      onClick={() => onRetry(info?.row?.id as string)}
+                      label='copy error'
+                      size='small'
+                      onClick={() => handleCopy(info.row.original?.errorMessage ?? '')}
                     >
-                      <ArrowPathIconSolid />
-                    </IconButtonWithToolTip>
-                  </span>
-                )} */}
-              </div>
+                      <ClipboardDocumentIconOutline
+                        color={colorMode === 'light' ? 'white' : ''}
+                        className='w-4 h-4 inline-block'
+                      />
+                    </IconButton>
+                  </Tip.Content>
+                )}
+              </Tip>
             );
           } else if (info.getValue() === 'Processing' && info.row.original.processingProgress === undefined) {
             return (
@@ -432,16 +467,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         id: 'model',
         cell: (info) => {
           const model = info.getValue();
-          return (
-            <i>
-              {(model.includes('LLM_MODEL_CONFIG_')
-                ? capitalize(model.split('LLM_MODEL_CONFIG_').at(-1) as string)
-                : capitalize(model)
-              )
-                .split('_')
-                .join(' ')}
-            </i>
-          );
+          return <i>{capitalizeWithUnderscore(model)}</i>;
         },
         header: () => <span>Model</span>,
         footer: (info) => info.column.id,
@@ -511,7 +537,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         footer: (info) => info.column.id,
       }),
     ],
-    [filesData.length, statusFilter, filetypeFilter, llmtypeFilter, fileSourceFilter]
+    [filesData.length, statusFilter, filetypeFilter, llmtypeFilter, fileSourceFilter, isReadOnlyUser, colorMode]
   );
 
   const table = useReactTable({
@@ -701,7 +727,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   }, [connectionStatus, userCredentials]);
 
   useEffect(() => {
-    if (connectionStatus && filesData.length && onlyfortheFirstRender) {
+    if (connectionStatus && filesData.length && onlyfortheFirstRender && !isReadOnlyUser) {
       const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
       if (processingFilesCount) {
         if (processingFilesCount === 1) {
@@ -718,7 +744,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       }
       onlyfortheFirstRender = false;
     }
-  }, [connectionStatus, filesData.length]);
+  }, [connectionStatus, filesData.length, isReadOnlyUser]);
 
   const cancelHandler = async (fileName: string, id: string, fileSource: string) => {
     setFilesData((prevfiles) =>

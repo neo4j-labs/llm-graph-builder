@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Dialog, SideNavigation, Tip, useMediaQuery } from '@neo4j-ndl/react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Dialog, SideNavigation, TextLink, Tip, useMediaQuery } from '@neo4j-ndl/react';
 import {
   ArrowRightIconOutline,
   ArrowLeftIconOutline,
@@ -7,22 +7,24 @@ import {
   ArrowsPointingOutIconOutline,
   ChatBubbleOvalLeftEllipsisIconOutline,
   CloudArrowUpIconSolid,
+  ArrowDownTrayIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { SideNavProps } from '../../types';
 import Chatbot from '../ChatBot/Chatbot';
 import { createPortal } from 'react-dom';
 import { useMessageContext } from '../../context/UserMessages';
-import { getIsLoading } from '../../utils/Utils';
+import { downloadClickHandler, getIsLoading } from '../../utils/Utils';
 import ExpandedChatButtonContainer from '../ChatBot/ExpandedChatButtonContainer';
 import { APP_SOURCES, tooltips } from '../../utils/Constants';
 import ChatModeToggle from '../ChatBot/ChatModeToggle';
 import { RiChatSettingsLine } from 'react-icons/ri';
-import IconButtonWithToolTip from '../UI/IconButtonToolTip';
+import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import GCSButton from '../DataSources/GCS/GCSButton';
 import S3Component from '../DataSources/AWS/S3Bucket';
 import WebButton from '../DataSources/Web/WebButton';
 import DropZoneForSmallLayouts from '../DataSources/Local/DropZoneForSmallLayouts';
 import { useCredentials } from '../../context/UserCredentials';
+import TipWrapper from '../UI/TipWrapper';
 
 const SideNav: React.FC<SideNavProps> = ({
   position,
@@ -44,7 +46,8 @@ const SideNav: React.FC<SideNavProps> = ({
   const [chatModeAnchor, setchatModeAnchor] = useState<HTMLElement | null>(null);
   const [showChatMode, setshowChatMode] = useState<boolean>(false);
   const largedesktops = useMediaQuery(`(min-width:1440px )`);
-  const { connectionStatus } = useCredentials();
+  const { connectionStatus, isReadOnlyUser } = useCredentials();
+  const downloadLinkRef = useRef<HTMLAnchorElement>(null);
 
   const date = new Date();
   useEffect(() => {
@@ -53,9 +56,14 @@ const SideNav: React.FC<SideNavProps> = ({
         {
           datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
           id: 2,
-          message:
-            ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
+          modes: {
+            'graph+vector+fulltext': {
+              message:
+                ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
+            },
+          },
           user: 'chatbot',
+          currentMode: 'graph+vector+fulltext',
         },
       ]);
     }
@@ -87,6 +95,7 @@ const SideNav: React.FC<SideNavProps> = ({
       toggleDrawer();
     }
   };
+
   return (
     <div style={{ height: 'calc(100vh - 58px)', minHeight: '200px', display: 'flex' }}>
       <SideNavigation iconMenu={true} expanded={false} position={position}>
@@ -101,12 +110,9 @@ const SideNav: React.FC<SideNavProps> = ({
             <SideNavigation.Item
               onClick={handleClick}
               icon={
-                <Tip allowedPlacements={['right']}>
-                  <Tip.Trigger>
-                    <CloudArrowUpIconSolid />
-                  </Tip.Trigger>
-                  <Tip.Content>{tooltips.sources}</Tip.Content>
-                </Tip>
+                <TipWrapper tooltip={tooltips.sources} placement='right'>
+                  <CloudArrowUpIconSolid />
+                </TipWrapper>
               }
             />
           )}
@@ -115,61 +121,46 @@ const SideNav: React.FC<SideNavProps> = ({
             <SideNavigation.Item
               onClick={handleClick}
               icon={
-                <Tip allowedPlacements={['left']}>
-                  <Tip.Trigger>
-                    <ChatBubbleOvalLeftEllipsisIconOutline />
-                  </Tip.Trigger>
-                  <Tip.Content>{tooltips.chat}</Tip.Content>
-                </Tip>
+                <TipWrapper tooltip={tooltips.chat} placement='left'>
+                  <ChatBubbleOvalLeftEllipsisIconOutline />
+                </TipWrapper>
               }
             />
           )}
 
-          {!largedesktops && position === 'left' && (
+          {!largedesktops && position === 'left' && !isReadOnlyUser && (
             <SideNavigation.Item
               icon={
-                <Tip allowedPlacements={['right']}>
-                  <Tip.Trigger>
-                    <DropZoneForSmallLayouts />
-                  </Tip.Trigger>
-                  <Tip.Content>Local files</Tip.Content>
-                </Tip>
+                <TipWrapper tooltip='Local Files' placement='right'>
+                  <DropZoneForSmallLayouts />
+                </TipWrapper>
               }
             />
           )}
-          {!largedesktops && APP_SOURCES.includes('gcs') && position === 'left' && (
+          {!largedesktops && APP_SOURCES.includes('gcs') && position === 'left' && !isReadOnlyUser && (
             <SideNavigation.Item
               icon={
-                <Tip allowedPlacements={['right']}>
-                  <Tip.Trigger>
-                    <GCSButton isLargeDesktop={largedesktops} openModal={toggleGCSModal}></GCSButton>
-                  </Tip.Trigger>
-                  <Tip.Content>GCS Files</Tip.Content>
-                </Tip>
+                <TipWrapper tooltip='GCS Files' placement='right'>
+                  <GCSButton isLargeDesktop={largedesktops} openModal={toggleGCSModal}></GCSButton>
+                </TipWrapper>
               }
             />
           )}
-          {!largedesktops && APP_SOURCES.includes('s3') && position === 'left' && (
+          {!largedesktops && APP_SOURCES.includes('s3') && position === 'left' && !isReadOnlyUser && (
             <SideNavigation.Item
               icon={
-                <Tip allowedPlacements={['right']}>
-                  <Tip.Trigger>
-                    <S3Component isLargeDesktop={largedesktops} openModal={toggles3Modal}></S3Component>
-                  </Tip.Trigger>
-                  <Tip.Content>S3 Files</Tip.Content>
-                </Tip>
+                <TipWrapper tooltip='S3 Files' placement='right'>
+                  <S3Component isLargeDesktop={largedesktops} openModal={toggles3Modal}></S3Component>
+                </TipWrapper>
               }
             />
           )}
-          {!largedesktops && APP_SOURCES.includes('web') && position === 'left' && (
+          {!largedesktops && APP_SOURCES.includes('web') && position === 'left' && !isReadOnlyUser && (
             <SideNavigation.Item
               icon={
-                <Tip allowedPlacements={['right']}>
-                  <Tip.Trigger>
-                    <WebButton isLargeDesktop={largedesktops} openModal={toggleGenericModal}></WebButton>
-                  </Tip.Trigger>
-                  <Tip.Content>Web Sources</Tip.Content>
-                </Tip>
+                <TipWrapper tooltip='Web Sources' placement='right'>
+                  <WebButton isLargeDesktop={largedesktops} openModal={toggleGenericModal}></WebButton>
+                </TipWrapper>
               }
             ></SideNavigation.Item>
           )}
@@ -201,6 +192,30 @@ const SideNav: React.FC<SideNavProps> = ({
                   }
                 />
               </Tip>
+              <Tip allowedPlacements={['left']}>
+                <SideNavigation.Item
+                  onClick={() => {
+                    downloadClickHandler(
+                      { conversation: messages },
+                      downloadLinkRef,
+                      'graph-builder-conversation.json'
+                    );
+                  }}
+                  icon={
+                    <>
+                      <Tip.Trigger>
+                        <ArrowDownTrayIconOutline className='n-size-token-7' />
+                      </Tip.Trigger>
+                      <Tip.Content>
+                        Download Conversation
+                        <TextLink ref={downloadLinkRef} className='!hidden'>
+                          ""
+                        </TextLink>
+                      </Tip.Content>
+                    </>
+                  }
+                />
+              </Tip>
               {!isChatModalOpen && (
                 <SideNavigation.Item
                   onClick={(e) => {
@@ -217,6 +232,7 @@ const SideNav: React.FC<SideNavProps> = ({
                         closeHandler={() => setshowChatMode(false)}
                         menuAnchor={chatModeAnchor}
                         disableBackdrop={true}
+                        anchorPortal={true}
                       ></ChatModeToggle>
                     </>
                   }

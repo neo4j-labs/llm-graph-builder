@@ -5,6 +5,7 @@ import { OverridableStringUnion } from '@mui/types';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { NonOAuthError } from '@react-oauth/google';
 import { BannerType } from '@neo4j-ndl/react';
+import Queue from './utils/Queue';
 
 export interface CustomFileBase extends Partial<globalThis.File> {
   processing: number | string;
@@ -201,28 +202,38 @@ export interface Source {
   source_name: string;
   start_time?: string;
 }
-export interface chunk {
+export interface ChunkDetail {
   id: string;
   score: number;
 }
+export type ResponseMode = {
+  message: string;
+  sources?: string[];
+  model?: string;
+  total_tokens?: number;
+  response_time?: number;
+  cypher_query?: string;
+  nodeDetails?: nodeDetailsProps;
+  chunk_ids?: string[];
+  graphonly_entities?: [];
+  error?: string;
+  entities?: string[];
+  metric_question?: string;
+  metric_contexts?: string;
+  metric_answer?: string;
+};
 export interface Messages {
   id: number;
-  message: string;
   user: string;
   datetime: string;
   isTyping?: boolean;
-  sources?: string[];
-  model?: string;
   isLoading?: boolean;
-  response_time?: number;
-  chunk_ids?: chunk[];
-  total_tokens?: number;
   speaking?: boolean;
   copying?: boolean;
-  mode?: string;
-  cypher_query?: string;
-  graphonly_entities?: [];
-  error?: string;
+  modes: {
+    [key: string]: ResponseMode;
+  };
+  currentMode: string;
 }
 
 export type ChatbotProps = {
@@ -245,7 +256,7 @@ export interface GraphViewModalProps {
   selectedRows?: CustomFile[] | undefined;
 }
 
-export type GraphType = 'Entities' | 'DocumentChunk';
+export type GraphType = 'Entities' | 'DocumentChunk' | 'Communities';
 
 export type PartialLabelNode = Partial<Node> & {
   labels: string;
@@ -255,6 +266,9 @@ export interface CheckboxSectionProps {
   graphType: GraphType[];
   loading: boolean;
   handleChange: (graph: GraphType) => void;
+  isCommunity: boolean;
+  isDocChunk: boolean;
+  isEntity: boolean;
 }
 
 export interface fileName {
@@ -333,8 +347,8 @@ export interface LegendChipProps {
   scheme: Scheme;
   label: string;
   type: 'node' | 'relationship' | 'propertyKey';
-  count: number;
-  onClick: (e: React.MouseEvent<HTMLElement>) => void;
+  count?: number;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
 }
 export interface FileContextProviderProps {
   children: ReactNode;
@@ -396,6 +410,14 @@ export interface duplicateNodesData extends Partial<commonserverresponse> {
 export interface OrphanNodeResponse extends Partial<commonserverresponse> {
   data: orphanNodeProps[];
 }
+export type metricdetails = {
+  faithfulness: number;
+  answer_relevancy: number;
+  context_utilization: number;
+};
+export interface MetricsResponse extends Omit<commonserverresponse, 'data'> {
+  data: metricdetails;
+}
 export interface schema {
   nodelabels: string[];
   relationshipTypes: string[];
@@ -408,16 +430,41 @@ export interface SourceListServerData {
   message?: string;
 }
 
+export interface MetricsState extends metricdetails {
+  error?: string;
+}
+
 export interface chatInfoMessage extends Partial<Messages> {
   sources: string[];
   model: string;
   response_time: number;
-  chunk_ids: chunk[];
   total_tokens: number;
   mode: string;
   cypher_query?: string;
   graphonly_entities: [];
   error: string;
+  entities_ids: string[];
+  nodeDetails: nodeDetailsProps;
+  metricquestion: string;
+  metricanswer: string;
+  metriccontexts: string;
+  metricmodel: string;
+  nodes: ExtendedNode[];
+  relationships: ExtendedRelationship[];
+  chunks: Chunk[];
+  metricDetails: MetricsState | null;
+  infoEntities: Entity[];
+  communities: Community[];
+  infoLoading: boolean;
+  metricsLoading: boolean;
+  saveInfoEntitites: (entities: Entity[]) => void;
+  saveNodes: (chatNodes: ExtendedNode[]) => void;
+  saveChatRelationships: (chatRels: ExtendedRelationship[]) => void;
+  saveChunks: (chatChunks: Chunk[]) => void;
+  saveMetrics: (metricInfo: MetricsState) => void;
+  saveCommunities: (chatCommunities: Community[]) => void;
+  toggleInfoLoading: React.DispatchWithoutAction;
+  toggleMetricsLoading: React.DispatchWithoutAction;
 }
 
 export interface eventResponsetypes extends Omit<SourceNode, 'total_chunks' | 'processingTime'> {
@@ -463,7 +510,14 @@ export type Entity = {
     id: string;
   };
 };
-
+export type Community = {
+  id: string;
+  summary: string;
+  weight: number;
+  level: number;
+  community_rank: number;
+  score?: number;
+};
 export type GroupedEntity = {
   texts: Set<string>;
   color: string;
@@ -501,6 +555,7 @@ export interface Chunk {
   url?: string;
   fileSource: string;
   score?: string;
+  fileType: string;
 }
 
 export interface SpeechSynthesisProps {
@@ -525,7 +580,7 @@ export interface SettingsModalProps {
   onClear?: () => void;
 }
 export interface Menuitems {
-  title: string;
+  title: string | JSX.Element;
   onClick: () => void;
   disabledCondition: boolean;
   description?: string | React.ReactNode;
@@ -538,13 +593,6 @@ export interface Origin {
   vertical: Vertical;
   horizontal: Horizontal;
 }
-
-export type BasicNode = {
-  id: string;
-  labels: string[];
-  properties: Record<string, string>;
-  propertyTypes: Record<string, string>;
-};
 
 export type GraphStatsLabels = Record<
   string,
@@ -563,7 +611,7 @@ export interface ExtendedNode extends Node {
 }
 
 export interface ExtendedRelationship extends Relationship {
-  count: number;
+  count?: number;
 }
 export interface connectionState {
   openPopUp: boolean;
@@ -620,10 +668,139 @@ export interface DrawerChatbotProps {
 export interface ContextProps {
   userCredentials: UserCredentials | null;
   setUserCredentials: (UserCredentials: UserCredentials) => void;
+  isGdsActive: boolean;
+  setGdsActive: Dispatch<SetStateAction<boolean>>;
+  isReadOnlyUser: boolean;
+  setIsReadOnlyUser: Dispatch<SetStateAction<boolean>>;
   connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];
   setMessages: Dispatch<SetStateAction<Messages[]>>;
+  clearHistoryData: boolean;
+  setClearHistoryData: Dispatch<SetStateAction<boolean>>;
 }
+
+export interface DatabaseStatusProps {
+  isConnected: boolean;
+  isGdsActive: boolean;
+  uri: string | null;
+}
+
+export type SourcesProps = {
+  loading: boolean;
+  mode: string;
+  sources: string[];
+  chunks: Chunk[];
+};
+
+export type ChunkProps = {
+  loading: boolean;
+  chunks: Chunk[];
+  mode: string;
+};
+
+export type EntitiesProps = {
+  loading: boolean;
+  mode: string;
+  graphonly_entities: [];
+  infoEntities: Entity[];
+};
+
+export type CommunitiesProps = {
+  loading: boolean;
+  communities: Community[];
+  mode: string;
+};
+
+export interface entity {
+  id: string;
+  score: number;
+}
+
+export interface community {
+  id: string;
+  score: number;
+}
+
+export interface nodeDetailsProps {
+  chunkdetails?: ChunkDetail[];
+  entitydetails?: entity[];
+  communitydetails?: community[];
+}
+
+export type entityProps = {
+  entityids: [];
+  relationshipids: [];
+};
+
+export interface showTextFromSchemaDialogType {
+  triggeredFrom: string;
+  show: boolean;
+}
+export interface FileContextType {
+  files: (File | null)[] | [];
+  filesData: CustomFile[] | [];
+  setFiles: Dispatch<SetStateAction<(File | null)[]>>;
+  setFilesData: Dispatch<SetStateAction<CustomFile[]>>;
+  model: string;
+  setModel: Dispatch<SetStateAction<string>>;
+  graphType: string;
+  setGraphType: Dispatch<SetStateAction<string>>;
+  selectedNodes: readonly OptionType[];
+  setSelectedNodes: Dispatch<SetStateAction<readonly OptionType[]>>;
+  selectedRels: readonly OptionType[];
+  setSelectedRels: Dispatch<SetStateAction<readonly OptionType[]>>;
+  rowSelection: Record<string, boolean>;
+  setRowSelection: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  selectedRows: string[];
+  setSelectedRows: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedSchemas: readonly OptionType[];
+  setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
+  chatModes: string[];
+  setchatModes: Dispatch<SetStateAction<string[]>>;
+  isSchema: boolean;
+  setIsSchema: React.Dispatch<React.SetStateAction<boolean>>;
+  showTextFromSchemaDialog: showTextFromSchemaDialogType;
+  setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
+  postProcessingTasks: string[];
+  setPostProcessingTasks: React.Dispatch<React.SetStateAction<string[]>>;
+  queue: Queue;
+  setQueue: Dispatch<SetStateAction<Queue>>;
+  processedCount: number;
+  setProcessedCount: Dispatch<SetStateAction<number>>;
+  postProcessingVal: boolean;
+  setPostProcessingVal: Dispatch<SetStateAction<boolean>>;
+}
+export declare type Side = 'top' | 'right' | 'bottom' | 'left';
+
+export type EntityType = 'node' | 'relationship';
+
+export type BasicRelationship = {
+  id: string;
+  to: string;
+  from: string;
+  type: string;
+  caption: string;
+};
+
+export type BasicNode = {
+  id: string;
+  type: string;
+  labels: string[];
+  properties: Record<string, string>;
+  propertyTypes: Record<string, string>;
+};
+
+export type GraphPropertiesTableProps = {
+  propertiesWithTypes: {
+    key: string;
+    value: string;
+  }[];
+};
+
+export type GraphPropertiesPanelProps = {
+  inspectedItem: BasicNode | BasicRelationship;
+  newScheme: Scheme;
+};

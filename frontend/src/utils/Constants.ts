@@ -1,139 +1,114 @@
 import { NvlOptions } from '@neo4j-nvl/base';
 import { GraphType, OptionType } from '../types';
+import { getDateTime, getDescriptionForChatMode } from './Utils';
+import chatbotmessages from '../assets/ChatbotMessages.json';
 
-export const document = `+ [docs]`;
-
-export const chunks = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
-+ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks`;
-
-export const entities = `+ collect { OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!Chunk) RETURN p}`;
-
-export const docEntities = `+ [docs] 
-+ collect { MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)--(:!Chunk) RETURN p }`;
-
-export const docChunks = `+[chunks]
-+collect {MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p} //first chunk
-+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
-+ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunk`;
-
-export const chunksEntities = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
-
-+ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
-//chunks with entities
-+ collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
-
-export const docChunkEntities = `+[chunks]
-+collect {MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p} //first chunk
-+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
-+ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
-//chunks with entities
-+ collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
 export const APP_SOURCES =
   process.env.VITE_REACT_APP_SOURCES !== ''
     ? (process.env.VITE_REACT_APP_SOURCES?.split(',') as string[])
     : ['gcs', 's3', 'local', 'wiki', 'youtube', 'web'];
+
 export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
         'diffbot',
-        'openai-gpt-3.5',
-        'openai-gpt-4o',
-        'openai-gpt-4o-mini',
-        'gemini-1.0-pro',
-        'gemini-1.5-pro',
+        'openai_gpt_3.5',
+        'openai_gpt_4o',
+        'openai_gpt_4o_mini',
+        'gemini_1.5_pro',
+        'gemini_1.5_flash',
         'azure_ai_gpt_35',
         'azure_ai_gpt_4o',
         'ollama_llama3',
         'groq_llama3_70b',
         'anthropic_claude_3_5_sonnet',
-        'fireworks_v3p1_405b',
+        'fireworks_llama_v3p2_90b',
         'bedrock_claude_3_5_sonnet',
       ];
 
-export const defaultLLM = llms?.includes('openai-gpt-4o')
-  ? 'openai-gpt-4o'
-  : llms?.includes('gemini-1.0-pro')
-  ? 'gemini-1.0-pro'
+export const defaultLLM = llms?.includes('openai_gpt_4o')
+  ? 'openai_gpt_4o'
+  : llms?.includes('gemini_1.5_pro')
+  ? 'gemini_1.5_pro'
   : 'diffbot';
+export const supportedLLmsForRagas = ['openai_gpt_3.5', 'openai_gpt_4o', 'openai_gpt_4o_mini', 'groq_llama3_70b'];
+export const chatModeLables = {
+  vector: 'vector',
+  graph: 'graph',
+  graph_vector: 'graph+vector',
+  fulltext: 'fulltext',
+  graph_vector_fulltext: 'graph+vector+fulltext',
+  entity_vector: 'entity search+vector',
+  unavailableChatMode: 'Chat mode is unavailable when files are selected',
+  selected: 'Selected',
+  global_vector: 'global search+vector+fulltext',
+};
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
-    ? process.env.VITE_CHAT_MODES?.split(',')
-    : ['vector', 'graph', 'graph+vector', 'fulltext', 'graph+vector+fulltext'];
+    ? process.env.VITE_CHAT_MODES?.split(',').map((mode) => ({
+        mode: mode.trim(),
+        description: getDescriptionForChatMode(mode.trim()),
+      }))
+    : [
+        {
+          mode: chatModeLables.vector,
+          description: 'Performs semantic similarity search on text chunks using vector indexing.',
+        },
+        {
+          mode: chatModeLables.graph,
+          description: 'Translates text to Cypher queries for precise data retrieval from a graph database.',
+        },
+        {
+          mode: chatModeLables.graph_vector,
+          description: 'Combines vector indexing and graph connections for contextually enhanced semantic search.',
+        },
+        {
+          mode: chatModeLables.fulltext,
+          description: 'Conducts fast, keyword-based search using full-text indexing on text chunks.',
+        },
+        {
+          mode: chatModeLables.graph_vector_fulltext,
+          description: 'Integrates vector, graph, and full-text indexing for comprehensive search results.',
+        },
+        {
+          mode: chatModeLables.entity_vector,
+          description: 'Uses vector indexing on entity nodes for highly relevant entity-based search.',
+        },
+        {
+          mode: chatModeLables.global_vector,
+          description:
+            'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.',
+        },
+      ];
+
 export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.VITE_TIME_PER_PAGE ? parseInt(process.env.VITE_TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
 export const largeFileSize = process.env.VITE_LARGE_FILE_SIZE
   ? parseInt(process.env.VITE_LARGE_FILE_SIZE)
   : 5 * 1024 * 1024;
-export const NODES_OPTIONS = [
-  {
-    label: 'Person',
-    value: 'Person',
-  },
-  {
-    label: 'Organization',
-    value: 'Organization',
-  },
-  {
-    label: 'Event',
-    value: 'Event',
-  },
-];
-
-export const RELATION_OPTIONS = [
-  {
-    label: 'WORKS_AT',
-    value: 'WORKS_AT',
-  },
-  {
-    label: 'IS_CEO',
-    value: 'IS_CEO',
-  },
-  {
-    label: 'HOSTS_EVENT',
-    value: 'HOSTS_EVENT',
-  },
-];
-
-export const queryMap: {
-  Document: string;
-  Chunks: string;
-  Entities: string;
-  DocEntities: string;
-  DocChunks: string;
-  ChunksEntities: string;
-  DocChunkEntities: string;
-} = {
-  Document: 'document',
-  Chunks: 'chunks',
-  Entities: 'entities',
-  DocEntities: 'docEntities',
-  DocChunks: 'docChunks',
-  ChunksEntities: 'chunksEntities',
-  DocChunkEntities: 'docChunkEntities',
-};
 
 export const tooltips = {
-  generateGraph: 'Select one or more (new) files to turn into a graph.',
+  generateGraph: 'Generate graph from selected files',
   deleteFile: 'Select one or more files to delete.',
-  showGraph: 'Select one or more files to preview the generated graph.',
-  bloomGraph: 'Open Neo4j Bloom for advanced graph interaction and exploration.',
+  showGraph: 'Preview generated graph.',
+  bloomGraph: 'Visualize the graph in Bloom',
   deleteSelectedFiles: 'File/Files to be deleted',
   documentation: 'Documentation',
   github: 'GitHub Issues',
   theme: 'Light / Dark mode',
   settings: 'Entity Graph Extraction Settings',
-  chat: 'Ask questions about the processed documents.',
-  sources: 'Upload files of different formats.',
+  chat: 'Start a chat',
+  sources: 'Upload files',
   deleteChat: 'Delete',
   maximise: 'Maximise',
   copy: 'Copy to Clipboard',
   copied: 'Copied',
   stopSpeaking: 'Stop Speaking',
   textTospeech: 'Text to Speech',
-  createSchema: 'Create your own schema by passing text',
-  useExistingSchema: 'Use the already existing schema from DB',
+  createSchema: 'Define schema from text.',
+  useExistingSchema: 'Fetch schema from database',
   clearChat: 'Clear Chat History',
   continue: 'Continue',
   clearGraphSettings: 'Clear configured Graph Schema',
@@ -184,6 +159,10 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
                 semantic meaning. This facilitates tasks like clustering similar entities, identifying duplicates, and
                 performing similarity-based searches.`,
   },
+  {
+    title: 'enable_communities',
+    description: 'Enable community creation across entities to use GraphRAG capabilities both local and global search.',
+  },
 ];
 export const RETRY_OPIONS = [
   'start_from_beginning',
@@ -191,6 +170,35 @@ export const RETRY_OPIONS = [
   'start_from_last_processed_position',
 ];
 export const batchSize: number = parseInt(process.env.VITE_BATCH_SIZE ?? '2');
+
+// Graph Constants
+export const document = `+ [docs]`;
+
+export const chunks = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
++ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks`;
+
+export const entities = `+ collect { OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)-[*0..1]-(:!Chunk) RETURN p}`;
+
+export const docEntities = `+ [docs] 
++ collect { MATCH (c:Chunk)-[:HAS_ENTITY]->(e), p=(e)--(:!Chunk) RETURN p }`;
+
+export const docChunks = `+[chunks]
++collect {MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p} //first chunk
++ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
++ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunk`;
+
+export const chunksEntities = `+ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
+
++ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
+//chunks with entities
++ collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
+
+export const docChunkEntities = `+[chunks]
++collect {MATCH p=(c)-[:FIRST_CHUNK]-() RETURN p} //first chunk
++ collect { MATCH p=(c)-[:NEXT_CHUNK]-() RETURN p } // chunk-chain
++ collect { MATCH p=(c)-[:SIMILAR]-() RETURN p } // similar-chunks
+//chunks with entities
++ collect { OPTIONAL MATCH p=(c:Chunk)-[:HAS_ENTITY]->(e)-[*0..1]-(:!Chunk) RETURN p }`;
 
 export const nvlOptions: NvlOptions = {
   allowDynamicMinZoom: true,
@@ -203,10 +211,22 @@ export const nvlOptions: NvlOptions = {
   initialZoom: 1,
 };
 
-export const mouseEventCallbacks = {
-  onPan: true,
-  onZoom: true,
-  onDrag: true,
+export const queryMap: {
+  Document: string;
+  Chunks: string;
+  Entities: string;
+  DocEntities: string;
+  DocChunks: string;
+  ChunksEntities: string;
+  DocChunkEntities: string;
+} = {
+  Document: 'document',
+  Chunks: 'chunks',
+  Entities: 'entities',
+  DocEntities: 'docEntities',
+  DocChunks: 'docChunks',
+  ChunksEntities: 'chunksEntities',
+  DocChunkEntities: 'docChunkEntities',
 };
 
 // export const graphQuery: string = queryMap.DocChunkEntities;
@@ -215,11 +235,11 @@ export const graphView: OptionType[] = [
   { label: 'Entity Graph', value: queryMap.Entities },
   { label: 'Knowledge Graph', value: queryMap.DocChunkEntities },
 ];
-export const intitalGraphType: GraphType[] = ['DocumentChunk', 'Entities'];
 
-export const appLabels = {
-  ownSchema: 'Or Define your own Schema',
-  predefinedSchema: 'Select a Pre-defined Schema',
+export const intitalGraphType = (isGDSActive: boolean): GraphType[] => {
+  return isGDSActive
+    ? ['DocumentChunk', 'Entities', 'Communities'] // GDS is active, include communities
+    : ['DocumentChunk', 'Entities']; // GDS is inactive, exclude communities
 };
 
 export const graphLabels = {
@@ -237,6 +257,26 @@ export const graphLabels = {
   selectCheckbox: 'Select atleast one checkbox for graph view',
   totalRelationships: 'Total Relationships',
   nodeSize: 30,
+  docChunk: 'Document & Chunk',
+  community: 'Communities',
+  noNodesRels: 'No Nodes and No relationships',
 };
 
 export const RESULT_STEP_SIZE = 25;
+
+export const connectionLabels = {
+  notConnected: 'Not Connected',
+  graphDataScience: 'Graph Data Science',
+  graphDatabase: 'Graph Database',
+  greenStroke: 'green',
+  redStroke: 'red',
+};
+
+export const getDefaultMessage = () => {
+  return [{ ...chatbotmessages.listMessages[0], datetime: getDateTime() }];
+};
+
+export const appLabels = {
+  ownSchema: 'Or Define your own Schema',
+  predefinedSchema: 'Select a Pre-defined Schema',
+};

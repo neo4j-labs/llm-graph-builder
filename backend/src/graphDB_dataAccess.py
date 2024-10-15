@@ -6,7 +6,11 @@ from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_up
 from src.document_sources.gcs_bucket import delete_file_from_gcs
 from src.shared.constants import BUCKET_UPLOAD
 from src.entities.source_node import sourceNode
+from src.communities import MAX_COMMUNITY_LEVELS
 import json
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class graphDBdataAccess:
 
@@ -140,8 +144,58 @@ class graphDBdataAccess:
                                 )
         else:
             logging.info("Vector index does not exist, So KNN graph not update")
+
+    def check_account_access(self, database):
+        query = """
+        SHOW USER PRIVILEGES 
+        YIELD * 
+        WHERE graph = $database AND action IN ['read'] 
+        RETURN COUNT(*) AS readAccessCount
+        """
+        try:
+            logging.info(f"Checking access for database: {database}")
+
+            result = self.graph.query(query, params={"database": database})
+            read_access_count = result[0]["readAccessCount"] if result else 0
+
+            logging.info(f"Read access count: {read_access_count}")
+
+            if read_access_count > 0:
+                logging.info("The account has read access.")
+                return False
+            else:
+                logging.info("The account has write access.")
+                return True
+
+        except Exception as e:
+            logging.error(f"Error checking account access: {e}")
+            return False
+
+    def check_gds_version(self):
+        try:
+            gds_procedure_count = """
+            SHOW PROCEDURES
+            YIELD name
+            WHERE name STARTS WITH "gds."
+            RETURN COUNT(*) AS totalGdsProcedures
+            """
+            result = self.graph.query(gds_procedure_count)
+            total_gds_procedures = result[0]['totalGdsProcedures'] if result else 0
+
+            enable_communities = os.environ.get('ENABLE_COMMUNITIES','').upper() == "TRUE"
+            logging.info(f"Enable Communities {enable_communities}")
+
+            if enable_communities and total_gds_procedures > 0:
+                logging.info("GDS is available in the database.")
+                return True
+            else:
+                logging.info("Communities are disabled or GDS is not available in the database.")
+                return False
+        except Exception as e:
+            logging.error(f"An error occurred while checking GDS version: {e}")
+            return False
             
-    def connection_check_and_get_vector_dimensions(self):
+    def connection_check_and_get_vector_dimensions(self,database):
         """
         Get the vector index dimension from database and application configuration and DB connection status
         
@@ -166,19 +220,21 @@ class graphDBdataAccess:
         embedding_model = os.getenv('EMBEDDING_MODEL')
         embeddings, application_dimension = load_embedding_model(embedding_model)
         logging.info(f'embedding model:{embeddings} and dimesion:{application_dimension}')
-        # print(chunks_exists)
+
+        gds_status = self.check_gds_version()
+        write_access = self.check_account_access(database=database)
         
         if self.graph:
             if len(db_vector_dimension) > 0:
-                return {'db_vector_dimension': db_vector_dimension[0]['vector_dimensions'], 'application_dimension':application_dimension, 'message':"Connection Successful"}
+                return {'db_vector_dimension': db_vector_dimension[0]['vector_dimensions'], 'application_dimension':application_dimension, 'message':"Connection Successful","gds_status":gds_status,"write_access":write_access}
             else:
                 if len(db_vector_dimension) == 0 and len(result_chunks) == 0:
                     logging.info("Chunks and vector index does not exists in database")
-                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":False}
+                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":False,"gds_status":gds_status,"write_access":write_access}
                 elif len(db_vector_dimension) == 0 and result_chunks[0]['hasEmbedding']==0 and result_chunks[0]['chunks'] > 0:
-                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":True}
+                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":True,"gds_status":gds_status,"write_access":write_access}
                 else:
-                    return {'message':"Connection Successful"}
+                    return {'message':"Connection Successful","gds_status": gds_status,"write_access":write_access}
 
     def execute_query(self, query, param=None):
         return self.graph.query(query, param)
@@ -226,10 +282,23 @@ class graphDBdataAccess:
             match (c)-[:HAS_ENTITY]->(e)
             where not exists { (e)<-[:HAS_ENTITY]-()-[:PART_OF]->(d2) where not d2 in documents }
             detach delete e
-            """    
+            """ 
+        query_to_delete_communities = """
+            MATCH (c:`__Community__`) 
+            WHERE NOT EXISTS { ()-[:IN_COMMUNITY]->(c) } AND c.level = 0 
+            DETACH DELETE c 
+
+            WITH *
+            UNWIND range(1, $max_level) AS level
+            MATCH (c:`__Community__`) 
+            WHERE c.level = level AND NOT EXISTS { (c)<-[:PARENT_COMMUNITY]-(child) } 
+            DETACH DELETE c
+        """   
         param = {"filename_list" : filename_list, "source_types_list": source_types_list}
+        community_param = {"max_level":MAX_COMMUNITY_LEVELS}
         if deleteEntities == "true":
             result = self.execute_query(query_to_delete_document_and_entities, param)
+            _ = self.execute_query(query_to_delete_communities,community_param)
             logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' from database")
         else :
             result = self.execute_query(query_to_delete_document, param)    
@@ -238,17 +307,29 @@ class graphDBdataAccess:
     
     def list_unconnected_nodes(self):
         query = """
-                MATCH (e:!Chunk&!Document) 
-                WHERE NOT exists { (e)--(:!Chunk&!Document) }
-                OPTIONAL MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(e)
-                RETURN e {.*, embedding:null, elementId:elementId(e), labels:labels(e)} as e, 
-                collect(distinct doc.fileName) as documents, count(distinct c) as chunkConnections
-                ORDER BY e.id ASC
-                LIMIT 100
-                """
+        MATCH (e:!Chunk&!Document&!`__Community__`) 
+        WHERE NOT exists { (e)--(:!Chunk&!Document&!`__Community__`) }
+        OPTIONAL MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(e)
+        RETURN 
+        e {
+            .*,
+            embedding: null,
+            elementId: elementId(e),
+            labels: CASE 
+            WHEN size(labels(e)) > 1 THEN 
+                apoc.coll.removeAll(labels(e), ["__Entity__"])
+            ELSE 
+                ["Entity"]
+            END
+        } AS e, 
+        collect(distinct doc.fileName) AS documents, 
+        count(distinct c) AS chunkConnections
+        ORDER BY e.id ASC
+        LIMIT 100
+        """
         query_total_nodes = """
-        MATCH (e:!Chunk&!Document) 
-        WHERE NOT exists { (e)--(:!Chunk&!Document) }
+        MATCH (e:!Chunk&!Document&!`__Community__`) 
+        WHERE NOT exists { (e)--(:!Chunk&!Document&!`__Community__`) }
         RETURN count(*) as total
         """
         nodes_list = self.execute_query(query)
@@ -268,9 +349,9 @@ class graphDBdataAccess:
         score_value = float(os.environ.get('DUPLICATE_SCORE_VALUE'))
         text_distance = int(os.environ.get('DUPLICATE_TEXT_DISTANCE'))
         query_duplicate_nodes = """
-                MATCH (n:!Chunk&!Document) with n 
-                WHERE n.embedding is not null and n.id is not null // and size(n.id) > 3
-                WITH n ORDER BY count {{ (n)--() }} DESC, size(n.id) DESC // updated
+                MATCH (n:!Chunk&!Document&!`__Community__`) with n 
+                WHERE n.embedding is not null and n.id is not null // and size(toString(n.id)) > 3
+                WITH n ORDER BY count {{ (n)--() }} DESC, size(toString(n.id)) DESC // updated
                 WITH collect(n) as nodes
                 UNWIND nodes as n
                 WITH n, [other in nodes 
@@ -280,9 +361,9 @@ class graphDBdataAccess:
                 AND 
                 (
                 // either contains each other as substrings or has a text edit distinct of less than 3
-                (size(other.id) > 2 AND toLower(n.id) CONTAINS toLower(other.id)) OR 
-                (size(n.id) > 2 AND toLower(other.id) CONTAINS toLower(n.id))
-                OR (size(n.id)>5 AND apoc.text.distance(toLower(n.id), toLower(other.id)) < $duplicate_text_distance)
+                (size(toString(other.id)) > 2 AND toLower(n.id) CONTAINS toLower(other.id)) OR 
+                (size(toString(n.id)) > 2 AND toLower(other.id) CONTAINS toLower(n.id))
+                OR (size(toString(n.id))>5 AND apoc.text.distance(toLower(n.id), toLower(other.id)) < $duplicate_text_distance)
                 OR
                 vector.similarity.cosine(other.embedding, n.embedding) > $duplicate_score_value
                 )] as similar
