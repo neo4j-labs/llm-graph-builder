@@ -164,6 +164,11 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
     description: 'Enable community creation across entities to use GraphRAG capabilities both local and global search.',
   },
 ];
+export const RETRY_OPIONS = [
+  'start_from_beginning',
+  'delete_entities_and_start_from_beginning',
+  'start_from_last_processed_position',
+];
 export const batchSize: number = parseInt(process.env.VITE_BATCH_SIZE ?? '2');
 
 // Graph Constants

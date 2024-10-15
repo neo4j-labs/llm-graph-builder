@@ -413,7 +413,8 @@ const Content: React.FC<ContentProps> = ({
       await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       showSuccessToast('All Q&A functionality is available now.');
     }
-    remainingFiles.forEach((f) => {
+    for (let index = 0; index < remainingFiles.length; index++) {
+      const f = remainingFiles[index];
       setFilesData((prev) =>
         prev.map((pf) => {
           if (pf.id === f.id) {
@@ -567,7 +568,7 @@ const Content: React.FC<ContentProps> = ({
       if (response.data.status === 'Failure') {
         throw new Error(response.data.error);
       }
-      const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption===RETRY_OPIONS[1];
+      const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption === RETRY_OPIONS[1];
       setFilesData((prev) => {
         return prev.map((f) => {
           return f.name === filename

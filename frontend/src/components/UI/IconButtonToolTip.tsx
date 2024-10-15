@@ -72,28 +72,3 @@ export const IconWithToolTip = ({
     </Tip>
   );
 };
-
-export const IconWithToolTip = ({
-  text,
-  children,
-  placement = 'bottom',
-}: {
-  label: string;
-  text: string | React.ReactNode;
-  children: React.ReactNode;
-  onClick?: React.MouseEventHandler<HTMLButtonElement> | undefined;
-  size?: 'small' | 'medium' | 'large';
-  clean?: boolean;
-  grouped?: boolean;
-  placement?: 'bottom' | 'top' | 'right' | 'left';
-  disabled?: boolean;
-}) => {
-  return (
-    <Tip allowedPlacements={[placement]}>
-      <Tip.Trigger>{children}</Tip.Trigger>
-      <Tip.Content isPortaled={false} style={{ whiteSpace: 'nowrap' }}>
-        {text}
-      </Tip.Content>
-    </Tip>
-  );
-};

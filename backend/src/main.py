@@ -376,8 +376,6 @@ async def processing_source(uri, userName, password, database, model, file_name,
       # selected_chunks = []
       is_cancelled_status = False
       job_status = "Completed"
-      node_count = 0
-      rel_count = 0
       for i in range(0, len(chunkId_chunkDoc_list), update_graph_chunk_processed):
         select_chunks_upto = i+update_graph_chunk_processed
         logging.info(f'Selected Chunks upto: {select_chunks_upto}')
@@ -406,9 +404,14 @@ async def processing_source(uri, userName, password, database, model, file_name,
           obj_source_node.file_name = file_name
           obj_source_node.updated_at = end_time
           obj_source_node.processing_time = processed_time
-          obj_source_node.node_count = node_count
-          obj_source_node.processed_chunk = select_chunks_upto
-          obj_source_node.relationship_count = rel_count
+          obj_source_node.processed_chunk = select_chunks_upto+select_chunks_with_retry
+          if retry_condition == START_FROM_BEGINNING:
+            result = graph.query(QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT, params={"filename":file_name})
+            obj_source_node.node_count = result[0]['nodes']
+            obj_source_node.relationship_count = result[0]['rels']
+          else:  
+            obj_source_node.node_count = node_count
+            obj_source_node.relationship_count = rel_count
           graphDb_data_Access.update_source_node(obj_source_node)
       
       result = graphDb_data_Access.get_current_status_document_node(file_name)

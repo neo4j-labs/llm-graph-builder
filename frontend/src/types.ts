@@ -203,10 +203,6 @@ export interface Source {
   source_name: string;
   time_stamps?: string;
 }
-export interface chunk {
-  id: string;
-  score: number;
-}
 export interface ChunkDetail {
   id: string;
   score: number;
