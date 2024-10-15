@@ -517,6 +517,7 @@ export type Community = {
   level: number;
   community_rank: number;
   score?: number;
+  element_id:string;
 };
 export type GroupedEntity = {
   texts: Set<string>;
@@ -556,6 +557,7 @@ export interface Chunk {
   fileSource: string;
   score?: string;
   fileType: string;
+  element_id: string;
 }
 
 export interface SpeechSynthesisProps {
@@ -715,6 +717,7 @@ export type CommunitiesProps = {
   loading: boolean;
   communities: Community[];
   mode: string;
+
   // nodeValues: ExtendedNode[];
   // relationshipValues: ExtendedRelationship[];
 };
