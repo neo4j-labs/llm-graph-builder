@@ -406,7 +406,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       handleSpeak(chat.modes[chat.currentMode]?.message, chat.id);
     }
   }, []);
-  
+
   const downloadClickHandler = useCallback(function downloadClickHandler<Type>(JsonData: Type) {
     const textFile = new Blob([JSON.stringify(JsonData)], { type: 'application/json' });
     if (downloadLinkRef && downloadLinkRef.current) {

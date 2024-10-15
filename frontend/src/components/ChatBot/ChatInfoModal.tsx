@@ -29,6 +29,7 @@ import { Relationship } from '@neo4j-nvl/base';
 import { getChatMetrics } from '../../services/GetRagasMetric';
 import MetricsTab from './MetricsTab';
 import { Stack } from '@mui/material';
+import { capitalizeWithUnderscore } from '../../utils/Utils';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
   sources,
@@ -263,14 +264,28 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           <Stack spacing={2}>
             <Stack spacing={2}>
               {!supportedLLmsForRagas.includes(metricmodel) && (
-                <Banner type='warning'>LLM Model Not Supported ,Please Choose Different Model</Banner>
+                <Banner
+                  type='warning'
+                  title='LLM Model Not Supported ,Please Choose Different Model'
+                  description={
+                    <Typography variant='body-medium'>
+                      Currently ragas evaluation works on{' '}
+                      {supportedLLmsForRagas.map((s, idx) => (
+                        <span className='font-bold'>
+                          {capitalizeWithUnderscore(s) + (idx != supportedLLmsForRagas.length - 1 ? ',' : '')}
+                        </span>
+                      ))}
+                      .
+                    </Typography>
+                  }
+                ></Banner>
               )}
               <Box>
                 <Typography variant='body-large'>
                   We use several key metrics to assess the quality of our chat responses. Click the button below to view
-                  detailed scores for this interaction. These scores help us continuously improve the accuracy and
-                  helpfulness of our chatbots.This usually takes about <span className='font-bold'>20</span> seconds.
-                  You'll see detailed scores shortly.
+                  detailed scores for this interaction using <span className='font-bold'>ragas framework</span>. These
+                  scores help us continuously improve the accuracy and helpfulness of our chatbots.This usually takes
+                  about <span className='font-bold'>20 seconds</span> . You'll see detailed scores shortly.
                 </Typography>
               </Box>
               <Stack>
