@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Dialog, SideNavigation, Tip, useMediaQuery } from '@neo4j-ndl/react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Dialog, SideNavigation, TextLink, Tip, useMediaQuery } from '@neo4j-ndl/react';
 import {
   ArrowRightIconOutline,
   ArrowLeftIconOutline,
@@ -7,12 +7,13 @@ import {
   ArrowsPointingOutIconOutline,
   ChatBubbleOvalLeftEllipsisIconOutline,
   CloudArrowUpIconSolid,
+  ArrowDownTrayIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { SideNavProps } from '../../types';
 import Chatbot from '../ChatBot/Chatbot';
 import { createPortal } from 'react-dom';
 import { useMessageContext } from '../../context/UserMessages';
-import { getIsLoading } from '../../utils/Utils';
+import { downloadClickHandler, getIsLoading } from '../../utils/Utils';
 import ExpandedChatButtonContainer from '../ChatBot/ExpandedChatButtonContainer';
 import { APP_SOURCES, tooltips } from '../../utils/Constants';
 import ChatModeToggle from '../ChatBot/ChatModeToggle';
@@ -46,6 +47,7 @@ const SideNav: React.FC<SideNavProps> = ({
   const [showChatMode, setshowChatMode] = useState<boolean>(false);
   const largedesktops = useMediaQuery(`(min-width:1440px )`);
   const { connectionStatus, isReadOnlyUser } = useCredentials();
+  const downloadLinkRef = useRef<HTMLAnchorElement>(null);
 
   const date = new Date();
   useEffect(() => {
@@ -93,6 +95,7 @@ const SideNav: React.FC<SideNavProps> = ({
       toggleDrawer();
     }
   };
+
   return (
     <div style={{ height: 'calc(100vh - 58px)', minHeight: '200px', display: 'flex' }}>
       <SideNavigation iconMenu={true} expanded={false} position={position}>
@@ -185,6 +188,30 @@ const SideNav: React.FC<SideNavProps> = ({
                         <ArrowsPointingOutIconOutline className='n-size-token-7' />
                       </Tip.Trigger>
                       <Tip.Content>{tooltips.maximise}</Tip.Content>
+                    </>
+                  }
+                />
+              </Tip>
+              <Tip allowedPlacements={['left']}>
+                <SideNavigation.Item
+                  onClick={() => {
+                    downloadClickHandler(
+                      { conversation: messages },
+                      downloadLinkRef,
+                      'graph-builder-conversation.json'
+                    );
+                  }}
+                  icon={
+                    <>
+                      <Tip.Trigger>
+                        <ArrowDownTrayIconOutline className='n-size-token-7' />
+                      </Tip.Trigger>
+                      <Tip.Content>
+                        Download Conversation
+                        <TextLink ref={downloadLinkRef} className='!hidden'>
+                          ""
+                        </TextLink>
+                      </Tip.Content>
                     </>
                   }
                 />
