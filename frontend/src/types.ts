@@ -657,9 +657,9 @@ export interface S3File {
 export interface GraphViewButtonProps {
   nodeValues?: ExtendedNode[];
   relationshipValues?: ExtendedRelationship[];
-  fill?: "text" | "filled" | "outlined" ;
+  fill?: 'text' | 'filled' | 'outlined';
   label: string;
-  viewType: string
+  viewType: string;
 }
 export interface DrawerChatbotProps {
   isExpanded: boolean;
@@ -701,7 +701,7 @@ export type SourcesProps = {
 export type ChunkProps = {
   loading: boolean;
   chunks: Chunk[];
-  mode:string;
+  mode: string;
 };
 
 export type EntitiesProps = {
@@ -714,7 +714,7 @@ export type EntitiesProps = {
 export type CommunitiesProps = {
   loading: boolean;
   communities: Community[];
-  mode:string;
+  mode: string;
   // nodeValues: ExtendedNode[];
   // relationshipValues: ExtendedRelationship[];
 };
@@ -809,3 +809,15 @@ export type GraphPropertiesPanelProps = {
   inspectedItem: BasicNode | BasicRelationship;
   newScheme: Scheme;
 };
+
+export interface GraphViewHandlerProps {
+  nodeValues?: ExtendedNode[];
+  relationshipValues?: ExtendedRelationship[];
+  fill?: 'text' | 'filled' | 'outlined';
+  label?: string;
+  viewType?: string;
+  buttonLabel: string;
+  graphonly_entities?: [];
+  entityInfo?: Entity[];
+  mode?: string;
+}

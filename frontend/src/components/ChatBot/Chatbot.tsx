@@ -232,13 +232,13 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               total_tokens: response.info.total_tokens,
               response_time: response.info.response_time,
               cypher_query: response.info.cypher_query,
-              graphonly_entities: response.info.context??[],
-              entities: response.info.entities??[],
+              graphonly_entities: response.info.context ?? [],
+              entities: response.info.entities ?? [],
               nodeDetails: response.info.nodedetails,
               error: response.info.error,
-              metric_question: response.info?.metric_details?.question??'',
-              metric_answer: response.info?.metric_details?.answer??'',
-              metric_contexts: response.info?.metric_details?.contexts??'',
+              metric_question: response.info?.metric_details?.question ?? '',
+              metric_answer: response.info?.metric_details?.answer ?? '',
+              metric_contexts: response.info?.metric_details?.contexts ?? '',
             };
             if (index === 0) {
               simulateTypingEffect(chatbotMessageId, responseMode, mode, responseMode.message);
@@ -400,7 +400,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       handleSpeak(chat.modes[chat.currentMode]?.message, chat.id);
     }
   }, []);
-  const downloadClickHandler = useCallback(function downloadClickHandler<Type>(JsonData: Type) {
+  const downloadClickHandler = useCallback((JsonData: Type) => {
     const textFile = new Blob([JSON.stringify(JsonData)], { type: 'application/json' });
     if (downloadLinkRef && downloadLinkRef.current) {
       downloadLinkRef.current.href = URL.createObjectURL(textFile);

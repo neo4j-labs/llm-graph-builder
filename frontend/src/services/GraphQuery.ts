@@ -27,10 +27,7 @@ export const graphQueryAPI = async (
   }
 };
 
-export const getNeighbors = async (
-  userCredentials: UserCredentials,
-  elementId: string
-) => {
+export const getNeighbors = async (userCredentials: UserCredentials, elementId: string) => {
   try {
     const formData = new FormData();
     formData.append('uri', userCredentials?.uri ?? '');

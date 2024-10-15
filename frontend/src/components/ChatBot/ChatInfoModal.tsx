@@ -75,7 +75,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
 
   console.log('node', nodeDetails);
 
-
   const actions: CypherCodeBlockProps['actions'] = useMemo(
     () => [
       {
@@ -240,9 +239,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
               {mode === chatModeLables.graph_vector ||
-                mode === chatModeLables.graph ||
-                mode === chatModeLables.graph_vector_fulltext ||
-                mode === chatModeLables.entity_vector ? (
+              mode === chatModeLables.graph ||
+              mode === chatModeLables.graph_vector_fulltext ||
+              mode === chatModeLables.entity_vector ? (
                 <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
               ) : (
                 <></>
@@ -310,7 +309,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           />
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={5}>
-          <ChunkInfo chunks={chunks} loading={infoLoading} mode={mode}/>
+          <ChunkInfo chunks={chunks} loading={infoLoading} mode={mode} />
         </Tabs.TabPanel>
         <Tabs.TabPanel value={activeTab} tabId={6}>
           <CypherCodeBlock
@@ -331,7 +330,12 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       </Flex>
       {activeTab == 4 && nodes?.length && relationships?.length ? (
         <Box className='button-container flex mt-2 justify-center'>
-          <GraphViewButton nodeValues={nodes} relationshipValues={relationships} label='Graph Entities used for Answer Generation' viewType='Entities' />
+          <GraphViewButton
+            nodeValues={nodes}
+            relationshipValues={relationships}
+            label='Graph Entities used for Answer Generation'
+            viewType='Entities'
+          />
         </Box>
       ) : (
         <></>

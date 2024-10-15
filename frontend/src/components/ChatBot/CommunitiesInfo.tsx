@@ -1,7 +1,7 @@
 import { Box, LoadingSpinner, Flex, Typography } from '@neo4j-ndl/react';
 import { FC } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { CommunitiesProps} from '../../types';
+import { CommunitiesProps } from '../../types';
 import { chatModeLables } from '../../utils/Constants';
 import GraphViewButton from '../Graph/GraphViewButton';
 
@@ -19,12 +19,14 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
               <li key={`${community.id}${index}`} className='mb-2'>
                 <div>
                   <Flex flexDirection='row' gap='2'>
-                    <GraphViewButton fill='text' label={`ID : ${community.id}`} viewType='Community'/>
+                    <GraphViewButton fill='text' label={`ID : ${community.id}`} viewType='Community' />
                   </Flex>
-                  {mode === chatModeLables.global_vector && community.score && (<Flex flexDirection='row' gap='2'>
-                    <Typography variant='subheading-medium'>Score : </Typography>
-                    <Typography variant='subheading-medium'>{community.score}</Typography>
-                  </Flex>)}
+                  {mode === chatModeLables.global_vector && community.score && (
+                    <Flex flexDirection='row' gap='2'>
+                      <Typography variant='subheading-medium'>Score : </Typography>
+                      <Typography variant='subheading-medium'>{community.score}</Typography>
+                    </Flex>
+                  )}
                   <ReactMarkdown>{community.summary}</ReactMarkdown>
                 </div>
               </li>
