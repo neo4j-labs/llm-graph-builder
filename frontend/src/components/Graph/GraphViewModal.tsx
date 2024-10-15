@@ -74,7 +74,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       {}
     );
   };
-
   // Unmounting the component
   useEffect(() => {
     const timeoutId = setTimeout(() => {

@@ -37,7 +37,7 @@ import { buttonCaptions, chatModeLables } from '../../utils/Constants';
 import useSpeechSynthesis from '../../hooks/useSpeech';
 import ButtonWithToolTip from '../UI/ButtonWithToolTip';
 import FallBackDialog from '../UI/FallBackDialog';
-import { getDateTime } from '../../utils/Utils';
+import { downloadClickHandler, getDateTime } from '../../utils/Utils';
 import ChatModesSwitch from './ChatModesSwitch';
 import CommonActions from './CommonChatActions';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
@@ -80,7 +80,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [infoLoading, toggleInfoLoading] = useReducer((s) => !s, false);
   const [metricsLoading, toggleMetricsLoading] = useReducer((s) => !s, false);
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
-  const [activeChat, setActiveChat] = useState<Messages>();
+  const [activeChat, setActiveChat] = useState<Messages | null>(null);
 
   const [_, copy] = useCopyToClipboard();
   const { speak, cancel, speaking } = useSpeechSynthesis({
@@ -374,7 +374,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     }
   };
 
-  const detailsHandler = useCallback((chat: Messages) => {
+  const detailsHandler = useCallback((chat: Messages, previousActiveChat: Messages | null) => {
     const currentMode = chat.modes[chat.currentMode];
     setModelModal(currentMode.model ?? '');
     setSourcesModal(currentMode.sources ?? []);
@@ -391,6 +391,12 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     setMetricContext(currentMode.metric_contexts ?? '');
     setMetricAnswer(currentMode.metric_answer ?? '');
     setActiveChat(chat);
+    if (previousActiveChat != null && chat.id != previousActiveChat?.id) {
+      setNodes([]);
+      setChunks([]);
+      setInfoEntities([]);
+      setMetricDetails(null);
+    }
   }, []);
 
   const speechHandler = useCallback((chat: Messages) => {
@@ -398,14 +404,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       handleCancel(chat.id);
     } else {
       handleSpeak(chat.modes[chat.currentMode]?.message, chat.id);
-    }
-  }, []);
-  const downloadClickHandler = useCallback((JsonData: Type) => {
-    const textFile = new Blob([JSON.stringify(JsonData)], { type: 'application/json' });
-    if (downloadLinkRef && downloadLinkRef.current) {
-      downloadLinkRef.current.href = URL.createObjectURL(textFile);
-      downloadLinkRef.current.download = 'graph-builder-chat-details.json';
-      downloadLinkRef.current.click();
     }
   }, []);
 
@@ -487,6 +485,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                               detailsHandler={detailsHandler}
                               listMessages={listMessages}
                               speechHandler={speechHandler}
+                              activeChat={activeChat}
                             ></CommonActions>
                             {messagechatModes.length > 1 && (
                               <ChatModesSwitch
@@ -511,6 +510,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                                 detailsHandler={detailsHandler}
                                 listMessages={listMessages}
                                 speechHandler={speechHandler}
+                                activeChat={activeChat}
                               ></CommonActions>
                             </Flex>
                             <Box>
@@ -572,6 +572,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           }}
           onClose={() => setShowInfoModal(false)}
           open={showInfoModal}
+          size={activeChat?.currentMode === chatModeLables.entity_vector ? 'large' : 'medium'}
         >
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <IconButton
@@ -580,17 +581,21 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               clean
               disabled={metricsLoading || infoLoading}
               onClick={() => {
-                downloadClickHandler({
-                  chatResponse: activeChat,
-                  chunks,
-                  metricDetails,
-                  communities,
-                  responseTime,
-                  entities: infoEntities,
-                  nodes,
-                  tokensUsed,
-                  model,
-                });
+                downloadClickHandler(
+                  {
+                    chatResponse: activeChat,
+                    chunks,
+                    metricDetails,
+                    communities,
+                    responseTime,
+                    entities: infoEntities,
+                    nodes,
+                    tokensUsed,
+                    model,
+                  },
+                  downloadLinkRef,
+                  'graph-builder-chat-details.json'
+                );
               }}
             >
               <ArrowDownTrayIconOutline />

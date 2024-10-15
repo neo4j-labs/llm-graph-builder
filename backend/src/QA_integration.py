@@ -402,7 +402,8 @@ def get_neo4j_retriever(graph, document_names,chat_mode_settings, score_threshol
 def setup_chat(model, graph, document_names, chat_mode_settings):
     start_time = time.time()
     try:
-        model = "openai-gpt-4o" if model == "diffbot" else model
+        if model == "diffbot":
+            model = os.getenv('DEFAULT_DIFFBOT_CHAT_MODEL')
         
         llm, model_name = get_llm(model=model)
         logging.info(f"Model called in chat: {model} (version: {model_name})")

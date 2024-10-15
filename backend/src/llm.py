@@ -150,7 +150,6 @@ async def get_graph_document_list(
 ):
     futures = []
     graph_document_list = []
-
     if "diffbot_api_key" in dir(llm):
         llm_transformer = llm
     else:
@@ -181,7 +180,11 @@ async def get_graph_document_list(
     #     for i, future in enumerate(concurrent.futures.as_completed(futures)):
     #         graph_document = future.result()
     #         graph_document_list.append(graph_document[0])
-    graph_document_list = await llm_transformer.aconvert_to_graph_documents(combined_chunk_document_list)
+    
+    if isinstance(llm,DiffbotGraphTransformer):
+        graph_document_list = llm_transformer.convert_to_graph_documents(combined_chunk_document_list)
+    else:
+        graph_document_list = await llm_transformer.aconvert_to_graph_documents(combined_chunk_document_list)
     return graph_document_list
 
 

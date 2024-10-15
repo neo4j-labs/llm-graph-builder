@@ -8,6 +8,7 @@ import {
   useCopyToClipboard,
   Banner,
   useMediaQuery,
+  Button,
 } from '@neo4j-ndl/react';
 import { DocumentDuplicateIconOutline, ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
@@ -28,7 +29,7 @@ import { Relationship } from '@neo4j-nvl/base';
 import { getChatMetrics } from '../../services/GetRagasMetric';
 import MetricsTab from './MetricsTab';
 import { Stack } from '@mui/material';
-import ButtonWithToolTip from '../UI/ButtonWithToolTip';
+import { capitalizeWithUnderscore } from '../../utils/Utils';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
   sources,
@@ -251,7 +252,11 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               ) : (
                 <></>
               )}
-              {mode === chatModeLables.entity_vector ? <Tabs.Tab tabId={7}>Communities</Tabs.Tab> : <></>}
+              {mode === chatModeLables.entity_vector && communities.length ? (
+                <Tabs.Tab tabId={7}>Communities</Tabs.Tab>
+              ) : (
+                <></>
+              )}
               <Tabs.Tab tabId={8}>Evaluation Metrics</Tabs.Tab>
             </>
           )}
@@ -264,11 +269,29 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         <Tabs.TabPanel tabId={8} value={activeTab}>
           <Stack spacing={2}>
             <Stack spacing={2}>
+              {!supportedLLmsForRagas.includes(metricmodel) && (
+                <Banner
+                  type='warning'
+                  title='LLM Model Not Supported ,Please Choose Different Model'
+                  description={
+                    <Typography variant='body-medium'>
+                      Currently ragas evaluation works on{' '}
+                      {supportedLLmsForRagas.map((s, idx) => (
+                        <span className='font-bold'>
+                          {capitalizeWithUnderscore(s) + (idx != supportedLLmsForRagas.length - 1 ? ',' : '')}
+                        </span>
+                      ))}
+                      .
+                    </Typography>
+                  }
+                ></Banner>
+              )}
               <Box>
                 <Typography variant='body-large'>
                   We use several key metrics to assess the quality of our chat responses. Click the button below to view
-                  detailed scores for this interaction. These scores help us continuously improve the accuracy and
-                  helpfulness of our chatbots.
+                  detailed scores for this interaction using <span className='font-bold'>ragas framework</span>. These
+                  scores help us continuously improve the accuracy and helpfulness of our chatbots.This usually takes
+                  about <span className='font-bold'>20 seconds</span> . You'll see detailed scores shortly.
                 </Typography>
               </Box>
               <Stack>
@@ -288,15 +311,14 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             </Stack>
             {showMetricsTable && <MetricsTab metricsLoading={metricsLoading} metricDetails={metricDetails} />}
             {!metricDetails && (
-              <ButtonWithToolTip
+              <Button
                 label='Metrics Action Button'
-                text={!supportedLLmsForRagas.includes(metricmodel) ? 'please choose different model' : ''}
                 disabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
                 className='w-max self-center mt-4'
                 onClick={loadMetrics}
               >
                 View Detailed Metrics
-              </ButtonWithToolTip>
+              </Button>
             )}
           </Stack>
         </Tabs.TabPanel>
