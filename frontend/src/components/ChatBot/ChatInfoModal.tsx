@@ -250,7 +250,11 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               ) : (
                 <></>
               )}
-              {mode === chatModeLables.entity_vector ? <Tabs.Tab tabId={7}>Communities</Tabs.Tab> : <></>}
+              {mode === chatModeLables.entity_vector && communities.length ? (
+                <Tabs.Tab tabId={7}>Communities</Tabs.Tab>
+              ) : (
+                <></>
+              )}
               <Tabs.Tab tabId={8}>Evaluation Metrics</Tabs.Tab>
             </>
           )}
