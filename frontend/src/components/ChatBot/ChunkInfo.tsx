@@ -58,18 +58,19 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   <>
                     <div className='flex flex-row inline-block items-center'>
                       <DocumentTextIconOutline className='w-4 h-4 inline-block mr-2' />
-                      <Typography
-                        variant='subheading-medium'
-                        className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden'
+                      <TextLink
+                        onClick={() => handleChunkClick(chunk.element_id)}
+                        className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden cursor-pointer'
                       >
                         {chunk?.fileName}
-                      </Typography>
+                      </TextLink>
                     </div>
                     {mode !== chatModeLables.global_vector &&
                       mode !== chatModeLables.entity_vector &&
                       mode !== chatModeLables.graph && (
                         <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                       )}
+                    <div><Typography variant='subheading-small'>Page: {chunk?.page_number}</Typography></div>
                   </>
                 ) : chunk?.url && chunk?.start_time ? (
                   <>
@@ -165,16 +166,6 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   </>
                 )}
                 <div className='mt-2'>
-                  <IconButtonWithToolTip
-                    placement='right'
-                    text='Graph'
-                    size='medium'
-                    label='Graph view'
-                    clean
-                    onClick={() => handleChunkClick(chunk?.element_id)}
-                  >
-                    <MagnifyingGlassCircleIconSolid />
-                  </IconButtonWithToolTip>
                   <ReactMarkdown>{chunk?.text}</ReactMarkdown>
                 </div>
               </li>

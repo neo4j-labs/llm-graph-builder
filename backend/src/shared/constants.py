@@ -480,7 +480,8 @@ RETURN
         community IN communities WHERE community IS NOT NULL | 
         community {
             .*,
-            embedding: null
+            embedding: null,
+            element_id:elementId(community)
         }
     ] AS communities,
     [
