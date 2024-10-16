@@ -71,6 +71,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const skipPageResetRef = useRef<boolean>(false);
   const [_, copy] = useCopyToClipboard();
   const { colorMode } = useContext(ThemeWrapperContext);
+  const [copyRow, setCopyRow] = useState<boolean>(false);
 
   const tableRef = useRef(null);
 
@@ -83,8 +84,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     }
   );
 
-  const handleCopy = (message: string) => {
-    copy(message);
+  const handleCopy = (rowData: any) => {
+    const rowString = JSON.stringify(rowData, null, 2);
+    copy(rowString);
+    setCopyRow(true);
+    setTimeout(() => {
+      setCopyRow(false);
+    }, 5000);
   };
   const columns = useMemo(
     () => [
@@ -154,18 +160,14 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         cell: (info) => {
           if (info.getValue() != 'Processing') {
             return (
-              <Tip allowedPlacements={['left']}>
-                <div
-                  className='cellClass'
-                  title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
-                >
-                  <Tip.Trigger>
-                    <StatusIndicator type={statusCheck(info.getValue())} />
-                    {info.getValue()}
-                  </Tip.Trigger>
-                  {(info.getValue() === 'Completed' ||
-                    info.getValue() === 'Failed' ||
-                    (info.getValue() === 'Cancelled' && !isReadOnlyUser)) && (
+              <div
+                className='cellClass'
+                title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
+              >
+                <StatusIndicator type={statusCheck(info.getValue())} />
+                {info.getValue()}
+                {(info.getValue() === 'Completed' || info.getValue() === 'Failed' || info.getValue() === 'Cancelled') &&
+                  !isReadOnlyUser && (
                     <span className='mx-1'>
                       <IconButtonWithToolTip
                         placement='right'
@@ -179,25 +181,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                       </IconButtonWithToolTip>
                     </span>
                   )}
-                </div>
-
-                {info.row.original?.status === 'Failed' && (
-                  <Tip.Content>
-                    <IconButton
-                      aria-label='error copy'
-                      clean
-                      label='copy error'
-                      size='small'
-                      onClick={() => handleCopy(info.row.original?.errorMessage ?? '')}
-                    >
-                      <ClipboardDocumentIconOutline
-                        color={colorMode === 'light' ? 'white' : ''}
-                        className='w-4 h-4 inline-block'
-                      />
-                    </IconButton>
-                  </Tip.Content>
-                )}
-              </Tip>
+              </div>
             );
           } else if (info.getValue() === 'Processing' && info.row.original.processingProgress === undefined) {
             return (
@@ -530,6 +514,17 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               onClick={() => onInspect(info?.row?.original?.name as string)}
             >
               <MagnifyingGlassCircleIconSolid />
+            </IconButtonWithToolTip>
+            <IconButtonWithToolTip
+              placement='left'
+              text='copy'
+              size='large'
+              label='Copy Row'
+              disabled={info.getValue() === 'Uploading'}
+              clean
+              onClick={() => handleCopy(info.row.original)}
+            >
+              <ClipboardDocumentIconOutline className={`${copyRow} ? 'cursor-wait': 'cursor`} />
             </IconButtonWithToolTip>
           </>
         ),
