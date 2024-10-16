@@ -350,13 +350,13 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           <></>
         )}
       </Flex>
-      {activeTab == 4 && nodes?.length && relationships?.length ? (
+      {activeTab == 4 && nodes?.length && relationships?.length && mode !== chatModeLables.graph ? (
         <Box className='button-container flex mt-2 justify-center'>
           <GraphViewButton
             nodeValues={nodes}
             relationshipValues={relationships}
             label='Graph Entities used for Answer Generation'
-            viewType='Entities'
+            viewType='chatInfoView'
           />
         </Box>
       ) : (

@@ -3,9 +3,9 @@ import { FC, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { CommunitiesProps, UserCredentials } from '../../types';
 import { chatModeLables } from '../../utils/Constants';
-import { getNeighbors } from '../../services/GraphQuery';
 import { useCredentials } from '../../context/UserCredentials';
 import GraphViewModal from '../Graph/GraphViewModal';
+import { handleGraphNodeClick } from './chatInfo';
 
 const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) => {
   const { userCredentials } = useCredentials();
@@ -15,28 +15,19 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
   const [viewPoint, setViewPoint] = useState('');
   const [loadingGraphView, setLoadingGraphView] = useState(false);
 
-  const handleCommunityClick = async (elementId: string) => {
-    setLoadingGraphView(true);
-    try {
-      const result = await getNeighbors(userCredentials as UserCredentials, elementId);
-      if (result && result.data.data.nodes.length > 0) {
-        const nodes = result.data.data.nodes.filter((node: any) => node.labels.length === 1);
-        const nodeIds = new Set(nodes.map((node: any) => node.element_id));
-        const relationships = result.data.data.relationships.filter(
-          (rel: any) => nodeIds.has(rel.end_node_element_id) && nodeIds.has(rel.start_node_element_id)
-        );
-        setNeoNodes(nodes);
-        setNeoRels(relationships);
-        setOpenGraphView(true);
-        setViewPoint('chatInfoView');
-      }
-    } catch (error: any) {
-      console.log('error', error);
-    }
-    finally {
-      setLoadingGraphView(false);
-    }
+  const handleCommunityClick = (elementId: string, viewMode: string) => {
+    handleGraphNodeClick(
+      userCredentials as UserCredentials,
+      elementId,
+      viewMode,
+      setNeoNodes,
+      setNeoRels,
+      setOpenGraphView,
+      setViewPoint,
+      setLoadingGraphView
+    );
   };
+
   return (
     <>
       {loading ? (
@@ -50,7 +41,11 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
               <li key={`${community.id}${index}`} className='mb-2'>
                 <div>
                   <Flex flexDirection='row' gap='2'>
-                    <TextLink className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`} label={`ID : ${community.id}`} onClick={() => handleCommunityClick(community.element_id)} >{`ID : ${community.id}`}</TextLink>
+                    <TextLink
+                      className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
+                      label={`ID : ${community.id}`}
+                      onClick={() => handleCommunityClick(community.element_id, 'chatInfoView')}
+                    >{`ID : ${community.id}`}</TextLink>
                   </Flex>
                   {mode === chatModeLables.global_vector && community.score && (
                     <Flex flexDirection='row' gap='2'>

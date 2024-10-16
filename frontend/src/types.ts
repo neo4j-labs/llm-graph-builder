@@ -517,7 +517,7 @@ export type Community = {
   level: number;
   community_rank: number;
   score?: number;
-  element_id:string;
+  element_id: string;
 };
 export type GroupedEntity = {
   texts: Set<string>;
@@ -610,6 +610,18 @@ export interface ExtendedNode extends Node {
     fileName?: string;
     [key: string]: any;
   };
+}
+
+export interface NeoNode {
+  element_id: string;
+  labels: string[];
+  properties: Record<string, any>;
+}
+export interface NeoRelationship {
+  element_id: string;
+  start_node_element_id: string;
+  end_node_element_id: string;
+  type: string;
 }
 
 export interface ExtendedRelationship extends Relationship {

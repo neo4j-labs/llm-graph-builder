@@ -12,7 +12,7 @@ import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { chatModeLables } from '../../utils/Constants';
 import { useCredentials } from '../../context/UserCredentials';
 import GraphViewModal from '../Graph/GraphViewModal';
-import { getNeighbors } from '../../services/GraphQuery';
+import { handleGraphNodeClick } from './chatInfo';
 
 const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   const themeUtils = useContext(ThemeWrapperContext);
@@ -23,30 +23,20 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   const [viewPoint, setViewPoint] = useState('');
   const [loadingGraphView, setLoadingGraphView] = useState(false);
 
-  const handleChunkClick = async (chunkId: string) => {
-    setLoadingGraphView(true);
-    try {
-      const result = await getNeighbors(userCredentials as UserCredentials, chunkId);
-      if (result && result.data.data.nodes.length > 0) {
-        const nodes = result.data.data.nodes.filter((node: any) => node.labels.length === 1);
-        const nodeIds = new Set(nodes.map((node: any) => node.element_id));
-        const relationships = result.data.data.relationships.filter(
-          (rel: any) => nodeIds.has(rel.end_node_element_id) && nodeIds.has(rel.start_node_element_id)
-        );
-        setNeoNodes(nodes);
-        setNeoRels(relationships);
-        setOpenGraphView(true);
-        setViewPoint('chatInfoView');
-      }
-    } catch (error: any) {
-      console.log('error', error);
-    }
-    finally {
-      setLoadingGraphView(false);
-    }
+  const handleChunkClick = async (elementId: string, viewMode: string) => {
+    handleGraphNodeClick(
+      userCredentials as UserCredentials,
+      elementId,
+      viewMode,
+      setNeoNodes,
+      setNeoRels,
+      setOpenGraphView,
+      setViewPoint,
+      setLoadingGraphView
+    );
   };
 
-  console.log('chunks', chunks)
+  console.log('chunks', chunks);
   return (
     <>
       {loading ? (
@@ -71,10 +61,13 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                     </div>
                     {mode !== chatModeLables.global_vector &&
                       mode !== chatModeLables.entity_vector &&
-                      mode !== chatModeLables.graph && chunk.score && (
+                      mode !== chatModeLables.graph &&
+                      chunk.score && (
                         <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                       )}
-                    <div><Typography variant='subheading-small'>Page: {chunk?.page_number}</Typography></div>
+                    <div>
+                      <Typography variant='subheading-small'>Page: {chunk?.page_number}</Typography>
+                    </div>
                   </>
                 ) : chunk?.url && chunk?.start_time ? (
                   <>
@@ -170,14 +163,17 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   </>
                 )}
                 <div className='mt-2'>
-                  <TextLink className={`!inline-block ${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`} onClick={() => handleChunkClick(chunk.element_id)}>
+                  <TextLink
+                    className={`!inline-block ${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
+                    onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                  >
                     <ReactMarkdown>{chunk?.text}</ReactMarkdown>
                   </TextLink>
                 </div>
               </li>
             ))}
           </ul>
-        </div >
+        </div>
       ) : (
         <span className='h6 text-center'> No Chunks Found</span>
       )}
@@ -194,4 +190,3 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   );
 };
 export default ChunkInfo;
-

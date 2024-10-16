@@ -5,8 +5,8 @@ import { calcWordColor } from '@neo4j-devtools/word-color';
 import { graphLabels } from '../../utils/Constants';
 import { parseEntity } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
-import { getNeighbors } from '../../services/GraphQuery';
 import GraphViewModal from '../Graph/GraphViewModal';
+import { handleGraphNodeClick } from './chatInfo';
 
 const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, infoEntities }) => {
   const { userCredentials } = useCredentials();
@@ -43,27 +43,17 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
     return Object.keys(labelCounts).sort((a, b) => labelCounts[b] - labelCounts[a]);
   }, [labelCounts]);
 
-  const handleEntityClick = async (elementId: string) => {
-    setLoadingGraphView(true);
-    try {
-      const result = await getNeighbors(userCredentials as UserCredentials, elementId);
-      if (result && result.data.data.nodes.length > 0) {
-        const nodes = result.data.data.nodes.filter((node: any) => node.labels.length === 1);
-        const nodeIds = new Set(nodes.map((node: any) => node.element_id));
-        const relationships = result.data.data.relationships.filter(
-          (rel: any) => nodeIds.has(rel.end_node_element_id) && nodeIds.has(rel.start_node_element_id)
-        );
-        setNeoNodes(nodes);
-        setNeoRels(relationships);
-        setOpenGraphView(true);
-        setViewPoint('chatInfoView');
-      }
-    } catch (error: any) {
-      console.log('error', error);
-    }
-    finally {
-      setLoadingGraphView(false);
-    }
+  const handleEntityClick = async (elementId: string, viewMode: string) => {
+    handleGraphNodeClick(
+      userCredentials as UserCredentials,
+      elementId,
+      viewMode,
+      setNeoNodes,
+      setNeoRels,
+      setOpenGraphView,
+      setViewPoint,
+      setLoadingGraphView
+    );
   };
 
   return (
@@ -72,66 +62,74 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
         <Box className='flex justify-center items-center'>
           <LoadingSpinner size='small' />
         </Box>
-      ) : Object.keys(groupedEntities)?.length > 0 || Object.keys(graphonly_entities)?.length > 0 ? (
+      ) : (mode !== 'graph' && Object.keys(groupedEntities)?.length > 0) ||
+        (mode == 'graph' && Object.keys(graphonly_entities)?.length > 0) ? (
         <ul className='list-none p-4 max-h-80 overflow-auto'>
           {mode == 'graph'
             ? graphonly_entities.map((label, index) => (
-              <li key={index} className={`flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%] overflow-hidden ${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'
-                }`}>
-                <ul className='list-inside'>
-                  {Object.keys(label).map((key) => (
-                    <li key={key} className='flex items-center'>
-                      <GraphLabel type='node' color={calcWordColor(key)} className='mr-2 mt-2 ' selected={false}>
-                        {key}
-                      </GraphLabel>
-                      <Typography
-                        variant='body-medium'
-                        className='ml-2 text-ellipsis whitespace-nowrap overflow-hidden'
-                      >
-                        {
-                          // @ts-ignore
-                          label[key].id ?? label[key]}
-                      </Typography>
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ))
-            : sortedLabels.map((label, index) => {
-              const entity = groupedEntities[label == 'undefined' ? 'Entity' : label];
-              return (
                 <li
                   key={index}
-                  className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%)] overflow-hidden'
+                  className={`flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%] overflow-hidden ${
+                    loadingGraphView ? 'cursor-wait' : 'cursor-pointer'
+                  }`}
                 >
-                  <GraphLabel type='node' className='legend' color={`${entity.color}`} selected={false}>
-                    {label === '__Community__' ? graphLabels.community : label} ({labelCounts[label]})
-                  </GraphLabel>
-                  <Typography
-                    variant='body-medium'
-                    className='ml-2 text-ellipsis whitespace-nowrap max-w-[calc(100%-120px)] overflow-hidden'
-                  >
-                    {Array.from(entity.texts).slice(0, 3).map((text, idx) => {
-                      const matchingEntity = infoEntities.find(
-                        (e) => e.labels.includes(label) && parseEntity(e).text === text
-                      );
-                      const textId = matchingEntity?.element_id;
-                      return (
-                        <span key={idx}>
-                          <TextLink
-                            onClick={() => handleEntityClick(textId!)}
-                            className={loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}
-                          >
-                            {text}
-                          </TextLink>
-                          {Array.from(entity.texts).length > 1 ? ',' : ''}
-                        </span>
-                      );
-                    })}
-                  </Typography>
+                  <ul className='list-inside'>
+                    {Object.keys(label).map((key) => (
+                      <li key={key} className='flex items-center'>
+                        <GraphLabel type='node' color={calcWordColor(key)} className='mr-2 mt-2 ' selected={false}>
+                          {key}
+                        </GraphLabel>
+                        <Typography
+                          variant='body-medium'
+                          className='ml-2 text-ellipsis whitespace-nowrap overflow-hidden'
+                        >
+                          {
+                            // @ts-ignore
+                            label[key].id ?? label[key]
+                          }
+                        </Typography>
+                      </li>
+                    ))}
+                  </ul>
                 </li>
-              );
-            })}
+              ))
+            : sortedLabels.map((label, index) => {
+                const entity = groupedEntities[label == 'undefined' ? 'Entity' : label];
+                return (
+                  <li
+                    key={index}
+                    className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%)] overflow-hidden'
+                  >
+                    <GraphLabel type='node' className='legend' color={`${entity.color}`} selected={false}>
+                      {label === '__Community__' ? graphLabels.community : label} ({labelCounts[label]})
+                    </GraphLabel>
+                    <Typography
+                      variant='body-medium'
+                      className='ml-2 text-ellipsis whitespace-nowrap max-w-[calc(100%-120px)] overflow-hidden'
+                    >
+                      {Array.from(entity.texts)
+                        .slice(0, 3)
+                        .map((text, idx) => {
+                          const matchingEntity = infoEntities.find(
+                            (e) => e.labels.includes(label) && parseEntity(e).text === text
+                          );
+                          const textId = matchingEntity?.element_id;
+                          return (
+                            <span key={idx}>
+                              <TextLink
+                                onClick={() => handleEntityClick(textId!, 'chatInfoView')}
+                                className={loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}
+                              >
+                                {text}
+                              </TextLink>
+                              {Array.from(entity.texts).length > 1 ? ',' : ''}
+                            </span>
+                          );
+                        })}
+                    </Typography>
+                  </li>
+                );
+              })}
         </ul>
       ) : (
         <span className='h6 text-center'>No Entities Found</span>
