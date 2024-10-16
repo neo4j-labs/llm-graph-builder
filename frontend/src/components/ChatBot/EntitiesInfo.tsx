@@ -14,6 +14,7 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
+  const [loadingGraphView, setLoadingGraphView] = useState(false);
 
   const groupedEntities = useMemo<{ [key: string]: GroupedEntity }>(() => {
     const items = infoEntities.reduce((acc, entity) => {
@@ -43,6 +44,7 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
   }, [labelCounts]);
 
   const handleEntityClick = async (elementId: string) => {
+    setLoadingGraphView(true);
     try {
       const result = await getNeighbors(userCredentials as UserCredentials, elementId);
       if (result && result.data.data.nodes.length > 0) {
@@ -59,6 +61,9 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
     } catch (error: any) {
       console.log('error', error);
     }
+    finally {
+      setLoadingGraphView(false);
+    }
   };
 
   return (
@@ -71,16 +76,25 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
         <ul className='list-none p-4 max-h-80 overflow-auto'>
           {mode == 'graph'
             ? graphonly_entities.map((label, index) => (
-              <li
-                key={index}
-                className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%)] overflow-hidden'
-              >
-                <div style={{ backgroundColor: calcWordColor(Object.keys(label)[0]) }} className='legend mr-2'>
-                  {
-                    // @ts-ignore
-                    label[Object.keys(label)[0]].id ?? Object.keys(label)[0]
-                  }
-                </div>
+              <li key={index} className={`flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%] overflow-hidden ${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'
+                }`}>
+                <ul className='list-inside'>
+                  {Object.keys(label).map((key) => (
+                    <li key={key} className='flex items-center'>
+                      <GraphLabel type='node' color={calcWordColor(key)} className='mr-2 mt-2 ' selected={false}>
+                        {key}
+                      </GraphLabel>
+                      <Typography
+                        variant='body-medium'
+                        className='ml-2 text-ellipsis whitespace-nowrap overflow-hidden'
+                      >
+                        {
+                          // @ts-ignore
+                          label[key].id ?? label[key]}
+                      </Typography>
+                    </li>
+                  ))}
+                </ul>
               </li>
             ))
             : sortedLabels.map((label, index) => {
@@ -106,7 +120,7 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
                         <span key={idx}>
                           <TextLink
                             onClick={() => handleEntityClick(textId!)}
-                            className='cursor-pointer'
+                            className={loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}
                           >
                             {text}
                           </TextLink>

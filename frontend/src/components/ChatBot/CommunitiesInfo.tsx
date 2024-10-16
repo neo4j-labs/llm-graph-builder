@@ -13,8 +13,10 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
+  const [loadingGraphView, setLoadingGraphView] = useState(false);
 
   const handleCommunityClick = async (elementId: string) => {
+    setLoadingGraphView(true);
     try {
       const result = await getNeighbors(userCredentials as UserCredentials, elementId);
       if (result && result.data.data.nodes.length > 0) {
@@ -31,6 +33,9 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
     } catch (error: any) {
       console.log('error', error);
     }
+    finally {
+      setLoadingGraphView(false);
+    }
   };
   return (
     <>
@@ -39,21 +44,21 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
           <LoadingSpinner size='small' />
         </Box>
       ) : communities?.length > 0 ? (
-                <div className='p-4 h-80 overflow-auto'>
-                  <ul className='list-disc list-inside'>
-                    {communities.map((community, index) => (
-                      <li key={`${community.id}${index}`} className='mb-2'>
-                        <div>
-                          <Flex flexDirection='row' gap='2'>
-                            <TextLink className='cursor-pointer' label={`ID : ${community.id}`} onClick={() => handleCommunityClick(community.element_id)} >{`ID : ${community.id}`}</TextLink>
-                          </Flex>
-                          {mode === chatModeLables.global_vector && community.score && (
-                            <Flex flexDirection='row' gap='2'>
-                              <Typography variant='subheading-medium'>Score : </Typography>
-                              <Typography variant='subheading-medium'>{community.score}</Typography>
-                            </Flex>
-                          )}
-                          <ReactMarkdown>{community.summary}</ReactMarkdown>
+        <div className='p-4 h-80 overflow-auto'>
+          <ul className='list-disc list-inside'>
+            {communities.map((community, index) => (
+              <li key={`${community.id}${index}`} className='mb-2'>
+                <div>
+                  <Flex flexDirection='row' gap='2'>
+                    <TextLink className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`} label={`ID : ${community.id}`} onClick={() => handleCommunityClick(community.element_id)} >{`ID : ${community.id}`}</TextLink>
+                  </Flex>
+                  {mode === chatModeLables.global_vector && community.score && (
+                    <Flex flexDirection='row' gap='2'>
+                      <Typography variant='subheading-medium'>Score : </Typography>
+                      <Typography variant='subheading-medium'>{community.score}</Typography>
+                    </Flex>
+                  )}
+                  <ReactMarkdown>{community.summary}</ReactMarkdown>
                 </div>
               </li>
             ))}

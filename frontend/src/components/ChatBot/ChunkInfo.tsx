@@ -13,8 +13,7 @@ import { chatModeLables } from '../../utils/Constants';
 import { useCredentials } from '../../context/UserCredentials';
 import GraphViewModal from '../Graph/GraphViewModal';
 import { getNeighbors } from '../../services/GraphQuery';
-import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
-import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
+
 const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   const themeUtils = useContext(ThemeWrapperContext);
   const { userCredentials } = useCredentials();
@@ -22,8 +21,10 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
+  const [loadingGraphView, setLoadingGraphView] = useState(false);
 
   const handleChunkClick = async (chunkId: string) => {
+    setLoadingGraphView(true);
     try {
       const result = await getNeighbors(userCredentials as UserCredentials, chunkId);
       if (result && result.data.data.nodes.length > 0) {
@@ -39,6 +40,9 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
       }
     } catch (error: any) {
       console.log('error', error);
+    }
+    finally {
+      setLoadingGraphView(false);
     }
   };
 
@@ -58,16 +62,16 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   <>
                     <div className='flex flex-row inline-block items-center'>
                       <DocumentTextIconOutline className='w-4 h-4 inline-block mr-2' />
-                      <TextLink
-                        onClick={() => handleChunkClick(chunk.element_id)}
-                        className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden cursor-pointer'
+                      <Typography
+                        variant='body-medium'
+                        className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
                       >
                         {chunk?.fileName}
-                      </TextLink>
+                      </Typography>
                     </div>
                     {mode !== chatModeLables.global_vector &&
                       mode !== chatModeLables.entity_vector &&
-                      mode !== chatModeLables.graph && (
+                      mode !== chatModeLables.graph && chunk.score && (
                         <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                       )}
                     <div><Typography variant='subheading-small'>Page: {chunk?.page_number}</Typography></div>
@@ -166,12 +170,14 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   </>
                 )}
                 <div className='mt-2'>
-                  <ReactMarkdown>{chunk?.text}</ReactMarkdown>
+                  <TextLink className={`!inline-block ${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`} onClick={() => handleChunkClick(chunk.element_id)}>
+                    <ReactMarkdown>{chunk?.text}</ReactMarkdown>
+                  </TextLink>
                 </div>
               </li>
             ))}
           </ul>
-        </div>
+        </div >
       ) : (
         <span className='h6 text-center'> No Chunks Found</span>
       )}
