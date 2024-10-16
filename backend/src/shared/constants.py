@@ -473,7 +473,8 @@ RETURN
             .*,
             embedding: null,
             fileName: d.fileName,
-            fileSource: d.fileSource
+            fileSource: d.fileSource, 
+            element_id: elementId(c)
         }
     ] AS chunks,
     [
