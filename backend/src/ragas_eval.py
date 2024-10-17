@@ -6,7 +6,7 @@ from src.llm import get_llm
 from datasets import Dataset
 from dotenv import load_dotenv
 from ragas import evaluate
-from ragas.metrics import answer_relevancy, context_utilization, faithfulness
+from ragas.metrics import answer_relevancy, faithfulness
 from src.shared.common_fn import load_embedding_model 
 load_dotenv()
 
@@ -23,7 +23,7 @@ def get_ragas_metrics(
         dataset = Dataset.from_dict(
             {"question": [question], "answer": [answer], "contexts": [[context]]}
         )
-        logging.info("Dataset created successfully.")
+        logging.info("Evaluation dataset created successfully.")
         if ("diffbot" in model) or ("ollama" in model):
             raise ValueError(f"Unsupported model for evaluation: {model}")
         else:
@@ -33,13 +33,13 @@ def get_ragas_metrics(
        
         score = evaluate(
             dataset=dataset,
-            metrics=[faithfulness, answer_relevancy, context_utilization],
+            metrics=[faithfulness, answer_relevancy],
             llm=llm,
             embeddings=EMBEDDING_FUNCTION,
         )
 
         score_dict = (
-            score.to_pandas()[["faithfulness", "answer_relevancy", "context_utilization"]]
+            score.to_pandas()[["faithfulness", "answer_relevancy"]]
             .round(4)
             .to_dict(orient="records")[0]
         ) 
