@@ -391,7 +391,10 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     setMetricContext(currentMode.metric_contexts ?? '');
     setMetricAnswer(currentMode.metric_answer ?? '');
     setActiveChat(chat);
-    if (previousActiveChat != null && chat.id != previousActiveChat?.id) {
+    if (
+      (previousActiveChat != null && chat.id != previousActiveChat?.id) ||
+      (previousActiveChat != null && previousActiveChat.currentMode != chat.currentMode)
+    ) {
       setNodes([]);
       setChunks([]);
       setInfoEntities([]);
