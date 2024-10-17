@@ -528,9 +528,27 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             </IconButtonWithToolTip>
           </>
         ),
-        header: () => <span>View</span>,
+        header: () => <span>Row Actions</span>,
         footer: (info) => info.column.id,
       }),
+      // columnHelper.accessor((row) => row.status, {
+      //   id: 'copy',
+      //   cell: (info) => (
+      //       <IconButtonWithToolTip
+      //         placement='right'
+      //         text='copy'
+      //         size='large'
+      //         label='Copy Row'
+      //         disabled={info.getValue() === 'Uploading'}
+      //         clean
+      //         onClick={() => handleCopy(info.row.original)}
+      //       >
+      //         <ClipboardDocumentIconOutline className={`${copyRow} ? 'cursor-wait': 'cursor`} />
+      //       </IconButtonWithToolTip>
+      //   ),
+      //   header: () => <span>Copy</span>,
+      //   footer: (info) => info.column.id,
+      // }),
     ],
     [filesData.length, statusFilter, filetypeFilter, llmtypeFilter, fileSourceFilter, isReadOnlyUser, colorMode]
   );
