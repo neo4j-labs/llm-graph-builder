@@ -644,6 +644,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             saveNodes={saveNodes}
             toggleInfoLoading={toggleInfoLoading}
             toggleMetricsLoading={toggleMetricsLoading}
+            activeChatmodes={activeChat?.modes}
           />
         </Modal>
       </Suspense>

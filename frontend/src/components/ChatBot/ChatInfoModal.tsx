@@ -13,7 +13,7 @@ import {
 import { DocumentDuplicateIconOutline, ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
 import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
-import { Entity, ExtendedNode, UserCredentials, chatInfoMessage } from '../../types';
+import { Entity, ExtendedNode, MetricsState, UserCredentials, chatInfoMessage } from '../../types';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import GraphViewButton from '../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
@@ -46,14 +46,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   metriccontexts,
   metricquestion,
   metricmodel,
-  saveNodes,
-  saveChunks,
-  saveChatRelationships,
-  saveCommunities,
-  saveInfoEntitites,
-  saveMetrics,
-  toggleInfoLoading,
-  toggleMetricsLoading,
   nodes,
   chunks,
   infoEntities,
@@ -62,6 +54,15 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   relationships,
   infoLoading,
   metricsLoading,
+  activeChatmodes,
+  saveNodes,
+  saveChunks,
+  saveChatRelationships,
+  saveCommunities,
+  saveInfoEntitites,
+  saveMetrics,
+  toggleInfoLoading,
+  toggleMetricsLoading,
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
@@ -190,21 +191,46 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     setActiveTab(tabId);
   };
   const loadMetrics = async () => {
-    setShowMetricsTable(true);
-    try {
-      toggleMetricsLoading();
-      const response = await getChatMetrics(metricquestion, metriccontexts, metricanswer, metricmodel);
-      toggleMetricsLoading();
-      if (response.data.status === 'Success') {
-        saveMetrics({ ...response.data.data, error: '' });
+    if (activeChatmodes) {
+      if (Object.keys(activeChatmodes).length <= 1) {
+        setShowMetricsTable(true);
+        try {
+          toggleMetricsLoading();
+          const response = await getChatMetrics(metricquestion, metriccontexts, metricanswer, metricmodel);
+          toggleMetricsLoading();
+          if (response.data.status === 'Success') {
+            saveMetrics({ ...response.data.data, error: '' });
+          } else {
+            throw new Error(response.data.error);
+          }
+        } catch (error) {
+          if (error instanceof Error) {
+            toggleMetricsLoading();
+            console.log('Error in getting chat metrics', error);
+            saveMetrics({ error: error.message, faithfulness: 0, answer_relevancy: 0 });
+          }
+        }
       } else {
-        throw new Error(response.data.error);
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        toggleMetricsLoading();
-        console.log('Error in getting chat metrics', error);
-        saveMetrics({ error: error.message, faithfulness: 0, answer_relevancy: 0, context_utilization: 0 });
+        const metricspromise = Object.values(activeChatmodes).map((r) => {
+          return getChatMetrics(
+            r.metric_question as string,
+            r.metric_contexts as string,
+            r.metric_answer as string,
+            metricmodel
+          );
+        });
+        const responses = await Promise.allSettled(metricspromise);
+        const metricsdata: MetricsState[] = [];
+        responses.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            if (result.value.data.status === 'Success') {
+              metricsdata.push(result.value.data.data);
+            }
+          } else {
+            saveMetrics({ error: result.reason, faithfulness: 0, answer_relevancy: 0 });
+          }
+        });
+        console.log({ metricsdata });
       }
     }
   };

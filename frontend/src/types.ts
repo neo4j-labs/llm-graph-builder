@@ -413,7 +413,6 @@ export interface OrphanNodeResponse extends Partial<commonserverresponse> {
 export type metricdetails = {
   faithfulness: number;
   answer_relevancy: number;
-  context_utilization: number;
 };
 export interface MetricsResponse extends Omit<commonserverresponse, 'data'> {
   data: metricdetails;
@@ -457,6 +456,11 @@ export interface chatInfoMessage extends Partial<Messages> {
   communities: Community[];
   infoLoading: boolean;
   metricsLoading: boolean;
+  activeChatmodes:
+    | {
+        [key: string]: ResponseMode;
+      }
+    | undefined;
   saveInfoEntitites: (entities: Entity[]) => void;
   saveNodes: (chatNodes: ExtendedNode[]) => void;
   saveChatRelationships: (chatRels: ExtendedRelationship[]) => void;
