@@ -269,15 +269,15 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           console.error(`API call failed for mode ${mode}:`, result.reason);
           setListMessages((prev) =>
             prev.map((msg) =>
-              (msg.id === chatbotMessageId
-                ? {
-                    ...msg,
-                    modes: {
-                      ...msg.modes,
-                      [mode]: { message: 'Failed to fetch response for this mode.', error: result.reason },
-                    },
-                  }
-                : msg)
+            (msg.id === chatbotMessageId
+              ? {
+                ...msg,
+                modes: {
+                  ...msg.modes,
+                  [mode]: { message: 'Failed to fetch response for this mode.', error: result.reason },
+                },
+              }
+              : msg)
             )
           );
         }
@@ -290,19 +290,19 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       if (error instanceof Error) {
         setListMessages((prev) =>
           prev.map((msg) =>
-            (msg.id === chatbotMessageId
-              ? {
-                  ...msg,
-                  isLoading: false,
-                  isTyping: false,
-                  modes: {
-                    [chatModes[0]]: {
-                      message: 'An error occurred while processing your request.',
-                      error: error.message,
-                    },
-                  },
-                }
-              : msg)
+          (msg.id === chatbotMessageId
+            ? {
+              ...msg,
+              isLoading: false,
+              isTyping: false,
+              modes: {
+                [chatModes[0]]: {
+                  message: 'An error occurred while processing your request.',
+                  error: error.message,
+                },
+              },
+            }
+            : msg)
           )
         );
       }
@@ -391,7 +391,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     setMetricContext(currentMode.metric_contexts ?? '');
     setMetricAnswer(currentMode.metric_answer ?? '');
     setActiveChat(chat);
-    if (previousActiveChat != null && chat.id != previousActiveChat?.id) {
+    if ((previousActiveChat != null && chat.id != previousActiveChat?.id) || (previousActiveChat != null && chat.currentMode != previousActiveChat.currentMode)) {
       setNodes([]);
       setChunks([]);
       setInfoEntities([]);
@@ -450,14 +450,12 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                   <Widget
                     header=''
                     isElevated={true}
-                    className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
-                      chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
-                    }`}
+                    className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                      }`}
                   >
                     <div
-                      className={`${
-                        chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
-                      }`}
+                      className={`${chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
+                        }`}
                     >
                       <ReactMarkdown className={!isFullScreen ? 'max-w-[250px]' : ''}>
                         {chat.modes[chat.currentMode]?.message || ''}
@@ -541,9 +539,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       <div className='n-bg-palette-neutral-bg-weak flex gap-2.5 bottom-0 p-2.5 w-full'>
         <form onSubmit={handleSubmit} className={`flex gap-2.5 w-full ${!isFullScreen ? 'justify-between' : ''}`}>
           <TextInput
-            className={`n-bg-palette-neutral-bg-default flex-grow-7 ${
-              isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
-            }`}
+            className={`n-bg-palette-neutral-bg-default flex-grow-7 ${isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
+              }`}
             aria-label='chatbot-input'
             type='text'
             value={inputMessage}
