@@ -24,7 +24,7 @@ import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { filterData, getCheckboxConditions, graphTypeFromNodes, processGraphData } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 
-import graphQueryAPI from '../../services/GraphQuery';
+import { graphQueryAPI } from '../../services/GraphQuery';
 import { graphLabels, nvlOptions, queryMap } from '../../utils/Constants';
 import CheckboxSelection from './CheckboxSelection';
 
@@ -160,7 +160,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     if (open) {
       setLoading(true);
       setGraphType([]);
-      if (viewPoint !== 'chatInfoView') {
+      if (viewPoint !== graphLabels.chatInfoView) {
         graphApi();
       } else {
         const { finalNodes, finalRels, schemeVal } = processGraphData(nodeValues ?? [], relationshipValues ?? []);
@@ -176,7 +176,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   }, [open]);
 
   useEffect(() => {
-    handleSearch(debouncedQuery);
+    if (debouncedQuery) {
+      handleSearch(debouncedQuery);
+    }
   }, [debouncedQuery]);
 
   const initGraph = (
@@ -244,7 +246,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setNodes(updatedNodes);
       setRelationships(updatedRelationships);
     },
-    [nodes]
+    [nodes, relationships]
   );
 
   // Unmounting the component
@@ -377,7 +379,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               <div className='my-40 flex items-center justify-center'>
                 <Banner name='graph banner' description={graphLabels.noNodesRels} type='danger' />
               </div>
-            ) : graphType.length === 0 ? (
+            ) : graphType.length === 0 && checkBoxView ? (
               <div className='my-40 flex items-center justify-center'>
                 <Banner name='graph banner' description={graphLabels.selectCheckbox} type='danger' />
               </div>

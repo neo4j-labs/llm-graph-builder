@@ -1,6 +1,7 @@
 import logging
 from src.graph_query import *
 from src.shared.constants import * 
+import re
 
 def process_records(records):
     """
@@ -191,7 +192,11 @@ def get_entities_from_chunkids(uri, username, password, database ,nodedetails,en
             if "entitydetails" in nodedetails and nodedetails["entitydetails"]:
                 entity_ids = [item["id"] for item in nodedetails["entitydetails"]]
                 logging.info(f"chunkid_entities module: Starting for entity ids: {entity_ids}")
-                return process_entityids(driver, entity_ids)
+                result = process_entityids(driver, entity_ids)
+                if "chunk_data" in result.keys():
+                    for chunk in result["chunk_data"]:
+                        chunk["text"] = re.sub(r'\s+', ' ', chunk["text"])
+                return result
             else:
                 logging.info("chunkid_entities module: No entity ids are passed")
                 return default_response  
@@ -201,7 +206,11 @@ def get_entities_from_chunkids(uri, username, password, database ,nodedetails,en
             if "chunkdetails" in nodedetails and nodedetails["chunkdetails"]:
                 chunk_ids = [item["id"] for item in nodedetails["chunkdetails"]]
                 logging.info(f"chunkid_entities module: Starting for chunk ids: {chunk_ids}")
-                return process_chunkids(driver, chunk_ids, entities)
+                result = process_chunkids(driver, chunk_ids, entities)
+                if "chunk_data" in result.keys():
+                    for chunk in result["chunk_data"]:
+                        chunk["text"] = re.sub(r'\s+', ' ', chunk["text"])
+                return result
             else:
                 logging.info("chunkid_entities module: No chunk ids are passed")
                 return default_response

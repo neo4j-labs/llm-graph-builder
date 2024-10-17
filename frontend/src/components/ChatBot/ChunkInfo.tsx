@@ -1,5 +1,5 @@
-import { FC, useContext } from 'react';
-import { ChunkProps } from '../../types';
+import { FC, useContext, useState } from 'react';
+import { ChunkProps, UserCredentials } from '../../types';
 import { Box, LoadingSpinner, TextLink, Typography } from '@neo4j-ndl/react';
 import { DocumentTextIconOutline, GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
 import wikipedialogo from '../../assets/images/wikipedia.svg';
@@ -10,10 +10,33 @@ import ReactMarkdown from 'react-markdown';
 import { generateYouTubeLink, getLogo, isAllowedHost } from '../../utils/Utils';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { chatModeLables } from '../../utils/Constants';
+import { useCredentials } from '../../context/UserCredentials';
+import GraphViewModal from '../Graph/GraphViewModal';
+import { handleGraphNodeClick } from './chatInfo';
 
 const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   const themeUtils = useContext(ThemeWrapperContext);
+  const { userCredentials } = useCredentials();
+  const [neoNodes, setNeoNodes] = useState<any[]>([]);
+  const [neoRels, setNeoRels] = useState<any[]>([]);
+  const [openGraphView, setOpenGraphView] = useState(false);
+  const [viewPoint, setViewPoint] = useState('');
+  const [loadingGraphView, setLoadingGraphView] = useState(false);
 
+  const handleChunkClick = async (elementId: string, viewMode: string) => {
+    handleGraphNodeClick(
+      userCredentials as UserCredentials,
+      elementId,
+      viewMode,
+      setNeoNodes,
+      setNeoRels,
+      setOpenGraphView,
+      setViewPoint,
+      setLoadingGraphView
+    );
+  };
+
+  console.log('chunks', chunks);
   return (
     <>
       {loading ? (
@@ -30,17 +53,21 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                     <div className='flex flex-row inline-block items-center'>
                       <DocumentTextIconOutline className='w-4 h-4 inline-block mr-2' />
                       <Typography
-                        variant='subheading-medium'
-                        className='text-ellipsis whitespace-nowrap max-w-[calc(100%-200px)] overflow-hidden'
+                        variant='body-medium'
+                        className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
                       >
                         {chunk?.fileName}
                       </Typography>
                     </div>
                     {mode !== chatModeLables.global_vector &&
                       mode !== chatModeLables.entity_vector &&
-                      mode !== chatModeLables.graph && (
+                      mode !== chatModeLables.graph &&
+                      chunk.score && (
                         <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                       )}
+                    <div>
+                      <Typography variant='subheading-small'>Page: {chunk?.page_number}</Typography>
+                    </div>
                   </>
                 ) : chunk?.url && chunk?.start_time ? (
                   <>
@@ -135,7 +162,14 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                     </div>
                   </>
                 )}
-                <ReactMarkdown>{chunk?.text}</ReactMarkdown>
+                <div className='mt-2'>
+                  <TextLink
+                    className={`!inline-block ${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
+                    onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                  >
+                    <ReactMarkdown>{chunk?.text}</ReactMarkdown>
+                  </TextLink>
+                </div>
               </li>
             ))}
           </ul>
@@ -143,8 +177,16 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
       ) : (
         <span className='h6 text-center'> No Chunks Found</span>
       )}
+      {openGraphView && (
+        <GraphViewModal
+          open={openGraphView}
+          setGraphViewOpen={setOpenGraphView}
+          viewPoint={viewPoint}
+          nodeValues={neoNodes}
+          relationshipValues={neoRels}
+        />
+      )}
     </>
   );
 };
-
 export default ChunkInfo;
