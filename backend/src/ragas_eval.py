@@ -8,11 +8,17 @@ from dotenv import load_dotenv
 from ragas import evaluate
 from ragas.metrics import answer_relevancy, faithfulness
 from src.shared.common_fn import load_embedding_model 
+import math
 load_dotenv()
 
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
 EMBEDDING_FUNCTION, _ = load_embedding_model(EMBEDDING_MODEL)
 
+def sanitize_data(data):
+   for key, value in data.items():
+       if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+           data[key] = 0
+   return data
 
 def get_ragas_metrics(
     question: str, context: str, answer: str, model: str
@@ -37,12 +43,13 @@ def get_ragas_metrics(
             llm=llm,
             embeddings=EMBEDDING_FUNCTION,
         )
-
+        
         score_dict = (
             score.to_pandas()[["faithfulness", "answer_relevancy"]]
             .round(4)
             .to_dict(orient="records")[0]
         ) 
+        score_dict = sanitize_data(score_dict)
         end_time = time.time()
         logging.info(f"Evaluation completed in: {end_time - start_time:.2f} seconds")
         return score_dict

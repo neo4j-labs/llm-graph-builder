@@ -712,8 +712,8 @@ async def retry_processing(uri=Form(), userName=Form(), password=Form(), databas
         gc.collect()    
 
 @app.post('/metric')
-async def calculate_metric(question=Form(), context=Form(), answer=Form(), model=Form()):
-   try:
+async def calculate_metric(question=Form(), context=Form(), answer=Form(), model=Form(), mode = Form()):
+   try: 
        result = await asyncio.to_thread(get_ragas_metrics, question, context, answer, model)
        if result is None or "error" in result:
            return create_api_response(
@@ -721,6 +721,7 @@ async def calculate_metric(question=Form(), context=Form(), answer=Form(), model
                message='Failed to calculate evaluation metrics.',
                error=result.get("error", "Ragas evaluation returned null")
            )
+       result['mode'] = mode
        return create_api_response('Success', data=result)
    except Exception as e:
        job_status = "Failed"
