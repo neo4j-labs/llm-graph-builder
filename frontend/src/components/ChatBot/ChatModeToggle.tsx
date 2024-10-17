@@ -38,8 +38,8 @@ export default function ChatModeToggle({
           )
         );
       }
-      if (!(chatModes.includes(chatModeLables.vector) || chatModes.includes(chatModeLables.graph_vector))) {
-        setchatModes([chatModeLables.graph_vector]);
+      if (!chatModes.includes(chatModeLables.vector)) {
+        setchatModes([chatModeLables.vector]);
       }
     }
   }, [selectedRows.length, chatModes.length]);
