@@ -411,9 +411,17 @@ export interface OrphanNodeResponse extends Partial<commonserverresponse> {
   data: orphanNodeProps[];
 }
 export type metricdetails = {
-  faithfulness: number;
-  answer_relevancy: number;
+  metrics: {
+    faithfulness: number;
+    answer_relevancy: number;
+  };
+  mode: string;
 };
+export interface multimodelmetric {
+  mode: string;
+  answer_relevancy: number;
+  faithfulness: number;
+}
 export interface MetricsResponse extends Omit<commonserverresponse, 'data'> {
   data: metricdetails;
 }

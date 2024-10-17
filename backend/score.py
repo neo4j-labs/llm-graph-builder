@@ -721,8 +721,10 @@ async def calculate_metric(question=Form(), context=Form(), answer=Form(), model
                message='Failed to calculate evaluation metrics.',
                error=result.get("error", "Ragas evaluation returned null")
            )
-       result['mode'] = mode
-       return create_api_response('Success', data=result)
+       data = {}
+       data['metrics'] = result
+       data['mode'] = mode
+       return create_api_response('Success', data=data)
    except Exception as e:
        job_status = "Failed"
        message = "Error while calculating evaluation metrics"

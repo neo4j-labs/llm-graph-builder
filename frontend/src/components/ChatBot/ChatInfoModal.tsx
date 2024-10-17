@@ -13,7 +13,7 @@ import {
 import { DocumentDuplicateIconOutline, ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
 import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
-import { Entity, ExtendedNode, MetricsState, UserCredentials, chatInfoMessage } from '../../types';
+import { Entity, ExtendedNode, UserCredentials, chatInfoMessage, multimodelmetric } from '../../types';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import GraphViewButton from '../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
@@ -30,6 +30,7 @@ import { getChatMetrics } from '../../services/GetRagasMetric';
 import MetricsTab from './MetricsTab';
 import { Stack } from '@mui/material';
 import { capitalizeWithUnderscore } from '../../utils/Utils';
+import MultiModeMetrics from './MultiModeMetrics';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
   sources,
@@ -74,6 +75,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
   const [showMetricsTable, setShowMetricsTable] = useState<boolean>(Boolean(metricDetails));
+  const [multiModelMetrics, setMultiModelMetrics] = useState<multimodelmetric[]>([]);
 
   const actions: CypherCodeBlockProps['actions'] = useMemo(
     () => [
@@ -162,7 +164,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               })
               .sort((a: any, b: any) => b.score - a.score)
           );
-
           saveChunks(
             chunksData
               .map((chunk: any) => {
@@ -184,6 +185,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     () => {
       setcopiedText(false);
       toggleMetricsLoading();
+      setMultiModelMetrics([])
     };
   }, [nodeDetails, mode, error]);
 
@@ -196,7 +198,13 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         setShowMetricsTable(true);
         try {
           toggleMetricsLoading();
-          const response = await getChatMetrics(metricquestion, metriccontexts, metricanswer, metricmodel);
+          const response = await getChatMetrics(
+            metricquestion,
+            metriccontexts,
+            metricanswer,
+            metricmodel,
+            Object.keys(activeChatmodes)[0]
+          );
           toggleMetricsLoading();
           if (response.data.status === 'Success') {
             saveMetrics({ ...response.data.data, error: '' });
@@ -207,30 +215,34 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           if (error instanceof Error) {
             toggleMetricsLoading();
             console.log('Error in getting chat metrics', error);
-            saveMetrics({ error: error.message, faithfulness: 0, answer_relevancy: 0 });
+            saveMetrics({ error: error.message, mode: '', metrics: { faithfulness: 0, answer_relevancy: 0 } });
           }
         }
       } else {
-        const metricspromise = Object.values(activeChatmodes).map((r) => {
+        setShowMetricsTable(true);
+        toggleMetricsLoading();
+        const metricspromise = Object.entries(activeChatmodes).map(([mode, r]) => {
           return getChatMetrics(
             r.metric_question as string,
             r.metric_contexts as string,
             r.metric_answer as string,
-            metricmodel
+            metricmodel,
+            mode
           );
         });
         const responses = await Promise.allSettled(metricspromise);
-        const metricsdata: MetricsState[] = [];
+        toggleMetricsLoading();
+        const metricsdata: multimodelmetric[] = [];
         responses.forEach((result) => {
           if (result.status === 'fulfilled') {
             if (result.value.data.status === 'Success') {
-              metricsdata.push(result.value.data.data);
+              metricsdata.push({ mode: result.value.data.data.mode, ...result.value.data.data.metrics });
             }
           } else {
-            saveMetrics({ error: result.reason, faithfulness: 0, answer_relevancy: 0 });
+            saveMetrics({ error: result.reason, mode: '', metrics: { faithfulness: 0, answer_relevancy: 0 } });
           }
         });
-        console.log({ metricsdata });
+        setMultiModelMetrics(metricsdata);
       }
     }
   };
@@ -329,7 +341,11 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                 </Typography>
               </Stack>
             </Stack>
-            {showMetricsTable && <MetricsTab metricsLoading={metricsLoading} metricDetails={metricDetails} />}
+            {showMetricsTable && activeChatmodes != null && Object.keys(activeChatmodes).length > 1 ? (
+              <MultiModeMetrics metricsLoading={metricsLoading} data={multiModelMetrics}></MultiModeMetrics>
+            ) : (
+              <MetricsTab metricsLoading={metricsLoading} metricDetails={metricDetails} />
+            )}
             {!metricDetails && (
               <Button
                 label='Metrics Action Button'
