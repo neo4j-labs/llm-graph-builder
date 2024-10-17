@@ -301,10 +301,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                   <span className='font-bold'>Answer Relevancy</span>: Determines How well the answer addresses the
                   user's question.
                 </Typography>
-                <Typography variant='body-large'>
-                  <span className='font-bold'>Context Utilization</span>: Determines How effectively the system uses the
-                  retrieved information to answer thequestion.
-                </Typography>
               </Stack>
             </Stack>
             {showMetricsTable && <MetricsTab metricsLoading={metricsLoading} metricDetails={metricDetails} />}
