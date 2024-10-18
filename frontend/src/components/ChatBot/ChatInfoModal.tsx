@@ -201,14 +201,15 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           toggleMetricsLoading();
           const response = await getChatMetrics(
             metricquestion,
-            metriccontexts,
-            metricanswer,
+            [metriccontexts],
+            [metricanswer],
             metricmodel,
-            Object.keys(activeChatmodes)[0]
+            [Object.keys(activeChatmodes)[0]]
           );
           toggleMetricsLoading();
           if (response.data.status === 'Success') {
-            saveMetrics({ ...response.data.data, error: '' });
+            const data=response
+            // saveMetrics({ ...response.data.data, error: '' });
           } else {
             throw new Error(response.data.error);
           }
@@ -222,27 +223,29 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       } else {
         setShowMetricsTable(true);
         toggleMetricsLoading();
-        const metricspromise = Object.entries(activeChatmodes).map(([mode, r]) => {
-          return getChatMetrics(
-            r.metric_question as string,
-            r.metric_contexts as string,
-            r.metric_answer as string,
-            metricmodel,
-            mode
-          );
+      
+        const contextarray = Object.values(activeChatmodes).map(( r) => {
+          return r.metric_contexts
         });
-        const responses = await Promise.allSettled(metricspromise);
+        const answerarray = Object.values(activeChatmodes).map(( r) => {
+          return r.metric_answer
+        });
+        const modesarray = Object.keys(activeChatmodes).map((mode) => {
+          return mode
+        });
+        const responses = await getChatMetrics(metricquestion,contextarray as string[],answerarray as string[],metricmodel,modesarray)
         toggleMetricsLoading();
+        console.log({responses})
         const metricsdata: multimodelmetric[] = [];
-        responses.forEach((result) => {
-          if (result.status === 'fulfilled') {
-            if (result.value.data.status === 'Success') {
-              metricsdata.push({ mode: result.value.data.data.mode, ...result.value.data.data.metrics });
-            }
-          } else {
-            saveMetrics({ error: result.reason, mode: '', metrics: { faithfulness: 0, answer_relevancy: 0 } });
-          }
-        });
+        // responses.forEach((result) => {
+        //   if (result.status === 'fulfilled') {
+        //     if (result.value.data.status === 'Success') {
+        //       metricsdata.push({ mode: result.value.data.data.mode, ...result.value.data.data.metrics });
+        //     }
+        //   } else {
+        //     saveMetrics({ error: result.reason, mode: '', metrics: { faithfulness: 0, answer_relevancy: 0 } });
+        //   }
+        // });
         setMultiModelMetrics(metricsdata);
       }
     }
