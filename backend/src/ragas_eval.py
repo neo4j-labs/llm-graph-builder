@@ -19,7 +19,6 @@ def get_ragas_metrics(question: str, context: list, answer: list, model: str):
         dataset = Dataset.from_dict(
             {"question": [question] * len(answer), "answer": answer, "contexts": [[ctx] for ctx in context]}
         )
-        dataset = dataset.map(preprocess_dataset)
         logging.info("Evaluation dataset created successfully.")
         if ("diffbot" in model) or ("ollama" in model):
             raise ValueError(f"Unsupported model for evaluation: {model}")
