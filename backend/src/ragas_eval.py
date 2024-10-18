@@ -17,18 +17,22 @@ EMBEDDING_FUNCTION, _ = load_embedding_model(EMBEDDING_MODEL)
 def sanitize_data(data):
    for key, value in data.items():
        if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
-           data[key] = 0
+           data[key] = None
    return data
 
-def get_ragas_metrics(
-    question: str, context: str, answer: str, model: str
-) -> Optional[Dict[str, float]]:
+def preprocess_dataset(example):
+    example["contexts"] = [example["contexts"]]
+    return example
+
+def get_ragas_metrics(question: str, context: list, answer: list, model: str):
     """Calculates RAGAS metrics."""
     try:
         start_time = time.time()
+        question = [question] * len(answer)
         dataset = Dataset.from_dict(
-            {"question": [question], "answer": [answer], "contexts": [[context]]}
+            {"question": question, "answer": answer, "contexts": context}
         )
+        dataset = dataset.map(preprocess_dataset)
         logging.info("Evaluation dataset created successfully.")
         if ("diffbot" in model) or ("ollama" in model):
             raise ValueError(f"Unsupported model for evaluation: {model}")
@@ -36,7 +40,7 @@ def get_ragas_metrics(
             llm, model_name = get_llm(model=model)
     
         logging.info(f"Evaluating with model: {model_name}")
-       
+
         score = evaluate(
             dataset=dataset,
             metrics=[faithfulness, answer_relevancy],
@@ -47,9 +51,10 @@ def get_ragas_metrics(
         score_dict = (
             score.to_pandas()[["faithfulness", "answer_relevancy"]]
             .round(4)
-            .to_dict(orient="records")[0]
+            .to_dict(orient="list")
         ) 
-        score_dict = sanitize_data(score_dict)
+        #score_dict = sanitize_data(score_dict)
+        print("Score dict : ",score_dict)
         end_time = time.time()
         logging.info(f"Evaluation completed in: {end_time - start_time:.2f} seconds")
         return score_dict
