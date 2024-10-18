@@ -22,7 +22,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
-  const [loadingGraphView, setLoadingGraphView] = useState(false);
+  const [_, setLoadingGraphView] = useState(false);
 
   const handleChunkClick = async (elementId: string, viewMode: string) => {
     handleGraphNodeClick(
