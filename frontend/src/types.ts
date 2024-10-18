@@ -410,12 +410,12 @@ export interface duplicateNodesData extends Partial<commonserverresponse> {
 export interface OrphanNodeResponse extends Partial<commonserverresponse> {
   data: orphanNodeProps[];
 }
-export type metricstate={
+export type metricstate = {
   faithfulness: number;
   answer_relevancy: number;
-  error?:string
-}
-export type metricdetails = Record<string,metricstate>
+  error?: string;
+};
+export type metricdetails = Record<string, metricstate>;
 
 export interface multimodelmetric {
   mode: string;
@@ -475,7 +475,7 @@ export interface chatInfoMessage extends Partial<Messages> {
   saveNodes: (chatNodes: ExtendedNode[]) => void;
   saveChatRelationships: (chatRels: ExtendedRelationship[]) => void;
   saveChunks: (chatChunks: Chunk[]) => void;
-  saveMetrics: (metricInfo:metricstate) => void;
+  saveMetrics: (metricInfo: metricstate) => void;
   saveCommunities: (chatCommunities: Community[]) => void;
   toggleInfoLoading: React.DispatchWithoutAction;
   toggleMetricsLoading: React.DispatchWithoutAction;

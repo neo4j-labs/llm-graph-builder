@@ -59,10 +59,9 @@ function MetricsTab({
   const table = useReactTable({
     data:
       metricDetails != null && !metricsLoading
-        ? Object.entries(metricDetails)
-            .map(([key, value]) => {
-              return { metric: key, score: value };
-            })
+        ? Object.entries(metricDetails).map(([key, value]) => {
+            return { metric: key, score: value };
+          })
         : [],
     columns,
     getCoreRowModel: getCoreRowModel(),
@@ -77,7 +76,7 @@ function MetricsTab({
   });
   return (
     <Box>
-      {metricDetails != undefined && error?.trim() != '' ? (
+      {error != undefined && error?.trim() != '' ? (
         <Banner type='danger'>{error}</Banner>
       ) : (
         <DataGrid

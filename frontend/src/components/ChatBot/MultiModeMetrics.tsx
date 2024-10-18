@@ -8,15 +8,17 @@ import {
 } from '@tanstack/react-table';
 import { capitalize } from '../../utils/Utils';
 import { useMemo, useRef } from 'react';
-import { Box, DataGrid, DataGridComponents, Typography } from '@neo4j-ndl/react';
+import { Banner, Box, DataGrid, DataGridComponents, Typography } from '@neo4j-ndl/react';
 import { multimodelmetric } from '../../types';
 
 export default function MultiModeMetrics({
   data,
   metricsLoading,
+  error,
 }: {
   data: multimodelmetric[];
   metricsLoading: boolean;
+  error: string;
 }) {
   const tableRef = useRef<HTMLDivElement>(null);
 
@@ -74,37 +76,41 @@ export default function MultiModeMetrics({
   });
   return (
     <Box>
-      <DataGrid
-        ref={tableRef}
-        isResizable={true}
-        tableInstance={table}
-        styling={{
-          borderStyle: 'all-sides',
-          zebraStriping: true,
-          headerStyle: 'clean',
-        }}
-        isLoading={metricsLoading}
-        components={{
-          Body: (props) => <DataGridComponents.Body {...props} />,
-          PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
-            return (
-              <DataGridComponents.PaginationNumericButton
-                {...restProps}
-                isSelected={isSelected}
-                innerProps={{
-                  ...innerProps,
-                  style: {
-                    ...(isSelected && {
-                      backgroundSize: '200% auto',
-                      borderRadius: '10px',
-                    }),
-                  },
-                }}
-              />
-            );
-          },
-        }}
-      />
+      {error?.trim() != '' ? (
+        <Banner type='danger'>{error}</Banner>
+      ) : (
+        <DataGrid
+          ref={tableRef}
+          isResizable={true}
+          tableInstance={table}
+          styling={{
+            borderStyle: 'all-sides',
+            zebraStriping: true,
+            headerStyle: 'clean',
+          }}
+          isLoading={metricsLoading}
+          components={{
+            Body: (props) => <DataGridComponents.Body {...props} />,
+            PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
+              return (
+                <DataGridComponents.PaginationNumericButton
+                  {...restProps}
+                  isSelected={isSelected}
+                  innerProps={{
+                    ...innerProps,
+                    style: {
+                      ...(isSelected && {
+                        backgroundSize: '200% auto',
+                        borderRadius: '10px',
+                      }),
+                    },
+                  }}
+                />
+              );
+            },
+          }}
+        />
+      )}
     </Box>
   );
 }

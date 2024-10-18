@@ -77,6 +77,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const [copiedText, setcopiedText] = useState<boolean>(false);
   const [showMetricsTable, setShowMetricsTable] = useState<boolean>(Boolean(metricDetails));
   const [multiModelMetrics, setMultiModelMetrics] = useState<multimodelmetric[]>([]);
+  const [multiModeError, setMultiModeError] = useState<string>('');
 
   const actions: CypherCodeBlockProps['actions'] = useMemo(
     () => [
@@ -185,10 +186,12 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     }
     () => {
       setcopiedText(false);
-      toggleMetricsLoading();
+      if (metricsLoading) {
+        toggleMetricsLoading();
+      }
       setMultiModelMetrics([]);
     };
-  }, [nodeDetails, mode, error]);
+  }, [nodeDetails, mode, error, metricsLoading]);
 
   const onChangeTabs = (tabId: number) => {
     setActiveTab(tabId);
@@ -197,19 +200,15 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     if (activeChatmodes) {
       if (Object.keys(activeChatmodes).length <= 1) {
         setShowMetricsTable(true);
-        const defaultMode=Object.keys(activeChatmodes)[0]
+        const defaultMode = Object.keys(activeChatmodes)[0];
         try {
           toggleMetricsLoading();
-          const response = await getChatMetrics(
-            metricquestion,
-            [metriccontexts],
-            [metricanswer],
-            metricmodel,
-            [defaultMode]
-          );
+          const response = await getChatMetrics(metricquestion, [metriccontexts], [metricanswer], metricmodel, [
+            defaultMode,
+          ]);
           toggleMetricsLoading();
           if (response.data.status === 'Success') {
-            const data=response
+            const data = response;
             saveMetrics(data.data.data[defaultMode]);
           } else {
             throw new Error(response.data.error);
@@ -218,36 +217,46 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           if (error instanceof Error) {
             toggleMetricsLoading();
             console.log('Error in getting chat metrics', error);
-            saveMetrics({ faithfulness: 0, answer_relevancy: 0 ,error:error.message});
+            saveMetrics({ faithfulness: 0, answer_relevancy: 0, error: error.message });
           }
         }
       } else {
         setShowMetricsTable(true);
         toggleMetricsLoading();
-      
-        const contextarray = Object.values(activeChatmodes).map(( r) => {
-          return r.metric_contexts
+        const contextarray = Object.values(activeChatmodes).map((r) => {
+          return r.metric_contexts;
         });
-        const answerarray = Object.values(activeChatmodes).map(( r) => {
-          return r.metric_answer
+        const answerarray = Object.values(activeChatmodes).map((r) => {
+          return r.metric_answer;
         });
         const modesarray = Object.keys(activeChatmodes).map((mode) => {
-          return mode
+          return mode;
         });
-        const responses = await getChatMetrics(metricquestion,contextarray as string[],answerarray as string[],metricmodel,modesarray)
-        toggleMetricsLoading();
-        console.log({responses})
-        const metricsdata: multimodelmetric[] = [];
-        // responses.forEach((result) => {
-        //   if (result.status === 'fulfilled') {
-        //     if (result.value.data.status === 'Success') {
-        //       metricsdata.push({ mode: result.value.data.data.mode, ...result.value.data.data.metrics });
-        //     }
-        //   } else {
-        //     saveMetrics({ error: result.reason, mode: '', metrics: { faithfulness: 0, answer_relevancy: 0 } });
-        //   }
-        // });
-        setMultiModelMetrics(metricsdata);
+        try {
+          const responses = await getChatMetrics(
+            metricquestion,
+            contextarray as string[],
+            answerarray as string[],
+            metricmodel,
+            modesarray
+          );
+          toggleMetricsLoading();
+          if (responses.data.status === 'Success') {
+            const modewisedata = responses.data.data;
+            const metricsdata = Object.entries(modewisedata).map(([mode, scores]) => {
+              return { mode, answer_relevancy: scores.answer_relevancy, faithfulness: scores.faithfulness };
+            });
+            setMultiModelMetrics(metricsdata);
+          } else {
+            throw new Error(responses.data.error);
+          }
+        } catch (error) {
+          toggleMetricsLoading();
+          console.log('Error in getting chat metrics', error);
+          if (error instanceof Error) {
+            setMultiModeError(error.message);
+          }
+        }
       }
     }
   };
@@ -347,7 +356,11 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               </Stack>
             </Stack>
             {showMetricsTable && activeChatmodes != null && Object.keys(activeChatmodes).length > 1 ? (
-              <MultiModeMetrics metricsLoading={metricsLoading} data={multiModelMetrics}></MultiModeMetrics>
+              <MultiModeMetrics
+                error={multiModeError}
+                metricsLoading={metricsLoading}
+                data={multiModelMetrics}
+              ></MultiModeMetrics>
             ) : (
               <MetricsTab metricsLoading={metricsLoading} error={metricError} metricDetails={metricDetails} />
             )}

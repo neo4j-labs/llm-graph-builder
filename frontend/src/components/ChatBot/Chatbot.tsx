@@ -635,8 +635,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             infoEntities={infoEntities}
             relationships={relationships}
             chunks={chunks}
-            metricDetails={activeChat!=undefined&&metricDetails!=null?metricDetails:undefined}
-            metricError={activeChat!=undefined&&metricDetails!=null?metricDetails.error as string:""}
+            metricDetails={activeChat != undefined && metricDetails != null ? metricDetails : undefined}
+            metricError={activeChat != undefined && metricDetails != null ? (metricDetails.error as string) : ''}
             communities={communities}
             infoLoading={infoLoading}
             metricsLoading={metricsLoading}
