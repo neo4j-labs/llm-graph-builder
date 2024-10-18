@@ -1,7 +1,7 @@
 import { FC, useContext, useState } from 'react';
 import { ChunkProps, UserCredentials } from '../../types';
 import { Box, LoadingSpinner, TextLink, Typography } from '@neo4j-ndl/react';
-import { DocumentTextIconOutline, GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
+import { DocumentTextIconOutline, GlobeAltIconOutline, MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
 import wikipedialogo from '../../assets/images/wikipedia.svg';
 import youtubelogo from '../../assets/images/youtube.svg';
 import gcslogo from '../../assets/images/gcs.webp';
@@ -13,6 +13,7 @@ import { chatModeLables } from '../../utils/Constants';
 import { useCredentials } from '../../context/UserCredentials';
 import GraphViewModal from '../Graph/GraphViewModal';
 import { handleGraphNodeClick } from './chatInfo';
+import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 
 const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   const themeUtils = useContext(ThemeWrapperContext);
@@ -36,7 +37,6 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
     );
   };
 
-  console.log('chunks', chunks);
   return (
     <>
       {loading ? (
@@ -51,13 +51,25 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                 {chunk?.page_number ? (
                   <>
                     <div className='flex flex-row inline-block items-center'>
-                      <DocumentTextIconOutline className='w-4 h-4 inline-block mr-2' />
-                      <Typography
-                        variant='body-medium'
-                        className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
-                      >
-                        {chunk?.fileName}
-                      </Typography>
+                      <>
+                        <IconButtonWithToolTip
+                          placement='left'
+                          text='Graph'
+                          size='large'
+                          label='Graph view'
+                          clean
+                          onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                        >
+                          <MagnifyingGlassCircleIconSolid />
+                        </IconButtonWithToolTip>
+                        <DocumentTextIconOutline className='w-4 h-4 inline-block mr-2' />
+                        <Typography
+                          variant='body-medium'
+                          className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                        >
+                          {chunk?.fileName}
+                        </Typography>
+                      </>
                     </div>
                     {mode !== chatModeLables.global_vector &&
                       mode !== chatModeLables.entity_vector &&
@@ -72,6 +84,16 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                 ) : chunk?.url && chunk?.start_time ? (
                   <>
                     <div className='flex flex-row inline-block justiy-between items-center'>
+                      <IconButtonWithToolTip
+                        placement='left'
+                        text='Graph'
+                        size='large'
+                        label='Graph view'
+                        clean
+                        onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                      >
+                        <MagnifyingGlassCircleIconSolid />
+                      </IconButtonWithToolTip>
                       <img src={youtubelogo} width={20} height={20} className='mr-2' />
                       <TextLink href={generateYouTubeLink(chunk?.url, chunk?.start_time)} externalLink={true}>
                         <Typography
@@ -91,6 +113,16 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                 ) : chunk?.url && new URL(chunk.url).host === 'wikipedia.org' ? (
                   <>
                     <div className='flex flex-row inline-block justiy-between items-center'>
+                      <IconButtonWithToolTip
+                        placement='left'
+                        text='Graph'
+                        size='large'
+                        label='Graph view'
+                        clean
+                        onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                      >
+                        <MagnifyingGlassCircleIconSolid />
+                      </IconButtonWithToolTip>
                       <img src={wikipedialogo} width={20} height={20} className='mr-2' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
@@ -103,6 +135,16 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                 ) : chunk?.url && new URL(chunk.url).host === 'storage.googleapis.com' ? (
                   <>
                     <div className='flex flex-row inline-block justiy-between items-center'>
+                      <IconButtonWithToolTip
+                        placement='left'
+                        text='Graph'
+                        size='large'
+                        label='Graph view'
+                        clean
+                        onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                      >
+                        <MagnifyingGlassCircleIconSolid />
+                      </IconButtonWithToolTip>
                       <img src={gcslogo} width={20} height={20} className='mr-2' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
@@ -115,6 +157,16 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                 ) : chunk?.url && chunk?.url.startsWith('s3://') ? (
                   <>
                     <div className='flex flex-row inline-block justiy-between items-center'>
+                      <IconButtonWithToolTip
+                        placement='left'
+                        text='Graph'
+                        size='large'
+                        label='Graph view'
+                        clean
+                        onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                      >
+                        <MagnifyingGlassCircleIconSolid />
+                      </IconButtonWithToolTip>
                       <img src={s3logo} width={20} height={20} className='mr-2' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
@@ -129,6 +181,16 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   !isAllowedHost(chunk?.url, ['storage.googleapis.com', 'wikipedia.org', 'youtube.com']) ? (
                   <>
                     <div className='flex flex-row inline-block items-center'>
+                      <IconButtonWithToolTip
+                        placement='left'
+                        text='Graph'
+                        size='large'
+                        label='Graph view'
+                        clean
+                        onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                      >
+                        <MagnifyingGlassCircleIconSolid />
+                      </IconButtonWithToolTip>
                       <GlobeAltIconOutline className='n-size-token-7' />
                       <TextLink href={chunk?.url} externalLink={true}>
                         <Typography variant='body-medium'>{chunk?.url}</Typography>
@@ -143,6 +205,16 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                 ) : (
                   <>
                     <div className='flex flex-row inline-block items-center'>
+                      <IconButtonWithToolTip
+                        placement='left'
+                        text='Graph'
+                        size='large'
+                        label='Graph view'
+                        clean
+                        onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                      >
+                        <MagnifyingGlassCircleIconSolid />
+                      </IconButtonWithToolTip>
                       {chunk.fileSource === 'local file' ? (
                         <DocumentTextIconOutline className='n-size-token-7 mr-2' />
                       ) : (
@@ -163,12 +235,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   </>
                 )}
                 <div className='mt-2'>
-                  <TextLink
-                    className={`!inline-block ${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
-                    onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
-                  >
-                    <ReactMarkdown>{chunk?.text}</ReactMarkdown>
-                  </TextLink>
+                  <ReactMarkdown>{chunk?.text}</ReactMarkdown>
                 </div>
               </li>
             ))}
