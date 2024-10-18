@@ -7,7 +7,6 @@ import {
   ProgressBar,
   StatusIndicator,
   TextLink,
-  Tip,
   Typography,
   useCopyToClipboard,
 } from '@neo4j-ndl/react';
