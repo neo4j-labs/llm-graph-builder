@@ -818,3 +818,7 @@ export type GraphPropertiesPanelProps = {
   inspectedItem: BasicNode | BasicRelationship;
   newScheme: Scheme;
 };
+
+export type withId = {
+  id: string;
+};

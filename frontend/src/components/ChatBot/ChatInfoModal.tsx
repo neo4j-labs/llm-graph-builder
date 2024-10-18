@@ -13,7 +13,7 @@ import {
 import { DocumentDuplicateIconOutline, ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
 import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
-import { Entity, ExtendedNode, UserCredentials, chatInfoMessage, multimodelmetric } from '../../types';
+import { ExtendedNode, UserCredentials, chatInfoMessage, multimodelmetric } from '../../types';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import GraphViewButton from '../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
@@ -29,7 +29,7 @@ import { Relationship } from '@neo4j-nvl/base';
 import { getChatMetrics } from '../../services/GetRagasMetric';
 import MetricsTab from './MetricsTab';
 import { Stack } from '@mui/material';
-import { capitalizeWithUnderscore } from '../../utils/Utils';
+import { capitalizeWithUnderscore, getNodes } from '../../utils/Utils';
 import MultiModeMetrics from './MultiModeMetrics';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
@@ -129,32 +129,11 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             .filter((rel: any) => nodeIds.has(rel.end_node_element_id) && nodeIds.has(rel.start_node_element_id));
           const communitiesData = response?.data?.data?.community_data;
           const chunksData = response?.data?.data?.chunk_data;
-
-          saveInfoEntitites(
-            nodesData.map((n: Entity) => {
-              if (!n.labels.length && mode === chatModeLables.entity_vector) {
-                return {
-                  ...n,
-                  labels: ['Entity'],
-                };
-              }
-              return n;
-            })
-          );
-          saveNodes(
-            nodesData.map((n: ExtendedNode) => {
-              if (!n.labels.length && mode === chatModeLables.entity_vector) {
-                return {
-                  ...n,
-                  labels: ['Entity'],
-                };
-              }
-              return n ?? [];
-            })
-          );
+          saveInfoEntitites(getNodes(nodesData, mode));
+          saveNodes(getNodes(nodesData, mode));
           saveChatRelationships(relationshipsData ?? []);
           saveCommunities(
-            (communitiesData || [])
+            (communitiesData ?? [])
               .map((community: { element_id: string }) => {
                 const communityScore = nodeDetails?.communitydetails?.find(
                   (c: { id: string }) => c.id === community.element_id
@@ -355,13 +334,14 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                 </Typography>
               </Stack>
             </Stack>
-            {showMetricsTable && activeChatmodes != null && Object.keys(activeChatmodes).length > 1 ? (
+            {showMetricsTable && activeChatmodes != null && Object.keys(activeChatmodes).length > 1 && (
               <MultiModeMetrics
                 error={multiModeError}
                 metricsLoading={metricsLoading}
                 data={multiModelMetrics}
               ></MultiModeMetrics>
-            ) : (
+            )}
+            {showMetricsTable && activeChatmodes != null && Object.keys(activeChatmodes).length <= 1 && (
               <MetricsTab metricsLoading={metricsLoading} error={metricError} metricDetails={metricDetails} />
             )}
             {!metricDetails && (
@@ -372,6 +352,16 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                 onClick={loadMetrics}
               >
                 View Detailed Metrics
+              </Button>
+            )}
+            {!multiModelMetrics && (
+              <Button
+                label='Metrics Action Button'
+                disabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
+                className='w-max self-center mt-4'
+                onClick={loadMetrics}
+              >
+                View Detailed For All Modes
               </Button>
             )}
           </Stack>

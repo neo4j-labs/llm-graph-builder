@@ -434,7 +434,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
             total_tokens = 0
             formatted_docs = ""
 
-        question = transformed_question if transformed_question else question
+        # question = transformed_question if transformed_question else question
         # metrics = get_ragas_metrics(question,formatted_docs,content)
         # print(metrics)
         
