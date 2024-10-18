@@ -3,7 +3,7 @@ import { Button } from '@neo4j-ndl/react';
 import GraphViewModal from './GraphViewModal';
 import { GraphViewButtonProps } from '../../types';
 
-const GraphViewButton: React.FC<GraphViewButtonProps> = ({ nodeValues, relationshipValues }) => {
+const GraphViewButton: React.FC<GraphViewButtonProps> = ({ nodeValues, relationshipValues, fill, label }) => {
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
 
@@ -13,7 +13,9 @@ const GraphViewButton: React.FC<GraphViewButtonProps> = ({ nodeValues, relations
   };
   return (
     <>
-      <Button onClick={handleGraphViewClick}>Graph Entities used for Answer Generation</Button>
+      <Button fill={fill} onClick={handleGraphViewClick} style={{}}>
+        {label}
+      </Button>
       <GraphViewModal
         open={openGraphView}
         setGraphViewOpen={setOpenGraphView}

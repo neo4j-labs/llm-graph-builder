@@ -17,6 +17,7 @@ from src.chunkid_entities import get_entities_from_chunkids
 from src.post_processing import create_vector_fulltext_indexes, create_entity_embedding
 from sse_starlette.sse import EventSourceResponse
 from src.communities import create_communities
+from src.neighbours import get_neighbour_nodes
 import json
 from typing import List, Mapping
 from starlette.middleware.sessions import SessionMiddleware
@@ -359,6 +360,25 @@ async def chunk_entities(uri=Form(),userName=Form(), password=Form(), database=F
         message="Unable to extract entities from chunk ids"
         error_message = str(e)
         logging.exception(f'Exception in chat bot:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()
+
+@app.post("/get_neighbours")
+async def get_neighbours(uri=Form(),userName=Form(), password=Form(), database=Form(), elementId=Form(None)):
+    try:
+        start = time.time()
+        result = await asyncio.to_thread(get_neighbour_nodes,uri=uri, username=userName, password=password,database=database, element_id=elementId)
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'get_neighbours','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response('Success',data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to extract neighbour nodes for given element ID"
+        error_message = str(e)
+        logging.exception(f'Exception in get neighbours :{error_message}')
         return create_api_response(job_status, message=message, error=error_message)
     finally:
         gc.collect()
