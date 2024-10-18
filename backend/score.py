@@ -791,24 +791,34 @@ async def retry_processing(uri=Form(), userName=Form(), password=Form(), databas
         gc.collect()    
 
 @app.post('/metric')
-async def calculate_metric(question=Form(), context=Form(), answer=Form(), model=Form()):
+async def calculate_metric(question: str = Form(),
+                           context: str = Form(),
+                           answer: str = Form(),
+                           model: str = Form(),
+                           mode: str = Form()):
    try:
-        payload_json_obj = {'api_name':'metric', 'context':context, 'answer':answer, 'model':model, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
-        result = await asyncio.to_thread(get_ragas_metrics, question, context, answer, model)
-        if result is None or "error" in result:
-            return create_api_response(
-                'Failed',
-                message='Failed to calculate evaluation metrics.',
-                error=result.get("error", "Ragas evaluation returned null")
-            )
-        return create_api_response('Success', data=result)
+       context_list = [str(item).strip() for item in json.loads(context)] if context else []
+       answer_list = [str(item).strip() for item in json.loads(answer)] if answer else []
+       mode_list = [str(item).strip() for item in json.loads(mode)] if mode else []
+
+       result = await asyncio.to_thread(
+           get_ragas_metrics, question, context_list, answer_list, model
+       )
+       if result is None or "error" in result:
+           return create_api_response(
+               'Failed',
+               message='Failed to calculate evaluation metrics.',
+               error=result.get("error", "Ragas evaluation returned null")
+           )
+       data = {mode: {metric: result[metric][i] for metric in result} for i, mode in enumerate(mode_list)}
+       return create_api_response('Success', data=data)
    except Exception as e:
-       job_status = "Failed"
-       message = "Error while calculating evaluation metrics"
-       error_message = str(e)
-       logging.exception(f'{error_message}')
-       return create_api_response(job_status, message=message, error=error_message)
+       logging.exception(f"Error while calculating evaluation metrics: {e}")
+       return create_api_response(
+           'Failed',
+           message="Error while calculating evaluation metrics",
+           error=str(e)
+       )
    finally:
        gc.collect()
 

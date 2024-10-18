@@ -410,11 +410,18 @@ export interface duplicateNodesData extends Partial<commonserverresponse> {
 export interface OrphanNodeResponse extends Partial<commonserverresponse> {
   data: orphanNodeProps[];
 }
-export type metricdetails = {
+export type metricstate = {
   faithfulness: number;
   answer_relevancy: number;
-  context_utilization: number;
+  error?: string;
 };
+export type metricdetails = Record<string, metricstate>;
+
+export interface multimodelmetric {
+  mode: string;
+  answer_relevancy: number;
+  faithfulness: number;
+}
 export interface MetricsResponse extends Omit<commonserverresponse, 'data'> {
   data: metricdetails;
 }
@@ -428,10 +435,6 @@ export interface SourceListServerData {
   status: string;
   error?: string;
   message?: string;
-}
-
-export interface MetricsState extends metricdetails {
-  error?: string;
 }
 
 export interface chatInfoMessage extends Partial<Messages> {
@@ -452,16 +455,27 @@ export interface chatInfoMessage extends Partial<Messages> {
   nodes: ExtendedNode[];
   relationships: ExtendedRelationship[];
   chunks: Chunk[];
-  metricDetails: MetricsState | null;
+  metricDetails:
+    | {
+        faithfulness: number;
+        answer_relevancy: number;
+      }
+    | undefined;
+  metricError: string;
   infoEntities: Entity[];
   communities: Community[];
   infoLoading: boolean;
   metricsLoading: boolean;
+  activeChatmodes:
+    | {
+        [key: string]: ResponseMode;
+      }
+    | undefined;
   saveInfoEntitites: (entities: Entity[]) => void;
   saveNodes: (chatNodes: ExtendedNode[]) => void;
   saveChatRelationships: (chatRels: ExtendedRelationship[]) => void;
   saveChunks: (chatChunks: Chunk[]) => void;
-  saveMetrics: (metricInfo: MetricsState) => void;
+  saveMetrics: (metricInfo: metricstate) => void;
   saveCommunities: (chatCommunities: Community[]) => void;
   toggleInfoLoading: React.DispatchWithoutAction;
   toggleMetricsLoading: React.DispatchWithoutAction;
@@ -823,6 +837,11 @@ export type GraphPropertiesPanelProps = {
   newScheme: Scheme;
 };
 
+
+export type withId = {
+  id: string;
+};
+
 export interface GraphViewHandlerProps {
   nodeValues?: ExtendedNode[];
   relationshipValues?: ExtendedRelationship[];
@@ -834,3 +853,4 @@ export interface GraphViewHandlerProps {
   entityInfo?: Entity[];
   mode?: string;
 }
+

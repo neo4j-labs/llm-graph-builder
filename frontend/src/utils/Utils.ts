@@ -510,3 +510,14 @@ export function downloadClickHandler<Type>(
     downloadLinkRef.current.click();
   }
 }
+export function getNodes<Type extends Entity | ExtendedNode>(nodesData: Array<Type>, mode: string) {
+  return nodesData.map((n) => {
+    if (!n.labels.length && mode === chatModeLables.entity_vector) {
+      return {
+        ...n,
+        labels: ['Entity'],
+      };
+    }
+    return n;
+  });
+}
