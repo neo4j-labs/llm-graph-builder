@@ -635,7 +635,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             infoEntities={infoEntities}
             relationships={relationships}
             chunks={chunks}
-            metricDetails={metricDetails}
+            metricDetails={metricDetails?.metrics}
+            metricError={metricDetails?.error as string}
             communities={communities}
             infoLoading={infoLoading}
             metricsLoading={metricsLoading}

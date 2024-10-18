@@ -1,5 +1,4 @@
 import { Banner, Box, DataGrid, DataGridComponents, Typography } from '@neo4j-ndl/react';
-import { MetricsState } from '../../types';
 import { memo, useMemo, useRef } from 'react';
 import {
   useReactTable,
@@ -13,9 +12,16 @@ import { capitalize } from '../../utils/Utils';
 function MetricsTab({
   metricsLoading,
   metricDetails,
+  error,
 }: {
   metricsLoading: boolean;
-  metricDetails: MetricsState | null;
+  metricDetails:
+    | {
+        faithfulness: number;
+        answer_relevancy: number;
+      }
+    | undefined;
+  error: string;
 }) {
   const columnHelper = createColumnHelper<{ metric: string; score: number }>();
   const tableRef = useRef(null);
@@ -54,7 +60,6 @@ function MetricsTab({
     data:
       metricDetails != null && !metricsLoading
         ? Object.entries(metricDetails)
-            .slice(0, Object.keys(metricDetails).length - 1)
             .map(([key, value]) => {
               return { metric: key, score: value };
             })
@@ -72,8 +77,8 @@ function MetricsTab({
   });
   return (
     <Box>
-      {metricDetails != null && metricDetails?.error?.trim() != '' ? (
-        <Banner type='danger'>{metricDetails?.error}</Banner>
+      {metricDetails != undefined && error?.trim() != '' ? (
+        <Banner type='danger'>{error}</Banner>
       ) : (
         <DataGrid
           ref={tableRef}

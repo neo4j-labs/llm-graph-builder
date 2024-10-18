@@ -459,7 +459,13 @@ export interface chatInfoMessage extends Partial<Messages> {
   nodes: ExtendedNode[];
   relationships: ExtendedRelationship[];
   chunks: Chunk[];
-  metricDetails: MetricsState | null;
+  metricDetails:
+    | {
+        faithfulness: number;
+        answer_relevancy: number;
+      }
+    | undefined;
+  metricError: string;
   infoEntities: Entity[];
   communities: Community[];
   infoLoading: boolean;

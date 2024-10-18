@@ -56,6 +56,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   infoLoading,
   metricsLoading,
   activeChatmodes,
+  metricError,
   saveNodes,
   saveChunks,
   saveChatRelationships,
@@ -185,7 +186,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     () => {
       setcopiedText(false);
       toggleMetricsLoading();
-      setMultiModelMetrics([])
+      setMultiModelMetrics([]);
     };
   }, [nodeDetails, mode, error]);
 
@@ -344,7 +345,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             {showMetricsTable && activeChatmodes != null && Object.keys(activeChatmodes).length > 1 ? (
               <MultiModeMetrics metricsLoading={metricsLoading} data={multiModelMetrics}></MultiModeMetrics>
             ) : (
-              <MetricsTab metricsLoading={metricsLoading} metricDetails={metricDetails} />
+              <MetricsTab metricsLoading={metricsLoading} error={metricError} metricDetails={metricDetails} />
             )}
             {!metricDetails && (
               <Button
