@@ -36,6 +36,7 @@ def get_ragas_metrics(question: str, context: list, answer: list, model: str):
         
         score_dict = (
             score.to_pandas()[["faithfulness", "answer_relevancy"]]
+            .fillna(0)
             .round(4)
             .to_dict(orient="list")
         ) 
