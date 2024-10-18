@@ -22,9 +22,9 @@ import {
   ExtendedNode,
   ExtendedRelationship,
   Messages,
-  MetricsState,
   ResponseMode,
   UserCredentials,
+  metricstate,
   nodeDetailsProps,
 } from '../../types';
 import { useCredentials } from '../../context/UserCredentials';
@@ -74,7 +74,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [nodes, setNodes] = useState<ExtendedNode[]>([]);
   const [relationships, setRelationships] = useState<ExtendedRelationship[]>([]);
   const [chunks, setChunks] = useState<Chunk[]>([]);
-  const [metricDetails, setMetricDetails] = useState<MetricsState | null>(null);
+  const [metricDetails, setMetricDetails] = useState<metricstate | null>(null);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [infoLoading, toggleInfoLoading] = useReducer((s) => !s, false);
@@ -112,7 +112,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const saveChunks = (chatChunks: Chunk[]) => {
     setChunks(chatChunks);
   };
-  const saveMetrics = (metricInfo: MetricsState) => {
+  const saveMetrics = (metricInfo: metricstate) => {
     setMetricDetails(metricInfo);
   };
   const saveCommunities = (chatCommunities: Community[]) => {
@@ -635,8 +635,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             infoEntities={infoEntities}
             relationships={relationships}
             chunks={chunks}
-            metricDetails={metricDetails?.metrics}
-            metricError={metricDetails?.error as string}
+            metricDetails={activeChat!=undefined&&metricDetails!=null?metricDetails:undefined}
+            metricError={activeChat!=undefined&&metricDetails!=null?metricDetails.error as string:""}
             communities={communities}
             infoLoading={infoLoading}
             metricsLoading={metricsLoading}

@@ -197,6 +197,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     if (activeChatmodes) {
       if (Object.keys(activeChatmodes).length <= 1) {
         setShowMetricsTable(true);
+        const defaultMode=Object.keys(activeChatmodes)[0]
         try {
           toggleMetricsLoading();
           const response = await getChatMetrics(
@@ -204,12 +205,12 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             [metriccontexts],
             [metricanswer],
             metricmodel,
-            [Object.keys(activeChatmodes)[0]]
+            [defaultMode]
           );
           toggleMetricsLoading();
           if (response.data.status === 'Success') {
             const data=response
-            // saveMetrics({ ...response.data.data, error: '' });
+            saveMetrics(data.data.data[defaultMode]);
           } else {
             throw new Error(response.data.error);
           }
@@ -217,7 +218,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           if (error instanceof Error) {
             toggleMetricsLoading();
             console.log('Error in getting chat metrics', error);
-            saveMetrics({ error: error.message, mode: '', metrics: { faithfulness: 0, answer_relevancy: 0 } });
+            saveMetrics({ faithfulness: 0, answer_relevancy: 0 ,error:error.message});
           }
         }
       } else {
