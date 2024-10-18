@@ -276,8 +276,9 @@ def retrieve_documents(doc_retriever, messages):
         logging.info(f"Documents retrieved in {doc_retrieval_time:.2f} seconds")
         
     except Exception as e:
-        logging.error(f"Error retrieving documents: {e}")
-        raise
+        error_message = f"Error retrieving documents: {str(e)}"
+        logging.error(error_message)
+        raise RuntimeError(error_message)
     
     return docs,transformed_question
 

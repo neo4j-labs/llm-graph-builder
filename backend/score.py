@@ -276,8 +276,7 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             logging.info(f'Entity Embeddings created')
             
         if "enable_communities" in tasks:
-            model = "openai_gpt_4o"
-            await asyncio.to_thread(create_communities, uri, userName, password, database,model)
+            await asyncio.to_thread(create_communities, uri, userName, password, database)
             josn_obj = {'api_name': 'post_processing/create_communities', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logger.log_struct(josn_obj)
             logging.info(f'created communities')
