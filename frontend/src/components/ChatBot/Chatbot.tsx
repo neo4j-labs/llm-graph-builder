@@ -22,9 +22,9 @@ import {
   ExtendedNode,
   ExtendedRelationship,
   Messages,
-  MetricsState,
   ResponseMode,
   UserCredentials,
+  metricstate,
   nodeDetailsProps,
 } from '../../types';
 import { useCredentials } from '../../context/UserCredentials';
@@ -74,7 +74,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [nodes, setNodes] = useState<ExtendedNode[]>([]);
   const [relationships, setRelationships] = useState<ExtendedRelationship[]>([]);
   const [chunks, setChunks] = useState<Chunk[]>([]);
-  const [metricDetails, setMetricDetails] = useState<MetricsState | null>(null);
+  const [metricDetails, setMetricDetails] = useState<metricstate | null>(null);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [infoLoading, toggleInfoLoading] = useReducer((s) => !s, false);
@@ -112,7 +112,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const saveChunks = (chatChunks: Chunk[]) => {
     setChunks(chatChunks);
   };
-  const saveMetrics = (metricInfo: MetricsState) => {
+  const saveMetrics = (metricInfo: metricstate) => {
     setMetricDetails(metricInfo);
   };
   const saveCommunities = (chatCommunities: Community[]) => {
@@ -269,15 +269,15 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           console.error(`API call failed for mode ${mode}:`, result.reason);
           setListMessages((prev) =>
             prev.map((msg) =>
-            (msg.id === chatbotMessageId
-              ? {
-                ...msg,
-                modes: {
-                  ...msg.modes,
-                  [mode]: { message: 'Failed to fetch response for this mode.', error: result.reason },
-                },
-              }
-              : msg)
+              (msg.id === chatbotMessageId
+                ? {
+                    ...msg,
+                    modes: {
+                      ...msg.modes,
+                      [mode]: { message: 'Failed to fetch response for this mode.', error: result.reason },
+                    },
+                  }
+                : msg)
             )
           );
         }
@@ -290,19 +290,19 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       if (error instanceof Error) {
         setListMessages((prev) =>
           prev.map((msg) =>
-          (msg.id === chatbotMessageId
-            ? {
-              ...msg,
-              isLoading: false,
-              isTyping: false,
-              modes: {
-                [chatModes[0]]: {
-                  message: 'An error occurred while processing your request.',
-                  error: error.message,
-                },
-              },
-            }
-            : msg)
+            (msg.id === chatbotMessageId
+              ? {
+                  ...msg,
+                  isLoading: false,
+                  isTyping: false,
+                  modes: {
+                    [chatModes[0]]: {
+                      message: 'An error occurred while processing your request.',
+                      error: error.message,
+                    },
+                  },
+                }
+              : msg)
           )
         );
       }
@@ -391,7 +391,10 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     setMetricContext(currentMode.metric_contexts ?? '');
     setMetricAnswer(currentMode.metric_answer ?? '');
     setActiveChat(chat);
-    if ((previousActiveChat != null && chat.id != previousActiveChat?.id) || (previousActiveChat != null && chat.currentMode != previousActiveChat.currentMode)) {
+    if (
+      (previousActiveChat != null && chat.id != previousActiveChat?.id) ||
+      (previousActiveChat != null && chat.currentMode != previousActiveChat.currentMode)
+    ) {
       setNodes([]);
       setChunks([]);
       setInfoEntities([]);
@@ -450,12 +453,14 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                   <Widget
                     header=''
                     isElevated={true}
-                    className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
-                      }`}
+                    className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
+                      chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                    }`}
                   >
                     <div
-                      className={`${chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
-                        }`}
+                      className={`${
+                        chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
+                      }`}
                     >
                       <ReactMarkdown className={!isFullScreen ? 'max-w-[250px]' : ''}>
                         {chat.modes[chat.currentMode]?.message || ''}
@@ -539,8 +544,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       <div className='n-bg-palette-neutral-bg-weak flex gap-2.5 bottom-0 p-2.5 w-full'>
         <form onSubmit={handleSubmit} className={`flex gap-2.5 w-full ${!isFullScreen ? 'justify-between' : ''}`}>
           <TextInput
-            className={`n-bg-palette-neutral-bg-default flex-grow-7 ${isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
-              }`}
+            className={`n-bg-palette-neutral-bg-default flex-grow-7 ${
+              isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
+            }`}
             aria-label='chatbot-input'
             type='text'
             value={inputMessage}
@@ -629,7 +635,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             infoEntities={infoEntities}
             relationships={relationships}
             chunks={chunks}
-            metricDetails={metricDetails}
+            metricDetails={activeChat != undefined && metricDetails != null ? metricDetails : undefined}
+            metricError={activeChat != undefined && metricDetails != null ? (metricDetails.error as string) : ''}
             communities={communities}
             infoLoading={infoLoading}
             metricsLoading={metricsLoading}
@@ -641,6 +648,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             saveNodes={saveNodes}
             toggleInfoLoading={toggleInfoLoading}
             toggleMetricsLoading={toggleMetricsLoading}
+            activeChatmodes={activeChat?.modes}
           />
         </Modal>
       </Suspense>

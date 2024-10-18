@@ -1,5 +1,3 @@
-import { Banner, Box, DataGrid, DataGridComponents, Typography } from '@neo4j-ndl/react';
-import { memo, useMemo, useRef } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -9,27 +7,26 @@ import {
   getSortedRowModel,
 } from '@tanstack/react-table';
 import { capitalize } from '../../utils/Utils';
-function MetricsTab({
+import { useMemo, useRef } from 'react';
+import { Banner, Box, DataGrid, DataGridComponents, Typography } from '@neo4j-ndl/react';
+import { multimodelmetric } from '../../types';
+
+export default function MultiModeMetrics({
+  data,
   metricsLoading,
-  metricDetails,
   error,
 }: {
+  data: multimodelmetric[];
   metricsLoading: boolean;
-  metricDetails:
-    | {
-        faithfulness: number;
-        answer_relevancy: number;
-      }
-    | undefined;
   error: string;
 }) {
-  const columnHelper = createColumnHelper<{ metric: string; score: number }>();
-  const tableRef = useRef(null);
+  const tableRef = useRef<HTMLDivElement>(null);
 
+  const columnHelper = createColumnHelper<multimodelmetric>();
   const columns = useMemo(
     () => [
-      columnHelper.accessor((row) => row.metric, {
-        id: 'Metric',
+      columnHelper.accessor((row) => row.mode, {
+        id: 'Mode',
         cell: (info) => {
           const metric = info.getValue();
           const capitilizedMetric = metric.includes('_')
@@ -44,25 +41,28 @@ function MetricsTab({
             </div>
           );
         },
-        header: () => <span>Metric</span>,
+        header: () => <span>Mode</span>,
         footer: (info) => info.column.id,
       }),
-      columnHelper.accessor((row) => row.score, {
+      columnHelper.accessor((row) => row.answer_relevancy, {
+        id: 'Answer Relevancy',
+        cell: (info) => {
+          return <Typography variant='body-medium'>{info.getValue().toFixed(2)}</Typography>;
+        },
+        header: () => <span>Answer Relevancy</span>,
+      }),
+      columnHelper.accessor((row) => row.faithfulness, {
         id: 'Score',
         cell: (info) => {
           return <Typography variant='body-medium'>{info.getValue().toFixed(2)}</Typography>;
         },
+        header: () => <span>Faithfulness</span>,
       }),
     ],
     []
   );
   const table = useReactTable({
-    data:
-      metricDetails != null && !metricsLoading
-        ? Object.entries(metricDetails).map(([key, value]) => {
-            return { metric: key, score: value };
-          })
-        : [],
+    data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -76,7 +76,7 @@ function MetricsTab({
   });
   return (
     <Box>
-      {error != undefined && error?.trim() != '' ? (
+      {error?.trim() != '' ? (
         <Banner type='danger'>{error}</Banner>
       ) : (
         <DataGrid
@@ -114,4 +114,3 @@ function MetricsTab({
     </Box>
   );
 }
-export default memo(MetricsTab);
