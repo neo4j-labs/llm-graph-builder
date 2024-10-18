@@ -718,12 +718,9 @@ async def calculate_metric(question: str = Form(),
                            model: str = Form(),
                            mode: str = Form()):
    try:
-       context_list = json.loads(context) if context else []
-       answer_list = json.loads(answer) if answer else []
-       mode_list = json.loads(mode) if mode else []
-       context_list = [str(item).strip() for item in context_list]
-       answer_list = [str(item).strip() for item in answer_list]
-       mode_list = [str(item).strip() for item in mode_list]
+       context_list = [str(item).strip() for item in json.loads(context)] if context else []
+       answer_list = [str(item).strip() for item in json.loads(answer)] if answer else []
+       mode_list = [str(item).strip() for item in json.loads(mode)] if mode else []
 
        result = await asyncio.to_thread(
            get_ragas_metrics, question, context_list, answer_list, model
