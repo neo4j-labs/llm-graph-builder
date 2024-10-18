@@ -734,10 +734,7 @@ async def calculate_metric(question: str = Form(),
                message='Failed to calculate evaluation metrics.',
                error=result.get("error", "Ragas evaluation returned null")
            )
-       data = {
-           'metrics': result,
-           'mode': mode_list
-       }
+       data = {mode: {metric: result[metric][i] for metric in result} for i, mode in enumerate(mode_list)}
        return create_api_response('Success', data=data)
    except Exception as e:
        logging.exception(f"Error while calculating evaluation metrics: {e}")
