@@ -531,6 +531,7 @@ export type Community = {
   level: number;
   community_rank: number;
   score?: number;
+  element_id: string;
 };
 export type GroupedEntity = {
   texts: Set<string>;
@@ -570,6 +571,7 @@ export interface Chunk {
   fileSource: string;
   score?: string;
   fileType: string;
+  element_id: string;
 }
 
 export interface SpeechSynthesisProps {
@@ -624,6 +626,18 @@ export interface ExtendedNode extends Node {
   };
 }
 
+export interface NeoNode {
+  element_id: string;
+  labels: string[];
+  properties: Record<string, any>;
+}
+export interface NeoRelationship {
+  element_id: string;
+  start_node_element_id: string;
+  end_node_element_id: string;
+  type: string;
+}
+
 export interface ExtendedRelationship extends Relationship {
   count?: number;
 }
@@ -671,6 +685,9 @@ export interface S3File {
 export interface GraphViewButtonProps {
   nodeValues?: ExtendedNode[];
   relationshipValues?: ExtendedRelationship[];
+  fill?: 'text' | 'filled' | 'outlined';
+  label: string;
+  viewType: string;
 }
 export interface DrawerChatbotProps {
   isExpanded: boolean;
@@ -726,6 +743,9 @@ export type CommunitiesProps = {
   loading: boolean;
   communities: Community[];
   mode: string;
+
+  // nodeValues: ExtendedNode[];
+  // relationshipValues: ExtendedRelationship[];
 };
 
 export interface entity {
@@ -819,6 +839,20 @@ export type GraphPropertiesPanelProps = {
   newScheme: Scheme;
 };
 
+
 export type withId = {
   id: string;
 };
+
+export interface GraphViewHandlerProps {
+  nodeValues?: ExtendedNode[];
+  relationshipValues?: ExtendedRelationship[];
+  fill?: 'text' | 'filled' | 'outlined';
+  label?: string;
+  viewType?: string;
+  buttonLabel: string;
+  graphonly_entities?: [];
+  entityInfo?: Entity[];
+  mode?: string;
+}
+

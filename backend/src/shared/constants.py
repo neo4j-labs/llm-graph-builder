@@ -121,7 +121,7 @@ WITH d,
 RETURN 
     d AS doc, 
     [chunk IN chunks | 
-        chunk {.*, embedding: null}
+        chunk {.*, embedding: null, element_id: elementId(chunk)}
     ] AS chunks,
     [
         node IN nodes | 
@@ -473,14 +473,16 @@ RETURN
             .*,
             embedding: null,
             fileName: d.fileName,
-            fileSource: d.fileSource
+            fileSource: d.fileSource, 
+            element_id: elementId(c)
         }
     ] AS chunks,
     [
         community IN communities WHERE community IS NOT NULL | 
         community {
             .*,
-            embedding: null
+            embedding: null,
+            element_id:elementId(community)
         }
     ] AS communities,
     [
@@ -551,7 +553,7 @@ MATCH (community:__Community__)
 WHERE elementId(community) IN $communityids
 WITH collect(distinct community) AS communities
 RETURN [community IN communities | 
-        community {.*, embedding: null, elementid: elementId(community)}] AS communities
+        community {.*, embedding: null, element_id: elementId(community)}] AS communities
 """
 
 ## CHAT MODES 

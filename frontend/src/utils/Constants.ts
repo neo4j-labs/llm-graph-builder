@@ -125,6 +125,7 @@ export const tooltips = {
   clearChat: 'Clear Chat History',
   continue: 'Continue',
   clearGraphSettings: 'Clear configured Graph Schema',
+  applySettings:'Apply Graph Schema'
 };
 
 export const buttonCaptions = {
@@ -148,6 +149,7 @@ export const buttonCaptions = {
   continueSettings: 'Continue',
   clearSettings: 'Clear Schema',
   ask: 'Ask',
+  applyGraphSchema:'Apply'
 };
 
 export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [

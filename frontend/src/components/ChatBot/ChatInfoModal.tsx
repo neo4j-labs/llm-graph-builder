@@ -23,7 +23,7 @@ import { tokens } from '@neo4j-ndl/base';
 import ChunkInfo from './ChunkInfo';
 import EntitiesInfo from './EntitiesInfo';
 import SourcesInfo from './SourcesInfo';
-import CommunitiesInfo from './Communities';
+import CommunitiesInfo from './CommunitiesInfo';
 import { chatModeLables, supportedLLmsForRagas } from '../../utils/Constants';
 import { Relationship } from '@neo4j-nvl/base';
 import { getChatMetrics } from '../../services/GetRagasMetric';
@@ -78,6 +78,8 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const [showMetricsTable, setShowMetricsTable] = useState<boolean>(Boolean(metricDetails));
   const [multiModelMetrics, setMultiModelMetrics] = useState<multimodelmetric[]>([]);
   const [multiModeError, setMultiModeError] = useState<string>('');
+
+  console.log('node', nodeDetails);
 
   const actions: CypherCodeBlockProps['actions'] = useMemo(
     () => [
@@ -394,9 +396,14 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           <></>
         )}
       </Flex>
-      {activeTab == 4 && nodes?.length && relationships?.length ? (
+      {activeTab == 4 && nodes?.length && relationships?.length && mode !== chatModeLables.graph ? (
         <Box className='button-container flex mt-2 justify-center'>
-          <GraphViewButton nodeValues={nodes} relationshipValues={relationships} />
+          <GraphViewButton
+            nodeValues={nodes}
+            relationshipValues={relationships}
+            label='Graph Entities used for Answer Generation'
+            viewType='chatInfoView'
+          />
         </Box>
       ) : (
         <></>
