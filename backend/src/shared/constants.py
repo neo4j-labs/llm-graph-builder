@@ -121,7 +121,7 @@ WITH d,
 RETURN 
     d AS doc, 
     [chunk IN chunks | 
-        chunk {.*, embedding: null}
+        chunk {.*, embedding: null, element_id: elementId(chunk)}
     ] AS chunks,
     [
         node IN nodes | 
@@ -168,10 +168,10 @@ CHAT_DOC_SPLIT_SIZE = 3000
 CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD = 0.10
 
 CHAT_TOKEN_CUT_OFF = {
-     ("openai-gpt-3.5",'azure_ai_gpt_35',"gemini-1.0-pro","gemini-1.5-pro", "gemini-1.5-flash","groq-llama3",'groq_llama3_70b','anthropic_claude_3_5_sonnet','fireworks_llama_v3_70b','bedrock_claude_3_5_sonnet', ) : 4, 
-     ("openai-gpt-4","diffbot" ,'azure_ai_gpt_4o',"openai-gpt-4o", "openai-gpt-4o-mini") : 28,
+     ('openai_gpt_3.5','azure_ai_gpt_35',"gemini_1.0_pro","gemini_1.5_pro", "gemini_1.5_flash","groq-llama3",'groq_llama3_70b','anthropic_claude_3_5_sonnet','fireworks_llama_v3_70b','bedrock_claude_3_5_sonnet', ) : 4, 
+     ("openai-gpt-4","diffbot" ,'azure_ai_gpt_4o',"openai_gpt_4o", "openai_gpt_4o_mini") : 28,
      ("ollama_llama3") : 2  
-} 
+}  
 
 ### CHAT TEMPLATES 
 CHAT_SYSTEM_TEMPLATE = """
@@ -473,14 +473,16 @@ RETURN
             .*,
             embedding: null,
             fileName: d.fileName,
-            fileSource: d.fileSource
+            fileSource: d.fileSource, 
+            element_id: elementId(c)
         }
     ] AS chunks,
     [
         community IN communities WHERE community IS NOT NULL | 
         community {
             .*,
-            embedding: null
+            embedding: null,
+            element_id:elementId(community)
         }
     ] AS communities,
     [
@@ -551,7 +553,7 @@ MATCH (community:__Community__)
 WHERE elementId(community) IN $communityids
 WITH collect(distinct community) AS communities
 RETURN [community IN communities | 
-        community {.*, embedding: null, elementid: elementId(community)}] AS communities
+        community {.*, embedding: null, element_id: elementId(community)}] AS communities
 """
 
 ## CHAT MODES 
