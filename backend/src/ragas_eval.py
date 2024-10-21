@@ -9,7 +9,7 @@ from ragas.metrics import answer_relevancy, faithfulness
 from src.shared.common_fn import load_embedding_model 
 load_dotenv()
 
-EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
+EMBEDDING_MODEL = os.getenv("RAGAS_EMBEDDING_MODEL")
 EMBEDDING_FUNCTION, _ = load_embedding_model(EMBEDDING_MODEL)
 
 def get_ragas_metrics(question: str, context: list, answer: list, model: str):
