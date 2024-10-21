@@ -13,7 +13,7 @@ import {
 import { DocumentDuplicateIconOutline, ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
 import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
-import { ExtendedNode, UserCredentials, chatInfoMessage, multimodelmetric } from '../../types';
+import { ExtendedNode, UserCredentials, chatInfoMessage } from '../../types';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import GraphViewButton from '../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
@@ -57,6 +57,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   metricsLoading,
   activeChatmodes,
   metricError,
+  multiModelMetrics,
   saveNodes,
   saveChunks,
   saveChatRelationships,
@@ -65,6 +66,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   saveMetrics,
   toggleInfoLoading,
   toggleMetricsLoading,
+  saveMultimodemetrics,
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
@@ -76,10 +78,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
   const [showMetricsTable, setShowMetricsTable] = useState<boolean>(Boolean(metricDetails));
-  const [multiModelMetrics, setMultiModelMetrics] = useState<multimodelmetric[]>([]);
   const [multiModeError, setMultiModeError] = useState<string>('');
-
-  console.log('node', nodeDetails);
 
   const actions: CypherCodeBlockProps['actions'] = useMemo(
     () => [
@@ -170,7 +169,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       if (metricsLoading) {
         toggleMetricsLoading();
       }
-      setMultiModelMetrics([]);
     };
   }, [nodeDetails, mode, error, metricsLoading]);
 
@@ -181,7 +179,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     if (activeChatmodes) {
       if (Object.keys(activeChatmodes).length <= 1) {
         setShowMetricsTable(true);
-        const defaultMode = Object.keys(activeChatmodes)[0];
+        const [defaultMode] = Object.keys(activeChatmodes);
         try {
           toggleMetricsLoading();
           const response = await getChatMetrics(metricquestion, [metriccontexts], [metricanswer], metricmodel, [
@@ -227,7 +225,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             const metricsdata = Object.entries(modewisedata).map(([mode, scores]) => {
               return { mode, answer_relevancy: scores.answer_relevancy, faithfulness: scores.faithfulness };
             });
-            setMultiModelMetrics(metricsdata);
+            saveMultimodemetrics(metricsdata);
           } else {
             throw new Error(responses.data.error);
           }
@@ -346,7 +344,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             {showMetricsTable && activeChatmodes != null && Object.keys(activeChatmodes).length <= 1 && (
               <MetricsTab metricsLoading={metricsLoading} error={metricError} metricDetails={metricDetails} />
             )}
-            {!metricDetails && (
+            {!metricDetails && activeChatmodes != undefined && Object.keys(activeChatmodes).length <= 1 && (
               <Button
                 label='Metrics Action Button'
                 disabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
@@ -356,14 +354,14 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                 View Detailed Metrics
               </Button>
             )}
-            {!multiModelMetrics && (
+            {!multiModelMetrics.length && activeChatmodes != undefined && Object.keys(activeChatmodes).length > 1 && (
               <Button
                 label='Metrics Action Button'
                 disabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
                 className='w-max self-center mt-4'
                 onClick={loadMetrics}
               >
-                View Detailed For All Modes
+                View Detailed Metrics For All Modes
               </Button>
             )}
           </Stack>

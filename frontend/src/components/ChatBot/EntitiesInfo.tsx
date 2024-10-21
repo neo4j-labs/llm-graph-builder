@@ -43,7 +43,7 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
     return Object.keys(labelCounts).sort((a, b) => labelCounts[b] - labelCounts[a]);
   }, [labelCounts]);
 
-  const handleEntityClick = async (elementId: string, viewMode: string) => {
+  const handleEntityClick = (elementId: string, viewMode: string) => {
     handleGraphNodeClick(
       userCredentials as UserCredentials,
       elementId,

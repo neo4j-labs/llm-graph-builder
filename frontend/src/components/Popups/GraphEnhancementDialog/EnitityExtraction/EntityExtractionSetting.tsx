@@ -317,8 +317,9 @@ export default function EntityExtractionSetting({
             options: nodeLabelOptions,
             onChange: onChangenodes,
             value: selectedNodes,
-            classNamePrefix: `${isTablet ? 'tablet_entity_extraction_Tab_node_label' : 'entity_extraction_Tab_node_label'
-              }`,
+            classNamePrefix: `${
+              isTablet ? 'tablet_entity_extraction_Tab_node_label' : 'entity_extraction_Tab_node_label'
+            }`,
           }}
           type='creatable'
         />
@@ -332,8 +333,9 @@ export default function EntityExtractionSetting({
             options: relationshipTypeOptions,
             onChange: onChangerels,
             value: selectedRels,
-            classNamePrefix: `${isTablet ? 'tablet_entity_extraction_Tab_relationship_label' : 'entity_extraction_Tab_relationship_label'
-              }`,
+            classNamePrefix: `${
+              isTablet ? 'tablet_entity_extraction_Tab_relationship_label' : 'entity_extraction_Tab_relationship_label'
+            }`,
           }}
           type='creatable'
         />
