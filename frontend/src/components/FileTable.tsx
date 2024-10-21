@@ -521,7 +521,11 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               label='Copy Row'
               disabled={info.getValue() === 'Uploading'}
               clean
-              onClick={() => handleCopy(info.row.original)}
+              onClick={() => {
+                const copied={...info.row.original};
+                delete copied.accessToken;
+                handleCopy(copied);
+              }}
             >
               <ClipboardDocumentIconOutline className={`${copyRow} ? 'cursor-wait': 'cursor`} />
             </IconButtonWithToolTip>
