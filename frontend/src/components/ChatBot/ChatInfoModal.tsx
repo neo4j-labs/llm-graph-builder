@@ -78,6 +78,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
   const [showMetricsTable, setShowMetricsTable] = useState<boolean>(Boolean(metricDetails));
+  const [showMultiModeMetrics, setShowMultiModeMetrics] = useState<boolean>(Boolean(multiModelMetrics.length))
   const [multiModeError, setMultiModeError] = useState<string>('');
 
   const actions: CypherCodeBlockProps['actions'] = useMemo(
@@ -200,7 +201,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           }
         }
       } else {
-        setShowMetricsTable(true);
+        setShowMultiModeMetrics(true)
         toggleMetricsLoading();
         const contextarray = Object.values(activeChatmodes).map((r) => {
           return r.metric_contexts;
@@ -334,7 +335,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                 </Typography>
               </Stack>
             </Stack>
-            {showMetricsTable && activeChatmodes != null && Object.keys(activeChatmodes).length > 1 && (
+            {showMultiModeMetrics && activeChatmodes != null && Object.keys(activeChatmodes).length > 1 && (
               <MultiModeMetrics
                 error={multiModeError}
                 metricsLoading={metricsLoading}

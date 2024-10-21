@@ -45,7 +45,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
         </Box>
       ) : chunks?.length > 0 ? (
         <div className='p-4 h-80 overflow-auto'>
-          <ul className='list-disc list-inside'>
+          <ul className='list-inside list-none'>
             {chunks.map((chunk) => (
               <li key={chunk.id} className='mb-2'>
                 {chunk?.page_number ? (
