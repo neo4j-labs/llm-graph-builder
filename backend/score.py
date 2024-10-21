@@ -291,10 +291,10 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             
         if "enable_communities" in tasks:
             await asyncio.to_thread(create_communities, uri, userName, password, database)
-            josn_obj = {'api_name': 'post_processing/create_communities', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+            json_obj = {'api_name': 'post_processing/create_communities', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logging.info(f'created communities')
             
-        logger.log_struct(josn_obj)
+        logger.log_struct(json_obj)
         return create_api_response('Success', message='All tasks completed successfully')
     
     except Exception as e:
