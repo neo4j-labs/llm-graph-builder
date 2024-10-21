@@ -36,7 +36,7 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
         </Box>
       ) : communities?.length > 0 ? (
         <div className='p-4 h-80 overflow-auto'>
-          <ul className='list-disc list-inside'>
+          <ul className='list-none list-inside'>
             {communities.map((community, index) => (
               <li key={`${community.id}${index}`} className='mb-2'>
                 <div>
