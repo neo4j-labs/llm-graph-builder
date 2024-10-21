@@ -25,6 +25,7 @@ import {
   ResponseMode,
   UserCredentials,
   metricstate,
+  multimodelmetric,
   nodeDetailsProps,
 } from '../../types';
 import { useCredentials } from '../../context/UserCredentials';
@@ -81,6 +82,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [metricsLoading, toggleMetricsLoading] = useReducer((s) => !s, false);
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
   const [activeChat, setActiveChat] = useState<Messages | null>(null);
+  const [multiModelMetrics, setMultiModelMetrics] = useState<multimodelmetric[]>([]);
 
   const [_, copy] = useCopyToClipboard();
   const { speak, cancel, speaking } = useSpeechSynthesis({
@@ -111,6 +113,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
 
   const saveChunks = (chatChunks: Chunk[]) => {
     setChunks(chatChunks);
+  };
+  const saveMultimodemetrics = (metrics: multimodelmetric[]) => {
+    setMultiModelMetrics(metrics);
   };
   const saveMetrics = (metricInfo: metricstate) => {
     setMetricDetails(metricInfo);
@@ -400,6 +405,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       setInfoEntities([]);
       setMetricDetails(null);
     }
+    if (previousActiveChat != null && chat.id != previousActiveChat?.id) {
+      setMultiModelMetrics([]);
+    }
   }, []);
 
   const speechHandler = useCallback((chat: Messages) => {
@@ -648,7 +656,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             saveNodes={saveNodes}
             toggleInfoLoading={toggleInfoLoading}
             toggleMetricsLoading={toggleMetricsLoading}
+            saveMultimodemetrics={saveMultimodemetrics}
             activeChatmodes={activeChat?.modes}
+            multiModelMetrics={multiModelMetrics}
           />
         </Modal>
       </Suspense>

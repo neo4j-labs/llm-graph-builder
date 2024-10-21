@@ -332,7 +332,6 @@ export const filterData = (
     filteredNodes = allNodes;
     filteredRelations = allRelationships;
     filteredScheme = scheme;
-    console.log('entity', filteredScheme);
   }
   return { filteredNodes, filteredRelations, filteredScheme };
 };

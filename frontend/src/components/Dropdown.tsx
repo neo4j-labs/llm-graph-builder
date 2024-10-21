@@ -39,7 +39,9 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
                   };
                 }),
                 placeholder: placeholder || 'Select an option',
-                defaultValue: defaultValue ? { label: capitalize(defaultValue), value: defaultValue } : undefined,
+                defaultValue: defaultValue
+                  ? { label: capitalizeWithUnderscore(defaultValue), value: defaultValue }
+                  : undefined,
                 menuPlacement: 'auto',
                 isDisabled: isDisabled,
                 value: value,

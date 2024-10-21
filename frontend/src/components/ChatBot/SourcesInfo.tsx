@@ -12,14 +12,14 @@ import s3logo from '../../assets/images/s3logo.png';
 
 const filterUniqueChunks = (chunks: Chunk[]) => {
   const chunkSource = new Set();
-  return chunks.filter(chunk => {
+  return chunks.filter((chunk) => {
     const sourceCheck = `${chunk.fileName}-${chunk.fileSource}`;
     if (chunkSource.has(sourceCheck)) {
       return false;
-    } else {
+    } 
       chunkSource.add(sourceCheck);
       return true;
-    }
+    
   });
 };
 

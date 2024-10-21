@@ -106,7 +106,7 @@ export default function DeduplicationTab() {
     });
   };
 
-  const handleDuplicateNodeClick = async (elementId: string, viewMode: string) => {
+  const handleDuplicateNodeClick = (elementId: string, viewMode: string) => {
     handleGraphNodeClick(
       userCredentials as UserCredentials,
       elementId,

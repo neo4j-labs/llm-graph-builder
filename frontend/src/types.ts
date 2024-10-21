@@ -471,6 +471,7 @@ export interface chatInfoMessage extends Partial<Messages> {
         [key: string]: ResponseMode;
       }
     | undefined;
+  multiModelMetrics: multimodelmetric[];
   saveInfoEntitites: (entities: Entity[]) => void;
   saveNodes: (chatNodes: ExtendedNode[]) => void;
   saveChatRelationships: (chatRels: ExtendedRelationship[]) => void;
@@ -479,6 +480,7 @@ export interface chatInfoMessage extends Partial<Messages> {
   saveCommunities: (chatCommunities: Community[]) => void;
   toggleInfoLoading: React.DispatchWithoutAction;
   toggleMetricsLoading: React.DispatchWithoutAction;
+  saveMultimodemetrics: (metrics: multimodelmetric[]) => void;
 }
 
 export interface eventResponsetypes extends Omit<SourceNode, 'total_chunks' | 'processingTime'> {
@@ -839,7 +841,6 @@ export type GraphPropertiesPanelProps = {
   newScheme: Scheme;
 };
 
-
 export type withId = {
   id: string;
 };
@@ -855,4 +856,3 @@ export interface GraphViewHandlerProps {
   entityInfo?: Entity[];
   mode?: string;
 }
-
