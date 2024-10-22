@@ -308,7 +308,7 @@ const Content: React.FC<ContentProps> = ({
         userCredentials as UserCredentials,
         fileItem.fileSource,
         fileItem.retryOption ?? '',
-        fileItem.source_url,
+        fileItem.sourceUrl,
         localStorage.getItem('accesskey'),
         localStorage.getItem('secretkey'),
         fileItem.name ?? '',
@@ -316,9 +316,9 @@ const Content: React.FC<ContentProps> = ({
         fileItem.gcsBucketFolder ?? '',
         selectedNodes.map((l) => l.value),
         selectedRels.map((t) => t.value),
-        fileItem.google_project_id,
+        fileItem.googleProjectId,
         fileItem.language,
-        fileItem.access_token
+        fileItem.accessToken
       );
 
       if (apiResponse?.status === 'Failed') {
@@ -571,8 +571,8 @@ const Content: React.FC<ContentProps> = ({
                 ...f,
                 status: 'Reprocess',
                 processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-                NodesCount: isStartFromBegining ? 0 : f.NodesCount,
-                relationshipCount: isStartFromBegining ? 0 : f.relationshipCount,
+                NodesCount: isStartFromBegining ? 0 : f.nodesCount,
+                relationshipCount: isStartFromBegining ? 0 : f.relationshipsCount,
               }
             : f;
         });
