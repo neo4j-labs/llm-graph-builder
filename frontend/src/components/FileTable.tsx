@@ -141,8 +141,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             <div className='textellipsis'>
               <span
                 title={
-                  (info.row.original?.fileSource === 's3 bucket' && info.row.original?.source_url) ||
-                  (info.row.original?.fileSource === 'youtube' && info.row.original?.source_url) ||
+                  (info.row.original?.fileSource === 's3 bucket' && info.row.original?.sourceUrl) ||
+                  (info.row.original?.fileSource === 'youtube' && info.row.original?.sourceUrl) ||
                   info.getValue()
                 }
               >
@@ -307,7 +307,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           },
         },
       }),
-      columnHelper.accessor((row) => row.uploadprogess, {
+      columnHelper.accessor((row) => row.uploadProgress, {
         id: 'uploadprogess',
         cell: (info: CellContext<CustomFile, string>) => {
           if (parseInt(info.getValue()) === 100 || info.row.original?.status === 'New') {
@@ -354,7 +354,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             return (
               <Flex>
                 <span>
-                  <TextLink externalLink href={info.row.original.source_url}>
+                  <TextLink externalLink href={info.row.original.sourceUrl}>
                     {info.row.original.fileSource}
                   </TextLink>
                 </span>
@@ -487,13 +487,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           },
         },
       }),
-      columnHelper.accessor((row) => row.NodesCount, {
+      columnHelper.accessor((row) => row.nodesCount, {
         id: 'NodesCount',
         cell: (info) => <i>{info.getValue()}</i>,
         header: () => <span>Nodes</span>,
         footer: (info) => info.column.id,
       }),
-      columnHelper.accessor((row) => row.relationshipCount, {
+      columnHelper.accessor((row) => row.relationshipsCount, {
         id: 'relationshipCount',
         cell: (info) => <i>{info.getValue()}</i>,
         header: () => <span>Relations</span>,
@@ -521,7 +521,11 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               label='Copy Row'
               disabled={info.getValue() === 'Uploading'}
               clean
-              onClick={() => handleCopy(info.row.original)}
+              onClick={() => {
+                const copied={...info.row.original};
+                delete copied.accessToken;
+                handleCopy(copied);
+              }}
             >
               <ClipboardDocumentIconOutline className={`${copyRow} ? 'cursor-wait': 'cursor`} />
             </IconButtonWithToolTip>
@@ -661,19 +665,19 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   type: item?.fileType?.includes('.')
                     ? item?.fileType?.substring(1)?.toUpperCase() ?? 'None'
                     : item?.fileType?.toUpperCase() ?? 'None',
-                  NodesCount: item?.nodeCount ?? 0,
-                  processing: item?.processingTime ?? 'None',
-                  relationshipCount: item?.relationshipCount ?? 0,
+                  nodesCount: item?.nodeCount ?? 0,
+                  processingTotalTime: item?.processingTime ?? 'None',
+                  relationshipsCount: item?.relationshipCount ?? 0,
                   status: waitingFile ? 'Waiting' : getFileSourceStatus(item),
                   model: item?.model ?? model,
                   id: !waitingFile ? uuidv4() : waitingFile.id,
-                  source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
+                  sourceUrl: item?.url != 'None' && item?.url != '' ? item.url : '',
                   fileSource: item?.fileSource ?? 'None',
                   gcsBucket: item?.gcsBucket,
                   gcsBucketFolder: item?.gcsBucketFolder,
                   errorMessage: item?.errorMessage,
-                  uploadprogess: item?.uploadprogress ?? 0,
-                  google_project_id: item?.gcsProjectId,
+                  uploadProgress: item?.uploadprogress ?? 0,
+                  googleProjectId: item?.gcsProjectId,
                   language: item?.language ?? '',
                   processingProgress:
                     item?.processed_chunk != undefined &&
@@ -681,7 +685,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                     !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
-                  access_token: item?.access_token ?? '',
+                  accessToken: item?.accessToken ?? '',
                   retryOption: item.retry_condition ?? '',
                   retryOptionStatus: false,
                 });
