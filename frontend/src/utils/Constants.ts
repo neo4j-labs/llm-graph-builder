@@ -51,13 +51,13 @@ export const chatModeLables = {
   graph: 'graph',
   'graph+vector': 'graph_vector',
   fulltext: 'fulltext',
-  "graph+vector+fulltext": 'graph_vector_fulltext',
-  "entity search+vector":"entity_vector",
+  'graph+vector+fulltext': 'graph_vector_fulltext',
+  'entity search+vector': 'entity_vector',
   unavailableChatMode: 'Chat mode is unavailable when files are selected',
   selected: 'Selected',
-  "global search+vector+fulltext":"global_vector"
+  'global search+vector+fulltext': 'global_vector',
 };
-export const chatModeReadableLables:Record<string,string> = {
+export const chatModeReadableLables: Record<string, string> = {
   vector: 'vector',
   graph: 'graph',
   graph_vector: 'graph+vector',

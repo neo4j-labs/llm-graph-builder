@@ -24,7 +24,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   const [viewPoint, setViewPoint] = useState('');
   const [_, setLoadingGraphView] = useState(false);
 
-  const handleChunkClick =  (elementId: string, viewMode: string) => {
+  const handleChunkClick = (elementId: string, viewMode: string) => {
     handleGraphNodeClick(
       userCredentials as UserCredentials,
       elementId,

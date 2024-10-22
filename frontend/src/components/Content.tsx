@@ -552,7 +552,7 @@ const Content: React.FC<ContentProps> = ({
     setSelectedNodes([]);
     setSelectedRels([]);
     setClearHistoryData(true);
-    setchatModes([chatModeLables.graph_vector_fulltext]);
+    setchatModes([chatModeLables['graph+vector+fulltext']]);
   };
 
   const retryHandler = async (filename: string, retryoption: string) => {

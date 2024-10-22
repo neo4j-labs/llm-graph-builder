@@ -71,14 +71,20 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const [activeTab, setActiveTab] = useState<number>(
-    error?.length ? 10 : mode === chatModeLables['global search+vector+fulltext'] ? 7 : mode === chatModeLables.graph ? 4 : 3
+    error?.length
+      ? 10
+      : mode === chatModeLables['global search+vector+fulltext']
+      ? 7
+      : mode === chatModeLables.graph
+      ? 4
+      : 3
   );
   const { userCredentials } = useCredentials();
   const themeUtils = useContext(ThemeWrapperContext);
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
   const [showMetricsTable, setShowMetricsTable] = useState<boolean>(Boolean(metricDetails));
-  const [showMultiModeMetrics, setShowMultiModeMetrics] = useState<boolean>(Boolean(multiModelMetrics.length))
+  const [showMultiModeMetrics, setShowMultiModeMetrics] = useState<boolean>(Boolean(multiModelMetrics.length));
   const [multiModeError, setMultiModeError] = useState<string>('');
 
   const actions: CypherCodeBlockProps['actions'] = useMemo(
@@ -201,7 +207,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           }
         }
       } else {
-        setShowMultiModeMetrics(true)
+        setShowMultiModeMetrics(true);
         toggleMetricsLoading();
         const contextarray = Object.values(activeChatmodes).map((r) => {
           return r.metric_contexts;

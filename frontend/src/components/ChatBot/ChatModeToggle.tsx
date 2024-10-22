@@ -68,7 +68,9 @@ export default function ChatModeToggle({
         title: (
           <div>
             <Typography variant='subheading-small'>
-              {chatModeReadableLables[m.mode].includes('+') ? capitalizeWithPlus(chatModeReadableLables[m.mode]) : capitalize(chatModeReadableLables[m.mode])}
+              {chatModeReadableLables[m.mode].includes('+')
+                ? capitalizeWithPlus(chatModeReadableLables[m.mode])
+                : capitalize(chatModeReadableLables[m.mode])}
             </Typography>
             <div>
               <Typography variant='body-small'>{m.description}</Typography>
