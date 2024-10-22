@@ -398,7 +398,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     setActiveChat(chat);
     if (
       (previousActiveChat != null && chat.id != previousActiveChat?.id) ||
-      (previousActiveChat != null && previousActiveChat.currentMode != chat.currentMode)
+      (previousActiveChat != null && chat.currentMode != previousActiveChat.currentMode)
     ) {
       setNodes([]);
       setChunks([]);
