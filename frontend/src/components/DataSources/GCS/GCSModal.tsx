@@ -120,6 +120,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
                 fileSource: defaultValues.fileSource,
                 processingProgress: defaultValues.processingProgress,
                 accessToken: codeResponse.access_token,
+                uploadProgress:100
               });
             }
           }
