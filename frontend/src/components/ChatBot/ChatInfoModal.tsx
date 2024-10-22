@@ -24,7 +24,7 @@ import ChunkInfo from './ChunkInfo';
 import EntitiesInfo from './EntitiesInfo';
 import SourcesInfo from './SourcesInfo';
 import CommunitiesInfo from './CommunitiesInfo';
-import { chatModeLables, supportedLLmsForRagas } from '../../utils/Constants';
+import { chatModeLables, chatModeReadableLables, supportedLLmsForRagas } from '../../utils/Constants';
 import { Relationship } from '@neo4j-nvl/base';
 import { getChatMetrics } from '../../services/GetRagasMetric';
 import MetricsTab from './MetricsTab';
@@ -261,7 +261,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             To generate this response, the process took <span className='font-bold'>{response_time} seconds,</span>
             utilizing <span className='font-bold'>{total_tokens}</span> tokens with the model{' '}
             <span className='font-bold'>{model}</span> in{' '}
-            <span className='font-bold'>{mode !== 'vector' ? mode.replace(/\+/g, ' & ') : mode}</span> mode.
+            <span className='font-bold'>{chatModeReadableLables[mode] !== 'vector' ? chatModeReadableLables[mode].replace(/\+/g, ' & ') : chatModeReadableLables[mode]}</span> mode.
           </Typography>
         </Box>
       </Box>
