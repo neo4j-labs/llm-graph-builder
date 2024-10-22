@@ -332,7 +332,6 @@ export const filterData = (
     filteredNodes = allNodes;
     filteredRelations = allRelationships;
     filteredScheme = scheme;
-    console.log('entity', filteredScheme);
   }
   return { filteredNodes, filteredRelations, filteredScheme };
 };
@@ -508,4 +507,15 @@ export function downloadClickHandler<Type>(
     downloadLinkRef.current.download = filename;
     downloadLinkRef.current.click();
   }
+}
+export function getNodes<Type extends Entity | ExtendedNode>(nodesData: Array<Type>, mode: string) {
+  return nodesData.map((n) => {
+    if (!n.labels.length && mode === chatModeLables.entity_vector) {
+      return {
+        ...n,
+        labels: ['Entity'],
+      };
+    }
+    return n;
+  });
 }

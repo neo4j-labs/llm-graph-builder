@@ -7,7 +7,6 @@ import {
   ProgressBar,
   StatusIndicator,
   TextLink,
-  Tip,
   Typography,
   useCopyToClipboard,
 } from '@neo4j-ndl/react';
@@ -71,6 +70,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const skipPageResetRef = useRef<boolean>(false);
   const [_, copy] = useCopyToClipboard();
   const { colorMode } = useContext(ThemeWrapperContext);
+  const [copyRow, setCopyRow] = useState<boolean>(false);
 
   const tableRef = useRef(null);
 
@@ -83,8 +83,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     }
   );
 
-  const handleCopy = (message: string) => {
-    copy(message);
+  const handleCopy = (rowData: any) => {
+    const rowString = JSON.stringify(rowData, null, 2);
+    copy(rowString);
+    setCopyRow(true);
+    setTimeout(() => {
+      setCopyRow(false);
+    }, 5000);
   };
   const columns = useMemo(
     () => [
@@ -136,8 +141,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             <div className='textellipsis'>
               <span
                 title={
-                  (info.row.original?.fileSource === 's3 bucket' && info.row.original?.source_url) ||
-                  (info.row.original?.fileSource === 'youtube' && info.row.original?.source_url) ||
+                  (info.row.original?.fileSource === 's3 bucket' && info.row.original?.sourceUrl) ||
+                  (info.row.original?.fileSource === 'youtube' && info.row.original?.sourceUrl) ||
                   info.getValue()
                 }
               >
@@ -154,18 +159,14 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         cell: (info) => {
           if (info.getValue() != 'Processing') {
             return (
-              <Tip allowedPlacements={['left']}>
-                <div
-                  className='cellClass'
-                  title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
-                >
-                  <Tip.Trigger>
-                    <StatusIndicator type={statusCheck(info.getValue())} />
-                    {info.getValue()}
-                  </Tip.Trigger>
-                  {(info.getValue() === 'Completed' ||
-                    info.getValue() === 'Failed' ||
-                    (info.getValue() === 'Cancelled' && !isReadOnlyUser)) && (
+              <div
+                className='cellClass'
+                title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
+              >
+                <StatusIndicator type={statusCheck(info.getValue())} />
+                {info.getValue()}
+                {(info.getValue() === 'Completed' || info.getValue() === 'Failed' || info.getValue() === 'Cancelled') &&
+                  !isReadOnlyUser && (
                     <span className='mx-1'>
                       <IconButtonWithToolTip
                         placement='right'
@@ -179,25 +180,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                       </IconButtonWithToolTip>
                     </span>
                   )}
-                </div>
-
-                {info.row.original?.status === 'Failed' && (
-                  <Tip.Content>
-                    <IconButton
-                      aria-label='error copy'
-                      clean
-                      label='copy error'
-                      size='small'
-                      onClick={() => handleCopy(info.row.original?.errorMessage ?? '')}
-                    >
-                      <ClipboardDocumentIconOutline
-                        color={colorMode === 'light' ? 'white' : ''}
-                        className='w-4 h-4 inline-block'
-                      />
-                    </IconButton>
-                  </Tip.Content>
-                )}
-              </Tip>
+              </div>
             );
           } else if (info.getValue() === 'Processing' && info.row.original.processingProgress === undefined) {
             return (
@@ -324,7 +307,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           },
         },
       }),
-      columnHelper.accessor((row) => row.uploadprogess, {
+      columnHelper.accessor((row) => row.uploadProgress, {
         id: 'uploadprogess',
         cell: (info: CellContext<CustomFile, string>) => {
           if (parseInt(info.getValue()) === 100 || info.row.original?.status === 'New') {
@@ -371,7 +354,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             return (
               <Flex>
                 <span>
-                  <TextLink externalLink href={info.row.original.source_url}>
+                  <TextLink externalLink href={info.row.original.sourceUrl}>
                     {info.row.original.fileSource}
                   </TextLink>
                 </span>
@@ -504,13 +487,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           },
         },
       }),
-      columnHelper.accessor((row) => row.NodesCount, {
+      columnHelper.accessor((row) => row.nodesCount, {
         id: 'NodesCount',
         cell: (info) => <i>{info.getValue()}</i>,
         header: () => <span>Nodes</span>,
         footer: (info) => info.column.id,
       }),
-      columnHelper.accessor((row) => row.relationshipCount, {
+      columnHelper.accessor((row) => row.relationshipsCount, {
         id: 'relationshipCount',
         cell: (info) => <i>{info.getValue()}</i>,
         header: () => <span>Relations</span>,
@@ -531,9 +514,24 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             >
               <MagnifyingGlassCircleIconSolid />
             </IconButtonWithToolTip>
+            <IconButtonWithToolTip
+              placement='left'
+              text='copy'
+              size='large'
+              label='Copy Row'
+              disabled={info.getValue() === 'Uploading'}
+              clean
+              onClick={() => {
+                const copied={...info.row.original};
+                delete copied.accessToken;
+                handleCopy(copied);
+              }}
+            >
+              <ClipboardDocumentIconOutline className={`${copyRow} ? 'cursor-wait': 'cursor`} />
+            </IconButtonWithToolTip>
           </>
         ),
-        header: () => <span>View</span>,
+        header: () => <span>Actions</span>,
         footer: (info) => info.column.id,
       }),
     ],
@@ -667,19 +665,19 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   type: item?.fileType?.includes('.')
                     ? item?.fileType?.substring(1)?.toUpperCase() ?? 'None'
                     : item?.fileType?.toUpperCase() ?? 'None',
-                  NodesCount: item?.nodeCount ?? 0,
-                  processing: item?.processingTime ?? 'None',
-                  relationshipCount: item?.relationshipCount ?? 0,
+                  nodesCount: item?.nodeCount ?? 0,
+                  processingTotalTime: item?.processingTime ?? 'None',
+                  relationshipsCount: item?.relationshipCount ?? 0,
                   status: waitingFile ? 'Waiting' : getFileSourceStatus(item),
                   model: item?.model ?? model,
                   id: !waitingFile ? uuidv4() : waitingFile.id,
-                  source_url: item?.url != 'None' && item?.url != '' ? item.url : '',
+                  sourceUrl: item?.url != 'None' && item?.url != '' ? item.url : '',
                   fileSource: item?.fileSource ?? 'None',
                   gcsBucket: item?.gcsBucket,
                   gcsBucketFolder: item?.gcsBucketFolder,
                   errorMessage: item?.errorMessage,
-                  uploadprogess: item?.uploadprogress ?? 0,
-                  google_project_id: item?.gcsProjectId,
+                  uploadProgress: item?.uploadprogress ?? 0,
+                  googleProjectId: item?.gcsProjectId,
                   language: item?.language ?? '',
                   processingProgress:
                     item?.processed_chunk != undefined &&
@@ -687,7 +685,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                     !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
-                  access_token: item?.access_token ?? '',
+                  accessToken: item?.accessToken ?? '',
                   retryOption: item.retry_condition ?? '',
                   retryOptionStatus: false,
                 });

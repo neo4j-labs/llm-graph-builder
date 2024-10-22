@@ -13,7 +13,8 @@ NODE_PROJECTION = "!Chunk&!Document&!__Community__"
 NODE_PROJECTION_ENTITY = "__Entity__"
 MAX_WORKERS = 10
 MAX_COMMUNITY_LEVELS = 3 
-MIN_COMMUNITY_SIZE = 1
+MIN_COMMUNITY_SIZE = 1 
+COMMUNITY_CREATION_DEFAULT_MODEL = "openai_gpt_4o"
 
 
 CREATE_COMMUNITY_GRAPH_PROJECTION = """
@@ -466,7 +467,7 @@ def clear_communities(gds):
         raise
 
 
-def create_communities(uri, username, password, database,model):
+def create_communities(uri, username, password, database,model=COMMUNITY_CREATION_DEFAULT_MODEL):
     try:
         gds = get_gds_driver(uri, username, password, database)
         clear_communities(gds)

@@ -8,24 +8,24 @@ import { BannerType } from '@neo4j-ndl/react';
 import Queue from './utils/Queue';
 
 export interface CustomFileBase extends Partial<globalThis.File> {
-  processing: number | string;
+  processingTotalTime: number | string;
   status: string;
-  NodesCount: number;
-  relationshipCount: number;
+  nodesCount: number;
+  relationshipsCount: number;
   model: string;
   fileSource: string;
-  source_url?: string;
-  wiki_query?: string;
+  sourceUrl?: string;
+  wikiQuery?: string;
   gcsBucket?: string;
   gcsBucketFolder?: string;
   errorMessage?: string;
-  uploadprogess?: number;
+  uploadProgress?: number;
   processingStatus?: boolean;
-  google_project_id?: string;
+  googleProjectId?: string;
   language?: string;
   processingProgress?: number;
-  access_token?: string;
-  checked?: boolean;
+  accessToken?: string;
+  isChecked?: boolean;
   retryOptionStatus: boolean;
   retryOption: string;
 }
@@ -45,12 +45,12 @@ export type UserCredentials = {
   database: string;
 } & { [key: string]: any };
 
-export interface SourceNode extends Omit<CustomFileBase, 'relationshipCount'> {
+export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount'> {
   fileName: string;
   fileSize: number;
   fileType: string;
   nodeCount?: number;
-  processingTime?: string;
+  processingTime: string;
   relationshipCount?: number;
   url?: string;
   awsAccessKeyId?: string;
@@ -61,7 +61,7 @@ export interface SourceNode extends Omit<CustomFileBase, 'relationshipCount'> {
   retry_condition?: string;
 }
 
-export type ExtractParams = Pick<CustomFile, 'wiki_query' | 'model' | 'source_url' | 'language' | 'access_token'> & {
+export type ExtractParams = Pick<CustomFile, 'wikiQuery' | 'model' | 'sourceUrl' | 'language' | 'accessToken'> & {
   file?: File;
   aws_access_key_id?: string | null;
   aws_secret_access_key?: string | null;
@@ -410,11 +410,18 @@ export interface duplicateNodesData extends Partial<commonserverresponse> {
 export interface OrphanNodeResponse extends Partial<commonserverresponse> {
   data: orphanNodeProps[];
 }
-export type metricdetails = {
+export type metricstate = {
   faithfulness: number;
   answer_relevancy: number;
-  context_utilization: number;
+  error?: string;
 };
+export type metricdetails = Record<string, metricstate>;
+
+export interface multimodelmetric {
+  mode: string;
+  answer_relevancy: number;
+  faithfulness: number;
+}
 export interface MetricsResponse extends Omit<commonserverresponse, 'data'> {
   data: metricdetails;
 }
@@ -428,10 +435,6 @@ export interface SourceListServerData {
   status: string;
   error?: string;
   message?: string;
-}
-
-export interface MetricsState extends metricdetails {
-  error?: string;
 }
 
 export interface chatInfoMessage extends Partial<Messages> {
@@ -452,19 +455,32 @@ export interface chatInfoMessage extends Partial<Messages> {
   nodes: ExtendedNode[];
   relationships: ExtendedRelationship[];
   chunks: Chunk[];
-  metricDetails: MetricsState | null;
+  metricDetails:
+    | {
+        faithfulness: number;
+        answer_relevancy: number;
+      }
+    | undefined;
+  metricError: string;
   infoEntities: Entity[];
   communities: Community[];
   infoLoading: boolean;
   metricsLoading: boolean;
+  activeChatmodes:
+    | {
+        [key: string]: ResponseMode;
+      }
+    | undefined;
+  multiModelMetrics: multimodelmetric[];
   saveInfoEntitites: (entities: Entity[]) => void;
   saveNodes: (chatNodes: ExtendedNode[]) => void;
   saveChatRelationships: (chatRels: ExtendedRelationship[]) => void;
   saveChunks: (chatChunks: Chunk[]) => void;
-  saveMetrics: (metricInfo: MetricsState) => void;
+  saveMetrics: (metricInfo: metricstate) => void;
   saveCommunities: (chatCommunities: Community[]) => void;
   toggleInfoLoading: React.DispatchWithoutAction;
   toggleMetricsLoading: React.DispatchWithoutAction;
+  saveMultimodemetrics: (metrics: multimodelmetric[]) => void;
 }
 
 export interface eventResponsetypes extends Omit<SourceNode, 'total_chunks' | 'processingTime'> {
@@ -517,6 +533,7 @@ export type Community = {
   level: number;
   community_rank: number;
   score?: number;
+  element_id: string;
 };
 export type GroupedEntity = {
   texts: Set<string>;
@@ -556,6 +573,7 @@ export interface Chunk {
   fileSource: string;
   score?: string;
   fileType: string;
+  element_id: string;
 }
 
 export interface SpeechSynthesisProps {
@@ -610,6 +628,18 @@ export interface ExtendedNode extends Node {
   };
 }
 
+export interface NeoNode {
+  element_id: string;
+  labels: string[];
+  properties: Record<string, any>;
+}
+export interface NeoRelationship {
+  element_id: string;
+  start_node_element_id: string;
+  end_node_element_id: string;
+  type: string;
+}
+
 export interface ExtendedRelationship extends Relationship {
   count?: number;
 }
@@ -657,6 +687,9 @@ export interface S3File {
 export interface GraphViewButtonProps {
   nodeValues?: ExtendedNode[];
   relationshipValues?: ExtendedRelationship[];
+  fill?: 'text' | 'filled' | 'outlined';
+  label: string;
+  viewType: string;
 }
 export interface DrawerChatbotProps {
   isExpanded: boolean;
@@ -712,6 +745,9 @@ export type CommunitiesProps = {
   loading: boolean;
   communities: Community[];
   mode: string;
+
+  // nodeValues: ExtendedNode[];
+  // relationshipValues: ExtendedRelationship[];
 };
 
 export interface entity {
@@ -804,3 +840,19 @@ export type GraphPropertiesPanelProps = {
   inspectedItem: BasicNode | BasicRelationship;
   newScheme: Scheme;
 };
+
+export type withId = {
+  id: string;
+};
+
+export interface GraphViewHandlerProps {
+  nodeValues?: ExtendedNode[];
+  relationshipValues?: ExtendedRelationship[];
+  fill?: 'text' | 'filled' | 'outlined';
+  label?: string;
+  viewType?: string;
+  buttonLabel: string;
+  graphonly_entities?: [];
+  entityInfo?: Entity[];
+  mode?: string;
+}

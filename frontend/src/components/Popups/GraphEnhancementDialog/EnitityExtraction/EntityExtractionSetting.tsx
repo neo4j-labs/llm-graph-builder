@@ -18,7 +18,7 @@ export default function EntityExtractionSetting({
   openTextSchema,
   settingView,
   onContinue,
-  colseEnhanceGraphSchemaDialog,
+  closeEnhanceGraphSchemaDialog,
 }: {
   view: 'Dialog' | 'Tabs';
   open?: boolean;
@@ -26,7 +26,7 @@ export default function EntityExtractionSetting({
   openTextSchema: () => void;
   settingView: 'contentView' | 'headerView';
   onContinue?: () => void;
-  colseEnhanceGraphSchemaDialog?: () => void;
+  closeEnhanceGraphSchemaDialog?: () => void;
 }) {
   const { breakpoints } = tokens;
   const {
@@ -240,9 +240,29 @@ export default function EntityExtractionSetting({
     );
     localStorage.setItem('selectedSchemas', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
     showNormalToast(`Successfully Removed the Schema settings`);
-    if (view === 'Dialog' && onClose != undefined) {
-      onClose();
+    if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
+      closeEnhanceGraphSchemaDialog();
     }
+  };
+  const handleApply = () => {
+    setIsSchema(true);
+    localStorage.setItem('isSchema', JSON.stringify(true));
+    showNormalToast(`Successfully Applied the Schema settings`);
+    if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
+      closeEnhanceGraphSchemaDialog();
+    }
+    localStorage.setItem(
+      'selectedNodeLabels',
+      JSON.stringify({ db: userCredentials?.uri, selectedOptions: selectedNodes })
+    );
+    localStorage.setItem(
+      'selectedRelationshipLabels',
+      JSON.stringify({ db: userCredentials?.uri, selectedOptions: selectedRels })
+    );
+    localStorage.setItem(
+      'selectedSchemas',
+      JSON.stringify({ db: userCredentials?.uri, selectedOptions: selectedSchemas })
+    );
   };
 
   // Load selectedSchemas from local storage on mount
@@ -297,9 +317,8 @@ export default function EntityExtractionSetting({
             options: nodeLabelOptions,
             onChange: onChangenodes,
             value: selectedNodes,
-            classNamePrefix: `${
-              isTablet ? 'tablet_entity_extraction_Tab_node_label' : 'entity_extraction_Tab_node_label'
-            }`,
+            classNamePrefix: `${isTablet ? 'tablet_entity_extraction_Tab_node_label' : 'entity_extraction_Tab_node_label'
+              }`,
           }}
           type='creatable'
         />
@@ -313,9 +332,8 @@ export default function EntityExtractionSetting({
             options: relationshipTypeOptions,
             onChange: onChangerels,
             value: selectedRels,
-            classNamePrefix: `${
-              isTablet ? 'tablet_entity_extraction_Tab_relationship_label' : 'entity_extraction_Tab_relationship_label'
-            }`,
+            classNamePrefix: `${isTablet ? 'tablet_entity_extraction_Tab_relationship_label' : 'entity_extraction_Tab_relationship_label'
+              }`,
           }}
           type='creatable'
         />
@@ -343,8 +361,8 @@ export default function EntityExtractionSetting({
                 if (view === 'Dialog' && onClose != undefined) {
                   onClose();
                 }
-                if (view === 'Tabs' && colseEnhanceGraphSchemaDialog != undefined) {
-                  colseEnhanceGraphSchemaDialog();
+                if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
+                  closeEnhanceGraphSchemaDialog();
                 }
                 openTextSchema();
               }}
@@ -372,6 +390,15 @@ export default function EntityExtractionSetting({
                 {buttonCaptions.clearSettings}
               </ButtonWithToolTip>
             )}
+            <ButtonWithToolTip
+              text={tooltips.applySettings}
+              placement='top'
+              onClick={handleApply}
+              label='Apply Graph Settings'
+              disabled={!isSchema}
+            >
+              {buttonCaptions.applyGraphSchema}
+            </ButtonWithToolTip>
           </Flex>
         </Flex>
       </div>

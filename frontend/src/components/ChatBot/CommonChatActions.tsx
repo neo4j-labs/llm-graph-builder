@@ -30,6 +30,7 @@ export default function CommonActions({
         label='Retrieval Information'
         disabled={chat.isTyping || chat.isLoading}
         onClick={() => detailsHandler(chat, activeChat)}
+        aria-label='Retrieval Information'
       >
         {buttonCaptions.details}
       </ButtonWithToolTip>
@@ -40,6 +41,7 @@ export default function CommonActions({
         text={chat.copying ? tooltips.copied : tooltips.copy}
         onClick={() => copyHandler(chat.modes[chat.currentMode]?.message, chat.id)}
         disabled={chat.isTyping || chat.isLoading}
+        aria-label='copy text'
       >
         <ClipboardDocumentIconOutline />
       </IconButtonWithToolTip>
@@ -50,6 +52,7 @@ export default function CommonActions({
         text={chat.speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
         disabled={listMessages.some((msg) => msg.speaking && msg.id !== chat.id)}
         label={chat.speaking ? 'stop speaking' : 'text to speech'}
+        aria-label='speech'
       >
         {chat.speaking ? <SpeakerXMarkIconOutline /> : <SpeakerWaveIconOutline />}
       </IconButtonWithToolTip>

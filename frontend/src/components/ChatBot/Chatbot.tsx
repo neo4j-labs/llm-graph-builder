@@ -22,9 +22,10 @@ import {
   ExtendedNode,
   ExtendedRelationship,
   Messages,
-  MetricsState,
   ResponseMode,
   UserCredentials,
+  metricstate,
+  multimodelmetric,
   nodeDetailsProps,
 } from '../../types';
 import { useCredentials } from '../../context/UserCredentials';
@@ -74,13 +75,14 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [nodes, setNodes] = useState<ExtendedNode[]>([]);
   const [relationships, setRelationships] = useState<ExtendedRelationship[]>([]);
   const [chunks, setChunks] = useState<Chunk[]>([]);
-  const [metricDetails, setMetricDetails] = useState<MetricsState | null>(null);
+  const [metricDetails, setMetricDetails] = useState<metricstate | null>(null);
   const [infoEntities, setInfoEntities] = useState<Entity[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [infoLoading, toggleInfoLoading] = useReducer((s) => !s, false);
   const [metricsLoading, toggleMetricsLoading] = useReducer((s) => !s, false);
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
   const [activeChat, setActiveChat] = useState<Messages | null>(null);
+  const [multiModelMetrics, setMultiModelMetrics] = useState<multimodelmetric[]>([]);
 
   const [_, copy] = useCopyToClipboard();
   const { speak, cancel, speaking } = useSpeechSynthesis({
@@ -112,7 +114,10 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const saveChunks = (chatChunks: Chunk[]) => {
     setChunks(chatChunks);
   };
-  const saveMetrics = (metricInfo: MetricsState) => {
+  const saveMultimodemetrics = (metrics: multimodelmetric[]) => {
+    setMultiModelMetrics(metrics);
+  };
+  const saveMetrics = (metricInfo: metricstate) => {
     setMetricDetails(metricInfo);
   };
   const saveCommunities = (chatCommunities: Community[]) => {
@@ -393,12 +398,15 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     setActiveChat(chat);
     if (
       (previousActiveChat != null && chat.id != previousActiveChat?.id) ||
-      (previousActiveChat != null && previousActiveChat.currentMode != chat.currentMode)
+      (previousActiveChat != null && chat.currentMode != previousActiveChat.currentMode)
     ) {
       setNodes([]);
       setChunks([]);
       setInfoEntities([]);
       setMetricDetails(null);
+    }
+    if (previousActiveChat != null && chat.id != previousActiveChat?.id) {
+      setMultiModelMetrics([]);
     }
   }, []);
 
@@ -635,7 +643,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             infoEntities={infoEntities}
             relationships={relationships}
             chunks={chunks}
-            metricDetails={metricDetails}
+            metricDetails={activeChat != undefined && metricDetails != null ? metricDetails : undefined}
+            metricError={activeChat != undefined && metricDetails != null ? (metricDetails.error as string) : ''}
             communities={communities}
             infoLoading={infoLoading}
             metricsLoading={metricsLoading}
@@ -647,6 +656,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             saveNodes={saveNodes}
             toggleInfoLoading={toggleInfoLoading}
             toggleMetricsLoading={toggleMetricsLoading}
+            saveMultimodemetrics={saveMultimodemetrics}
+            activeChatmodes={activeChat?.modes}
+            multiModelMetrics={multiModelMetrics}
           />
         </Modal>
       </Suspense>

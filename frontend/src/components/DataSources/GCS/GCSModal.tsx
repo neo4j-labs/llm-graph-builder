@@ -23,10 +23,10 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
   const { setFilesData, model, filesData } = useFileContext();
 
   const defaultValues: CustomFileBase = {
-    processing: 0,
+    processingTotalTime: 0,
     status: 'New',
-    NodesCount: 0,
-    relationshipCount: 0,
+    nodesCount: 0,
+    relationshipsCount: 0,
     type: 'TEXT',
     model: model,
     fileSource: 'gcs bucket',
@@ -101,9 +101,9 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
                 size: item.fileSize ?? 0,
                 gcsBucket: item.gcsBucketName,
                 gcsBucketFolder: item.gcsBucketFolder,
-                google_project_id: item.gcsProjectId,
+                googleProjectId: item.gcsProjectId,
                 id: uuidv4(),
-                access_token: codeResponse.access_token,
+                accessToken: codeResponse.access_token,
                 ...defaultValues,
               });
             } else {
@@ -112,13 +112,13 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
               copiedFilesData.unshift({
                 ...tempFileData,
                 status: defaultValues.status,
-                NodesCount: defaultValues.NodesCount,
-                relationshipCount: defaultValues.relationshipCount,
-                processing: defaultValues.processing,
+                nodesCount: defaultValues.nodesCount,
+                relationshipsCount: defaultValues.relationshipsCount,
+                processingTotalTime: defaultValues.processingTotalTime,
                 model: defaultValues.model,
                 fileSource: defaultValues.fileSource,
                 processingProgress: defaultValues.processingProgress,
-                access_token: codeResponse.access_token,
+                accessToken: codeResponse.access_token,
               });
             }
           }

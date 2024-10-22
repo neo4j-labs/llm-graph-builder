@@ -276,8 +276,9 @@ def retrieve_documents(doc_retriever, messages):
         logging.info(f"Documents retrieved in {doc_retrieval_time:.2f} seconds")
         
     except Exception as e:
-        logging.error(f"Error retrieving documents: {e}")
-        raise
+        error_message = f"Error retrieving documents: {str(e)}"
+        logging.error(error_message)
+        raise RuntimeError(error_message)
     
     return docs,transformed_question
 
@@ -434,7 +435,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
             total_tokens = 0
             formatted_docs = ""
 
-        question = transformed_question if transformed_question else question
+        # question = transformed_question if transformed_question else question
         # metrics = get_ragas_metrics(question,formatted_docs,content)
         # print(metrics)
         
