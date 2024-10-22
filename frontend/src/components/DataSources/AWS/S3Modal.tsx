@@ -85,6 +85,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               name: item.fileName,
               size: item.fileSize,
               sourceUrl: item.url,
+              uploadProgress:100,
               // total_pages: 'N/A',
               id: uuidv4(),
               ...defaultValues,
@@ -101,6 +102,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               model: defaultValues.model,
               fileSource: defaultValues.fileSource,
               processingProgress: defaultValues.processingProgress,
+              uploadProgress:100,
             });
           }
         });
