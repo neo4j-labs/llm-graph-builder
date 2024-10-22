@@ -71,7 +71,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const [activeTab, setActiveTab] = useState<number>(
-    error?.length ? 10 : mode === chatModeLables.global_vector ? 7 : mode === chatModeLables.graph ? 4 : 3
+    error?.length ? 10 : mode === chatModeLables['global search+vector+fulltext'] ? 7 : mode === chatModeLables.graph ? 4 : 3
   );
   const { userCredentials } = useCredentials();
   const themeUtils = useContext(ThemeWrapperContext);
@@ -263,16 +263,16 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         <Banner type='danger'>{error}</Banner>
       ) : (
         <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
-          {mode === chatModeLables.global_vector ? (
+          {mode === chatModeLables['global search+vector+fulltext'] ? (
             <Tabs.Tab tabId={7}>Communities</Tabs.Tab>
           ) : (
             <>
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
-              {mode === chatModeLables.graph_vector ||
+              {mode === chatModeLables['graph+vector'] ||
               mode === chatModeLables.graph ||
-              mode === chatModeLables.graph_vector_fulltext ||
-              mode === chatModeLables.entity_vector ? (
+              mode === chatModeLables['graph+vector+fulltext'] ||
+              mode === chatModeLables['entity search+vector'] ? (
                 <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
               ) : (
                 <></>
@@ -282,7 +282,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               ) : (
                 <></>
               )}
-              {mode === chatModeLables.entity_vector && communities.length ? (
+              {mode === chatModeLables['entity search+vector'] && communities.length ? (
                 <Tabs.Tab tabId={7}>Communities</Tabs.Tab>
               ) : (
                 <></>
@@ -387,7 +387,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             className='min-h-40'
           />
         </Tabs.TabPanel>
-        {mode === chatModeLables.entity_vector || mode === chatModeLables.global_vector ? (
+        {mode === chatModeLables['entity search+vector'] || mode === chatModeLables['global search+vector+fulltext'] ? (
           <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={7}>
             <CommunitiesInfo loading={infoLoading} communities={communities} mode={mode} />
           </Tabs.TabPanel>
