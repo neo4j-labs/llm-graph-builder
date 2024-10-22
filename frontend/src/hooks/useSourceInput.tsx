@@ -115,7 +115,7 @@ export default function useSourceInput(
                 const baseValues = {
                   name: item.fileName,
                   size: item.fileSize,
-                  source_url: item.url,
+                  sourceUrl: item.url,
                   id: uuidv4(),
                   language: item.language,
                   uploadProgress:100,
