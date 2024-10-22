@@ -170,13 +170,13 @@ export default function DropZoneForSmallLayouts() {
     setIsLoading(false);
     if (f.length) {
       const defaultValues: CustomFileBase = {
-        processing: 0,
+        processingTotalTime: 0,
         status: 'None',
-        NodesCount: 0,
-        relationshipCount: 0,
+        nodesCount: 0,
+        relationshipsCount: 0,
         model: model,
         fileSource: 'local file',
-        uploadprogess: 0,
+        uploadProgress: 0,
         processingProgress: undefined,
         retryOption: '',
         retryOptionStatus: false,
@@ -192,7 +192,7 @@ export default function DropZoneForSmallLayouts() {
             // @ts-ignore
             type: `${file.name.substring(file.name.lastIndexOf('.') + 1, file.name.length).toUpperCase()}`,
             size: file.size,
-            uploadprogess: file.size && file?.size < chunkSize ? 100 : 0,
+            uploadProgress: file.size && file?.size < chunkSize ? 100 : 0,
             id: uuidv4(),
             ...defaultValues,
           });
@@ -202,9 +202,9 @@ export default function DropZoneForSmallLayouts() {
           copiedFilesData.unshift({
             ...tempFileData,
             status: defaultValues.status,
-            NodesCount: defaultValues.NodesCount,
-            relationshipCount: defaultValues.relationshipCount,
-            processing: defaultValues.processing,
+            nodesCount: defaultValues.nodesCount,
+            relationshipsCount: defaultValues.relationshipsCount,
+            processingTotalTime: defaultValues.processingTotalTime,
             model: defaultValues.model,
             fileSource: defaultValues.fileSource,
             processingProgress: defaultValues.processingProgress,
