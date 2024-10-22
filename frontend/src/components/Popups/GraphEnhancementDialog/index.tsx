@@ -102,7 +102,7 @@ export default function GraphEnhancementDialog({
               openTextSchema={() => {
                 setShowTextFromSchemaDialog({ triggeredFrom: 'enhancementtab', show: true });
               }}
-              colseEnhanceGraphSchemaDialog={onClose}
+              closeEnhanceGraphSchemaDialog={onClose}
               settingView='headerView'
             />
           </div>
