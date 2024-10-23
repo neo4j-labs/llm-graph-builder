@@ -333,10 +333,10 @@ const Content: React.FC<ContentProps> = ({
               const apiRes = apiResponse?.data;
               return {
                 ...curfile,
-                processing: apiRes?.processingTime?.toFixed(2),
+                processingProgress: apiRes?.processingTime?.toFixed(2),
                 status: apiRes?.status,
-                NodesCount: apiRes?.nodeCount,
-                relationshipCount: apiRes?.relationshipCount,
+                nodesCount: apiRes?.nodeCount,
+                relationshipsCount: apiRes?.relationshipCount,
                 model: apiRes?.model,
               };
             }
