@@ -1,15 +1,19 @@
 import json
+import asyncio
 import os
 import shutil
 import logging
 import pandas as pd
 from datetime import datetime as dt
 from dotenv import load_dotenv
-from score import *
+# from score import *
 from src.main import *
 from src.QA_integration import QA_RAG
 from langserve import add_routes
-
+from src.ragas_eval import get_ragas_metrics
+from datasets import Dataset
+from ragas import evaluate
+from ragas.metrics import answer_relevancy, context_utilization, faithfulness
 # Load environment variables if needed
 load_dotenv()
 import os 
@@ -57,11 +61,11 @@ def test_graph_from_file_local(model_name):
    create_source_node_local(graph, model_name, file_name)
    merged_file_path = os.path.join(MERGED_DIR, file_name)
 
-   local_file_result = extract_graph_from_file_local_file(
-       URI, USERNAME, PASSWORD, DATABASE, model_name, merged_file_path, file_name, '', '',None
-   )
+   local_file_result = asyncio.run(extract_graph_from_file_local_file(
+       URI, USERNAME, PASSWORD, DATABASE, model_name, merged_file_path, file_name, '', '',None))
    logging.info("Local file processing complete")
    print(local_file_result)
+   return local_file_result
 
 #    try:
 #        assert local_file_result['status'] == 'Completed'
@@ -72,19 +76,19 @@ def test_graph_from_file_local(model_name):
 #        print("Fail: ", e)
 
     # Delete the file after processing
-   delete_extracted_files(merged_file_path)
+#    delete_extracted_fiKles(merged_file_path)
 
-   return local_file_result
+   #return local_file_result
 
 def test_graph_from_wikipedia(model_name):
    # try:
        """Test graph creation from a Wikipedia page."""
-       wiki_query = 'https://en.wikipedia.org/wiki/Ram_Mandir'
+       wiki_query = 'https://en.wikipedia.org/wiki/Berkshire_Hathaway'
        source_type = 'Wikipedia'
-       file_name = "Ram_Mandir"
+       file_name = "Berkshire_Hathaway"
        create_source_node_graph_url_wikipedia(graph, model_name, wiki_query, source_type)
 
-       wiki_result = extract_graph_from_file_Wikipedia(URI, USERNAME, PASSWORD, DATABASE, model_name, file_name, 'en',file_name, '', '',None)
+       wiki_result = asyncio.run(extract_graph_from_file_Wikipedia(URI, USERNAME, PASSWORD, DATABASE, model_name, file_name, 'en',file_name, '', '',None))
        logging.info("Wikipedia test done")
        print(wiki_result)
        try:
@@ -107,7 +111,7 @@ def test_graph_website(model_name):
    file_name = []
    create_source_node_graph_web_url(graph, model_name, source_url, source_type)
 
-   weburl_result = extract_graph_from_web_page(URI, USERNAME, PASSWORD, DATABASE, model_name, source_url,file_name, '', '',None)
+   weburl_result = asyncio.run(extract_graph_from_web_page(URI, USERNAME, PASSWORD, DATABASE, model_name, source_url,file_name, '', '',None))
    logging.info("WebUrl test done")
    print(weburl_result)
 
@@ -164,9 +168,9 @@ def disconected_nodes():
    print(nodes_list[0]["e"]["elementId"])
    status = "False"
    if total_nodes['total']>0:
-       status = "True"
+       status = "get_unconnected_nodes_list.. records loaded successfully"
    else:
-       status = "False"
+       status = "get_unconnected_nodes_list ..records not loaded"
    return nodes_list[0]["e"]["elementId"], status
   
 #Test Delete delete_disconnected_nodes list
@@ -177,9 +181,9 @@ def delete_disconected_nodes(lst_element_id):
    result = graphDb_data_Access.delete_unconnected_nodes(json.dumps(lst_element_id))
    print(f'delete disconnect api result {result}')
    if not result:
-       return "True"
+       return "delete_unconnected_nodes..Succesfully deleted first index of disconnected nodes"
    else:
-       return "False"
+       return "delete_unconnected_nodes..Unable to delete Nodes"
 
 #Test Get Duplicate_nodes
 def get_duplicate_nodes():
@@ -187,28 +191,34 @@ def get_duplicate_nodes():
        graphDb_data_Access = graphDBdataAccess(graph)
        nodes_list, total_nodes = graphDb_data_Access.get_duplicate_nodes_list()
        if total_nodes['total']>0:
-           return "True"
+           return "Data successfully loaded"
        else:
-           return "False"
+           return "Unable to load data"
       
 #Test populate_graph_schema
-def test_populate_graph_schema_from_text(model):
-   result_schema = populate_graph_schema_from_text('When Amazon was founded in 1993 by creator Jeff Benzos, it was mostly an online bookstore. Initially Amazon’s growth was very slow, not turning a profit until over 7 years after its founding. This was thanks to the great momentum provided by the dot-com bubble.', model, True)
-   print(result_schema)
-   return result_schema
-
+def test_populate_graph_schema_from_text(model_name):
+    schema_text =('Amazon was founded on July 5, 1994, by Jeff Bezos in Bellevue, Washington.The company originally started as an online marketplace for books but gradually expanded its offerings to include a wide range of product categories. This diversification led to it being referred.')
+    #result_schema=''
+    try:
+        result_schema = populate_graph_schema_from_text(schema_text, model_name, True)
+        print(result_schema)
+        return result_schema
+    except Exception as e:
+       print("Failed to get schema from text", e)
+       return e
 
 def run_tests():
    final_list = []
    error_list = []
-   models = ['openai-gpt-3.5','openai-gpt-4o','openai-gpt-4o-mini','gemini-1.5-pro','gemini 1.5 Flash','azure_ai_gpt_35','azure_ai_gpt_4o','ollama_llama3','ollama','groq_llama3_70b','anthropic_claude_3_5_sonnet','bedrock_claude_3_5_sonnet','fireworks_llama_v3p2_90b']
+   
+   models = ['openai_gpt_3_5','openai_gpt_4o','openai_gpt_4o_mini','azure-ai-gpt-35','azure-ai-gpt-4o','gemini_1_5_pro','gemini_1_5_flash','anthropic-claude-3-5-sonnet','bedrock-claude-3-5-sonnet','groq-llama3-70b','fireworks-llama-v3-70b']
 
    for model_name in models:
        try:
                 final_list.append(test_graph_from_file_local(model_name))
                 final_list.append(test_graph_from_wikipedia(model_name))
-                final_list.append(test_populate_graph_schema_from_text(model_name))
                 final_list.append(test_graph_website(model_name))
+                final_list.append(test_populate_graph_schema_from_text(model_name))
                 final_list.append(test_graph_from_youtube_video(model_name))
                 final_list.append(test_chatbot_qna(model_name))
                 final_list.append(test_chatbot_qna(model_name, mode='vector'))
@@ -219,23 +229,25 @@ def run_tests():
                 
        except Exception as e:
            error_list.append((model_name, str(e)))
-   # #Compare and log diffrences in graph results
-   # # compare_graph_results(final_list)  # Pass the final_list to comapre_graph_results
-   # test_populate_graph_schema_from_text('openai-gpt-4o')
-#    dis_elementid, dis_status = disconected_nodes()
-#    lst_element_id = [dis_elementid]
-#    delt = delete_disconected_nodes(lst_element_id)
+
+#    test_populate_graph_schema_from_text('openai-gpt-4o')
+#delete diconnected nodes
+   dis_elementid, dis_status = disconected_nodes()
+   lst_element_id = [dis_elementid]
+   delt = delete_disconected_nodes(lst_element_id)
 #    dup = get_duplicate_nodes()
    print(final_list)
-   # schma = test_populate_graph_schema_from_text(model)
+   schma = test_populate_graph_schema_from_text(model_name)
    # Save final results to CSV
    df = pd.DataFrame(final_list)
    print(df)
    df['execution_date'] = dt.today().strftime('%Y-%m-%d')
-#    df['disconnected_nodes']=dis_status
+#diconnected nodes   
+   df['disconnected_nodes']=dis_status
 #    df['get_duplicate_nodes']=dup
-#    df['delete_disconected_nodes']=delt
-   # df['test_populate_graph_schema_from_text'] = schma
+
+   df['delete_disconected_nodes']=delt
+   df['test_populate_graph_schema_from_text'] = schma
    df.to_csv(f"Integration_TestResult_{dt.now().strftime('%Y%m%d_%H%M%S')}.csv", index=False)
 
    # Save error details to CSV
