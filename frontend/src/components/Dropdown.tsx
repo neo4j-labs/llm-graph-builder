@@ -2,7 +2,6 @@ import { Dropdown, Tip } from '@neo4j-ndl/react';
 import { OptionType, ReusableDropdownProps } from '../types';
 import { memo, useMemo, useReducer } from 'react';
 import { capitalize, capitalizeWithUnderscore } from '../utils/Utils';
-
 const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   options,
   placeholder,
@@ -14,6 +13,8 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   value,
 }) => {
   const [disableTooltip, toggleDisableState] = useReducer((state) => !state, false);
+  const isProdEnv = process.env.VITE_ENV === 'PROD';
+  const supportedModels = process.env.VITE_LLM_MODELS_PROD;
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
   };
@@ -30,12 +31,14 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
               selectProps={{
                 onChange: handleChange,
                 options: allOptions?.map((option) => {
-                  const label =
-                    typeof option === 'string' ? capitalizeWithUnderscore(option) : capitalize(option.label);
+                  const label = 
+                      typeof option === 'string' ? capitalizeWithUnderscore(option) : capitalize(option.label);
                   const value = typeof option === 'string' ? option : option.value;
+                  const isModelSupported = !isProdEnv || supportedModels?.includes(value);
                   return {
                     label,
                     value,
+                    isDisabled: !isModelSupported,
                   };
                 }),
                 placeholder: placeholder || 'Select an option',
