@@ -229,7 +229,7 @@ async def extract_knowledge_graph_from_file(
     except Exception as e:
         message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content "
         error_message = str(e)
-        graphDb_data_Access.update_exception_db(file_name,error_message)
+        graphDb_data_Access.update_exception_db(file_name,error_message, retry_condition)
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
         if source_type == 'local file':
             if gcs_file_cache == 'True':
