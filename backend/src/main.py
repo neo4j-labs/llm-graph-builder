@@ -185,7 +185,7 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     #   logging.warning("credntial file path not exist")
 
     video_id = parse_qs(urlparse(youtube_url).query).get('v')
-    print(f'Video Id Youtube: {video_id}')
+   
     # google_api_client = GoogleApiClient(service_account_path=Path(file_path))
     # youtube_loader_channel = GoogleApiYoutubeLoader(
     # google_api_client=google_api_client,
@@ -195,6 +195,7 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     # page_content = youtube_transcript[0].page_content
 
     obj_source_node.file_name = match.group(1)#youtube_transcript[0].metadata["snippet"]["title"]
+    #obj_source_node.file_name = YouTube(youtube_url).title
     transcript= get_youtube_combined_transcript(match.group(1))
     print(transcript)
     if transcript==None or len(transcript)==0:
@@ -460,7 +461,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
     else:
       logging.info('File does not process because it\'s already in Processing status')
   else:
-    error_message = "Unable to get the status of docuemnt node."
+    error_message = "Unable to get the status of document node."
     logging.error(error_message)
     raise Exception(error_message)
 
