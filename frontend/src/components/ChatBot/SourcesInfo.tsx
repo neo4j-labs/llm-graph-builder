@@ -16,10 +16,9 @@ const filterUniqueChunks = (chunks: Chunk[]) => {
     const sourceCheck = `${chunk.fileName}-${chunk.fileSource}`;
     if (chunkSource.has(sourceCheck)) {
       return false;
-    } 
-      chunkSource.add(sourceCheck);
-      return true;
-    
+    }
+    chunkSource.add(sourceCheck);
+    return true;
   });
 };
 

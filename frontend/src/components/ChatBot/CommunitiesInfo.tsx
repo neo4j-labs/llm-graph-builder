@@ -47,7 +47,7 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
                       onClick={() => handleCommunityClick(community.element_id, 'chatInfoView')}
                     >{`ID : ${community.id}`}</TextLink>
                   </Flex>
-                  {mode === chatModeLables.global_vector && community.score && (
+                  {mode === chatModeLables['global search+vector+fulltext'] && community.score && (
                     <Flex flexDirection='row' gap='2'>
                       <Typography variant='subheading-medium'>Score : </Typography>
                       <Typography variant='subheading-medium'>{community.score}</Typography>
