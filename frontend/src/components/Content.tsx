@@ -333,7 +333,7 @@ const Content: React.FC<ContentProps> = ({
               const apiRes = apiResponse?.data;
               return {
                 ...curfile,
-                processingProgress: apiRes?.processingTime?.toFixed(2),
+                processingTotalTime: apiRes?.processingTime?.toFixed(2),
                 status: apiRes?.status,
                 nodesCount: apiRes?.nodeCount,
                 relationshipsCount: apiRes?.relationshipCount,
@@ -573,12 +573,12 @@ const Content: React.FC<ContentProps> = ({
         return prev.map((f) => {
           return f.name === filename
             ? {
-              ...f,
-              status: 'Reprocess',
-              processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-              nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-              relationshipCount: isStartFromBegining ? 0 : f.relationshipsCount,
-            }
+                ...f,
+                status: 'Reprocess',
+                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                nodesCount: isStartFromBegining ? 0 : f.nodesCount,
+                relationshipCount: isStartFromBegining ? 0 : f.relationshipsCount,
+              }
             : f;
         });
       });
