@@ -2,6 +2,7 @@ import { Flex, IconButton } from '@neo4j-ndl/react';
 import { ChevronLeftIconSolid, ChevronRightIconSolid } from '@neo4j-ndl/react/icons';
 import TipWrapper from '../UI/TipWrapper';
 import { capitalize, capitalizeWithPlus } from '../../utils/Utils';
+import { chatModeReadableLables } from '../../utils/Constants';
 
 export default function ChatModesSwitch({
   switchToOtherMode,
@@ -16,7 +17,7 @@ export default function ChatModesSwitch({
   currentMode: string;
   isFullScreen: boolean;
 }) {
-  const chatmodetoshow = currentMode.includes('+') ? capitalizeWithPlus(currentMode) : capitalize(currentMode);
+  const chatmodetoshow =chatModeReadableLables[currentMode].includes('+') ? capitalizeWithPlus(chatModeReadableLables[currentMode]) : capitalize(chatModeReadableLables[currentMode]);
   return (
     <Flex flexDirection='row' gap='1' alignItems='center'>
       <IconButton

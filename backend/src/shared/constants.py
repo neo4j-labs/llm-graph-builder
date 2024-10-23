@@ -560,12 +560,12 @@ RETURN [community IN communities |
 
 CHAT_VECTOR_MODE = "vector"
 CHAT_FULLTEXT_MODE = "fulltext"
-CHAT_ENTITY_VECTOR_MODE = "entity search+vector"
-CHAT_VECTOR_GRAPH_MODE = "graph+vector"
-CHAT_VECTOR_GRAPH_FULLTEXT_MODE = "graph+vector+fulltext"
-CHAT_GLOBAL_VECTOR_FULLTEXT_MODE = "global search+vector+fulltext"
+CHAT_ENTITY_VECTOR_MODE = "entity_vector"
+CHAT_VECTOR_GRAPH_MODE = "graph_vector"
+CHAT_VECTOR_GRAPH_FULLTEXT_MODE = "graph_vector_fulltext"
+CHAT_GLOBAL_VECTOR_FULLTEXT_MODE = "global_vector"
 CHAT_GRAPH_MODE = "graph"
-CHAT_DEFAULT_MODE = "graph+vector+fulltext"
+CHAT_DEFAULT_MODE = "graph_vector_fulltext"
 
 CHAT_MODE_CONFIG_MAP= {
         CHAT_VECTOR_MODE : {

@@ -64,7 +64,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [responseTime, setResponseTime] = useState<number>(0);
   const [tokensUsed, setTokensUsed] = useState<number>(0);
   const [cypherQuery, setcypherQuery] = useState<string>('');
-  const [chatsMode, setChatsMode] = useState<string>(chatModeLables.graph_vector_fulltext);
+  const [chatsMode, setChatsMode] = useState<string>(chatModeLables['graph+vector+fulltext']);
   const [graphEntitites, setgraphEntitites] = useState<[]>([]);
   const [messageError, setmessageError] = useState<string>('');
   const [entitiesModal, setEntitiesModal] = useState<string[]>([]);
@@ -583,7 +583,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           }}
           onClose={() => setShowInfoModal(false)}
           open={showInfoModal}
-          size={activeChat?.currentMode === chatModeLables.entity_vector ? 'large' : 'medium'}
+          size={activeChat?.currentMode === chatModeLables['entity search+vector'] ? 'large' : 'medium'}
         >
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <IconButton
