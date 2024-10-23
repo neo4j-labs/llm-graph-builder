@@ -105,6 +105,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
                 id: uuidv4(),
                 accessToken: codeResponse.access_token,
                 ...defaultValues,
+                uploadProgress:100
               });
             } else {
               const tempFileData = copiedFilesData[filedataIndex];
@@ -119,6 +120,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
                 fileSource: defaultValues.fileSource,
                 processingProgress: defaultValues.processingProgress,
                 accessToken: codeResponse.access_token,
+                uploadProgress:100
               });
             }
           }

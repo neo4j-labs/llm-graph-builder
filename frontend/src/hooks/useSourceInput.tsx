@@ -115,9 +115,10 @@ export default function useSourceInput(
                 const baseValues = {
                   name: item.fileName,
                   size: item.fileSize,
-                  source_url: item.url,
+                  sourceUrl: item.url,
                   id: uuidv4(),
                   language: item.language,
+                  uploadProgress:100,
                   // total_pages: 1,
                   ...defaultValues,
                 };
@@ -137,6 +138,7 @@ export default function useSourceInput(
                   model: defaultValues.model,
                   fileSource: defaultValues.fileSource,
                   processingProgress: defaultValues.processingProgress,
+                  uploadProgress:100,
                 });
               }
             }
