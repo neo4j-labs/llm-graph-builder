@@ -699,7 +699,7 @@ The API is used to delete unconnected entities from database.
 ....
 
 
-== Decisions
+==== Decisions
 
 * Process only 1st page of Wikipedia
 * Split document content into chunks of size 200 and overlap of 20
