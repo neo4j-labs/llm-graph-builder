@@ -45,7 +45,7 @@ export default function DeduplicationTab() {
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
-
+  const [nodesCount, setNodesCount] = useState<number>(0);
   const fetchDuplicateNodes = useCallback(async () => {
     try {
       setLoading(true);
@@ -56,6 +56,8 @@ export default function DeduplicationTab() {
       }
       if (duplicateNodesData.data.data.length) {
         setDuplicateNodes(duplicateNodesData.data.data);
+        //@ts-ignore
+        setNodesCount(duplicateNodesData.data.message.total)
       } else {
         setDuplicateNodes([]);
       }
@@ -272,9 +274,9 @@ export default function DeduplicationTab() {
               accuracy and clarity of your knowledge graph.
             </Typography>
           </Flex>
-          {duplicateNodes.length > 0 && (
+          {nodesCount > 0 && (
             <Typography variant={isTablet ? 'subheading-medium' : 'subheading-large'}>
-              Total Duplicate Nodes: {duplicateNodes.length}
+              Total Duplicate Nodes: {nodesCount}
             </Typography>
           )}
         </Flex>
