@@ -1,8 +1,8 @@
-import { Dropdown, Tip, Typography } from '@neo4j-ndl/react';
+import { Dropdown, Tip } from '@neo4j-ndl/react';
 import { OptionType, ReusableDropdownProps } from '../types';
 import { memo, useMemo, useReducer } from 'react';
 import { capitalize, capitalizeWithUnderscore } from '../utils/Utils';
-import { LLMDropdownLabel } from '../utils/Constants';
+// import { LLMDropdownLabel } from '../utils/Constants';
 const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   options,
   placeholder,
@@ -64,13 +64,13 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
         </Tip>
         {children}
       </div>
-      {isProdEnv && (<Typography className={'pt-4 absolute top-14 self-start'} variant='body-small'>
+      {/* {isProdEnv && (<Typography className={'pt-4 absolute top-14 self-start'} variant='body-small'>
         {LLMDropdownLabel.disabledModels}
         <a href="https://dev-frontend-dcavk67s4a-uc.a.run.app/" target="_blank" style={{ textDecoration: 'underline' }}>
           {LLMDropdownLabel.devEnv}
         </a>
         {'.'}
-      </Typography>)}
+      </Typography>)} */}
     </>
   );
 };
