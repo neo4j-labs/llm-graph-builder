@@ -434,10 +434,6 @@ def process_chat_response(messages, history, question, model, graph, document_na
             result = {"sources": list(), "nodedetails": list(), "entities": list()}
             total_tokens = 0
             formatted_docs = ""
-
-        # question = transformed_question if transformed_question else question
-        # metrics = get_ragas_metrics(question,formatted_docs,content)
-        # print(metrics)
         
         ai_response = AIMessage(content=content)
         messages.append(ai_response)
@@ -580,7 +576,7 @@ def process_graph_response(model, graph, question, messages, history):
         summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, qa_llm))
         summarization_thread.start()
         logging.info("Summarization thread started.")
-        
+        metric_details = {"question":question,"contexts":graph_response.get("context", ""),"answer":ai_response_content}
         result = {
             "session_id": "", 
             "message": ai_response_content,
@@ -589,7 +585,8 @@ def process_graph_response(model, graph, question, messages, history):
                 "cypher_query": graph_response.get("cypher_query", ""),
                 "context": graph_response.get("context", ""),
                 "mode": "graph",
-                "response_time": 0
+                "response_time": 0,
+                "metric_details": metric_details,
             },
             "user": "chatbot"
         }
