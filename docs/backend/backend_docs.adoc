@@ -894,9 +894,9 @@ The API is used to merge duplicate entities from database selected by user.
     "message": "Duplicate entities merged successfully"
 }
 ....
-=== drop 
+=== Drop and create vector index
 ----
-POST /retry_processing
+POST /drop_create_vector_index
 ----
 
 The API is used to drop and create the vector index when vector index dimesion are different.
