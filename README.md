@@ -156,6 +156,32 @@ Allow unauthenticated request : Yes
 | RAGAS_EMBEDDING_MODEL         | Optional      | openai              | embedding model used by ragas evaluation framework                               |
 
 
+## For local llms (Ollama)
+1. Pull the docker imgage of ollama
+```bash
+docker pull ollama/ollama
+```
+2. Run the ollama docker image
+```bash
+docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+```
+3. Execute any llm model ex🦙3
+```bash
+docker exec -it ollama ollama run llama3
+```
+4. Configure  env variable in docker compose or backend enviournment.
+```env
+LLM_MODEL_CONFIG_ollama_<model_name>
+#example
+LLM_MODEL_CONFIG_ollama_llama3=${LLM_MODEL_CONFIG_ollama_llama3-llama3,
+http://host.docker.internal:11434}
+```
+5. Configure the backend API url
+```env
+VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
+```
+6. Open the application in browser and select the ollama model for the extraction.
+7. Enjoy Graph Building.
 
 
 ## Usage
