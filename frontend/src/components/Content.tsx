@@ -332,6 +332,7 @@ const Content: React.FC<ContentProps> = ({
               return {
                 ...curfile,
                 processingProgress: apiRes?.processingTime?.toFixed(2),
+                processingTotalTime: apiRes?.processingTime?.toFixed(2),
                 status: apiRes?.status,
                 nodesCount: apiRes?.nodeCount,
                 relationshipsCount: apiRes?.relationshipCount,
