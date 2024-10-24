@@ -306,3 +306,8 @@ export const appLabels = {
   ownSchema: 'Or Define your own Schema',
   predefinedSchema: 'Select a Pre-defined Schema',
 };
+
+export const LLMDropdownLabel ={
+  disabledModels: 'Disabled models are available in the development version. Access more models in our ',
+  devEnv: 'development environment'
+}
