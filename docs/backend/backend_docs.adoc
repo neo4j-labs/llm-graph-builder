@@ -737,6 +737,142 @@ The API is used to delete unconnected entities from database.
 ** minimum score for KNN graph
 ** Uploaded file storage location (GCS bucket or container)
 
+
+=== Get duplicate nodes
+----
+POST /get_duplicate_nodes
+----
+
+The API is used to fetch duplicate entities from database.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "data": [
+        {
+            "e": {
+                "id": "13 September 2024",
+                "elementId": "4:b104b2e7-e2ed-4902-b78b-7ad1518ca04f:14007",
+                "communities": [
+                    2969,
+                    383,
+                    81
+                ],
+                "labels": [
+                    "__Entity__",
+                    "Date"
+                ],
+                "embedding": null
+            },
+            "similar": [
+                {
+                    "id": "20 September 2024",
+                    "elementId": "4:b104b2e7-e2ed-4902-b78b-7ad1518ca04f:14153",
+                    "description": null,
+                    "labels": [
+                        "__Entity__",
+                        "Date"
+                    ]
+                }
+            ],
+            "documents": [],
+            "chunkConnections": 0
+        }
+    ],
+    "message": {
+        "total": 1
+    }
+}
+....
+
+
+=== Merge duplicate nodes
+----
+POST /merge_duplicate_nodes
+----
+
+The API is used to merge duplicate entities from database selected by user.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `duplicate_nodes_list`= selected entities list to merge of with similar entities.
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "data": [
+        {
+            "totalMerged": 2
+        }
+    ],
+    "message": "Duplicate entities merged successfully"
+}
+....
+=== drop 
+----
+POST /retry_processing
+----
+
+The API is used to drop and create the vector index when vector index dimesion are different.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `isVectorIndexExist`= True or False based on whether vector index exist in database,
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "message": "Drop and Re-Create vector index succesfully"
+}
+....
+
+=== Reprocess document
+----
+POST /retry_processing
+----
+
+The API is used to reprocess document.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `file_name`= The name of the file which needs to be reprocessed,
+* `retry_condition`= reprocessing condition whether to just start from beginning or delete created entitities and reprocess,
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "message": "Status set to Reprocess for filename : Alphabet.pdf"
+}
+....
+
 === Evaluate response
 ----
 POST /metric
