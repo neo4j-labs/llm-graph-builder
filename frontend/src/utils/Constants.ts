@@ -49,6 +49,17 @@ export const supportedLLmsForRagas = [
 export const chatModeLables = {
   vector: 'vector',
   graph: 'graph',
+  'graph+vector': 'graph_vector',
+  fulltext: 'fulltext',
+  'graph+vector+fulltext': 'graph_vector_fulltext',
+  'entity search+vector': 'entity_vector',
+  unavailableChatMode: 'Chat mode is unavailable when files are selected',
+  selected: 'Selected',
+  'global search+vector+fulltext': 'global_vector',
+};
+export const chatModeReadableLables: Record<string, string> = {
+  vector: 'vector',
+  graph: 'graph',
   graph_vector: 'graph+vector',
   fulltext: 'fulltext',
   graph_vector_fulltext: 'graph+vector+fulltext',
@@ -73,7 +84,7 @@ export const chatModes =
           description: 'Translates text to Cypher queries for precise data retrieval from a graph database.',
         },
         {
-          mode: chatModeLables.graph_vector,
+          mode: chatModeLables['graph+vector'],
           description: 'Combines vector indexing and graph connections for contextually enhanced semantic search.',
         },
         {
@@ -81,15 +92,15 @@ export const chatModes =
           description: 'Conducts fast, keyword-based search using full-text indexing on text chunks.',
         },
         {
-          mode: chatModeLables.graph_vector_fulltext,
+          mode: chatModeLables['graph+vector+fulltext'],
           description: 'Integrates vector, graph, and full-text indexing for comprehensive search results.',
         },
         {
-          mode: chatModeLables.entity_vector,
+          mode: chatModeLables['entity search+vector'],
           description: 'Uses vector indexing on entity nodes for highly relevant entity-based search.',
         },
         {
-          mode: chatModeLables.global_vector,
+          mode: chatModeLables['global search+vector+fulltext'],
           description:
             'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.',
         },
@@ -295,3 +306,8 @@ export const appLabels = {
   ownSchema: 'Or Define your own Schema',
   predefinedSchema: 'Select a Pre-defined Schema',
 };
+
+export const LLMDropdownLabel ={
+  disabledModels: 'Disabled models are available in the development version. Access more models in our ',
+  devEnv: 'development environment'
+}

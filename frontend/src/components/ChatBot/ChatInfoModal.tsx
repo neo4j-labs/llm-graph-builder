@@ -24,7 +24,7 @@ import ChunkInfo from './ChunkInfo';
 import EntitiesInfo from './EntitiesInfo';
 import SourcesInfo from './SourcesInfo';
 import CommunitiesInfo from './CommunitiesInfo';
-import { chatModeLables, supportedLLmsForRagas } from '../../utils/Constants';
+import { chatModeLables, chatModeReadableLables, supportedLLmsForRagas } from '../../utils/Constants';
 import { Relationship } from '@neo4j-nvl/base';
 import { getChatMetrics } from '../../services/GetRagasMetric';
 import MetricsTab from './MetricsTab';
@@ -71,14 +71,20 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const [activeTab, setActiveTab] = useState<number>(
-    error?.length ? 10 : mode === chatModeLables.global_vector ? 7 : mode === chatModeLables.graph ? 4 : 3
+    error?.length
+      ? 10
+      : mode === chatModeLables['global search+vector+fulltext']
+      ? 7
+      : mode === chatModeLables.graph
+      ? 4
+      : 3
   );
   const { userCredentials } = useCredentials();
   const themeUtils = useContext(ThemeWrapperContext);
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
   const [showMetricsTable, setShowMetricsTable] = useState<boolean>(Boolean(metricDetails));
-  const [showMultiModeMetrics, setShowMultiModeMetrics] = useState<boolean>(Boolean(multiModelMetrics.length))
+  const [showMultiModeMetrics, setShowMultiModeMetrics] = useState<boolean>(Boolean(multiModelMetrics.length));
   const [multiModeError, setMultiModeError] = useState<string>('');
 
   const actions: CypherCodeBlockProps['actions'] = useMemo(
@@ -201,7 +207,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           }
         }
       } else {
-        setShowMultiModeMetrics(true)
+        setShowMultiModeMetrics(true);
         toggleMetricsLoading();
         const contextarray = Object.values(activeChatmodes).map((r) => {
           return r.metric_contexts;
@@ -255,7 +261,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             To generate this response, the process took <span className='font-bold'>{response_time} seconds,</span>
             utilizing <span className='font-bold'>{total_tokens}</span> tokens with the model{' '}
             <span className='font-bold'>{model}</span> in{' '}
-            <span className='font-bold'>{mode !== 'vector' ? mode.replace(/\+/g, ' & ') : mode}</span> mode.
+            <span className='font-bold'>{chatModeReadableLables[mode] !== 'vector' ? chatModeReadableLables[mode].replace(/\+/g, ' & ') : chatModeReadableLables[mode]}</span> mode.
           </Typography>
         </Box>
       </Box>
@@ -263,16 +269,16 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         <Banner type='danger'>{error}</Banner>
       ) : (
         <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
-          {mode === chatModeLables.global_vector ? (
+          {mode === chatModeLables['global search+vector+fulltext'] ? (
             <Tabs.Tab tabId={7}>Communities</Tabs.Tab>
           ) : (
             <>
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
-              {mode === chatModeLables.graph_vector ||
+              {mode === chatModeLables['graph+vector'] ||
               mode === chatModeLables.graph ||
-              mode === chatModeLables.graph_vector_fulltext ||
-              mode === chatModeLables.entity_vector ? (
+              mode === chatModeLables['graph+vector+fulltext'] ||
+              mode === chatModeLables['entity search+vector'] ? (
                 <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
               ) : (
                 <></>
@@ -282,7 +288,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               ) : (
                 <></>
               )}
-              {mode === chatModeLables.entity_vector && communities.length ? (
+              {mode === chatModeLables['entity search+vector'] && communities.length ? (
                 <Tabs.Tab tabId={7}>Communities</Tabs.Tab>
               ) : (
                 <></>
@@ -387,7 +393,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             className='min-h-40'
           />
         </Tabs.TabPanel>
-        {mode === chatModeLables.entity_vector || mode === chatModeLables.global_vector ? (
+        {mode === chatModeLables['entity search+vector'] || mode === chatModeLables['global search+vector+fulltext'] ? (
           <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={7}>
             <CommunitiesInfo loading={infoLoading} communities={communities} mode={mode} />
           </Tabs.TabPanel>

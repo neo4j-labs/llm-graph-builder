@@ -17,14 +17,19 @@ class graphDBdataAccess:
     def __init__(self, graph: Neo4jGraph):
         self.graph = graph
 
-    def update_exception_db(self, file_name, exp_msg):
+    def update_exception_db(self, file_name, exp_msg, retry_condition):
         try:
             job_status = "Failed"
             result = self.get_current_status_document_node(file_name)
             is_cancelled_status = result[0]['is_cancelled']
             if bool(is_cancelled_status) == True:
                 job_status = 'Cancelled'
-            self.graph.query("""MERGE(d:Document {fileName :$fName}) SET d.status = $status, d.errorMessage = $error_msg""",
+            if retry_condition is not None: 
+                retry_condition = None
+                self.graph.query("""MERGE(d:Document {fileName :$fName}) SET d.status = $status, d.errorMessage = $error_msg, d.retry_condition = $retry_condition""",
+                            {"fName":file_name, "status":job_status, "error_msg":exp_msg, "retry_condition":retry_condition})
+            else :    
+                self.graph.query("""MERGE(d:Document {fileName :$fName}) SET d.status = $status, d.errorMessage = $error_msg""",
                             {"fName":file_name, "status":job_status, "error_msg":exp_msg})
         except Exception as e:
             error_message = str(e)
@@ -385,13 +390,14 @@ class graphDBdataAccess:
                 [s in similar | s {.id, .description, labels:labels(s), elementId: elementId(s)}] as similar,
                 collect(distinct doc.fileName) as documents, count(distinct c) as chunkConnections
                 ORDER BY e.id ASC
+                LIMIT 100
                 """
-        return_query_duplicate_nodes_total = "RETURN COUNT(DISTINCT(n)) as total"
+        total_duplicate_nodes = "RETURN COUNT(DISTINCT(n)) as total"
         
         param = {"duplicate_score_value": score_value, "duplicate_text_distance" : text_distance}
         
         nodes_list = self.execute_query(query_duplicate_nodes.format(return_statement=return_query_duplicate_nodes),param=param)
-        total_nodes = self.execute_query(query_duplicate_nodes.format(return_statement=return_query_duplicate_nodes_total),param=param)
+        total_nodes = self.execute_query(query_duplicate_nodes.format(return_statement=total_duplicate_nodes),param=param)
         return nodes_list, total_nodes[0]
     
     def merge_duplicate_nodes(self,duplicate_nodes_list):

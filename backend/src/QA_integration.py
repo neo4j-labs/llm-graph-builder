@@ -390,7 +390,7 @@ def get_neo4j_retriever(graph, document_names,chat_mode_settings, score_threshol
     try:
 
         neo_db = initialize_neo4j_vector(graph, chat_mode_settings)
-        document_names= list(map(str.strip, json.loads(document_names)))
+        # document_names= list(map(str.strip, json.loads(document_names)))
         search_k = chat_mode_settings["top_k"]
         retriever = create_retriever(neo_db, document_names,chat_mode_settings, search_k, score_threshold)
         return retriever
@@ -434,10 +434,6 @@ def process_chat_response(messages, history, question, model, graph, document_na
             result = {"sources": list(), "nodedetails": list(), "entities": list()}
             total_tokens = 0
             formatted_docs = ""
-
-        # question = transformed_question if transformed_question else question
-        # metrics = get_ragas_metrics(question,formatted_docs,content)
-        # print(metrics)
         
         ai_response = AIMessage(content=content)
         messages.append(ai_response)
@@ -580,7 +576,7 @@ def process_graph_response(model, graph, question, messages, history):
         summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, qa_llm))
         summarization_thread.start()
         logging.info("Summarization thread started.")
-        
+        metric_details = {"question":question,"contexts":graph_response.get("context", ""),"answer":ai_response_content}
         result = {
             "session_id": "", 
             "message": ai_response_content,
@@ -589,7 +585,8 @@ def process_graph_response(model, graph, question, messages, history):
                 "cypher_query": graph_response.get("cypher_query", ""),
                 "context": graph_response.get("context", ""),
                 "mode": "graph",
-                "response_time": 0
+                "response_time": 0,
+                "metric_details": metric_details,
             },
             "user": "chatbot"
         }
@@ -659,7 +656,25 @@ def QA_RAG(graph,model, question, document_names, session_id, mode, write_access
         result = process_graph_response(model, graph, question, messages, history)
     else:
         chat_mode_settings = get_chat_mode_settings(mode=mode)
-        result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings)
+        document_names= list(map(str.strip, json.loads(document_names)))
+        if document_names and not chat_mode_settings["document_filter"]:
+            result =  {
+                "session_id": "",  
+                "message": "This chat mode does support document selection",
+                "info": {
+                    "sources": [],
+                    "model": "",
+                    "nodedetails": [],
+                    "total_tokens": 0,
+                    "response_time": 0,
+                    "mode": chat_mode_settings["mode"],
+                    "entities": [],
+                    "metric_details": [],
+                },
+                "user": "chatbot"
+            }
+        else:
+            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings)
 
     result["session_id"] = session_id
     

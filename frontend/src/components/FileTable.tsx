@@ -824,7 +824,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               ...curfile,
               status: status,
               nodesCount: nodeCount,
-              relationshipsCount: relationshipCount,
+              relationshipCount: relationshipCount,
               model: model,
               processingTotalTime: processingTime?.toFixed(2),
               processingProgress: Math.floor((processed_chunk / total_chunks) * 100),
@@ -854,7 +854,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               ...curfile,
               status: status,
               nodesCount: nodeCount,
-              relationshipsCount: relationshipCount,
+              relationshipCount: relationshipCount,
               processingProgress: Math.floor((processed_chunk / total_chunks) * 100),
             };
           }

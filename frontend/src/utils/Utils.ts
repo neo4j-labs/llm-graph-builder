@@ -417,15 +417,15 @@ export const getDescriptionForChatMode = (mode: string): string => {
       return 'Utilizes vector indexing on text chunks to enable semantic similarity search.';
     case chatModeLables.graph:
       return 'Leverages text-to-cypher translation to query a database and retrieve relevant data, ensuring a highly targeted and contextually accurate response.';
-    case chatModeLables.graph_vector:
+    case chatModeLables['graph+vector']:
       return 'Combines vector indexing on text chunks with graph connections, enhancing search results with contextual relevance by considering relationships between concepts.';
     case chatModeLables.fulltext:
       return 'Employs a fulltext index on text chunks for rapid keyword-based search, efficiently identifying documents containing specific words or phrases.';
-    case chatModeLables.graph_vector_fulltext:
+    case chatModeLables['graph+vector+fulltext']:
       return 'Merges vector indexing, graph connections, and fulltext indexing for a comprehensive search approach, combining semantic similarity, contextual relevance, and keyword-based search for optimal results.';
-    case chatModeLables.entity_vector:
+    case chatModeLables['entity search+vector']:
       return 'Combines entity node vector indexing with graph connections for accurate entity-based search, providing the most relevant response.';
-    case chatModeLables.global_vector:
+    case chatModeLables['global search+vector+fulltext']:
       return 'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.';
     default:
       return 'Chat mode description not available'; // Fallback description
@@ -510,7 +510,7 @@ export function downloadClickHandler<Type>(
 }
 export function getNodes<Type extends Entity | ExtendedNode>(nodesData: Array<Type>, mode: string) {
   return nodesData.map((n) => {
-    if (!n.labels.length && mode === chatModeLables.entity_vector) {
+    if (!n.labels.length && mode === chatModeLables['entity search+vector']) {
       return {
         ...n,
         labels: ['Entity'],

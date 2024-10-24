@@ -60,8 +60,8 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                         </Typography>
                       </>
                     </div>
-                    {mode !== chatModeLables.global_vector &&
-                      mode !== chatModeLables.entity_vector &&
+                    {mode !== chatModeLables['global search+vector+fulltext'] &&
+                      mode !== chatModeLables['entity search+vector'] &&
                       mode !== chatModeLables.graph &&
                       chunk.score && (
                         <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
@@ -71,11 +71,10 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                     </div>
                     <div>
                       <TextLink
-                       as='medium'
                         label='Graph view'
                         className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                         onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
-                      >{'Graph'}
+                      >{'View Graph'}
                       </TextLink>
                     </div>
                   </>
@@ -92,8 +91,8 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                         </Typography>
                       </TextLink>
                     </div>
-                    {mode !== chatModeLables.global_vector &&
-                      mode !== chatModeLables.entity_vector &&
+                    {mode !== chatModeLables['global search+vector+fulltext'] &&
+                      mode !== chatModeLables['entity search+vector'] &&
                       mode !== chatModeLables.graph && (
                         <>
                           <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
@@ -115,18 +114,17 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       <img src={wikipedialogo} width={20} height={20} className='mr-2' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
-                    {mode !== chatModeLables.global_vector &&
-                      mode !== chatModeLables.entity_vector &&
+                    {mode !== chatModeLables['global search+vector+fulltext'] &&
+                      mode !== chatModeLables['entity search+vector'] &&
                       mode !== chatModeLables.graph && (
                         <>
                           <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                           <div>
                             <TextLink
-                             as='medium'
                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               label='Graph view'
                               onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
-                            >{'Graph'}
+                            >{'View Graph'}
                             </TextLink>
                           </div>
                         </>
@@ -138,18 +136,17 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       <img src={gcslogo} width={20} height={20} className='mr-2' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
-                    {mode !== chatModeLables.global_vector &&
-                      mode !== chatModeLables.entity_vector &&
+                    {mode !== chatModeLables['global search+vector+fulltext'] &&
+                      mode !== chatModeLables['entity search+vector'] &&
                       mode !== chatModeLables.graph && (
                         <>
                           <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                           <div>
                             <TextLink
-                             as='medium'
                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               label='Graph view'
                               onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
-                            >{'Graph'}
+                            >{'View Graph'}
                             </TextLink>
                           </div>
                         </>
@@ -161,18 +158,17 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       <img src={s3logo} width={20} height={20} className='mr-2' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
-                    {mode !== chatModeLables.global_vector &&
-                      mode !== chatModeLables.entity_vector &&
+                    {mode !== chatModeLables['global search+vector+fulltext'] &&
+                      mode !== chatModeLables['entity search+vector'] &&
                       mode !== chatModeLables.graph && (
                         <>
                           <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                           <div>
                             <TextLink
-                             as='medium'
                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               label='Graph view'
                               onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
-                            >{'Graph'}
+                            >{'View Graph'}
                             </TextLink>
                           </div>
                         </>
@@ -188,18 +184,17 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                         <Typography variant='body-medium'>{chunk?.url}</Typography>
                       </TextLink>
                     </div>
-                    {mode !== chatModeLables.global_vector &&
-                      mode !== chatModeLables.entity_vector &&
+                    {mode !== chatModeLables['global search+vector+fulltext'] &&
+                      mode !== chatModeLables['entity search+vector'] &&
                       mode !== chatModeLables.graph && (
                         <>
                           <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                           <div>
                             <TextLink
-                             as='medium'
                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               label='Graph view'
                               onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
-                            >{'Graph'}
+                            >{'View Graph'}
                             </TextLink>
                           </div>
                         </>
@@ -227,11 +222,10 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                         </Typography>
                         <div>
                           <TextLink
-                           as='medium'
                            className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                             label='Graph view'
                             onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
-                          >{'Graph'}
+                          >{'View Graph'}
                           </TextLink>
                         </div>
                       </>

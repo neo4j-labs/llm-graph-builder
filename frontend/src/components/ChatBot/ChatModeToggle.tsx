@@ -2,7 +2,7 @@ import { StatusIndicator, Typography } from '@neo4j-ndl/react';
 import { useMemo, useEffect } from 'react';
 import { useFileContext } from '../../context/UsersFiles';
 import CustomMenu from '../UI/Menu';
-import { chatModeLables, chatModes as AvailableModes } from '../../utils/Constants';
+import { chatModeLables, chatModes as AvailableModes, chatModeReadableLables } from '../../utils/Constants';
 import { capitalize } from '@mui/material';
 import { capitalizeWithPlus } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
@@ -30,16 +30,16 @@ export default function ChatModeToggle({
       if (
         chatModes.includes(chatModeLables.graph) ||
         chatModes.includes(chatModeLables.fulltext) ||
-        chatModes.includes(chatModeLables.graph_vector_fulltext)
+        chatModes.includes(chatModeLables['global search+vector+fulltext'])
       ) {
         setchatModes((prev) =>
           prev.filter(
-            (m) => ![chatModeLables.graph, chatModeLables.fulltext, chatModeLables.graph_vector_fulltext].includes(m)
+            (m) => ![chatModeLables.graph, chatModeLables.fulltext, chatModeLables['graph+vector+fulltext']].includes(m)
           )
         );
       }
-      if (!chatModes.includes(chatModeLables.vector)) {
-        setchatModes([chatModeLables.vector]);
+      if (!(chatModes.includes(chatModeLables.vector) || chatModes.includes(chatModeLables['graph+vector']))) {
+        setchatModes([chatModeLables['graph+vector']]);
       }
     }
   }, [selectedRows.length, chatModes.length]);
@@ -47,16 +47,16 @@ export default function ChatModeToggle({
   const memoizedChatModes = useMemo(() => {
     return isGdsActive && isCommunityAllowed
       ? AvailableModes
-      : AvailableModes?.filter((m) => !m.mode.includes(chatModeLables.global_vector));
+      : AvailableModes?.filter((m) => !m.mode.includes(chatModeLables['global search+vector+fulltext']));
   }, [isGdsActive, isCommunityAllowed]);
   const menuItems = useMemo(() => {
     return memoizedChatModes?.map((m) => {
       const isDisabled = Boolean(
-        selectedRows.length && !(m.mode === chatModeLables.vector || m.mode === chatModeLables.graph_vector)
+        selectedRows.length && !(m.mode === chatModeLables.vector || m.mode === chatModeLables['graph+vector'])
       );
       const handleModeChange = () => {
         if (isDisabled) {
-          setchatModes([chatModeLables.graph_vector]);
+          setchatModes([chatModeLables['graph+vector']]);
         } else if (chatModes.includes(m.mode)) {
           setchatModes((prev) => prev.filter((i) => i != m.mode));
         } else {
@@ -68,7 +68,9 @@ export default function ChatModeToggle({
         title: (
           <div>
             <Typography variant='subheading-small'>
-              {m.mode.includes('+') ? capitalizeWithPlus(m.mode) : capitalize(m.mode)}
+              {chatModeReadableLables[m.mode].includes('+')
+                ? capitalizeWithPlus(chatModeReadableLables[m.mode])
+                : capitalize(chatModeReadableLables[m.mode])}
             </Typography>
             <div>
               <Typography variant='body-small'>{m.description}</Typography>
@@ -97,7 +99,7 @@ export default function ChatModeToggle({
 
   useEffect(() => {
     if (!selectedRows.length && !chatModes.length) {
-      setchatModes([chatModeLables.graph_vector_fulltext]);
+      setchatModes([]);
     }
   }, [selectedRows.length, chatModes.length]);
   return (

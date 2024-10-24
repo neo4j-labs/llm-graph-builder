@@ -17,22 +17,25 @@ from langchain_community.document_loaders import GoogleApiClient, GoogleApiYoutu
 def get_youtube_transcript(youtube_id):
   try:
     #transcript = YouTubeTranscriptApi.get_transcript(youtube_id)
-    transcript_list = YouTubeTranscriptApi.list_transcripts(youtube_id)
-    transcript = transcript_list.find_transcript(["en"])
-    transcript_pieces: List[Dict[str, Any]] = transcript.fetch()
+    # transcript_list = YouTubeTranscriptApi.list_transcripts(youtube_id)
+    # transcript = transcript_list.find_transcript(["en"])
+    # transcript_pieces: List[Dict[str, Any]] = transcript.fetch()
+    proxy = os.environ.get("YOUTUBE_TRANSCRIPT_PROXY") 
+    proxies = { 'https': proxy }
+    transcript_pieces = YouTubeTranscriptApi.get_transcript(youtube_id, proxies = proxies)
     return transcript_pieces
   except Exception as e:
     message = f"Youtube transcript is not available for youtube Id: {youtube_id}"
     raise Exception(message)
   
-def get_youtube_combined_transcript(youtube_id):
-  try:
-    transcript_dict = get_youtube_transcript(youtube_id)
-    transcript = YouTubeTranscriptApi.get_transcript(youtube_id)
-    return transcript
-  except Exception as e:
-    message = f"Youtube transcript is not available for youtube Id: {youtube_id}"
-    raise Exception(message)
+# def get_youtube_combined_transcript(youtube_id):
+#   try:
+#     transcript_dict = get_youtube_transcript(youtube_id)
+#     transcript = YouTubeTranscriptApi.get_transcript(youtube_id)
+#     return transcript
+#   except Exception as e:
+#     message = f"Youtube transcript is not available for youtube Id: {youtube_id}"
+#     raise Exception(message)
   
 def get_youtube_combined_transcript(youtube_id):
   try:
