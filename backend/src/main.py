@@ -424,15 +424,16 @@ async def processing_source(uri, userName, password, database, model, file_name,
         uri_latency["Per_entity_latency"] = 'N/A'
       else:  
         uri_latency["Per_entity_latency"] = f'{int(processing_source_func)/node_count}/s'
-      uri_latency["fileName"] = file_name
-      uri_latency["nodeCount"] = node_count
-      uri_latency["relationshipCount"] = rel_count
-      uri_latency["total_processing_time"] = round(processed_time.total_seconds(),2)
-      uri_latency["status"] = job_status
-      uri_latency["model"] = model
-      uri_latency["success_count"] = 1
+      response = {}  
+      response["fileName"] = file_name
+      response["nodeCount"] = node_count
+      response["relationshipCount"] = rel_count
+      response["total_processing_time"] = round(processed_time.total_seconds(),2)
+      response["status"] = job_status
+      response["model"] = model
+      response["success_count"] = 1
       
-      return uri_latency
+      return uri_latency, response
     else:
       logging.info('File does not process because it\'s already in Processing status')
   else:
