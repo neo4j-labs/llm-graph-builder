@@ -374,6 +374,8 @@ The API responsible for a chatbot system designed to leverage multiple AI models
 * `model`= LLM model
 * `question`= User query for the chatbot
 * `session_id`= Session ID used to maintain the history of chats during the user's connection
+* `document_names`= File name/names for which user wants to question
+* `mode`= Retrieval mode used for answer generation
 
 **Response :**
 [source,json,indent=0]
@@ -381,26 +383,51 @@ The API responsible for a chatbot system designed to leverage multiple AI models
 {
     "status": "Success",
     "data": {
-        "session_id": "0901",
-        "message": "Fibrosis, also known as fibrotic scarring, is a pathological wound healing process where connective tissue replaces normal parenchymal tissue."
+        "session_id": "d345d9b6-f8f1-40c0-b585-280c998b9752",
+        "message": "Google DeepMind is a British-American artificial intelligence research laboratory that focuses on developing advanced AI technologies. It is known for creating neural network models capable of playing video games and board games, such as the AlphaGo program, which famously defeated a world champion Go player. DeepMind also works on general-purpose AI systems, like AlphaZero, which can play multiple games at a high level. Additionally, the company has been involved in AI safety work and has established an ethics board to guide its AI development.",
         "info": {
             "sources": [
-                {
-                    "source_name": "https://en.wikipedia.org/wiki/Fibrosis",
-                    "page_numbers": [],
-                    "start_time": []
-                }
+                "https://en.wikipedia.org/wiki/Google_DeepMind"
             ],
-            "model": "gpt-4o",
-            "chunkids": [
-                "54d8c0dbefb67f1ed3f6939d59267e1ff557a94c",
-                "4cc02ee8419706c8decdf71ab0d3896aad5c7dca",
-                "266ce95311bb1921791b4f1cd29a48d433027139",
-                "11e19513247e1e396475728fa6a197695045b248",
-                "8bafa01b6d851f70822bcb86863e485e1785a64c"
-            ],
-            "total_tokens": 2213,
-            "response_time": 10.17
+            "model": "gpt-4o-2024-08-06",
+            "nodedetails": {
+                "chunkdetails": [
+                    {
+                        "id": "80b30de81d6c1dca5973587b538887de8f47237d",
+                        "score": 0.8614
+                    },
+                    {
+                        "id": "419cee50cef9aba9c2204f2a7a17bfe84fb1df20",
+                        "score": 0.8306
+                    },
+                    {
+                        "id": "9daf80b62be569ace896d1945c7b25a7fcce9027",
+                        "score": 0.827
+                    },
+                    {
+                        "id": "36a1441279bf19feb5498d9a0ecfcebefac1d1f5",
+                        "score": 0.8232
+                    },
+                    {
+                        "id": "31a8234c4ab3c5fff8febb4264a5a041e1f21c36",
+                        "score": 0.8181
+                    }
+                ],
+                "entitydetails": [],
+                "communitydetails": []
+            },
+            "total_tokens": 1713,
+            "response_time": 7.22,
+            "mode": "vector",
+            "entities": {
+                "entityids": [],
+                "relationshipids": []
+            },
+            "metric_details": {
+                "question": "what does google deepmind do?",
+                "contexts": "Document start\nThis Document belongs to the source https://en.wikipedia.org/wiki/Google_DeepMind\nContent:  developed by Google DeepMind.   == References ==   == Further reading ==   == External links == Official website\n----\nDeepMind Technologies Limited, also known by its trade name Google DeepMind,  is a British-American artificial intelligence research laboratory which serves as a subsidiary of Google. Founded in the UK in 2010, it was acquired by Google in 2014 and merged with Google AIs Google Brain division to become Google DeepMind in April 2023.\nDocument end\n",
+                "answer": "Google DeepMind is a British-American artificial intelligence research laboratory that focuses on developing advanced AI technologies. It is known for creating neural network models capable of playing video games and board games, such as the AlphaGo program, which famously defeated a world champion Go player. DeepMind also works on general-purpose AI systems, like AlphaZero, which can play multiple games at a high level. Additionally, the company has been involved in AI safety work and has established an ethics board to guide its AI development."
+            }
         },
         "user": "chatbot"
     }
@@ -699,7 +726,7 @@ The API is used to delete unconnected entities from database.
 ....
 
 
-== Decisions
+==== Decisions
 
 * Process only 1st page of Wikipedia
 * Split document content into chunks of size 200 and overlap of 20
@@ -709,3 +736,168 @@ The API is used to delete unconnected entities from database.
 ** Embedding model
 ** minimum score for KNN graph
 ** Uploaded file storage location (GCS bucket or container)
+
+
+=== Get duplicate nodes
+----
+POST /get_duplicate_nodes
+----
+
+The API is used to fetch duplicate entities from database.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "data": [
+        {
+            "e": {
+                "id": "13 September 2024",
+                "elementId": "4:b104b2e7-e2ed-4902-b78b-7ad1518ca04f:14007",
+                "communities": [
+                    2969,
+                    383,
+                    81
+                ],
+                "labels": [
+                    "__Entity__",
+                    "Date"
+                ],
+                "embedding": null
+            },
+            "similar": [
+                {
+                    "id": "20 September 2024",
+                    "elementId": "4:b104b2e7-e2ed-4902-b78b-7ad1518ca04f:14153",
+                    "description": null,
+                    "labels": [
+                        "__Entity__",
+                        "Date"
+                    ]
+                }
+            ],
+            "documents": [],
+            "chunkConnections": 0
+        }
+    ],
+    "message": {
+        "total": 1
+    }
+}
+....
+
+
+=== Merge duplicate nodes
+----
+POST /merge_duplicate_nodes
+----
+
+The API is used to merge duplicate entities from database selected by user.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `duplicate_nodes_list`= selected entities list to merge of with similar entities.
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "data": [
+        {
+            "totalMerged": 2
+        }
+    ],
+    "message": "Duplicate entities merged successfully"
+}
+....
+=== drop 
+----
+POST /retry_processing
+----
+
+The API is used to drop and create the vector index when vector index dimesion are different.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `isVectorIndexExist`= True or False based on whether vector index exist in database,
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "message": "Drop and Re-Create vector index succesfully"
+}
+....
+
+=== Reprocess document
+----
+POST /retry_processing
+----
+
+The API is used to reprocess document.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `file_name`= The name of the file which needs to be reprocessed,
+* `retry_condition`= reprocessing condition whether to just start from beginning or delete created entitities and reprocess,
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "message": "Status set to Reprocess for filename : Alphabet.pdf"
+}
+....
+
+=== Evaluate response
+----
+POST /metric
+----
+
+The API responsible for a evaluating chatbot responses on the basis of different metrics such as faithfulness and answer relevancy. This utilises RAGAS library to calculate these metrics.
+
+**API Parameters :**
+
+* `question`= User query for the chatbot
+* `context`= context retrieved by retrieval mode used for answer generation
+* `answer`= answer generated by chatbot
+* `model`= LLM model
+* `mode`= Retrieval mode used for answer generationRetrieval mode used for answer generation
+
+**Response :**
+[source,json,indent=0]
+....
+{
+    "status": "Success",
+    "data": {
+        "graph+vector+fulltext": {
+            "faithfulness": 1.0,
+            "answer_relevancy": 0.9699
+        }
+    }
+}
+....

@@ -754,7 +754,7 @@ async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), da
         gc.collect()
         
 @app.post("/drop_create_vector_index")
-async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), database=Form(), isVectorIndexExist=Form()):
+async def drop_create_vector_index(uri=Form(), userName=Form(), password=Form(), database=Form(), isVectorIndexExist=Form()):
     try:
         payload_json_obj = {'api_name':'drop_create_vector_index', 'db_url':uri, 'userName':userName, 'database':database,
                             'isVectorIndexExist':isVectorIndexExist, 'logging_time': formatted_time(datetime.now(timezone.utc))}
