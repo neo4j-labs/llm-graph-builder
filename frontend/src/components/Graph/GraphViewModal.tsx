@@ -228,12 +228,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         return {
           ...node,
           selected: match,
-          size:
-            match && viewPoint === graphLabels.showGraphView
-              ? 100
-              : match && viewPoint !== graphLabels.showGraphView
-              ? 50
-              : graphLabels.nodeSize,
         };
       });
       // deactivating any active relationships
