@@ -9,7 +9,7 @@ import { useCredentials } from '../../context/UserCredentials';
 
 export default function ChatModeToggle({
   menuAnchor,
-  closeHandler = () => { },
+  closeHandler = () => {},
   open,
   anchorPortal = true,
   disableBackdrop = false,
@@ -37,7 +37,9 @@ export default function ChatModeToggle({
     return memoizedChatModes?.map((m) => {
       const handleModeChange = () => {
         if (chatModes.includes(m.mode)) {
-          if (chatModes.length === 1) return;
+          if (chatModes.length === 1) {
+            return;
+          }
           setchatModes((prev) => prev.filter((i) => i !== m.mode));
         } else {
           setchatModes((prev) => [...prev, m.mode]);
