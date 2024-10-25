@@ -60,7 +60,7 @@ import IndeterminateCheckbox from './UI/CustomCheckBox';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
 let onlyfortheFirstRender = true;
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
-  const { isExpanded, connectionStatus, setConnectionStatus, onInspect } = props;
+  const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
   const { userCredentials, isReadOnlyUser } = useCredentials();
@@ -1047,4 +1047,4 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   );
 };
 
-export default forwardRef(FileTable);
+export default FileTable;
