@@ -433,7 +433,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                         newScheme={newScheme}
                         searchQuery={searchQuery}
                         setSearchQuery={setSearchQuery}
-                        viewPoint={viewPoint}
                         setNodes={setNodes}
                         setRelationships={setRelationships}
                       />
