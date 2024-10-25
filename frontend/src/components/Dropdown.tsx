@@ -3,7 +3,6 @@ import { OptionType, ReusableDropdownProps } from '../types';
 import { memo, useMemo } from 'react';
 import { capitalize, capitalizeWithUnderscore } from '../utils/Utils';
 import { prodllms } from '../utils/Constants';
-
 const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   options,
   placeholder,
