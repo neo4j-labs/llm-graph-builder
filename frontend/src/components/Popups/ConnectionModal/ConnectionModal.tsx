@@ -84,11 +84,7 @@ export default function ConnectionModal({
               JSON.stringify({
                 uri: usercredential?.uri,
                 user: usercredential?.userName,
-<<<<<<< HEAD
-                password: usercredential?.password,
-=======
                 password: btoa(usercredential?.password),
->>>>>>> bec4bf517370161c514d6f92eaa2bcfa650e55c8
                 database: usercredential?.database,
                 userDbVectorIndex: 384,
               })
@@ -211,29 +207,20 @@ export default function ConnectionModal({
       if (response?.data?.status !== 'Success') {
         throw new Error(response.data.error);
       } else {
-<<<<<<< HEAD
-=======
         const isgdsActive = response.data.data.gds_status;
         const isReadOnlyUser = !response.data.data.write_access;
         setGdsActive(isgdsActive);
         setIsReadOnlyUser(isReadOnlyUser);
->>>>>>> bec4bf517370161c514d6f92eaa2bcfa650e55c8
         localStorage.setItem(
           'neo4j.connection',
           JSON.stringify({
             uri: connectionURI,
             user: username,
-<<<<<<< HEAD
-            password: password,
-            database: database,
-            userDbVectorIndex,
-=======
             password: btoa(password),
             database: database,
             userDbVectorIndex,
             isgdsActive,
             isReadOnlyUser,
->>>>>>> bec4bf517370161c514d6f92eaa2bcfa650e55c8
           })
         );
         setUserDbVectorIndex(response.data.data.db_vector_dimension);

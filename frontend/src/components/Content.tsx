@@ -37,9 +37,6 @@ import FallBackDialog from './UI/FallBackDialog';
 import DeletePopUp from './Popups/DeletePopUp/DeletePopUp';
 import GraphEnhancementDialog from './Popups/GraphEnhancementDialog';
 import { tokens } from '@neo4j-ndl/base';
-import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
-import retry from '../services/retry';
-import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/toasts';
 import axios from 'axios';
 import DatabaseStatusIcon from './UI/DatabaseStatusIcon';
 import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
@@ -577,42 +574,6 @@ const Content: React.FC<ContentProps> = ({
                 processingProgress: isStartFromBegining ? 0 : f.processingProgress,
                 nodesCount: isStartFromBegining ? 0 : f.nodesCount,
                 relationshipCount: isStartFromBegining ? 0 : f.relationshipsCount,
-              }
-            : f;
-        });
-      });
-      showSuccessToast(response.data.message as string);
-      retryOnclose();
-    } catch (error) {
-      setRetryLoading(false);
-      if (error instanceof Error) {
-        setAlertStateForRetry({
-          showAlert: true,
-          alertMessage: error.message,
-          alertType: 'danger',
-        });
-      }
-    }
-  };
-
-  const retryHandler = async (filename: string, retryoption: string) => {
-    try {
-      setRetryLoading(true);
-      const response = await retry(userCredentials as UserCredentials, filename, retryoption);
-      setRetryLoading(false);
-      if (response.data.status === 'Failure') {
-        throw new Error(response.data.error);
-      }
-      const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption===RETRY_OPIONS[1];
-      setFilesData((prev) => {
-        return prev.map((f) => {
-          return f.name === filename
-            ? {
-                ...f,
-                status: 'Reprocess',
-                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-                NodesCount: isStartFromBegining ? 0 : f.NodesCount,
-                relationshipCount: isStartFromBegining ? 0 : f.relationshipCount,
               }
             : f;
         });
