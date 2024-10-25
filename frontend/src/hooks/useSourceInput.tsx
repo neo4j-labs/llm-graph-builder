@@ -47,10 +47,10 @@ export default function useSourceInput(
   const submitHandler = useCallback(
     async (url: string) => {
       const defaultValues: CustomFileBase = {
-        processing: 0,
+        processingTotalTime: 0,
         status: 'New',
-        NodesCount: 0,
-        relationshipCount: 0,
+        nodesCount: 0,
+        relationshipsCount: 0,
         type: 'TEXT',
         model: model,
         fileSource: fileSource,
@@ -115,14 +115,15 @@ export default function useSourceInput(
                 const baseValues = {
                   name: item.fileName,
                   size: item.fileSize,
-                  source_url: item.url,
+                  sourceUrl: item.url,
                   id: uuidv4(),
                   language: item.language,
+                  uploadProgress: 100,
                   // total_pages: 1,
                   ...defaultValues,
                 };
                 if (isWikiQuery) {
-                  baseValues.wiki_query = item.fileName;
+                  baseValues.wikiQuery = item.fileName;
                 }
                 copiedFilesData.unshift(baseValues);
               } else {
@@ -131,12 +132,13 @@ export default function useSourceInput(
                 copiedFilesData.unshift({
                   ...tempFileData,
                   status: defaultValues.status,
-                  NodesCount: defaultValues.NodesCount,
-                  relationshipCount: defaultValues.relationshipCount,
-                  processing: defaultValues.processing,
+                  nodesCount: defaultValues.nodesCount,
+                  relationshipsCount: defaultValues.relationshipsCount,
+                  processingTotalTime: defaultValues.processingTotalTime,
                   model: defaultValues.model,
                   fileSource: defaultValues.fileSource,
                   processingProgress: defaultValues.processingProgress,
+                  uploadProgress: 100,
                 });
               }
             }

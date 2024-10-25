@@ -18,7 +18,16 @@ import { postProcessing } from '../services/PostProcessing';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import { useSearchParams } from 'react-router-dom';
-import { batchSize, buttonCaptions, defaultLLM, largeFileSize, llms, RETRY_OPIONS, tooltips } from '../utils/Constants';
+import {
+  batchSize,
+  buttonCaptions,
+  chatModeLables,
+  defaultLLM,
+  largeFileSize,
+  llms,
+  RETRY_OPIONS,
+  tooltips,
+} from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import connectAPI from '../services/ConnectAPI';
 import DropdownComponent from './Dropdown';
@@ -32,6 +41,12 @@ import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
 import retry from '../services/retry';
 import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/toasts';
 import axios from 'axios';
+import DatabaseStatusIcon from './UI/DatabaseStatusIcon';
+import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
+import retry from '../services/retry';
+import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/toasts';
+import { useMessageContext } from '../context/UserMessages';
+import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
 
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
@@ -58,7 +73,16 @@ const Content: React.FC<ContentProps> = ({
   });
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
-  const { setUserCredentials, userCredentials, connectionStatus, setConnectionStatus } = useCredentials();
+  const {
+    setUserCredentials,
+    userCredentials,
+    connectionStatus,
+    setConnectionStatus,
+    isGdsActive,
+    setGdsActive,
+    setIsReadOnlyUser,
+    isReadOnlyUser,
+  } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [retryFile, setRetryFile] = useState<string>('');
@@ -69,7 +93,7 @@ const Content: React.FC<ContentProps> = ({
     alertType: 'neutral',
     alertMessage: '',
   });
-
+  const { setClearHistoryData } = useMessageContext();
   const {
     filesData,
     setFilesData,
@@ -84,6 +108,7 @@ const Content: React.FC<ContentProps> = ({
     queue,
     processedCount,
     setProcessedCount,
+    setchatModes,
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
@@ -109,10 +134,16 @@ const Content: React.FC<ContentProps> = ({
         setUserCredentials({
           uri: neo4jConnection.uri,
           userName: neo4jConnection.user,
-          password: neo4jConnection.password,
+          password: atob(neo4jConnection.password),
           database: neo4jConnection.database,
           port: neo4jConnection.uri.split(':')[2],
         });
+        if (neo4jConnection.isgdsActive !== undefined) {
+          setGdsActive(neo4jConnection.isgdsActive);
+        }
+        if (neo4jConnection.isReadOnlyUser !== undefined) {
+          setIsReadOnlyUser(neo4jConnection.isReadOnlyUser);
+        }
       } else {
         setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
       }
@@ -137,10 +168,17 @@ const Content: React.FC<ContentProps> = ({
     if (afterFirstRender) {
       localStorage.setItem('processedCount', JSON.stringify({ db: userCredentials?.uri, count: processedCount }));
     }
-    if (processedCount == batchSize) {
+    if (processedCount == batchSize && !isReadOnlyUser) {
       handleGenerateGraph([], true);
     }
-  }, [processedCount, userCredentials]);
+    if (processedCount === 1 && queue.isEmpty()) {
+      (async () => {
+        showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
+        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+        showSuccessToast('All Q&A functionality is available now.');
+      })();
+    }
+  }, [processedCount, userCredentials, queue, isReadOnlyUser, isGdsActive]);
 
   useEffect(() => {
     if (afterFirstRender) {
@@ -161,16 +199,27 @@ const Content: React.FC<ContentProps> = ({
     if (connection != null) {
       (async () => {
         const parsedData = JSON.parse(connection);
-        console.log(parsedData.uri);
-        const response = await connectAPI(parsedData.uri, parsedData.user, parsedData.password, parsedData.database);
+        const response = await connectAPI(
+          parsedData.uri,
+          parsedData.user,
+          atob(parsedData.password),
+          parsedData.database
+        );
         if (response?.data?.status === 'Success') {
           localStorage.setItem(
             'neo4j.connection',
             JSON.stringify({
               ...parsedData,
               userDbVectorIndex: response.data.data.db_vector_dimension,
+              password: btoa(atob(parsedData.password)),
             })
           );
+          if (response.data.data.gds_status !== undefined) {
+            setGdsActive(response.data.data.gds_status);
+          }
+          if (response.data.data.write_access !== undefined) {
+            setIsReadOnlyUser(!response.data.data.write_access);
+          }
           if (
             (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
               response.data.data.db_vector_dimension == 0) &&
@@ -262,7 +311,7 @@ const Content: React.FC<ContentProps> = ({
         userCredentials as UserCredentials,
         fileItem.fileSource,
         fileItem.retryOption ?? '',
-        fileItem.source_url,
+        fileItem.sourceUrl,
         localStorage.getItem('accesskey'),
         localStorage.getItem('secretkey'),
         fileItem.name ?? '',
@@ -270,9 +319,9 @@ const Content: React.FC<ContentProps> = ({
         fileItem.gcsBucketFolder ?? '',
         selectedNodes.map((l) => l.value),
         selectedRels.map((t) => t.value),
-        fileItem.google_project_id,
+        fileItem.googleProjectId,
         fileItem.language,
-        fileItem.access_token
+        fileItem.accessToken
       );
 
       if (apiResponse?.status === 'Failed') {
@@ -285,10 +334,11 @@ const Content: React.FC<ContentProps> = ({
               const apiRes = apiResponse?.data;
               return {
                 ...curfile,
-                processing: apiRes?.processingTime?.toFixed(2),
+                processingProgress: apiRes?.processingTime?.toFixed(2),
+                processingTotalTime: apiRes?.processingTime?.toFixed(2),
                 status: apiRes?.status,
-                NodesCount: apiRes?.nodeCount,
-                relationshipCount: apiRes?.relationshipCount,
+                nodesCount: apiRes?.nodeCount,
+                relationshipsCount: apiRes?.relationshipCount,
                 model: apiRes?.model,
               };
             }
@@ -356,7 +406,12 @@ const Content: React.FC<ContentProps> = ({
     return data;
   };
 
-  const addFilesToQueue = (remainingFiles: CustomFile[]) => {
+  const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
+    if (!remainingFiles.length) {
+      showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
+      await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+      showSuccessToast('All Q&A functionality is available now.');
+    }
     for (let index = 0; index < remainingFiles.length; index++) {
       const f = remainingFiles[index];
       setFilesData((prev) =>
@@ -432,15 +487,13 @@ const Content: React.FC<ContentProps> = ({
         }
         data = triggerBatchProcessing(filesTobeSchedule, filesTobeProcessed, true, true);
       }
-      Promise.allSettled(data).then(async (_) => {
+      Promise.allSettled(data).then((_) => {
         setextractLoading(false);
-        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       });
     } else if (queueFiles && !queue.isEmpty() && processingFilesCount < batchSize) {
       data = scheduleBatchWiseProcess(queue.items, true);
-      Promise.allSettled(data).then(async (_) => {
+      Promise.allSettled(data).then((_) => {
         setextractLoading(false);
-        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       });
     } else {
       addFilesToQueue(filesTobeProcessed as CustomFile[]);
@@ -458,9 +511,8 @@ const Content: React.FC<ContentProps> = ({
       } else {
         data = triggerBatchProcessing(queue.items, queue.items as CustomFile[], true, false);
       }
-      Promise.allSettled(data).then(async (_) => {
+      Promise.allSettled(data).then((_) => {
         setextractLoading(false);
-        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
       });
     } else {
       const selectedNewFiles = childRef.current
@@ -503,6 +555,44 @@ const Content: React.FC<ContentProps> = ({
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
+    setClearHistoryData(true);
+    setchatModes([chatModeLables['graph+vector+fulltext']]);
+  };
+
+  const retryHandler = async (filename: string, retryoption: string) => {
+    try {
+      setRetryLoading(true);
+      const response = await retry(userCredentials as UserCredentials, filename, retryoption);
+      setRetryLoading(false);
+      if (response.data.status === 'Failure') {
+        throw new Error(response.data.error);
+      }
+      const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption === RETRY_OPIONS[1];
+      setFilesData((prev) => {
+        return prev.map((f) => {
+          return f.name === filename
+            ? {
+                ...f,
+                status: 'Reprocess',
+                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                nodesCount: isStartFromBegining ? 0 : f.nodesCount,
+                relationshipCount: isStartFromBegining ? 0 : f.relationshipsCount,
+              }
+            : f;
+        });
+      });
+      showSuccessToast(response.data.message as string);
+      retryOnclose();
+    } catch (error) {
+      setRetryLoading(false);
+      if (error instanceof Error) {
+        setAlertStateForRetry({
+          showAlert: true,
+          alertMessage: error.message,
+          alertType: 'danger',
+        });
+      }
+    }
   };
 
   const retryHandler = async (filename: string, retryoption: string) => {
@@ -739,16 +829,14 @@ const Content: React.FC<ContentProps> = ({
               chunksExistsWithDifferentEmbedding={openConnection.chunksExistsWithDifferentDimension}
             />
           </Suspense>
-
           <div className='connectionstatus__container'>
-            <span className='h6 px-1'>Neo4j connection</span>
+            <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
             <Typography variant='body-medium'>
-              {!connectionStatus ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
-              {connectionStatus ? (
-                <span className='n-body-small'>{userCredentials?.uri}</span>
-              ) : (
-                <span className='n-body-small'>Not Connected</span>
-              )}
+              <DatabaseStatusIcon
+                isConnected={connectionStatus}
+                isGdsActive={isGdsActive}
+                uri={userCredentials && userCredentials?.uri}
+              />
               <div className='pt-1'>
                 {!isSchema ? (
                   <StatusIndicator type='danger' />
@@ -773,11 +861,11 @@ const Content: React.FC<ContentProps> = ({
           <div>
             <ButtonWithToolTip
               placement='top'
-              text='Configure Graph Schema, Delete disconnected Entities, Merge duplicate Entities'
+              text='Enhance graph quality'
               label='Graph Enhancemnet Settings'
               className='mr-2.5'
               onClick={toggleEnhancementDialog}
-              disabled={!connectionStatus}
+              disabled={!connectionStatus || isReadOnlyUser}
               size={isTablet ? 'small' : 'medium'}
             >
               Graph Enhancement
@@ -834,7 +922,7 @@ const Content: React.FC<ContentProps> = ({
               placement='top'
               label='generate graph'
               onClick={onClickHandler}
-              disabled={disableCheck}
+              disabled={disableCheck || isReadOnlyUser}
               className='mr-0.5'
               size={isTablet ? 'small' : 'medium'}
             >
@@ -869,7 +957,7 @@ const Content: React.FC<ContentProps> = ({
               }
               placement='top'
               onClick={() => setshowDeletePopUp(true)}
-              disabled={!selectedfileslength}
+              disabled={!selectedfileslength || isReadOnlyUser}
               className='ml-0.5'
               label='Delete Files'
               size={isTablet ? 'small' : 'medium'}

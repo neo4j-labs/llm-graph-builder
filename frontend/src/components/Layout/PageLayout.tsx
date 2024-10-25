@@ -22,16 +22,15 @@ export default function PageLayoutNew({
   openSettingsDialog: () => void;
 }) {
   const largedesktops = useMediaQuery(`(min-width:1440px )`);
+  const { userCredentials, connectionStatus } = useCredentials();
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(largedesktops));
   const [isRightExpanded, setIsRightExpanded] = useState<boolean>(Boolean(largedesktops));
   const [showChatBot, setShowChatBot] = useState<boolean>(false);
   const [showDrawerChatbot, setShowDrawerChatbot] = useState<boolean>(true);
-  const [clearHistoryData, setClearHistoryData] = useState<boolean>(false);
   const [showEnhancementDialog, toggleEnhancementDialog] = useReducer((s) => !s, false);
   const [shows3Modal, toggleS3Modal] = useReducer((s) => !s, false);
   const [showGCSModal, toggleGCSModal] = useReducer((s) => !s, false);
   const [showGenericModal, toggleGenericModal] = useReducer((s) => !s, false);
-  const { userCredentials, connectionStatus } = useCredentials();
   const toggleLeftDrawer = () => {
     if (largedesktops) {
       setIsLeftExpanded(!isLeftExpanded);
@@ -47,7 +46,7 @@ export default function PageLayoutNew({
     }
   };
 
-  const { messages } = useMessageContext();
+  const { messages, setClearHistoryData, clearHistoryData } = useMessageContext();
   const { isSchema, setIsSchema, setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
 
   const deleteOnClick = async () => {

@@ -41,7 +41,7 @@ export default function ConnectionModal({
   const [username, setUsername] = useState<string>(initialusername ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
-  const { setUserCredentials, userCredentials } = useCredentials();
+  const { setUserCredentials, userCredentials, setGdsActive, setIsReadOnlyUser } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [userDbVectorIndex, setUserDbVectorIndex] = useState<number | undefined>(initialuserdbvectorindex ?? undefined);
@@ -84,7 +84,11 @@ export default function ConnectionModal({
               JSON.stringify({
                 uri: usercredential?.uri,
                 user: usercredential?.userName,
+<<<<<<< HEAD
                 password: usercredential?.password,
+=======
+                password: btoa(usercredential?.password),
+>>>>>>> bec4bf517370161c514d6f92eaa2bcfa650e55c8
                 database: usercredential?.database,
                 userDbVectorIndex: 384,
               })
@@ -189,6 +193,7 @@ export default function ConnectionModal({
           setMessage({ type: 'danger', content: 'Please drop a valid file' });
         }
       } catch (err: any) {
+        console.log({ err });
         setMessage({ type: 'danger', content: err.message });
       }
     }
@@ -206,14 +211,29 @@ export default function ConnectionModal({
       if (response?.data?.status !== 'Success') {
         throw new Error(response.data.error);
       } else {
+<<<<<<< HEAD
+=======
+        const isgdsActive = response.data.data.gds_status;
+        const isReadOnlyUser = !response.data.data.write_access;
+        setGdsActive(isgdsActive);
+        setIsReadOnlyUser(isReadOnlyUser);
+>>>>>>> bec4bf517370161c514d6f92eaa2bcfa650e55c8
         localStorage.setItem(
           'neo4j.connection',
           JSON.stringify({
             uri: connectionURI,
             user: username,
+<<<<<<< HEAD
             password: password,
             database: database,
             userDbVectorIndex,
+=======
+            password: btoa(password),
+            database: database,
+            userDbVectorIndex,
+            isgdsActive,
+            isReadOnlyUser,
+>>>>>>> bec4bf517370161c514d6f92eaa2bcfa650e55c8
           })
         );
         setUserDbVectorIndex(response.data.data.db_vector_dimension);
@@ -259,6 +279,7 @@ export default function ConnectionModal({
         }
       }
     } catch (error) {
+      console.log({ error });
       setIsLoading(false);
       if (error instanceof Error) {
         setMessage({ type: 'danger', content: error.message });

@@ -7,12 +7,15 @@ import {
   InformationCircleIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { Typography } from '@neo4j-ndl/react';
-import { useCallback, useEffect } from 'react';
-import IconButtonWithToolTip from '../UI/IconButtonToolTip';
+import { memo, useCallback, useContext, useEffect } from 'react';
+import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { tooltips } from '../../utils/Constants';
 import { useFileContext } from '../../context/UsersFiles';
+import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 
-export default function Header({ themeMode, toggleTheme }: { themeMode: string; toggleTheme: () => void }) {
+function Header() {
+  const { colorMode, toggleColorMode } = useContext(ThemeWrapperContext);
+
   const handleURLClick = useCallback((url: string) => {
     window.open(url, '_blank');
   }, []);
@@ -38,7 +41,7 @@ export default function Header({ themeMode, toggleTheme }: { themeMode: string; 
         <section className='flex w-1/3 shrink-0 grow-0 items-center grow min-w-[200px]'>
           <Typography variant='h6' component='a' href='#app-bar-with-responsive-menu' sx={{}}>
             <img
-              src={themeMode === 'dark' ? Neo4jLogoBW : Neo4jLogoColor}
+              src={colorMode === 'dark' ? Neo4jLogoBW : Neo4jLogoColor}
               className='h-8 min-h-8 min-w-8'
               alt='Neo4j Logo'
             />
@@ -75,10 +78,10 @@ export default function Header({ themeMode, toggleTheme }: { themeMode: string; 
                 text={tooltips.theme}
                 clean
                 size='large'
-                onClick={toggleTheme}
+                onClick={toggleColorMode}
                 placement='left'
               >
-                {themeMode === 'dark' ? (
+                {colorMode === 'dark' ? (
                   <span role='img' aria-label='sun'>
                     <SunIconOutline />
                   </span>
@@ -95,3 +98,4 @@ export default function Header({ themeMode, toggleTheme }: { themeMode: string; 
     </div>
   );
 }
+export default memo(Header);

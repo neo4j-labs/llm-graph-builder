@@ -29,9 +29,8 @@ export default function GraphEnhancementDialog({
   const orphanNodesDeleteHandler = async (selectedEntities: string[]) => {
     try {
       setorphanDeleteAPIloading(true);
-      const response = await deleteOrphanAPI(userCredentials as UserCredentials, selectedEntities);
+      await deleteOrphanAPI(userCredentials as UserCredentials, selectedEntities);
       setorphanDeleteAPIloading(false);
-      console.log(response);
     } catch (error) {
       setorphanDeleteAPIloading(false);
       console.log(error);
@@ -103,7 +102,7 @@ export default function GraphEnhancementDialog({
               openTextSchema={() => {
                 setShowTextFromSchemaDialog({ triggeredFrom: 'enhancementtab', show: true });
               }}
-              colseEnhanceGraphSchemaDialog={onClose}
+              closeEnhanceGraphSchemaDialog={onClose}
               settingView='headerView'
             />
           </div>

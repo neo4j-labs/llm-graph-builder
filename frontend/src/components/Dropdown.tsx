@@ -1,8 +1,8 @@
-import { Dropdown, Tip } from '@neo4j-ndl/react';
+import { Dropdown, Tip, useMediaQuery } from '@neo4j-ndl/react';
 import { OptionType, ReusableDropdownProps } from '../types';
-import { useMemo, useReducer } from 'react';
-import { capitalize } from '../utils/Utils';
-
+import { memo, useMemo } from 'react';
+import { capitalize, capitalizeWithUnderscore } from '../utils/Utils';
+import { prodllms } from '../utils/Constants';
 const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   options,
   placeholder,
@@ -13,7 +13,8 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   isDisabled,
   value,
 }) => {
-  const [disableTooltip, toggleDisableState] = useReducer((state) => !state, false);
+  const isProdEnv = process.env.VITE_ENV === 'PROD';
+  const isLargeDesktop = useMediaQuery(`(min-width:1440px )`);
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
   };
@@ -21,51 +22,47 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   return (
     <>
       <div className={view === 'ContentView' ? 'w-[150px]' : ''}>
-        <Tip allowedPlacements={['top']} isDisabled={disableTooltip}>
-          <Tip.Trigger>
-            <Dropdown
-              type='select'
-              aria-label='A selection dropdown'
-              label='LLM Models'
-              selectProps={{
-                onChange: handleChange,
-                options: allOptions?.map((option) => {
-                  const label =
-                    typeof option === 'string'
-                      ? (option.includes('LLM_MODEL_CONFIG_')
-                          ? capitalize(option.split('LLM_MODEL_CONFIG_').at(-1) as string)
-                          : capitalize(option)
-                        )
-                          .split('_')
-                          .join(' ')
-                      : capitalize(option.label);
-                  const value = typeof option === 'string' ? option : option.value;
-                  return {
-                    label,
-                    value,
-                  };
-                }),
-                placeholder: placeholder || 'Select an option',
-                defaultValue: defaultValue ? { label: capitalize(defaultValue), value: defaultValue } : undefined,
-                menuPlacement: 'auto',
-                isDisabled: isDisabled,
-                value: value,
-                onMenuOpen: () => {
-                  toggleDisableState();
-                },
-                onMenuClose: () => {
-                  toggleDisableState();
-                },
-              }}
-              size='medium'
-              fluid
-            />
-          </Tip.Trigger>
-          <Tip.Content>LLM Model used for Extraction & Chat</Tip.Content>
-        </Tip>
+        <Dropdown
+          type='select'
+          aria-label='A selection dropdown'
+          label='LLM Models'
+          helpText={<div className='!w-max'> LLM Model used for Extraction & Chat</div>}
+          selectProps={{
+            onChange: handleChange,
+            // @ts-ignore
+            options: allOptions?.map((option) => {
+              const label = typeof option === 'string' ? capitalizeWithUnderscore(option) : capitalize(option.label);
+              const value = typeof option === 'string' ? option : option.value;
+              const isModelSupported = !isProdEnv || prodllms?.includes(value);
+              return {
+                label: !isModelSupported ? (
+                  <Tip allowedPlacements={isLargeDesktop ? ['left'] : ['right']}>
+                    <Tip.Trigger>
+                      <span>{label}</span>
+                    </Tip.Trigger>
+                    <Tip.Content>Available In Development Version</Tip.Content>
+                  </Tip>
+                ) : (
+                  <span>{label}</span>
+                ),
+                value,
+                isDisabled: !isModelSupported,
+              };
+            }),
+            placeholder: placeholder || 'Select an option',
+            defaultValue: defaultValue
+              ? { label: capitalizeWithUnderscore(defaultValue), value: defaultValue }
+              : undefined,
+            menuPlacement: 'auto',
+            isDisabled: isDisabled,
+            value: value,
+          }}
+          size='medium'
+          fluid
+        />
         {children}
       </div>
     </>
   );
 };
-export default DropdownComponent;
+export default memo(DropdownComponent);

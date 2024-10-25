@@ -8,6 +8,7 @@ export default function useServerSideEvent(
   errorHandler: (filename: string) => void
 ) {
   const { setFilesData, setProcessedCount } = useFileContext();
+  const processcountmap: Record<string, number> = {};
   function updateStatusForLargeFiles(eventSourceRes: eventResponsetypes) {
     const {
       fileName,
@@ -28,22 +29,26 @@ export default function useServerSideEvent(
         alertHandler(minutes !== 0, minutes === 0 ? seconds : minutes, fileName);
       }
       if (total_chunks) {
-        setFilesData((prevfiles) => {
-          return prevfiles.map((curfile) => {
-            if (curfile.name == fileName) {
-              return {
-                ...curfile,
-                status: total_chunks === processed_chunk ? 'Completed' : status,
-                NodesCount: nodeCount,
-                relationshipCount: relationshipCount,
-                model: model,
-                processing: processingTime?.toFixed(2),
-                processingProgress: Math.floor((processed_chunk / total_chunks) * 100),
-              };
-            }
-            return curfile;
+        const updateState = processed_chunk != processcountmap[fileName];
+        if (updateState) {
+          processcountmap[fileName] = processed_chunk;
+          setFilesData((prevfiles) => {
+            return prevfiles.map((curfile) => {
+              if (curfile.name == fileName) {
+                return {
+                  ...curfile,
+                  status: total_chunks === processed_chunk ? 'Completed' : status,
+                  nodesCount: nodeCount,
+                  relationshipsCount: relationshipCount,
+                  model: model,
+                  processingTotalTime: processingTime?.toFixed(2),
+                  processingProgress: Math.floor((processed_chunk / total_chunks) * 100),
+                };
+              }
+              return curfile;
+            });
           });
-        });
+        }
       }
     } else if (status === 'Completed') {
       setFilesData((prevfiles) => {
@@ -52,10 +57,10 @@ export default function useServerSideEvent(
             return {
               ...curfile,
               status: status,
-              NodesCount: nodeCount,
-              relationshipCount: relationshipCount,
+              nodesCount: nodeCount,
+              relationshipsCount: relationshipCount,
               model: model,
-              processing: processingTime?.toFixed(2),
+              processingTotalTime: processingTime?.toFixed(2),
             };
           }
           return curfile;
@@ -67,6 +72,7 @@ export default function useServerSideEvent(
         }
         return prev + 1;
       });
+      delete processcountmap[fileName];
     } else if (eventSourceRes.status === 'Failed') {
       setFilesData((prevfiles) => {
         return prevfiles.map((curfile) => {
@@ -80,6 +86,7 @@ export default function useServerSideEvent(
         });
       });
       errorHandler(fileName);
+      delete processcountmap[fileName];
     }
   }
   return {

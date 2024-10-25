@@ -12,6 +12,7 @@ ARG VITE_CHUNK_SIZE=5242880
 ARG VITE_CHAT_MODES=""
 ARG VITE_ENV="DEV"
 ARG VITE_BATCH_SIZE=2
+ARG VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
 
 WORKDIR /app
 COPY package.json yarn.lock ./
@@ -28,6 +29,7 @@ RUN VITE_BACKEND_API_URL=$VITE_BACKEND_API_URL \
     VITE_LARGE_FILE_SIZE=${VITE_LARGE_FILE_SIZE} \
     VITE_CHAT_MODES=$VITE_CHAT_MODES \
     VITE_BATCH_SIZE=$VITE_BATCH_SIZE \
+    VITE_LLM_MODELS_PROD=$VITE_LLM_MODELS_PROD \
     yarn run build
 
 # Step 2: Serve the application using Nginx

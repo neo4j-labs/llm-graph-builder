@@ -52,16 +52,17 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-http://localhost:8000}
-        - VITE_REACT_APP_SOURCES=${VITE_REACT_APP_SOURCES-local,youtube,wiki,s3}
-        - VITE_LLM_MODELS=${VITE_LLM_MODELS-diffbot,openai-gpt-3.5,openai-gpt-4o}
-        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID-""}
+        - VITE_REACT_APP_SOURCES=${VITE_REACT_APP_SOURCES-local,wiki,s3}
+        - VITE_LLM_MODELS=${VITE_LLM_MODELS-}
+        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID-}
         - VITE_BLOOM_URL=${VITE_BLOOM_URL-https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true}
         - VITE_TIME_PER_PAGE=${VITE_TIME_PER_PAGE-50}
         - VITE_CHUNK_SIZE=${VITE_CHUNK_SIZE-5242880}
         - VITE_LARGE_FILE_SIZE=${VITE_LARGE_FILE_SIZE-5242880}
         - VITE_ENV=${VITE_ENV-DEV}
-        - VITE_CHAT_MODES=${VITE_CHAT_MODES-""}
+        - VITE_CHAT_MODES=${VITE_CHAT_MODES-}
         - VITE_BATCH_SIZE=${VITE_BATCH_SIZE-2}
+        - VITE_LLM_MODELS_PROD=${VITE_LLM_MODELS_PROD-openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash}
     volumes:
       - ./frontend:/app
       - /app/node_modules
