@@ -9,7 +9,7 @@ import { useCredentials } from '../../context/UserCredentials';
 
 export default function ChatModeToggle({
   menuAnchor,
-  closeHandler = () => {},
+  closeHandler = () => { },
   open,
   anchorPortal = true,
   disableBackdrop = false,
@@ -24,22 +24,8 @@ export default function ChatModeToggle({
   const isCommunityAllowed = postProcessingTasks.includes('enable_communities');
   const { isGdsActive } = useCredentials();
   useEffect(() => {
-    // If rows are selected, the mode is valid (either vector or graph+vector)
-    if (selectedRows.length > 0) {
-      if (
-        chatModes.includes(chatModeLables.graph) ||
-        chatModes.includes(chatModeLables.fulltext) ||
-        chatModes.includes(chatModeLables['global search+vector+fulltext'])
-      ) {
-        setchatModes((prev) =>
-          prev.filter(
-            (m) => ![chatModeLables.graph, chatModeLables.fulltext, chatModeLables['graph+vector+fulltext']].includes(m)
-          )
-        );
-      }
-      if (!(chatModes.includes(chatModeLables.vector) || chatModes.includes(chatModeLables['graph+vector']))) {
-        setchatModes([chatModeLables['graph+vector']]);
-      }
+    if (!chatModes.length) {
+      setchatModes([chatModeLables['graph+vector+fulltext']]);
     }
   }, [chatModes.length]);
   const memoizedChatModes = useMemo(() => {
@@ -49,14 +35,10 @@ export default function ChatModeToggle({
   }, [isGdsActive, isCommunityAllowed]);
   const menuItems = useMemo(() => {
     return memoizedChatModes?.map((m) => {
-      const isDisabled = Boolean(
-        selectedRows.length && !(m.mode === chatModeLables.vector || m.mode === chatModeLables['graph+vector'])
-      );
       const handleModeChange = () => {
-        if (isDisabled) {
-          setchatModes([chatModeLables['graph+vector']]);
-        } else if (chatModes.includes(m.mode)) {
-          setchatModes((prev) => prev.filter((i) => i != m.mode));
+        if (chatModes.includes(m.mode)) {
+          if (chatModes.length === 1) return;
+          setchatModes((prev) => prev.filter((i) => i !== m.mode));
         } else {
           setchatModes((prev) => [...prev, m.mode]);
         }
@@ -88,13 +70,7 @@ export default function ChatModeToggle({
         ),
       };
     });
-  }, [chatModes.length, memoizedChatModes, closeHandler, selectedRows]);
-
-  useEffect(() => {
-    if (!selectedRows.length && !chatModes.length) {
-      setchatModes([]);
-    }
-  }, [selectedRows.length, chatModes.length]);
+  }, [chatModes, memoizedChatModes, closeHandler]);
   return (
     <CustomMenu
       closeHandler={closeHandler}
