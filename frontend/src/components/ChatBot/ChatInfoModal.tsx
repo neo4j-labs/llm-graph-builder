@@ -261,7 +261,12 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             To generate this response, the process took <span className='font-bold'>{response_time} seconds,</span>
             utilizing <span className='font-bold'>{total_tokens}</span> tokens with the model{' '}
             <span className='font-bold'>{model}</span> in{' '}
-            <span className='font-bold'>{chatModeReadableLables[mode] !== 'vector' ? chatModeReadableLables[mode].replace(/\+/g, ' & ') : chatModeReadableLables[mode]}</span> mode.
+            <span className='font-bold'>
+              {chatModeReadableLables[mode] !== 'vector'
+                ? chatModeReadableLables[mode].replace(/\+/g, ' & ')
+                : chatModeReadableLables[mode]}
+            </span>{' '}
+            mode.
           </Typography>
         </Box>
       </Box>
