@@ -56,7 +56,7 @@ import { ThemeWrapperContext } from '../context/ThemeWrapper';
 let onlyfortheFirstRender = true;
 
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
-  const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry } = props;
+  const { isExpanded, connectionStatus, setConnectionStatus, onInspect } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
   const { userCredentials, isReadOnlyUser } = useCredentials();
