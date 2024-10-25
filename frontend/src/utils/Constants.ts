@@ -46,6 +46,11 @@ export const supportedLLmsForRagas = [
   'fireworks_llama_v3_70b',
   'bedrock_claude_3_5_sonnet',
 ];
+export const prodllms =
+  process.env.VITE_LLM_MODELS_PROD?.trim() != ''
+    ? (process.env.VITE_LLM_MODELS_PROD?.split(',') as string[])
+    : ['openai_gpt_4o', 'openai_gpt_4o_mini', 'diffbot', 'gemini_1.5_flash'];
+
 export const chatModeLables = {
   vector: 'vector',
   graph: 'graph',
@@ -140,7 +145,7 @@ export const tooltips = {
 };
 
 export const buttonCaptions = {
-  exploreGraphWithBloom: 'Explore Graph with Bloom',
+  exploreGraphWithBloom: 'Explore Graph',
   showPreviewGraph: 'Preview Graph',
   deleteFiles: 'Delete Files',
   generateGraph: 'Generate Graph',
@@ -307,7 +312,7 @@ export const appLabels = {
   predefinedSchema: 'Select a Pre-defined Schema',
 };
 
-export const LLMDropdownLabel ={
+export const LLMDropdownLabel = {
   disabledModels: 'Disabled models are available in the development version. Access more models in our ',
-  devEnv: 'development environment'
-}
+  devEnv: 'development environment',
+};

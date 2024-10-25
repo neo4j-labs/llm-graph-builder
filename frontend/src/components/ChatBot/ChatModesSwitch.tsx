@@ -17,7 +17,9 @@ export default function ChatModesSwitch({
   currentMode: string;
   isFullScreen: boolean;
 }) {
-  const chatmodetoshow =chatModeReadableLables[currentMode].includes('+') ? capitalizeWithPlus(chatModeReadableLables[currentMode]) : capitalize(chatModeReadableLables[currentMode]);
+  const chatmodetoshow = chatModeReadableLables[currentMode].includes('+')
+    ? capitalizeWithPlus(chatModeReadableLables[currentMode])
+    : capitalize(chatModeReadableLables[currentMode]);
   return (
     <Flex flexDirection='row' gap='1' alignItems='center'>
       <IconButton

@@ -522,7 +522,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               disabled={info.getValue() === 'Uploading'}
               clean
               onClick={() => {
-                const copied={...info.row.original};
+                const copied = { ...info.row.original };
                 delete copied.accessToken;
                 handleCopy(copied);
               }}
