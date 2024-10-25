@@ -1,5 +1,5 @@
 version: "3"
- 
+
 services:
   backend:
     build:
@@ -33,7 +33,7 @@ services:
 #      - LLM_MODEL_CONFIG_groq_llama3_70b=${LLM_MODEL_CONFIG_groq_llama3_70b-}
 #      - LLM_MODEL_CONFIG_bedrock_claude_3_5_sonnet=${LLM_MODEL_CONFIG_bedrock_claude_3_5_sonnet-}
 #     - LLM_MODEL_CONFIG_fireworks_qwen_72b=${LLM_MODEL_CONFIG_fireworks_qwen_72b-}
-      - LLM_MODEL_CONFIG_ollama_llama3=${LLM_MODEL_CONFIG_ollama_llama3-llama3,https://crispy-orbit-69wv9pgwrg7256qj-11434.app.github.dev/}
+      - LLM_MODEL_CONFIG_ollama_llama3=${LLM_MODEL_CONFIG_ollama_llama3-}
     # env_file:
     #   - ./backend/.env
     container_name: backend
@@ -43,7 +43,7 @@ services:
       - "8000:8000"
     networks:
       - net
- 
+
   frontend:
     depends_on:
       - backend
@@ -51,18 +51,17 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-https://crispy-orbit-69wv9pgwrg7256qj-8000.app.github.dev/}
+        - VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-http://localhost:8000}
         - VITE_REACT_APP_SOURCES=${VITE_REACT_APP_SOURCES-local,youtube,wiki,s3}
-        - VITE_LLM_MODELS=${VITE_LLM_MODELS-ollama_llama3,diffbot}
-        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID-}
+        - VITE_LLM_MODELS=${VITE_LLM_MODELS-diffbot,openai-gpt-3.5,openai-gpt-4o}
+        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID-""}
         - VITE_BLOOM_URL=${VITE_BLOOM_URL-https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true}
         - VITE_TIME_PER_PAGE=${VITE_TIME_PER_PAGE-50}
         - VITE_CHUNK_SIZE=${VITE_CHUNK_SIZE-5242880}
         - VITE_LARGE_FILE_SIZE=${VITE_LARGE_FILE_SIZE-5242880}
         - VITE_ENV=${VITE_ENV-DEV}
-        - VITE_CHAT_MODES=${VITE_CHAT_MODES-}
+        - VITE_CHAT_MODES=${VITE_CHAT_MODES-""}
         - VITE_BATCH_SIZE=${VITE_BATCH_SIZE-2}
-        - VITE_LLM_MODELS_PROD=${VITE_LLM_MODELS_PROD-openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash}
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -73,7 +72,6 @@ services:
       - "8080:8080"
     networks:
       - net
- 
+
 networks:
   net:
- 
