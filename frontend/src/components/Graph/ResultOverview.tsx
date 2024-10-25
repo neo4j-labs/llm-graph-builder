@@ -92,12 +92,6 @@ const ResultOverview: React.FunctionComponent<OverViewProps> = ({
       return {
         ...node,
         selected: isActive,
-        size:
-          isActive && viewPoint === graphLabels.showGraphView
-            ? 100
-            : isActive && viewPoint !== graphLabels.showGraphView
-            ? 50
-            : graphLabels.nodeSize,
       };
     });
     // deactivating any active relationships
