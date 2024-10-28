@@ -77,7 +77,7 @@ You can of course combine all (local, youtube, wikipedia, s3 and gcs) or remove 
 
 ### Chat Modes
 
-By default,all of the chat modes will be available: vector, graph_vector, graph,fulltext,graph_vector_fulltext,entity_vector and global_vector.
+By default,all of the chat modes will be available: vector, graph_vector, graph, fulltext, graph_vector_fulltext , entity_vector and global_vector.
 If none of the mode is mentioned in the chat modes variable all modes will be available:
 ```env
 VITE_CHAT_MODES=""
@@ -85,7 +85,7 @@ VITE_CHAT_MODES=""
 
 If however you want to specify the only vector mode or only graph mode you can do that by specifying the mode in the env:
 ```env
-VITE_CHAT_MODES="vector,graph_vector,"
+VITE_CHAT_MODES="vector,graph"
 ```
 
 #### Running Backend and Frontend separately (dev environment)
