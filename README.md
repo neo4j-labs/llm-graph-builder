@@ -31,8 +31,13 @@ If you are using Neo4j Desktop, you will not be able to use the docker-compose b
 ### Local deployment
 #### Running through docker-compose
 By default only OpenAI and Diffbot are enabled since Gemini requires extra GCP configurations.
-According to the environment, we are configuring the models which indicated by VITE_LLM_MODELS_PROD variable we can configure models based on our needs.
+Accoroding to enviornment we are configuring the models which is indicated by VITE_LLM_MODELS_PROD variable we can configure model based on our need.
 EX:
+```env
+VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
+```
+
+In your root folder, create a .env file with your OPENAI and DIFFBOT keys (if you want to use both):
 ```env
 VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
 ```
@@ -71,7 +76,7 @@ You can of course combine all (local, youtube, wikipedia, s3 and gcs) or remove 
 
 ### Chat Modes
 
-By default,all of the chat modes will be available: vector, graph_vector, graph, fulltext, graph_vector_fulltext , entity_vector and global_vector.
+By default,all of the chat modes will be available: vector, graph_vector, graph,fulltext,graph_vector_fulltext,entity_vector and global_vector.
 If none of the mode is mentioned in the chat modes variable all modes will be available:
 ```env
 VITE_CHAT_MODES=""
@@ -79,7 +84,7 @@ VITE_CHAT_MODES=""
 
 If however you want to specify the only vector mode or only graph mode you can do that by specifying the mode in the env:
 ```env
-VITE_CHAT_MODES="vector,graph"
+VITE_CHAT_MODES="vector,graph_vector,"
 ```
 
 #### Running Backend and Frontend separately (dev environment)
@@ -153,7 +158,6 @@ Allow unauthenticated request : Yes
 | VITE_CHUNK_SIZE              | Optional           | 5242880       | Size of each chunk of file for upload                                                                |
 | VITE_GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
 | VITE_LLM_MODELS_PROD         | Optional      | openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash | To Distinguish models based on the Enviornment PROD or DEV 
-| VITE_LLM_MODELS              | Optional | 'diffbot,openai_gpt_3.5,openai_gpt_4o,openai_gpt_4o_mini,gemini_1.5_pro,gemini_1.5_flash,azure_ai_gpt_35,azure_ai_gpt_4o,ollama_llama3,groq_llama3_70b,anthropic_claude_3_5_sonnet' | Supported Models For the application
 | GCS_FILE_CACHE          | Optional           | False         | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
 | ENTITY_EMBEDDING        | Optional           | False         | If set to True, It will add embeddings for each entity in database |
 | LLM_MODEL_CONFIG_ollama_<model_name>         | Optional      |               | Set ollama config as - model_name,model_local_url for local deployments |
@@ -170,6 +174,7 @@ Allow unauthenticated request : Yes
 8. Ollama(dev)
 9. Diffbot
 10. Other OpenAI compabtile baseurl models(dev)
+
 
 ## For local llms (Ollama)
 1. Pull the docker imgage of ollama
