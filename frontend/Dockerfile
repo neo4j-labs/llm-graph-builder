@@ -3,7 +3,6 @@ FROM node:20 AS build
 
 ARG VITE_BACKEND_API_URL="http://localhost:8000"
 ARG VITE_REACT_APP_SOURCES=""
-ARG VITE_LLM_MODELS=""
 ARG VITE_GOOGLE_CLIENT_ID=""
 ARG VITE_BLOOM_URL="https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true"
 ARG VITE_TIME_PER_PAGE=50
@@ -20,7 +19,6 @@ RUN yarn install
 COPY . ./
 RUN VITE_BACKEND_API_URL=$VITE_BACKEND_API_URL \
     VITE_REACT_APP_SOURCES=$VITE_REACT_APP_SOURCES \
-    VITE_LLM_MODELS=$VITE_LLM_MODELS \
     VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
     VITE_BLOOM_URL=$VITE_BLOOM_URL \
     VITE_CHUNK_SIZE=$VITE_CHUNK_SIZE \
