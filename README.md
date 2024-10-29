@@ -149,7 +149,6 @@ Allow unauthenticated request : Yes
 | VITE_BACKEND_API_URL         | Optional           | http://localhost:8000 | URL for backend API                                                                       |
 | VITE_BLOOM_URL               | Optional           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
 | VITE_REACT_APP_SOURCES       | Mandatory          | local,youtube,wiki,s3 | List of input sources that will be available                                               |
-| VITE_LLM_MODELS              | Mandatory          | diffbot,openai-gpt-3.5,openai-gpt-4o | Models available for selection on the frontend, used for entities extraction and Q&A
 | VITE_CHAT_MODES              | Mandatory          | vector,graph+vector,graph,hybrid | Chat modes available for Q&A
 | VITE_ENV                     | Mandatory          | DEV or PROD           | Environment variable for the app                                                                 |
 | VITE_TIME_PER_PAGE          | Optional           | 50             | Time per page for processing                                                                    |
