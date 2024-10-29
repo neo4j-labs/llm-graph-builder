@@ -45,13 +45,13 @@ DIFFBOT_API_KEY="your-diffbot-key"
 
 if you only want OpenAI:
 ```env
-VITE_LLM_MODELS="diffbot,openai-gpt-3.5,openai-gpt-4o"
+VITE_LLM_MODELS_PROD="diffbot,openai-gpt-3.5,openai-gpt-4o"
 OPENAI_API_KEY="your-openai-key"
 ```
 
 if you only want Diffbot:
 ```env
-VITE_LLM_MODELS="diffbot"
+VITE_LLM_MODELS_PROD="diffbot"
 DIFFBOT_API_KEY="your-diffbot-key"
 ```
 
