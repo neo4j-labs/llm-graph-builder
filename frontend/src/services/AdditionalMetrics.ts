@@ -1,4 +1,4 @@
-// /additional_metrics
+
 import api from '../API/Index';
 
 const getAdditionalMetrics = async (question:string,context:string,answer:string,reference:string,model:string,mode:string) => {
