@@ -106,7 +106,7 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
                       </>
                     )}
                     {!link?.startsWith('s3://') &&
-                      !isAllowedHost(link, ['storage.googleapis.com', 'wikipedia.org', 'youtube.com']) && (
+                      !isAllowedHost(link, ['storage.googleapis.com', 'wikipedia.org', 'www.youtube.com']) && (
                         <div className='flex flex-row inline-block justify-between items-center'>
                           <GlobeAltIconOutline className='n-size-token-7' />
                           <TextLink href={link} externalLink={true}>
