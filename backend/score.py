@@ -816,6 +816,40 @@ async def calculate_metric(question: str = Form(),
        )
    finally:
        gc.collect()
+       
+
+@app.post('/additional_metrics')
+async def calculate_additional_metrics(question: str = Form(),
+                                        context: str = Form(),
+                                        answer: str = Form(),
+                                        reference: str = Form(),
+                                        model: str = Form(),
+                                        mode: str = Form(),
+):
+   try:
+       context_list = [str(item).strip() for item in json.loads(context)] if context else []
+       answer_list = [str(item).strip() for item in json.loads(answer)] if answer else []
+       mode_list = [str(item).strip() for item in json.loads(mode)] if mode else []
+       result = await get_additional_metrics(question, answer_list, context_list, reference, model)
+       if result is None or "error" in result:
+           return create_api_response(
+               'Failed',
+               message='Failed to calculate evaluation metrics.',
+               error=result.get("error", "Ragas evaluation returned null")
+           )
+       data = {mode: {metric: result[i][metric] for metric in result[i]} for i, mode in enumerate(mode_list)}
+       return create_api_response('Success', data=data)
+   except Exception as e:
+       logging.exception(f"Error while calculating evaluation metrics: {e}")
+       return create_api_response(
+           'Failed',
+           message="Error while calculating evaluation metrics",
+           error=str(e)
+       )
+   finally:
+       gc.collect()
+
+
 
 if __name__ == "__main__":
     uvicorn.run(app)
