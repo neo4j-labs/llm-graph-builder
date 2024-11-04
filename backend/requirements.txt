@@ -179,5 +179,5 @@ PyMuPDF==1.24.5
 pypandoc==1.13
 graphdatascience==1.10
 Secweb==1.11.0
-ragas==0.1.14
-
+ragas==0.2.2
+rouge_score
