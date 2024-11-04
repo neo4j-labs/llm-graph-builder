@@ -230,20 +230,17 @@ def get_chunktext_results(uri, username, password, database, document_name):
    """Retrieves chunk text, position, and page number from graph data."""
    try:
        logging.info("Starting chunk text query process")
-       
        driver = GraphDatabase.driver(uri, auth=(username, password))
        with driver.session(database=database) as session:
            records = session.run(CHUNK_TEXT_QUERY, file_name=document_name)
-           result = {
-               "Chunk Text": [],
-               "Chunk Position": [],
-               "Page Number": []
-           }
+           result = []
            for record in records:
-               result["Chunk Text"].append(record["chunk_text"])
-               result["Chunk Position"].append(record["chunk_position"])
-               result["Page Number"].append(record["page_number"])
-           logging.info(f"Query process completed with {len(result['Chunk Text'])} chunks retrieved")
+               result.append({
+                   "text": record["chunk_text"],
+                   "position": record["chunk_position"],
+                   "pagenumber": record["page_number"]
+               })
+           logging.info(f"Query process completed with {len(result)} chunks retrieved")
            return result
    except Exception as e:
        logging.error(f"An error occurred in get_chunktext_results. Error: {str(e)}")
