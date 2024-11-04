@@ -114,13 +114,25 @@ SET c.summary = row.summary,
 
 COMMUNITY_SYSTEM_TEMPLATE = "Given input triples, generate the information summary. No pre-amble."
 
-COMMUNITY_TEMPLATE = """Based on the provided nodes and relationships that belong to the same graph community,
-generate a natural language summary of the provided information and provide concise title having length not more than 4 words:
-{community_info}
+# COMMUNITY_TEMPLATE = """Based on the provided nodes and relationships that belong to the same graph community,
+# generate a natural language summary of the provided information and provide concise title having length not more than 4 words:
+# {community_info}
 
-Summary:
-Title:
-""" 
+# Provide output in dictionary format consisting keys as Title and Summmary.
+# {Title: , Summary: }
+
+# """ 
+
+COMMUNITY_TEMPLATE = """
+Based on the provided nodes and relationships that belong to the same graph community,
+generate a JSON-style dictionary output with the following keys:
+"title": "[A concise title, no more than 4 words]",
+"summary": "[A natural language summary of the information]"
+{community_info}
+Example output:
+"title": "Example Title",
+"summary": "This is an example summary that describes the key information of this community."
+"""
 
 PARENT_COMMUNITY_SYSTEM_TEMPLATE = "Given an input list of community summaries, generate a summary of the information"
 
@@ -286,10 +298,16 @@ def process_community_info(community, chain, is_parent=False):
             combined_text = prepare_string(community)
         summary_response = chain.invoke({'community_info': combined_text})
         logging.info(f" Summary response : {summary_response}")
+        lines = summary_response.splitlines()
+        title = "Untitled Community"
+        summary = ""
+        for line in lines:
+            if line.lower().startswith("title:"):
+                title = line.split(":", 1)[-1].strip()
+            elif line.lower().startswith("summary:"):
+                summary = line.split(":", 1)[-1].strip()     
         logging.info(f"type of response : {type(summary_response)}")
-        title = summary_response.get('title','Untitled Community')
-        logging.info(f"Titleeeeeeeeeeeeeeeeee : {title}")
-        summary =   summary_response.get('summary','')
+        logging.info(f"Title : {title}")
         return {"community": community['communityId'], "title":title, "summary": summary}
     except Exception as e:
         logging.error(f"Failed to process community {community.get('communityId', 'unknown')}: {e}")
