@@ -154,6 +154,7 @@ export interface FileTableProps {
   connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
   onInspect: (id: string) => void;
+  onChunkView: (name: string) => void;
   handleGenerateGraph: () => void;
   onRetry: (id: string) => void;
 }
@@ -379,7 +380,7 @@ export interface commonserverresponse {
   error?: string;
   message?: string | orphanTotalNodes;
   file_name?: string;
-  data?: labelsAndTypes | labelsAndTypes[] | uploadData | orphanNodeProps[] | dupNodes[];
+  data?: labelsAndTypes | labelsAndTypes[] | uploadData | orphanNodeProps[] | dupNodes[] | chunkdata[];
 }
 export interface dupNodeProps {
   id: string;
@@ -397,6 +398,11 @@ export interface selectedDuplicateNodes {
   firstElementId: string;
   similarElementIds: string[];
 }
+export interface chunkdata {
+  text: string;
+  position: number;
+  pagenumber: null | number;
+}
 export interface ScehmaFromText extends Partial<commonserverresponse> {
   data: labelsAndTypes;
 }
@@ -406,6 +412,9 @@ export interface ServerData extends Partial<commonserverresponse> {
 }
 export interface duplicateNodesData extends Partial<commonserverresponse> {
   data: dupNodes[];
+}
+export interface chunksData extends Partial<commonserverresponse> {
+  data: chunkdata[];
 }
 export interface OrphanNodeResponse extends Partial<commonserverresponse> {
   data: orphanNodeProps[];

@@ -70,6 +70,7 @@ const Content: React.FC<ContentProps> = ({
   });
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
+  const [documentName, setDocumentName] = useState<string>('');
   const {
     setUserCredentials,
     userCredentials,
@@ -85,6 +86,8 @@ const Content: React.FC<ContentProps> = ({
   const [retryFile, setRetryFile] = useState<string>('');
   const [retryLoading, setRetryLoading] = useState<boolean>(false);
   const [showRetryPopup, toggleRetryPopup] = useReducer((state) => !state, false);
+  const [showChunkPopup, toggleChunkPopup] = useReducer((state) => !state, false);
+
   const [alertStateForRetry, setAlertStateForRetry] = useState<BannerAlertProps>({
     showAlert: false,
     alertType: 'neutral',
@@ -858,6 +861,10 @@ const Content: React.FC<ContentProps> = ({
           onRetry={(id) => {
             setRetryFile(id);
             toggleRetryPopup();
+          }}
+          onChunkView={(name) => {
+            setDocumentName(name);
+            toggleChunkPopup();
           }}
           ref={childRef}
           handleGenerateGraph={processWaitingFilesOnRefresh}
