@@ -125,23 +125,27 @@ COMMUNITY_SYSTEM_TEMPLATE = "Given input triples, generate the information summa
 
 COMMUNITY_TEMPLATE = """
 Based on the provided nodes and relationships that belong to the same graph community,
-generate a JSON-style dictionary output with the following keys:
-"title": "[A concise title, no more than 4 words]",
-"summary": "[A natural language summary of the information]"
+generate following output in exact format
+title: A concise title, no more than 4 words,
+summary: A natural language summary of the information
 {community_info}
 Example output:
-"title": "Example Title",
-"summary": "This is an example summary that describes the key information of this community."
+title: Example Title,
+summary: This is an example summary that describes the key information of this community.
 """
 
 PARENT_COMMUNITY_SYSTEM_TEMPLATE = "Given an input list of community summaries, generate a summary of the information"
 
 PARENT_COMMUNITY_TEMPLATE = """Based on the provided list of community summaries that belong to the same graph community, 
-generate a natural language summary of the information.Include all the necessary information as much as possible. Also provide concise title having length not more than 4 words :
+generate following output in exact format
+title: A concise title, no more than 4 words,
+summary: A natural language summary of the information. Include all the necessary information as much as possible.
+
 {community_info}
 
-Summary:
-Title:
+Example output:
+title: Example Title,
+summary: This is an example summary that describes the key information of this community.
 """ 
 
 
@@ -302,9 +306,9 @@ def process_community_info(community, chain, is_parent=False):
         title = "Untitled Community"
         summary = ""
         for line in lines:
-            if line.lower().startswith("title:"):
+            if line.lower().startswith("title"):
                 title = line.split(":", 1)[-1].strip()
-            elif line.lower().startswith("summary:"):
+            elif line.lower().startswith("summary"):
                 summary = line.split(":", 1)[-1].strip()     
         logging.info(f"type of response : {type(summary_response)}")
         logging.info(f"Title : {title}")
