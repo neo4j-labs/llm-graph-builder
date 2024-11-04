@@ -11,6 +11,7 @@ import {
   CustomFile,
   OptionType,
   UserCredentials,
+  chunkdata,
   connectionState,
 } from '../types';
 import deleteAPI from '../services/DeleteFiles';
@@ -44,6 +45,8 @@ import retry from '../services/retry';
 import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/toasts';
 import { useMessageContext } from '../context/UserMessages';
 import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
+import { getChunkText } from '../services/getChunkText';
+import ChunkPopUp from './Popups/ChunkPopUp';
 
 const ConnectionModal = lazy(() => import('./Popups/ConnectionModal/ConnectionModal'));
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
@@ -87,6 +90,9 @@ const Content: React.FC<ContentProps> = ({
   const [retryLoading, setRetryLoading] = useState<boolean>(false);
   const [showRetryPopup, toggleRetryPopup] = useReducer((state) => !state, false);
   const [showChunkPopup, toggleChunkPopup] = useReducer((state) => !state, false);
+  const [chunksLoading, toggleChunksLoading] = useReducer((state) => !state, false);
+
+  const [textChunks, setTextChunks] = useState<chunkdata[]>([]);
 
   const [alertStateForRetry, setAlertStateForRetry] = useState<BannerAlertProps>({
     showAlert: false,
@@ -774,6 +780,14 @@ const Content: React.FC<ContentProps> = ({
           view='contentView'
         ></DeletePopUp>
       )}
+      {showChunkPopup && (
+        <ChunkPopUp
+          chunksLoading={chunksLoading}
+          onClose={() => toggleChunkPopup()}
+          showChunkPopup={showChunkPopup}
+          chunks={textChunks}
+        ></ChunkPopUp>
+      )}
       {showEnhancementDialog && (
         <GraphEnhancementDialog
           open={showEnhancementDialog}
@@ -862,9 +876,15 @@ const Content: React.FC<ContentProps> = ({
             setRetryFile(id);
             toggleRetryPopup();
           }}
-          onChunkView={(name) => {
+          onChunkView={async (name) => {
             setDocumentName(name);
-            toggleChunkPopup();
+            if (name != documentName) {
+              toggleChunkPopup();
+              toggleChunksLoading();
+              const response = await getChunkText(userCredentials as UserCredentials, name);
+              setTextChunks(response.data.data);
+              toggleChunksLoading();
+            }
           }}
           ref={childRef}
           handleGenerateGraph={processWaitingFilesOnRefresh}
