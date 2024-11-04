@@ -160,6 +160,11 @@ RETURN
         }
     ] AS entities
 """
+CHUNK_TEXT_QUERY = """
+MATCH (d:Document {fileName: $file_name})<-[:PART_OF]-(c:Chunk)
+RETURN c.text AS chunk_text, c.position AS chunk_position, c.page_number AS page_number
+ORDER BY c.position
+"""
 
 ## CHAT SETUP
 CHAT_MAX_TOKENS = 1000

@@ -3,7 +3,7 @@ from neo4j import time
 from neo4j import GraphDatabase
 import os
 import json
-from src.shared.constants import GRAPH_CHUNK_LIMIT,GRAPH_QUERY
+from src.shared.constants import GRAPH_CHUNK_LIMIT,GRAPH_QUERY,CHUNK_TEXT_QUERY
 # from neo4j.debug import watch
 
 # watch("neo4j")
@@ -226,3 +226,27 @@ def get_graph_results(uri, username, password,database,document_names):
         driver.close()
 
 
+def get_chunktext_results(uri, username, password, database, document_name):
+   """Retrieves chunk text, position, and page number from graph data."""
+   try:
+       logging.info("Starting chunk text query process")
+       
+       driver = GraphDatabase.driver(uri, auth=(username, password))
+       with driver.session(database=database) as session:
+           records = session.run(CHUNK_TEXT_QUERY, file_name=document_name)
+           result = {
+               "Chunk Text": [],
+               "Chunk Position": [],
+               "Page Number": []
+           }
+           for record in records:
+               result["Chunk Text"].append(record["chunk_text"])
+               result["Chunk Position"].append(record["chunk_position"])
+               result["Page Number"].append(record["page_number"])
+           logging.info(f"Query process completed with {len(result['Chunk Text'])} chunks retrieved")
+           return result
+   except Exception as e:
+       logging.error(f"An error occurred in get_chunktext_results. Error: {str(e)}")
+       raise Exception("An error occurred in get_chunktext_results. Please check the logs for more details.") from e
+   finally:
+       driver.close()
