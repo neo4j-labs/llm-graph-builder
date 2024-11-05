@@ -380,7 +380,13 @@ export interface commonserverresponse {
   error?: string;
   message?: string | orphanTotalNodes;
   file_name?: string;
-  data?: labelsAndTypes | labelsAndTypes[] | uploadData | orphanNodeProps[] | dupNodes[] | chunkdata[];
+  data?:
+    | labelsAndTypes
+    | labelsAndTypes[]
+    | uploadData
+    | orphanNodeProps[]
+    | dupNodes[]
+    | { pageitems: chunkdata[]; total_pages: number };
 }
 export interface dupNodeProps {
   id: string;
@@ -414,7 +420,7 @@ export interface duplicateNodesData extends Partial<commonserverresponse> {
   data: dupNodes[];
 }
 export interface chunksData extends Partial<commonserverresponse> {
-  data: chunkdata[];
+  data: { pageitems: chunkdata[]; total_pages: number };
 }
 export interface OrphanNodeResponse extends Partial<commonserverresponse> {
   data: orphanNodeProps[];

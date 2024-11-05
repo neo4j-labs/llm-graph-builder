@@ -1,4 +1,5 @@
-import { Dialog, Typography, Flex } from '@neo4j-ndl/react';
+import { Dialog, Typography, Flex, IconButton } from '@neo4j-ndl/react';
+import { ArrowLeftIconOutline, ArrowRightIconOutline } from '@neo4j-ndl/react/icons';
 import { chunkdata } from '../../../types';
 import Loader from '../../../utils/Loader';
 import { useMemo } from 'react';
@@ -8,11 +9,19 @@ const ChunkPopUp = ({
   chunks,
   onClose,
   chunksLoading,
+  incrementPage,
+  decrementPage,
+  currentPage,
+  totalPageCount,
 }: {
   showChunkPopup: boolean;
   chunks: chunkdata[];
   onClose: () => void;
   chunksLoading: boolean;
+  incrementPage: () => void;
+  decrementPage: () => void;
+  currentPage: number | null;
+  totalPageCount: number | null;
 }) => {
   const sortedChunksData = useMemo(() => {
     return chunks.sort((a, b) => a.position - b.position);
@@ -45,6 +54,18 @@ const ChunkPopUp = ({
           </ol>
         )}
       </Dialog.Content>
+      {totalPageCount != null && totalPageCount > 1 && (
+        <Dialog.Actions className='flex !justify-center items-center'>
+          <Flex flexDirection='row'>
+            <IconButton disabled={currentPage === 1} onClick={decrementPage}>
+              <ArrowLeftIconOutline />
+            </IconButton>
+            <IconButton disabled={currentPage === totalPageCount} onClick={incrementPage}>
+              <ArrowRightIconOutline />
+            </IconButton>
+          </Flex>
+        </Dialog.Actions>
+      )}
     </Dialog>
   );
 };

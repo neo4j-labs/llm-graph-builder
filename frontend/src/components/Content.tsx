@@ -91,7 +91,8 @@ const Content: React.FC<ContentProps> = ({
   const [showRetryPopup, toggleRetryPopup] = useReducer((state) => !state, false);
   const [showChunkPopup, toggleChunkPopup] = useReducer((state) => !state, false);
   const [chunksLoading, toggleChunksLoading] = useReducer((state) => !state, false);
-
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const [totalPageCount, setTotalPageCount] = useState<number | null>(null);
   const [textChunks, setTextChunks] = useState<chunkdata[]>([]);
 
   const [alertStateForRetry, setAlertStateForRetry] = useState<BannerAlertProps>({
@@ -131,7 +132,12 @@ const Content: React.FC<ContentProps> = ({
     }
   );
   const childRef = useRef<ChildRef>(null);
-
+  const incrementPage = () => {
+    setCurrentPage((prev) => prev + 1);
+  };
+  const decrementPage = () => {
+    setCurrentPage((prev) => prev - 1);
+  };
   useEffect(() => {
     if (!init && !searchParams.has('connectURL')) {
       let session = localStorage.getItem('neo4j.connection');
@@ -158,7 +164,13 @@ const Content: React.FC<ContentProps> = ({
       setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
     }
   }, []);
-
+  useEffect(() => {
+    if (currentPage >=1) {
+      (async () => {
+        await getChunks(documentName, currentPage);
+      })();
+    }
+  }, [currentPage, documentName]);
   useEffect(() => {
     setFilesData((prevfiles) => {
       return prevfiles.map((curfile) => {
@@ -260,7 +272,15 @@ const Content: React.FC<ContentProps> = ({
       setModel(selectedOption?.value);
     }
   };
-
+  const getChunks = async (name: string, pageNo: number) => {
+    toggleChunksLoading();
+    const response = await getChunkText(userCredentials as UserCredentials, name, pageNo);
+    setTextChunks(response.data.data.pageitems);
+    if (!totalPageCount) {
+      setTotalPageCount(response.data.data.total_pages);
+    }
+    toggleChunksLoading();
+  };
   const extractData = async (uid: string, isselectedRows = false, filesTobeProcess: CustomFile[]) => {
     if (!isselectedRows) {
       const fileItem = filesData.find((f) => f.id == uid);
@@ -506,7 +526,7 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
-  function processWaitingFilesOnRefresh() {
+  const processWaitingFilesOnRefresh = () => {
     let data = [];
     const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
 
@@ -526,7 +546,7 @@ const Content: React.FC<ContentProps> = ({
         .filter((f) => f.status === 'New' || f.status == 'Reprocess');
       addFilesToQueue(selectedNewFiles as CustomFile[]);
     }
-  }
+  };
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
@@ -786,6 +806,10 @@ const Content: React.FC<ContentProps> = ({
           onClose={() => toggleChunkPopup()}
           showChunkPopup={showChunkPopup}
           chunks={textChunks}
+          incrementPage={incrementPage}
+          decrementPage={decrementPage}
+          currentPage={currentPage}
+          totalPageCount={totalPageCount}
         ></ChunkPopUp>
       )}
       {showEnhancementDialog && (
@@ -880,10 +904,11 @@ const Content: React.FC<ContentProps> = ({
             setDocumentName(name);
             if (name != documentName) {
               toggleChunkPopup();
-              toggleChunksLoading();
-              const response = await getChunkText(userCredentials as UserCredentials, name);
-              setTextChunks(response.data.data);
-              toggleChunksLoading();
+              if (totalPageCount) {
+                setTotalPageCount(null);
+              }
+              setCurrentPage(1)
+              // await getChunks(name, 1);
             }
           }}
           ref={childRef}
