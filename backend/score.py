@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, Form, Request
+from fastapi import FastAPI, File, UploadFile, Form, Request, Query
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
@@ -824,7 +824,8 @@ async def fetch_chunktext(
    database: str = Form(),
    userName: str = Form(),
    password: str = Form(),
-   document_name: str = Form()
+   document_name: str = Form(),
+   page_no: int = Query(1, alias="page_no") 
 ):
    try:
        payload_json_obj = {
@@ -833,6 +834,7 @@ async def fetch_chunktext(
            'userName': userName,
            'database': database,
            'document_name': document_name,
+           'page_no': page_no,
            'logging_time': formatted_time(datetime.now(timezone.utc))
        }
        logger.log_struct(payload_json_obj, "INFO")
@@ -843,7 +845,8 @@ async def fetch_chunktext(
            username=userName,
            password=password,
            database=database,
-           document_name=document_name
+           document_name=document_name,
+           page_no=page_no
        )
        end = time.time()
        elapsed_time = end - start
@@ -851,6 +854,7 @@ async def fetch_chunktext(
            'api_name': 'fetch_chunktext',
            'db_url': uri,
            'document_name': document_name,
+           'page_no': page_no,
            'logging_time': formatted_time(datetime.now(timezone.utc)),
            'elapsed_api_time': f'{elapsed_time:.2f}'
        }
