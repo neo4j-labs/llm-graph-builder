@@ -825,9 +825,10 @@ async def fetch_chunktext(
    userName: str = Form(),
    password: str = Form(),
    document_name: str = Form(),
-   page_no: int = Query(1, alias="page_no") 
+   page_no: int = Form(1)
 ):
    try:
+       print("in score :",page_no )
        payload_json_obj = {
            'api_name': 'fetch_chunktext',
            'db_url': uri,
