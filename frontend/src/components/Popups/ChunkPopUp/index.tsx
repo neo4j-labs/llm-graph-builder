@@ -33,7 +33,7 @@ const ChunkPopUp = ({
                     <Typography variant='subheading-medium'>{c.position}</Typography>
                   </Flex>
                   {c.pagenumber ? (
-                    <Flex>
+                    <Flex flexDirection='row'>
                       <Typography variant='label'>Page No :</Typography>{' '}
                       <Typography variant='subheading-small'>{c.pagenumber}</Typography>
                     </Flex>
