@@ -830,7 +830,7 @@ async def calculate_additional_metrics(question: str = Form(),
        context_list = [str(item).strip() for item in json.loads(context)] if context else []
        answer_list = [str(item).strip() for item in json.loads(answer)] if answer else []
        mode_list = [str(item).strip() for item in json.loads(mode)] if mode else []
-       result = await get_additional_metrics(question, answer_list, context_list, reference, model)
+       result = await get_additional_metrics(question, context_list, answer_list, reference, model)
        if result is None or "error" in result:
            return create_api_response(
                'Failed',

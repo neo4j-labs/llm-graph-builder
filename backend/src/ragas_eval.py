@@ -73,7 +73,6 @@ async def get_additional_metrics(question: str,contexts: list, answers: list,  r
    ragas_llm = LangchainLLMWrapper(llm)   
    embeddings = EMBEDDING_FUNCTION
    embedding_model = LangchainEmbeddingsWrapper(embeddings=embeddings)
-   #bleu_scorer = BleuScore()
    rouge_scorer = RougeScore()
    factual_scorer = FactualCorrectness()
    semantic_scorer = SemanticSimilarity()
@@ -84,18 +83,19 @@ async def get_additional_metrics(question: str,contexts: list, answers: list,  r
    metrics = []
    for response, context in zip(answers, contexts):
        sample = SingleTurnSample(response=response, reference=reference)
-       #bleu_score = await bleu_scorer.single_turn_ascore(sample)
        rouge_score = await rouge_scorer.single_turn_ascore(sample)
-       fact_score = await factual_scorer.single_turn_ascore(sample)
        semantic_score = await semantic_scorer.single_turn_ascore(sample)
-       entity_sample = SingleTurnSample(reference=reference, retrieved_contexts=[context])
-       entity_recall_score = await entity_recall_scorer.single_turn_ascore(entity_sample)
+       if ("gemini" in model_name):
+           fact_score = "Not Available"
+           entity_recall_score = "Not Available"
+       else:
+           fact_score = await factual_scorer.single_turn_ascore(sample)
+           entity_sample = SingleTurnSample(reference=reference, retrieved_contexts=[context])
+           entity_recall_score = await entity_recall_scorer.single_turn_ascore(entity_sample)
        metrics.append({
-           #"bleu_score": bleu_score,
            "rouge_score": rouge_score,
            "fact_score": fact_score,
            "semantic_score": semantic_score,
            "context_entity_recall_score": entity_recall_score
        })
-   print("Metrics  :",metrics) 
    return metrics  
