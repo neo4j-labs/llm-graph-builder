@@ -230,7 +230,6 @@ def get_chunktext_results(uri, username, password, database, document_name, page
    """Retrieves chunk text, position, and page number from graph data with pagination."""
    try:
        logging.info("Starting chunk text query process")
-       print("PAGEEEE NO ",page_no)
        offset = 10
        skip = (page_no - 1) * offset
        limit = offset
