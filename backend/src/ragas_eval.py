@@ -64,38 +64,41 @@ def get_ragas_metrics(question: str, context: list, answer: list, model: str):
        return {"error": str(e)}
 
 
-async def get_additional_metrics(question: str,contexts: list, answers: list,  reference: str, model_name):
+async def get_additional_metrics(question: str, contexts: list, answers: list, reference: str, model_name: str):
    """Calculates multiple metrics for given question, answers, contexts, and reference."""
-   if ("diffbot" in model_name) or ("ollama" in model_name):
-       raise ValueError(f"Unsupported model for evaluation: {model_name}")
-   else:
+   try:
+       if ("diffbot" in model_name) or ("ollama" in model_name):
+           raise ValueError(f"Unsupported model for evaluation: {model_name}")
        llm, model_name = get_llm(model=model_name)
-   ragas_llm = LangchainLLMWrapper(llm)   
-   embeddings = EMBEDDING_FUNCTION
-   embedding_model = LangchainEmbeddingsWrapper(embeddings=embeddings)
-   rouge_scorer = RougeScore()
-   factual_scorer = FactualCorrectness()
-   semantic_scorer = SemanticSimilarity()
-   entity_recall_scorer = ContextEntityRecall()
-   factual_scorer.llm = ragas_llm
-   entity_recall_scorer.llm = ragas_llm
-   semantic_scorer.embeddings = embedding_model
-   metrics = []
-   for response, context in zip(answers, contexts):
-       sample = SingleTurnSample(response=response, reference=reference)
-       rouge_score = await rouge_scorer.single_turn_ascore(sample)
-       semantic_score = await semantic_scorer.single_turn_ascore(sample)
-       if ("gemini" in model_name):
-           fact_score = "Not Available"
-           entity_recall_score = "Not Available"
-       else:
-           fact_score = await factual_scorer.single_turn_ascore(sample)
-           entity_sample = SingleTurnSample(reference=reference, retrieved_contexts=[context])
-           entity_recall_score = await entity_recall_scorer.single_turn_ascore(entity_sample)
-       metrics.append({
-           "rouge_score": rouge_score,
-           "fact_score": fact_score,
-           "semantic_score": semantic_score,
-           "context_entity_recall_score": entity_recall_score
-       })
-   return metrics  
+       ragas_llm = LangchainLLMWrapper(llm)
+       embeddings = EMBEDDING_FUNCTION
+       embedding_model = LangchainEmbeddingsWrapper(embeddings=embeddings)
+       rouge_scorer = RougeScore()
+       factual_scorer = FactualCorrectness()
+       semantic_scorer = SemanticSimilarity()
+       entity_recall_scorer = ContextEntityRecall()
+       factual_scorer.llm = ragas_llm
+       entity_recall_scorer.llm = ragas_llm
+       semantic_scorer.embeddings = embedding_model
+       metrics = []
+       for response, context in zip(answers, contexts):
+           sample = SingleTurnSample(response=response, reference=reference)
+           rouge_score = await rouge_scorer.single_turn_ascore(sample)
+           semantic_score = await semantic_scorer.single_turn_ascore(sample)
+           if "gemini" in model_name:
+               fact_score = "Not Available"
+               entity_recall_score = "Not Available"
+           else:
+               fact_score = await factual_scorer.single_turn_ascore(sample)
+               entity_sample = SingleTurnSample(reference=reference, retrieved_contexts=[context])
+               entity_recall_score = await entity_recall_scorer.single_turn_ascore(entity_sample)
+           metrics.append({
+               "rouge_score": rouge_score,
+               "fact_score": fact_score,
+               "semantic_score": semantic_score,
+               "context_entity_recall_score": entity_recall_score
+           })
+       return metrics
+   except Exception as e:
+       logging.exception("Error in get_additional_metrics")
+       return {"error": str(e)}
