@@ -114,14 +114,6 @@ SET c.summary = row.summary,
 
 COMMUNITY_SYSTEM_TEMPLATE = "Given input triples, generate the information summary. No pre-amble."
 
-# COMMUNITY_TEMPLATE = """Based on the provided nodes and relationships that belong to the same graph community,
-# generate a natural language summary of the provided information and provide concise title having length not more than 4 words:
-# {community_info}
-
-# Provide output in dictionary format consisting keys as Title and Summmary.
-# {Title: , Summary: }
-
-# """ 
 
 COMMUNITY_TEMPLATE = """
 Based on the provided nodes and relationships that belong to the same graph community,
@@ -295,13 +287,11 @@ def prepare_string(community_data):
 
 def process_community_info(community, chain, is_parent=False):
     try:
-        logging.info("Inside process community info")
         if is_parent:
             combined_text = " ".join(f"Summary {i+1}: {summary}" for i, summary in enumerate(community.get("texts", [])))
         else:
             combined_text = prepare_string(community)
         summary_response = chain.invoke({'community_info': combined_text})
-        logging.info(f" Summary response : {summary_response}")
         lines = summary_response.splitlines()
         title = "Untitled Community"
         summary = ""
@@ -310,8 +300,7 @@ def process_community_info(community, chain, is_parent=False):
                 title = line.split(":", 1)[-1].strip()
             elif line.lower().startswith("summary"):
                 summary = line.split(":", 1)[-1].strip()     
-        logging.info(f"type of response : {type(summary_response)}")
-        logging.info(f"Title : {title}")
+        logging.info(f"Community Title : {title}")
         return {"community": community['communityId'], "title":title, "summary": summary}
     except Exception as e:
         logging.error(f"Failed to process community {community.get('communityId', 'unknown')}: {e}")
@@ -503,7 +492,6 @@ def clear_communities(gds):
 
 def create_communities(uri, username, password, database,model=COMMUNITY_CREATION_DEFAULT_MODEL):
     try:
-        logging.info("INSIDE COMMUNITY CREATION")
         gds = get_gds_driver(uri, username, password, database)
         clear_communities(gds)
 
