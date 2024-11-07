@@ -190,22 +190,22 @@ async def extract_knowledge_graph_from_file(
         if source_type == 'local file':
             merged_file_path = os.path.join(MERGED_DIR,file_name)
             logging.info(f'File path:{merged_file_path}')
-            result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, retry_condition)
+            uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 's3 bucket' and source_url:
-            result = await extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition)
+            uri_latency, result = await extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition)
         
         elif source_type == 'web-url':
-            result = await extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
+            uri_latency, result = await extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 'youtube' and source_url:
-            result = await extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
+            uri_latency, result = await extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 'Wikipedia' and wiki_query:
-            result = await extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, retry_condition)
+            uri_latency, result = await extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, retry_condition)
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
-            result = await extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, retry_condition)
+            uri_latency, result = await extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, retry_condition)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
         extract_api_time = time.time() - start_time
@@ -218,12 +218,13 @@ async def extract_knowledge_graph_from_file(
             result['logging_time'] = formatted_time(datetime.now(timezone.utc))
             result['elapsed_api_time'] = f'{extract_api_time:.2f}'
         logger.log_struct(result, "INFO")
+        result.update(uri_latency)
         logging.info(f"extraction completed in {extract_api_time:.2f} seconds for file name {file_name}")
         return create_api_response('Success', data=result, file_source= source_type)
     except Exception as e:
         message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content "
         error_message = str(e)
-        graphDb_data_Access.update_exception_db(file_name,error_message)
+        graphDb_data_Access.update_exception_db(file_name,error_message, retry_condition)
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
         if source_type == 'local file':
             if gcs_file_cache == 'True':
@@ -748,7 +749,7 @@ async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), da
         gc.collect()
         
 @app.post("/drop_create_vector_index")
-async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), database=Form(), isVectorIndexExist=Form()):
+async def drop_create_vector_index(uri=Form(), userName=Form(), password=Form(), database=Form(), isVectorIndexExist=Form()):
     try:
         payload_json_obj = {'api_name':'drop_create_vector_index', 'db_url':uri, 'userName':userName, 'database':database,
                             'isVectorIndexExist':isVectorIndexExist, 'logging_time': formatted_time(datetime.now(timezone.utc))}

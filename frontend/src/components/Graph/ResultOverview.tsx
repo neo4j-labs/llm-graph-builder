@@ -14,7 +14,6 @@ interface OverViewProps {
   newScheme: Scheme;
   searchQuery: string;
   setSearchQuery: Dispatch<SetStateAction<string>>;
-  viewPoint: string;
   setNodes: Dispatch<SetStateAction<ExtendedNode[]>>;
   setRelationships: Dispatch<SetStateAction<ExtendedRelationship[]>>;
 }
@@ -24,7 +23,6 @@ const ResultOverview: React.FunctionComponent<OverViewProps> = ({
   newScheme,
   searchQuery,
   setSearchQuery,
-  viewPoint,
   setNodes,
   setRelationships,
 }) => {
@@ -92,12 +90,6 @@ const ResultOverview: React.FunctionComponent<OverViewProps> = ({
       return {
         ...node,
         selected: isActive,
-        size:
-          isActive && viewPoint === graphLabels.showGraphView
-            ? 100
-            : isActive && viewPoint !== graphLabels.showGraphView
-            ? 50
-            : graphLabels.nodeSize,
       };
     });
     // deactivating any active relationships

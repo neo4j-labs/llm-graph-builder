@@ -20,9 +20,10 @@ export default function SelectedJobList({
   );
   return (
     <Flex justifyContent='space-between' flexDirection='column' gap='4'>
-      {ongoingPostProcessingTasks.map((task) => {
+      {ongoingPostProcessingTasks.map((task, idx) => {
         return (
           <Checkbox
+            key={idx}
             label={
               <Typography variant='label'>
                 {task

@@ -8,24 +8,24 @@ import { BannerType } from '@neo4j-ndl/react';
 import Queue from './utils/Queue';
 
 export interface CustomFileBase extends Partial<globalThis.File> {
-  processing: number | string;
+  processingTotalTime: number | string;
   status: string;
-  NodesCount: number;
-  relationshipCount: number;
+  nodesCount: number;
+  relationshipsCount: number;
   model: string;
   fileSource: string;
-  source_url?: string;
-  wiki_query?: string;
+  sourceUrl?: string;
+  wikiQuery?: string;
   gcsBucket?: string;
   gcsBucketFolder?: string;
   errorMessage?: string;
-  uploadprogess?: number;
+  uploadProgress?: number;
   processingStatus?: boolean;
-  google_project_id?: string;
+  googleProjectId?: string;
   language?: string;
   processingProgress?: number;
-  access_token?: string;
-  checked?: boolean;
+  accessToken?: string;
+  isChecked?: boolean;
   retryOptionStatus: boolean;
   retryOption: string;
 }
@@ -45,12 +45,12 @@ export type UserCredentials = {
   database: string;
 } & { [key: string]: any };
 
-export interface SourceNode extends Omit<CustomFileBase, 'relationshipCount'> {
+export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount'> {
   fileName: string;
   fileSize: number;
   fileType: string;
   nodeCount?: number;
-  processingTime?: string;
+  processingTime: string;
   relationshipCount?: number;
   url?: string;
   awsAccessKeyId?: string;
@@ -61,7 +61,7 @@ export interface SourceNode extends Omit<CustomFileBase, 'relationshipCount'> {
   retry_condition?: string;
 }
 
-export type ExtractParams = Pick<CustomFile, 'wiki_query' | 'model' | 'source_url' | 'language' | 'access_token'> & {
+export type ExtractParams = Pick<CustomFile, 'wikiQuery' | 'model' | 'sourceUrl' | 'language' | 'accessToken'> & {
   file?: File;
   aws_access_key_id?: string | null;
   aws_secret_access_key?: string | null;
