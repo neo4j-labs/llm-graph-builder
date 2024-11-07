@@ -9,12 +9,14 @@ import {
   Banner,
   useMediaQuery,
   Button,
+  Checkbox,
+  Textarea,
 } from '@neo4j-ndl/react';
 import { DocumentDuplicateIconOutline, ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
 import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
 import { ExtendedNode, UserCredentials, chatInfoMessage } from '../../types';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import GraphViewButton from '../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
 import { useCredentials } from '../../context/UserCredentials';
@@ -31,6 +33,7 @@ import MetricsTab from './MetricsTab';
 import { Stack } from '@mui/material';
 import { capitalizeWithUnderscore, getNodes } from '../../utils/Utils';
 import MultiModeMetrics from './MultiModeMetrics';
+import getAdditionalMetrics from '../../services/AdditionalMetrics';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
   sources,
@@ -86,6 +89,8 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const [showMetricsTable, setShowMetricsTable] = useState<boolean>(Boolean(metricDetails));
   const [showMultiModeMetrics, setShowMultiModeMetrics] = useState<boolean>(Boolean(multiModelMetrics.length));
   const [multiModeError, setMultiModeError] = useState<string>('');
+  const [enableReference, toggleReferenceVisibility] = useReducer((state: boolean) => !state, false);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const actions: CypherCodeBlockProps['actions'] = useMemo(
     () => [
@@ -183,6 +188,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     setActiveTab(tabId);
   };
   const loadMetrics = async () => {
+    // @ts-ignore
+    const referenceText = textAreaRef?.current?.value ?? '';
+    console.log({ referenceText });
     if (activeChatmodes) {
       if (Object.keys(activeChatmodes).length <= 1) {
         setShowMetricsTable(true);
@@ -204,6 +212,21 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             toggleMetricsLoading();
             console.log('Error in getting chat metrics', error);
             saveMetrics({ faithfulness: 0, answer_relevancy: 0, error: error.message });
+          }
+        }
+        if (referenceText.trim() != '') {
+          try {
+            const response = await getAdditionalMetrics(
+              metricquestion,
+              metriccontexts,
+              metricanswer,
+              referenceText,
+              metricmodel,
+              defaultMode
+            );
+            console.log(response.data);
+          } catch (error) {
+            console.log(error);
           }
         }
       } else {
@@ -241,6 +264,21 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           console.log('Error in getting chat metrics', error);
           if (error instanceof Error) {
             setMultiModeError(error.message);
+          }
+        }
+        if (referenceText.trim() != '') {
+          try {
+            const response = await getAdditionalMetrics(
+              metricquestion,
+              metriccontexts,
+              metricanswer,
+              referenceText,
+              metricmodel,
+              modesarray[0]
+            );
+            console.log(response.data);
+          } catch (error) {
+            console.log(error);
           }
         }
       }
@@ -355,6 +393,16 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             )}
             {showMetricsTable && activeChatmodes != null && Object.keys(activeChatmodes).length <= 1 && (
               <MetricsTab metricsLoading={metricsLoading} error={metricError} metricDetails={metricDetails} />
+            )}
+            {!showMetricsTable && (
+              <Checkbox
+                label='Get More Metrics by providing reference'
+                checked={enableReference}
+                onChange={toggleReferenceVisibility}
+              />
+            )}
+            {enableReference && !showMetricsTable && (
+              <Textarea ref={textAreaRef} fluid={true} size='large' isOptional={true} label='Reference'></Textarea>
             )}
             {!metricDetails && activeChatmodes != undefined && Object.keys(activeChatmodes).length <= 1 && (
               <Button
