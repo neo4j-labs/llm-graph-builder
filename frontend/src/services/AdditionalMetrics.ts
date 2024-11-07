@@ -2,20 +2,20 @@ import api from '../API/Index';
 
 const getAdditionalMetrics = async (
   question: string,
-  context: string,
-  answer: string,
+  context: string[],
+  answer: string[],
   reference: string,
   model: string,
-  mode: string
+  mode: string[]
 ) => {
   try {
     const formData = new FormData();
     formData.append('question', question ?? '');
-    formData.append('context', context ?? '');
-    formData.append('answer', answer ?? '');
+    formData.append('context', JSON.stringify(context) ?? '');
+    formData.append('answer', JSON.stringify(context)??answer ?? '');
     formData.append('reference', reference ?? '');
     formData.append('model', model ?? '');
-    formData.append('mode', mode ?? '');
+    formData.append('mode', JSON.stringify(context)??mode ?? '');
 
     const response = await api.post(`/additional_metrics`, formData, {
       headers: {

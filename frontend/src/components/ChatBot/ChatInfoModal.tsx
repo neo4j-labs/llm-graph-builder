@@ -218,11 +218,11 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           try {
             const response = await getAdditionalMetrics(
               metricquestion,
-              metriccontexts,
-              metricanswer,
+              [metriccontexts],
+              [metricanswer],
               referenceText,
               metricmodel,
-              defaultMode
+              [defaultMode]
             );
             console.log(response.data);
           } catch (error) {
@@ -270,11 +270,11 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           try {
             const response = await getAdditionalMetrics(
               metricquestion,
-              metriccontexts,
-              metricanswer,
+              [metriccontexts],
+              [metricanswer],
               referenceText,
               metricmodel,
-              modesarray[0]
+              modesarray
             );
             console.log(response.data);
           } catch (error) {
