@@ -8,21 +8,21 @@ export const APP_SOURCES =
     ? (process.env.VITE_REACT_APP_SOURCES?.split(',') as string[])
     : ['gcs', 's3', 'local', 'wiki', 'youtube', 'web'];
 
-export const llms = [
-  'diffbot',
-  'openai_gpt_3.5',
-  'openai_gpt_4o',
-  'openai_gpt_4o_mini',
-  'gemini_1.5_pro',
-  'gemini_1.5_flash',
-  'azure_ai_gpt_35',
-  'azure_ai_gpt_4o',
-  'ollama_llama3',
-  'groq_llama3_70b',
-  'anthropic_claude_3_5_sonnet',
-  'fireworks_llama_v3p2_90b',
-  'bedrock_claude_3_5_sonnet',
-];
+    export const llms = [
+      'diffbot',
+      'openai_gpt_3.5',
+      'openai_gpt_4o',
+      'openai_gpt_4o_mini',
+      'gemini_1.5_pro',
+      'gemini_1.5_flash',
+      'azure_ai_gpt_35',
+      'azure_ai_gpt_4o',
+      'ollama_llama3',
+      'groq_llama3_70b',
+      'anthropic_claude_3_5_sonnet',
+      'fireworks_llama_v3p2_90b',
+      'bedrock_claude_3_5_sonnet',
+    ];
 
 export const defaultLLM = llms?.includes('openai_gpt_4o')
   ? 'openai_gpt_4o'
@@ -288,6 +288,7 @@ export const graphLabels = {
   docChunk: 'Document & Chunk',
   community: 'Communities',
   noNodesRels: 'No Nodes and No relationships',
+  neighborView:'neighborView'
 };
 
 export const RESULT_STEP_SIZE = 25;

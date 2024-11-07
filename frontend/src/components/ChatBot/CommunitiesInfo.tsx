@@ -13,18 +13,17 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
-  const [loadingGraphView, setLoadingGraphView] = useState(false);
+  const [graphLoading, setGraphLoading] = useState<boolean>(false);
 
   const handleCommunityClick = (elementId: string, viewMode: string) => {
+    setOpenGraphView(true);
+    setViewPoint('chatInfoView');
     handleGraphNodeClick(
       userCredentials as UserCredentials,
       elementId,
       viewMode,
       setNeoNodes,
       setNeoRels,
-      setOpenGraphView,
-      setViewPoint,
-      setLoadingGraphView
     );
   };
 
@@ -42,7 +41,6 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
                 <div>
                   <Flex flexDirection='row' gap='2'>
                     <TextLink
-                      className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                       label={`ID : ${community.id}`}
                       onClick={() => handleCommunityClick(community.element_id, 'chatInfoView')}
                     >{`ID : ${community.id}`}</TextLink>
