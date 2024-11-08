@@ -1,6 +1,5 @@
 import { getNeighbors } from '../../services/GraphQuery';
 import { NeoNode, NeoRelationship, UserCredentials } from '../../types';
-import { graphLabels } from '../../utils/Constants';
 
 export const handleGraphNodeClick = async (
   userCredentials: UserCredentials,
@@ -8,12 +7,18 @@ export const handleGraphNodeClick = async (
   viewMode: string,
   setNeoNodes: React.Dispatch<React.SetStateAction<NeoNode[]>>,
   setNeoRels: React.Dispatch<React.SetStateAction<NeoRelationship[]>>,
+  setOpenGraphView: React.Dispatch<React.SetStateAction<boolean>>,
+  setViewPoint: React.Dispatch<React.SetStateAction<string>>,
+  setLoadingGraphView?: React.Dispatch<React.SetStateAction<boolean>>
 ) => {
+  if (setLoadingGraphView) {
+    setLoadingGraphView(true);
+  }
   try {
     const result = await getNeighbors(userCredentials, elementId);
     if (result && result.data.data.nodes.length > 0) {
       let { nodes } = result.data.data;
-      if (viewMode === graphLabels.chatInfoView) {
+      if (viewMode === 'Chunk') {
         nodes = nodes.filter((node: NeoNode) => node.labels.length === 1 && node.properties.id !== null);
       }
       const nodeIds = new Set(nodes.map((node: NeoNode) => node.element_id));
@@ -22,8 +27,14 @@ export const handleGraphNodeClick = async (
       );
       setNeoNodes(nodes);
       setNeoRels(relationships);
+      setOpenGraphView(true);
+      setViewPoint('chatInfoView');
     }
   } catch (error: any) {
     console.error('Error fetching neighbors:', error);
+  } finally {
+    if (setLoadingGraphView) {
+      setLoadingGraphView(false);
+    }
   }
 };
