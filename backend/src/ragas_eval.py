@@ -91,14 +91,14 @@ async def get_additional_metrics(question: str, contexts: list, answers: list, r
                fact_score = "Not Available"
                entity_recall_score = "Not Available"
            else:
-               fact_score = await factual_scorer.single_turn_ascore(sample)
-               fact_score = round(fact_score, 4)
+            #    fact_score = await factual_scorer.single_turn_ascore(sample)
+            #    fact_score = round(fact_score, 4)
                entity_sample = SingleTurnSample(reference=reference, retrieved_contexts=[context])
                entity_recall_score = await entity_recall_scorer.single_turn_ascore(entity_sample)
                entity_recall_score = round(entity_recall_score, 4)
            metrics.append({
                "rouge_score": rouge_score,
-               "fact_score": fact_score,
+               "fact_score": 0,
                "semantic_score": semantic_score,
                "context_entity_recall_score": entity_recall_score
            })

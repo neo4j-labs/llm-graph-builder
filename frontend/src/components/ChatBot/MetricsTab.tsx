@@ -17,8 +17,7 @@ function MetricsTab({
   metricsLoading: boolean;
   metricDetails:
     | {
-        faithfulness: number;
-        answer_relevancy: number;
+        [key:string]: number;
       }
     | undefined;
   error: string;

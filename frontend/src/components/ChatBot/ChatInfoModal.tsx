@@ -190,7 +190,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const loadMetrics = async () => {
     // @ts-ignore
     const referenceText = textAreaRef?.current?.value ?? '';
-    console.log({ referenceText });
     const metricsPromise = [];
     if (activeChatmodes) {
       if (Object.keys(activeChatmodes).length <= 1) {
@@ -209,25 +208,31 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             );
           }
           const metricsResponse = await Promise.allSettled(metricsPromise);
+          const successresponse=[]
           for (let index = 0; index < metricsResponse.length; index++) {
             const metricPromise = metricsResponse[index];
             if (metricPromise.status === 'fulfilled') {
-              console.log(metricPromise.value);
+              if(metricPromise.value.data.status==="Success"){
+                successresponse.push(metricPromise.value.data.data)
+              }
             }
           }
           toggleMetricsLoading();
-
-          // if (response.data.status === 'Success') {
-          //   const data = response;
-          //   saveMetrics(data.data.data[defaultMode]);
-          // } else {
-          //   throw new Error(response.data.error);
-          // }
+        
+          const mergedState=successresponse.reduce((acc,cur)=>{
+            if (acc[defaultMode]) {
+              acc[defaultMode]={...acc[defaultMode],...cur[defaultMode]}
+            }else{
+              acc[defaultMode]=cur[defaultMode]
+            }
+            return acc
+          },{})
+         saveMetrics(mergedState[defaultMode])
         } catch (error) {
           if (error instanceof Error) {
             toggleMetricsLoading();
             console.log('Error in getting chat metrics', error);
-            saveMetrics({ faithfulness: 0, answer_relevancy: 0, error: error.message });
+            saveMetrics({ 'faithfulness': 0, 'answer_relevancy': 0, 'error': error.message });
           }
         }
       } else {
@@ -258,7 +263,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               )
             );
           }
-          toggleMetricsLoading();
           const metricsResponse = await Promise.allSettled(metricsPromise);
           toggleMetricsLoading();
           for (let index = 0; index < metricsResponse.length; index++) {
