@@ -12,10 +12,10 @@ const getAdditionalMetrics = async (
     const formData = new FormData();
     formData.append('question', question ?? '');
     formData.append('context', JSON.stringify(context) ?? '');
-    formData.append('answer', JSON.stringify(context)??answer ?? '');
+    formData.append('answer', JSON.stringify(answer)?? '');
     formData.append('reference', reference ?? '');
     formData.append('model', model ?? '');
-    formData.append('mode', JSON.stringify(context)??mode ?? '');
+    formData.append('mode', JSON.stringify(mode) ?? '');
 
     const response = await api.post(`/additional_metrics`, formData, {
       headers: {
