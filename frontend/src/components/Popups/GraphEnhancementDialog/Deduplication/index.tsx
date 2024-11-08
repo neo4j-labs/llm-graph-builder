@@ -30,7 +30,6 @@ import mergeDuplicateNodes from '../../../../services/MergeDuplicateEntities';
 import { tokens } from '@neo4j-ndl/base';
 import GraphViewModal from '../../../Graph/GraphViewModal';
 import { handleGraphNodeClick } from '../../../ChatBot/chatInfo';
-import { useGraphContext } from '../../../../context/GraphLoading';
 
 export default function DeduplicationTab() {
   const { breakpoints } = tokens;
@@ -47,7 +46,6 @@ export default function DeduplicationTab() {
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
   const [nodesCount, setNodesCount] = useState<number>(0);
-  const { setLoadingGraph } = useGraphContext();
   const fetchDuplicateNodes = useCallback(async () => {
     try {
       setLoading(true);
@@ -118,8 +116,7 @@ export default function DeduplicationTab() {
       setNeoNodes,
       setNeoRels,
       setOpenGraphView,
-      setViewPoint,
-      setLoadingGraph
+      setViewPoint
     );
   };
 

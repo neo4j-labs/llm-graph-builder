@@ -14,6 +14,7 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
+  const [loadingGraphView, setLoadingGraphView] = useState(false);
 
   const groupedEntities = useMemo<{ [key: string]: GroupedEntity }>(() => {
     const items = infoEntities.reduce((acc, entity) => {
@@ -43,14 +44,15 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
   }, [labelCounts]);
 
   const handleEntityClick = (elementId: string, viewMode: string) => {
-    setOpenGraphView(true);
-    setViewPoint('chatInfoView');
     handleGraphNodeClick(
       userCredentials as UserCredentials,
       elementId,
       viewMode,
       setNeoNodes,
       setNeoRels,
+      setOpenGraphView,
+      setViewPoint,
+      setLoadingGraphView
     );
   };
 
@@ -67,7 +69,9 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
             ? graphonly_entities.map((label, index) => (
                 <li
                   key={index}
-                  className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%] overflow-hidden'
+                  className={`flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%] overflow-hidden ${
+                    loadingGraphView ? 'cursor-wait' : 'cursor-pointer'
+                  }`}
                 >
                   <ul className='list-inside'>
                     {Object.keys(label).map((key) => (
@@ -114,6 +118,7 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
                             <span key={idx}>
                               <TextLink
                                 onClick={() => handleEntityClick(textId!, 'chatInfoView')}
+                                className={loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}
                               >
                                 {text}
                               </TextLink>

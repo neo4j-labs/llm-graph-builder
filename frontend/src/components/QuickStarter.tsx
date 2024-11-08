@@ -5,7 +5,6 @@ import { FileContextProvider } from '../context/UsersFiles';
 import UserCredentialsWrapper from '../context/UserCredentials';
 import AlertContextWrapper from '../context/Alert';
 import { MessageContextWrapper } from '../context/UserMessages';
-import { GraphContextWrapper } from '../context/GraphLoading';
 
 const QuickStarter: React.FunctionComponent = () => {
   const [showSettingsModal, setshowSettingsModal] = useState<boolean>(false);
@@ -20,7 +19,6 @@ const QuickStarter: React.FunctionComponent = () => {
     <UserCredentialsWrapper>
       <FileContextProvider>
         <MessageContextWrapper>
-          <GraphContextWrapper>
             <AlertContextWrapper>
               <Header />
               <PageLayout
@@ -29,7 +27,6 @@ const QuickStarter: React.FunctionComponent = () => {
                 closeSettingModal={closeSettingModal}
               />
             </AlertContextWrapper>
-          </GraphContextWrapper>
         </MessageContextWrapper>
       </FileContextProvider>
     </UserCredentialsWrapper>
