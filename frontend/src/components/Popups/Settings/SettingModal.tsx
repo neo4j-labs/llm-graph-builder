@@ -4,10 +4,9 @@ import { OptionType, SettingsModalProps, UserCredentials, schema } from '../../.
 import { useFileContext } from '../../../context/UsersFiles';
 import { getNodeLabelsAndRelTypes } from '../../../services/GetNodeLabelsRelTypes';
 import { useCredentials } from '../../../context/UserCredentials';
-import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
-import schemaExamples from '../../../assets/schemas.json';
+import { MouseEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
-import { buttonCaptions, tooltips } from '../../../utils/Constants';
+import { buttonCaptions, getDefaultSchemaExamples, tooltips } from '../../../utils/Constants';
 import { useAlertContext } from '../../../context/Alert';
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -124,24 +123,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   };
   const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>([]);
   const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
-  const [defaultExamples, setdefaultExamples] = useState<OptionType[]>([]);
+  const defaultExamples = useMemo(() => getDefaultSchemaExamples(), []);
 
   const { showAlert } = useAlertContext();
-
-  useEffect(() => {
-    const parsedData = schemaExamples.reduce((accu: OptionType[], example) => {
-      const examplevalues: OptionType = {
-        label: example.schema,
-        value: JSON.stringify({
-          nodelabels: example.labels,
-          relationshipTypes: example.relationshipTypes,
-        }),
-      };
-      accu.push(examplevalues);
-      return accu;
-    }, []);
-    setdefaultExamples(parsedData);
-  }, []);
 
   useEffect(() => {
     if (userCredentials && open) {

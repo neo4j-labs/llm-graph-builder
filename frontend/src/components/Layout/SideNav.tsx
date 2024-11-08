@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Dialog, SideNavigation, TextLink, Tip, useMediaQuery } from '@neo4j-ndl/react';
 import {
   ArrowRightIconOutline,
@@ -48,26 +48,6 @@ const SideNav: React.FC<SideNavProps> = ({
   const largedesktops = useMediaQuery(`(min-width:1440px )`);
   const { connectionStatus, isReadOnlyUser } = useCredentials();
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
-
-  const date = new Date();
-  useEffect(() => {
-    if (clearHistoryData) {
-      setMessages([
-        {
-          datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
-          id: 2,
-          modes: {
-            'graph+vector+fulltext': {
-              message:
-                ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
-            },
-          },
-          user: 'chatbot',
-          currentMode: 'graph+vector+fulltext',
-        },
-      ]);
-    }
-  }, [clearHistoryData]);
 
   const handleExpandClick = () => {
     setIsChatModalOpen(true);

@@ -191,42 +191,43 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     // @ts-ignore
     const referenceText = textAreaRef?.current?.value ?? '';
     console.log({ referenceText });
+    const metricsPromise = [];
     if (activeChatmodes) {
       if (Object.keys(activeChatmodes).length <= 1) {
         setShowMetricsTable(true);
         const [defaultMode] = Object.keys(activeChatmodes);
         try {
           toggleMetricsLoading();
-          const response = await getChatMetrics(metricquestion, [metriccontexts], [metricanswer], metricmodel, [
-            defaultMode,
-          ]);
-          toggleMetricsLoading();
-          if (response.data.status === 'Success') {
-            const data = response;
-            saveMetrics(data.data.data[defaultMode]);
-          } else {
-            throw new Error(response.data.error);
+          metricsPromise.push(
+            getChatMetrics(metricquestion, [metriccontexts], [metricanswer], metricmodel, [defaultMode])
+          );
+          if (referenceText.trim() != '') {
+            metricsPromise.push(
+              getAdditionalMetrics(metricquestion, [metriccontexts], [metricanswer], referenceText, metricmodel, [
+                defaultMode,
+              ])
+            );
           }
+          const metricsResponse = await Promise.allSettled(metricsPromise);
+          for (let index = 0; index < metricsResponse.length; index++) {
+            const metricPromise = metricsResponse[index];
+            if (metricPromise.status === 'fulfilled') {
+              console.log(metricPromise.value);
+            }
+          }
+          toggleMetricsLoading();
+
+          // if (response.data.status === 'Success') {
+          //   const data = response;
+          //   saveMetrics(data.data.data[defaultMode]);
+          // } else {
+          //   throw new Error(response.data.error);
+          // }
         } catch (error) {
           if (error instanceof Error) {
             toggleMetricsLoading();
             console.log('Error in getting chat metrics', error);
             saveMetrics({ faithfulness: 0, answer_relevancy: 0, error: error.message });
-          }
-        }
-        if (referenceText.trim() != '') {
-          try {
-            const response = await getAdditionalMetrics(
-              metricquestion,
-              [metriccontexts],
-              [metricanswer],
-              referenceText,
-              metricmodel,
-              [defaultMode]
-            );
-            console.log(response.data);
-          } catch (error) {
-            console.log(error);
           }
         }
       } else {
@@ -242,43 +243,44 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           return mode;
         });
         try {
-          const responses = await getChatMetrics(
-            metricquestion,
-            contextarray as string[],
-            answerarray as string[],
-            metricmodel,
-            modesarray
+          metricsPromise.push(
+            getChatMetrics(metricquestion, contextarray as string[], answerarray as string[], metricmodel, modesarray)
           );
-          toggleMetricsLoading();
-          if (responses.data.status === 'Success') {
-            const modewisedata = responses.data.data;
-            const metricsdata = Object.entries(modewisedata).map(([mode, scores]) => {
-              return { mode, answer_relevancy: scores.answer_relevancy, faithfulness: scores.faithfulness };
-            });
-            saveMultimodemetrics(metricsdata);
-          } else {
-            throw new Error(responses.data.error);
+          if (referenceText.trim() != '') {
+            metricsPromise.push(
+              getAdditionalMetrics(
+                metricquestion,
+                [metriccontexts],
+                [metricanswer],
+                referenceText,
+                metricmodel,
+                modesarray
+              )
+            );
           }
+          toggleMetricsLoading();
+          const metricsResponse = await Promise.allSettled(metricsPromise);
+          toggleMetricsLoading();
+          for (let index = 0; index < metricsResponse.length; index++) {
+            const metricPromise = metricsResponse[index];
+            if (metricPromise.status === 'fulfilled') {
+              console.log(metricPromise.value);
+            }
+          }
+          // if (responses.data.status === 'Success') {
+          //   const modewisedata = responses.data.data;
+          //   const metricsdata = Object.entries(modewisedata).map(([mode, scores]) => {
+          //     return { mode, answer_relevancy: scores.answer_relevancy, faithfulness: scores.faithfulness };
+          //   });
+          //   // saveMultimodemetrics(metricsdata);
+          // } else {
+          //   throw new Error(responses.data.error);
+          // }
         } catch (error) {
           toggleMetricsLoading();
           console.log('Error in getting chat metrics', error);
           if (error instanceof Error) {
             setMultiModeError(error.message);
-          }
-        }
-        if (referenceText.trim() != '') {
-          try {
-            const response = await getAdditionalMetrics(
-              metricquestion,
-              [metriccontexts],
-              [metricanswer],
-              referenceText,
-              metricmodel,
-              modesarray
-            );
-            console.log(response.data);
-          } catch (error) {
-            console.log(error);
           }
         }
       }

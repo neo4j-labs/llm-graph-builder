@@ -1,5 +1,5 @@
 import { TextInput } from '@neo4j-ndl/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useFileContext } from '../../../context/UsersFiles';
 import { urlScanAPI } from '../../../services/URLScan';
@@ -41,16 +41,16 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
     setprojectId('');
   };
 
-  useEffect(() => {
-    if (status != 'unknown') {
-      setTimeout(() => {
-        setStatusMessage('');
-        setStatus('unknown');
-        reset();
-        hideModal();
-      }, 5000);
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (status != 'unknown') {
+  //     setTimeout(() => {
+  //       setStatusMessage('');
+  //       setStatus('unknown');
+  //       reset();
+  //       hideModal();
+  //     }, 5000);
+  //   }
+  // }, []);
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (codeResponse) => {

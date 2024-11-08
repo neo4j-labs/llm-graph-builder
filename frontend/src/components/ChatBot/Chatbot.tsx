@@ -44,14 +44,7 @@ import CommonActions from './CommonChatActions';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
 
 const Chatbot: FC<ChatbotProps> = (props) => {
-  const {
-    messages: listMessages,
-    setMessages: setListMessages,
-    isLoading,
-    isFullScreen,
-    clear,
-    connectionStatus,
-  } = props;
+  const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, connectionStatus } = props;
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
@@ -319,18 +312,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   };
   useEffect(() => {
     scrollToBottom();
-  }, [listMessages]);
-
-  useEffect(() => {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
   }, [listMessages]);
-
-  useEffect(() => {
-    if (clear) {
-      cancel();
-      setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
-    }
-  }, [clear]);
 
   const handleCopy = (message: string, id: number) => {
     copy(message);

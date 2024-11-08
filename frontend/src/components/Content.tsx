@@ -105,7 +105,6 @@ const Content: React.FC<ContentProps> = ({
     filesData,
     setFilesData,
     setModel,
-    model,
     selectedNodes,
     selectedRels,
     setSelectedNodes,
@@ -132,11 +131,13 @@ const Content: React.FC<ContentProps> = ({
     }
   );
   const childRef = useRef<ChildRef>(null);
-  const incrementPage = () => {
+  const incrementPage = async () => {
     setCurrentPage((prev) => prev + 1);
+    getChunks(documentName, currentPage + 1);
   };
-  const decrementPage = () => {
+  const decrementPage = async () => {
     setCurrentPage((prev) => prev - 1);
+    getChunks(documentName, currentPage - 1);
   };
   useEffect(() => {
     if (!init && !searchParams.has('connectURL')) {
@@ -164,23 +165,6 @@ const Content: React.FC<ContentProps> = ({
       setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
     }
   }, []);
-  useEffect(() => {
-    if (currentPage >= 1) {
-      (async () => {
-        await getChunks(documentName, currentPage);
-      })();
-    }
-  }, [currentPage, documentName]);
-  useEffect(() => {
-    setFilesData((prevfiles) => {
-      return prevfiles.map((curfile) => {
-        return {
-          ...curfile,
-          model: curfile.status === 'New' || curfile.status === 'Reprocess' ? model : curfile.model,
-        };
-      });
-    });
-  }, [model]);
 
   useEffect(() => {
     if (afterFirstRender) {
@@ -271,6 +255,15 @@ const Content: React.FC<ContentProps> = ({
     if (selectedOption?.value) {
       setModel(selectedOption?.value);
     }
+    setFilesData((prevfiles) => {
+      return prevfiles.map((curfile) => {
+        return {
+          ...curfile,
+          model:
+            curfile.status === 'New' || curfile.status === 'Reprocess' ? selectedOption?.value ?? '' : curfile.model,
+        };
+      });
+    });
   };
   const getChunks = async (name: string, pageNo: number) => {
     toggleChunksLoading();
@@ -908,7 +901,7 @@ const Content: React.FC<ContentProps> = ({
                 setTotalPageCount(null);
               }
               setCurrentPage(1);
-              // await getChunks(name, 1);
+              await getChunks(name, 1);
             }
           }}
           ref={childRef}
