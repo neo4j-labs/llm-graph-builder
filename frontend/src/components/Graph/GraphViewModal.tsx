@@ -124,9 +124,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     try {
       const result = await fetchData();
       if (result && result.data.data.nodes.length > 0) {
-        const neoNodes = result.data.data.nodes
-          .map((f: Node) => f)
-          .filter((node: ExtendedNode) => node.labels.length === 1);
+        const neoNodes = result.data.data.nodes;
         const nodeIds = new Set(neoNodes.map((node: any) => node.element_id));
         const neoRels = result.data.data.relationships
           .map((f: Relationship) => f)
@@ -157,6 +155,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
   };
 
+  console.log('nodes', nodes);
   useEffect(() => {
     if (open) {
       setLoadingGraph(true);

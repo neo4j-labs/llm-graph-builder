@@ -160,11 +160,11 @@ export function extractPdfFileName(url: string): string {
 export const processGraphData = (neoNodes: ExtendedNode[], neoRels: ExtendedRelationship[]) => {
   const schemeVal: Scheme = {};
   let iterator = 0;
-  const labels: string[] = neoNodes.map((f: any) => f.labels);
+  const labels: string[] = neoNodes.flatMap((f: any) => f.labels);
   for (let index = 0; index < labels.length; index++) {
     const label = labels[index];
     if (schemeVal[label] == undefined) {
-      schemeVal[label] = calcWordColor(label[0]);
+      schemeVal[label] = calcWordColor(label);
       iterator += 1;
     }
   }
