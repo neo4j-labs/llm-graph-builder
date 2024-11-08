@@ -38,9 +38,9 @@ import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, 
 import { useCredentials } from '../context/UserCredentials';
 import {
   ArrowPathIconSolid,
-  ClipboardDocumentIconOutline,
+  ClipboardDocumentIconSolid,
   MagnifyingGlassCircleIconSolid,
-  NewspaperIconOutline,
+  DocumentTextIconSolid,
 } from '@neo4j-ndl/react/icons';
 import CustomProgressBar from './UI/CustomProgressBar';
 import subscribe from '../services/PollingAPI';
@@ -528,7 +528,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 handleCopy(copied);
               }}
             >
-              <ClipboardDocumentIconOutline className={`${copyRow} ? 'cursor-wait': 'cursor`} />
+              <ClipboardDocumentIconSolid className={`${copyRow} ? 'cursor-wait': 'cursor`} />
             </IconButtonWithToolTip>
             <IconButtonWithToolTip
               onClick={() => {
@@ -538,13 +538,15 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               placement='left'
               label='chunktextaction'
               text='View Chunks'
-              size='small'
+              size='large'
               disabled={info.getValue() === 'Uploading'}
             >
-              <NewspaperIconOutline />
+              <DocumentTextIconSolid />
             </IconButtonWithToolTip>
           </>
         ),
+        size: 300,
+        minSize: 180,
         header: () => <span>Actions</span>,
         footer: (info) => info.column.id,
       }),

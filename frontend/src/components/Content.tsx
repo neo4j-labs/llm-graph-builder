@@ -165,7 +165,7 @@ const Content: React.FC<ContentProps> = ({
     }
   }, []);
   useEffect(() => {
-    if (currentPage >=1) {
+    if (currentPage >= 1) {
       (async () => {
         await getChunks(documentName, currentPage);
       })();
@@ -907,7 +907,7 @@ const Content: React.FC<ContentProps> = ({
               if (totalPageCount) {
                 setTotalPageCount(null);
               }
-              setCurrentPage(1)
+              setCurrentPage(1);
               // await getChunks(name, 1);
             }
           }}
