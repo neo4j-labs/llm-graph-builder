@@ -8,7 +8,10 @@ export const APP_SOURCES =
     ? (process.env.VITE_REACT_APP_SOURCES?.split(',') as string[])
     : ['gcs', 's3', 'local', 'wiki', 'youtube', 'web'];
 
-    export const llms = [
+export const llms =
+  process.env?.VITE_LLM_MODELS?.trim() != ''
+    ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
+    : [
       'diffbot',
       'openai_gpt_3.5',
       'openai_gpt_4o',
@@ -288,7 +291,7 @@ export const graphLabels = {
   docChunk: 'Document & Chunk',
   community: 'Communities',
   noNodesRels: 'No Nodes and No relationships',
-  neighborView:'neighborView'
+  neighborView: 'neighborView'
 };
 
 export const RESULT_STEP_SIZE = 25;
