@@ -21,6 +21,7 @@ import DeletePopUp from '../../DeletePopUp/DeletePopUp';
 import { tokens } from '@neo4j-ndl/base';
 import GraphViewModal from '../../../Graph/GraphViewModal';
 import { handleGraphNodeClick } from '../../../ChatBot/chatInfo';
+import { useGraphContext } from '../../../../context/GraphLoading';
 export default function DeletePopUpForOrphanNodes({
   deleteHandler,
   loading,
@@ -41,6 +42,7 @@ export default function DeletePopUpForOrphanNodes({
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
+  const { setLoadingGraph } = useGraphContext();
 
   const fetchOrphanNodes = useCallback(async () => {
     try {
@@ -80,7 +82,8 @@ export default function DeletePopUpForOrphanNodes({
       setNeoNodes,
       setNeoRels,
       setOpenGraphView,
-      setViewPoint
+      setViewPoint,
+      setLoadingGraph,
     );
   };
 

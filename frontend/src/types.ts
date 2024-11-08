@@ -574,6 +574,10 @@ export interface MessagesContextProviderProps {
   children: ReactNode;
 }
 
+export interface GraphContextProviderProps {
+  children: ReactNode;
+}
+
 export interface Chunk {
   id: string;
   position: number;
@@ -728,6 +732,11 @@ export interface MessageContextType {
   setMessages: Dispatch<SetStateAction<Messages[]>>;
   clearHistoryData: boolean;
   setClearHistoryData: Dispatch<SetStateAction<boolean>>;
+}
+
+export interface GraphContextType {
+  loadingGraph: boolean;
+  setLoadingGraph: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface DatabaseStatusProps {

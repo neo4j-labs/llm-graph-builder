@@ -21,18 +21,16 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
-  const [loadingGraphView, setLoadingGraphView] = useState(false);
 
   const handleChunkClick = (elementId: string, viewMode: string) => {
+    setOpenGraphView(true);
+    setViewPoint('chatInfoView');
     handleGraphNodeClick(
       userCredentials as UserCredentials,
       elementId,
       viewMode,
       setNeoNodes,
       setNeoRels,
-      setOpenGraphView,
-      setViewPoint,
-      setLoadingGraphView
     );
   };
 
@@ -72,7 +70,6 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                     <div>
                       <TextLink
                         label='Graph view'
-                        className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                         onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
                       >
                         {'View Graph'}
@@ -100,7 +97,6 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                           <div>
                             <TextLink
                               as='small'
-                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               label='Graph view'
                               onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
                             >
@@ -123,7 +119,6 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                           <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                           <div>
                             <TextLink
-                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               label='Graph view'
                               onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
                             >
@@ -146,7 +141,6 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                           <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                           <div>
                             <TextLink
-                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               label='Graph view'
                               onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
                             >
@@ -169,7 +163,6 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                           <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                           <div>
                             <TextLink
-                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               label='Graph view'
                               onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
                             >
@@ -196,7 +189,6 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                           <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                           <div>
                             <TextLink
-                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               label='Graph view'
                               onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
                             >
@@ -228,7 +220,6 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                         </Typography>
                         <div>
                           <TextLink
-                            className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                             label='Graph view'
                             onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
                           >
