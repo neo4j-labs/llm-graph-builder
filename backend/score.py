@@ -12,7 +12,7 @@ from langserve import add_routes
 from langchain_google_vertexai import ChatVertexAI
 from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
-from src.graph_query import get_graph_results
+from src.graph_query import get_graph_results,get_chunktext_results
 from src.chunkid_entities import get_entities_from_chunkids
 from src.post_processing import create_vector_fulltext_indexes, create_entity_embedding
 from sse_starlette.sse import EventSourceResponse
@@ -817,6 +817,58 @@ async def calculate_metric(question: str = Form(),
        )
    finally:
        gc.collect()
+
+@app.post("/fetch_chunktext")
+async def fetch_chunktext(
+   uri: str = Form(),
+   database: str = Form(),
+   userName: str = Form(),
+   password: str = Form(),
+   document_name: str = Form(),
+   page_no: int = Form(1)
+):
+   try:
+       payload_json_obj = {
+           'api_name': 'fetch_chunktext',
+           'db_url': uri,
+           'userName': userName,
+           'database': database,
+           'document_name': document_name,
+           'page_no': page_no,
+           'logging_time': formatted_time(datetime.now(timezone.utc))
+       }
+       logger.log_struct(payload_json_obj, "INFO")
+       start = time.time()
+       result = await asyncio.to_thread(
+           get_chunktext_results,
+           uri=uri,
+           username=userName,
+           password=password,
+           database=database,
+           document_name=document_name,
+           page_no=page_no
+       )
+       end = time.time()
+       elapsed_time = end - start
+       json_obj = {
+           'api_name': 'fetch_chunktext',
+           'db_url': uri,
+           'document_name': document_name,
+           'page_no': page_no,
+           'logging_time': formatted_time(datetime.now(timezone.utc)),
+           'elapsed_api_time': f'{elapsed_time:.2f}'
+       }
+       logger.log_struct(json_obj, "INFO")
+       return create_api_response('Success', data=result, message=f"Total elapsed API time {elapsed_time:.2f}")
+   except Exception as e:
+       job_status = "Failed"
+       message = "Unable to get chunk text response"
+       error_message = str(e)
+       logging.exception(f'Exception in fetch_chunktext: {error_message}')
+       return create_api_response(job_status, message=message, error=error_message)
+   finally:
+       gc.collect()
+
 
 if __name__ == "__main__":
     uvicorn.run(app)

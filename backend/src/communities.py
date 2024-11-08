@@ -487,4 +487,3 @@ def create_communities(uri, username, password, database,model=COMMUNITY_CREATIO
 
 
 
-

@@ -38,8 +38,9 @@ import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, 
 import { useCredentials } from '../context/UserCredentials';
 import {
   ArrowPathIconSolid,
-  ClipboardDocumentIconOutline,
+  ClipboardDocumentIconSolid,
   MagnifyingGlassCircleIconSolid,
+  DocumentTextIconSolid,
 } from '@neo4j-ndl/react/icons';
 import CustomProgressBar from './UI/CustomProgressBar';
 import subscribe from '../services/PollingAPI';
@@ -56,7 +57,7 @@ import { ThemeWrapperContext } from '../context/ThemeWrapper';
 let onlyfortheFirstRender = true;
 
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
-  const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry } = props;
+  const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry, onChunkView } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
   const { userCredentials, isReadOnlyUser } = useCredentials();
@@ -527,10 +528,25 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 handleCopy(copied);
               }}
             >
-              <ClipboardDocumentIconOutline className={`${copyRow} ? 'cursor-wait': 'cursor`} />
+              <ClipboardDocumentIconSolid className={`${copyRow} ? 'cursor-wait': 'cursor`} />
+            </IconButtonWithToolTip>
+            <IconButtonWithToolTip
+              onClick={() => {
+                onChunkView(info?.row?.original?.name as string);
+              }}
+              clean
+              placement='left'
+              label='chunktextaction'
+              text='View Chunks'
+              size='large'
+              disabled={info.getValue() === 'Uploading'}
+            >
+              <DocumentTextIconSolid />
             </IconButtonWithToolTip>
           </>
         ),
+        size: 300,
+        minSize: 180,
         header: () => <span>Actions</span>,
         footer: (info) => info.column.id,
       }),
