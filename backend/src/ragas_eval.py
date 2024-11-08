@@ -74,29 +74,33 @@ async def get_additional_metrics(question: str, contexts: list, answers: list, r
        embeddings = EMBEDDING_FUNCTION
        embedding_model = LangchainEmbeddingsWrapper(embeddings=embeddings)
        rouge_scorer = RougeScore()
-       #factual_scorer = FactualCorrectness()
+       factual_scorer = FactualCorrectness()
        semantic_scorer = SemanticSimilarity()
        entity_recall_scorer = ContextEntityRecall()
-       #factual_scorer.llm = ragas_llm
+       factual_scorer.llm = ragas_llm
        entity_recall_scorer.llm = ragas_llm
        semantic_scorer.embeddings = embedding_model
        metrics = []
        for response, context in zip(answers, contexts):
            sample = SingleTurnSample(response=response, reference=reference)
            rouge_score = await rouge_scorer.single_turn_ascore(sample)
+           rouge_score = round(rouge_score,4)
            semantic_score = await semantic_scorer.single_turn_ascore(sample)
+           semantic_score = round(semantic_score, 4)
            if "gemini" in model_name:
-               #fact_score = "Not Available"
+               fact_score = "Not Available"
                entity_recall_score = "Not Available"
            else:
-               #fact_score = await factual_scorer.single_turn_ascore(sample)
+               fact_score = await factual_scorer.single_turn_ascore(sample)
+               fact_score = round(fact_score, 4)
                entity_sample = SingleTurnSample(reference=reference, retrieved_contexts=[context])
                entity_recall_score = await entity_recall_scorer.single_turn_ascore(entity_sample)
+               entity_recall_score = round(entity_recall_score, 4)
            metrics.append({
-               "rouge_score": round(rouge_score,4),
-               #"fact_score": fact_score,
-               "semantic_score": round(semantic_score,4),
-               "context_entity_recall_score": round(entity_recall_score,4)
+               "rouge_score": rouge_score,
+               "fact_score": fact_score,
+               "semantic_score": semantic_score,
+               "context_entity_recall_score": entity_recall_score
            })
        return metrics
    except Exception as e:
