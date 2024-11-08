@@ -131,6 +131,9 @@ export const getNodeCaption = (node: any) => {
   if (node.properties.fileName) {
     return node.properties.fileName;
   }
+  if(node.labels[0] === '__Community__'){
+    return node.properties.title;
+  }
   return node.properties.id;
 };
 
