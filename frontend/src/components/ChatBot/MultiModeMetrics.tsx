@@ -44,20 +44,48 @@ export default function MultiModeMetrics({
         header: () => <span>Mode</span>,
         footer: (info) => info.column.id,
       }),
-      columnHelper.accessor((row) => row.answer_relevancy, {
+      columnHelper.accessor((row) => row.answer_relevancy as number, {
         id: 'Answer Relevancy',
         cell: (info) => {
           return <Typography variant='body-medium'>{info.getValue().toFixed(2)}</Typography>;
         },
         header: () => <span>Answer Relevancy</span>,
       }),
-      columnHelper.accessor((row) => row.faithfulness, {
+      columnHelper.accessor((row) => row.faithfulness as number, {
         id: 'Score',
         cell: (info) => {
           return <Typography variant='body-medium'>{info.getValue().toFixed(2)}</Typography>;
         },
         header: () => <span>Faithfulness</span>,
       }),
+      columnHelper.accessor((row)=>row.context_entity_recall_score as number,{
+        id: 'Recall Score',
+        cell: (info) => {
+          return <Typography variant='body-medium'>{info.getValue()?.toFixed(2)}</Typography>;
+        },
+        header: () => <span>Context Entity Recall Score</span>
+      }),
+      columnHelper.accessor((row)=>row.semantic_score as number,{
+        id: 'Semantic Score',
+        cell: (info) => {
+          return <Typography variant='body-medium'>{info.getValue()?.toFixed(2)}</Typography>;
+        },
+        header: () => <span>Semantic Score</span>
+      }),
+      columnHelper.accessor((row)=>row.rouge_score as number,{
+        id: 'Rouge Score',
+        cell: (info) => {
+          return <Typography variant='body-medium'>{info.getValue()?.toFixed(2)}</Typography>;
+        },
+        header: () => <span>Rouge Score</span>
+      }),
+      columnHelper.accessor((row)=>row.fact_score as number,{
+        id: 'Fact Score',
+        cell: (info) => {
+          return <Typography variant='body-medium'>{info.getValue()?.toFixed(2)}</Typography>;
+        },
+        header: () => <span>Fact Score</span>
+      })
     ],
     []
   );

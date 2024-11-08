@@ -426,17 +426,16 @@ export interface OrphanNodeResponse extends Partial<commonserverresponse> {
   data: orphanNodeProps[];
 }
 export type metricstate = {
-  [key:string]:number | string;
-}&
-{
+  [key: string]: number | string;
+} & {
   error: string;
 };
 export type metricdetails = Record<string, metricstate>;
 
-export interface multimodelmetric {
+export type multimodelmetric= {
+[key:string]:number | string
+}& {
   mode: string;
-  answer_relevancy: number;
-  faithfulness: number;
 }
 export interface MetricsResponse extends Omit<commonserverresponse, 'data'> {
   data: metricdetails;
@@ -473,7 +472,7 @@ export interface chatInfoMessage extends Partial<Messages> {
   chunks: Chunk[];
   metricDetails:
     | {
-        [key:string]: number;
+        [key: string]: number;
       }
     | undefined;
   metricError: string;

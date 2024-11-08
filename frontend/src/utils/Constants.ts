@@ -329,3 +329,16 @@ export const getDefaultSchemaExamples = () =>
     accu.push(examplevalues);
     return accu;
   }, []);
+export function mergeNestedObjects(objects: Record<string, Record<string, number>>[]) {
+  return objects.reduce((merged, obj) => {
+    for (const key in obj) {
+      if (!merged[key]) {
+        merged[key] = {};
+      }
+      for (const innerKey in obj[key]) {
+        merged[key][innerKey] = obj[key][innerKey];
+      }
+    }
+    return merged;
+  }, {});
+}

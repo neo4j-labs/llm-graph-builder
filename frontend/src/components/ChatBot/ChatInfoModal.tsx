@@ -26,7 +26,12 @@ import ChunkInfo from './ChunkInfo';
 import EntitiesInfo from './EntitiesInfo';
 import SourcesInfo from './SourcesInfo';
 import CommunitiesInfo from './CommunitiesInfo';
-import { chatModeLables, chatModeReadableLables, supportedLLmsForRagas } from '../../utils/Constants';
+import {
+  chatModeLables,
+  chatModeReadableLables,
+  mergeNestedObjects,
+  supportedLLmsForRagas,
+} from '../../utils/Constants';
 import { Relationship } from '@neo4j-nvl/base';
 import { getChatMetrics } from '../../services/GetRagasMetric';
 import MetricsTab from './MetricsTab';
@@ -208,31 +213,30 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             );
           }
           const metricsResponse = await Promise.allSettled(metricsPromise);
-          const successresponse=[]
+          const successresponse = [];
           for (let index = 0; index < metricsResponse.length; index++) {
             const metricPromise = metricsResponse[index];
             if (metricPromise.status === 'fulfilled') {
-              if(metricPromise.value.data.status==="Success"){
-                successresponse.push(metricPromise.value.data.data)
+              if (metricPromise.value.data.status === 'Success') {
+                successresponse.push(metricPromise.value.data.data);
               }
             }
           }
           toggleMetricsLoading();
-        
-          const mergedState=successresponse.reduce((acc,cur)=>{
+          const mergedState = successresponse.reduce((acc, cur) => {
             if (acc[defaultMode]) {
-              acc[defaultMode]={...acc[defaultMode],...cur[defaultMode]}
-            }else{
-              acc[defaultMode]=cur[defaultMode]
+              acc[defaultMode] = { ...acc[defaultMode], ...cur[defaultMode] };
+            } else {
+              acc[defaultMode] = cur[defaultMode];
             }
-            return acc
-          },{})
-         saveMetrics(mergedState[defaultMode])
+            return acc;
+          }, {});
+          saveMetrics(mergedState[defaultMode]);
         } catch (error) {
           if (error instanceof Error) {
             toggleMetricsLoading();
             console.log('Error in getting chat metrics', error);
-            saveMetrics({ 'faithfulness': 0, 'answer_relevancy': 0, 'error': error.message });
+            saveMetrics({ faithfulness: 0, answer_relevancy: 0, error: error.message });
           }
         }
       } else {
@@ -255,8 +259,8 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             metricsPromise.push(
               getAdditionalMetrics(
                 metricquestion,
-                [metriccontexts],
-                [metricanswer],
+                contextarray as string[],
+                answerarray as string[],
                 referenceText,
                 metricmodel,
                 modesarray
@@ -265,21 +269,19 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           }
           const metricsResponse = await Promise.allSettled(metricsPromise);
           toggleMetricsLoading();
+          const successResponse = [];
           for (let index = 0; index < metricsResponse.length; index++) {
             const metricPromise = metricsResponse[index];
             if (metricPromise.status === 'fulfilled') {
-              console.log(metricPromise.value);
+              if (metricPromise.value.data.status === 'Success') {
+                successResponse.push(metricPromise.value.data.data);
+              }
             }
           }
-          // if (responses.data.status === 'Success') {
-          //   const modewisedata = responses.data.data;
-          //   const metricsdata = Object.entries(modewisedata).map(([mode, scores]) => {
-          //     return { mode, answer_relevancy: scores.answer_relevancy, faithfulness: scores.faithfulness };
-          //   });
-          //   // saveMultimodemetrics(metricsdata);
-          // } else {
-          //   throw new Error(responses.data.error);
-          // }
+          const metricsdata = Object.entries(mergeNestedObjects(successResponse)).map(([mode, scores]) => {
+            return { mode, ...scores };
+          });
+          saveMultimodemetrics(metricsdata);
         } catch (error) {
           toggleMetricsLoading();
           console.log('Error in getting chat metrics', error);

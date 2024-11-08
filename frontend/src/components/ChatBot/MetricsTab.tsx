@@ -17,7 +17,7 @@ function MetricsTab({
   metricsLoading: boolean;
   metricDetails:
     | {
-        [key:string]: number;
+        [key: string]: number;
       }
     | undefined;
   error: string;
