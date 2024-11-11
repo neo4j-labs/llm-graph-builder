@@ -33,7 +33,7 @@ from Secweb.StrictTransportSecurity import HSTS
 from Secweb.ContentSecurityPolicy import ContentSecurityPolicy
 from Secweb.XContentTypeOptions import XContentTypeOptions
 from Secweb.XFrameOptions import XFrame
-#from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from src.ragas_eval import *
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 import gzip
