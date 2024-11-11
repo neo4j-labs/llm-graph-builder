@@ -545,7 +545,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             </IconButtonWithToolTip>
           </>
         ),
-        size: 300,
+        maxSize: 300,
         minSize: 180,
         header: () => <span>Actions</span>,
         footer: (info) => info.column.id,

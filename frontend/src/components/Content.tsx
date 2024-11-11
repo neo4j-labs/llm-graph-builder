@@ -133,11 +133,11 @@ const Content: React.FC<ContentProps> = ({
   const childRef = useRef<ChildRef>(null);
   const incrementPage = async () => {
     setCurrentPage((prev) => prev + 1);
-    getChunks(documentName, currentPage + 1);
+    await getChunks(documentName, currentPage + 1);
   };
   const decrementPage = async () => {
     setCurrentPage((prev) => prev - 1);
-    getChunks(documentName, currentPage - 1);
+    await getChunks(documentName, currentPage - 1);
   };
   useEffect(() => {
     if (!init && !searchParams.has('connectURL')) {

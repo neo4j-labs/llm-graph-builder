@@ -7,7 +7,7 @@ import {
   getSortedRowModel,
 } from '@tanstack/react-table';
 import { capitalize } from '../../utils/Utils';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Banner, Box, DataGrid, DataGridComponents, Typography } from '@neo4j-ndl/react';
 import { multimodelmetric } from '../../types';
 
@@ -15,13 +15,14 @@ export default function MultiModeMetrics({
   data,
   metricsLoading,
   error,
+  isWithAdditionalMetrics,
 }: {
   data: multimodelmetric[];
   metricsLoading: boolean;
   error: string;
+  isWithAdditionalMetrics: boolean;
 }) {
   const tableRef = useRef<HTMLDivElement>(null);
-
   const columnHelper = createColumnHelper<multimodelmetric>();
   const columns = useMemo(
     () => [
@@ -45,11 +46,11 @@ export default function MultiModeMetrics({
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.answer_relevancy as number, {
-        id: 'Answer Relevancy',
+        id: 'Relevancy',
         cell: (info) => {
           return <Typography variant='body-medium'>{info.getValue().toFixed(2)}</Typography>;
         },
-        header: () => <span>Answer Relevancy</span>,
+        header: () => <span>Relevancy</span>,
       }),
       columnHelper.accessor((row) => row.faithfulness as number, {
         id: 'Score',
@@ -58,34 +59,34 @@ export default function MultiModeMetrics({
         },
         header: () => <span>Faithfulness</span>,
       }),
-      columnHelper.accessor((row)=>row.context_entity_recall_score as number,{
+      columnHelper.accessor((row) => row.context_entity_recall_score as number, {
         id: 'Recall Score',
         cell: (info) => {
           return <Typography variant='body-medium'>{info.getValue()?.toFixed(2)}</Typography>;
         },
-        header: () => <span>Context Entity Recall Score</span>
+        header: () => <span>Context Score</span>,
       }),
-      columnHelper.accessor((row)=>row.semantic_score as number,{
+      columnHelper.accessor((row) => row.semantic_score as number, {
         id: 'Semantic Score',
         cell: (info) => {
           return <Typography variant='body-medium'>{info.getValue()?.toFixed(2)}</Typography>;
         },
-        header: () => <span>Semantic Score</span>
+        header: () => <span>Semantic Score</span>,
       }),
-      columnHelper.accessor((row)=>row.rouge_score as number,{
+      columnHelper.accessor((row) => row.rouge_score as number, {
         id: 'Rouge Score',
         cell: (info) => {
           return <Typography variant='body-medium'>{info.getValue()?.toFixed(2)}</Typography>;
         },
-        header: () => <span>Rouge Score</span>
+        header: () => <span>Rouge Score</span>,
       }),
-      columnHelper.accessor((row)=>row.fact_score as number,{
+      columnHelper.accessor((row) => row.fact_score as number, {
         id: 'Fact Score',
         cell: (info) => {
           return <Typography variant='body-medium'>{info.getValue()?.toFixed(2)}</Typography>;
         },
-        header: () => <span>Fact Score</span>
-      })
+        header: () => <span>Fact Score</span>,
+      }),
     ],
     []
   );
@@ -102,6 +103,12 @@ export default function MultiModeMetrics({
     enableSorting: true,
     getSortedRowModel: getSortedRowModel(),
   });
+  useEffect(() => {
+    if (!isWithAdditionalMetrics) {
+      table.getAllLeafColumns().map((col, idx) => (idx > 2 ? col.toggleVisibility() : col));
+    }
+  }, [isWithAdditionalMetrics, table]);
+
   return (
     <Box>
       {error?.trim() != '' ? (

@@ -432,11 +432,11 @@ export type metricstate = {
 };
 export type metricdetails = Record<string, metricstate>;
 
-export type multimodelmetric= {
-[key:string]:number | string
-}& {
+export type multimodelmetric = {
+  [key: string]: number | string;
+} & {
   mode: string;
-}
+};
 export interface MetricsResponse extends Omit<commonserverresponse, 'data'> {
   data: metricdetails;
 }
@@ -472,7 +472,7 @@ export interface chatInfoMessage extends Partial<Messages> {
   chunks: Chunk[];
   metricDetails:
     | {
-        [key: string]: number;
+        [key: string]: number | string;
       }
     | undefined;
   metricError: string;

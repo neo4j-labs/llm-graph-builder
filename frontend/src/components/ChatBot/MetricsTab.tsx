@@ -17,12 +17,12 @@ function MetricsTab({
   metricsLoading: boolean;
   metricDetails:
     | {
-        [key: string]: number;
+        [key: string]: number | string;
       }
     | undefined;
   error: string;
 }) {
-  const columnHelper = createColumnHelper<{ metric: string; score: number }>();
+  const columnHelper = createColumnHelper<{ metric: string; score: number | string }>();
   const tableRef = useRef(null);
 
   const columns = useMemo(
@@ -46,7 +46,7 @@ function MetricsTab({
         header: () => <span>Metric</span>,
         footer: (info) => info.column.id,
       }),
-      columnHelper.accessor((row) => row.score, {
+      columnHelper.accessor((row) => row.score as number, {
         id: 'Score',
         cell: (info) => {
           return <Typography variant='body-medium'>{info.getValue().toFixed(2)}</Typography>;
