@@ -74,10 +74,8 @@ async def get_additional_metrics(question: str, contexts: list, answers: list, r
        embeddings = EMBEDDING_FUNCTION
        embedding_model = LangchainEmbeddingsWrapper(embeddings=embeddings)
        rouge_scorer = RougeScore()
-       factual_scorer = FactualCorrectness()
        semantic_scorer = SemanticSimilarity()
        entity_recall_scorer = ContextEntityRecall()
-       factual_scorer.llm = ragas_llm
        entity_recall_scorer.llm = ragas_llm
        semantic_scorer.embeddings = embedding_model
        metrics = []
@@ -90,8 +88,6 @@ async def get_additional_metrics(question: str, contexts: list, answers: list, r
            if "gemini" in model_name:
                entity_recall_score = "Not Available"
            else:
-            #    fact_score = await factual_scorer.single_turn_ascore(sample)
-            #    fact_score = round(fact_score, 4)
                entity_sample = SingleTurnSample(reference=reference, retrieved_contexts=[context])
                entity_recall_score = await entity_recall_scorer.single_turn_ascore(entity_sample)
                entity_recall_score = round(entity_recall_score, 4)
