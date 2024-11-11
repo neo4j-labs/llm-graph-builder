@@ -99,6 +99,7 @@ export default function MultiModeMetrics({
   useEffect(() => {
     if (isWithAdditionalMetrics === false) {
       table.getAllLeafColumns().map((col, idx) => (idx > 2 ? col.toggleVisibility() : col));
+      table.resetColumnSizing();
     }
   }, [isWithAdditionalMetrics, table]);
 

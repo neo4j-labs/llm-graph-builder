@@ -42,6 +42,12 @@ import { downloadClickHandler, getDateTime } from '../../utils/Utils';
 import ChatModesSwitch from './ChatModesSwitch';
 import CommonActions from './CommonChatActions';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
+if (typeof window !== 'undefined') {
+  if (!sessionStorage.getItem('session_id')) {
+    const id = uuidv4();
+    sessionStorage.setItem('session_id', id);
+  }
+}
 
 const Chatbot: FC<ChatbotProps> = (props) => {
   const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, connectionStatus } = props;
@@ -50,7 +56,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const { userCredentials } = useCredentials();
   const { model, chatModes, selectedRows, filesData } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
+  const [sessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
   const [sourcesModal, setSourcesModal] = useState<string[]>([]);
   const [modelModal, setModelModal] = useState<string>('');
@@ -116,13 +122,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const saveCommunities = (chatCommunities: Community[]) => {
     setCommunities(chatCommunities);
   };
-  useEffect(() => {
-    if (!sessionStorage.getItem('session_id')) {
-      const id = uuidv4();
-      setSessionId(id);
-      sessionStorage.setItem('session_id', id);
-    }
-  }, []);
 
   const simulateTypingEffect = (messageId: number, response: ResponseMode, mode: string, message: string) => {
     let index = 0;

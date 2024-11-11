@@ -41,17 +41,6 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
     setprojectId('');
   };
 
-  // useEffect(() => {
-  //   if (status != 'unknown') {
-  //     setTimeout(() => {
-  //       setStatusMessage('');
-  //       setStatus('unknown');
-  //       reset();
-  //       hideModal();
-  //     }, 5000);
-  //   }
-  // }, []);
-
   const googleLogin = useGoogleLogin({
     onSuccess: async (codeResponse) => {
       try {

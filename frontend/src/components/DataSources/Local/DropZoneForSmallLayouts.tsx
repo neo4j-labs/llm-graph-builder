@@ -1,7 +1,7 @@
 import { CloudArrowUpIconSolid } from '@neo4j-ndl/react/icons';
 import { useDropzone } from 'react-dropzone';
 import { useFileContext } from '../../../context/UsersFiles';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useCredentials } from '../../../context/UserCredentials';
 import { CustomFile, CustomFileBase, UserCredentials } from '../../../types';
 import { chunkSize } from '../../../utils/Constants';
@@ -15,18 +15,7 @@ export default function DropZoneForSmallLayouts() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isClicked, setIsClicked] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
-
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  useEffect(() => {
-    if (selectedFiles.length > 0) {
-      for (let index = 0; index < selectedFiles.length; index++) {
-        const file = selectedFiles[index];
-        if (filesData[index]?.status == 'None' && isClicked) {
-          uploadFileInChunks(file);
-        }
-      }
-    }
-  }, [selectedFiles]);
 
   const uploadFileInChunks = (file: File) => {
     const totalChunks = Math.ceil(file.size / chunkSize);
@@ -212,6 +201,14 @@ export default function DropZoneForSmallLayouts() {
         }
       }
       setFilesData(copiedFilesData);
+      if (selectedFiles.length > 0) {
+        for (let index = 0; index < selectedFiles.length; index++) {
+          const file = selectedFiles[index];
+          if (filesData[index]?.status == 'None' && isClicked) {
+            uploadFileInChunks(file);
+          }
+        }
+      }
     }
   };
   return (

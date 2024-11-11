@@ -1,5 +1,5 @@
 import { Dropzone, Flex, Typography } from '@neo4j-ndl/react';
-import { useState, useEffect, FunctionComponent } from 'react';
+import { useState, FunctionComponent } from 'react';
 import Loader from '../../../utils/Loader';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../../../context/UserCredentials';
@@ -66,19 +66,17 @@ const DropZone: FunctionComponent = () => {
         }
       }
       setFilesData(copiedFilesData);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedFiles.length > 0) {
-      for (let index = 0; index < selectedFiles.length; index++) {
-        const file = selectedFiles[index];
-        if (filesData[index]?.status == 'None' && isClicked) {
-          uploadFileInChunks(file);
+      if (selectedFiles.length > 0) {
+        for (let index = 0; index < selectedFiles.length; index++) {
+          const file = selectedFiles[index];
+          if (filesData[index]?.status == 'None' && isClicked) {
+            uploadFileInChunks(file);
+          }
         }
       }
     }
-  }, [selectedFiles]);
+  };
+
   const uploadFileInChunks = (file: File) => {
     const totalChunks = Math.ceil(file.size / chunkSize);
     const chunkProgressIncrement = 100 / totalChunks;
@@ -127,7 +125,7 @@ const DropZone: FunctionComponent = () => {
                   if (curfile.name == file.name) {
                     return {
                       ...curfile,
-                      uploadprogess: chunkNumber * chunkProgressIncrement,
+                      uploadProgress: chunkNumber * chunkProgressIncrement,
                     };
                   }
                   return curfile;
@@ -139,7 +137,7 @@ const DropZone: FunctionComponent = () => {
                 if (curfile.name == file.name) {
                   return {
                     ...curfile,
-                    uploadprogess: chunkNumber * chunkProgressIncrement,
+                    uploadProgress: chunkNumber * chunkProgressIncrement,
                   };
                 }
                 return curfile;

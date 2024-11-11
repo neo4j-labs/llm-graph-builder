@@ -1,5 +1,5 @@
 import { StatusIndicator, Typography } from '@neo4j-ndl/react';
-import { useMemo, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useFileContext } from '../../context/UsersFiles';
 import CustomMenu from '../UI/Menu';
 import { chatModeLables, chatModes as AvailableModes, chatModeReadableLables } from '../../utils/Constants';
@@ -23,11 +23,10 @@ export default function ChatModeToggle({
   const { setchatModes, chatModes, postProcessingTasks } = useFileContext();
   const isCommunityAllowed = postProcessingTasks.includes('enable_communities');
   const { isGdsActive } = useCredentials();
-  useEffect(() => {
-    if (!chatModes.length) {
-      setchatModes([chatModeLables['graph+vector+fulltext']]);
-    }
-  }, [chatModes.length]);
+  if (!chatModes.length) {
+    setchatModes([chatModeLables['graph+vector+fulltext']]);
+  }
+
   const memoizedChatModes = useMemo(() => {
     return isGdsActive && isCommunityAllowed
       ? AvailableModes
