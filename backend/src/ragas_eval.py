@@ -88,7 +88,6 @@ async def get_additional_metrics(question: str, contexts: list, answers: list, r
            semantic_score = await semantic_scorer.single_turn_ascore(sample)
            semantic_score = round(semantic_score, 4)
            if "gemini" in model_name:
-               fact_score = "Not Available"
                entity_recall_score = "Not Available"
            else:
             #    fact_score = await factual_scorer.single_turn_ascore(sample)
@@ -98,7 +97,6 @@ async def get_additional_metrics(question: str, contexts: list, answers: list, r
                entity_recall_score = round(entity_recall_score, 4)
            metrics.append({
                "rouge_score": rouge_score,
-               "fact_score": 0,
                "semantic_score": semantic_score,
                "context_entity_recall_score": entity_recall_score
            })

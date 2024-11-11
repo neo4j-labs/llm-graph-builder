@@ -80,13 +80,6 @@ export default function MultiModeMetrics({
         },
         header: () => <span>Rouge Score</span>,
       }),
-      columnHelper.accessor((row) => row.fact_score as number, {
-        id: 'Fact Score',
-        cell: (info) => {
-          return <Typography variant='body-medium'>{info.getValue()?.toFixed(2)}</Typography>;
-        },
-        header: () => <span>Fact Score</span>,
-      }),
     ],
     []
   );
