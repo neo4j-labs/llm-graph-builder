@@ -97,7 +97,13 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const [multiModeError, setMultiModeError] = useState<string>('');
   const [enableReference, toggleReferenceVisibility] = useReducer((state: boolean) => !state, false);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const [isAdditionalMetricsEnabled, setIsAdditionalMetricsEnabled] = useState<boolean>(false);
+  const [isAdditionalMetricsEnabled, setIsAdditionalMetricsEnabled] = useState<boolean | null>(
+    multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length > 3
+      ? true
+      : multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length <= 3
+      ? false
+      : null
+  );
 
   const actions: CypherCodeBlockProps['actions'] = useMemo(
     () => [

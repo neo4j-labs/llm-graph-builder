@@ -20,7 +20,7 @@ export default function MultiModeMetrics({
   data: multimodelmetric[];
   metricsLoading: boolean;
   error: string;
-  isWithAdditionalMetrics: boolean;
+  isWithAdditionalMetrics: boolean | null;
 }) {
   const tableRef = useRef<HTMLDivElement>(null);
   const columnHelper = createColumnHelper<multimodelmetric>();
@@ -97,7 +97,7 @@ export default function MultiModeMetrics({
     getSortedRowModel: getSortedRowModel(),
   });
   useEffect(() => {
-    if (!isWithAdditionalMetrics) {
+    if (isWithAdditionalMetrics === false) {
       table.getAllLeafColumns().map((col, idx) => (idx > 2 ? col.toggleVisibility() : col));
     }
   }, [isWithAdditionalMetrics, table]);
