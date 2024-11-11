@@ -20,7 +20,8 @@ RETURN
             labels: [coalesce(apoc.coll.removeAll(labels(node), ['__Entity__'])[0], "*")],
             element_id: elementId(node),
             properties: { 
-                id: CASE WHEN node.id IS NOT NULL THEN node.id ELSE node.fileName END
+                id: CASE WHEN node.id IS NOT NULL THEN node.id ELSE node.fileName END,
+                title:  CASE WHEN node.title IS NOT NULL THEN node.title ELSE " " END
             }
         }
     ] AS nodes,
