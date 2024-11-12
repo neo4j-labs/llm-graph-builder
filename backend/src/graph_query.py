@@ -227,7 +227,6 @@ def get_graph_results(uri, username, password,database,document_names):
 
 def get_chunktext_results(uri, username, password, database, document_name, page_no):
    """Retrieves chunk text, position, and page number from graph data with pagination."""
-   driver = None
    try:
        logging.info("Starting chunk text query process")
        offset = 10
@@ -256,5 +255,4 @@ def get_chunktext_results(uri, username, password, database, document_name, page
        logging.error(f"An error occurred in get_chunktext_results. Error: {str(e)}")
        raise Exception("An error occurred in get_chunktext_results. Please check the logs for more details.") from e
    finally:
-       if driver:
-           driver.close()
+       driver.close()

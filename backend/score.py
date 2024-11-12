@@ -18,7 +18,7 @@ from sse_starlette.sse import EventSourceResponse
 from src.communities import create_communities
 from src.neighbours import get_neighbour_nodes
 import json
-from typing import List
+from typing import List, Mapping, Union
 from starlette.middleware.sessions import SessionMiddleware
 from google.oauth2.credentials import Credentials
 import os
@@ -30,8 +30,8 @@ from Secweb.XContentTypeOptions import XContentTypeOptions
 from Secweb.XFrameOptions import XFrame
 from fastapi.middleware.gzip import GZipMiddleware
 from src.ragas_eval import *
-from starlette.types import ASGIApp, Receive, Scope, Send
-from langchain_neo4j import Neo4jGraph
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
+import gzip
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
@@ -77,9 +77,10 @@ class CustomGZipMiddleware:
         await gzip_middleware(scope, receive, send)
 app = FastAPI()
 # SecWeb(app=app, Option={'referrer': False, 'xframe': False})
-# app.add_middleware(ContentSecurityPolicy, Option={'default-src': ["'self'"], 'base-uri': ["'self'"], 'block-all-mixed-content': []}, script_nonce=False, style_nonce=False, report_only=False)
+app.add_middleware(ContentSecurityPolicy, Option={'default-src': ["'self'"], 'base-uri': ["'self'"], 'block-all-mixed-content': []}, script_nonce=False, style_nonce=False, report_only=False)
 app.add_middleware(XContentTypeOptions)
 app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
+#app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
 app.add_middleware(CustomGZipMiddleware, minimum_size=1000, compresslevel=5,paths=["/sources_list","/url/scan","/extract","/chat_bot","/chunk_entities","/get_neighbours","/graph_query","/schema","/populate_graph_schema","/get_unconnected_nodes_list","/get_duplicate_nodes","/fetch_chunktext"])
 app.add_middleware(
     CORSMiddleware,
@@ -844,6 +845,58 @@ async def retry_processing(uri=Form(), userName=Form(), password=Form(), databas
         return create_api_response(job_status, message=message, error=error_message)
     finally:
         gc.collect()        
+
+@app.post("/fetch_chunktext")
+async def fetch_chunktext(
+   uri: str = Form(),
+   database: str = Form(),
+   userName: str = Form(),
+   password: str = Form(),
+   document_name: str = Form(),
+   page_no: int = Form(1)
+):
+   try:
+       payload_json_obj = {
+           'api_name': 'fetch_chunktext',
+           'db_url': uri,
+           'userName': userName,
+           'database': database,
+           'document_name': document_name,
+           'page_no': page_no,
+           'logging_time': formatted_time(datetime.now(timezone.utc))
+       }
+       logger.log_struct(payload_json_obj, "INFO")
+       start = time.time()
+       result = await asyncio.to_thread(
+           get_chunktext_results,
+           uri=uri,
+           username=userName,
+           password=password,
+           database=database,
+           document_name=document_name,
+           page_no=page_no
+       )
+       end = time.time()
+       elapsed_time = end - start
+       json_obj = {
+           'api_name': 'fetch_chunktext',
+           'db_url': uri,
+           'document_name': document_name,
+           'page_no': page_no,
+           'logging_time': formatted_time(datetime.now(timezone.utc)),
+           'elapsed_api_time': f'{elapsed_time:.2f}'
+       }
+       logger.log_struct(json_obj, "INFO")
+       return create_api_response('Success', data=result, message=f"Total elapsed API time {elapsed_time:.2f}")
+   except Exception as e:
+       job_status = "Failed"
+       message = "Unable to get chunk text response"
+       error_message = str(e)
+       logging.exception(f'Exception in fetch_chunktext: {error_message}')
+       return create_api_response(job_status, message=message, error=error_message)
+   finally:
+       gc.collect()
+
 
 if __name__ == "__main__":
     uvicorn.run(app)

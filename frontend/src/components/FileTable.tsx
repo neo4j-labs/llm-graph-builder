@@ -46,7 +46,12 @@ import {
 } from '../utils/Utils';
 import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, ChildRef } from '../types';
 import { useCredentials } from '../context/UserCredentials';
-import { MagnifyingGlassCircleIconSolid } from '@neo4j-ndl/react/icons';
+import {
+  ArrowPathIconSolid,
+  ClipboardDocumentIconSolid,
+  MagnifyingGlassCircleIconSolid,
+  DocumentTextIconSolid,
+} from '@neo4j-ndl/react/icons';
 import CustomProgressBar from './UI/CustomProgressBar';
 import subscribe from '../services/PollingAPI';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
@@ -60,7 +65,7 @@ import IndeterminateCheckbox from './UI/CustomCheckBox';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
 let onlyfortheFirstRender = true;
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
-  const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry } = props;
+  const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry, onChunkView } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
   const { userCredentials, isReadOnlyUser } = useCredentials();
@@ -587,13 +592,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               label='chunktextaction'
               text='View Chunks'
               size='large'
-              disabled={info.getValue() === 'Uploading' || info.getValue() === 'New'}
+              disabled={info.getValue() === 'Uploading'}
             >
-              <DocumentTextIconSolid className='n-size-token-7' />
+              <DocumentTextIconSolid />
             </IconButtonWithToolTip>
           </>
         ),
-        maxSize: 300,
+        size: 300,
         minSize: 180,
         header: () => <span>Actions</span>,
         footer: (info) => info.column.id,
