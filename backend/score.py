@@ -186,7 +186,6 @@ async def extract_knowledge_graph_from_file(
         logger.log_struct(payload_json_obj, "INFO")
         graph = create_graph_database_connection(uri, userName, password, database)   
         graphDb_data_Access = graphDBdataAccess(graph)
-        
         if source_type == 'local file':
             merged_file_path = os.path.join(MERGED_DIR,file_name)
             logging.info(f'File path:{merged_file_path}')
@@ -210,6 +209,15 @@ async def extract_knowledge_graph_from_file(
             return create_api_response('Failed',message='source_type is other than accepted source')
         extract_api_time = time.time() - start_time
         if result is not None:
+            logging.info("Going for counting nodes and relationships")
+            count_response = graphDb_data_Access.update_node_relationship_count()
+            if count_response :
+                result['chunkNodeCount'] = count_response[file_name].get('chunkNodeCount',"")
+                result['chunkRelCount'] =  count_response[file_name].get('chunkRelCount',"")
+                result['entityNodeCount']=  count_response[file_name].get('entityNodeCount',"")
+                result['entityEntityRelCount']=  count_response[file_name].get('entityEntityRelCount',"")
+                result['communityNodeCount']=  count_response[file_name].get('communityNodeCount',"")
+                result['communityRelCount']= count_response[file_name].get('communityRelCount',"")
             result['db_url'] = uri
             result['api_name'] = 'extract'
             result['source_url'] = source_url
@@ -294,7 +302,11 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             await asyncio.to_thread(create_communities, uri, userName, password, database)
             json_obj = {'api_name': 'post_processing/create_communities', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logging.info(f'created communities')
-            
+        
+        graph = create_graph_database_connection(uri, userName, password, database)   
+        graphDb_data_Access = graphDBdataAccess(graph)
+        count_response = graphDb_data_Access.update_node_relationship_count()
+
         logger.log_struct(json_obj)
         return create_api_response('Success', message='All tasks completed successfully')
     
