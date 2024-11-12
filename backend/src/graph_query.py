@@ -3,7 +3,7 @@ from neo4j import time
 from neo4j import GraphDatabase
 import os
 import json
-from src.shared.constants import GRAPH_CHUNK_LIMIT,GRAPH_QUERY
+from src.shared.constants import GRAPH_CHUNK_LIMIT,GRAPH_QUERY,CHUNK_TEXT_QUERY,COUNT_CHUNKS_QUERY
 # from neo4j.debug import watch
 
 # watch("neo4j")
@@ -226,3 +226,34 @@ def get_graph_results(uri, username, password,database,document_names):
         driver.close()
 
 
+def get_chunktext_results(uri, username, password, database, document_name, page_no):
+   """Retrieves chunk text, position, and page number from graph data with pagination."""
+   try:
+       logging.info("Starting chunk text query process")
+       offset = 10
+       skip = (page_no - 1) * offset
+       limit = offset
+       driver = GraphDatabase.driver(uri, auth=(username, password))
+       with driver.session(database=database) as session:
+           total_chunks_result = session.run(COUNT_CHUNKS_QUERY, file_name=document_name)
+           total_chunks = total_chunks_result.single()["total_chunks"]
+           total_pages = (total_chunks + offset - 1) // offset  # Calculate total pages
+           records = session.run(CHUNK_TEXT_QUERY, file_name=document_name, skip=skip, limit=limit)
+           pageitems = [
+               {
+                   "text": record["chunk_text"],
+                   "position": record["chunk_position"],
+                   "pagenumber": record["page_number"]
+               }
+               for record in records
+           ]
+           logging.info(f"Query process completed with {len(pageitems)} chunks retrieved")
+           return {
+               "pageitems": pageitems,
+               "total_pages": total_pages
+           }
+   except Exception as e:
+       logging.error(f"An error occurred in get_chunktext_results. Error: {str(e)}")
+       raise Exception("An error occurred in get_chunktext_results. Please check the logs for more details.") from e
+   finally:
+       driver.close()

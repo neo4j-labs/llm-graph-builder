@@ -107,24 +107,38 @@ RETURN p.id as communityId, collect(c.summary) as texts
 STORE_COMMUNITY_SUMMARIES = """
 UNWIND $data AS row
 MERGE (c:__Community__ {id:row.community})
-SET c.summary = row.summary
+SET c.summary = row.summary,
+    c.title = row.title
 """ 
+
 
 COMMUNITY_SYSTEM_TEMPLATE = "Given input triples, generate the information summary. No pre-amble."
 
-COMMUNITY_TEMPLATE = """Based on the provided nodes and relationships that belong to the same graph community,
-generate a natural language summary of the provided information:
-{community_info}
 
-Summary:""" 
+COMMUNITY_TEMPLATE = """
+Based on the provided nodes and relationships that belong to the same graph community,
+generate following output in exact format
+title: A concise title, no more than 4 words,
+summary: A natural language summary of the information
+{community_info}
+Example output:
+title: Example Title,
+summary: This is an example summary that describes the key information of this community.
+"""
 
 PARENT_COMMUNITY_SYSTEM_TEMPLATE = "Given an input list of community summaries, generate a summary of the information"
 
 PARENT_COMMUNITY_TEMPLATE = """Based on the provided list of community summaries that belong to the same graph community, 
-generate a natural language summary of the information.Include all the necessary information as possible
+generate following output in exact format
+title: A concise title, no more than 4 words,
+summary: A natural language summary of the information. Include all the necessary information as much as possible.
+
 {community_info}
 
-Summary:""" 
+Example output:
+title: Example Title,
+summary: This is an example summary that describes the key information of this community.
+""" 
 
 
 GET_COMMUNITY_DETAILS = """
@@ -277,8 +291,17 @@ def process_community_info(community, chain, is_parent=False):
             combined_text = " ".join(f"Summary {i+1}: {summary}" for i, summary in enumerate(community.get("texts", [])))
         else:
             combined_text = prepare_string(community)
-        summary = chain.invoke({'community_info': combined_text})
-        return {"community": community['communityId'], "summary": summary}
+        summary_response = chain.invoke({'community_info': combined_text})
+        lines = summary_response.splitlines()
+        title = "Untitled Community"
+        summary = ""
+        for line in lines:
+            if line.lower().startswith("title"):
+                title = line.split(":", 1)[-1].strip()
+            elif line.lower().startswith("summary"):
+                summary = line.split(":", 1)[-1].strip()     
+        logging.info(f"Community Title : {title}")
+        return {"community": community['communityId'], "title":title, "summary": summary}
     except Exception as e:
         logging.error(f"Failed to process community {community.get('communityId', 'unknown')}: {e}")
         return None
@@ -291,7 +314,7 @@ def create_community_summaries(gds, model):
         summaries = []
         with ThreadPoolExecutor() as executor:
             futures = [executor.submit(process_community_info, community, community_chain) for community in community_info_list.to_dict(orient="records")]
-            
+   
             for future in as_completed(futures):
                 result = future.result()
                 if result:
@@ -482,9 +505,3 @@ def create_communities(uri, username, password, database,model=COMMUNITY_CREATIO
             logging.warning("Failed to write communities. Constraint was not applied.")
     except Exception as e:
         logging.error(f"Failed to create communities: {e}")
-
-
-
-
-
-

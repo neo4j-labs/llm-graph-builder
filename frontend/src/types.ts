@@ -154,6 +154,7 @@ export interface FileTableProps {
   connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
   onInspect: (id: string) => void;
+  onChunkView: (name: string) => void;
   handleGenerateGraph: () => void;
   onRetry: (id: string) => void;
 }
@@ -379,7 +380,13 @@ export interface commonserverresponse {
   error?: string;
   message?: string | orphanTotalNodes;
   file_name?: string;
-  data?: labelsAndTypes | labelsAndTypes[] | uploadData | orphanNodeProps[] | dupNodes[];
+  data?:
+    | labelsAndTypes
+    | labelsAndTypes[]
+    | uploadData
+    | orphanNodeProps[]
+    | dupNodes[]
+    | { pageitems: chunkdata[]; total_pages: number };
 }
 export interface dupNodeProps {
   id: string;
@@ -397,6 +404,11 @@ export interface selectedDuplicateNodes {
   firstElementId: string;
   similarElementIds: string[];
 }
+export interface chunkdata {
+  text: string;
+  position: number;
+  pagenumber: null | number;
+}
 export interface ScehmaFromText extends Partial<commonserverresponse> {
   data: labelsAndTypes;
 }
@@ -406,6 +418,9 @@ export interface ServerData extends Partial<commonserverresponse> {
 }
 export interface duplicateNodesData extends Partial<commonserverresponse> {
   data: dupNodes[];
+}
+export interface chunksData extends Partial<commonserverresponse> {
+  data: { pageitems: chunkdata[]; total_pages: number };
 }
 export interface OrphanNodeResponse extends Partial<commonserverresponse> {
   data: orphanNodeProps[];
@@ -556,6 +571,10 @@ export interface LargefilesProps {
 }
 
 export interface MessagesContextProviderProps {
+  children: ReactNode;
+}
+
+export interface GraphContextProviderProps {
   children: ReactNode;
 }
 
@@ -713,6 +732,11 @@ export interface MessageContextType {
   setMessages: Dispatch<SetStateAction<Messages[]>>;
   clearHistoryData: boolean;
   setClearHistoryData: Dispatch<SetStateAction<boolean>>;
+}
+
+export interface GraphContextType {
+  loadingGraph: boolean;
+  setLoadingGraph: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface DatabaseStatusProps {
