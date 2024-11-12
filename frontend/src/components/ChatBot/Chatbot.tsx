@@ -48,6 +48,7 @@ if (typeof window !== 'undefined') {
     sessionStorage.setItem('session_id', id);
   }
 }
+const sessionId = sessionStorage.getItem('session_id') ?? '';
 
 const Chatbot: FC<ChatbotProps> = (props) => {
   const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, connectionStatus } = props;
@@ -56,7 +57,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const { userCredentials } = useCredentials();
   const { model, chatModes, selectedRows, filesData } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [sessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
   const [sourcesModal, setSourcesModal] = useState<string[]>([]);
   const [modelModal, setModelModal] = useState<string>('');
