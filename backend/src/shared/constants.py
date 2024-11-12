@@ -174,7 +174,7 @@ SKIP $skip
 LIMIT $limit
 """
 
-NODE_RELATIONSHIP_COUNT_QUERY = """
+NODEREL_COUNT_QUERY_WITH_COMMUNITY = """
 MATCH docs = (d:Document)
 WHERE d.fileName IS NOT NULL
 CALL {
@@ -221,6 +221,30 @@ CALL {
    RETURN d.fileName AS filename, chunkNodeCount, chunkRelCount + chunkEntityRelCount AS chunkRelCount,
           entityNodeCount, entityEntityRelCount, communityNodeCount, communityRelCount
 }
+RETURN filename, chunkNodeCount, chunkRelCount, entityNodeCount, entityEntityRelCount, communityNodeCount, communityRelCount
+ORDER BY d.createdAt DESC
+"""
+NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY = """
+MATCH docs = (d:Document)
+WHERE d.fileName IS NOT NULL
+CALL {
+   WITH d
+   // Match PART_OF and HAS_ENTITY relationships on Chunks
+   OPTIONAL MATCH (d)<-[po:PART_OF]-(c:Chunk)
+   OPTIONAL MATCH (c)-[he:HAS_ENTITY]->(e:__Entity__)
+   WITH d, count(distinct c) AS chunkNodeCount, count(distinct po) AS chunkRelCount,
+        count(distinct he) AS chunkEntityRelCount, count(distinct e) AS entityNodeCount,
+        collect(distinct e) AS entities
+   // Calculate entity-to-entity relationships
+   CALL {
+       WITH entities
+       UNWIND entities AS e
+       RETURN sum(COUNT { (e)-->(e2:__Entity__) WHERE e2 in entities }) AS entityEntityRelCount
+   }
+   RETURN d.fileName AS filename, chunkNodeCount, chunkRelCount + chunkEntityRelCount AS chunkRelCount,
+          entityNodeCount, entityEntityRelCount
+}
+RETURN filename, chunkNodeCount, chunkRelCount, entityNodeCount, entityEntityRelCount
 ORDER BY d.createdAt DESC
 """
 

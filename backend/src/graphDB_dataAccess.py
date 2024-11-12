@@ -4,7 +4,7 @@ from datetime import datetime
 from langchain_community.graphs import Neo4jGraph
 from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model
 from src.document_sources.gcs_bucket import delete_file_from_gcs
-from src.shared.constants import BUCKET_UPLOAD,NODE_RELATIONSHIP_COUNT_QUERY
+from src.shared.constants import BUCKET_UPLOAD,NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY
 from src.entities.source_node import sourceNode
 from src.communities import MAX_COMMUNITY_LEVELS
 import json
@@ -443,9 +443,12 @@ class graphDBdataAccess:
         return "Drop and Re-Create vector index succesfully"
 
 
-    def update_node_relationship_count(self):
+    def update_node_relationship_count(self,update_community_count_flag):
         logging.info("updating node and relationship count")
-        result = self.execute_query(NODE_RELATIONSHIP_COUNT_QUERY)
+        if update_community_count_flag == True:
+            result = self.execute_query(NODEREL_COUNT_QUERY_WITH_COMMUNITY)
+        else:
+            result = self.execute_query(NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY)
         response = {}
         for record in result:
             filename = record["filename"]
@@ -453,8 +456,12 @@ class graphDBdataAccess:
             chunkRelCount = record["chunkRelCount"]
             entityNodeCount = record["entityNodeCount"]
             entityEntityRelCount = record["entityEntityRelCount"]
-            communityNodeCount = record["communityNodeCount"]
-            communityRelCount = record["communityRelCount"]
+            if update_community_count_flag == True:
+                communityNodeCount = record["communityNodeCount"]
+                communityRelCount = record["communityRelCount"]
+            else:
+                communityNodeCount = 0
+                communityRelCount = 0
 
             update_query = """
             MATCH (d:Document {fileName: $filename})
