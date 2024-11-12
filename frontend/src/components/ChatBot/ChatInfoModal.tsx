@@ -104,6 +104,13 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       ? false
       : null
   );
+  const [isAdditionalMetricsWithSingleMode, setIsAdditionalMetricsWithSingleMode] = useState<boolean | null>(
+    metricDetails != undefined && Object.keys(metricDetails).length > 2
+      ? true
+      : metricDetails != undefined && Object.keys(metricDetails).length <= 2
+      ? false
+      : null
+  );
 
   const actions: CypherCodeBlockProps['actions'] = useMemo(
     () => [
@@ -227,6 +234,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             successresponse.push(metricPromise.value.data.data);
           }
         }
+        setIsAdditionalMetricsWithSingleMode(successresponse.length === 2);
         toggleMetricsLoading();
         const mergedState = successresponse.reduce((acc, cur) => {
           if (acc[defaultMode]) {
@@ -424,26 +432,42 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             <MetricsCheckBoxWithCheck
               enableReference={enableReference}
               toggleReferenceVisibility={toggleReferenceVisibility}
-              isVisible={isSingleMode}
+              isVisible={
+                isSingleMode &&
+                (isAdditionalMetricsWithSingleMode === false || isAdditionalMetricsWithSingleMode === null)
+              }
             />
             <MetricsCheckBoxWithCheck
               enableReference={enableReference}
               toggleReferenceVisibility={toggleReferenceVisibility}
-              isVisible={isMultiModes}
+              isVisible={isMultiModes && (isAdditionalMetricsEnabled === false || isAdditionalMetricsEnabled === null)}
             />
-            <TextareaWithCheck isVisible={enableReference && isSingleMode} />
-            <TextareaWithCheck isVisible={enableReference && isMultiModes} />
-            {isSingleMode && (
-              <Button
-                label='Metrics Action Button'
-                disabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
-                className='w-max self-center mt-4'
-                onClick={loadMetrics}
-              >
-                View Detailed Metrics
-              </Button>
-            )}
-            {isMultiModes && (
+            <TextareaWithCheck
+              isVisible={
+                enableReference &&
+                isSingleMode &&
+                (isAdditionalMetricsWithSingleMode === false || isAdditionalMetricsWithSingleMode === null)
+              }
+            />
+            <TextareaWithCheck
+              isVisible={
+                enableReference &&
+                isMultiModes &&
+                (isAdditionalMetricsEnabled === false || isAdditionalMetricsEnabled === null)
+              }
+            />
+            {isSingleMode &&
+              (isAdditionalMetricsWithSingleMode === false || isAdditionalMetricsWithSingleMode === null) && (
+                <Button
+                  label='Metrics Action Button'
+                  disabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
+                  className='w-max self-center mt-4'
+                  onClick={loadMetrics}
+                >
+                  View Detailed Metrics
+                </Button>
+              )}
+            {isMultiModes && (isAdditionalMetricsEnabled === false || isAdditionalMetricsEnabled === null) && (
               <Button
                 label='Metrics Action Button'
                 disabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}

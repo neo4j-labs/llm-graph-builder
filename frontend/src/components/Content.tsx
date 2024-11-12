@@ -807,10 +807,7 @@ const Content: React.FC<ContentProps> = ({
         ></ChunkPopUp>
       )}
       {showEnhancementDialog && (
-        <GraphEnhancementDialog
-          open={showEnhancementDialog}
-          onClose={toggleEnhancementDialog}
-        ></GraphEnhancementDialog>
+        <GraphEnhancementDialog open={showEnhancementDialog} onClose={toggleEnhancementDialog}></GraphEnhancementDialog>
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row' flexWrap='wrap'>

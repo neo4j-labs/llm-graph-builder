@@ -98,7 +98,9 @@ export default function MultiModeMetrics({
   });
   useEffect(() => {
     if (isWithAdditionalMetrics === false) {
-      table.getAllLeafColumns().map((col, idx) => (idx > 2 ? col.toggleVisibility() : col));
+      table.setColumnVisibility({ 'Recall Score': false, 'Semantic Score': false, 'Rouge Score': false });
+    } else {
+      table.resetColumnVisibility(true);
     }
   }, [isWithAdditionalMetrics, table]);
 
@@ -107,37 +109,41 @@ export default function MultiModeMetrics({
       {error?.trim() != '' ? (
         <Banner type='danger'>{error}</Banner>
       ) : (
-        <DataGrid
-          ref={tableRef}
-          isResizable={true}
-          tableInstance={table}
-          styling={{
-            borderStyle: 'all-sides',
-            zebraStriping: true,
-            headerStyle: 'clean',
-          }}
-          isLoading={metricsLoading}
-          components={{
-            Body: (props) => <DataGridComponents.Body {...props} />,
-            PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
-              return (
-                <DataGridComponents.PaginationNumericButton
-                  {...restProps}
-                  isSelected={isSelected}
-                  innerProps={{
-                    ...innerProps,
-                    style: {
-                      ...(isSelected && {
-                        backgroundSize: '200% auto',
-                        borderRadius: '10px',
-                      }),
-                    },
-                  }}
-                />
-              );
-            },
-          }}
-        />
+        <div className={isWithAdditionalMetrics === false ? 'flex justify-center items-center' : ''}>
+          <DataGrid
+            ref={tableRef}
+            isResizable={true}
+            tableInstance={table}
+            styling={{
+              borderStyle: 'all-sides',
+              zebraStriping: true,
+              headerStyle: 'clean',
+            }}
+            isAutoResizingColumns={true}
+            isLoading={metricsLoading}
+            rootProps={{ className: isWithAdditionalMetrics === false ? '!w-[465px]' : 'auto' }}
+            components={{
+              Body: (props) => <DataGridComponents.Body {...props} />,
+              PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
+                return (
+                  <DataGridComponents.PaginationNumericButton
+                    {...restProps}
+                    isSelected={isSelected}
+                    innerProps={{
+                      ...innerProps,
+                      style: {
+                        ...(isSelected && {
+                          backgroundSize: '200% auto',
+                          borderRadius: '10px',
+                        }),
+                      },
+                    }}
+                  />
+                );
+              },
+            }}
+          />
+        </div>
       )}
     </Box>
   );

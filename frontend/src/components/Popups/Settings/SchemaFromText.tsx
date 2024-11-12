@@ -7,13 +7,7 @@ import { buttonCaptions } from '../../../utils/Constants';
 import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
 import { showNormalToast, showSuccessToast } from '../../../utils/toasts';
 
-const SchemaFromTextDialog = ({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) => {
+const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
   const [userText, setUserText] = useState<string>('');
   const [loading, setloading] = useState<boolean>(false);
   const { setSelectedNodes, setSelectedRels } = useFileContext();

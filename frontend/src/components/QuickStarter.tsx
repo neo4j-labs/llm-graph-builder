@@ -7,15 +7,13 @@ import AlertContextWrapper from '../context/Alert';
 import { MessageContextWrapper } from '../context/UserMessages';
 
 const QuickStarter: React.FunctionComponent = () => {
-
   return (
     <UserCredentialsWrapper>
       <FileContextProvider>
         <MessageContextWrapper>
           <AlertContextWrapper>
             <Header />
-            <PageLayout
-            />
+            <PageLayout />
           </AlertContextWrapper>
         </MessageContextWrapper>
       </FileContextProvider>
