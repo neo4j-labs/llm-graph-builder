@@ -539,7 +539,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               label='chunktextaction'
               text='View Chunks'
               size='large'
-              disabled={info.getValue() === 'Uploading'}
+              disabled={info.getValue() === 'Uploading' || info.getValue() === 'New'}
             >
               <DocumentTextIconSolid />
             </IconButtonWithToolTip>
