@@ -244,6 +244,7 @@ export type ChatbotProps = {
   clear?: boolean;
   isFullScreen?: boolean;
   connectionStatus: boolean;
+  isReadOnly?: boolean;
 };
 export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
 
@@ -694,7 +695,8 @@ export interface ChildRef {
   getSelectedRows: () => CustomFile[];
 }
 export interface IconProps {
-  closeChatBot: () => void;
+  isFullScreen?: boolean,
+  closeChatBot?: () => void;
   deleteOnClick?: () => void;
   messages: Messages[];
 }
@@ -715,6 +717,13 @@ export interface DrawerChatbotProps {
   clearHistoryData: boolean;
   messages: Messages[];
   connectionStatus: boolean;
+}
+
+export interface ChatOnlyProps{
+  clearHistoryData: boolean;
+  messages: Messages[];
+  connectionStatus: boolean;
+  isReadOnlyUser:boolean;
 }
 
 export interface ContextProps {

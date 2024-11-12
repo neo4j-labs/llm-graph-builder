@@ -5,6 +5,7 @@ import {
   SunIconOutline,
   CodeBracketSquareIconOutline,
   InformationCircleIconOutline,
+  ArrowTopRightOnSquareIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { Typography } from '@neo4j-ndl/react';
 import { memo, useCallback, useContext, useEffect } from 'react';
@@ -12,10 +13,9 @@ import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { tooltips } from '../../utils/Constants';
 import { useFileContext } from '../../context/UsersFiles';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
-
 function Header() {
   const { colorMode, toggleColorMode } = useContext(ThemeWrapperContext);
-
+    
   const handleURLClick = useCallback((url: string) => {
     window.open(url, '_blank');
   }, []);
@@ -26,6 +26,27 @@ function Header() {
     setIsSchema(isSchema);
   }, [isSchema]);
 
+  const openChatPopout = useCallback(() => {
+    const session = localStorage.getItem('neo4j.connection');
+    if (session) {
+      const neo4jConnection = JSON.parse(session);
+      const uri = neo4jConnection.uri;
+      const user = neo4jConnection.user;
+      const password = btoa(neo4jConnection.password); // Encode password
+      const database = neo4jConnection.database;
+      const port = uri.split(':')[2];
+      // Construct URL with query parameters
+      const chatUrl = `/chat-only?uri=${encodeURIComponent(uri)}&user=${encodeURIComponent(
+        user
+      )}&password=${encodeURIComponent(password)}&database=${encodeURIComponent(
+        database
+      )}&port=${encodeURIComponent(port)}`;
+      // Open the new window with credentials in URL
+      window.open(chatUrl, '_blank');
+    } else {
+      console.warn('No connection data found in localStorage.');
+    }
+  }, []);
   return (
     <div
       className='n-bg-palette-neutral-bg-weak p-1'
@@ -90,6 +111,15 @@ function Header() {
                     <MoonIconOutline />
                   </span>
                 )}
+              </IconButtonWithToolTip>
+              <IconButtonWithToolTip
+                label={tooltips.openChatPopout}
+                onClick={openChatPopout}
+                text={tooltips.openChatPopout}
+                size='large'
+                clean
+              >
+                <ArrowTopRightOnSquareIconOutline />
               </IconButtonWithToolTip>
             </div>
           </div>
