@@ -60,7 +60,6 @@ const Content: React.FC<ContentProps> = ({
   setIsSchema,
   showEnhancementDialog,
   toggleEnhancementDialog,
-  closeSettingModal,
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
@@ -811,7 +810,6 @@ const Content: React.FC<ContentProps> = ({
         <GraphEnhancementDialog
           open={showEnhancementDialog}
           onClose={toggleEnhancementDialog}
-          closeSettingModal={closeSettingModal}
         ></GraphEnhancementDialog>
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>

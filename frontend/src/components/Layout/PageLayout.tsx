@@ -3,7 +3,6 @@ import SideNav from './SideNav';
 import DrawerDropzone from './DrawerDropzone';
 import DrawerChatbot from './DrawerChatbot';
 import Content from '../Content';
-import SettingsModal from '../Popups/Settings/SettingModal';
 import { clearChatAPI } from '../../services/QnaAPI';
 import { useCredentials } from '../../context/UserCredentials';
 import { UserCredentials } from '../../types';
@@ -13,15 +12,7 @@ import { useFileContext } from '../../context/UsersFiles';
 import SchemaFromTextDialog from '../Popups/Settings/SchemaFromText';
 import useSpeechSynthesis from '../../hooks/useSpeech';
 
-export default function PageLayoutNew({
-  isSettingPanelExpanded,
-  closeSettingModal,
-  openSettingsDialog,
-}: {
-  isSettingPanelExpanded: boolean;
-  closeSettingModal: () => void;
-  openSettingsDialog: () => void;
-}) {
+export default function PageLayout() {
   const largedesktops = useMediaQuery(`(min-width:1440px )`);
   const { userCredentials, connectionStatus } = useCredentials();
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(largedesktops));
@@ -103,31 +94,17 @@ export default function PageLayoutNew({
       />
       <SchemaFromTextDialog
         open={showTextFromSchemaDialog.show}
-        openSettingsDialog={openSettingsDialog}
         onClose={() => {
           setShowTextFromSchemaDialog({ triggeredFrom: '', show: false });
           switch (showTextFromSchemaDialog.triggeredFrom) {
             case 'enhancementtab':
               toggleEnhancementDialog();
               break;
-            case 'schemadialog':
-              openSettingsDialog();
-              break;
             default:
               break;
           }
         }}
       ></SchemaFromTextDialog>
-      <SettingsModal
-        openTextSchema={() => {
-          setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
-        }}
-        open={isSettingPanelExpanded}
-        onClose={closeSettingModal}
-        settingView='headerView'
-        isSchema={isSchema}
-        setIsSchema={setIsSchema}
-      />
       <Content
         openChatBot={() => setShowChatBot(true)}
         isLeftExpanded={isLeftExpanded}
@@ -140,7 +117,6 @@ export default function PageLayoutNew({
         setIsSchema={setIsSchema}
         showEnhancementDialog={showEnhancementDialog}
         toggleEnhancementDialog={toggleEnhancementDialog}
-        closeSettingModal={closeSettingModal}
       />
       {showDrawerChatbot && (
         <DrawerChatbot

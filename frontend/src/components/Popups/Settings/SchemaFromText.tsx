@@ -10,11 +10,9 @@ import { showNormalToast, showSuccessToast } from '../../../utils/toasts';
 const SchemaFromTextDialog = ({
   open,
   onClose,
-  openSettingsDialog,
 }: {
   open: boolean;
   onClose: () => void;
-  openSettingsDialog: () => void;
 }) => {
   const [userText, setUserText] = useState<string>('');
   const [loading, setloading] = useState<boolean>(false);
@@ -84,7 +82,6 @@ const SchemaFromTextDialog = ({
       onClose();
       setUserText('');
       setIsSchema(false);
-      openSettingsDialog();
     } catch (error) {
       setloading(false);
       console.log(error);

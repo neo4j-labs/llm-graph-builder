@@ -146,7 +146,6 @@ export interface ContentProps {
   setIsSchema: Dispatch<SetStateAction<boolean>>;
   showEnhancementDialog: boolean;
   toggleEnhancementDialog: () => void;
-  closeSettingModal: () => void;
 }
 
 export interface FileTableProps {

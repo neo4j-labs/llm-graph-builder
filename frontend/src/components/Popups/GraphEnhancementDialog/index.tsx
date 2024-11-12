@@ -1,6 +1,6 @@
 import { Dialog, Tabs, Box, Typography, Flex, useMediaQuery } from '@neo4j-ndl/react';
 import graphenhancement from '../../../assets/images/graph-enhancements.svg';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import DeletePopUpForOrphanNodes from './DeleteTabForOrphanNodes';
 import deleteOrphanAPI from '../../../services/DeleteOrphanNodes';
 import { UserCredentials } from '../../../types';
@@ -14,11 +14,9 @@ import PostProcessingCheckList from './PostProcessingCheckList';
 export default function GraphEnhancementDialog({
   open,
   onClose,
-  closeSettingModal,
 }: {
   open: boolean;
   onClose: () => void;
-  closeSettingModal: () => void;
 }) {
   const { breakpoints } = tokens;
   const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
@@ -36,9 +34,7 @@ export default function GraphEnhancementDialog({
       console.log(error);
     }
   };
-  useEffect(() => {
-    closeSettingModal();
-  }, []);
+
 
   const [activeTab, setactiveTab] = useState<number>(0);
   return (
