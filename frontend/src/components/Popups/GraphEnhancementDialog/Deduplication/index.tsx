@@ -66,10 +66,13 @@ export default function DeduplicationTab() {
       console.log(error);
     }
   }, [userCredentials]);
+
   useEffect(() => {
-    (async () => {
-      await fetchDuplicateNodes();
-    })();
+    if (userCredentials != null) {
+      (async () => {
+        await fetchDuplicateNodes();
+      })();
+    }
   }, [userCredentials]);
 
   const clickHandler = async () => {

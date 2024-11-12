@@ -62,9 +62,11 @@ export default function DeletePopUpForOrphanNodes({
   }, [userCredentials]);
 
   useEffect(() => {
-    (async () => {
-      await fetchOrphanNodes();
-    })();
+    if (userCredentials != null) {
+      (async () => {
+        await fetchOrphanNodes();
+      })();
+    }
     return () => {
       setOrphanNodes([]);
       setTotalOrphanNodes(0);

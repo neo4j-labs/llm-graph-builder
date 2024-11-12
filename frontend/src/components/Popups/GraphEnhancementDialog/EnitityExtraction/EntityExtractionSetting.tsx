@@ -250,15 +250,6 @@ export default function EntityExtractionSetting({
     );
   };
 
-  // Load selectedSchemas from local storage on mount
-  useEffect(() => {
-    const storedSchemas = localStorage.getItem('selectedSchemas');
-    if (storedSchemas) {
-      const parsedSchemas = JSON.parse(storedSchemas);
-      setSelectedSchemas(parsedSchemas.selectedOptions);
-    }
-  }, []);
-
   return (
     <div>
       <Typography variant='body-medium'>
