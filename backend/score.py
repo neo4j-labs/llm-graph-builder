@@ -36,7 +36,6 @@ from fastapi.middleware.gzip import GZipMiddleware
 from src.ragas_eval import *
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 import gzip
-from langchain_neo4j import Neo4jGraph
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
@@ -82,9 +81,10 @@ class CustomGZipMiddleware:
         await gzip_middleware(scope, receive, send)
 app = FastAPI()
 # SecWeb(app=app, Option={'referrer': False, 'xframe': False})
-# app.add_middleware(ContentSecurityPolicy, Option={'default-src': ["'self'"], 'base-uri': ["'self'"], 'block-all-mixed-content': []}, script_nonce=False, style_nonce=False, report_only=False)
+app.add_middleware(ContentSecurityPolicy, Option={'default-src': ["'self'"], 'base-uri': ["'self'"], 'block-all-mixed-content': []}, script_nonce=False, style_nonce=False, report_only=False)
 app.add_middleware(XContentTypeOptions)
 app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
+#app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
 app.add_middleware(CustomGZipMiddleware, minimum_size=1000, compresslevel=5,paths=["/sources_list","/url/scan","/extract","/chat_bot","/chunk_entities","/get_neighbours","/graph_query","/schema","/populate_graph_schema","/get_unconnected_nodes_list","/get_duplicate_nodes","/fetch_chunktext"])
 app.add_middleware(
     CORSMiddleware,
@@ -930,6 +930,16 @@ async def fetch_chunktext(
    page_no: int = Form(1)
 ):
    try:
+       payload_json_obj = {
+           'api_name': 'fetch_chunktext',
+           'db_url': uri,
+           'userName': userName,
+           'database': database,
+           'document_name': document_name,
+           'page_no': page_no,
+           'logging_time': formatted_time(datetime.now(timezone.utc))
+       }
+       logger.log_struct(payload_json_obj, "INFO")
        start = time.time()
        result = await asyncio.to_thread(
            get_chunktext_results,
@@ -945,8 +955,6 @@ async def fetch_chunktext(
        json_obj = {
            'api_name': 'fetch_chunktext',
            'db_url': uri,
-           'userName': userName,
-           'database': database,
            'document_name': document_name,
            'page_no': page_no,
            'logging_time': formatted_time(datetime.now(timezone.utc)),
@@ -963,34 +971,6 @@ async def fetch_chunktext(
    finally:
        gc.collect()
 
-@app.post("/backend_connection_configuation")
-async def backend_connection_configuation():
-    try:
-        graph = Neo4jGraph()
-        logging.info(f'login connection status of object: {graph}')
-        if graph is not None:
-            graph_connection = True
-            isURI = os.getenv('NEO4J_URI')
-            isUsername= os.getenv('NEO4J_USERNAME')
-            isDatabase= os.getenv('NEO4J_DATABASE')
-            isPassword= os.getenv('NEO4J_PASSWORD')
-            encoded_password = encode_password(isPassword)
-            graphDb_data_Access = graphDBdataAccess(graph)
-            gds_status = graphDb_data_Access.check_gds_version()
-            write_access = graphDb_data_Access.check_account_access(database=isDatabase)
-            return create_api_response('Success',message=f"Backend connection successful",data={'graph_connection':graph_connection,'uri':isURI,'user_name':isUsername,'database':isDatabase,'password':encoded_password,'gds_status':gds_status,'write_access':write_access})
-        else:
-            graph_connection = False
-            return create_api_response('Success',message=f"Backend connection is not successful",data=graph_connection)
-    except Exception as e:
-        graph_connection = False
-        job_status = "Failed"
-        message="Unable to connect backend DB"
-        error_message = str(e)
-        logging.exception(f'{error_message}')
-        return create_api_response(job_status, message=message, error=error_message + ' or fill from the login dialog', data=graph_connection)
-    finally:
-        gc.collect()    
 
 if __name__ == "__main__":
     uvicorn.run(app)

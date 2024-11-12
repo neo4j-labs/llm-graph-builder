@@ -585,13 +585,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               label='chunktextaction'
               text='View Chunks'
               size='large'
-              disabled={info.getValue() === 'Uploading' || info.getValue() === 'New'}
+              disabled={info.getValue() === 'Uploading'}
             >
-              <DocumentTextIconSolid className='n-size-token-7' />
+              <DocumentTextIconSolid />
             </IconButtonWithToolTip>
           </>
         ),
-        maxSize: 300,
+        size: 300,
         minSize: 180,
         header: () => <span>Actions</span>,
         footer: (info) => info.column.id,

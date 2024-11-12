@@ -137,6 +137,27 @@ def test_graph_website(model_name):
     #     print("Fail: ", e)
     return weburl_result
 
+def test_graph_website(model_name):
+    """Test graph creation from a Website page."""
+     #graph, model, source_url, source_type
+    source_url = 'https://www.amazon.com/'
+    source_type = 'web-url'
+    create_source_node_graph_web_url(graph, model_name, source_url, source_type)
+
+    weburl_result = extract_graph_from_web_page(URI, USERNAME, PASSWORD, DATABASE, model_name, source_url, '', '')
+    logging.info("WebUrl test done")
+    print(weburl_result)
+
+    try:
+        assert weburl_result['status'] == 'Completed'
+        assert weburl_result['nodeCount'] > 0
+        assert weburl_result['relationshipCount'] > 0
+        print("Success")
+    except AssertionError as e:
+        print("Fail: ", e)
+    return weburl_result
+
+
 def test_graph_from_youtube_video(model_name):
    """Test graph creation from a YouTube video."""
    source_url = 'https://www.youtube.com/watch?v=T-qy-zPWgqA'
