@@ -1,6 +1,6 @@
 import { FC, useContext } from 'react';
 import { Chunk, SourcesProps } from '../../types';
-import { Box, LoadingSpinner, TextLink, Typography } from '@neo4j-ndl/react';
+import { LoadingSpinner, TextLink, Typography } from '@neo4j-ndl/react';
 import { DocumentTextIconOutline, GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
 import { getLogo, isAllowedHost, youtubeLinkValidation } from '../../utils/Utils';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
@@ -28,9 +28,9 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
   return (
     <>
       {loading ? (
-        <Box className='flex justify-center items-center'>
+        <div className='flex justify-center items-center'>
           <LoadingSpinner size='small' />
-        </Box>
+        </div>
       ) : mode === 'entity search+vector' && uniqueChunks.length ? (
         <ul>
           {uniqueChunks

@@ -1,4 +1,4 @@
-import { Box, Dialog, Tabs, Typography } from '@neo4j-ndl/react';
+import { Dialog, Tabs, Typography } from '@neo4j-ndl/react';
 import youtubelightmodelogo from '../../assets/images/youtube-lightmode.svg';
 import youtubedarkmodelogo from '../../assets/images/youtube-darkmode.svg';
 import wikipedialogo from '../../assets/images/wikipedia.svg';
@@ -39,15 +39,15 @@ export default function GenericModal({
       }}
     >
       <Dialog.Header>
-        <Box className='flex flex-row pb-6 items-center mb-2'>
+        <div className='flex flex-row pb-6 items-center mb-2'>
           <img src={Neo4jDataImportFromCloud} style={{ width: 95, height: 95, marginRight: 10 }} loading='lazy' />
-          <Box className='flex flex-col'>
+          <div className='flex flex-col'>
             <Typography variant='h2'>Web Sources</Typography>
             <Typography variant='body-medium' className='mb-2'>
               Convert Any Web Source to Knowledge graph
             </Typography>
-          </Box>
-        </Box>
+          </div>
+        </div>
         <Tabs fill='underline' onChange={setactiveTab} size='large' value={activeTab}>
           {APP_SOURCES != undefined && APP_SOURCES.includes('youtube') && (
             <Tabs.Tab

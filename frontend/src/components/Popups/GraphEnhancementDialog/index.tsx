@@ -1,4 +1,4 @@
-import { Dialog, Tabs, Box, Typography, Flex, useMediaQuery } from '@neo4j-ndl/react';
+import { Dialog, Tabs, Typography, Flex, useMediaQuery } from '@neo4j-ndl/react';
 import graphenhancement from '../../../assets/images/graph-enhancements.svg';
 import { useState } from 'react';
 import DeletePopUpForOrphanNodes from './DeleteTabForOrphanNodes';
@@ -42,8 +42,8 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
       onClose={onClose}
     >
       <Dialog.Header className='flex justify-between self-end !mb-0 '>
-        <Box className='n-bg-palette-neutral-bg-weak px-4'>
-          <Box className='flex flex-row items-center mb-2'>
+        <div className='n-bg-palette-neutral-bg-weak px-4'>
+          <div className='flex flex-row items-center mb-2'>
             <img
               src={graphenhancement}
               style={{
@@ -54,7 +54,7 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
               }}
               loading='lazy'
             />
-            <Box className='flex flex-col'>
+            <div className='flex flex-col'>
               <Typography variant={isTablet ? 'h5' : 'h2'}>Graph Enhancements</Typography>
               <Typography variant={isTablet ? 'subheading-small' : 'subheading-medium'} className='mb-2'>
                 {isTablet
@@ -99,9 +99,9 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
                   </Tabs.Tab>
                 </Tabs>
               </Flex>
-            </Box>
-          </Box>
-        </Box>
+            </div>
+          </div>
+        </div>
       </Dialog.Header>
       <Dialog.Content className='flex flex-col n-gap-token- grow w-[90%] mx-auto'>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4' value={activeTab} tabId={0}>

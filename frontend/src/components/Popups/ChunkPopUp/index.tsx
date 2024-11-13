@@ -1,4 +1,4 @@
-import { Dialog, Typography, Flex, IconButton, Box, useMediaQuery } from '@neo4j-ndl/react';
+import { Dialog, Typography, Flex, IconButton, useMediaQuery } from '@neo4j-ndl/react';
 import { ArrowLeftIconOutline, ArrowRightIconOutline } from '@neo4j-ndl/react/icons';
 import { chunkdata } from '../../../types';
 import Loader from '../../../utils/Loader';
@@ -34,24 +34,24 @@ const ChunkPopUp = ({
   return (
     <Dialog isOpen={showChunkPopup} onClose={onClose}>
       <Dialog.Header>
-        <Box className='flex flex-row items-center mb-2'>
+        <div className='flex flex-row items-center mb-2'>
           <img
             src={chunklogo}
             style={{ width: isTablet ? 100 : 140, height: isTablet ? 100 : 140, marginRight: 10 }}
             loading='lazy'
           />
-          <Box className='flex flex-col'>
+          <div className='flex flex-col'>
             <Typography variant='h2'>Text Chunks</Typography>
             <Typography variant='body-medium' className='mb-2'>
               These text chunks are extracted to build a knowledge graph and enable accurate information retrieval using
               a different retrival strategies
             </Typography>
-          </Box>
-        </Box>
+          </div>
+        </div>
         {!chunksLoading && totalPageCount != null && totalPageCount > 0 && (
-          <Box className='flex flex-row justify-end'>
+          <div className='flex flex-row justify-end'>
             <Typography variant='subheading-small'>Total Pages: {totalPageCount}</Typography>
-          </Box>
+          </div>
         )}
       </Dialog.Header>
       <Dialog.Content>

@@ -319,14 +319,14 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     [activeChatmodes]
   );
   return (
-    <Box className='n-bg-palette-neutral-bg-weak p-4'>
-      <Box className='flex flex-row pb-6 items-center mb-2'>
+    <div className='n-bg-palette-neutral-bg-weak p-4'>
+      <div className='flex flex-row pb-6 items-center mb-2'>
         <img
           src={Neo4jRetrievalLogo}
           style={{ width: isTablet ? 80 : 95, height: isTablet ? 80 : 95, marginRight: 10 }}
           loading='lazy'
         />
-        <Box className='flex flex-col'>
+        <div className='flex flex-col'>
           <Typography variant='h2'>Retrieval information</Typography>
           <Typography variant='body-medium' className='mb-2'>
             To generate this response, the process took <span className='font-bold'>{response_time} seconds,</span>
@@ -339,8 +339,8 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             </span>{' '}
             mode.
           </Typography>
-        </Box>
-      </Box>
+        </div>
+      </div>
       {error?.length > 0 ? (
         <Banner type='danger' usage='inline'>
           {error}
@@ -567,18 +567,18 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         )}
       </Flex>
       {activeTab == 4 && nodes?.length && relationships?.length && mode !== chatModeLables.graph ? (
-        <Box className='button-container flex mt-2 justify-center'>
+        <div className='button-container flex mt-2 justify-center'>
           <GraphViewButton
             nodeValues={nodes}
             relationshipValues={relationships}
             label='Graph Entities used for Answer Generation'
             viewType='chatInfoView'
           />
-        </Box>
+        </div>
       ) : (
         <></>
       )}
-    </Box>
+    </div>
   );
 };
 export default ChatInfoModal;
