@@ -240,7 +240,10 @@ async def extract_knowledge_graph_from_file(
         extract_api_time = time.time() - start_time
         if result is not None:
             logging.info("Going for counting nodes and relationships")
+            count_node_time = time.time()
             update_community_count_flag = False
+            graph = create_graph_database_connection(uri, userName, password, database)   
+            graphDb_data_Access = graphDBdataAccess(graph)
             count_response = graphDb_data_Access.update_node_relationship_count(update_community_count_flag)
             if count_response :
                 result['chunkNodeCount'] = count_response[file_name].get('chunkNodeCount',"")
@@ -249,6 +252,7 @@ async def extract_knowledge_graph_from_file(
                 result['entityEntityRelCount']=  count_response[file_name].get('entityEntityRelCount',"")
                 result['communityNodeCount']=  count_response[file_name].get('communityNodeCount',"")
                 result['communityRelCount']= count_response[file_name].get('communityRelCount',"")
+                logging.info(f"counting completed in {(time.time()-count_node_time):.2f}")
             result['db_url'] = uri
             result['api_name'] = 'extract'
             result['source_url'] = source_url
@@ -330,7 +334,7 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             logging.info(f'Entity Embeddings created')
             
         if "enable_communities" in tasks:
-            await asyncio.to_thread(create_communities, uri, userName, password, database)
+            # await asyncio.to_thread(create_communities, uri, userName, password, database)
             json_obj = {'api_name': 'post_processing/create_communities', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logging.info(f'created communities')
             graph = create_graph_database_connection(uri, userName, password, database)   

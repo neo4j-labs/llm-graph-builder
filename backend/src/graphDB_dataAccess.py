@@ -462,7 +462,6 @@ class graphDBdataAccess:
             else:
                 communityNodeCount = 0
                 communityRelCount = 0
-
             update_query = """
             MATCH (d:Document {fileName: $filename})
             SET d.chunkNodeCount = $chunkNodeCount,
