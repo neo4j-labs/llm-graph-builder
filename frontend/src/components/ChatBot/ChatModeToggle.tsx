@@ -11,10 +11,12 @@ export default function ChatModeToggle({
   menuAnchor,
   closeHandler = () => {},
   open,
+  isRoot
 }: {
   menuAnchor: React.RefObject<HTMLElement | null>;
   closeHandler?: () => void;
   open: boolean;
+  isRoot:boolean
 }) {
   const { setchatModes, chatModes, postProcessingTasks } = useFileContext();
   const isCommunityAllowed = postProcessingTasks.includes('enable_communities');
@@ -68,5 +70,5 @@ export default function ChatModeToggle({
       };
     });
   }, [chatModes, memoizedChatModes, closeHandler]);
-  return <CustomMenu closeHandler={closeHandler} open={open} anchorOrigin={menuAnchor} items={menuItems} />;
+  return <CustomMenu isRoot={isRoot} closeHandler={closeHandler} open={open} anchorOrigin={menuAnchor} items={menuItems} />;
 }

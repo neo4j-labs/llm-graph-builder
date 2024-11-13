@@ -224,6 +224,7 @@ const SideNav: React.FC<SideNavProps> = ({
                         open={showChatMode}
                         closeHandler={() => setshowChatMode(false)}
                         menuAnchor={anchorMenuRef}
+                        isRoot={false}
                       ></ChatModeToggle>
                     </>
                   }

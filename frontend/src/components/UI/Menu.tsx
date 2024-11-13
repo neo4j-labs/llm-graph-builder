@@ -5,11 +5,13 @@ export default function CustomMenu({
   closeHandler,
   items,
   anchorOrigin,
+  isRoot=false
 }: {
   open: boolean;
   closeHandler: () => void;
   items: Menuitems[] | undefined;
   anchorOrigin: React.RefObject<HTMLElement | null>;
+  isRoot?:boolean
 }) {
   return (
     <Menu
@@ -19,6 +21,7 @@ export default function CustomMenu({
       }}
       anchorRef={anchorOrigin}
       className='custom-menu'
+      isRoot={isRoot}
     >
       {items?.map((i, idx) => (
         <Menu.Item
@@ -31,6 +34,7 @@ export default function CustomMenu({
           isDisabled={i.disabledCondition}
           className={i.isSelected ? i.selectedClassName : ''}
           description={i.description}
+          
         />
       ))}
     </Menu>
