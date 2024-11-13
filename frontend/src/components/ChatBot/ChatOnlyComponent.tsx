@@ -6,6 +6,8 @@ import { FileContextProvider } from '../../context/UsersFiles';
 import { useEffect, useState, useCallback } from 'react';
 import ExpandedChatButtonContainer from './ExpandedChatButtonContainer';
 import ConnectionModal from '../Popups/ConnectionModal/ConnectionModal';
+import { clearChatAPI } from '../../services/QnaAPI';
+import { UserCredentials } from '../../types';
 type ConnectionState = {
     openPopUp: boolean;
     chunksExists: boolean;
@@ -22,8 +24,9 @@ const ChatOnlyComponent: React.FC = () => (
     </UserCredentialsWrapper>
 );
 const ChatContent: React.FC = () => {
-    const { clearHistoryData, messages, setMessages } = useMessageContext();
-    const { connectionStatus, setUserCredentials, setConnectionStatus } = useCredentials();
+    const date = new Date();
+    const { clearHistoryData, messages, setMessages, setClearHistoryData } = useMessageContext();
+    const { connectionStatus, setUserCredentials, setConnectionStatus, userCredentials } = useCredentials();
     const [openConnection, setOpenConnection] = useState<ConnectionState>({
         openPopUp: false,
         chunksExists: false,
@@ -46,7 +49,7 @@ const ChatContent: React.FC = () => {
             const password = atob(encodedPassword);
             const credentials = { uri, userName: user, password, database, port };
             localStorage.setItem('neo4j.connection.popout', JSON.stringify(credentials));
-            const credentialsForAPI = { uri, userName: user, password:btoa(password), database, port };
+            const credentialsForAPI = { uri, userName: user, password: btoa(password), database, port };
             setUserCredentials({ ...credentialsForAPI });
             setConnectionStatus(true);
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -65,6 +68,41 @@ const ChatContent: React.FC = () => {
         urlParams.delete('openModal');
         window.history.replaceState({}, document.title, window.location.pathname + '?' + urlParams.toString());
     };
+
+
+    const deleteOnClick = async () => {
+        try {
+            const response = await clearChatAPI(
+                userCredentials as UserCredentials,
+                sessionStorage.getItem('session_id') ?? ''
+            );
+            if (response.data.status === 'Success') {
+                setClearHistoryData(true);
+            }
+        } catch (error) {
+            console.log(error);
+            setClearHistoryData(false);
+        }
+    };
+
+    useEffect(() => {
+        if (clearHistoryData) {
+            setMessages([
+                {
+                    datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
+                    id: 2,
+                    modes: {
+                        'graph+vector+fulltext': {
+                            message:
+                                ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
+                        },
+                    },
+                    user: 'chatbot',
+                    currentMode: 'graph+vector+fulltext',
+                },
+            ]);
+        }
+    }, [clearHistoryData]);
     return (
         <>
             <ConnectionModal
@@ -80,7 +118,7 @@ const ChatContent: React.FC = () => {
                 <>
                     <ExpandedChatButtonContainer
                         isReadOnly
-                        deleteOnClick={() => console.log('hello')}
+                        deleteOnClick={deleteOnClick}
                         messages={messages ?? []}
                     />
                     <Chatbot
