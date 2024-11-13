@@ -92,7 +92,7 @@ def get_documents_from_youtube(url):
               transcript_content += ''.join(td['text'])+" "
           else :
               transcript_content += ''.join(td['text'])+" "
-              pages.append(Document(page_content=transcript_content.strip(), metadata={'start_timestamp':counter-YOUTUBE_CHUNK_SIZE_SECONDS, 'end_timestamp':td['start']}))
+              pages.append(Document(page_content=transcript_content.strip(), metadata={'start_timestamp':str(timedelta(seconds = counter-YOUTUBE_CHUNK_SIZE_SECONDS)).split('.')[0], 'end_timestamp':str(timedelta(seconds = td['start'])).split('.')[0]}))
               counter += YOUTUBE_CHUNK_SIZE_SECONDS  
               transcript_content=''  
             
