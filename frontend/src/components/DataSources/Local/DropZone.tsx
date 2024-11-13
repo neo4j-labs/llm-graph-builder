@@ -1,5 +1,5 @@
 import { Dropzone, Flex, Typography } from '@neo4j-ndl/react';
-import { useState, FunctionComponent } from 'react';
+import { useState, FunctionComponent, useEffect } from 'react';
 import Loader from '../../../utils/Loader';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../../../context/UserCredentials';
@@ -66,16 +66,18 @@ const DropZone: FunctionComponent = () => {
         }
       }
       setFilesData(copiedFilesData);
-      if (selectedFiles.length > 0) {
-        for (let index = 0; index < selectedFiles.length; index++) {
-          const file = selectedFiles[index];
-          if (filesData[index]?.status == 'None' && isClicked) {
-            uploadFileInChunks(file);
-          }
+    }
+  };
+  useEffect(()=>{
+    if (selectedFiles.length > 0) {
+      for (let index = 0; index < selectedFiles.length; index++) {
+        const file = selectedFiles[index];
+        if (filesData[index]?.status == 'None' && isClicked) {
+          uploadFileInChunks(file);
         }
       }
     }
-  };
+  },[selectedFiles])
 
   const uploadFileInChunks = (file: File) => {
     const totalChunks = Math.ceil(file.size / chunkSize);
@@ -177,7 +179,7 @@ const DropZone: FunctionComponent = () => {
               return {
                 ...curfile,
                 status: 'New',
-                uploadprogess: 100,
+                uploadProgress: 100,
               };
             }
             return curfile;

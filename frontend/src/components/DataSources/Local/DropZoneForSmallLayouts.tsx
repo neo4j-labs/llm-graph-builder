@@ -1,7 +1,7 @@
 import { CloudArrowUpIconSolid } from '@neo4j-ndl/react/icons';
 import { useDropzone } from 'react-dropzone';
 import { useFileContext } from '../../../context/UsersFiles';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useCredentials } from '../../../context/UserCredentials';
 import { CustomFile, CustomFileBase, UserCredentials } from '../../../types';
 import { chunkSize } from '../../../utils/Constants';
@@ -201,21 +201,23 @@ export default function DropZoneForSmallLayouts() {
         }
       }
       setFilesData(copiedFilesData);
-      if (selectedFiles.length > 0) {
-        for (let index = 0; index < selectedFiles.length; index++) {
-          const file = selectedFiles[index];
-          if (filesData[index]?.status == 'None' && isClicked) {
-            uploadFileInChunks(file);
-          }
+    }
+  };
+  useEffect(()=>{
+    if (selectedFiles.length > 0) {
+      for (let index = 0; index < selectedFiles.length; index++) {
+        const file = selectedFiles[index];
+        if (filesData[index]?.status == 'None' && isClicked) {
+          uploadFileInChunks(file);
         }
       }
     }
-  };
+  },[selectedFiles])
   return (
     <>
       <div {...getRootProps({ className: 'dropzone' })}>
         <input {...getInputProps()} />
-        {isLoading ? <LoadingSpinner size='medium' /> : <CloudArrowUpIconSolid />}
+        {isLoading ? <LoadingSpinner size='medium' /> : <CloudArrowUpIconSolid className='n-size-token-7'/>}
       </div>
     </>
   );

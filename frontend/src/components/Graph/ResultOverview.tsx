@@ -132,7 +132,7 @@ const ResultOverview: React.FunctionComponent<OverViewProps> = ({
                     className='-mt-0.5'
                     htmlAttributes={{ type: 'submit' }}
                   >
-                    <MagnifyingGlassIconOutline />
+                    <MagnifyingGlassIconOutline className='n-size-token-7'/>
                   </IconButton>
                 }
               />

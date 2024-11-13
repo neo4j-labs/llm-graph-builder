@@ -121,7 +121,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             {copiedText ? (
               <ClipboardDocumentCheckIconOutline className='n-size-token-7' />
             ) : (
-              <DocumentDuplicateIconOutline className='text-palette-neutral-text-icon' />
+              <DocumentDuplicateIconOutline className='text-palette-neutral-text-icon n-size-token-7' />
             )}
           </>
         ),

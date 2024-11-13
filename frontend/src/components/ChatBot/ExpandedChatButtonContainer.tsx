@@ -41,10 +41,10 @@ const ExpandedChatButtonContainer: React.FC<IconProps> = ({ closeChatBot, delete
           placement='bottom'
           label={tooltips.clearChat}
         >
-          <TrashIconOutline />
+          <TrashIconOutline className='n-size-token-7'/>
         </IconButtonWithToolTip>
         <IconButton ariaLabel='Remove chatbot' isClean={true} onClick={closeChatBot}>
-          <XMarkIconOutline />
+          <XMarkIconOutline className='n-size-token-7'/>
         </IconButton>
       </div>
     </div>

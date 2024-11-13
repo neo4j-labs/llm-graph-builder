@@ -75,7 +75,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
                     }`}
                   >
                     {process.env.VITE_ENV != 'PROD' && (
-                      <Typography variant='body-medium' className='flex items-center content-center'>
+                      <Typography variant='body-medium' className='flex items-center content-center gap-1'>
                         <Typography variant='body-medium'>
                           {!isBackendConnected ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
                         </Typography>

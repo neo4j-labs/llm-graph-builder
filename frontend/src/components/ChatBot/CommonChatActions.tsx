@@ -23,7 +23,7 @@ export default function CommonActions({
     <>
       <ButtonWithToolTip
         className='w-4 h-4 inline-block p-6 mt-1.5'
-        fill='text'
+        fill='filled'
         placement='top'
         clean
         text='Retrieval Information'
@@ -43,7 +43,7 @@ export default function CommonActions({
         disabled={chat.isTyping || chat.isLoading}
         aria-label='copy text'
       >
-        <ClipboardDocumentIconOutline />
+        <ClipboardDocumentIconOutline className='n-size-token-7'/>
       </IconButtonWithToolTip>
       <IconButtonWithToolTip
         placement='top'
@@ -54,7 +54,7 @@ export default function CommonActions({
         label={chat.speaking ? 'stop speaking' : 'text to speech'}
         aria-label='speech'
       >
-        {chat.speaking ? <SpeakerXMarkIconOutline /> : <SpeakerWaveIconOutline />}
+        {chat.speaking ? <SpeakerXMarkIconOutline className='n-size-token-7'/> : <SpeakerWaveIconOutline className='n-size-token-7'/>}
       </IconButtonWithToolTip>
     </>
   );

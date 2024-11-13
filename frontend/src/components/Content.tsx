@@ -829,15 +829,15 @@ const Content: React.FC<ContentProps> = ({
                 isGdsActive={isGdsActive}
                 uri={userCredentials && userCredentials?.uri}
               />
-              <div className='pt-1'>
-                {!isSchema ? (
+              <div className='pt-1 flex gap-1 items-center'>
+                <div>{!isSchema ? (
                   <StatusIndicator type='danger' />
                 ) : selectedNodes.length || selectedRels.length ? (
                   <StatusIndicator type='success' />
                 ) : (
                   <StatusIndicator type='warning' />
-                )}
-                {isSchema ? (
+                )}</div>
+                <div>{isSchema ? (
                   <span className='n-body-small'>
                     {(!selectedNodes.length || !selectedNodes.length) && 'Empty'} Graph Schema configured
                     {selectedNodes.length || selectedRels.length
@@ -846,7 +846,8 @@ const Content: React.FC<ContentProps> = ({
                   </span>
                 ) : (
                   <span className='n-body-small'>No Graph Schema configured</span>
-                )}
+                )}</div>
+                
               </div>
             </Typography>
           </div>
