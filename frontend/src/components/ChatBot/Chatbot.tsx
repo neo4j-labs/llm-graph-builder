@@ -421,7 +421,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
 
   return (
     <div className={clsx('n-bg-palette-neutral-bg-weak flex flex-col justify-between', {
-      'min-h-screen max-h-screen': isReadOnly,
+      'min-h-screen max-h-screen overflow-hidden': isReadOnly,
       'min-h-full max-h-full overflow-hidden': !isReadOnly,
     })}>
       <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3 pr-3'>

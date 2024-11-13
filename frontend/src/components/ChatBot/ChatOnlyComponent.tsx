@@ -25,31 +25,19 @@ const ChatContent: React.FC = () => {
             const encodedPassword = urlParams.get('password');
             const database = urlParams.get('database');
             const port = urlParams.get('port');
-            const userDbVectorIndex = urlParams.get('userDbVectorIndex');
-            const setCredentials = (credentials: {
-                uri: string;
-                userName: string;
-                password: string;
-                database: string;
-                port: string;
-                userDbVectorIndex?: string;
-            }) => {
-                setUserCredentials(credentials);
-                setConnectionStatus(true);
-                window.history.replaceState({}, document.title, window.location.pathname);
-                localStorage.setItem('neo4j.connection', JSON.stringify(credentials));
-            };
-            if (uri && user && encodedPassword && database && port && userDbVectorIndex) {
+            if (uri && user && encodedPassword && database && port) {
                 const password = atob(encodedPassword);
-                setCredentials({ uri, userName: user, password: btoa(password), database, port, userDbVectorIndex });
+                console.log('password', password);
+                const credentials = { uri, userName: user, password, database, port };
+                localStorage.setItem('neo4j.connection.popout', JSON.stringify(credentials));
+                const credentialsForApi = { uri, userName: user, password: atob(password), database, port };
+                setUserCredentials(credentialsForApi);
+                setConnectionStatus(true);
+                // Clean up the URL by removing query parameters
+                window.history.replaceState({}, document.title, window.location.pathname);
             } else {
-                const session = localStorage.getItem('neo4j.connection');
-                if (session) {
-                    const { uri, user, password, database, port, userDbVectorIndex } = JSON.parse(session);
-                    setCredentials({ uri, userName: user, password, database, port, userDbVectorIndex });
-                } else {
-                    setConnectionStatus(false);
-                }
+                console.warn('Incomplete URL parameters for credentials.');
+                setConnectionStatus(false);
             }
         };
         initialise();
@@ -57,7 +45,7 @@ const ChatContent: React.FC = () => {
     return (
         <>
             <ExpandedChatButtonContainer
-                deleteOnClick={()=>console.log('hello')}
+                deleteOnClick={() => console.log('hello')}
                 messages={messages ?? []} />
             <Chatbot
                 isFullScreen
