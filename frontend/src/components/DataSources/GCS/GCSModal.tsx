@@ -184,48 +184,55 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
       <div className='w-full inline-block'>
         <form>
           <TextInput
-            id='project id'
+            htmlAttributes={{
+              id: 'project id',
+              autoFocus: true,
+              onKeyDown: handleKeyPress,
+            }}
             value={projectId}
-            disabled={false}
+            isDisabled={false}
             label='Project ID'
             aria-label='Project ID'
             placeholder=''
-            autoFocus
-            fluid
-            required
+            isFluid={true}
+            isRequired={true}
             onChange={(e) => {
               setprojectId(e.target.value);
             }}
-            onKeyDown={handleKeyPress}
           ></TextInput>
           <TextInput
-            id='bucketname'
+            htmlAttributes={{
+              id: 'bucketname',
+              autoFocus: true,
+              onKeyDown: handleKeyPress,
+            }}
             value={bucketName}
-            disabled={false}
+            isDisabled={false}
             label='Bucket Name'
             aria-label='Bucket Name'
             placeholder=''
-            autoFocus
-            fluid
-            required
+            isFluid={true}
+            isRequired={true}
             onChange={(e) => {
               setbucketName(e.target.value);
             }}
-            onKeyDown={handleKeyPress}
           />
           <TextInput
-            id='foldername'
+            htmlAttributes={{
+              id: 'foldername',
+              autoFocus: true,
+              onKeyDown: handleKeyPress,
+            }}
             value={folderName}
-            disabled={false}
+            isDisabled={false}
             label='Folder Name'
             aria-label='Folder Name'
             helpText='Optional'
             placeholder=''
-            fluid
+            isFluid={true}
             onChange={(e) => {
               setFolderName(e.target.value);
             }}
-            onKeyDown={handleKeyPress}
           />
         </form>
       </div>

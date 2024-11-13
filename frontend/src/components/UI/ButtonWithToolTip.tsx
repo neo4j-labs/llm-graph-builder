@@ -28,7 +28,7 @@ const ButtonWithToolTip = ({
   label: string;
   fill?: 'filled' | 'outlined' | 'text';
   type?: 'submit' | 'button' | 'reset';
-  color?: 'primary' | 'danger' | 'warning' | 'success' | 'neutral' | undefined;
+  color?: 'primary' | 'danger' | 'neutral' | undefined;
 }) => {
   const [isHovered, setIsHovered] = useState<boolean>(false);
   return (
@@ -38,14 +38,12 @@ const ButtonWithToolTip = ({
           aria-label={label}
           size={size}
           onClick={onClick}
-          disabled={disabled}
+          isDisabled={disabled}
           className={className}
-          loading={loading}
+          isLoading={loading}
           fill={fill}
           type={type}
           color={color}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
         >
           {children}
         </Button>

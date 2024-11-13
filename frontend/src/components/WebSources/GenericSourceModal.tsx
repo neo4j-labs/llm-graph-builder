@@ -32,7 +32,7 @@ export default function GenericModal({
 
   return (
     <Dialog
-      open={open}
+      isOpen={open}
       onClose={() => {
         setIsLoading(false);
         closeHandler();
@@ -50,7 +50,7 @@ export default function GenericModal({
         </Box>
         <Tabs fill='underline' onChange={setactiveTab} size='large' value={activeTab}>
           {APP_SOURCES != undefined && APP_SOURCES.includes('youtube') && (
-            <Tabs.Tab tabId={0} aria-label='Database' disabled={isLoading}>
+            <Tabs.Tab tabId={0} aria-label='Database' isDisabled={isLoading}>
               <img
                 src={themeUtils.colorMode === 'light' ? youtubelightmodelogo : youtubedarkmodelogo}
                 className={`brandimg`}
@@ -58,7 +58,7 @@ export default function GenericModal({
             </Tabs.Tab>
           )}
           {APP_SOURCES != undefined && APP_SOURCES.includes('wiki') && (
-            <Tabs.Tab tabId={1} aria-label='Add database' disabled={isLoading}>
+            <Tabs.Tab tabId={1} aria-label='Add database' isDisabled={isLoading}>
               <img
                 src={themeUtils.colorMode === 'dark' ? wikipedialogo : wikipediadarkmode}
                 className={`brandimg`}
@@ -66,7 +66,7 @@ export default function GenericModal({
             </Tabs.Tab>
           )}
           {APP_SOURCES != undefined && APP_SOURCES.includes('web') && (
-            <Tabs.Tab tabId={2} aria-label='Inbox' disabled={isLoading}>
+            <Tabs.Tab tabId={2} aria-label='Inbox' isDisabled={isLoading}>
               <img src={themeUtils.colorMode === 'dark' ? webdarkmode : weblogo} className={`brandimg`}></img>
             </Tabs.Tab>
           )}

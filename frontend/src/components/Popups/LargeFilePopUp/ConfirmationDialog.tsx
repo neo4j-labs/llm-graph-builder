@@ -70,7 +70,7 @@ function ConfirmationDialog({
   return (
     <Dialog
       size='medium'
-      open={open}
+      isOpen={open}
       aria-labelledby='form-dialog-title'
       onClose={() => {
         setChecked([]);

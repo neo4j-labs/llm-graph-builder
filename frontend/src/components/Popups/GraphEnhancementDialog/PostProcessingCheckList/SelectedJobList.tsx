@@ -32,8 +32,8 @@ export default function SelectedJobList({
                   .join(' ')}
               </Typography>
             }
-            checked={true}
-            disabled={true}
+            isChecked={true}
+            isDisabled={true}
             aria-label='Selected-postprocessing-jobs'
           />
         );

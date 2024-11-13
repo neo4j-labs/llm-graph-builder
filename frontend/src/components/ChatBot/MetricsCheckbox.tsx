@@ -10,7 +10,7 @@ function MetricsCheckbox({
   return (
     <Checkbox
       label='Get More Metrics by providing reference'
-      checked={enableReference}
+      isChecked={enableReference}
       onChange={toggleReferenceVisibility}
     />
   );

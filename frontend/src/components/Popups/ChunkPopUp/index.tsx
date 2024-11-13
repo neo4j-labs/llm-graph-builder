@@ -32,7 +32,7 @@ const ChunkPopUp = ({
   }, [chunks]);
 
   return (
-    <Dialog open={showChunkPopup} onClose={onClose}>
+    <Dialog isOpen={showChunkPopup} onClose={onClose}>
       <Dialog.Header>
         <Box className='flex flex-row items-center mb-2'>
           <img
@@ -82,10 +82,10 @@ const ChunkPopUp = ({
       {totalPageCount != null && totalPageCount > 1 && (
         <Dialog.Actions className='flex !justify-center items-center'>
           <Flex flexDirection='row'>
-            <IconButton disabled={currentPage === 1} onClick={decrementPage}>
+            <IconButton ariaLabel='decrementButton' isDisabled={currentPage === 1} onClick={decrementPage}>
               <ArrowLeftIconOutline />
             </IconButton>
-            <IconButton disabled={currentPage === totalPageCount} onClick={incrementPage}>
+            <IconButton ariaLabel='incrementButton' isDisabled={currentPage === totalPageCount} onClick={incrementPage}>
               <ArrowRightIconOutline />
             </IconButton>
           </Flex>

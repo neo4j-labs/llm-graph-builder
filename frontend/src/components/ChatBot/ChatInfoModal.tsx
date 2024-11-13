@@ -3,23 +3,23 @@ import {
   Typography,
   Flex,
   Tabs,
-  CypherCodeBlock,
-  CypherCodeBlockProps,
+  Code,
   useCopyToClipboard,
   Banner,
   useMediaQuery,
   Button,
-  Textarea,
+  TextArea,
+  Tooltip,
+  IconButton,
 } from '@neo4j-ndl/react';
 import { DocumentDuplicateIconOutline, ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
 import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
 import { ExtendedNode, UserCredentials, chatInfoMessage } from '../../types';
-import { useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import GraphViewButton from '../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
 import { useCredentials } from '../../context/UserCredentials';
-import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { tokens } from '@neo4j-ndl/base';
 import ChunkInfo from './ChunkInfo';
 import EntitiesInfo from './EntitiesInfo';
@@ -89,7 +89,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       : 3
   );
   const { userCredentials } = useCredentials();
-  const themeUtils = useContext(ThemeWrapperContext);
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
   const [showMetricsTable, setShowMetricsTable] = useState<boolean>(Boolean(metricDetails));
@@ -112,11 +111,11 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       : null
   );
 
-  const actions: CypherCodeBlockProps['actions'] = useMemo(
+  const actions: React.ComponentProps<typeof IconButton<'button'>>[] = useMemo(
     () => [
       {
         title: 'copy',
-        'aria-label': 'copy',
+        ariaLabel: 'copy',
         children: (
           <>
             {copiedText ? (
@@ -309,7 +308,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   };
   const MetricsCheckBoxWithCheck = withVisibility(MetricsCheckbox);
   const TextareaWithCheck = withVisibility(() => (
-    <Textarea ref={textAreaRef} fluid={true} size='large' isOptional={true} label='Reference'></Textarea>
+    <TextArea ref={textAreaRef} isFluid={true} size='large' isOptional={true} label='Reference'></TextArea>
   ));
   const isMultiModes = useMemo(
     () => activeChatmodes != null && Object.keys(activeChatmodes).length > 1,
@@ -408,14 +407,72 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                 </Typography>
               </Box>
               <Stack>
-                <Typography variant='body-large'>
-                  <span className='font-bold'>Faithfulness</span>: Determines How accurately the answer reflects the
-                  provided information
-                </Typography>
-                <Typography variant='body-large'>
-                  <span className='font-bold'>Answer Relevancy</span>: Determines How well the answer addresses the
-                  user's question.
-                </Typography>
+                <Tooltip type='rich'>
+                  <Tooltip.Trigger hasButtonWrapper>
+                    <Typography variant='body-large'>
+                      <span className='font-bold'>Faithfulness</span>:
+                    </Typography>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>
+                    <Tooltip.Header>Meaning</Tooltip.Header>
+                    <Tooltip.Body>Determines How accurately the answer reflects the provided information.</Tooltip.Body>
+                  </Tooltip.Content>
+                </Tooltip>
+                <Tooltip type='rich'>
+                  <Tooltip.Trigger hasButtonWrapper>
+                    <Typography variant='body-large'>
+                      <span className='font-bold'>Answer Relevancy</span>:
+                    </Typography>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>
+                    <Tooltip.Header>Meaning</Tooltip.Header>
+                    <Tooltip.Body>Determines How well the answer addresses the user's question.</Tooltip.Body>
+                  </Tooltip.Content>
+                </Tooltip>
+                {(isAdditionalMetricsWithSingleMode || isAdditionalMetricsEnabled) && (
+                  <>
+                    <Tooltip type='rich'>
+                      <Tooltip.Trigger hasButtonWrapper>
+                        <Typography variant='body-large'>
+                          <span className='font-bold'>ROUGE Score</span>:
+                        </Typography>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content>
+                        <Tooltip.Header>Meaning</Tooltip.Header>
+                        <Tooltip.Body>
+                          Determines How much the generated answer matches the reference answer, word-for-word
+                        </Tooltip.Body>
+                      </Tooltip.Content>
+                    </Tooltip>
+                    <Tooltip type='rich'>
+                      <Tooltip.Trigger hasButtonWrapper>
+                        <Typography variant='body-large'>
+                          <span className='font-bold'>Semantic Score</span>:
+                        </Typography>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content>
+                        <Tooltip.Header>Meaning</Tooltip.Header>
+                        <Tooltip.Body>
+                          Determines How well the generated answer understands the meaning of the reference answer.
+                        </Tooltip.Body>
+                      </Tooltip.Content>
+                    </Tooltip>
+                    <Tooltip type='rich'>
+                      <Tooltip.Trigger hasButtonWrapper>
+                        <Typography variant='body-large'>
+                          <span className='font-bold'>Context Entity Recall Score</span>:
+                        </Typography>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content>
+                        <Tooltip.Header>Meaning</Tooltip.Header>
+                        <Tooltip.Body>
+                          Determines Measures the recall of entities present in both reference and retrieved contexts
+                          relative to the reference.
+                        </Tooltip.Body>
+                      </Tooltip.Content>
+                    </Tooltip>
+                  </>
+                )}
               </Stack>
             </Stack>
             {showMultiModeMetrics && isMultiModes && (
@@ -459,8 +516,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             {isSingleMode &&
               (isAdditionalMetricsWithSingleMode === false || isAdditionalMetricsWithSingleMode === null) && (
                 <Button
-                  label='Metrics Action Button'
-                  disabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
+                  isDisabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
                   className='w-max self-center mt-4'
                   onClick={loadMetrics}
                 >
@@ -469,8 +525,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               )}
             {isMultiModes && (isAdditionalMetricsEnabled === false || isAdditionalMetricsEnabled === null) && (
               <Button
-                label='Metrics Action Button'
-                disabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
+                isDisabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
                 className='w-max self-center mt-4'
                 onClick={loadMetrics}
               >
@@ -491,12 +546,13 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           <ChunkInfo chunks={chunks} loading={infoLoading} mode={mode} />
         </Tabs.TabPanel>
         <Tabs.TabPanel value={activeTab} tabId={6}>
-          <CypherCodeBlock
+          <Code
             code={cypher_query as string}
             actions={actions}
             headerTitle=''
-            theme={themeUtils.colorMode}
+            theme={'vs'}
             className='min-h-40'
+            language='cypher'
           />
         </Tabs.TabPanel>
         {mode === chatModeLables['entity search+vector'] || mode === chatModeLables['global search+vector+fulltext'] ? (

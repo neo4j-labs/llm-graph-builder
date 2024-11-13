@@ -27,11 +27,11 @@ function RetryConfirmationDialog({
   const file = filesData.find((c) => c.id === fileId);
   const RetryOptionsForFile = file?.status != 'Completed' ? RETRY_OPIONS : RETRY_OPIONS.slice(0, 2);
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog isOpen={open} onClose={onClose}>
       <Dialog.Header>Reprocess Options</Dialog.Header>
       <Dialog.Content>
         {alertStatus.showAlert && (
-          <Banner closeable onClose={onBannerClose} className='my-4' type={alertStatus.alertType}>
+          <Banner isCloseable onClose={onBannerClose} className='my-4' type={alertStatus.alertType}>
             {alertStatus.alertMessage}
           </Banner>
         )}
@@ -47,17 +47,19 @@ function RetryConfirmationDialog({
                     });
                   });
                 }}
-                name='retryoptions'
-                checked={o === file?.retryOption && file?.retryOptionStatus}
+                htmlAttributes={{
+                  name: 'retryoptions',
+                  onKeyDown: (e) => {
+                    if (e.code === 'Enter' && file?.retryOption.length) {
+                      retryHandler(file?.name as string, file?.retryOption as string);
+                    }
+                  },
+                }}
+                isChecked={o === file?.retryOption && file?.retryOptionStatus}
                 label={o
                   .split('_')
                   .map((s) => capitalize(s))
                   .join(' ')}
-                onKeyDown={(e) => {
-                  if (e.code === 'Enter' && file?.retryOption.length) {
-                    retryHandler(file?.name as string, file?.retryOption as string);
-                  }
-                }}
               />
             );
           })}

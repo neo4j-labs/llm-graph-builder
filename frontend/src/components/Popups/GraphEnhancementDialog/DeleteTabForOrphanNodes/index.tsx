@@ -94,7 +94,7 @@ export default function DeletePopUpForOrphanNodes({
           return (
             <Checkbox
               aria-label='header-checkbox'
-              checked={table.getIsAllRowsSelected()}
+              isChecked={table.getIsAllRowsSelected()}
               onChange={table.getToggleAllRowsSelectedHandler()}
             />
           );
@@ -105,8 +105,8 @@ export default function DeletePopUpForOrphanNodes({
               <Checkbox
                 aria-label='row-checkbox'
                 onChange={row.getToggleSelectedHandler()}
-                title='Select the Row for Deletion'
-                checked={row.getIsSelected()}
+                htmlAttributes={{ title: 'Select the Row for Deletion' }}
+                isChecked={row.getIsSelected()}
               />
             </div>
           );
@@ -120,8 +120,10 @@ export default function DeletePopUpForOrphanNodes({
             <div className='textellipsis'>
               <TextLink
                 className='!cursor-pointer'
-                onClick={() => handleOrphanNodeClick(info.row.id, 'chatInfoView')}
-                title={info.getValue()}
+                htmlAttributes={{
+                  onClick: () => handleOrphanNodeClick(info.row.id, 'chatInfoView'),
+                  title: info.getValue(),
+                }}
               >
                 {info.getValue()}
               </TextLink>
@@ -256,7 +258,7 @@ export default function DeletePopUpForOrphanNodes({
           tableInstance={table}
           styling={{
             borderStyle: 'all-sides',
-            zebraStriping: true,
+            hasZebraStriping: true,
             headerStyle: 'clean',
           }}
           rootProps={{

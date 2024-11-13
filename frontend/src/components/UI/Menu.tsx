@@ -14,18 +14,18 @@ export default function CustomMenu({
   closeHandler: () => void;
   items: Menuitems[] | undefined;
   MenuAnchor: HTMLElement | null;
-  anchorOrigin?: Origin;
+  anchorOrigin: Origin;
   transformOrigin?: Origin;
   anchorPortal?: boolean;
   disableBackdrop?: boolean;
 }) {
   return (
     <Menu
-      open={open}
+      isOpen={open}
       onClose={() => {
         closeHandler();
       }}
-      anchorOrigin={anchorOrigin}
+      anchorRef={anchorOrigin}
       transformOrigin={transformOrigin}
       anchorPortal={anchorPortal}
       anchorEl={MenuAnchor}

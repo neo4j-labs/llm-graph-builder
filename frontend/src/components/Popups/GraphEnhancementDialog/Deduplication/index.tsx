@@ -131,7 +131,7 @@ export default function DeduplicationTab() {
           return (
             <Checkbox
               aria-label='header-checkbox'
-              checked={table.getIsAllRowsSelected()}
+              isChecked={table.getIsAllRowsSelected()}
               onChange={table.getToggleAllRowsSelectedHandler()}
             />
           );
@@ -142,8 +142,8 @@ export default function DeduplicationTab() {
               <Checkbox
                 aria-label='row-checkbox'
                 onChange={row.getToggleSelectedHandler()}
-                title='Select the Row for merging'
-                checked={row.getIsSelected()}
+                htmlAttributes={{ title: 'Select the Row for merging' }}
+                isChecked={row.getIsSelected()}
               />
             </div>
           );
@@ -157,8 +157,10 @@ export default function DeduplicationTab() {
             <div className='textellipsis'>
               <TextLink
                 className='!cursor-pointer'
-                onClick={() => handleDuplicateNodeClick(info.row.id, 'chatInfoView')}
-                title={info.getValue()}
+                htmlAttributes={{
+                  onClick: () => handleDuplicateNodeClick(info.row.id, 'chatInfoView'),
+                  title: info.getValue(),
+                }}
               >
                 {info.getValue()}
               </TextLink>
@@ -182,7 +184,7 @@ export default function DeduplicationTab() {
                   onRemove={() => {
                     onRemove(info.row.original.e.elementId, s.elementId);
                   }}
-                  removeable={true}
+                  isRemovable={true}
                   type='default'
                   size={isTablet ? 'small' : 'medium'}
                 >
@@ -289,7 +291,7 @@ export default function DeduplicationTab() {
           tableInstance={table}
           styling={{
             borderStyle: 'all-sides',
-            zebraStriping: true,
+            hasZebraStriping: true,
             headerStyle: 'clean',
           }}
           rootProps={{

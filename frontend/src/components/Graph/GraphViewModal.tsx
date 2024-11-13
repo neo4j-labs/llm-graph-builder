@@ -339,12 +339,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           id: 'default-menu',
         }}
         size='unset'
-        open={open}
+        isOpen={open}
         aria-labelledby='form-dialog-title'
-        disableCloseButton={false}
+        hasDisabledCloseButton={false}
         onClose={onClose}
       >
-        <Dialog.Header id='graph-title'>
+        <Dialog.Header htmlAttributes={{ id: 'graph-title' }}>
           {headerTitle}
           <Flex className='w-full' alignItems='center' flexDirection='row'>
             {checkBoxView && (
@@ -390,7 +390,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       }}
                       nvlCallbacks={nvlCallbacks}
                     />
-                    <IconButtonArray orientation='vertical' floating className='absolute bottom-4 right-4'>
+                    <IconButtonArray orientation='vertical' isFloating={true} className='absolute bottom-4 right-4'>
                       {viewPoint !== 'chatInfoView' && (
                         <IconButtonWithToolTip
                           label='Refresh'

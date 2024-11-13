@@ -27,14 +27,13 @@ export const IconButtonWithToolTip = ({
     <Tip allowedPlacements={[placement]}>
       <Tip.Trigger>
         <IconButton
-          aria-label={label}
+          ariaLabel={label}
           size={size}
-          clean={clean}
-          grouped={grouped}
+          isClean={clean}
+          isGrouped={grouped}
           onClick={onClick}
-          disabled={disabled}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          isDisabled={disabled}
+          htmlAttributes={{ onMouseEnter: () => setIsHovered(true), onMouseLeave: () => setIsHovered(false) }}
         >
           {children}
         </IconButton>

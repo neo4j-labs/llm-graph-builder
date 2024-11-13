@@ -311,18 +311,18 @@ export default function ConnectionModal({
     <>
       <Dialog
         size='small'
-        open={open}
+        isOpen={open}
         aria-labelledby='form-dialog-title'
         onClose={() => {
           setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
           setMessage({ type: 'unknown', content: '' });
         }}
-        disableCloseButton={vectorIndexLoading}
+        hasDisabledCloseButton={vectorIndexLoading}
       >
-        <Dialog.Header id='form-dialog-title'>Connect to Neo4j</Dialog.Header>
+        <Dialog.Header htmlAttributes={{ id: 'form-dialog-title' }}>Connect to Neo4j</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
           <Typography variant='body-medium' className='mb-4'>
-            <TextLink externalLink href='https://console.neo4j.io/'>
+            <TextLink isExternalLink href='https://console.neo4j.io/'>
               Don't have a Neo4j instance? Start for free today
             </TextLink>
           </Typography>
@@ -330,14 +330,14 @@ export default function ConnectionModal({
             (vectorIndexLoading ? (
               <Banner
                 name='Connection Modal'
-                closeable={false}
+                isCloseable={false}
                 type={connectionMessage?.type}
                 description={connectionMessage?.content}
               ></Banner>
             ) : (
               <Banner
                 name='Connection Modal'
-                closeable
+                isCloseable
                 onClose={onClose}
                 type={connectionMessage?.type}
                 description={connectionMessage?.content}
@@ -370,7 +370,8 @@ export default function ConnectionModal({
               size='medium'
               disabled={false}
               selectProps={{
-                onChange: (newValue) => newValue && setProtocol(newValue.value),
+                onChange: (newValue: { value: React.SetStateAction<string> }) =>
+                  newValue && setProtocol(newValue.value),
                 options: protocols.map((option) => ({ label: option, value: option })),
                 value: { label: protocol, value: protocol },
               }}
@@ -380,70 +381,78 @@ export default function ConnectionModal({
             <div className='ml-[5%] w-[70%] inline-block'>
               <TextInput
                 ref={uriRef}
-                id='url'
+                htmlAttributes={{
+                  id: 'url',
+                  autoFocus: true,
+                  onPaste: (e) => handleHostPasteChange(e),
+                  onKeyDown: (e) => handleKeyPress(e, databaseRef),
+                }}
                 value={URI}
-                disabled={false}
+                isDisabled={false}
                 label='URI'
-                autoFocus
-                fluid
+                isFluid={true}
                 onChange={(e) => setURI(e.target.value)}
-                onPaste={(e) => handleHostPasteChange(e)}
                 aria-label='Connection URI'
-                onKeyDown={(e) => handleKeyPress(e, databaseRef)}
               />
             </div>
           </div>
           <form>
             <TextInput
               ref={databaseRef}
-              id='database'
+              htmlAttributes={{
+                id: 'database',
+                onKeyDown: handleKeyPress,
+              }}
               value={database}
-              disabled={false}
+              isDisabled={false}
               label='Database'
               aria-label='Database'
               placeholder='neo4j'
-              fluid
-              required
+              isFluid={true}
+              isRequired={true}
               onChange={(e) => setDatabase(e.target.value)}
               className='w-full'
-              onKeyDown={handleKeyPress}
             />
             <div className='n-flex n-flex-row n-flex-wrap mb-2'>
               <div className='w-[48.5%] mr-1.5 inline-block'>
                 <TextInput
                   ref={userNameRef}
-                  id='username'
+                  htmlAttributes={{
+                    id: 'username',
+                    onKeyDown: handleKeyPress,
+                  }}
                   value={username}
-                  disabled={false}
+                  isDisabled={false}
                   label='Username'
                   aria-label='Username'
                   placeholder='neo4j'
-                  fluid
+                  isFluid={true}
                   onChange={(e) => setUsername(e.target.value)}
-                  onKeyDown={handleKeyPress}
                 />
               </div>
               <div className='w-[48.5%] ml-[1.5%] inline-block'>
                 <TextInput
                   ref={passwordRef}
-                  id='password'
+                  htmlAttributes={{
+                    id: 'password',
+                    onKeyDown: handleKeyPress,
+                    type: 'password',
+                  }}
                   value={password}
-                  disabled={false}
+                  isDisabled={false}
                   label='Password'
                   aria-label='Password'
                   placeholder='password'
-                  type='password'
-                  fluid
+                  isFluid={true}
                   onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={handleKeyPress}
                 />
               </div>
             </div>
           </form>
           <Flex flexDirection='row' justifyContent='flex-end'>
             <Button
-              loading={isLoading}
-              disabled={isDisabled}
+              isLoading={isLoading}
+              isDisabled={isDisabled}
               onClick={() => submitConnection()}
               ref={connectRef}
               onKeyDown={(e) => {

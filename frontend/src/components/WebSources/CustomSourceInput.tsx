@@ -23,7 +23,7 @@ export default function CustomSourceInput({
       {status !== 'unknown' && (
         <Box>
           <Banner
-            closeable
+            isCloseable={true}
             description={statusMessage}
             onClose={() => setStatus('unknown')}
             type={status}
@@ -35,31 +35,33 @@ export default function CustomSourceInput({
       <Box>
         <div className='w-full inline-block'>
           <TextInput
-            id={id}
+            htmlAttributes={{
+              id: id,
+              onBlur: onBlurHandler,
+              autoFocus: true,
+              onPaste: onPasteHandler,
+              onKeyDown: (e) => {
+                if (e.code === 'Enter') {
+                  submitHandler(value);
+                }
+              },
+            }}
             value={value}
-            disabled={false}
+            isDisabled={false}
             label={label}
             aria-label={label}
             placeholder={placeHolder}
-            onBlur={onBlurHandler}
-            autoFocus
-            fluid
-            required
+            isFluid={true}
+            isRequired={true}
             onChange={onChangeHandler}
             errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
-            onPaste={onPasteHandler}
-            onKeyDown={(e) => {
-              if (e.code === 'Enter') {
-                submitHandler(value);
-              }
-            }}
           />
         </div>
       </Box>
       <Flex flexDirection='row' justifyContent='flex-end'>
         <div>
           <Button
-            disabled={value.trim() === ''}
+            isDisabled={value.trim() === ''}
             color='neutral'
             fill='outlined'
             onClick={onCloseHandler}
@@ -68,7 +70,7 @@ export default function CustomSourceInput({
           >
             Reset
           </Button>
-          <Button onClick={() => submitHandler(value)} size='medium' disabled={disabledCheck}>
+          <Button onClick={() => submitHandler(value)} size='medium' isDisabled={disabledCheck}>
             Submit
           </Button>
         </div>

@@ -84,7 +84,7 @@ function MetricsTab({
           tableInstance={table}
           styling={{
             borderStyle: 'all-sides',
-            zebraStriping: true,
+            hasZebraStriping: true,
             headerStyle: 'clean',
           }}
           isLoading={metricsLoading}

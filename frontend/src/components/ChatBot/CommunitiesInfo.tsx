@@ -43,8 +43,9 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
                   <Flex flexDirection='row' gap='2'>
                     <TextLink
                       className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
-                      label={`ID : ${community.id}`}
-                      onClick={() => handleCommunityClick(community.element_id, 'chatInfoView')}
+                      htmlAttributes={{
+                        onClick: () => handleCommunityClick(community.element_id, 'chatInfoView'),
+                      }}
                     >{`ID : ${community.id}`}</TextLink>
                   </Flex>
                   {mode === chatModeLables['global search+vector+fulltext'] && community.score && (

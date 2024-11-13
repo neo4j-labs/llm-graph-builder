@@ -116,7 +116,7 @@ export default function MultiModeMetrics({
             tableInstance={table}
             styling={{
               borderStyle: 'all-sides',
-              zebraStriping: true,
+              hasZebraStriping: true,
               headerStyle: 'clean',
             }}
             isAutoResizingColumns={true}

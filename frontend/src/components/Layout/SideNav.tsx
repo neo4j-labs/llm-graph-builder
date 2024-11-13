@@ -78,17 +78,17 @@ const SideNav: React.FC<SideNavProps> = ({
 
   return (
     <div style={{ height: 'calc(100vh - 58px)', minHeight: '200px', display: 'flex' }}>
-      <SideNavigation iconMenu={true} expanded={false} position={position}>
+      <SideNavigation hasIconMenu={true} isExpanded={false} position={position}>
         <SideNavigation.List>
           {isExpanded && largedesktops && (
             <SideNavigation.Item
-              onClick={handleClick}
+              htmlAttributes={{ onClick: handleClick }}
               icon={position === 'left' ? <ArrowLeftIconOutline /> : <ArrowRightIconOutline />}
             />
           )}
           {!isExpanded && position === 'left' && largedesktops && (
             <SideNavigation.Item
-              onClick={handleClick}
+              htmlAttributes={{ onClick: handleClick }}
               icon={
                 <TipWrapper tooltip={tooltips.sources} placement='right'>
                   <CloudArrowUpIconSolid />
@@ -99,7 +99,7 @@ const SideNav: React.FC<SideNavProps> = ({
 
           {position === 'right' && !isExpanded && (
             <SideNavigation.Item
-              onClick={handleClick}
+              htmlAttributes={{ onClick: handleClick }}
               icon={
                 <TipWrapper tooltip={tooltips.chat} placement='left'>
                   <ChatBubbleOvalLeftEllipsisIconOutline />
@@ -148,7 +148,7 @@ const SideNav: React.FC<SideNavProps> = ({
             <>
               <Tip allowedPlacements={['left']}>
                 <SideNavigation.Item
-                  onClick={deleteOnClick}
+                  htmlAttributes={{ onClick: deleteOnClick }}
                   icon={
                     <>
                       <Tip.Trigger>
@@ -161,7 +161,7 @@ const SideNav: React.FC<SideNavProps> = ({
               </Tip>
               <Tip allowedPlacements={['left']}>
                 <SideNavigation.Item
-                  onClick={handleExpandClick}
+                  htmlAttributes={{ onClick: handleExpandClick }}
                   icon={
                     <>
                       <Tip.Trigger>
@@ -174,12 +174,14 @@ const SideNav: React.FC<SideNavProps> = ({
               </Tip>
               <Tip allowedPlacements={['left']}>
                 <SideNavigation.Item
-                  onClick={() => {
-                    downloadClickHandler(
-                      { conversation: messages },
-                      downloadLinkRef,
-                      'graph-builder-conversation.json'
-                    );
+                  htmlAttributes={{
+                    onClick: () => {
+                      downloadClickHandler(
+                        { conversation: messages },
+                        downloadLinkRef,
+                        'graph-builder-conversation.json'
+                      );
+                    },
                   }}
                   icon={
                     <>
@@ -198,9 +200,11 @@ const SideNav: React.FC<SideNavProps> = ({
               </Tip>
               {!isChatModalOpen && (
                 <SideNavigation.Item
-                  onClick={(e) => {
-                    setchatModeAnchor(e.currentTarget);
-                    setshowChatMode(true);
+                  htmlAttributes={{
+                    onClick: (e) => {
+                      setchatModeAnchor(e.currentTarget);
+                      setshowChatMode(true);
+                    },
                   }}
                   icon={
                     <>
@@ -229,11 +233,11 @@ const SideNav: React.FC<SideNavProps> = ({
               id: 'Chatbot-popup',
               className: 'n-p-token-4 n-rounded-lg h-[90%]',
             }}
-            open={isChatModalOpen}
+            isOpen={isChatModalOpen}
             size='unset'
-            disableCloseButton={true}
+            hasDisabledCloseButton={true}
           >
-            <Dialog.Header className='flex justify-between self-end' id='chatbot-dialog-title'>
+            <Dialog.Header className='flex justify-between self-end' htmlAttributes={{ id: 'chatbot-dialog-title' }}>
               <ExpandedChatButtonContainer
                 closeChatBot={handleShrinkClick}
                 deleteOnClick={deleteOnClick}

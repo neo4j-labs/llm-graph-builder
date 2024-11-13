@@ -36,9 +36,9 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
         id: 'graph-enhancement-popup',
         className: 'n-p-token-4 n-rounded-lg',
       }}
-      open={open}
+      isOpen={open}
       size='unset'
-      disableCloseButton={false}
+      hasDisabledCloseButton={false}
       onClose={onClose}
     >
       <Dialog.Header className='flex justify-between self-end !mb-0 '>
