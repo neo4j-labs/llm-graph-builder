@@ -681,6 +681,7 @@ export interface ConnectionModalProps {
   isVectorIndexMatch: boolean;
   chunksExistsWithoutEmbedding: boolean;
   chunksExistsWithDifferentEmbedding: boolean;
+  onSuccess?: () => void;
 }
 export interface ReusableDropdownProps extends DropdownProps {
   options: string[] | OptionType[];
@@ -699,6 +700,7 @@ export interface IconProps {
   closeChatBot?: () => void;
   deleteOnClick?: () => void;
   messages: Messages[];
+  isReadOnly?:boolean;
 }
 export interface S3File {
   fileName: string;

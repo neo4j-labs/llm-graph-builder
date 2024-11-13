@@ -13,6 +13,7 @@ import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { tooltips } from '../../utils/Constants';
 import { useFileContext } from '../../context/UsersFiles';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
+import { useCredentials } from '../../context/UserCredentials';
 function Header() {
   const { colorMode, toggleColorMode } = useContext(ThemeWrapperContext);
 
@@ -21,27 +22,10 @@ function Header() {
   }, []);
 
   const { isSchema, setIsSchema } = useFileContext();
-
+const {connectionStatus}= useCredentials();
   useEffect(() => {
     setIsSchema(isSchema);
   }, [isSchema]);
-
-  const openChatPopout = useCallback(() => {
-    let session = localStorage.getItem('neo4j.connection');
-    if (session) {
-      const neo4jConnection = JSON.parse(session);
-      const uri = neo4jConnection.uri;
-      const userName = neo4jConnection.user;
-      const password = neo4jConnection.password;
-      const database = neo4jConnection.database;
-      const port = uri.split(':')[2];
-      const encodedPassword = btoa(password);
-      const chatUrl = `/chat-only?uri=${encodeURIComponent(uri)}&user=${userName}&password=${encodedPassword}&database=${database}&port=${port}`;
-      window.open(chatUrl, '_blank'); // Open the new window with credentials in URL
-    } else {
-      console.warn('No connection data found in localStorage.');
-    }
-  }, []);
 
   // const openChatPopout = useCallback(() => {
   //   let session = localStorage.getItem('neo4j.connection');
@@ -56,11 +40,27 @@ function Header() {
   //     const chatUrl = `/chat-only?uri=${encodeURIComponent(uri)}&user=${userName}&password=${encodedPassword}&database=${database}&port=${port}`;
   //     window.open(chatUrl, '_blank'); // Open the new window with credentials in URL
   //   } else {
-  //     const chatUrl = `/chat-only?openModal=true`;
-  //     window.open(chatUrl, '_blank');
   //     console.warn('No connection data found in localStorage.');
   //   }
-  // }, [])
+  // }, []);
+
+  const openChatPopout = useCallback(() => {
+    let session = localStorage.getItem('neo4j.connection');
+    if (session) {
+      const neo4jConnection = JSON.parse(session);
+      const uri = neo4jConnection.uri;
+      const userName = neo4jConnection.user;
+      const password = neo4jConnection.password;
+      const database = neo4jConnection.database;
+      const port = uri.split(':')[2];
+      const encodedPassword = btoa(password);
+      const chatUrl = `/chat-only?uri=${encodeURIComponent(uri)}&user=${userName}&password=${encodedPassword}&database=${database}&port=${port}&connectionStatus=${connectionStatus}`;
+      window.open(chatUrl, '_blank'); // Open the new window with credentials in URL
+    } else {
+      const chatUrl = `/chat-only?openModal=true`;
+      window.open(chatUrl, '_blank');
+    }
+  }, [])
 
   return (
     <div
