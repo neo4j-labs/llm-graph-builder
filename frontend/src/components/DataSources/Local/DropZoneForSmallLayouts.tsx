@@ -203,7 +203,7 @@ export default function DropZoneForSmallLayouts() {
       setFilesData(copiedFilesData);
     }
   };
-  useEffect(()=>{
+  useEffect(() => {
     if (selectedFiles.length > 0) {
       for (let index = 0; index < selectedFiles.length; index++) {
         const file = selectedFiles[index];
@@ -212,12 +212,12 @@ export default function DropZoneForSmallLayouts() {
         }
       }
     }
-  },[selectedFiles])
+  }, [selectedFiles]);
   return (
     <>
       <div {...getRootProps({ className: 'dropzone' })}>
         <input {...getInputProps()} />
-        {isLoading ? <LoadingSpinner size='medium' /> : <CloudArrowUpIconSolid className='n-size-token-7'/>}
+        {isLoading ? <LoadingSpinner size='medium' /> : <CloudArrowUpIconSolid className='n-size-token-7' />}
       </div>
     </>
   );

@@ -164,7 +164,9 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 className='cellClass flex gap-1 items-center'
                 title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
               >
-                <div><StatusIndicator type={statusCheck(info.getValue())} /></div>
+                <div>
+                  <StatusIndicator type={statusCheck(info.getValue())} />
+                </div>
                 <div>{info.getValue()}</div>
                 {(info.getValue() === 'Completed' || info.getValue() === 'Failed' || info.getValue() === 'Cancelled') &&
                   !isReadOnlyUser && (
@@ -177,7 +179,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                         clean
                         onClick={() => onRetry(info?.row?.id as string)}
                       >
-                        <ArrowPathIconSolid className='n-size-token-7'/>
+                        <ArrowPathIconSolid className='n-size-token-4' />
                       </IconButtonWithToolTip>
                     </span>
                   )}
@@ -186,8 +188,12 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           } else if (info.getValue() === 'Processing' && info.row.original.processingProgress === undefined) {
             return (
               <div className='cellClass flex gap-1 items-center'>
-                <div><StatusIndicator type={statusCheck(info.getValue())} /></div>
-                <div><i>Processing</i></div>
+                <div>
+                  <StatusIndicator type={statusCheck(info.getValue())} />
+                </div>
+                <div>
+                  <i>Processing</i>
+                </div>
                 <div className='mx-1'>
                   <IconButton
                     size='medium'
@@ -247,8 +253,10 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           }
           return (
             <div className='cellClass flex gap-1'>
-              <div><StatusIndicator type={statusCheck(info.getValue())} /></div>
-              <div>{ info.getValue()}</div>
+              <div>
+                <StatusIndicator type={statusCheck(info.getValue())} />
+              </div>
+              <div>{info.getValue()}</div>
             </div>
           );
         },
@@ -317,26 +325,32 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         cell: (info: CellContext<CustomFile, string>) => {
           if (parseInt(info.getValue()) === 100 || info.row.original?.status === 'New') {
             return (
-              <Typography variant='body-medium'>
-                <StatusIndicator type='success' />
-                Uploaded
-              </Typography>
+              <div className='flex gap-1 items-center'>
+                <Typography variant='body-medium'>
+                  <StatusIndicator type='success' />
+                </Typography>
+                <Typography variant='body-medium'>Uploaded</Typography>
+              </div>
             );
           } else if (info.row.original?.status === 'Uploading') {
             return <CustomProgressBar value={parseInt(info?.getValue())}></CustomProgressBar>;
           } else if (info.row.original?.status === 'Failed') {
             return (
-              <Typography variant='body-medium'>
-                <StatusIndicator type='danger' />
-                NA
-              </Typography>
+              <div className='flex gap-1 items-center'>
+                 <Typography variant='body-medium'>
+                  <StatusIndicator type='danger' />
+                </Typography>
+                <Typography variant='body-medium'> NA</Typography>
+              </div>
             );
           }
           return (
-            <Typography variant='body-medium'>
-              <StatusIndicator type='success' />
-              Uploaded
-            </Typography>
+            <div className='flex items-center gap-1'>
+              <Typography variant='body-medium'>
+                <StatusIndicator type='success' />
+              </Typography>
+              <Typography variant='body-medium'>Uploaded</Typography>
+            </div>
           );
         },
         header: () => <span>Upload Status</span>,
@@ -517,7 +531,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               clean
               onClick={() => onInspect(info?.row?.original?.name as string)}
             >
-              <MagnifyingGlassCircleIconSolid className='n-size-token-7'/>
+              <MagnifyingGlassCircleIconSolid className='n-size-token-7' />
             </IconButtonWithToolTip>
             <IconButtonWithToolTip
               placement='left'
@@ -545,7 +559,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               size='large'
               disabled={info.getValue() === 'Uploading' || info.getValue() === 'New'}
             >
-              <DocumentTextIconSolid className='n-size-token-7'/>
+              <DocumentTextIconSolid className='n-size-token-7' />
             </IconButtonWithToolTip>
           </>
         ),

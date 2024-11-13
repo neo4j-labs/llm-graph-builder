@@ -17,9 +17,8 @@ const ExpandedChatButtonContainer: React.FC<IconProps> = ({ closeChatBot, delete
         open={showChatModeOption}
         menuAnchor={chatAnchor}
       />
-      <div className='!h-[48px] mx-2'>
+      <div className='!h-[48px] mx-2 flex items-center'>
         <div ref={chatAnchor}>
-          {' '}
           <IconButtonWithToolTip
             onClick={() => {
               setshowChatModeOption(true);
@@ -41,10 +40,10 @@ const ExpandedChatButtonContainer: React.FC<IconProps> = ({ closeChatBot, delete
           placement='bottom'
           label={tooltips.clearChat}
         >
-          <TrashIconOutline className='n-size-token-7'/>
+          <TrashIconOutline />
         </IconButtonWithToolTip>
         <IconButton ariaLabel='Remove chatbot' isClean={true} onClick={closeChatBot}>
-          <XMarkIconOutline className='n-size-token-7'/>
+          <XMarkIconOutline className='n-size-token-7' />
         </IconButton>
       </div>
     </div>

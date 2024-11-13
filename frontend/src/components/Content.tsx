@@ -830,24 +830,27 @@ const Content: React.FC<ContentProps> = ({
                 uri={userCredentials && userCredentials?.uri}
               />
               <div className='pt-1 flex gap-1 items-center'>
-                <div>{!isSchema ? (
-                  <StatusIndicator type='danger' />
-                ) : selectedNodes.length || selectedRels.length ? (
-                  <StatusIndicator type='success' />
-                ) : (
-                  <StatusIndicator type='warning' />
-                )}</div>
-                <div>{isSchema ? (
-                  <span className='n-body-small'>
-                    {(!selectedNodes.length || !selectedNodes.length) && 'Empty'} Graph Schema configured
-                    {selectedNodes.length || selectedRels.length
-                      ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)`
-                      : ''}
-                  </span>
-                ) : (
-                  <span className='n-body-small'>No Graph Schema configured</span>
-                )}</div>
-                
+                <div>
+                  {!isSchema ? (
+                    <StatusIndicator type='danger' />
+                  ) : selectedNodes.length || selectedRels.length ? (
+                    <StatusIndicator type='success' />
+                  ) : (
+                    <StatusIndicator type='warning' />
+                  )}
+                </div>
+                <div>
+                  {isSchema ? (
+                    <span className='n-body-small'>
+                      {(!selectedNodes.length || !selectedNodes.length) && 'Empty'} Graph Schema configured
+                      {selectedNodes.length || selectedRels.length
+                        ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)`
+                        : ''}
+                    </span>
+                  ) : (
+                    <span className='n-body-small'>No Graph Schema configured</span>
+                  )}
+                </div>
               </div>
             </Typography>
           </div>

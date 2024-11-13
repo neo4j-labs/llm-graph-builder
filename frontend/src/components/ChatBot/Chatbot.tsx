@@ -596,7 +596,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                 );
               }}
             >
-              <ArrowDownTrayIconOutline className='n-size-token-7'/>
+              <ArrowDownTrayIconOutline className='n-size-token-7' />
               <TextLink ref={downloadLinkRef} className='!hidden'>
                 ""
               </TextLink>
@@ -610,7 +610,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               isClean
               onClick={() => setShowInfoModal(false)}
             >
-              <XMarkIconOutline className='n-size-token-7'/>
+              <XMarkIconOutline className='n-size-token-7' />
             </IconButton>
           </div>
           <InfoModal

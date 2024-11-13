@@ -68,7 +68,7 @@ const DropZone: FunctionComponent = () => {
       setFilesData(copiedFilesData);
     }
   };
-  useEffect(()=>{
+  useEffect(() => {
     if (selectedFiles.length > 0) {
       for (let index = 0; index < selectedFiles.length; index++) {
         const file = selectedFiles[index];
@@ -77,7 +77,7 @@ const DropZone: FunctionComponent = () => {
         }
       }
     }
-  },[selectedFiles])
+  }, [selectedFiles]);
 
   const uploadFileInChunks = (file: File) => {
     const totalChunks = Math.ceil(file.size / chunkSize);
