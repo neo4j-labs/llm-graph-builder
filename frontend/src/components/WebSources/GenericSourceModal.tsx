@@ -50,7 +50,13 @@ export default function GenericModal({
         </Box>
         <Tabs fill='underline' onChange={setactiveTab} size='large' value={activeTab}>
           {APP_SOURCES != undefined && APP_SOURCES.includes('youtube') && (
-            <Tabs.Tab tabId={0} aria-label='Database' isDisabled={isLoading}>
+            <Tabs.Tab
+              tabId={0}
+              isDisabled={isLoading}
+              htmlAttributes={{
+                'aria-label': 'Database',
+              }}
+            >
               <img
                 src={themeUtils.colorMode === 'light' ? youtubelightmodelogo : youtubedarkmodelogo}
                 className={`brandimg`}
@@ -58,7 +64,13 @@ export default function GenericModal({
             </Tabs.Tab>
           )}
           {APP_SOURCES != undefined && APP_SOURCES.includes('wiki') && (
-            <Tabs.Tab tabId={1} aria-label='Add database' isDisabled={isLoading}>
+            <Tabs.Tab
+              tabId={1}
+              isDisabled={isLoading}
+              htmlAttributes={{
+                'aria-label': 'Add database',
+              }}
+            >
               <img
                 src={themeUtils.colorMode === 'dark' ? wikipedialogo : wikipediadarkmode}
                 className={`brandimg`}
@@ -66,7 +78,13 @@ export default function GenericModal({
             </Tabs.Tab>
           )}
           {APP_SOURCES != undefined && APP_SOURCES.includes('web') && (
-            <Tabs.Tab tabId={2} aria-label='Inbox' isDisabled={isLoading}>
+            <Tabs.Tab
+              tabId={2}
+              isDisabled={isLoading}
+              htmlAttributes={{
+                'aria-label': 'Inbox',
+              }}
+            >
               <img src={themeUtils.colorMode === 'dark' ? webdarkmode : weblogo} className={`brandimg`}></img>
             </Tabs.Tab>
           )}

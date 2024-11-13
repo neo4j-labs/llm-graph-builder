@@ -29,6 +29,7 @@ export default function CustomSourceInput({
             type={status}
             name='Custom Banner'
             className='text-lg font-semibold'
+            usage='inline'
           />
         </Box>
       )}
@@ -40,17 +41,19 @@ export default function CustomSourceInput({
               onBlur: onBlurHandler,
               autoFocus: true,
               onPaste: onPasteHandler,
+
               onKeyDown: (e) => {
                 if (e.code === 'Enter') {
                   submitHandler(value);
                 }
               },
+
+              'aria-label': label,
+              placeholder: placeHolder,
             }}
             value={value}
             isDisabled={false}
             label={label}
-            aria-label={label}
-            placeholder={placeHolder}
             isFluid={true}
             isRequired={true}
             onChange={onChangeHandler}

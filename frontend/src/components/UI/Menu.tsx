@@ -1,23 +1,15 @@
 import { Menu } from '@neo4j-ndl/react';
-import { Menuitems, Origin } from '../../types';
+import { Menuitems } from '../../types';
 export default function CustomMenu({
   open,
   closeHandler,
   items,
-  MenuAnchor,
   anchorOrigin,
-  transformOrigin,
-  anchorPortal = true,
-  disableBackdrop = false,
 }: {
   open: boolean;
   closeHandler: () => void;
   items: Menuitems[] | undefined;
-  MenuAnchor: HTMLElement | null;
-  anchorOrigin: Origin;
-  transformOrigin?: Origin;
-  anchorPortal?: boolean;
-  disableBackdrop?: boolean;
+  anchorOrigin: React.RefObject<HTMLElement | null>;
 }) {
   return (
     <Menu
@@ -26,10 +18,6 @@ export default function CustomMenu({
         closeHandler();
       }}
       anchorRef={anchorOrigin}
-      transformOrigin={transformOrigin}
-      anchorPortal={anchorPortal}
-      anchorEl={MenuAnchor}
-      disableBackdrop={disableBackdrop}
       className='custom-menu'
     >
       {items?.map((i, idx) => (
@@ -40,7 +28,7 @@ export default function CustomMenu({
             i.onClick();
             closeHandler();
           }}
-          disabled={i.disabledCondition}
+          isDisabled={i.disabledCondition}
           className={i.isSelected ? i.selectedClassName : ''}
           description={i.description}
         />

@@ -71,10 +71,12 @@ function ConfirmationDialog({
     <Dialog
       size='medium'
       isOpen={open}
-      aria-labelledby='form-dialog-title'
       onClose={() => {
         setChecked([]);
         onClose();
+      }}
+      htmlAttributes={{
+        'aria-labelledby': 'form-dialog-title',
       }}
     >
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>

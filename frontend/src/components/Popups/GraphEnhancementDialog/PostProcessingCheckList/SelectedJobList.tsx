@@ -34,7 +34,7 @@ export default function SelectedJobList({
             }
             isChecked={true}
             isDisabled={true}
-            aria-label='Selected-postprocessing-jobs'
+            ariaLabel='Selected-postprocessing-jobs'
           />
         );
       })}

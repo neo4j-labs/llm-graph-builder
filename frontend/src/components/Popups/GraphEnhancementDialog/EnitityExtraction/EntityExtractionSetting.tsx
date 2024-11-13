@@ -1,7 +1,7 @@
 import { MouseEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { appLabels, buttonCaptions, getDefaultSchemaExamples, tooltips } from '../../../../utils/Constants';
-import { Dropdown, Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
+import { Select, Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { OnChangeValue, ActionMeta } from 'react-select';
@@ -266,7 +266,7 @@ export default function EntityExtractionSetting({
         <div className='flex align-self-center justify-center'>
           <h5>{appLabels.predefinedSchema}</h5>
         </div>
-        <Dropdown
+        <Select
           helpText='Schema Examples'
           label='Predefined Schema'
           size={view === 'Tabs' && !isTablet ? 'large' : isTablet ? 'small' : 'medium'}
@@ -283,7 +283,7 @@ export default function EntityExtractionSetting({
         <div className='flex align-self-center justify-center'>
           <h5>{appLabels.ownSchema}</h5>
         </div>
-        <Dropdown
+        <Select
           helpText='You can select more than one values'
           label='Node Labels'
           size={view === 'Tabs' && !isTablet ? 'large' : isTablet ? 'small' : 'medium'}
@@ -299,7 +299,7 @@ export default function EntityExtractionSetting({
           }}
           type='creatable'
         />
-        <Dropdown
+        <Select
           helpText='You can select more than one values'
           label='Relationship Types'
           size={view === 'Tabs' && !isTablet ? 'large' : isTablet ? 'small' : 'medium'}

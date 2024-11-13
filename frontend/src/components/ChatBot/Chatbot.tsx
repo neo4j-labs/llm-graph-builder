@@ -422,10 +422,10 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         className='-ml-4'
                         hasStatus
                         name='KM'
-                        shape='square'
                         size='x-large'
                         source={ChatBotAvatar}
                         status={connectionStatus ? 'online' : 'offline'}
+                        shape='square'
                         type='image'
                       />
                     ) : (
@@ -433,9 +433,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         className=''
                         hasStatus
                         name='KM'
-                        shape='square'
                         size='x-large'
                         status={connectionStatus ? 'online' : 'offline'}
+                        shape='square'
                         type='image'
                       />
                     )}
@@ -537,12 +537,14 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             className={`n-bg-palette-neutral-bg-default flex-grow-7 ${
               isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
             }`}
-            aria-label='chatbot-input'
-            type='text'
             value={inputMessage}
-            fluid
+            isFluid
             onChange={handleInputChange}
-            name='chatbot-input'
+            htmlAttributes={{
+              type: 'text',
+              'aria-label': 'chatbot-input',
+              name: 'chatbot-input',
+            }}
           />
           <ButtonWithToolTip
             label='Q&A Button'
@@ -564,15 +566,18 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             className: 'n-p-token-4 n-bg-palette-neutral-bg-weak n-rounded-lg',
           }}
           onClose={() => setShowInfoModal(false)}
-          open={showInfoModal}
+          isOpen={showInfoModal}
           size={activeChat?.currentMode === chatModeLables['entity search+vector'] ? 'large' : 'medium'}
         >
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <IconButton
               size='large'
-              title='download chat info'
-              clean
-              disabled={metricsLoading || infoLoading}
+              htmlAttributes={{
+                title: 'download chat info',
+              }}
+              isClean
+              ariaLabel='download chat info'
+              isDisabled={metricsLoading || infoLoading}
               onClick={() => {
                 downloadClickHandler(
                   {
@@ -598,9 +603,11 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             </IconButton>
             <IconButton
               size='large'
-              title='close pop up'
-              aria-label='close pop up'
-              clean
+              htmlAttributes={{
+                title: 'close pop up',
+              }}
+              ariaLabel='close pop up'
+              isClean
               onClick={() => setShowInfoModal(false)}
             >
               <XMarkIconOutline />

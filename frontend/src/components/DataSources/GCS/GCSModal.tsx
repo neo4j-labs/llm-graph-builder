@@ -188,12 +188,12 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
               id: 'project id',
               autoFocus: true,
               onKeyDown: handleKeyPress,
+              'aria-label': 'Project ID',
+              placeholder: '',
             }}
             value={projectId}
             isDisabled={false}
             label='Project ID'
-            aria-label='Project ID'
-            placeholder=''
             isFluid={true}
             isRequired={true}
             onChange={(e) => {
@@ -205,12 +205,12 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
               id: 'bucketname',
               autoFocus: true,
               onKeyDown: handleKeyPress,
+              'aria-label': 'Bucket Name',
+              placeholder: '',
             }}
             value={bucketName}
             isDisabled={false}
             label='Bucket Name'
-            aria-label='Bucket Name'
-            placeholder=''
             isFluid={true}
             isRequired={true}
             onChange={(e) => {
@@ -222,13 +222,13 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
               id: 'foldername',
               autoFocus: true,
               onKeyDown: handleKeyPress,
+              'aria-label': 'Folder Name',
+              placeholder: '',
             }}
             value={folderName}
             isDisabled={false}
             label='Folder Name'
-            aria-label='Folder Name'
             helpText='Optional'
-            placeholder=''
             isFluid={true}
             onChange={(e) => {
               setFolderName(e.target.value);

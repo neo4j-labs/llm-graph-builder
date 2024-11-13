@@ -51,7 +51,7 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
                   <ListItemButton role={undefined} dense>
                     <ListItemIcon>
                       <Checkbox
-                        aria-label='selection checkbox'
+                        ariaLabel='selection checkbox'
                         onChange={(e) => {
                           if (e.target.checked) {
                             handleToggle(true, f.id);

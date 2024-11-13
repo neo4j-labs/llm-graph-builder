@@ -11,14 +11,10 @@ export default function ChatModeToggle({
   menuAnchor,
   closeHandler = () => {},
   open,
-  anchorPortal = true,
-  disableBackdrop = false,
 }: {
-  menuAnchor: HTMLElement | null;
+  menuAnchor: React.RefObject<HTMLElement | null>;
   closeHandler?: () => void;
   open: boolean;
-  anchorPortal?: boolean;
-  disableBackdrop?: boolean;
 }) {
   const { setchatModes, chatModes, postProcessingTasks } = useFileContext();
   const isCommunityAllowed = postProcessingTasks.includes('enable_communities');
@@ -72,14 +68,5 @@ export default function ChatModeToggle({
       };
     });
   }, [chatModes, memoizedChatModes, closeHandler]);
-  return (
-    <CustomMenu
-      closeHandler={closeHandler}
-      open={open}
-      MenuAnchor={menuAnchor}
-      anchorPortal={anchorPortal}
-      disableBackdrop={disableBackdrop}
-      items={menuItems}
-    />
-  );
+  return <CustomMenu closeHandler={closeHandler} open={open} anchorOrigin={menuAnchor} items={menuItems} />;
 }

@@ -103,7 +103,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             .includes('Processing');
           return (
             <Checkbox
-              aria-label='header-checkbox'
+              ariaLabel='header-checkbox'
               isChecked={table.getIsAllRowsSelected()}
               onChange={table.getToggleAllRowsSelectedHandler()}
               isDisabled={processingcheck}
@@ -958,6 +958,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   );
                 },
               }}
+              isKeyboardNavigable={false}
             />
           </div>
         </>

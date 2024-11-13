@@ -130,7 +130,7 @@ export default function DeduplicationTab() {
         header: ({ table }: { table: Table<dupNodes> }) => {
           return (
             <Checkbox
-              aria-label='header-checkbox'
+              ariaLabel='header-checkbox'
               isChecked={table.getIsAllRowsSelected()}
               onChange={table.getToggleAllRowsSelectedHandler()}
             />
@@ -140,7 +140,7 @@ export default function DeduplicationTab() {
           return (
             <div className='px-1'>
               <Checkbox
-                aria-label='row-checkbox'
+                ariaLabel='row-checkbox'
                 onChange={row.getToggleSelectedHandler()}
                 htmlAttributes={{ title: 'Select the Row for merging' }}
                 isChecked={row.getIsSelected()}
@@ -318,6 +318,7 @@ export default function DeduplicationTab() {
               );
             },
           }}
+          isKeyboardNavigable={false}
         />
         <Flex className='mt-3' flexDirection='row' justifyContent='flex-end'>
           <ButtonWithToolTip

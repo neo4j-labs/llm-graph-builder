@@ -86,12 +86,14 @@ const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () =>
     <Dialog
       size='medium'
       isOpen={open}
-      aria-labelledby='form-dialog-title'
       onClose={() => {
         setloading(false);
         setIsSchema(false);
         setUserText('');
         onClose();
+      }}
+      htmlAttributes={{
+        'aria-labelledby': 'form-dialog-title',
       }}
     >
       <Dialog.Header>Entity Graph Extraction Settings</Dialog.Header>

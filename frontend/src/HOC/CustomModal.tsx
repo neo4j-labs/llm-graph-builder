@@ -30,6 +30,7 @@ const CustomModal: React.FC<CustomModalProps> = ({
             onClose={() => setStatus('unknown')}
             type={status}
             name='Custom Banner'
+            usage='inline'
           />
         )}
         <div className='n-flex n-flex-row n-flex-wrap'>{children}</div>

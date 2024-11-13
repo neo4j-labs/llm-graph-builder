@@ -93,7 +93,7 @@ export default function DeletePopUpForOrphanNodes({
         header: ({ table }: { table: Table<orphanNodeProps> }) => {
           return (
             <Checkbox
-              aria-label='header-checkbox'
+              ariaLabel='header-checkbox'
               isChecked={table.getIsAllRowsSelected()}
               onChange={table.getToggleAllRowsSelectedHandler()}
             />
@@ -103,7 +103,7 @@ export default function DeletePopUpForOrphanNodes({
           return (
             <div className='px-1'>
               <Checkbox
-                aria-label='row-checkbox'
+                ariaLabel='row-checkbox'
                 onChange={row.getToggleSelectedHandler()}
                 htmlAttributes={{ title: 'Select the Row for Deletion' }}
                 isChecked={row.getIsSelected()}
@@ -285,6 +285,7 @@ export default function DeletePopUpForOrphanNodes({
               );
             },
           }}
+          isKeyboardNavigable={false}
         />
         <Flex className='mt-3' flexDirection='row' justifyContent='flex-end'>
           <ButtonWithToolTip

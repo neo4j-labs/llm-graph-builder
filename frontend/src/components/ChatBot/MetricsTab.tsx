@@ -76,7 +76,9 @@ function MetricsTab({
   return (
     <Box>
       {error != undefined && error?.trim() != '' ? (
-        <Banner type='danger'>{error}</Banner>
+        <Banner type='danger' usage='inline'>
+          {error}
+        </Banner>
       ) : (
         <DataGrid
           ref={tableRef}
@@ -108,6 +110,7 @@ function MetricsTab({
               );
             },
           }}
+          isKeyboardNavigable={false}
         />
       )}
     </Box>

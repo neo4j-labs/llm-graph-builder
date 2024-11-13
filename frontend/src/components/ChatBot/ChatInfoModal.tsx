@@ -342,7 +342,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         </Box>
       </Box>
       {error?.length > 0 ? (
-        <Banner type='danger'>{error}</Banner>
+        <Banner type='danger' usage='inline'>
+          {error}
+        </Banner>
       ) : (
         <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
           {mode === chatModeLables['global search+vector+fulltext'] ? (
@@ -396,6 +398,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                       .
                     </Typography>
                   }
+                  usage='inline'
                 ></Banner>
               )}
               <Box>

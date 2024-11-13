@@ -31,7 +31,7 @@ function RetryConfirmationDialog({
       <Dialog.Header>Reprocess Options</Dialog.Header>
       <Dialog.Content>
         {alertStatus.showAlert && (
-          <Banner isCloseable onClose={onBannerClose} className='my-4' type={alertStatus.alertType}>
+          <Banner isCloseable onClose={onBannerClose} className='my-4' type={alertStatus.alertType} usage='inline'>
             {alertStatus.alertMessage}
           </Banner>
         )}

@@ -107,7 +107,9 @@ export default function MultiModeMetrics({
   return (
     <Box>
       {error?.trim() != '' ? (
-        <Banner type='danger'>{error}</Banner>
+        <Banner type='danger' usage='inline'>
+          {error}
+        </Banner>
       ) : (
         <div className={isWithAdditionalMetrics === false ? 'flex justify-center items-center' : ''}>
           <DataGrid
@@ -142,6 +144,7 @@ export default function MultiModeMetrics({
                 );
               },
             }}
+            isKeyboardNavigable={false}
           />
         </div>
       )}

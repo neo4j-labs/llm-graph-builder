@@ -49,6 +49,7 @@ export default class ErrorBoundary extends React.Component<any, any> {
                     },
                   ]
             }
+            usage='inline'
           ></Banner>
         </div>
       );

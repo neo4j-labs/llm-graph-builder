@@ -158,12 +158,12 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               autoFocus: true,
               onBlur: () => setValid(validation(bucketUrl) && isFocused),
               onKeyDown: handleKeyDown,
+              'aria-label': 'Bucket URL',
+              placeholder: 's3://data.neo4j.com/pdf/',
             }}
             value={bucketUrl}
             isDisabled={false}
             label='Bucket URL'
-            aria-label='Bucket URL'
-            placeholder='s3://data.neo4j.com/pdf/'
             isFluid={true}
             isRequired={true}
             errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
@@ -178,13 +178,13 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
                 id: 'access key',
                 type: 'password',
                 onKeyDown: handleKeyDown,
+                'aria-label': 'Access Key',
+                placeholder: '',
               }}
               value={accessKey}
               isDisabled={false}
               label='Access Key'
-              aria-label='Access Key'
               className='w-full'
-              placeholder=''
               isFluid={true}
               isRequired={true}
               onChange={(e) => {
@@ -196,13 +196,13 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
                 id: 'secret key',
                 type: 'password',
                 onKeyDown: handleKeyDown,
+                'aria-label': 'Secret Key',
+                placeholder: '',
               }}
               value={secretKey}
               isDisabled={false}
               label='Secret Key'
-              aria-label='Secret Key'
               className='w-full'
-              placeholder=''
               isFluid={true}
               isRequired={true}
               onChange={(e) => {
