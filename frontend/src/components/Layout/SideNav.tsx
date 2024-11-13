@@ -210,7 +210,14 @@ const SideNav: React.FC<SideNavProps> = ({
                   ref={anchorMenuRef}
                   icon={
                     <>
-                      <IconButtonWithToolTip size='small' placement='left' clean label='Chat mode' text='Chat mode'>
+                      <IconButtonWithToolTip
+                        onClick={() => setshowChatMode(true)}
+                        size='small'
+                        placement='left'
+                        clean
+                        label='Chat mode'
+                        text='Chat mode'
+                      >
                         <RiChatSettingsLine className='n-size-token-7' />
                       </IconButtonWithToolTip>
                       <ChatModeToggle
