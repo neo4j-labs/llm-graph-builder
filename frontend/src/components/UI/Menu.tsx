@@ -27,10 +27,7 @@ export default function CustomMenu({
         <Menu.Item
           key={`${idx}${i.title}`}
           title={i.title}
-          onClick={() => {
-            i.onClick();
-            closeHandler();
-          }}
+          onClick={i.onClick}
           isDisabled={i.disabledCondition}
           className={i.isSelected ? i.selectedClassName : ''}
           description={i.description}

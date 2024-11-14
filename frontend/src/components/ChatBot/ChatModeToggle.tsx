@@ -41,7 +41,6 @@ export default function ChatModeToggle({
         } else {
           setchatModes((prev) => [...prev, m.mode]);
         }
-        closeHandler();
       };
       return {
         title: (
@@ -56,7 +55,10 @@ export default function ChatModeToggle({
             </div>
           </div>
         ),
-        onClick: handleModeChange,
+        onClick: (e:React.MouseEvent<HTMLButtonElement, MouseEvent>)=>{
+          handleModeChange();
+          e.stopPropagation();
+        },
         disabledCondition: false,
         description: (
           <span>
@@ -69,7 +71,7 @@ export default function ChatModeToggle({
         ),
       };
     });
-  }, [chatModes, memoizedChatModes, closeHandler]);
+  }, [chatModes, memoizedChatModes]);
   return (
     <CustomMenu isRoot={isRoot} closeHandler={closeHandler} open={open} anchorOrigin={menuAnchor} items={menuItems} />
   );
