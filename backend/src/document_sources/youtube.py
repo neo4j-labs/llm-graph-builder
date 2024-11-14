@@ -95,7 +95,7 @@ def get_documents_from_youtube(url):
               pages.append(Document(page_content=transcript_content.strip(), metadata={'start_timestamp':str(timedelta(seconds = counter-YOUTUBE_CHUNK_SIZE_SECONDS)).split('.')[0], 'end_timestamp':str(timedelta(seconds = td['start'])).split('.')[0]}))
               counter += YOUTUBE_CHUNK_SIZE_SECONDS  
               transcript_content=''  
-            
+      pages.append(Document(page_content=transcript_content.strip(), metadata={'start_timestamp':str(timedelta(seconds = counter-YOUTUBE_CHUNK_SIZE_SECONDS)).split('.')[0], 'end_timestamp':str(timedelta(seconds =transcript[-1]['start'] if transcript else counter)).split('.')[0]})) # Handle empty transcript_pieces
       file_name = match.group(1)#youtube_transcript[0].metadata["snippet"]["title"]
       return file_name, pages
     except Exception as e:
