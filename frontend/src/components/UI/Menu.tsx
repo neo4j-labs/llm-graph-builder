@@ -5,13 +5,13 @@ export default function CustomMenu({
   closeHandler,
   items,
   anchorOrigin,
-  isRoot=false
+  isRoot = false,
 }: {
   open: boolean;
   closeHandler: () => void;
   items: Menuitems[] | undefined;
   anchorOrigin: React.RefObject<HTMLElement | null>;
-  isRoot?:boolean
+  isRoot?: boolean;
 }) {
   return (
     <Menu
@@ -34,7 +34,6 @@ export default function CustomMenu({
           isDisabled={i.disabledCondition}
           className={i.isSelected ? i.selectedClassName : ''}
           description={i.description}
-          
         />
       ))}
     </Menu>

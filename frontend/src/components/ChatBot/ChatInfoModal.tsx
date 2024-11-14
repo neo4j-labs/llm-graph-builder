@@ -9,8 +9,8 @@ import {
   useMediaQuery,
   Button,
   TextArea,
-  Tooltip,
   IconButton,
+  Accordion,
 } from '@neo4j-ndl/react';
 import { DocumentDuplicateIconOutline, ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
@@ -96,6 +96,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const [multiModeError, setMultiModeError] = useState<string>('');
   const [enableReference, toggleReferenceVisibility] = useReducer((state: boolean) => !state, false);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const [expandedItemIdValue, setExpandedId] = useState<number | null>(null);
   const [isAdditionalMetricsEnabled, setIsAdditionalMetricsEnabled] = useState<boolean | null>(
     multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length > 3
       ? true
@@ -381,7 +382,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           <SourcesInfo loading={infoLoading} sources={sources} mode={mode} chunks={chunks} />
         </Tabs.TabPanel>
         <Tabs.TabPanel tabId={8} value={activeTab}>
-          <Stack spacing={2}>
+          <Stack spacing={2} className='max-h-96 overflow-y-auto'>
             <Stack spacing={2}>
               {!supportedLLmsForRagas.includes(metricmodel) && (
                 <Banner
@@ -409,74 +410,36 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                   about <span className='font-bold'>20 seconds</span> . You'll see detailed scores shortly.
                 </Typography>
               </Box>
-              <Stack>
-                <Tooltip type='rich'>
-                  <Tooltip.Trigger hasButtonWrapper>
-                    <Typography variant='body-large'>
-                      <span className='font-bold'>Faithfulness</span>:
-                    </Typography>
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>
-                    <Tooltip.Header>Meaning</Tooltip.Header>
-                    <Tooltip.Body>Determines How accurately the answer reflects the provided information.</Tooltip.Body>
-                  </Tooltip.Content>
-                </Tooltip>
-                <Tooltip type='rich'>
-                  <Tooltip.Trigger hasButtonWrapper>
-                    <Typography variant='body-large'>
-                      <span className='font-bold'>Answer Relevancy</span>:
-                    </Typography>
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>
-                    <Tooltip.Header>Meaning</Tooltip.Header>
-                    <Tooltip.Body>Determines How well the answer addresses the user's question.</Tooltip.Body>
-                  </Tooltip.Content>
-                </Tooltip>
-                {(isAdditionalMetricsWithSingleMode || isAdditionalMetricsEnabled) && (
-                  <>
-                    <Tooltip type='rich'>
-                      <Tooltip.Trigger hasButtonWrapper>
-                        <Typography variant='body-large'>
-                          <span className='font-bold'>ROUGE Score</span>:
-                        </Typography>
-                      </Tooltip.Trigger>
-                      <Tooltip.Content>
-                        <Tooltip.Header>Meaning</Tooltip.Header>
-                        <Tooltip.Body>
-                          Determines How much the generated answer matches the reference answer, word-for-word
-                        </Tooltip.Body>
-                      </Tooltip.Content>
-                    </Tooltip>
-                    <Tooltip type='rich'>
-                      <Tooltip.Trigger hasButtonWrapper>
-                        <Typography variant='body-large'>
-                          <span className='font-bold'>Semantic Score</span>:
-                        </Typography>
-                      </Tooltip.Trigger>
-                      <Tooltip.Content>
-                        <Tooltip.Header>Meaning</Tooltip.Header>
-                        <Tooltip.Body>
-                          Determines How well the generated answer understands the meaning of the reference answer.
-                        </Tooltip.Body>
-                      </Tooltip.Content>
-                    </Tooltip>
-                    <Tooltip type='rich'>
-                      <Tooltip.Trigger hasButtonWrapper>
-                        <Typography variant='body-large'>
-                          <span className='font-bold'>Context Entity Recall Score</span>:
-                        </Typography>
-                      </Tooltip.Trigger>
-                      <Tooltip.Content>
-                        <Tooltip.Header>Meaning</Tooltip.Header>
-                        <Tooltip.Body>
-                          Determines Measures the recall of entities present in both reference and retrieved contexts
-                          relative to the reference.
-                        </Tooltip.Body>
-                      </Tooltip.Content>
-                    </Tooltip>
-                  </>
-                )}
-              </Stack>
+              <div className='flex flex-col items-start justify-center gap-4'>
+                <Accordion
+                  isMultiple={false}
+                  expandedItemId={expandedItemIdValue}
+                  onChange={(e) => {
+                    setExpandedId(e);
+                  }}
+                >
+                  <Accordion.Item itemId={0} title='Faithfulness' arrowPosition='right'>
+                    Determines How accurately the answer reflects the provided information.
+                  </Accordion.Item>
+                  <Accordion.Item itemId={1} title='Answer Relevancy' arrowPosition='right'>
+                    Determines How well the answer addresses the user's question.
+                  </Accordion.Item>
+                  {(isAdditionalMetricsWithSingleMode || isAdditionalMetricsEnabled) && (
+                    <>
+                      <Accordion.Item itemId={2} title='Rouge Score' arrowPosition='right'>
+                        Determines How much the generated answer matches the reference answer, word-for-word
+                      </Accordion.Item>
+                      <Accordion.Item itemId={3} title='Semantic Score' arrowPosition='right'>
+                        Determines How well the generated answer understands the meaning of the reference answer.
+                      </Accordion.Item>
+                      <Accordion.Item itemId={4} title='Context Entity Recall Score' arrowPosition='right'>
+                        Determines Measures the recall of entities present in both reference and retrieved contexts
+                        relative to the reference.
+                      </Accordion.Item>
+                    </>
+                  )}
+                </Accordion>
+              </div>
             </Stack>
             {showMultiModeMetrics && isMultiModes && (
               <MultiModeMetrics

@@ -26,7 +26,7 @@ const ButtonWithToolTip = ({
   className?: string;
   loading?: boolean;
   label: string;
-  fill?: 'filled';
+  fill?: 'filled' | 'outlined' | 'text';
   type?: 'submit' | 'button' | 'reset';
   color?: 'primary' | 'danger' | undefined;
 }) => {

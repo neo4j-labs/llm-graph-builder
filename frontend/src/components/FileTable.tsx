@@ -337,7 +337,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           } else if (info.row.original?.status === 'Failed') {
             return (
               <div className='flex gap-1 items-center'>
-                 <Typography variant='body-medium'>
+                <Typography variant='body-medium'>
                   <StatusIndicator type='danger' />
                 </Typography>
                 <Typography variant='body-medium'> NA</Typography>
