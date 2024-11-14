@@ -278,7 +278,9 @@ def retrieve_documents(doc_retriever, messages):
     except Exception as e:
         error_message = f"Error retrieving documents: {str(e)}"
         logging.error(error_message)
-        raise RuntimeError(error_message)
+        docs = None
+        transformed_question = None
+
     
     return docs,transformed_question
 
