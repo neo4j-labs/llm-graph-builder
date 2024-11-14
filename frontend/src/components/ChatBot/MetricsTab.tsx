@@ -1,5 +1,5 @@
 import { Banner, Box, DataGrid, DataGridComponents, Typography } from '@neo4j-ndl/react';
-import { memo, useMemo, useRef } from 'react';
+import { memo, useContext, useMemo, useRef } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -9,6 +9,7 @@ import {
   getSortedRowModel,
 } from '@tanstack/react-table';
 import { capitalize } from '../../utils/Utils';
+import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 function MetricsTab({
   metricsLoading,
   metricDetails,
@@ -24,6 +25,7 @@ function MetricsTab({
 }) {
   const columnHelper = createColumnHelper<{ metric: string; score: number | string }>();
   const tableRef = useRef(null);
+  const { colorMode } = useContext(ThemeWrapperContext);
 
   const columns = useMemo(
     () => [
@@ -91,7 +93,13 @@ function MetricsTab({
           }}
           isLoading={metricsLoading}
           components={{
-            Body: (props) => <DataGridComponents.Body {...props} />,
+            Body: () => (
+              <DataGridComponents.Body
+                innerProps={{
+                  className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
+                }}
+              />
+            ),
             PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
               return (
                 <DataGridComponents.PaginationNumericButton

@@ -1,5 +1,5 @@
 import { Checkbox, DataGrid, DataGridComponents, Flex, TextLink, Typography, useMediaQuery } from '@neo4j-ndl/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { UserCredentials, orphanNodeProps } from '../../../../types';
 import { getOrphanNodes } from '../../../../services/GetOrphanNodes';
 import { useCredentials } from '../../../../context/UserCredentials';
@@ -21,6 +21,7 @@ import DeletePopUp from '../../DeletePopUp/DeletePopUp';
 import { tokens } from '@neo4j-ndl/base';
 import GraphViewModal from '../../../Graph/GraphViewModal';
 import { handleGraphNodeClick } from '../../../ChatBot/chatInfo';
+import { ThemeWrapperContext } from '../../../../context/ThemeWrapper';
 export default function DeletePopUpForOrphanNodes({
   deleteHandler,
   loading,
@@ -41,6 +42,7 @@ export default function DeletePopUpForOrphanNodes({
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
+  const { colorMode } = useContext(ThemeWrapperContext);
 
   const fetchOrphanNodes = useCallback(async () => {
     try {
@@ -266,7 +268,13 @@ export default function DeletePopUpForOrphanNodes({
           }}
           isLoading={isLoading}
           components={{
-            Body: (props) => <DataGridComponents.Body {...props} />,
+            Body: () => (
+              <DataGridComponents.Body
+                innerProps={{
+                  className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
+                }}
+              />
+            ),
             PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
               return (
                 <DataGridComponents.PaginationNumericButton

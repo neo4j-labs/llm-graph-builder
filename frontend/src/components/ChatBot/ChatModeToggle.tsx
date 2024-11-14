@@ -55,7 +55,7 @@ export default function ChatModeToggle({
             </div>
           </div>
         ),
-        onClick: (e:React.MouseEvent<HTMLButtonElement, MouseEvent>)=>{
+        onClick: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
           handleModeChange();
           e.stopPropagation();
         },

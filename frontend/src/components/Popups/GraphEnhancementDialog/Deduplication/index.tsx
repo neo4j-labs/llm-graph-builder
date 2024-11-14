@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { getDuplicateNodes } from '../../../../services/GetDuplicateNodes';
 import { useCredentials } from '../../../../context/UserCredentials';
 import { dupNodes, selectedDuplicateNodes, UserCredentials } from '../../../../types';
@@ -30,6 +30,7 @@ import mergeDuplicateNodes from '../../../../services/MergeDuplicateEntities';
 import { tokens } from '@neo4j-ndl/base';
 import GraphViewModal from '../../../Graph/GraphViewModal';
 import { handleGraphNodeClick } from '../../../ChatBot/chatInfo';
+import { ThemeWrapperContext } from '../../../../context/ThemeWrapper';
 
 export default function DeduplicationTab() {
   const { breakpoints } = tokens;
@@ -46,6 +47,8 @@ export default function DeduplicationTab() {
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
   const [nodesCount, setNodesCount] = useState<number>(0);
+  const { colorMode } = useContext(ThemeWrapperContext);
+
   const fetchDuplicateNodes = useCallback(async () => {
     try {
       setLoading(true);
@@ -299,7 +302,13 @@ export default function DeduplicationTab() {
           }}
           isLoading={isLoading}
           components={{
-            Body: (props) => <DataGridComponents.Body {...props} />,
+            Body: () => (
+              <DataGridComponents.Body
+                innerProps={{
+                  className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
+                }}
+              />
+            ),
             PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
               return (
                 <DataGridComponents.PaginationNumericButton

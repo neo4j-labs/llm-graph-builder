@@ -616,7 +616,7 @@ export interface SettingsModalProps {
 }
 export interface Menuitems {
   title: string | JSX.Element;
-  onClick: (e:React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+  onClick: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   disabledCondition: boolean;
   description?: string | React.ReactNode;
   isSelected?: boolean;

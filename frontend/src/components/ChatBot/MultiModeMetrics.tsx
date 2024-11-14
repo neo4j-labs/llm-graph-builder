@@ -7,9 +7,10 @@ import {
   getSortedRowModel,
 } from '@tanstack/react-table';
 import { capitalize } from '../../utils/Utils';
-import { useEffect, useMemo, useRef } from 'react';
+import { useContext, useEffect, useMemo, useRef } from 'react';
 import { Banner, Box, DataGrid, DataGridComponents, Typography } from '@neo4j-ndl/react';
 import { multimodelmetric } from '../../types';
+import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 
 export default function MultiModeMetrics({
   data,
@@ -22,6 +23,7 @@ export default function MultiModeMetrics({
   error: string;
   isWithAdditionalMetrics: boolean | null;
 }) {
+  const { colorMode } = useContext(ThemeWrapperContext);
   const tableRef = useRef<HTMLDivElement>(null);
   const columnHelper = createColumnHelper<multimodelmetric>();
   const columns = useMemo(
@@ -125,7 +127,13 @@ export default function MultiModeMetrics({
             isLoading={metricsLoading}
             rootProps={{ className: isWithAdditionalMetrics === false ? '!w-[465px]' : 'auto' }}
             components={{
-              Body: (props) => <DataGridComponents.Body {...props} />,
+              Body: () => (
+                <DataGridComponents.Body
+                  innerProps={{
+                    className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
+                  }}
+                />
+              ),
               PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
                 return (
                   <DataGridComponents.PaginationNumericButton

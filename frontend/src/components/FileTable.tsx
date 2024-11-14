@@ -953,7 +953,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 className: classNameCheck,
               }}
               components={{
-                Body: (props) => <DataGridComponents.Body {...props} />,
+                Body: () => (
+                  <DataGridComponents.Body
+                    innerProps={{
+                      className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
+                    }}
+                  />
+                ),
                 PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
                   return (
                     <DataGridComponents.PaginationNumericButton
