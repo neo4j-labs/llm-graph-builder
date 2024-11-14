@@ -1,23 +1,29 @@
 import { Menu } from '@neo4j-ndl/react';
 import { Menuitems } from '../../types';
+import { Key } from 'react';
 export default function CustomMenu({
   open,
   closeHandler,
   items,
   anchorOrigin,
   isRoot = false,
+  Key
 }: {
   open: boolean;
   closeHandler: () => void;
   items: Menuitems[] | undefined;
   anchorOrigin: React.RefObject<HTMLElement | null>;
   isRoot?: boolean;
+  Key?:Key
 }) {
   return (
     <Menu
+      key={Key}
       isOpen={open}
-      onClose={() => {
-        closeHandler();
+      onClose={(e) => {
+        if(e!==undefined&&e.isTrusted){
+          // closeHandler();
+        }
       }}
       anchorRef={anchorOrigin}
       className='custom-menu'
