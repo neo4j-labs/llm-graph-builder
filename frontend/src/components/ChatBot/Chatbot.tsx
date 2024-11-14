@@ -424,7 +424,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       'min-h-[94vh] max-h-screen overflow-hidden': isReadOnly,
       'min-h-full max-h-full overflow-hidden': !isReadOnly,
     })}>
-      <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3 pr-3'>
+      <div className={`flex overflow-y-auto pb-12 min-w-full ${isReadOnly ? '' : 'chatBotContainer'} pl-3 pr-3`}>
         <Widget className='n-bg-palette-neutral-bg-weak w-full' header='' isElevated={false}>
           <div className='flex flex-col gap-4 gap-y-4'>
             {listMessages.map((chat, index) => {
@@ -465,13 +465,11 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                   <Widget
                     header=''
                     isElevated={true}
-                    className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
-                      chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                    className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
                       }`}
                   >
                     <div
-                      className={`${
-                        chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
+                      className={`${chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
                         }`}
                     >
                       <ReactMarkdown className={!isFullScreen ? 'max-w-[250px]' : ''}>
@@ -556,8 +554,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       <div className='n-bg-palette-neutral-bg-weak flex gap-2.5 bottom-0 p-2.5 w-full'>
         <form onSubmit={handleSubmit} className={`flex gap-2.5 w-full ${!isFullScreen ? 'justify-between' : ''}`}>
           <TextInput
-            className={`n-bg-palette-neutral-bg-default flex-grow-7 ${
-              isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
+            className={`n-bg-palette-neutral-bg-default flex-grow-7 ${isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
               }`}
             aria-label='chatbot-input'
             type='text'
