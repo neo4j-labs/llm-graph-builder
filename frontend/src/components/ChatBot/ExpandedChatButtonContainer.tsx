@@ -17,7 +17,6 @@ const ExpandedChatButtonContainer: React.FC<IconProps> = ({ closeChatBot, delete
         open={showChatModeOption}
         menuAnchor={chatAnchor}
         isRoot={false}
-        Key="Chat Menu Modal"
       />
       <div className='!h-[48px] mx-2 flex items-center'>
         <div ref={chatAnchor}>

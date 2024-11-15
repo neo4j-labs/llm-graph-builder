@@ -211,7 +211,9 @@ const SideNav: React.FC<SideNavProps> = ({
                   icon={
                     <>
                       <IconButtonWithToolTip
-                        onClick={() => setshowChatMode(true)}
+                        onClick={() => {
+                          setshowChatMode(true);
+                        }}
                         size='small'
                         placement='left'
                         clean
@@ -222,10 +224,11 @@ const SideNav: React.FC<SideNavProps> = ({
                       </IconButtonWithToolTip>
                       <ChatModeToggle
                         open={showChatMode}
-                        closeHandler={() => setshowChatMode(false)}
+                        closeHandler={() => {
+                          setshowChatMode(false);
+                        }}
                         menuAnchor={anchorMenuRef}
                         isRoot={false}
-                        Key="Chat Mode SideNav"
                       ></ChatModeToggle>
                     </>
                   }

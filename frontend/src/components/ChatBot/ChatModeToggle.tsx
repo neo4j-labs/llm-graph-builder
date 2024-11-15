@@ -1,24 +1,22 @@
 import { StatusIndicator, Typography } from '@neo4j-ndl/react';
-import { Key, useMemo } from 'react';
 import { useFileContext } from '../../context/UsersFiles';
-import CustomMenu from '../UI/Menu';
+import CustomMenu from '../UI/CustomMenu';
 import { chatModeLables, chatModes as AvailableModes, chatModeReadableLables } from '../../utils/Constants';
 import { capitalize } from '@mui/material';
 import { capitalizeWithPlus } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
+import { useMemo } from 'react';
 
 export default function ChatModeToggle({
   menuAnchor,
   closeHandler = () => {},
   open,
   isRoot,
-  Key
 }: {
   menuAnchor: React.RefObject<HTMLElement | null>;
   closeHandler?: () => void;
   open: boolean;
   isRoot: boolean;
-  Key?:Key
 }) {
   const { setchatModes, chatModes, postProcessingTasks } = useFileContext();
   const isCommunityAllowed = postProcessingTasks.includes('enable_communities');
@@ -75,6 +73,6 @@ export default function ChatModeToggle({
     });
   }, [chatModes, memoizedChatModes]);
   return (
-    <CustomMenu Key={Key} isRoot={isRoot} closeHandler={closeHandler} open={open} anchorOrigin={menuAnchor} items={menuItems} />
+    <CustomMenu isRoot={isRoot} closeHandler={closeHandler} open={open} anchorOrigin={menuAnchor} items={menuItems} />
   );
 }
