@@ -333,7 +333,7 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             logging.info(f'Entity Embeddings created')
             
         if "enable_communities" in tasks:
-            # await asyncio.to_thread(create_communities, uri, userName, password, database)
+            await asyncio.to_thread(create_communities, uri, userName, password, database)
             json_obj = {'api_name': 'post_processing/create_communities', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logging.info(f'created communities')
             graph = create_graph_database_connection(uri, userName, password, database)   
@@ -592,7 +592,13 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                         'total_chunks':result[0]['total_chunks'],
                         'fileSize':result[0]['fileSize'],
                         'processed_chunk':result[0]['processed_chunk'],
-                        'fileSource':result[0]['fileSource']
+                        'fileSource':result[0]['fileSource'],
+                        'chunkNodeCount' : result[0]['chunkNodeCount'],
+                        'chunkRelCount' : result[0]['chunkRelCount'],
+                        'entityNodeCount' : result[0]['entityNodeCount'],
+                        'entityEntityRelCount' : result[0]['entityEntityRelCount'],
+                        'communityNodeCount' : result[0]['communityNodeCount'],
+                        'communityRelCount' : result[0]['communityRelCount']
                         })
                     yield status
             except asyncio.CancelledError:
@@ -654,7 +660,13 @@ async def get_document_status(file_name, url, userName, password, database):
                 'total_chunks':result[0]['total_chunks'],
                 'fileSize':result[0]['fileSize'],
                 'processed_chunk':result[0]['processed_chunk'],
-                'fileSource':result[0]['fileSource']
+                'fileSource':result[0]['fileSource'],
+                'chunkNodeCount' : result[0]['chunkNodeCount'],
+                'chunkRelCount' : result[0]['chunkRelCount'],
+                'entityNodeCount' : result[0]['entityNodeCount'],
+                'entityEntityRelCount' : result[0]['entityEntityRelCount'],
+                'communityNodeCount' : result[0]['communityNodeCount'],
+                'communityRelCount' : result[0]['communityRelCount']
                 }
         else:
             status = {'fileName':file_name, 'status':'Failed'}
