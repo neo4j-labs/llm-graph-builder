@@ -85,7 +85,6 @@ app = FastAPI()
 app.add_middleware(ContentSecurityPolicy, Option={'default-src': ["'self'"], 'base-uri': ["'self'"], 'block-all-mixed-content': []}, script_nonce=False, style_nonce=False, report_only=False)
 app.add_middleware(XContentTypeOptions)
 app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
-#app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
 app.add_middleware(CustomGZipMiddleware, minimum_size=1000, compresslevel=5,paths=["/sources_list","/url/scan","/extract","/chat_bot","/chunk_entities","/get_neighbours","/graph_query","/schema","/populate_graph_schema","/get_unconnected_nodes_list","/get_duplicate_nodes","/fetch_chunktext"])
 app.add_middleware(
     CORSMiddleware,
@@ -852,6 +851,40 @@ async def calculate_metric(question: str = Form(),
        )
    finally:
        gc.collect()
+       
+
+@app.post('/additional_metrics')
+async def calculate_additional_metrics(question: str = Form(),
+                                        context: str = Form(),
+                                        answer: str = Form(),
+                                        reference: str = Form(),
+                                        model: str = Form(),
+                                        mode: str = Form(),
+):
+   try:
+       context_list = [str(item).strip() for item in json.loads(context)] if context else []
+       answer_list = [str(item).strip() for item in json.loads(answer)] if answer else []
+       mode_list = [str(item).strip() for item in json.loads(mode)] if mode else []
+       result = await get_additional_metrics(question, context_list,answer_list, reference, model)
+       if result is None or "error" in result:
+           return create_api_response(
+               'Failed',
+               message='Failed to calculate evaluation metrics.',
+               error=result.get("error", "Ragas evaluation returned null")
+           )
+       data = {mode: {metric: result[i][metric] for metric in result[i]} for i, mode in enumerate(mode_list)}
+       return create_api_response('Success', data=data)
+   except Exception as e:
+       logging.exception(f"Error while calculating evaluation metrics: {e}")
+       return create_api_response(
+           'Failed',
+           message="Error while calculating evaluation metrics",
+           error=str(e)
+       )
+   finally:
+       gc.collect()
+
+
 
 @app.post("/fetch_chunktext")
 async def fetch_chunktext(

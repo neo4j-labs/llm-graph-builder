@@ -42,22 +42,21 @@ import { downloadClickHandler, getDateTime } from '../../utils/Utils';
 import ChatModesSwitch from './ChatModesSwitch';
 import CommonActions from './CommonChatActions';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
+if (typeof window !== 'undefined') {
+  if (!sessionStorage.getItem('session_id')) {
+    const id = uuidv4();
+    sessionStorage.setItem('session_id', id);
+  }
+}
+const sessionId = sessionStorage.getItem('session_id') ?? '';
 
 const Chatbot: FC<ChatbotProps> = (props) => {
-  const {
-    messages: listMessages,
-    setMessages: setListMessages,
-    isLoading,
-    isFullScreen,
-    clear,
-    connectionStatus,
-  } = props;
+  const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, connectionStatus } = props;
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
   const { model, chatModes, selectedRows, filesData } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
   const [sourcesModal, setSourcesModal] = useState<string[]>([]);
   const [modelModal, setModelModal] = useState<string>('');
@@ -123,13 +122,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const saveCommunities = (chatCommunities: Community[]) => {
     setCommunities(chatCommunities);
   };
-  useEffect(() => {
-    if (!sessionStorage.getItem('session_id')) {
-      const id = uuidv4();
-      setSessionId(id);
-      sessionStorage.setItem('session_id', id);
-    }
-  }, []);
 
   const simulateTypingEffect = (messageId: number, response: ResponseMode, mode: string, message: string) => {
     let index = 0;
@@ -319,18 +311,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   };
   useEffect(() => {
     scrollToBottom();
-  }, [listMessages]);
-
-  useEffect(() => {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
   }, [listMessages]);
-
-  useEffect(() => {
-    if (clear) {
-      cancel();
-      setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
-    }
-  }, [clear]);
 
   const handleCopy = (message: string, id: number) => {
     copy(message);
@@ -440,10 +422,10 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         className='-ml-4'
                         hasStatus
                         name='KM'
-                        shape='square'
                         size='x-large'
                         source={ChatBotAvatar}
                         status={connectionStatus ? 'online' : 'offline'}
+                        shape='square'
                         type='image'
                       />
                     ) : (
@@ -451,9 +433,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         className=''
                         hasStatus
                         name='KM'
-                        shape='square'
                         size='x-large'
                         status={connectionStatus ? 'online' : 'offline'}
+                        shape='square'
                         type='image'
                       />
                     )}
@@ -555,12 +537,14 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             className={`n-bg-palette-neutral-bg-default flex-grow-7 ${
               isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
             }`}
-            aria-label='chatbot-input'
-            type='text'
             value={inputMessage}
-            fluid
+            isFluid
             onChange={handleInputChange}
-            name='chatbot-input'
+            htmlAttributes={{
+              type: 'text',
+              'aria-label': 'chatbot-input',
+              name: 'chatbot-input',
+            }}
           />
           <ButtonWithToolTip
             label='Q&A Button'
@@ -582,15 +566,18 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             className: 'n-p-token-4 n-bg-palette-neutral-bg-weak n-rounded-lg',
           }}
           onClose={() => setShowInfoModal(false)}
-          open={showInfoModal}
+          isOpen={showInfoModal}
           size={activeChat?.currentMode === chatModeLables['entity search+vector'] ? 'large' : 'medium'}
         >
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <IconButton
               size='large'
-              title='download chat info'
-              clean
-              disabled={metricsLoading || infoLoading}
+              htmlAttributes={{
+                title: 'download chat info',
+              }}
+              isClean
+              ariaLabel='download chat info'
+              isDisabled={metricsLoading || infoLoading}
               onClick={() => {
                 downloadClickHandler(
                   {
@@ -609,19 +596,21 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                 );
               }}
             >
-              <ArrowDownTrayIconOutline />
+              <ArrowDownTrayIconOutline className='n-size-token-7' />
               <TextLink ref={downloadLinkRef} className='!hidden'>
                 ""
               </TextLink>
             </IconButton>
             <IconButton
               size='large'
-              title='close pop up'
-              aria-label='close pop up'
-              clean
+              htmlAttributes={{
+                title: 'close pop up',
+              }}
+              ariaLabel='close pop up'
+              isClean
               onClick={() => setShowInfoModal(false)}
             >
-              <XMarkIconOutline />
+              <XMarkIconOutline className='n-size-token-7' />
             </IconButton>
           </div>
           <InfoModal

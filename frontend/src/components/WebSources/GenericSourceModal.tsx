@@ -1,8 +1,11 @@
-import { Box, Dialog, Tabs, Typography } from '@neo4j-ndl/react';
-import youtubelogo from '../../assets/images/youtube.png';
-import wikipedialogo from '../../assets/images/Wikipedia-logo-v2.svg';
-import weblogo from '../../assets/images/web-svgrepo-com.svg';
-import { useState } from 'react';
+import { Dialog, Tabs, Typography } from '@neo4j-ndl/react';
+import youtubelightmodelogo from '../../assets/images/youtube-lightmode.svg';
+import youtubedarkmodelogo from '../../assets/images/youtube-darkmode.svg';
+import wikipedialogo from '../../assets/images/wikipedia.svg';
+import weblogo from '../../assets/images/web.svg';
+import webdarkmode from '../../assets/images/web-darkmode.svg';
+import wikipediadarkmode from '../../assets/images/wikipedia-darkmode.svg';
+import { useContext, useState } from 'react';
 import WikipediaInput from './WikiPedia/WikipediaInput';
 import WebInput from './Web/WebInput';
 import YoutubeInput from './Youtube/YoutubeInput';
@@ -27,36 +30,60 @@ export default function GenericModal({
 
   return (
     <Dialog
-      open={open}
+      isOpen={open}
       onClose={() => {
         setIsLoading(false);
         closeHandler();
       }}
     >
       <Dialog.Header>
-        <Box className='flex flex-row pb-6 items-center mb-2'>
-          <img src={Neo4jRetrievalLogo} style={{ width: 95, height: 95, marginRight: 10 }} loading='lazy' />
-          <Box className='flex flex-col'>
+        <div className='flex flex-row pb-6 items-center mb-2'>
+          <img src={Neo4jDataImportFromCloud} style={{ width: 95, height: 95, marginRight: 10 }} loading='lazy' />
+          <div className='flex flex-col'>
             <Typography variant='h2'>Web Sources</Typography>
             <Typography variant='body-medium' className='mb-2'>
               Convert Any Web Source to Knowledge graph
             </Typography>
-          </Box>
-        </Box>
+          </div>
+        </div>
         <Tabs fill='underline' onChange={setactiveTab} size='large' value={activeTab}>
           {APP_SOURCES != undefined && APP_SOURCES.includes('youtube') && (
-            <Tabs.Tab tabId={0} aria-label='Database' disabled={isLoading}>
-              <img src={youtubelogo} className={`brandimg`}></img>
+            <Tabs.Tab
+              tabId={0}
+              isDisabled={isLoading}
+              htmlAttributes={{
+                'aria-label': 'Database',
+              }}
+            >
+              <img
+                src={themeUtils.colorMode === 'light' ? youtubelightmodelogo : youtubedarkmodelogo}
+                className={`brandimg`}
+              ></img>
             </Tabs.Tab>
           )}
           {APP_SOURCES != undefined && APP_SOURCES.includes('wiki') && (
-            <Tabs.Tab tabId={1} aria-label='Add database' disabled={isLoading}>
-              <img src={wikipedialogo} className={`brandimg`}></img>
+            <Tabs.Tab
+              tabId={1}
+              isDisabled={isLoading}
+              htmlAttributes={{
+                'aria-label': 'Add database',
+              }}
+            >
+              <img
+                src={themeUtils.colorMode === 'dark' ? wikipedialogo : wikipediadarkmode}
+                className={`brandimg`}
+              ></img>
             </Tabs.Tab>
           )}
           {APP_SOURCES != undefined && APP_SOURCES.includes('web') && (
-            <Tabs.Tab tabId={2} aria-label='Inbox' disabled={isLoading}>
-              <img src={weblogo} className={`brandimg !w-[70px] !h-[70px]`}></img>
+            <Tabs.Tab
+              tabId={2}
+              isDisabled={isLoading}
+              htmlAttributes={{
+                'aria-label': 'Inbox',
+              }}
+            >
+              <img src={themeUtils.colorMode === 'dark' ? webdarkmode : weblogo} className={`brandimg`}></img>
             </Tabs.Tab>
           )}
         </Tabs>

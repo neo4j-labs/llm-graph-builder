@@ -3,7 +3,6 @@ import SideNav from './SideNav';
 import DrawerDropzone from './DrawerDropzone';
 import DrawerChatbot from './DrawerChatbot';
 import Content from '../Content';
-import SettingsModal from '../Popups/Settings/SettingModal';
 import { clearChatAPI } from '../../services/QnaAPI';
 import { useCredentials } from '../../context/UserCredentials';
 import { UserCredentials } from '../../types';
@@ -11,16 +10,9 @@ import { useMessageContext } from '../../context/UserMessages';
 import { useMediaQuery } from '@mui/material';
 import { useFileContext } from '../../context/UsersFiles';
 import SchemaFromTextDialog from '../Popups/Settings/SchemaFromText';
+import useSpeechSynthesis from '../../hooks/useSpeech';
 
-export default function PageLayoutNew({
-  isSettingPanelExpanded,
-  closeSettingModal,
-  openSettingsDialog,
-}: {
-  isSettingPanelExpanded: boolean;
-  closeSettingModal: () => void;
-  openSettingsDialog: () => void;
-}) {
+export default function PageLayout() {
   const largedesktops = useMediaQuery(`(min-width:1440px )`);
   const { userCredentials, connectionStatus } = useCredentials();
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(largedesktops));
@@ -46,18 +38,34 @@ export default function PageLayoutNew({
     }
   };
 
-  const { messages, setClearHistoryData, clearHistoryData } = useMessageContext();
+  const { messages, setClearHistoryData, clearHistoryData, setMessages } = useMessageContext();
   const { isSchema, setIsSchema, setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
-
+  const { cancel } = useSpeechSynthesis();
   const deleteOnClick = async () => {
     try {
       setClearHistoryData(true);
+      cancel();
       const response = await clearChatAPI(
         userCredentials as UserCredentials,
         sessionStorage.getItem('session_id') ?? ''
       );
       if (response.data.status === 'Success') {
-        setClearHistoryData(false);
+        const date = new Date();
+
+        setMessages([
+          {
+            datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
+            id: 2,
+            modes: {
+              'graph+vector+fulltext': {
+                message:
+                  ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
+              },
+            },
+            user: 'chatbot',
+            currentMode: 'graph+vector+fulltext',
+          },
+        ]);
       }
     } catch (error) {
       console.log(error);
@@ -86,29 +94,17 @@ export default function PageLayoutNew({
       />
       <SchemaFromTextDialog
         open={showTextFromSchemaDialog.show}
-        openSettingsDialog={openSettingsDialog}
         onClose={() => {
           setShowTextFromSchemaDialog({ triggeredFrom: '', show: false });
           switch (showTextFromSchemaDialog.triggeredFrom) {
             case 'enhancementtab':
               toggleEnhancementDialog();
               break;
-            case 'schemadialog':
-              openSettingsDialog();
-              break;
             default:
               break;
           }
         }}
       ></SchemaFromTextDialog>
-      <SettingsModal
-        openTextSchema={openSchemaFromTextDialog}
-        open={isSettingPanelExpanded}
-        onClose={closeSettingModal}
-        settingView='headerView'
-        isSchema={isSchema}
-        setIsSchema={setIsSchema}
-      />
       <Content
         openChatBot={() => setShowChatBot(true)}
         isLeftExpanded={isLeftExpanded}
@@ -120,7 +116,6 @@ export default function PageLayoutNew({
         setIsSchema={setIsSchema}
         showEnhancementDialog={showEnhancementDialog}
         toggleEnhancementDialog={toggleEnhancementDialog}
-        closeSettingModal={closeSettingModal}
       />
       {showDrawerChatbot && (
         <DrawerChatbot

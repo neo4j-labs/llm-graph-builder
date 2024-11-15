@@ -146,7 +146,6 @@ export interface ContentProps {
   setIsSchema: Dispatch<SetStateAction<boolean>>;
   showEnhancementDialog: boolean;
   toggleEnhancementDialog: () => void;
-  closeSettingModal: () => void;
 }
 
 export interface FileTableProps {
@@ -425,17 +424,17 @@ export interface OrphanNodeResponse extends Partial<commonserverresponse> {
   data: orphanNodeProps[];
 }
 export type metricstate = {
-  faithfulness: number;
-  answer_relevancy: number;
-  error?: string;
+  [key: string]: number | string;
+} & {
+  error: string;
 };
 export type metricdetails = Record<string, metricstate>;
 
-export interface multimodelmetric {
+export type multimodelmetric = {
+  [key: string]: number | string;
+} & {
   mode: string;
-  answer_relevancy: number;
-  faithfulness: number;
-}
+};
 export interface MetricsResponse extends Omit<commonserverresponse, 'data'> {
   data: metricdetails;
 }
@@ -471,8 +470,7 @@ export interface chatInfoMessage extends Partial<Messages> {
   chunks: Chunk[];
   metricDetails:
     | {
-        faithfulness: number;
-        answer_relevancy: number;
+        [key: string]: number | string;
       }
     | undefined;
   metricError: string;
@@ -617,7 +615,7 @@ export interface SettingsModalProps {
 }
 export interface Menuitems {
   title: string | JSX.Element;
-  onClick: () => void;
+  onClick: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   disabledCondition: boolean;
   description?: string;
 }

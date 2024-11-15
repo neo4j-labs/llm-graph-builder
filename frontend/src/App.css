@@ -25,7 +25,7 @@
 }
 
 .contentWithExpansion {
-  width: calc(-840px + 100dvw);
+  width: calc(-807px + 100dvw);
   height: calc(100dvh - 58px);
   padding: 3px;
   display: flex;
@@ -384,4 +384,13 @@
 .custom-menu {
   min-width: 250px;
   max-width: 305px;
+}
+.ndl-modal-root{
+  z-index: 39 !important;
+}
+.tbody-dark .ndl-data-grid-tr:hover {
+  --cell-background: rgb(60 63 68) !important;
+}
+.tbody-light .ndl-data-grid-tr:hover {
+  --cell-background: rgb(226 227 229) !important;
 }
