@@ -38,7 +38,7 @@ const ExpandedChatButtonContainer: React.FC<IconProps> = ({ closeChatBot, delete
           clean
           onClick={deleteOnClick}
           disabled={messages.length === 1}
-          placement='bottom'
+          placement={'left'}
           label={tooltips.clearChat}
         >
           <TrashIconOutline />
