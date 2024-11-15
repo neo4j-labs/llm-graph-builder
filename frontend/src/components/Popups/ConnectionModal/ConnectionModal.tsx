@@ -15,7 +15,6 @@ export default function ConnectionModal({
   isVectorIndexMatch,
   chunksExistsWithoutEmbedding,
   chunksExistsWithDifferentEmbedding,
-  isChatOnly
 }: ConnectionModalProps) {
   let prefilledconnection = localStorage.getItem('neo4j.connection');
   let initialuri;

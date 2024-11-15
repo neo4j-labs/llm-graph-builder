@@ -10,7 +10,7 @@ import {
   ArrowLeftIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { Button, Typography } from '@neo4j-ndl/react';
-import { Dispatch, memo, SetStateAction, useCallback, useContext, useEffect, useState } from 'react';
+import { Dispatch, memo, SetStateAction, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { buttonCaptions, tooltips } from '../../utils/Constants';
 import { useFileContext } from '../../context/UsersFiles';
@@ -31,14 +31,14 @@ interface HeaderProp {
 const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnection }) => {
   const { colorMode, toggleColorMode } = useContext(ThemeWrapperContext);
   const navigate = useNavigate();
-  const { messages } = useMessageContext();
+  const { messages, setChatPopout, chatPopout } = useMessageContext();
   const handleURLClick = useCallback((url: string) => {
     window.open(url, '_blank');
   }, []);
 
   const { isSchema, setIsSchema } = useFileContext();
   const { connectionStatus } = useCredentials();
-  const [chatAnchor, setchatAnchor] = useState<HTMLElement | null>(null);
+  const chatAnchor = useRef<HTMLDivElement>(null);
   const [showChatModeOption, setshowChatModeOption] = useState<boolean>(false);
   useEffect(() => {
     setIsSchema(isSchema);
@@ -56,12 +56,17 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
       const encodedPassword = btoa(password);
       const chatUrl = `/chat-only?uri=${encodeURIComponent(uri)}&user=${userName}&password=${encodedPassword}&database=${database}&port=${port}&connectionStatus=${connectionStatus}`;
       navigate(chatUrl, { state: messages })
+      setChatPopout(true);
     } else {
       const chatUrl = `/chat-only?openModal=true`;
       window.open(chatUrl, '_blank');
     }
   }, [messages])
 
+  const onBackButtonClick = () => {
+    navigate('/', { state: messages })
+    setChatPopout(true);
+  }
   return (
     <>
       <div
@@ -76,7 +81,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
           aria-label='main navigation'
         >
           <section className='flex w-1/3 shrink-0 grow-0 items-center grow min-w-[200px]'>
-            <Typography variant='h6' component='a' href='#app-bar-with-responsive-menu' sx={{}}>
+            <Typography variant='h6' as='a' href='#app-bar-with-responsive-menu'>
               <img
                 src={colorMode === 'dark' ? Neo4jLogoBW : Neo4jLogoColor}
                 className='h-8 min-h-8 min-w-8'
@@ -161,7 +166,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                     </Button>
                   )}
                   <IconButtonWithToolTip
-                    onClick={() => navigate('/', { state: connectionStatus })}
+                    onClick={onBackButtonClick}
                     clean
                     text="Back"
                     placement="bottom"
@@ -169,18 +174,19 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
 
                     <ArrowLeftIconOutline />
                   </IconButtonWithToolTip>
-                  <IconButtonWithToolTip
-                    onClick={(e) => {
-                      setchatAnchor(e.currentTarget);
-                      setshowChatModeOption(true);
-                    }}
-                    clean
-                    text="Chat mode"
-                    placement="bottom"
-                    label="Chat mode"
-                  >
-                    <RiChatSettingsLine />
-                  </IconButtonWithToolTip>
+                  <div ref={chatAnchor}>
+                    <IconButtonWithToolTip
+                      onClick={() => {
+                        setshowChatModeOption(true);
+                      }}
+                      clean
+                      text="Chat mode"
+                      placement="bottom"
+                      label="Chat mode"
+                    >
+                      <RiChatSettingsLine />
+                    </IconButtonWithToolTip>
+                  </div>
                   <IconButtonWithToolTip
                     text={tooltips.clearChat}
                     aria-label="Remove chat history"
@@ -198,10 +204,9 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
       </div>
       <ChatModeToggle
         closeHandler={() => setshowChatModeOption(false)}
-        anchorPortal={true}
-        disableBackdrop={true}
         open={showChatModeOption}
         menuAnchor={chatAnchor}
+        isRoot={false}
       />
     </>
   );

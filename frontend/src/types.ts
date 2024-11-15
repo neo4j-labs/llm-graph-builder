@@ -245,7 +245,7 @@ export type ChatbotProps = {
   connectionStatus: boolean;
   isChatOnly?: boolean;
 };
-export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
+export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> { }
 
 export interface GraphViewModalProps {
   open: boolean;
@@ -381,12 +381,12 @@ export interface commonserverresponse {
   message?: string | orphanTotalNodes;
   file_name?: string;
   data?:
-    | labelsAndTypes
-    | labelsAndTypes[]
-    | uploadData
-    | orphanNodeProps[]
-    | dupNodes[]
-    | { pageitems: chunkdata[]; total_pages: number };
+  | labelsAndTypes
+  | labelsAndTypes[]
+  | uploadData
+  | orphanNodeProps[]
+  | dupNodes[]
+  | { pageitems: chunkdata[]; total_pages: number };
 }
 export interface dupNodeProps {
   id: string;
@@ -471,20 +471,20 @@ export interface chatInfoMessage extends Partial<Messages> {
   relationships: ExtendedRelationship[];
   chunks: Chunk[];
   metricDetails:
-    | {
-        [key: string]: number | string;
-      }
-    | undefined;
+  | {
+    [key: string]: number | string;
+  }
+  | undefined;
   metricError: string;
   infoEntities: Entity[];
   communities: Community[];
   infoLoading: boolean;
   metricsLoading: boolean;
   activeChatmodes:
-    | {
-        [key: string]: ResponseMode;
-      }
-    | undefined;
+  | {
+    [key: string]: ResponseMode;
+  }
+  | undefined;
   multiModelMetrics: multimodelmetric[];
   saveInfoEntitites: (entities: Entity[]) => void;
   saveNodes: (chatNodes: ExtendedNode[]) => void;
@@ -680,7 +680,7 @@ export interface ConnectionModalProps {
   chunksExistsWithoutEmbedding: boolean;
   chunksExistsWithDifferentEmbedding: boolean;
   onSuccess?: () => void;
-  isChatOnly?:boolean;
+  isChatOnly?: boolean;
 }
 export interface ReusableDropdownProps extends DropdownProps {
   options: string[] | OptionType[];
@@ -699,7 +699,7 @@ export interface IconProps {
   closeChatBot?: () => void;
   deleteOnClick?: () => void;
   messages: Messages[];
-  isChatOnly?:boolean;
+  isChatOnly?: boolean;
 }
 export interface S3File {
   fileName: string;
@@ -720,11 +720,11 @@ export interface DrawerChatbotProps {
   connectionStatus: boolean;
 }
 
-export interface ChatOnlyProps{
+export interface ChatOnlyProps {
   clearHistoryData: boolean;
   messages: Messages[];
   connectionStatus: boolean;
-  isReadOnlyUser:boolean;
+  isReadOnlyUser: boolean;
 }
 
 export interface ContextProps {
@@ -742,6 +742,8 @@ export interface MessageContextType {
   setMessages: Dispatch<SetStateAction<Messages[]>>;
   clearHistoryData: boolean;
   setClearHistoryData: Dispatch<SetStateAction<boolean>>;
+  chatPopout: boolean;
+  setChatPopout: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface GraphContextType {

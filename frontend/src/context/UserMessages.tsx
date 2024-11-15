@@ -7,12 +7,15 @@ const MessageContext = createContext<MessageContextType | undefined>(undefined);
 const MessageContextWrapper: FC<MessagesContextProviderProps> = ({ children }) => {
   const [messages, setMessages] = useState<Messages[] | []>(getDefaultMessage);
   const [clearHistoryData, setClearHistoryData] = useState<boolean>(false);
-
+  const [chatPopout, setChatPopout] = useState<boolean>(false);
+  
   const value: MessageContextType = {
     messages,
     setMessages,
     clearHistoryData,
     setClearHistoryData,
+    chatPopout,
+    setChatPopout
   };
   return <MessageContext.Provider value={value}>{children}</MessageContext.Provider>;
 };

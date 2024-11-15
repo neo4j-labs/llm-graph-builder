@@ -15,7 +15,7 @@ interface chatProp {
 }
 const ChatContent: React.FC<chatProp> = ({ chatMessages }) => {
     const date = new Date();
-    const { clearHistoryData, messages, setMessages, setClearHistoryData } = useMessageContext();
+    const { clearHistoryData, messages, setMessages, setClearHistoryData} = useMessageContext();
     const { setUserCredentials, setConnectionStatus, connectionStatus } = useCredentials();
     const [openConnection, setOpenConnection] = useState<connectionState>({
         openPopUp: false,
