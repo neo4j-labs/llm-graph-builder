@@ -31,7 +31,7 @@ interface HeaderProp {
 const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnection }) => {
   const { colorMode, toggleColorMode } = useContext(ThemeWrapperContext);
   const navigate = useNavigate();
-  const { messages, setChatPopout, chatPopout } = useMessageContext();
+  const { messages } = useMessageContext();
   const handleURLClick = useCallback((url: string) => {
     window.open(url, '_blank');
   }, []);
@@ -56,7 +56,6 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
       const encodedPassword = btoa(password);
       const chatUrl = `/chat-only?uri=${encodeURIComponent(uri)}&user=${userName}&password=${encodedPassword}&database=${database}&port=${port}&connectionStatus=${connectionStatus}`;
       navigate(chatUrl, { state: messages })
-      setChatPopout(true);
     } else {
       const chatUrl = `/chat-only?openModal=true`;
       window.open(chatUrl, '_blank');
@@ -64,8 +63,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
   }, [messages])
 
   const onBackButtonClick = () => {
-    navigate('/', { state: messages })
-    setChatPopout(true);
+    navigate('/',{state:messages})
   }
   return (
     <>

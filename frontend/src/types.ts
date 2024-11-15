@@ -742,8 +742,6 @@ export interface MessageContextType {
   setMessages: Dispatch<SetStateAction<Messages[]>>;
   clearHistoryData: boolean;
   setClearHistoryData: Dispatch<SetStateAction<boolean>>;
-  chatPopout: boolean;
-  setChatPopout: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface GraphContextType {
