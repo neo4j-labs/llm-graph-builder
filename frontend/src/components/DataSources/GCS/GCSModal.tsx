@@ -33,6 +33,12 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
     processingProgress: undefined,
     retryOption: '',
     retryOptionStatus: false,
+    chunkNodeCount: 0,
+    chunkRelCount: 0,
+    entityNodeCount: 0,
+    entityEntityRelCount: 0,
+    communityNodeCount: 0,
+    communityRelCount: 0,
   };
 
   const reset = () => {
