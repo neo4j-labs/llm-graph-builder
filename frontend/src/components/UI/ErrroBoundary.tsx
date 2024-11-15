@@ -19,7 +19,7 @@ export default class ErrorBoundary extends React.Component<any, any> {
       return (
         <div className='n-size-full n-flex n-flex-col n-items-center n-justify-center n-rounded-md n-bg-palette-neutral-bg-weak n-box-border'>
           <Banner
-            icon
+            hasIcon={true}
             type='info'
             description={
               this.state.errorMessage === 'Missing required parameter client_id.'
@@ -29,7 +29,6 @@ export default class ErrorBoundary extends React.Component<any, any> {
                 : 'Sorry there was a problem loading this page'
             }
             title='Something went wrong'
-            floating
             className='mt-8'
             actions={
               this.state.errorName === 'InvalidCharacterError'
@@ -50,6 +49,7 @@ export default class ErrorBoundary extends React.Component<any, any> {
                     },
                   ]
             }
+            usage='inline'
           ></Banner>
         </div>
       );

@@ -1,5 +1,5 @@
 import { Banner, Box, DataGrid, DataGridComponents, Typography } from '@neo4j-ndl/react';
-import { memo, useMemo, useRef } from 'react';
+import { memo, useContext, useMemo, useRef } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -9,6 +9,7 @@ import {
   getSortedRowModel,
 } from '@tanstack/react-table';
 import { capitalize } from '../../utils/Utils';
+import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 function MetricsTab({
   metricsLoading,
   metricDetails,
@@ -17,14 +18,14 @@ function MetricsTab({
   metricsLoading: boolean;
   metricDetails:
     | {
-        faithfulness: number;
-        answer_relevancy: number;
+        [key: string]: number | string;
       }
     | undefined;
   error: string;
 }) {
-  const columnHelper = createColumnHelper<{ metric: string; score: number }>();
+  const columnHelper = createColumnHelper<{ metric: string; score: number | string }>();
   const tableRef = useRef(null);
+  const { colorMode } = useContext(ThemeWrapperContext);
 
   const columns = useMemo(
     () => [
@@ -47,7 +48,7 @@ function MetricsTab({
         header: () => <span>Metric</span>,
         footer: (info) => info.column.id,
       }),
-      columnHelper.accessor((row) => row.score, {
+      columnHelper.accessor((row) => row.score as number, {
         id: 'Score',
         cell: (info) => {
           return <Typography variant='body-medium'>{info.getValue().toFixed(2)}</Typography>;
@@ -77,7 +78,9 @@ function MetricsTab({
   return (
     <Box>
       {error != undefined && error?.trim() != '' ? (
-        <Banner type='danger'>{error}</Banner>
+        <Banner type='danger' usage='inline'>
+          {error}
+        </Banner>
       ) : (
         <DataGrid
           ref={tableRef}
@@ -85,12 +88,18 @@ function MetricsTab({
           tableInstance={table}
           styling={{
             borderStyle: 'all-sides',
-            zebraStriping: true,
+            hasZebraStriping: true,
             headerStyle: 'clean',
           }}
           isLoading={metricsLoading}
           components={{
-            Body: (props) => <DataGridComponents.Body {...props} />,
+            Body: () => (
+              <DataGridComponents.Body
+                innerProps={{
+                  className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
+                }}
+              />
+            ),
             PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
               return (
                 <DataGridComponents.PaginationNumericButton
@@ -109,6 +118,7 @@ function MetricsTab({
               );
             },
           }}
+          isKeyboardNavigable={false}
         />
       )}
     </Box>

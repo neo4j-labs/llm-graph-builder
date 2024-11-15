@@ -1,4 +1,4 @@
-import { Checkbox, Dialog, Textarea } from '@neo4j-ndl/react';
+import { Checkbox, Dialog, TextArea } from '@neo4j-ndl/react';
 import { useCallback, useState } from 'react';
 import { getNodeLabelsAndRelTypesFromText } from '../../../services/SchemaFromTextAPI';
 import { useCredentials } from '../../../context/UserCredentials';
@@ -7,15 +7,7 @@ import { buttonCaptions } from '../../../utils/Constants';
 import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
 import { showNormalToast, showSuccessToast } from '../../../utils/toasts';
 
-const SchemaFromTextDialog = ({
-  open,
-  onClose,
-  openSettingsDialog,
-}: {
-  open: boolean;
-  onClose: () => void;
-  openSettingsDialog: () => void;
-}) => {
+const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
   const [userText, setUserText] = useState<string>('');
   const [loading, setloading] = useState<boolean>(false);
   const { setSelectedNodes, setSelectedRels } = useFileContext();
@@ -84,7 +76,6 @@ const SchemaFromTextDialog = ({
       onClose();
       setUserText('');
       setIsSchema(false);
-      openSettingsDialog();
     } catch (error) {
       setloading(false);
       console.log(error);
@@ -94,26 +85,30 @@ const SchemaFromTextDialog = ({
   return (
     <Dialog
       size='medium'
-      open={open}
-      aria-labelledby='form-dialog-title'
+      isOpen={open}
       onClose={() => {
         setloading(false);
         setIsSchema(false);
         setUserText('');
         onClose();
       }}
+      htmlAttributes={{
+        'aria-labelledby': 'form-dialog-title',
+      }}
     >
-      <Dialog.Header id='form-dialog-title'>Entity Graph Extraction Settings</Dialog.Header>
+      <Dialog.Header>Entity Graph Extraction Settings</Dialog.Header>
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
-        <Textarea
+        <TextArea
           helpText='Analyze the text to extract Entities'
           label='Document Text'
           style={{
             resize: 'vertical',
           }}
-          fluid
+          isFluid={true}
           value={userText}
-          onChange={(e) => setUserText(e.target.value)}
+          htmlAttributes={{
+            onChange: (e) => setUserText(e.target.value),
+          }}
           size='large'
         />
         <Dialog.Actions className='!mt-4'>
@@ -122,7 +117,7 @@ const SchemaFromTextDialog = ({
             onChange={(e) => {
               setIsSchema(e.target.checked);
             }}
-            checked={isSchema}
+            isChecked={isSchema}
           />
           <ButtonWithToolTip
             placement='top'

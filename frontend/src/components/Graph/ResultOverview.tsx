@@ -114,17 +114,25 @@ const ResultOverview: React.FunctionComponent<OverViewProps> = ({
             <Typography variant='h3'>{graphLabels.resultOverview}</Typography>
             <div className={`text-input-container`}>
               <TextInput
-                aria-label='search nodes'
-                type='text'
+                htmlAttributes={{
+                  type: 'text',
+                  'aria-label': 'search nodes',
+                  placeholder: 'Search On Node Properties',
+                }}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                 }}
-                placeholder='Search On Node Properties'
-                fluid={true}
-                leftIcon={
-                  <IconButton aria-label='Search Icon' clean size='small' className='-mt-0.5' type='submit'>
-                    <MagnifyingGlassIconOutline />
+                isFluid={true}
+                leftElement={
+                  <IconButton
+                    ariaLabel='Search Icon'
+                    isClean={true}
+                    size='small'
+                    className='-mt-0.5'
+                    htmlAttributes={{ type: 'submit' }}
+                  >
+                    <MagnifyingGlassIconOutline className='n-size-token-7' />
                   </IconButton>
                 }
               />
