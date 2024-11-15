@@ -4,21 +4,16 @@ import Chatbot from './Chatbot';
 import { getIsLoading } from '../../utils/Utils';
 import { FileContextProvider } from '../../context/UsersFiles';
 import { useEffect, useState, useCallback } from 'react';
-import ExpandedChatButtonContainer from './ExpandedChatButtonContainer';
 import ConnectionModal from '../Popups/ConnectionModal/ConnectionModal';
 import { clearChatAPI } from '../../services/QnaAPI';
-import { connectionState, UserCredentials } from '../../types';
+import { connectionState, Messages, UserCredentials } from '../../types';
+import { useLocation } from 'react-router';
+import Header from '../Layout/Header';
 
-const ChatOnlyComponent: React.FC = () => (
-    <UserCredentialsWrapper>
-        <FileContextProvider>
-            <MessageContextWrapper>
-                <ChatContent />
-            </MessageContextWrapper>
-        </FileContextProvider>
-    </UserCredentialsWrapper>
-);
-const ChatContent: React.FC = () => {
+interface chatProp {
+    chatMessages: Messages[];
+}
+const ChatContent: React.FC<chatProp> = ({ chatMessages }) => {
     const date = new Date();
     const { clearHistoryData, messages, setMessages, setClearHistoryData } = useMessageContext();
     const { setUserCredentials, setConnectionStatus, connectionStatus } = useCredentials();
@@ -43,10 +38,11 @@ const ChatContent: React.FC = () => {
             const credentialsForAPI = { uri, userName: user, password: atob(atob(encodedPassword)), database, port };
             setUserCredentials({ ...credentialsForAPI });
             setConnectionStatus(true);
+            setMessages(chatMessages);
             window.history.replaceState({}, document.title, window.location.pathname);
         }
     }, [connectionStatus, setUserCredentials]);
-    
+
     useEffect(() => {
         initialiseConnection();
     }, [connectionStatus]);
@@ -101,26 +97,38 @@ const ChatContent: React.FC = () => {
                 chunksExistsWithoutEmbedding={false}
                 chunksExistsWithDifferentEmbedding={false}
                 onSuccess={handleConnectionSuccess}
+                isChatOnly={true}
             />
-            {connectionStatus && (
-                <>
-                    <ExpandedChatButtonContainer
-                        isReadOnly
-                        deleteOnClick={deleteOnClick}
-                        messages={messages ?? []}
-                    />
-                    <Chatbot
-                        isFullScreen
-                        isReadOnly
-                        messages={messages}
-                        setMessages={setMessages}
-                        clear={clearHistoryData}
-                        isLoading={getIsLoading(messages)}
-                        connectionStatus={connectionStatus}
-                    />
-                </>
-            )}
+            {
+                <div>
+                    <Header chatOnly={true} deleteOnClick={deleteOnClick} setOpenConnection={setOpenConnection}/>
+                    <div>
+                        <Chatbot
+                            isFullScreen
+                            isChatOnly
+                            messages={messages}
+                            setMessages={setMessages}
+                            clear={clearHistoryData}
+                            isLoading={getIsLoading(messages)}
+                            connectionStatus={connectionStatus}
+                        />
+                    </div>
+                </div>
+            }
         </>
     );
 };
+const ChatOnlyComponent: React.FC = () => {
+    const location = useLocation();
+    return (
+        <UserCredentialsWrapper>
+            <FileContextProvider>
+                <MessageContextWrapper>
+                    <ChatContent chatMessages={location.state as Messages[]} />
+                </MessageContextWrapper>
+            </FileContextProvider>
+        </UserCredentialsWrapper>
+    )
+};
+
 export default ChatOnlyComponent;

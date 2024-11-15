@@ -15,6 +15,7 @@ export default function ConnectionModal({
   isVectorIndexMatch,
   chunksExistsWithoutEmbedding,
   chunksExistsWithDifferentEmbedding,
+  isChatOnly
 }: ConnectionModalProps) {
   let prefilledconnection = localStorage.getItem('neo4j.connection');
   let initialuri;
@@ -317,7 +318,7 @@ export default function ConnectionModal({
           setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
           setMessage({ type: 'unknown', content: '' });
         }}
-        disableCloseButton={vectorIndexLoading}
+        disableCloseButton={vectorIndexLoading || isChatOnly}
       >
         <Dialog.Header id='form-dialog-title'>Connect to Neo4j</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>

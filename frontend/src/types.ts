@@ -244,7 +244,7 @@ export type ChatbotProps = {
   clear?: boolean;
   isFullScreen?: boolean;
   connectionStatus: boolean;
-  isReadOnly?: boolean;
+  isChatOnly?: boolean;
 };
 export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
 
@@ -682,6 +682,7 @@ export interface ConnectionModalProps {
   chunksExistsWithoutEmbedding: boolean;
   chunksExistsWithDifferentEmbedding: boolean;
   onSuccess?: () => void;
+  isChatOnly?:boolean;
 }
 export interface ReusableDropdownProps extends DropdownProps {
   options: string[] | OptionType[];
@@ -700,7 +701,7 @@ export interface IconProps {
   closeChatBot?: () => void;
   deleteOnClick?: () => void;
   messages: Messages[];
-  isReadOnly?:boolean;
+  isChatOnly?:boolean;
 }
 export interface S3File {
   fileName: string;

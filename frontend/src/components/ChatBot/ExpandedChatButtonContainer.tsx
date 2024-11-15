@@ -7,7 +7,7 @@ import { tooltips } from '../../utils/Constants';
 import { memo, useState } from 'react';
 import { RiChatSettingsLine } from 'react-icons/ri';
 
-const ExpandedChatButtonContainer: React.FC<IconProps> = ({ isFullScreen, closeChatBot, deleteOnClick, messages,isReadOnly }) => {
+const ExpandedChatButtonContainer: React.FC<IconProps> = ({ isFullScreen, closeChatBot, deleteOnClick, messages }) => {
   const [chatAnchor, setchatAnchor] = useState<HTMLElement | null>(null);
   const [showChatModeOption, setshowChatModeOption] = useState<boolean>(false);
   return (
@@ -38,7 +38,7 @@ const ExpandedChatButtonContainer: React.FC<IconProps> = ({ isFullScreen, closeC
           clean
           onClick={deleteOnClick}
           disabled={messages.length === 1}
-          placement={isReadOnly ? 'left' : 'bottom'}
+          placement={'left'}
           label={tooltips.clearChat}
         >
           <TrashIconOutline />

@@ -51,7 +51,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     isFullScreen,
     clear,
     connectionStatus,
-    isReadOnly,
+    isChatOnly,
   } = props;
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
@@ -420,11 +420,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   }, []);
 
   return (
-    <div className={clsx('n-bg-palette-neutral-bg-weak flex flex-col justify-between', {
-      'min-h-[94vh] max-h-screen overflow-hidden': isReadOnly,
-      'min-h-full max-h-full overflow-hidden': !isReadOnly,
-    })}>
-      <div className={`flex overflow-y-auto pb-12 min-w-full ${isReadOnly ? '' : 'chatBotContainer'} pl-3 pr-3`}>
+    <div className={'n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'}>
+      <div className={`flex overflow-y-auto pb-12 min-w-full ${isChatOnly ? 'min-h-[calc(100dvh-114px)]' : 'chatBotContainer'} pl-3 pr-3`}>
         <Widget className='n-bg-palette-neutral-bg-weak w-full' header='' isElevated={false}>
           <div className='flex flex-col gap-4 gap-y-4'>
             {listMessages.map((chat, index) => {
