@@ -51,7 +51,7 @@ if (typeof window !== 'undefined') {
 const sessionId = sessionStorage.getItem('session_id') ?? '';
 
 const Chatbot: FC<ChatbotProps> = (props) => {
-  const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, connectionStatus } = props;
+  const { messages: listMessages, setMessages: setListMessages, isLoading, isFullScreen, connectionStatus, isChatOnly } = props;
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
@@ -266,15 +266,15 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           console.error(`API call failed for mode ${mode}:`, result.reason);
           setListMessages((prev) =>
             prev.map((msg) =>
-              (msg.id === chatbotMessageId
-                ? {
-                    ...msg,
-                    modes: {
-                      ...msg.modes,
-                      [mode]: { message: 'Failed to fetch response for this mode.', error: result.reason },
-                    },
-                  }
-                : msg)
+            (msg.id === chatbotMessageId
+              ? {
+                ...msg,
+                modes: {
+                  ...msg.modes,
+                  [mode]: { message: 'Failed to fetch response for this mode.', error: result.reason },
+                },
+              }
+              : msg)
             )
           );
         }
@@ -287,19 +287,19 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       if (error instanceof Error) {
         setListMessages((prev) =>
           prev.map((msg) =>
-            (msg.id === chatbotMessageId
-              ? {
-                  ...msg,
-                  isLoading: false,
-                  isTyping: false,
-                  modes: {
-                    [chatModes[0]]: {
-                      message: 'An error occurred while processing your request.',
-                      error: error.message,
-                    },
-                  },
-                }
-              : msg)
+          (msg.id === chatbotMessageId
+            ? {
+              ...msg,
+              isLoading: false,
+              isTyping: false,
+              modes: {
+                [chatModes[0]]: {
+                  message: 'An error occurred while processing your request.',
+                  error: error.message,
+                },
+              },
+            }
+            : msg)
           )
         );
       }
@@ -401,8 +401,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   }, []);
 
   return (
-    <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
-      <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3 pr-3'>
+    <div className={'n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'}>
+      <div className={`flex overflow-y-auto pb-12 min-w-full ${isChatOnly ? 'min-h-[calc(100dvh-114px)] pl-5 pr-5' : 'chatBotContainer pl-3 pr-3'} `}>
         <Widget className='n-bg-palette-neutral-bg-weak w-full' header='' isElevated={false}>
           <div className='flex flex-col gap-4 gap-y-4'>
             {listMessages.map((chat, index) => {
@@ -443,14 +443,12 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                   <Widget
                     header=''
                     isElevated={true}
-                    className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
-                      chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
-                    }`}
+                    className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
+                      }`}
                   >
                     <div
-                      className={`${
-                        chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
-                      }`}
+                      className={`${chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
+                        }`}
                     >
                       <ReactMarkdown className={!isFullScreen ? 'max-w-[250px]' : ''}>
                         {chat.modes[chat.currentMode]?.message || ''}

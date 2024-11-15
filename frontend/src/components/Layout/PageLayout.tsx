@@ -12,7 +12,11 @@ import { useFileContext } from '../../context/UsersFiles';
 import SchemaFromTextDialog from '../Popups/Settings/SchemaFromText';
 import useSpeechSynthesis from '../../hooks/useSpeech';
 
-export default function PageLayout() {
+interface PageLayoutProp {
+  isChatOnly?: boolean;
+}
+
+const PageLayout: React.FC<PageLayoutProp> = ({ isChatOnly }) => {
   const largedesktops = useMediaQuery(`(min-width:1440px )`);
   const { userCredentials, connectionStatus } = useCredentials();
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(largedesktops));
@@ -143,3 +147,5 @@ export default function PageLayout() {
     </div>
   );
 }
+
+export default PageLayout;
