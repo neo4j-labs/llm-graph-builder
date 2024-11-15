@@ -1,13 +1,12 @@
-import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
+import { MouseEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
-import { appLabels, buttonCaptions, tooltips } from '../../../../utils/Constants';
-import { Dropdown, Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
+import { appLabels, buttonCaptions, getDefaultSchemaExamples, tooltips } from '../../../../utils/Constants';
+import { Select, Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { OnChangeValue, ActionMeta } from 'react-select';
 import { OptionType, schema, UserCredentials } from '../../../../types';
 import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
-import schemaExamples from '../../../../assets/schemas.json';
 import { tokens } from '@neo4j-ndl/base';
 import { showNormalToast } from '../../../../utils/toasts';
 
@@ -149,22 +148,8 @@ export default function EntityExtractionSetting({
   };
   const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>([]);
   const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
-  const [defaultExamples, setdefaultExamples] = useState<OptionType[]>([]);
+  const defaultExamples = useMemo(() => getDefaultSchemaExamples(), []);
 
-  useEffect(() => {
-    const parsedData = schemaExamples.reduce((accu: OptionType[], example) => {
-      const examplevalues: OptionType = {
-        label: example.schema,
-        value: JSON.stringify({
-          nodelabels: example.labels,
-          relationshipTypes: example.relationshipTypes,
-        }),
-      };
-      accu.push(examplevalues);
-      return accu;
-    }, []);
-    setdefaultExamples(parsedData);
-  }, []);
   useEffect(() => {
     if (userCredentials) {
       if (open && view === 'Dialog') {
@@ -265,15 +250,6 @@ export default function EntityExtractionSetting({
     );
   };
 
-  // Load selectedSchemas from local storage on mount
-  useEffect(() => {
-    const storedSchemas = localStorage.getItem('selectedSchemas');
-    if (storedSchemas) {
-      const parsedSchemas = JSON.parse(storedSchemas);
-      setSelectedSchemas(parsedSchemas.selectedOptions);
-    }
-  }, []);
-
   return (
     <div>
       <Typography variant='body-medium'>
@@ -290,7 +266,7 @@ export default function EntityExtractionSetting({
         <div className='flex align-self-center justify-center'>
           <h5>{appLabels.predefinedSchema}</h5>
         </div>
-        <Dropdown
+        <Select
           helpText='Schema Examples'
           label='Predefined Schema'
           size={view === 'Tabs' && !isTablet ? 'large' : isTablet ? 'small' : 'medium'}
@@ -307,7 +283,7 @@ export default function EntityExtractionSetting({
         <div className='flex align-self-center justify-center'>
           <h5>{appLabels.ownSchema}</h5>
         </div>
-        <Dropdown
+        <Select
           helpText='You can select more than one values'
           label='Node Labels'
           size={view === 'Tabs' && !isTablet ? 'large' : isTablet ? 'small' : 'medium'}
@@ -323,7 +299,7 @@ export default function EntityExtractionSetting({
           }}
           type='creatable'
         />
-        <Dropdown
+        <Select
           helpText='You can select more than one values'
           label='Relationship Types'
           size={view === 'Tabs' && !isTablet ? 'large' : isTablet ? 'small' : 'medium'}

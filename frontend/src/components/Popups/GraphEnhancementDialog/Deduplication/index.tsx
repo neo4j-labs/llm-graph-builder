@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { getDuplicateNodes } from '../../../../services/GetDuplicateNodes';
 import { useCredentials } from '../../../../context/UserCredentials';
 import { dupNodes, selectedDuplicateNodes, UserCredentials } from '../../../../types';
@@ -30,6 +30,7 @@ import mergeDuplicateNodes from '../../../../services/MergeDuplicateEntities';
 import { tokens } from '@neo4j-ndl/base';
 import GraphViewModal from '../../../Graph/GraphViewModal';
 import { handleGraphNodeClick } from '../../../ChatBot/chatInfo';
+import { ThemeWrapperContext } from '../../../../context/ThemeWrapper';
 
 export default function DeduplicationTab() {
   const { breakpoints } = tokens;
@@ -46,6 +47,8 @@ export default function DeduplicationTab() {
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
   const [nodesCount, setNodesCount] = useState<number>(0);
+  const { colorMode } = useContext(ThemeWrapperContext);
+
   const fetchDuplicateNodes = useCallback(async () => {
     try {
       setLoading(true);
@@ -66,10 +69,13 @@ export default function DeduplicationTab() {
       console.log(error);
     }
   }, [userCredentials]);
+
   useEffect(() => {
-    (async () => {
-      await fetchDuplicateNodes();
-    })();
+    if (userCredentials != null) {
+      (async () => {
+        await fetchDuplicateNodes();
+      })();
+    }
   }, [userCredentials]);
 
   const clickHandler = async () => {
@@ -127,8 +133,8 @@ export default function DeduplicationTab() {
         header: ({ table }: { table: Table<dupNodes> }) => {
           return (
             <Checkbox
-              aria-label='header-checkbox'
-              checked={table.getIsAllRowsSelected()}
+              ariaLabel='header-checkbox'
+              isChecked={table.getIsAllRowsSelected()}
               onChange={table.getToggleAllRowsSelectedHandler()}
             />
           );
@@ -137,10 +143,10 @@ export default function DeduplicationTab() {
           return (
             <div className='px-1'>
               <Checkbox
-                aria-label='row-checkbox'
+                ariaLabel='row-checkbox'
                 onChange={row.getToggleSelectedHandler()}
-                title='Select the Row for merging'
-                checked={row.getIsSelected()}
+                htmlAttributes={{ title: 'Select the Row for merging' }}
+                isChecked={row.getIsSelected()}
               />
             </div>
           );
@@ -154,8 +160,10 @@ export default function DeduplicationTab() {
             <div className='textellipsis'>
               <TextLink
                 className='!cursor-pointer'
-                onClick={() => handleDuplicateNodeClick(info.row.id, 'chatInfoView')}
-                title={info.getValue()}
+                htmlAttributes={{
+                  onClick: () => handleDuplicateNodeClick(info.row.id, 'chatInfoView'),
+                  title: info.getValue(),
+                }}
               >
                 {info.getValue()}
               </TextLink>
@@ -179,7 +187,7 @@ export default function DeduplicationTab() {
                   onRemove={() => {
                     onRemove(info.row.original.e.elementId, s.elementId);
                   }}
-                  removeable={true}
+                  isRemovable={true}
                   type='default'
                   size={isTablet ? 'small' : 'medium'}
                 >
@@ -286,7 +294,7 @@ export default function DeduplicationTab() {
           tableInstance={table}
           styling={{
             borderStyle: 'all-sides',
-            zebraStriping: true,
+            hasZebraStriping: true,
             headerStyle: 'clean',
           }}
           rootProps={{
@@ -294,7 +302,13 @@ export default function DeduplicationTab() {
           }}
           isLoading={isLoading}
           components={{
-            Body: (props) => <DataGridComponents.Body {...props} />,
+            Body: () => (
+              <DataGridComponents.Body
+                innerProps={{
+                  className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
+                }}
+              />
+            ),
             PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
               return (
                 <DataGridComponents.PaginationNumericButton
@@ -313,6 +327,7 @@ export default function DeduplicationTab() {
               );
             },
           }}
+          isKeyboardNavigable={false}
         />
         <Flex className='mt-3' flexDirection='row' justifyContent='flex-end'>
           <ButtonWithToolTip
