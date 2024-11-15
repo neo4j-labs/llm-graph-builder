@@ -23,13 +23,13 @@ export default function ChatModesSwitch({
   return (
     <Flex flexDirection='row' gap='1' alignItems='center'>
       <IconButton
-        disabled={currentModeIndex === 0}
+        isDisabled={currentModeIndex === 0}
         size='small'
-        clean
+        isClean={true}
         onClick={() => switchToOtherMode(currentModeIndex - 1)}
-        aria-label='left'
+        ariaLabel='left'
       >
-        <ChevronLeftIconSolid />
+        <ChevronLeftIconSolid className='n-size-token-7' />
       </IconButton>
       <TipWrapper tooltip={chatmodetoshow} placement='top'>
         <span
@@ -39,13 +39,13 @@ export default function ChatModesSwitch({
         </span>
       </TipWrapper>
       <IconButton
-        disabled={currentModeIndex === modescount - 1}
+        isDisabled={currentModeIndex === modescount - 1}
         size='small'
-        clean
+        isClean={true}
         onClick={() => switchToOtherMode(currentModeIndex + 1)}
-        aria-label='right'
+        ariaLabel='right'
       >
-        <ChevronRightIconSolid />
+        <ChevronRightIconSolid className='n-size-token-7' />
       </IconButton>
     </Flex>
   );

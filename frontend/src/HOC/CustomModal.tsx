@@ -16,7 +16,7 @@ const CustomModal: React.FC<CustomModalProps> = ({
   return (
     <Dialog
       size='small'
-      open={open}
+      isOpen={open}
       modalProps={{
         id: 'default-menu',
       }}
@@ -25,16 +25,17 @@ const CustomModal: React.FC<CustomModalProps> = ({
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4 mt-6'>
         {status !== 'unknown' && (
           <Banner
-            closeable
+            isCloseable
             description={statusMessage}
             onClose={() => setStatus('unknown')}
             type={status}
             name='Custom Banner'
+            usage='inline'
           />
         )}
         <div className='n-flex n-flex-row n-flex-wrap'>{children}</div>
         <Dialog.Actions className='mt-4'>
-          <Button onClick={submitHandler} size='medium' disabled={isDisabled}>
+          <Button onClick={submitHandler} size='medium' isDisabled={isDisabled}>
             {submitLabel}
           </Button>
         </Dialog.Actions>

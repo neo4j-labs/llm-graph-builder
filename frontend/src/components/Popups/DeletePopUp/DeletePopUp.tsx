@@ -25,14 +25,14 @@ function DeletePopUp({
           no_of_files > 1 ? 'Nodes' : 'Node'
         } from the graph database? `;
   return (
-    <Dialog open={open} onClose={deleteCloseHandler}>
+    <Dialog isOpen={open} onClose={deleteCloseHandler}>
       <Dialog.Content>
         <h5 className='max-w-[90%]'>{message}</h5>
         {view === 'contentView' && (
           <div className='mt-5'>
             <Checkbox
               label='Delete Entities'
-              checked={deleteEntities}
+              isChecked={deleteEntities}
               onChange={(e) => {
                 if (e.target.checked) {
                   setDeleteEntities(true);
@@ -45,10 +45,10 @@ function DeletePopUp({
         )}
       </Dialog.Content>
       <Dialog.Actions className='mt-3'>
-        <Button onClick={deleteCloseHandler} size='large' disabled={loading}>
+        <Button onClick={deleteCloseHandler} size='large' isDisabled={loading}>
           Cancel
         </Button>
-        <Button onClick={() => deleteHandler(deleteEntities)} size='large' loading={loading}>
+        <Button onClick={() => deleteHandler(deleteEntities)} size='large' isLoading={loading}>
           Continue
         </Button>
       </Dialog.Actions>

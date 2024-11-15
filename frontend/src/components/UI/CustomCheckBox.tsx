@@ -15,6 +15,6 @@ export default function IndeterminateCheckbox({
   }, [ref, indeterminate]);
 
   return (
-    <Checkbox aria-label='row checkbox' type='checkbox' ref={ref} className={`${className} cursor-pointer`} {...rest} />
+    <Checkbox ariaLabel='row checkbox' type='checkbox' ref={ref} className={`${className} cursor-pointer`} {...rest} />
   );
 }

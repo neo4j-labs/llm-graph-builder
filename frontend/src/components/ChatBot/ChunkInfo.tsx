@@ -1,6 +1,6 @@
 import { FC, useContext, useState } from 'react';
 import { ChunkProps, UserCredentials } from '../../types';
-import { Box, LoadingSpinner, TextLink, Typography } from '@neo4j-ndl/react';
+import { LoadingSpinner, TextLink, Typography } from '@neo4j-ndl/react';
 import { DocumentTextIconOutline, GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
 import wikipedialogo from '../../assets/images/wikipedia.svg';
 import youtubelogo from '../../assets/images/youtube.svg';
@@ -39,9 +39,9 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   return (
     <>
       {loading ? (
-        <Box className='flex justify-center items-center'>
+        <div className='flex justify-center items-center'>
           <LoadingSpinner size='small' />
-        </Box>
+        </div>
       ) : chunks?.length > 0 ? (
         <div className='p-4 h-80 overflow-auto'>
           <ul className='list-inside list-none'>
@@ -71,9 +71,10 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                     </div>
                     <div>
                       <TextLink
-                        label='Graph view'
                         className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
-                        onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                        htmlAttributes={{
+                          onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
+                        }}
                       >
                         {'View Graph'}
                       </TextLink>
@@ -83,7 +84,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   <>
                     <div className='flex flex-row inline-block justiy-between items-center'>
                       <img src={youtubelogo} width={20} height={20} className='mr-2' />
-                      <TextLink href={generateYouTubeLink(chunk?.url, chunk?.start_time)} externalLink={true}>
+                      <TextLink href={generateYouTubeLink(chunk?.url, chunk?.start_time)} isExternalLink={true}>
                         <Typography
                           variant='body-medium'
                           className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
@@ -101,8 +102,9 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                             <TextLink
                               as='small'
                               className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
-                              label='Graph view'
-                              onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                              htmlAttributes={{
+                                onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
+                              }}
                             >
                               {'View Graph'}
                             </TextLink>
@@ -124,8 +126,9 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                           <div>
                             <TextLink
                               className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
-                              label='Graph view'
-                              onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                              htmlAttributes={{
+                                onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
+                              }}
                             >
                               {'View Graph'}
                             </TextLink>
@@ -147,8 +150,9 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                           <div>
                             <TextLink
                               className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
-                              label='Graph view'
-                              onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                              htmlAttributes={{
+                                onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
+                              }}
                             >
                               {'View Graph'}
                             </TextLink>
@@ -170,8 +174,9 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                           <div>
                             <TextLink
                               className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
-                              label='Graph view'
-                              onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                              htmlAttributes={{
+                                onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
+                              }}
                             >
                               {'View Graph'}
                             </TextLink>
@@ -185,7 +190,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   <>
                     <div className='flex flex-row inline-block items-center'>
                       <GlobeAltIconOutline className='n-size-token-7' />
-                      <TextLink href={chunk?.url} externalLink={true}>
+                      <TextLink href={chunk?.url} isExternalLink={true}>
                         <Typography variant='body-medium'>{chunk?.url}</Typography>
                       </TextLink>
                     </div>
@@ -197,8 +202,9 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                           <div>
                             <TextLink
                               className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
-                              label='Graph view'
-                              onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                              htmlAttributes={{
+                                onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
+                              }}
                             >
                               {'View Graph'}
                             </TextLink>
@@ -229,8 +235,9 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                         <div>
                           <TextLink
                             className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
-                            label='Graph view'
-                            onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                            htmlAttributes={{
+                              onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
+                            }}
                           >
                             {'View Graph'}
                           </TextLink>

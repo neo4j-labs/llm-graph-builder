@@ -6,7 +6,7 @@ import {
   OptionType,
   showTextFromSchemaDialogType,
 } from '../types';
-import { chatModeLables, defaultLLM } from '../utils/Constants';
+import { chatModeLables, defaultLLM, getStoredSchema } from '../utils/Constants';
 import { useCredentials } from './UserCredentials';
 import Queue from '../utils/Queue';
 
@@ -26,7 +26,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [graphType, setGraphType] = useState<string>('Knowledge Graph Entities');
   const [selectedNodes, setSelectedNodes] = useState<readonly OptionType[]>([]);
   const [selectedRels, setSelectedRels] = useState<readonly OptionType[]>([]);
-  const [selectedSchemas, setSelectedSchemas] = useState<readonly OptionType[]>([]);
+  const [selectedSchemas, setSelectedSchemas] = useState<readonly OptionType[]>(getStoredSchema);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [chatModes, setchatModes] = useState<string[]>([chatModeLables['graph+vector+fulltext']]);
