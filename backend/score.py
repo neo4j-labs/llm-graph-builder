@@ -207,6 +207,7 @@ async def extract_knowledge_graph_from_file(
           Nodes and Relations created in Neo4j databse for the pdf file
     """
     try:
+        print("IN EXTRAAAAAAAAAAAAAAAAAAAAAAACT")
         start_time = time.time()
         payload_json_obj = {'api_name':'extract', 'db_url':uri, 'userName':userName, 'database':database, 'source_url':source_url, 'aws_access_key_id':aws_access_key_id,
                             'model':model, 'gcs_bucket_name':gcs_bucket_name, 'gcs_bucket_folder':gcs_bucket_folder, 'source_type':source_type,'gcs_blob_filename':gcs_blob_filename,
@@ -245,12 +246,14 @@ async def extract_knowledge_graph_from_file(
             graphDb_data_Access = graphDBdataAccess(graph)
             count_response = graphDb_data_Access.update_node_relationship_count(update_community_count_flag)
             if count_response :
-                result['chunkNodeCount'] = count_response[file_name].get('chunkNodeCount',"")
-                result['chunkRelCount'] =  count_response[file_name].get('chunkRelCount',"")
-                result['entityNodeCount']=  count_response[file_name].get('entityNodeCount',"")
-                result['entityEntityRelCount']=  count_response[file_name].get('entityEntityRelCount',"")
-                result['communityNodeCount']=  count_response[file_name].get('communityNodeCount',"")
-                result['communityRelCount']= count_response[file_name].get('communityRelCount',"")
+                result['chunkNodeCount'] = count_response[file_name].get('chunkNodeCount',"0")
+                result['chunkRelCount'] =  count_response[file_name].get('chunkRelCount',"0")
+                result['entityNodeCount']=  count_response[file_name].get('entityNodeCount',"0")
+                result['entityEntityRelCount']=  count_response[file_name].get('entityEntityRelCount',"0")
+                result['communityNodeCount']=  count_response[file_name].get('communityNodeCount',"0")
+                result['communityRelCount']= count_response[file_name].get('communityRelCount',"0")
+                result['nodeCount'] = count_response[file_name].get('nodeCount',"0")
+                result['relationshipCount']  = count_response[file_name].get('relationshipCount',"0")
                 logging.info(f"counting completed in {(time.time()-count_node_time):.2f}")
             result['db_url'] = uri
             result['api_name'] = 'extract'

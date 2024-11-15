@@ -468,6 +468,8 @@ class graphDBdataAccess:
             else:
                 communityNodeCount = 0
                 communityRelCount = 0
+            nodeCount = int(chunkNodeCount) + int(entityNodeCount) + int(communityNodeCount)
+            relationshipCount = int(chunkRelCount) + int(entityEntityRelCount) + int(communityRelCount)
             update_query = """
             MATCH (d:Document {fileName: $filename})
             SET d.chunkNodeCount = $chunkNodeCount,
@@ -475,7 +477,9 @@ class graphDBdataAccess:
                 d.entityNodeCount = $entityNodeCount,
                 d.entityEntityRelCount = $entityEntityRelCount,
                 d.communityNodeCount = $communityNodeCount,
-                d.communityRelCount = $communityRelCount
+                d.communityRelCount = $communityRelCount,
+                d.nodeCount = $nodeCount,
+                d.relationshipCount = $relationshipCount
             """
             self.execute_query(update_query,{
                 "filename": filename,
@@ -484,7 +488,9 @@ class graphDBdataAccess:
                 "entityNodeCount": entityNodeCount,
                 "entityEntityRelCount": entityEntityRelCount,
                 "communityNodeCount": communityNodeCount,
-                "communityRelCount": communityRelCount
+                "communityRelCount": communityRelCount,
+                "nodeCount" : nodeCount,
+                "relationshipCount" : relationshipCount
                 })
             
             response[filename] = {"chunkNodeCount": chunkNodeCount,
@@ -492,7 +498,10 @@ class graphDBdataAccess:
                 "entityNodeCount": entityNodeCount,
                 "entityEntityRelCount": entityEntityRelCount,
                 "communityNodeCount": communityNodeCount,
-                "communityRelCount": communityRelCount}
+                "communityRelCount": communityRelCount,
+                "nodeCount" : nodeCount,
+                "relationshipCount" : relationshipCount
+                }
             
         logging.info("Nodes and Relationship Counts updated")
         return response
