@@ -177,8 +177,7 @@ LIMIT $limit
 NODEREL_COUNT_QUERY_WITH_COMMUNITY = """
 MATCH docs = (d:Document)
 WHERE d.fileName IS NOT NULL
-CALL {
-   WITH d
+CALL (d) {
    // Match PART_OF and HAS_ENTITY relationships on Chunks
    OPTIONAL MATCH (d)<-[po:PART_OF]-(c:Chunk)
    OPTIONAL MATCH (c)-[he:HAS_ENTITY]->(e:__Entity__)
@@ -186,14 +185,12 @@ CALL {
         count(distinct he) AS chunkEntityRelCount, count(distinct e) AS entityNodeCount,
         collect(distinct e) AS entities
    // Calculate entity-to-entity relationships
-   CALL {
-       WITH entities
+   CALL (entities) {
        UNWIND entities AS e
        RETURN sum(COUNT { (e)-->(e2:__Entity__) WHERE e2 in entities }) AS entityEntityRelCount
    }
    // Step 1: Match IN_COMMUNITY relationships and collect base communities
-   CALL {
-       WITH entities
+   CALL (entities) {
        UNWIND entities AS e
        OPTIONAL MATCH (e)-[ic:IN_COMMUNITY]->(comm:__Community__)
        WITH collect(distinct comm) AS base_communities, collect(distinct ic) AS inCommunityRels
@@ -227,8 +224,7 @@ ORDER BY d.createdAt DESC
 NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY = """
 MATCH docs = (d:Document)
 WHERE d.fileName IS NOT NULL
-CALL {
-   WITH d
+CALL (d) {
    // Match PART_OF and HAS_ENTITY relationships on Chunks
    OPTIONAL MATCH (d)<-[po:PART_OF]-(c:Chunk)
    OPTIONAL MATCH (c)-[he:HAS_ENTITY]->(e:__Entity__)
@@ -236,8 +232,7 @@ CALL {
         count(distinct he) AS chunkEntityRelCount, count(distinct e) AS entityNodeCount,
         collect(distinct e) AS entities
    // Calculate entity-to-entity relationships
-   CALL {
-       WITH entities
+   CALL (entities) {
        UNWIND entities AS e
        RETURN sum(COUNT { (e)-->(e2:__Entity__) WHERE e2 in entities }) AS entityEntityRelCount
    }

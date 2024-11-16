@@ -207,7 +207,6 @@ async def extract_knowledge_graph_from_file(
           Nodes and Relations created in Neo4j databse for the pdf file
     """
     try:
-        print("IN EXTRAAAAAAAAAAAAAAAAAAAAAAACT")
         start_time = time.time()
         payload_json_obj = {'api_name':'extract', 'db_url':uri, 'userName':userName, 'database':database, 'source_url':source_url, 'aws_access_key_id':aws_access_key_id,
                             'model':model, 'gcs_bucket_name':gcs_bucket_name, 'gcs_bucket_folder':gcs_bucket_folder, 'source_type':source_type,'gcs_blob_filename':gcs_blob_filename,
@@ -239,12 +238,11 @@ async def extract_knowledge_graph_from_file(
             return create_api_response('Failed',message='source_type is other than accepted source')
         extract_api_time = time.time() - start_time
         if result is not None:
-            logging.info("Going for counting nodes and relationships")
+            logging.info("Going for counting nodes and relationships in extract")
             count_node_time = time.time()
-            update_community_count_flag = False
             graph = create_graph_database_connection(uri, userName, password, database)   
             graphDb_data_Access = graphDBdataAccess(graph)
-            count_response = graphDb_data_Access.update_node_relationship_count(update_community_count_flag)
+            count_response = graphDb_data_Access.update_node_relationship_count()
             if count_response :
                 result['chunkNodeCount'] = count_response[file_name].get('chunkNodeCount',"0")
                 result['chunkRelCount'] =  count_response[file_name].get('chunkRelCount',"0")
@@ -341,8 +339,7 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             logging.info(f'created communities')
             graph = create_graph_database_connection(uri, userName, password, database)   
             graphDb_data_Access = graphDBdataAccess(graph)
-            update_community_count_flag = True
-            count_response = graphDb_data_Access.update_node_relationship_count(update_community_count_flag)
+            count_response = graphDb_data_Access.update_node_relationship_count()
             logging.info(f'Updated source node with community related counts')
 
         logger.log_struct(json_obj)

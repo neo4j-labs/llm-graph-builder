@@ -449,11 +449,15 @@ class graphDBdataAccess:
         return "Drop and Re-Create vector index succesfully"
 
 
-    def update_node_relationship_count(self,update_community_count_flag):
+    def update_node_relationship_count(self):
         logging.info("updating node and relationship count")
-        if update_community_count_flag == True:
+        label_query = """CALL db.labels"""
+        check_labels = self.execute_query(label_query)
+        if {'label': '__Community__'} in check_labels:
+            logging.info("COMMUNITY QUERY")
             result = self.execute_query(NODEREL_COUNT_QUERY_WITH_COMMUNITY)
         else:
+            logging.info("NON COMMUNITY QUERY")
             result = self.execute_query(NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY)
         response = {}
         for record in result:
@@ -462,7 +466,7 @@ class graphDBdataAccess:
             chunkRelCount = record["chunkRelCount"]
             entityNodeCount = record["entityNodeCount"]
             entityEntityRelCount = record["entityEntityRelCount"]
-            if update_community_count_flag == True:
+            if {'label': '__Community__'} in check_labels:
                 communityNodeCount = record["communityNodeCount"]
                 communityRelCount = record["communityRelCount"]
             else:
