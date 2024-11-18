@@ -1,4 +1,4 @@
-import { Checkbox, DataGrid, DataGridComponents, Flex, TextLink, Typography, useMediaQuery } from '@neo4j-ndl/react';
+import { DataGrid, DataGridComponents, Flex, TextLink, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { UserCredentials, orphanNodeProps } from '../../../../types';
 import { getOrphanNodes } from '../../../../services/GetOrphanNodes';
@@ -22,6 +22,7 @@ import { tokens } from '@neo4j-ndl/base';
 import GraphViewModal from '../../../Graph/GraphViewModal';
 import { handleGraphNodeClick } from '../../../ChatBot/chatInfo';
 import { ThemeWrapperContext } from '../../../../context/ThemeWrapper';
+import { Checkbox } from '@mui/material';
 export default function DeletePopUpForOrphanNodes({
   deleteHandler,
   loading,
@@ -95,9 +96,15 @@ export default function DeletePopUpForOrphanNodes({
         header: ({ table }: { table: Table<orphanNodeProps> }) => {
           return (
             <Checkbox
-              ariaLabel='header-checkbox'
-              isChecked={table.getIsAllRowsSelected()}
+              aria-label='header-checkbox'
+              checked={table.getIsAllRowsSelected()}
               onChange={table.getToggleAllRowsSelectedHandler()}
+              sx={{
+                color: colorMode === 'dark' ? 'rgb(168 172 178)' : 'rgb(94 99 106)',
+                '&.Mui-checked': {
+                  color: colorMode === 'dark' ? '#8fe3e8' : '#0a6190',
+                },
+              }}
             />
           );
         },
@@ -105,10 +112,16 @@ export default function DeletePopUpForOrphanNodes({
           return (
             <div className='px-1'>
               <Checkbox
-                ariaLabel='row-checkbox'
+                aria-label='row-checkbox'
                 onChange={row.getToggleSelectedHandler()}
-                htmlAttributes={{ title: 'Select the Row for Deletion' }}
-                isChecked={row.getIsSelected()}
+                title='Select the Row for Deletion'
+                checked={row.getIsSelected()}
+                sx={{
+                  color: colorMode === 'dark' ? 'rgb(168 172 178)' : 'rgb(94 99 106)',
+                  '&.Mui-checked': {
+                    color: colorMode === 'dark' ? '#8fe3e8' : '#0a6190',
+                  },
+                }}
               />
             </div>
           );
