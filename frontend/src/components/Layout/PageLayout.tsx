@@ -16,7 +16,7 @@ interface PageLayoutProp {
   isChatOnly?: boolean;
 }
 
-const PageLayout: React.FC<PageLayoutProp> = ({ isChatOnly }) => {
+const PageLayout: React.FC<PageLayoutProp> = () => {
   const largedesktops = useMediaQuery(`(min-width:1440px )`);
   const { userCredentials, connectionStatus } = useCredentials();
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(largedesktops));
