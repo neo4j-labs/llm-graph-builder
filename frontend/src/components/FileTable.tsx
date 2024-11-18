@@ -1,5 +1,4 @@
 import {
-  Checkbox,
   DataGrid,
   DataGridComponents,
   Flex,
@@ -53,6 +52,7 @@ import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
+import { Checkbox } from '@mui/material';
 let onlyfortheFirstRender = true;
 
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
@@ -102,14 +102,20 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             .includes('Processing');
           return (
             <Checkbox
-              ariaLabel='header-checkbox'
-              isChecked={table.getIsAllRowsSelected()}
+              aria-label='header-checkbox'
+              checked={table.getIsAllRowsSelected()}
               onChange={table.getToggleAllRowsSelectedHandler()}
-              isDisabled={processingcheck}
-              htmlAttributes={{
-                title: processingcheck
+              disabled={processingcheck}
+              title={
+                processingcheck
                   ? `Files are still processing please select individual checkbox for deletion`
-                  : 'select all rows for deletion',
+                  : 'select all rows for deletion'
+              }
+              sx={{
+                color: colorMode === 'dark' ? 'rgb(168 172 178)' : 'rgb(94 99 106)',
+                '&.Mui-checked': {
+                  color: colorMode === 'dark' ? '#8fe3e8' : '#0a6190',
+                },
               }}
             />
           );
