@@ -249,6 +249,7 @@ export type ChatbotProps = {
   clear?: boolean;
   isFullScreen?: boolean;
   connectionStatus: boolean;
+  isChatOnly?: boolean;
 };
 export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
 
@@ -690,6 +691,8 @@ export interface ConnectionModalProps {
   isVectorIndexMatch: boolean;
   chunksExistsWithoutEmbedding: boolean;
   chunksExistsWithDifferentEmbedding: boolean;
+  onSuccess?: () => void;
+  isChatOnly?: boolean;
 }
 export interface ReusableDropdownProps extends DropdownProps {
   options: string[] | OptionType[];
@@ -704,9 +707,11 @@ export interface ChildRef {
   getSelectedRows: () => CustomFile[];
 }
 export interface IconProps {
-  closeChatBot: () => void;
+  isFullScreen?: boolean;
+  closeChatBot?: () => void;
   deleteOnClick?: () => void;
   messages: Messages[];
+  isChatOnly?: boolean;
 }
 export interface S3File {
   fileName: string;
@@ -725,6 +730,13 @@ export interface DrawerChatbotProps {
   clearHistoryData: boolean;
   messages: Messages[];
   connectionStatus: boolean;
+}
+
+export interface ChatOnlyProps {
+  clearHistoryData: boolean;
+  messages: Messages[];
+  connectionStatus: boolean;
+  isReadOnlyUser: boolean;
 }
 
 export interface ContextProps {
