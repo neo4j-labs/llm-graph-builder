@@ -1,5 +1,4 @@
 import {
-  Checkbox,
   DataGrid,
   DataGridComponents,
   Flex,
@@ -51,9 +50,9 @@ import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
-import IndeterminateCheckbox from './UI/CustomCheckBox';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
+import { Checkbox } from '@mui/material';
 let onlyfortheFirstRender = true;
 
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
@@ -103,14 +102,20 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             .includes('Processing');
           return (
             <Checkbox
-              ariaLabel='header-checkbox'
-              isChecked={table.getIsAllRowsSelected()}
+              aria-label='header-checkbox'
+              checked={table.getIsAllRowsSelected()}
               onChange={table.getToggleAllRowsSelectedHandler()}
-              isDisabled={processingcheck}
-              htmlAttributes={{
-                title: processingcheck
+              disabled={processingcheck}
+              title={
+                processingcheck
                   ? `Files are still processing please select individual checkbox for deletion`
-                  : 'select all rows for deletion',
+                  : 'select all rows for deletion'
+              }
+              sx={{
+                color: colorMode === 'dark' ? 'rgb(168 172 178)' : 'rgb(94 99 106)',
+                '&.Mui-checked': {
+                  color: colorMode === 'dark' ? '#8fe3e8' : '#0a6190',
+                },
               }}
             />
           );
@@ -118,16 +123,21 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         cell: ({ row }: { row: Row<CustomFile> }) => {
           return (
             <div className='px-1'>
-              <IndeterminateCheckbox
-                {...{
-                  checked: row.getIsSelected(),
-                  disabled:
-                    !row.getCanSelect() ||
-                    row.original.status == 'Uploading' ||
-                    row.original.status === 'Processing' ||
-                    row.original.status === 'Waiting',
-                  indeterminate: row.getIsSomeSelected(),
-                  onChange: row.getToggleSelectedHandler(),
+              <Checkbox
+                checked={row.getIsSelected()}
+                disabled={
+                  !row.getCanSelect() ||
+                  row.original.status == 'Uploading' ||
+                  row.original.status === 'Processing' ||
+                  row.original.status === 'Waiting'
+                }
+                indeterminate={row.getIsSomeSelected()}
+                onChange={row.getToggleSelectedHandler()}
+                sx={{
+                  color: colorMode === 'dark' ? 'rgb(168 172 178)' : 'rgb(94 99 106)',
+                  '&.Mui-checked': {
+                    color: colorMode === 'dark' ? '#8fe3e8' : '#0a6190',
+                  },
                 }}
               />
             </div>
