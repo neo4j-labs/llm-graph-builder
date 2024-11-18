@@ -320,7 +320,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     [activeChatmodes]
   );
   return (
-    <div className='n-bg-palette-neutral-bg-weak p-4'>
+    <div className='n-bg-palette-neutral-bg-weak p-4 max-h-[546px] overflow-y-auto'>
       <div className='flex flex-row pb-6 items-center mb-2'>
         <img
           src={Neo4jRetrievalLogo}
@@ -382,7 +382,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           <SourcesInfo loading={infoLoading} sources={sources} mode={mode} chunks={chunks} />
         </Tabs.TabPanel>
         <Tabs.TabPanel tabId={8} value={activeTab}>
-          <Stack spacing={2} className='max-h-96 overflow-y-auto'>
+          <Stack spacing={2}>
             <Stack spacing={2}>
               {!supportedLLmsForRagas.includes(metricmodel) && (
                 <Banner
