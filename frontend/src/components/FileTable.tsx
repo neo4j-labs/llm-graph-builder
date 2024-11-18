@@ -529,8 +529,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   <Popover.Content className='p-2'>
                     <ul>
                       <li>Chunk Nodes: {info.row.original.chunkNodeCount}</li>
-                      <li>Entity Nodest: {info.row.original.entityNodeCount}</li>
-                      <li>Community Nodest: {info.row.original.communityNodeCount}</li>
+                      <li>Entity Nodes: {info.row.original.entityNodeCount}</li>
+                      <li>Community Nodes: {info.row.original.communityNodeCount}</li>
                     </ul>
                   </Popover.Content>
                 </Popover>
