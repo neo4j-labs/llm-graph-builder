@@ -5,8 +5,7 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: <App />,
-    children: [
-    ],
+    children: [],
   },
   { path: '/chat-only', element: <ChatOnlyComponent /> },
 ]);

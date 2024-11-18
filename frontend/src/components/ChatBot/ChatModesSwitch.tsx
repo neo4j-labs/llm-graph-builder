@@ -32,11 +32,11 @@ export default function ChatModesSwitch({
         <ChevronLeftIconSolid className='n-size-token-7' />
       </IconButton>
       <TipWrapper tooltip={chatmodetoshow} placement='top'>
-        <span
+        <div
           className={`n-body-medium  ${!isFullScreen ? 'max-w-[50px] text-ellipsis text-nowrap overflow-hidden' : ''}`}
         >
           {chatmodetoshow}
-        </span>
+        </div>
       </TipWrapper>
       <IconButton
         isDisabled={currentModeIndex === modescount - 1}

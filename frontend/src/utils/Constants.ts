@@ -143,7 +143,7 @@ export const tooltips = {
   continue: 'Continue',
   clearGraphSettings: 'Clear configured Graph Schema',
   applySettings: 'Apply Graph Schema',
-  openChatPopout:'Chat'
+  openChatPopout: 'Chat',
 };
 
 export const buttonCaptions = {

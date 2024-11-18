@@ -13,7 +13,7 @@ const DrawerChatbot: React.FC<DrawerChatbotProps> = ({ isExpanded, clearHistoryD
     if (location && location.state) {
       setMessages(location.state);
     }
-  }, [location])
+  }, [location]);
 
   const getIsLoading = (messages: Messages[]) => {
     return messages.some((msg) => msg.isTyping || msg.isLoading);

@@ -48,23 +48,25 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
     let session = localStorage.getItem('neo4j.connection');
     if (session) {
       const neo4jConnection = JSON.parse(session);
-      const uri = neo4jConnection.uri;
+      const {uri} = neo4jConnection;
       const userName = neo4jConnection.user;
-      const password = neo4jConnection.password;
-      const database = neo4jConnection.database;
+      const {password} = neo4jConnection;
+      const {database} = neo4jConnection;
       const port = uri.split(':')[2];
       const encodedPassword = btoa(password);
-      const chatUrl = `/chat-only?uri=${encodeURIComponent(uri)}&user=${userName}&password=${encodedPassword}&database=${database}&port=${port}&connectionStatus=${connectionStatus}`;
-      navigate(chatUrl, { state: messages })
+      const chatUrl = `/chat-only?uri=${encodeURIComponent(
+        uri
+      )}&user=${userName}&password=${encodedPassword}&database=${database}&port=${port}&connectionStatus=${connectionStatus}`;
+      navigate(chatUrl, { state: messages });
     } else {
       const chatUrl = `/chat-only?openModal=true`;
       window.open(chatUrl, '_blank');
     }
-  }, [messages])
+  }, [messages]);
 
   const onBackButtonClick = () => {
-    navigate('/',{state:messages})
-  }
+    navigate('/', { state: messages });
+  };
   return (
     <>
       <div
@@ -143,61 +145,56 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                   </IconButtonWithToolTip>
                 </div>
               </div>
-            </section>)
-            : (
-              <section className='items-center justify-end w-1/3 grow-0 flex'>
-                <div
-                  className='inline-flex gap-x-1'
-                  style={{ display: 'flex', flexGrow: 0, alignItems: 'center', gap: '4px' }}
-                >
-                  {!connectionStatus && (
-                    <Button
-                      size={'medium'}
-                      className={`${chatOnly ? '' : 'mr-2.5'}`}
-                      onClick={() => {
-                        if (setOpenConnection) {
-                          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-                        }
-                      }}
-                    >
-                      {buttonCaptions.connectToNeo4j}
-                    </Button>
-                  )}
-                  <IconButtonWithToolTip
-                    onClick={onBackButtonClick}
-                    clean
-                    text="Back"
-                    placement="bottom"
-                    label="Back">
-
-                    <ArrowLeftIconOutline />
-                  </IconButtonWithToolTip>
-                  <div ref={chatAnchor}>
-                    <IconButtonWithToolTip
-                      onClick={() => {
-                        setshowChatModeOption(true);
-                      }}
-                      clean
-                      text="Chat mode"
-                      placement="bottom"
-                      label="Chat mode"
-                    >
-                      <RiChatSettingsLine />
-                    </IconButtonWithToolTip>
-                  </div>
-                  <IconButtonWithToolTip
-                    text={tooltips.clearChat}
-                    aria-label="Remove chat history"
-                    clean
-                    onClick={deleteOnClick}
-                    disabled={messages.length === 1}
-                    placement={chatOnly ? "left" : "bottom"}
-                    label={tooltips.clearChat}
+            </section>
+          ) : (
+            <section className='items-center justify-end w-1/3 grow-0 flex'>
+              <div
+                className='inline-flex gap-x-1'
+                style={{ display: 'flex', flexGrow: 0, alignItems: 'center', gap: '4px' }}
+              >
+                {!connectionStatus && (
+                  <Button
+                    size={'medium'}
+                    className={`${chatOnly ? '' : 'mr-2.5'}`}
+                    onClick={() => {
+                      if (setOpenConnection) {
+                        setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+                      }
+                    }}
                   >
-                    <TrashIconOutline />
+                    {buttonCaptions.connectToNeo4j}
+                  </Button>
+                )}
+                <IconButtonWithToolTip onClick={onBackButtonClick} clean text='Back' placement='bottom' label='Back'>
+                  <ArrowLeftIconOutline />
+                </IconButtonWithToolTip>
+                <div ref={chatAnchor}>
+                  <IconButtonWithToolTip
+                    onClick={() => {
+                      setshowChatModeOption(true);
+                    }}
+                    clean
+                    text='Chat mode'
+                    placement='bottom'
+                    label='Chat mode'
+                  >
+                    <RiChatSettingsLine />
                   </IconButtonWithToolTip>
                 </div>
-              </section>)}
+                <IconButtonWithToolTip
+                  text={tooltips.clearChat}
+                  aria-label='Remove chat history'
+                  clean
+                  onClick={deleteOnClick}
+                  disabled={messages.length === 1}
+                  placement={chatOnly ? 'left' : 'bottom'}
+                  label={tooltips.clearChat}
+                >
+                  <TrashIconOutline />
+                </IconButtonWithToolTip>
+              </div>
+            </section>
+          )}
         </nav>
       </div>
       <ChatModeToggle
@@ -208,5 +205,5 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
       />
     </>
   );
-}
+};
 export default memo(Header);
