@@ -8,6 +8,7 @@ import {
   TextLink,
   Typography,
   useCopyToClipboard,
+  Checkbox,
 } from '@neo4j-ndl/react';
 import { forwardRef, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
@@ -52,7 +53,6 @@ import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
-import { Checkbox } from '@mui/material';
 let onlyfortheFirstRender = true;
 
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
@@ -102,20 +102,14 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             .includes('Processing');
           return (
             <Checkbox
-              aria-label='header-checkbox'
-              checked={table.getIsAllRowsSelected()}
+              ariaLabel='header-checkbox'
+              isChecked={table.getIsAllRowsSelected()}
               onChange={table.getToggleAllRowsSelectedHandler()}
-              disabled={processingcheck}
-              title={
-                processingcheck
+              isDisabled={processingcheck}
+              htmlAttributes={{
+                title: processingcheck
                   ? `Files are still processing please select individual checkbox for deletion`
-                  : 'select all rows for deletion'
-              }
-              sx={{
-                color: colorMode === 'dark' ? 'rgb(168 172 178)' : 'rgb(94 99 106)',
-                '&.Mui-checked': {
-                  color: colorMode === 'dark' ? '#8fe3e8' : '#0a6190',
-                },
+                  : 'select all rows for deletion',
               }}
             />
           );
@@ -129,7 +123,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   !row.getCanSelect() ||
                   row.original.status == 'Uploading' ||
                   row.original.status === 'Processing' ||
-                  row.original.status === 'Waiting'}
+                  row.original.status === 'Waiting'
+                }
                 onChange={row.getToggleSelectedHandler()}
               />
             </div>
@@ -717,8 +712,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   language: item?.language ?? '',
                   processingProgress:
                     item?.processed_chunk != undefined &&
-                      item?.total_chunks != undefined &&
-                      !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
+                    item?.total_chunks != undefined &&
+                    !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
                   accessToken: item?.accessToken ?? '',
