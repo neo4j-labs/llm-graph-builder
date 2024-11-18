@@ -3,7 +3,6 @@ from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
 from src.QA_integration import *
-from src.entities.user_credential import user_credential
 from src.shared.common_fn import *
 import uvicorn
 import asyncio
@@ -123,10 +122,6 @@ async def create_source_knowledge_graph_url(
     
     try:
         start = time.time()
-        payload_json_obj = {'api_name':'url_scan', 'db_url':uri, 'userName':userName, 'database':database, 'source_url':source_url, 'aws_access_key_id':aws_access_key_id,
-                            'model':model, 'gcs_bucket_name':gcs_bucket_name, 'gcs_bucket_folder':gcs_bucket_folder, 'source_type':source_type,
-                            'gcs_project_id':gcs_project_id, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
         if source_url is not None:
             source = source_url
         else:
@@ -160,7 +155,9 @@ async def create_source_knowledge_graph_url(
         message = f"Source Node created successfully for source type: {source_type} and source: {source}"
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'url_scan','db_url':uri,'url_scanned_file':lst_file_name, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        json_obj = {'api_name':'url_scan','db_url':uri,'url_scanned_file':lst_file_name, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','userName':userName, 'database':database, 'aws_access_key_id':aws_access_key_id,
+                            'model':model, 'gcs_bucket_name':gcs_bucket_name, 'gcs_bucket_folder':gcs_bucket_folder, 'source_type':source_type,
+                            'gcs_project_id':gcs_project_id, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(json_obj, "INFO")
         result ={'elapsed_api_time' : f'{elapsed_time:.2f}'}
         return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name,data=result)    
@@ -214,11 +211,6 @@ async def extract_knowledge_graph_from_file(
     """
     try:
         start_time = time.time()
-        payload_json_obj = {'api_name':'extract', 'db_url':uri, 'userName':userName, 'database':database, 'source_url':source_url, 'aws_access_key_id':aws_access_key_id,
-                            'model':model, 'gcs_bucket_name':gcs_bucket_name, 'gcs_bucket_folder':gcs_bucket_folder, 'source_type':source_type,'gcs_blob_filename':gcs_blob_filename,
-                            'file_name':file_name, 'gcs_project_id':gcs_project_id, 'wiki_query':wiki_query,'allowedNodes':allowedNodes,'allowedRelationship':allowedRelationship,
-                            'language':language ,'retry_condition':retry_condition,'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
         graph = create_graph_database_connection(uri, userName, password, database)   
         graphDb_data_Access = graphDBdataAccess(graph)
         
@@ -252,6 +244,17 @@ async def extract_knowledge_graph_from_file(
             result['source_type'] = source_type
             result['logging_time'] = formatted_time(datetime.now(timezone.utc))
             result['elapsed_api_time'] = f'{extract_api_time:.2f}'
+            result['userName'] = userName
+            result['database'] = database
+            result['aws_access_key_id'] = aws_access_key_id
+            result['gcs_bucket_name'] = gcs_bucket_name
+            result['gcs_bucket_folder'] = gcs_bucket_folder
+            result['gcs_blob_filename'] = gcs_blob_filename
+            result['gcs_project_id'] = gcs_project_id
+            result['allowedNodes'] = allowedNodes
+            result['allowedRelationship'] = allowedRelationship
+            result['language'] = language
+            result['retry_condition'] = retry_condition
         logger.log_struct(result, "INFO")
         result.update(uri_latency)
         logging.info(f"extraction completed in {extract_api_time:.2f} seconds for file name {file_name}")
@@ -284,15 +287,13 @@ async def get_source_list(uri:str, userName:str, password:str, database:str=None
     """
     try:
         start = time.time()
-        payload_json_obj = {'api_name':'sources_list', 'db_url':uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
         decoded_password = decode_password(password)
         if " " in uri:
             uri = uri.replace(" ","+")
         result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'sources_list','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        json_obj = {'api_name':'sources_list','db_url':uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         return create_api_response("Success",data=result, message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
@@ -305,31 +306,32 @@ async def get_source_list(uri:str, userName:str, password:str, database:str=None
 @app.post("/post_processing")
 async def post_processing(uri=Form(), userName=Form(), password=Form(), database=Form(), tasks=Form(None)):
     try:
-        payload_json_obj = {'api_name':'post_processing', 'db_url':uri, 'userName':userName, 'database':database, 'tasks':tasks, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
         graph = create_graph_database_connection(uri, userName, password, database)
         tasks = set(map(str.strip, json.loads(tasks)))
-        
+        start = time.time()
         if "materialize_text_chunk_similarities" in tasks:
             await asyncio.to_thread(update_graph, graph)
-            json_obj = {'api_name': 'post_processing/update_similarity_graph', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+            api_name = 'post_processing/update_similarity_graph'
             logging.info(f'Updated KNN Graph')
 
         if "enable_hybrid_search_and_fulltext_search_in_bloom" in tasks:
             await asyncio.to_thread(create_vector_fulltext_indexes, uri=uri, username=userName, password=password, database=database)
-            json_obj = {'api_name': 'post_processing/enable_hybrid_search_and_fulltext_search_in_bloom', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+            api_name = 'post_processing/enable_hybrid_search_and_fulltext_search_in_bloom'
             logging.info(f'Full Text index created')
 
         if os.environ.get('ENTITY_EMBEDDING','False').upper()=="TRUE" and "materialize_entity_similarities" in tasks:
             await asyncio.to_thread(create_entity_embedding, graph)
-            json_obj = {'api_name': 'post_processing/create_entity_embedding', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+            api_name = 'post_processing/create_entity_embedding'
             logging.info(f'Entity Embeddings created')
             
         if "enable_communities" in tasks:
+            api_name = 'create_communities'
             await asyncio.to_thread(create_communities, uri, userName, password, database)
-            json_obj = {'api_name': 'post_processing/create_communities', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-            logging.info(f'created communities')
             
+            logging.info(f'created communities')
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name': api_name, 'db_url': uri, 'userName':userName, 'database':database, 'tasks':tasks, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj)
         return create_api_response('Success', message='All tasks completed successfully')
     
@@ -348,9 +350,6 @@ async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(),
     logging.info(f"QA_RAG called at {datetime.now()}")
     qa_rag_start_time = time.time()
     try:
-        payload_json_obj = {'api_name':'chat_bot', 'db_url':uri, 'userName':userName, 'database':database, 'question':question,'document_names':document_names,
-                             'session_id':session_id, 'mode':mode, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
         if mode == "graph":
             graph = Neo4jGraph( url=uri,username=userName,password=password,database=database,sanitize = True, refresh_schema=True)
         else:
@@ -364,7 +363,8 @@ async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(),
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
         result["info"]["response_time"] = round(total_call_time, 2)
         
-        json_obj = {'api_name':'chat_bot','db_url':uri,'session_id':session_id,'mode':mode, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{total_call_time:.2f}'}
+        json_obj = {'api_name':'chat_bot','db_url':uri, 'userName':userName, 'database':database, 'question':question,'document_names':document_names,
+                             'session_id':session_id, 'mode':mode, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{total_call_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         
         return create_api_response('Success',data=result)
@@ -381,13 +381,11 @@ async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(),
 async def chunk_entities(uri=Form(),userName=Form(), password=Form(), database=Form(), nodedetails=Form(None),entities=Form(),mode=Form()):
     try:
         start = time.time()
-        payload_json_obj = {'api_name':'chunk_entities', 'db_url':uri, 'userName':userName, 'database':database, 'nodedetails':nodedetails,'entities':entities,
-                            'mode':mode, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
         result = await asyncio.to_thread(get_entities_from_chunkids,uri=uri, username=userName, password=password, database=database,nodedetails=nodedetails,entities=entities,mode=mode)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'chunk_entities','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        json_obj = {'api_name':'chunk_entities','db_url':uri, 'userName':userName, 'database':database, 'nodedetails':nodedetails,'entities':entities,
+                            'mode':mode, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
@@ -406,7 +404,7 @@ async def get_neighbours(uri=Form(),userName=Form(), password=Form(), database=F
         result = await asyncio.to_thread(get_neighbour_nodes,uri=uri, username=userName, password=password,database=database, element_id=elementId)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'get_neighbours','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        json_obj = {'api_name':'get_neighbours', 'userName':userName, 'database':database,'db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
@@ -427,9 +425,6 @@ async def graph_query(
     document_names: str = Form(None),
 ):
     try:
-        payload_json_obj = {'api_name':'graph_query', 'db_url':uri, 'userName':userName, 'database':database, 'document_names':document_names,
-                            'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
         start = time.time()
         result = await asyncio.to_thread(
             get_graph_results,
@@ -441,7 +436,7 @@ async def graph_query(
         )
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'graph_query','db_url':uri,'document_names':document_names, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        json_obj = {'api_name':'graph_query','db_url':uri, 'userName':userName, 'database':database, 'document_names':document_names, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
@@ -457,10 +452,13 @@ async def graph_query(
 @app.post("/clear_chat_bot")
 async def clear_chat_bot(uri=Form(),userName=Form(), password=Form(), database=Form(), session_id=Form(None)):
     try:
-        payload_json_obj = {'api_name':'clear_chat_bot', 'db_url':uri, 'userName':userName, 'database':database, 'session_id':session_id, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
+        start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(clear_chat_history,graph=graph,session_id=session_id)
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'clear_chat_bot', 'db_url':uri, 'userName':userName, 'database':database, 'session_id':session_id, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
@@ -475,13 +473,11 @@ async def clear_chat_bot(uri=Form(),userName=Form(), password=Form(), database=F
 async def connect(uri=Form(), userName=Form(), password=Form(), database=Form()):
     try:
         start = time.time()
-        payload_json_obj = {'api_name':'connect', 'db_url':uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'connect','db_url':uri,'status':result, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        json_obj = {'api_name':'connect','db_url':uri, 'userName':userName, 'database':database,'status':result, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         result['elapsed_api_time'] = f'{elapsed_time:.2f}'
         return create_api_response('Success',data=result)
@@ -498,22 +494,18 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
                                         password=Form(), database=Form()):
     try:
         start = time.time()
-        payload_json_obj = {'api_name':'upload', 'db_url':uri, 'userName':userName, 'database':database, 'chunkNumber':chunkNumber,'totalChunks':totalChunks,
-                            'original_file_name':originalname,'model':model, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, uri, CHUNK_DIR, MERGED_DIR)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'upload','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        json_obj = {'api_name':'upload','db_url':uri,'userName':userName, 'database':database, 'chunkNumber':chunkNumber,'totalChunks':totalChunks,
+                            'original_file_name':originalname,'model':model, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
-        # result['elapsed_api_time'] = f'{elapsed_time:.2f}'
         if int(chunkNumber) == int(totalChunks):
             return create_api_response('Success',data=result, message='Source Node Created Successfully')
         else:
             return create_api_response('Success', message=result)
     except Exception as e:
-        # job_status = "Failed"
         message="Unable to upload large file into chunks. "
         error_message = str(e)
         logging.info(message)
@@ -526,14 +518,12 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
 async def get_structured_schema(uri=Form(), userName=Form(), password=Form(), database=Form()):
     try:
         start = time.time()
-        payload_json_obj = {'api_name':'schema', 'db_url':uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(get_labels_and_relationtypes, graph)
         end = time.time()
         elapsed_time = end - start
         logging.info(f'Schema result from DB: {result}')
-        json_obj = {'api_name':'schema','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        json_obj = {'api_name':'schema','db_url':uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
@@ -598,9 +588,6 @@ async def delete_document_and_entities(uri=Form(),
                                        deleteEntities=Form()):
     try:
         start = time.time()
-        payload_json_obj = {'api_name':'delete_document_and_entities', 'db_url':uri, 'userName':userName, 'database':database, 'filenames':filenames,'deleteEntities':deleteEntities,
-                            'source_types':source_types, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         result, files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filenames, source_types, deleteEntities, MERGED_DIR, uri)
@@ -608,7 +595,8 @@ async def delete_document_and_entities(uri=Form(),
         message = f"Deleted {files_list_size} documents with entities from database"
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'delete_document_and_entities','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        json_obj = {'api_name':'delete_document_and_entities','db_url':uri, 'userName':userName, 'database':database, 'filenames':filenames,'deleteEntities':deleteEntities,
+                            'source_types':source_types, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',message=message)
     except Exception as e:
@@ -656,12 +644,14 @@ async def get_document_status(file_name, url, userName, password, database):
 @app.post("/cancelled_job")
 async def cancelled_job(uri=Form(), userName=Form(), password=Form(), database=Form(), filenames=Form(None), source_types=Form(None)):
     try:
-        payload_json_obj = {'api_name':'cancelled_job', 'db_url':uri, 'userName':userName, 'database':database, 
-                            'filenames':filenames,'source_types':source_types,'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
+        start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         result = manually_cancelled_job(graph,filenames, source_types, MERGED_DIR, uri)
-        
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'cancelled_job','db_url':uri, 'userName':userName, 'database':database, 'filenames':filenames,
+                            'source_types':source_types, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',message=result)
     except Exception as e:
         job_status = "Failed"
@@ -675,9 +665,12 @@ async def cancelled_job(uri=Form(), userName=Form(), password=Form(), database=F
 @app.post("/populate_graph_schema")
 async def populate_graph_schema(input_text=Form(None), model=Form(None), is_schema_description_checked=Form(None)):
     try:
-        payload_json_obj = {'api_name':'populate_graph_schema', 'model':model, 'is_schema_description_checked':is_schema_description_checked, 'input_text':input_text, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
+        start = time.time()
         result = populate_graph_schema_from_text(input_text, model, is_schema_description_checked)
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'populate_graph_schema', 'model':model, 'is_schema_description_checked':is_schema_description_checked, 'input_text':input_text, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
@@ -691,15 +684,13 @@ async def populate_graph_schema(input_text=Form(None), model=Form(None), is_sche
 @app.post("/get_unconnected_nodes_list")
 async def get_unconnected_nodes_list(uri=Form(), userName=Form(), password=Form(), database=Form()):
     try:
-        payload_json_obj = {'api_name':'get_unconnected_nodes_list', 'db_url':uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         nodes_list, total_nodes = graphDb_data_Access.list_unconnected_nodes()
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'get_unconnected_nodes_list','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        json_obj = {'api_name':'get_unconnected_nodes_list','db_url':uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=nodes_list,message=total_nodes)
     except Exception as e:
@@ -714,16 +705,13 @@ async def get_unconnected_nodes_list(uri=Form(), userName=Form(), password=Form(
 @app.post("/delete_unconnected_nodes")
 async def delete_orphan_nodes(uri=Form(), userName=Form(), password=Form(), database=Form(),unconnected_entities_list=Form()):
     try:
-        payload_json_obj = {'api_name':'delete_unconnected_nodes', 'db_url':uri, 'userName':userName, 'database':database,
-                            'unconnected_entities_list':unconnected_entities_list, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         result = graphDb_data_Access.delete_unconnected_nodes(unconnected_entities_list)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'delete_unconnected_nodes','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        json_obj = {'api_name':'delete_unconnected_nodes','db_url':uri, 'userName':userName, 'database':database,'unconnected_entities_list':unconnected_entities_list, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result,message="Unconnected entities delete successfully")
     except Exception as e:
@@ -739,14 +727,12 @@ async def delete_orphan_nodes(uri=Form(), userName=Form(), password=Form(), data
 async def get_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), database=Form()):
     try:
         start = time.time()
-        payload_json_obj = {'api_name':'get_duplicate_nodes', 'db_url':uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         nodes_list, total_nodes = graphDb_data_Access.get_duplicate_nodes_list()
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'get_duplicate_nodes','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        json_obj = {'api_name':'get_duplicate_nodes','db_url':uri,'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=nodes_list, message=total_nodes)
     except Exception as e:
@@ -762,15 +748,13 @@ async def get_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), data
 async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), database=Form(),duplicate_nodes_list=Form()):
     try:
         start = time.time()
-        payload_json_obj = {'api_name':'merge_duplicate_nodes', 'db_url':uri, 'userName':userName, 'database':database,
-                            'duplicate_nodes_list':duplicate_nodes_list, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         result = graphDb_data_Access.merge_duplicate_nodes(duplicate_nodes_list)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'merge_duplicate_nodes','db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        json_obj = {'api_name':'merge_duplicate_nodes','db_url':uri, 'userName':userName, 'database':database,
+                            'duplicate_nodes_list':duplicate_nodes_list, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result,message="Duplicate entities merged successfully")
     except Exception as e:
@@ -785,12 +769,15 @@ async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), da
 @app.post("/drop_create_vector_index")
 async def drop_create_vector_index(uri=Form(), userName=Form(), password=Form(), database=Form(), isVectorIndexExist=Form()):
     try:
-        payload_json_obj = {'api_name':'drop_create_vector_index', 'db_url':uri, 'userName':userName, 'database':database,
-                            'isVectorIndexExist':isVectorIndexExist, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
+        start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         result = graphDb_data_Access.drop_create_vector_index(isVectorIndexExist)
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'drop_create_vector_index', 'db_url':uri, 'userName':userName, 'database':database,
+                            'isVectorIndexExist':isVectorIndexExist, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',message=result)
     except Exception as e:
         job_status = "Failed"
@@ -804,12 +791,14 @@ async def drop_create_vector_index(uri=Form(), userName=Form(), password=Form(),
 @app.post("/retry_processing")
 async def retry_processing(uri=Form(), userName=Form(), password=Form(), database=Form(), file_name=Form(), retry_condition=Form()):
     try:
-        payload_json_obj = {'api_name':'retry_processing', 'db_url':uri, 'userName':userName, 'database':database, 'file_name':file_name,'retry_condition':retry_condition,
-                            'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
+        start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
-        #set_status_retry(graph,file_name,retry_condition)
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'retry_processing', 'db_url':uri, 'userName':userName, 'database':database, 'file_name':file_name,'retry_condition':retry_condition,
+                            'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',message=f"Status set to Reprocess for filename : {file_name}")
     except Exception as e:
         job_status = "Failed"
@@ -826,31 +815,37 @@ async def calculate_metric(question: str = Form(),
                            answer: str = Form(),
                            model: str = Form(),
                            mode: str = Form()):
-   try:
-       context_list = [str(item).strip() for item in json.loads(context)] if context else []
-       answer_list = [str(item).strip() for item in json.loads(answer)] if answer else []
-       mode_list = [str(item).strip() for item in json.loads(mode)] if mode else []
+    try:
+        start = time.time()
+        context_list = [str(item).strip() for item in json.loads(context)] if context else []
+        answer_list = [str(item).strip() for item in json.loads(answer)] if answer else []
+        mode_list = [str(item).strip() for item in json.loads(mode)] if mode else []
 
-       result = await asyncio.to_thread(
-           get_ragas_metrics, question, context_list, answer_list, model
-       )
-       if result is None or "error" in result:
-           return create_api_response(
-               'Failed',
-               message='Failed to calculate evaluation metrics.',
-               error=result.get("error", "Ragas evaluation returned null")
-           )
-       data = {mode: {metric: result[metric][i] for metric in result} for i, mode in enumerate(mode_list)}
-       return create_api_response('Success', data=data)
-   except Exception as e:
-       logging.exception(f"Error while calculating evaluation metrics: {e}")
-       return create_api_response(
-           'Failed',
-           message="Error while calculating evaluation metrics",
-           error=str(e)
-       )
-   finally:
-       gc.collect()
+        result = await asyncio.to_thread(
+            get_ragas_metrics, question, context_list, answer_list, model
+        )
+        if result is None or "error" in result:
+            return create_api_response(
+                'Failed',
+                message='Failed to calculate evaluation metrics.',
+                error=result.get("error", "Ragas evaluation returned null")
+            )
+        data = {mode: {metric: result[metric][i] for metric in result} for i, mode in enumerate(mode_list)}
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'metric', 'question':question, 'context':context, 'answer':answer, 'model':model,'mode':mode,
+                            'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response('Success', data=data)
+    except Exception as e:
+        logging.exception(f"Error while calculating evaluation metrics: {e}")
+        return create_api_response(
+            'Failed',
+            message="Error while calculating evaluation metrics",
+            error=str(e)
+        )
+    finally:
+        gc.collect()
        
 
 @app.post('/additional_metrics')
@@ -896,16 +891,6 @@ async def fetch_chunktext(
    page_no: int = Form(1)
 ):
    try:
-       payload_json_obj = {
-           'api_name': 'fetch_chunktext',
-           'db_url': uri,
-           'userName': userName,
-           'database': database,
-           'document_name': document_name,
-           'page_no': page_no,
-           'logging_time': formatted_time(datetime.now(timezone.utc))
-       }
-       logger.log_struct(payload_json_obj, "INFO")
        start = time.time()
        result = await asyncio.to_thread(
            get_chunktext_results,
@@ -921,6 +906,8 @@ async def fetch_chunktext(
        json_obj = {
            'api_name': 'fetch_chunktext',
            'db_url': uri,
+           'userName': userName,
+           'database': database,
            'document_name': document_name,
            'page_no': page_no,
            'logging_time': formatted_time(datetime.now(timezone.utc)),
@@ -936,7 +923,6 @@ async def fetch_chunktext(
        return create_api_response(job_status, message=message, error=error_message)
    finally:
        gc.collect()
-
 
 if __name__ == "__main__":
     uvicorn.run(app)
