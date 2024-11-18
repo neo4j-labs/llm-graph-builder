@@ -7,7 +7,7 @@ const MessageContext = createContext<MessageContextType | undefined>(undefined);
 const MessageContextWrapper: FC<MessagesContextProviderProps> = ({ children }) => {
   const [messages, setMessages] = useState<Messages[] | []>(getDefaultMessage);
   const [clearHistoryData, setClearHistoryData] = useState<boolean>(false);
-  
+
   const value: MessageContextType = {
     messages,
     setMessages,

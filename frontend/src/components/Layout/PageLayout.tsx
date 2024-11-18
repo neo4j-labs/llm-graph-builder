@@ -146,6 +146,6 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
       />
     </div>
   );
-}
+};
 
 export default PageLayout;
