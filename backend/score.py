@@ -314,12 +314,9 @@ async def get_source_list(uri:str, userName:str, password:str, database:str=None
 @app.post("/post_processing")
 async def post_processing(uri=Form(), userName=Form(), password=Form(), database=Form(), tasks=Form(None)):
     try:
-        payload_json_obj = {'api_name':'post_processing', 'db_url':uri, 'userName':userName, 'database':database, 'tasks':tasks, 'logging_time': formatted_time(datetime.now(timezone.utc))}
-        logger.log_struct(payload_json_obj, "INFO")
         graph = create_graph_database_connection(uri, userName, password, database)
         tasks = set(map(str.strip, json.loads(tasks)))
         start = time.time()
-
         if "materialize_text_chunk_similarities" in tasks:
             await asyncio.to_thread(update_graph, graph)
             json_obj = {'api_name': 'post_processing/update_similarity_graph', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
@@ -338,6 +335,7 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
         if "enable_communities" in tasks:
             api_name = 'create_communities'
             await asyncio.to_thread(create_communities, uri, userName, password, database)
+            
             logging.info(f'created communities')
             graph = create_graph_database_connection(uri, userName, password, database)   
             graphDb_data_Access = graphDBdataAccess(graph)
