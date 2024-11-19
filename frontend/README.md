@@ -1,6 +1,6 @@
 # Neo4j Knowledge Graph Builder
 
-Reactjs app for building an knowledge graph using [Neo4j Needle](https://www.neo4j.design/).
+ReactJS app for building an knowledge graph using [Neo4j Needle](https://www.neo4j.design/).
     
 ## Features
 - 🚀 Responsive: Adapts to different screen sizes for optimal user experience.
@@ -24,5 +24,5 @@ Do run yarn add -- package name to get project updated with required dependencie
 29/01/2024> Latest dependency
 yarn add uuid 
 ##
-Upload api url should be picked from: ports tab under codespace environement // For demo
+Upload api url should be picked from: ports tab under codespace environment // For demo
 ## What it looks like
