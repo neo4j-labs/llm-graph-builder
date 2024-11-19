@@ -449,14 +449,13 @@ class graphDBdataAccess:
         return "Drop and Re-Create vector index succesfully"
 
 
-    def update_node_relationship_count(self):
+    def update_node_relationship_count(self,document_name):
         logging.info("updating node and relationship count")
-        label_query = """CALL db.labels"""
-        check_labels = self.execute_query(label_query)
-        if {'label': '__Community__'} in check_labels:
-            result = self.execute_query(NODEREL_COUNT_QUERY_WITH_COMMUNITY)
+        if document_name:
+            param = {"document_name":document_name}
+            result = self.execute_query(NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY,param)
         else:
-            result = self.execute_query(NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY)
+            result = self.execute_query(NODEREL_COUNT_QUERY_WITH_COMMUNITY)
         response = {}
         for record in result:
             filename = record["filename"]
@@ -464,12 +463,12 @@ class graphDBdataAccess:
             chunkRelCount = record["chunkRelCount"]
             entityNodeCount = record["entityNodeCount"]
             entityEntityRelCount = record["entityEntityRelCount"]
-            if {'label': '__Community__'} in check_labels:
-                communityNodeCount = record["communityNodeCount"]
-                communityRelCount = record["communityRelCount"]
-            else:
+            if document_name:
                 communityNodeCount = 0
                 communityRelCount = 0
+            else:
+                communityNodeCount = record["communityNodeCount"]
+                communityRelCount = record["communityRelCount"]
             nodeCount = int(chunkNodeCount) + int(entityNodeCount) + int(communityNodeCount)
             relationshipCount = int(chunkRelCount) + int(entityEntityRelCount) + int(communityRelCount)
             update_query = """

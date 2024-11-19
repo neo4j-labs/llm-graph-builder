@@ -223,7 +223,7 @@ ORDER BY d.createdAt DESC
 """
 NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY = """
 MATCH docs = (d:Document)
-WHERE d.fileName IS NOT NULL
+WHERE d.fileName = $document_name
 CALL (d) {
    // Match PART_OF and HAS_ENTITY relationships on Chunks
    OPTIONAL MATCH (d)<-[po:PART_OF]-(c:Chunk)
