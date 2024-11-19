@@ -1,7 +1,6 @@
 import { MessageContextWrapper, useMessageContext } from '../../context/UserMessages';
 import UserCredentialsWrapper, { useCredentials } from '../../context/UserCredentials';
 import Chatbot from './Chatbot';
-import { getIsLoading } from '../../utils/Utils';
 import { FileContextProvider } from '../../context/UsersFiles';
 import { useEffect, useState, useCallback } from 'react';
 import ConnectionModal from '../Popups/ConnectionModal/ConnectionModal';
@@ -12,8 +11,9 @@ import Header from '../Layout/Header';
 
 interface chatProp {
   chatMessages: Messages[];
+  isLoading: boolean;
 }
-const ChatContent: React.FC<chatProp> = ({ chatMessages }) => {
+const ChatContent: React.FC<chatProp> = ({ chatMessages, isLoading }) => {
   const date = new Date();
   const { clearHistoryData, messages, setMessages, setClearHistoryData } = useMessageContext();
   const { setUserCredentials, setConnectionStatus, connectionStatus } = useCredentials();
@@ -88,6 +88,7 @@ const ChatContent: React.FC<chatProp> = ({ chatMessages }) => {
       setClearHistoryData(false);
     }
   }, [clearHistoryData]);
+
   return (
     <>
       <ConnectionModal
@@ -110,7 +111,7 @@ const ChatContent: React.FC<chatProp> = ({ chatMessages }) => {
               messages={messages}
               setMessages={setMessages}
               clear={clearHistoryData}
-              isLoading={getIsLoading(messages)}
+              isLoading={isLoading}
               connectionStatus={connectionStatus}
             />
           </div>
@@ -121,11 +122,27 @@ const ChatContent: React.FC<chatProp> = ({ chatMessages }) => {
 };
 const ChatOnlyComponent: React.FC = () => {
   const location = useLocation();
+  const date = new Date();
+  const message = [
+    {
+      datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
+      id: 2,
+      modes: {
+        'graph+vector+fulltext': {
+          message:
+            'Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
+        },
+      },
+      user: 'chatbot',
+      currentMode: 'graph+vector+fulltext',
+    },
+  ];
+  console.log('isloading', location.state)
   return (
     <UserCredentialsWrapper>
       <FileContextProvider>
         <MessageContextWrapper>
-          <ChatContent chatMessages={location.state as Messages[]} />
+          <ChatContent chatMessages={location ? location.state.messages as Messages[] : message} isLoading={location.state.isLoading} />
         </MessageContextWrapper>
       </FileContextProvider>
     </UserCredentialsWrapper>
