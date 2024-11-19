@@ -22,6 +22,7 @@ import { tokens } from '@neo4j-ndl/base';
 import GraphViewModal from '../../../Graph/GraphViewModal';
 import { handleGraphNodeClick } from '../../../ChatBot/chatInfo';
 import { ThemeWrapperContext } from '../../../../context/ThemeWrapper';
+
 export default function DeletePopUpForOrphanNodes({
   deleteHandler,
   loading,
@@ -105,7 +106,7 @@ export default function DeletePopUpForOrphanNodes({
           return (
             <div className='px-1'>
               <Checkbox
-                ariaLabel='row-checkbox'
+                aria-label='row-checkbox'
                 onChange={row.getToggleSelectedHandler()}
                 htmlAttributes={{ title: 'Select the Row for Deletion' }}
                 isChecked={row.getIsSelected()}

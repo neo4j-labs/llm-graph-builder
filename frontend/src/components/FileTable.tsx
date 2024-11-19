@@ -1,5 +1,4 @@
 import {
-  Checkbox,
   DataGrid,
   DataGridComponents,
   Flex,
@@ -9,6 +8,7 @@ import {
   TextLink,
   Typography,
   useCopyToClipboard,
+  Checkbox,
 } from '@neo4j-ndl/react';
 import { forwardRef, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
@@ -51,7 +51,6 @@ import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
-import IndeterminateCheckbox from './UI/CustomCheckBox';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
 let onlyfortheFirstRender = true;
@@ -124,7 +123,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   !row.getCanSelect() ||
                   row.original.status == 'Uploading' ||
                   row.original.status === 'Processing' ||
-                  row.original.status === 'Waiting'}
+                  row.original.status === 'Waiting'
+                }
                 onChange={row.getToggleSelectedHandler()}
               />
             </div>
@@ -712,8 +712,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   language: item?.language ?? '',
                   processingProgress:
                     item?.processed_chunk != undefined &&
-                      item?.total_chunks != undefined &&
-                      !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
+                    item?.total_chunks != undefined &&
+                    !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
                   accessToken: item?.accessToken ?? '',
