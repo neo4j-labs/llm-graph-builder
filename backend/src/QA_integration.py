@@ -278,7 +278,9 @@ def retrieve_documents(doc_retriever, messages):
     except Exception as e:
         error_message = f"Error retrieving documents: {str(e)}"
         logging.error(error_message)
-        raise RuntimeError(error_message)
+        docs = None
+        transformed_question = None
+
     
     return docs,transformed_question
 
@@ -660,7 +662,7 @@ def QA_RAG(graph,model, question, document_names, session_id, mode, write_access
         if document_names and not chat_mode_settings["document_filter"]:
             result =  {
                 "session_id": "",  
-                "message": "This chat mode does support document selection",
+                "message": "Please deselect all documents in the table before using this chat mode",
                 "info": {
                     "sources": [],
                     "model": "",

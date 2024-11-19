@@ -146,7 +146,6 @@ export interface ContentProps {
   setIsSchema: Dispatch<SetStateAction<boolean>>;
   showEnhancementDialog: boolean;
   toggleEnhancementDialog: () => void;
-  closeSettingModal: () => void;
 }
 
 export interface FileTableProps {
@@ -244,6 +243,7 @@ export type ChatbotProps = {
   clear?: boolean;
   isFullScreen?: boolean;
   connectionStatus: boolean;
+  isChatOnly?: boolean;
 };
 export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
 
@@ -426,17 +426,17 @@ export interface OrphanNodeResponse extends Partial<commonserverresponse> {
   data: orphanNodeProps[];
 }
 export type metricstate = {
-  faithfulness: number;
-  answer_relevancy: number;
-  error?: string;
+  [key: string]: number | string;
+} & {
+  error: string;
 };
 export type metricdetails = Record<string, metricstate>;
 
-export interface multimodelmetric {
+export type multimodelmetric = {
+  [key: string]: number | string;
+} & {
   mode: string;
-  answer_relevancy: number;
-  faithfulness: number;
-}
+};
 export interface MetricsResponse extends Omit<commonserverresponse, 'data'> {
   data: metricdetails;
 }
@@ -472,8 +472,7 @@ export interface chatInfoMessage extends Partial<Messages> {
   chunks: Chunk[];
   metricDetails:
     | {
-        faithfulness: number;
-        answer_relevancy: number;
+        [key: string]: number | string;
       }
     | undefined;
   metricError: string;
@@ -618,7 +617,7 @@ export interface SettingsModalProps {
 }
 export interface Menuitems {
   title: string | JSX.Element;
-  onClick: () => void;
+  onClick: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   disabledCondition: boolean;
   description?: string | React.ReactNode;
   isSelected?: boolean;
@@ -680,6 +679,8 @@ export interface ConnectionModalProps {
   isVectorIndexMatch: boolean;
   chunksExistsWithoutEmbedding: boolean;
   chunksExistsWithDifferentEmbedding: boolean;
+  onSuccess?: () => void;
+  isChatOnly?: boolean;
 }
 export interface ReusableDropdownProps extends DropdownProps {
   options: string[] | OptionType[];
@@ -694,9 +695,11 @@ export interface ChildRef {
   getSelectedRows: () => CustomFile[];
 }
 export interface IconProps {
-  closeChatBot: () => void;
+  isFullScreen?: boolean;
+  closeChatBot?: () => void;
   deleteOnClick?: () => void;
   messages: Messages[];
+  isChatOnly?: boolean;
 }
 export interface S3File {
   fileName: string;
@@ -715,6 +718,13 @@ export interface DrawerChatbotProps {
   clearHistoryData: boolean;
   messages: Messages[];
   connectionStatus: boolean;
+}
+
+export interface ChatOnlyProps {
+  clearHistoryData: boolean;
+  messages: Messages[];
+  connectionStatus: boolean;
+  isReadOnlyUser: boolean;
 }
 
 export interface ContextProps {

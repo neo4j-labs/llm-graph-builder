@@ -1,7 +1,7 @@
-import { Tip } from '@neo4j-ndl/react';
+import { Tooltip } from '@neo4j-ndl/react';
 import { Side } from '../../types';
 
-function TipWrapper({
+function TooltipWrapper({
   placement = 'right',
   children,
   tooltip,
@@ -11,10 +11,10 @@ function TipWrapper({
   tooltip: string;
 }) {
   return (
-    <Tip allowedPlacements={[placement]}>
-      <Tip.Trigger>{children}</Tip.Trigger>
-      <Tip.Content>{tooltip}</Tip.Content>
-    </Tip>
+    <Tooltip type='simple' placement={placement}>
+      <Tooltip.Trigger>{children}</Tooltip.Trigger>
+      <Tooltip.Content>{tooltip}</Tooltip.Content>
+    </Tooltip>
   );
 }
-export default TipWrapper;
+export default TooltipWrapper;

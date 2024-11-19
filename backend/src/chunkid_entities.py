@@ -74,8 +74,8 @@ def process_chunk_data(chunk_data):
             for chunk in record["chunks"]:
                 chunk.update(doc_properties)
                 if chunk["fileSource"] == "youtube":
-                    chunk["start_time"] = min(time_to_seconds(chunk["start_time"]),time_to_seconds(chunk["end_time"]))
-                    chunk["end_time"] = time_to_seconds(chunk["end_time"])
+                    chunk["start_time"] = min(time_to_seconds(chunk.get('start_time',0)),time_to_seconds(chunk.get("end_time",0)))
+                    chunk["end_time"] = time_to_seconds(chunk.get("end_time",0))
                 chunk_properties.append(chunk)
 
         return chunk_properties

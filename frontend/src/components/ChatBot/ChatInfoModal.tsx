@@ -3,34 +3,43 @@ import {
   Typography,
   Flex,
   Tabs,
-  CypherCodeBlock,
-  CypherCodeBlockProps,
+  Code,
   useCopyToClipboard,
   Banner,
   useMediaQuery,
   Button,
+  TextArea,
+  IconButton,
+  Accordion,
 } from '@neo4j-ndl/react';
 import { DocumentDuplicateIconOutline, ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
 import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
 import { ExtendedNode, UserCredentials, chatInfoMessage } from '../../types';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import GraphViewButton from '../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
 import { useCredentials } from '../../context/UserCredentials';
-import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { tokens } from '@neo4j-ndl/base';
 import ChunkInfo from './ChunkInfo';
 import EntitiesInfo from './EntitiesInfo';
 import SourcesInfo from './SourcesInfo';
 import CommunitiesInfo from './CommunitiesInfo';
-import { chatModeLables, chatModeReadableLables, supportedLLmsForRagas } from '../../utils/Constants';
+import {
+  chatModeLables,
+  chatModeReadableLables,
+  mergeNestedObjects,
+  supportedLLmsForRagas,
+} from '../../utils/Constants';
 import { Relationship } from '@neo4j-nvl/base';
 import { getChatMetrics } from '../../services/GetRagasMetric';
 import MetricsTab from './MetricsTab';
 import { Stack } from '@mui/material';
 import { capitalizeWithUnderscore, getNodes } from '../../utils/Utils';
 import MultiModeMetrics from './MultiModeMetrics';
+import getAdditionalMetrics from '../../services/AdditionalMetrics';
+import { withVisibility } from '../../HOC/withVisibility';
+import MetricsCheckbox from './MetricsCheckbox';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
   sources,
@@ -80,24 +89,40 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       : 3
   );
   const { userCredentials } = useCredentials();
-  const themeUtils = useContext(ThemeWrapperContext);
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
   const [showMetricsTable, setShowMetricsTable] = useState<boolean>(Boolean(metricDetails));
   const [showMultiModeMetrics, setShowMultiModeMetrics] = useState<boolean>(Boolean(multiModelMetrics.length));
   const [multiModeError, setMultiModeError] = useState<string>('');
+  const [enableReference, toggleReferenceVisibility] = useReducer((state: boolean) => !state, false);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const [expandedItemIdValue, setExpandedId] = useState<number | null>(null);
+  const [isAdditionalMetricsEnabled, setIsAdditionalMetricsEnabled] = useState<boolean | null>(
+    multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length > 3
+      ? true
+      : multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length <= 3
+      ? false
+      : null
+  );
+  const [isAdditionalMetricsWithSingleMode, setIsAdditionalMetricsWithSingleMode] = useState<boolean | null>(
+    metricDetails != undefined && Object.keys(metricDetails).length > 2
+      ? true
+      : metricDetails != undefined && Object.keys(metricDetails).length <= 2
+      ? false
+      : null
+  );
 
-  const actions: CypherCodeBlockProps['actions'] = useMemo(
+  const actions: React.ComponentProps<typeof IconButton<'button'>>[] = useMemo(
     () => [
       {
         title: 'copy',
-        'aria-label': 'copy',
+        ariaLabel: 'copy',
         children: (
           <>
             {copiedText ? (
               <ClipboardDocumentCheckIconOutline className='n-size-token-7' />
             ) : (
-              <DocumentDuplicateIconOutline className='text-palette-neutral-text-icon' />
+              <DocumentDuplicateIconOutline className='text-palette-neutral-text-icon n-size-token-7' />
             )}
           </>
         ),
@@ -183,79 +208,126 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     setActiveTab(tabId);
   };
   const loadMetrics = async () => {
-    if (activeChatmodes) {
-      if (Object.keys(activeChatmodes).length <= 1) {
-        setShowMetricsTable(true);
-        const [defaultMode] = Object.keys(activeChatmodes);
-        try {
-          toggleMetricsLoading();
-          const response = await getChatMetrics(metricquestion, [metriccontexts], [metricanswer], metricmodel, [
-            defaultMode,
-          ]);
-          toggleMetricsLoading();
-          if (response.data.status === 'Success') {
-            const data = response;
-            saveMetrics(data.data.data[defaultMode]);
-          } else {
-            throw new Error(response.data.error);
-          }
-        } catch (error) {
-          if (error instanceof Error) {
-            toggleMetricsLoading();
-            console.log('Error in getting chat metrics', error);
-            saveMetrics({ faithfulness: 0, answer_relevancy: 0, error: error.message });
+    // @ts-ignore
+    const referenceText = textAreaRef?.current?.value ?? '';
+    const metricsPromise = [];
+    if (activeChatmodes != undefined && Object.keys(activeChatmodes).length <= 1) {
+      setShowMetricsTable(true);
+      const [defaultMode] = Object.keys(activeChatmodes);
+      try {
+        toggleMetricsLoading();
+        metricsPromise.push(
+          getChatMetrics(metricquestion, [metriccontexts], [metricanswer], metricmodel, [defaultMode])
+        );
+        if (referenceText.trim() != '') {
+          metricsPromise.push(
+            getAdditionalMetrics(metricquestion, [metriccontexts], [metricanswer], referenceText, metricmodel, [
+              defaultMode,
+            ])
+          );
+        }
+        const metricsResponse = await Promise.allSettled(metricsPromise);
+        const successresponse = [];
+        for (let index = 0; index < metricsResponse.length; index++) {
+          const metricPromise = metricsResponse[index];
+          if (metricPromise.status === 'fulfilled' && metricPromise.value.data.status === 'Success') {
+            successresponse.push(metricPromise.value.data.data);
           }
         }
-      } else {
-        setShowMultiModeMetrics(true);
+        setIsAdditionalMetricsWithSingleMode(successresponse.length === 2);
         toggleMetricsLoading();
-        const contextarray = Object.values(activeChatmodes).map((r) => {
-          return r.metric_contexts;
-        });
-        const answerarray = Object.values(activeChatmodes).map((r) => {
-          return r.metric_answer;
-        });
-        const modesarray = Object.keys(activeChatmodes).map((mode) => {
-          return mode;
-        });
-        try {
-          const responses = await getChatMetrics(
-            metricquestion,
-            contextarray as string[],
-            answerarray as string[],
-            metricmodel,
-            modesarray
-          );
-          toggleMetricsLoading();
-          if (responses.data.status === 'Success') {
-            const modewisedata = responses.data.data;
-            const metricsdata = Object.entries(modewisedata).map(([mode, scores]) => {
-              return { mode, answer_relevancy: scores.answer_relevancy, faithfulness: scores.faithfulness };
-            });
-            saveMultimodemetrics(metricsdata);
+        const mergedState = successresponse.reduce((acc, cur) => {
+          if (acc[defaultMode]) {
+            acc[defaultMode] = { ...acc[defaultMode], ...cur[defaultMode] };
           } else {
-            throw new Error(responses.data.error);
+            acc[defaultMode] = cur[defaultMode];
           }
-        } catch (error) {
+          return acc;
+        }, {});
+        saveMetrics(mergedState[defaultMode]);
+      } catch (error) {
+        if (error instanceof Error) {
+          setShowMetricsTable(false);
           toggleMetricsLoading();
           console.log('Error in getting chat metrics', error);
-          if (error instanceof Error) {
-            setMultiModeError(error.message);
+          saveMetrics({ faithfulness: 0, answer_relevancy: 0, error: error.message });
+        }
+      }
+    } else if (activeChatmodes != undefined) {
+      setShowMultiModeMetrics(true);
+      toggleMetricsLoading();
+      const values = Object.values(activeChatmodes);
+      const keys = Object.keys(activeChatmodes);
+      const contextarray = values.map((r) => {
+        return r.metric_contexts;
+      });
+      const answerarray = values.map((r) => {
+        return r.metric_answer;
+      });
+      const modesarray = keys.map((mode) => {
+        return mode;
+      });
+      try {
+        metricsPromise.push(
+          getChatMetrics(metricquestion, contextarray as string[], answerarray as string[], metricmodel, modesarray)
+        );
+        if (referenceText.trim() != '') {
+          metricsPromise.push(
+            getAdditionalMetrics(
+              metricquestion,
+              contextarray as string[],
+              answerarray as string[],
+              referenceText,
+              metricmodel,
+              modesarray
+            )
+          );
+        }
+        const metricsResponse = await Promise.allSettled(metricsPromise);
+        toggleMetricsLoading();
+        const successResponse = [];
+        for (let index = 0; index < metricsResponse.length; index++) {
+          const metricPromise = metricsResponse[index];
+          if (metricPromise.status === 'fulfilled' && metricPromise.value.data.status === 'Success') {
+            successResponse.push(metricPromise.value.data.data);
           }
+        }
+        setIsAdditionalMetricsEnabled(successResponse.length === 2);
+        const metricsdata = Object.entries(mergeNestedObjects(successResponse)).map(([mode, scores]) => {
+          return { mode, ...scores };
+        });
+        saveMultimodemetrics(metricsdata);
+      } catch (error) {
+        setShowMultiModeMetrics(false);
+        toggleMetricsLoading();
+        console.log('Error in getting chat metrics', error);
+        if (error instanceof Error) {
+          setMultiModeError(error.message);
         }
       }
     }
   };
-
+  const MetricsCheckBoxWithCheck = withVisibility(MetricsCheckbox);
+  const TextareaWithCheck = withVisibility(() => (
+    <TextArea ref={textAreaRef} isFluid={true} size='large' isOptional={true} label='Reference'></TextArea>
+  ));
+  const isMultiModes = useMemo(
+    () => activeChatmodes != null && Object.keys(activeChatmodes).length > 1,
+    [activeChatmodes]
+  );
+  const isSingleMode = useMemo(
+    () => activeChatmodes != null && Object.keys(activeChatmodes).length <= 1,
+    [activeChatmodes]
+  );
   return (
-    <Box className='n-bg-palette-neutral-bg-weak p-4'>
-      <Box className='flex flex-row pb-6 items-center mb-2'>
+    <div className='n-bg-palette-neutral-bg-weak p-4'>
+      <div className='flex flex-row pb-6 items-center mb-2'>
         <img
           src={Neo4jRetrievalLogo}
           style={{ width: isTablet ? 80 : 95, height: isTablet ? 80 : 95, marginRight: 10 }}
           loading='lazy'
         />
-        <Box className='flex flex-col'>
+        <div className='flex flex-col'>
           <Typography variant='h2'>Retrieval information</Typography>
           <Typography variant='body-medium' className='mb-2'>
             To generate this response, the process took <span className='font-bold'>{response_time} seconds,</span>
@@ -268,10 +340,12 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             </span>{' '}
             mode.
           </Typography>
-        </Box>
-      </Box>
+        </div>
+      </div>
       {error?.length > 0 ? (
-        <Banner type='danger'>{error}</Banner>
+        <Banner type='danger' usage='inline'>
+          {error}
+        </Banner>
       ) : (
         <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
           {mode === chatModeLables['global search+vector+fulltext'] ? (
@@ -308,7 +382,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           <SourcesInfo loading={infoLoading} sources={sources} mode={mode} chunks={chunks} />
         </Tabs.TabPanel>
         <Tabs.TabPanel tabId={8} value={activeTab}>
-          <Stack spacing={2}>
+          <Stack spacing={2} className='max-h-96 overflow-y-auto'>
             <Stack spacing={2}>
               {!supportedLLmsForRagas.includes(metricmodel) && (
                 <Banner
@@ -325,6 +399,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                       .
                     </Typography>
                   }
+                  usage='inline'
                 ></Banner>
               )}
               <Box>
@@ -335,41 +410,88 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                   about <span className='font-bold'>20 seconds</span> . You'll see detailed scores shortly.
                 </Typography>
               </Box>
-              <Stack>
-                <Typography variant='body-large'>
-                  <span className='font-bold'>Faithfulness</span>: Determines How accurately the answer reflects the
-                  provided information
-                </Typography>
-                <Typography variant='body-large'>
-                  <span className='font-bold'>Answer Relevancy</span>: Determines How well the answer addresses the
-                  user's question.
-                </Typography>
-              </Stack>
+              <div className='flex flex-col items-start justify-center gap-4'>
+                <Accordion
+                  isMultiple={false}
+                  expandedItemId={expandedItemIdValue}
+                  onChange={(e) => {
+                    setExpandedId(e);
+                  }}
+                >
+                  <Accordion.Item itemId={0} title='Faithfulness' arrowPosition='right'>
+                    Determines How accurately the answer reflects the provided information.
+                  </Accordion.Item>
+                  <Accordion.Item itemId={1} title='Answer Relevancy' arrowPosition='right'>
+                    Determines How well the answer addresses the user's question.
+                  </Accordion.Item>
+                  {(isAdditionalMetricsWithSingleMode || isAdditionalMetricsEnabled) && (
+                    <>
+                      <Accordion.Item itemId={2} title='Rouge Score' arrowPosition='right'>
+                        Determines How much the generated answer matches the reference answer, word-for-word
+                      </Accordion.Item>
+                      <Accordion.Item itemId={3} title='Semantic Score' arrowPosition='right'>
+                        Determines How well the generated answer understands the meaning of the reference answer.
+                      </Accordion.Item>
+                      <Accordion.Item itemId={4} title='Context Entity Recall Score' arrowPosition='right'>
+                        Determines Measures the recall of entities present in both reference and retrieved contexts
+                        relative to the reference.
+                      </Accordion.Item>
+                    </>
+                  )}
+                </Accordion>
+              </div>
             </Stack>
-            {showMultiModeMetrics && activeChatmodes != null && Object.keys(activeChatmodes).length > 1 && (
+            {showMultiModeMetrics && isMultiModes && (
               <MultiModeMetrics
                 error={multiModeError}
                 metricsLoading={metricsLoading}
                 data={multiModelMetrics}
+                isWithAdditionalMetrics={isAdditionalMetricsEnabled}
               ></MultiModeMetrics>
             )}
-            {showMetricsTable && activeChatmodes != null && Object.keys(activeChatmodes).length <= 1 && (
+            {showMetricsTable && isSingleMode && (
               <MetricsTab metricsLoading={metricsLoading} error={metricError} metricDetails={metricDetails} />
             )}
-            {!metricDetails && activeChatmodes != undefined && Object.keys(activeChatmodes).length <= 1 && (
+            <MetricsCheckBoxWithCheck
+              enableReference={enableReference}
+              toggleReferenceVisibility={toggleReferenceVisibility}
+              isVisible={
+                isSingleMode &&
+                (isAdditionalMetricsWithSingleMode === false || isAdditionalMetricsWithSingleMode === null)
+              }
+            />
+            <MetricsCheckBoxWithCheck
+              enableReference={enableReference}
+              toggleReferenceVisibility={toggleReferenceVisibility}
+              isVisible={isMultiModes && (isAdditionalMetricsEnabled === false || isAdditionalMetricsEnabled === null)}
+            />
+            <TextareaWithCheck
+              isVisible={
+                enableReference &&
+                isSingleMode &&
+                (isAdditionalMetricsWithSingleMode === false || isAdditionalMetricsWithSingleMode === null)
+              }
+            />
+            <TextareaWithCheck
+              isVisible={
+                enableReference &&
+                isMultiModes &&
+                (isAdditionalMetricsEnabled === false || isAdditionalMetricsEnabled === null)
+              }
+            />
+            {isSingleMode &&
+              (isAdditionalMetricsWithSingleMode === false || isAdditionalMetricsWithSingleMode === null) && (
+                <Button
+                  isDisabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
+                  className='w-max self-center mt-4'
+                  onClick={loadMetrics}
+                >
+                  View Detailed Metrics
+                </Button>
+              )}
+            {isMultiModes && (isAdditionalMetricsEnabled === false || isAdditionalMetricsEnabled === null) && (
               <Button
-                label='Metrics Action Button'
-                disabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
-                className='w-max self-center mt-4'
-                onClick={loadMetrics}
-              >
-                View Detailed Metrics
-              </Button>
-            )}
-            {!multiModelMetrics.length && activeChatmodes != undefined && Object.keys(activeChatmodes).length > 1 && (
-              <Button
-                label='Metrics Action Button'
-                disabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
+                isDisabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
                 className='w-max self-center mt-4'
                 onClick={loadMetrics}
               >
@@ -390,12 +512,13 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           <ChunkInfo chunks={chunks} loading={infoLoading} mode={mode} />
         </Tabs.TabPanel>
         <Tabs.TabPanel value={activeTab} tabId={6}>
-          <CypherCodeBlock
+          <Code
             code={cypher_query as string}
             actions={actions}
             headerTitle=''
-            theme={themeUtils.colorMode}
+            theme={'vs'}
             className='min-h-40'
+            language='cypher'
           />
         </Tabs.TabPanel>
         {mode === chatModeLables['entity search+vector'] || mode === chatModeLables['global search+vector+fulltext'] ? (
@@ -407,18 +530,18 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         )}
       </Flex>
       {activeTab == 4 && nodes?.length && relationships?.length && mode !== chatModeLables.graph ? (
-        <Box className='button-container flex mt-2 justify-center'>
+        <div className='button-container flex mt-2 justify-center'>
           <GraphViewButton
             nodeValues={nodes}
             relationshipValues={relationships}
             label='Graph Entities used for Answer Generation'
             viewType='chatInfoView'
           />
-        </Box>
+        </div>
       ) : (
         <></>
       )}
-    </Box>
+    </div>
   );
 };
 export default ChatInfoModal;

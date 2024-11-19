@@ -1,5 +1,5 @@
 import { Checkbox, DataGrid, DataGridComponents, Flex, TextLink, Typography, useMediaQuery } from '@neo4j-ndl/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { UserCredentials, orphanNodeProps } from '../../../../types';
 import { getOrphanNodes } from '../../../../services/GetOrphanNodes';
 import { useCredentials } from '../../../../context/UserCredentials';
@@ -21,6 +21,8 @@ import DeletePopUp from '../../DeletePopUp/DeletePopUp';
 import { tokens } from '@neo4j-ndl/base';
 import GraphViewModal from '../../../Graph/GraphViewModal';
 import { handleGraphNodeClick } from '../../../ChatBot/chatInfo';
+import { ThemeWrapperContext } from '../../../../context/ThemeWrapper';
+
 export default function DeletePopUpForOrphanNodes({
   deleteHandler,
   loading,
@@ -41,6 +43,7 @@ export default function DeletePopUpForOrphanNodes({
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
+  const { colorMode } = useContext(ThemeWrapperContext);
 
   const fetchOrphanNodes = useCallback(async () => {
     try {
@@ -62,9 +65,11 @@ export default function DeletePopUpForOrphanNodes({
   }, [userCredentials]);
 
   useEffect(() => {
-    (async () => {
-      await fetchOrphanNodes();
-    })();
+    if (userCredentials != null) {
+      (async () => {
+        await fetchOrphanNodes();
+      })();
+    }
     return () => {
       setOrphanNodes([]);
       setTotalOrphanNodes(0);
@@ -91,8 +96,8 @@ export default function DeletePopUpForOrphanNodes({
         header: ({ table }: { table: Table<orphanNodeProps> }) => {
           return (
             <Checkbox
-              aria-label='header-checkbox'
-              checked={table.getIsAllRowsSelected()}
+              ariaLabel='header-checkbox'
+              isChecked={table.getIsAllRowsSelected()}
               onChange={table.getToggleAllRowsSelectedHandler()}
             />
           );
@@ -103,8 +108,8 @@ export default function DeletePopUpForOrphanNodes({
               <Checkbox
                 aria-label='row-checkbox'
                 onChange={row.getToggleSelectedHandler()}
-                title='Select the Row for Deletion'
-                checked={row.getIsSelected()}
+                htmlAttributes={{ title: 'Select the Row for Deletion' }}
+                isChecked={row.getIsSelected()}
               />
             </div>
           );
@@ -118,8 +123,10 @@ export default function DeletePopUpForOrphanNodes({
             <div className='textellipsis'>
               <TextLink
                 className='!cursor-pointer'
-                onClick={() => handleOrphanNodeClick(info.row.id, 'chatInfoView')}
-                title={info.getValue()}
+                htmlAttributes={{
+                  onClick: () => handleOrphanNodeClick(info.row.id, 'chatInfoView'),
+                  title: info.getValue(),
+                }}
               >
                 {info.getValue()}
               </TextLink>
@@ -254,7 +261,7 @@ export default function DeletePopUpForOrphanNodes({
           tableInstance={table}
           styling={{
             borderStyle: 'all-sides',
-            zebraStriping: true,
+            hasZebraStriping: true,
             headerStyle: 'clean',
           }}
           rootProps={{
@@ -262,7 +269,13 @@ export default function DeletePopUpForOrphanNodes({
           }}
           isLoading={isLoading}
           components={{
-            Body: (props) => <DataGridComponents.Body {...props} />,
+            Body: () => (
+              <DataGridComponents.Body
+                innerProps={{
+                  className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
+                }}
+              />
+            ),
             PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
               return (
                 <DataGridComponents.PaginationNumericButton
@@ -281,6 +294,7 @@ export default function DeletePopUpForOrphanNodes({
               );
             },
           }}
+          isKeyboardNavigable={false}
         />
         <Flex className='mt-3' flexDirection='row' justifyContent='flex-end'>
           <ButtonWithToolTip

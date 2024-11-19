@@ -60,7 +60,6 @@ const Content: React.FC<ContentProps> = ({
   setIsSchema,
   showEnhancementDialog,
   toggleEnhancementDialog,
-  closeSettingModal,
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
@@ -105,7 +104,6 @@ const Content: React.FC<ContentProps> = ({
     filesData,
     setFilesData,
     setModel,
-    model,
     selectedNodes,
     selectedRels,
     setSelectedNodes,
@@ -117,6 +115,7 @@ const Content: React.FC<ContentProps> = ({
     setProcessedCount,
     setchatModes,
   } = useFileContext();
+
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'|'neighborView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
@@ -133,11 +132,13 @@ const Content: React.FC<ContentProps> = ({
     }
   );
   const childRef = useRef<ChildRef>(null);
-  const incrementPage = () => {
+  const incrementPage = async () => {
     setCurrentPage((prev) => prev + 1);
+    await getChunks(documentName, currentPage + 1);
   };
-  const decrementPage = () => {
+  const decrementPage = async () => {
     setCurrentPage((prev) => prev - 1);
+    await getChunks(documentName, currentPage - 1);
   };
   useEffect(() => {
     if (!init && !searchParams.has('connectURL')) {
@@ -172,17 +173,6 @@ const Content: React.FC<ContentProps> = ({
       })();
     }
   }, [currentPage, documentName]);
-  useEffect(() => {
-    setFilesData((prevfiles) => {
-      return prevfiles.map((curfile) => {
-        return {
-          ...curfile,
-          model: curfile.status === 'New' || curfile.status === 'Reprocess' ? model : curfile.model,
-        };
-      });
-    });
-  }, [model]);
-
   useEffect(() => {
     if (afterFirstRender) {
       localStorage.setItem('processedCount', JSON.stringify({ db: userCredentials?.uri, count: processedCount }));
@@ -272,6 +262,15 @@ const Content: React.FC<ContentProps> = ({
     if (selectedOption?.value) {
       setModel(selectedOption?.value);
     }
+    setFilesData((prevfiles) => {
+      return prevfiles.map((curfile) => {
+        return {
+          ...curfile,
+          model:
+            curfile.status === 'New' || curfile.status === 'Reprocess' ? selectedOption?.value ?? '' : curfile.model,
+        };
+      });
+    });
   };
   const getChunks = async (name: string, pageNo: number) => {
     toggleChunksLoading();
@@ -814,11 +813,7 @@ const Content: React.FC<ContentProps> = ({
         ></ChunkPopUp>
       )}
       {showEnhancementDialog && (
-        <GraphEnhancementDialog
-          open={showEnhancementDialog}
-          onClose={toggleEnhancementDialog}
-          closeSettingModal={closeSettingModal}
-        ></GraphEnhancementDialog>
+        <GraphEnhancementDialog open={showEnhancementDialog} onClose={toggleEnhancementDialog}></GraphEnhancementDialog>
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row' flexWrap='wrap'>
@@ -840,24 +835,28 @@ const Content: React.FC<ContentProps> = ({
                 isGdsActive={isGdsActive}
                 uri={userCredentials && userCredentials?.uri}
               />
-              <div className='pt-1'>
-                {!isSchema ? (
-                  <StatusIndicator type='danger' />
-                ) : selectedNodes.length || selectedRels.length ? (
-                  <StatusIndicator type='success' />
-                ) : (
-                  <StatusIndicator type='warning' />
-                )}
-                {isSchema ? (
-                  <span className='n-body-small'>
-                    {(!selectedNodes.length || !selectedNodes.length) && 'Empty'} Graph Schema configured
-                    {selectedNodes.length || selectedRels.length
-                      ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)`
-                      : ''}
-                  </span>
-                ) : (
-                  <span className='n-body-small'>No Graph Schema configured</span>
-                )}
+              <div className='pt-1 flex gap-1 items-center'>
+                <div>
+                  {!isSchema ? (
+                    <StatusIndicator type='danger' />
+                  ) : selectedNodes.length || selectedRels.length ? (
+                    <StatusIndicator type='success' />
+                  ) : (
+                    <StatusIndicator type='warning' />
+                  )}
+                </div>
+                <div>
+                  {isSchema ? (
+                    <span className='n-body-small'>
+                      {(!selectedNodes.length || !selectedNodes.length) && 'Empty'} Graph Schema configured
+                      {selectedNodes.length || selectedRels.length
+                        ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)`
+                        : ''}
+                    </span>
+                  ) : (
+                    <span className='n-body-small'>No Graph Schema configured</span>
+                  )}
+                </div>
               </div>
             </Typography>
           </div>
@@ -909,7 +908,7 @@ const Content: React.FC<ContentProps> = ({
                 setTotalPageCount(null);
               }
               setCurrentPage(1);
-              // await getChunks(name, 1);
+              await getChunks(name, 1);
             }
           }}
           ref={childRef}
