@@ -178,45 +178,49 @@ NODEREL_COUNT_QUERY_WITH_COMMUNITY = """
 MATCH docs = (d:Document)
 WHERE d.fileName IS NOT NULL
 CALL (d) {
-   // Match PART_OF and HAS_ENTITY relationships on Chunks
-   OPTIONAL MATCH (d)<-[po:PART_OF]-(c:Chunk)
-   OPTIONAL MATCH (c)-[he:HAS_ENTITY]->(e:__Entity__)
-   WITH d, count(distinct c) AS chunkNodeCount, count(distinct po) AS chunkRelCount,
-        count(distinct he) AS chunkEntityRelCount, count(distinct e) AS entityNodeCount,
-        collect(distinct e) AS entities
-   // Calculate entity-to-entity relationships
-   CALL (entities) {
-       UNWIND entities AS e
-       RETURN sum(COUNT { (e)-->(e2:__Entity__) WHERE e2 in entities }) AS entityEntityRelCount
-   }
-   // Step 1: Match IN_COMMUNITY relationships and collect base communities
-   CALL (entities) {
-       UNWIND entities AS e
-       OPTIONAL MATCH (e)-[ic:IN_COMMUNITY]->(comm:__Community__)
-       WITH collect(distinct comm) AS base_communities, collect(distinct ic) AS inCommunityRels
-       // Step 2: Find first-level parents and relationships
-       UNWIND base_communities AS base_comm
-       OPTIONAL MATCH (base_comm)-[pc1:PARENT_COMMUNITY]->(first_level:__Community__)
-       WITH base_communities, inCommunityRels, collect(distinct first_level) AS first_level_parents,
-            collect(distinct pc1) AS parentCommunityRels1
-       // Step 3: Find second-level parents and relationships
-       UNWIND first_level_parents AS first_level
-       OPTIONAL MATCH (first_level)-[pc2:PARENT_COMMUNITY]->(second_level:__Community__)
-       WITH base_communities, inCommunityRels, first_level_parents, parentCommunityRels1,
-            collect(distinct second_level) AS second_level_parents, collect(distinct pc2) AS parentCommunityRels2
-       // Step 4: Find third-level parents and relationships
-       UNWIND second_level_parents AS second_level
-       OPTIONAL MATCH (second_level)-[pc3:PARENT_COMMUNITY]->(third_level:__Community__)
-       WITH base_communities, inCommunityRels, first_level_parents, second_level_parents, parentCommunityRels1, parentCommunityRels2,
-            collect(distinct third_level) AS third_level_parents, collect(distinct pc3) AS parentCommunityRels3
-       // Aggregate all communities and relationships
-       WITH
-           base_communities + coalesce(first_level_parents, []) + coalesce(second_level_parents, []) + coalesce(third_level_parents, []) AS all_communities,
-           inCommunityRels + coalesce(parentCommunityRels1, []) + coalesce(parentCommunityRels2, []) + coalesce(parentCommunityRels3, []) AS all_rels
-       RETURN size(all_communities) AS communityNodeCount, size(all_rels) AS communityRelCount
-   }
-   RETURN d.fileName AS filename, chunkNodeCount, chunkRelCount + chunkEntityRelCount AS chunkRelCount,
-          entityNodeCount, entityEntityRelCount, communityNodeCount, communityRelCount
+  OPTIONAL MATCH (d)<-[po:PART_OF]-(c:Chunk)
+  OPTIONAL MATCH (c)-[he:HAS_ENTITY]->(e:__Entity__)
+  OPTIONAL MATCH (c)-[sim:SIMILAR]->(c2:Chunk)
+  OPTIONAL MATCH (c)-[nc:NEXT_CHUNK]->(c3:Chunk)
+  WITH d, count(distinct c) AS chunkNodeCount,
+       count(distinct po) AS partOfRelCount,
+       count(distinct he) AS hasEntityRelCount,
+       count(distinct sim) AS similarRelCount,
+       count(distinct nc) AS nextChunkRelCount,
+       count(distinct e) AS entityNodeCount,
+       collect(distinct e) AS entities
+  CALL (entities) {
+      UNWIND entities AS e
+      RETURN sum(COUNT { (e)-->(e2:__Entity__) WHERE e2 in entities }) AS entityEntityRelCount
+  }
+  CALL (entities) {
+      UNWIND entities AS e
+      OPTIONAL MATCH (e)-[ic:IN_COMMUNITY]->(comm:__Community__)
+      WITH collect(distinct comm) AS base_communities, collect(distinct ic) AS inCommunityRels
+      // Step 2: Find first-level parents and relationships
+      UNWIND base_communities AS base_comm
+      OPTIONAL MATCH (base_comm)-[pc1:PARENT_COMMUNITY]->(first_level:__Community__)
+      WITH base_communities, inCommunityRels, collect(distinct first_level) AS first_level_parents,
+           collect(distinct pc1) AS parentCommunityRels1
+      // Step 3: Find second-level parents and relationships
+      UNWIND first_level_parents AS first_level
+      OPTIONAL MATCH (first_level)-[pc2:PARENT_COMMUNITY]->(second_level:__Community__)
+      WITH base_communities, inCommunityRels, first_level_parents, parentCommunityRels1,
+           collect(distinct second_level) AS second_level_parents, collect(distinct pc2) AS parentCommunityRels2
+      // Step 4: Find third-level parents and relationships
+      UNWIND second_level_parents AS second_level
+      OPTIONAL MATCH (second_level)-[pc3:PARENT_COMMUNITY]->(third_level:__Community__)
+      WITH base_communities, inCommunityRels, first_level_parents, second_level_parents, parentCommunityRels1, parentCommunityRels2,
+           collect(distinct third_level) AS third_level_parents, collect(distinct pc3) AS parentCommunityRels3
+      // Aggregate all communities and relationships
+      WITH
+          base_communities + coalesce(first_level_parents, []) + coalesce(second_level_parents, []) + coalesce(third_level_parents, []) AS all_communities,
+          inCommunityRels + coalesce(parentCommunityRels1, []) + coalesce(parentCommunityRels2, []) + coalesce(parentCommunityRels3, []) AS all_rels
+      RETURN size(all_communities) AS communityNodeCount, size(all_rels) AS communityRelCount
+  }
+  RETURN d.fileName AS filename, chunkNodeCount,
+         partOfRelCount + hasEntityRelCount + similarRelCount + nextChunkRelCount AS chunkRelCount,
+         entityNodeCount, entityEntityRelCount, communityNodeCount, communityRelCount
 }
 RETURN filename, chunkNodeCount, chunkRelCount, entityNodeCount, entityEntityRelCount, communityNodeCount, communityRelCount
 ORDER BY d.createdAt DESC
@@ -225,19 +229,24 @@ NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY = """
 MATCH docs = (d:Document)
 WHERE d.fileName = $document_name
 CALL (d) {
-   // Match PART_OF and HAS_ENTITY relationships on Chunks
-   OPTIONAL MATCH (d)<-[po:PART_OF]-(c:Chunk)
-   OPTIONAL MATCH (c)-[he:HAS_ENTITY]->(e:__Entity__)
-   WITH d, count(distinct c) AS chunkNodeCount, count(distinct po) AS chunkRelCount,
-        count(distinct he) AS chunkEntityRelCount, count(distinct e) AS entityNodeCount,
-        collect(distinct e) AS entities
-   // Calculate entity-to-entity relationships
-   CALL (entities) {
-       UNWIND entities AS e
-       RETURN sum(COUNT { (e)-->(e2:__Entity__) WHERE e2 in entities }) AS entityEntityRelCount
-   }
-   RETURN d.fileName AS filename, chunkNodeCount, chunkRelCount + chunkEntityRelCount AS chunkRelCount,
-          entityNodeCount, entityEntityRelCount
+  OPTIONAL MATCH (d)<-[po:PART_OF]-(c:Chunk)
+  OPTIONAL MATCH (c)-[he:HAS_ENTITY]->(e:__Entity__)
+  OPTIONAL MATCH (c)-[sim:SIMILAR]->(c2:Chunk)
+  OPTIONAL MATCH (c)-[nc:NEXT_CHUNK]->(c3:Chunk)
+  WITH d, count(distinct c) AS chunkNodeCount,
+       count(distinct po) AS partOfRelCount,
+       count(distinct he) AS hasEntityRelCount,
+       count(distinct sim) AS similarRelCount,
+       count(distinct nc) AS nextChunkRelCount,
+       count(distinct e) AS entityNodeCount,
+       collect(distinct e) AS entities
+  CALL (entities) {
+      UNWIND entities AS e
+      RETURN sum(COUNT { (e)-->(e2:__Entity__) WHERE e2 in entities }) AS entityEntityRelCount
+  }
+  RETURN d.fileName AS filename, chunkNodeCount,
+         partOfRelCount + hasEntityRelCount + similarRelCount + nextChunkRelCount AS chunkRelCount,
+         entityNodeCount, entityEntityRelCount
 }
 RETURN filename, chunkNodeCount, chunkRelCount, entityNodeCount, entityEntityRelCount
 ORDER BY d.createdAt DESC
