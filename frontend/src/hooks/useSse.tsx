@@ -25,7 +25,7 @@ export default function useServerSideEvent(
       communityNodeCount,
       chunkRelCount,
       entityEntityRelCount,
-      communityRelCount
+      communityRelCount,
     } = eventSourceRes;
     const alertShownStatus = JSON.parse(localStorage.getItem('alertShown') || 'null');
 
@@ -47,9 +47,9 @@ export default function useServerSideEvent(
                   chunkNodeCount: chunkNodeCount ?? 0,
                   entityNodeCount: entityNodeCount ?? 0,
                   communityNodeCount: communityNodeCount ?? 0,
-                  chunkRelCount:chunkRelCount??0,
-                  entityEntityRelCount:entityEntityRelCount??0,
-                  communityRelCount:communityRelCount??0,
+                  chunkRelCount: chunkRelCount ?? 0,
+                  entityEntityRelCount: entityEntityRelCount ?? 0,
+                  communityRelCount: communityRelCount ?? 0,
                   nodesCount: nodeCount,
                   relationshipsCount: relationshipCount,
                   model: model,
@@ -76,9 +76,9 @@ export default function useServerSideEvent(
               chunkNodeCount: chunkNodeCount ?? 0,
               entityNodeCount: entityNodeCount ?? 0,
               communityNodeCount: communityNodeCount ?? 0,
-              chunkRelCount:chunkRelCount??0,
-              entityEntityRelCount:entityEntityRelCount??0,
-              communityRelCount:communityRelCount??0,
+              chunkRelCount: chunkRelCount ?? 0,
+              entityEntityRelCount: entityEntityRelCount ?? 0,
+              communityRelCount: communityRelCount ?? 0,
             };
           }
           return curfile;

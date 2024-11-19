@@ -52,7 +52,7 @@ const ChatContent: React.FC<chatProp> = ({ chatMessages }) => {
     setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
     const urlParams = new URLSearchParams(window.location.search);
     urlParams.delete('openModal');
-    window.history.replaceState({}, document.title, `${window.location.pathname  }?${  urlParams.toString()}`);
+    window.history.replaceState({}, document.title, `${window.location.pathname}?${urlParams.toString()}`);
   };
   const deleteOnClick = async () => {
     try {

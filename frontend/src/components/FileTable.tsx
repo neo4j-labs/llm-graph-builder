@@ -915,7 +915,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       communityNodeCount,
       chunkRelCount,
       entityEntityRelCount,
-      communityRelCount
+      communityRelCount,
     } = file_name;
     if (fileName && total_chunks) {
       setFilesData((prevfiles) =>
@@ -932,9 +932,9 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               chunkNodeCount: chunkNodeCount ?? 0,
               entityNodeCount: entityNodeCount ?? 0,
               communityNodeCount: communityNodeCount ?? 0,
-              chunkRelCount:chunkRelCount??0,
-              entityEntityRelCount:entityEntityRelCount??0,
-              communityRelCount:communityRelCount??0,
+              chunkRelCount: chunkRelCount ?? 0,
+              entityEntityRelCount: entityEntityRelCount ?? 0,
+              communityRelCount: communityRelCount ?? 0,
             };
           }
           return curfile;
@@ -964,7 +964,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       communityNodeCount,
       chunkRelCount,
       entityEntityRelCount,
-      communityRelCount
+      communityRelCount,
     } = file_name;
     if (fileName && total_chunks) {
       setFilesData((prevfiles) =>
@@ -979,9 +979,9 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               chunkNodeCount: chunkNodeCount ?? 0,
               entityNodeCount: entityNodeCount ?? 0,
               communityNodeCount: communityNodeCount ?? 0,
-              chunkRelCount:chunkRelCount??0,
-              entityEntityRelCount:entityEntityRelCount??0,
-              communityRelCount:communityRelCount??0,
+              chunkRelCount: chunkRelCount ?? 0,
+              entityEntityRelCount: entityEntityRelCount ?? 0,
+              communityRelCount: communityRelCount ?? 0,
             };
           }
           return curfile;

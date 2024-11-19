@@ -48,10 +48,10 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
     let session = localStorage.getItem('neo4j.connection');
     if (session) {
       const neo4jConnection = JSON.parse(session);
-      const {uri} = neo4jConnection;
+      const { uri } = neo4jConnection;
       const userName = neo4jConnection.user;
-      const {password} = neo4jConnection;
-      const {database} = neo4jConnection;
+      const { password } = neo4jConnection;
+      const { database } = neo4jConnection;
       const port = uri.split(':')[2];
       const encodedPassword = btoa(password);
       const chatUrl = `/chat-only?uri=${encodeURIComponent(
