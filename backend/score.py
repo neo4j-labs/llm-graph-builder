@@ -243,6 +243,7 @@ async def extract_knowledge_graph_from_file(
             graph = create_graph_database_connection(uri, userName, password, database)   
             graphDb_data_Access = graphDBdataAccess(graph)
             count_response = graphDb_data_Access.update_node_relationship_count()
+            logging.info("Nodes and Relationship Counts updated")
             if count_response :
                 result['chunkNodeCount'] = count_response[file_name].get('chunkNodeCount',"0")
                 result['chunkRelCount'] =  count_response[file_name].get('chunkRelCount',"0")
@@ -317,7 +318,8 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
         logger.log_struct(payload_json_obj, "INFO")
         graph = create_graph_database_connection(uri, userName, password, database)
         tasks = set(map(str.strip, json.loads(tasks)))
-        
+        start = time.time()
+
         if "materialize_text_chunk_similarities" in tasks:
             await asyncio.to_thread(update_graph, graph)
             json_obj = {'api_name': 'post_processing/update_similarity_graph', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
@@ -334,14 +336,17 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             logging.info(f'Entity Embeddings created')
             
         if "enable_communities" in tasks:
+            api_name = 'create_communities'
             await asyncio.to_thread(create_communities, uri, userName, password, database)
-            json_obj = {'api_name': 'post_processing/create_communities', 'db_url': uri, 'logging_time': formatted_time(datetime.now(timezone.utc))}
             logging.info(f'created communities')
             graph = create_graph_database_connection(uri, userName, password, database)   
             graphDb_data_Access = graphDBdataAccess(graph)
             count_response = graphDb_data_Access.update_node_relationship_count()
             logging.info(f'Updated source node with community related counts')
-
+        
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name': api_name, 'db_url': uri, 'userName':userName, 'database':database, 'tasks':tasks, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj)
         return create_api_response('Success', message='All tasks completed successfully')
     
