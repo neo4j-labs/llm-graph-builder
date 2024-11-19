@@ -874,8 +874,6 @@ async def calculate_additional_metrics(question: str = Form(),
    finally:
        gc.collect()
 
-
-
 @app.post("/fetch_chunktext")
 async def fetch_chunktext(
    uri: str = Form(),
@@ -886,6 +884,7 @@ async def fetch_chunktext(
    page_no: int = Form(1)
 ):
    try:
+
        start = time.time()
        result = await asyncio.to_thread(
            get_chunktext_results,
