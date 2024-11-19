@@ -1,5 +1,4 @@
 import {
-  Checkbox,
   DataGrid,
   DataGridComponents,
   Flex,
@@ -10,6 +9,7 @@ import {
   TextLink,
   Typography,
   useCopyToClipboard,
+  Checkbox,
 } from '@neo4j-ndl/react';
 import { forwardRef, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
@@ -53,7 +53,6 @@ import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
-import IndeterminateCheckbox from './UI/CustomCheckBox';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
 
@@ -121,17 +120,15 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         cell: ({ row }: { row: Row<CustomFile> }) => {
           return (
             <div className='px-1'>
-              <IndeterminateCheckbox
-                {...{
-                  checked: row.getIsSelected(),
-                  disabled:
-                    !row.getCanSelect() ||
-                    row.original.status == 'Uploading' ||
-                    row.original.status === 'Processing' ||
-                    row.original.status === 'Waiting',
-                  indeterminate: row.getIsSomeSelected(),
-                  onChange: row.getToggleSelectedHandler(),
-                }}
+              <Checkbox
+                isChecked={row.getIsSelected()}
+                isDisabled={
+                  !row.getCanSelect() ||
+                  row.original.status == 'Uploading' ||
+                  row.original.status === 'Processing' ||
+                  row.original.status === 'Waiting'
+                }
+                onChange={row.getToggleSelectedHandler()}
               />
             </div>
           );

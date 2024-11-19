@@ -115,12 +115,12 @@ const Content: React.FC<ContentProps> = ({
     setProcessedCount,
     setchatModes,
   } = useFileContext();
-  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>(
-    'tableView'
-  );
+
+  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'|'neighborView'>('tableView');
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
+
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
@@ -166,7 +166,13 @@ const Content: React.FC<ContentProps> = ({
       setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
     }
   }, []);
-
+  useEffect(() => {
+    if (currentPage >= 1) {
+      (async () => {
+        await getChunks(documentName, currentPage);
+      })();
+    }
+  }, [currentPage, documentName]);
   useEffect(() => {
     if (afterFirstRender) {
       localStorage.setItem('processedCount', JSON.stringify({ db: userCredentials?.uri, count: processedCount }));

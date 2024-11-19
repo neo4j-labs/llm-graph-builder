@@ -8,7 +8,7 @@ import { useEffect } from 'react';
 const DrawerChatbot: React.FC<DrawerChatbotProps> = ({ isExpanded, clearHistoryData, messages, connectionStatus }) => {
   const { setMessages } = useMessageContext();
   const location = useLocation();
-  console.log('location', location.state);
+
   useEffect(() => {
     if (location && location.state) {
       setMessages(location.state);

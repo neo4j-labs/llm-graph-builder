@@ -454,10 +454,8 @@ class graphDBdataAccess:
         label_query = """CALL db.labels"""
         check_labels = self.execute_query(label_query)
         if {'label': '__Community__'} in check_labels:
-            logging.info("COMMUNITY QUERY")
             result = self.execute_query(NODEREL_COUNT_QUERY_WITH_COMMUNITY)
         else:
-            logging.info("NON COMMUNITY QUERY")
             result = self.execute_query(NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY)
         response = {}
         for record in result:
@@ -507,5 +505,4 @@ class graphDBdataAccess:
                 "relationshipCount" : relationshipCount
                 }
             
-        logging.info("Nodes and Relationship Counts updated")
         return response
