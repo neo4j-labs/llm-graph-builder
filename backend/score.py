@@ -573,25 +573,24 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                     graph = create_graph_database_connection(uri, userName, decoded_password, database)
                     graphDb_data_Access = graphDBdataAccess(graph)
                     result = graphDb_data_Access.get_current_status_document_node(file_name)
-                    count_response = graphDb_data_Access.update_node_relationship_count(file_name)
                     # print(f'Result of document status in SSE : {result}')
                     if len(result) > 0:
                         status = json.dumps({'fileName':file_name, 
                         'status':result[0]['Status'],
                         'processingTime':result[0]['processingTime'],
-                        'nodeCount':count_response[file_name].get('nodeCount',"0"),
-                        'relationshipCount':count_response[file_name].get('relationshipCount',"0"),
+                        'nodeCount':result[0]['nodeCount'],
+                        'relationshipCount':result[0]['relationshipCount'],
                         'model':result[0]['model'],
                         'total_chunks':result[0]['total_chunks'],
                         'fileSize':result[0]['fileSize'],
                         'processed_chunk':result[0]['processed_chunk'],
                         'fileSource':result[0]['fileSource'],
-                        'chunkNodeCount' : count_response[file_name].get('chunkNodeCount',"0"),
-                        'chunkRelCount' : count_response[file_name].get('chunkRelCount',"0"),
-                        'entityNodeCount' : count_response[file_name].get('entityNodeCount',"0"),
-                        'entityEntityRelCount' : count_response[file_name].get('entityEntityRelCount',"0"),
-                        'communityNodeCount' : count_response[file_name].get('communityNodeCount',"0"),
-                        'communityRelCount' : count_response[file_name].get('communityRelCount',"0")
+                        'chunkNodeCount' : result[0]['chunkNodeCount'],
+                        'chunkRelCount' : result[0]['chunkRelCount'],
+                        'entityNodeCount' : result[0]['entityNodeCount'],
+                        'entityEntityRelCount' : result[0]['entityEntityRelCount'],
+                        'communityNodeCount' : result[0]['communityNodeCount'],
+                        'communityRelCount' : result[0]['communityRelCount']
                         })
                     yield status
             except asyncio.CancelledError:
@@ -641,24 +640,23 @@ async def get_document_status(file_name, url, userName, password, database):
         graph = create_graph_database_connection(uri, userName, decoded_password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         result = graphDb_data_Access.get_current_status_document_node(file_name)
-        count_response = graphDb_data_Access.update_node_relationship_count(file_name)
         if len(result) > 0:
             status = {'fileName':file_name, 
                 'status':result[0]['Status'],
                 'processingTime':result[0]['processingTime'],
-                'nodeCount':count_response[file_name].get('nodeCount',"0"),
-                'relationshipCount':count_response[file_name].get('relationshipCount',"0"),
+                'nodeCount':result[0]['nodeCount'],
+                'relationshipCount':result[0]['relationshipCount'],
                 'model':result[0]['model'],
                 'total_chunks':result[0]['total_chunks'],
                 'fileSize':result[0]['fileSize'],
                 'processed_chunk':result[0]['processed_chunk'],
                 'fileSource':result[0]['fileSource'],
-                'chunkNodeCount' : count_response[file_name].get('chunkNodeCount',"0"),
-                'chunkRelCount' : count_response[file_name].get('chunkRelCount',"0"),
-                'entityNodeCount' : count_response[file_name].get('entityNodeCount',"0"),
-                'entityEntityRelCount' : count_response[file_name].get('entityEntityRelCount',"0"),
-                'communityNodeCount' : count_response[file_name].get('communityNodeCount',"0"),
-                'communityRelCount' : count_response[file_name].get('communityRelCount',"0")
+                'chunkNodeCount' : result[0]['chunkNodeCount'],
+                'chunkRelCount' : result[0]['chunkRelCount'],
+                'entityNodeCount' : result[0]['entityNodeCount'],
+                'entityEntityRelCount' : result[0]['entityEntityRelCount'],
+                'communityNodeCount' : result[0]['communityNodeCount'],
+                'communityRelCount' : result[0]['communityRelCount']
                 }
         else:
             status = {'fileName':file_name, 'status':'Failed'}

@@ -451,11 +451,15 @@ class graphDBdataAccess:
 
     def update_node_relationship_count(self,document_name):
         logging.info("updating node and relationship count")
-        if document_name:
-            param = {"document_name":document_name}
-            result = self.execute_query(NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY,param)
-        else:
+        label_query = """CALL db.labels"""
+        community_flag = {'label': '__Community__'} in self.execute_query(label_query)
+        if (not document_name) and (community_flag):
             result = self.execute_query(NODEREL_COUNT_QUERY_WITH_COMMUNITY)
+        elif (not document_name) and (not community_flag):
+             return None
+        else:
+            param = {"document_name": document_name}
+            result = self.execute_query(NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY, param)
         response = {}
         for record in result:
             filename = record["filename"]
@@ -463,12 +467,12 @@ class graphDBdataAccess:
             chunkRelCount = record["chunkRelCount"]
             entityNodeCount = record["entityNodeCount"]
             entityEntityRelCount = record["entityEntityRelCount"]
-            if document_name:
-                communityNodeCount = 0
-                communityRelCount = 0
-            else:
+            if (not document_name) and (community_flag):
                 communityNodeCount = record["communityNodeCount"]
                 communityRelCount = record["communityRelCount"]
+            else:
+                communityNodeCount = 0
+                communityRelCount = 0
             nodeCount = int(chunkNodeCount) + int(entityNodeCount) + int(communityNodeCount)
             relationshipCount = int(chunkRelCount) + int(entityEntityRelCount) + int(communityRelCount)
             update_query = """
