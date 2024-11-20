@@ -28,6 +28,12 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   isChecked?: boolean;
   retryOptionStatus: boolean;
   retryOption: string;
+  chunkNodeCount: number;
+  chunkRelCount: number;
+  entityNodeCount: number;
+  entityEntityRelCount: number;
+  communityNodeCount: number;
+  communityRelCount: number;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
@@ -312,6 +318,12 @@ export interface fileStatus {
   total_chunks?: number;
   // total_pages?: number;
   processed_chunk?: number;
+  chunkNodeCount: number;
+  chunkRelCount: number;
+  entityNodeCount: number;
+  entityEntityRelCount: number;
+  communityNodeCount: number;
+  communityRelCount: number;
 }
 export interface PollingAPI_Response extends Partial<AxiosResponse> {
   data: statusupdate;

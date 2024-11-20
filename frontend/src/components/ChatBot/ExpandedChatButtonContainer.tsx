@@ -13,7 +13,11 @@ const ExpandedChatButtonContainer: React.FC<IconProps> = ({ closeChatBot, delete
   return (
     <div className='flex items-end justify-end'>
       <ChatModeToggle
-        closeHandler={() => setshowChatModeOption(false)}
+        closeHandler={(_, reason) => {
+          if (reason.type === 'backdropClick') {
+            setshowChatModeOption(false);
+          }
+        }}
         open={showChatModeOption}
         menuAnchor={chatAnchor}
         isRoot={false}

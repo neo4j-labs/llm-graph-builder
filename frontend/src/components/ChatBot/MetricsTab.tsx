@@ -1,4 +1,4 @@
-import { Banner, Box, DataGrid, DataGridComponents, Typography } from '@neo4j-ndl/react';
+import { Banner, Box, DataGrid, DataGridComponents, Flex, IconButton, Popover, Typography } from '@neo4j-ndl/react';
 import { memo, useContext, useMemo, useRef } from 'react';
 import {
   useReactTable,
@@ -10,6 +10,8 @@ import {
 } from '@tanstack/react-table';
 import { capitalize } from '../../utils/Utils';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
+import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
+import { metricsinfo } from '../../utils/Constants';
 function MetricsTab({
   metricsLoading,
   metricDetails,
@@ -40,9 +42,21 @@ function MetricsTab({
                 .join(' ')
             : capitalize(metric);
           return (
-            <div className='textellipsis'>
-              <span title={metric}>{capitilizedMetric}</span>
-            </div>
+            <Flex flexDirection='row' alignItems='center'>
+              <div className='textellipsis'>
+                <span title={metric}>{capitilizedMetric}</span>
+              </div>
+              <Popover placement='top-middle-bottom-middle' hasAnchorPortal={true}>
+                <Popover.Trigger hasButtonWrapper>
+                  <IconButton size='small' isClean ariaLabel='infoicon'>
+                    <InformationCircleIconOutline />
+                  </IconButton>
+                </Popover.Trigger>
+                <Popover.Content className='p-2'>
+                  <Typography variant='body-small'>{metricsinfo[metric]}</Typography>
+                </Popover.Content>
+              </Popover>
+            </Flex>
           );
         },
         header: () => <span>Metric</span>,
