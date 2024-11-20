@@ -14,7 +14,13 @@ export default function ChatModeToggle({
   isRoot,
 }: {
   menuAnchor: React.RefObject<HTMLElement | null>;
-  closeHandler?: () => void;
+  closeHandler?: (
+    event: Event | undefined,
+    closeReason: {
+      type: 'backdropClick' | 'itemClick' | 'escapeKeyDown';
+      id?: string;
+    }
+  ) => void;
   open: boolean;
   isRoot: boolean;
 }) {
