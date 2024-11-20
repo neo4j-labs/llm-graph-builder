@@ -1,7 +1,8 @@
 import logging
 import os
 from datetime import datetime
-from langchain_community.graphs import Neo4jGraph
+#from langchain_community.graphs import Neo4jGraph
+from langchain_neo4j import Neo4jGraph
 from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model
 from src.document_sources.gcs_bucket import delete_file_from_gcs
 from src.shared.constants import BUCKET_UPLOAD,NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY

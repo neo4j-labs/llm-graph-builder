@@ -11,8 +11,12 @@ from dotenv import load_dotenv
 
 
 # LangChain imports
-from langchain_community.vectorstores.neo4j_vector import Neo4jVector
-from langchain_community.chat_message_histories import Neo4jChatMessageHistory
+# from langchain_community.vectorstores.neo4j_vector import Neo4jVector
+# from langchain_community.chat_message_histories import Neo4jChatMessageHistory
+from langchain_neo4j import Neo4jVector
+from langchain_neo4j import Neo4jChatMessageHistory
+from langchain_neo4j import GraphCypherQAChain
+
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableBranch
@@ -21,7 +25,7 @@ from langchain_community.document_transformers import EmbeddingsRedundantFilter
 from langchain.retrievers.document_compressors import EmbeddingsFilter, DocumentCompressorPipeline
 from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage, AIMessage
-from langchain.chains import GraphCypherQAChain
+#from langchain.chains import GraphCypherQAChain
 from langchain_community.chat_message_histories import ChatMessageHistory 
 from langchain_core.callbacks import StdOutCallbackHandler, BaseCallbackHandler
 

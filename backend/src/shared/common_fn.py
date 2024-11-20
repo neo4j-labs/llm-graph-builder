@@ -5,7 +5,8 @@ from langchain_community.embeddings.sentence_transformer import SentenceTransfor
 from langchain_google_vertexai import VertexAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from langchain.docstore.document import Document
-from langchain_community.graphs import Neo4jGraph
+#from langchain_community.graphs import Neo4jGraph
+from langchain_neo4j import Neo4jGraph
 from langchain_community.graphs.graph_document import GraphDocument
 from typing import List
 import re

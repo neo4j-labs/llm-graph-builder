@@ -1,7 +1,8 @@
 from neo4j import GraphDatabase
 import logging
 import time
-from langchain_community.graphs import Neo4jGraph
+#from langchain_community.graphs import Neo4jGraph
+from langchain_neo4j import Neo4jGraph
 import os
 from src.shared.common_fn import load_embedding_model
 

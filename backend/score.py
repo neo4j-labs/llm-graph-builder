@@ -36,6 +36,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from src.ragas_eval import *
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 import gzip
+from langchain_neo4j import Neo4jGraph
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")

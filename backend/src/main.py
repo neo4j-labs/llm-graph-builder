@@ -1,4 +1,5 @@
-from langchain_community.graphs import Neo4jGraph
+#from langchain_community.graphs import Neo4jGraph
+from langchain_neo4j import Neo4jGraph
 from src.shared.constants import (BUCKET_UPLOAD, PROJECT_ID, QUERY_TO_GET_CHUNKS, 
                                   QUERY_TO_DELETE_EXISTING_ENTITIES, 
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION,
