@@ -918,5 +918,25 @@ async def fetch_chunktext(
    finally:
        gc.collect()
 
+@app.post("/backend_connection_configuation")
+async def backend_connection_configuation():
+    try:
+        graph = Neo4jGraph()
+        print(f'login connection status of object: {graph}')
+        if graph is not None:
+            graph_connection = True
+            return create_api_response('Success',message=f"Backend connection successful",data=graph_connection)
+        else:
+            graph_connection = False
+            return create_api_response('Success',message=f"Backend connection is not successful",data=graph_connection)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to connect backend DB"
+        error_message = str(e)
+        logging.exception(f'{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()    
+
 if __name__ == "__main__":
     uvicorn.run(app)
