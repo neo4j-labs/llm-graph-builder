@@ -342,12 +342,14 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             graphDb_data_Access = graphDBdataAccess(graph)
             document_name = ""
             count_response = graphDb_data_Access.update_node_relationship_count(document_name)
-            logging.info(f'Updated source node with community related counts')
+            if count_response:
+                count_response = [{"filename": filename, **counts} for filename, counts in count_response.items()]
+                logging.info(f'Updated source node with community related counts')
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name': api_name, 'db_url': uri, 'userName':userName, 'database':database, 'tasks':tasks, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj)
-        return create_api_response('Success', message='All tasks completed successfully')
+        return create_api_response('Success', data=count_response, message='All tasks completed successfully')
     
     except Exception as e:
         job_status = "Failed"
