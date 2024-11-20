@@ -516,22 +516,23 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           return (
             <Flex alignItems='center' flexDirection='row'>
               <i>{info.getValue()}</i>
-              {hasNodeBreakDownValues && info.row.original.status === 'Completed' && (
-                <Popover>
-                  <Popover.Trigger hasButtonWrapper>
-                    <IconButton isClean ariaLabel='infoicon'>
-                      <InformationCircleIconOutline className='n-size-token-7' />
-                    </IconButton>
-                  </Popover.Trigger>
-                  <Popover.Content className='p-2'>
-                    <ul>
-                      <li>Chunk Nodes: {info.row.original.chunkNodeCount}</li>
-                      <li>Entity Nodes: {info.row.original.entityNodeCount}</li>
-                      <li>Community Nodes: {info.row.original.communityNodeCount}</li>
-                    </ul>
-                  </Popover.Content>
-                </Popover>
-              )}
+              {hasNodeBreakDownValues &&
+                (info.row.original.status === 'Completed' || info.row.original.status === 'Failed') && (
+                  <Popover>
+                    <Popover.Trigger>
+                      <IconButton isClean ariaLabel='infoicon'>
+                        <InformationCircleIconOutline className='n-size-token-7' />
+                      </IconButton>
+                    </Popover.Trigger>
+                    <Popover.Content className='p-2'>
+                      <ul>
+                        <li>Chunk Nodes: {info.row.original.chunkNodeCount}</li>
+                        <li>Entity Nodes: {info.row.original.entityNodeCount}</li>
+                        <li>Community Nodes: {info.row.original.communityNodeCount}</li>
+                      </ul>
+                    </Popover.Content>
+                  </Popover>
+                )}
             </Flex>
           );
         },
@@ -548,22 +549,23 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           return (
             <Flex alignItems='center' flexDirection='row'>
               <i>{info.getValue()}</i>
-              {hasRelationsBreakDownValues && info.row.original.status === 'Completed' && (
-                <Popover>
-                  <Popover.Trigger hasButtonWrapper>
-                    <IconButton isClean ariaLabel='infoicon'>
-                      <InformationCircleIconOutline className='n-size-token-7' />
-                    </IconButton>
-                  </Popover.Trigger>
-                  <Popover.Content className='p-2'>
-                    <ul>
-                      <li>Chunk Relations: {info.row.original.chunkRelCount}</li>
-                      <li>Entity Relations: {info.row.original.entityEntityRelCount}</li>
-                      <li>Community Relations: {info.row.original.communityRelCount}</li>
-                    </ul>
-                  </Popover.Content>
-                </Popover>
-              )}
+              {hasRelationsBreakDownValues &&
+                (info.row.original.status === 'Completed' || info.row.original.status === 'Failed') && (
+                  <Popover>
+                    <Popover.Trigger>
+                      <IconButton isClean ariaLabel='infoicon'>
+                        <InformationCircleIconOutline className='n-size-token-7' />
+                      </IconButton>
+                    </Popover.Trigger>
+                    <Popover.Content className='p-2'>
+                      <ul>
+                        <li>Chunk Relations: {info.row.original.chunkRelCount}</li>
+                        <li>Entity Relations: {info.row.original.entityEntityRelCount}</li>
+                        <li>Community Relations: {info.row.original.communityRelCount}</li>
+                      </ul>
+                    </Popover.Content>
+                  </Popover>
+                )}
             </Flex>
           );
         },
