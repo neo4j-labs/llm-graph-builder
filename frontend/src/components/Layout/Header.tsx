@@ -28,9 +28,10 @@ interface HeaderProp {
   chatOnly?: boolean;
   deleteOnClick?: () => void;
   setOpenConnection?: Dispatch<SetStateAction<connectionState>>;
+  showBackButton?: boolean;
 }
 
-const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnection }) => {
+const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnection, showBackButton }) => {
   const { colorMode, toggleColorMode } = useContext(ThemeWrapperContext);
   const navigate = useNavigate();
   const { messages } = useMessageContext();
@@ -169,9 +170,10 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                     {buttonCaptions.connectToNeo4j}
                   </Button>
                 )}
-                <IconButtonWithToolTip onClick={onBackButtonClick} clean text='Back' placement='bottom' label='Back' disabled={getIsLoading(messages)}>
+                {showBackButton && (<IconButtonWithToolTip onClick={onBackButtonClick} clean text='Back' placement='bottom' label='Back' disabled={getIsLoading(messages)}>
                   <ArrowLeftIconOutline />
                 </IconButtonWithToolTip>
+                )}
                 <div ref={chatAnchor}>
                   <IconButtonWithToolTip
                     onClick={() => {

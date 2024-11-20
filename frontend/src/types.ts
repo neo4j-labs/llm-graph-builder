@@ -890,3 +890,7 @@ export interface GraphViewHandlerProps {
   entityInfo?: Entity[];
   mode?: string;
 }
+
+export interface ChatProps {
+  chatMessages: Messages[];
+}
