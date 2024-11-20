@@ -121,7 +121,7 @@ const Content: React.FC<ContentProps> = ({
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
 
-
+console.log('connection status', connectionStatus);
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
       showNormalToast(`${fileName} will take approx ${time} ${inMinutes ? 'Min' : 'Sec'}`);
@@ -203,60 +203,60 @@ const Content: React.FC<ContentProps> = ({
     }
   }, [isSchema]);
 
-  useEffect(() => {
-    const connection = localStorage.getItem('neo4j.connection');
-    if (connection != null) {
-      (async () => {
-        const parsedData = JSON.parse(connection);
-        const response = await connectAPI(
-          parsedData.uri,
-          parsedData.user,
-          atob(parsedData.password),
-          parsedData.database
-        );
-        if (response?.data?.status === 'Success') {
-          localStorage.setItem(
-            'neo4j.connection',
-            JSON.stringify({
-              ...parsedData,
-              userDbVectorIndex: response.data.data.db_vector_dimension,
-              password: btoa(atob(parsedData.password)),
-            })
-          );
-          if (response.data.data.gds_status !== undefined) {
-            setGdsActive(response.data.data.gds_status);
-          }
-          if (response.data.data.write_access !== undefined) {
-            setIsReadOnlyUser(!response.data.data.write_access);
-          }
-          if (
-            (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
-              response.data.data.db_vector_dimension == 0) &&
-            !response.data.data.chunks_exists
-          ) {
-            setConnectionStatus(true);
-            setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
-          } else {
-            setOpenConnection({
-              openPopUp: true,
-              chunksExists: response.data.data.chunks_exists as boolean,
-              vectorIndexMisMatch:
-                response.data.data.db_vector_dimension > 0 &&
-                response.data.data.db_vector_dimension != response.data.data.application_dimension,
-              chunksExistsWithDifferentDimension:
-                response.data.data.db_vector_dimension > 0 &&
-                response.data.data.db_vector_dimension != response.data.data.application_dimension &&
-                (response.data.data.chunks_exists ?? true),
-            });
-            setConnectionStatus(false);
-          }
-        } else {
-          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-          setConnectionStatus(false);
-        }
-      })();
-    }
-  }, []);
+  // useEffect(() => {
+  //   const connection = localStorage.getItem('neo4j.connection');
+  //   if (connection != null) {
+  //     (async () => {
+  //       const parsedData = JSON.parse(connection);
+  //       const response = await connectAPI(
+  //         parsedData.uri,
+  //         parsedData.user,
+  //         atob(parsedData.password),
+  //         parsedData.database
+  //       );
+  //       if (response?.data?.status === 'Success') {
+  //         localStorage.setItem(
+  //           'neo4j.connection',
+  //           JSON.stringify({
+  //             ...parsedData,
+  //             userDbVectorIndex: response.data.data.db_vector_dimension,
+  //             password: btoa(atob(parsedData.password)),
+  //           })
+  //         );
+  //         if (response.data.data.gds_status !== undefined) {
+  //           setGdsActive(response.data.data.gds_status);
+  //         }
+  //         if (response.data.data.write_access !== undefined) {
+  //           setIsReadOnlyUser(!response.data.data.write_access);
+  //         }
+  //         if (
+  //           (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
+  //             response.data.data.db_vector_dimension == 0) &&
+  //           !response.data.data.chunks_exists
+  //         ) {
+  //           setConnectionStatus(true);
+  //           setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
+  //         } else {
+  //           setOpenConnection({
+  //             openPopUp: true,
+  //             chunksExists: response.data.data.chunks_exists as boolean,
+  //             vectorIndexMisMatch:
+  //               response.data.data.db_vector_dimension > 0 &&
+  //               response.data.data.db_vector_dimension != response.data.data.application_dimension,
+  //             chunksExistsWithDifferentDimension:
+  //               response.data.data.db_vector_dimension > 0 &&
+  //               response.data.data.db_vector_dimension != response.data.data.application_dimension &&
+  //               (response.data.data.chunks_exists ?? true),
+  //           });
+  //           setConnectionStatus(false);
+  //         }
+  //       } else {
+  //         setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+  //         setConnectionStatus(false);
+  //       }
+  //     })();
+  //   }
+  // }, []);
 
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
@@ -817,7 +817,7 @@ const Content: React.FC<ContentProps> = ({
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row' flexWrap='wrap'>
-          <Suspense fallback={<FallBackDialog />}>
+          {/* <Suspense fallback={<FallBackDialog />}>
             <ConnectionModal
               open={openConnection.openPopUp}
               setOpenConnection={setOpenConnection}
@@ -826,7 +826,7 @@ const Content: React.FC<ContentProps> = ({
               chunksExistsWithoutEmbedding={openConnection.chunksExists}
               chunksExistsWithDifferentEmbedding={openConnection.chunksExistsWithDifferentDimension}
             />
-          </Suspense>
+          </Suspense> */}
           <div className='connectionstatus__container'>
             <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
             <Typography variant='body-medium'>
@@ -861,7 +861,7 @@ const Content: React.FC<ContentProps> = ({
             </Typography>
           </div>
           <div>
-            <ButtonWithToolTip
+            {/* <ButtonWithToolTip
               placement='top'
               text='Enhance graph quality'
               label='Graph Enhancemnet Settings'
@@ -884,7 +884,7 @@ const Content: React.FC<ContentProps> = ({
               <Button size={isTablet ? 'small' : 'medium'} className='mr-2.5' onClick={disconnect}>
                 {buttonCaptions.disconnect}
               </Button>
-            )}
+            )} */}
           </div>
         </Flex>
         <FileTable

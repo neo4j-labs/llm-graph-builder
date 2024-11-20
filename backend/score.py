@@ -925,7 +925,11 @@ async def backend_connection_configuation():
         print(f'login connection status of object: {graph}')
         if graph is not None:
             graph_connection = True
-            return create_api_response('Success',message=f"Backend connection successful",data=graph_connection)
+            isURI = os.getenv('NEO4J_URI')
+            isUsername= os.getenv('NEO4J_USERNAME')
+            isDatabase= os.getenv('NEO4J_DATABASE')
+            isPassword= os.getenv('NEO4J_PASSWORD')
+            return create_api_response('Success',message=f"Backend connection successful",data={'graph_connection':graph_connection,'uri':isURI,'user_name':isUsername,'database':isDatabase,'password':isPassword})
         else:
             graph_connection = False
             return create_api_response('Success',message=f"Backend connection is not successful",data=graph_connection)
