@@ -81,7 +81,7 @@ class CustomGZipMiddleware:
         await gzip_middleware(scope, receive, send)
 app = FastAPI()
 # SecWeb(app=app, Option={'referrer': False, 'xframe': False})
-app.add_middleware(ContentSecurityPolicy, Option={'default-src': ["'self'"], 'base-uri': ["'self'"], 'block-all-mixed-content': []}, script_nonce=False, style_nonce=False, report_only=False)
+# app.add_middleware(ContentSecurityPolicy, Option={'default-src': ["'self'"], 'base-uri': ["'self'"], 'block-all-mixed-content': []}, script_nonce=False, style_nonce=False, report_only=False)
 app.add_middleware(XContentTypeOptions)
 app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
 app.add_middleware(CustomGZipMiddleware, minimum_size=1000, compresslevel=5,paths=["/sources_list","/url/scan","/extract","/chat_bot","/chunk_entities","/get_neighbours","/graph_query","/schema","/populate_graph_schema","/get_unconnected_nodes_list","/get_duplicate_nodes","/fetch_chunktext"])
@@ -917,6 +917,26 @@ async def fetch_chunktext(
        return create_api_response(job_status, message=message, error=error_message)
    finally:
        gc.collect()
+
+@app.post("/backend_connection_configuation")
+async def backend_connection_configuation():
+    try:
+        graph = Neo4jGraph()
+        print(f'login connection status of object: {graph}')
+        if graph is not None:
+            graph_connection = True
+            return create_api_response('Success',message=f"Backend connection successful",data=graph_connection)
+        else:
+            graph_connection = False
+            return create_api_response('Success',message=f"Backend connection is not successful",data=graph_connection)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to connect backend DB"
+        error_message = str(e)
+        logging.exception(f'{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()    
 
 if __name__ == "__main__":
     uvicorn.run(app)
