@@ -224,8 +224,10 @@ const SideNav: React.FC<SideNavProps> = ({
                       </IconButtonWithToolTip>
                       <ChatModeToggle
                         open={showChatMode}
-                        closeHandler={() => {
-                          setshowChatMode(false);
+                        closeHandler={(_, reason) => {
+                          if (reason.type === 'backdropClick') {
+                            setshowChatMode(false);
+                          }
                         }}
                         menuAnchor={anchorMenuRef}
                         isRoot={false}

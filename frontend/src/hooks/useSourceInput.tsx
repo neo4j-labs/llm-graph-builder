@@ -57,6 +57,12 @@ export default function useSourceInput(
         processingProgress: undefined,
         retryOption: '',
         retryOptionStatus: false,
+        chunkNodeCount: 0,
+        chunkRelCount: 0,
+        entityNodeCount: 0,
+        entityEntityRelCount: 0,
+        communityNodeCount: 0,
+        communityRelCount: 0,
       };
       if (url.trim() != '') {
         setIsValid(validator(url) && isFocused);

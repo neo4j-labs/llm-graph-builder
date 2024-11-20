@@ -4,7 +4,7 @@ from datetime import datetime
 from langchain_community.graphs import Neo4jGraph
 from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model
 from src.document_sources.gcs_bucket import delete_file_from_gcs
-from src.shared.constants import BUCKET_UPLOAD
+from src.shared.constants import BUCKET_UPLOAD,NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY
 from src.entities.source_node import sourceNode
 from src.communities import MAX_COMMUNITY_LEVELS
 import json
@@ -249,7 +249,13 @@ class graphDBdataAccess:
                 MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, 
                 d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount,
                 d.total_chunks AS total_chunks , d.fileSize as fileSize, 
-                d.is_cancelled as is_cancelled, d.processed_chunk as processed_chunk, d.fileSource as fileSource
+                d.is_cancelled as is_cancelled, d.processed_chunk as processed_chunk, d.fileSource as fileSource,
+                d.chunkNodeCount AS chunkNodeCount,
+                d.chunkRelCount AS chunkRelCount,
+                d.entityNodeCount AS entityNodeCount,
+                d.entityEntityRelCount AS entityEntityRelCount,
+                d.communityNodeCount AS communityNodeCount,
+                d.communityRelCount AS communityRelCount
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
@@ -441,3 +447,65 @@ class graphDBdataAccess:
                         }
                         )
         return "Drop and Re-Create vector index succesfully"
+
+
+    def update_node_relationship_count(self,document_name):
+        logging.info("updating node and relationship count")
+        label_query = """CALL db.labels"""
+        community_flag = {'label': '__Community__'} in self.execute_query(label_query)
+        if (not document_name) and (community_flag):
+            result = self.execute_query(NODEREL_COUNT_QUERY_WITH_COMMUNITY)
+        elif (not document_name) and (not community_flag):
+             return None
+        else:
+            param = {"document_name": document_name}
+            result = self.execute_query(NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY, param)
+        response = {}
+        for record in result:
+            filename = record["filename"]
+            chunkNodeCount = record["chunkNodeCount"]
+            chunkRelCount = record["chunkRelCount"]
+            entityNodeCount = record["entityNodeCount"]
+            entityEntityRelCount = record["entityEntityRelCount"]
+            if (not document_name) and (community_flag):
+                communityNodeCount = record["communityNodeCount"]
+                communityRelCount = record["communityRelCount"]
+            else:
+                communityNodeCount = 0
+                communityRelCount = 0
+            nodeCount = int(chunkNodeCount) + int(entityNodeCount) + int(communityNodeCount)
+            relationshipCount = int(chunkRelCount) + int(entityEntityRelCount) + int(communityRelCount)
+            update_query = """
+            MATCH (d:Document {fileName: $filename})
+            SET d.chunkNodeCount = $chunkNodeCount,
+                d.chunkRelCount = $chunkRelCount,
+                d.entityNodeCount = $entityNodeCount,
+                d.entityEntityRelCount = $entityEntityRelCount,
+                d.communityNodeCount = $communityNodeCount,
+                d.communityRelCount = $communityRelCount,
+                d.nodeCount = $nodeCount,
+                d.relationshipCount = $relationshipCount
+            """
+            self.execute_query(update_query,{
+                "filename": filename,
+                "chunkNodeCount": chunkNodeCount,
+                "chunkRelCount": chunkRelCount,
+                "entityNodeCount": entityNodeCount,
+                "entityEntityRelCount": entityEntityRelCount,
+                "communityNodeCount": communityNodeCount,
+                "communityRelCount": communityRelCount,
+                "nodeCount" : nodeCount,
+                "relationshipCount" : relationshipCount
+                })
+            
+            response[filename] = {"chunkNodeCount": chunkNodeCount,
+                "chunkRelCount": chunkRelCount,
+                "entityNodeCount": entityNodeCount,
+                "entityEntityRelCount": entityEntityRelCount,
+                "communityNodeCount": communityNodeCount,
+                "communityRelCount": communityRelCount,
+                "nodeCount" : nodeCount,
+                "relationshipCount" : relationshipCount
+                }
+            
+        return response

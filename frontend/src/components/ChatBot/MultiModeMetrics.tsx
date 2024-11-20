@@ -4,13 +4,13 @@ import {
   createColumnHelper,
   getFilteredRowModel,
   getPaginationRowModel,
-  getSortedRowModel,
 } from '@tanstack/react-table';
 import { capitalize } from '../../utils/Utils';
 import { useContext, useEffect, useMemo, useRef } from 'react';
-import { Banner, Box, DataGrid, DataGridComponents, Typography } from '@neo4j-ndl/react';
+import { Banner, Box, DataGrid, DataGridComponents, Flex, IconButton, Popover, Typography } from '@neo4j-ndl/react';
 import { multimodelmetric } from '../../types';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
+import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 
 export default function MultiModeMetrics({
   data,
@@ -52,35 +52,115 @@ export default function MultiModeMetrics({
         cell: (info) => {
           return <Typography variant='body-medium'>{info.getValue().toFixed(2)}</Typography>;
         },
-        header: () => <span>Relevancy</span>,
+        header: () => (
+          <Flex flexDirection='row' alignItems='center'>
+            <span>Relevancy</span>
+            <Popover placement='top-middle-bottom-middle' hasAnchorPortal={true}>
+              <Popover.Trigger hasButtonWrapper>
+                <IconButton size='small' isClean ariaLabel='infoicon'>
+                  <InformationCircleIconOutline />
+                </IconButton>
+              </Popover.Trigger>
+              <Popover.Content className='p-2'>
+                <Typography variant='body-small'>
+                  Determines How well the answer addresses the user's question.
+                </Typography>
+              </Popover.Content>
+            </Popover>
+          </Flex>
+        ),
       }),
       columnHelper.accessor((row) => row.faithfulness as number, {
         id: 'Score',
         cell: (info) => {
           return <Typography variant='body-medium'>{info.getValue().toFixed(2)}</Typography>;
         },
-        header: () => <span>Faithfulness</span>,
+        header: () => (
+          <Flex flexDirection='row' alignItems='center'>
+            <span>Faithful</span>
+            <Popover placement='top-middle-bottom-middle' hasAnchorPortal={true}>
+              <Popover.Trigger hasButtonWrapper>
+                <IconButton size='small' isClean ariaLabel='infoicon'>
+                  <InformationCircleIconOutline />
+                </IconButton>
+              </Popover.Trigger>
+              <Popover.Content className='p-2'>
+                <Typography variant='body-small'>
+                  Determines How accurately the answer reflects the provided information.
+                </Typography>
+              </Popover.Content>
+            </Popover>
+          </Flex>
+        ),
       }),
       columnHelper.accessor((row) => row.context_entity_recall_score as number, {
         id: 'Recall Score',
         cell: (info) => {
           return <Typography variant='body-medium'>{info.getValue()?.toFixed(2)}</Typography>;
         },
-        header: () => <span>Context Score</span>,
+        header: () => (
+          <Flex flexDirection='row' alignItems='center'>
+            <span>Context</span>
+            <Popover placement='top-middle-bottom-middle' hasAnchorPortal={true}>
+              <Popover.Trigger hasButtonWrapper>
+                <IconButton size='small' isClean ariaLabel='infoicon'>
+                  <InformationCircleIconOutline />
+                </IconButton>
+              </Popover.Trigger>
+              <Popover.Content className='p-2'>
+                <Typography variant='body-small'>
+                  Determines the recall of entities present in both reference and retrieved contexts.
+                </Typography>
+              </Popover.Content>
+            </Popover>
+          </Flex>
+        ),
       }),
       columnHelper.accessor((row) => row.semantic_score as number, {
         id: 'Semantic Score',
         cell: (info) => {
           return <Typography variant='body-medium'>{info.getValue()?.toFixed(2)}</Typography>;
         },
-        header: () => <span>Semantic Score</span>,
+        header: () => (
+          <Flex flexDirection='row' alignItems='center'>
+            <span>Semantic</span>
+            <Popover placement='top-middle-bottom-middle' hasAnchorPortal={true}>
+              <Popover.Trigger hasButtonWrapper>
+                <IconButton size='small' isClean ariaLabel='infoicon'>
+                  <InformationCircleIconOutline />
+                </IconButton>
+              </Popover.Trigger>
+              <Popover.Content className='p-2'>
+                <Typography variant='body-small'>
+                  Determines How well the generated answer understands the meaning of the reference answer.
+                </Typography>
+              </Popover.Content>
+            </Popover>
+          </Flex>
+        ),
       }),
       columnHelper.accessor((row) => row.rouge_score as number, {
         id: 'Rouge Score',
         cell: (info) => {
           return <Typography variant='body-medium'>{info.getValue()?.toFixed(2)}</Typography>;
         },
-        header: () => <span>Rouge Score</span>,
+        header: () => (
+          <Flex flexDirection='row' alignItems='center'>
+            <span>Rouge</span>
+            <Popover placement='top-middle-bottom-middle' hasAnchorPortal={true}>
+              <Popover.Trigger hasButtonWrapper>
+                <IconButton size='small' isClean ariaLabel='infoicon'>
+                  <InformationCircleIconOutline />
+                </IconButton>
+              </Popover.Trigger>
+              <Popover.Content className='p-2'>
+                <Typography variant='body-small'>
+                  Determines How much the generated answer matches the reference answer, word-for-word.
+                </Typography>
+              </Popover.Content>
+            </Popover>
+          </Flex>
+        ),
       }),
     ],
     []
@@ -93,10 +173,10 @@ export default function MultiModeMetrics({
     getPaginationRowModel: getPaginationRowModel(),
     enableGlobalFilter: false,
     autoResetPageIndex: false,
+    enableColumnResizing: true,
     enableRowSelection: true,
     enableMultiRowSelection: true,
-    enableSorting: true,
-    getSortedRowModel: getSortedRowModel(),
+    enableSorting: false,
   });
   useEffect(() => {
     if (isWithAdditionalMetrics === false) {

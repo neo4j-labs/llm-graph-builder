@@ -3,6 +3,7 @@ import {
   DataGridComponents,
   Flex,
   IconButton,
+  Popover,
   ProgressBar,
   StatusIndicator,
   TextLink,
@@ -41,6 +42,7 @@ import {
   ClipboardDocumentIconSolid,
   MagnifyingGlassCircleIconSolid,
   DocumentTextIconSolid,
+  InformationCircleIconOutline,
 } from '@neo4j-ndl/react/icons';
 import CustomProgressBar from './UI/CustomProgressBar';
 import subscribe from '../services/PollingAPI';
@@ -53,6 +55,7 @@ import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
+
 let onlyfortheFirstRender = true;
 
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
@@ -505,13 +508,67 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       }),
       columnHelper.accessor((row) => row.nodesCount, {
         id: 'NodesCount',
-        cell: (info) => <i>{info.getValue()}</i>,
+        cell: (info) => {
+          const hasNodeBreakDownValues =
+            info.row.original.chunkNodeCount > 0 ||
+            info.row.original.communityNodeCount > 0 ||
+            info.row.original.entityNodeCount > 0;
+          return (
+            <Flex alignItems='center' flexDirection='row'>
+              <i>{info.getValue()}</i>
+              {hasNodeBreakDownValues &&
+                (info.row.original.status === 'Completed' || info.row.original.status === 'Failed') && (
+                  <Popover>
+                    <Popover.Trigger>
+                      <IconButton isClean ariaLabel='infoicon'>
+                        <InformationCircleIconOutline className='n-size-token-7' />
+                      </IconButton>
+                    </Popover.Trigger>
+                    <Popover.Content className='p-2'>
+                      <ul>
+                        <li>Chunk Nodes: {info.row.original.chunkNodeCount}</li>
+                        <li>Entity Nodes: {info.row.original.entityNodeCount}</li>
+                        <li>Community Nodes: {info.row.original.communityNodeCount}</li>
+                      </ul>
+                    </Popover.Content>
+                  </Popover>
+                )}
+            </Flex>
+          );
+        },
         header: () => <span>Nodes</span>,
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.relationshipsCount, {
         id: 'relationshipCount',
-        cell: (info) => <i>{info.getValue()}</i>,
+        cell: (info) => {
+          const hasRelationsBreakDownValues =
+            info.row.original.chunkRelCount > 0 ||
+            info.row.original.communityRelCount > 0 ||
+            info.row.original.entityEntityRelCount > 0;
+          return (
+            <Flex alignItems='center' flexDirection='row'>
+              <i>{info.getValue()}</i>
+              {hasRelationsBreakDownValues &&
+                (info.row.original.status === 'Completed' || info.row.original.status === 'Failed') && (
+                  <Popover>
+                    <Popover.Trigger>
+                      <IconButton isClean ariaLabel='infoicon'>
+                        <InformationCircleIconOutline className='n-size-token-7' />
+                      </IconButton>
+                    </Popover.Trigger>
+                    <Popover.Content className='p-2'>
+                      <ul>
+                        <li>Chunk Relations: {info.row.original.chunkRelCount}</li>
+                        <li>Entity Relations: {info.row.original.entityEntityRelCount}</li>
+                        <li>Community Relations: {info.row.original.communityRelCount}</li>
+                      </ul>
+                    </Popover.Content>
+                  </Popover>
+                )}
+            </Flex>
+          );
+        },
         header: () => <span>Relations</span>,
         footer: (info) => info.column.id,
       }),
@@ -719,6 +776,12 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   accessToken: item?.accessToken ?? '',
                   retryOption: item.retry_condition ?? '',
                   retryOptionStatus: false,
+                  chunkNodeCount: item.chunkNodeCount ?? 0,
+                  chunkRelCount: item.chunkRelCount ?? 0,
+                  entityNodeCount: item.entityNodeCount ?? 0,
+                  entityEntityRelCount: item.entityEntityRelCount ?? 0,
+                  communityNodeCount: item.communityNodeCount ?? 0,
+                  communityRelCount: item.communityRelCount ?? 0,
                 });
               }
             });
@@ -846,6 +909,12 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       status,
       processed_chunk = 0,
       total_chunks,
+      chunkNodeCount,
+      entityNodeCount,
+      communityNodeCount,
+      chunkRelCount,
+      entityEntityRelCount,
+      communityRelCount,
     } = file_name;
     if (fileName && total_chunks) {
       setFilesData((prevfiles) =>
@@ -855,10 +924,16 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               ...curfile,
               status: status,
               nodesCount: nodeCount,
-              relationshipCount: relationshipCount,
+              relationshipsCount: relationshipCount,
               model: model,
               processingTotalTime: processingTime?.toFixed(2),
               processingProgress: Math.floor((processed_chunk / total_chunks) * 100),
+              chunkNodeCount: chunkNodeCount ?? 0,
+              entityNodeCount: entityNodeCount ?? 0,
+              communityNodeCount: communityNodeCount ?? 0,
+              chunkRelCount: chunkRelCount ?? 0,
+              entityEntityRelCount: entityEntityRelCount ?? 0,
+              communityRelCount: communityRelCount ?? 0,
             };
           }
           return curfile;
@@ -876,7 +951,20 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
 
   const updateProgress = (i: statusupdate) => {
     const { file_name } = i;
-    const { fileName, nodeCount = 0, relationshipCount = 0, status, processed_chunk = 0, total_chunks } = file_name;
+    const {
+      fileName,
+      nodeCount = 0,
+      relationshipCount = 0,
+      status,
+      processed_chunk = 0,
+      total_chunks,
+      chunkNodeCount,
+      entityNodeCount,
+      communityNodeCount,
+      chunkRelCount,
+      entityEntityRelCount,
+      communityRelCount,
+    } = file_name;
     if (fileName && total_chunks) {
       console.log({ processed_chunk, total_chunks, percentage: Math.floor((processed_chunk / total_chunks) * 100) });
       setFilesData((prevfiles) =>
@@ -886,8 +974,14 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               ...curfile,
               status: status,
               nodesCount: nodeCount,
-              relationshipCount: relationshipCount,
+              relationshipsCount: relationshipCount,
               processingProgress: Math.floor((processed_chunk / total_chunks) * 100),
+              chunkNodeCount: chunkNodeCount ?? 0,
+              entityNodeCount: entityNodeCount ?? 0,
+              communityNodeCount: communityNodeCount ?? 0,
+              chunkRelCount: chunkRelCount ?? 0,
+              entityEntityRelCount: entityEntityRelCount ?? 0,
+              communityRelCount: communityRelCount ?? 0,
             };
           }
           return curfile;

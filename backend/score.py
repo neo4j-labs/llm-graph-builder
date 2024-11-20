@@ -213,7 +213,6 @@ async def extract_knowledge_graph_from_file(
         start_time = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)   
         graphDb_data_Access = graphDBdataAccess(graph)
-        
         if source_type == 'local file':
             merged_file_path = os.path.join(MERGED_DIR,file_name)
             logging.info(f'File path:{merged_file_path}')
@@ -237,6 +236,22 @@ async def extract_knowledge_graph_from_file(
             return create_api_response('Failed',message='source_type is other than accepted source')
         extract_api_time = time.time() - start_time
         if result is not None:
+            logging.info("Going for counting nodes and relationships in extract")
+            count_node_time = time.time()
+            graph = create_graph_database_connection(uri, userName, password, database)   
+            graphDb_data_Access = graphDBdataAccess(graph)
+            count_response = graphDb_data_Access.update_node_relationship_count(file_name)
+            logging.info("Nodes and Relationship Counts updated")
+            if count_response :
+                result['chunkNodeCount'] = count_response[file_name].get('chunkNodeCount',"0")
+                result['chunkRelCount'] =  count_response[file_name].get('chunkRelCount',"0")
+                result['entityNodeCount']=  count_response[file_name].get('entityNodeCount',"0")
+                result['entityEntityRelCount']=  count_response[file_name].get('entityEntityRelCount',"0")
+                result['communityNodeCount']=  count_response[file_name].get('communityNodeCount',"0")
+                result['communityRelCount']= count_response[file_name].get('communityRelCount',"0")
+                result['nodeCount'] = count_response[file_name].get('nodeCount',"0")
+                result['relationshipCount']  = count_response[file_name].get('relationshipCount',"0")
+                logging.info(f"counting completed in {(time.time()-count_node_time):.2f}")
             result['db_url'] = uri
             result['api_name'] = 'extract'
             result['source_url'] = source_url
@@ -329,6 +344,11 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             await asyncio.to_thread(create_communities, uri, userName, password, database)
             
             logging.info(f'created communities')
+            graph = create_graph_database_connection(uri, userName, password, database)   
+            graphDb_data_Access = graphDBdataAccess(graph)
+            document_name = ""
+            count_response = graphDb_data_Access.update_node_relationship_count(document_name)
+            logging.info(f'Updated source node with community related counts')
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name': api_name, 'db_url': uri, 'userName':userName, 'database':database, 'tasks':tasks, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
@@ -570,7 +590,13 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                         'total_chunks':result[0]['total_chunks'],
                         'fileSize':result[0]['fileSize'],
                         'processed_chunk':result[0]['processed_chunk'],
-                        'fileSource':result[0]['fileSource']
+                        'fileSource':result[0]['fileSource'],
+                        'chunkNodeCount' : result[0]['chunkNodeCount'],
+                        'chunkRelCount' : result[0]['chunkRelCount'],
+                        'entityNodeCount' : result[0]['entityNodeCount'],
+                        'entityEntityRelCount' : result[0]['entityEntityRelCount'],
+                        'communityNodeCount' : result[0]['communityNodeCount'],
+                        'communityRelCount' : result[0]['communityRelCount']
                         })
                     yield status
             except asyncio.CancelledError:
@@ -629,7 +655,14 @@ async def get_document_status(file_name, url, userName, password, database):
                 'model':result[0]['model'],
                 'total_chunks':result[0]['total_chunks'],
                 'fileSize':result[0]['fileSize'],
-                'processed_chunk':result[0]['processed_chunk']
+                'processed_chunk':result[0]['processed_chunk'],
+                'fileSource':result[0]['fileSource'],
+                'chunkNodeCount' : result[0]['chunkNodeCount'],
+                'chunkRelCount' : result[0]['chunkRelCount'],
+                'entityNodeCount' : result[0]['entityNodeCount'],
+                'entityEntityRelCount' : result[0]['entityEntityRelCount'],
+                'communityNodeCount' : result[0]['communityNodeCount'],
+                'communityRelCount' : result[0]['communityRelCount']
                 }
         else:
             status = {'fileName':file_name, 'status':'Failed'}

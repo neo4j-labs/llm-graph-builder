@@ -8,7 +8,13 @@ export default function CustomMenu({
   isRoot = false,
 }: {
   open: boolean;
-  closeHandler: () => void;
+  closeHandler: (
+    event: Event | undefined,
+    closeReason: {
+      type: 'backdropClick' | 'itemClick' | 'escapeKeyDown';
+      id?: string;
+    }
+  ) => void;
   items: Menuitems[] | undefined;
   anchorOrigin: React.RefObject<HTMLElement | null>;
   isRoot?: boolean;
