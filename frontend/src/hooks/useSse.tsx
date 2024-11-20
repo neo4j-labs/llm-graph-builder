@@ -20,6 +20,12 @@ export default function useServerSideEvent(
       model,
       processed_chunk = 0,
       fileSize,
+      chunkNodeCount,
+      entityNodeCount,
+      communityNodeCount,
+      chunkRelCount,
+      entityEntityRelCount,
+      communityRelCount,
     } = eventSourceRes;
     const alertShownStatus = JSON.parse(localStorage.getItem('alertShown') || 'null');
 
@@ -38,6 +44,12 @@ export default function useServerSideEvent(
                 return {
                   ...curfile,
                   status: total_chunks === processed_chunk ? 'Completed' : status,
+                  chunkNodeCount: chunkNodeCount ?? 0,
+                  entityNodeCount: entityNodeCount ?? 0,
+                  communityNodeCount: communityNodeCount ?? 0,
+                  chunkRelCount: chunkRelCount ?? 0,
+                  entityEntityRelCount: entityEntityRelCount ?? 0,
+                  communityRelCount: communityRelCount ?? 0,
                   nodesCount: nodeCount,
                   relationshipsCount: relationshipCount,
                   model: model,
@@ -61,6 +73,12 @@ export default function useServerSideEvent(
               relationshipsCount: relationshipCount,
               model: model,
               processingTotalTime: processingTime?.toFixed(2),
+              chunkNodeCount: chunkNodeCount ?? 0,
+              entityNodeCount: entityNodeCount ?? 0,
+              communityNodeCount: communityNodeCount ?? 0,
+              chunkRelCount: chunkRelCount ?? 0,
+              entityEntityRelCount: entityEntityRelCount ?? 0,
+              communityRelCount: communityRelCount ?? 0,
             };
           }
           return curfile;
