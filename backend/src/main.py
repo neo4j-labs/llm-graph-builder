@@ -341,6 +341,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
       
       start_update_source_node = time.time()
       graphDb_data_Access.update_source_node(obj_source_node)
+      count_response = graphDb_data_Access.update_node_relationship_count(file_name)
       end_update_source_node = time.time()
       elapsed_update_source_node = end_update_source_node - start_update_source_node
       logging.info(f'Time taken to update the document source node: {elapsed_update_source_node:.2f} seconds')
@@ -389,6 +390,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
             obj_source_node.node_count = node_count
             obj_source_node.relationship_count = rel_count
           graphDb_data_Access.update_source_node(obj_source_node)
+          count_response = graphDb_data_Access.update_node_relationship_count(file_name)
       
       result = graphDb_data_Access.get_current_status_document_node(file_name)
       is_cancelled_status = result[0]['is_cancelled']
@@ -404,6 +406,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
       obj_source_node.processing_time = processed_time
 
       graphDb_data_Access.update_source_node(obj_source_node)
+      count_response = graphDb_data_Access.update_node_relationship_count(file_name)
       logging.info('Updated the nodeCount and relCount properties in Document node')
       logging.info(f'file:{file_name} extraction has been completed')
 
@@ -678,6 +681,7 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
       obj_source_node.updated_at = datetime.now()
       graphDb_data_Access = graphDBdataAccess(graph)
       graphDb_data_Access.update_source_node(obj_source_node)
+      count_response = graphDb_data_Access.update_node_relationship_count(file_name)
       obj_source_node = None
       merged_file_path = os.path.join(merged_dir, file_name)
       if source_type == 'local file' and gcs_file_cache == 'True':

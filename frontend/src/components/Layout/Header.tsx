@@ -226,7 +226,11 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
         </nav>
       </div>
       <ChatModeToggle
-        closeHandler={() => setshowChatModeOption(false)}
+        closeHandler={(_, reason) => {
+          if (reason.type === 'backdropClick') {
+            setshowChatModeOption(false);
+          }
+        }}
         open={showChatModeOption}
         menuAnchor={chatAnchor}
         isRoot={false}
