@@ -28,7 +28,8 @@ const HoverableLink: React.FC<HoverableLinkProps> = ({ url, children }) => {
     setHovering(false);
   };
   const isYouTubeURL = (url: string): boolean => {
-    return url.includes('youtube.com') || url.includes('youtu.be');
+    const newurl = new URL(url);
+    return newurl.host === 'youtube.com' || newurl.host === 'youtu.be';
   };
   const extractYouTubeVideoId = (url: string): string => {
     const videoIdRegex = /(?:\/embed\/|\/watch\?v=|\/(?:embed\/|v\/|watch\?.*v=|youtu\.be\/|embed\/|v=))([^&?#]+)/;
