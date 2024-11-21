@@ -554,6 +554,11 @@ def decode_password(pwd):
     decoded_password = sample_string_bytes.decode("utf-8")
     return decoded_password
 
+def encode_password(pwd):
+    data_bytes = pwd.encode('ascii')
+    encoded_pwd_bytes = base64.b64encode(data_bytes)
+    return encoded_pwd_bytes
+
 @app.get("/update_extract_status/{file_name}")
 async def update_extract_status(request:Request, file_name, url, userName, password, database):
     async def generate():
@@ -961,7 +966,8 @@ async def backend_connection_configuation():
             isUsername= os.getenv('NEO4J_USERNAME')
             isDatabase= os.getenv('NEO4J_DATABASE')
             isPassword= os.getenv('NEO4J_PASSWORD')
-            return create_api_response('Success',message=f"Backend connection successful",data={'graph_connection':graph_connection,'uri':isURI,'user_name':isUsername,'database':isDatabase,'password':isPassword})
+            encoded_password = encode_password(isPassword)
+            return create_api_response('Success',message=f"Backend connection successful",data={'graph_connection':graph_connection,'uri':isURI,'user_name':isUsername,'database':isDatabase,'password':encoded_password})
         else:
             graph_connection = False
             return create_api_response('Success',message=f"Backend connection is not successful",data=graph_connection)
