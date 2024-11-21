@@ -60,7 +60,7 @@ def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
   logging.info("creating list of chunks and graph documents in get_chunk_and_graphDocument func")
   lst_chunk_chunkId_document=[]
   for graph_document in graph_document_list:            
-          for chunk_id in graph_document.source.metadata['combined_chunk_ids'] :
+          for chunk_id in graph_document.source.metadata['chunk_id'] :
             lst_chunk_chunkId_document.append({'graph_doc':graph_document,'chunk_id':chunk_id})
                   
   return lst_chunk_chunkId_document  
@@ -94,7 +94,7 @@ def load_embedding_model(embedding_model_name: str):
     return embeddings, dimension
 
 def save_graphDocuments_in_neo4j(graph:Neo4jGraph, graph_document_list:List[GraphDocument]):
-  graph.add_graph_documents(graph_document_list, baseEntityLabel=True,include_source=True)
+  graph.add_graph_documents(graph_document_list, baseEntityLabel=True)
   # graph.add_graph_documents(graph_document_list)
   
 def handle_backticks_nodes_relationship_id_type(graph_document_list:List[GraphDocument]):
