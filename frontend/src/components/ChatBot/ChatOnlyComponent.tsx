@@ -1,29 +1,28 @@
+import { useEffect, useState, useCallback, useReducer } from 'react';
+import { useLocation } from 'react-router';
 import { MessageContextWrapper, useMessageContext } from '../../context/UserMessages';
 import UserCredentialsWrapper, { useCredentials } from '../../context/UserCredentials';
-import Chatbot from './Chatbot';
-import { getIsLoading } from '../../utils/Utils';
 import { FileContextProvider } from '../../context/UsersFiles';
-import { useEffect, useState, useCallback } from 'react';
+import Chatbot from './Chatbot';
 import ConnectionModal from '../Popups/ConnectionModal/ConnectionModal';
-import { clearChatAPI } from '../../services/QnaAPI';
-import { connectionState, Messages, UserCredentials } from '../../types';
-import { useLocation } from 'react-router';
 import Header from '../Layout/Header';
+import { clearChatAPI } from '../../services/QnaAPI';
+import { ChatProps, connectionState, Messages, UserCredentials } from '../../types';
+import { getIsLoading } from '../../utils/Utils';
 
-interface chatProp {
-  chatMessages: Messages[];
-}
-const ChatContent: React.FC<chatProp> = ({ chatMessages }) => {
-  const date = new Date();
+const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
   const { clearHistoryData, messages, setMessages, setClearHistoryData } = useMessageContext();
   const { setUserCredentials, setConnectionStatus, connectionStatus } = useCredentials();
+  const [showBackButton, setShowBackButton]= useReducer((state) => !state, false);
   const [openConnection, setOpenConnection] = useState<connectionState>({
     openPopUp: false,
     chunksExists: false,
     vectorIndexMisMatch: false,
     chunksExistsWithDifferentDimension: false,
   });
-
+  /**
+   * Initializes connection settings based on URL parameters.
+   */
   const initialiseConnection = useCallback(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const uri = urlParams.get('uri');
@@ -31,22 +30,32 @@ const ChatContent: React.FC<chatProp> = ({ chatMessages }) => {
     const encodedPassword = urlParams.get('password');
     const database = urlParams.get('database');
     const port = urlParams.get('port');
-    const openModel = urlParams.get('open') === 'true';
-    if (openModel || !(uri && user && encodedPassword && database && port)) {
+    const openModal = urlParams.get('open') === 'true';
+    if (openModal || !(uri && user && encodedPassword && database && port)) {
       setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
     } else {
-      const credentialsForAPI = { uri, userName: user, password: atob(atob(encodedPassword)), database, port };
-      setUserCredentials({ ...credentialsForAPI });
+      const credentialsForAPI: UserCredentials = {
+        uri,
+        userName: user,
+        password: atob(atob(encodedPassword)),
+        database,
+        port,
+      };
+      setShowBackButton();
+      setUserCredentials(credentialsForAPI);
       setConnectionStatus(true);
       setMessages(chatMessages);
+      // Remove query params from URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, [connectionStatus, setUserCredentials]);
+  }, [chatMessages, setUserCredentials, setConnectionStatus, setMessages]);
 
   useEffect(() => {
     initialiseConnection();
-  }, [connectionStatus]);
-
+  }, [initialiseConnection]);
+  /**
+   * Handles successful connection establishment.
+   */
   const handleConnectionSuccess = () => {
     setConnectionStatus(true);
     setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
@@ -54,26 +63,29 @@ const ChatContent: React.FC<chatProp> = ({ chatMessages }) => {
     urlParams.delete('openModal');
     window.history.replaceState({}, document.title, `${window.location.pathname}?${urlParams.toString()}`);
   };
+  /**
+   * Clears chat history by calling the API.
+   */
   const deleteOnClick = async () => {
     try {
       setClearHistoryData(true);
-      const response = await clearChatAPI(
-        JSON.parse(localStorage.getItem('neo4j.connection') || '{}') as UserCredentials,
-        sessionStorage.getItem('session_id') ?? ''
-      );
+      const credentials = JSON.parse(localStorage.getItem('neo4j.connection') || '{}') as UserCredentials;
+      const sessionId = sessionStorage.getItem('session_id') || '';
+      const response = await clearChatAPI(credentials, sessionId);
       if (response.data.status !== 'Success') {
         setClearHistoryData(false);
       }
     } catch (error) {
-      console.log(error);
+      console.error('Error clearing chat history:', error);
       setClearHistoryData(false);
     }
   };
   useEffect(() => {
     if (clearHistoryData) {
+      const currentDateTime = new Date();
       setMessages([
         {
-          datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
+          datetime: `${currentDateTime.toLocaleDateString()} ${currentDateTime.toLocaleTimeString()}`,
           id: 2,
           modes: {
             'graph+vector+fulltext': {
@@ -87,7 +99,7 @@ const ChatContent: React.FC<chatProp> = ({ chatMessages }) => {
       ]);
       setClearHistoryData(false);
     }
-  }, [clearHistoryData]);
+  }, [clearHistoryData, setMessages]);
   return (
     <>
       <ConnectionModal
@@ -100,36 +112,38 @@ const ChatContent: React.FC<chatProp> = ({ chatMessages }) => {
         onSuccess={handleConnectionSuccess}
         isChatOnly={true}
       />
-      {
+      <div>
+        <Header chatOnly={true} deleteOnClick={deleteOnClick} setOpenConnection={setOpenConnection} showBackButton={showBackButton} />
         <div>
-          <Header chatOnly={true} deleteOnClick={deleteOnClick} setOpenConnection={setOpenConnection} />
-          <div>
-            <Chatbot
-              isFullScreen
-              isChatOnly
-              messages={messages}
-              setMessages={setMessages}
-              clear={clearHistoryData}
-              isLoading={getIsLoading(messages)}
-              connectionStatus={connectionStatus}
-            />
-          </div>
+          <Chatbot
+            isFullScreen
+            isChatOnly
+            messages={messages}
+            setMessages={setMessages}
+            clear={clearHistoryData}
+            isLoading={getIsLoading(messages)}
+            connectionStatus={connectionStatus}
+          />
         </div>
-      }
+      </div>
     </>
   );
 };
+/**
+* ChatOnlyComponent
+* Wrapper component to provide necessary context and initialize chat functionality.
+*/
 const ChatOnlyComponent: React.FC = () => {
   const location = useLocation();
+  const chatMessages = location.state?.messages as Messages[] || [];
   return (
     <UserCredentialsWrapper>
       <FileContextProvider>
         <MessageContextWrapper>
-          <ChatContent chatMessages={location.state as Messages[]} />
+          <ChatContent chatMessages={chatMessages} />
         </MessageContextWrapper>
       </FileContextProvider>
     </UserCredentialsWrapper>
   );
 };
-
 export default ChatOnlyComponent;
