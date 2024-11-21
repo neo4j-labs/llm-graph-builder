@@ -168,13 +168,6 @@ const Content: React.FC<ContentProps> = ({
     }
   }, []);
   useEffect(() => {
-    if (currentPage >= 1) {
-      (async () => {
-        await getChunks(documentName, currentPage);
-      })();
-    }
-  }, [currentPage, documentName]);
-  useEffect(() => {
     if (afterFirstRender) {
       localStorage.setItem('processedCount', JSON.stringify({ db: userCredentials?.uri, count: processedCount }));
     }
