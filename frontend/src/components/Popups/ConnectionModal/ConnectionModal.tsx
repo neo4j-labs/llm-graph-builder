@@ -15,6 +15,7 @@ export default function ConnectionModal({
   isVectorIndexMatch,
   chunksExistsWithoutEmbedding,
   chunksExistsWithDifferentEmbedding,
+  errorMessage
 }: ConnectionModalProps) {
   let prefilledconnection = localStorage.getItem('neo4j.connection');
   let initialuri;
@@ -51,6 +52,12 @@ export default function ConnectionModal({
   const databaseRef = useRef<HTMLInputElement>(null);
   const userNameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (errorMessage) {
+      setMessage({ type: 'danger', content: errorMessage });
+    }
+  }, [errorMessage])
 
   useEffect(() => {
     if (searchParams.has('connectURL')) {

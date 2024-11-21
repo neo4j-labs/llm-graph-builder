@@ -816,7 +816,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     } else {
       setFilesData([]);
     }
-  }, [connectionStatus, userCredentials]);
+  }, [connectionStatus]);
 
   useEffect(() => {
     if (connectionStatus && filesData.length && onlyfortheFirstRender && !isReadOnlyUser) {

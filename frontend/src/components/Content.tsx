@@ -82,6 +82,7 @@ const Content: React.FC<ContentProps> = ({
     setGdsActive,
     setIsReadOnlyUser,
     isReadOnlyUser,
+    errorMessage
   } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
@@ -93,6 +94,7 @@ const Content: React.FC<ContentProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [totalPageCount, setTotalPageCount] = useState<number | null>(null);
   const [textChunks, setTextChunks] = useState<chunkdata[]>([]);
+  const [showDisconnectButton, setDisconnectButtonShow] = useReducer((state) => !state, false);
 
   const [alertStateForRetry, setAlertStateForRetry] = useState<BannerAlertProps>({
     showAlert: false,
@@ -122,9 +124,6 @@ const Content: React.FC<ContentProps> = ({
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
-  
-console.log('connection status', connectionStatus);
-  
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
       showNormalToast(`${fileName} will take approx ${time} ${inMinutes ? 'Min' : 'Sec'}`);
@@ -206,60 +205,61 @@ console.log('connection status', connectionStatus);
     }
   }, [isSchema]);
 
-  // useEffect(() => {
-  //   const connection = localStorage.getItem('neo4j.connection');
-  //   if (connection != null) {
-  //     (async () => {
-  //       const parsedData = JSON.parse(connection);
-  //       const response = await connectAPI(
-  //         parsedData.uri,
-  //         parsedData.user,
-  //         atob(parsedData.password),
-  //         parsedData.database
-  //       );
-  //       if (response?.data?.status === 'Success') {
-  //         localStorage.setItem(
-  //           'neo4j.connection',
-  //           JSON.stringify({
-  //             ...parsedData,
-  //             userDbVectorIndex: response.data.data.db_vector_dimension,
-  //             password: btoa(atob(parsedData.password)),
-  //           })
-  //         );
-  //         if (response.data.data.gds_status !== undefined) {
-  //           setGdsActive(response.data.data.gds_status);
-  //         }
-  //         if (response.data.data.write_access !== undefined) {
-  //           setIsReadOnlyUser(!response.data.data.write_access);
-  //         }
-  //         if (
-  //           (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
-  //             response.data.data.db_vector_dimension == 0) &&
-  //           !response.data.data.chunks_exists
-  //         ) {
-  //           setConnectionStatus(true);
-  //           setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
-  //         } else {
-  //           setOpenConnection({
-  //             openPopUp: true,
-  //             chunksExists: response.data.data.chunks_exists as boolean,
-  //             vectorIndexMisMatch:
-  //               response.data.data.db_vector_dimension > 0 &&
-  //               response.data.data.db_vector_dimension != response.data.data.application_dimension,
-  //             chunksExistsWithDifferentDimension:
-  //               response.data.data.db_vector_dimension > 0 &&
-  //               response.data.data.db_vector_dimension != response.data.data.application_dimension &&
-  //               (response.data.data.chunks_exists ?? true),
-  //           });
-  //           setConnectionStatus(false);
-  //         }
-  //       } else {
-  //         setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-  //         setConnectionStatus(false);
-  //       }
-  //     })();
-  //   }
-  // }, []);
+  useEffect(() => {
+    const connection = localStorage.getItem('neo4j.connection');
+    if (connection != null && !connectionStatus) {
+      (async () => {
+        const parsedData = JSON.parse(connection);
+        const response = await connectAPI(
+          parsedData.uri,
+          parsedData.user,
+          atob(parsedData.password),
+          parsedData.database
+        );
+        if (response?.data?.status === 'Success') {
+          localStorage.setItem(
+            'neo4j.connection',
+            JSON.stringify({
+              ...parsedData,
+              userDbVectorIndex: response.data.data.db_vector_dimension,
+              password: btoa(atob(parsedData.password)),
+            })
+          );
+          if (response.data.data.gds_status !== undefined) {
+            setGdsActive(response.data.data.gds_status);
+          }
+          if (response.data.data.write_access !== undefined) {
+            setIsReadOnlyUser(!response.data.data.write_access);
+          }
+          if (
+            (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
+              response.data.data.db_vector_dimension == 0) &&
+            !response.data.data.chunks_exists
+          ) {
+            setConnectionStatus(true);
+            setDisconnectButtonShow();
+            setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
+          } else {
+            setOpenConnection({
+              openPopUp: true,
+              chunksExists: response.data.data.chunks_exists as boolean,
+              vectorIndexMisMatch:
+                response.data.data.db_vector_dimension > 0 &&
+                response.data.data.db_vector_dimension != response.data.data.application_dimension,
+              chunksExistsWithDifferentDimension:
+                response.data.data.db_vector_dimension > 0 &&
+                response.data.data.db_vector_dimension != response.data.data.application_dimension &&
+                (response.data.data.chunks_exists ?? true),
+            });
+            setConnectionStatus(false);
+          }
+        } else {
+          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+          setConnectionStatus(false);
+        }
+      })();
+    }
+  }, []);
 
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
@@ -554,9 +554,8 @@ console.log('connection status', connectionStatus);
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
-      userCredentials?.port ?? '7687'
-    }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
+      }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -566,10 +565,10 @@ console.log('connection status', connectionStatus);
     isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
       : isRightExpanded
-      ? 'contentWithChatBot'
-      : !isLeftExpanded && !isRightExpanded
-      ? 'w-[calc(100%-128px)]'
-      : 'contentWithDropzoneExpansion';
+        ? 'contentWithChatBot'
+        : !isLeftExpanded && !isRightExpanded
+          ? 'w-[calc(100%-128px)]'
+          : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -601,12 +600,12 @@ console.log('connection status', connectionStatus);
         return prev.map((f) => {
           return f.name === filename
             ? {
-                ...f,
-                status: 'Reprocess',
-                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-                nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-                relationshipCount: isStartFromBegining ? 0 : f.relationshipsCount,
-              }
+              ...f,
+              status: 'Reprocess',
+              processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+              nodesCount: isStartFromBegining ? 0 : f.nodesCount,
+              relationshipCount: isStartFromBegining ? 0 : f.relationshipsCount,
+            }
             : f;
         });
       });
@@ -820,16 +819,19 @@ console.log('connection status', connectionStatus);
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row' flexWrap='wrap'>
-          {/* <Suspense fallback={<FallBackDialog />}>
-            <ConnectionModal
-              open={openConnection.openPopUp}
-              setOpenConnection={setOpenConnection}
-              setConnectionStatus={setConnectionStatus}
-              isVectorIndexMatch={openConnection.vectorIndexMisMatch}
-              chunksExistsWithoutEmbedding={openConnection.chunksExists}
-              chunksExistsWithDifferentEmbedding={openConnection.chunksExistsWithDifferentDimension}
-            />
-          </Suspense> */}
+          <Suspense fallback={<FallBackDialog />}>
+            {!connectionStatus && (
+              <ConnectionModal
+                open={openConnection.openPopUp}
+                setOpenConnection={setOpenConnection}
+                setConnectionStatus={setConnectionStatus}
+                isVectorIndexMatch={openConnection.vectorIndexMisMatch}
+                chunksExistsWithoutEmbedding={openConnection.chunksExists}
+                chunksExistsWithDifferentEmbedding={openConnection.chunksExistsWithDifferentDimension}
+                errorMessage={errorMessage}
+              />
+            )}
+          </Suspense>
           <div className='connectionstatus__container'>
             <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
             <Typography variant='body-medium'>
@@ -864,7 +866,7 @@ console.log('connection status', connectionStatus);
             </Typography>
           </div>
           <div>
-            {/* <ButtonWithToolTip
+            <ButtonWithToolTip
               placement='top'
               text='Enhance graph quality'
               label='Graph Enhancemnet Settings'
@@ -884,10 +886,11 @@ console.log('connection status', connectionStatus);
                 {buttonCaptions.connectToNeo4j}
               </Button>
             ) : (
-              <Button size={isTablet ? 'small' : 'medium'} className='mr-2.5' onClick={disconnect}>
-                {buttonCaptions.disconnect}
-              </Button>
-            )} */}
+              showDisconnectButton && (
+                <Button size={isTablet ? 'small' : 'medium'} className='mr-2.5' onClick={disconnect}>
+                  {buttonCaptions.disconnect}
+                </Button>
+              ))}
           </div>
         </Flex>
         <FileTable
@@ -918,9 +921,8 @@ console.log('connection status', connectionStatus);
           handleGenerateGraph={processWaitingFilesOnRefresh}
         ></FileTable>
         <Flex
-          className={`${
-            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+          className={`${!isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+            } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection={isTablet ? 'column' : 'row'}
         >

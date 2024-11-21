@@ -14,6 +14,8 @@ export const UserConnection = createContext<ContextProps>({
   setConnectionStatus: () => null,
   isReadOnlyUser: false,
   setIsReadOnlyUser: () => null,
+  errorMessage: '',
+  setErrorMessage: () => ''
 });
 export const useCredentials = () => {
   const userCredentials = useContext(UserConnection);
@@ -24,6 +26,7 @@ const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
   const [isGdsActive, setGdsActive] = useState<boolean>(false);
   const [isReadOnlyUser, setIsReadOnlyUser] = useState<boolean>(false);
   const [connectionStatus, setConnectionStatus] = useReducer((state) => !state, false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const value = {
     userCredentials,
     setUserCredentials,
@@ -33,6 +36,8 @@ const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
     setConnectionStatus,
     isReadOnlyUser,
     setIsReadOnlyUser,
+    errorMessage, 
+    setErrorMessage
   };
 
   return <UserConnection.Provider value={value}>{props.children}</UserConnection.Provider>;

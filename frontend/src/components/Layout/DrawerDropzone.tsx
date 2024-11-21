@@ -12,6 +12,7 @@ import GenericButton from '../WebSources/GenericSourceButton';
 import GenericModal from '../WebSources/GenericSourceModal';
 import FallBackDialog from '../UI/FallBackDialog';
 import { useCredentials } from '../../context/UserCredentials';
+
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 
@@ -26,38 +27,41 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
 }) => {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
   const { closeAlert, alertState } = useAlertContext();
-  const { isReadOnlyUser, setConnectionStatus, setUserCredentials, userCredentials } = useCredentials();
+  const { isReadOnlyUser, setConnectionStatus, setUserCredentials, setErrorMessage } = useCredentials();
 
   useEffect(() => {
-    async function getHealthStatus() {
+    async function getConnectionStatus() {
+      let response;
+      let responseConnection;
       try {
-        const response = await healthStatus();
+        response = await healthStatus();
         setIsBackendConnected(response.data.healthy);
-        const responseConnection = await connectionStatusAPI();
+        responseConnection = await connectionStatusAPI();
         setConnectionStatus(responseConnection.data.graph_connection);
         const credentials = {
           uri: responseConnection.data.data.uri,
-          password: responseConnection.data.data.password,
+          password: atob(responseConnection.data.data.password),
           userName: responseConnection.data.data.user_name,
           database: responseConnection.data.data.database,
         };
         setUserCredentials(credentials);
-        // Store the connection info in localStorage
         localStorage.setItem(
           'neo4j.connection',
           JSON.stringify({
-            connectionStatus: responseConnection.data.graph_connection,
-            credentials,
+            uri: responseConnection.data.data.uri,
+            user: responseConnection.data.data.user_name,
+            password: atob(responseConnection.data.data.password),
+            database: responseConnection.data.data.database,
           })
         );
       } catch (error) {
-        setIsBackendConnected(false);
+        setIsBackendConnected(response?.data.healthy);
+        setConnectionStatus(responseConnection?.data?.graph_connection);
+        setErrorMessage(responseConnection?.data?.error);
       }
     }
-    getHealthStatus();
+    getConnectionStatus();
   }, []);
-
-  console.log('user', userCredentials);
 
   const isYoutubeOnlyCheck = useMemo(
     () => APP_SOURCES?.includes('youtube') && !APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('web'),

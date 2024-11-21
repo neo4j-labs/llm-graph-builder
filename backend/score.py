@@ -975,11 +975,12 @@ async def backend_connection_configuation():
             graph_connection = False
             return create_api_response('Success',message=f"Backend connection is not successful",data=graph_connection)
     except Exception as e:
+        graph_connection = False
         job_status = "Failed"
         message="Unable to connect backend DB"
         error_message = str(e)
         logging.exception(f'{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        return create_api_response(job_status, message=message, error=error_message + 'or fill from the modal', data=graph_connection)
     finally:
         gc.collect()    
 
