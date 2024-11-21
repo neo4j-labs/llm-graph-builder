@@ -967,7 +967,10 @@ async def backend_connection_configuation():
             isDatabase= os.getenv('NEO4J_DATABASE')
             isPassword= os.getenv('NEO4J_PASSWORD')
             encoded_password = encode_password(isPassword)
-            return create_api_response('Success',message=f"Backend connection successful",data={'graph_connection':graph_connection,'uri':isURI,'user_name':isUsername,'database':isDatabase,'password':encoded_password})
+            graphDb_data_Access = graphDBdataAccess(graph)
+            gds_status = graphDb_data_Access.check_gds_version()
+            write_access = graphDb_data_Access.check_account_access(database=isDatabase)
+            return create_api_response('Success',message=f"Backend connection successful",data={'graph_connection':graph_connection,'uri':isURI,'user_name':isUsername,'database':isDatabase,'password':encoded_password,'gds_status':gds_status,'write_access':write_access})
         else:
             graph_connection = False
             return create_api_response('Success',message=f"Backend connection is not successful",data=graph_connection)
