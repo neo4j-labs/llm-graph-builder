@@ -223,7 +223,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               defaultMode,
             ])
           );
+          toggleReferenceVisibility();
         }
+
         const metricsResponse = await Promise.allSettled(metricsPromise);
         const successresponse = [];
         for (let index = 0; index < metricsResponse.length; index++) {
@@ -280,6 +282,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               modesarray
             )
           );
+          toggleReferenceVisibility();
         }
         const metricsResponse = await Promise.allSettled(metricsPromise);
         toggleMetricsLoading();
@@ -425,13 +428,18 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               toggleReferenceVisibility={toggleReferenceVisibility}
               isVisible={
                 isSingleMode &&
+                !metricsLoading &&
                 (isAdditionalMetricsWithSingleMode === false || isAdditionalMetricsWithSingleMode === null)
               }
             />
             <MetricsCheckBoxWithCheck
               enableReference={enableReference}
               toggleReferenceVisibility={toggleReferenceVisibility}
-              isVisible={isMultiModes && (isAdditionalMetricsEnabled === false || isAdditionalMetricsEnabled === null)}
+              isVisible={
+                isMultiModes &&
+                !metricsLoading &&
+                (isAdditionalMetricsEnabled === false || isAdditionalMetricsEnabled === null)
+              }
             />
             <TextareaWithCheck
               isVisible={
