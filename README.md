@@ -31,25 +31,6 @@ If you are using Neo4j Desktop, you will not be able to use the docker-compose b
 ### Local deployment
 #### Running through docker-compose
 By default only OpenAI and Diffbot are enabled since Gemini requires extra GCP configurations.
-
-Set the values for nginx configuration in frontend/nginx/nginx.conf.
-
-```
-set $backendapi "BACKEND_API_URL";
-set $segmentapi "SEGMENT_API_URL";
-set $webhost "*.FRONTEND_HOSTNAME";
-```
-Here the SEGMENT_API_URL is optional it will not impact the application it is used for analytics purpose.Both BACKEND_API_URL and FRONTEND_HOSTNAME is compulsory to run the application.
-
-BACKEND_API_URL is the url where backend server is up and running.
-
-FRONTEND_HOSTNAME is the hostname of the frontend application url.
-
-EX:
-
-if the frontend application is running on http://localhost:8080
-the host name will be localhost:8080
-
 According to the environment, we are configuring the models which indicated by VITE_LLM_MODELS_PROD variable we can configure models based on our needs.
 EX:
 ```env
