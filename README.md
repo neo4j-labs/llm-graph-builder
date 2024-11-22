@@ -32,16 +32,17 @@ If you are using Neo4j Desktop, you will not be able to use the docker-compose b
 #### Running through docker-compose
 By default only OpenAI and Diffbot are enabled since Gemini requires extra GCP configurations.
 
-Set the values for nginx configuration in frontend/nginx/nginx.conf
+Set the values for nginx configuration in frontend/nginx/nginx.conf.
 
 ```
 set $backendapi "BACKEND_API_URL";
 set $segmentapi "SEGMENT_API_URL";
 set $webhost "*.FRONTEND_HOSTNAME";
 ```
-Here the SEGMENT_API_URL is optional it will not impact the application it is used for analytics purpose.
-Both BACKEND_API_URL and FRONTEND_HOSTNAME is compulsory to run the application.
+Here the SEGMENT_API_URL is optional it will not impact the application it is used for analytics purpose.Both BACKEND_API_URL and FRONTEND_HOSTNAME is compulsory to run the application.
+
 BACKEND_API_URL is the url where backend server is up and running.
+
 FRONTEND_HOSTNAME is the hostname of the frontend application url.
 #example:
 if the frontend application is running on http://localhost:8080
