@@ -13,7 +13,7 @@ import { getIsLoading } from '../../utils/Utils';
 const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
   const { clearHistoryData, messages, setMessages, setClearHistoryData } = useMessageContext();
   const { setUserCredentials, setConnectionStatus, connectionStatus } = useCredentials();
-  const [showBackButton, setShowBackButton]= useReducer((state) => !state, false);
+  const [showBackButton, setShowBackButton] = useReducer((state) => !state, false);
   const [openConnection, setOpenConnection] = useState<connectionState>({
     openPopUp: false,
     chunksExists: false,
@@ -113,7 +113,12 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
         isChatOnly={true}
       />
       <div>
-        <Header chatOnly={true} deleteOnClick={deleteOnClick} setOpenConnection={setOpenConnection} showBackButton={showBackButton} />
+        <Header
+          chatOnly={true}
+          deleteOnClick={deleteOnClick}
+          setOpenConnection={setOpenConnection}
+          showBackButton={showBackButton}
+        />
         <div>
           <Chatbot
             isFullScreen
@@ -130,12 +135,12 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
   );
 };
 /**
-* ChatOnlyComponent
-* Wrapper component to provide necessary context and initialize chat functionality.
-*/
+ * ChatOnlyComponent
+ * Wrapper component to provide necessary context and initialize chat functionality.
+ */
 const ChatOnlyComponent: React.FC = () => {
   const location = useLocation();
-  const chatMessages = location.state?.messages as Messages[] || [];
+  const chatMessages = (location.state?.messages as Messages[]) || [];
   return (
     <UserCredentialsWrapper>
       <FileContextProvider>

@@ -48,7 +48,7 @@ export default function MultiModeMetrics({
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.answer_relevancy as number, {
-        id: 'Relevancy',
+        id: 'Answer Relevancy',
         cell: (info) => {
           return <Typography variant='body-medium'>{info.getValue().toFixed(2)}</Typography>;
         },
@@ -71,7 +71,7 @@ export default function MultiModeMetrics({
         ),
       }),
       columnHelper.accessor((row) => row.faithfulness as number, {
-        id: 'Score',
+        id: 'Faithfullness',
         cell: (info) => {
           return <Typography variant='body-medium'>{info.getValue().toFixed(2)}</Typography>;
         },
@@ -94,7 +94,7 @@ export default function MultiModeMetrics({
         ),
       }),
       columnHelper.accessor((row) => row.context_entity_recall_score as number, {
-        id: 'Recall Score',
+        id: 'Entity Recall Score',
         cell: (info) => {
           return <Typography variant='body-medium'>{info.getValue()?.toFixed(2)}</Typography>;
         },

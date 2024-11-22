@@ -61,7 +61,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
       const chatUrl = `/chat-only?uri=${encodeURIComponent(
         uri
       )}&user=${userName}&password=${encodedPassword}&database=${database}&port=${port}&connectionStatus=${connectionStatus}`;
-      navigate(chatUrl, { state: { messages, isLoading } });;
+      navigate(chatUrl, { state: { messages, isLoading } });
     } else {
       const chatUrl = `/chat-only?openModal=true`;
       window.open(chatUrl, '_blank');
@@ -170,9 +170,17 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                     {buttonCaptions.connectToNeo4j}
                   </Button>
                 )}
-                {showBackButton && (<IconButtonWithToolTip onClick={onBackButtonClick} clean text='Back' placement='bottom' label='Back' disabled={getIsLoading(messages)}>
-                  <ArrowLeftIconOutline />
-                </IconButtonWithToolTip>
+                {showBackButton && (
+                  <IconButtonWithToolTip
+                    onClick={onBackButtonClick}
+                    clean
+                    text='Back'
+                    placement='bottom'
+                    label='Back'
+                    disabled={getIsLoading(messages)}
+                  >
+                    <ArrowLeftIconOutline />
+                  </IconButtonWithToolTip>
                 )}
                 <div ref={chatAnchor}>
                   <IconButtonWithToolTip
@@ -192,22 +200,25 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                     text={tooltips.downloadChat}
                     aria-label='Download Chat'
                     clean
-                    onClick={() => downloadClickHandler(
-                      { conversation: messages },
-                      downloadLinkRef,
-                      'graph-builder-conversation.json'
-                    )}
+                    onClick={() =>
+                      downloadClickHandler(
+                        { conversation: messages },
+                        downloadLinkRef,
+                        'graph-builder-conversation.json'
+                      )
+                    }
                     disabled={messages.length === 1 || getIsLoading(messages)}
                     placement={chatOnly ? 'left' : 'bottom'}
                     label={tooltips.downloadChat}
                   >
-                    <span ref={downloadLinkRef} ></span>
+                    <span ref={downloadLinkRef}></span>
                     <ArrowDownTrayIconOutline />
                   </IconButtonWithToolTip>
                   <>
                     <TextLink ref={downloadLinkRef} className='!hidden'>
                       ""
-                    </TextLink></>
+                    </TextLink>
+                  </>
                 </>
                 <IconButtonWithToolTip
                   text={tooltips.clearChat}
