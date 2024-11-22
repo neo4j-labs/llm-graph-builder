@@ -12,7 +12,7 @@ import { getIsLoading } from '../../utils/Utils';
 
 const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
   const { clearHistoryData, messages, setMessages, setClearHistoryData } = useMessageContext();
-  const { setUserCredentials, setConnectionStatus, connectionStatus } = useCredentials();
+  const { setUserCredentials, setConnectionStatus, connectionStatus,setShowDisconnectButton } = useCredentials();
   const [showBackButton, setShowBackButton]= useReducer((state) => !state, false);
   const [openConnection, setOpenConnection] = useState<connectionState>({
     openPopUp: false,
@@ -58,6 +58,7 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
    */
   const handleConnectionSuccess = () => {
     setConnectionStatus(true);
+    setShowDisconnectButton(true);
     setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
     const urlParams = new URLSearchParams(window.location.search);
     urlParams.delete('openModal');

@@ -24,21 +24,9 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
   showGCSModal,
   showGenericModal,
 }) => {
-  const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
-  const { closeAlert, alertState } = useAlertContext();
-  const { isReadOnlyUser } = useCredentials();
 
-  useEffect(() => {
-    async function getHealthStatus() {
-      try {
-        const response = await healthStatus();
-        setIsBackendConnected(response.data.healthy);
-      } catch (error) {
-        setIsBackendConnected(false);
-      }
-    }
-    getHealthStatus();
-  }, []);
+  const { closeAlert, alertState } = useAlertContext();
+  const { isReadOnlyUser, isBackendConnected } = useCredentials();
 
   const isYoutubeOnlyCheck = useMemo(
     () => APP_SOURCES?.includes('youtube') && !APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('web'),
@@ -70,9 +58,8 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
               <div className='relative h-full'>
                 <div className='flex flex-col h-full'>
                   <div
-                    className={`mx-6 flex flex-none items-center justify-between ${
-                      process.env.VITE_ENV != 'PROD' ? 'pb-6' : 'pb-5'
-                    }`}
+                    className={`mx-6 flex flex-none items-center justify-between ${process.env.VITE_ENV != 'PROD' ? 'pb-6' : 'pb-5'
+                      }`}
                   >
                     {process.env.VITE_ENV != 'PROD' && (
                       <Typography variant='body-medium' className='flex items-center content-center gap-1'>
@@ -92,31 +79,29 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
                           </div>
                         )}
                         {(APP_SOURCES != undefined && APP_SOURCES.includes('s3')) ||
-                        (APP_SOURCES != undefined && APP_SOURCES.includes('gcs')) ? (
+                          (APP_SOURCES != undefined && APP_SOURCES.includes('gcs')) ? (
                           <>
                             {(APP_SOURCES.includes('youtube') ||
                               APP_SOURCES.includes('wiki') ||
                               APP_SOURCES.includes('web')) && (
-                              <div
-                                className={`outline-dashed imageBg ${
-                                  process.env.VITE_ENV === 'PROD' ? 'w-[245px]' : ''
-                                }`}
-                              >
-                                <GenericButton openModal={toggleGenericModal}></GenericButton>
-                                <GenericModal
-                                  isOnlyYoutube={isYoutubeOnlyCheck}
-                                  isOnlyWikipedia={isWikipediaOnlyCheck}
-                                  isOnlyWeb={iswebOnlyCheck}
-                                  open={showGenericModal}
-                                  closeHandler={toggleGenericModal}
-                                ></GenericModal>
-                              </div>
-                            )}
+                                <div
+                                  className={`outline-dashed imageBg ${process.env.VITE_ENV === 'PROD' ? 'w-[245px]' : ''
+                                    }`}
+                                >
+                                  <GenericButton openModal={toggleGenericModal}></GenericButton>
+                                  <GenericModal
+                                    isOnlyYoutube={isYoutubeOnlyCheck}
+                                    isOnlyWikipedia={isWikipediaOnlyCheck}
+                                    isOnlyWeb={iswebOnlyCheck}
+                                    open={showGenericModal}
+                                    closeHandler={toggleGenericModal}
+                                  ></GenericModal>
+                                </div>
+                              )}
                             {APP_SOURCES.includes('s3') && (
                               <div
-                                className={`outline-dashed imageBg ${
-                                  process.env.VITE_ENV === 'PROD' ? 'w-[245px]' : ''
-                                }`}
+                                className={`outline-dashed imageBg ${process.env.VITE_ENV === 'PROD' ? 'w-[245px]' : ''
+                                  }`}
                               >
                                 <S3Component openModal={toggleS3Modal} />
                                 <Suspense fallback={<FallBackDialog />}>
@@ -126,9 +111,8 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
                             )}
                             {APP_SOURCES.includes('gcs') && (
                               <div
-                                className={`outline-dashed imageBg ${
-                                  process.env.VITE_ENV === 'PROD' ? 'w-[245px]' : ''
-                                }`}
+                                className={`outline-dashed imageBg ${process.env.VITE_ENV === 'PROD' ? 'w-[245px]' : ''
+                                  }`}
                               >
                                 <GCSButton openModal={toggleGCSModal} />
                                 <Suspense fallback={<FallBackDialog />}>
@@ -157,27 +141,26 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
                         {((APP_SOURCES != undefined && APP_SOURCES.includes('youtube')) ||
                           (APP_SOURCES != undefined && APP_SOURCES.includes('wiki')) ||
                           (APP_SOURCES != undefined && APP_SOURCES.includes('web'))) && (
-                          <div
-                            className={`outline-dashed imageBg ${process.env.VITE_ENV === 'PROD' ? 'w-[245px]' : ''}`}
-                          >
-                            <GenericButton openModal={toggleGenericModal}></GenericButton>
-                            <GenericModal
-                              isOnlyYoutube={isYoutubeOnlyCheck}
-                              isOnlyWikipedia={isWikipediaOnlyCheck}
-                              isOnlyWeb={iswebOnlyCheck}
-                              open={showGenericModal}
-                              closeHandler={toggleGenericModal}
-                            ></GenericModal>
-                          </div>
-                        )}
+                            <div
+                              className={`outline-dashed imageBg ${process.env.VITE_ENV === 'PROD' ? 'w-[245px]' : ''}`}
+                            >
+                              <GenericButton openModal={toggleGenericModal}></GenericButton>
+                              <GenericModal
+                                isOnlyYoutube={isYoutubeOnlyCheck}
+                                isOnlyWikipedia={isWikipediaOnlyCheck}
+                                isOnlyWeb={iswebOnlyCheck}
+                                open={showGenericModal}
+                                closeHandler={toggleGenericModal}
+                              ></GenericModal>
+                            </div>
+                          )}
                         {(APP_SOURCES != undefined && APP_SOURCES.includes('s3')) ||
-                        (APP_SOURCES != undefined && APP_SOURCES.includes('gcs')) ? (
+                          (APP_SOURCES != undefined && APP_SOURCES.includes('gcs')) ? (
                           <>
                             {APP_SOURCES != undefined && APP_SOURCES.includes('s3') && (
                               <div
-                                className={`outline-dashed imageBg ${
-                                  process.env.VITE_ENV === 'PROD' ? 'w-[245px]' : ''
-                                }`}
+                                className={`outline-dashed imageBg ${process.env.VITE_ENV === 'PROD' ? 'w-[245px]' : ''
+                                  }`}
                               >
                                 <S3Component openModal={toggleS3Modal} />
                                 <Suspense fallback={<FallBackDialog />}>
@@ -187,9 +170,8 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
                             )}
                             {APP_SOURCES != undefined && APP_SOURCES.includes('gcs') && (
                               <div
-                                className={`outline-dashed imageBg ${
-                                  process.env.VITE_ENV === 'PROD' ? 'w-[245px]' : ''
-                                }`}
+                                className={`outline-dashed imageBg ${process.env.VITE_ENV === 'PROD' ? 'w-[245px]' : ''
+                                  }`}
                               >
                                 <GCSButton openModal={toggleGCSModal} />
                                 <GCSModal
