@@ -56,7 +56,16 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
 
   const { messages, setClearHistoryData, clearHistoryData, setMessages } = useMessageContext();
   const { isSchema, setIsSchema, setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
-  const { setConnectionStatus, setGdsActive, setIsReadOnlyUser, setIsBackendConnected, setUserCredentials, setErrorMessage, setShowDisconnectButton, showDisconnectButton } = useCredentials();
+  const {
+    setConnectionStatus,
+    setGdsActive,
+    setIsReadOnlyUser,
+    setIsBackendConnected,
+    setUserCredentials,
+    setErrorMessage,
+    setShowDisconnectButton,
+    showDisconnectButton,
+  } = useCredentials();
   const { cancel } = useSpeechSynthesis();
 
   useEffect(() => {
@@ -137,12 +146,8 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
                 database: neo4jConnection.database,
                 port: neo4jConnection.uri.split(':')[2],
               });
-              if (neo4jConnection.isgdsActive !== undefined) {
-                setGdsActive(neo4jConnection.isgdsActive);
-              }
-              if (neo4jConnection.isReadOnlyUser !== undefined) {
-                setIsReadOnlyUser(neo4jConnection.isReadOnlyUser);
-              }
+              setGdsActive(neo4jConnection.isgdsActive);
+              setIsReadOnlyUser(neo4jConnection.isReadOnlyUser);
             } else {
               setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
               setShowDisconnectButton(true);
@@ -156,7 +161,6 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
     }
     getHealthStatus();
   }, []);
-
 
   const deleteOnClick = async () => {
     try {

@@ -12,13 +12,12 @@ import {
   OptionType,
   UserCredentials,
   chunkdata,
-  connectionState,
 } from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
-import { useSearchParams } from 'react-router-dom';
+// import { useSearchParams } from 'react-router-dom';
 import {
   batchSize,
   buttonCaptions,
@@ -60,7 +59,7 @@ const Content: React.FC<ContentProps> = ({
   toggleEnhancementDialog,
   setOpenConnection,
   showDisconnectButton,
-  connectionStatus
+  connectionStatus,
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
@@ -68,13 +67,7 @@ const Content: React.FC<ContentProps> = ({
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [documentName, setDocumentName] = useState<string>('');
-  const {
-    setUserCredentials,
-    userCredentials,
-    setConnectionStatus,
-    isGdsActive,
-    isReadOnlyUser,
-  } = useCredentials();
+  const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [retryFile, setRetryFile] = useState<string>('');
@@ -537,8 +530,9 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -548,10 +542,10 @@ const Content: React.FC<ContentProps> = ({
     isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
       : isRightExpanded
-        ? 'contentWithChatBot'
-        : !isLeftExpanded && !isRightExpanded
-          ? 'w-[calc(100%-128px)]'
-          : 'contentWithDropzoneExpansion';
+      ? 'contentWithChatBot'
+      : !isLeftExpanded && !isRightExpanded
+      ? 'w-[calc(100%-128px)]'
+      : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -583,12 +577,12 @@ const Content: React.FC<ContentProps> = ({
         return prev.map((f) => {
           return f.name === filename
             ? {
-              ...f,
-              status: 'Reprocess',
-              processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-              nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-              relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
-            }
+                ...f,
+                status: 'Reprocess',
+                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                nodesCount: isStartFromBegining ? 0 : f.nodesCount,
+                relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
+              }
             : f;
         });
       });
@@ -856,9 +850,11 @@ const Content: React.FC<ContentProps> = ({
                 {buttonCaptions.connectToNeo4j}
               </Button>
             ) : (
-              showDisconnectButton && (<Button size={isTablet ? 'small' : 'medium'} className='mr-2.5' onClick={disconnect}>
-                {buttonCaptions.disconnect}
-              </Button>)
+              showDisconnectButton && (
+                <Button size={isTablet ? 'small' : 'medium'} className='mr-2.5' onClick={disconnect}>
+                  {buttonCaptions.disconnect}
+                </Button>
+              )
             )}
           </div>
         </Flex>
@@ -890,8 +886,9 @@ const Content: React.FC<ContentProps> = ({
           handleGenerateGraph={processWaitingFilesOnRefresh}
         ></FileTable>
         <Flex
-          className={`${!isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-            } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+          className={`${
+            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection={isTablet ? 'column' : 'row'}
         >

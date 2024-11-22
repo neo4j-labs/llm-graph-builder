@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, FunctionComponent, ReactNode, useReducer } from 'react';
+import { createContext, useState, useContext, FunctionComponent, ReactNode } from 'react';
 import { ContextProps, UserCredentials } from '../types';
 
 type Props = {
@@ -19,7 +19,7 @@ export const UserConnection = createContext<ContextProps>({
   errorMessage: '',
   setErrorMessage: () => null,
   showDisconnectButton: false,
-  setShowDisconnectButton:() => null,
+  setShowDisconnectButton: () => null,
 });
 export const useCredentials = () => {
   const userCredentials = useContext(UserConnection);
@@ -32,7 +32,7 @@ const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [showDisconnectButton,setShowDisconnectButton]= useState<boolean>(false);
+  const [showDisconnectButton, setShowDisconnectButton] = useState<boolean>(false);
   const value = {
     userCredentials,
     setUserCredentials,
@@ -44,10 +44,10 @@ const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
     setIsReadOnlyUser,
     isBackendConnected,
     setIsBackendConnected,
-    errorMessage, 
+    errorMessage,
     setErrorMessage,
     showDisconnectButton,
-    setShowDisconnectButton
+    setShowDisconnectButton,
   };
 
   return <UserConnection.Provider value={value}>{props.children}</UserConnection.Provider>;

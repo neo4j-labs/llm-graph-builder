@@ -1,7 +1,6 @@
 import { Drawer, Flex, StatusIndicator, Typography } from '@neo4j-ndl/react';
 import DropZone from '../DataSources/Local/DropZone';
-import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
-import { healthStatus } from '../../services/HealthStatus';
+import React, { useMemo, Suspense, lazy } from 'react';
 import S3Component from '../DataSources/AWS/S3Bucket';
 import { DrawerProps } from '../../types';
 import GCSButton from '../DataSources/GCS/GCSButton';
@@ -24,7 +23,6 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
   showGCSModal,
   showGenericModal,
 }) => {
-
   const { closeAlert, alertState } = useAlertContext();
   const { isReadOnlyUser, isBackendConnected } = useCredentials();
 

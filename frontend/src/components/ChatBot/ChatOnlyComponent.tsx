@@ -9,11 +9,12 @@ import Header from '../Layout/Header';
 import { clearChatAPI } from '../../services/QnaAPI';
 import { ChatProps, connectionState, Messages, UserCredentials } from '../../types';
 import { getIsLoading } from '../../utils/Utils';
+import ThemeWrapper from '../../context/ThemeWrapper';
 
 const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
   const { clearHistoryData, messages, setMessages, setClearHistoryData } = useMessageContext();
-  const { setUserCredentials, setConnectionStatus, connectionStatus,setShowDisconnectButton } = useCredentials();
-  const [showBackButton, setShowBackButton]= useReducer((state) => !state, false);
+  const { setUserCredentials, setConnectionStatus, connectionStatus, setShowDisconnectButton } = useCredentials();
+  const [showBackButton, setShowBackButton] = useReducer((state) => !state, false);
   const [openConnection, setOpenConnection] = useState<connectionState>({
     openPopUp: false,
     chunksExists: false,
@@ -114,7 +115,12 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
         isChatOnly={true}
       />
       <div>
-        <Header chatOnly={true} deleteOnClick={deleteOnClick} setOpenConnection={setOpenConnection} showBackButton={showBackButton} />
+        <Header
+          chatOnly={true}
+          deleteOnClick={deleteOnClick}
+          setOpenConnection={setOpenConnection}
+          showBackButton={showBackButton}
+        />
         <div>
           <Chatbot
             isFullScreen
@@ -131,20 +137,22 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
   );
 };
 /**
-* ChatOnlyComponent
-* Wrapper component to provide necessary context and initialize chat functionality.
-*/
+ * ChatOnlyComponent
+ * Wrapper component to provide necessary context and initialize chat functionality.
+ */
 const ChatOnlyComponent: React.FC = () => {
   const location = useLocation();
-  const chatMessages = location.state?.messages as Messages[] || [];
+  const chatMessages = (location.state?.messages as Messages[]) || [];
   return (
-    <UserCredentialsWrapper>
-      <FileContextProvider>
-        <MessageContextWrapper>
-          <ChatContent chatMessages={chatMessages} />
-        </MessageContextWrapper>
-      </FileContextProvider>
-    </UserCredentialsWrapper>
+    <ThemeWrapper>
+      <UserCredentialsWrapper>
+        <FileContextProvider>
+          <MessageContextWrapper>
+            <ChatContent chatMessages={chatMessages} />
+          </MessageContextWrapper>
+        </FileContextProvider>
+      </UserCredentialsWrapper>
+    </ThemeWrapper>
   );
 };
 export default ChatOnlyComponent;

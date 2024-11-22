@@ -1,6 +1,6 @@
 import { Button, Dialog, TextInput, Select, Banner, Dropzone, Typography, TextLink, Flex } from '@neo4j-ndl/react';
 import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import {connectAPI} from '../../../services/ConnectAPI';
+import { connectAPI } from '../../../services/ConnectAPI';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useSearchParams } from 'react-router-dom';
 import { buttonCaptions } from '../../../utils/Constants';
@@ -41,7 +41,7 @@ export default function ConnectionModal({
   const [username, setUsername] = useState<string>(initialusername ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
-  const { setUserCredentials, userCredentials, setGdsActive, setIsReadOnlyUser,errorMessage } = useCredentials();
+  const { setUserCredentials, userCredentials, setGdsActive, setIsReadOnlyUser, errorMessage } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [userDbVectorIndex, setUserDbVectorIndex] = useState<number | undefined>(initialuserdbvectorindex ?? undefined);
@@ -127,7 +127,7 @@ export default function ConnectionModal({
     if (errorMessage) {
       setMessage({ type: 'danger', content: errorMessage });
     }
-  }, [errorMessage])
+  }, [errorMessage]);
 
   const parseAndSetURI = (uri: string, urlparams = false) => {
     const uriParts: string[] = uri.split('://');
