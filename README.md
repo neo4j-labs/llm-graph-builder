@@ -44,7 +44,9 @@ Here the SEGMENT_API_URL is optional it will not impact the application it is us
 BACKEND_API_URL is the url where backend server is up and running.
 
 FRONTEND_HOSTNAME is the hostname of the frontend application url.
+
 #example:
+
 if the frontend application is running on http://localhost:8080
 the host name will be localhost:8080
 
