@@ -69,7 +69,7 @@ function RetryConfirmationDialog({
             <ButtonWithToolTip
               placement='top'
               label='Retry action button'
-              text={!file?.retryOption.length ? `Please Select One Of The Option` : 'Reset The Status To Reprocess'}
+              text={!file?.retryOption.length ? `Please Select One Of The Option` : 'Reset The Status To Ready to Reprocess'}
               loading={retryLoading}
               disabled={!file?.retryOption.length}
               onClick={() => {
