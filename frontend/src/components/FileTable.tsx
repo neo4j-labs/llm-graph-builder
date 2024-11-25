@@ -3,7 +3,6 @@ import {
   DataGridComponents,
   Flex,
   IconButton,
-  Popover,
   ProgressBar,
   StatusIndicator,
   TextLink,
@@ -42,7 +41,6 @@ import {
   ClipboardDocumentIconSolid,
   MagnifyingGlassCircleIconSolid,
   DocumentTextIconSolid,
-  InformationCircleIconOutline,
 } from '@neo4j-ndl/react/icons';
 import CustomProgressBar from './UI/CustomProgressBar';
 import subscribe from '../services/PollingAPI';
@@ -55,6 +53,7 @@ import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
+import BreakDownPopOver from './BreakDownPopOver';
 
 let onlyfortheFirstRender = true;
 
@@ -62,7 +61,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry, onChunkView } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
-  const { userCredentials, isReadOnlyUser, isGdsActive } = useCredentials();
+  const { userCredentials, isReadOnlyUser } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -513,25 +512,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             info.row.original.chunkNodeCount > 0 ||
             info.row.original.communityNodeCount > 0 ||
             info.row.original.entityNodeCount > 0;
+
           return (
             <Flex alignItems='center' flexDirection='row'>
               <i>{info.getValue()}</i>
               {hasNodeBreakDownValues &&
                 (info.row.original.status === 'Completed' || info.row.original.status === 'Failed') && (
-                  <Popover>
-                    <Popover.Trigger>
-                      <IconButton isClean ariaLabel='infoicon'>
-                        <InformationCircleIconOutline className='n-size-token-7' />
-                      </IconButton>
-                    </Popover.Trigger>
-                    <Popover.Content className='p-2'>
-                      <ul>
-                        <li>Chunk Nodes: {info.row.original.chunkNodeCount}</li>
-                        <li>Entity Nodes: {info.row.original.entityNodeCount}</li>
-                        {isGdsActive && <li>Community Nodes: {info.row.original.communityNodeCount}</li>}
-                      </ul>
-                    </Popover.Content>
-                  </Popover>
+                  <BreakDownPopOver file={info.row.original} isNodeCount={true} />
                 )}
             </Flex>
           );
@@ -551,20 +538,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               <i>{info.getValue()}</i>
               {hasRelationsBreakDownValues &&
                 (info.row.original.status === 'Completed' || info.row.original.status === 'Failed') && (
-                  <Popover>
-                    <Popover.Trigger>
-                      <IconButton isClean ariaLabel='infoicon'>
-                        <InformationCircleIconOutline className='n-size-token-7' />
-                      </IconButton>
-                    </Popover.Trigger>
-                    <Popover.Content className='p-2'>
-                      <ul>
-                        <li>Chunk Relations: {info.row.original.chunkRelCount}</li>
-                        <li>Entity Relations: {info.row.original.entityEntityRelCount}</li>
-                        {isGdsActive && <li>Community Relations: {info.row.original.communityRelCount}</li>}
-                      </ul>
-                    </Popover.Content>
-                  </Popover>
+                  <BreakDownPopOver file={info.row.original} isNodeCount={false} />
                 )}
             </Flex>
           );
@@ -769,8 +743,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   language: item?.language ?? '',
                   processingProgress:
                     item?.processed_chunk != undefined &&
-                      item?.total_chunks != undefined &&
-                      !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
+                    item?.total_chunks != undefined &&
+                    !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
                   accessToken: item?.accessToken ?? '',
