@@ -188,7 +188,7 @@ const Content: React.FC<ContentProps> = ({
           const response = await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
           if (response.data.status === 'Success') {
             const communityfiles = response.data.data;
-            communityfiles.forEach((c: CustomFile) => {
+            communityfiles.forEach((c:any) => {
               setFilesData((prev) => {
                 return prev.map((f) => {
                   if (f.name === c.name) {
@@ -200,6 +200,8 @@ const Content: React.FC<ContentProps> = ({
                       chunkRelCount: c.chunkRelCount ?? 0,
                       entityEntityRelCount: c.entityEntityRelCount ?? 0,
                       communityRelCount: c.communityRelCount ?? 0,
+                      nodesCount: c.nodeCount,
+                      relationshipsCount: c.relationshipCount
                     };
                   }
                   return f;
@@ -469,7 +471,7 @@ const Content: React.FC<ContentProps> = ({
         const response = await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
         if (response.data.status === 'Success') {
           const communityfiles = response.data.data;
-          communityfiles.forEach((c: CustomFile) => {
+          communityfiles.forEach((c: any) => {
             setFilesData((prev) => {
               return prev.map((f) => {
                 if (f.name === c.name) {
@@ -481,6 +483,8 @@ const Content: React.FC<ContentProps> = ({
                     chunkRelCount: c.chunkRelCount ?? 0,
                     entityEntityRelCount: c.entityEntityRelCount ?? 0,
                     communityRelCount: c.communityRelCount ?? 0,
+                    nodesCount: c.nodeCount,
+                    relationshipsCount: c.relationshipCount
                   };
                 }
                 return f;
