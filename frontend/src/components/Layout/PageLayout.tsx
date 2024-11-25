@@ -75,24 +75,19 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
       const environment = process.env.VITE_ENV;
       const isDev = environment === 'DEV';
       // Fetch backend health status
-      const responseHealth = await healthStatus();
-      if (responseHealth?.data?.healthy === true || responseHealth?.data?.healthy === false) {
-        setIsBackendConnected(responseHealth.data.healthy);
-      } else {
-        console.error('Invalid response for health status');
+      try {
+        const response = await healthStatus();
+        setIsBackendConnected(response.data.healthy);
+      } catch (error) {
         setIsBackendConnected(false);
       }
-      // Helper function to set the disconnect button state
-      function handleDisconnectButtonState(isModalOpen: boolean) {
-        if (typeof isModalOpen === 'boolean') {
-          setShowDisconnectButton(isModalOpen);
-          localStorage.setItem('disconnectButtonState', isModalOpen ? 'true' : 'false');
-        } else {
-          console.error('Invalid value for disconnect button state:', isModalOpen);
-        }
+      // To set the disconnect button state
+      const handleDisconnectButtonState = (isModalOpen: boolean) => {
+        setShowDisconnectButton(isModalOpen);
+        localStorage.setItem('disconnectButtonState', isModalOpen ? 'true' : 'false');
       }
-      // Helper function to parse and set user credentials from session
-      function setUserCredentialsFromSession(neo4jConnection: string) {
+      // To parse and set user credentials from session
+      const setUserCredentialsFromSession = (neo4jConnection: string) => {
         if (!neo4jConnection) {
           console.error('Invalid session data:', neo4jConnection);
           return;
@@ -125,16 +120,16 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
           console.error('Failed to parse session data:', error);
         }
       }
-      // Helper function to update credentials if environment values differ
-      function updateSessionIfNeeded(envCredentials: UserCredentials, storedSession: string) {
+      // To update credentials if environment values differ
+      const updateSessionIfNeeded = (envCredentials: UserCredentials, storedSession: string) => {
         try {
           const storedCredentials = JSON.parse(storedSession);
-          const isDifferent =
+          const isDiffCreds =
             envCredentials.uri !== storedCredentials.uri ||
             envCredentials.userName !== storedCredentials.user ||
             btoa(envCredentials.password) !== storedCredentials.password ||
             envCredentials.database !== storedCredentials.database;
-          if (isDifferent) {
+          if (isDiffCreds) {
             setUserCredentials(envCredentials);
             localStorage.setItem(
               'neo4j.connection',
@@ -163,22 +158,22 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
             let backendApiResponse;
             try {
               backendApiResponse = await envConnectionAPI();
-                const connectionData = backendApiResponse.data;
-                const envCredentials = {
-                  uri: connectionData.data.uri,
-                  password: atob(connectionData.data.password),
-                  userName: connectionData.data.user_name,
-                  database: connectionData.data.database,
-                  isReadonlyUser: connectionData.data.write_access,
-                  isGds: connectionData.data.gds_status,
-                };
-                const updated = updateSessionIfNeeded(envCredentials, session);
-                if (!updated) {
-                  setUserCredentialsFromSession(session); // Use stored session if no update is needed
-                }
-                setConnectionStatus(!!connectionData.graph_connection);
-                setIsBackendConnected(true);
-                handleDisconnectButtonState(false);
+              const connectionData = backendApiResponse.data;
+              const envCredentials = {
+                uri: connectionData.data.uri,
+                password: atob(connectionData.data.password),
+                userName: connectionData.data.user_name,
+                database: connectionData.data.database,
+                isReadonlyUser: connectionData.data.write_access,
+                isGds: connectionData.data.gds_status,
+              };
+              const updated = updateSessionIfNeeded(envCredentials, session);
+              if (!updated) {
+                setUserCredentialsFromSession(session); // Using stored session if no update is needed
+              }
+              setConnectionStatus(!!connectionData.graph_connection);
+              setIsBackendConnected(true);
+              handleDisconnectButtonState(false);
             } catch (error) {
               console.error('Error in DEV session handling:', error);
               handleDisconnectButtonState(true);
@@ -186,7 +181,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
               setErrorMessage(backendApiResponse?.data.error);
             }
           } else {
-            // For PROD, prioritize the session values
+            // For PROD, picking the session values
             setUserCredentialsFromSession(session);
             setConnectionStatus(true);
             setIsBackendConnected(true);
@@ -196,9 +191,10 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
         }
         // Handle case where no session exists
         if (isDev) {
+          let envAPiResponse;
           try {
-            const response = await envConnectionAPI();
-            const connectionData = response.data.data;
+            envAPiResponse = await envConnectionAPI();
+            const connectionData = envAPiResponse.data.data;
             const credentials = {
               uri: connectionData.uri,
               password: atob(connectionData.password),
@@ -227,7 +223,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
             console.error('Error in DEV no-session handling:', error);
             handleDisconnectButtonState(true);
             setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-            setErrorMessage('Connection failed in DEV environment.');
+            setErrorMessage(envAPiResponse?.data.error);
           }
         } else {
           // For PROD: Open modal to manually connect
@@ -236,10 +232,8 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
           setIsBackendConnected(false);
         }
       } catch (error) {
-        // General error handling
         console.error('Error in initializeConnection:', error);
         setIsBackendConnected(false);
-        setErrorMessage('Network error');
       }
     }
     initializeConnection();
