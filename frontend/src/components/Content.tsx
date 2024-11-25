@@ -261,7 +261,9 @@ const Content: React.FC<ContentProps> = ({
         return {
           ...curfile,
           model:
-            curfile.status === 'New' || curfile.status === 'Ready to Reprocess' ? selectedOption?.value ?? '' : curfile.model,
+            curfile.status === 'New' || curfile.status === 'Ready to Reprocess'
+              ? selectedOption?.value ?? ''
+              : curfile.model,
         };
       });
     });
@@ -621,7 +623,8 @@ const Content: React.FC<ContentProps> = ({
   );
 
   const newFilecheck = useMemo(
-    () => childRef.current?.getSelectedRows().filter((f) => f.status === 'New' || f.status == 'Ready to Reprocess').length,
+    () =>
+      childRef.current?.getSelectedRows().filter((f) => f.status === 'New' || f.status == 'Ready to Reprocess').length,
     [childRef.current?.getSelectedRows()]
   );
 
@@ -721,7 +724,11 @@ const Content: React.FC<ContentProps> = ({
       }
     } else if (filesData.length) {
       const largefiles = filesData.filter((f) => {
-        if (typeof f.size === 'number' && (f.status === 'New' || f.status == 'Ready to Reprocess') && f.size > largeFileSize) {
+        if (
+          typeof f.size === 'number' &&
+          (f.status === 'New' || f.status == 'Ready to Reprocess') &&
+          f.size > largeFileSize
+        ) {
           return true;
         }
         return false;
