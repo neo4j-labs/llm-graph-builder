@@ -184,8 +184,37 @@ const Content: React.FC<ContentProps> = ({
     if (processedCount === 1 && queue.isEmpty()) {
       (async () => {
         showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
-        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
-        showSuccessToast('All Q&A functionality is available now.');
+        try {
+          const response = await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+          if (response.data.status === 'Success') {
+            const communityfiles = response.data.data;
+            communityfiles.forEach((c: CustomFile) => {
+              setFilesData((prev) => {
+                return prev.map((f) => {
+                  if (f.name === c.name) {
+                    return {
+                      ...f,
+                      chunkNodeCount: c.chunkNodeCount ?? 0,
+                      entityNodeCount: c.entityNodeCount ?? 0,
+                      communityNodeCount: c.communityNodeCount ?? 0,
+                      chunkRelCount: c.chunkRelCount ?? 0,
+                      entityEntityRelCount: c.entityEntityRelCount ?? 0,
+                      communityRelCount: c.communityRelCount ?? 0,
+                    };
+                  }
+                  return f;
+                });
+              });
+            });
+            showSuccessToast('All Q&A functionality is available now.');
+          } else {
+            throw new Error(response.data.error);
+          }
+        } catch (error) {
+          if (error instanceof Error) {
+            showSuccessToast(error.message);
+          }
+        }
       })();
     }
   }, [processedCount, userCredentials, queue, isReadOnlyUser, isGdsActive]);
@@ -436,8 +465,37 @@ const Content: React.FC<ContentProps> = ({
   const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
     if (!remainingFiles.length) {
       showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
-      await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
-      showSuccessToast('All Q&A functionality is available now.');
+      try {
+        const response = await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+        if (response.data.status === 'Success') {
+          const communityfiles = response.data.data;
+          communityfiles.forEach((c: CustomFile) => {
+            setFilesData((prev) => {
+              return prev.map((f) => {
+                if (f.name === c.name) {
+                  return {
+                    ...f,
+                    chunkNodeCount: c.chunkNodeCount ?? 0,
+                    entityNodeCount: c.entityNodeCount ?? 0,
+                    communityNodeCount: c.communityNodeCount ?? 0,
+                    chunkRelCount: c.chunkRelCount ?? 0,
+                    entityEntityRelCount: c.entityEntityRelCount ?? 0,
+                    communityRelCount: c.communityRelCount ?? 0,
+                  };
+                }
+                return f;
+              });
+            });
+          });
+          showSuccessToast('All Q&A functionality is available now.');
+        } else {
+          throw new Error(response.data.error);
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          showSuccessToast(error.message);
+        }
+      }
     }
     for (let index = 0; index < remainingFiles.length; index++) {
       const f = remainingFiles[index];
