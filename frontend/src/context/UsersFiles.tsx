@@ -16,7 +16,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const selectedNodeLabelstr = localStorage.getItem('selectedNodeLabels');
   const selectedNodeRelsstr = localStorage.getItem('selectedRelationshipLabels');
   const persistedQueue = localStorage.getItem('waitingQueue');
-  const { userCredentials } = useCredentials();
+  const { userCredentials, isGdsActive } = useCredentials();
   const [files, setFiles] = useState<(File | null)[] | []>([]);
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
   const [queue, setQueue] = useState<Queue>(
@@ -35,12 +35,17 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     triggeredFrom: '',
     show: false,
   });
-  const [postProcessingTasks, setPostProcessingTasks] = useState<string[]>([
-    'materialize_text_chunk_similarities',
-    'enable_hybrid_search_and_fulltext_search_in_bloom',
-    'materialize_entity_similarities',
-    'enable_communities',
-  ]);
+  const [postProcessingTasks, setPostProcessingTasks] = useState<string[]>(() => {
+    const tasks = [
+      'materialize_text_chunk_similarities',
+      'enable_hybrid_search_and_fulltext_search_in_bloom',
+      'materialize_entity_similarities',
+    ];
+    if (isGdsActive) {
+      tasks.push('enable_communities');
+    }
+    return tasks;
+  });
   const [processedCount, setProcessedCount] = useState<number>(0);
   const [postProcessingVal, setPostProcessingVal] = useState<boolean>(false);
 
