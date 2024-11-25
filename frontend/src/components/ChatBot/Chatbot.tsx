@@ -410,8 +410,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   return (
     <div className={'n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'}>
       <div
-        className={`flex overflow-y-auto pb-12 min-w-full pl-5 pr-5 ${
-          isChatOnly ? 'min-h-[calc(100dvh-114px)]' : 'chatBotContainer'
+        className={`flex overflow-y-auto pb-12 min-w-full pl-5 pr-5 chatBotContainer ${
+          isChatOnly ? 'min-h-[calc(100dvh-102px)] max-h-[calc(100dvh-102px)]' : ''
         } `}
       >
         <Widget className='n-bg-palette-neutral-bg-weak w-full' header='' isElevated={false}>

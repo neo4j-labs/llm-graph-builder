@@ -222,7 +222,7 @@ export default function DropZoneForSmallLayouts() {
   return (
     <>
       <div {...getRootProps({ className: 'dropzone' })}>
-        <input {...getInputProps()} />
+        <input {...getInputProps()} aria-label='dropzone' />
         {isLoading ? <LoadingSpinner size='medium' /> : <CloudArrowUpIconSolid className='n-size-token-7' />}
       </div>
     </>

@@ -144,6 +144,7 @@ export const tooltips = {
   clearGraphSettings: 'Clear configured Graph Schema',
   applySettings: 'Apply Graph Schema',
   openChatPopout: 'Chat',
+  downloadChat: 'Download Conversation',
 };
 
 export const buttonCaptions = {

@@ -8,8 +8,9 @@ import {
   ArrowTopRightOnSquareIconOutline,
   TrashIconOutline,
   ArrowLeftIconOutline,
+  ArrowDownTrayIconOutline,
 } from '@neo4j-ndl/react/icons';
-import { Button, Typography } from '@neo4j-ndl/react';
+import { Button, TextLink, Typography } from '@neo4j-ndl/react';
 import { Dispatch, memo, SetStateAction, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { buttonCaptions, tooltips } from '../../utils/Constants';
@@ -21,21 +22,23 @@ import { useMessageContext } from '../../context/UserMessages';
 import { RiChatSettingsLine } from 'react-icons/ri';
 import ChatModeToggle from '../ChatBot/ChatModeToggle';
 import { connectionState } from '../../types';
+import { downloadClickHandler, getIsLoading } from '../../utils/Utils';
 
 interface HeaderProp {
   chatOnly?: boolean;
   deleteOnClick?: () => void;
   setOpenConnection?: Dispatch<SetStateAction<connectionState>>;
+  showBackButton?: boolean;
 }
 
-const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnection }) => {
+const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnection, showBackButton }) => {
   const { colorMode, toggleColorMode } = useContext(ThemeWrapperContext);
   const navigate = useNavigate();
   const { messages } = useMessageContext();
   const handleURLClick = useCallback((url: string) => {
     window.open(url, '_blank');
   }, []);
-
+  const downloadLinkRef = useRef<HTMLAnchorElement>(null);
   const { isSchema, setIsSchema } = useFileContext();
   const { connectionStatus } = useCredentials();
   const chatAnchor = useRef<HTMLDivElement>(null);
@@ -46,6 +49,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
 
   const openChatPopout = useCallback(() => {
     let session = localStorage.getItem('neo4j.connection');
+    const isLoading = getIsLoading(messages);
     if (session) {
       const neo4jConnection = JSON.parse(session);
       const { uri } = neo4jConnection;
@@ -57,7 +61,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
       const chatUrl = `/chat-only?uri=${encodeURIComponent(
         uri
       )}&user=${userName}&password=${encodedPassword}&database=${database}&port=${port}&connectionStatus=${connectionStatus}`;
-      navigate(chatUrl, { state: messages });
+      navigate(chatUrl, { state: { messages, isLoading } });
     } else {
       const chatUrl = `/chat-only?openModal=true`;
       window.open(chatUrl, '_blank');
@@ -140,6 +144,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                     text={tooltips.openChatPopout}
                     size='large'
                     clean
+                    disabled={getIsLoading(messages)}
                   >
                     <ArrowTopRightOnSquareIconOutline />
                   </IconButtonWithToolTip>
@@ -165,9 +170,18 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                     {buttonCaptions.connectToNeo4j}
                   </Button>
                 )}
-                <IconButtonWithToolTip onClick={onBackButtonClick} clean text='Back' placement='bottom' label='Back'>
-                  <ArrowLeftIconOutline />
-                </IconButtonWithToolTip>
+                {showBackButton && (
+                  <IconButtonWithToolTip
+                    onClick={onBackButtonClick}
+                    clean
+                    text='Back'
+                    placement='bottom'
+                    label='Back'
+                    disabled={getIsLoading(messages)}
+                  >
+                    <ArrowLeftIconOutline />
+                  </IconButtonWithToolTip>
+                )}
                 <div ref={chatAnchor}>
                   <IconButtonWithToolTip
                     onClick={() => {
@@ -181,12 +195,37 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                     <RiChatSettingsLine />
                   </IconButtonWithToolTip>
                 </div>
+                <>
+                  <IconButtonWithToolTip
+                    text={tooltips.downloadChat}
+                    aria-label='Download Chat'
+                    clean
+                    onClick={() =>
+                      downloadClickHandler(
+                        { conversation: messages },
+                        downloadLinkRef,
+                        'graph-builder-conversation.json'
+                      )
+                    }
+                    disabled={messages.length === 1 || getIsLoading(messages)}
+                    placement={chatOnly ? 'left' : 'bottom'}
+                    label={tooltips.downloadChat}
+                  >
+                    <span ref={downloadLinkRef}></span>
+                    <ArrowDownTrayIconOutline />
+                  </IconButtonWithToolTip>
+                  <>
+                    <TextLink ref={downloadLinkRef} className='!hidden'>
+                      ""
+                    </TextLink>
+                  </>
+                </>
                 <IconButtonWithToolTip
                   text={tooltips.clearChat}
                   aria-label='Remove chat history'
                   clean
                   onClick={deleteOnClick}
-                  disabled={messages.length === 1}
+                  disabled={messages.length === 1 || getIsLoading(messages)}
                   placement={chatOnly ? 'left' : 'bottom'}
                   label={tooltips.clearChat}
                 >

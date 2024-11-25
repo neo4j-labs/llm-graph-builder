@@ -168,13 +168,6 @@ const Content: React.FC<ContentProps> = ({
     }
   }, []);
   useEffect(() => {
-    if (currentPage >= 1) {
-      (async () => {
-        await getChunks(documentName, currentPage);
-      })();
-    }
-  }, [currentPage, documentName]);
-  useEffect(() => {
     if (afterFirstRender) {
       localStorage.setItem('processedCount', JSON.stringify({ db: userCredentials?.uri, count: processedCount }));
     }
@@ -603,7 +596,7 @@ const Content: React.FC<ContentProps> = ({
                 status: 'Reprocess',
                 processingProgress: isStartFromBegining ? 0 : f.processingProgress,
                 nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-                relationshipCount: isStartFromBegining ? 0 : f.relationshipsCount,
+                relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
               }
             : f;
         });
