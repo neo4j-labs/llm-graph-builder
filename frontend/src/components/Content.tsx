@@ -191,7 +191,7 @@ const Content: React.FC<ContentProps> = ({
             communityfiles.forEach((c:any) => {
               setFilesData((prev) => {
                 return prev.map((f) => {
-                  if (f.name === c.name) {
+                  if (f.name === c.filename) {
                     return {
                       ...f,
                       chunkNodeCount: c.chunkNodeCount ?? 0,
@@ -474,7 +474,7 @@ const Content: React.FC<ContentProps> = ({
           communityfiles.forEach((c: any) => {
             setFilesData((prev) => {
               return prev.map((f) => {
-                if (f.name === c.name) {
+                if (f.name === c.filename) {
                   return {
                     ...f,
                     chunkNodeCount: c.chunkNodeCount ?? 0,
