@@ -109,10 +109,9 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
               userName: parsedConnection.user,
               password: atob(parsedConnection.password),
               database: parsedConnection.database,
-              port: parsedConnection.uri.split(':')[2],
             });
-            setGdsActive(parsedConnection.isGDS || false);
-            setIsReadOnlyUser(parsedConnection.isReadOnlyUser || false);
+            setGdsActive(parsedConnection.isGDS);
+            //setIsReadOnlyUser(parsedConnection.isReadOnlyUser || false);
           } else {
             console.error('Invalid parsed session data:', parsedConnection);
           }
@@ -139,7 +138,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
                 password: btoa(envCredentials.password),
                 database: envCredentials.database,
                 userDbVectorIndex: 384,
-                isReadOnlyUser: envCredentials.isReadonlyUser,
+                // isReadOnlyUser: envCredentials.isReadonlyUser,
                 isGDS: envCredentials.isGds,
               })
             );
@@ -164,14 +163,14 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
                 password: atob(connectionData.data.password),
                 userName: connectionData.data.user_name,
                 database: connectionData.data.database,
-                isReadonlyUser: connectionData.data.write_access,
+                // isReadonlyUser: connectionData.data.write_access,
                 isGds: connectionData.data.gds_status,
               };
               const updated = updateSessionIfNeeded(envCredentials, session);
               if (!updated) {
                 setUserCredentialsFromSession(session); // Using stored session if no update is needed
               }
-              setConnectionStatus(!!connectionData.graph_connection);
+              setConnectionStatus(!!connectionData.data.graph_connection);
               setIsBackendConnected(true);
               handleDisconnectButtonState(false);
             } catch (error) {
@@ -185,7 +184,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
             setUserCredentialsFromSession(session);
             setConnectionStatus(true);
             setIsBackendConnected(true);
-            handleDisconnectButtonState(false);
+            handleDisconnectButtonState(true);
           }
           return;
         }
@@ -200,7 +199,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
               password: atob(connectionData.password),
               userName: connectionData.user_name,
               database: connectionData.database,
-              isReadonlyUser: connectionData.write_access,
+              // isReadonlyUser: connectionData.write_access,
               isGds: connectionData.gds_status,
             };
             setUserCredentials(credentials);
@@ -212,7 +211,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
                 password: btoa(credentials.password),
                 database: credentials.database,
                 userDbVectorIndex: 384,
-                isReadOnlyUser: credentials.isReadonlyUser,
+                // isReadOnlyUser: credentials.isReadonlyUser,
                 isGDS: credentials.isGds,
               })
             );
