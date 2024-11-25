@@ -173,9 +173,9 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                     <span className='mx-1'>
                       <IconButtonWithToolTip
                         placement='right'
-                        text='Reprocess'
+                        text='Ready to Reprocess'
                         size='small'
-                        label='reprocess'
+                        label='Ready to Reprocess'
                         clean
                         onClick={() => onRetry(info?.row?.id as string)}
                       >

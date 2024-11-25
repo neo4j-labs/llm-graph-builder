@@ -70,7 +70,7 @@ export const statusCheck = (status: string) => {
       return 'danger';
     case 'Upload Failed':
       return 'danger';
-    case 'Reprocess':
+    case 'Ready to Reprocess':
       return 'info';
     default:
       return 'unknown';
@@ -379,7 +379,7 @@ export const getFileSourceStatus = (item: SourceNode) => {
   if (item?.fileSource === 'local file') {
     return item?.status;
   }
-  if (item?.status === 'Completed' || item.status === 'Failed' || item.status === 'Reprocess') {
+  if (item?.status === 'Completed' || item.status === 'Failed' || item.status === 'Ready to Reprocess') {
     return item?.status;
   }
   if (
