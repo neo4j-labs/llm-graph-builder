@@ -62,7 +62,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry, onChunkView } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
-  const { userCredentials, isReadOnlyUser } = useCredentials();
+  const { userCredentials, isReadOnlyUser, isGdsActive } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -528,7 +528,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                       <ul>
                         <li>Chunk Nodes: {info.row.original.chunkNodeCount}</li>
                         <li>Entity Nodes: {info.row.original.entityNodeCount}</li>
-                        <li>Community Nodes: {info.row.original.communityNodeCount}</li>
+                        {isGdsActive && <li>Community Nodes: {info.row.original.communityNodeCount}</li>}
                       </ul>
                     </Popover.Content>
                   </Popover>
@@ -561,7 +561,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                       <ul>
                         <li>Chunk Relations: {info.row.original.chunkRelCount}</li>
                         <li>Entity Relations: {info.row.original.entityEntityRelCount}</li>
-                        <li>Community Relations: {info.row.original.communityRelCount}</li>
+                        {isGdsActive && <li>Community Relations: {info.row.original.communityRelCount}</li>}
                       </ul>
                     </Popover.Content>
                   </Popover>
@@ -769,8 +769,8 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   language: item?.language ?? '',
                   processingProgress:
                     item?.processed_chunk != undefined &&
-                    item?.total_chunks != undefined &&
-                    !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
+                      item?.total_chunks != undefined &&
+                      !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
                   accessToken: item?.accessToken ?? '',
