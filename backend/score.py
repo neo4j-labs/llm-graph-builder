@@ -826,7 +826,7 @@ async def retry_processing(uri=Form(), userName=Form(), password=Form(), databas
         json_obj = {'api_name':'retry_processing', 'db_url':uri, 'userName':userName, 'database':database, 'file_name':file_name,'retry_condition':retry_condition,
                             'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
-        return create_api_response('Success',message=f"Status set to Reprocess for filename : {file_name}")
+        return create_api_response('Success',message=f"Status set to Ready to Reprocess for filename : {file_name}")
     except Exception as e:
         job_status = "Failed"
         message="Unable to set status to Retry"
