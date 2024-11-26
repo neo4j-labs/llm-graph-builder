@@ -182,6 +182,24 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                     <ArrowLeftIconOutline />
                   </IconButtonWithToolTip>
                 )}
+                <IconButtonWithToolTip
+                  label={tooltips.theme}
+                  text={tooltips.theme}
+                  clean
+                  size='large'
+                  onClick={toggleColorMode}
+                  placement='bottom'
+                >
+                  {colorMode === 'dark' ? (
+                    <span role='img' aria-label='sun'>
+                      <SunIconOutline />
+                    </span>
+                  ) : (
+                    <span role='img' aria-label='moon'>
+                      <MoonIconOutline />
+                    </span>
+                  )}
+                </IconButtonWithToolTip>
                 <div ref={chatAnchor}>
                   <IconButtonWithToolTip
                     onClick={() => {

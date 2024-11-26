@@ -152,6 +152,9 @@ export interface ContentProps {
   setIsSchema: Dispatch<SetStateAction<boolean>>;
   showEnhancementDialog: boolean;
   toggleEnhancementDialog: () => void;
+  setOpenConnection: Dispatch<SetStateAction<connectionState>>;
+  showDisconnectButton: boolean;
+  connectionStatus: boolean;
 }
 
 export interface FileTableProps {
@@ -745,6 +748,12 @@ export interface ContextProps {
   setIsReadOnlyUser: Dispatch<SetStateAction<boolean>>;
   connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
+  isBackendConnected: boolean;
+  setIsBackendConnected: Dispatch<SetStateAction<boolean>>;
+  errorMessage: string;
+  setErrorMessage: Dispatch<SetStateAction<string>>;
+  showDisconnectButton: boolean;
+  setShowDisconnectButton: Dispatch<SetStateAction<boolean>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];

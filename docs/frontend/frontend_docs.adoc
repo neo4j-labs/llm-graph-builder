@@ -18,53 +18,80 @@ This document provides a comprehensive guide for developers on how we build a Re
     .
     ├── Components 
     |    ├─ ChatBot
-    |    |   ├─ ChatBotInfoModal
+    |    |   ├─ ChatInfoModal
     |    |   ├─ ChatModeToggle
     |    |   ├─ ExpandedChatButtonContainer
+    |    |   ├─ ChatModesSwitch
+    |    |   ├─ ChatOnlyComponent
+    |    |   ├─ ChatInfo
+    |    |   ├─ CommonChatActions
+    |    |   ├─ CommunitiesInfo
+    |    |   ├─ EntitiesInfo
+    |    |   ├─ MetricsCheckbox
+    |    |   ├─ MetricsTab
+    |    |   ├─ MultiModeMetrics
+    |    |   ├─ SourcesInfo
     |    ├─ Data Sources
     |    |   ├─ AWS
     |    |   ├─ GCS
     |    |   ├─ Local
-    |    |   ├─ WebSources
-    |    |   |   ├─Web
-    |    |   |   ├─Wikipedia
-    |    |   |   ├─Youtube
+    |    |   ├─ Web
+    |    |   |   ├─ WebButton
     |    ├─ Graph
+    |    |   ├─ CheckboxSelection
+    |    |   ├─ GraphPropertiesPanel
+    |    |   ├─ GraphPropertiesTable
     |    |   ├─ GraphViewButton
     |    |   ├─ GraphViewModal
     |    |   ├─ LegendsChip
+    |    |   ├─ ResizePanel
+    |    |   ├─ ResultOverview
     |    ├─ Layout
-    |    |   ├─ Content
+    |    |   ├─ AlertIcon
     |    |   ├─ DrawerChatbot
     |    |   ├─ DrawerDropzone
     |    |   ├─ Header
     |    |   ├─ PageLayout
     |    |   ├─ SideNav
     |    ├─ Popups
+    |    |   ├─ ChunkPopUp
     |    |   ├─ ConnectionModal
     |    |   ├─ DeletePopup
     |    |   ├─ GraphEnhancementDialog
     |    |   ├─ LargeFilePopup
+    |    |   ├─ RetryConfirmation
     |    |   ├─ Settings
     |    ├─ UI
     |    |   ├─ Alert
     |    |   ├─ ButtonWithTooltip
     |    |   ├─ CustomButton
-    |    |   ├─ CustomModal
+    |    |   ├─ CustomCheckBox
+    |    |   ├─ CustomMenu
     |    |   ├─ CustomProgressBar
-    |    |   ├─ CustomSourceInput
-    |    |   ├─ Dropdown
+    |    |   ├─ DatabaseIcon
+    |    |   ├─ DatabaseStatusIcon
     |    |   ├─ ErrorBoundary
-    |    |   ├─ FileTable
-    |    |   ├─ GenericSourceButton
-    |    |   ├─ GenericSourceModal
+    |    |   ├─ FallBackDialog
     |    |   ├─ HoverableLink
     |    |   ├─ IconButtonTooltip
     |    |   ├─ Legend
-    |    |   ├─ Menu
-    |    |   ├─ QuickStarter
+    |    |   ├─ ScienceMolecule
+    |    |   ├─ ShowAll
+    |    |   ├─ TipWrapper
+    |    ├─ Websources
+    |    |   ├─ Web
+    |    |   ├─ Wikipedia
+    |    |   ├─ Youtube
+    |    |   ├─ CustomSourceInput
+    |    |   ├─ GenericSourceButton
+    |    |   ├─ GenericSourceModal
+    |    ├─ Content
+    |    ├─ Dropdown
+    |    ├─ FileTable
+    |    ├─ QuickStarter
     ├── HOC
-    |    ├─ SettingModalHOC
+    |    ├─ CustomModal
+    |    ├─ withVisibility
     ├── Assets
     |    ├─ images
     |    |   ├─ Application Images
@@ -87,8 +114,14 @@ This document provides a comprehensive guide for developers on how we build a Re
     |    ├─ constants
     |    ├─ FileAPI
     |    ├─ Loader
-    |    ├─ Types
+    |    ├─ Queue
+    |    ├─ toats
     |    ├─ utils
+    ├── App
+    ├── index
+    ├── main
+    ├── router
+    ├── types
     └── README.md
 
 == Application
@@ -98,7 +131,10 @@ Added Node.js with version v21.1.0 and npm on the development machine.
 Install necessary dependencies by running yarn install, such as axios for making HTTP requests and others to interact with the graph.
 
 == 2.	Connect to the Neo4j Aura instance: 
-Created a connection modal by adding details including protocol, URI, database name, username, and password. Added a submit button that triggers an API: ***/connect*** and accepts params like uri, password, username and database to establish a connection to the Neo4j Aura instance. Handled the authentication and error scenarios appropriately, by displaying relevant messages. To check whether the backend connection is up and working we hit the API: ***/health***
+Created a connection modal by adding details including protocol, URI, database name, username, and password. Added a submit button that triggers an API: ***/connect*** and accepts params like uri, password, username and database to establish a connection to the Neo4j Aura instance. Handled the authentication and error scenarios appropriately, by displaying relevant messages. To check whether the backend connection is up and working we hit the API: ***/health.*** The user can now access both AURA DS and AURA DB instances. 
+
+* If GDS Connection is there icon is scientific molecule >  Graph enhancement model > Post processing jobs > gives user the leverage to check and uncheck the communities checkbox.
+* If AURA DB > icon is database icon > Graph enhancement model > Post processing jobs > communities checkbox is disabled.
 
 * Before Connection :
 
@@ -240,6 +276,10 @@ image::images/LightMode.jpg[LightMode, 600]
 User can delete all number/selected files from the table.
 
 image::images/DeleteFiles.jpg[DeleteFiles, 600]
+
+* ***Chat Only Mode***
+
+User can also use the chat only feature by navigating to the url https://dev-frontend-dcavk67s4a-uc.a.run.app/chat-only to ask questions related to documents which have been completely processed. User is required to pass the login credentials to connect to the database.
 
 == 8. Interface Design: 
 Designed a user-friendly interface that guides users through the process of connecting to Neo4j Aura, accessing file sources, uploading PDF files, and generating graphs.
