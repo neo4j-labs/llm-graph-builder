@@ -17,6 +17,7 @@ import type { Node, Relationship } from '@neo4j-nvl/base';
 import {
   ArrowPathIconOutline,
   FitToScreenIcon,
+  InformationCircleIconOutline,
   MagnifyingGlassMinusIconOutline,
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
@@ -62,10 +63,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-      ? queryMap.DocChunks
-      : graphType.includes('Entities')
-      ? queryMap.Entities
-      : '';
+        ? queryMap.DocChunks
+        : graphType.includes('Entities')
+          ? queryMap.Entities
+          : '';
 
   // fit graph to original position
   const handleZoomToFit = () => {
@@ -107,10 +108,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
-              userCredentials as UserCredentials,
-              graphQuery,
-              selectedRows?.map((f) => f.name)
-            )
+            userCredentials as UserCredentials,
+            graphQuery,
+            selectedRows?.map((f) => f.name)
+          )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -348,6 +349,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       >
         <Dialog.Header htmlAttributes={{ id: 'graph-title' }}>
           {headerTitle}
+          {viewPoint !== graphLabels.chatInfoView && (<div style={{ display: 'flex', alignItems: 'center' }}>
+            <span>
+              <InformationCircleIconOutline className='n-size-token-6' />
+            </span>
+            <span className='n-body-small ml-1'>{graphLabels.chunksInfo}</span>
+          </div>)}
           <Flex className='w-full' alignItems='center' flexDirection='row'>
             {checkBoxView && (
               <CheckboxSelection
