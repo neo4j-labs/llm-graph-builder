@@ -22,7 +22,7 @@ export default function BreakDownPopOver({ file, isNodeCount = true }: { file: C
           {isGdsActive && <li>Community Nodes: {file.communityNodeCount}</li>}
         </ul>
       ) : (
-        <ul>
+        <ul className='p-2'>
           <li>Chunk Relations: {file.chunkRelCount}</li>
           <li>Entity Relations: {file.entityEntityRelCount}</li>
           {isGdsActive && <li>Community Relations: {file.communityRelCount}</li>}

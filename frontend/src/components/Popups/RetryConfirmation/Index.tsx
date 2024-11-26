@@ -30,7 +30,8 @@ function RetryConfirmationDialog({
     <Dialog isOpen={open} onClose={onClose}>
       <Dialog.Header>Reprocess Options</Dialog.Header>
       <Dialog.Description>
-        Clicking "Continue" will mark these files as "Ready to Reprocess." To proceed, click “Generate Graph” to start the reprocessing process.
+        Clicking "Continue" will mark these files as "Ready to Reprocess." To proceed, click “Generate Graph” to start
+        the reprocessing process.
       </Dialog.Description>
       <Dialog.Content>
         {alertStatus.showAlert && (
