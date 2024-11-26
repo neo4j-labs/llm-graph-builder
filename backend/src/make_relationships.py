@@ -1,4 +1,3 @@
-#from langchain_community.graphs import Neo4jGraph
 from langchain_neo4j import Neo4jGraph
 from langchain.docstore.document import Document
 from src.shared.common_fn import load_embedding_model

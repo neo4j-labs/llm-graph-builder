@@ -1,7 +1,5 @@
 import logging
 import os
-from datetime import datetime
-#from langchain_community.graphs import Neo4jGraph
 from langchain_neo4j import Neo4jGraph
 from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model
 from src.document_sources.gcs_bucket import delete_file_from_gcs
@@ -104,7 +102,7 @@ class graphDBdataAccess:
 
             param= {"props":params}
             
-            print(f'Base Param value 1 : {param}')
+            logging.info(f'Base Param value 1 : {param}')
             query = "MERGE(d:Document {fileName :$props.fileName}) SET d += $props"
             logging.info("Update source node properties")
             self.graph.query(query,param)
@@ -409,7 +407,7 @@ class graphDBdataAccess:
     
     def merge_duplicate_nodes(self,duplicate_nodes_list):
         nodes_list = json.loads(duplicate_nodes_list)
-        print(f'Nodes list to merge {nodes_list}')
+        logging.info(f'Nodes list to merge {nodes_list}')
         query = """
         UNWIND $rows AS row
         CALL { with row

@@ -6,17 +6,13 @@ from langchain_google_vertexai import ChatVertexAI
 from langchain_groq import ChatGroq
 from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
 from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransformer
-import concurrent.futures
-from concurrent.futures import ThreadPoolExecutor
 from langchain_experimental.graph_transformers import LLMGraphTransformer
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_anthropic import ChatAnthropic
 from langchain_fireworks import ChatFireworks
 from langchain_aws import ChatBedrock
 from langchain_community.chat_models import ChatOllama
 import boto3
 import google.auth
-from src.shared.constants import MODEL_VERSIONS, PROMPT_TO_ALL_LLMs
 
 
 def get_llm(model: str):
@@ -28,7 +24,6 @@ def get_llm(model: str):
     if "gemini" in model:
         model_name = env_value
         credentials, project_id = google.auth.default()
-        #model_name = MODEL_VERSIONS[model]
         llm = ChatVertexAI(
             model_name=model_name,
             #convert_system_message_to_human=True,
@@ -44,7 +39,6 @@ def get_llm(model: str):
             },
         )
     elif "openai" in model:
-        #model_name = MODEL_VERSIONS[model]
         model_name, api_key = env_value.split(",")
         llm = ChatOpenAI(
             api_key=api_key,
@@ -176,20 +170,7 @@ async def get_graph_document_list(
             allowed_nodes=allowedNodes,
             allowed_relationships=allowedRelationship,
             ignore_tool_usage=True,
-            #prompt = ChatPromptTemplate.from_messages(["system",PROMPT_TO_ALL_LLMs])
         )
-    # with ThreadPoolExecutor(max_workers=10) as executor:
-    #     for chunk in combined_chunk_document_list:
-    #         chunk_doc = Document(
-    #             page_content=chunk.page_content.encode("utf-8"), metadata=chunk.metadata
-    #         )
-    #         futures.append(
-    #             executor.submit(llm_transformer.convert_to_graph_documents, [chunk_doc])
-    #         )
-
-    #     for i, future in enumerate(concurrent.futures.as_completed(futures)):
-    #         graph_document = future.result()
-    #         graph_document_list.append(graph_document[0])
     
     if isinstance(llm,DiffbotGraphTransformer):
         graph_document_list = llm_transformer.convert_to_graph_documents(combined_chunk_document_list)

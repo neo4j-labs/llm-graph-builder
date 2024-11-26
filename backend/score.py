@@ -582,7 +582,6 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                     graph = create_graph_database_connection(uri, userName, decoded_password, database)
                     graphDb_data_Access = graphDBdataAccess(graph)
                     result = graphDb_data_Access.get_current_status_document_node(file_name)
-                    # print(f'Result of document status in SSE : {result}')
                     if len(result) > 0:
                         status = json.dumps({'fileName':file_name, 
                         'status':result[0]['Status'],
@@ -669,7 +668,7 @@ async def get_document_status(file_name, url, userName, password, database):
                 }
         else:
             status = {'fileName':file_name, 'status':'Failed'}
-        print(f'Result of document status in refresh : {result}')
+        logging.info(f'Result of document status in refresh : {result}')
         return create_api_response('Success',message="",file_name=status)
     except Exception as e:
         message=f"Unable to get the document status"
@@ -963,7 +962,7 @@ async def fetch_chunktext(
 async def backend_connection_configuation():
     try:
         graph = Neo4jGraph()
-        print(f'login connection status of object: {graph}')
+        logging.info(f'login connection status of object: {graph}')
         if graph is not None:
             graph_connection = True
             isURI = os.getenv('NEO4J_URI')
