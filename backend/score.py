@@ -557,6 +557,11 @@ def decode_password(pwd):
     decoded_password = sample_string_bytes.decode("utf-8")
     return decoded_password
 
+def encode_password(pwd):
+    data_bytes = pwd.encode('ascii')
+    encoded_pwd_bytes = base64.b64encode(data_bytes)
+    return encoded_pwd_bytes
+
 @app.get("/update_extract_status/{file_name}")
 async def update_extract_status(request:Request, file_name, url, userName, password, database):
     async def generate():
@@ -960,16 +965,25 @@ async def backend_connection_configuation():
         print(f'login connection status of object: {graph}')
         if graph is not None:
             graph_connection = True
-            return create_api_response('Success',message=f"Backend connection successful",data=graph_connection)
+            isURI = os.getenv('NEO4J_URI')
+            isUsername= os.getenv('NEO4J_USERNAME')
+            isDatabase= os.getenv('NEO4J_DATABASE')
+            isPassword= os.getenv('NEO4J_PASSWORD')
+            encoded_password = encode_password(isPassword)
+            graphDb_data_Access = graphDBdataAccess(graph)
+            gds_status = graphDb_data_Access.check_gds_version()
+            write_access = graphDb_data_Access.check_account_access(database=isDatabase)
+            return create_api_response('Success',message=f"Backend connection successful",data={'graph_connection':graph_connection,'uri':isURI,'user_name':isUsername,'database':isDatabase,'password':encoded_password,'gds_status':gds_status,'write_access':write_access})
         else:
             graph_connection = False
             return create_api_response('Success',message=f"Backend connection is not successful",data=graph_connection)
     except Exception as e:
+        graph_connection = False
         job_status = "Failed"
         message="Unable to connect backend DB"
         error_message = str(e)
         logging.exception(f'{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        return create_api_response(job_status, message=message, error=error_message + ' or fill from the login dialog', data=graph_connection)
     finally:
         gc.collect()    
 

@@ -979,3 +979,26 @@ The API responsible for a evaluating chatbot responses on the basis of different
     }
 }
 ....
+=== Backend Database connection 
+----
+POST /backend_connection_configuation
+----
+
+The API responsible for create the connection obj from Neo4j DB based on environment variable and return the status for show/hide login dialog on UI 
+
+**Response :**
+[source,json,indent=0]
+....
+{
+  "status": "Success",
+  "data": true,
+  "message": "Backend connection successful"
+}
+....
+
+....
+{
+  "status": "Failed",
+  "error": "Could not connect to Neo4j database. Please ensure that the username and password are correct",
+  "message": "Unable to connect backend DB"
+}
