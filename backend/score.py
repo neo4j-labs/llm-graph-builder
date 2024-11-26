@@ -318,6 +318,7 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         tasks = set(map(str.strip, json.loads(tasks)))
+        count_response = ""
         start = time.time()
         if "materialize_text_chunk_similarities" in tasks:
             await asyncio.to_thread(update_graph, graph)
@@ -343,12 +344,14 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             graphDb_data_Access = graphDBdataAccess(graph)
             document_name = ""
             count_response = graphDb_data_Access.update_node_relationship_count(document_name)
-            logging.info(f'Updated source node with community related counts')
+            if count_response:
+                count_response = [{"filename": filename, **counts} for filename, counts in count_response.items()]
+                logging.info(f'Updated source node with community related counts')
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name': api_name, 'db_url': uri, 'userName':userName, 'database':database, 'tasks':tasks, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
-        logger.log_struct(json_obj)
-        return create_api_response('Success', message='All tasks completed successfully')
+        # logger.log_struct(json_obj)
+        return create_api_response('Success', data=count_response, message='All tasks completed successfully')
     
     except Exception as e:
         job_status = "Failed"
@@ -554,6 +557,11 @@ def decode_password(pwd):
     sample_string_bytes = base64.b64decode(pwd)
     decoded_password = sample_string_bytes.decode("utf-8")
     return decoded_password
+
+def encode_password(pwd):
+    data_bytes = pwd.encode('ascii')
+    encoded_pwd_bytes = base64.b64encode(data_bytes)
+    return encoded_pwd_bytes
 
 @app.get("/update_extract_status/{file_name}")
 async def update_extract_status(request:Request, file_name, url, userName, password, database):
@@ -827,7 +835,7 @@ async def retry_processing(uri=Form(), userName=Form(), password=Form(), databas
         json_obj = {'api_name':'retry_processing', 'db_url':uri, 'userName':userName, 'database':database, 'file_name':file_name,'retry_condition':retry_condition,
                             'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
-        return create_api_response('Success',message=f"Status set to Reprocess for filename : {file_name}")
+        return create_api_response('Success',message=f"Status set to Ready to Reprocess for filename : {file_name}")
     except Exception as e:
         job_status = "Failed"
         message="Unable to set status to Retry"
@@ -958,16 +966,25 @@ async def backend_connection_configuation():
         print(f'login connection status of object: {graph}')
         if graph is not None:
             graph_connection = True
-            return create_api_response('Success',message=f"Backend connection successful",data=graph_connection)
+            isURI = os.getenv('NEO4J_URI')
+            isUsername= os.getenv('NEO4J_USERNAME')
+            isDatabase= os.getenv('NEO4J_DATABASE')
+            isPassword= os.getenv('NEO4J_PASSWORD')
+            encoded_password = encode_password(isPassword)
+            graphDb_data_Access = graphDBdataAccess(graph)
+            gds_status = graphDb_data_Access.check_gds_version()
+            write_access = graphDb_data_Access.check_account_access(database=isDatabase)
+            return create_api_response('Success',message=f"Backend connection successful",data={'graph_connection':graph_connection,'uri':isURI,'user_name':isUsername,'database':isDatabase,'password':encoded_password,'gds_status':gds_status,'write_access':write_access})
         else:
             graph_connection = False
             return create_api_response('Success',message=f"Backend connection is not successful",data=graph_connection)
     except Exception as e:
+        graph_connection = False
         job_status = "Failed"
         message="Unable to connect backend DB"
         error_message = str(e)
         logging.exception(f'{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        return create_api_response(job_status, message=message, error=error_message + ' or fill from the login dialog', data=graph_connection)
     finally:
         gc.collect()    
 

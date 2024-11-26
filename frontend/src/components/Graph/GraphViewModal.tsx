@@ -17,6 +17,7 @@ import type { Node, Relationship } from '@neo4j-nvl/base';
 import {
   ArrowPathIconOutline,
   FitToScreenIcon,
+  InformationCircleIconOutline,
   MagnifyingGlassMinusIconOutline,
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
@@ -348,6 +349,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       >
         <Dialog.Header htmlAttributes={{ id: 'graph-title' }}>
           {headerTitle}
+          {viewPoint !== graphLabels.chatInfoView && (
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span>
+                <InformationCircleIconOutline className='n-size-token-6' />
+              </span>
+              <span className='n-body-small ml-1'>{graphLabels.chunksInfo}</span>
+            </div>
+          )}
           <Flex className='w-full' alignItems='center' flexDirection='row'>
             {checkBoxView && (
               <CheckboxSelection

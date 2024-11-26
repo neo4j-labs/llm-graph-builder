@@ -3,7 +3,6 @@ import {
   DataGridComponents,
   Flex,
   IconButton,
-  Popover,
   ProgressBar,
   StatusIndicator,
   TextLink,
@@ -42,7 +41,6 @@ import {
   ClipboardDocumentIconSolid,
   MagnifyingGlassCircleIconSolid,
   DocumentTextIconSolid,
-  InformationCircleIconOutline,
 } from '@neo4j-ndl/react/icons';
 import CustomProgressBar from './UI/CustomProgressBar';
 import subscribe from '../services/PollingAPI';
@@ -55,6 +53,7 @@ import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
+import BreakDownPopOver from './BreakDownPopOver';
 
 let onlyfortheFirstRender = true;
 
@@ -173,9 +172,9 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                     <span className='mx-1'>
                       <IconButtonWithToolTip
                         placement='right'
-                        text='Reprocess'
+                        text='Ready to Reprocess'
                         size='small'
-                        label='reprocess'
+                        label='Ready to Reprocess'
                         clean
                         onClick={() => onRetry(info?.row?.id as string)}
                       >
@@ -513,25 +512,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             info.row.original.chunkNodeCount > 0 ||
             info.row.original.communityNodeCount > 0 ||
             info.row.original.entityNodeCount > 0;
+
           return (
             <Flex alignItems='center' flexDirection='row'>
               <i>{info.getValue()}</i>
               {hasNodeBreakDownValues &&
                 (info.row.original.status === 'Completed' || info.row.original.status === 'Failed') && (
-                  <Popover>
-                    <Popover.Trigger>
-                      <IconButton isClean ariaLabel='infoicon'>
-                        <InformationCircleIconOutline className='n-size-token-7' />
-                      </IconButton>
-                    </Popover.Trigger>
-                    <Popover.Content className='p-2'>
-                      <ul>
-                        <li>Chunk Nodes: {info.row.original.chunkNodeCount}</li>
-                        <li>Entity Nodes: {info.row.original.entityNodeCount}</li>
-                        <li>Community Nodes: {info.row.original.communityNodeCount}</li>
-                      </ul>
-                    </Popover.Content>
-                  </Popover>
+                  <BreakDownPopOver file={info.row.original} isNodeCount={true} />
                 )}
             </Flex>
           );
@@ -551,20 +538,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               <i>{info.getValue()}</i>
               {hasRelationsBreakDownValues &&
                 (info.row.original.status === 'Completed' || info.row.original.status === 'Failed') && (
-                  <Popover>
-                    <Popover.Trigger>
-                      <IconButton isClean ariaLabel='infoicon'>
-                        <InformationCircleIconOutline className='n-size-token-7' />
-                      </IconButton>
-                    </Popover.Trigger>
-                    <Popover.Content className='p-2'>
-                      <ul>
-                        <li>Chunk Relations: {info.row.original.chunkRelCount}</li>
-                        <li>Entity Relations: {info.row.original.entityEntityRelCount}</li>
-                        <li>Community Relations: {info.row.original.communityRelCount}</li>
-                      </ul>
-                    </Popover.Content>
-                  </Popover>
+                  <BreakDownPopOver file={info.row.original} isNodeCount={false} />
                 )}
             </Flex>
           );

@@ -9,10 +9,11 @@ import Header from '../Layout/Header';
 import { clearChatAPI } from '../../services/QnaAPI';
 import { ChatProps, connectionState, Messages, UserCredentials } from '../../types';
 import { getIsLoading } from '../../utils/Utils';
+import ThemeWrapper from '../../context/ThemeWrapper';
 
 const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
   const { clearHistoryData, messages, setMessages, setClearHistoryData } = useMessageContext();
-  const { setUserCredentials, setConnectionStatus, connectionStatus } = useCredentials();
+  const { setUserCredentials, setConnectionStatus, connectionStatus, setShowDisconnectButton } = useCredentials();
   const [showBackButton, setShowBackButton] = useReducer((state) => !state, false);
   const [openConnection, setOpenConnection] = useState<connectionState>({
     openPopUp: false,
@@ -58,6 +59,7 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
    */
   const handleConnectionSuccess = () => {
     setConnectionStatus(true);
+    setShowDisconnectButton(true);
     setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
     const urlParams = new URLSearchParams(window.location.search);
     urlParams.delete('openModal');
@@ -142,13 +144,15 @@ const ChatOnlyComponent: React.FC = () => {
   const location = useLocation();
   const chatMessages = (location.state?.messages as Messages[]) || [];
   return (
-    <UserCredentialsWrapper>
-      <FileContextProvider>
-        <MessageContextWrapper>
-          <ChatContent chatMessages={chatMessages} />
-        </MessageContextWrapper>
-      </FileContextProvider>
-    </UserCredentialsWrapper>
+    <ThemeWrapper>
+      <UserCredentialsWrapper>
+        <FileContextProvider>
+          <MessageContextWrapper>
+            <ChatContent chatMessages={chatMessages} />
+          </MessageContextWrapper>
+        </FileContextProvider>
+      </UserCredentialsWrapper>
+    </ThemeWrapper>
   );
 };
 export default ChatOnlyComponent;
