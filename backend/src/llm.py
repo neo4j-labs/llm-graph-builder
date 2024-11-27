@@ -166,7 +166,7 @@ async def get_graph_document_list(
             node_properties = False
             relationship_properties = False
         else:
-            node_properties = ["description","date","year","time"]
+            node_properties = ["description"]
             relationship_properties = ["description"]
         llm_transformer = LLMGraphTransformer(
             llm=llm,
