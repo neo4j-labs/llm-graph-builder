@@ -67,7 +67,6 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
   } = useCredentials();
   const { cancel } = useSpeechSynthesis();
 
-
   useEffect(() => {
     async function initializeConnection() {
       const session = localStorage.getItem('neo4j.connection');
@@ -84,7 +83,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
       const handleDisconnectButtonState = (isModalOpen: boolean) => {
         setShowDisconnectButton(isModalOpen);
         localStorage.setItem('disconnectButtonState', isModalOpen ? 'true' : 'false');
-      }
+      };
       // To parse and set user credentials from session
       const setUserCredentialsFromSession = (neo4jConnection: string) => {
         if (!neo4jConnection) {
@@ -110,14 +109,14 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
               database: parsedConnection.database,
             });
             setGdsActive(parsedConnection.isGDS);
-            //setIsReadOnlyUser(parsedConnection.isReadOnlyUser || false);
+            // setIsReadOnlyUser(parsedConnection.isReadOnlyUser || false);
           } else {
             console.error('Invalid parsed session data:', parsedConnection);
           }
         } catch (error) {
           console.error('Failed to parse session data:', error);
         }
-      }
+      };
       // To update credentials if environment values differ
       const updateSessionIfNeeded = (envCredentials: UserCredentials, storedSession: string) => {
         try {
@@ -148,43 +147,41 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
           console.error('Failed to update session:', error);
           return false;
         }
-      }
+      };
       try {
         // Handle case where session exists
-        if (session) {
-          if (isDev) {
-            let backendApiResponse;
-            try {
-              backendApiResponse = await envConnectionAPI();
-              const connectionData = backendApiResponse.data;
-              const envCredentials = {
-                uri: connectionData.data.uri,
-                password: atob(connectionData.data.password),
-                userName: connectionData.data.user_name,
-                database: connectionData.data.database,
-                // isReadonlyUser: connectionData.data.write_access,
-                isGds: connectionData.data.gds_status,
-              };
-              const updated = updateSessionIfNeeded(envCredentials, session);
-              if (!updated) {
-                setUserCredentialsFromSession(session); // Using stored session if no update is needed
-              }
-              setConnectionStatus(!!connectionData.data.graph_connection);
-              setIsBackendConnected(true);
-              handleDisconnectButtonState(false);
-            } catch (error) {
-              console.error('Error in DEV session handling:', error);
-              handleDisconnectButtonState(true);
-              setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-              setErrorMessage(backendApiResponse?.data.error);
+        if (session && isDev) {
+          let backendApiResponse;
+          try {
+            backendApiResponse = await envConnectionAPI();
+            const connectionData = backendApiResponse.data;
+            const envCredentials = {
+              uri: connectionData.data.uri,
+              password: atob(connectionData.data.password),
+              userName: connectionData.data.user_name,
+              database: connectionData.data.database,
+              // isReadonlyUser: connectionData.data.write_access,
+              isGds: connectionData.data.gds_status,
+            };
+            const updated = updateSessionIfNeeded(envCredentials, session);
+            if (!updated) {
+              setUserCredentialsFromSession(session); // Using stored session if no update is needed
             }
-          } else {
+            setConnectionStatus(Boolean(connectionData.data.graph_connection));
+            setIsBackendConnected(true);
+            handleDisconnectButtonState(false);
+          } catch (error) {
+            console.error('Error in DEV session handling:', error);
+            handleDisconnectButtonState(true);
+            setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+            setErrorMessage(backendApiResponse?.data.error);
+          }
+        }else{
             // For PROD, picking the session values
-            setUserCredentialsFromSession(session);
+            setUserCredentialsFromSession(session as string);
             setConnectionStatus(true);
             setIsBackendConnected(true);
             handleDisconnectButtonState(true);
-          }
           return;
         }
         // Handle case where no session exists
@@ -214,7 +211,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
                 isGDS: credentials.isGds,
               })
             );
-            setConnectionStatus(!!connectionData.graph_connection);
+            setConnectionStatus(Boolean(connectionData.graph_connection));
             setIsBackendConnected(true);
             handleDisconnectButtonState(false);
           } catch (error) {
