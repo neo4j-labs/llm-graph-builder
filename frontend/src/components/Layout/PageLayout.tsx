@@ -59,7 +59,6 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
   const {
     setConnectionStatus,
     setGdsActive,
-    setIsReadOnlyUser,
     setIsBackendConnected,
     setUserCredentials,
     setErrorMessage,
