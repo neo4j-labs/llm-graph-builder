@@ -4,20 +4,11 @@ import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { extractAPI } from '../utils/FileAPI';
-import {
-  BannerAlertProps,
-  ChildRef,
-  ContentProps,
-  CustomFile,
-  OptionType,
-  UserCredentials,
-  chunkdata,
-} from '../types';
+import { BannerAlertProps, ChildRef, ContentProps, CustomFile, OptionType, UserCredentials, chunkdata } from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
-// import { useSearchParams } from 'react-router-dom';
 import {
   batchSize,
   buttonCaptions,
@@ -105,7 +96,6 @@ const Content: React.FC<ContentProps> = ({
   );
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
-  // const [searchParams] = useSearchParams();
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
@@ -125,32 +115,7 @@ const Content: React.FC<ContentProps> = ({
     setCurrentPage((prev) => prev - 1);
     await getChunks(documentName, currentPage - 1);
   };
-  // useEffect(() => {
-  //   if (!init && !searchParams.has('connectURL')) {
-  //     let session = localStorage.getItem('neo4j.connection');
-  //     if (session) {
-  //       let neo4jConnection = JSON.parse(session);
-  //       setUserCredentials({
-  //         uri: neo4jConnection.uri,
-  //         userName: neo4jConnection.user,
-  //         password: atob(neo4jConnection.password),
-  //         database: neo4jConnection.database,
-  //         port: neo4jConnection.uri.split(':')[2],
-  //       });
-  //       if (neo4jConnection.isgdsActive !== undefined) {
-  //         setGdsActive(neo4jConnection.isgdsActive);
-  //       }
-  //       if (neo4jConnection.isReadOnlyUser !== undefined) {
-  //         setIsReadOnlyUser(neo4jConnection.isReadOnlyUser);
-  //       }
-  //     } else {
-  //       setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-  //     }
-  //     setInit(true);
-  //   } else {
-  //     setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-  //   }
-  // }, []);
+
   useEffect(() => {
     if (afterFirstRender) {
       localStorage.setItem('processedCount', JSON.stringify({ db: userCredentials?.uri, count: processedCount }));
@@ -165,26 +130,28 @@ const Content: React.FC<ContentProps> = ({
           const response = await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
           if (response.data.status === 'Success') {
             const communityfiles = response.data?.data;
-            communityfiles?.forEach((c: any) => {
-              setFilesData((prev) => {
-                return prev.map((f) => {
-                  if (f.name === c.filename) {
-                    return {
-                      ...f,
-                      chunkNodeCount: c.chunkNodeCount ?? 0,
-                      entityNodeCount: c.entityNodeCount ?? 0,
-                      communityNodeCount: c.communityNodeCount ?? 0,
-                      chunkRelCount: c.chunkRelCount ?? 0,
-                      entityEntityRelCount: c.entityEntityRelCount ?? 0,
-                      communityRelCount: c.communityRelCount ?? 0,
-                      nodesCount: c.nodeCount,
-                      relationshipsCount: c.relationshipCount,
-                    };
-                  }
-                  return f;
+            if (Array.isArray(communityfiles) && communityfiles.length) {
+              communityfiles?.forEach((c: any) => {
+                setFilesData((prev) => {
+                  return prev.map((f) => {
+                    if (f.name === c.filename) {
+                      return {
+                        ...f,
+                        chunkNodeCount: c.chunkNodeCount ?? 0,
+                        entityNodeCount: c.entityNodeCount ?? 0,
+                        communityNodeCount: c.communityNodeCount ?? 0,
+                        chunkRelCount: c.chunkRelCount ?? 0,
+                        entityEntityRelCount: c.entityEntityRelCount ?? 0,
+                        communityRelCount: c.communityRelCount ?? 0,
+                        nodesCount: c.nodeCount,
+                        relationshipsCount: c.relationshipCount,
+                      };
+                    }
+                    return f;
+                  });
                 });
               });
-            });
+            }
             showSuccessToast('All Q&A functionality is available now.');
           } else {
             throw new Error(response.data.error);
@@ -211,61 +178,6 @@ const Content: React.FC<ContentProps> = ({
       setIsSchema(JSON.parse(storedSchema));
     }
   }, [isSchema]);
-
-  // useEffect(() => {
-  //   const connection = localStorage.getItem('neo4j.connection');
-  //   if (connection != null) {
-  //     (async () => {
-  //       const parsedData = JSON.parse(connection);
-  //       const response = await connectAPI(
-  //         parsedData.uri,
-  //         parsedData.user,
-  //         atob(parsedData.password),
-  //         parsedData.database
-  //       );
-  //       if (response?.data?.status === 'Success') {
-  //         localStorage.setItem(
-  //           'neo4j.connection',
-  //           JSON.stringify({
-  //             ...parsedData,
-  //             userDbVectorIndex: response.data.data.db_vector_dimension,
-  //             password: btoa(atob(parsedData.password)),
-  //           })
-  //         );
-  //         if (response.data.data.gds_status !== undefined) {
-  //           setGdsActive(response.data.data.gds_status);
-  //         }
-  //         if (response.data.data.write_access !== undefined) {
-  //           setIsReadOnlyUser(!response.data.data.write_access);
-  //         }
-  //         if (
-  //           (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
-  //             response.data.data.db_vector_dimension == 0) &&
-  //           !response.data.data.chunks_exists
-  //         ) {
-  //           setConnectionStatus(true);
-  //           setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
-  //         } else {
-  //           setOpenConnection({
-  //             openPopUp: true,
-  //             chunksExists: response.data.data.chunks_exists as boolean,
-  //             vectorIndexMisMatch:
-  //               response.data.data.db_vector_dimension > 0 &&
-  //               response.data.data.db_vector_dimension != response.data.data.application_dimension,
-  //             chunksExistsWithDifferentDimension:
-  //               response.data.data.db_vector_dimension > 0 &&
-  //               response.data.data.db_vector_dimension != response.data.data.application_dimension &&
-  //               (response.data.data.chunks_exists ?? true),
-  //           });
-  //           setConnectionStatus(false);
-  //         }
-  //       } else {
-  //         setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-  //         setConnectionStatus(false);
-  //       }
-  //     })();
-  //   }
-  // }, []);
 
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
@@ -453,26 +365,28 @@ const Content: React.FC<ContentProps> = ({
         const response = await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
         if (response.data.status === 'Success') {
           const communityfiles = response.data?.data;
-          communityfiles?.forEach((c: any) => {
-            setFilesData((prev) => {
-              return prev.map((f) => {
-                if (f.name === c.filename) {
-                  return {
-                    ...f,
-                    chunkNodeCount: c.chunkNodeCount ?? 0,
-                    entityNodeCount: c.entityNodeCount ?? 0,
-                    communityNodeCount: c.communityNodeCount ?? 0,
-                    chunkRelCount: c.chunkRelCount ?? 0,
-                    entityEntityRelCount: c.entityEntityRelCount ?? 0,
-                    communityRelCount: c.communityRelCount ?? 0,
-                    nodesCount: c.nodeCount,
-                    relationshipsCount: c.relationshipCount,
-                  };
-                }
-                return f;
+          if (Array.isArray(communityfiles) && communityfiles.length) {
+            communityfiles?.forEach((c: any) => {
+              setFilesData((prev) => {
+                return prev.map((f) => {
+                  if (f.name === c.filename) {
+                    return {
+                      ...f,
+                      chunkNodeCount: c.chunkNodeCount ?? 0,
+                      entityNodeCount: c.entityNodeCount ?? 0,
+                      communityNodeCount: c.communityNodeCount ?? 0,
+                      chunkRelCount: c.chunkRelCount ?? 0,
+                      entityEntityRelCount: c.entityEntityRelCount ?? 0,
+                      communityRelCount: c.communityRelCount ?? 0,
+                      nodesCount: c.nodeCount,
+                      relationshipsCount: c.relationshipCount,
+                    };
+                  }
+                  return f;
+                });
               });
             });
-          });
+          }
           showSuccessToast('All Q&A functionality is available now.');
         } else {
           throw new Error(response.data.error);
