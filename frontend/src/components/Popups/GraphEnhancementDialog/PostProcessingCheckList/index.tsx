@@ -9,9 +9,6 @@ export default function PostProcessingCheckList() {
   const tablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const { postProcessingTasks, setPostProcessingTasks } = useFileContext();
   const { isGdsActive } = useCredentials();
-  const handleCheckboxChange = (jobTitle: string, isChecked: boolean) => {
-    setPostProcessingTasks((prev) => (isChecked ? [...prev, jobTitle] : prev.filter((task) => task !== jobTitle)));
-  };
   return (
     <Flex gap={tablet ? '6' : '8'}>
       <div>
@@ -40,8 +37,14 @@ export default function PostProcessingCheckList() {
                         ? isGdsActive && postProcessingTasks.includes(job.title)
                         : postProcessingTasks.includes(job.title)
                     }
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setPostProcessingTasks((prev) => [...prev, job.title]);
+                      } else {
+                        setPostProcessingTasks((prev) => prev.filter((s) => s !== job.title));
+                      }
+                    }}
                     isDisabled={isCreateCommunities && !isGdsActive}
-                    onChange={(e) => handleCheckboxChange(job.title, e.target.checked)}
                     ariaLabel='checkbox-postProcessing'
                   />
                   <Typography variant={tablet ? 'body-small' : 'body-medium'}>{job.description}</Typography>

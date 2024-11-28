@@ -29,7 +29,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
     chunksExistsWithDifferentDimension: false,
   });
   const largedesktops = useMediaQuery(`(min-width:1440px )`);
-  const { userCredentials, connectionStatus } = useCredentials();
+  const { userCredentials, connectionStatus, setIsReadOnlyUser } = useCredentials();
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(largedesktops));
   const [isRightExpanded, setIsRightExpanded] = useState<boolean>(Boolean(largedesktops));
   const [showChatBot, setShowChatBot] = useState<boolean>(false);
@@ -96,11 +96,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
             parsedConnection.uri &&
             parsedConnection.user &&
             parsedConnection.password &&
-            parsedConnection.database &&
-            typeof parsedConnection.uri === 'string' &&
-            typeof parsedConnection.user === 'string' &&
-            typeof parsedConnection.password === 'string' &&
-            typeof parsedConnection.database === 'string'
+            parsedConnection.database
           ) {
             setUserCredentials({
               uri: parsedConnection.uri,
@@ -109,7 +105,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
               database: parsedConnection.database,
             });
             setGdsActive(parsedConnection.isGDS);
-            // setIsReadOnlyUser(parsedConnection.isReadOnlyUser || false);
+            setIsReadOnlyUser(parsedConnection.isReadOnlyUser);
           } else {
             console.error('Invalid parsed session data:', parsedConnection);
           }
@@ -136,7 +132,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
                 password: btoa(envCredentials.password),
                 database: envCredentials.database,
                 userDbVectorIndex: 384,
-                // isReadOnlyUser: envCredentials.isReadonlyUser,
+                isReadOnlyUser: envCredentials.isReadonlyUser,
                 isGDS: envCredentials.isGds,
               })
             );
@@ -160,7 +156,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
               password: atob(connectionData.data.password),
               userName: connectionData.data.user_name,
               database: connectionData.data.database,
-              // isReadonlyUser: connectionData.data.write_access,
+              isReadonlyUser: !connectionData.data.write_access,
               isGds: connectionData.data.gds_status,
             };
             const updated = updateSessionIfNeeded(envCredentials, session);
@@ -176,12 +172,12 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
             setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
             setErrorMessage(backendApiResponse?.data.error);
           }
-        }else{
-            // For PROD, picking the session values
-            setUserCredentialsFromSession(session as string);
-            setConnectionStatus(true);
-            setIsBackendConnected(true);
-            handleDisconnectButtonState(true);
+        } else {
+          // For PROD, picking the session values
+          setUserCredentialsFromSession(session as string);
+          setConnectionStatus(true);
+          setIsBackendConnected(true);
+          handleDisconnectButtonState(true);
           return;
         }
         // Handle case where no session exists
@@ -195,7 +191,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
               password: atob(connectionData.password),
               userName: connectionData.user_name,
               database: connectionData.database,
-              // isReadonlyUser: connectionData.write_access,
+              isReadonlyUser: !connectionData.write_access,
               isGds: connectionData.gds_status,
             };
             setUserCredentials(credentials);
@@ -207,7 +203,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
                 password: btoa(credentials.password),
                 database: credentials.database,
                 userDbVectorIndex: 384,
-                // isReadOnlyUser: credentials.isReadonlyUser,
+                isReadOnlyUser: credentials.isReadonlyUser,
                 isGDS: credentials.isGds,
               })
             );
