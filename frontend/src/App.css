@@ -387,3 +387,6 @@
   min-width: 250px;
   max-width: 305px;
 }
+.ndl-modal-root{
+  z-index: 39 !important;
+}
