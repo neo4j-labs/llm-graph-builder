@@ -63,11 +63,12 @@ services:
         - VITE_BATCH_SIZE=${VITE_BATCH_SIZE-2}
         - VITE_LLM_MODELS=${VITE_LLM_MODELS-}
         - VITE_LLM_MODELS_PROD=${VITE_LLM_MODELS_PROD-openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash}
+        - DEPLOYMENT_ENV=local
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    # env_file:
-    #   - ./frontend/.env
+    env_file:
+      - ./frontend/.env
     container_name: frontend
     ports:
       - "8080:8080"
