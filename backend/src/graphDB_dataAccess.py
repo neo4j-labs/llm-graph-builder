@@ -283,16 +283,18 @@ class graphDBdataAccess:
             return count(*) as deletedChunks
             """
         query_to_delete_document_and_entities="""
-            match (d:Document) where d.fileName IN $filename_list and d.fileSource in $source_types_list
-            detach delete d
-            with collect(d) as documents
-            unwind documents as d
-            match (d)<-[:PART_OF]-(c:Chunk)
-            detach delete c
-            with *
-            match (c)-[:HAS_ENTITY]->(e)
-            where not exists { (e)<-[:HAS_ENTITY]-()-[:PART_OF]->(d2) where not d2 in documents }
-            detach delete e
+            MATCH (d:Document)
+            WHERE d.fileName IN $filename_list AND d.fileSource IN $source_types_list
+            WITH COLLECT(d) as documents
+            UNWIND documents AS d
+            MATCH (d)<-[:PART_OF]-(c:Chunk)
+            WITH d, c, documents
+            OPTIONAL MATCH (c)-[:HAS_ENTITY]->(e)
+            WHERE NOT EXISTS {
+                MATCH (e)<-[:HAS_ENTITY]-(c2)-[:PART_OF]->(d2:Document)
+                WHERE NOT d2 IN documents
+                }
+            DETACH DELETE c, e, d
             """ 
         query_to_delete_communities = """
             MATCH (c:`__Community__`) 
@@ -301,9 +303,9 @@ class graphDBdataAccess:
 
             WITH *
             UNWIND range(1, $max_level) AS level
-            MATCH (c:`__Community__`) 
-            WHERE c.level = level AND NOT EXISTS { (c)<-[:PARENT_COMMUNITY]-(child) } 
-            DETACH DELETE c
+            MATCH (c1:`__Community__`) 
+            WHERE c1.level = level AND NOT EXISTS { (c1)<-[:PARENT_COMMUNITY]-(child) } 
+            DETACH DELETE c1
         """   
         param = {"filename_list" : filename_list, "source_types_list": source_types_list}
         community_param = {"max_level":MAX_COMMUNITY_LEVELS}
@@ -456,7 +458,7 @@ class graphDBdataAccess:
         if (not document_name) and (community_flag):
             result = self.execute_query(NODEREL_COUNT_QUERY_WITH_COMMUNITY)
         elif (not document_name) and (not community_flag):
-             return None
+             return []
         else:
             param = {"document_name": document_name}
             result = self.execute_query(NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY, param)
