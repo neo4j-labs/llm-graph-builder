@@ -25,23 +25,23 @@ export default function ChatModesSwitch({
       <IconButton
         isDisabled={currentModeIndex === 0}
         size='small'
-        isClean
+        isClean={true}
         onClick={() => switchToOtherMode(currentModeIndex - 1)}
         ariaLabel='left'
       >
         <ChevronLeftIconSolid className='n-size-token-7' />
       </IconButton>
       <TipWrapper tooltip={chatmodetoshow} placement='top'>
-        <span
+        <div
           className={`n-body-medium  ${!isFullScreen ? 'max-w-[50px] text-ellipsis text-nowrap overflow-hidden' : ''}`}
         >
           {chatmodetoshow}
-        </span>
+        </div>
       </TipWrapper>
       <IconButton
         isDisabled={currentModeIndex === modescount - 1}
         size='small'
-        isClean
+        isClean={true}
         onClick={() => switchToOtherMode(currentModeIndex + 1)}
         ariaLabel='right'
       >

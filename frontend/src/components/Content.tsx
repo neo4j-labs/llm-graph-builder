@@ -837,7 +837,9 @@ const Content: React.FC<ContentProps> = ({
             />
           </Suspense>
           <div className='connectionstatus__container'>
-            <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
+            <Typography variant='h6' className='px-1'>
+              Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}
+            </Typography>
             <Typography variant='body-medium'>
               <DatabaseStatusIcon
                 isConnected={connectionStatus}

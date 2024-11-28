@@ -1,14 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Dialog, SideNavigation, TextLink, Tooltip, useMediaQuery } from '@neo4j-ndl/react';
 import {
   ArrowRightIconOutline,
   ArrowLeftIconOutline,
-  TrashIconOutline,
   ArrowsPointingOutIconOutline,
   ChatBubbleOvalLeftEllipsisIconOutline,
   CloudArrowUpIconSolid,
   ArrowDownTrayIconOutline,
+  TrashIconOutline,
 } from '@neo4j-ndl/react/icons';
+
 import { SideNavProps } from '../../types';
 import Chatbot from '../ChatBot/Chatbot';
 import { createPortal } from 'react-dom';
@@ -49,26 +50,6 @@ const SideNav: React.FC<SideNavProps> = ({
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
   const anchorMenuRef = useRef<HTMLAnchorElement>(null);
 
-  const date = new Date();
-  useEffect(() => {
-    if (clearHistoryData) {
-      setMessages([
-        {
-          datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
-          id: 2,
-          modes: {
-            'graph+vector+fulltext': {
-              message:
-                ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
-            },
-          },
-          user: 'chatbot',
-          currentMode: 'graph+vector+fulltext',
-        },
-      ]);
-    }
-  }, [clearHistoryData]);
-
   const handleExpandClick = () => {
     setIsChatModalOpen(true);
     setIsFullScreen(true);
@@ -102,9 +83,7 @@ const SideNav: React.FC<SideNavProps> = ({
         <SideNavigation.List>
           {isExpanded && largedesktops && (
             <SideNavigation.Item
-              htmlAttributes={{
-                onClick: handleClick,
-              }}
+              htmlAttributes={{ onClick: handleClick }}
               icon={
                 position === 'left' ? (
                   <ArrowLeftIconOutline className='n-size-token-7' />
@@ -116,9 +95,7 @@ const SideNav: React.FC<SideNavProps> = ({
           )}
           {!isExpanded && position === 'left' && largedesktops && (
             <SideNavigation.Item
-              htmlAttributes={{
-                onClick: handleClick,
-              }}
+              htmlAttributes={{ onClick: handleClick }}
               icon={
                 <TooltipWrapper tooltip={tooltips.sources} placement='right'>
                   <CloudArrowUpIconSolid className='n-size-token-7' />
@@ -129,9 +106,7 @@ const SideNav: React.FC<SideNavProps> = ({
 
           {position === 'right' && !isExpanded && (
             <SideNavigation.Item
-              htmlAttributes={{
-                onClick: handleClick,
-              }}
+              htmlAttributes={{ onClick: handleClick }}
               icon={
                 <TooltipWrapper tooltip={tooltips.chat} placement='left'>
                   <ChatBubbleOvalLeftEllipsisIconOutline className='n-size-token-7' />
@@ -180,9 +155,7 @@ const SideNav: React.FC<SideNavProps> = ({
             <>
               <Tooltip type='simple' placement={'left'}>
                 <SideNavigation.Item
-                  htmlAttributes={{
-                    onClick: deleteOnClick,
-                  }}
+                  htmlAttributes={{ onClick: deleteOnClick }}
                   icon={
                     <>
                       <Tooltip.Trigger>
@@ -195,9 +168,7 @@ const SideNav: React.FC<SideNavProps> = ({
               </Tooltip>
               <Tooltip type='simple' placement={'left'}>
                 <SideNavigation.Item
-                  htmlAttributes={{
-                    onClick: handleExpandClick,
-                  }}
+                  htmlAttributes={{ onClick: handleExpandClick }}
                   icon={
                     <>
                       <Tooltip.Trigger>
@@ -280,12 +251,7 @@ const SideNav: React.FC<SideNavProps> = ({
             size='unset'
             hasDisabledCloseButton={true}
           >
-            <Dialog.Header
-              className='flex justify-between self-end'
-              htmlAttributes={{
-                id: 'chatbot-dialog-title',
-              }}
-            >
+            <Dialog.Header className='flex justify-between self-end' htmlAttributes={{ id: 'chatbot-dialog-title' }}>
               <ExpandedChatButtonContainer
                 closeChatBot={handleShrinkClick}
                 deleteOnClick={deleteOnClick}
