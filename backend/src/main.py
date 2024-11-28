@@ -705,7 +705,7 @@ def populate_graph_schema_from_text(text, model, is_schema_description_cheked):
 def set_status_retry(graph, file_name, retry_condition):
     graphDb_data_Access = graphDBdataAccess(graph)
     obj_source_node = sourceNode()
-    status = "Reprocess"
+    status = "Ready to Reprocess"
     obj_source_node.file_name = file_name
     obj_source_node.status = status
     obj_source_node.retry_condition = retry_condition
