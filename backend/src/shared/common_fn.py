@@ -57,7 +57,7 @@ def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
   logging.info("creating list of chunks and graph documents in get_chunk_and_graphDocument func")
   lst_chunk_chunkId_document=[]
   for graph_document in graph_document_list:            
-          for chunk_id in graph_document.source.metadata['chunk_id'] :
+          for chunk_id in graph_document.source.metadata['combined_chunk_ids'] :
             lst_chunk_chunkId_document.append({'graph_doc':graph_document,'chunk_id':chunk_id})
                   
   return lst_chunk_chunkId_document  
