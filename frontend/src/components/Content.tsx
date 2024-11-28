@@ -60,7 +60,6 @@ const Content: React.FC<ContentProps> = ({
   setIsSchema,
   showEnhancementDialog,
   toggleEnhancementDialog,
-  closeSettingModal,
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
@@ -194,7 +193,9 @@ const Content: React.FC<ContentProps> = ({
     if (processedCount === 1 && queue.isEmpty()) {
       (async () => {
         showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
-        const payload = isGdsActive ? postProcessingTasks : postProcessingTasks.filter((task) => task !== 'enable_communities');
+        const payload = isGdsActive
+          ? postProcessingTasks
+          : postProcessingTasks.filter((task) => task !== 'enable_communities');
         await postProcessing(userCredentials as UserCredentials, payload);
         showSuccessToast('All Q&A functionality is available now.');
       })();
@@ -821,11 +822,7 @@ const Content: React.FC<ContentProps> = ({
         ></ChunkPopUp>
       )}
       {showEnhancementDialog && (
-        <GraphEnhancementDialog
-          open={showEnhancementDialog}
-          onClose={toggleEnhancementDialog}
-          closeSettingModal={closeSettingModal}
-        ></GraphEnhancementDialog>
+        <GraphEnhancementDialog open={showEnhancementDialog} onClose={toggleEnhancementDialog}></GraphEnhancementDialog>
       )}
       <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
         <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row' flexWrap='wrap'>

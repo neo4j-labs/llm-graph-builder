@@ -1,6 +1,6 @@
-import { Dialog, Tabs, Box, Typography, Flex, useMediaQuery } from '@neo4j-ndl/react';
+import { Dialog, Tabs, Typography, Flex, useMediaQuery } from '@neo4j-ndl/react';
 import graphenhancement from '../../../assets/images/graph-enhancements.svg';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import DeletePopUpForOrphanNodes from './DeleteTabForOrphanNodes';
 import deleteOrphanAPI from '../../../services/DeleteOrphanNodes';
 import { UserCredentials } from '../../../types';
@@ -11,15 +11,7 @@ import DeduplicationTab from './Deduplication';
 import { tokens } from '@neo4j-ndl/base';
 import PostProcessingCheckList from './PostProcessingCheckList';
 
-export default function GraphEnhancementDialog({
-  open,
-  onClose,
-  closeSettingModal,
-}: {
-  open: boolean;
-  onClose: () => void;
-  closeSettingModal: () => void;
-}) {
+export default function GraphEnhancementDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { breakpoints } = tokens;
   const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
   const { setShowTextFromSchemaDialog } = useFileContext();
@@ -36,9 +28,6 @@ export default function GraphEnhancementDialog({
       console.log(error);
     }
   };
-  useEffect(() => {
-    closeSettingModal();
-  }, []);
 
   const [activeTab, setactiveTab] = useState<number>(0);
   return (
@@ -53,8 +42,8 @@ export default function GraphEnhancementDialog({
       onClose={onClose}
     >
       <Dialog.Header className='flex justify-between self-end !mb-0 '>
-        <Box className='n-bg-palette-neutral-bg-weak px-4'>
-          <Box className='flex flex-row items-center mb-2'>
+        <div className='n-bg-palette-neutral-bg-weak px-4'>
+          <div className='flex flex-row items-center mb-2'>
             <img
               src={graphenhancement}
               style={{
@@ -65,7 +54,7 @@ export default function GraphEnhancementDialog({
               }}
               loading='lazy'
             />
-            <Box className='flex flex-col'>
+            <div className='flex flex-col'>
               <Typography variant={isTablet ? 'h5' : 'h2'}>Graph Enhancements</Typography>
               <Typography variant={isTablet ? 'subheading-small' : 'subheading-medium'} className='mb-2'>
                 {isTablet
@@ -110,9 +99,9 @@ export default function GraphEnhancementDialog({
                   </Tabs.Tab>
                 </Tabs>
               </Flex>
-            </Box>
-          </Box>
-        </Box>
+            </div>
+          </div>
+        </div>
       </Dialog.Header>
       <Dialog.Content className='flex flex-col n-gap-token- grow w-[90%] mx-auto'>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4' value={activeTab} tabId={0}>

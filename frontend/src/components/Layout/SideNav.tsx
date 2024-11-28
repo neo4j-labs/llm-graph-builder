@@ -105,7 +105,13 @@ const SideNav: React.FC<SideNavProps> = ({
               htmlAttributes={{
                 onClick: handleClick,
               }}
-              icon={position === 'left' ? <ArrowLeftIconOutline /> : <ArrowRightIconOutline />}
+              icon={
+                position === 'left' ? (
+                  <ArrowLeftIconOutline className='n-size-token-7' />
+                ) : (
+                  <ArrowRightIconOutline className='n-size-token-7' />
+                )
+              }
             />
           )}
           {!isExpanded && position === 'left' && largedesktops && (
@@ -115,7 +121,7 @@ const SideNav: React.FC<SideNavProps> = ({
               }}
               icon={
                 <TooltipWrapper tooltip={tooltips.sources} placement='right'>
-                  <CloudArrowUpIconSolid />
+                  <CloudArrowUpIconSolid className='n-size-token-7' />
                 </TooltipWrapper>
               }
             />
@@ -128,7 +134,7 @@ const SideNav: React.FC<SideNavProps> = ({
               }}
               icon={
                 <TooltipWrapper tooltip={tooltips.chat} placement='left'>
-                  <ChatBubbleOvalLeftEllipsisIconOutline />
+                  <ChatBubbleOvalLeftEllipsisIconOutline className='n-size-token-7' />
                 </TooltipWrapper>
               }
             />
@@ -180,7 +186,7 @@ const SideNav: React.FC<SideNavProps> = ({
                   icon={
                     <>
                       <Tooltip.Trigger>
-                        <TrashIconOutline />
+                        <TrashIconOutline className='n-size-token-7' />
                       </Tooltip.Trigger>
                       <Tooltip.Content>{tooltips.clearChat}</Tooltip.Content>
                     </>

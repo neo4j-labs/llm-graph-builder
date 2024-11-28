@@ -1,4 +1,4 @@
-import { Box, Checkbox, Flex, Typography } from '@neo4j-ndl/react';
+import { Checkbox, Flex, Typography } from '@neo4j-ndl/react';
 import { DocumentTextIconOutline } from '@neo4j-ndl/react/icons';
 import { LargefilesProps } from '../../../types';
 import { List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
@@ -30,14 +30,14 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
     [colorMode]
   );
   return (
-    <Box className='n-bg-palette-neutral-bg-weak p-4'>
-      <Box className='flex flex-row pb-6 items-center mb-2'>
+    <div className='n-bg-palette-neutral-bg-weak p-4'>
+      <div className='flex flex-row pb-6 items-center mb-2'>
         <img
           style={{ width: 95, height: 95, marginRight: 10, alignSelf: 'flex-start' }}
           src={BellImage}
           alt='alert icon'
         />
-        <Box className='flex flex-col'>
+        <div className='flex flex-col'>
           <Typography variant='h3'>Large Document Notice</Typography>
           <Typography variant='body-medium'>
             One or more of your selected documents are large and may take extra time to process. Please review the
@@ -98,9 +98,9 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
               );
             })}
           </List>
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 export default LargeFilesAlert;

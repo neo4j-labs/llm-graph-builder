@@ -205,7 +205,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                       );
                     }}
                   >
-                    <XMarkIconOutline />
+                    <XMarkIconOutline className='n-size-token-7' />
                   </IconButton>
                 </div>
               </div>

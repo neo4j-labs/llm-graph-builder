@@ -29,7 +29,7 @@ export default function ChatModesSwitch({
         onClick={() => switchToOtherMode(currentModeIndex - 1)}
         ariaLabel='left'
       >
-        <ChevronLeftIconSolid />
+        <ChevronLeftIconSolid className='n-size-token-7' />
       </IconButton>
       <TipWrapper tooltip={chatmodetoshow} placement='top'>
         <span
@@ -45,7 +45,7 @@ export default function ChatModesSwitch({
         onClick={() => switchToOtherMode(currentModeIndex + 1)}
         ariaLabel='right'
       >
-        <ChevronRightIconSolid />
+        <ChevronRightIconSolid className='n-size-token-7' />
       </IconButton>
     </Flex>
   );

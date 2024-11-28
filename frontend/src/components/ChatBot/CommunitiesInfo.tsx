@@ -1,4 +1,4 @@
-import { Box, LoadingSpinner, Flex, Typography, TextLink } from '@neo4j-ndl/react';
+import { LoadingSpinner, Flex, Typography, TextLink } from '@neo4j-ndl/react';
 import { FC, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { CommunitiesProps, UserCredentials } from '../../types';
@@ -31,9 +31,9 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
   return (
     <>
       {loading ? (
-        <Box className='flex justify-center items-center'>
+        <div className='flex justify-center items-center'>
           <LoadingSpinner size='small' />
-        </Box>
+        </div>
       ) : communities?.length > 0 ? (
         <div className='p-4 h-80 overflow-auto'>
           <ul className='list-none list-inside'>

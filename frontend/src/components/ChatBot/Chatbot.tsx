@@ -614,7 +614,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                 );
               }}
             >
-              <ArrowDownTrayIconOutline />
+              <ArrowDownTrayIconOutline className='n-size-token-7' />
               <TextLink ref={downloadLinkRef} className='!hidden'>
                 ""
               </TextLink>

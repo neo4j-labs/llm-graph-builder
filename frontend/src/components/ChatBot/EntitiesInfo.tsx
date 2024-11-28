@@ -1,4 +1,4 @@
-import { Box, GraphLabel, LoadingSpinner, TextLink, Typography } from '@neo4j-ndl/react';
+import { GraphLabel, LoadingSpinner, TextLink, Typography } from '@neo4j-ndl/react';
 import { FC, useMemo, useState } from 'react';
 import { EntitiesProps, GroupedEntity, UserCredentials } from '../../types';
 import { calcWordColor } from '@neo4j-devtools/word-color';
@@ -59,9 +59,9 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
   return (
     <>
       {loading ? (
-        <Box className='flex justify-center items-center'>
+        <div className='flex justify-center items-center'>
           <LoadingSpinner size='small' />
-        </Box>
+        </div>
       ) : (mode !== 'graph' && Object.keys(groupedEntities)?.length > 0) ||
         (mode == 'graph' && Object.keys(graphonly_entities)?.length > 0) ? (
         <ul className='list-none p-4 max-h-80 overflow-auto'>
