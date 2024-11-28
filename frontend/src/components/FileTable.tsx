@@ -325,26 +325,32 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         cell: (info: CellContext<CustomFile, string>) => {
           if (parseInt(info.getValue()) === 100 || info.row.original?.status === 'New') {
             return (
-              <Typography variant='body-medium'>
-                <StatusIndicator type='success' />
-                Uploaded
-              </Typography>
+              <div className='flex gap-1 items-center'>
+                <Typography variant='body-medium'>
+                  <StatusIndicator type='success' />
+                </Typography>
+                <Typography variant='body-medium'>Uploaded</Typography>
+              </div>
             );
           } else if (info.row.original?.status === 'Uploading') {
             return <CustomProgressBar value={parseInt(info?.getValue())}></CustomProgressBar>;
           } else if (info.row.original?.status === 'Failed') {
             return (
-              <Typography variant='body-medium'>
-                <StatusIndicator type='danger' />
-                NA
-              </Typography>
+              <div className='flex gap-1 items-center'>
+                <Typography variant='body-medium'>
+                  <StatusIndicator type='danger' />
+                </Typography>
+                <Typography variant='body-medium'> NA</Typography>
+              </div>
             );
           }
           return (
-            <Typography variant='body-medium'>
-              <StatusIndicator type='success' />
-              Uploaded
-            </Typography>
+            <div className='flex items-center gap-1'>
+              <Typography variant='body-medium'>
+                <StatusIndicator type='success' />
+              </Typography>
+              <Typography variant='body-medium'>Uploaded</Typography>
+            </div>
           );
         },
         header: () => <span>Upload Status</span>,
