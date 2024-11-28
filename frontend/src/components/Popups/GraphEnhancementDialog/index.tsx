@@ -47,9 +47,9 @@ export default function GraphEnhancementDialog({
         id: 'graph-enhancement-popup',
         className: 'n-p-token-4 n-rounded-lg',
       }}
-      open={open}
+      isOpen={open}
       size='unset'
-      disableCloseButton={false}
+      hasDisabledCloseButton={false}
       onClose={onClose}
     >
       <Dialog.Header className='flex justify-between self-end !mb-0 '>
@@ -76,16 +76,36 @@ export default function GraphEnhancementDialog({
               </Typography>
               <Flex className='pt-2'>
                 <Tabs fill='underline' onChange={setactiveTab} size={isTablet ? 'small' : 'large'} value={activeTab}>
-                  <Tabs.Tab tabId={0} aria-label='Database'>
+                  <Tabs.Tab
+                    tabId={0}
+                    htmlAttributes={{
+                      'aria-label': 'Database',
+                    }}
+                  >
                     Entity Extraction Settings
                   </Tabs.Tab>
-                  <Tabs.Tab tabId={1} aria-label='Add database'>
+                  <Tabs.Tab
+                    tabId={1}
+                    htmlAttributes={{
+                      'aria-label': 'Add database',
+                    }}
+                  >
                     Disconnected Nodes
                   </Tabs.Tab>
-                  <Tabs.Tab tabId={2} aria-label='Duplication Nodes'>
+                  <Tabs.Tab
+                    tabId={2}
+                    htmlAttributes={{
+                      'aria-label': 'Duplication Nodes',
+                    }}
+                  >
                     De-Duplication Of Nodes
                   </Tabs.Tab>
-                  <Tabs.Tab tabId={3} aria-label='Duplication Nodes'>
+                  <Tabs.Tab
+                    tabId={3}
+                    htmlAttributes={{
+                      'aria-label': 'Duplication Nodes',
+                    }}
+                  >
                     Post Processing Jobs
                   </Tabs.Tab>
                 </Tabs>

@@ -39,7 +39,7 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
         />
         <Box className='flex flex-col'>
           <Typography variant='h3'>Large Document Notice</Typography>
-          <Typography variant='body-medium' sx={{ mb: 2 }}>
+          <Typography variant='body-medium'>
             One or more of your selected documents are large and may take extra time to process. Please review the
             estimated times below
           </Typography>
@@ -51,7 +51,7 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
                   <ListItemButton role={undefined} dense>
                     <ListItemIcon>
                       <Checkbox
-                        aria-label='selection checkbox'
+                        ariaLabel='selection checkbox'
                         onChange={(e) => {
                           if (e.target.checked) {
                             handleToggle(true, f.id);
@@ -59,8 +59,10 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ largeFiles, handleToggle, checke
                             handleToggle(false, f.id);
                           }
                         }}
-                        checked={checked.indexOf(f.id) !== -1}
-                        tabIndex={-1}
+                        isChecked={checked.indexOf(f.id) !== -1}
+                        htmlAttributes={{
+                          tabIndex: -1,
+                        }}
                       />
                     </ListItemIcon>
                     <ListItemAvatar>

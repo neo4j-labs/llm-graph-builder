@@ -117,11 +117,12 @@ const Content: React.FC<ContentProps> = ({
     setProcessedCount,
     setchatModes,
   } = useFileContext();
-  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'|'neighborView'>('tableView');
+  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>(
+    'tableView'
+  );
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
-
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
@@ -628,7 +629,8 @@ const Content: React.FC<ContentProps> = ({
   );
 
   const newFilecheck = useMemo(
-    () => childRef.current?.getSelectedRows().filter((f) => f.status === 'New' || f.status == 'Ready to Reprocess').length,
+    () =>
+      childRef.current?.getSelectedRows().filter((f) => f.status === 'New' || f.status == 'Ready to Reprocess').length,
     [childRef.current?.getSelectedRows()]
   );
 
@@ -728,7 +730,11 @@ const Content: React.FC<ContentProps> = ({
       }
     } else if (filesData.length) {
       const largefiles = filesData.filter((f) => {
-        if (typeof f.size === 'number' && (f.status === 'New' || f.status == 'Ready to Reprocess') && f.size > largeFileSize) {
+        if (
+          typeof f.size === 'number' &&
+          (f.status === 'New' || f.status == 'Ready to Reprocess') &&
+          f.size > largeFileSize
+        ) {
           return true;
         }
         return false;

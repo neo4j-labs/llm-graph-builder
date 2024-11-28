@@ -1,4 +1,4 @@
-import { IconButton, Tip } from '@neo4j-ndl/react';
+import { IconButton, Tooltip } from '@neo4j-ndl/react';
 import { useState } from 'react';
 
 export const IconButtonWithToolTip = ({
@@ -24,27 +24,22 @@ export const IconButtonWithToolTip = ({
 }) => {
   const [isHovered, setIsHovered] = useState<boolean>(false);
   return (
-    <Tip allowedPlacements={[placement]}>
-      <Tip.Trigger>
+    <Tooltip type='simple' placement={placement}>
+      <Tooltip.Trigger>
         <IconButton
-          aria-label={label}
+          ariaLabel={label}
           size={size}
-          clean={clean}
-          grouped={grouped}
+          isClean={clean}
+          isGrouped={grouped}
           onClick={onClick}
-          disabled={disabled}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          isDisabled={disabled}
+          htmlAttributes={{ onMouseEnter: () => setIsHovered(true), onMouseLeave: () => setIsHovered(false) }}
         >
           {children}
         </IconButton>
-      </Tip.Trigger>
-      {isHovered && (
-        <Tip.Content isPortaled={false} style={{ whiteSpace: 'nowrap' }}>
-          {text}
-        </Tip.Content>
-      )}
-    </Tip>
+      </Tooltip.Trigger>
+      {isHovered && <Tooltip.Content style={{ whiteSpace: 'nowrap' }}>{text}</Tooltip.Content>}
+    </Tooltip>
   );
 };
 
@@ -64,11 +59,9 @@ export const IconWithToolTip = ({
   disabled?: boolean;
 }) => {
   return (
-    <Tip allowedPlacements={[placement]}>
-      <Tip.Trigger>{children}</Tip.Trigger>
-      <Tip.Content isPortaled={false} style={{ whiteSpace: 'nowrap' }}>
-        {text}
-      </Tip.Content>
-    </Tip>
+    <Tooltip type={'simple'} placement={placement}>
+      <Tooltip.Trigger>{children}</Tooltip.Trigger>
+      <Tooltip.Content style={{ whiteSpace: 'nowrap' }}>{text}</Tooltip.Content>
+    </Tooltip>
   );
 };

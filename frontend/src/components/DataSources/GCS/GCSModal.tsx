@@ -195,48 +195,54 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
       <div className='w-full inline-block'>
         <form>
           <TextInput
-            id='project id'
             value={projectId}
-            disabled={false}
+            isDisabled={false}
             label='Project ID'
-            aria-label='Project ID'
-            placeholder=''
-            autoFocus
-            fluid
-            required
+            isFluid
             onChange={(e) => {
               setprojectId(e.target.value);
             }}
-            onKeyDown={handleKeyPress}
+            htmlAttributes={{
+              id: 'project id',
+              'aria-label': 'Project ID',
+              placeholder: '',
+              autoFocus: true,
+              required: true,
+              onKeyDown: handleKeyPress,
+            }}
           ></TextInput>
           <TextInput
-            id='bucketname'
             value={bucketName}
-            disabled={false}
+            isDisabled={false}
             label='Bucket Name'
-            aria-label='Bucket Name'
-            placeholder=''
-            autoFocus
-            fluid
-            required
+            isFluid
             onChange={(e) => {
               setbucketName(e.target.value);
             }}
-            onKeyDown={handleKeyPress}
+            htmlAttributes={{
+              id: 'bucketname',
+              'aria-label': 'Bucket Name',
+              placeholder: '',
+              autoFocus: true,
+              required: true,
+              onKeyDown: handleKeyPress,
+            }}
           />
           <TextInput
-            id='foldername'
             value={folderName}
-            disabled={false}
+            isDisabled={false}
             label='Folder Name'
-            aria-label='Folder Name'
             helpText='Optional'
-            placeholder=''
-            fluid
+            isFluid
             onChange={(e) => {
               setFolderName(e.target.value);
             }}
-            onKeyDown={handleKeyPress}
+            htmlAttributes={{
+              id: 'foldername',
+              'aria-label': 'Folder Name',
+              placeholder: '',
+              onKeyDown: handleKeyPress,
+            }}
           />
         </form>
       </div>

@@ -23,35 +23,38 @@ export default function CustomSourceInput({
       {status !== 'unknown' && (
         <Box>
           <Banner
-            closeable
+            isCloseable
             description={statusMessage}
             onClose={() => setStatus('unknown')}
             type={status}
             name='Custom Banner'
             className='text-lg font-semibold'
+            usage='inline'
           />
         </Box>
       )}
       <Box>
         <div className='w-full inline-block'>
           <TextInput
-            id={id}
             value={value}
-            disabled={false}
+            isDisabled={false}
             label={label}
-            aria-label={label}
-            placeholder={placeHolder}
-            onBlur={onBlurHandler}
-            autoFocus
-            fluid
-            required
+            isFluid
             onChange={onChangeHandler}
             errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
-            onPaste={onPasteHandler}
-            onKeyDown={(e) => {
-              if (e.code === 'Enter') {
-                submitHandler(value);
-              }
+            htmlAttributes={{
+              id: id,
+              'aria-label': label,
+              placeholder: placeHolder,
+              onBlur: onBlurHandler,
+              autoFocus: true,
+              required: true,
+              onPaste: onPasteHandler,
+              onKeyDown: (e) => {
+                if (e.code === 'Enter') {
+                  submitHandler(value);
+                }
+              },
             }}
           />
         </div>
@@ -59,7 +62,7 @@ export default function CustomSourceInput({
       <Flex flexDirection='row' justifyContent='flex-end'>
         <div>
           <Button
-            disabled={value.trim() === ''}
+            isDisabled={value.trim() === ''}
             color='neutral'
             fill='outlined'
             onClick={onCloseHandler}
@@ -68,7 +71,7 @@ export default function CustomSourceInput({
           >
             Reset
           </Button>
-          <Button onClick={() => submitHandler(value)} size='medium' disabled={disabledCheck}>
+          <Button onClick={() => submitHandler(value)} size='medium' isDisabled={disabledCheck}>
             Submit
           </Button>
         </div>

@@ -103,15 +103,15 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             .includes('Processing');
           return (
             <Checkbox
-              aria-label='header-checkbox'
-              checked={table.getIsAllRowsSelected()}
+              ariaLabel='header-checkbox'
+              isChecked={table.getIsAllRowsSelected()}
               onChange={table.getToggleAllRowsSelectedHandler()}
-              disabled={processingcheck}
-              title={
-                processingcheck
+              isDisabled={processingcheck}
+              htmlAttributes={{
+                title: processingcheck
                   ? `Files are still processing please select individual checkbox for deletion`
-                  : 'select all rows for deletion'
-              }
+                  : 'select all rows for deletion',
+              }}
             />
           );
         },
@@ -191,10 +191,12 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 <div className='mx-1'>
                   <IconButton
                     size='medium'
-                    title='cancel the processing job'
-                    aria-label='cancel job button'
-                    clean
-                    disabled={info.row.original.processingStatus}
+                    htmlAttributes={{
+                      title: 'cancel the processing job',
+                    }}
+                    ariaLabel='cancel job button'
+                    isClean
+                    isDisabled={info.row.original.processingStatus}
                     onClick={() => {
                       cancelHandler(
                         info.row.original.name as string,
@@ -223,10 +225,12 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 <div className='mx-1'>
                   <IconButton
                     size='medium'
-                    title='cancel the processing job'
-                    aria-label='cancel job button'
-                    clean
-                    disabled={info.row.original.processingStatus}
+                    htmlAttributes={{
+                      title: 'cancel the processing job',
+                    }}
+                    ariaLabel='cancel job button'
+                    isClean
+                    isDisabled={info.row.original.processingStatus}
                     onClick={() => {
                       cancelHandler(
                         info.row.original.name as string,
@@ -304,7 +308,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 },
               },
             ],
-            defaultSortingActions: false,
           },
         },
       }),
@@ -355,7 +358,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             return (
               <Flex>
                 <span>
-                  <TextLink externalLink href={info.row.original.sourceUrl}>
+                  <TextLink isExternalLink href={info.row.original.sourceUrl}>
                     {info.row.original.fileSource}
                   </TextLink>
                 </span>
@@ -400,7 +403,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 };
               }),
             ],
-            defaultSortingActions: false,
           },
         },
       }),
@@ -443,7 +445,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 };
               }),
             ],
-            defaultSortingActions: false,
           },
         },
       }),
@@ -484,7 +485,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 };
               }),
             ],
-            defaultSortingActions: false,
           },
         },
       }),
@@ -927,7 +927,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               tableInstance={table}
               styling={{
                 borderStyle: 'all-sides',
-                zebraStriping: true,
+                hasZebraStriping: true,
                 headerStyle: 'clean',
               }}
               isLoading={isLoading}
@@ -954,6 +954,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   );
                 },
               }}
+              isKeyboardNavigable={false}
             />
           </div>
         </>

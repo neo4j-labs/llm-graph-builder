@@ -1,4 +1,4 @@
-import { Button, Dialog, TextInput, Dropdown, Banner, Dropzone, Typography, TextLink, Flex } from '@neo4j-ndl/react';
+import { Button, Dialog, TextInput, Select, Banner, Dropzone, Typography, TextLink, Flex } from '@neo4j-ndl/react';
 import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import connectAPI from '../../../services/ConnectAPI';
 import { useCredentials } from '../../../context/UserCredentials';
@@ -311,18 +311,26 @@ export default function ConnectionModal({
     <>
       <Dialog
         size='small'
-        open={open}
-        aria-labelledby='form-dialog-title'
+        isOpen={open}
         onClose={() => {
           setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
           setMessage({ type: 'unknown', content: '' });
         }}
-        disableCloseButton={vectorIndexLoading}
+        hasDisabledCloseButton={vectorIndexLoading}
+        htmlAttributes={{
+          'aria-labelledby': 'form-dialog-title',
+        }}
       >
-        <Dialog.Header id='form-dialog-title'>Connect to Neo4j</Dialog.Header>
+        <Dialog.Header
+          htmlAttributes={{
+            id: 'form-dialog-title',
+          }}
+        >
+          Connect to Neo4j
+        </Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
           <Typography variant='body-medium' className='mb-4'>
-            <TextLink externalLink href='https://console.neo4j.io/'>
+            <TextLink isExternalLink href='https://console.neo4j.io/'>
               Don't have a Neo4j instance? Start for free today
             </TextLink>
           </Typography>
@@ -330,17 +338,19 @@ export default function ConnectionModal({
             (vectorIndexLoading ? (
               <Banner
                 name='Connection Modal'
-                closeable={false}
+                isCloseable={false}
                 type={connectionMessage?.type}
                 description={connectionMessage?.content}
+                usage='inline'
               ></Banner>
             ) : (
               <Banner
                 name='Connection Modal'
-                closeable
+                isCloseable
                 onClose={onClose}
                 type={connectionMessage?.type}
                 description={connectionMessage?.content}
+                usage='inline'
               ></Banner>
             ))}
           <div className='n-flex max-h-44'>
@@ -363,87 +373,97 @@ export default function ConnectionModal({
             />
           </div>
           <div className='n-flex n-flex-row n-flex-wrap'>
-            <Dropdown
-              id='protocol'
+            <Select
               label='Protocol'
               type='select'
               size='medium'
-              disabled={false}
+              isDisabled={false}
               selectProps={{
                 onChange: (newValue) => newValue && setProtocol(newValue.value),
                 options: protocols.map((option) => ({ label: option, value: option })),
                 value: { label: protocol, value: protocol },
               }}
               className='w-1/4 inline-block'
-              fluid
+              isFluid
+              htmlAttributes={{
+                id: 'protocol',
+              }}
             />
             <div className='ml-[5%] w-[70%] inline-block'>
               <TextInput
                 ref={uriRef}
-                id='url'
                 value={URI}
-                disabled={false}
+                isDisabled={false}
                 label='URI'
-                autoFocus
-                fluid
+                isFluid
                 onChange={(e) => setURI(e.target.value)}
-                onPaste={(e) => handleHostPasteChange(e)}
-                aria-label='Connection URI'
-                onKeyDown={(e) => handleKeyPress(e, databaseRef)}
+                htmlAttributes={{
+                  id: 'url',
+                  autoFocus: true,
+                  'aria-label': 'Connection URI',
+                  onPaste: (e) => handleHostPasteChange(e),
+                  onKeyDown: (e) => handleKeyPress(e, databaseRef),
+                }}
               />
             </div>
           </div>
           <form>
             <TextInput
               ref={databaseRef}
-              id='database'
               value={database}
-              disabled={false}
+              isDisabled={false}
               label='Database'
-              aria-label='Database'
-              placeholder='neo4j'
-              fluid
-              required
+              isFluid
               onChange={(e) => setDatabase(e.target.value)}
               className='w-full'
-              onKeyDown={handleKeyPress}
+              htmlAttributes={{
+                id: 'database',
+                'aria-label': 'Database',
+                placeholder: 'neo4j',
+                required: true,
+                onKeyDown: handleKeyPress,
+              }}
             />
             <div className='n-flex n-flex-row n-flex-wrap mb-2'>
               <div className='w-[48.5%] mr-1.5 inline-block'>
                 <TextInput
                   ref={userNameRef}
-                  id='username'
                   value={username}
-                  disabled={false}
+                  isDisabled={false}
                   label='Username'
-                  aria-label='Username'
-                  placeholder='neo4j'
-                  fluid
+                  isFluid
                   onChange={(e) => setUsername(e.target.value)}
-                  onKeyDown={handleKeyPress}
+                  htmlAttributes={{
+                    id: 'username',
+                    'aria-label': 'Username',
+                    placeholder: 'neo4j',
+                    onKeyDown: handleKeyPress,
+                  }}
                 />
               </div>
               <div className='w-[48.5%] ml-[1.5%] inline-block'>
                 <TextInput
                   ref={passwordRef}
-                  id='password'
                   value={password}
-                  disabled={false}
+                  isDisabled={false}
                   label='Password'
-                  aria-label='Password'
-                  placeholder='password'
-                  type='password'
-                  fluid
+                  isFluid
                   onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={handleKeyPress}
+                  htmlAttributes={{
+                    type: 'password',
+                    id: 'password',
+                    'aria-label': 'Password',
+                    placeholder: 'password',
+                    onKeyDown: handleKeyPress,
+                  }}
                 />
               </div>
             </div>
           </form>
           <Flex flexDirection='row' justifyContent='flex-end'>
             <Button
-              loading={isLoading}
-              disabled={isDisabled}
+              isLoading={isLoading}
+              isDisabled={isDisabled}
               onClick={() => submitConnection()}
               ref={connectRef}
               onKeyDown={(e) => {

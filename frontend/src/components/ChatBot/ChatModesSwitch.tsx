@@ -23,11 +23,11 @@ export default function ChatModesSwitch({
   return (
     <Flex flexDirection='row' gap='1' alignItems='center'>
       <IconButton
-        disabled={currentModeIndex === 0}
+        isDisabled={currentModeIndex === 0}
         size='small'
-        clean
+        isClean
         onClick={() => switchToOtherMode(currentModeIndex - 1)}
-        aria-label='left'
+        ariaLabel='left'
       >
         <ChevronLeftIconSolid />
       </IconButton>
@@ -39,11 +39,11 @@ export default function ChatModesSwitch({
         </span>
       </TipWrapper>
       <IconButton
-        disabled={currentModeIndex === modescount - 1}
+        isDisabled={currentModeIndex === modescount - 1}
         size='small'
-        clean
+        isClean
         onClick={() => switchToOtherMode(currentModeIndex + 1)}
-        aria-label='right'
+        ariaLabel='right'
       >
         <ChevronRightIconSolid />
       </IconButton>

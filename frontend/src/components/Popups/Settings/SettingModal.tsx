@@ -1,4 +1,4 @@
-import { Dialog, Dropdown } from '@neo4j-ndl/react';
+import { Dialog, Select } from '@neo4j-ndl/react';
 import { OnChangeValue, ActionMeta } from 'react-select';
 import { OptionType, SettingsModalProps, UserCredentials, schema } from '../../../types';
 import { useFileContext } from '../../../context/UsersFiles';
@@ -188,10 +188,23 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   return (
-    <Dialog size='medium' open={open} aria-labelledby='form-dialog-title' onClose={onClose}>
-      <Dialog.Header id='form-dialog-title'>Entity Graph Extraction Settings</Dialog.Header>
+    <Dialog
+      size='medium'
+      isOpen={open}
+      onClose={onClose}
+      htmlAttributes={{
+        'aria-labelledby': 'form-dialog-title',
+      }}
+    >
+      <Dialog.Header
+        htmlAttributes={{
+          id: 'form-dialog-title',
+        }}
+      >
+        Entity Graph Extraction Settings
+      </Dialog.Header>
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
-        <Dropdown
+        <Select
           helpText='Schema Examples'
           label='Predefined Schema'
           selectProps={{
@@ -204,7 +217,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           }}
           type='select'
         />
-        <Dropdown
+        <Select
           helpText='You can select more than one values'
           label='Node Labels'
           selectProps={{
@@ -217,7 +230,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           }}
           type='creatable'
         />
-        <Dropdown
+        <Select
           helpText='You can select more than one values'
           label='Relationship Types'
           selectProps={{

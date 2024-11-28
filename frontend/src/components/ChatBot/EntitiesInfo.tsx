@@ -76,7 +76,7 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
                   <ul className='list-inside'>
                     {Object.keys(label).map((key) => (
                       <li key={key} className='flex items-center'>
-                        <GraphLabel type='node' color={calcWordColor(key)} className='mr-2 mt-2 ' selected={false}>
+                        <GraphLabel type='node' color={calcWordColor(key)} className='mr-2 mt-2 ' isSelected={false}>
                           {key}
                         </GraphLabel>
                         <Typography
@@ -100,7 +100,7 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
                     key={index}
                     className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%)] overflow-hidden'
                   >
-                    <GraphLabel type='node' className='legend' color={`${entity.color}`} selected={false}>
+                    <GraphLabel type='node' className='legend' color={`${entity.color}`} isSelected={false}>
                       {label === '__Community__' ? graphLabels.community : label} ({labelCounts[label]})
                     </GraphLabel>
                     <Typography
@@ -117,7 +117,9 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
                           return (
                             <span key={idx}>
                               <TextLink
-                                onClick={() => handleEntityClick(textId!, 'chatInfoView')}
+                                htmlAttributes={{
+                                  onClick: () => handleEntityClick(textId!, 'chatInfoView'),
+                                }}
                                 className={loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}
                               >
                                 {text}
