@@ -65,7 +65,7 @@ function RetryConfirmationDialog({
         <Dialog.Actions>
           <Dialog.Actions className='!mt-3'>
             <ButtonWithToolTip
-              placement='top'
+              placement='left'
               label='Retry action button'
               text={!file?.retryOption.length ? `Please Select One Of The Option` : 'Reset The Status To Ready to Reprocess'}
               loading={retryLoading}

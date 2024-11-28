@@ -193,7 +193,8 @@ const Content: React.FC<ContentProps> = ({
     if (processedCount === 1 && queue.isEmpty()) {
       (async () => {
         showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
-        await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+        const payload = isGdsActive ? postProcessingTasks : postProcessingTasks.filter((task) => task !== 'enable_communities');
+        await postProcessing(userCredentials as UserCredentials, payload);
         showSuccessToast('All Q&A functionality is available now.');
       })();
     }
