@@ -161,11 +161,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           if (info.getValue() != 'Processing') {
             return (
               <div
-                className='cellClass'
+                className='cellClass flex gap-1 items-center'
                 title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
               >
-                <StatusIndicator type={statusCheck(info.getValue())} />
-                {info.getValue()}
+                <div>
+                  <StatusIndicator type={statusCheck(info.getValue())} />
+                </div>
+                <div>{info.getValue()}</div>
                 {(info.getValue() === 'Completed' || info.getValue() === 'Failed' || info.getValue() === 'Cancelled') &&
                   !isReadOnlyUser && (
                     <span className='mx-1'>
@@ -177,7 +179,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                         clean
                         onClick={() => onRetry(info?.row?.id as string)}
                       >
-                        <ArrowPathIconSolid />
+                        <ArrowPathIconSolid className='n-size-token-4' />
                       </IconButtonWithToolTip>
                     </span>
                   )}
@@ -185,9 +187,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             );
           } else if (info.getValue() === 'Processing' && info.row.original.processingProgress === undefined) {
             return (
-              <div className='cellClass'>
-                <StatusIndicator type={statusCheck(info.getValue())} />
-                <i>Processing</i>
+              <div className='cellClass flex gap-1 items-center'>
+                <div>
+                  <StatusIndicator type={statusCheck(info.getValue())} />
+                </div>
+                <div>
+                  <i>Processing</i>
+                </div>
                 <div className='mx-1'>
                   <IconButton
                     size='medium'
@@ -205,7 +211,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                       );
                     }}
                   >
-                    <XMarkIconOutline className='n-size-token-7' />
+                    <XMarkIconOutline />
                   </IconButton>
                 </div>
               </div>
@@ -229,7 +235,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                       title: 'cancel the processing job',
                     }}
                     ariaLabel='cancel job button'
-                    isClean
+                    isClean={true}
                     isDisabled={info.row.original.processingStatus}
                     onClick={() => {
                       cancelHandler(
@@ -246,9 +252,11 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             );
           }
           return (
-            <div className='cellClass'>
-              <StatusIndicator type={statusCheck(info.getValue())} />
-              <i>{info.getValue()}</i>
+            <div className='cellClass flex gap-1'>
+              <div>
+                <StatusIndicator type={statusCheck(info.getValue())} />
+              </div>
+              <div>{info.getValue()}</div>
             </div>
           );
         },
@@ -308,6 +316,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 },
               },
             ],
+            hasDefaultSortingActions: false,
           },
         },
       }),

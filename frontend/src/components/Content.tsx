@@ -837,33 +837,35 @@ const Content: React.FC<ContentProps> = ({
             />
           </Suspense>
           <div className='connectionstatus__container'>
-            <Typography variant='h6' className='px-1'>
-              Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}
-            </Typography>
+            <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
             <Typography variant='body-medium'>
               <DatabaseStatusIcon
                 isConnected={connectionStatus}
                 isGdsActive={isGdsActive}
                 uri={userCredentials && userCredentials?.uri}
               />
-              <div className='pt-1'>
-                {!isSchema ? (
-                  <StatusIndicator type='danger' />
-                ) : selectedNodes.length || selectedRels.length ? (
-                  <StatusIndicator type='success' />
-                ) : (
-                  <StatusIndicator type='warning' />
-                )}
-                {isSchema ? (
-                  <span className='n-body-small'>
-                    {(!selectedNodes.length || !selectedNodes.length) && 'Empty'} Graph Schema configured
-                    {selectedNodes.length || selectedRels.length
-                      ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)`
-                      : ''}
-                  </span>
-                ) : (
-                  <span className='n-body-small'>No Graph Schema configured</span>
-                )}
+              <div className='pt-1 flex gap-1 items-center'>
+                <div>
+                  {!isSchema ? (
+                    <StatusIndicator type='danger' />
+                  ) : selectedNodes.length || selectedRels.length ? (
+                    <StatusIndicator type='success' />
+                  ) : (
+                    <StatusIndicator type='warning' />
+                  )}
+                </div>
+                <div>
+                  {isSchema ? (
+                    <span className='n-body-small'>
+                      {(!selectedNodes.length || !selectedNodes.length) && 'Empty'} Graph Schema configured
+                      {selectedNodes.length || selectedRels.length
+                        ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)`
+                        : ''}
+                    </span>
+                  ) : (
+                    <span className='n-body-small'>No Graph Schema configured</span>
+                  )}
+                </div>
               </div>
             </Typography>
           </div>
