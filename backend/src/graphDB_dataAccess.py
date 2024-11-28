@@ -187,14 +187,11 @@ class graphDBdataAccess:
             result = self.graph.query(gds_procedure_count)
             total_gds_procedures = result[0]['totalGdsProcedures'] if result else 0
 
-            enable_communities = os.environ.get('ENABLE_COMMUNITIES','').upper() == "TRUE"
-            logging.info(f"Enable Communities {enable_communities}")
-
-            if enable_communities and total_gds_procedures > 0:
+            if total_gds_procedures > 0:
                 logging.info("GDS is available in the database.")
                 return True
             else:
-                logging.info("Communities are disabled or GDS is not available in the database.")
+                logging.info("GDS is not available in the database.")
                 return False
         except Exception as e:
             logging.error(f"An error occurred while checking GDS version: {e}")
