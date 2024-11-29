@@ -294,10 +294,9 @@ class graphDBdataAccess:
             MATCH (c:`__Community__`)
             WHERE c.level = 0 AND NOT EXISTS { ()-[:IN_COMMUNITY]->(c) }
             DETACH DELETE c
-
+            WITH 1 AS dummy
             UNWIND range(1, $max_level)  AS level
-            CALL {
-                WITH level
+            CALL (level) {
                 MATCH (c:`__Community__`)
                 WHERE c.level = level AND NOT EXISTS { ()-[:PARENT_COMMUNITY]->(c) }
                 DETACH DELETE c
