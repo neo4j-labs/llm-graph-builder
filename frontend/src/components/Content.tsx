@@ -606,7 +606,7 @@ const Content: React.FC<ContentProps> = ({
                 status: 'Ready to Reprocess',
                 processingProgress: isStartFromBegining ? 0 : f.processingProgress,
                 nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-                relationshipCount: isStartFromBegining ? 0 : f.relationshipsCount,
+                relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
               }
             : f;
         });
