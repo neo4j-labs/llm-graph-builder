@@ -35,17 +35,12 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     triggeredFrom: '',
     show: false,
   });
-  const [postProcessingTasks, setPostProcessingTasks] = useState<string[]>(() => {
-    const tasks = [
-      'materialize_text_chunk_similarities',
-      'enable_hybrid_search_and_fulltext_search_in_bloom',
-      'materialize_entity_similarities',
-    ];
-    if (isGdsActive) {
-      tasks.push('enable_communities');
-    }
-    return tasks;
-  });
+  const [postProcessingTasks, setPostProcessingTasks] = useState<string[]>([
+    'materialize_text_chunk_similarities',
+    'enable_hybrid_search_and_fulltext_search_in_bloom',
+    'materialize_entity_similarities',
+    'enable_communities',
+  ]);
   const [processedCount, setProcessedCount] = useState<number>(0);
   const [postProcessingVal, setPostProcessingVal] = useState<boolean>(false);
 
