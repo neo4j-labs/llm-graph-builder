@@ -275,31 +275,27 @@ class graphDBdataAccess:
         query_to_delete_document_and_entities="""
             MATCH (d:Document)
             WHERE d.fileName IN $filename_list AND d.fileSource IN $source_types_list
-            WITH COLLECT(d) AS documents
+            WITH COLLECT(d) as documents
             UNWIND documents AS d
-            OPTIONAL MATCH (d)<-[:PART_OF]-(c:Chunk)
-            OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e)
-            WITH d, c, e, documents
+            MATCH (d)<-[:PART_OF]-(c:Chunk)
+            WITH d, c, documents
+            OPTIONAL MATCH (c)-[:HAS_ENTITY]->(e)
             WHERE NOT EXISTS {
                 MATCH (e)<-[:HAS_ENTITY]-(c2)-[:PART_OF]->(d2:Document)
                 WHERE NOT d2 IN documents
                 }
-            WITH d, COLLECT(c) AS chunks, COLLECT(e) AS entities
-            FOREACH (chunk IN chunks | DETACH DELETE chunk)
-            FOREACH (entity IN entities | DETACH DELETE entity)
-            DETACH DELETE d
+            DETACH DELETE c, e, d
             """  
         query_to_delete_communities = """
-            MATCH (c:`__Community__`)
-            WHERE c.level = 0 AND NOT EXISTS { ()-[:IN_COMMUNITY]->(c) }
-            DETACH DELETE c
-            WITH 1 AS dummy
-            UNWIND range(1, $max_level)  AS level
-            CALL (level) {
-                MATCH (c:`__Community__`)
-                WHERE c.level = level AND NOT EXISTS { ()-[:PARENT_COMMUNITY]->(c) }
-                DETACH DELETE c
-                }
+            MATCH (c:`__Community__`) 
+            WHERE NOT EXISTS { ()-[:IN_COMMUNITY]->(c) } AND c.level = 0 
+            DETACH DELETE c 
+
+            WITH *
+            UNWIND range(1, $max_level) AS level
+            MATCH (c1:`__Community__`) 
+            WHERE c1.level = level AND NOT EXISTS { (c1)<-[:PARENT_COMMUNITY]-(child) } 
+            DETACH DELETE c1
         """   
         param = {"filename_list" : filename_list, "source_types_list": source_types_list}
         community_param = {"max_level":MAX_COMMUNITY_LEVELS}

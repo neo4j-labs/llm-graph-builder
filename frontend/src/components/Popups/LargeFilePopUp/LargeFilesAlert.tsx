@@ -60,7 +60,9 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }) 
                           }
                         }}
                         isChecked={checked.indexOf(f.id) !== -1}
-                        htmlAttributes={{ tabIndex: -1 }}
+                        htmlAttributes={{
+                          tabIndex: -1,
+                        }}
                       />
                     </ListItemIcon>
                     <ListItemAvatar>

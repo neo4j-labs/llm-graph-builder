@@ -108,7 +108,9 @@ export default function DeletePopUpForOrphanNodes({
               <Checkbox
                 ariaLabel='row-checkbox'
                 onChange={row.getToggleSelectedHandler()}
-                htmlAttributes={{ title: 'Select the Row for Deletion' }}
+                htmlAttributes={{
+                  title: 'Select the Row for Deletion',
+                }}
                 isChecked={row.getIsSelected()}
               />
             </div>
@@ -122,10 +124,10 @@ export default function DeletePopUpForOrphanNodes({
           return (
             <div className='textellipsis'>
               <TextLink
-                className='!cursor-pointer !inline'
+                className='!cursor-pointer'
                 htmlAttributes={{
                   onClick: () => handleOrphanNodeClick(info.row.id, 'chatInfoView'),
-                  title: info.getValue() ? info.getValue() : info.row.id,
+                  title: info.getValue(),
                 }}
               >
                 {info.getValue() ? info.getValue() : info.row.id}

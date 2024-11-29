@@ -47,9 +47,6 @@ const Content: React.FC<ContentProps> = ({
   setIsSchema,
   showEnhancementDialog,
   toggleEnhancementDialog,
-  setOpenConnection,
-  showDisconnectButton,
-  connectionStatus,
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
@@ -106,11 +103,12 @@ const Content: React.FC<ContentProps> = ({
     setchatModes,
     model,
   } = useFileContext();
-  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'|'neighborView'>('tableView');
+  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>(
+    'tableView'
+  );
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
-
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
@@ -160,7 +158,7 @@ const Content: React.FC<ContentProps> = ({
       return prevfiles.map((curfile) => {
         return {
           ...curfile,
-          model: curfile.status === 'New' || curfile.status === 'Reprocess' ? model : curfile.model,
+          model: curfile.status === 'New' || curfile.status === 'Ready to Reprocess' ? model : curfile.model,
         };
       });
     });
@@ -176,44 +174,11 @@ const Content: React.FC<ContentProps> = ({
     if (processedCount === 1 && queue.isEmpty()) {
       (async () => {
         showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
-        try {
-          const payload = isGdsActive
-            ? postProcessingTasks
-            : postProcessingTasks.filter((task) => task !== 'enable_communities');
-          const response = await postProcessing(userCredentials as UserCredentials, payload);
-          if (response.data.status === 'Success') {
-            const communityfiles = response.data?.data;
-            if (Array.isArray(communityfiles) && communityfiles.length) {
-              communityfiles?.forEach((c: any) => {
-                setFilesData((prev) => {
-                  return prev.map((f) => {
-                    if (f.name === c.filename) {
-                      return {
-                        ...f,
-                        chunkNodeCount: c.chunkNodeCount ?? 0,
-                        entityNodeCount: c.entityNodeCount ?? 0,
-                        communityNodeCount: c.communityNodeCount ?? 0,
-                        chunkRelCount: c.chunkRelCount ?? 0,
-                        entityEntityRelCount: c.entityEntityRelCount ?? 0,
-                        communityRelCount: c.communityRelCount ?? 0,
-                        nodesCount: c.nodeCount,
-                        relationshipsCount: c.relationshipCount,
-                      };
-                    }
-                    return f;
-                  });
-                });
-              });
-            }
-            showSuccessToast('All Q&A functionality is available now.');
-          } else {
-            throw new Error(response.data.error);
-          }
-        } catch (error) {
-          if (error instanceof Error) {
-            showSuccessToast(error.message);
-          }
-        }
+        const payload = isGdsActive
+          ? postProcessingTasks
+          : postProcessingTasks.filter((task) => task !== 'enable_communities');
+        await postProcessing(userCredentials as UserCredentials, payload);
+        showSuccessToast('All Q&A functionality is available now.');
       })();
     }
   }, [processedCount, userCredentials, queue, isReadOnlyUser, isGdsActive]);
@@ -450,7 +415,7 @@ const Content: React.FC<ContentProps> = ({
     showNormalToast(`Processing ${batch.length} files at a time.`);
     for (let i = 0; i < batch.length; i++) {
       if (newCheck) {
-        if (batch[i]?.status === 'New' || batch[i].status === 'Reprocess') {
+        if (batch[i]?.status === 'New' || batch[i].status === 'Ready to Reprocess') {
           data.push(extractData(batch[i].id, isSelectedFiles, selectedFiles as CustomFile[]));
         }
       } else {
@@ -566,7 +531,7 @@ const Content: React.FC<ContentProps> = ({
     } else {
       const selectedNewFiles = childRef.current
         ?.getSelectedRows()
-        .filter((f) => f.status === 'New' || f.status == 'Reprocess');
+        .filter((f) => f.status === 'New' || f.status == 'Ready to Reprocess');
       addFilesToQueue(selectedNewFiles as CustomFile[]);
     }
   };
@@ -642,7 +607,8 @@ const Content: React.FC<ContentProps> = ({
   );
 
   const newFilecheck = useMemo(
-    () => childRef.current?.getSelectedRows().filter((f) => f.status === 'New' || f.status == 'Reprocess').length,
+    () =>
+      childRef.current?.getSelectedRows().filter((f) => f.status === 'New' || f.status == 'Ready to Reprocess').length,
     [childRef.current?.getSelectedRows()]
   );
 
@@ -652,7 +618,7 @@ const Content: React.FC<ContentProps> = ({
   );
 
   const dropdowncheck = useMemo(
-    () => !filesData.some((f) => f.status === 'New' || f.status === 'Waiting' || f.status === 'Reprocess'),
+    () => !filesData.some((f) => f.status === 'New' || f.status === 'Waiting' || f.status === 'Ready to Reprocess'),
     [filesData]
   );
 
@@ -672,12 +638,12 @@ const Content: React.FC<ContentProps> = ({
     if (selectedRows?.length) {
       for (let index = 0; index < selectedRows.length; index++) {
         const parsedFile: CustomFile = selectedRows[index];
-        if (parsedFile.status === 'New' || parsedFile.status == 'Reprocess') {
+        if (parsedFile.status === 'New' || parsedFile.status == 'Ready to Reprocess') {
           newstatusfiles.push(parsedFile);
         }
       }
     } else if (filesData.length) {
-      newstatusfiles = filesData.filter((f) => f.status === 'New' || f.status === 'Reprocess');
+      newstatusfiles = filesData.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess');
     }
     return newstatusfiles;
   }, [filesData, childRef.current?.getSelectedRows()]);
@@ -729,7 +695,7 @@ const Content: React.FC<ContentProps> = ({
         if (
           parsedData.fileSource === 'local file' &&
           typeof parsedData.size === 'number' &&
-          (parsedData.status === 'New' || parsedData.status == 'Reprocess') &&
+          (parsedData.status === 'New' || parsedData.status == 'Ready to Reprocess') &&
           parsedData.size > largeFileSize
         ) {
           selectedLargeFiles.push(parsedData);
@@ -740,16 +706,20 @@ const Content: React.FC<ContentProps> = ({
       } else if (largeFileExists && isGCSActive) {
         setshowExpirationModal(true);
       } else {
-        handleGenerateGraph(selectedRows.filter((f) => f.status === 'New' || f.status === 'Reprocess'));
+        handleGenerateGraph(selectedRows.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess'));
       }
     } else if (filesData.length) {
       const largefiles = filesData.filter((f) => {
-        if (typeof f.size === 'number' && (f.status === 'New' || f.status == 'Reprocess') && f.size > largeFileSize) {
+        if (
+          typeof f.size === 'number' &&
+          (f.status === 'New' || f.status == 'Ready to Reprocess') &&
+          f.size > largeFileSize
+        ) {
           return true;
         }
         return false;
       });
-      const selectAllNewFiles = filesData.filter((f) => f.status === 'New' || f.status === 'Reprocess');
+      const selectAllNewFiles = filesData.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess');
       const stringified = selectAllNewFiles.reduce((accu, f) => {
         const key = f.id;
         // @ts-ignore
@@ -762,7 +732,7 @@ const Content: React.FC<ContentProps> = ({
       } else if (expiredFileExists && isGCSActive) {
         setshowExpirationModal(true);
       } else {
-        handleGenerateGraph(filesData.filter((f) => f.status === 'New' || f.status === 'Reprocess'));
+        handleGenerateGraph(filesData.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess'));
       }
     }
   };
@@ -845,11 +815,7 @@ const Content: React.FC<ContentProps> = ({
         ></ChunkPopUp>
       )}
       {showEnhancementDialog && (
-        <GraphEnhancementDialog
-          open={showEnhancementDialog}
-          onClose={toggleEnhancementDialog}
-          closeSettingModal={closeSettingModal}
-        ></GraphEnhancementDialog>
+        <GraphEnhancementDialog open={showEnhancementDialog} onClose={toggleEnhancementDialog}></GraphEnhancementDialog>
       )}
       {showEnhancementDialog && (
         <GraphEnhancementDialog open={showEnhancementDialog} onClose={toggleEnhancementDialog}></GraphEnhancementDialog>

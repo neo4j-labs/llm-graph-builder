@@ -61,7 +61,6 @@ import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
-import IndeterminateCheckbox from './UI/CustomCheckBox';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
 let onlyfortheFirstRender = true;
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
@@ -123,17 +122,15 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         cell: ({ row }: { row: Row<CustomFile> }) => {
           return (
             <div className='px-1'>
-              <IndeterminateCheckbox
-                {...{
-                  checked: row.getIsSelected(),
-                  disabled:
-                    !row.getCanSelect() ||
-                    row.original.status == 'Uploading' ||
-                    row.original.status === 'Processing' ||
-                    row.original.status === 'Waiting',
-                  indeterminate: row.getIsSomeSelected(),
-                  onChange: row.getToggleSelectedHandler(),
-                }}
+              <Checkbox
+                isChecked={row.getIsSelected()}
+                isDisabled={
+                  !row.getCanSelect() ||
+                  row.original.status == 'Uploading' ||
+                  row.original.status === 'Processing' ||
+                  row.original.status === 'Waiting'
+                }
+                onChange={row.getToggleSelectedHandler()}
               />
             </div>
           );
@@ -169,24 +166,25 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 className='cellClass flex gap-1 items-center'
                 title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
               >
-                <StatusIndicator type={statusCheck(info.getValue())} />
-                {info.getValue()}
-                {/* {(info.getValue() === 'Completed' ||
-                  info.getValue() === 'Failed' ||
-                  info.getValue() === 'Cancelled') && (
-                  <span className='mx-1'>
-                    <IconButtonWithToolTip
-                      placement='right'
-                      text='Reprocess'
-                      size='small'
-                      label='reprocess'
-                      clean
-                      onClick={() => onRetry(info?.row?.id as string)}
-                    >
-                      <ArrowPathIconSolid />
-                    </IconButtonWithToolTip>
-                  </span>
-                )} */}
+                <div>
+                  <StatusIndicator type={statusCheck(info.getValue())} />
+                </div>
+                <div>{info.getValue()}</div>
+                {(info.getValue() === 'Completed' || info.getValue() === 'Failed' || info.getValue() === 'Cancelled') &&
+                  !isReadOnlyUser && (
+                    <span className='mx-1'>
+                      <IconButtonWithToolTip
+                        placement='right'
+                        text='Ready to Reprocess'
+                        size='small'
+                        label='Ready to Reprocess'
+                        clean
+                        onClick={() => onRetry(info?.row?.id as string)}
+                      >
+                        <ArrowPathIconSolid className='n-size-token-4' />
+                      </IconButtonWithToolTip>
+                    </span>
+                  )}
               </div>
             );
           } else if (info.getValue() === 'Processing' && info.row.original.processingProgress === undefined) {
@@ -256,9 +254,11 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             );
           }
           return (
-            <div className='cellClass'>
-              <StatusIndicator type={statusCheck(info.getValue())} />
-              <i>{info.getValue()}</i>
+            <div className='cellClass flex gap-1'>
+              <div>
+                <StatusIndicator type={statusCheck(info.getValue())} />
+              </div>
+              <div>{info.getValue()}</div>
             </div>
           );
         },
@@ -375,7 +375,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             return (
               <Flex>
                 <span>
-                  <TextLink isExternalLink={true} href={info.row.original.sourceUrl}>
+                  <TextLink isExternalLink href={info.row.original.sourceUrl}>
                     {info.row.original.fileSource}
                   </TextLink>
                 </span>
@@ -420,7 +420,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 };
               }),
             ],
-            hasDefaultSortingActions: false,
           },
         },
       }),
@@ -463,7 +462,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 };
               }),
             ],
-            hasDefaultSortingActions: false,
           },
         },
       }),
@@ -504,7 +502,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 };
               }),
             ],
-            hasDefaultSortingActions: false,
           },
         },
       }),
@@ -1005,47 +1002,43 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     <>
       {filesData ? (
         <>
-          <DataGrid
-            ref={tableRef}
-            isResizable={true}
-            tableInstance={table}
-            styling={{
-              borderStyle: 'all-sides',
-              hasZebraStriping: true,
-              headerStyle: 'clean',
-            }}
-            isLoading={isLoading}
-            rootProps={{
-              className: `absolute h-[67%] left-10 filetable ${!largedesktops ? 'top-[17%]' : 'top-[14%]'}`,
-            }}
-            components={{
-              Body: () => (
-                <DataGridComponents.Body
-                  innerProps={{
-                    className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
-                  }}
-                />
-              ),
-              PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
-                return (
-                  <DataGridComponents.PaginationNumericButton
-                    {...restProps}
-                    isSelected={isSelected}
-                    innerProps={{
-                      ...innerProps,
-                      style: {
-                        ...(isSelected && {
-                          backgroundSize: '200% auto',
-                          borderRadius: '10px',
-                        }),
-                      },
-                    }}
-                  />
-                );
-              },
-            }}
-            isKeyboardNavigable={false}
-          />
+          <div className={`${isExpanded ? 'w-[calc(100%-64px)]' : 'mx-auto w-[calc(100%-100px)]'}`}>
+            <DataGrid
+              ref={tableRef}
+              isResizable={true}
+              tableInstance={table}
+              styling={{
+                borderStyle: 'all-sides',
+                hasZebraStriping: true,
+                headerStyle: 'clean',
+              }}
+              isLoading={isLoading}
+              rootProps={{
+                className: classNameCheck,
+              }}
+              components={{
+                Body: (props) => <DataGridComponents.Body {...props} />,
+                PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
+                  return (
+                    <DataGridComponents.PaginationNumericButton
+                      {...restProps}
+                      isSelected={isSelected}
+                      innerProps={{
+                        ...innerProps,
+                        style: {
+                          ...(isSelected && {
+                            backgroundSize: '200% auto',
+                            borderRadius: '10px',
+                          }),
+                        },
+                      }}
+                    />
+                  );
+                },
+              }}
+              isKeyboardNavigable={false}
+            />
+          </div>
         </>
       ) : null}
     </>

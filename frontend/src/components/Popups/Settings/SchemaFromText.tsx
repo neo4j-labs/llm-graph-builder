@@ -94,6 +94,7 @@ const SchemaFromTextDialog = ({
     <Dialog
       size='medium'
       isOpen={open}
+      aria-labelledby='form-dialog-title'
       onClose={() => {
         setloading(false);
         setIsSchema(false);
@@ -104,7 +105,7 @@ const SchemaFromTextDialog = ({
         'aria-labelledby': 'form-dialog-title',
       }}
     >
-      <Dialog.Header>Entity Graph Extraction Settings</Dialog.Header>
+      <Dialog.Header htmlAttributes={{ id: 'form-dialog-title' }}>Entity Graph Extraction Settings</Dialog.Header>
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
         <TextArea
           helpText='Analyze the text to extract Entities'
@@ -112,7 +113,7 @@ const SchemaFromTextDialog = ({
           style={{
             resize: 'vertical',
           }}
-          isFluid={true}
+          isFluid
           value={userText}
           htmlAttributes={{
             onChange: (e) => setUserText(e.target.value),

@@ -47,26 +47,43 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
     setIsSchema(isSchema);
   }, [isSchema]);
 
-  const openChatPopout = useCallback(() => {
-    let session = localStorage.getItem('neo4j.connection');
-    const isLoading = getIsLoading(messages);
-    if (session) {
-      const neo4jConnection = JSON.parse(session);
-      const { uri } = neo4jConnection;
-      const userName = neo4jConnection.user;
-      const { password } = neo4jConnection;
-      const { database } = neo4jConnection;
-      const [, port] = uri.split(':');
-      const encodedPassword = btoa(password);
-      const chatUrl = `/chat-only?uri=${encodeURIComponent(
-        uri
-      )}&user=${userName}&password=${encodedPassword}&database=${database}&port=${port}&connectionStatus=${connectionStatus}`;
-      navigate(chatUrl, { state: { messages, isLoading } });
-    } else {
-      const chatUrl = `/chat-only?openModal=true`;
-      window.open(chatUrl, '_blank');
-    }
-  }, [messages]);
+  return (
+    <div
+      className='n-bg-palette-neutral-bg-weak p-1'
+      style={{ borderBottom: '2px solid rgb(var(--theme-palette-neutral-border-weak))' }}
+    >
+      <nav
+        className='flex items-center justify-between flex-row'
+        role='navigation'
+        data-testid='navigation'
+        id='navigation'
+        aria-label='main navigation'
+      >
+        <section className='flex w-1/3 shrink-0 grow-0 items-center grow min-w-[200px]'>
+          <Typography variant='h6' as='a' href='#app-bar-with-responsive-menu'>
+            <img
+              src={colorMode === 'dark' ? Neo4jLogoBW : Neo4jLogoColor}
+              className='h-8 min-h-8 min-w-8'
+              alt='Neo4j Logo'
+            />
+          </Typography>
+        </section>
+        <section className='items-center justify-end w-1/3 grow-0 flex'>
+          <div>
+            <div
+              className='inline-flex gap-x-1'
+              style={{ display: 'flex', flexGrow: 0, alignItems: 'center', gap: '4px' }}
+            >
+              <IconButtonWithToolTip
+                text={tooltips.documentation}
+                onClick={() => handleURLClick('https://neo4j.com/labs/genai-ecosystem/llm-graph-builder')}
+                size='large'
+                clean
+                placement='left'
+                label={tooltips.documentation}
+              >
+                <InformationCircleIconOutline className='n-size-token-7' />
+              </IconButtonWithToolTip>
 
   const onBackButtonClick = () => {
     navigate('/', { state: messages });

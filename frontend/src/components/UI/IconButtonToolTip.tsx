@@ -1,4 +1,4 @@
-import { IconButton, Tip } from '@neo4j-ndl/react';
+import { IconButton, Tooltip } from '@neo4j-ndl/react';
 import { useState } from 'react';
 
 export const IconButtonWithToolTip = ({
@@ -25,26 +25,21 @@ export const IconButtonWithToolTip = ({
   const [isHovered, setIsHovered] = useState<boolean>(false);
   return (
     <Tooltip type='simple' placement={placement}>
-      <Tooltip.Trigger hasButtonWrapper>
+      <Tooltip.Trigger>
         <IconButton
           ariaLabel={label}
           size={size}
           isClean={clean}
           isGrouped={grouped}
           onClick={onClick}
-          disabled={disabled}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          isDisabled={disabled}
+          htmlAttributes={{ onMouseEnter: () => setIsHovered(true), onMouseLeave: () => setIsHovered(false) }}
         >
           {children}
         </IconButton>
-      </Tip.Trigger>
-      {isHovered && (
-        <Tip.Content isPortaled={false} style={{ whiteSpace: 'nowrap' }}>
-          {text}
-        </Tip.Content>
-      )}
-    </Tip>
+      </Tooltip.Trigger>
+      {isHovered && <Tooltip.Content style={{ whiteSpace: 'nowrap' }}>{text}</Tooltip.Content>}
+    </Tooltip>
   );
 };
 
