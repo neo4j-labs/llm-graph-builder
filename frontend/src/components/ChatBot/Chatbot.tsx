@@ -42,6 +42,13 @@ import { downloadClickHandler, getDateTime } from '../../utils/Utils';
 import ChatModesSwitch from './ChatModesSwitch';
 import CommonActions from './CommonChatActions';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
+if (typeof window !== 'undefined') {
+  if (!sessionStorage.getItem('session_id')) {
+    const id = uuidv4();
+    sessionStorage.setItem('session_id', id);
+  }
+}
+const sessionId = sessionStorage.getItem('session_id') ?? '';
 
 const Chatbot: FC<ChatbotProps> = (props) => {
   const {
@@ -49,7 +56,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     setMessages: setListMessages,
     isLoading,
     isFullScreen,
-    clear,
     connectionStatus,
   } = props;
   const [inputMessage, setInputMessage] = useState('');
@@ -57,7 +63,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const { userCredentials } = useCredentials();
   const { model, chatModes, selectedRows, filesData } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
   const [sourcesModal, setSourcesModal] = useState<string[]>([]);
   const [modelModal, setModelModal] = useState<string>('');
@@ -123,13 +128,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const saveCommunities = (chatCommunities: Community[]) => {
     setCommunities(chatCommunities);
   };
-  useEffect(() => {
-    if (!sessionStorage.getItem('session_id')) {
-      const id = uuidv4();
-      setSessionId(id);
-      sessionStorage.setItem('session_id', id);
-    }
-  }, []);
 
   const simulateTypingEffect = (messageId: number, response: ResponseMode, mode: string, message: string) => {
     let index = 0;
@@ -274,15 +272,15 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           console.error(`API call failed for mode ${mode}:`, result.reason);
           setListMessages((prev) =>
             prev.map((msg) =>
-              (msg.id === chatbotMessageId
-                ? {
-                    ...msg,
-                    modes: {
-                      ...msg.modes,
-                      [mode]: { message: 'Failed to fetch response for this mode.', error: result.reason },
-                    },
-                  }
-                : msg)
+            (msg.id === chatbotMessageId
+              ? {
+                ...msg,
+                modes: {
+                  ...msg.modes,
+                  [mode]: { message: 'Failed to fetch response for this mode.', error: result.reason },
+                },
+              }
+              : msg)
             )
           );
         }
@@ -295,19 +293,19 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       if (error instanceof Error) {
         setListMessages((prev) =>
           prev.map((msg) =>
-            (msg.id === chatbotMessageId
-              ? {
-                  ...msg,
-                  isLoading: false,
-                  isTyping: false,
-                  modes: {
-                    [chatModes[0]]: {
-                      message: 'An error occurred while processing your request.',
-                      error: error.message,
-                    },
-                  },
-                }
-              : msg)
+          (msg.id === chatbotMessageId
+            ? {
+              ...msg,
+              isLoading: false,
+              isTyping: false,
+              modes: {
+                [chatModes[0]]: {
+                  message: 'An error occurred while processing your request.',
+                  error: error.message,
+                },
+              },
+            }
+            : msg)
           )
         );
       }
@@ -319,18 +317,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   };
   useEffect(() => {
     scrollToBottom();
-  }, [listMessages]);
-
-  useEffect(() => {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
   }, [listMessages]);
-
-  useEffect(() => {
-    if (clear) {
-      cancel();
-      setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
-    }
-  }, [clear]);
 
   const handleCopy = (message: string, id: number) => {
     copy(message);
@@ -454,7 +442,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         size='x-large'
                         status={connectionStatus ? 'online' : 'offline'}
                         type='image'
-                        shape='square'
+                        shape='square'       
                       />
                     )}
                   </div>
@@ -463,12 +451,12 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                     isElevated={true}
                     className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
                       chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
-                    }`}
+                      }`}
                   >
                     <div
                       className={`${
                         chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
-                      }`}
+                        }`}
                     >
                       <ReactMarkdown className={!isFullScreen ? 'max-w-[250px]' : ''}>
                         {chat.modes[chat.currentMode]?.message || ''}
@@ -554,7 +542,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           <TextInput
             className={`n-bg-palette-neutral-bg-default flex-grow-7 ${
               isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
-            }`}
+              }`}
             value={inputMessage}
             isFluid
             onChange={handleInputChange}
@@ -593,7 +581,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               htmlAttributes={{
                 title: 'download chat info',
               }}
-              ariaLabel='downloadchat'
+              ariaLabel='download chat info'
               isClean
               isDisabled={metricsLoading || infoLoading}
               onClick={() => {
@@ -628,7 +616,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               isClean
               onClick={() => setShowInfoModal(false)}
             >
-              <XMarkIconOutline />
+              <XMarkIconOutline className='n-size-token-7' />
             </IconButton>
           </div>
           <InfoModal

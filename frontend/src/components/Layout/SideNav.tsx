@@ -153,19 +153,19 @@ const SideNav: React.FC<SideNavProps> = ({
           )}
           {position === 'right' && isExpanded && (
             <>
-              <Tooltip type='simple' placement={'left'}>
+              {!getIsLoading(messages ?? []) && (<Tooltip type='simple' placement={'left'}>
                 <SideNavigation.Item
                   htmlAttributes={{ onClick: deleteOnClick }}
                   icon={
                     <>
                       <Tooltip.Trigger>
-                        <TrashIconOutline className='n-size-token-7' />
+                        <TrashIconOutline className='n-size-token-7'/>
                       </Tooltip.Trigger>
                       <Tooltip.Content>{tooltips.clearChat}</Tooltip.Content>
                     </>
                   }
                 />
-              </Tooltip>
+              </Tooltip>)}
               <Tooltip type='simple' placement={'left'}>
                 <SideNavigation.Item
                   htmlAttributes={{ onClick: handleExpandClick }}
