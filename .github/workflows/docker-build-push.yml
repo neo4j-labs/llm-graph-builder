@@ -1,0 +1,51 @@
+name: Build and Push Docker Images to GHCR
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Log in to GitHub Container Registry
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: https://ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Set the lowercase image tag for the llm-graph-builder backend and frontend
+      - name: Set Image Tags to Lowercase
+        run: |
+          BACKEND_TAG="ghcr.io/${{ github.repository_owner }}/llm-graph-builder-backend:latest"
+          FRONTEND_TAG="ghcr.io/${{ github.repository_owner }}/llm-graph-builder-frontend:latest"
+          BACKEND_TAG_LOWERCASE=$(echo $BACKEND_TAG | tr '[:upper:]' '[:lower:]')
+          FRONTEND_TAG_LOWERCASE=$(echo $FRONTEND_TAG | tr '[:upper:]' '[:lower:]')
+          echo "BACKEND_TAG=$BACKEND_TAG_LOWERCASE" >> $GITHUB_ENV
+          echo "FRONTEND_TAG=$FRONTEND_TAG_LOWERCASE" >> $GITHUB_ENV
+
+      # Build and push backend Docker image
+      - name: Build and Push LLM Graph Builder Backend Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ env.BACKEND_TAG }}
+
+      # Build and push frontend Docker image
+      - name: Build and Push LLM Graph Builder Frontend Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ${{ env.FRONTEND_TAG }}
