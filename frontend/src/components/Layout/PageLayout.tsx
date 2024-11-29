@@ -46,7 +46,7 @@ export default function PageLayoutNew({
     }
   };
 
-  const { messages, setClearHistoryData, clearHistoryData } = useMessageContext();
+  const { messages, setClearHistoryData, clearHistoryData, setMessages } = useMessageContext();
   const { isSchema, setIsSchema, setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
 
   const deleteOnClick = async () => {
@@ -57,7 +57,21 @@ export default function PageLayoutNew({
         sessionStorage.getItem('session_id') ?? ''
       );
       if (response.data.status === 'Success') {
-        setClearHistoryData(false);
+        const date = new Date();
+        setMessages([
+          {
+            datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
+            id: 2,
+            modes: {
+              'graph+vector+fulltext': {
+                message:
+                  ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
+              },
+            },
+            user: 'chatbot',
+            currentMode: 'graph+vector+fulltext',
+          },
+        ]);
       }
     } catch (error) {
       console.log(error);
