@@ -39,7 +39,7 @@ function Header() {
         aria-label='main navigation'
       >
         <section className='flex w-1/3 shrink-0 grow-0 items-center grow min-w-[200px]'>
-          <Typography variant='h6' component='a' href='#app-bar-with-responsive-menu' sx={{}}>
+          <Typography variant='h6' as='a' href='#app-bar-with-responsive-menu'>
             <img
               src={colorMode === 'dark' ? Neo4jLogoBW : Neo4jLogoColor}
               className='h-8 min-h-8 min-w-8'

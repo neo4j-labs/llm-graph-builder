@@ -187,14 +187,11 @@ class graphDBdataAccess:
             result = self.graph.query(gds_procedure_count)
             total_gds_procedures = result[0]['totalGdsProcedures'] if result else 0
 
-            enable_communities = os.environ.get('ENABLE_COMMUNITIES','').upper() == "TRUE"
-            logging.info(f"Enable Communities {enable_communities}")
-
-            if enable_communities and total_gds_procedures > 0:
+            if total_gds_procedures > 0:
                 logging.info("GDS is available in the database.")
                 return True
             else:
-                logging.info("Communities are disabled or GDS is not available in the database.")
+                logging.info("GDS is not available in the database.")
                 return False
         except Exception as e:
             logging.error(f"An error occurred while checking GDS version: {e}")
@@ -277,17 +274,19 @@ class graphDBdataAccess:
             return count(*) as deletedChunks
             """
         query_to_delete_document_and_entities="""
-            match (d:Document) where d.fileName IN $filename_list and d.fileSource in $source_types_list
-            detach delete d
-            with collect(d) as documents
-            unwind documents as d
-            match (d)<-[:PART_OF]-(c:Chunk)
-            detach delete c
-            with *
-            match (c)-[:HAS_ENTITY]->(e)
-            where not exists { (e)<-[:HAS_ENTITY]-()-[:PART_OF]->(d2) where not d2 in documents }
-            detach delete e
-            """ 
+            MATCH (d:Document)
+            WHERE d.fileName IN $filename_list AND d.fileSource IN $source_types_list
+            WITH COLLECT(d) as documents
+            UNWIND documents AS d
+            MATCH (d)<-[:PART_OF]-(c:Chunk)
+            WITH d, c, documents
+            OPTIONAL MATCH (c)-[:HAS_ENTITY]->(e)
+            WHERE NOT EXISTS {
+                MATCH (e)<-[:HAS_ENTITY]-(c2)-[:PART_OF]->(d2:Document)
+                WHERE NOT d2 IN documents
+                }
+            DETACH DELETE c, e, d
+            """  
         query_to_delete_communities = """
             MATCH (c:`__Community__`) 
             WHERE NOT EXISTS { ()-[:IN_COMMUNITY]->(c) } AND c.level = 0 
@@ -295,9 +294,9 @@ class graphDBdataAccess:
 
             WITH *
             UNWIND range(1, $max_level) AS level
-            MATCH (c:`__Community__`) 
-            WHERE c.level = level AND NOT EXISTS { (c)<-[:PARENT_COMMUNITY]-(child) } 
-            DETACH DELETE c
+            MATCH (c1:`__Community__`) 
+            WHERE c1.level = level AND NOT EXISTS { (c1)<-[:PARENT_COMMUNITY]-(child) } 
+            DETACH DELETE c1
         """   
         param = {"filename_list" : filename_list, "source_types_list": source_types_list}
         community_param = {"max_level":MAX_COMMUNITY_LEVELS}

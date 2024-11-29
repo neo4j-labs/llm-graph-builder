@@ -218,7 +218,7 @@ export default function DropZoneForSmallLayouts() {
     <>
       <div {...getRootProps({ className: 'dropzone' })}>
         <input {...getInputProps()} />
-        {isLoading ? <LoadingSpinner size='medium' /> : <CloudArrowUpIconSolid />}
+        {isLoading ? <LoadingSpinner size='medium' /> : <CloudArrowUpIconSolid className='n-size-token-7' />}
       </div>
     </>
   );

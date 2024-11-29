@@ -1,4 +1,4 @@
-import { Checkbox, Dialog, Textarea } from '@neo4j-ndl/react';
+import { Checkbox, Dialog, TextArea } from '@neo4j-ndl/react';
 import { useCallback, useState } from 'react';
 import { getNodeLabelsAndRelTypesFromText } from '../../../services/SchemaFromTextAPI';
 import { useCredentials } from '../../../context/UserCredentials';
@@ -94,7 +94,7 @@ const SchemaFromTextDialog = ({
   return (
     <Dialog
       size='medium'
-      open={open}
+      isOpen={open}
       aria-labelledby='form-dialog-title'
       onClose={() => {
         setloading(false);
@@ -103,17 +103,19 @@ const SchemaFromTextDialog = ({
         onClose();
       }}
     >
-      <Dialog.Header id='form-dialog-title'>Entity Graph Extraction Settings</Dialog.Header>
+      <Dialog.Header htmlAttributes={{ id: 'form-dialog-title' }}>Entity Graph Extraction Settings</Dialog.Header>
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
-        <Textarea
+        <TextArea
           helpText='Analyze the text to extract Entities'
           label='Document Text'
           style={{
             resize: 'vertical',
           }}
-          fluid
+          isFluid
           value={userText}
-          onChange={(e) => setUserText(e.target.value)}
+          htmlAttributes={{
+            onChange: (e) => setUserText(e.target.value),
+          }}
           size='large'
         />
         <Dialog.Actions className='!mt-4'>
@@ -122,7 +124,7 @@ const SchemaFromTextDialog = ({
             onChange={(e) => {
               setIsSchema(e.target.checked);
             }}
-            checked={isSchema}
+            isChecked={isSchema}
           />
           <ButtonWithToolTip
             placement='top'

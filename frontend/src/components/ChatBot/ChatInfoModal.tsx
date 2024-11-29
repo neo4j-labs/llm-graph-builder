@@ -3,22 +3,21 @@ import {
   Typography,
   Flex,
   Tabs,
-  CypherCodeBlock,
-  CypherCodeBlockProps,
+  Code,
   useCopyToClipboard,
   Banner,
   useMediaQuery,
   Button,
+  IconButton,
 } from '@neo4j-ndl/react';
 import { DocumentDuplicateIconOutline, ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
 import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
 import { ExtendedNode, UserCredentials, chatInfoMessage } from '../../types';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import GraphViewButton from '../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
 import { useCredentials } from '../../context/UserCredentials';
-import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { tokens } from '@neo4j-ndl/base';
 import ChunkInfo from './ChunkInfo';
 import EntitiesInfo from './EntitiesInfo';
@@ -80,18 +79,17 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       : 3
   );
   const { userCredentials } = useCredentials();
-  const themeUtils = useContext(ThemeWrapperContext);
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
   const [showMetricsTable, setShowMetricsTable] = useState<boolean>(Boolean(metricDetails));
   const [showMultiModeMetrics, setShowMultiModeMetrics] = useState<boolean>(Boolean(multiModelMetrics.length));
   const [multiModeError, setMultiModeError] = useState<string>('');
 
-  const actions: CypherCodeBlockProps['actions'] = useMemo(
+  const actions: React.ComponentProps<typeof IconButton<'button'>>[] = useMemo(
     () => [
       {
         title: 'copy',
-        'aria-label': 'copy',
+        ariaLabel: 'copy',
         children: (
           <>
             {copiedText ? (
@@ -248,14 +246,14 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   };
 
   return (
-    <Box className='n-bg-palette-neutral-bg-weak p-4'>
-      <Box className='flex flex-row pb-6 items-center mb-2'>
+    <div className='n-bg-palette-neutral-bg-weak p-4'>
+      <div className='flex flex-row pb-6 items-center mb-2'>
         <img
           src={Neo4jRetrievalLogo}
           style={{ width: isTablet ? 80 : 95, height: isTablet ? 80 : 95, marginRight: 10 }}
           loading='lazy'
         />
-        <Box className='flex flex-col'>
+        <div className='flex flex-col'>
           <Typography variant='h2'>Retrieval information</Typography>
           <Typography variant='body-medium' className='mb-2'>
             To generate this response, the process took <span className='font-bold'>{response_time} seconds,</span>
@@ -268,10 +266,12 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             </span>{' '}
             mode.
           </Typography>
-        </Box>
-      </Box>
+        </div>
+      </div>
       {error?.length > 0 ? (
-        <Banner type='danger'>{error}</Banner>
+        <Banner type='danger' usage='inline'>
+          {error}
+        </Banner>
       ) : (
         <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
           {mode === chatModeLables['global search+vector+fulltext'] ? (
@@ -325,6 +325,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                       .
                     </Typography>
                   }
+                  usage='inline'
                 ></Banner>
               )}
               <Box>
@@ -358,8 +359,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             )}
             {!metricDetails && activeChatmodes != undefined && Object.keys(activeChatmodes).length <= 1 && (
               <Button
-                label='Metrics Action Button'
-                disabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
+                isDisabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
                 className='w-max self-center mt-4'
                 onClick={loadMetrics}
               >
@@ -368,8 +368,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             )}
             {!multiModelMetrics.length && activeChatmodes != undefined && Object.keys(activeChatmodes).length > 1 && (
               <Button
-                label='Metrics Action Button'
-                disabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
+                isDisabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
                 className='w-max self-center mt-4'
                 onClick={loadMetrics}
               >
@@ -390,12 +389,13 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           <ChunkInfo chunks={chunks} loading={infoLoading} mode={mode} />
         </Tabs.TabPanel>
         <Tabs.TabPanel value={activeTab} tabId={6}>
-          <CypherCodeBlock
+          <Code
             code={cypher_query as string}
             actions={actions}
             headerTitle=''
-            theme={themeUtils.colorMode}
+            theme={'vs'}
             className='min-h-40'
+            language='cypher'
           />
         </Tabs.TabPanel>
         {mode === chatModeLables['entity search+vector'] || mode === chatModeLables['global search+vector+fulltext'] ? (
@@ -407,18 +407,18 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         )}
       </Flex>
       {activeTab == 4 && nodes?.length && relationships?.length && mode !== chatModeLables.graph ? (
-        <Box className='button-container flex mt-2 justify-center'>
+        <div className='button-container flex mt-2 justify-center'>
           <GraphViewButton
             nodeValues={nodes}
             relationshipValues={relationships}
             label='Graph Entities used for Answer Generation'
             viewType='chatInfoView'
           />
-        </Box>
+        </div>
       ) : (
         <></>
       )}
-    </Box>
+    </div>
   );
 };
 export default ChatInfoModal;

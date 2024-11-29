@@ -923,14 +923,14 @@ The API is used to drop and create the vector index when vector index dimesion a
 POST /retry_processing
 ----
  
-This API is used to reprocess cancelled, completed or failed file sources.
-Users have 3 options to reprocess files:
+This API is used to Ready to Reprocess cancelled, completed or failed file sources.
+Users have 3 options to Ready to Reprocess files:
  
 * Start from begnning - In this condition file will be processed from the begnning i.e. 1st chunk again.
 * Delete entities and start from begnning - If the file source is already processed and have any existing nodes and relations then those will be deleted and file will be reprocessed from the 1st chunk.
 * Start from last processed postion - Cancelled or failed files will be processed from the last successfully processed chunk position. This option is not available for completed files.
  
-Ones the status is set to 'Reprocess', user can again click on Generate graph to process the file for knowledge graph creation.
+Ones the status is set to 'Ready to Reprocess', user can again click on Generate graph to process the file for knowledge graph creation.
  
 **API Parameters :**
  
@@ -938,7 +938,7 @@ Ones the status is set to 'Reprocess', user can again click on Generate graph to
 * `userName`= Neo4j db username,
 * `password`= Neo4j db password,
 * `database`= Neo4j database name,
-* `file_name`= Name of the file which user want to reprocess.
+* `file_name`= Name of the file which user want to Ready to Reprocess.
 * `retry_condition` = One of the above 3 conditions which is selected for reprocessing.
  
  
@@ -947,7 +947,7 @@ Ones the status is set to 'Reprocess', user can again click on Generate graph to
 ....
 {
     "status": "Success",
-    "message": "Status set to Reprocess for filename : $filename"
+    "message": "Status set to Ready to Reprocess for filename : $filename"
 }
 ....
 

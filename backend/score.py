@@ -806,7 +806,7 @@ async def retry_processing(uri=Form(), userName=Form(), password=Form(), databas
         graph = create_graph_database_connection(uri, userName, password, database)
         await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
         #set_status_retry(graph,file_name,retry_condition)
-        return create_api_response('Success',message=f"Status set to Reprocess for filename : {file_name}")
+        return create_api_response('Success',message=f"Status set to Ready to Reprocess for filename : {file_name}")
     except Exception as e:
         job_status = "Failed"
         message="Unable to set status to Retry"

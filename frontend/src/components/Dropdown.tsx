@@ -1,4 +1,4 @@
-import { Dropdown, Tip, useMediaQuery } from '@neo4j-ndl/react';
+import { Select, Tooltip, useMediaQuery } from '@neo4j-ndl/react';
 import { OptionType, ReusableDropdownProps } from '../types';
 import { memo, useMemo } from 'react';
 import { capitalize, capitalizeWithUnderscore } from '../utils/Utils';
@@ -22,9 +22,8 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   return (
     <>
       <div className={view === 'ContentView' ? 'w-[150px]' : ''}>
-        <Dropdown
+        <Select
           type='select'
-          aria-label='A selection dropdown'
           label='LLM Models'
           helpText={<div className='!w-max'> LLM Model used for Extraction & Chat</div>}
           selectProps={{
@@ -36,12 +35,12 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
               const isModelSupported = !isProdEnv || prodllms?.includes(value);
               return {
                 label: !isModelSupported ? (
-                  <Tip allowedPlacements={isLargeDesktop ? ['left'] : ['right']}>
-                    <Tip.Trigger>
+                  <Tooltip type='simple' placement={isLargeDesktop ? 'left' : 'right'}>
+                    <Tooltip.Trigger>
                       <span>{label}</span>
-                    </Tip.Trigger>
-                    <Tip.Content>Available In Development Version</Tip.Content>
-                  </Tip>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>Available In Development Version</Tooltip.Content>
+                  </Tooltip>
                 ) : (
                   <span>{label}</span>
                 ),
@@ -58,7 +57,10 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
             value: value,
           }}
           size='medium'
-          fluid
+          isFluid
+          htmlAttributes={{
+            'aria-label': 'A selection dropdown',
+          }}
         />
         {children}
       </div>

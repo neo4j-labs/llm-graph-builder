@@ -15,25 +15,25 @@ const CheckboxSelection: React.FC<CheckboxSectionProps> = ({
     <div className='flex gap-5'>
       {isDocChunk && (
         <Checkbox
-          checked={graphType.includes('DocumentChunk')}
+          isChecked={graphType.includes('DocumentChunk')}
           label={graphLabels.docChunk}
-          disabled={loading}
+          isDisabled={loading}
           onChange={() => handleChange('DocumentChunk')}
         />
       )}
       {isEntity && (
         <Checkbox
-          checked={graphType.includes('Entities')}
+          isChecked={graphType.includes('Entities')}
           label={graphLabels.entities}
-          disabled={loading}
+          isDisabled={loading}
           onChange={() => handleChange('Entities')}
         />
       )}
       {isCommunity && (
         <Checkbox
-          checked={graphType.includes('Communities')}
+          isChecked={graphType.includes('Communities')}
           label={graphLabels.community}
-          disabled={loading}
+          isDisabled={loading}
           onChange={() => handleChange('Communities')}
         />
       )}

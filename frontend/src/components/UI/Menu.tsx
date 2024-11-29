@@ -1,46 +1,32 @@
 import { Menu } from '@neo4j-ndl/react';
-import { Menuitems, Origin } from '../../types';
+import { Menuitems } from '../../types';
 export default function CustomMenu({
   open,
   closeHandler,
   items,
-  MenuAnchor,
   anchorOrigin,
-  transformOrigin,
-  anchorPortal = true,
-  disableBackdrop = false,
+  isRoot = false,
 }: {
   open: boolean;
-  closeHandler: () => void;
-  items: Menuitems[] | undefined;
-  MenuAnchor: HTMLElement | null;
-  anchorOrigin?: Origin;
-  transformOrigin?: Origin;
-  anchorPortal?: boolean;
-  disableBackdrop?: boolean;
+  closeHandler: (
+    event: Event | undefined,
+    closeReason: {
+      type: 'backdropClick' | 'itemClick' | 'escapeKeyDown';
+      id?: string;
+    }
+  ) => void;
+  items: Menuitems[];
+  anchorOrigin: React.RefObject<HTMLElement | null>;
+  isRoot?: boolean;
 }) {
   return (
-    <Menu
-      open={open}
-      onClose={() => {
-        closeHandler();
-      }}
-      anchorOrigin={anchorOrigin}
-      transformOrigin={transformOrigin}
-      anchorPortal={anchorPortal}
-      anchorEl={MenuAnchor}
-      disableBackdrop={disableBackdrop}
-      className='custom-menu'
-    >
+    <Menu isOpen={open} anchorRef={anchorOrigin} className='custom-menu' isRoot={isRoot} onClose={closeHandler}>
       {items?.map((i, idx) => (
         <Menu.Item
           key={`${idx}${i.title}`}
           title={i.title}
-          onClick={() => {
-            i.onClick();
-            closeHandler();
-          }}
-          disabled={i.disabledCondition}
+          onClick={i.onClick}
+          isDisabled={i.disabledCondition}
           className={i.isSelected ? i.selectedClassName : ''}
           description={i.description}
         />

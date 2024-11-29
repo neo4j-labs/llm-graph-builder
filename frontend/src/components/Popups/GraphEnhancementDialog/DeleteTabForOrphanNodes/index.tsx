@@ -91,8 +91,8 @@ export default function DeletePopUpForOrphanNodes({
         header: ({ table }: { table: Table<orphanNodeProps> }) => {
           return (
             <Checkbox
-              aria-label='header-checkbox'
-              checked={table.getIsAllRowsSelected()}
+              ariaLabel='header-checkbox'
+              isChecked={table.getIsAllRowsSelected()}
               onChange={table.getToggleAllRowsSelectedHandler()}
             />
           );
@@ -101,10 +101,12 @@ export default function DeletePopUpForOrphanNodes({
           return (
             <div className='px-1'>
               <Checkbox
-                aria-label='row-checkbox'
+                ariaLabel='row-checkbox'
                 onChange={row.getToggleSelectedHandler()}
-                title='Select the Row for Deletion'
-                checked={row.getIsSelected()}
+                htmlAttributes={{
+                  title: 'Select the Row for Deletion',
+                }}
+                isChecked={row.getIsSelected()}
               />
             </div>
           );
@@ -118,8 +120,10 @@ export default function DeletePopUpForOrphanNodes({
             <div className='textellipsis'>
               <TextLink
                 className='!cursor-pointer'
-                onClick={() => handleOrphanNodeClick(info.row.id, 'chatInfoView')}
-                title={info.getValue()}
+                htmlAttributes={{
+                  onClick: () => handleOrphanNodeClick(info.row.id, 'chatInfoView'),
+                  title: info.getValue(),
+                }}
               >
                 {info.getValue()}
               </TextLink>
@@ -254,7 +258,7 @@ export default function DeletePopUpForOrphanNodes({
           tableInstance={table}
           styling={{
             borderStyle: 'all-sides',
-            zebraStriping: true,
+            hasZebraStriping: true,
             headerStyle: 'clean',
           }}
           rootProps={{
@@ -281,6 +285,7 @@ export default function DeletePopUpForOrphanNodes({
               );
             },
           }}
+          isKeyboardNavigable={false}
         />
         <Flex className='mt-3' flexDirection='row' justifyContent='flex-end'>
           <ButtonWithToolTip

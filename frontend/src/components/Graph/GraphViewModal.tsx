@@ -1,4 +1,4 @@
-import { Banner, Dialog, Flex, IconButtonArray, LoadingSpinner, useDebounce } from '@neo4j-ndl/react';
+import { Banner, Dialog, Flex, IconButtonArray, LoadingSpinner, useDebounceValue } from '@neo4j-ndl/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BasicNode,
@@ -53,7 +53,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [scheme, setScheme] = useState<Scheme>({});
   const [newScheme, setNewScheme] = useState<Scheme>({});
   const [searchQuery, setSearchQuery] = useState('');
-  const debouncedQuery = useDebounce(searchQuery, 300);
+  const [debouncedQuery] = useDebounceValue(searchQuery, 300);
   const [graphType, setGraphType] = useState<GraphType[]>([]);
   const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
   const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
@@ -339,12 +339,18 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           id: 'default-menu',
         }}
         size='unset'
-        open={open}
-        aria-labelledby='form-dialog-title'
-        disableCloseButton={false}
+        isOpen={open}
+        hasDisabledCloseButton={false}
         onClose={onClose}
+        htmlAttributes={{
+          'aria-labelledby': 'form-dialog-title',
+        }}
       >
-        <Dialog.Header id='graph-title'>
+        <Dialog.Header
+          htmlAttributes={{
+            id: 'graph-title',
+          }}
+        >
           {headerTitle}
           <Flex className='w-full' alignItems='center' flexDirection='row'>
             {checkBoxView && (
@@ -365,15 +371,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               </div>
             ) : status !== 'unknown' ? (
               <div className='my-40 flex items-center justify-center'>
-                <Banner name='graph banner' description={statusMessage} type={status} />
+                <Banner name='graph banner' description={statusMessage} type={status} usage='inline' />
               </div>
             ) : nodes.length === 0 && relationships.length === 0 && graphType.length !== 0 ? (
               <div className='my-40 flex items-center justify-center'>
-                <Banner name='graph banner' description={graphLabels.noNodesRels} type='danger' />
+                <Banner name='graph banner' description={graphLabels.noNodesRels} type='danger' usage='inline' />
               </div>
             ) : graphType.length === 0 && checkBoxView ? (
               <div className='my-40 flex items-center justify-center'>
-                <Banner name='graph banner' description={graphLabels.selectCheckbox} type='danger' />
+                <Banner name='graph banner' description={graphLabels.selectCheckbox} type='danger' usage='inline' />
               </div>
             ) : (
               <>
@@ -390,7 +396,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       }}
                       nvlCallbacks={nvlCallbacks}
                     />
-                    <IconButtonArray orientation='vertical' floating className='absolute bottom-4 right-4'>
+                    <IconButtonArray orientation='vertical' isFloating className='absolute bottom-4 right-4'>
                       {viewPoint !== 'chatInfoView' && (
                         <IconButtonWithToolTip
                           label='Refresh'

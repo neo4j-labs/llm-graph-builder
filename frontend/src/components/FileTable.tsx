@@ -51,7 +51,6 @@ import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
-import IndeterminateCheckbox from './UI/CustomCheckBox';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
 let onlyfortheFirstRender = true;
@@ -103,32 +102,30 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             .includes('Processing');
           return (
             <Checkbox
-              aria-label='header-checkbox'
-              checked={table.getIsAllRowsSelected()}
+              ariaLabel='header-checkbox'
+              isChecked={table.getIsAllRowsSelected()}
               onChange={table.getToggleAllRowsSelectedHandler()}
-              disabled={processingcheck}
-              title={
-                processingcheck
+              isDisabled={processingcheck}
+              htmlAttributes={{
+                title: processingcheck
                   ? `Files are still processing please select individual checkbox for deletion`
-                  : 'select all rows for deletion'
-              }
+                  : 'select all rows for deletion',
+              }}
             />
           );
         },
         cell: ({ row }: { row: Row<CustomFile> }) => {
           return (
             <div className='px-1'>
-              <IndeterminateCheckbox
-                {...{
-                  checked: row.getIsSelected(),
-                  disabled:
-                    !row.getCanSelect() ||
-                    row.original.status == 'Uploading' ||
-                    row.original.status === 'Processing' ||
-                    row.original.status === 'Waiting',
-                  indeterminate: row.getIsSomeSelected(),
-                  onChange: row.getToggleSelectedHandler(),
-                }}
+              <Checkbox
+                isChecked={row.getIsSelected()}
+                isDisabled={
+                  !row.getCanSelect() ||
+                  row.original.status == 'Uploading' ||
+                  row.original.status === 'Processing' ||
+                  row.original.status === 'Waiting'
+                }
+                onChange={row.getToggleSelectedHandler()}
               />
             </div>
           );
@@ -161,23 +158,25 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           if (info.getValue() != 'Processing') {
             return (
               <div
-                className='cellClass'
+                className='cellClass flex gap-1 items-center'
                 title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
               >
-                <StatusIndicator type={statusCheck(info.getValue())} />
-                {info.getValue()}
+                <div>
+                  <StatusIndicator type={statusCheck(info.getValue())} />
+                </div>
+                <div>{info.getValue()}</div>
                 {(info.getValue() === 'Completed' || info.getValue() === 'Failed' || info.getValue() === 'Cancelled') &&
                   !isReadOnlyUser && (
                     <span className='mx-1'>
                       <IconButtonWithToolTip
                         placement='right'
-                        text='Reprocess'
+                        text='Ready to Reprocess'
                         size='small'
-                        label='reprocess'
+                        label='Ready to Reprocess'
                         clean
                         onClick={() => onRetry(info?.row?.id as string)}
                       >
-                        <ArrowPathIconSolid />
+                        <ArrowPathIconSolid className='n-size-token-4' />
                       </IconButtonWithToolTip>
                     </span>
                   )}
@@ -185,16 +184,22 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             );
           } else if (info.getValue() === 'Processing' && info.row.original.processingProgress === undefined) {
             return (
-              <div className='cellClass'>
-                <StatusIndicator type={statusCheck(info.getValue())} />
-                <i>Processing</i>
+              <div className='cellClass flex gap-1 items-center'>
+                <div>
+                  <StatusIndicator type={statusCheck(info.getValue())} />
+                </div>
+                <div>
+                  <i>Processing</i>
+                </div>
                 <div className='mx-1'>
                   <IconButton
                     size='medium'
-                    title='cancel the processing job'
-                    aria-label='cancel job button'
-                    clean
-                    disabled={info.row.original.processingStatus}
+                    htmlAttributes={{
+                      title: 'cancel the processing job',
+                    }}
+                    ariaLabel='cancel job button'
+                    isClean
+                    isDisabled={info.row.original.processingStatus}
                     onClick={() => {
                       cancelHandler(
                         info.row.original.name as string,
@@ -223,10 +228,12 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 <div className='mx-1'>
                   <IconButton
                     size='medium'
-                    title='cancel the processing job'
-                    aria-label='cancel job button'
-                    clean
-                    disabled={info.row.original.processingStatus}
+                    htmlAttributes={{
+                      title: 'cancel the processing job',
+                    }}
+                    ariaLabel='cancel job button'
+                    isClean={true}
+                    isDisabled={info.row.original.processingStatus}
                     onClick={() => {
                       cancelHandler(
                         info.row.original.name as string,
@@ -242,9 +249,11 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             );
           }
           return (
-            <div className='cellClass'>
-              <StatusIndicator type={statusCheck(info.getValue())} />
-              <i>{info.getValue()}</i>
+            <div className='cellClass flex gap-1'>
+              <div>
+                <StatusIndicator type={statusCheck(info.getValue())} />
+              </div>
+              <div>{info.getValue()}</div>
             </div>
           );
         },
@@ -304,7 +313,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 },
               },
             ],
-            defaultSortingActions: false,
+            hasDefaultSortingActions: false,
           },
         },
       }),
@@ -313,26 +322,32 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         cell: (info: CellContext<CustomFile, string>) => {
           if (parseInt(info.getValue()) === 100 || info.row.original?.status === 'New') {
             return (
-              <Typography variant='body-medium'>
-                <StatusIndicator type='success' />
-                Uploaded
-              </Typography>
+              <div className='flex gap-1 items-center'>
+                <Typography variant='body-medium'>
+                  <StatusIndicator type='success' />
+                </Typography>
+                <Typography variant='body-medium'>Uploaded</Typography>
+              </div>
             );
           } else if (info.row.original?.status === 'Uploading') {
             return <CustomProgressBar value={parseInt(info?.getValue())}></CustomProgressBar>;
           } else if (info.row.original?.status === 'Failed') {
             return (
-              <Typography variant='body-medium'>
-                <StatusIndicator type='danger' />
-                NA
-              </Typography>
+              <div className='flex gap-1 items-center'>
+                <Typography variant='body-medium'>
+                  <StatusIndicator type='danger' />
+                </Typography>
+                <Typography variant='body-medium'> NA</Typography>
+              </div>
             );
           }
           return (
-            <Typography variant='body-medium'>
-              <StatusIndicator type='success' />
-              Uploaded
-            </Typography>
+            <div className='flex items-center gap-1'>
+              <Typography variant='body-medium'>
+                <StatusIndicator type='success' />
+              </Typography>
+              <Typography variant='body-medium'>Uploaded</Typography>
+            </div>
           );
         },
         header: () => <span>Upload Status</span>,
@@ -355,7 +370,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             return (
               <Flex>
                 <span>
-                  <TextLink externalLink href={info.row.original.sourceUrl}>
+                  <TextLink isExternalLink href={info.row.original.sourceUrl}>
                     {info.row.original.fileSource}
                   </TextLink>
                 </span>
@@ -400,7 +415,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 };
               }),
             ],
-            defaultSortingActions: false,
           },
         },
       }),
@@ -443,7 +457,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 };
               }),
             ],
-            defaultSortingActions: false,
           },
         },
       }),
@@ -484,7 +497,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 };
               }),
             ],
-            defaultSortingActions: false,
           },
         },
       }),
@@ -927,7 +939,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               tableInstance={table}
               styling={{
                 borderStyle: 'all-sides',
-                zebraStriping: true,
+                hasZebraStriping: true,
                 headerStyle: 'clean',
               }}
               isLoading={isLoading}
@@ -954,6 +966,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   );
                 },
               }}
+              isKeyboardNavigable={false}
             />
           </div>
         </>

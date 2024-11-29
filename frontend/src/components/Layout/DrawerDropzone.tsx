@@ -55,9 +55,9 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
 
   return (
     <div className='flex min-h-[calc(-58px+100vh)] relative'>
-      <Drawer expanded={isExpanded} position='left' type='push' closeable={false}>
+      <Drawer isExpanded={isExpanded} position='left' type='push' isCloseable={false}>
         {!isReadOnlyUser ? (
-          <Drawer.Body className={`!overflow-hidden !w-[294px]`} style={{ height: 'intial' }}>
+          <Drawer.Body className={`!overflow-hidden !w-[294px]`} htmlAttributes={{ style: { height: 'intial' } }}>
             {alertState.showAlert && (
               <CustomAlert
                 severity={alertState.alertType}
@@ -75,7 +75,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
                     }`}
                   >
                     {process.env.VITE_ENV != 'PROD' && (
-                      <Typography variant='body-medium' className='flex items-center content-center'>
+                      <Typography variant='body-medium' className='flex items-center content-center gap-1'>
                         <Typography variant='body-medium'>
                           {!isBackendConnected ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
                         </Typography>
@@ -211,7 +211,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
             </div>
           </Drawer.Body>
         ) : (
-          <Drawer.Body className={`!overflow-hidden !w-[294px]`} style={{ height: 'intial' }}>
+          <Drawer.Body className={`!overflow-hidden !w-[294px]`} htmlAttributes={{ style: { height: 'intial' } }}>
             <Typography variant='subheading-medium'>
               This user account does not have permission to access or manage data sources.
             </Typography>

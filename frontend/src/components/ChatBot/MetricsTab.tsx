@@ -77,7 +77,9 @@ function MetricsTab({
   return (
     <Box>
       {error != undefined && error?.trim() != '' ? (
-        <Banner type='danger'>{error}</Banner>
+        <Banner type='danger' usage='inline'>
+          {error}
+        </Banner>
       ) : (
         <DataGrid
           ref={tableRef}
@@ -85,7 +87,7 @@ function MetricsTab({
           tableInstance={table}
           styling={{
             borderStyle: 'all-sides',
-            zebraStriping: true,
+            hasZebraStriping: true,
             headerStyle: 'clean',
           }}
           isLoading={metricsLoading}
@@ -109,6 +111,7 @@ function MetricsTab({
               );
             },
           }}
+          isKeyboardNavigable={false}
         />
       )}
     </Box>
