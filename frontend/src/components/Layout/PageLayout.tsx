@@ -38,7 +38,6 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
   const [shows3Modal, toggleS3Modal] = useReducer((s) => !s, false);
   const [showGCSModal, toggleGCSModal] = useReducer((s) => !s, false);
   const [showGenericModal, toggleGenericModal] = useReducer((s) => !s, false);
-
   const toggleLeftDrawer = () => {
     if (largedesktops) {
       setIsLeftExpanded(!isLeftExpanded);
@@ -92,12 +91,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
         }
         try {
           const parsedConnection = JSON.parse(neo4jConnection);
-          if (
-            parsedConnection.uri &&
-            parsedConnection.user &&
-            parsedConnection.password &&
-            parsedConnection.database
-          ) {
+          if (parsedConnection.uri && parsedConnection.user && parsedConnection.password && parsedConnection.database) {
             setUserCredentials({
               uri: parsedConnection.uri,
               userName: parsedConnection.user,

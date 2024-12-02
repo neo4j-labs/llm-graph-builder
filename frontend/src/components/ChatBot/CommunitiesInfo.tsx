@@ -61,7 +61,10 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
           </ul>
         </div>
       ) : (
-        <span className='h6 text-center'> No Communities Found</span>
+        <Typography variant='h6' className='text-center'>
+          {' '}
+          No Communities Found
+        </Typography>
       )}
       {openGraphView && (
         <GraphViewModal

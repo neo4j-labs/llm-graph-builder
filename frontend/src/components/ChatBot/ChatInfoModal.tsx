@@ -321,7 +321,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     [activeChatmodes]
   );
   return (
-    <div className='n-bg-palette-neutral-bg-weak p-4 overflow-y-auto'>
+    <div className='n-bg-palette-neutral-bg-weak p-4'>
       <div className='flex flex-row pb-6 items-center mb-2'>
         <img
           src={Neo4jRetrievalLogo}

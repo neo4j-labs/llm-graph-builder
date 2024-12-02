@@ -971,28 +971,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     }),
     [table]
   );
-  useEffect(() => {
-    if (tableRef.current) {
-      // Component has content, calculate maximum height for table
-      // Observes the height of the content and calculates own height accordingly
-      const resizeObserver = new ResizeObserver((entries) => {
-        for (let index = 0; index < entries.length; index++) {
-          const entry = entries[index];
-          const { height } = entry.contentRect;
-          const rowHeight = document?.getElementsByClassName('ndl-data-grid-td')?.[0]?.clientHeight ?? 69;
-          table.setPageSize(Math.floor(height / rowHeight));
-        }
-      });
-
-      const [contentElement] = document.getElementsByClassName('ndl-data-grid-scrollable');
-      resizeObserver.observe(contentElement);
-
-      return () => {
-        // Stop observing content after cleanup
-        resizeObserver.unobserve(contentElement);
-      };
-    }
-  }, []);
 
   const classNameCheck = isExpanded ? 'fileTableWithExpansion' : `filetable`;
 

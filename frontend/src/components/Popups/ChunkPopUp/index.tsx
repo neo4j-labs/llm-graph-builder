@@ -30,7 +30,6 @@ const ChunkPopUp = ({
   const sortedChunksData = useMemo(() => {
     return chunks.sort((a, b) => a.position - b.position);
   }, [chunks]);
-
   return (
     <Dialog isOpen={showChunkPopup} onClose={onClose}>
       <Dialog.Header>
