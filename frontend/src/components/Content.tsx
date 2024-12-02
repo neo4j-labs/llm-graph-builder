@@ -535,6 +535,7 @@ const Content: React.FC<ContentProps> = ({
     setProcessedCount(0);
     setConnectionStatus(false);
     localStorage.removeItem('password');
+    localStorage.removeItem('selectedModel')
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
