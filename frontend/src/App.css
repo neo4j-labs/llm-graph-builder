@@ -390,3 +390,9 @@
 .ndl-modal-root{
   z-index: 39 !important;
 }
+.tbody-dark .ndl-data-grid-tr:hover {
+  --cell-background: rgb(60 63 68) !important;
+}
+.tbody-light .ndl-data-grid-tr:hover {
+  --cell-background: rgb(226 227 229) !important;
+}

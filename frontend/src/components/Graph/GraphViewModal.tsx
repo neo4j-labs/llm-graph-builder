@@ -347,11 +347,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           'aria-labelledby': 'form-dialog-title',
         }}
       >
-        <Dialog.Header
-          htmlAttributes={{
-            id: 'graph-title',
-          }}
-        >
+        <Dialog.Header htmlAttributes={{ id: 'graph-title' }}>
           {headerTitle}
           {viewPoint !== graphLabels.chatInfoView && (
             <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -405,7 +401,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       }}
                       nvlCallbacks={nvlCallbacks}
                     />
-                    <IconButtonArray orientation='vertical' isFloating className='absolute bottom-4 right-4'>
+                    <IconButtonArray orientation='vertical' isFloating={true} className='absolute bottom-4 right-4'>
                       {viewPoint !== 'chatInfoView' && (
                         <IconButtonWithToolTip
                           label='Refresh'
@@ -414,14 +410,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                           placement='left'
                           disabled={disableRefresh}
                         >
-                          <ArrowPathIconOutline />
+                          <ArrowPathIconOutline className='n-size-token-7' />
                         </IconButtonWithToolTip>
                       )}
                       <IconButtonWithToolTip label='Zoomin' text='Zoom in' onClick={handleZoomIn} placement='left'>
-                        <MagnifyingGlassPlusIconOutline />
+                        <MagnifyingGlassPlusIconOutline className='n-size-token-7' />
                       </IconButtonWithToolTip>
                       <IconButtonWithToolTip label='Zoom out' text='Zoom out' onClick={handleZoomOut} placement='left'>
-                        <MagnifyingGlassMinusIconOutline />
+                        <MagnifyingGlassMinusIconOutline className='n-size-token-7' />
                       </IconButtonWithToolTip>
                       <IconButtonWithToolTip
                         label='Zoom to fit'
@@ -429,7 +425,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                         onClick={handleZoomToFit}
                         placement='left'
                       >
-                        <FitToScreenIcon />
+                        <FitToScreenIcon className='n-size-token-7' />
                       </IconButtonWithToolTip>
                     </IconButtonArray>
                   </div>

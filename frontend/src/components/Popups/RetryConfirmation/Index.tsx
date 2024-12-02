@@ -28,7 +28,7 @@ function RetryConfirmationDialog({
   const RetryOptionsForFile = file?.status != 'Completed' ? RETRY_OPIONS : RETRY_OPIONS.slice(0, 2);
   return (
     <Dialog isOpen={open} onClose={onClose}>
-      <Dialog.Header>Ready to Reprocess Options</Dialog.Header>
+      <Dialog.Header>Reprocess Options</Dialog.Header>
       <Dialog.Description>
         Clicking "Continue" will mark these files as "Ready to Reprocess." To proceed, click “Generate Graph” to start
         the reprocessing process.
@@ -73,7 +73,9 @@ function RetryConfirmationDialog({
             <ButtonWithToolTip
               placement='left'
               label='Retry action button'
-              text={!file?.retryOption.length ? `Please Select One Of The Option` : 'Reset Status'}
+              text={
+                !file?.retryOption.length ? `Please Select One Of The Option` : 'Reset The Status To Ready to Reprocess'
+              }
               loading={retryLoading}
               disabled={!file?.retryOption.length}
               onClick={() => {

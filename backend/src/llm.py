@@ -18,7 +18,6 @@ import boto3
 import google.auth
 from src.shared.constants import MODEL_VERSIONS, PROMPT_TO_ALL_LLMs
 
-
 def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""
     env_key = "LLM_MODEL_CONFIG_" + model
@@ -144,6 +143,16 @@ def get_combined_chunks(chunkId_chunkDoc_list):
         )
     return combined_chunk_document_list
 
+def get_chunk_id_as_doc_metadata(chunkId_chunkDoc_list):
+    combined_chunk_document_list = [
+       Document(
+           page_content=document["chunk_doc"].page_content,
+           metadata={"chunk_id": [document["chunk_id"]]},
+       )
+       for document in chunkId_chunkDoc_list
+   ]
+    return combined_chunk_document_list
+      
 
 async def get_graph_document_list(
     llm, combined_chunk_document_list, allowedNodes, allowedRelationship
@@ -192,6 +201,7 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
     
     llm, model_name = get_llm(model)
     combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
+    #combined_chunk_document_list = get_chunk_id_as_doc_metadata(chunkId_chunkDoc_list)
     
     if  allowedNodes is None or allowedNodes=="":
         allowedNodes =[]

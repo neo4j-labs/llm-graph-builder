@@ -40,6 +40,12 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       processingProgress: undefined,
       retryOption: '',
       retryOptionStatus: false,
+      chunkNodeCount: 0,
+      chunkRelCount: 0,
+      entityNodeCount: 0,
+      entityEntityRelCount: 0,
+      communityNodeCount: 0,
+      communityRelCount: 0,
     };
     if (url) {
       setValid(validation(bucketUrl) && isFocused);
@@ -153,60 +159,60 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       <div className='w-full inline-block'>
         <form>
           <TextInput
+            htmlAttributes={{
+              id: 'url',
+              autoFocus: true,
+              onBlur: () => setValid(validation(bucketUrl) && isFocused),
+              onKeyDown: handleKeyDown,
+              'aria-label': 'Bucket URL',
+              placeholder: 's3://data.neo4j.com/pdf/',
+            }}
             value={bucketUrl}
             isDisabled={false}
             label='Bucket URL'
-            isFluid
+            isFluid={true}
+            isRequired={true}
             errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
             onChange={(e) => {
               setisFocused(true);
               setBucketUrl(e.target.value);
             }}
-            htmlAttributes={{
-              id: 'url',
-              'aria-label': 'Bucket URL',
-              placeholder: 's3://data.neo4j.com/pdf/',
-              autoFocus: true,
-              required: true,
-              onBlur: () => setValid(validation(bucketUrl) && isFocused),
-              onKeyDown: handleKeyDown,
-            }}
           />
           <div className='flex justify-between items-center w-full gap-4 mt-3'>
             <TextInput
+              htmlAttributes={{
+                id: 'access key',
+                type: 'password',
+                onKeyDown: handleKeyDown,
+                'aria-label': 'Access Key',
+                placeholder: '',
+              }}
               value={accessKey}
               isDisabled={false}
               label='Access Key'
               className='w-full'
-              isFluid
+              isFluid={true}
+              isRequired={true}
               onChange={(e) => {
                 setAccessKey(e.target.value);
               }}
-              htmlAttributes={{
-                type: 'password',
-                id: 'access key',
-                'aria-label': 'Access Key',
-                placeholder: '',
-                required: true,
-                onKeyDown: handleKeyDown,
-              }}
             />
             <TextInput
+              htmlAttributes={{
+                id: 'secret key',
+                type: 'password',
+                onKeyDown: handleKeyDown,
+                'aria-label': 'Secret Key',
+                placeholder: '',
+              }}
               value={secretKey}
               isDisabled={false}
               label='Secret Key'
               className='w-full'
-              isFluid
+              isFluid={true}
+              isRequired={true}
               onChange={(e) => {
                 setSecretKey(e.target.value);
-              }}
-              htmlAttributes={{
-                type: 'password',
-                id: 'secret key',
-                'aria-label': 'Secret Key',
-                placeholder: '',
-                required: true,
-                onKeyDown: handleKeyDown,
               }}
             />
           </div>

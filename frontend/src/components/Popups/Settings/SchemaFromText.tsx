@@ -7,15 +7,7 @@ import { buttonCaptions } from '../../../utils/Constants';
 import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
 import { showNormalToast, showSuccessToast } from '../../../utils/toasts';
 
-const SchemaFromTextDialog = ({
-  open,
-  onClose,
-  openSettingsDialog,
-}: {
-  open: boolean;
-  onClose: () => void;
-  openSettingsDialog: () => void;
-}) => {
+const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
   const [userText, setUserText] = useState<string>('');
   const [loading, setloading] = useState<boolean>(false);
   const { setSelectedNodes, setSelectedRels } = useFileContext();
@@ -84,7 +76,6 @@ const SchemaFromTextDialog = ({
       onClose();
       setUserText('');
       setIsSchema(false);
-      openSettingsDialog();
     } catch (error) {
       setloading(false);
       console.log(error);
@@ -95,15 +86,17 @@ const SchemaFromTextDialog = ({
     <Dialog
       size='medium'
       isOpen={open}
-      aria-labelledby='form-dialog-title'
       onClose={() => {
         setloading(false);
         setIsSchema(false);
         setUserText('');
         onClose();
       }}
+      htmlAttributes={{
+        'aria-labelledby': 'form-dialog-title',
+      }}
     >
-      <Dialog.Header htmlAttributes={{ id: 'form-dialog-title' }}>Entity Graph Extraction Settings</Dialog.Header>
+      <Dialog.Header>Entity Graph Extraction Settings</Dialog.Header>
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
         <TextArea
           helpText='Analyze the text to extract Entities'
@@ -111,7 +104,7 @@ const SchemaFromTextDialog = ({
           style={{
             resize: 'vertical',
           }}
-          isFluid
+          isFluid={true}
           value={userText}
           htmlAttributes={{
             onChange: (e) => setUserText(e.target.value),

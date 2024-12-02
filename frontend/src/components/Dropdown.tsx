@@ -1,4 +1,4 @@
-import { Select, Tooltip, useMediaQuery } from '@neo4j-ndl/react';
+import { Tooltip, useMediaQuery, Select } from '@neo4j-ndl/react';
 import { OptionType, ReusableDropdownProps } from '../types';
 import { memo, useMemo } from 'react';
 import { capitalize, capitalizeWithUnderscore } from '../utils/Utils';

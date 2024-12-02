@@ -153,19 +153,19 @@ const SideNav: React.FC<SideNavProps> = ({
           )}
           {position === 'right' && isExpanded && (
             <>
-              {!getIsLoading(messages ?? []) && (<Tooltip type='simple' placement={'left'}>
+              <Tooltip type='simple' placement={'left'}>
                 <SideNavigation.Item
                   htmlAttributes={{ onClick: deleteOnClick }}
                   icon={
                     <>
                       <Tooltip.Trigger>
-                        <TrashIconOutline className='n-size-token-7'/>
+                        <TrashIconOutline className='n-size-token-7' />
                       </Tooltip.Trigger>
                       <Tooltip.Content>{tooltips.clearChat}</Tooltip.Content>
                     </>
                   }
                 />
-              </Tooltip>)}
+              </Tooltip>
               <Tooltip type='simple' placement={'left'}>
                 <SideNavigation.Item
                   htmlAttributes={{ onClick: handleExpandClick }}
@@ -253,6 +253,7 @@ const SideNav: React.FC<SideNavProps> = ({
           >
             <Dialog.Header className='flex justify-between self-end' htmlAttributes={{ id: 'chatbot-dialog-title' }}>
               <ExpandedChatButtonContainer
+                isFullScreen={isFullScreen}
                 closeChatBot={handleShrinkClick}
                 deleteOnClick={deleteOnClick}
                 messages={messages ?? []}

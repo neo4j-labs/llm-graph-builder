@@ -18,4 +18,16 @@ const connectAPI = async (connectionURI: string, username: string, password: str
     throw error;
   }
 };
-export default connectAPI;
+
+const envConnectionAPI = async () => {
+  try {
+    const conectionUrl = `/backend_connection_configuation`;
+    const response = await api.post(conectionUrl);
+    return response;
+  } catch (error) {
+    console.log('API Connection error', error);
+    throw error;
+  }
+};
+
+export { connectAPI, envConnectionAPI };

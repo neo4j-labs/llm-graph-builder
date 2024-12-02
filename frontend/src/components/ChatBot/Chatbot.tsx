@@ -57,6 +57,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     isLoading,
     isFullScreen,
     connectionStatus,
+    isChatOnly,
   } = props;
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
@@ -407,8 +408,12 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   }, []);
 
   return (
-    <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
-      <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3 pr-3'>
+    <div className={'n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'}>
+      <div
+        className={`flex overflow-y-auto pb-12 min-w-full pl-5 pr-5 chatBotContainer ${
+          isChatOnly ? 'min-h-[calc(100dvh-114px)] max-h-[calc(100dvh-114px)]' : ''
+        } `}
+      >
         <Widget className='n-bg-palette-neutral-bg-weak w-full' header='' isElevated={false}>
           <div className='flex flex-col gap-4 gap-y-4'>
             {listMessages.map((chat, index) => {
@@ -431,8 +436,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         size='x-large'
                         source={ChatBotAvatar}
                         status={connectionStatus ? 'online' : 'offline'}
-                        type='image'
                         shape='square'
+                        type='image'
                       />
                     ) : (
                       <Avatar
@@ -441,8 +446,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         name='KM'
                         size='x-large'
                         status={connectionStatus ? 'online' : 'offline'}
-                        type='image'
-                        shape='square'       
+                        shape='square'
+                        type='image'      
                       />
                     )}
                   </div>
@@ -542,7 +547,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           <TextInput
             className={`n-bg-palette-neutral-bg-default flex-grow-7 ${
               isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
-              }`}
+            }`}
             value={inputMessage}
             isFluid
             onChange={handleInputChange}
@@ -581,8 +586,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               htmlAttributes={{
                 title: 'download chat info',
               }}
-              ariaLabel='download chat info'
               isClean
+              ariaLabel='download chat info'
               isDisabled={metricsLoading || infoLoading}
               onClick={() => {
                 downloadClickHandler(

@@ -42,7 +42,7 @@ def get_youtube_combined_transcript(youtube_id):
     transcript_dict = get_youtube_transcript(youtube_id)
     transcript=''
     for td in transcript_dict:
-      transcript += ''.join(td['text'])
+      transcript += ''.join(td['text'])+" "
     return transcript
   except Exception as e:
     message = f"Youtube transcript is not available for youtube Id: {youtube_id}"
@@ -83,9 +83,20 @@ def get_documents_from_youtube(url):
       # print(f'youtube page_content: {youtube_transcript[0].page_content}')
       # print(f'youtube id: {youtube_transcript[0].metadata["id"]}')
       # print(f'youtube title: {youtube_transcript[0].metadata["snippet"]["title"]}')
-      transcript= get_youtube_combined_transcript(match.group(1))
+      transcript= get_youtube_transcript(match.group(1))
+      transcript_content=''
+      counter = YOUTUBE_CHUNK_SIZE_SECONDS 
+      pages = []
+      for i, td in enumerate(transcript):
+          if td['start'] < counter:
+              transcript_content += ''.join(td['text'])+" "
+          else :
+              transcript_content += ''.join(td['text'])+" "
+              pages.append(Document(page_content=transcript_content.strip(), metadata={'start_timestamp':str(timedelta(seconds = counter-YOUTUBE_CHUNK_SIZE_SECONDS)).split('.')[0], 'end_timestamp':str(timedelta(seconds = td['start'])).split('.')[0]}))
+              counter += YOUTUBE_CHUNK_SIZE_SECONDS  
+              transcript_content=''  
+      pages.append(Document(page_content=transcript_content.strip(), metadata={'start_timestamp':str(timedelta(seconds = counter-YOUTUBE_CHUNK_SIZE_SECONDS)).split('.')[0], 'end_timestamp':str(timedelta(seconds =transcript[-1]['start'] if transcript else counter)).split('.')[0]})) # Handle empty transcript_pieces
       file_name = match.group(1)#youtube_transcript[0].metadata["snippet"]["title"]
-      pages = [Document(page_content=transcript)]
       return file_name, pages
     except Exception as e:
       error_message = str(e)
