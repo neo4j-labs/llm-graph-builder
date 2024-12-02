@@ -106,7 +106,7 @@ export default function DeletePopUpForOrphanNodes({
           return (
             <div className='px-1'>
               <Checkbox
-                aria-label='row-checkbox'
+                ariaLabel='row-checkbox'
                 onChange={row.getToggleSelectedHandler()}
                 htmlAttributes={{ title: 'Select the Row for Deletion' }}
                 isChecked={row.getIsSelected()}

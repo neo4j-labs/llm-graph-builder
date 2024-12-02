@@ -91,7 +91,6 @@ const Content: React.FC<ContentProps> = ({
     setchatModes,
     model
   } = useFileContext();
-
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>(
     'tableView'
   );
@@ -128,7 +127,9 @@ const Content: React.FC<ContentProps> = ({
       (async () => {
         showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
         try {
-          const payload = isGdsActive ? postProcessingTasks : postProcessingTasks.filter((task) => task !== 'enable_communities');
+          const payload = isGdsActive
+            ? postProcessingTasks
+            : postProcessingTasks.filter((task) => task !== 'enable_communities');
           const response = await postProcessing(userCredentials as UserCredentials, payload);
           if (response.data.status === 'Success') {
             const communityfiles = response.data?.data;
@@ -509,8 +510,9 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -520,10 +522,10 @@ const Content: React.FC<ContentProps> = ({
     isLeftExpanded && isRightExpanded
       ? 'contentWithExpansion'
       : isRightExpanded
-        ? 'contentWithChatBot'
-        : !isLeftExpanded && !isRightExpanded
-          ? 'w-[calc(100%-128px)]'
-          : 'contentWithDropzoneExpansion';
+      ? 'contentWithChatBot'
+      : !isLeftExpanded && !isRightExpanded
+      ? 'w-[calc(100%-128px)]'
+      : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -556,12 +558,12 @@ const Content: React.FC<ContentProps> = ({
         return prev.map((f) => {
           return f.name === filename
             ? {
-              ...f,
-              status: 'Ready to Reprocess',
-              processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-              nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-              relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
-            }
+                ...f,
+                status: 'Ready to Reprocess',
+                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                nodesCount: isStartFromBegining ? 0 : f.nodesCount,
+                relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
+              }
             : f;
         });
       });
@@ -870,8 +872,9 @@ const Content: React.FC<ContentProps> = ({
           handleGenerateGraph={processWaitingFilesOnRefresh}
         ></FileTable>
         <Flex
-          className={`${!isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-            } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+          className={`${
+            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
+          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
           justifyContent='space-between'
           flexDirection={isTablet ? 'column' : 'row'}
         >
