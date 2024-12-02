@@ -186,14 +186,11 @@ class graphDBdataAccess:
             result = self.graph.query(gds_procedure_count)
             total_gds_procedures = result[0]['totalGdsProcedures'] if result else 0
 
-            enable_communities = os.environ.get('ENABLE_COMMUNITIES','').upper() == "TRUE"
-            logging.info(f"Enable Communities {enable_communities}")
-
-            if enable_communities and total_gds_procedures > 0:
+            if total_gds_procedures > 0:
                 logging.info("GDS is available in the database.")
                 return True
             else:
-                logging.info("Communities are disabled or GDS is not available in the database.")
+                logging.info("GDS is not available in the database.")
                 return False
         except Exception as e:
             logging.error(f"An error occurred while checking GDS version: {e}")
@@ -284,27 +281,31 @@ class graphDBdataAccess:
         query_to_delete_document_and_entities="""
             MATCH (d:Document)
             WHERE d.fileName IN $filename_list AND d.fileSource IN $source_types_list
-            WITH COLLECT(d) as documents
+            WITH COLLECT(d) AS documents
             UNWIND documents AS d
-            MATCH (d)<-[:PART_OF]-(c:Chunk)
-            WITH d, c, documents
-            OPTIONAL MATCH (c)-[:HAS_ENTITY]->(e)
+            OPTIONAL MATCH (d)<-[:PART_OF]-(c:Chunk)
+            OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e)
+            WITH d, c, e, documents
             WHERE NOT EXISTS {
                 MATCH (e)<-[:HAS_ENTITY]-(c2)-[:PART_OF]->(d2:Document)
                 WHERE NOT d2 IN documents
                 }
-            DETACH DELETE c, e, d
-            """ 
+            WITH d, COLLECT(c) AS chunks, COLLECT(e) AS entities
+            FOREACH (chunk IN chunks | DETACH DELETE chunk)
+            FOREACH (entity IN entities | DETACH DELETE entity)
+            DETACH DELETE d
+            """  
         query_to_delete_communities = """
-            MATCH (c:`__Community__`) 
-            WHERE NOT EXISTS { ()-[:IN_COMMUNITY]->(c) } AND c.level = 0 
-            DETACH DELETE c 
-
-            WITH *
-            UNWIND range(1, $max_level) AS level
-            MATCH (c1:`__Community__`) 
-            WHERE c1.level = level AND NOT EXISTS { (c1)<-[:PARENT_COMMUNITY]-(child) } 
-            DETACH DELETE c1
+            MATCH (c:`__Community__`)
+            WHERE c.level = 0 AND NOT EXISTS { ()-[:IN_COMMUNITY]->(c) }
+            DETACH DELETE c
+            WITH 1 AS dummy
+            UNWIND range(1, $max_level)  AS level
+            CALL (level) {
+                MATCH (c:`__Community__`)
+                WHERE c.level = level AND NOT EXISTS { ()-[:PARENT_COMMUNITY]->(c) }
+                DETACH DELETE c
+                }
         """   
         param = {"filename_list" : filename_list, "source_types_list": source_types_list}
         community_param = {"max_level":MAX_COMMUNITY_LEVELS}

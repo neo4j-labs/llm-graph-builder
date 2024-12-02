@@ -924,7 +924,6 @@ async def fetch_chunktext(
    page_no: int = Form(1)
 ):
    try:
-
        start = time.time()
        result = await asyncio.to_thread(
            get_chunktext_results,

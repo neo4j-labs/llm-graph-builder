@@ -16,7 +16,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const selectedNodeLabelstr = localStorage.getItem('selectedNodeLabels');
   const selectedNodeRelsstr = localStorage.getItem('selectedRelationshipLabels');
   const persistedQueue = localStorage.getItem('waitingQueue');
-  const { userCredentials, isGdsActive } = useCredentials();
+  const { userCredentials } = useCredentials();
   const [files, setFiles] = useState<(File | null)[] | []>([]);
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
   const [queue, setQueue] = useState<Queue>(
