@@ -13,7 +13,6 @@ import {
   batchSize,
   buttonCaptions,
   chatModeLables,
-  defaultLLM,
   largeFileSize,
   llms,
   RETRY_OPIONS,
@@ -90,6 +89,7 @@ const Content: React.FC<ContentProps> = ({
     processedCount,
     setProcessedCount,
     setchatModes,
+    model
   } = useFileContext();
 
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>(
@@ -879,7 +879,7 @@ const Content: React.FC<ContentProps> = ({
             onSelect={handleDropdownChange}
             options={llms ?? ['']}
             placeholder='Select LLM Model'
-            defaultValue={defaultLLM}
+            defaultValue={model}
             view='ContentView'
             isDisabled={false}
           />

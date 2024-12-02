@@ -176,12 +176,12 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
             setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
             setErrorMessage(backendApiResponse?.data.error);
           }
-        }else{
-            // For PROD, picking the session values
-            setUserCredentialsFromSession(session as string);
-            setConnectionStatus(true);
-            setIsBackendConnected(true);
-            handleDisconnectButtonState(true);
+        } else {
+          // For PROD, picking the session values
+          setUserCredentialsFromSession(session as string);
+          setConnectionStatus(true);
+          setIsBackendConnected(true);
+          handleDisconnectButtonState(true);
           return;
         }
         // Handle case where no session exists
