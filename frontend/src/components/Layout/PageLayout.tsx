@@ -91,12 +91,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
         }
         try {
           const parsedConnection = JSON.parse(neo4jConnection);
-          if (
-            parsedConnection.uri &&
-            parsedConnection.user &&
-            parsedConnection.password &&
-            parsedConnection.database
-          ) {
+          if (parsedConnection.uri && parsedConnection.user && parsedConnection.password && parsedConnection.database) {
             setUserCredentials({
               uri: parsedConnection.uri,
               userName: parsedConnection.user,

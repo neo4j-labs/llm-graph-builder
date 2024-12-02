@@ -249,7 +249,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             } else {
               setListMessages((prev) =>
                 prev.map((msg) =>
-                  (msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg)
+                  msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg
                 )
               );
             }
@@ -264,7 +264,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             } else {
               setListMessages((prev) =>
                 prev.map((msg) =>
-                  (msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg)
+                  msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg
                 )
               );
             }
@@ -273,15 +273,15 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           console.error(`API call failed for mode ${mode}:`, result.reason);
           setListMessages((prev) =>
             prev.map((msg) =>
-            (msg.id === chatbotMessageId
-              ? {
-                ...msg,
-                modes: {
-                  ...msg.modes,
-                  [mode]: { message: 'Failed to fetch response for this mode.', error: result.reason },
-                },
-              }
-              : msg)
+              msg.id === chatbotMessageId
+                ? {
+                    ...msg,
+                    modes: {
+                      ...msg.modes,
+                      [mode]: { message: 'Failed to fetch response for this mode.', error: result.reason },
+                    },
+                  }
+                : msg
             )
           );
         }
@@ -294,19 +294,19 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       if (error instanceof Error) {
         setListMessages((prev) =>
           prev.map((msg) =>
-          (msg.id === chatbotMessageId
-            ? {
-              ...msg,
-              isLoading: false,
-              isTyping: false,
-              modes: {
-                [chatModes[0]]: {
-                  message: 'An error occurred while processing your request.',
-                  error: error.message,
-                },
-              },
-            }
-            : msg)
+            msg.id === chatbotMessageId
+              ? {
+                  ...msg,
+                  isLoading: false,
+                  isTyping: false,
+                  modes: {
+                    [chatModes[0]]: {
+                      message: 'An error occurred while processing your request.',
+                      error: error.message,
+                    },
+                  },
+                }
+              : msg
           )
         );
       }
@@ -447,7 +447,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         size='x-large'
                         status={connectionStatus ? 'online' : 'offline'}
                         shape='square'
-                        type='image'      
+                        type='image'
                       />
                     )}
                   </div>
@@ -456,12 +456,12 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                     isElevated={true}
                     className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
                       chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
-                      }`}
+                    }`}
                   >
                     <div
                       className={`${
                         chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
-                        }`}
+                      }`}
                     >
                       <ReactMarkdown className={!isFullScreen ? 'max-w-[250px]' : ''}>
                         {chat.modes[chat.currentMode]?.message || ''}
