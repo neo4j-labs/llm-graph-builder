@@ -12,6 +12,7 @@ import { capitalize } from '../../utils/Utils';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import { metricsinfo } from '../../utils/Constants';
+import NotAvailableMetric from './NotAvailableMetric';
 function MetricsTab({
   metricsLoading,
   metricDetails,
@@ -65,7 +66,11 @@ function MetricsTab({
       columnHelper.accessor((row) => row.score as number, {
         id: 'Score',
         cell: (info) => {
-          return <Typography variant='body-medium'>{info.getValue().toFixed(2)}</Typography>;
+          const value = isNaN(info.getValue()) ? 'N.A' : info.getValue()?.toFixed(2);
+          if (value === 'N.A') {
+            return <NotAvailableMetric />;
+          }
+          return <Typography variant='body-medium'>{value}</Typography>;
         },
       }),
     ],
