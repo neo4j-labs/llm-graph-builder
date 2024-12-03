@@ -207,8 +207,6 @@ def get_graph_results(uri, username, password,database,document_names):
         document_nodes = extract_node_elements(records)
         document_relationships = extract_relationships(records)
 
-        print(query)
-
         logging.info(f"no of nodes : {len(document_nodes)}")
         logging.info(f"no of relations : {len(document_relationships)}")
         result = {
