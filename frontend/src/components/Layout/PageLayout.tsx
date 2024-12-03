@@ -87,6 +87,7 @@ const PageLayout: React.FC = () => {
       const setUserCredentialsFromSession = (neo4jConnection: string) => {
         if (!neo4jConnection) {
           console.error('Invalid session data:', neo4jConnection);
+          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
           return;
         }
         try {
@@ -138,90 +139,73 @@ const PageLayout: React.FC = () => {
           return false;
         }
       };
+      // Handle case where session exists
+      let backendApiResponse;
       try {
-        // Handle case where session exists
-        if (session && isDev) {
-          let backendApiResponse;
-          try {
-            backendApiResponse = await envConnectionAPI();
-            const connectionData = backendApiResponse.data;
-            const envCredentials = {
-              uri: connectionData.data.uri,
-              password: atob(connectionData.data.password),
-              userName: connectionData.data.user_name,
-              database: connectionData.data.database,
-              isReadonlyUser: !connectionData.data.write_access,
-              isGds: connectionData.data.gds_status,
-            };
+        if (isDev) {
+          backendApiResponse = await envConnectionAPI();
+          const connectionData = backendApiResponse.data;
+          const envCredentials = {
+            uri: connectionData.data.uri,
+            password: atob(connectionData.data.password),
+            userName: connectionData.data.user_name,
+            database: connectionData.data.database,
+            isReadonlyUser: !connectionData.data.write_access,
+            isGds: connectionData.data.gds_status,
+          };
+          if (session && isDev) {
             const updated = updateSessionIfNeeded(envCredentials, session);
             if (!updated) {
               setUserCredentialsFromSession(session); // Using stored session if no update is needed
             }
             setConnectionStatus(Boolean(connectionData.data.graph_connection));
-            setGdsActive(connectionData.data.gds_status)
             setIsBackendConnected(true);
             handleDisconnectButtonState(false);
-          } catch (error) {
-            console.error('Error in DEV session handling:', error);
-            handleDisconnectButtonState(true);
-            setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-            setErrorMessage(backendApiResponse?.data.error);
           }
-        } else {
-          // For PROD, picking the session values
-          setUserCredentialsFromSession(session as string);
-          setGdsActive((typeof session === 'string' && JSON.parse(session)?.isgdsActive));;
-          setConnectionStatus(true);
-          setIsBackendConnected(true);
-          handleDisconnectButtonState(true);
-          return;
-        }
-        // Handle case where no session exists
-        if (isDev) {
-          let envAPiResponse;
-          try {
-            envAPiResponse = await envConnectionAPI();
-            const connectionData = envAPiResponse.data.data;
-            const credentials = {
-              uri: connectionData.uri,
-              password: atob(connectionData.password),
-              userName: connectionData.user_name,
-              database: connectionData.database,
-              isReadonlyUser: !connectionData.write_access,
-              isGds: connectionData.gds_status,
-            };
-            setUserCredentials(credentials);
+          else if (!session) {
+            setUserCredentials(envCredentials);
             localStorage.setItem(
               'neo4j.connection',
               JSON.stringify({
-                uri: credentials.uri,
-                user: credentials.userName,
-                password: btoa(credentials.password),
-                database: credentials.database,
+                uri: envCredentials.uri,
+                user: envCredentials.userName,
+                password: btoa(envCredentials.password),
+                database: envCredentials.database,
                 userDbVectorIndex: 384,
-                isReadOnlyUser: credentials.isReadonlyUser,
-                isGDS: credentials.isGds,
+                isReadOnlyUser: envCredentials.isReadonlyUser,
+                isGDS: envCredentials.isGds,
               })
             );
-            setConnectionStatus(Boolean(connectionData.graph_connection));
-            setGdsActive(Boolean(credentials.isGds));
-            setIsBackendConnected(true);
+            setConnectionStatus(true);
+            setGdsActive(envCredentials.isGds);
+            setIsReadOnlyUser(envCredentials.isReadonlyUser);
             handleDisconnectButtonState(false);
-          } catch (error) {
-            console.error('Error in DEV no-session handling:', error);
-            handleDisconnectButtonState(true);
-            setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-            setErrorMessage(envAPiResponse?.data.error);
           }
-        } else {
-          // For PROD: Open modal to manually connect
-          handleDisconnectButtonState(true);
-          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-          setIsBackendConnected(false);
+        }
+        else {
+          if (session && !isDev) {
+            // For PROD, picking the session values
+            setUserCredentialsFromSession(session as string);
+            setConnectionStatus(true);
+            handleDisconnectButtonState(true);
+            return;
+          }
+          else {
+            setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+            handleDisconnectButtonState(true);
+          }
         }
       } catch (error) {
-        console.error('Error in initializeConnection:', error);
-        setIsBackendConnected(false);
+        console.error('Error in DEV session handling:', error);
+        if (session) {
+          setUserCredentialsFromSession(session as string);
+          setConnectionStatus(true);
+        }
+        else {
+          setErrorMessage(backendApiResponse?.data.error);
+          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+        }
+        handleDisconnectButtonState(true);
       }
     }
     initializeConnection();
