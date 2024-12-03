@@ -161,7 +161,17 @@ Allow unauthenticated request : Yes
 | LLM_MODEL_CONFIG_ollama_<model_name>         | Optional      |               | Set ollama config as - model_name,model_local_url for local deployments |
 | RAGAS_EMBEDDING_MODEL         | Optional      | openai              | embedding model used by ragas evaluation framework                               |
 
-
+## LLMs Supported 
+1. OpenAI
+2. Gemini
+3. Azure OpenAI(dev)
+4. Anthropic(dev)
+5. Fireworks(dev)
+6. Groq(dev)
+7. Amazon Bedrock(dev)
+8. Ollama(dev)
+9. Diffbot
+10. Other OpenAI compabtile baseurl models(dev)
 
 ## For local llms (Ollama)
 1. Pull the docker imgage of ollama
