@@ -14,14 +14,12 @@ import useSpeechSynthesis from '../../hooks/useSpeech';
 import FallBackDialog from '../UI/FallBackDialog';
 import { envConnectionAPI } from '../../services/ConnectAPI';
 import { healthStatus } from '../../services/HealthStatus';
+import { useNavigate } from 'react-router';
 
 const ConnectionModal = lazy(() => import('../Popups/ConnectionModal/ConnectionModal'));
 
-interface PageLayoutProp {
-  isChatOnly?: boolean;
-}
 
-const PageLayout: React.FC<PageLayoutProp> = () => {
+const PageLayout: React.FC = () => {
   const [openConnection, setOpenConnection] = useState<connectionState>({
     openPopUp: false,
     chunksExists: false,
@@ -38,6 +36,8 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
   const [shows3Modal, toggleS3Modal] = useReducer((s) => !s, false);
   const [showGCSModal, toggleGCSModal] = useReducer((s) => !s, false);
   const [showGenericModal, toggleGenericModal] = useReducer((s) => !s, false);
+  const navigate = useNavigate();
+
   const toggleLeftDrawer = () => {
     if (largedesktops) {
       setIsLeftExpanded(!isLeftExpanded);
@@ -158,6 +158,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
               setUserCredentialsFromSession(session); // Using stored session if no update is needed
             }
             setConnectionStatus(Boolean(connectionData.data.graph_connection));
+            setGdsActive(connectionData.data.gds_status)
             setIsBackendConnected(true);
             handleDisconnectButtonState(false);
           } catch (error) {
@@ -169,6 +170,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
         } else {
           // For PROD, picking the session values
           setUserCredentialsFromSession(session as string);
+          setGdsActive((typeof session === 'string' && JSON.parse(session)?.isgdsActive));;
           setConnectionStatus(true);
           setIsBackendConnected(true);
           handleDisconnectButtonState(true);
@@ -202,6 +204,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
               })
             );
             setConnectionStatus(Boolean(connectionData.graph_connection));
+            setGdsActive(Boolean(credentials.isGds));
             setIsBackendConnected(true);
             handleDisconnectButtonState(false);
           } catch (error) {
@@ -249,6 +252,7 @@ const PageLayout: React.FC<PageLayoutProp> = () => {
             currentMode: 'graph+vector+fulltext',
           },
         ]);
+        navigate('.', { replace: true, state: null });
       }
     } catch (error) {
       console.log(error);
