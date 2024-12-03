@@ -28,11 +28,6 @@ export const llms =
         'bedrock_claude_3_5_sonnet',
       ];
 
-export const defaultLLM = llms?.includes('openai_gpt_4o')
-  ? 'openai_gpt_4o'
-  : llms?.includes('gemini_1.5_pro')
-  ? 'gemini_1.5_pro'
-  : 'diffbot';
 export const supportedLLmsForRagas = [
   'openai_gpt_3.5',
   'openai_gpt_4',

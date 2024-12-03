@@ -17,6 +17,10 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   const isLargeDesktop = useMediaQuery(`(min-width:1440px )`);
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
+    const existingModel = localStorage.getItem('selectedModel');
+    if (existingModel != selectedOption?.value) {
+      localStorage.setItem('selectedModel', selectedOption?.value ?? '');
+    }
   };
   const allOptions = useMemo(() => options, [options]);
   return (
