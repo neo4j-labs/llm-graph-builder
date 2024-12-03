@@ -16,7 +16,7 @@ from langchain_aws import ChatBedrock
 from langchain_community.chat_models import ChatOllama
 import boto3
 import google.auth
-from src.shared.constants import MODEL_VERSIONS, PROMPT_TO_ALL_LLMs
+from src.shared.constants import PROMPT_TO_ALL_LLMs
 
 def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""

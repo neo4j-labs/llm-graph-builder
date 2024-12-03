@@ -1,14 +1,4 @@
-MODEL_VERSIONS = {
-        "openai-gpt-3.5": "gpt-3.5-turbo-0125",
-        "gemini-1.0-pro": "gemini-1.0-pro-001",
-        "gemini-1.5-pro": "gemini-1.5-pro-002",
-        "gemini-1.5-flash": "gemini-1.5-flash-002",
-        "openai-gpt-4": "gpt-4-turbo-2024-04-09",
-        "diffbot" : "gpt-4-turbo-2024-04-09",
-        "openai-gpt-4o-mini": "gpt-4o-mini-2024-07-18",
-        "openai-gpt-4o":"gpt-4o-2024-08-06",
-        "groq-llama3" : "llama3-70b-8192"
-         }
+
 OPENAI_MODELS = ["openai-gpt-3.5", "openai-gpt-4o", "openai-gpt-4o-mini"]
 GEMINI_MODELS = ["gemini-1.0-pro", "gemini-1.5-pro", "gemini-1.5-flash"]
 GROQ_MODELS = ["groq-llama3"]
