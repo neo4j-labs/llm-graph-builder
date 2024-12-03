@@ -1,4 +1,4 @@
-from langchain_community.graphs import Neo4jGraph
+from langchain_neo4j import Neo4jGraph
 from src.shared.constants import (BUCKET_UPLOAD, PROJECT_ID, QUERY_TO_GET_CHUNKS, 
                                   QUERY_TO_DELETE_EXISTING_ENTITIES, 
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION,
@@ -8,7 +8,6 @@ from src.shared.constants import (BUCKET_UPLOAD, PROJECT_ID, QUERY_TO_GET_CHUNKS
                                   DELETE_ENTITIES_AND_START_FROM_BEGINNING,
                                   QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT)
 from src.shared.schema_extraction import schema_extraction_from_text
-from langchain_community.document_loaders import GoogleApiClient, GoogleApiYoutubeLoader
 from dotenv import load_dotenv
 from datetime import datetime
 import logging
@@ -27,7 +26,6 @@ from src.document_sources.web_pages import *
 import re
 from langchain_community.document_loaders import WikipediaLoader, WebBaseLoader
 import warnings
-from pytube import YouTube
 import sys
 import shutil
 import urllib.parse
@@ -142,34 +140,13 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     obj_source_node.created_at = datetime.now()
     match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
     logging.info(f"match value: {match}")
-    # file_path = os.path.join(os.path.dirname(__file__),"llm-experiments_credentials.json")
-    # logging.info(f'file path {file_path}')
-    
-    # if os.path.exists(file_path):
-    #   logging.info("File path exist")
-    #   with open(file_path,'r') as file:
-    #     data = json.load(file)
-    #     # logging.info(f"Project id : {data['project_id']}")
-    #     # logging.info(f"Universal domain: {data['universe_domain']}")
-    # else:
-    #   logging.warning("credntial file path not exist")
-
     video_id = parse_qs(urlparse(youtube_url).query).get('v')
-   
-    # google_api_client = GoogleApiClient(service_account_path=Path(file_path))
-    # youtube_loader_channel = GoogleApiYoutubeLoader(
-    # google_api_client=google_api_client,
-    # video_ids=[video_id[0].strip()], add_video_info=True
-    # )
-    # youtube_transcript = youtube_loader_channel.load()
-    # page_content = youtube_transcript[0].page_content
-
-    obj_source_node.file_name = match.group(1)#youtube_transcript[0].metadata["snippet"]["title"]
-    #obj_source_node.file_name = YouTube(youtube_url).title
+    obj_source_node.file_name = match.group(1)
     transcript= get_youtube_combined_transcript(match.group(1))
-    print(transcript)
+    logging.info(f"Youtube transcript : {transcript}")
     if transcript==None or len(transcript)==0:
       message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
+      logging.info(f"Youtube transcript is not available for : {obj_source_node.file_name}")
       raise Exception(message)
     else:  
       obj_source_node.file_size = sys.getsizeof(transcript)
@@ -212,7 +189,7 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
 async def extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, fileName, allowedNodes, allowedRelationship, retry_condition):
 
   logging.info(f'Process file name :{fileName}')
-  if retry_condition is None:
+  if not retry_condition:
     gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
     if gcs_file_cache == 'True':
       folder_name = create_gcs_bucket_folder_name_hashed(uri, fileName)
@@ -226,7 +203,7 @@ async def extract_graph_from_file_local_file(uri, userName, password, database, 
     return await processing_source(uri, userName, password, database, model, fileName, [], allowedNodes, allowedRelationship, True, merged_file_path, retry_condition)
   
 async def extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition):
-  if retry_condition is None:
+  if not retry_condition:
     if(aws_access_key_id==None or aws_secret_access_key==None):
       raise Exception('Please provide AWS access and secret keys')
     else:
@@ -240,9 +217,8 @@ async def extract_graph_from_file_s3(uri, userName, password, database, model, s
     return await processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, retry_condition=retry_condition)
   
 async def extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition):
-  if retry_condition is None:
+  if not retry_condition:
     file_name, pages = get_documents_from_web_page(source_url)
-
     if pages==None or len(pages)==0:
       raise Exception(f'Content is not available for given URL : {file_name}')
     return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship)
@@ -250,7 +226,7 @@ async def extract_graph_from_web_page(uri, userName, password, database, model, 
     return await processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, retry_condition=retry_condition)
   
 async def extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition):
-  if retry_condition is None:
+  if not retry_condition:
     file_name, pages = get_documents_from_youtube(source_url)
 
     if pages==None or len(pages)==0:
@@ -260,7 +236,7 @@ async def extract_graph_from_file_youtube(uri, userName, password, database, mod
      return await processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, retry_condition=retry_condition)
     
 async def extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, retry_condition):
-  if retry_condition is None:
+  if not retry_condition:
     file_name, pages = get_documents_from_Wikipedia(wiki_query, language)
     if pages==None or len(pages)==0:
       raise Exception(f'Wikipedia page is not available for file : {file_name}')
@@ -269,7 +245,7 @@ async def extract_graph_from_file_Wikipedia(uri, userName, password, database, m
     return await processing_source(uri, userName, password, database, model, file_name,[], allowedNodes, allowedRelationship, retry_condition=retry_condition)
 
 async def extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, retry_condition):
-  if retry_condition is None:
+  if not retry_condition:
     file_name, pages = get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token)
     if pages==None or len(pages)==0:
       raise Exception(f'File content is not available for file : {file_name}')
@@ -303,7 +279,6 @@ async def processing_source(uri, userName, password, database, model, file_name,
   logging.info(f'Time taken database connection: {elapsed_create_connection:.2f} seconds')
   uri_latency["create_connection"] = f'{elapsed_create_connection:.2f}'
   graphDb_data_Access = graphDBdataAccess(graph)
-
   start_get_chunkId_chunkDoc_list = time.time()
   total_chunks, chunkId_chunkDoc_list = get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition)
   end_get_chunkId_chunkDoc_list = time.time()
@@ -499,12 +474,10 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password,
 
     node_count += len(distinct_nodes)
     rel_count += len(relations)
-    print(f'node count internal func:{node_count}')
-    print(f'relation count internal func:{rel_count}')
   return node_count,rel_count,latency_processing_chunk
 
 def get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition):
-  if retry_condition is None:
+  if not retry_condition:
     logging.info("Break down file into chunks")
     bad_chars = ['"', "\n", "'"]
     for i in range(0,len(pages)):
