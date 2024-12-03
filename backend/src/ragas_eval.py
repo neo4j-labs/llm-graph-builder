@@ -8,11 +8,8 @@ from ragas import evaluate
 from ragas.metrics import answer_relevancy, faithfulness
 from src.shared.common_fn import load_embedding_model 
 from ragas.dataset_schema import SingleTurnSample
-from ragas.metrics import BleuScore, RougeScore, SemanticSimilarity, ContextEntityRecall
-from ragas.metrics._factual_correctness import FactualCorrectness
+from ragas.metrics import RougeScore, SemanticSimilarity, ContextEntityRecall
 from ragas.llms import LangchainLLMWrapper
-from langchain_openai import ChatOpenAI
-from langchain.embeddings import OpenAIEmbeddings
 from ragas.embeddings import LangchainEmbeddingsWrapper
 import nltk
 

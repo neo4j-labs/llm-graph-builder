@@ -1,5 +1,6 @@
 from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransformer
-from langchain_community.graphs import Neo4jGraph
+#from langchain_community.graphs import Neo4jGraph
+from langchain_neo4j import Neo4jGraph
 from langchain.docstore.document import Document
 from typing import List
 import os

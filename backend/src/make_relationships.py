@@ -1,4 +1,4 @@
-from langchain_community.graphs import Neo4jGraph
+from langchain_neo4j import Neo4jGraph
 from langchain.docstore.document import Document
 from langchain_community.vectorstores.neo4j_vector import Neo4jVector
 from langchain_openai import OpenAIEmbeddings
