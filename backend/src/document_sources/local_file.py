@@ -20,10 +20,8 @@ from langchain_core.documents import Document
 
 def load_document_content(file_path):
     if Path(file_path).suffix.lower() == '.pdf':
-        print("in if")
         return PyMuPDFLoader(file_path)
     else:
-        print("in else")
         return UnstructuredFileLoader(file_path, mode="elements",autodetect_encoding=True)
     
 def get_documents_from_file_by_path(file_path,file_name):

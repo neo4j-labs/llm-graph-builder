@@ -601,6 +601,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                     nodes,
                     tokensUsed,
                     model,
+                    multiModelMetrics,
                   },
                   downloadLinkRef,
                   'graph-builder-chat-details.json'

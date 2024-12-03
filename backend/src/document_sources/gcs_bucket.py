@@ -107,15 +107,12 @@ def merge_file_gcs(bucket_name, original_file_name: str, folder_name_sha1_hashed
   try:
       storage_client = storage.Client()
       bucket = storage_client.bucket(bucket_name)
-      # Retrieve chunks from GCS
-      # blobs = storage_client.list_blobs(bucket_name, prefix=folder_name_sha1_hashed)
-      # print(f'before sorted blobs: {blobs}')
       chunks = []
       for i in range(1,total_chunks+1):
         blob_name = folder_name_sha1_hashed + '/' + f"{original_file_name}_part_{i}"
         blob = bucket.blob(blob_name) 
         if blob.exists():
-          print(f'Blob Name: {blob.name}')
+          logging.info(f'Blob Name: {blob.name}')
           chunks.append(blob.download_as_bytes())
         blob.delete()
       
