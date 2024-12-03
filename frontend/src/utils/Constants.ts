@@ -295,7 +295,7 @@ export const graphLabels = {
   community: 'Communities',
   noNodesRels: 'No Nodes and No relationships',
   neighborView: 'neighborView',
-  chunksInfo: 'We are processing 50 chunks at a time',
+  chunksInfo: 'We are visualizing 50 chunks at a time',
 };
 
 export const RESULT_STEP_SIZE = 25;
