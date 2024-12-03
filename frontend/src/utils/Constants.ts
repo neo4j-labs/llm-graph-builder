@@ -47,6 +47,18 @@ export const supportedLLmsForRagas = [
   'fireworks_llama_v3_70b',
   'bedrock_claude_3_5_sonnet',
 ];
+export const supportedLLmsForGroundTruthMetrics = [
+  'openai_gpt_3.5',
+  'openai_gpt_4',
+  'openai_gpt_4o',
+  'openai_gpt_4o_mini',
+  'azure_ai_gpt_35',
+  'azure_ai_gpt_4o',
+  'groq_llama3_70b',
+  'anthropic_claude_3_5_sonnet',
+  'fireworks_llama_v3_70b',
+  'bedrock_claude_3_5_sonnet',
+];
 export const prodllms =
   process.env.VITE_LLM_MODELS_PROD?.trim() != ''
     ? (process.env.VITE_LLM_MODELS_PROD?.split(',') as string[])

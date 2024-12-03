@@ -11,6 +11,7 @@ import { Banner, Box, DataGrid, DataGridComponents, Flex, IconButton, Popover, T
 import { multimodelmetric } from '../../types';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
+import NotAvailableMetric from './NotAvailableMetric';
 
 export default function MultiModeMetrics({
   data,
@@ -50,7 +51,11 @@ export default function MultiModeMetrics({
       columnHelper.accessor((row) => row.answer_relevancy as number, {
         id: 'Answer Relevancy',
         cell: (info) => {
-          return <Typography variant='body-medium'>{info.getValue().toFixed(2)}</Typography>;
+          const value = isNaN(info.getValue()) ? 'N.A' : info.getValue()?.toFixed(2);
+          if (value === 'N.A') {
+            return <NotAvailableMetric />;
+          }
+          return <Typography variant='body-medium'>{value}</Typography>;
         },
         header: () => (
           <Flex flexDirection='row' alignItems='center'>
@@ -73,7 +78,11 @@ export default function MultiModeMetrics({
       columnHelper.accessor((row) => row.faithfulness as number, {
         id: 'Faithfullness',
         cell: (info) => {
-          return <Typography variant='body-medium'>{info.getValue().toFixed(2)}</Typography>;
+          const value = isNaN(info.getValue()) ? 'N.A' : info.getValue()?.toFixed(2);
+          if (value === 'N.A') {
+            return <NotAvailableMetric />;
+          }
+          return <Typography variant='body-medium'>{value}</Typography>;
         },
         header: () => (
           <Flex flexDirection='row' alignItems='center'>
@@ -96,7 +105,11 @@ export default function MultiModeMetrics({
       columnHelper.accessor((row) => row.context_entity_recall_score as number, {
         id: 'Entity Recall Score',
         cell: (info) => {
-          return <Typography variant='body-medium'>{info.getValue()?.toFixed(2)}</Typography>;
+          const value = isNaN(info.getValue()) ? 'N.A' : info.getValue()?.toFixed(2);
+          if (value === 'N.A') {
+            return <NotAvailableMetric />;
+          }
+          return <Typography variant='body-medium'>{value}</Typography>;
         },
         header: () => (
           <Flex flexDirection='row' alignItems='center'>
@@ -119,7 +132,11 @@ export default function MultiModeMetrics({
       columnHelper.accessor((row) => row.semantic_score as number, {
         id: 'Semantic Score',
         cell: (info) => {
-          return <Typography variant='body-medium'>{info.getValue()?.toFixed(2)}</Typography>;
+          const value = isNaN(info.getValue()) ? 'N.A' : info.getValue()?.toFixed(2);
+          if (value === 'N.A') {
+            return <NotAvailableMetric />;
+          }
+          return <Typography variant='body-medium'>{value}</Typography>;
         },
         header: () => (
           <Flex flexDirection='row' alignItems='center'>
@@ -142,7 +159,11 @@ export default function MultiModeMetrics({
       columnHelper.accessor((row) => row.rouge_score as number, {
         id: 'Rouge Score',
         cell: (info) => {
-          return <Typography variant='body-medium'>{info.getValue()?.toFixed(2)}</Typography>;
+          const value = isNaN(info.getValue()) ? 'N.A' : info.getValue()?.toFixed(2);
+          if (value === 'N.A') {
+            return <NotAvailableMetric />;
+          }
+          return <Typography variant='body-medium'>{value}</Typography>;
         },
         header: () => (
           <Flex flexDirection='row' alignItems='center'>
