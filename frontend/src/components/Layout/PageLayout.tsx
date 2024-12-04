@@ -179,15 +179,14 @@ const PageLayout: React.FC = () => {
             handleDisconnectButtonState(false);
           }
         } else if (session && !isDev) {
-            // For PROD, picking the session values
-            setUserCredentialsFromSession(session as string);
-            setConnectionStatus(true);
-            handleDisconnectButtonState(true);
-            
-          } else {
-            setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-            handleDisconnectButtonState(true);
-          }
+          // For PROD, picking the session values
+          setUserCredentialsFromSession(session as string);
+          setConnectionStatus(true);
+          handleDisconnectButtonState(true);
+        } else {
+          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+          handleDisconnectButtonState(true);
+        }
       } catch (error) {
         console.error('Error in DEV session handling:', error);
         if (session) {
