@@ -1,10 +1,9 @@
+
 import { Dialog, Typography, Flex, IconButton, useMediaQuery } from '@neo4j-ndl/react';
 import { ArrowLeftIconOutline, ArrowRightIconOutline } from '@neo4j-ndl/react/icons';
 import { chunkdata } from '../../../types';
 import Loader from '../../../utils/Loader';
 import { useMemo } from 'react';
-import chunklogo from '../../../assets/images/chunks.svg';
-import { tokens } from '@neo4j-ndl/base';
 
 const ChunkPopUp = ({
   showChunkPopup,
@@ -25,6 +24,7 @@ const ChunkPopUp = ({
   currentPage: number | null;
   totalPageCount: number | null;
 }) => {
+
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const sortedChunksData = useMemo(() => {

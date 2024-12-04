@@ -97,6 +97,7 @@ const Content: React.FC<ContentProps> = ({
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
 
+
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
       showNormalToast(`${fileName} will take approx ${time} ${inMinutes ? 'Min' : 'Sec'}`);
@@ -107,6 +108,7 @@ const Content: React.FC<ContentProps> = ({
     }
   );
   const childRef = useRef<ChildRef>(null);
+
   const incrementPage = async () => {
     setCurrentPage((prev) => prev + 1);
     await getChunks(documentName, currentPage + 1);
@@ -207,6 +209,7 @@ const Content: React.FC<ContentProps> = ({
     }
     toggleChunksLoading();
   };
+  
   const extractData = async (uid: string, isselectedRows = false, filesTobeProcess: CustomFile[]) => {
     if (!isselectedRows) {
       const fileItem = filesData.find((f) => f.id == uid);

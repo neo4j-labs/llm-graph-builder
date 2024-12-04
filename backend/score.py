@@ -924,6 +924,16 @@ async def fetch_chunktext(
    page_no: int = Form(1)
 ):
    try:
+       payload_json_obj = {
+           'api_name': 'fetch_chunktext',
+           'db_url': uri,
+           'userName': userName,
+           'database': database,
+           'document_name': document_name,
+           'page_no': page_no,
+           'logging_time': formatted_time(datetime.now(timezone.utc))
+       }
+       logger.log_struct(payload_json_obj, "INFO")
        start = time.time()
        result = await asyncio.to_thread(
            get_chunktext_results,
@@ -956,6 +966,7 @@ async def fetch_chunktext(
        return create_api_response(job_status, message=message, error=error_message)
    finally:
        gc.collect()
+
 
 @app.post("/backend_connection_configuation")
 async def backend_connection_configuation():
