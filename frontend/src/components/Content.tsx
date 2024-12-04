@@ -88,7 +88,7 @@ const Content: React.FC<ContentProps> = ({
     processedCount,
     setProcessedCount,
     setchatModes,
-    model
+    model,
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>(
     'tableView'
@@ -539,7 +539,7 @@ const Content: React.FC<ContentProps> = ({
     setProcessedCount(0);
     setConnectionStatus(false);
     localStorage.removeItem('password');
-    localStorage.removeItem('selectedModel')
+    localStorage.removeItem('selectedModel');
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
     setSelectedNodes([]);
     setSelectedRels([]);

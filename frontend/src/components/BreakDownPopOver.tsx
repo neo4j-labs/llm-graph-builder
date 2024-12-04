@@ -11,7 +11,7 @@ export default function BreakDownPopOver({ file, isNodeCount = true }: { file: C
     <CustomPopOver
       Trigger={
         <IconButton isClean ariaLabel='infoicon'>
-          <InformationCircleIconOutline className='n-size-token-7' />
+          <InformationCircleIconOutline className='n-size-token-3' />
         </IconButton>
       }
     >

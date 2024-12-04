@@ -18,7 +18,6 @@ import { useNavigate } from 'react-router';
 
 const ConnectionModal = lazy(() => import('../Popups/ConnectionModal/ConnectionModal'));
 
-
 const PageLayout: React.FC = () => {
   const [openConnection, setOpenConnection] = useState<connectionState>({
     openPopUp: false,
@@ -161,8 +160,7 @@ const PageLayout: React.FC = () => {
             setConnectionStatus(Boolean(connectionData.data.graph_connection));
             setIsBackendConnected(true);
             handleDisconnectButtonState(false);
-          }
-          else if (!session) {
+          } else if (!session) {
             setUserCredentials(envCredentials);
             localStorage.setItem(
               'neo4j.connection',
@@ -181,27 +179,22 @@ const PageLayout: React.FC = () => {
             setIsReadOnlyUser(envCredentials.isReadonlyUser);
             handleDisconnectButtonState(false);
           }
-        }
-        else {
-          if (session && !isDev) {
+        } else if (session && !isDev) {
             // For PROD, picking the session values
             setUserCredentialsFromSession(session as string);
             setConnectionStatus(true);
             handleDisconnectButtonState(true);
-            return;
-          }
-          else {
+            
+          } else {
             setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
             handleDisconnectButtonState(true);
           }
-        }
       } catch (error) {
         console.error('Error in DEV session handling:', error);
         if (session) {
           setUserCredentialsFromSession(session as string);
           setConnectionStatus(true);
-        }
-        else {
+        } else {
           setErrorMessage(backendApiResponse?.data.error);
           setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
         }
