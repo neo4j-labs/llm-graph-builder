@@ -4,6 +4,8 @@ import { ArrowLeftIconOutline, ArrowRightIconOutline } from '@neo4j-ndl/react/ic
 import { chunkdata } from '../../../types';
 import Loader from '../../../utils/Loader';
 import { useMemo } from 'react';
+import chunklogo from '../../../assets/images/chunks.svg';
+import { tokens } from '@neo4j-ndl/base';
 
 const ChunkPopUp = ({
   showChunkPopup,
