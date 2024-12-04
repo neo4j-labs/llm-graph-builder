@@ -208,6 +208,7 @@ const Content: React.FC<ContentProps> = ({
     }
     toggleChunksLoading();
   };
+  
   const extractData = async (uid: string, isselectedRows = false, filesTobeProcess: CustomFile[]) => {
     if (!isselectedRows) {
       const fileItem = filesData.find((f) => f.id == uid);
