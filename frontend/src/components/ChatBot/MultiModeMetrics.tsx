@@ -201,7 +201,7 @@ export default function MultiModeMetrics({
   });
   useEffect(() => {
     if (isWithAdditionalMetrics === false) {
-      table.setColumnVisibility({ 'Entity Recall Score': false, 'Semantic Score': false, 'Rouge Score': false });
+      table.setColumnVisibility({'Semantic Score': false, 'Rouge Score': false });
     } else {
       table.resetColumnVisibility(true);
     }
