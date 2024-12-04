@@ -35,6 +35,7 @@ const PageLayout: React.FC = () => {
   const [shows3Modal, toggleS3Modal] = useReducer((s) => !s, false);
   const [showGCSModal, toggleGCSModal] = useReducer((s) => !s, false);
   const [showGenericModal, toggleGenericModal] = useReducer((s) => !s, false);
+  const navigate = useNavigate();
   const toggleLeftDrawer = () => {
     if (largedesktops) {
       setIsLeftExpanded(!isLeftExpanded);

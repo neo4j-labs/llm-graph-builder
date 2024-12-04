@@ -11,8 +11,8 @@ import re
 import os
 from pathlib import Path
 
-def check_url_source(source_type, yt_url:str=None, queries_list:List[str]=None):
-    languages=[]
+def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
+    language=''
     try:
       logging.info(f"incoming URL: {yt_url}")
       if source_type == 'youtube':

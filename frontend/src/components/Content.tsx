@@ -4,16 +4,7 @@ import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { extractAPI } from '../utils/FileAPI';
-import {
-  BannerAlertProps,
-  ChildRef,
-  ContentProps,
-  CustomFile,
-  OptionType,
-  UserCredentials,
-  chunkdata,
-  connectionState,
-} from '../types';
+import { BannerAlertProps, ChildRef, ContentProps, CustomFile, OptionType, UserCredentials, chunkdata } from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
@@ -66,16 +57,7 @@ const Content: React.FC<ContentProps> = ({
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [documentName, setDocumentName] = useState<string>('');
-  const {
-    setUserCredentials,
-    userCredentials,
-    connectionStatus,
-    setConnectionStatus,
-    isGdsActive,
-    setGdsActive,
-    setIsReadOnlyUser,
-    isReadOnlyUser,
-  } = useCredentials();
+  const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [retryFile, setRetryFile] = useState<string>('');
@@ -108,7 +90,9 @@ const Content: React.FC<ContentProps> = ({
     setchatModes,
     model,
   } = useFileContext();
-  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView'|'neighborView'>('tableView');
+  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>(
+    'tableView'
+  );
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
 
@@ -123,55 +107,15 @@ const Content: React.FC<ContentProps> = ({
     }
   );
   const childRef = useRef<ChildRef>(null);
-  const incrementPage = () => {
+
+  const incrementPage = async () => {
     setCurrentPage((prev) => prev + 1);
+    await getChunks(documentName, currentPage + 1);
   };
-  const decrementPage = () => {
+  const decrementPage = async () => {
     setCurrentPage((prev) => prev - 1);
+    await getChunks(documentName, currentPage - 1);
   };
-  useEffect(() => {
-    if (!init && !searchParams.has('connectURL')) {
-      let session = localStorage.getItem('neo4j.connection');
-      if (session) {
-        let neo4jConnection = JSON.parse(session);
-        setUserCredentials({
-          uri: neo4jConnection.uri,
-          userName: neo4jConnection.user,
-          password: atob(neo4jConnection.password),
-          database: neo4jConnection.database,
-          port: neo4jConnection.uri.split(':')[2],
-        });
-        if (neo4jConnection.isgdsActive !== undefined) {
-          setGdsActive(neo4jConnection.isgdsActive);
-        }
-        if (neo4jConnection.isReadOnlyUser !== undefined) {
-          setIsReadOnlyUser(neo4jConnection.isReadOnlyUser);
-        }
-      } else {
-        setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-      }
-      setInit(true);
-    } else {
-      setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-    }
-  }, []);
-  useEffect(() => {
-    if (currentPage >= 1) {
-      (async () => {
-        await getChunks(documentName, currentPage);
-      })();
-    }
-  }, [currentPage, documentName]);
-  useEffect(() => {
-    setFilesData((prevfiles) => {
-      return prevfiles.map((curfile) => {
-        return {
-          ...curfile,
-          model: curfile.status === 'New' || curfile.status === 'Reprocess' ? model : curfile.model,
-        };
-      });
-    });
-  }, [model]);
 
   useEffect(() => {
     if (afterFirstRender) {
@@ -264,15 +208,7 @@ const Content: React.FC<ContentProps> = ({
     }
     toggleChunksLoading();
   };
-  const getChunks = async (name: string, pageNo: number) => {
-    toggleChunksLoading();
-    const response = await getChunkText(userCredentials as UserCredentials, name, pageNo);
-    setTextChunks(response.data.data.pageitems);
-    if (!totalPageCount) {
-      setTotalPageCount(response.data.data.total_pages);
-    }
-    toggleChunksLoading();
-  };
+  
   const extractData = async (uid: string, isselectedRows = false, filesTobeProcess: CustomFile[]) => {
     if (!isselectedRows) {
       const fileItem = filesData.find((f) => f.id == uid);
@@ -915,7 +851,7 @@ const Content: React.FC<ContentProps> = ({
                 setTotalPageCount(null);
               }
               setCurrentPage(1);
-              // await getChunks(name, 1);
+              await getChunks(name, 1);
             }
           }}
           ref={childRef}
