@@ -32,7 +32,7 @@ export default function PostProcessingCheckList() {
                           .join(' ')}
                       </Typography>
                     }
-                    checked={
+                    isChecked={
                       isCreateCommunities
                         ? isGdsActive && postProcessingTasks.includes(job.title)
                         : postProcessingTasks.includes(job.title)
@@ -44,8 +44,8 @@ export default function PostProcessingCheckList() {
                         setPostProcessingTasks((prev) => prev.filter((s) => s !== job.title));
                       }
                     }}
-                    disabled={isCreateCommunities && !isGdsActive}
-                    aria-label='checkbox-postProcessing'
+                    isDisabled={isCreateCommunities && !isGdsActive}
+                    ariaLabel='checkbox-postProcessing'
                   />
                   <Typography variant={tablet ? 'body-small' : 'body-medium'}>{job.description}</Typography>
                 </Flex>

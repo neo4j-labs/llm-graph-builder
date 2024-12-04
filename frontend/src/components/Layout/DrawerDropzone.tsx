@@ -1,7 +1,6 @@
 import { Drawer, Flex, StatusIndicator, Typography } from '@neo4j-ndl/react';
 import DropZone from '../DataSources/Local/DropZone';
-import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
-import { healthStatus } from '../../services/HealthStatus';
+import React, { useMemo, Suspense, lazy } from 'react';
 import S3Component from '../DataSources/AWS/S3Bucket';
 import { DrawerProps } from '../../types';
 import GCSButton from '../DataSources/GCS/GCSButton';
@@ -24,21 +23,8 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
   showGCSModal,
   showGenericModal,
 }) => {
-  const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
   const { closeAlert, alertState } = useAlertContext();
-  const { isReadOnlyUser } = useCredentials();
-
-  useEffect(() => {
-    async function getHealthStatus() {
-      try {
-        const response = await healthStatus();
-        setIsBackendConnected(response.data.healthy);
-      } catch (error) {
-        setIsBackendConnected(false);
-      }
-    }
-    getHealthStatus();
-  }, []);
+  const { isReadOnlyUser, isBackendConnected } = useCredentials();
 
   const isYoutubeOnlyCheck = useMemo(
     () => APP_SOURCES?.includes('youtube') && !APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('web'),
@@ -55,9 +41,9 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
 
   return (
     <div className='flex min-h-[calc(-58px+100vh)] relative'>
-      <Drawer expanded={isExpanded} position='left' type='push' closeable={false}>
+      <Drawer isExpanded={isExpanded} position='left' type='push' isCloseable={false}>
         {!isReadOnlyUser ? (
-          <Drawer.Body className={`!overflow-hidden !w-[294px]`} style={{ height: 'intial' }}>
+          <Drawer.Body className={`!overflow-hidden !w-[294px]`} htmlAttributes={{ style: { height: 'intial' } }}>
             {alertState.showAlert && (
               <CustomAlert
                 severity={alertState.alertType}
@@ -75,7 +61,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
                     }`}
                   >
                     {process.env.VITE_ENV != 'PROD' && (
-                      <Typography variant='body-medium' className='flex items-center content-center'>
+                      <Typography variant='body-medium' className='flex items-center content-center gap-1'>
                         <Typography variant='body-medium'>
                           {!isBackendConnected ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
                         </Typography>
@@ -211,7 +197,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
             </div>
           </Drawer.Body>
         ) : (
-          <Drawer.Body className={`!overflow-hidden !w-[294px]`} style={{ height: 'intial' }}>
+          <Drawer.Body className={`!overflow-hidden !w-[294px]`} htmlAttributes={{ style: { height: 'intial' } }}>
             <Typography variant='subheading-medium'>
               This user account does not have permission to access or manage data sources.
             </Typography>

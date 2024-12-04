@@ -1,4 +1,4 @@
-import { Box, LoadingSpinner, Flex, Typography, TextLink } from '@neo4j-ndl/react';
+import { LoadingSpinner, Flex, Typography, TextLink } from '@neo4j-ndl/react';
 import { FC, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { CommunitiesProps, UserCredentials } from '../../types';
@@ -31,9 +31,9 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
   return (
     <>
       {loading ? (
-        <Box className='flex justify-center items-center'>
+        <div className='flex justify-center items-center'>
           <LoadingSpinner size='small' />
-        </Box>
+        </div>
       ) : communities?.length > 0 ? (
         <div className='p-4 h-80 overflow-auto'>
           <ul className='list-none list-inside'>
@@ -43,8 +43,9 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
                   <Flex flexDirection='row' gap='2'>
                     <TextLink
                       className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
-                      label={`ID : ${community.id}`}
-                      onClick={() => handleCommunityClick(community.element_id, 'chatInfoView')}
+                      htmlAttributes={{
+                        onClick: () => handleCommunityClick(community.element_id, 'chatInfoView'),
+                      }}
                     >{`ID : ${community.id}`}</TextLink>
                   </Flex>
                   {mode === chatModeLables['global search+vector+fulltext'] && community.score && (
@@ -60,7 +61,10 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
           </ul>
         </div>
       ) : (
-        <span className='h6 text-center'> No Communities Found</span>
+        <Typography variant='h6' className='text-center'>
+          {' '}
+          No Communities Found
+        </Typography>
       )}
       {openGraphView && (
         <GraphViewModal

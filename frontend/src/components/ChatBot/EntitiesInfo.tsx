@@ -1,4 +1,4 @@
-import { Box, GraphLabel, LoadingSpinner, TextLink, Typography } from '@neo4j-ndl/react';
+import { GraphLabel, LoadingSpinner, TextLink, Typography } from '@neo4j-ndl/react';
 import { FC, useMemo, useState } from 'react';
 import { EntitiesProps, GroupedEntity, UserCredentials } from '../../types';
 import { calcWordColor } from '@neo4j-devtools/word-color';
@@ -59,9 +59,9 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
   return (
     <>
       {loading ? (
-        <Box className='flex justify-center items-center'>
+        <div className='flex justify-center items-center'>
           <LoadingSpinner size='small' />
-        </Box>
+        </div>
       ) : (mode !== 'graph' && Object.keys(groupedEntities)?.length > 0) ||
         (mode == 'graph' && Object.keys(graphonly_entities)?.length > 0) ? (
         <ul className='list-none p-4 max-h-80 overflow-auto'>
@@ -76,7 +76,7 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
                   <ul className='list-inside'>
                     {Object.keys(label).map((key) => (
                       <li key={key} className='flex items-center'>
-                        <GraphLabel type='node' color={calcWordColor(key)} className='mr-2 mt-2 ' selected={false}>
+                        <GraphLabel type='node' color={calcWordColor(key)} className='mr-2 mt-2 ' isSelected={false}>
                           {key}
                         </GraphLabel>
                         <Typography
@@ -100,7 +100,7 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
                     key={index}
                     className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%)] overflow-hidden'
                   >
-                    <GraphLabel type='node' className='legend' color={`${entity.color}`} selected={false}>
+                    <GraphLabel type='node' className='legend' color={`${entity.color}`} isSelected={false}>
                       {label === '__Community__' ? graphLabels.community : label} ({labelCounts[label]})
                     </GraphLabel>
                     <Typography
@@ -117,7 +117,9 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
                           return (
                             <span key={idx}>
                               <TextLink
-                                onClick={() => handleEntityClick(textId!, 'chatInfoView')}
+                                htmlAttributes={{
+                                  onClick: () => handleEntityClick(textId!, 'chatInfoView'),
+                                }}
                                 className={loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}
                               >
                                 {text}
@@ -132,7 +134,9 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
               })}
         </ul>
       ) : (
-        <span className='h6 text-center'>No Entities Found</span>
+        <Typography variant='h6' className='text-center'>
+          No Entities Found
+        </Typography>
       )}
       {openGraphView && (
         <GraphViewModal

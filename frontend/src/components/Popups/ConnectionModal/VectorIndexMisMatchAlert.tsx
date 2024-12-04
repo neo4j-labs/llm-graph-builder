@@ -33,7 +33,7 @@ To proceed, please choose one of the following options:
             : ''}
         </Markdown>
       </Box>
-      <Box className='n-size-full n-flex n-flex-col n-items-center n-justify-center'>
+      <div className='n-size-full n-flex n-flex-col n-items-center n-justify-center'>
         <ButtonWithToolTip
           text={
             userCredentials === null
@@ -54,7 +54,7 @@ To proceed, please choose one of the following options:
         >
           {isVectorIndexAlreadyExists ? 'Re-Create Vector Index' : 'Create Vector Index'}
         </ButtonWithToolTip>
-      </Box>
+      </div>
     </Flex>
   );
 }

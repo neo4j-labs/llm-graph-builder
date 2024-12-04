@@ -4,15 +4,13 @@ import time
 import logging
 
 import threading
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from typing import Any
 from dotenv import load_dotenv
 
-
-# LangChain imports
-from langchain_community.vectorstores.neo4j_vector import Neo4jVector
-from langchain_community.chat_message_histories import Neo4jChatMessageHistory
+from langchain_neo4j import Neo4jVector
+from langchain_neo4j import Neo4jChatMessageHistory
+from langchain_neo4j import GraphCypherQAChain
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableBranch
@@ -21,7 +19,6 @@ from langchain_community.document_transformers import EmbeddingsRedundantFilter
 from langchain.retrievers.document_compressors import EmbeddingsFilter, DocumentCompressorPipeline
 from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage, AIMessage
-from langchain.chains import GraphCypherQAChain
 from langchain_community.chat_message_histories import ChatMessageHistory 
 from langchain_core.callbacks import StdOutCallbackHandler, BaseCallbackHandler
 
@@ -38,8 +35,6 @@ from langchain_community.chat_models import ChatOllama
 from src.llm import get_llm
 from src.shared.common_fn import load_embedding_model
 from src.shared.constants import *
-from src.graphDB_dataAccess import graphDBdataAccess
-from src.ragas_eval import get_ragas_metrics
 load_dotenv() 
 
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
@@ -278,7 +273,9 @@ def retrieve_documents(doc_retriever, messages):
     except Exception as e:
         error_message = f"Error retrieving documents: {str(e)}"
         logging.error(error_message)
-        raise RuntimeError(error_message)
+        docs = None
+        transformed_question = None
+
     
     return docs,transformed_question
 
@@ -660,7 +657,7 @@ def QA_RAG(graph,model, question, document_names, session_id, mode, write_access
         if document_names and not chat_mode_settings["document_filter"]:
             result =  {
                 "session_id": "",  
-                "message": "This chat mode does support document selection",
+                "message": "Please deselect all documents in the table before using this chat mode",
                 "info": {
                     "sources": [],
                     "model": "",

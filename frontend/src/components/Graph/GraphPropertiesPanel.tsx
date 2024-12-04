@@ -12,6 +12,15 @@ const isNode = (item: BasicNode | BasicRelationship): item is BasicNode => {
 
 const GraphPropertiesPanel = ({ inspectedItem, newScheme }: GraphPropertiesPanelProps) => {
   const inspectedItemType = isNode(inspectedItem) ? 'node' : 'relationship';
+  const filteredProperties =
+    inspectedItemType === 'node'
+      ? Object.entries((inspectedItem as BasicNode).properties)
+          .filter(([, value]) => value !== null && value !== undefined && value !== ' ')
+          .reduce((acc, [key, value]) => {
+            acc[key] = value;
+            return acc;
+          }, {} as Record<string, any>)
+      : {};
   const properties =
     inspectedItemType === 'node'
       ? [
@@ -20,9 +29,9 @@ const GraphPropertiesPanel = ({ inspectedItem, newScheme }: GraphPropertiesPanel
             value: `${(inspectedItem as BasicNode).id}`,
             type: 'String',
           },
-          ...Object.keys((inspectedItem as BasicNode).properties).map((key) => {
-            const value = (inspectedItem as BasicNode).properties[key];
-            return { key: key, value: value ?? '' };
+          ...Object.keys(filteredProperties).map((key) => {
+            const value = filteredProperties[key];
+            return { key, value };
           }),
         ]
       : [

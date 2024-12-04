@@ -1,4 +1,4 @@
-import { Box, Dialog, Tabs, Typography } from '@neo4j-ndl/react';
+import { Dialog, Tabs, Typography } from '@neo4j-ndl/react';
 import youtubelightmodelogo from '../../assets/images/youtube-lightmode.svg';
 import youtubedarkmodelogo from '../../assets/images/youtube-darkmode.svg';
 import wikipedialogo from '../../assets/images/wikipedia.svg';
@@ -32,25 +32,31 @@ export default function GenericModal({
 
   return (
     <Dialog
-      open={open}
+      isOpen={open}
       onClose={() => {
         setIsLoading(false);
         closeHandler();
       }}
     >
       <Dialog.Header>
-        <Box className='flex flex-row pb-6 items-center mb-2'>
+        <div className='flex flex-row pb-6 items-center mb-2'>
           <img src={Neo4jDataImportFromCloud} style={{ width: 95, height: 95, marginRight: 10 }} loading='lazy' />
-          <Box className='flex flex-col'>
+          <div className='flex flex-col'>
             <Typography variant='h2'>Web Sources</Typography>
             <Typography variant='body-medium' className='mb-2'>
               Convert Any Web Source to Knowledge graph
             </Typography>
-          </Box>
-        </Box>
+          </div>
+        </div>
         <Tabs fill='underline' onChange={setactiveTab} size='large' value={activeTab}>
           {APP_SOURCES != undefined && APP_SOURCES.includes('youtube') && (
-            <Tabs.Tab tabId={0} aria-label='Database' disabled={isLoading}>
+            <Tabs.Tab
+              tabId={0}
+              isDisabled={isLoading}
+              htmlAttributes={{
+                'aria-label': 'Database',
+              }}
+            >
               <img
                 src={themeUtils.colorMode === 'light' ? youtubelightmodelogo : youtubedarkmodelogo}
                 className={`brandimg`}
@@ -58,7 +64,13 @@ export default function GenericModal({
             </Tabs.Tab>
           )}
           {APP_SOURCES != undefined && APP_SOURCES.includes('wiki') && (
-            <Tabs.Tab tabId={1} aria-label='Add database' disabled={isLoading}>
+            <Tabs.Tab
+              tabId={1}
+              isDisabled={isLoading}
+              htmlAttributes={{
+                'aria-label': 'Add database',
+              }}
+            >
               <img
                 src={themeUtils.colorMode === 'dark' ? wikipedialogo : wikipediadarkmode}
                 className={`brandimg`}
@@ -66,7 +78,13 @@ export default function GenericModal({
             </Tabs.Tab>
           )}
           {APP_SOURCES != undefined && APP_SOURCES.includes('web') && (
-            <Tabs.Tab tabId={2} aria-label='Inbox' disabled={isLoading}>
+            <Tabs.Tab
+              tabId={2}
+              isDisabled={isLoading}
+              htmlAttributes={{
+                'aria-label': 'Inbox',
+              }}
+            >
               <img src={themeUtils.colorMode === 'dark' ? webdarkmode : weblogo} className={`brandimg`}></img>
             </Tabs.Tab>
           )}

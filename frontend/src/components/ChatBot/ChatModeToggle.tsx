@@ -1,33 +1,36 @@
 import { StatusIndicator, Typography } from '@neo4j-ndl/react';
-import { useMemo, useEffect } from 'react';
 import { useFileContext } from '../../context/UsersFiles';
-import CustomMenu from '../UI/Menu';
+import CustomMenu from '../UI/CustomMenu';
 import { chatModeLables, chatModes as AvailableModes, chatModeReadableLables } from '../../utils/Constants';
 import { capitalize } from '@mui/material';
 import { capitalizeWithPlus } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
+import { useMemo } from 'react';
 
 export default function ChatModeToggle({
   menuAnchor,
   closeHandler = () => {},
   open,
-  anchorPortal = true,
-  disableBackdrop = false,
+  isRoot,
 }: {
-  menuAnchor: HTMLElement | null;
-  closeHandler?: () => void;
+  menuAnchor: React.RefObject<HTMLElement | null>;
+  closeHandler?: (
+    event: Event | undefined,
+    closeReason: {
+      type: 'backdropClick' | 'itemClick' | 'escapeKeyDown';
+      id?: string;
+    }
+  ) => void;
   open: boolean;
-  anchorPortal?: boolean;
-  disableBackdrop?: boolean;
+  isRoot: boolean;
 }) {
   const { setchatModes, chatModes, postProcessingTasks } = useFileContext();
   const isCommunityAllowed = postProcessingTasks.includes('enable_communities');
   const { isGdsActive } = useCredentials();
-  useEffect(() => {
-    if (!chatModes.length) {
-      setchatModes([chatModeLables['graph+vector+fulltext']]);
-    }
-  }, [chatModes.length]);
+  if (!chatModes.length) {
+    setchatModes([chatModeLables['graph+vector+fulltext']]);
+  }
+
   const memoizedChatModes = useMemo(() => {
     return isGdsActive && isCommunityAllowed
       ? AvailableModes
@@ -44,7 +47,6 @@ export default function ChatModeToggle({
         } else {
           setchatModes((prev) => [...prev, m.mode]);
         }
-        closeHandler();
       };
       return {
         title: (
@@ -59,7 +61,10 @@ export default function ChatModeToggle({
             </div>
           </div>
         ),
-        onClick: handleModeChange,
+        onClick: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+          handleModeChange();
+          e.stopPropagation();
+        },
         disabledCondition: false,
         description: (
           <span>
@@ -72,15 +77,8 @@ export default function ChatModeToggle({
         ),
       };
     });
-  }, [chatModes, memoizedChatModes, closeHandler]);
+  }, [chatModes, memoizedChatModes]);
   return (
-    <CustomMenu
-      closeHandler={closeHandler}
-      open={open}
-      MenuAnchor={menuAnchor}
-      anchorPortal={anchorPortal}
-      disableBackdrop={disableBackdrop}
-      items={menuItems}
-    />
+    <CustomMenu isRoot={isRoot} closeHandler={closeHandler} open={open} anchorOrigin={menuAnchor} items={menuItems} />
   );
 }

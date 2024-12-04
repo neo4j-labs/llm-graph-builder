@@ -1,4 +1,4 @@
-import { Banner, Dialog, Flex, IconButtonArray, LoadingSpinner, useDebounce } from '@neo4j-ndl/react';
+import { Banner, Dialog, Flex, IconButtonArray, LoadingSpinner, useDebounceValue } from '@neo4j-ndl/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BasicNode,
@@ -17,6 +17,7 @@ import type { Node, Relationship } from '@neo4j-nvl/base';
 import {
   ArrowPathIconOutline,
   FitToScreenIcon,
+  InformationCircleIconOutline,
   MagnifyingGlassMinusIconOutline,
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
@@ -53,10 +54,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [scheme, setScheme] = useState<Scheme>({});
   const [newScheme, setNewScheme] = useState<Scheme>({});
   const [searchQuery, setSearchQuery] = useState('');
-  const debouncedQuery = useDebounce(searchQuery, 300);
+  const [debouncedQuery] = useDebounceValue(searchQuery, 300);
   const [graphType, setGraphType] = useState<GraphType[]>([]);
   const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
   const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
+  const [mode, setMode] = useState<boolean>(false);
 
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
@@ -96,7 +98,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   }, []);
 
   useEffect(() => {
-    const updateGraphType = graphTypeFromNodes(allNodes);
+    let updateGraphType;
+    if (mode) {
+      updateGraphType = graphTypeFromNodes(nodes);
+    } else {
+      updateGraphType = graphTypeFromNodes(allNodes);
+    }
     if (Array.isArray(updateGraphType)) {
       setGraphType(updateGraphType);
     }
@@ -259,11 +266,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     const newGraphSelected = [...graphType];
     if (currentIndex === -1) {
       newGraphSelected.push(graph);
-      initGraph(newGraphSelected, allNodes, allRelationships, scheme);
     } else {
       newGraphSelected.splice(currentIndex, 1);
-      initGraph(newGraphSelected, allNodes, allRelationships, scheme);
     }
+    initGraph(newGraphSelected, allNodes, allRelationships, scheme);
     setSearchQuery('');
     setGraphType(newGraphSelected);
     setSelected(undefined);
@@ -294,11 +300,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   // Refresh the graph with nodes and relations if file is processing
   const handleRefresh = () => {
     setDisableRefresh(true);
+    setMode(true);
     graphApi('refreshMode');
-    setGraphType(graphType);
-    setNodes(nodes);
-    setRelationships(relationships);
-    setScheme(newScheme);
   };
 
   // when modal closes reset all states to default
@@ -339,13 +342,23 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           id: 'default-menu',
         }}
         size='unset'
-        open={open}
-        aria-labelledby='form-dialog-title'
-        disableCloseButton={false}
+        isOpen={open}
+        hasDisabledCloseButton={false}
         onClose={onClose}
+        htmlAttributes={{
+          'aria-labelledby': 'form-dialog-title',
+        }}
       >
-        <Dialog.Header id='graph-title'>
+        <Dialog.Header htmlAttributes={{ id: 'graph-title' }}>
           {headerTitle}
+          {viewPoint !== graphLabels.chatInfoView && (
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span>
+                <InformationCircleIconOutline className='n-size-token-6' />
+              </span>
+              <span className='n-body-small ml-1'>{graphLabels.chunksInfo}</span>
+            </div>
+          )}
           <Flex className='w-full' alignItems='center' flexDirection='row'>
             {checkBoxView && (
               <CheckboxSelection
@@ -365,15 +378,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               </div>
             ) : status !== 'unknown' ? (
               <div className='my-40 flex items-center justify-center'>
-                <Banner name='graph banner' description={statusMessage} type={status} />
+                <Banner name='graph banner' description={statusMessage} type={status} usage='inline' />
               </div>
             ) : nodes.length === 0 && relationships.length === 0 && graphType.length !== 0 ? (
               <div className='my-40 flex items-center justify-center'>
-                <Banner name='graph banner' description={graphLabels.noNodesRels} type='danger' />
+                <Banner name='graph banner' description={graphLabels.noNodesRels} type='danger' usage='inline' />
               </div>
             ) : graphType.length === 0 && checkBoxView ? (
               <div className='my-40 flex items-center justify-center'>
-                <Banner name='graph banner' description={graphLabels.selectCheckbox} type='danger' />
+                <Banner name='graph banner' description={graphLabels.selectCheckbox} type='danger' usage='inline' />
               </div>
             ) : (
               <>
@@ -390,7 +403,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       }}
                       nvlCallbacks={nvlCallbacks}
                     />
-                    <IconButtonArray orientation='vertical' floating className='absolute bottom-4 right-4'>
+                    <IconButtonArray orientation='vertical' isFloating={true} className='absolute bottom-4 right-4'>
                       {viewPoint !== 'chatInfoView' && (
                         <IconButtonWithToolTip
                           label='Refresh'
@@ -399,14 +412,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                           placement='left'
                           disabled={disableRefresh}
                         >
-                          <ArrowPathIconOutline />
+                          <ArrowPathIconOutline className='n-size-token-7' />
                         </IconButtonWithToolTip>
                       )}
                       <IconButtonWithToolTip label='Zoomin' text='Zoom in' onClick={handleZoomIn} placement='left'>
-                        <MagnifyingGlassPlusIconOutline />
+                        <MagnifyingGlassPlusIconOutline className='n-size-token-7' />
                       </IconButtonWithToolTip>
                       <IconButtonWithToolTip label='Zoom out' text='Zoom out' onClick={handleZoomOut} placement='left'>
-                        <MagnifyingGlassMinusIconOutline />
+                        <MagnifyingGlassMinusIconOutline className='n-size-token-7' />
                       </IconButtonWithToolTip>
                       <IconButtonWithToolTip
                         label='Zoom to fit'
@@ -414,7 +427,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                         onClick={handleZoomToFit}
                         placement='left'
                       >
-                        <FitToScreenIcon />
+                        <FitToScreenIcon className='n-size-token-7' />
                       </IconButtonWithToolTip>
                     </IconButtonArray>
                   </div>

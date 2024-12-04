@@ -1,5 +1,5 @@
 import { TextInput } from '@neo4j-ndl/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useFileContext } from '../../../context/UsersFiles';
 import { urlScanAPI } from '../../../services/URLScan';
@@ -33,6 +33,12 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
     processingProgress: undefined,
     retryOption: '',
     retryOptionStatus: false,
+    chunkNodeCount: 0,
+    chunkRelCount: 0,
+    entityNodeCount: 0,
+    entityEntityRelCount: 0,
+    communityNodeCount: 0,
+    communityRelCount: 0,
   };
 
   const reset = () => {
@@ -40,17 +46,6 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
     setFolderName('');
     setprojectId('');
   };
-
-  useEffect(() => {
-    if (status != 'unknown') {
-      setTimeout(() => {
-        setStatusMessage('');
-        setStatus('unknown');
-        reset();
-        hideModal();
-      }, 5000);
-    }
-  }, []);
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (codeResponse) => {
@@ -195,48 +190,55 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
       <div className='w-full inline-block'>
         <form>
           <TextInput
-            id='project id'
+            htmlAttributes={{
+              id: 'project id',
+              autoFocus: true,
+              onKeyDown: handleKeyPress,
+              'aria-label': 'Project ID',
+              placeholder: '',
+            }}
             value={projectId}
-            disabled={false}
+            isDisabled={false}
             label='Project ID'
-            aria-label='Project ID'
-            placeholder=''
-            autoFocus
-            fluid
-            required
+            isFluid={true}
+            isRequired={true}
             onChange={(e) => {
               setprojectId(e.target.value);
             }}
-            onKeyDown={handleKeyPress}
           ></TextInput>
           <TextInput
-            id='bucketname'
+            htmlAttributes={{
+              id: 'bucketname',
+              autoFocus: true,
+              onKeyDown: handleKeyPress,
+              'aria-label': 'Bucket Name',
+              placeholder: '',
+            }}
             value={bucketName}
-            disabled={false}
+            isDisabled={false}
             label='Bucket Name'
-            aria-label='Bucket Name'
-            placeholder=''
-            autoFocus
-            fluid
-            required
+            isFluid={true}
+            isRequired={true}
             onChange={(e) => {
               setbucketName(e.target.value);
             }}
-            onKeyDown={handleKeyPress}
           />
           <TextInput
-            id='foldername'
+            htmlAttributes={{
+              id: 'foldername',
+              autoFocus: true,
+              onKeyDown: handleKeyPress,
+              'aria-label': 'Folder Name',
+              placeholder: '',
+            }}
             value={folderName}
-            disabled={false}
+            isDisabled={false}
             label='Folder Name'
-            aria-label='Folder Name'
             helpText='Optional'
-            placeholder=''
-            fluid
+            isFluid={true}
             onChange={(e) => {
               setFolderName(e.target.value);
             }}
-            onKeyDown={handleKeyPress}
           />
         </form>
       </div>

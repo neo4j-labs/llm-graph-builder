@@ -15,18 +15,7 @@ export default function DropZoneForSmallLayouts() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isClicked, setIsClicked] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
-
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  useEffect(() => {
-    if (selectedFiles.length > 0) {
-      for (let index = 0; index < selectedFiles.length; index++) {
-        const file = selectedFiles[index];
-        if (filesData[index]?.status == 'None' && isClicked) {
-          uploadFileInChunks(file);
-        }
-      }
-    }
-  }, [selectedFiles]);
 
   const uploadFileInChunks = (file: File) => {
     const totalChunks = Math.ceil(file.size / chunkSize);
@@ -180,6 +169,12 @@ export default function DropZoneForSmallLayouts() {
         processingProgress: undefined,
         retryOption: '',
         retryOptionStatus: false,
+        chunkNodeCount: 0,
+        chunkRelCount: 0,
+        entityNodeCount: 0,
+        entityEntityRelCount: 0,
+        communityNodeCount: 0,
+        communityRelCount: 0,
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
@@ -214,11 +209,21 @@ export default function DropZoneForSmallLayouts() {
       setFilesData(copiedFilesData);
     }
   };
+  useEffect(() => {
+    if (selectedFiles.length > 0) {
+      for (let index = 0; index < selectedFiles.length; index++) {
+        const file = selectedFiles[index];
+        if (filesData[index]?.status == 'None' && isClicked) {
+          uploadFileInChunks(file);
+        }
+      }
+    }
+  }, [selectedFiles]);
   return (
     <>
       <div {...getRootProps({ className: 'dropzone' })}>
-        <input {...getInputProps()} />
-        {isLoading ? <LoadingSpinner size='medium' /> : <CloudArrowUpIconSolid />}
+        <input {...getInputProps()} aria-label='dropzone' />
+        {isLoading ? <LoadingSpinner size='medium' /> : <CloudArrowUpIconSolid className='n-size-token-7' />}
       </div>
     </>
   );

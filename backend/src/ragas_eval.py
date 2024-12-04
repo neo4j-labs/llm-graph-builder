@@ -7,6 +7,13 @@ from dotenv import load_dotenv
 from ragas import evaluate
 from ragas.metrics import answer_relevancy, faithfulness
 from src.shared.common_fn import load_embedding_model 
+from ragas.dataset_schema import SingleTurnSample
+from ragas.metrics import RougeScore, SemanticSimilarity, ContextEntityRecall
+from ragas.llms import LangchainLLMWrapper
+from ragas.embeddings import LangchainEmbeddingsWrapper
+import nltk
+
+nltk.download('punkt')
 load_dotenv()
 
 EMBEDDING_MODEL = os.getenv("RAGAS_EMBEDDING_MODEL")
@@ -51,4 +58,42 @@ def get_ragas_metrics(question: str, context: list, answer: list, model: str):
        return {"error": str(e)}
     except Exception as e:
        logging.exception(f"Error during metrics evaluation: {e}")
+       return {"error": str(e)}
+
+
+async def get_additional_metrics(question: str, contexts: list, answers: list, reference: str, model_name: str):
+   """Calculates multiple metrics for given question, answers, contexts, and reference."""
+   try:
+       if ("diffbot" in model_name) or ("ollama" in model_name):
+           raise ValueError(f"Unsupported model for evaluation: {model_name}")
+       llm, model_name = get_llm(model=model_name)
+       ragas_llm = LangchainLLMWrapper(llm)
+       embeddings = EMBEDDING_FUNCTION
+       embedding_model = LangchainEmbeddingsWrapper(embeddings=embeddings)
+       rouge_scorer = RougeScore()
+       semantic_scorer = SemanticSimilarity()
+       entity_recall_scorer = ContextEntityRecall()
+       entity_recall_scorer.llm = ragas_llm
+       semantic_scorer.embeddings = embedding_model
+       metrics = []
+       for response, context in zip(answers, contexts):
+           sample = SingleTurnSample(response=response, reference=reference)
+           rouge_score = await rouge_scorer.single_turn_ascore(sample)
+           rouge_score = round(rouge_score,4)
+           semantic_score = await semantic_scorer.single_turn_ascore(sample)
+           semantic_score = round(semantic_score, 4)
+           if "gemini" in model_name:
+               entity_recall_score = "Not Available"
+           else:
+               entity_sample = SingleTurnSample(reference=reference, retrieved_contexts=[context])
+               entity_recall_score = await entity_recall_scorer.single_turn_ascore(entity_sample)
+               entity_recall_score = round(entity_recall_score, 4)
+           metrics.append({
+               "rouge_score": rouge_score,
+               "semantic_score": semantic_score,
+               "context_entity_recall_score": entity_recall_score
+           })
+       return metrics
+   except Exception as e:
+       logging.exception("Error in get_additional_metrics")
        return {"error": str(e)}
