@@ -201,7 +201,7 @@ export default function MultiModeMetrics({
   });
   useEffect(() => {
     if (isWithAdditionalMetrics === false) {
-      table.setColumnVisibility({ 'Recall Score': false, 'Semantic Score': false, 'Rouge Score': false });
+      table.setColumnVisibility({ 'Entity Recall Score': false, 'Semantic Score': false, 'Rouge Score': false });
     } else {
       table.resetColumnVisibility(true);
     }
@@ -235,23 +235,7 @@ export default function MultiModeMetrics({
                   }}
                 />
               ),
-              PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
-                return (
-                  <DataGridComponents.PaginationNumericButton
-                    {...restProps}
-                    isSelected={isSelected}
-                    innerProps={{
-                      ...innerProps,
-                      style: {
-                        ...(isSelected && {
-                          backgroundSize: '200% auto',
-                          borderRadius: '10px',
-                        }),
-                      },
-                    }}
-                  />
-                );
-              },
+              Navigation: null,
             }}
             isKeyboardNavigable={false}
           />
