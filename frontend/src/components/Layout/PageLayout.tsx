@@ -97,7 +97,7 @@ const PageLayout: React.FC = () => {
               password: atob(parsedConnection.password),
               database: parsedConnection.database,
             });
-            setGdsActive(parsedConnection.isGDS);
+            setGdsActive(parsedConnection.isgdsActive);
             setIsReadOnlyUser(parsedConnection.isReadOnlyUser);
           } else {
             console.error('Invalid parsed session data:', parsedConnection);
@@ -126,7 +126,7 @@ const PageLayout: React.FC = () => {
                 database: envCredentials.database,
                 userDbVectorIndex: 384,
                 isReadOnlyUser: envCredentials.isReadonlyUser,
-                isGDS: envCredentials.isGds,
+                isgdsActive: envCredentials.isgdsActive,
               })
             );
             return true;
@@ -149,7 +149,7 @@ const PageLayout: React.FC = () => {
             userName: connectionData.data.user_name,
             database: connectionData.data.database,
             isReadonlyUser: !connectionData.data.write_access,
-            isGds: connectionData.data.gds_status,
+            isgdsActive: connectionData.data.gds_status,
           };
           if (session && isDev) {
             const updated = updateSessionIfNeeded(envCredentials, session);
@@ -170,11 +170,11 @@ const PageLayout: React.FC = () => {
                 database: envCredentials.database,
                 userDbVectorIndex: 384,
                 isReadOnlyUser: envCredentials.isReadonlyUser,
-                isGDS: envCredentials.isGds,
+                isGDS: envCredentials.isgdsActive,
               })
             );
             setConnectionStatus(true);
-            setGdsActive(envCredentials.isGds);
+            setGdsActive(envCredentials.isgdsActive);
             setIsReadOnlyUser(envCredentials.isReadonlyUser);
             handleDisconnectButtonState(false);
           }
