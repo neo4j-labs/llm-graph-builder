@@ -43,7 +43,7 @@ export default function CommonActions({
         disabled={chat.isTyping || chat.isLoading}
         aria-label='copy text'
       >
-        <ClipboardDocumentIconOutline />
+        <ClipboardDocumentIconOutline className='n-size-token-4' />
       </IconButtonWithToolTip>
       <IconButtonWithToolTip
         placement='top'
@@ -54,7 +54,11 @@ export default function CommonActions({
         label={chat.speaking ? 'stop speaking' : 'text to speech'}
         aria-label='speech'
       >
-        {chat.speaking ? <SpeakerXMarkIconOutline /> : <SpeakerWaveIconOutline />}
+        {chat.speaking ? (
+          <SpeakerXMarkIconOutline className='n-size-token-4' />
+        ) : (
+          <SpeakerWaveIconOutline className='n-size-token-4' />
+        )}
       </IconButtonWithToolTip>
     </>
   );
