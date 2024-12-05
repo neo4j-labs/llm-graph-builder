@@ -30,8 +30,7 @@ export const handleGraphNodeClick = async (
       setNeoRels(relationships);
       setOpenGraphView(true);
       setViewPoint('chatInfoView');
-    }
-    else {
+    } else {
       showNormalToast('No nodes or relationships found for the selected node.');
     }
   } catch (error: any) {
