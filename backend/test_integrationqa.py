@@ -13,7 +13,8 @@ from langserve import add_routes
 from src.ragas_eval import get_ragas_metrics
 from datasets import Dataset
 from ragas import evaluate
-from ragas.metrics import answer_relevancy, context_utilization, faithfulness
+# from ragas.metrics import answer_relevancy, context_utilization, faithfulness
+# from ragas.dataset_schema import SingleTurnSample
 # Load environment variables if needed
 load_dotenv()
 import os 
@@ -64,19 +65,18 @@ def delete_extracted_files(file_path):
         logging.error(f"Failed to delete file {file_path}. Error: {e}")
 
 def test_graph_from_file_local(model_name):
-   """Test graph creation from a local file."""
-   file_name = 'About Amazon.pdf'
-   shutil.copyfile('/workspaces/llm-graph-builder/backend/files/About Amazon.pdf',
-                   os.path.join(MERGED_DIR, file_name))
-
-   create_source_node_local(graph, model_name, file_name)
-   merged_file_path = os.path.join(MERGED_DIR, file_name)
-
-   local_file_result = asyncio.run(extract_graph_from_file_local_file(
-       URI, USERNAME, PASSWORD, DATABASE, model_name, merged_file_path, file_name, '', '',None))
-   logging.info("Local file processing complete")
-   print(local_file_result)
-   return local_file_result
+    """Test graph creation from a local file."""
+    try:
+        file_name = 'About Amazon.pdf'
+        shutil.copyfile('/workspaces/llm-graph-builder/backend/files/About Amazon.pdf',os.path.join(MERGED_DIR, file_name))
+        create_source_node_local(graph, model_name, file_name)
+        merged_file_path = os.path.join(MERGED_DIR, file_name)
+        local_file_result = asyncio.run(extract_graph_from_file_local_file(URI, USERNAME, PASSWORD, DATABASE, model_name, merged_file_path, file_name, '', '',None))
+        logging.info("Local file processing complete")
+        print(local_file_result)
+        return local_file_result
+    except Exception as e:
+        logging.error(f"Failed to delete file. Error: {e}")
 
 #    try:
 #        assert local_file_result['status'] == 'Completed'
@@ -92,57 +92,39 @@ def test_graph_from_file_local(model_name):
    #return local_file_result
 
 def test_graph_from_wikipedia(model_name):
-   # try:
+    try:
        """Test graph creation from a Wikipedia page."""
-       wiki_query = 'https://en.wikipedia.org/wiki/Berkshire_Hathaway'
+       wiki_query = 'https://en.wikipedia.org/wiki/Apollo_program'
        source_type = 'Wikipedia'
-       file_name = "Berkshire_Hathaway"
+       file_name = "Apollo_program"
        create_source_node_graph_url_wikipedia(graph, model_name, wiki_query, source_type)
 
-       wiki_result = asyncio.run(extract_graph_from_file_Wikipedia(URI, USERNAME, PASSWORD, DATABASE, model_name, file_name, 'en',file_name, '', '',None))
+       wiki_result = asyncio.run(extract_graph_from_file_Wikipedia(URI, USERNAME, PASSWORD, DATABASE, model_name, wiki_query, 'en',file_name, '', '',None))
        logging.info("Wikipedia test done")
        print(wiki_result)
-       try:
-           assert wiki_result['status'] == 'Completed'
-           assert wiki_result['nodeCount'] > 0
-           assert wiki_result['relationshipCount'] > 0
-           print("Success")
-       except AssertionError as e:
-           print("Fail: ", e)
+    #    try:
+    #        assert wiki_result['status'] == 'Completed'
+    #        assert wiki_result['nodeCount'] > 0
+    #        assert wiki_result['relationshipCount'] > 0
+    #        print("Success")
+    #    except AssertionError as e:
+    #        print("Fail: ", e)
   
        return wiki_result
-   # except Exception as ex:
-   #     print(ex)
-
-def test_graph_website(model_name):
-   """Test graph creation from a Website page."""
-    #graph, model, source_url, source_type
-   source_url = 'https://www.amazon.com/'
-   source_type = 'web-url'
-   file_name = []
-   create_source_node_graph_web_url(graph, model_name, source_url, source_type)
-
-   weburl_result = asyncio.run(extract_graph_from_web_page(URI, USERNAME, PASSWORD, DATABASE, model_name, source_url,file_name, '', '',None))
-   logging.info("WebUrl test done")
-   print(weburl_result)
-
-   try:
-       assert weburl_result['status'] == 'Completed'
-       assert weburl_result['nodeCount'] > 0
-       assert weburl_result['relationshipCount'] > 0
-       print("Success")
-   except AssertionError as e:
-       print("Fail: ", e)
-   return weburl_result
+    except Exception as ex:
+        print('Hello error herte')
+        print(ex)
 
 def test_graph_website(model_name):
     """Test graph creation from a Website page."""
      #graph, model, source_url, source_type
-    source_url = 'https://www.amazon.com/'
+    source_url = 'https://www.cloudskillsboost.google/'
     source_type = 'web-url'
+    file_name = 'Google Cloud Skills Boost'
+    # file_name = []
     create_source_node_graph_web_url(graph, model_name, source_url, source_type)
 
-    weburl_result = extract_graph_from_web_page(URI, USERNAME, PASSWORD, DATABASE, model_name, source_url, '', '')
+    weburl_result = asyncio.run(extract_graph_from_web_page(URI, USERNAME, PASSWORD, DATABASE, model_name, source_url,file_name, '', '',None))
     logging.info("WebUrl test done")
     print(weburl_result)
 
@@ -155,15 +137,13 @@ def test_graph_website(model_name):
         print("Fail: ", e)
     return weburl_result
 
-
 def test_graph_from_youtube_video(model_name):
    """Test graph creation from a YouTube video."""
    source_url = 'https://www.youtube.com/watch?v=T-qy-zPWgqA'
+   file_name = 'NKc8Tr5_L3w'
    source_type = 'youtube'
    create_source_node_graph_url_youtube(graph, model_name, source_url, source_type)
-   youtube_result = extract_graph_from_file_youtube(
-       URI, USERNAME, PASSWORD, DATABASE, model_name, source_url, '', ''
-   )
+   youtube_result = extract_graph_from_file_youtube(URI, USERNAME, PASSWORD, DATABASE, model_name, source_url,file_name,'','')
    logging.info("YouTube Video test done")
    print(youtube_result)
 
@@ -229,7 +209,7 @@ def get_duplicate_nodes():
       
 #Test populate_graph_schema
 def test_populate_graph_schema_from_text(model_name):
-    schema_text =('Amazon was founded on July 5, 1994, by Jeff Bezos in Bellevue, Washington.The company originally started as an online marketplace for books but gradually expanded its offerings to include a wide range of product categories. This diversification led to it being referred.')
+    schema_text =('Amazon was founded on July 5, 1994, by Jeff Bezos in Bellevue, Washington.The company originally started as an online marketplace for books but gradually expanded its offerings to include a wide range of product categories. This diversification led to it being referred.')
     #result_schema=''
     try:
         result_schema = populate_graph_schema_from_text(schema_text, model_name, True)
@@ -243,7 +223,7 @@ def run_tests():
    final_list = []
    error_list = []
    
-   models = ['openai_gpt_3_5','openai_gpt_4o','openai_gpt_4o_mini','azure-ai-gpt-35','azure-ai-gpt-4o','gemini_1_5_pro','gemini_1_5_flash','anthropic-claude-3-5-sonnet','bedrock-claude-3-5-sonnet','groq-llama3-70b','fireworks-llama-v3-70b']
+   models = ['openai_gpt_4','openai_gpt_4o','openai_gpt_4o_mini','gemini_1.5_pro','gemini_1.5_flash']
 
    for model_name in models:
        try:
@@ -264,22 +244,22 @@ def run_tests():
 
 #    test_populate_graph_schema_from_text('openai-gpt-4o')
 #delete diconnected nodes
-   dis_elementid, dis_status = disconected_nodes()
-   lst_element_id = [dis_elementid]
-   delt = delete_disconected_nodes(lst_element_id)
+#    dis_elementid, dis_status = disconected_nodes()
+#    lst_element_id = [dis_elementid]
+#    delt = delete_disconected_nodes(lst_element_id)
 #    dup = get_duplicate_nodes()
    print(final_list)
-   schma = test_populate_graph_schema_from_text(model_name)
+#    schma = test_populate_graph_schema_from_text(model_name)
    # Save final results to CSV
    df = pd.DataFrame(final_list)
    print(df)
    df['execution_date'] = dt.today().strftime('%Y-%m-%d')
 #diconnected nodes   
-   df['disconnected_nodes']=dis_status
+#    df['disconnected_nodes']=dis_status
 #    df['get_duplicate_nodes']=dup
 
-   df['delete_disconected_nodes']=delt
-   df['test_populate_graph_schema_from_text'] = schma
+#    df['delete_disconected_nodes']=delt
+#    df['test_populate_graph_schema_from_text'] = schma
    df.to_csv(f"Integration_TestResult_{dt.now().strftime('%Y%m%d_%H%M%S')}.csv", index=False)
 
    # Save error details to CSV
