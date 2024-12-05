@@ -95,7 +95,7 @@ const PageLayout: React.FC = () => {
               password: atob(parsedConnection.password),
               database: parsedConnection.database,
             });
-            setGdsActive(parsedConnection.isGDS);
+            setGdsActive(parsedConnection.isgdsActive);
             setIsReadOnlyUser(parsedConnection.isReadOnlyUser);
           } else {
             console.error('Invalid parsed session data:', parsedConnection);
@@ -124,7 +124,7 @@ const PageLayout: React.FC = () => {
                 database: envCredentials.database,
                 userDbVectorIndex: 384,
                 isReadOnlyUser: envCredentials.isReadonlyUser,
-                isGDS: envCredentials.isGds,
+                isgdsActive: envCredentials.isgdsActive,
               })
             );
             return true;
