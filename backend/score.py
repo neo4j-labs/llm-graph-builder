@@ -993,7 +993,7 @@ async def backend_connection_configuation():
         message="Unable to connect backend DB"
         error_message = str(e)
         logging.exception(f'{error_message}')
-        return create_api_response(job_status, message=message, error=error_message + ' or fill from the login dialog', data=graph_connection)
+        return create_api_response(job_status, message=message, error=error_message.rstrip('.') + ', or fill from the login dialog.', data=graph_connection)
     finally:
         gc.collect()    
 
