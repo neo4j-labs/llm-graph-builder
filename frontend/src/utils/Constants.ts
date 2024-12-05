@@ -13,12 +13,12 @@ export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
-        'diffbot',
         'openai_gpt_3.5',
         'openai_gpt_4o',
         'openai_gpt_4o_mini',
         'gemini_1.5_pro',
         'gemini_1.5_flash',
+        'diffbot',
         'azure_ai_gpt_35',
         'azure_ai_gpt_4o',
         'ollama_llama3',

@@ -146,7 +146,7 @@ const PageLayout: React.FC = () => {
           userName: connectionData.data.user_name,
           database: connectionData.data.database,
           isReadonlyUser: !connectionData.data.write_access,
-          isGds: connectionData.data.gds_status,
+          isgdsActive: connectionData.data.gds_status,
         };
         if (session) {
           const updated = updateSessionIfNeeded(envCredentials, session);
@@ -167,11 +167,11 @@ const PageLayout: React.FC = () => {
               database: envCredentials.database,
               userDbVectorIndex: 384,
               isReadOnlyUser: envCredentials.isReadonlyUser,
-              isGDS: envCredentials.isGds,
+              isgdsActive: envCredentials.isgdsActive,
             })
           );
           setConnectionStatus(true);
-          setGdsActive(envCredentials.isGds);
+          setGdsActive(envCredentials.isgdsActive);
           setIsReadOnlyUser(envCredentials.isReadonlyUser);
           handleDisconnectButtonState(false);
         }
