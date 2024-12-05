@@ -18,7 +18,7 @@ Upload your files from local machine, GCS or S3 bucket or from web sources, choo
 - **Knowledge Graph Creation**: Transform unstructured data into structured knowledge graphs using LLMs.
 - **Providing Schema**: Provide your own custom schema or use existing schema in settings to generate graph.
 - **View Graph**: View graph for a particular source or multiple sources at a time in Bloom.
-- **Chat with Data**: Interact with your data in a Neo4j database through conversational queries, also retrieve metadata about the source of response to your queries. 
+- **Chat with Data**: Interact with your data in a Neo4j database through conversational queries, also retrieve metadata about the source of response to your queries.For a dedicated chat interface, access the standalone chat application at: [Chat-Only](https://dev-frontend-dcavk67s4a-uc.a.run.app/chat-only). This link provides a focused chat experience for querying your data.
 
 ## Getting started
 
@@ -102,9 +102,13 @@ Alternatively, you can run the backend and frontend separately:
     ```
 
 - For the backend:
-1. Create the backend/.env file by copy/pasting the backend/example.env.
-2. Change values as needed
-3.
+1. Create the backend/.env file by copy/pasting the backend/example.env. To streamline the initial setup and testing of the application, you can preconfigure user credentials directly within the .env file. This bypasses the login dialog and allows you to immediately connect with a predefined user.
+   - **NEO4J_URI**:
+   - **NEO4J_USERNAME**:
+   - **NEO4J_PASSWORD**:
+   - **NEO4J_DATABASE**:
+3. Change values as needed
+4.
     ```bash
     cd backend
     python -m venv envName
@@ -202,7 +206,7 @@ VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
 
 
 ## Usage
-1. Connect to Neo4j Aura Instance which can be both AURA DS or AURA DB by passing URI and password or using Neo4j credentials file.
+1. Connect to Neo4j Aura Instance which can be both AURA DS or AURA DB by passing URI and password through Backend env, fill using login dialog or drag and drop the Neo4j credentials file.
 2. To differntiate we have added different icons. For AURA DB we have a database icon and for AURA DS we have scientific molecule icon right under Neo4j Connection details label.
 3. Choose your source from a list of Unstructured sources to create graph.
 4. Change the LLM (if required) from drop down, which will be used to generate graph.
