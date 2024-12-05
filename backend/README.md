@@ -50,11 +50,7 @@ http://127.0.0.1:8000/redocs for ReDoc.
 
 ## Configuration
 
-Update the environment variable in `.env` file.
-
-`OPENAI_API_KEY`: Open AI key to use LLM
-
-`DIFFBOT_API_KEY` : Diffbot API key to use DiffbotGraphTransformer
+Update the environment variable in `.env` file. Refer example.env in backend folder for more config.
 
 `NEO4J_URI` : Neo4j URL
 
