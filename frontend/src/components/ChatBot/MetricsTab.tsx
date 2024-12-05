@@ -119,23 +119,7 @@ function MetricsTab({
                 }}
               />
             ),
-            PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
-              return (
-                <DataGridComponents.PaginationNumericButton
-                  {...restProps}
-                  isSelected={isSelected}
-                  innerProps={{
-                    ...innerProps,
-                    style: {
-                      ...(isSelected && {
-                        backgroundSize: '200% auto',
-                        borderRadius: '10px',
-                      }),
-                    },
-                  }}
-                />
-              );
-            },
+            Navigation: null,
           }}
           isKeyboardNavigable={false}
         />
