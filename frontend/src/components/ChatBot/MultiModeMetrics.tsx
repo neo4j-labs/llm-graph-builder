@@ -122,7 +122,7 @@ export default function MultiModeMetrics({
               </Popover.Trigger>
               <Popover.Content className='p-2'>
                 <Typography variant='body-small'>
-                  Determines the recall of entities present in both reference and retrieved contexts.
+                  Determines the recall of entities present in both generated answer and retrieved contexts.
                 </Typography>
               </Popover.Content>
             </Popover>
