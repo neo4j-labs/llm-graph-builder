@@ -5,7 +5,7 @@ from src.llm import get_llm
 from datasets import Dataset
 from dotenv import load_dotenv
 from ragas import evaluate
-from ragas.metrics import answer_relevancy, faithfulness
+from ragas.metrics import answer_relevancy, faithfulness,context_entity_recall
 from src.shared.common_fn import load_embedding_model 
 from ragas.dataset_schema import SingleTurnSample
 from ragas.metrics import RougeScore, SemanticSimilarity, ContextEntityRecall
@@ -24,25 +24,29 @@ def get_ragas_metrics(question: str, context: list, answer: list, model: str):
     try:
         start_time = time.time()
         dataset = Dataset.from_dict(
-            {"question": [question] * len(answer), "answer": answer, "contexts": [[ctx] for ctx in context]}
+            {"question": [question] * len(answer),"reference": answer, "answer": answer, "contexts": [[ctx] for ctx in context]}
         )
         logging.info("Evaluation dataset created successfully.")
         if ("diffbot" in model) or ("ollama" in model):
             raise ValueError(f"Unsupported model for evaluation: {model}")
+        elif ("gemini" in model):
+            llm, model_name = get_llm(model=model)
+            llm = LangchainLLMWrapper(llm,is_finished_parser=custom_is_finished_parser)
         else:
             llm, model_name = get_llm(model=model)
+            llm = LangchainLLMWrapper(llm)
     
         logging.info(f"Evaluating with model: {model_name}")
 
         score = evaluate(
             dataset=dataset,
-            metrics=[faithfulness, answer_relevancy],
+            metrics=[faithfulness, answer_relevancy,context_entity_recall],
             llm=llm,
             embeddings=EMBEDDING_FUNCTION,
         )
         
         score_dict = (
-            score.to_pandas()[["faithfulness", "answer_relevancy"]]
+            score.to_pandas()[["faithfulness", "answer_relevancy","context_entity_recall"]]
             .fillna(0)
             .round(4)
             .to_dict(orient="list")
@@ -67,13 +71,10 @@ async def get_additional_metrics(question: str, contexts: list, answers: list, r
        if ("diffbot" in model_name) or ("ollama" in model_name):
            raise ValueError(f"Unsupported model for evaluation: {model_name}")
        llm, model_name = get_llm(model=model_name)
-       ragas_llm = LangchainLLMWrapper(llm)
        embeddings = EMBEDDING_FUNCTION
        embedding_model = LangchainEmbeddingsWrapper(embeddings=embeddings)
        rouge_scorer = RougeScore()
        semantic_scorer = SemanticSimilarity()
-       entity_recall_scorer = ContextEntityRecall()
-       entity_recall_scorer.llm = ragas_llm
        semantic_scorer.embeddings = embedding_model
        metrics = []
        for response, context in zip(answers, contexts):
@@ -82,18 +83,35 @@ async def get_additional_metrics(question: str, contexts: list, answers: list, r
            rouge_score = round(rouge_score,4)
            semantic_score = await semantic_scorer.single_turn_ascore(sample)
            semantic_score = round(semantic_score, 4)
-           if "gemini" in model_name:
-               entity_recall_score = "Not Available"
-           else:
-               entity_sample = SingleTurnSample(reference=reference, retrieved_contexts=[context])
-               entity_recall_score = await entity_recall_scorer.single_turn_ascore(entity_sample)
-               entity_recall_score = round(entity_recall_score, 4)
            metrics.append({
                "rouge_score": rouge_score,
                "semantic_score": semantic_score,
-               "context_entity_recall_score": entity_recall_score
            })
        return metrics
    except Exception as e:
        logging.exception("Error in get_additional_metrics")
        return {"error": str(e)}
+   
+
+def custom_is_finished_parser(response):
+    is_finished_list = []
+    for g in response.flatten():
+        resp = g.generations[0][0]
+        if resp.generation_info is not None:
+            if resp.generation_info.get("finish_reason") is not None:
+                is_finished_list.append(
+                    resp.generation_info.get("finish_reason") == "STOP"
+                )
+
+        elif (
+            isinstance(resp, ChatGeneration)
+            and t.cast(ChatGeneration, resp).message is not None
+        ):
+            resp_message: BaseMessage = t.cast(ChatGeneration, resp).message
+            if resp_message.response_metadata.get("finish_reason") is not None:
+                is_finished_list.append(
+                    resp_message.response_metadata.get("finish_reason") == "STOP"
+                )
+        else:
+            is_finished_list.append(True)
+    return all(is_finished_list)
