@@ -295,26 +295,83 @@ export default function MultiModeMetrics({
           </Flex>
         ),
       }),
+      columnHelper.accessor((row) => row.semantic_score as number, {
+        id: 'Semantic Score',
+        cell: (info) => {
+          const value = isNaN(info.getValue()) ? 'N.A' : info.getValue()?.toFixed(2);
+          if (value === 'N.A') {
+            return <NotAvailableMetric />;
+          }
+          return <Typography variant='body-medium'>{value}</Typography>;
+        },
+        header: () => (
+          <Flex flexDirection='row' alignItems='center'>
+            <span>Semantic</span>
+            <Popover placement='top-middle-bottom-middle' hasAnchorPortal={true}>
+              <Popover.Trigger hasButtonWrapper>
+                <IconButton size='small' isClean ariaLabel='infoicon'>
+                  <InformationCircleIconOutline />
+                </IconButton>
+              </Popover.Trigger>
+              <Popover.Content className='p-2'>
+                <Typography variant='body-small'>
+                  Determines How well the generated answer understands the meaning of the reference answer.
+                </Typography>
+              </Popover.Content>
+            </Popover>
+          </Flex>
+        ),
+      }),
+      columnHelper.accessor((row) => row.rouge_score as number, {
+        id: 'Rouge Score',
+        cell: (info) => {
+          const value = isNaN(info.getValue()) ? 'N.A' : info.getValue()?.toFixed(2);
+          if (value === 'N.A') {
+            return <NotAvailableMetric />;
+          }
+          return <Typography variant='body-medium'>{value}</Typography>;
+        },
+        header: () => (
+          <Flex flexDirection='row' alignItems='center'>
+            <span>Rouge</span>
+            <Popover placement='top-middle-bottom-middle' hasAnchorPortal={true}>
+              <Popover.Trigger hasButtonWrapper>
+                <IconButton size='small' isClean ariaLabel='infoicon'>
+                  <InformationCircleIconOutline />
+                </IconButton>
+              </Popover.Trigger>
+              <Popover.Content className='p-2'>
+                <Typography variant='body-small'>
+                  Determines How much the generated answer matches the reference answer, word-for-word.
+                </Typography>
+              </Popover.Content>
+            </Popover>
+          </Flex>
+        ),
+      }),
     ],
     []
   );
-  const config = useMemo(
-    () => ({
-      data,
-      columns: !isWithAdditionalMetrics ? columnswithoutSemanticAndRougeScores : columns,
-      getCoreRowModel: getCoreRowModel(),
-      getFilteredRowModel: getFilteredRowModel(),
-      getPaginationRowModel: getPaginationRowModel(),
-      enableGlobalFilter: false,
-      autoResetPageIndex: false,
-      enableColumnResizing: true,
-      enableRowSelection: true,
-      enableMultiRowSelection: true,
-      enableSorting: false,
-    }),
-    [isWithAdditionalMetrics]
-  );
-  const table = useReactTable(config);
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    enableGlobalFilter: false,
+    autoResetPageIndex: false,
+    enableColumnResizing: true,
+    enableRowSelection: true,
+    enableMultiRowSelection: true,
+    enableSorting: false,
+  });
+  useEffect(() => {
+    if (isWithAdditionalMetrics === false) {
+      table.setColumnVisibility({ 'Semantic Score': false, 'Rouge Score': false });
+    } else {
+      table.resetColumnVisibility(true);
+    }
+  }, [isWithAdditionalMetrics, table]);
 
   return (
     <Box>

@@ -63,7 +63,7 @@ const PageLayout: React.FC = () => {
     showDisconnectButton,
   } = useCredentials();
   const { cancel } = useSpeechSynthesis();
-
+  
   useEffect(() => {
     async function initializeConnection() {
       const session = localStorage.getItem('neo4j.connection');
