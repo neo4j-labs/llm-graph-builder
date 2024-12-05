@@ -102,7 +102,7 @@ export default function MultiModeMetrics({
           </Flex>
         ),
       }),
-      columnHelper.accessor((row) => row.context_entity_recall_score as number, {
+      columnHelper.accessor((row) => row.context_entity_recall as number, {
         id: 'Entity Recall Score',
         cell: (info) => {
           const value = isNaN(info.getValue()) ? 'N.A' : info.getValue()?.toFixed(2);
@@ -122,7 +122,7 @@ export default function MultiModeMetrics({
               </Popover.Trigger>
               <Popover.Content className='p-2'>
                 <Typography variant='body-small'>
-                  Determines the recall of entities present in both reference and retrieved contexts.
+                  Determines the recall of entities present in both generated answer and retrieved contexts.
                 </Typography>
               </Popover.Content>
             </Popover>
@@ -201,7 +201,7 @@ export default function MultiModeMetrics({
   });
   useEffect(() => {
     if (isWithAdditionalMetrics === false) {
-      table.setColumnVisibility({ 'Recall Score': false, 'Semantic Score': false, 'Rouge Score': false });
+      table.setColumnVisibility({ 'Semantic Score': false, 'Rouge Score': false });
     } else {
       table.resetColumnVisibility(true);
     }
@@ -235,23 +235,7 @@ export default function MultiModeMetrics({
                   }}
                 />
               ),
-              PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
-                return (
-                  <DataGridComponents.PaginationNumericButton
-                    {...restProps}
-                    isSelected={isSelected}
-                    innerProps={{
-                      ...innerProps,
-                      style: {
-                        ...(isSelected && {
-                          backgroundSize: '200% auto',
-                          borderRadius: '10px',
-                        }),
-                      },
-                    }}
-                  />
-                );
-              },
+              Navigation: null,
             }}
             isKeyboardNavigable={false}
           />

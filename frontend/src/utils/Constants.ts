@@ -13,12 +13,12 @@ export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
-        'diffbot',
         'openai_gpt_3.5',
         'openai_gpt_4o',
         'openai_gpt_4o_mini',
         'gemini_1.5_pro',
         'gemini_1.5_flash',
+        'diffbot',
         'azure_ai_gpt_35',
         'azure_ai_gpt_4o',
         'ollama_llama3',
@@ -366,5 +366,5 @@ export const metricsinfo: Record<string, string> = {
   answer_relevancy: "Determines How well the answer addresses the user's question.",
   rouge_score: 'Determines How much the generated answer matches the reference answer, word-for-word.',
   semantic_score: 'Determines How well the generated answer understands the meaning of the reference answer.',
-  context_entity_recall_score: 'Determines the recall of entities present in both reference and retrieved contexts',
+  context_entity_recall: 'Determines the recall of entities present in both generated answer and retrieved contexts',
 };
