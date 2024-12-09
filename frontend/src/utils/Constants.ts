@@ -153,7 +153,7 @@ export const tooltips = {
   openChatPopout: 'Chat',
   downloadChat: 'Download Conversation',
 };
-
+export const PRODMODLES = ['openai_gpt_4o', 'openai_gpt_4o_mini', 'diffbot', 'gemini_1.5_flash'];
 export const buttonCaptions = {
   exploreGraphWithBloom: 'Explore Graph',
   showPreviewGraph: 'Preview Graph',
