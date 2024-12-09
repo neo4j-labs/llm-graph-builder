@@ -33,7 +33,7 @@ const ButtonWithToolTip = ({
   const [isHovered, setIsHovered] = useState<boolean>(false);
   return (
     <Tooltip placement={placement} type='simple'>
-      <Tooltip.Trigger>
+      <Tooltip.Trigger hasButtonWrapper>
         <Button
           size={size}
           onClick={onClick}

@@ -120,6 +120,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           return (
             <div className='px-1'>
               <Checkbox
+                ariaLabel='row-selection'
                 isChecked={row.getIsSelected()}
                 isDisabled={
                   !row.getCanSelect() ||
