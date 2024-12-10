@@ -192,6 +192,7 @@ export default function MultiModeMetrics({
     ],
     []
   );
+
   const columnswithoutSemanticAndRougeScores = useMemo(
     () => [
       columnHelper.accessor((row) => row.mode, {
@@ -315,6 +316,7 @@ export default function MultiModeMetrics({
     [isWithAdditionalMetrics]
   );
   const table = useReactTable(config);
+
 
   return (
     <Box>
