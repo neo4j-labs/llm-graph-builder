@@ -578,7 +578,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           }}
           onClose={() => setShowInfoModal(false)}
           isOpen={showInfoModal}
-          size={activeChat?.currentMode === chatModeLables['entity search+vector'] ? 'large' : 'medium'}
+          size={'large'}
         >
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <IconButton

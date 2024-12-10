@@ -68,12 +68,12 @@ def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name
             #                 "embeddings" : embeddings_arr
             #             }
             #             )
-            # logging.info('create vector index on chunk embedding')
-            result = graph.query("SHOW INDEXES YIELD * WHERE labelsOrTypes = ['__Chunk__'] and name = 'vector'")
+            logging.info('create vector index on chunk embedding')
+            # result = graph.query("SHOW INDEXES YIELD * WHERE labelsOrTypes = ['Chunk'] and name = 'vector'")
             vector_index = graph.query("SHOW INDEXES YIELD * WHERE labelsOrTypes = ['Chunk'] and type = 'VECTOR' AND name = 'vector' return options")
-            if result:
-                logging.info(f"vector index dropped for 'Chunk'")
-                graph.query("DROP INDEX vector IF EXISTS;")
+            # if result:
+            #     logging.info(f"vector index dropped for 'Chunk'")
+            #     graph.query("DROP INDEX vector IF EXISTS;")
 
             if len(vector_index) == 0:
                 logging.info(f'vector index is not exist, will create in next query')

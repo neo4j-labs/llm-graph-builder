@@ -25,7 +25,7 @@ export const IconButtonWithToolTip = ({
   const [isHovered, setIsHovered] = useState<boolean>(false);
   return (
     <Tooltip type='simple' placement={placement}>
-      <Tooltip.Trigger>
+      <Tooltip.Trigger hasButtonWrapper>
         <IconButton
           ariaLabel={label}
           size={size}

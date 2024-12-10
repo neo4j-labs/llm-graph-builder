@@ -96,16 +96,16 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const [enableReference, toggleReferenceVisibility] = useReducer((state: boolean) => !state, false);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const [isAdditionalMetricsEnabled, setIsAdditionalMetricsEnabled] = useState<boolean | null>(
-    multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length > 3
+    multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length > 4
       ? true
-      : multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length <= 3
+      : multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length <= 4
       ? false
       : null
   );
   const [isAdditionalMetricsWithSingleMode, setIsAdditionalMetricsWithSingleMode] = useState<boolean | null>(
-    metricDetails != undefined && Object.keys(metricDetails).length > 2
+    metricDetails != undefined && Object.keys(metricDetails).length > 3
       ? true
-      : metricDetails != undefined && Object.keys(metricDetails).length <= 2
+      : metricDetails != undefined && Object.keys(metricDetails).length <= 3
       ? false
       : null
   );
