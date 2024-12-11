@@ -369,11 +369,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           'aria-labelledby': 'form-dialog-title',
         }}
       >
-        <Dialog.Header
-          htmlAttributes={{
-            id: 'graph-title',
-          }}
-        >
+        <Dialog.Header htmlAttributes={{ id: 'graph-title' }}>
           {headerTitle}
           {viewPoint !== graphLabels.chatInfoView && (
             <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -427,7 +423,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       }}
                       nvlCallbacks={nvlCallbacks}
                     />
-                    <IconButtonArray orientation='vertical' isFloating className='absolute bottom-4 right-4'>
+                    <IconButtonArray orientation='vertical' isFloating={true} className='absolute bottom-4 right-4'>
                       {viewPoint !== 'chatInfoView' && (
                         <IconButtonWithToolTip
                           label='Refresh'
