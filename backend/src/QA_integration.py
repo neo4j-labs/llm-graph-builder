@@ -539,6 +539,8 @@ def create_graph_chain(model, graph):
 def get_graph_response(graph_chain, question):
     try:
         cypher_res = graph_chain.invoke({"query": question})
+        if not cypher_res:
+            raise Exception("The invoke method returned None")
         
         response = cypher_res.get("result")
         cypher_query = ""
@@ -555,17 +557,24 @@ def get_graph_response(graph_chain, question):
             "cypher_query": cypher_query,
             "context": context
         }
-    
     except Exception as e:
         logging.error(f"An error occurred while getting the graph response : {e}")
+        return {
+            "response": None,
+            "cypher_query": None,
+            "context": None,
+            "error": str(e)
+        }
 
 def process_graph_response(model, graph, question, messages, history):
     try:
         graph_chain, qa_llm, model_version = create_graph_chain(model, graph)
         
         graph_response = get_graph_response(graph_chain, question)
-        
-        ai_response_content = graph_response.get("response", "Something went wrong")
+        if graph_response.get("error"):
+            raise Exception(graph_response['error'])
+        else:
+            ai_response_content = graph_response.get("response", "Something went wrong")
         ai_response = AIMessage(content=ai_response_content)
         
         messages.append(ai_response)
