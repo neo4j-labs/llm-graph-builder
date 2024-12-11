@@ -1,5 +1,4 @@
 import {
-  Checkbox,
   DataGrid,
   DataGridComponents,
   Flex,
@@ -9,6 +8,7 @@ import {
   TextLink,
   Typography,
   useCopyToClipboard,
+  Checkbox,
 } from '@neo4j-ndl/react';
 import { forwardRef, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
@@ -53,6 +53,8 @@ import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
+import BreakDownPopOver from './BreakDownPopOver';
+
 let onlyfortheFirstRender = true;
 
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
@@ -118,6 +120,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           return (
             <div className='px-1'>
               <Checkbox
+                ariaLabel='row-selection'
                 isChecked={row.getIsSelected()}
                 isDisabled={
                   !row.getCanSelect() ||
@@ -370,7 +373,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             return (
               <Flex>
                 <span>
-                  <TextLink isExternalLink href={info.row.original.sourceUrl}>
+                  <TextLink isExternalLink={true} href={info.row.original.sourceUrl}>
                     {info.row.original.fileSource}
                   </TextLink>
                 </span>
@@ -415,6 +418,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 };
               }),
             ],
+            hasDefaultSortingActions: false,
           },
         },
       }),
@@ -457,6 +461,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 };
               }),
             ],
+            hasDefaultSortingActions: false,
           },
         },
       }),
@@ -497,18 +502,52 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 };
               }),
             ],
+            hasDefaultSortingActions: false,
           },
         },
       }),
       columnHelper.accessor((row) => row.nodesCount, {
         id: 'NodesCount',
-        cell: (info) => <i>{info.getValue()}</i>,
+        cell: (info) => {
+          const hasNodeBreakDownValues =
+            info.row.original.chunkNodeCount > 0 ||
+            info.row.original.communityNodeCount > 0 ||
+            info.row.original.entityNodeCount > 0;
+
+          return (
+            <Flex alignItems='center' flexDirection='row'>
+              <i>{info.getValue()}</i>
+              {hasNodeBreakDownValues &&
+                (info.row.original.status === 'Completed' ||
+                  info.row.original.status === 'Failed' ||
+                  info.row.original.status === 'Cancelled') && (
+                  <BreakDownPopOver file={info.row.original} isNodeCount={true} />
+                )}
+            </Flex>
+          );
+        },
         header: () => <span>Nodes</span>,
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.relationshipsCount, {
         id: 'relationshipCount',
-        cell: (info) => <i>{info.getValue()}</i>,
+        cell: (info) => {
+          const hasRelationsBreakDownValues =
+            info.row.original.chunkRelCount > 0 ||
+            info.row.original.communityRelCount > 0 ||
+            info.row.original.entityEntityRelCount > 0;
+          return (
+            <Flex alignItems='center' flexDirection='row'>
+              <i>{info.getValue()}</i>
+              {hasRelationsBreakDownValues &&
+                (info.row.original.status === 'Completed' ||
+                  info.row.original.status === 'Failed' ||
+                  info.row.original.status === 'Cancelled') && (
+                  <BreakDownPopOver file={info.row.original} isNodeCount={false} />
+                )}
+            </Flex>
+          );
+        },
         header: () => <span>Relations</span>,
         footer: (info) => info.column.id,
       }),
@@ -525,7 +564,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               clean
               onClick={() => onInspect(info?.row?.original?.name as string)}
             >
-              <MagnifyingGlassCircleIconSolid />
+              <MagnifyingGlassCircleIconSolid className='n-size-token-7' />
             </IconButtonWithToolTip>
             <IconButtonWithToolTip
               placement='left'
@@ -551,13 +590,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               label='chunktextaction'
               text='View Chunks'
               size='large'
-              disabled={info.getValue() === 'Uploading'}
+              disabled={info.getValue() === 'Uploading' || info.getValue() === 'New'}
             >
-              <DocumentTextIconSolid />
+              <DocumentTextIconSolid className='n-size-token-7' />
             </IconButtonWithToolTip>
           </>
         ),
-        size: 300,
+        maxSize: 300,
         minSize: 180,
         header: () => <span>Actions</span>,
         footer: (info) => info.column.id,
@@ -716,6 +755,12 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   accessToken: item?.accessToken ?? '',
                   retryOption: item.retry_condition ?? '',
                   retryOptionStatus: false,
+                  chunkNodeCount: item.chunkNodeCount ?? 0,
+                  chunkRelCount: item.chunkRelCount ?? 0,
+                  entityNodeCount: item.entityNodeCount ?? 0,
+                  entityEntityRelCount: item.entityEntityRelCount ?? 0,
+                  communityNodeCount: item.communityNodeCount ?? 0,
+                  communityRelCount: item.communityRelCount ?? 0,
                 });
               }
             });
@@ -843,6 +888,12 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       status,
       processed_chunk = 0,
       total_chunks,
+      chunkNodeCount,
+      entityNodeCount,
+      communityNodeCount,
+      chunkRelCount,
+      entityEntityRelCount,
+      communityRelCount,
     } = file_name;
     if (fileName && total_chunks) {
       setFilesData((prevfiles) =>
@@ -852,10 +903,16 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               ...curfile,
               status: status,
               nodesCount: nodeCount,
-              relationshipCount: relationshipCount,
+              relationshipsCount: relationshipCount,
               model: model,
               processingTotalTime: processingTime?.toFixed(2),
               processingProgress: Math.floor((processed_chunk / total_chunks) * 100),
+              chunkNodeCount: chunkNodeCount ?? 0,
+              entityNodeCount: entityNodeCount ?? 0,
+              communityNodeCount: communityNodeCount ?? 0,
+              chunkRelCount: chunkRelCount ?? 0,
+              entityEntityRelCount: entityEntityRelCount ?? 0,
+              communityRelCount: communityRelCount ?? 0,
             };
           }
           return curfile;
@@ -873,7 +930,20 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
 
   const updateProgress = (i: statusupdate) => {
     const { file_name } = i;
-    const { fileName, nodeCount = 0, relationshipCount = 0, status, processed_chunk = 0, total_chunks } = file_name;
+    const {
+      fileName,
+      nodeCount = 0,
+      relationshipCount = 0,
+      status,
+      processed_chunk = 0,
+      total_chunks,
+      chunkNodeCount,
+      entityNodeCount,
+      communityNodeCount,
+      chunkRelCount,
+      entityEntityRelCount,
+      communityRelCount,
+    } = file_name;
     if (fileName && total_chunks) {
       setFilesData((prevfiles) =>
         prevfiles.map((curfile) => {
@@ -882,8 +952,14 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
               ...curfile,
               status: status,
               nodesCount: nodeCount,
-              relationshipCount: relationshipCount,
+              relationshipsCount: relationshipCount,
               processingProgress: Math.floor((processed_chunk / total_chunks) * 100),
+              chunkNodeCount: chunkNodeCount ?? 0,
+              entityNodeCount: entityNodeCount ?? 0,
+              communityNodeCount: communityNodeCount ?? 0,
+              chunkRelCount: chunkRelCount ?? 0,
+              entityEntityRelCount: entityEntityRelCount ?? 0,
+              communityRelCount: communityRelCount ?? 0,
             };
           }
           return curfile;
@@ -899,28 +975,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     }),
     [table]
   );
-  useEffect(() => {
-    if (tableRef.current) {
-      // Component has content, calculate maximum height for table
-      // Observes the height of the content and calculates own height accordingly
-      const resizeObserver = new ResizeObserver((entries) => {
-        for (let index = 0; index < entries.length; index++) {
-          const entry = entries[index];
-          const { height } = entry.contentRect;
-          const rowHeight = document?.getElementsByClassName('ndl-data-grid-td')?.[0]?.clientHeight ?? 69;
-          table.setPageSize(Math.floor(height / rowHeight));
-        }
-      });
-
-      const [contentElement] = document.getElementsByClassName('ndl-data-grid-scrollable');
-      resizeObserver.observe(contentElement);
-
-      return () => {
-        // Stop observing content after cleanup
-        resizeObserver.unobserve(contentElement);
-      };
-    }
-  }, []);
 
   const classNameCheck = isExpanded ? 'fileTableWithExpansion' : `filetable`;
 
@@ -947,7 +1001,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                 className: classNameCheck,
               }}
               components={{
-                Body: (props) => <DataGridComponents.Body {...props} />,
+                Body: () => (
+                  <DataGridComponents.Body
+                    innerProps={{
+                      className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
+                    }}
+                  />
+                ),
                 PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
                   return (
                     <DataGridComponents.PaginationNumericButton

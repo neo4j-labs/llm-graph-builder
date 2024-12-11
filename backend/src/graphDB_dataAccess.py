@@ -1,10 +1,9 @@
 import logging
 import os
-from datetime import datetime
-from langchain_community.graphs import Neo4jGraph
+from langchain_neo4j import Neo4jGraph
 from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model
 from src.document_sources.gcs_bucket import delete_file_from_gcs
-from src.shared.constants import BUCKET_UPLOAD
+from src.shared.constants import BUCKET_UPLOAD,NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY
 from src.entities.source_node import sourceNode
 from src.communities import MAX_COMMUNITY_LEVELS
 import json
@@ -103,7 +102,7 @@ class graphDBdataAccess:
 
             param= {"props":params}
             
-            print(f'Base Param value 1 : {param}')
+            logging.info(f'Base Param value 1 : {param}')
             query = "MERGE(d:Document {fileName :$props.fileName}) SET d += $props"
             logging.info("Update source node properties")
             self.graph.query(query,param)
@@ -246,7 +245,13 @@ class graphDBdataAccess:
                 MATCH(d:Document {fileName : $file_name}) RETURN d.status AS Status , d.processingTime AS processingTime, 
                 d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount,
                 d.total_chunks AS total_chunks , d.fileSize as fileSize, 
-                d.is_cancelled as is_cancelled, d.processed_chunk as processed_chunk, d.fileSource as fileSource
+                d.is_cancelled as is_cancelled, d.processed_chunk as processed_chunk, d.fileSource as fileSource,
+                d.chunkNodeCount AS chunkNodeCount,
+                d.chunkRelCount AS chunkRelCount,
+                d.entityNodeCount AS entityNodeCount,
+                d.entityEntityRelCount AS entityEntityRelCount,
+                d.communityNodeCount AS communityNodeCount,
+                d.communityRelCount AS communityRelCount
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
@@ -276,27 +281,31 @@ class graphDBdataAccess:
         query_to_delete_document_and_entities="""
             MATCH (d:Document)
             WHERE d.fileName IN $filename_list AND d.fileSource IN $source_types_list
-            WITH COLLECT(d) as documents
+            WITH COLLECT(d) AS documents
             UNWIND documents AS d
-            MATCH (d)<-[:PART_OF]-(c:Chunk)
-            WITH d, c, documents
-            OPTIONAL MATCH (c)-[:HAS_ENTITY]->(e)
+            OPTIONAL MATCH (d)<-[:PART_OF]-(c:Chunk)
+            OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e)
+            WITH d, c, e, documents
             WHERE NOT EXISTS {
                 MATCH (e)<-[:HAS_ENTITY]-(c2)-[:PART_OF]->(d2:Document)
                 WHERE NOT d2 IN documents
                 }
-            DETACH DELETE c, e, d
+            WITH d, COLLECT(c) AS chunks, COLLECT(e) AS entities
+            FOREACH (chunk IN chunks | DETACH DELETE chunk)
+            FOREACH (entity IN entities | DETACH DELETE entity)
+            DETACH DELETE d
             """  
         query_to_delete_communities = """
-            MATCH (c:`__Community__`) 
-            WHERE NOT EXISTS { ()-[:IN_COMMUNITY]->(c) } AND c.level = 0 
-            DETACH DELETE c 
-
-            WITH *
-            UNWIND range(1, $max_level) AS level
-            MATCH (c1:`__Community__`) 
-            WHERE c1.level = level AND NOT EXISTS { (c1)<-[:PARENT_COMMUNITY]-(child) } 
-            DETACH DELETE c1
+            MATCH (c:`__Community__`)
+            WHERE c.level = 0 AND NOT EXISTS { ()-[:IN_COMMUNITY]->(c) }
+            DETACH DELETE c
+            WITH 1 AS dummy
+            UNWIND range(1, $max_level)  AS level
+            CALL (level) {
+                MATCH (c:`__Community__`)
+                WHERE c.level = level AND NOT EXISTS { ()-[:PARENT_COMMUNITY]->(c) }
+                DETACH DELETE c
+                }
         """   
         param = {"filename_list" : filename_list, "source_types_list": source_types_list}
         community_param = {"max_level":MAX_COMMUNITY_LEVELS}
@@ -353,7 +362,7 @@ class graphDBdataAccess:
         score_value = float(os.environ.get('DUPLICATE_SCORE_VALUE'))
         text_distance = int(os.environ.get('DUPLICATE_TEXT_DISTANCE'))
         query_duplicate_nodes = """
-                MATCH (n:!Chunk&!Session&!Document&!`__Community__`&!`__Entity__`) with n 
+                MATCH (n:!Chunk&!Session&!Document&!`__Community__`) with n 
                 WHERE n.embedding is not null and n.id is not null // and size(toString(n.id)) > 3
                 WITH n ORDER BY count {{ (n)--() }} DESC, size(toString(n.id)) DESC // updated
                 WITH collect(n) as nodes
@@ -401,7 +410,7 @@ class graphDBdataAccess:
     
     def merge_duplicate_nodes(self,duplicate_nodes_list):
         nodes_list = json.loads(duplicate_nodes_list)
-        print(f'Nodes list to merge {nodes_list}')
+        logging.info(f'Nodes list to merge {nodes_list}')
         query = """
         UNWIND $rows AS row
         CALL { with row
@@ -440,3 +449,65 @@ class graphDBdataAccess:
                         }
                         )
         return "Drop and Re-Create vector index succesfully"
+
+
+    def update_node_relationship_count(self,document_name):
+        logging.info("updating node and relationship count")
+        label_query = """CALL db.labels"""
+        community_flag = {'label': '__Community__'} in self.execute_query(label_query)
+        if (not document_name) and (community_flag):
+            result = self.execute_query(NODEREL_COUNT_QUERY_WITH_COMMUNITY)
+        elif (not document_name) and (not community_flag):
+             return []
+        else:
+            param = {"document_name": document_name}
+            result = self.execute_query(NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY, param)
+        response = {}
+        for record in result:
+            filename = record["filename"]
+            chunkNodeCount = record["chunkNodeCount"]
+            chunkRelCount = record["chunkRelCount"]
+            entityNodeCount = record["entityNodeCount"]
+            entityEntityRelCount = record["entityEntityRelCount"]
+            if (not document_name) and (community_flag):
+                communityNodeCount = record["communityNodeCount"]
+                communityRelCount = record["communityRelCount"]
+            else:
+                communityNodeCount = 0
+                communityRelCount = 0
+            nodeCount = int(chunkNodeCount) + int(entityNodeCount) + int(communityNodeCount)
+            relationshipCount = int(chunkRelCount) + int(entityEntityRelCount) + int(communityRelCount)
+            update_query = """
+            MATCH (d:Document {fileName: $filename})
+            SET d.chunkNodeCount = $chunkNodeCount,
+                d.chunkRelCount = $chunkRelCount,
+                d.entityNodeCount = $entityNodeCount,
+                d.entityEntityRelCount = $entityEntityRelCount,
+                d.communityNodeCount = $communityNodeCount,
+                d.communityRelCount = $communityRelCount,
+                d.nodeCount = $nodeCount,
+                d.relationshipCount = $relationshipCount
+            """
+            self.execute_query(update_query,{
+                "filename": filename,
+                "chunkNodeCount": chunkNodeCount,
+                "chunkRelCount": chunkRelCount,
+                "entityNodeCount": entityNodeCount,
+                "entityEntityRelCount": entityEntityRelCount,
+                "communityNodeCount": communityNodeCount,
+                "communityRelCount": communityRelCount,
+                "nodeCount" : nodeCount,
+                "relationshipCount" : relationshipCount
+                })
+            
+            response[filename] = {"chunkNodeCount": chunkNodeCount,
+                "chunkRelCount": chunkRelCount,
+                "entityNodeCount": entityNodeCount,
+                "entityEntityRelCount": entityEntityRelCount,
+                "communityNodeCount": communityNodeCount,
+                "communityRelCount": communityRelCount,
+                "nodeCount" : nodeCount,
+                "relationshipCount" : relationshipCount
+                }
+            
+        return response

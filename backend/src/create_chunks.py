@@ -1,8 +1,7 @@
 from langchain_text_splitters import TokenTextSplitter
 from langchain.docstore.document import Document
-from langchain_community.graphs import Neo4jGraph
+from langchain_neo4j import Neo4jGraph
 import logging
-import os
 from src.document_sources.youtube import get_chunks_with_timestamps, get_calculated_timestamps
 import re
 
@@ -25,7 +24,6 @@ class CreateChunksofDocument:
             A list of chunks each of which is a langchain Document.
         """
         logging.info("Split file into smaller chunks")
-        # number_of_chunks_allowed = int(os.environ.get('NUMBER_OF_CHUNKS_ALLOWED'))
         text_splitter = TokenTextSplitter(chunk_size=200, chunk_overlap=20)
         if 'page' in self.pages[0].metadata:
             chunks = []

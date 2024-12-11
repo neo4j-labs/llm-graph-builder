@@ -1,6 +1,6 @@
 import { FC, useContext, useState } from 'react';
 import { ChunkProps, UserCredentials } from '../../types';
-import { Box, LoadingSpinner, TextLink, Typography } from '@neo4j-ndl/react';
+import { LoadingSpinner, TextLink, Typography } from '@neo4j-ndl/react';
 import { DocumentTextIconOutline, GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
 import wikipedialogo from '../../assets/images/wikipedia.svg';
 import youtubelogo from '../../assets/images/youtube.svg';
@@ -39,9 +39,9 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   return (
     <>
       {loading ? (
-        <Box className='flex justify-center items-center'>
+        <div className='flex justify-center items-center'>
           <LoadingSpinner size='small' />
-        </Box>
+        </div>
       ) : chunks?.length > 0 ? (
         <div className='p-4 h-80 overflow-auto'>
           <ul className='list-inside list-none'>

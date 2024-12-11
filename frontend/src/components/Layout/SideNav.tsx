@@ -43,7 +43,7 @@ const SideNav: React.FC<SideNavProps> = ({
 }) => {
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const { setMessages } = useMessageContext();
+  const { setMessages, isDeleteChatLoading } = useMessageContext();
   const [showChatMode, setshowChatMode] = useState<boolean>(false);
   const largedesktops = useMediaQuery(`(min-width:1440px )`);
   const { connectionStatus, isReadOnlyUser } = useCredentials();
@@ -253,6 +253,7 @@ const SideNav: React.FC<SideNavProps> = ({
           >
             <Dialog.Header className='flex justify-between self-end' htmlAttributes={{ id: 'chatbot-dialog-title' }}>
               <ExpandedChatButtonContainer
+                isFullScreen={isFullScreen}
                 closeChatBot={handleShrinkClick}
                 deleteOnClick={deleteOnClick}
                 messages={messages ?? []}
@@ -266,6 +267,7 @@ const SideNav: React.FC<SideNavProps> = ({
                 setMessages={setMessages}
                 isLoading={getIsLoading(messages ?? [])}
                 connectionStatus={connectionStatus}
+                isDeleteChatLoading={isDeleteChatLoading}
               />
             </Dialog.Content>
           </Dialog>,

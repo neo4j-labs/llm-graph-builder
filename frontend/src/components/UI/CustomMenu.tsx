@@ -15,7 +15,7 @@ export default function CustomMenu({
       id?: string;
     }
   ) => void;
-  items: Menuitems[];
+  items: Menuitems[] | undefined;
   anchorOrigin: React.RefObject<HTMLElement | null>;
   isRoot?: boolean;
 }) {

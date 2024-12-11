@@ -18,7 +18,7 @@ Upload your files from local machine, GCS or S3 bucket or from web sources, choo
 - **Knowledge Graph Creation**: Transform unstructured data into structured knowledge graphs using LLMs.
 - **Providing Schema**: Provide your own custom schema or use existing schema in settings to generate graph.
 - **View Graph**: View graph for a particular source or multiple sources at a time in Bloom.
-- **Chat with Data**: Interact with your data in a Neo4j database through conversational queries, also retrive metadata about the source of response to your queries. 
+- **Chat with Data**: Interact with your data in a Neo4j database through conversational queries, also retrieve metadata about the source of response to your queries.For a dedicated chat interface, access the standalone chat application at: [Chat-Only](https://dev-frontend-dcavk67s4a-uc.a.run.app/chat-only). This link provides a focused chat experience for querying your data.
 
 ## Getting started
 
@@ -36,21 +36,22 @@ EX:
 ```env
 VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
 ```
-
-In your root folder, create a .env file with your OPENAI and DIFFBOT keys (if you want to use both):
+According to the environment, we are configuring the models which indicated by VITE_LLM_MODELS_PROD variable we can configure models based on our needs.
+EX:
 ```env
-OPENAI_API_KEY="your-openai-key"
-DIFFBOT_API_KEY="your-diffbot-key"
+VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
 ```
 
 if you only want OpenAI:
 ```env
+VITE_LLM_MODELS_PROD="diffbot,openai-gpt-3.5,openai-gpt-4o"
 VITE_LLM_MODELS_PROD="diffbot,openai-gpt-3.5,openai-gpt-4o"
 OPENAI_API_KEY="your-openai-key"
 ```
 
 if you only want Diffbot:
 ```env
+VITE_LLM_MODELS_PROD="diffbot"
 VITE_LLM_MODELS_PROD="diffbot"
 DIFFBOT_API_KEY="your-diffbot-key"
 ```
@@ -78,6 +79,7 @@ You can of course combine all (local, youtube, wikipedia, s3 and gcs) or remove 
 ### Chat Modes
 
 By default,all of the chat modes will be available: vector, graph_vector, graph, fulltext, graph_vector_fulltext , entity_vector and global_vector.
+By default,all of the chat modes will be available: vector, graph_vector, graph, fulltext, graph_vector_fulltext , entity_vector and global_vector.
 If none of the mode is mentioned in the chat modes variable all modes will be available:
 ```env
 VITE_CHAT_MODES=""
@@ -85,6 +87,7 @@ VITE_CHAT_MODES=""
 
 If however you want to specify the only vector mode or only graph mode you can do that by specifying the mode in the env:
 ```env
+VITE_CHAT_MODES="vector,graph"
 VITE_CHAT_MODES="vector,graph"
 ```
 
@@ -102,9 +105,13 @@ Alternatively, you can run the backend and frontend separately:
     ```
 
 - For the backend:
-1. Create the backend/.env file by copy/pasting the backend/example.env.
-2. Change values as needed
-3.
+1. Create the backend/.env file by copy/pasting the backend/example.env. To streamline the initial setup and testing of the application, you can preconfigure user credentials directly within the .env file. This bypasses the login dialog and allows you to immediately connect with a predefined user.
+   - **NEO4J_URI**:
+   - **NEO4J_USERNAME**:
+   - **NEO4J_PASSWORD**:
+   - **NEO4J_DATABASE**:
+3. Change values as needed
+4.
     ```bash
     cd backend
     python -m venv envName
@@ -155,12 +162,23 @@ Allow unauthenticated request : Yes
 | VITE_CHUNK_SIZE              | Optional           | 5242880       | Size of each chunk of file for upload                                                                |
 | VITE_GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
 | VITE_LLM_MODELS_PROD         | Optional      | openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash | To Distinguish models based on the Enviornment PROD or DEV 
+| VITE_LLM_MODELS              | Optional | 'diffbot,openai_gpt_3.5,openai_gpt_4o,openai_gpt_4o_mini,gemini_1.5_pro,gemini_1.5_flash,azure_ai_gpt_35,azure_ai_gpt_4o,ollama_llama3,groq_llama3_70b,anthropic_claude_3_5_sonnet' | Supported Models For the application
 | GCS_FILE_CACHE          | Optional           | False         | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
 | ENTITY_EMBEDDING        | Optional           | False         | If set to True, It will add embeddings for each entity in database |
 | LLM_MODEL_CONFIG_ollama_<model_name>         | Optional      |               | Set ollama config as - model_name,model_local_url for local deployments |
 | RAGAS_EMBEDDING_MODEL         | Optional      | openai              | embedding model used by ragas evaluation framework                               |
 
-
+## LLMs Supported 
+1. OpenAI
+2. Gemini
+3. Azure OpenAI(dev)
+4. Anthropic(dev)
+5. Fireworks(dev)
+6. Groq(dev)
+7. Amazon Bedrock(dev)
+8. Ollama(dev)
+9. Diffbot
+10. Other OpenAI compabtile baseurl models(dev)
 
 ## For local llms (Ollama)
 1. Pull the docker imgage of ollama
@@ -175,7 +193,7 @@ docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
 ```bash
 docker exec -it ollama ollama run llama3
 ```
-4. Configure  env variable in docker compose or backend enviournment.
+4. Configure  env variable in docker compose or backend environment.
 ```env
 LLM_MODEL_CONFIG_ollama_<model_name>
 #example
@@ -191,13 +209,14 @@ VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
 
 
 ## Usage
-1. Connect to Neo4j Aura Instance by passing URI and password or using Neo4j credentials file.
-2. Choose your source from a list of Unstructured sources to create graph.
-3. Change the LLM (if required) from drop down, which will be used to generate graph.
-4. Optionally, define schema(nodes and relationship labels) in entity graph extraction settings.
-5. Either select multiple files to 'Generate Graph' or all the files in 'New' status will be processed for graph creation.
-6. Have a look at the graph for individial files using 'View' in grid or select one or more files and 'Preview Graph'
-7. Ask questions related to the processed/completed sources to chat-bot, Also get detailed information about your answers generated by LLM.
+1. Connect to Neo4j Aura Instance which can be both AURA DS or AURA DB by passing URI and password through Backend env, fill using login dialog or drag and drop the Neo4j credentials file.
+2. To differntiate we have added different icons. For AURA DB we have a database icon and for AURA DS we have scientific molecule icon right under Neo4j Connection details label.
+3. Choose your source from a list of Unstructured sources to create graph.
+4. Change the LLM (if required) from drop down, which will be used to generate graph.
+5. Optionally, define schema(nodes and relationship labels) in entity graph extraction settings.
+6. Either select multiple files to 'Generate Graph' or all the files in 'New' status will be processed for graph creation.
+7. Have a look at the graph for individual files using 'View' in grid or select one or more files and 'Preview Graph'
+8. Ask questions related to the processed/completed sources to chat-bot, Also get detailed information about your answers generated by LLM.
 
 ## Links
 

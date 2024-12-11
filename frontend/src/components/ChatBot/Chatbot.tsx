@@ -41,7 +41,15 @@ import FallBackDialog from '../UI/FallBackDialog';
 import { downloadClickHandler, getDateTime } from '../../utils/Utils';
 import ChatModesSwitch from './ChatModesSwitch';
 import CommonActions from './CommonChatActions';
+import Loader from '../../utils/Loader';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
+if (typeof window !== 'undefined') {
+  if (!sessionStorage.getItem('session_id')) {
+    const id = uuidv4();
+    sessionStorage.setItem('session_id', id);
+  }
+}
+const sessionId = sessionStorage.getItem('session_id') ?? '';
 
 const Chatbot: FC<ChatbotProps> = (props) => {
   const {
@@ -49,15 +57,15 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     setMessages: setListMessages,
     isLoading,
     isFullScreen,
-    clear,
     connectionStatus,
+    isChatOnly,
+    isDeleteChatLoading,
   } = props;
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { userCredentials } = useCredentials();
   const { model, chatModes, selectedRows, filesData } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [sessionId, setSessionId] = useState<string>(sessionStorage.getItem('session_id') ?? '');
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
   const [sourcesModal, setSourcesModal] = useState<string[]>([]);
   const [modelModal, setModelModal] = useState<string>('');
@@ -123,13 +131,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const saveCommunities = (chatCommunities: Community[]) => {
     setCommunities(chatCommunities);
   };
-  useEffect(() => {
-    if (!sessionStorage.getItem('session_id')) {
-      const id = uuidv4();
-      setSessionId(id);
-      sessionStorage.setItem('session_id', id);
-    }
-  }, []);
 
   const simulateTypingEffect = (messageId: number, response: ResponseMode, mode: string, message: string) => {
     let index = 0;
@@ -319,18 +320,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   };
   useEffect(() => {
     scrollToBottom();
-  }, [listMessages]);
-
-  useEffect(() => {
     setLoading(() => listMessages.some((msg) => msg.isLoading || msg.isTyping));
   }, [listMessages]);
-
-  useEffect(() => {
-    if (clear) {
-      cancel();
-      setListMessages((msgs) => msgs.map((msg) => ({ ...msg, speaking: false })));
-    }
-  }, [clear]);
 
   const handleCopy = (message: string, id: number) => {
     copy(message);
@@ -419,8 +410,17 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   }, []);
 
   return (
-    <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'>
-      <div className='flex overflow-y-auto pb-12 min-w-full chatBotContainer pl-3 pr-3'>
+    <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden relative'>
+      {isDeleteChatLoading && (
+        <div className='chatbot-deleteLoader'>
+          <Loader title='Deleting...'></Loader>
+        </div>
+      )}
+      <div
+        className={`flex overflow-y-auto pb-12 min-w-full pl-5 pr-5 chatBotContainer ${
+          isChatOnly ? 'min-h-[calc(100dvh-114px)] max-h-[calc(100dvh-114px)]' : ''
+        } `}
+      >
         <Widget className='n-bg-palette-neutral-bg-weak w-full' header='' isElevated={false}>
           <div className='flex flex-col gap-4 gap-y-4'>
             {listMessages.map((chat, index) => {
@@ -443,8 +443,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         size='x-large'
                         source={ChatBotAvatar}
                         status={connectionStatus ? 'online' : 'offline'}
-                        type='image'
                         shape='square'
+                        type='image'
                       />
                     ) : (
                       <Avatar
@@ -453,8 +453,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         name='KM'
                         size='x-large'
                         status={connectionStatus ? 'online' : 'offline'}
-                        type='image'
                         shape='square'
+                        type='image'
                       />
                     )}
                   </div>
@@ -585,7 +585,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           }}
           onClose={() => setShowInfoModal(false)}
           isOpen={showInfoModal}
-          size={activeChat?.currentMode === chatModeLables['entity search+vector'] ? 'large' : 'medium'}
+          size={'large'}
         >
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <IconButton
@@ -593,8 +593,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               htmlAttributes={{
                 title: 'download chat info',
               }}
-              ariaLabel='downloadchat'
               isClean
+              ariaLabel='download chat info'
               isDisabled={metricsLoading || infoLoading}
               onClick={() => {
                 downloadClickHandler(
@@ -608,6 +608,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                     nodes,
                     tokensUsed,
                     model,
+                    multiModelMetrics,
                   },
                   downloadLinkRef,
                   'graph-builder-chat-details.json'
@@ -628,7 +629,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               isClean
               onClick={() => setShowInfoModal(false)}
             >
-              <XMarkIconOutline />
+              <XMarkIconOutline className='n-size-token-7' />
             </IconButton>
           </div>
           <InfoModal

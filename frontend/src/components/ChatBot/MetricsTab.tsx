@@ -1,5 +1,5 @@
-import { Banner, Box, DataGrid, DataGridComponents, Typography } from '@neo4j-ndl/react';
-import { memo, useMemo, useRef } from 'react';
+import { Banner, Box, DataGrid, DataGridComponents, Flex, IconButton, Popover, Typography } from '@neo4j-ndl/react';
+import { memo, useContext, useMemo, useRef } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -9,6 +9,10 @@ import {
   getSortedRowModel,
 } from '@tanstack/react-table';
 import { capitalize } from '../../utils/Utils';
+import { ThemeWrapperContext } from '../../context/ThemeWrapper';
+import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
+import { metricsinfo } from '../../utils/Constants';
+import NotAvailableMetric from './NotAvailableMetric';
 function MetricsTab({
   metricsLoading,
   metricDetails,
@@ -17,14 +21,14 @@ function MetricsTab({
   metricsLoading: boolean;
   metricDetails:
     | {
-        faithfulness: number;
-        answer_relevancy: number;
+        [key: string]: number | string;
       }
     | undefined;
   error: string;
 }) {
-  const columnHelper = createColumnHelper<{ metric: string; score: number }>();
+  const columnHelper = createColumnHelper<{ metric: string; score: number | string }>();
   const tableRef = useRef(null);
+  const { colorMode } = useContext(ThemeWrapperContext);
 
   const columns = useMemo(
     () => [
@@ -39,18 +43,34 @@ function MetricsTab({
                 .join(' ')
             : capitalize(metric);
           return (
-            <div className='textellipsis'>
-              <span title={metric}>{capitilizedMetric}</span>
-            </div>
+            <Flex flexDirection='row' alignItems='center'>
+              <div className='textellipsis'>
+                <span title={metric}>{capitilizedMetric}</span>
+              </div>
+              <Popover placement='top-middle-bottom-middle' hasAnchorPortal={true}>
+                <Popover.Trigger hasButtonWrapper>
+                  <IconButton size='small' isClean ariaLabel='infoicon'>
+                    <InformationCircleIconOutline />
+                  </IconButton>
+                </Popover.Trigger>
+                <Popover.Content className='p-2'>
+                  <Typography variant='body-small'>{metricsinfo[metric]}</Typography>
+                </Popover.Content>
+              </Popover>
+            </Flex>
           );
         },
         header: () => <span>Metric</span>,
         footer: (info) => info.column.id,
       }),
-      columnHelper.accessor((row) => row.score, {
+      columnHelper.accessor((row) => row.score as number, {
         id: 'Score',
         cell: (info) => {
-          return <Typography variant='body-medium'>{info.getValue().toFixed(2)}</Typography>;
+          const value = isNaN(info.getValue()) ? 'N.A' : info.getValue()?.toFixed(2);
+          if (value === 'N.A') {
+            return <NotAvailableMetric />;
+          }
+          return <Typography variant='body-medium'>{value}</Typography>;
         },
       }),
     ],
@@ -92,24 +112,14 @@ function MetricsTab({
           }}
           isLoading={metricsLoading}
           components={{
-            Body: (props) => <DataGridComponents.Body {...props} />,
-            PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
-              return (
-                <DataGridComponents.PaginationNumericButton
-                  {...restProps}
-                  isSelected={isSelected}
-                  innerProps={{
-                    ...innerProps,
-                    style: {
-                      ...(isSelected && {
-                        backgroundSize: '200% auto',
-                        borderRadius: '10px',
-                      }),
-                    },
-                  }}
-                />
-              );
-            },
+            Body: () => (
+              <DataGridComponents.Body
+                innerProps={{
+                  className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
+                }}
+              />
+            ),
+            Navigation: null,
           }}
           isKeyboardNavigable={false}
         />

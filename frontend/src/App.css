@@ -58,7 +58,7 @@
 }
 
 .contentWithChatBot {
-  width: calc(-550px + 100dvw);
+  width: calc(-512px + 100dvw);
   height: calc(100dvh - 58px);
   padding: 3px;
   display: flex;
@@ -389,4 +389,23 @@
 }
 .ndl-modal-root{
   z-index: 39 !important;
+}
+.tbody-dark .ndl-data-grid-tr:hover {
+  --cell-background: rgb(60 63 68) !important;
+}
+.tbody-light .ndl-data-grid-tr:hover {
+  --cell-background: rgb(226 227 229) !important;
+}
+.chatbot-deleteLoader{
+  position:absolute;
+  top:0;
+  bottom:0;
+  width:100%;
+  height:100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 111;
+  opacity: 0.8;
+  background-color: rgb(201 201 201 / 40%);
 }

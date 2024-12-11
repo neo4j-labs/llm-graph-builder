@@ -1,7 +1,7 @@
 from neo4j import GraphDatabase
 import logging
 import time
-from langchain_community.graphs import Neo4jGraph
+from langchain_neo4j import Neo4jGraph
 import os
 from src.shared.common_fn import load_embedding_model
 
@@ -124,6 +124,10 @@ def create_fulltext(driver,type):
 
 def create_vector_fulltext_indexes(uri, username, password, database):
     types = ["entities", "hybrid"]
+    embedding_model = os.getenv('EMBEDDING_MODEL')
+    embeddings, dimension = load_embedding_model(embedding_model)
+    if not dimension:
+        dimension = CHUNK_VECTOR_EMBEDDING_DIMENSION
     logging.info("Starting the process of creating full-text indexes.")
 
     try:
@@ -144,7 +148,7 @@ def create_vector_fulltext_indexes(uri, username, password, database):
 
     try:
         logging.info(f"Creating a vector index for type '{CHUNK_VECTOR_INDEX_NAME}'.")
-        create_vector_index(driver, CHUNK_VECTOR_INDEX_NAME,CHUNK_VECTOR_EMBEDDING_DIMENSION)
+        create_vector_index(driver, CHUNK_VECTOR_INDEX_NAME,dimension)
         logging.info("Vector index for chunk created successfully.")
     except Exception as e:
         logging.error(f"Failed to create vector index for '{CHUNK_VECTOR_INDEX_NAME}': {e}")

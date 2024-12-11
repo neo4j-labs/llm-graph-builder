@@ -1,6 +1,6 @@
 import { Button, Dialog, TextInput, Select, Banner, Dropzone, Typography, TextLink, Flex } from '@neo4j-ndl/react';
 import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import connectAPI from '../../../services/ConnectAPI';
+import { connectAPI } from '../../../services/ConnectAPI';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useSearchParams } from 'react-router-dom';
 import { buttonCaptions } from '../../../utils/Constants';
@@ -41,7 +41,7 @@ export default function ConnectionModal({
   const [username, setUsername] = useState<string>(initialusername ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
-  const { setUserCredentials, userCredentials, setGdsActive, setIsReadOnlyUser } = useCredentials();
+  const { setUserCredentials, userCredentials, setGdsActive, setIsReadOnlyUser, errorMessage } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [userDbVectorIndex, setUserDbVectorIndex] = useState<number | undefined>(initialuserdbvectorindex ?? undefined);
@@ -122,6 +122,12 @@ export default function ConnectionModal({
       });
     }
   }, [isVectorIndexMatch, chunksExistsWithDifferentEmbedding, chunksExistsWithoutEmbedding, userCredentials]);
+
+  useEffect(() => {
+    if (errorMessage) {
+      setMessage({ type: 'danger', content: errorMessage });
+    }
+  }, [errorMessage]);
 
   const parseAndSetURI = (uri: string, urlparams = false) => {
     const uriParts: string[] = uri.split('://');
@@ -321,13 +327,7 @@ export default function ConnectionModal({
           'aria-labelledby': 'form-dialog-title',
         }}
       >
-        <Dialog.Header
-          htmlAttributes={{
-            id: 'form-dialog-title',
-          }}
-        >
-          Connect to Neo4j
-        </Dialog.Header>
+        <Dialog.Header htmlAttributes={{ id: 'form-dialog-title' }}>Connect to Neo4j</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
           <Typography variant='body-medium' className='mb-4'>
             <TextLink isExternalLink href='https://console.neo4j.io/'>
@@ -392,70 +392,71 @@ export default function ConnectionModal({
             <div className='ml-[5%] w-[70%] inline-block'>
               <TextInput
                 ref={uriRef}
-                value={URI}
-                isDisabled={false}
-                label='URI'
-                isFluid
-                onChange={(e) => setURI(e.target.value)}
                 htmlAttributes={{
                   id: 'url',
                   autoFocus: true,
-                  'aria-label': 'Connection URI',
                   onPaste: (e) => handleHostPasteChange(e),
                   onKeyDown: (e) => handleKeyPress(e, databaseRef),
+                  'aria-label': 'Connection URI',
                 }}
+                value={URI}
+                isDisabled={false}
+                label='URI'
+                isFluid={true}
+                onChange={(e) => setURI(e.target.value)}
               />
             </div>
           </div>
           <form>
             <TextInput
               ref={databaseRef}
+              htmlAttributes={{
+                id: 'database',
+                onKeyDown: handleKeyPress,
+                'aria-label': 'Database',
+                placeholder: 'neo4j',
+              }}
               value={database}
               isDisabled={false}
               label='Database'
-              isFluid
+              isFluid={true}
+              isRequired={true}
               onChange={(e) => setDatabase(e.target.value)}
               className='w-full'
-              htmlAttributes={{
-                id: 'database',
-                'aria-label': 'Database',
-                placeholder: 'neo4j',
-                required: true,
-                onKeyDown: handleKeyPress,
-              }}
             />
             <div className='n-flex n-flex-row n-flex-wrap mb-2'>
               <div className='w-[48.5%] mr-1.5 inline-block'>
                 <TextInput
                   ref={userNameRef}
+                  htmlAttributes={{
+                    id: 'username',
+                    onKeyDown: handleKeyPress,
+                    'aria-label': 'Username',
+                    placeholder: 'neo4j',
+                  }}
                   value={username}
                   isDisabled={false}
                   label='Username'
-                  isFluid
+                  isFluid={true}
                   onChange={(e) => setUsername(e.target.value)}
-                  htmlAttributes={{
-                    id: 'username',
-                    'aria-label': 'Username',
-                    placeholder: 'neo4j',
-                    onKeyDown: handleKeyPress,
-                  }}
                 />
               </div>
               <div className='w-[48.5%] ml-[1.5%] inline-block'>
                 <TextInput
                   ref={passwordRef}
+                  htmlAttributes={{
+                    id: 'password',
+                    onKeyDown: handleKeyPress,
+                    type: 'password',
+                    'aria-label': 'Password',
+                    placeholder: 'password',
+                    autoComplete: 'current-password',
+                  }}
                   value={password}
                   isDisabled={false}
                   label='Password'
-                  isFluid
+                  isFluid={true}
                   onChange={(e) => setPassword(e.target.value)}
-                  htmlAttributes={{
-                    type: 'password',
-                    id: 'password',
-                    'aria-label': 'Password',
-                    placeholder: 'password',
-                    onKeyDown: handleKeyPress,
-                  }}
                 />
               </div>
             </div>

@@ -1,12 +1,11 @@
 import { StatusIndicator, Typography } from '@neo4j-ndl/react';
 import { useFileContext } from '../../context/UsersFiles';
-import CustomMenu from '../UI/Menu';
+import CustomMenu from '../UI/CustomMenu';
 import { chatModeLables, chatModes as AvailableModes, chatModeReadableLables } from '../../utils/Constants';
 import { capitalize } from '@mui/material';
 import { capitalizeWithPlus } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 import { useMemo } from 'react';
-import { Menuitems } from '../../types';
 
 export default function ChatModeToggle({
   menuAnchor,
@@ -80,12 +79,6 @@ export default function ChatModeToggle({
     });
   }, [chatModes, memoizedChatModes]);
   return (
-    <CustomMenu
-      isRoot={isRoot}
-      closeHandler={closeHandler}
-      open={open}
-      anchorOrigin={menuAnchor}
-      items={menuItems as Menuitems[]}
-    />
+    <CustomMenu isRoot={isRoot} closeHandler={closeHandler} open={open} anchorOrigin={menuAnchor} items={menuItems} />
   );
 }

@@ -8,13 +8,14 @@ import {
   Banner,
   useMediaQuery,
   Button,
+  TextArea,
   IconButton,
 } from '@neo4j-ndl/react';
 import { DocumentDuplicateIconOutline, ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
 import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
 import { ExtendedNode, UserCredentials, chatInfoMessage } from '../../types';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import GraphViewButton from '../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
 import { useCredentials } from '../../context/UserCredentials';
@@ -23,13 +24,21 @@ import ChunkInfo from './ChunkInfo';
 import EntitiesInfo from './EntitiesInfo';
 import SourcesInfo from './SourcesInfo';
 import CommunitiesInfo from './CommunitiesInfo';
-import { chatModeLables, chatModeReadableLables, supportedLLmsForRagas } from '../../utils/Constants';
+import {
+  chatModeLables,
+  chatModeReadableLables,
+  mergeNestedObjects,
+  supportedLLmsForRagas,
+} from '../../utils/Constants';
 import { Relationship } from '@neo4j-nvl/base';
 import { getChatMetrics } from '../../services/GetRagasMetric';
 import MetricsTab from './MetricsTab';
 import { Stack } from '@mui/material';
 import { capitalizeWithUnderscore, getNodes } from '../../utils/Utils';
 import MultiModeMetrics from './MultiModeMetrics';
+import getAdditionalMetrics from '../../services/AdditionalMetrics';
+import { withVisibility } from '../../HOC/withVisibility';
+import MetricsCheckbox from './MetricsCheckbox';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
   sources,
@@ -84,6 +93,22 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const [showMetricsTable, setShowMetricsTable] = useState<boolean>(Boolean(metricDetails));
   const [showMultiModeMetrics, setShowMultiModeMetrics] = useState<boolean>(Boolean(multiModelMetrics.length));
   const [multiModeError, setMultiModeError] = useState<string>('');
+  const [enableReference, toggleReferenceVisibility] = useReducer((state: boolean) => !state, false);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const [isAdditionalMetricsEnabled, setIsAdditionalMetricsEnabled] = useState<boolean | null>(
+    multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length > 4
+      ? true
+      : multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length <= 4
+      ? false
+      : null
+  );
+  const [isAdditionalMetricsWithSingleMode, setIsAdditionalMetricsWithSingleMode] = useState<boolean | null>(
+    metricDetails != undefined && Object.keys(metricDetails).length > 3
+      ? true
+      : metricDetails != undefined && Object.keys(metricDetails).length <= 3
+      ? false
+      : null
+  );
 
   const actions: React.ComponentProps<typeof IconButton<'button'>>[] = useMemo(
     () => [
@@ -95,7 +120,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             {copiedText ? (
               <ClipboardDocumentCheckIconOutline className='n-size-token-7' />
             ) : (
-              <DocumentDuplicateIconOutline className='text-palette-neutral-text-icon' />
+              <DocumentDuplicateIconOutline className='text-palette-neutral-text-icon n-size-token-7' />
             )}
           </>
         ),
@@ -181,70 +206,120 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     setActiveTab(tabId);
   };
   const loadMetrics = async () => {
-    if (activeChatmodes) {
-      if (Object.keys(activeChatmodes).length <= 1) {
-        setShowMetricsTable(true);
-        const [defaultMode] = Object.keys(activeChatmodes);
-        try {
-          toggleMetricsLoading();
-          const response = await getChatMetrics(metricquestion, [metriccontexts], [metricanswer], metricmodel, [
-            defaultMode,
-          ]);
-          toggleMetricsLoading();
-          if (response.data.status === 'Success') {
-            const data = response;
-            saveMetrics(data.data.data[defaultMode]);
-          } else {
-            throw new Error(response.data.error);
-          }
-        } catch (error) {
-          if (error instanceof Error) {
-            toggleMetricsLoading();
-            console.log('Error in getting chat metrics', error);
-            saveMetrics({ faithfulness: 0, answer_relevancy: 0, error: error.message });
+    // @ts-ignore
+    const referenceText = textAreaRef?.current?.value ?? '';
+    const metricsPromise = [];
+    if (activeChatmodes != undefined && Object.keys(activeChatmodes).length <= 1) {
+      setShowMetricsTable(true);
+      const [defaultMode] = Object.keys(activeChatmodes);
+      try {
+        toggleMetricsLoading();
+        metricsPromise.push(
+          getChatMetrics(metricquestion, [metriccontexts], [metricanswer], metricmodel, [defaultMode])
+        );
+        if (referenceText.trim() != '') {
+          metricsPromise.push(
+            getAdditionalMetrics(metricquestion, [metriccontexts], [metricanswer], referenceText, metricmodel, [
+              defaultMode,
+            ])
+          );
+          toggleReferenceVisibility();
+        }
+
+        const metricsResponse = await Promise.allSettled(metricsPromise);
+        const successresponse = [];
+        for (let index = 0; index < metricsResponse.length; index++) {
+          const metricPromise = metricsResponse[index];
+          if (metricPromise.status === 'fulfilled' && metricPromise.value.data.status === 'Success') {
+            successresponse.push(metricPromise.value.data.data);
           }
         }
-      } else {
-        setShowMultiModeMetrics(true);
+        setIsAdditionalMetricsWithSingleMode(successresponse.length === 2);
         toggleMetricsLoading();
-        const contextarray = Object.values(activeChatmodes).map((r) => {
-          return r.metric_contexts;
-        });
-        const answerarray = Object.values(activeChatmodes).map((r) => {
-          return r.metric_answer;
-        });
-        const modesarray = Object.keys(activeChatmodes).map((mode) => {
-          return mode;
-        });
-        try {
-          const responses = await getChatMetrics(
-            metricquestion,
-            contextarray as string[],
-            answerarray as string[],
-            metricmodel,
-            modesarray
-          );
-          toggleMetricsLoading();
-          if (responses.data.status === 'Success') {
-            const modewisedata = responses.data.data;
-            const metricsdata = Object.entries(modewisedata).map(([mode, scores]) => {
-              return { mode, answer_relevancy: scores.answer_relevancy, faithfulness: scores.faithfulness };
-            });
-            saveMultimodemetrics(metricsdata);
+        const mergedState = successresponse.reduce((acc, cur) => {
+          if (acc[defaultMode]) {
+            acc[defaultMode] = { ...acc[defaultMode], ...cur[defaultMode] };
           } else {
-            throw new Error(responses.data.error);
+            acc[defaultMode] = cur[defaultMode];
           }
-        } catch (error) {
+          return acc;
+        }, {});
+        saveMetrics(mergedState[defaultMode]);
+      } catch (error) {
+        if (error instanceof Error) {
+          setShowMetricsTable(false);
           toggleMetricsLoading();
           console.log('Error in getting chat metrics', error);
-          if (error instanceof Error) {
-            setMultiModeError(error.message);
+          saveMetrics({ faithfulness: 0, answer_relevancy: 0, error: error.message });
+        }
+      }
+    } else if (activeChatmodes != undefined) {
+      setShowMultiModeMetrics(true);
+      toggleMetricsLoading();
+      const values = Object.values(activeChatmodes);
+      const keys = Object.keys(activeChatmodes);
+      const contextarray = values.map((r) => {
+        return r.metric_contexts;
+      });
+      const answerarray = values.map((r) => {
+        return r.metric_answer;
+      });
+      const modesarray = keys.map((mode) => {
+        return mode;
+      });
+      try {
+        metricsPromise.push(
+          getChatMetrics(metricquestion, contextarray as string[], answerarray as string[], metricmodel, modesarray)
+        );
+        if (referenceText.trim() != '') {
+          metricsPromise.push(
+            getAdditionalMetrics(
+              metricquestion,
+              contextarray as string[],
+              answerarray as string[],
+              referenceText,
+              metricmodel,
+              modesarray
+            )
+          );
+          toggleReferenceVisibility();
+        }
+        const metricsResponse = await Promise.allSettled(metricsPromise);
+        toggleMetricsLoading();
+        const successResponse = [];
+        for (let index = 0; index < metricsResponse.length; index++) {
+          const metricPromise = metricsResponse[index];
+          if (metricPromise.status === 'fulfilled' && metricPromise.value.data.status === 'Success') {
+            successResponse.push(metricPromise.value.data.data);
           }
+        }
+        setIsAdditionalMetricsEnabled(successResponse.length === 2);
+        const metricsdata = Object.entries(mergeNestedObjects(successResponse)).map(([mode, scores]) => {
+          return { mode, ...scores };
+        });
+        saveMultimodemetrics(metricsdata);
+      } catch (error) {
+        setShowMultiModeMetrics(false);
+        toggleMetricsLoading();
+        console.log('Error in getting chat metrics', error);
+        if (error instanceof Error) {
+          setMultiModeError(error.message);
         }
       }
     }
   };
-
+  const MetricsCheckBoxWithCheck = withVisibility(MetricsCheckbox);
+  const TextareaWithCheck = withVisibility(() => (
+    <TextArea ref={textAreaRef} isFluid={true} size='large' isOptional={true} label='Reference Answer'></TextArea>
+  ));
+  const isMultiModes = useMemo(
+    () => activeChatmodes != null && Object.keys(activeChatmodes).length > 1,
+    [activeChatmodes]
+  );
+  const isSingleMode = useMemo(
+    () => activeChatmodes != null && Object.keys(activeChatmodes).length <= 1,
+    [activeChatmodes]
+  );
   return (
     <div className='n-bg-palette-neutral-bg-weak p-4'>
       <div className='flex flex-row pb-6 items-center mb-2'>
@@ -336,37 +411,61 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                   about <span className='font-bold'>20 seconds</span> . You'll see detailed scores shortly.
                 </Typography>
               </Box>
-              <Stack>
-                <Typography variant='body-large'>
-                  <span className='font-bold'>Faithfulness</span>: Determines How accurately the answer reflects the
-                  provided information
-                </Typography>
-                <Typography variant='body-large'>
-                  <span className='font-bold'>Answer Relevancy</span>: Determines How well the answer addresses the
-                  user's question.
-                </Typography>
-              </Stack>
             </Stack>
-            {showMultiModeMetrics && activeChatmodes != null && Object.keys(activeChatmodes).length > 1 && (
+            {showMultiModeMetrics && isMultiModes && (
               <MultiModeMetrics
                 error={multiModeError}
                 metricsLoading={metricsLoading}
                 data={multiModelMetrics}
+                isWithAdditionalMetrics={isAdditionalMetricsEnabled}
               ></MultiModeMetrics>
             )}
-            {showMetricsTable && activeChatmodes != null && Object.keys(activeChatmodes).length <= 1 && (
+            {showMetricsTable && isSingleMode && (
               <MetricsTab metricsLoading={metricsLoading} error={metricError} metricDetails={metricDetails} />
             )}
-            {!metricDetails && activeChatmodes != undefined && Object.keys(activeChatmodes).length <= 1 && (
-              <Button
-                isDisabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
-                className='w-max self-center mt-4'
-                onClick={loadMetrics}
-              >
-                View Detailed Metrics
-              </Button>
-            )}
-            {!multiModelMetrics.length && activeChatmodes != undefined && Object.keys(activeChatmodes).length > 1 && (
+            <MetricsCheckBoxWithCheck
+              enableReference={enableReference}
+              toggleReferenceVisibility={toggleReferenceVisibility}
+              isVisible={
+                isSingleMode &&
+                !metricsLoading &&
+                (isAdditionalMetricsWithSingleMode === false || isAdditionalMetricsWithSingleMode === null)
+              }
+            />
+            <MetricsCheckBoxWithCheck
+              enableReference={enableReference}
+              toggleReferenceVisibility={toggleReferenceVisibility}
+              isVisible={
+                isMultiModes &&
+                !metricsLoading &&
+                (isAdditionalMetricsEnabled === false || isAdditionalMetricsEnabled === null)
+              }
+            />
+            <TextareaWithCheck
+              isVisible={
+                enableReference &&
+                isSingleMode &&
+                (isAdditionalMetricsWithSingleMode === false || isAdditionalMetricsWithSingleMode === null)
+              }
+            />
+            <TextareaWithCheck
+              isVisible={
+                enableReference &&
+                isMultiModes &&
+                (isAdditionalMetricsEnabled === false || isAdditionalMetricsEnabled === null)
+              }
+            />
+            {isSingleMode &&
+              (isAdditionalMetricsWithSingleMode === false || isAdditionalMetricsWithSingleMode === null) && (
+                <Button
+                  isDisabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
+                  className='w-max self-center mt-4'
+                  onClick={loadMetrics}
+                >
+                  View Detailed Metrics
+                </Button>
+              )}
+            {isMultiModes && (isAdditionalMetricsEnabled === false || isAdditionalMetricsEnabled === null) && (
               <Button
                 isDisabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
                 className='w-max self-center mt-4'

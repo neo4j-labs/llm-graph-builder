@@ -2,6 +2,7 @@ import { NvlOptions } from '@neo4j-nvl/base';
 import { GraphType, OptionType } from '../types';
 import { getDateTime, getDescriptionForChatMode } from './Utils';
 import chatbotmessages from '../assets/ChatbotMessages.json';
+import schemaExamples from '../assets/schemas.json';
 
 export const APP_SOURCES =
   process.env.VITE_REACT_APP_SOURCES !== ''
@@ -12,12 +13,12 @@ export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
-        'diffbot',
         'openai_gpt_3.5',
         'openai_gpt_4o',
         'openai_gpt_4o_mini',
         'gemini_1.5_pro',
         'gemini_1.5_flash',
+        'diffbot',
         'azure_ai_gpt_35',
         'azure_ai_gpt_4o',
         'ollama_llama3',
@@ -27,11 +28,6 @@ export const llms =
         'bedrock_claude_3_5_sonnet',
       ];
 
-export const defaultLLM = llms?.includes('openai_gpt_4o')
-  ? 'openai_gpt_4o'
-  : llms?.includes('gemini_1.5_pro')
-  ? 'gemini_1.5_pro'
-  : 'diffbot';
 export const supportedLLmsForRagas = [
   'openai_gpt_3.5',
   'openai_gpt_4',
@@ -39,6 +35,18 @@ export const supportedLLmsForRagas = [
   'openai_gpt_4o_mini',
   'gemini_1.5_pro',
   'gemini_1.5_flash',
+  'azure_ai_gpt_35',
+  'azure_ai_gpt_4o',
+  'groq_llama3_70b',
+  'anthropic_claude_3_5_sonnet',
+  'fireworks_llama_v3_70b',
+  'bedrock_claude_3_5_sonnet',
+];
+export const supportedLLmsForGroundTruthMetrics = [
+  'openai_gpt_3.5',
+  'openai_gpt_4',
+  'openai_gpt_4o',
+  'openai_gpt_4o_mini',
   'azure_ai_gpt_35',
   'azure_ai_gpt_4o',
   'groq_llama3_70b',
@@ -142,8 +150,10 @@ export const tooltips = {
   continue: 'Continue',
   clearGraphSettings: 'Clear configured Graph Schema',
   applySettings: 'Apply Graph Schema',
+  openChatPopout: 'Chat',
+  downloadChat: 'Download Conversation',
 };
-
+export const PRODMODLES = ['openai_gpt_4o', 'openai_gpt_4o_mini', 'diffbot', 'gemini_1.5_flash'];
 export const buttonCaptions = {
   exploreGraphWithBloom: 'Explore Graph',
   showPreviewGraph: 'Preview Graph',
@@ -292,6 +302,7 @@ export const graphLabels = {
   community: 'Communities',
   noNodesRels: 'No Nodes and No relationships',
   neighborView: 'neighborView',
+  chunksInfo: 'We are visualizing 50 chunks at a time',
 };
 
 export const RESULT_STEP_SIZE = 25;
@@ -316,4 +327,44 @@ export const appLabels = {
 export const LLMDropdownLabel = {
   disabledModels: 'Disabled models are available in the development version. Access more models in our ',
   devEnv: 'development environment',
+};
+export const getDefaultSchemaExamples = () =>
+  schemaExamples.reduce((accu: OptionType[], example) => {
+    const examplevalues: OptionType = {
+      label: example.schema,
+      value: JSON.stringify({
+        nodelabels: example.labels,
+        relationshipTypes: example.relationshipTypes,
+      }),
+    };
+    accu.push(examplevalues);
+    return accu;
+  }, []);
+export function mergeNestedObjects(objects: Record<string, Record<string, number>>[]) {
+  return objects.reduce((merged, obj) => {
+    for (const key in obj) {
+      if (!merged[key]) {
+        merged[key] = {};
+      }
+      for (const innerKey in obj[key]) {
+        merged[key][innerKey] = obj[key][innerKey];
+      }
+    }
+    return merged;
+  }, {});
+}
+export function getStoredSchema() {
+  const storedSchemas = localStorage.getItem('selectedSchemas');
+  if (storedSchemas) {
+    const parsedSchemas = JSON.parse(storedSchemas);
+    return parsedSchemas.selectedOptions;
+  }
+  return [];
+}
+export const metricsinfo: Record<string, string> = {
+  faithfulness: 'Determines How accurately the answer reflects the provided information',
+  answer_relevancy: "Determines How well the answer addresses the user's question.",
+  rouge_score: 'Determines How much the generated answer matches the reference answer, word-for-word.',
+  semantic_score: 'Determines How well the generated answer understands the meaning of the reference answer.',
+  context_entity_recall: 'Determines the recall of entities present in both generated answer and retrieved contexts',
 };
