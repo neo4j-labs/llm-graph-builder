@@ -36,10 +36,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from src.ragas_eval import *
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 import gzip
-<<<<<<< HEAD
 from langchain_neo4j import Neo4jGraph
-=======
->>>>>>> 6a46472dcebfb9282c1c9d7332bcfacb30811661
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
@@ -85,16 +82,9 @@ class CustomGZipMiddleware:
         await gzip_middleware(scope, receive, send)
 app = FastAPI()
 # SecWeb(app=app, Option={'referrer': False, 'xframe': False})
-<<<<<<< HEAD
 # app.add_middleware(ContentSecurityPolicy, Option={'default-src': ["'self'"], 'base-uri': ["'self'"], 'block-all-mixed-content': []}, script_nonce=False, style_nonce=False, report_only=False)
 app.add_middleware(XContentTypeOptions)
 app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
-=======
-app.add_middleware(ContentSecurityPolicy, Option={'default-src': ["'self'"], 'base-uri': ["'self'"], 'block-all-mixed-content': []}, script_nonce=False, style_nonce=False, report_only=False)
-app.add_middleware(XContentTypeOptions)
-app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
-#app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
->>>>>>> 6a46472dcebfb9282c1c9d7332bcfacb30811661
 app.add_middleware(CustomGZipMiddleware, minimum_size=1000, compresslevel=5,paths=["/sources_list","/url/scan","/extract","/chat_bot","/chunk_entities","/get_neighbours","/graph_query","/schema","/populate_graph_schema","/get_unconnected_nodes_list","/get_duplicate_nodes","/fetch_chunktext"])
 app.add_middleware(
     CORSMiddleware,
@@ -839,15 +829,11 @@ async def retry_processing(uri=Form(), userName=Form(), password=Form(), databas
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
-<<<<<<< HEAD
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'retry_processing', 'db_url':uri, 'userName':userName, 'database':database, 'file_name':file_name,'retry_condition':retry_condition,
                             'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
-=======
-        #set_status_retry(graph,file_name,retry_condition)
->>>>>>> 6a46472dcebfb9282c1c9d7332bcfacb30811661
         return create_api_response('Success',message=f"Status set to Ready to Reprocess for filename : {file_name}")
     except Exception as e:
         job_status = "Failed"
@@ -963,11 +949,8 @@ async def fetch_chunktext(
        json_obj = {
            'api_name': 'fetch_chunktext',
            'db_url': uri,
-<<<<<<< HEAD
            'userName': userName,
            'database': database,
-=======
->>>>>>> 6a46472dcebfb9282c1c9d7332bcfacb30811661
            'document_name': document_name,
            'page_no': page_no,
            'logging_time': formatted_time(datetime.now(timezone.utc)),
@@ -985,7 +968,6 @@ async def fetch_chunktext(
        gc.collect()
 
 
-<<<<<<< HEAD
 @app.post("/backend_connection_configuation")
 async def backend_connection_configuation():
     try:
@@ -1015,7 +997,5 @@ async def backend_connection_configuation():
     finally:
         gc.collect()    
 
-=======
->>>>>>> 6a46472dcebfb9282c1c9d7332bcfacb30811661
 if __name__ == "__main__":
     uvicorn.run(app)
