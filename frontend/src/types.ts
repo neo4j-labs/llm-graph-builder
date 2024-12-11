@@ -773,6 +773,11 @@ export interface GraphContextType {
   setLoadingGraph: Dispatch<SetStateAction<boolean>>;
 }
 
+export interface GraphContextType {
+  loadingGraph: boolean;
+  setLoadingGraph: Dispatch<SetStateAction<boolean>>;
+}
+
 export interface DatabaseStatusProps {
   isConnected: boolean;
   isGdsActive: boolean;
