@@ -352,26 +352,23 @@ export default function MultiModeMetrics({
     ],
     []
   );
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    enableGlobalFilter: false,
-    autoResetPageIndex: false,
-    enableColumnResizing: true,
-    enableRowSelection: true,
-    enableMultiRowSelection: true,
-    enableSorting: false,
-  });
-  useEffect(() => {
-    if (isWithAdditionalMetrics === false) {
-      table.setColumnVisibility({ 'Semantic Score': false, 'Rouge Score': false });
-    } else {
-      table.resetColumnVisibility(true);
-    }
-  }, [isWithAdditionalMetrics, table]);
+  const config = useMemo(
+    () => ({
+      data,
+      columns: !isWithAdditionalMetrics ? columnswithoutSemanticAndRougeScores : columns,
+      getCoreRowModel: getCoreRowModel(),
+      getFilteredRowModel: getFilteredRowModel(),
+      getPaginationRowModel: getPaginationRowModel(),
+      enableGlobalFilter: false,
+      autoResetPageIndex: false,
+      enableColumnResizing: true,
+      enableRowSelection: true,
+      enableMultiRowSelection: true,
+      enableSorting: false,
+    }),
+    [isWithAdditionalMetrics]
+  );
+  const table = useReactTable(config);
 
   return (
     <Box>

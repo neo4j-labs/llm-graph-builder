@@ -450,7 +450,7 @@ export default function ConnectionModal({
                     type: 'password',
                     'aria-label': 'Password',
                     placeholder: 'password',
-                    autoComplete:"current-password"
+                    autoComplete: 'current-password',
                   }}
                   value={password}
                   isDisabled={false}
