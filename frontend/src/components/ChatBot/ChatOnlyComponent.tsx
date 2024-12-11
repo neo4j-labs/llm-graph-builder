@@ -12,7 +12,8 @@ import { getIsLoading } from '../../utils/Utils';
 import ThemeWrapper from '../../context/ThemeWrapper';
 
 const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
-  const { clearHistoryData, messages, setMessages, setClearHistoryData } = useMessageContext();
+  const { clearHistoryData, messages, setMessages, setClearHistoryData, setIsDeleteChatLoading, isDeleteChatLoading } =
+    useMessageContext();
   const { setUserCredentials, setConnectionStatus, connectionStatus, setShowDisconnectButton } = useCredentials();
   const [showBackButton, setShowBackButton] = useReducer((state) => !state, false);
   const [openConnection, setOpenConnection] = useState<connectionState>({
@@ -71,13 +72,16 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
   const deleteOnClick = async () => {
     try {
       setClearHistoryData(true);
+      setIsDeleteChatLoading(true);
       const credentials = JSON.parse(localStorage.getItem('neo4j.connection') || '{}') as UserCredentials;
       const sessionId = sessionStorage.getItem('session_id') || '';
       const response = await clearChatAPI(credentials, sessionId);
+      setIsDeleteChatLoading(false);
       if (response.data.status !== 'Success') {
         setClearHistoryData(false);
       }
     } catch (error) {
+      setIsDeleteChatLoading(false);
       console.error('Error clearing chat history:', error);
       setClearHistoryData(false);
     }
@@ -130,6 +134,7 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
             clear={clearHistoryData}
             isLoading={getIsLoading(messages)}
             connectionStatus={connectionStatus}
+            isDeleteChatLoading={isDeleteChatLoading}
           />
         </div>
       </div>

@@ -317,7 +317,6 @@ export default function MultiModeMetrics({
   );
   const table = useReactTable(config);
 
-
   return (
     <Box>
       {error?.trim() != '' ? (

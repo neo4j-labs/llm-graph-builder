@@ -6,7 +6,7 @@ import { useLocation } from 'react-router';
 import { useEffect } from 'react';
 
 const DrawerChatbot: React.FC<DrawerChatbotProps> = ({ isExpanded, clearHistoryData, messages, connectionStatus }) => {
-  const { setMessages } = useMessageContext();
+  const { setMessages, isDeleteChatLoading } = useMessageContext();
   const location = useLocation();
 
   useEffect(() => {
@@ -29,6 +29,7 @@ const DrawerChatbot: React.FC<DrawerChatbotProps> = ({ isExpanded, clearHistoryD
             clear={clearHistoryData}
             isLoading={getIsLoading(messages)}
             connectionStatus={connectionStatus}
+            isDeleteChatLoading={isDeleteChatLoading}
           />
         </Drawer.Body>
       </Drawer>
