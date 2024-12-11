@@ -585,7 +585,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           }}
           onClose={() => setShowInfoModal(false)}
           isOpen={showInfoModal}
-          size={activeChat?.currentMode === chatModeLables['entity search+vector'] ? 'large' : 'medium'}
+          size={'large'}
         >
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <IconButton
@@ -593,8 +593,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               htmlAttributes={{
                 title: 'download chat info',
               }}
-              ariaLabel='downloadchat'
               isClean
+              ariaLabel='download chat info'
               isDisabled={metricsLoading || infoLoading}
               onClick={() => {
                 downloadClickHandler(

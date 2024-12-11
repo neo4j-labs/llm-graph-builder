@@ -1,5 +1,5 @@
 import { Dropzone, Flex, Typography } from '@neo4j-ndl/react';
-import { useState, useEffect, FunctionComponent } from 'react';
+import { useState, FunctionComponent, useEffect } from 'react';
 import Loader from '../../../utils/Loader';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../../../context/UserCredentials';
@@ -40,7 +40,6 @@ const DropZone: FunctionComponent = () => {
         entityEntityRelCount: 0,
         communityNodeCount: 0,
         communityRelCount: 0,
-        createdAt: new Date(),
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
@@ -187,7 +186,6 @@ const DropZone: FunctionComponent = () => {
                 ...curfile,
                 status: 'New',
                 uploadProgress: 100,
-                createdAt: new Date(),
               };
             }
             return curfile;

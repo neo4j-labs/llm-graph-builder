@@ -33,6 +33,12 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
     processingProgress: undefined,
     retryOption: '',
     retryOptionStatus: false,
+    chunkNodeCount: 0,
+    chunkRelCount: 0,
+    entityNodeCount: 0,
+    entityEntityRelCount: 0,
+    communityNodeCount: 0,
+    communityRelCount: 0,
   };
 
   const reset = () => {
@@ -182,53 +188,54 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
       <div className='w-full inline-block'>
         <form>
           <TextInput
+            htmlAttributes={{
+              id: 'project id',
+              autoFocus: true,
+              onKeyDown: handleKeyPress,
+              'aria-label': 'Project ID',
+              placeholder: '',
+            }}
             value={projectId}
             isDisabled={false}
             label='Project ID'
-            isFluid
+            isFluid={true}
+            isRequired={true}
             onChange={(e) => {
               setprojectId(e.target.value);
             }}
-            htmlAttributes={{
-              id: 'project id',
-              'aria-label': 'Project ID',
-              placeholder: '',
-              autoFocus: true,
-              required: true,
-              onKeyDown: handleKeyPress,
-            }}
           ></TextInput>
           <TextInput
+            htmlAttributes={{
+              id: 'bucketname',
+              autoFocus: true,
+              onKeyDown: handleKeyPress,
+              'aria-label': 'Bucket Name',
+              placeholder: '',
+            }}
             value={bucketName}
             isDisabled={false}
             label='Bucket Name'
-            isFluid
+            isFluid={true}
+            isRequired={true}
             onChange={(e) => {
               setbucketName(e.target.value);
             }}
-            htmlAttributes={{
-              id: 'bucketname',
-              'aria-label': 'Bucket Name',
-              placeholder: '',
-              autoFocus: true,
-              required: true,
-              onKeyDown: handleKeyPress,
-            }}
           />
           <TextInput
+            htmlAttributes={{
+              id: 'foldername',
+              autoFocus: true,
+              onKeyDown: handleKeyPress,
+              'aria-label': 'Folder Name',
+              placeholder: '',
+            }}
             value={folderName}
             isDisabled={false}
             label='Folder Name'
             helpText='Optional'
-            isFluid
+            isFluid={true}
             onChange={(e) => {
               setFolderName(e.target.value);
-            }}
-            htmlAttributes={{
-              id: 'foldername',
-              'aria-label': 'Folder Name',
-              placeholder: '',
-              onKeyDown: handleKeyPress,
             }}
           />
         </form>

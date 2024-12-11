@@ -323,32 +323,32 @@ export default function MultiModeMetrics({
           {error}
         </Banner>
       ) : (
-        <DataGrid
-          ref={tableRef}
-          isResizable={true}
-          tableInstance={table}
-          styling={{
-            borderStyle: 'all-sides',
-            hasZebraStriping: true,
-            headerStyle: 'clean',
-          }}
-          isLoading={metricsLoading}
-          components={{
-            Body: (props) => <DataGridComponents.Body {...props} />,
-            PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
-              return (
-                <DataGridComponents.PaginationNumericButton
-                  {...restProps}
-                  isSelected={isSelected}
+        <div className={isWithAdditionalMetrics === false ? 'flex justify-center items-center' : ''}>
+          <DataGrid
+            ref={tableRef}
+            isResizable={true}
+            tableInstance={table}
+            styling={{
+              borderStyle: 'all-sides',
+              hasZebraStriping: true,
+              headerStyle: 'clean',
+            }}
+            isAutoResizingColumns={true}
+            isLoading={metricsLoading}
+            // rootProps={{ className: isWithAdditionalMetrics === false ? '!w-[465px]' : 'auto' }}
+            components={{
+              Body: () => (
+                <DataGridComponents.Body
                   innerProps={{
                     className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
                   }}
                 />
-              );
-            },
-          }}
-          isKeyboardNavigable={false}
-        />
+              ),
+              Navigation: null,
+            }}
+            isKeyboardNavigable={false}
+          />
+        </div>
       )}
     </Box>
   );

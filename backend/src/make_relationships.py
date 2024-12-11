@@ -54,6 +54,35 @@ def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name):
                 "chunkId": row['chunk_id'],
                 "embeddings": embeddings_arr
             })
+            # graph.query("""MATCH (d:Document {fileName : $fileName})
+            #                MERGE (c:Chunk {id:$chunkId}) SET c.embedding = $embeddings 
+            #                MERGE (c)-[:PART_OF]->(d)
+            #             """,
+            #             {
+            #                 "fileName" : file_name,
+            #                 "chunkId": row['chunk_id'],
+            #                 "embeddings" : embeddings_arr
+            #             }
+            #             )
+            logging.info('create vector index on chunk embedding')
+            # result = graph.query("SHOW INDEXES YIELD * WHERE labelsOrTypes = ['Chunk'] and name = 'vector'")
+            vector_index = graph.query("SHOW INDEXES YIELD * WHERE labelsOrTypes = ['Chunk'] and type = 'VECTOR' AND name = 'vector' return options")
+            # if result:
+            #     logging.info(f"vector index dropped for 'Chunk'")
+            #     graph.query("DROP INDEX vector IF EXISTS;")
+
+            if len(vector_index) == 0:
+                logging.info(f'vector index is not exist, will create in next query')
+                graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
+                                OPTIONS {indexConfig: {
+                                `vector.dimensions`: $dimensions,
+                                `vector.similarity_function`: 'cosine'
+                                }}
+                            """,
+                            {
+                                "dimensions" : dimension
+                            }
+                            )
     
     query_to_create_embedding = """
         UNWIND $data AS row

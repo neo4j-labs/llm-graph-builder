@@ -4,21 +4,20 @@ import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { extractAPI } from '../utils/FileAPI';
-import {
-  BannerAlertProps,
-  ContentProps,
-  CustomFile,
-  OptionType,
-  UserCredentials,
-  chunkdata,
-  FileTableHandle,
-} from '../types';
+import { BannerAlertProps, ChildRef, ContentProps, CustomFile, OptionType, UserCredentials, chunkdata } from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
-import { useSearchParams } from 'react-router-dom';
-import { batchSize, buttonCaptions, defaultLLM, largeFileSize, llms, RETRY_OPIONS, tooltips } from '../utils/Constants';
+import {
+  batchSize,
+  buttonCaptions,
+  chatModeLables,
+  largeFileSize,
+  llms,
+  RETRY_OPIONS,
+  tooltips,
+} from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import DropdownComponent from './Dropdown';
 import GraphViewModal from './Graph/GraphViewModal';
@@ -47,6 +46,9 @@ const Content: React.FC<ContentProps> = ({
   setIsSchema,
   showEnhancementDialog,
   toggleEnhancementDialog,
+  setOpenConnection,
+  showDisconnectButton,
+  connectionStatus,
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
@@ -54,8 +56,7 @@ const Content: React.FC<ContentProps> = ({
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [documentName, setDocumentName] = useState<string>('');
-  const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser, isGCSActive } =
-    useCredentials();
+  const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [showExpirationModal, setshowExpirationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
@@ -88,15 +89,12 @@ const Content: React.FC<ContentProps> = ({
     setProcessedCount,
     setchatModes,
     model,
-    additionalInstructions,
-    setAdditionalInstructions,
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>(
     'tableView'
   );
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
-    const hasSelections = useHasSelections(selectedNodes, selectedRels);
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
@@ -107,51 +105,16 @@ const Content: React.FC<ContentProps> = ({
       showErrorToast(`${fileName} Failed to process`);
     }
   );
-  const childRef = useRef<FileTableHandle>(null);
+  const childRef = useRef<ChildRef>(null);
 
   const incrementPage = async () => {
     setCurrentPage((prev) => prev + 1);
+    await getChunks(documentName, currentPage + 1);
   };
-  const decrementPage = () => {
+  const decrementPage = async () => {
     setCurrentPage((prev) => prev - 1);
+    await getChunks(documentName, currentPage - 1);
   };
-  useEffect(() => {
-    if (!init && !searchParams.has('connectURL')) {
-      let session = localStorage.getItem('neo4j.connection');
-      if (session) {
-        let neo4jConnection = JSON.parse(session);
-        setUserCredentials({
-          uri: neo4jConnection.uri,
-          userName: neo4jConnection.user,
-          password: neo4jConnection.password,
-          database: neo4jConnection.database,
-          port: neo4jConnection.uri.split(':')[2],
-        });
-      } else {
-        setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-      }
-      setInit(true);
-    } else {
-      setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-    }
-  }, []);
-  useEffect(() => {
-    if (currentPage >= 1) {
-      (async () => {
-        await getChunks(documentName, currentPage);
-      })();
-    }
-  }, [currentPage, documentName]);
-  useEffect(() => {
-    setFilesData((prevfiles) => {
-      return prevfiles.map((curfile) => {
-        return {
-          ...curfile,
-          model: curfile.status === 'New' || curfile.status === 'Ready to Reprocess' ? model : curfile.model,
-        };
-      });
-    });
-  }, [model]);
 
   useEffect(() => {
     if (afterFirstRender) {
@@ -162,21 +125,11 @@ const Content: React.FC<ContentProps> = ({
     }
     if (processedCount === 1 && queue.isEmpty()) {
       (async () => {
-        showNormalToast(
-          <PostProcessingToast
-            isGdsActive={isGdsActive}
-            postProcessingTasks={postProcessingTasks}
-            isSchema={hasSelections}
-          />
-        );
+        showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
         try {
           const payload = isGdsActive
-            ? hasSelections
-              ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation')
-              : postProcessingTasks
-            : hasSelections
-              ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities')
-              : postProcessingTasks.filter((task) => task !== 'enable_communities');
+            ? postProcessingTasks
+            : postProcessingTasks.filter((task) => task !== 'enable_communities');
           const response = await postProcessing(userCredentials as UserCredentials, payload);
           if (response.data.status === 'Success') {
             const communityfiles = response.data?.data;
@@ -222,6 +175,13 @@ const Content: React.FC<ContentProps> = ({
     afterFirstRender = true;
   }, [queue.items.length, userCredentials]);
 
+  useEffect(() => {
+    const storedSchema = localStorage.getItem('isSchema');
+    if (storedSchema !== null) {
+      setIsSchema(JSON.parse(storedSchema));
+    }
+  }, [isSchema]);
+
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
       setModel(selectedOption?.value);
@@ -247,6 +207,7 @@ const Content: React.FC<ContentProps> = ({
     }
     toggleChunksLoading();
   };
+  
   const extractData = async (uid: string, isselectedRows = false, filesTobeProcess: CustomFile[]) => {
     if (!isselectedRows) {
       const fileItem = filesData.find((f) => f.id == uid);
@@ -403,9 +364,7 @@ const Content: React.FC<ContentProps> = ({
 
   const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
     if (!remainingFiles.length) {
-      showNormalToast(
-        <PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} isSchema={hasSelections} />
-      );
+      showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
       try {
         const response = await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
         if (response.data.status === 'Success') {
@@ -858,21 +817,8 @@ const Content: React.FC<ContentProps> = ({
       {showEnhancementDialog && (
         <GraphEnhancementDialog open={showEnhancementDialog} onClose={toggleEnhancementDialog}></GraphEnhancementDialog>
       )}
-      <GraphViewModal
-        inspectedName={inspectedName}
-        open={openGraphView}
-        setGraphViewOpen={setOpenGraphView}
-        viewPoint={viewPoint}
-        selectedRows={childRef.current?.getSelectedRows()}
-      />
-      <div className={`n-bg-palette-neutral-bg-default main-content-wrapper`}>
-        <Flex
-          className='w-full absolute top-0'
-          alignItems='center'
-          justifyContent='space-between'
-          flexDirection='row'
-          flexWrap='wrap'
-        >
+      <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
+        <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row' flexWrap='wrap'>
           <div className='connectionstatus__container'>
             <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
             <Typography variant='body-medium'>
@@ -953,7 +899,7 @@ const Content: React.FC<ContentProps> = ({
                 setTotalPageCount(null);
               }
               setCurrentPage(1);
-              // await getChunks(name, 1);
+              await getChunks(name, 1);
             }
           }}
           ref={childRef}
@@ -964,17 +910,15 @@ const Content: React.FC<ContentProps> = ({
           justifyContent='space-between'
           flexDirection={isTablet ? 'column' : 'row'}
         >
-          <div>
-            <DropdownComponent
-              onSelect={handleDropdownChange}
-              options={llms ?? ['']}
-              placeholder='Select LLM Model'
-              defaultValue={model}
-              view='ContentView'
-              isDisabled={false}
-            />
-          </div>
-          <Flex flexDirection='row' gap='4' className='self-end mb-2.5' flexWrap='wrap'>
+          <DropdownComponent
+            onSelect={handleDropdownChange}
+            options={llms ?? ['']}
+            placeholder='Select LLM Model'
+            defaultValue={model}
+            view='ContentView'
+            isDisabled={false}
+          />
+          <Flex flexDirection='row' gap='4' className='self-end' flexWrap='wrap'>
             <ButtonWithToolTip
               text={tooltips.generateGraph}
               placement='top'

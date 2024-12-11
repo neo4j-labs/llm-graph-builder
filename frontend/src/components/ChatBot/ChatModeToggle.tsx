@@ -6,7 +6,6 @@ import { capitalize } from '@mui/material';
 import { capitalizeWithPlus } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 import { useMemo } from 'react';
-import { Menuitems } from '../../types';
 
 export default function ChatModeToggle({
   menuAnchor,
@@ -81,12 +80,6 @@ export default function ChatModeToggle({
     });
   }, [chatModes, memoizedChatModes]);
   return (
-    <CustomMenu
-      isRoot={isRoot}
-      closeHandler={closeHandler}
-      open={open}
-      anchorOrigin={menuAnchor}
-      items={menuItems as Menuitems[]}
-    />
+    <CustomMenu isRoot={isRoot} closeHandler={closeHandler} open={open} anchorOrigin={menuAnchor} items={menuItems} />
   );
 }

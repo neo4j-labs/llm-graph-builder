@@ -145,9 +145,7 @@ export default function DeduplicationTab() {
               <Checkbox
                 ariaLabel='row-checkbox'
                 onChange={row.getToggleSelectedHandler()}
-                htmlAttributes={{
-                  title: 'Select the Row for merging',
-                }}
+                htmlAttributes={{ title: 'Select the Row for merging' }}
                 isChecked={row.getIsSelected()}
               />
             </div>

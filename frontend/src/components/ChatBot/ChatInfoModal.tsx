@@ -8,13 +8,14 @@ import {
   Banner,
   useMediaQuery,
   Button,
+  TextArea,
   IconButton,
 } from '@neo4j-ndl/react';
 import { DocumentDuplicateIconOutline, ClipboardDocumentCheckIconOutline } from '@neo4j-ndl/react/icons';
 import '../../styling/info.css';
 import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
 import { ExtendedNode, UserCredentials, chatInfoMessage } from '../../types';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import GraphViewButton from '../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
 import { useCredentials } from '../../context/UserCredentials';
@@ -465,15 +466,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                 </Button>
               )}
             {isMultiModes && (isAdditionalMetricsEnabled === false || isAdditionalMetricsEnabled === null) && (
-              <Button
-                isDisabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
-                className='w-max self-center mt-4'
-                onClick={loadMetrics}
-              >
-                View Detailed Metrics
-              </Button>
-            )}
-            {!multiModelMetrics.length && activeChatmodes != undefined && Object.keys(activeChatmodes).length > 1 && (
               <Button
                 isDisabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
                 className='w-max self-center mt-4'

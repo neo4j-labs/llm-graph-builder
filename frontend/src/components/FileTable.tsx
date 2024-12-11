@@ -9,7 +9,6 @@ import {
   Typography,
   useCopyToClipboard,
   Checkbox,
-  useMediaQuery,
 } from '@neo4j-ndl/react';
 import {
   forwardRef,
@@ -64,6 +63,9 @@ import cancelAPI from '../services/CancelAPI';
 import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
+import { ThemeWrapperContext } from '../context/ThemeWrapper';
+import BreakDownPopOver from './BreakDownPopOver';
+
 let onlyfortheFirstRender = true;
 
 const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, ref) => {
@@ -130,6 +132,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
           return (
             <div className='px-1'>
               <Checkbox
+                ariaLabel='row-selection'
                 isChecked={row.getIsSelected()}
                 isDisabled={
                   !row.getCanSelect() ||
@@ -382,7 +385,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             return (
               <Flex>
                 <span>
-                  <TextLink isExternalLink href={info.row.original.sourceUrl}>
+                  <TextLink isExternalLink={true} href={info.row.original.sourceUrl}>
                     {info.row.original.fileSource}
                   </TextLink>
                 </span>
@@ -427,6 +430,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                 };
               }),
             ],
+            hasDefaultSortingActions: false,
           },
         },
       }),
@@ -469,6 +473,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                 };
               }),
             ],
+            hasDefaultSortingActions: false,
           },
         },
       }),
@@ -509,6 +514,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                 };
               }),
             ],
+            hasDefaultSortingActions: false,
           },
         },
       }),
@@ -596,13 +602,13 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               label='chunktextaction'
               text='View Chunks'
               size='large'
-              disabled={info.getValue() === 'Uploading'}
+              disabled={info.getValue() === 'Uploading' || info.getValue() === 'New'}
             >
-              <DocumentTextIconSolid />
+              <DocumentTextIconSolid className='n-size-token-7' />
             </IconButtonWithToolTip>
           </>
         ),
-        size: 300,
+        maxSize: 300,
         minSize: 180,
         header: () => <span>Actions</span>,
         footer: (info) => info.column.id,
@@ -767,7 +773,6 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   entityEntityRelCount: item.entityEntityRelCount ?? 0,
                   communityNodeCount: item.communityNodeCount ?? 0,
                   communityRelCount: item.communityRelCount ?? 0,
-                  createdAt: item.createdAt != undefined ? getParsedDate(item?.createdAt) : undefined,
                 });
               }
             });
@@ -984,28 +989,6 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
     }),
     [table]
   );
-  useEffect(() => {
-    if (tableRef.current) {
-      // Component has content, calculate maximum height for table
-      // Observes the height of the content and calculates own height accordingly
-      const resizeObserver = new ResizeObserver((entries) => {
-        for (let index = 0; index < entries.length; index++) {
-          const entry = entries[index];
-          const { height } = entry.contentRect;
-          const rowHeight = document?.getElementsByClassName('ndl-data-grid-td')?.[0]?.clientHeight ?? 69;
-          table.setPageSize(Math.floor(height / rowHeight));
-        }
-      });
-
-      const [contentElement] = document.getElementsByClassName('ndl-data-grid-scrollable');
-      resizeObserver.observe(contentElement);
-
-      return () => {
-        // Stop observing content after cleanup
-        resizeObserver.unobserve(contentElement);
-      };
-    }
-  }, []);
 
   useEffect(() => {
     setSelectedRows(table.getSelectedRowModel().rows.map((i) => i.id));
@@ -1015,47 +998,49 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
     <>
       {filesData ? (
         <>
-          <DataGrid
-            ref={tableRef}
-            isResizable={true}
-            tableInstance={table}
-            styling={{
-              borderStyle: 'all-sides',
-              hasZebraStriping: true,
-              headerStyle: 'clean',
-            }}
-            isLoading={isLoading}
-            rootProps={{
-              className: `absolute h-[67%] left-10 filetable ${!largedesktops ? 'top-[17%]' : 'top-[14%]'}`,
-            }}
-            components={{
-              Body: () => (
-                <DataGridComponents.Body
-                  innerProps={{
-                    className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
-                  }}
-                />
-              ),
-              PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
-                return (
-                  <DataGridComponents.PaginationNumericButton
-                    {...restProps}
-                    isSelected={isSelected}
+          <div className={`${isExpanded ? 'w-[calc(100%-64px)]' : 'mx-auto w-[calc(100%-100px)]'}`}>
+            <DataGrid
+              ref={tableRef}
+              isResizable={true}
+              tableInstance={table}
+              styling={{
+                borderStyle: 'all-sides',
+                hasZebraStriping: true,
+                headerStyle: 'clean',
+              }}
+              isLoading={isLoading}
+              rootProps={{
+                className: classNameCheck,
+              }}
+              components={{
+                Body: () => (
+                  <DataGridComponents.Body
                     innerProps={{
-                      ...innerProps,
-                      style: {
-                        ...(isSelected && {
-                          backgroundSize: '200% auto',
-                          borderRadius: '10px',
-                        }),
-                      },
+                      className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
                     }}
                   />
-                );
-              },
-            }}
-            isKeyboardNavigable={false}
-          />
+                ),
+                PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
+                  return (
+                    <DataGridComponents.PaginationNumericButton
+                      {...restProps}
+                      isSelected={isSelected}
+                      innerProps={{
+                        ...innerProps,
+                        style: {
+                          ...(isSelected && {
+                            backgroundSize: '200% auto',
+                            borderRadius: '10px',
+                          }),
+                        },
+                      }}
+                    />
+                  );
+                },
+              }}
+              isKeyboardNavigable={false}
+            />
+          </div>
         </>
       ) : null}
     </>

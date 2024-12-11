@@ -13,7 +13,6 @@ from langchain_aws import ChatBedrock
 from langchain_community.chat_models import ChatOllama
 import boto3
 import google.auth
-from src.shared.constants import ADDITIONAL_INSTRUCTIONS
 
 def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""
@@ -27,31 +26,31 @@ def get_llm(model: str):
         raise Exception(err)
     
     logging.info("Model: {}".format(env_key))
-    try:
-        if "gemini" in model:
-            model_name = env_value
-            credentials, project_id = google.auth.default()
-            llm = ChatVertexAI(
-                model_name=model_name,
-                #convert_system_message_to_human=True,
-                credentials=credentials,
-                project=project_id,
-                temperature=0,
-                safety_settings={
-                    HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-                },
-            )
-        elif "openai" in model:
-            model_name, api_key = env_value.split(",")
-            llm = ChatOpenAI(
-                api_key=api_key,
-                model=model_name,
-                temperature=0,
-            )
+    
+    if "gemini" in model:
+        model_name = env_value
+        credentials, project_id = google.auth.default()
+        llm = ChatVertexAI(
+            model_name=model_name,
+            #convert_system_message_to_human=True,
+            credentials=credentials,
+            project=project_id,
+            temperature=0,
+            safety_settings={
+                HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+            },
+        )
+    elif "openai" in model:
+        model_name, api_key = env_value.split(",")
+        llm = ChatOpenAI(
+            api_key=api_key,
+            model=model_name,
+            temperature=0,
+        )
 
         elif "azure" in model:
             model_name, api_endpoint, api_key, api_version = env_value.split(",")
@@ -181,7 +180,6 @@ async def get_graph_document_list(
             allowed_nodes=allowedNodes,
             allowed_relationships=allowedRelationship,
             ignore_tool_usage=True,
-            additional_instructions=ADDITIONAL_INSTRUCTIONS+ (additional_instructions if additional_instructions else "")
         )
     
     if isinstance(llm,DiffbotGraphTransformer):
@@ -192,9 +190,19 @@ async def get_graph_document_list(
 
 
 async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship):
-    try:
-        llm, model_name = get_llm(model)
-        combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
+    
+    llm, model_name = get_llm(model)
+    combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
+    #combined_chunk_document_list = get_chunk_id_as_doc_metadata(chunkId_chunkDoc_list)
+    
+    if  allowedNodes is None or allowedNodes=="":
+        allowedNodes =[]
+    else:
+        allowedNodes = allowedNodes.split(',')    
+    if  allowedRelationship is None or allowedRelationship=="":   
+        allowedRelationship=[]
+    else:
+        allowedRelationship = allowedRelationship.split(',')
         
         if  allowedNodes is None or allowedNodes=="":
             allowedNodes =[]

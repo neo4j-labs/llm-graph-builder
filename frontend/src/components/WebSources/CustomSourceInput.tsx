@@ -23,7 +23,7 @@ export default function CustomSourceInput({
       {status !== 'unknown' && (
         <Box>
           <Banner
-            isCloseable
+            isCloseable={true}
             description={statusMessage}
             onClose={() => setStatus('unknown')}
             type={status}
@@ -36,26 +36,28 @@ export default function CustomSourceInput({
       <Box>
         <div className='w-full inline-block'>
           <TextInput
-            value={value}
-            isDisabled={false}
-            label={label}
-            isFluid
-            onChange={onChangeHandler}
-            errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
             htmlAttributes={{
               id: id,
-              'aria-label': label,
-              placeholder: placeHolder,
               onBlur: onBlurHandler,
               autoFocus: true,
-              required: true,
               onPaste: onPasteHandler,
+
               onKeyDown: (e) => {
                 if (e.code === 'Enter') {
                   submitHandler(value);
                 }
               },
+
+              'aria-label': label,
+              placeholder: placeHolder,
             }}
+            value={value}
+            isDisabled={false}
+            label={label}
+            isFluid={true}
+            isRequired={true}
+            onChange={onChangeHandler}
+            errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
           />
         </div>
       </Box>

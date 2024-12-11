@@ -35,7 +35,6 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   entityEntityRelCount: number;
   communityNodeCount: number;
   communityRelCount: number;
-  createdAt?: Date;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
@@ -249,6 +248,8 @@ export type ChatbotProps = {
   clear?: boolean;
   isFullScreen?: boolean;
   connectionStatus: boolean;
+  isChatOnly?: boolean;
+  isDeleteChatLoading: boolean;
 };
 export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
 
@@ -730,6 +731,13 @@ export interface DrawerChatbotProps {
   connectionStatus: boolean;
 }
 
+export interface ChatOnlyProps {
+  clearHistoryData: boolean;
+  messages: Messages[];
+  connectionStatus: boolean;
+  isReadOnlyUser: boolean;
+}
+
 export interface ContextProps {
   userCredentials: UserCredentials | null;
   setUserCredentials: (UserCredentials: UserCredentials) => void;
@@ -741,8 +749,6 @@ export interface ContextProps {
   setErrorMessage: Dispatch<SetStateAction<string>>;
   showDisconnectButton: boolean;
   setShowDisconnectButton: Dispatch<SetStateAction<boolean>>;
-  isGCSActive: boolean;
-  setIsGCSActive: Dispatch<SetStateAction<boolean>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];
@@ -751,6 +757,11 @@ export interface MessageContextType {
   setClearHistoryData: Dispatch<SetStateAction<boolean>>;
   isDeleteChatLoading: boolean;
   setIsDeleteChatLoading: Dispatch<SetStateAction<boolean>>;
+}
+
+export interface GraphContextType {
+  loadingGraph: boolean;
+  setLoadingGraph: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface GraphContextType {
@@ -903,21 +914,3 @@ export interface GraphViewHandlerProps {
 export interface ChatProps {
   chatMessages: Messages[];
 }
-
-export interface filedate {
-  _DateTime__date: {
-    _Date__ordinal: number;
-    _Date__year: number;
-    _Date__month: number;
-    _Date__day: number;
-  };
-  _DateTime__time: {
-    _Time__ticks: number;
-    _Time__hour: number;
-    _Time__minute: number;
-    _Time__second: number;
-    _Time__nanosecond: number;
-    _Time__tzinfo: null;
-  };
-}
-export type FileTableHandle = React.ElementRef<typeof FileTable>;

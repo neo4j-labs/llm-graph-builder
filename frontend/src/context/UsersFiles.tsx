@@ -18,7 +18,6 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const selectedNodeRelsstr = localStorage.getItem('selectedRelationshipLabels');
   const persistedQueue = localStorage.getItem('waitingQueue');
   const selectedModel = localStorage.getItem('selectedModel');
-  const selectedInstructstr = localStorage.getItem('instructions');
   const isProdDefaultModel = isProdEnv && selectedModel && PRODMODLES.includes(selectedModel);
   const { userCredentials } = useCredentials();
   const [files, setFiles] = useState<(File | null)[] | []>([]);

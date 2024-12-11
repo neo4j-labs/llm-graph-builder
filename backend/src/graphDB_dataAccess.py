@@ -270,8 +270,7 @@ class graphDBdataAccess:
                 d.entityNodeCount AS entityNodeCount,
                 d.entityEntityRelCount AS entityEntityRelCount,
                 d.communityNodeCount AS communityNodeCount,
-                d.communityRelCount AS communityRelCount,
-                d.createdAt AS created_time
+                d.communityRelCount AS communityRelCount
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
@@ -303,13 +302,12 @@ class graphDBdataAccess:
             """
         query_to_delete_document_and_entities = """
             MATCH (d:Document)
-            WHERE d.fileName IN $filename_list AND coalesce(d.fileSource, "None") IN $source_types_list
+            WHERE d.fileName IN $filename_list AND d.fileSource IN $source_types_list
             WITH COLLECT(d) AS documents
-            CALL (documents) {
             UNWIND documents AS d
-            MATCH (d)<-[:PART_OF]-(c:Chunk)
-            WITH d, c, documents
-            OPTIONAL MATCH (c)-[:HAS_ENTITY]->(e)
+            OPTIONAL MATCH (d)<-[:PART_OF]-(c:Chunk)
+            OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e)
+            WITH d, c, e, documents
             WHERE NOT EXISTS {
                 MATCH (e)<-[:HAS_ENTITY]-(c2)-[:PART_OF]->(d2:Document)
                 WHERE NOT d2 IN documents
@@ -318,18 +316,18 @@ class graphDBdataAccess:
             FOREACH (chunk IN chunks | DETACH DELETE chunk)
             FOREACH (entity IN entities | DETACH DELETE entity)
             DETACH DELETE d
-            } IN TRANSACTIONS OF 1 ROWS
-            """
+            """  
         query_to_delete_communities = """
-            MATCH (c:`__Community__`) 
-            WHERE NOT EXISTS { ()-[:IN_COMMUNITY]->(c) } AND c.level = 0 
-            DETACH DELETE c 
-
-            WITH *
-            UNWIND range(1, $max_level) AS level
-            MATCH (c1:`__Community__`) 
-            WHERE c1.level = level AND NOT EXISTS { (c1)<-[:PARENT_COMMUNITY]-(child) } 
-            DETACH DELETE c1
+            MATCH (c:`__Community__`)
+            WHERE c.level = 0 AND NOT EXISTS { ()-[:IN_COMMUNITY]->(c) }
+            DETACH DELETE c
+            WITH 1 AS dummy
+            UNWIND range(1, $max_level)  AS level
+            CALL (level) {
+                MATCH (c:`__Community__`)
+                WHERE c.level = level AND NOT EXISTS { ()-[:PARENT_COMMUNITY]->(c) }
+                DETACH DELETE c
+                }
         """   
         param = {"filename_list" : filename_list, "source_types_list": source_types_list}
         community_param = {"max_level":MAX_COMMUNITY_LEVELS}
@@ -487,52 +485,51 @@ class graphDBdataAccess:
             param = {"document_name": document_name}
             result = self.execute_query(NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY, param)
         response = {}
-        if result:
-            for record in result:
-                filename = record.get("filename",None)
-                chunkNodeCount = int(record.get("chunkNodeCount",0))
-                chunkRelCount = int(record.get("chunkRelCount",0))
-                entityNodeCount = int(record.get("entityNodeCount",0))
-                entityEntityRelCount = int(record.get("entityEntityRelCount",0))
-                if (not document_name) and (community_flag):
-                    communityNodeCount = int(record.get("communityNodeCount",0))
-                    communityRelCount = int(record.get("communityRelCount",0))
-                else:
-                    communityNodeCount = 0
-                    communityRelCount = 0
-                nodeCount = int(chunkNodeCount) + int(entityNodeCount) + int(communityNodeCount)
-                relationshipCount = int(chunkRelCount) + int(entityEntityRelCount) + int(communityRelCount)
-                update_query = """
-                MATCH (d:Document {fileName: $filename})
-                SET d.chunkNodeCount = $chunkNodeCount,
-                    d.chunkRelCount = $chunkRelCount,
-                    d.entityNodeCount = $entityNodeCount,
-                    d.entityEntityRelCount = $entityEntityRelCount,
-                    d.communityNodeCount = $communityNodeCount,
-                    d.communityRelCount = $communityRelCount,
-                    d.nodeCount = $nodeCount,
-                    d.relationshipCount = $relationshipCount
-                """
-                self.execute_query(update_query,{
-                    "filename": filename,
-                    "chunkNodeCount": chunkNodeCount,
-                    "chunkRelCount": chunkRelCount,
-                    "entityNodeCount": entityNodeCount,
-                    "entityEntityRelCount": entityEntityRelCount,
-                    "communityNodeCount": communityNodeCount,
-                    "communityRelCount": communityRelCount,
-                    "nodeCount" : nodeCount,
-                    "relationshipCount" : relationshipCount
-                    })
-                
-                response[filename] = {"chunkNodeCount": chunkNodeCount,
-                    "chunkRelCount": chunkRelCount,
-                    "entityNodeCount": entityNodeCount,
-                    "entityEntityRelCount": entityEntityRelCount,
-                    "communityNodeCount": communityNodeCount,
-                    "communityRelCount": communityRelCount,
-                    "nodeCount" : nodeCount,
-                    "relationshipCount" : relationshipCount
-                    }
+        for record in result:
+            filename = record["filename"]
+            chunkNodeCount = record["chunkNodeCount"]
+            chunkRelCount = record["chunkRelCount"]
+            entityNodeCount = record["entityNodeCount"]
+            entityEntityRelCount = record["entityEntityRelCount"]
+            if (not document_name) and (community_flag):
+                communityNodeCount = record["communityNodeCount"]
+                communityRelCount = record["communityRelCount"]
+            else:
+                communityNodeCount = 0
+                communityRelCount = 0
+            nodeCount = int(chunkNodeCount) + int(entityNodeCount) + int(communityNodeCount)
+            relationshipCount = int(chunkRelCount) + int(entityEntityRelCount) + int(communityRelCount)
+            update_query = """
+            MATCH (d:Document {fileName: $filename})
+            SET d.chunkNodeCount = $chunkNodeCount,
+                d.chunkRelCount = $chunkRelCount,
+                d.entityNodeCount = $entityNodeCount,
+                d.entityEntityRelCount = $entityEntityRelCount,
+                d.communityNodeCount = $communityNodeCount,
+                d.communityRelCount = $communityRelCount,
+                d.nodeCount = $nodeCount,
+                d.relationshipCount = $relationshipCount
+            """
+            self.execute_query(update_query,{
+                "filename": filename,
+                "chunkNodeCount": chunkNodeCount,
+                "chunkRelCount": chunkRelCount,
+                "entityNodeCount": entityNodeCount,
+                "entityEntityRelCount": entityEntityRelCount,
+                "communityNodeCount": communityNodeCount,
+                "communityRelCount": communityRelCount,
+                "nodeCount" : nodeCount,
+                "relationshipCount" : relationshipCount
+                })
+            
+            response[filename] = {"chunkNodeCount": chunkNodeCount,
+                "chunkRelCount": chunkRelCount,
+                "entityNodeCount": entityNodeCount,
+                "entityEntityRelCount": entityEntityRelCount,
+                "communityNodeCount": communityNodeCount,
+                "communityRelCount": communityRelCount,
+                "nodeCount" : nodeCount,
+                "relationshipCount" : relationshipCount
+                }
             
         return response

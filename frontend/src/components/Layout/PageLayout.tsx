@@ -5,11 +5,16 @@ import DrawerChatbot from './DrawerChatbot';
 import Content from '../Content';
 import { clearChatAPI } from '../../services/QnaAPI';
 import { useCredentials } from '../../context/UserCredentials';
-import { UserCredentials } from '../../types';
+import { connectionState, UserCredentials } from '../../types';
 import { useMessageContext } from '../../context/UserMessages';
 import { useMediaQuery } from '@mui/material';
 import { useFileContext } from '../../context/UsersFiles';
 import SchemaFromTextDialog from '../Popups/Settings/SchemaFromText';
+import useSpeechSynthesis from '../../hooks/useSpeech';
+import FallBackDialog from '../UI/FallBackDialog';
+import { envConnectionAPI } from '../../services/ConnectAPI';
+import { healthStatus } from '../../services/HealthStatus';
+import { useNavigate } from 'react-router';
 
 const ConnectionModal = lazy(() => import('../Popups/ConnectionModal/ConnectionModal'));
 
@@ -30,7 +35,7 @@ const PageLayout: React.FC = () => {
   const [shows3Modal, toggleS3Modal] = useReducer((s) => !s, false);
   const [showGCSModal, toggleGCSModal] = useReducer((s) => !s, false);
   const [showGenericModal, toggleGenericModal] = useReducer((s) => !s, false);
-  const { userCredentials, connectionStatus } = useCredentials();
+  const navigate = useNavigate();
   const toggleLeftDrawer = () => {
     if (largedesktops) {
       setIsLeftExpanded(!isLeftExpanded);
@@ -47,7 +52,7 @@ const PageLayout: React.FC = () => {
   };
 
   const { messages, setClearHistoryData, clearHistoryData, setMessages, setIsDeleteChatLoading } = useMessageContext();
-  const { setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
+  const { isSchema, setIsSchema, setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
   const {
     setConnectionStatus,
     setGdsActive,
@@ -56,7 +61,6 @@ const PageLayout: React.FC = () => {
     setErrorMessage,
     setShowDisconnectButton,
     showDisconnectButton,
-    setIsGCSActive,
   } = useCredentials();
   const { cancel } = useSpeechSynthesis();
 
@@ -75,26 +79,8 @@ const PageLayout: React.FC = () => {
         setShowDisconnectButton(isModalOpen);
         localStorage.setItem('disconnectButtonState', isModalOpen ? 'true' : 'false');
       };
-      const setUserCredentialsLocally = (credentials: any) => {
-        setUserCredentials(credentials);
-        setIsGCSActive(credentials.isGCSActive ?? false);
-        setGdsActive(credentials.isgdsActive);
-        setIsReadOnlyUser(credentials.isReadonlyUser);
-        localStorage.setItem(
-          'neo4j.connection',
-          JSON.stringify({
-            uri: credentials.uri,
-            user: credentials.userName,
-            password: btoa(credentials.password),
-            database: credentials.database,
-            userDbVectorIndex: 384,
-            isReadOnlyUser: credentials.isReadonlyUser,
-            isgdsActive: credentials.isgdsActive,
-            isGCSActive: credentials.isGCSActive,
-          })
-        );
-      };
-      const parseSessionAndSetCredentials = (neo4jConnection: string) => {
+      // To parse and set user credentials from session
+      const setUserCredentialsFromSession = (neo4jConnection: string) => {
         if (!neo4jConnection) {
           console.error('Invalid session data:', neo4jConnection);
           setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
@@ -111,7 +97,6 @@ const PageLayout: React.FC = () => {
             });
             setGdsActive(parsedConnection.isgdsActive);
             setIsReadOnlyUser(parsedConnection.isReadOnlyUser);
-            setIsGCSActive(parsedConnection.isGCSActive);
           } else {
             console.error('Invalid parsed session data:', parsedConnection);
           }
@@ -120,8 +105,7 @@ const PageLayout: React.FC = () => {
         }
       };
       // To update credentials if environment values differ
-
-      const updateSessionIfNeeded = (envCredentials: any, storedSession: string) => {
+      const updateSessionIfNeeded = (envCredentials: UserCredentials, storedSession: string) => {
         try {
           const storedCredentials = JSON.parse(storedSession);
           const isDiffCreds =
@@ -131,7 +115,6 @@ const PageLayout: React.FC = () => {
             envCredentials.database !== storedCredentials.database;
           if (isDiffCreds) {
             setUserCredentials(envCredentials);
-            setIsGCSActive(envCredentials.isGCSActive ?? false);
             localStorage.setItem(
               'neo4j.connection',
               JSON.stringify({
@@ -164,14 +147,14 @@ const PageLayout: React.FC = () => {
           database: connectionData.data.database,
           isReadonlyUser: !connectionData.data.write_access,
           isgdsActive: connectionData.data.gds_status,
-          isGCSActive: connectionData?.data?.gcs_file_cache === 'True',
         };
-        setIsGCSActive(connectionData?.data?.gcs_file_cache === 'True');
         if (session) {
           const updated = updateSessionIfNeeded(envCredentials, session);
           if (!updated) {
             setUserCredentialsFromSession(session); // Use stored session if no update is needed
           }
+          setConnectionStatus(Boolean(connectionData.data.graph_connection));
+          setIsBackendConnected(true);
           handleDisconnectButtonState(false);
         } else {
           setUserCredentials(envCredentials);
@@ -185,7 +168,6 @@ const PageLayout: React.FC = () => {
               userDbVectorIndex: 384,
               isReadOnlyUser: envCredentials.isReadonlyUser,
               isgdsActive: envCredentials.isgdsActive,
-              isGCSActive: envCredentials.isGCSActive,
             })
           );
           setConnectionStatus(true);
@@ -196,7 +178,7 @@ const PageLayout: React.FC = () => {
       } catch (error) {
         console.error('Error during backend API call:', error);
         if (session) {
-          parseSessionAndSetCredentials(session);
+          setUserCredentialsFromSession(session);
           setConnectionStatus(true);
         } else {
           setErrorMessage(backendApiResponse?.data?.error);
@@ -244,7 +226,7 @@ const PageLayout: React.FC = () => {
   };
 
   return (
-    <>
+    <div style={{ maxHeight: 'calc(100vh - 58px)' }} className='flex overflow-hidden'>
       <Suspense fallback={<FallBackDialog />}>
         <ConnectionModal
           open={openConnection.openPopUp}
@@ -255,6 +237,23 @@ const PageLayout: React.FC = () => {
           chunksExistsWithDifferentEmbedding={openConnection.chunksExistsWithDifferentDimension}
         />
       </Suspense>
+      <SideNav
+        toggles3Modal={toggleS3Modal}
+        toggleGCSModal={toggleGCSModal}
+        toggleGenericModal={toggleGenericModal}
+        isExpanded={isLeftExpanded}
+        position='left'
+        toggleDrawer={toggleLeftDrawer}
+      />
+      <DrawerDropzone
+        shows3Modal={shows3Modal}
+        showGCSModal={showGCSModal}
+        showGenericModal={showGenericModal}
+        toggleGCSModal={toggleGCSModal}
+        toggleGenericModal={toggleGenericModal}
+        toggleS3Modal={toggleS3Modal}
+        isExpanded={isLeftExpanded}
+      />
       <SchemaFromTextDialog
         open={showTextFromSchemaDialog.show}
         onClose={() => {
@@ -268,130 +267,29 @@ const PageLayout: React.FC = () => {
           }
         }}
       ></SchemaFromTextDialog>
-      {largedesktops ? (
-        <div
-          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${
-            !isRightExpanded ? 'drawerchatbotclosed' : ''
-          } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
-        >
-          <SideNav
-            toggles3Modal={toggleS3Modal}
-            toggleGCSModal={toggleGCSModal}
-            toggleGenericModal={toggleGenericModal}
-            isExpanded={isLeftExpanded}
-            position='left'
-            toggleDrawer={toggleLeftDrawer}
-          />
-          {isLeftExpanded && (
-            <DrawerDropzone
-              shows3Modal={shows3Modal}
-              showGCSModal={showGCSModal}
-              showGenericModal={showGenericModal}
-              toggleGCSModal={toggleGCSModal}
-              toggleGenericModal={toggleGenericModal}
-              toggleS3Modal={toggleS3Modal}
-              isExpanded={isLeftExpanded}
-            />
-          )}
-          <Content
-            openChatBot={() => setShowChatBot(true)}
-            showChatBot={showChatBot}
-            openTextSchema={() => {
-              setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
-            }}
-            isSchema={isSchema}
-            setIsSchema={setIsSchema}
-            showEnhancementDialog={showEnhancementDialog}
-            toggleEnhancementDialog={toggleEnhancementDialog}
-            setOpenConnection={setOpenConnection}
-            showDisconnectButton={showDisconnectButton}
-            connectionStatus={connectionStatus}
-          />
-          {isRightExpanded && (
-            <DrawerChatbot
-              messages={messages}
-              isExpanded={isRightExpanded}
-              clearHistoryData={clearHistoryData}
-              connectionStatus={connectionStatus}
-            />
-          )}
-          <SideNav
-            messages={messages}
-            isExpanded={isRightExpanded}
-            position='right'
-            toggleDrawer={toggleRightDrawer}
-            deleteOnClick={deleteOnClick}
-            showDrawerChatbot={showDrawerChatbot}
-            setShowDrawerChatbot={setShowDrawerChatbot}
-            setIsRightExpanded={setIsRightExpanded}
-            clearHistoryData={clearHistoryData}
-            toggleGCSModal={toggleGCSModal}
-            toggles3Modal={toggleS3Modal}
-            toggleGenericModal={toggleGenericModal}
-            setIsleftExpanded={setIsLeftExpanded}
-          />
-        </div>
-      ) : (
-        <>
-          <DrawerDropzone
-            shows3Modal={shows3Modal}
-            showGCSModal={showGCSModal}
-            showGenericModal={showGenericModal}
-            toggleGCSModal={toggleGCSModal}
-            toggleGenericModal={toggleGenericModal}
-            toggleS3Modal={toggleS3Modal}
-            isExpanded={isLeftExpanded}
-          />
-
-          <div className='layout-wrapper drawerclosed'>
-            <SideNav
-              toggles3Modal={toggleS3Modal}
-              toggleGCSModal={toggleGCSModal}
-              toggleGenericModal={toggleGenericModal}
-              isExpanded={isLeftExpanded}
-              position='left'
-              toggleDrawer={toggleLeftDrawer}
-            />
-
-            <Content
-              openChatBot={() => setShowChatBot(true)}
-              showChatBot={showChatBot}
-              openTextSchema={() => {
-                setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
-              }}
-              isSchema={isSchema}
-              setIsSchema={setIsSchema}
-              showEnhancementDialog={showEnhancementDialog}
-              toggleEnhancementDialog={toggleEnhancementDialog}
-              setOpenConnection={setOpenConnection}
-              showDisconnectButton={showDisconnectButton}
-              connectionStatus={connectionStatus}
-            />
-            {isRightExpanded && (
-              <DrawerChatbot
-                messages={messages}
-                isExpanded={isRightExpanded}
-                clearHistoryData={clearHistoryData}
-                connectionStatus={connectionStatus}
-              />
-            )}
-            <SideNav
-              messages={messages}
-              isExpanded={isRightExpanded}
-              position='right'
-              toggleDrawer={toggleRightDrawer}
-              deleteOnClick={deleteOnClick}
-              showDrawerChatbot={showDrawerChatbot}
-              setShowDrawerChatbot={setShowDrawerChatbot}
-              setIsRightExpanded={setIsRightExpanded}
-              clearHistoryData={clearHistoryData}
-              toggleGCSModal={toggleGCSModal}
-              toggles3Modal={toggleS3Modal}
-              toggleGenericModal={toggleGenericModal}
-              setIsleftExpanded={setIsLeftExpanded}
-            />
-          </div>
-        </>
+      <Content
+        openChatBot={() => setShowChatBot(true)}
+        isLeftExpanded={isLeftExpanded}
+        isRightExpanded={isRightExpanded}
+        showChatBot={showChatBot}
+        openTextSchema={() => {
+          setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
+        }}
+        isSchema={isSchema}
+        setIsSchema={setIsSchema}
+        showEnhancementDialog={showEnhancementDialog}
+        toggleEnhancementDialog={toggleEnhancementDialog}
+        setOpenConnection={setOpenConnection}
+        showDisconnectButton={showDisconnectButton}
+        connectionStatus={connectionStatus}
+      />
+      {showDrawerChatbot && (
+        <DrawerChatbot
+          messages={messages}
+          isExpanded={isRightExpanded}
+          clearHistoryData={clearHistoryData}
+          connectionStatus={connectionStatus}
+        />
       )}
     </>
   );

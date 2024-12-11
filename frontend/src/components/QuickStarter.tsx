@@ -13,11 +13,7 @@ const QuickStarter: React.FunctionComponent = () => {
         <MessageContextWrapper>
           <AlertContextWrapper>
             <Header />
-            <PageLayout
-              openSettingsDialog={openSettingsModal}
-              isSettingPanelExpanded={showSettingsModal}
-              closeSettingModal={closeSettingModal}
-            />
+            <PageLayout />
           </AlertContextWrapper>
         </MessageContextWrapper>
       </FileContextProvider>

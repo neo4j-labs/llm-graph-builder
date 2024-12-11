@@ -1,6 +1,6 @@
 import { MouseEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
-import { appLabels, buttonCaptions, tooltips } from '../../../../utils/Constants';
+import { appLabels, buttonCaptions, getDefaultSchemaExamples, tooltips } from '../../../../utils/Constants';
 import { Select, Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
@@ -143,20 +143,6 @@ export default function EntityExtractionSetting({
   const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
   const defaultExamples = useMemo(() => getDefaultSchemaExamples(), []);
 
-  useEffect(() => {
-    const parsedData = schemaExamples.reduce((accu: OptionType[], example) => {
-      const examplevalues: OptionType = {
-        label: example.schema,
-        value: JSON.stringify({
-          nodelabels: example.labels,
-          relationshipTypes: example.relationshipTypes,
-        }),
-      };
-      accu.push(examplevalues);
-      return accu;
-    }, []);
-    setdefaultExamples(parsedData);
-  }, []);
   useEffect(() => {
     if (userCredentials) {
       if (open && view === 'Dialog') {

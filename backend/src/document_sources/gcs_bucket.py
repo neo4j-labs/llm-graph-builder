@@ -67,7 +67,7 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
         loader = GCSFileLoader(project_name=gcs_project_id, bucket=gcs_bucket_name, blob=blob_name, loader_func=load_document_content)
         pages = loader.load() 
     else :
-      raise LLMGraphBuilderException('File does not exist, Please re-upload the file and try again.')
+      raise Exception('File does not exist, Please re-upload the file and try again.')
   else:
     creds= Credentials(access_token)
     storage_client = storage.Client(project=gcs_project_id, credentials=creds)
@@ -84,7 +84,7 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
             text += page.extract_text()
       pages = [Document(page_content = text)]
     else:
-      raise LLMGraphBuilderException(f'File Not Found in GCS bucket - {gcs_bucket_name}')
+      raise Exception(f'File Not Found in GCS bucket - {gcs_bucket_name}')
   return gcs_blob_filename, pages
 
 def upload_file_to_gcs(file_chunk, chunk_number, original_file_name, bucket_name, folder_name_sha1_hashed):

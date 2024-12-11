@@ -35,8 +35,27 @@ Accoroding to enviornment we are configuring the models which is indicated by VI
 EX:
 ```env
 VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
-
 ```
+According to the environment, we are configuring the models which indicated by VITE_LLM_MODELS_PROD variable we can configure models based on our needs.
+EX:
+```env
+VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
+```
+
+if you only want OpenAI:
+```env
+VITE_LLM_MODELS_PROD="diffbot,openai-gpt-3.5,openai-gpt-4o"
+VITE_LLM_MODELS_PROD="diffbot,openai-gpt-3.5,openai-gpt-4o"
+OPENAI_API_KEY="your-openai-key"
+```
+
+if you only want Diffbot:
+```env
+VITE_LLM_MODELS_PROD="diffbot"
+VITE_LLM_MODELS_PROD="diffbot"
+DIFFBOT_API_KEY="your-diffbot-key"
+```
+
 You can then run Docker Compose to build and start all components:
 ```bash
 docker-compose up --build
@@ -60,6 +79,7 @@ You can of course combine all (local, youtube, wikipedia, s3 and gcs) or remove 
 ### Chat Modes
 
 By default,all of the chat modes will be available: vector, graph_vector, graph, fulltext, graph_vector_fulltext , entity_vector and global_vector.
+By default,all of the chat modes will be available: vector, graph_vector, graph, fulltext, graph_vector_fulltext , entity_vector and global_vector.
 If none of the mode is mentioned in the chat modes variable all modes will be available:
 ```env
 VITE_CHAT_MODES=""
@@ -67,6 +87,7 @@ VITE_CHAT_MODES=""
 
 If however you want to specify the only vector mode or only graph mode you can do that by specifying the mode in the env:
 ```env
+VITE_CHAT_MODES="vector,graph"
 VITE_CHAT_MODES="vector,graph"
 ```
 
@@ -84,7 +105,7 @@ Alternatively, you can run the backend and frontend separately:
     ```
 
 - For the backend:
-1. Create the backend/.env file by copy/pasting the backend/example.env. To streamline the initial setup and testing of the application, you can preconfigure user credentials directly within the backend .env file. This bypasses the login dialog and allows you to immediately connect with a predefined user.
+1. Create the backend/.env file by copy/pasting the backend/example.env. To streamline the initial setup and testing of the application, you can preconfigure user credentials directly within the .env file. This bypasses the login dialog and allows you to immediately connect with a predefined user.
    - **NEO4J_URI**:
    - **NEO4J_USERNAME**:
    - **NEO4J_PASSWORD**:
@@ -150,6 +171,10 @@ Allow unauthenticated request : Yes
 | VITE_GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
 | VITE_LLM_MODELS_PROD         | Optional      | openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash | To Distinguish models based on the Enviornment PROD or DEV 
 | VITE_LLM_MODELS              | Optional | 'diffbot,openai_gpt_3.5,openai_gpt_4o,openai_gpt_4o_mini,gemini_1.5_pro,gemini_1.5_flash,azure_ai_gpt_35,azure_ai_gpt_4o,ollama_llama3,groq_llama3_70b,anthropic_claude_3_5_sonnet' | Supported Models For the application
+| GCS_FILE_CACHE          | Optional           | False         | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
+| ENTITY_EMBEDDING        | Optional           | False         | If set to True, It will add embeddings for each entity in database |
+| LLM_MODEL_CONFIG_ollama_<model_name>         | Optional      |               | Set ollama config as - model_name,model_local_url for local deployments |
+| RAGAS_EMBEDDING_MODEL         | Optional      | openai              | embedding model used by ragas evaluation framework                               |
 
 ## LLMs Supported 
 1. OpenAI
@@ -162,7 +187,6 @@ Allow unauthenticated request : Yes
 8. Ollama(dev)
 9. Diffbot
 10. Other OpenAI compabtile baseurl models(dev)
-
 
 ## For local llms (Ollama)
 1. Pull the docker imgage of ollama
