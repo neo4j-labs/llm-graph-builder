@@ -19,11 +19,7 @@ export default class ErrorBoundary extends React.Component<any, any> {
       return (
         <div className='n-size-full n-flex n-flex-col n-items-center n-justify-center n-rounded-md n-bg-palette-neutral-bg-weak n-box-border'>
           <Banner
-<<<<<<< HEAD
             hasIcon={true}
-=======
-            hasIcon
->>>>>>> 6a46472dcebfb9282c1c9d7332bcfacb30811661
             type='info'
             description={
               this.state.errorMessage === 'Missing required parameter client_id.'
@@ -53,11 +49,7 @@ export default class ErrorBoundary extends React.Component<any, any> {
                     },
                   ]
             }
-<<<<<<< HEAD
             usage='inline'
-=======
-            usage='global'
->>>>>>> 6a46472dcebfb9282c1c9d7332bcfacb30811661
           ></Banner>
         </div>
       );
