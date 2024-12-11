@@ -51,7 +51,7 @@ const PageLayout: React.FC = () => {
     }
   };
 
-  const { messages, setClearHistoryData, clearHistoryData, setMessages } = useMessageContext();
+  const { messages, setClearHistoryData, clearHistoryData, setMessages, setIsDeleteChatLoading } = useMessageContext();
   const { isSchema, setIsSchema, setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
   const {
     setConnectionStatus,
@@ -63,7 +63,7 @@ const PageLayout: React.FC = () => {
     showDisconnectButton,
   } = useCredentials();
   const { cancel } = useSpeechSynthesis();
-  
+
   useEffect(() => {
     async function initializeConnection() {
       const session = localStorage.getItem('neo4j.connection');
@@ -193,14 +193,15 @@ const PageLayout: React.FC = () => {
   const deleteOnClick = async () => {
     try {
       setClearHistoryData(true);
+      setIsDeleteChatLoading(true);
       cancel();
       const response = await clearChatAPI(
         userCredentials as UserCredentials,
         sessionStorage.getItem('session_id') ?? ''
       );
+      setIsDeleteChatLoading(false);
       if (response.data.status === 'Success') {
         const date = new Date();
-
         setMessages([
           {
             datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
@@ -218,6 +219,7 @@ const PageLayout: React.FC = () => {
         navigate('.', { replace: true, state: null });
       }
     } catch (error) {
+      setIsDeleteChatLoading(false);
       console.log(error);
       setClearHistoryData(false);
     }

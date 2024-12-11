@@ -41,6 +41,7 @@ import FallBackDialog from '../UI/FallBackDialog';
 import { downloadClickHandler, getDateTime } from '../../utils/Utils';
 import ChatModesSwitch from './ChatModesSwitch';
 import CommonActions from './CommonChatActions';
+import Loader from '../../utils/Loader';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
 if (typeof window !== 'undefined') {
   if (!sessionStorage.getItem('session_id')) {
@@ -58,6 +59,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     isFullScreen,
     connectionStatus,
     isChatOnly,
+    isDeleteChatLoading,
   } = props;
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
@@ -249,7 +251,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             } else {
               setListMessages((prev) =>
                 prev.map((msg) =>
-                  msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg
+                  (msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg)
                 )
               );
             }
@@ -264,7 +266,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             } else {
               setListMessages((prev) =>
                 prev.map((msg) =>
-                  msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg
+                  (msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg)
                 )
               );
             }
@@ -273,7 +275,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           console.error(`API call failed for mode ${mode}:`, result.reason);
           setListMessages((prev) =>
             prev.map((msg) =>
-              msg.id === chatbotMessageId
+              (msg.id === chatbotMessageId
                 ? {
                     ...msg,
                     modes: {
@@ -281,7 +283,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                       [mode]: { message: 'Failed to fetch response for this mode.', error: result.reason },
                     },
                   }
-                : msg
+                : msg)
             )
           );
         }
@@ -294,7 +296,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       if (error instanceof Error) {
         setListMessages((prev) =>
           prev.map((msg) =>
-            msg.id === chatbotMessageId
+            (msg.id === chatbotMessageId
               ? {
                   ...msg,
                   isLoading: false,
@@ -306,7 +308,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                     },
                   },
                 }
-              : msg
+              : msg)
           )
         );
       }
@@ -408,7 +410,12 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   }, []);
 
   return (
-    <div className={'n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden'}>
+    <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden relative'>
+      {isDeleteChatLoading && (
+        <div className='chatbot-deleteLoader'>
+          <Loader title='Deleting...'></Loader>
+        </div>
+      )}
       <div
         className={`flex overflow-y-auto pb-12 min-w-full pl-5 pr-5 chatBotContainer ${
           isChatOnly ? 'min-h-[calc(100dvh-114px)] max-h-[calc(100dvh-114px)]' : ''
