@@ -330,27 +330,3 @@
   opacity: 0.8;
   background-color: rgb(201 201 201 / 40%);
 }
-.layout-wrapper{
-  display: grid;
-  grid-template-rows: auto;
-  grid-template-columns: 64px 1fr minmax(min-content,4fr) 1.4fr 64px;
-  max-height: calc(100vh - 58px);
-  max-width: 100%;
-}
-.layout-wrapper.drawerdropzoneclosed{
-  grid-template-columns: 64px 4fr 1.1fr 64px;
-
-}
-.layout-wrapper.drawerchatbotclosed{
-  grid-template-columns: 64px 0.6fr minmax(min-content,4fr) 64px;
-}
-.layout-wrapper.drawerclosed{
-  grid-template-columns: 64px minmax(min-content,4fr) 64px;
-}
-.main-content-wrapper{
-  display: flex;
-  flex-direction: column;
-  max-width: 100%;
-  position: relative;
-  height: 100%;
-}
