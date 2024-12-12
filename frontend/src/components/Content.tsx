@@ -265,7 +265,7 @@ const Content: React.FC<ContentProps> = ({
         fileItem.retryOption ?? '',
         fileItem.sourceUrl,
         localStorage.getItem('accesskey'),
-        localStorage.getItem('secretkey'),
+        atob(localStorage.getItem('secretkey')??''),
         fileItem.name ?? '',
         fileItem.gcsBucket ?? '',
         fileItem.gcsBucketFolder ?? '',
