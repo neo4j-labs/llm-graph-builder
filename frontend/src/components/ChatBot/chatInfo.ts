@@ -1,5 +1,6 @@
 import { getNeighbors } from '../../services/GraphQuery';
 import { NeoNode, NeoRelationship, UserCredentials } from '../../types';
+import { showNormalToast } from '../../utils/toasts';
 
 export const handleGraphNodeClick = async (
   userCredentials: UserCredentials,
@@ -29,6 +30,8 @@ export const handleGraphNodeClick = async (
       setNeoRels(relationships);
       setOpenGraphView(true);
       setViewPoint('chatInfoView');
+    } else {
+      showNormalToast('No nodes or relationships found for the selected node.');
     }
   } catch (error: any) {
     console.error('Error fetching neighbors:', error);

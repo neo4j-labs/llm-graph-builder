@@ -36,6 +36,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from src.ragas_eval import *
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 import gzip
+from langchain_neo4j import Neo4jGraph
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
@@ -581,7 +582,6 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                     graph = create_graph_database_connection(uri, userName, decoded_password, database)
                     graphDb_data_Access = graphDBdataAccess(graph)
                     result = graphDb_data_Access.get_current_status_document_node(file_name)
-                    # print(f'Result of document status in SSE : {result}')
                     if len(result) > 0:
                         status = json.dumps({'fileName':file_name, 
                         'status':result[0]['Status'],
@@ -668,7 +668,7 @@ async def get_document_status(file_name, url, userName, password, database):
                 }
         else:
             status = {'fileName':file_name, 'status':'Failed'}
-        print(f'Result of document status in refresh : {result}')
+        logging.info(f'Result of document status in refresh : {result}')
         return create_api_response('Success',message="",file_name=status)
     except Exception as e:
         message=f"Unable to get the document status"
@@ -924,6 +924,16 @@ async def fetch_chunktext(
    page_no: int = Form(1)
 ):
    try:
+       payload_json_obj = {
+           'api_name': 'fetch_chunktext',
+           'db_url': uri,
+           'userName': userName,
+           'database': database,
+           'document_name': document_name,
+           'page_no': page_no,
+           'logging_time': formatted_time(datetime.now(timezone.utc))
+       }
+       logger.log_struct(payload_json_obj, "INFO")
        start = time.time()
        result = await asyncio.to_thread(
            get_chunktext_results,
@@ -957,11 +967,12 @@ async def fetch_chunktext(
    finally:
        gc.collect()
 
+
 @app.post("/backend_connection_configuation")
 async def backend_connection_configuation():
     try:
         graph = Neo4jGraph()
-        print(f'login connection status of object: {graph}')
+        logging.info(f'login connection status of object: {graph}')
         if graph is not None:
             graph_connection = True
             isURI = os.getenv('NEO4J_URI')
@@ -982,7 +993,7 @@ async def backend_connection_configuation():
         message="Unable to connect backend DB"
         error_message = str(e)
         logging.exception(f'{error_message}')
-        return create_api_response(job_status, message=message, error=error_message + ' or fill from the login dialog', data=graph_connection)
+        return create_api_response(job_status, message=message, error=error_message.rstrip('.') + ', or fill from the login dialog.', data=graph_connection)
     finally:
         gc.collect()    
 

@@ -120,6 +120,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
           return (
             <div className='px-1'>
               <Checkbox
+                ariaLabel='row-selection'
                 isChecked={row.getIsSelected()}
                 isDisabled={
                   !row.getCanSelect() ||
@@ -517,7 +518,9 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             <Flex alignItems='center' flexDirection='row'>
               <i>{info.getValue()}</i>
               {hasNodeBreakDownValues &&
-                (info.row.original.status === 'Completed' || info.row.original.status === 'Failed') && (
+                (info.row.original.status === 'Completed' ||
+                  info.row.original.status === 'Failed' ||
+                  info.row.original.status === 'Cancelled') && (
                   <BreakDownPopOver file={info.row.original} isNodeCount={true} />
                 )}
             </Flex>
@@ -537,7 +540,9 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             <Flex alignItems='center' flexDirection='row'>
               <i>{info.getValue()}</i>
               {hasRelationsBreakDownValues &&
-                (info.row.original.status === 'Completed' || info.row.original.status === 'Failed') && (
+                (info.row.original.status === 'Completed' ||
+                  info.row.original.status === 'Failed' ||
+                  info.row.original.status === 'Cancelled') && (
                   <BreakDownPopOver file={info.row.original} isNodeCount={false} />
                 )}
             </Flex>

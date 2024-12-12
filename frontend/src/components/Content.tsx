@@ -13,7 +13,6 @@ import {
   batchSize,
   buttonCaptions,
   chatModeLables,
-  defaultLLM,
   largeFileSize,
   llms,
   RETRY_OPIONS,
@@ -90,6 +89,7 @@ const Content: React.FC<ContentProps> = ({
     processedCount,
     setProcessedCount,
     setchatModes,
+    model,
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>(
     'tableView'
@@ -107,6 +107,7 @@ const Content: React.FC<ContentProps> = ({
     }
   );
   const childRef = useRef<ChildRef>(null);
+
   const incrementPage = async () => {
     setCurrentPage((prev) => prev + 1);
     await getChunks(documentName, currentPage + 1);
@@ -207,6 +208,7 @@ const Content: React.FC<ContentProps> = ({
     }
     toggleChunksLoading();
   };
+
   const extractData = async (uid: string, isselectedRows = false, filesTobeProcess: CustomFile[]) => {
     if (!isselectedRows) {
       const fileItem = filesData.find((f) => f.id == uid);
@@ -537,6 +539,7 @@ const Content: React.FC<ContentProps> = ({
     setProcessedCount(0);
     setConnectionStatus(false);
     localStorage.removeItem('password');
+    localStorage.removeItem('selectedModel');
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
@@ -881,7 +884,7 @@ const Content: React.FC<ContentProps> = ({
             onSelect={handleDropdownChange}
             options={llms ?? ['']}
             placeholder='Select LLM Model'
-            defaultValue={defaultLLM}
+            defaultValue={model}
             view='ContentView'
             isDisabled={false}
           />

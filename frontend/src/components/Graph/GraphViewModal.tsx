@@ -58,6 +58,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [graphType, setGraphType] = useState<GraphType[]>([]);
   const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
   const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
+  const [mode, setMode] = useState<boolean>(false);
 
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
@@ -97,7 +98,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   }, []);
 
   useEffect(() => {
-    const updateGraphType = graphTypeFromNodes(allNodes);
+    let updateGraphType;
+    if (mode) {
+      updateGraphType = graphTypeFromNodes(nodes);
+    } else {
+      updateGraphType = graphTypeFromNodes(allNodes);
+    }
     if (Array.isArray(updateGraphType)) {
       setGraphType(updateGraphType);
     }
@@ -260,11 +266,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     const newGraphSelected = [...graphType];
     if (currentIndex === -1) {
       newGraphSelected.push(graph);
-      initGraph(newGraphSelected, allNodes, allRelationships, scheme);
     } else {
       newGraphSelected.splice(currentIndex, 1);
-      initGraph(newGraphSelected, allNodes, allRelationships, scheme);
     }
+    initGraph(newGraphSelected, allNodes, allRelationships, scheme);
     setSearchQuery('');
     setGraphType(newGraphSelected);
     setSelected(undefined);
@@ -295,11 +300,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   // Refresh the graph with nodes and relations if file is processing
   const handleRefresh = () => {
     setDisableRefresh(true);
+    setMode(true);
     graphApi('refreshMode');
-    setGraphType(graphType);
-    setNodes(nodes);
-    setRelationships(relationships);
-    setScheme(newScheme);
   };
 
   // when modal closes reset all states to default

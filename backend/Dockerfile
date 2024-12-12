@@ -5,6 +5,7 @@ EXPOSE 8000
 # Install dependencies and clean up in one layer
 RUN apt-get update && \
    apt-get install -y --no-install-recommends \
+       libmagic1 \
        libgl1-mesa-glx \
        libreoffice \
        cmake \

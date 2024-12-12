@@ -253,6 +253,7 @@ export type ChatbotProps = {
   isFullScreen?: boolean;
   connectionStatus: boolean;
   isChatOnly?: boolean;
+  isDeleteChatLoading: boolean;
 };
 export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
 
@@ -763,6 +764,8 @@ export interface MessageContextType {
   setMessages: Dispatch<SetStateAction<Messages[]>>;
   clearHistoryData: boolean;
   setClearHistoryData: Dispatch<SetStateAction<boolean>>;
+  isDeleteChatLoading: boolean;
+  setIsDeleteChatLoading: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface GraphContextType {
