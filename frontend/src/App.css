@@ -1,84 +1,7 @@
 .filetable {
-  /* width: calc(-360px + 100dvw); */
-  height: calc(-350px + 100dvh);
   border: 1px solid #d1d5db;
+  width: 95% !important;
 }
-
-.fileTableWithExpansion {
-  width: calc(-640px + 100dvw) !important;
-  height: calc(-350px + 100dvh);
-  border: 1px solid #d1d5db;
-}
-
-.fileTableWithBothDrawers {
-  width: calc(-650px + 100dvw) !important;
-  height: calc(-350px + 100dvh);
-  border: 1px solid #d1d5db;
-}
-
-.fileTableWithExpansion .ndl-div-table {
-  width: max-content !important;
-}
-
-.filetable .ndl-div-table {
-  width: max-content !important;
-}
-
-.contentWithExpansion {
-  width: calc(-807px + 100dvw);
-  height: calc(100dvh - 58px);
-  padding: 3px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  position: relative;
-}
-
-.contentWithOneExpansion {
-  width: calc(-550px + 100dvw);
-  height: calc(100dvh - 58px);
-  padding: 3px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  position: relative;
-}
-
-.contentWithBothDrawers {
-  width: calc(-786px + 100dvw);
-  height: calc(100dvh - 58px);
-  padding: 3px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  position: relative;
-}
-
-.contentWithChatBot {
-  width: calc(-512px + 100dvw);
-  height: calc(100dvh - 58px);
-  padding: 3px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  position: relative;
-}
-
-.contentWithDropzoneExpansion {
-  width: calc(100% - 422px);
-  height: calc(100dvh - 58px);
-  padding: 3px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  position: relative;
-}
-
 .s3Container {
   display: flex;
   align-items: center;
@@ -408,4 +331,28 @@
   z-index: 111;
   opacity: 0.8;
   background-color: rgb(201 201 201 / 40%);
+}
+.layout-wrapper{
+  display: grid;
+  grid-template-rows: auto;
+  grid-template-columns: 64px 1fr minmax(min-content,4fr) 1.4fr 64px;
+  max-height: calc(100vh - 58px);
+  max-width: 100%;
+}
+.layout-wrapper.drawerdropzoneclosed{
+  grid-template-columns: 64px 4fr 1.1fr 64px;
+
+}
+.layout-wrapper.drawerchatbotclosed{
+  grid-template-columns: 64px 0.6fr minmax(min-content,4fr) 64px;
+}
+.layout-wrapper.drawerclosed{
+  grid-template-columns: 64px minmax(min-content,4fr) 64px;
+}
+.main-content-wrapper{
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  position: relative;
+  height: 100%;
 }
