@@ -117,13 +117,13 @@ def test_graph_website(model_name):
     logging.info("WebUrl test done")
     print(weburl_result)
 
-    try:
-        assert weburl_result['status'] == 'Completed'
-        assert weburl_result['nodeCount'] > 0
-        assert weburl_result['relationshipCount'] > 0
-        print("Success")
-    except AssertionError as e:
-        print("Fail: ", e)
+    # try:
+    #     assert weburl_result['status'] == 'Completed'
+    #     assert weburl_result['nodeCount'] > 0
+    #     assert weburl_result['relationshipCount'] > 0
+    #     print("Success")
+    # except AssertionError as e:
+    #     print("Fail: ", e)
     return weburl_result
 
 def test_graph_from_youtube_video(model_name):
@@ -132,17 +132,17 @@ def test_graph_from_youtube_video(model_name):
    file_name = 'NKc8Tr5_L3w'
    source_type = 'youtube'
    create_source_node_graph_url_youtube(graph, model_name, source_url, source_type)
-   youtube_result = extract_graph_from_file_youtube(URI, USERNAME, PASSWORD, DATABASE, model_name, source_url,file_name,'','')
+   youtube_result = asyncio.run(extract_graph_from_file_youtube(URI, USERNAME, PASSWORD, DATABASE, model_name, source_url,file_name,'','',None))
    logging.info("YouTube Video test done")
    print(youtube_result)
 
-   try:
-       assert youtube_result['status'] == 'Completed'
-       assert youtube_result['nodeCount'] > 1
-       assert youtube_result['relationshipCount'] > 1
-       print("Success")
-   except AssertionError as e:
-       print("Failed: ", e)
+#    try:
+#        assert youtube_result['status'] == 'Completed'
+#        assert youtube_result['nodeCount'] > 1
+#        assert youtube_result['relationshipCount'] > 1
+#        print("Success")
+#    except AssertionError as e:
+#        print("Failed: ", e)
 
    return youtube_result
 
@@ -233,22 +233,22 @@ def run_tests():
 
 #    test_populate_graph_schema_from_text('openai-gpt-4o')
 #delete diconnected nodes
-#    dis_elementid, dis_status = disconected_nodes()
-#    lst_element_id = [dis_elementid]
-#    delt = delete_disconected_nodes(lst_element_id)
-#    dup = get_duplicate_nodes()
+   dis_elementid, dis_status = disconected_nodes()
+   lst_element_id = [dis_elementid]
+   delt = delete_disconected_nodes(lst_element_id)
+   dup = get_duplicate_nodes()
    print(final_list)
-#    schma = test_populate_graph_schema_from_text(model_name)
+   schma = test_populate_graph_schema_from_text(model_name)
    # Save final results to CSV
    df = pd.DataFrame(final_list)
    print(df)
    df['execution_date'] = dt.today().strftime('%Y-%m-%d')
 #diconnected nodes   
-#    df['disconnected_nodes']=dis_status
-#    df['get_duplicate_nodes']=dup
+   df['disconnected_nodes']=dis_status
+   df['get_duplicate_nodes']=dup
 
-#    df['delete_disconected_nodes']=delt
-#    df['test_populate_graph_schema_from_text'] = schma
+   df['delete_disconected_nodes']=delt
+   df['test_populate_graph_schema_from_text'] = schma
    df.to_csv(f"Integration_TestResult_{dt.now().strftime('%Y%m%d_%H%M%S')}.csv", index=False)
 
    # Save error details to CSV
