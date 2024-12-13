@@ -226,7 +226,7 @@ const PageLayout: React.FC = () => {
   };
 
   return (
-    <div style={{ maxHeight: 'calc(100vh - 58px)' }} className='flex overflow-hidden'>
+    <>
       <Suspense fallback={<FallBackDialog />}>
         <ConnectionModal
           open={openConnection.openPopUp}
@@ -237,23 +237,6 @@ const PageLayout: React.FC = () => {
           chunksExistsWithDifferentEmbedding={openConnection.chunksExistsWithDifferentDimension}
         />
       </Suspense>
-      <SideNav
-        toggles3Modal={toggleS3Modal}
-        toggleGCSModal={toggleGCSModal}
-        toggleGenericModal={toggleGenericModal}
-        isExpanded={isLeftExpanded}
-        position='left'
-        toggleDrawer={toggleLeftDrawer}
-      />
-      <DrawerDropzone
-        shows3Modal={shows3Modal}
-        showGCSModal={showGCSModal}
-        showGenericModal={showGenericModal}
-        toggleGCSModal={toggleGCSModal}
-        toggleGenericModal={toggleGenericModal}
-        toggleS3Modal={toggleS3Modal}
-        isExpanded={isLeftExpanded}
-      />
       <SchemaFromTextDialog
         open={showTextFromSchemaDialog.show}
         onClose={() => {
@@ -267,45 +250,69 @@ const PageLayout: React.FC = () => {
           }
         }}
       ></SchemaFromTextDialog>
-      <Content
-        openChatBot={() => setShowChatBot(true)}
-        isLeftExpanded={isLeftExpanded}
-        isRightExpanded={isRightExpanded}
-        showChatBot={showChatBot}
-        openTextSchema={openSchemaFromTextDialog}
-        openOrphanNodeDeletionModal={openOrphanNodeDeletionModal}
-        isSchema={isSchema}
-        setIsSchema={setIsSchema}
-        showEnhancementDialog={showEnhancementDialog}
-        toggleEnhancementDialog={toggleEnhancementDialog}
-        setOpenConnection={setOpenConnection}
-        showDisconnectButton={showDisconnectButton}
-        connectionStatus={connectionStatus}
-      />
-      {showDrawerChatbot && (
-        <DrawerChatbot
-          messages={messages}
-          isExpanded={isRightExpanded}
-          clearHistoryData={clearHistoryData}
+      <div
+        className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${
+          !isRightExpanded ? 'drawerchatbotclosed' : ''
+        } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
+      >
+        <SideNav
+          toggles3Modal={toggleS3Modal}
+          toggleGCSModal={toggleGCSModal}
+          toggleGenericModal={toggleGenericModal}
+          isExpanded={isLeftExpanded}
+          position='left'
+          toggleDrawer={toggleLeftDrawer}
+        />
+        {isLeftExpanded && (
+          <DrawerDropzone
+            shows3Modal={shows3Modal}
+            showGCSModal={showGCSModal}
+            showGenericModal={showGenericModal}
+            toggleGCSModal={toggleGCSModal}
+            toggleGenericModal={toggleGenericModal}
+            toggleS3Modal={toggleS3Modal}
+            isExpanded={isLeftExpanded}
+          />
+        )}
+        <Content
+          openChatBot={() => setShowChatBot(true)}
+          showChatBot={showChatBot}
+          openTextSchema={() => {
+            setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
+          }}
+          isSchema={isSchema}
+          setIsSchema={setIsSchema}
+          showEnhancementDialog={showEnhancementDialog}
+          toggleEnhancementDialog={toggleEnhancementDialog}
+          setOpenConnection={setOpenConnection}
+          showDisconnectButton={showDisconnectButton}
           connectionStatus={connectionStatus}
         />
-      )}
-      <SideNav
-        messages={messages}
-        isExpanded={isRightExpanded}
-        position='right'
-        toggleDrawer={toggleRightDrawer}
-        deleteOnClick={deleteOnClick}
-        showDrawerChatbot={showDrawerChatbot}
-        setShowDrawerChatbot={setShowDrawerChatbot}
-        setIsRightExpanded={setIsRightExpanded}
-        clearHistoryData={clearHistoryData}
-        toggleGCSModal={toggleGCSModal}
-        toggles3Modal={toggleS3Modal}
-        toggleGenericModal={toggleGenericModal}
-        setIsleftExpanded={setIsLeftExpanded}
-      />
-    </div>
+        {isRightExpanded && (
+          <DrawerChatbot
+            messages={messages}
+            isExpanded={isRightExpanded}
+            clearHistoryData={clearHistoryData}
+            connectionStatus={connectionStatus}
+          />
+        )}
+        <SideNav
+          messages={messages}
+          isExpanded={isRightExpanded}
+          position='right'
+          toggleDrawer={toggleRightDrawer}
+          deleteOnClick={deleteOnClick}
+          showDrawerChatbot={showDrawerChatbot}
+          setShowDrawerChatbot={setShowDrawerChatbot}
+          setIsRightExpanded={setIsRightExpanded}
+          clearHistoryData={clearHistoryData}
+          toggleGCSModal={toggleGCSModal}
+          toggles3Modal={toggleS3Modal}
+          toggleGenericModal={toggleGenericModal}
+          setIsleftExpanded={setIsLeftExpanded}
+        />
+      </div>
+    </>
   );
 };
 

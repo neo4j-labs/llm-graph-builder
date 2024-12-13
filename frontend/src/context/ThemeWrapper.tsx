@@ -45,7 +45,7 @@ const ThemeWrapper = ({ children }: ThemeWrapperProps) => {
   }
   return (
     <ThemeWrapperContext.Provider value={themeWrapperUtils}>
-      <NeedleThemeProvider theme={mode as 'light' | 'dark' | undefined} wrapperProps={{ isWrappingChildren: true }}>
+      <NeedleThemeProvider theme={mode as 'light' | 'dark' | undefined} wrapperProps={{ isWrappingChildren: false }}>
         {children}
       </NeedleThemeProvider>
     </ThemeWrapperContext.Provider>
