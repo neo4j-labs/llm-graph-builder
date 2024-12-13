@@ -39,7 +39,7 @@ starlette==0.41.3
 sse-starlette==2.1.3
 starlette-session==0.4.3
 tqdm==4.67.1
-unstructured[all-docs]==0.16.6
+unstructured[all-docs]
 unstructured==0.16.11
 unstructured-client==0.28.1
 unstructured-inference==0.8.1
