@@ -463,51 +463,52 @@ class graphDBdataAccess:
             param = {"document_name": document_name}
             result = self.execute_query(NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY, param)
         response = {}
-        for record in result:
-            filename = record["filename"]
-            chunkNodeCount = record["chunkNodeCount"]
-            chunkRelCount = record["chunkRelCount"]
-            entityNodeCount = record["entityNodeCount"]
-            entityEntityRelCount = record["entityEntityRelCount"]
-            if (not document_name) and (community_flag):
-                communityNodeCount = record["communityNodeCount"]
-                communityRelCount = record["communityRelCount"]
-            else:
-                communityNodeCount = 0
-                communityRelCount = 0
-            nodeCount = int(chunkNodeCount) + int(entityNodeCount) + int(communityNodeCount)
-            relationshipCount = int(chunkRelCount) + int(entityEntityRelCount) + int(communityRelCount)
-            update_query = """
-            MATCH (d:Document {fileName: $filename})
-            SET d.chunkNodeCount = $chunkNodeCount,
-                d.chunkRelCount = $chunkRelCount,
-                d.entityNodeCount = $entityNodeCount,
-                d.entityEntityRelCount = $entityEntityRelCount,
-                d.communityNodeCount = $communityNodeCount,
-                d.communityRelCount = $communityRelCount,
-                d.nodeCount = $nodeCount,
-                d.relationshipCount = $relationshipCount
-            """
-            self.execute_query(update_query,{
-                "filename": filename,
-                "chunkNodeCount": chunkNodeCount,
-                "chunkRelCount": chunkRelCount,
-                "entityNodeCount": entityNodeCount,
-                "entityEntityRelCount": entityEntityRelCount,
-                "communityNodeCount": communityNodeCount,
-                "communityRelCount": communityRelCount,
-                "nodeCount" : nodeCount,
-                "relationshipCount" : relationshipCount
-                })
-            
-            response[filename] = {"chunkNodeCount": chunkNodeCount,
-                "chunkRelCount": chunkRelCount,
-                "entityNodeCount": entityNodeCount,
-                "entityEntityRelCount": entityEntityRelCount,
-                "communityNodeCount": communityNodeCount,
-                "communityRelCount": communityRelCount,
-                "nodeCount" : nodeCount,
-                "relationshipCount" : relationshipCount
-                }
+        if result:
+            for record in result:
+                filename = record.get("filename",None)
+                chunkNodeCount = record.get("chunkNodeCount",0)
+                chunkRelCount = record.get("chunkRelCount",0)
+                entityNodeCount = record.get("entityNodeCount",0)
+                entityEntityRelCount = record.get("entityEntityRelCount",0)
+                if (not document_name) and (community_flag):
+                    communityNodeCount = record.get("communityNodeCount",0)
+                    communityRelCount = record.get("communityRelCount",0)
+                else:
+                    communityNodeCount = 0
+                    communityRelCount = 0
+                nodeCount = int(chunkNodeCount) + int(entityNodeCount) + int(communityNodeCount)
+                relationshipCount = int(chunkRelCount) + int(entityEntityRelCount) + int(communityRelCount)
+                update_query = """
+                MATCH (d:Document {fileName: $filename})
+                SET d.chunkNodeCount = $chunkNodeCount,
+                    d.chunkRelCount = $chunkRelCount,
+                    d.entityNodeCount = $entityNodeCount,
+                    d.entityEntityRelCount = $entityEntityRelCount,
+                    d.communityNodeCount = $communityNodeCount,
+                    d.communityRelCount = $communityRelCount,
+                    d.nodeCount = $nodeCount,
+                    d.relationshipCount = $relationshipCount
+                """
+                self.execute_query(update_query,{
+                    "filename": filename,
+                    "chunkNodeCount": chunkNodeCount,
+                    "chunkRelCount": chunkRelCount,
+                    "entityNodeCount": entityNodeCount,
+                    "entityEntityRelCount": entityEntityRelCount,
+                    "communityNodeCount": communityNodeCount,
+                    "communityRelCount": communityRelCount,
+                    "nodeCount" : nodeCount,
+                    "relationshipCount" : relationshipCount
+                    })
+                
+                response[filename] = {"chunkNodeCount": chunkNodeCount,
+                    "chunkRelCount": chunkRelCount,
+                    "entityNodeCount": entityNodeCount,
+                    "entityEntityRelCount": entityEntityRelCount,
+                    "communityNodeCount": communityNodeCount,
+                    "communityRelCount": communityRelCount,
+                    "nodeCount" : nodeCount,
+                    "relationshipCount" : relationshipCount
+                    }
             
         return response
