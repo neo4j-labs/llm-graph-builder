@@ -143,8 +143,6 @@ export interface DrawerProps {
 }
 
 export interface ContentProps {
-  isLeftExpanded: boolean;
-  isRightExpanded: boolean;
   showChatBot: boolean;
   openChatBot: () => void;
   openTextSchema: () => void;
@@ -158,7 +156,6 @@ export interface ContentProps {
 }
 
 export interface FileTableProps {
-  isExpanded: boolean;
   connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
   onInspect: (id: string) => void;
