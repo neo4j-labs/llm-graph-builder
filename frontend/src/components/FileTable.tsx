@@ -9,6 +9,7 @@ import {
   Typography,
   useCopyToClipboard,
   Checkbox,
+  useMediaQuery,
 } from '@neo4j-ndl/react';
 import { forwardRef, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
@@ -73,6 +74,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const [_, copy] = useCopyToClipboard();
   const { colorMode } = useContext(ThemeWrapperContext);
   const [copyRow, setCopyRow] = useState<boolean>(false);
+  const largedesktops = useMediaQuery(`(min-width:1440px )`);
 
   const tableRef = useRef(null);
 
@@ -996,7 +998,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
             }}
             isLoading={isLoading}
             rootProps={{
-              className: 'absolute top-[14%] h-[67%] left-10 filetable',
+              className: `absolute h-[67%] left-10 filetable ${!largedesktops ? 'top-[17%]' : 'top-[14%]'}`,
             }}
             components={{
               Body: () => (
