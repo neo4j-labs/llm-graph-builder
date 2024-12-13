@@ -46,14 +46,24 @@ class graphDBdataAccess:
                             d.relationshipCount = $r_count, d.model= $model, d.gcsBucket=$gcs_bucket, 
                             d.gcsBucketFolder= $gcs_bucket_folder, d.language= $language,d.gcsProjectId= $gcs_project_id,
                             d.is_cancelled=False, d.total_chunks=0, d.processed_chunk=0,
-                            d.access_token=$access_token""",
+                            d.access_token=$access_token,
+                            d.chunkNodeCount=$chunkNodeCount,d.chunkRelCount=$chunkRelCount,
+                            d.entityNodeCount=$entityNodeCount,d.entityEntityRelCount=$entityEntityRelCount,
+                            d.communityNodeCount=$communityNodeCount,d.communityRelCount=$communityRelCount""",
                             {"fn":obj_source_node.file_name, "fs":obj_source_node.file_size, "ft":obj_source_node.file_type, "st":job_status, 
                             "url":obj_source_node.url,
                             "awsacc_key_id":obj_source_node.awsAccessKeyId, "f_source":obj_source_node.file_source, "c_at":obj_source_node.created_at,
                             "u_at":obj_source_node.created_at, "pt":0, "e_message":'', "n_count":0, "r_count":0, "model":obj_source_node.model,
                             "gcs_bucket": obj_source_node.gcsBucket, "gcs_bucket_folder": obj_source_node.gcsBucketFolder, 
                             "language":obj_source_node.language, "gcs_project_id":obj_source_node.gcsProjectId,
-                            "access_token":obj_source_node.access_token})
+                            "access_token":obj_source_node.access_token,
+                            "chunkNodeCount":obj_source_node.chunkNodeCount,
+                            "chunkRelCount":obj_source_node.chunkRelCount,
+                            "entityNodeCount":obj_source_node.entityNodeCount,
+                            "entityEntityRelCount":obj_source_node.entityEntityRelCount,
+                            "communityNodeCount":obj_source_node.communityNodeCount,
+                            "communityRelCount":obj_source_node.communityRelCount
+                            })
         except Exception as e:
             error_message = str(e)
             logging.info(f"error_message = {error_message}")
@@ -466,13 +476,13 @@ class graphDBdataAccess:
         if result:
             for record in result:
                 filename = record.get("filename",None)
-                chunkNodeCount = record.get("chunkNodeCount",0)
-                chunkRelCount = record.get("chunkRelCount",0)
-                entityNodeCount = record.get("entityNodeCount",0)
-                entityEntityRelCount = record.get("entityEntityRelCount",0)
+                chunkNodeCount = int(record.get("chunkNodeCount",0))
+                chunkRelCount = int(record.get("chunkRelCount",0))
+                entityNodeCount = int(record.get("entityNodeCount",0))
+                entityEntityRelCount = int(record.get("entityEntityRelCount",0))
                 if (not document_name) and (community_flag):
-                    communityNodeCount = record.get("communityNodeCount",0)
-                    communityRelCount = record.get("communityRelCount",0)
+                    communityNodeCount = int(record.get("communityNodeCount",0))
+                    communityRelCount = int(record.get("communityRelCount",0))
                 else:
                     communityNodeCount = 0
                     communityRelCount = 0
