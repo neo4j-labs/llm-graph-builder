@@ -41,8 +41,6 @@ const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/Confirmati
 let afterFirstRender = false;
 
 const Content: React.FC<ContentProps> = ({
-  isLeftExpanded,
-  isRightExpanded,
   isSchema,
   setIsSchema,
   showEnhancementDialog,
@@ -267,7 +265,7 @@ const Content: React.FC<ContentProps> = ({
         fileItem.retryOption ?? '',
         fileItem.sourceUrl,
         localStorage.getItem('accesskey'),
-        localStorage.getItem('secretkey'),
+        atob(localStorage.getItem('secretkey')??''),
         fileItem.name ?? '',
         fileItem.gcsBucket ?? '',
         fileItem.gcsBucketFolder ?? '',
@@ -519,15 +517,6 @@ const Content: React.FC<ContentProps> = ({
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
   };
-
-  const classNameCheck =
-    isLeftExpanded && isRightExpanded
-      ? 'contentWithExpansion'
-      : isRightExpanded
-      ? 'contentWithChatBot'
-      : !isLeftExpanded && !isRightExpanded
-      ? 'w-[calc(100%-128px)]'
-      : 'contentWithDropzoneExpansion';
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -782,8 +771,21 @@ const Content: React.FC<ContentProps> = ({
       {showEnhancementDialog && (
         <GraphEnhancementDialog open={showEnhancementDialog} onClose={toggleEnhancementDialog}></GraphEnhancementDialog>
       )}
-      <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
-        <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row' flexWrap='wrap'>
+      <GraphViewModal
+        inspectedName={inspectedName}
+        open={openGraphView}
+        setGraphViewOpen={setOpenGraphView}
+        viewPoint={viewPoint}
+        selectedRows={childRef.current?.getSelectedRows()}
+      />
+      <div className={`n-bg-palette-neutral-bg-default main-content-wrapper`}>
+        <Flex
+          className='w-full absolute top-0'
+          alignItems='center'
+          justifyContent='space-between'
+          flexDirection='row'
+          flexWrap='wrap'
+        >
           <div className='connectionstatus__container'>
             <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
             <Typography variant='body-medium'>
@@ -847,7 +849,6 @@ const Content: React.FC<ContentProps> = ({
           </div>
         </Flex>
         <FileTable
-          isExpanded={isLeftExpanded && isRightExpanded}
           connectionStatus={connectionStatus}
           setConnectionStatus={setConnectionStatus}
           onInspect={(name) => {
@@ -874,21 +875,21 @@ const Content: React.FC<ContentProps> = ({
           handleGenerateGraph={processWaitingFilesOnRefresh}
         ></FileTable>
         <Flex
-          className={`${
-            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+          className={`p-2.5  mt-1.5 absolute bottom-0 w-full`}
           justifyContent='space-between'
           flexDirection={isTablet ? 'column' : 'row'}
         >
-          <DropdownComponent
-            onSelect={handleDropdownChange}
-            options={llms ?? ['']}
-            placeholder='Select LLM Model'
-            defaultValue={model}
-            view='ContentView'
-            isDisabled={false}
-          />
-          <Flex flexDirection='row' gap='4' className='self-end' flexWrap='wrap'>
+          <div>
+            <DropdownComponent
+              onSelect={handleDropdownChange}
+              options={llms ?? ['']}
+              placeholder='Select LLM Model'
+              defaultValue={model}
+              view='ContentView'
+              isDisabled={false}
+            />
+          </div>
+          <Flex flexDirection='row' gap='4' className='self-end mb-2.5' flexWrap='wrap'>
             <ButtonWithToolTip
               text={tooltips.generateGraph}
               placement='top'
@@ -940,13 +941,6 @@ const Content: React.FC<ContentProps> = ({
           </Flex>
         </Flex>
       </div>
-      <GraphViewModal
-        inspectedName={inspectedName}
-        open={openGraphView}
-        setGraphViewOpen={setOpenGraphView}
-        viewPoint={viewPoint}
-        selectedRows={childRef.current?.getSelectedRows()}
-      />
     </>
   );
 };

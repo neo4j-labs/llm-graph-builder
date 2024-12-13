@@ -58,7 +58,7 @@ import BreakDownPopOver from './BreakDownPopOver';
 let onlyfortheFirstRender = true;
 
 const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
-  const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry, onChunkView } = props;
+  const { connectionStatus, setConnectionStatus, onInspect, onRetry, onChunkView } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
   const { userCredentials, isReadOnlyUser } = useCredentials();
@@ -976,8 +976,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     [table]
   );
 
-  const classNameCheck = isExpanded ? 'fileTableWithExpansion' : `filetable`;
-
   useEffect(() => {
     setSelectedRows(table.getSelectedRowModel().rows.map((i) => i.id));
   }, [table.getSelectedRowModel()]);
@@ -986,49 +984,47 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     <>
       {filesData ? (
         <>
-          <div className={`${isExpanded ? 'w-[calc(100%-64px)]' : 'mx-auto w-[calc(100%-100px)]'}`}>
-            <DataGrid
-              ref={tableRef}
-              isResizable={true}
-              tableInstance={table}
-              styling={{
-                borderStyle: 'all-sides',
-                hasZebraStriping: true,
-                headerStyle: 'clean',
-              }}
-              isLoading={isLoading}
-              rootProps={{
-                className: classNameCheck,
-              }}
-              components={{
-                Body: () => (
-                  <DataGridComponents.Body
+          <DataGrid
+            ref={tableRef}
+            isResizable={true}
+            tableInstance={table}
+            styling={{
+              borderStyle: 'all-sides',
+              hasZebraStriping: true,
+              headerStyle: 'clean',
+            }}
+            isLoading={isLoading}
+            rootProps={{
+              className: 'absolute top-[14%] h-[67%] left-10 filetable',
+            }}
+            components={{
+              Body: () => (
+                <DataGridComponents.Body
+                  innerProps={{
+                    className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
+                  }}
+                />
+              ),
+              PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
+                return (
+                  <DataGridComponents.PaginationNumericButton
+                    {...restProps}
+                    isSelected={isSelected}
                     innerProps={{
-                      className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
+                      ...innerProps,
+                      style: {
+                        ...(isSelected && {
+                          backgroundSize: '200% auto',
+                          borderRadius: '10px',
+                        }),
+                      },
                     }}
                   />
-                ),
-                PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
-                  return (
-                    <DataGridComponents.PaginationNumericButton
-                      {...restProps}
-                      isSelected={isSelected}
-                      innerProps={{
-                        ...innerProps,
-                        style: {
-                          ...(isSelected && {
-                            backgroundSize: '200% auto',
-                            borderRadius: '10px',
-                          }),
-                        },
-                      }}
-                    />
-                  );
-                },
-              }}
-              isKeyboardNavigable={false}
-            />
-          </div>
+                );
+              },
+            }}
+            isKeyboardNavigable={false}
+          />
         </>
       ) : null}
     </>
