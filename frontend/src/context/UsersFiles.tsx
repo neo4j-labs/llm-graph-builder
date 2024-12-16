@@ -6,9 +6,10 @@ import {
   OptionType,
   showTextFromSchemaDialogType,
 } from '../types';
-import { chatModeLables, getStoredSchema, llms, PRODMODLES } from '../utils/Constants';
+import { chatModeLables, llms, PRODMODLES } from '../utils/Constants';
 import { useCredentials } from './UserCredentials';
 import Queue from '../utils/Queue';
+import { getStoredSchema } from '../utils/Utils';
 
 const FileContext = createContext<FileContextType | undefined>(undefined);
 

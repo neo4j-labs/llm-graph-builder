@@ -17,7 +17,7 @@ import type { Node, Relationship } from '@neo4j-nvl/base';
 import {
   ArrowPathIconOutline,
   FitToScreenIcon,
-  InformationCircleIconOutline,
+  // InformationCircleIconOutline,
   MagnifyingGlassMinusIconOutline,
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
@@ -26,12 +26,13 @@ import { filterData, getCheckboxConditions, graphTypeFromNodes, processGraphData
 import { useCredentials } from '../../context/UserCredentials';
 
 import { graphQueryAPI } from '../../services/GraphQuery';
-import { graphLabels, nvlOptions, queryMap } from '../../utils/Constants';
+import { GRAPH_CHUNK_LIMIT, graphLabels, nvlOptions, queryMap } from '../../utils/Constants';
 import CheckboxSelection from './CheckboxSelection';
 
 import ResultOverview from './ResultOverview';
 import { ResizePanelDetails } from './ResizePanel';
 import GraphPropertiesPanel from './GraphPropertiesPanel';
+import SliderSelection from '../../utils/Slider';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -59,6 +60,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
   const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
   const [mode, setMode] = useState<boolean>(false);
+  const [sliderValue, setSliderValue] = useState<number>(GRAPH_CHUNK_LIMIT);
 
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
@@ -116,14 +118,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           ? await graphQueryAPI(
               userCredentials as UserCredentials,
               graphQuery,
-              selectedRows?.map((f) => f.name)
+              selectedRows?.map((f) => f.name),
+              sliderValue
             )
-          : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
+          : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? ''], sliderValue);
       return nodeRelationshipData;
     } catch (error: any) {
       console.log(error);
     }
-  }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials]);
+  }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials, sliderValue]);
 
   // Api call to get the nodes and relations
   const graphApi = async (mode?: string) => {
@@ -178,7 +181,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         setLoading(false);
       }
     }
-  }, [open]);
+  }, [open, sliderValue]);
 
   useEffect(() => {
     if (debouncedQuery) {
@@ -317,6 +320,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setAllRelationships([]);
     setSearchQuery('');
     setSelected(undefined);
+    setSliderValue(GRAPH_CHUNK_LIMIT);
   };
 
   const mouseEventCallbacks = {
@@ -332,6 +336,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     onPan: true,
     onZoom: true,
     onDrag: true,
+  };
+
+  const handleSliderChange = (value: number) => {
+    setSliderValue(value);
+    console.log('Slider value updated:', value);
   };
 
   return (
@@ -351,23 +360,31 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       >
         <Dialog.Header htmlAttributes={{ id: 'graph-title' }}>
           {headerTitle}
-          {viewPoint !== graphLabels.chatInfoView && (
+          {/* {viewPoint !== graphLabels.chatInfoView && (
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <span>
                 <InformationCircleIconOutline className='n-size-token-6' />
               </span>
               <span className='n-body-small ml-1'>{graphLabels.chunksInfo}</span>
             </div>
-          )}
-          <Flex className='w-full' alignItems='center' flexDirection='row'>
-            {checkBoxView && (
-              <CheckboxSelection
-                graphType={graphType}
+          )} */}
+          <Flex className='w-full' alignItems='center' flexDirection='row' justifyContent='space-between'>
+            <>
+              {checkBoxView && (
+                <CheckboxSelection
+                  graphType={graphType}
+                  loading={loading}
+                  handleChange={handleCheckboxChange}
+                  {...getCheckboxConditions(allNodes)}
+                />
+              )}
+              <SliderSelection
                 loading={loading}
-                handleChange={handleCheckboxChange}
-                {...getCheckboxConditions(allNodes)}
+                graphType={graphType}
+                handleChange={handleSliderChange}
+                sliderValue={sliderValue}
               />
-            )}
+            </>
           </Flex>
         </Dialog.Header>
         <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border border-palette-neutral-border-weak'>

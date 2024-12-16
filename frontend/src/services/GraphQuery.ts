@@ -4,7 +4,8 @@ import api from '../API/Index';
 export const graphQueryAPI = async (
   userCredentials: UserCredentials,
   query_type: string,
-  document_names: (string | undefined)[] | undefined
+  document_names: (string | undefined)[] | undefined,
+  chunksPerDocument: number
 ) => {
   try {
     const formData = new FormData();
@@ -14,6 +15,7 @@ export const graphQueryAPI = async (
     formData.append('password', userCredentials?.password ?? '');
     formData.append('query_type', query_type ?? 'entities');
     formData.append('document_names', JSON.stringify(document_names));
+    formData.append('chunksPerDocument', JSON.stringify(chunksPerDocument));
 
     const response = await api.post(`/graph_query`, formData, {
       headers: {

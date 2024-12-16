@@ -441,6 +441,7 @@ async def graph_query(
     userName: str = Form(),
     password: str = Form(),
     document_names: str = Form(None),
+    chunksPerDocument:str = Form(),
 ):
     try:
         start = time.time()
@@ -450,11 +451,12 @@ async def graph_query(
             username=userName,
             password=password,
             database=database,
-            document_names=document_names
+            document_names=document_names,
+            chunksPerDocument=chunksPerDocument
         )
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'graph_query','db_url':uri, 'userName':userName, 'database':database, 'document_names':document_names, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        json_obj = {'api_name':'graph_query','db_url':uri, 'userName':userName, 'database':database, 'document_names':document_names, 'chunksPerDocument':chunksPerDocument, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:

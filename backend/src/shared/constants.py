@@ -19,7 +19,7 @@ ORDER BY d.createdAt DESC
 CALL {{
   WITH d
   OPTIONAL MATCH chunks = (d)<-[:PART_OF|FIRST_CHUNK]-(c:Chunk)
-  RETURN c, chunks LIMIT {graph_chunk_limit}
+  RETURN c, chunks LIMIT $chunksPerDocument
 }}
 
 WITH collect(distinct docs) AS docs, 
