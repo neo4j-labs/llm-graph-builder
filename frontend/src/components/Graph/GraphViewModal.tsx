@@ -342,6 +342,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   };
 
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
+    setStatus('unknown');
     if (selectedOption?.value) {
       setSliderValue(selectedOption?.value);
     }
@@ -364,14 +365,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       >
         <Dialog.Header htmlAttributes={{ id: 'graph-title' }}>
           {headerTitle}
-          {/* {viewPoint !== graphLabels.chatInfoView && (
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span>
-                <InformationCircleIconOutline className='n-size-token-6' />
-              </span>
-              <span className='n-body-small ml-1'>{graphLabels.chunksInfo}</span>
-            </div>
-          )} */}
           <Flex className='w-full' alignItems='center' flexDirection='row' justifyContent='space-between'>
             <>
               {checkBoxView && (
