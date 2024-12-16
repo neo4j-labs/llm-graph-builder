@@ -703,6 +703,9 @@ export interface ReusableDropdownProps extends DropdownProps {
   view?: 'ContentView' | 'GraphView';
   isDisabled: boolean;
   value?: OptionType;
+  label?: string;
+  helpText?: string;
+  size?: 'small' | 'medium' | 'large';
 }
 export interface ChildRef {
   getSelectedRows: () => CustomFile[];

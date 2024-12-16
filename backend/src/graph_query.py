@@ -203,6 +203,7 @@ def get_graph_results(uri, username, password,database,document_names,chunksPerD
         driver = get_graphDB_driver(uri, username, password,database)  
         document_names= list(map(str.strip, json.loads(document_names)))
         query = GRAPH_QUERY.format(graph_chunk_limit=int(chunksPerDocument))
+        print(query)
         records, summary , keys = execute_query(driver, query.strip(), document_names)
         document_nodes = extract_node_elements(records)
         document_relationships = extract_relationships(records)

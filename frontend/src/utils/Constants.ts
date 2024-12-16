@@ -336,4 +336,14 @@ export const metricsinfo: Record<string, string> = {
   context_entity_recall: 'Determines the recall of entities present in both generated answer and retrieved contexts',
 };
 
-export const GRAPH_CHUNK_LIMIT = 50;
+export const GRAPH_CHUNK_LIMIT = '50';
+export const graph_chunk_limit = [
+        '25',
+        '50',
+        '75',
+        '100',
+        '125',
+        '150',
+        '175',
+        '200',
+      ];

@@ -12,6 +12,9 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   view,
   isDisabled,
   value,
+  label,
+  helpText,
+  size
 }) => {
   const isProdEnv = process.env.VITE_ENV === 'PROD';
   const isLargeDesktop = useMediaQuery(`(min-width:1440px )`);
@@ -28,8 +31,8 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
       <div className={view === 'ContentView' ? 'w-[150px]' : ''}>
         <Select
           type='select'
-          label='LLM Models'
-          helpText={<div className='!w-max'> LLM Model used for Extraction & Chat</div>}
+          label={label}
+          helpText={<div className='!w-max'>{helpText}</div>}
           selectProps={{
             onChange: handleChange,
             // @ts-ignore
@@ -38,7 +41,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
               const value = typeof option === 'string' ? option : option.value;
               const isModelSupported = !isProdEnv || prodllms?.includes(value);
               return {
-                label: !isModelSupported ? (
+                label: !isModelSupported && view === 'ContentView' ? (
                   <Tooltip type='simple' placement={isLargeDesktop ? 'left' : 'right'}>
                     <Tooltip.Trigger>
                       <span>{label}</span>
@@ -60,7 +63,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
             isDisabled: isDisabled,
             value: value,
           }}
-          size='medium'
+          size={size}
           isFluid
           htmlAttributes={{
             'aria-label': 'A selection dropdown',

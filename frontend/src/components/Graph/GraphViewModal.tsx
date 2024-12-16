@@ -8,6 +8,7 @@ import {
   ExtendedRelationship,
   GraphType,
   GraphViewModalProps,
+  OptionType,
   Scheme,
   UserCredentials,
 } from '../../types';
@@ -17,6 +18,7 @@ import type { Node, Relationship } from '@neo4j-nvl/base';
 import {
   ArrowPathIconOutline,
   FitToScreenIcon,
+  InformationCircleIconOutline,
   // InformationCircleIconOutline,
   MagnifyingGlassMinusIconOutline,
   MagnifyingGlassPlusIconOutline,
@@ -26,13 +28,14 @@ import { filterData, getCheckboxConditions, graphTypeFromNodes, processGraphData
 import { useCredentials } from '../../context/UserCredentials';
 
 import { graphQueryAPI } from '../../services/GraphQuery';
-import { GRAPH_CHUNK_LIMIT, graphLabels, nvlOptions, queryMap } from '../../utils/Constants';
+import { graph_chunk_limit, GRAPH_CHUNK_LIMIT, graphLabels, nvlOptions, queryMap } from '../../utils/Constants';
 import CheckboxSelection from './CheckboxSelection';
 
 import ResultOverview from './ResultOverview';
 import { ResizePanelDetails } from './ResizePanel';
 import GraphPropertiesPanel from './GraphPropertiesPanel';
 import SliderSelection from '../../utils/Slider';
+import DropdownComponent from '../Dropdown';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -60,16 +63,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
   const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
   const [mode, setMode] = useState<boolean>(false);
-  const [sliderValue, setSliderValue] = useState<number>(GRAPH_CHUNK_LIMIT);
+  const [sliderValue, setSliderValue] = useState<string>(GRAPH_CHUNK_LIMIT);
 
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-      ? queryMap.DocChunks
-      : graphType.includes('Entities')
-      ? queryMap.Entities
-      : '';
+        ? queryMap.DocChunks
+        : graphType.includes('Entities')
+          ? queryMap.Entities
+          : '';
 
   // fit graph to original position
   const handleZoomToFit = () => {
@@ -116,11 +119,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
-              userCredentials as UserCredentials,
-              graphQuery,
-              selectedRows?.map((f) => f.name),
-              sliderValue
-            )
+            userCredentials as UserCredentials,
+            graphQuery,
+            selectedRows?.map((f) => f.name),
+            sliderValue
+          )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? ''], sliderValue);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -338,9 +341,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     onDrag: true,
   };
 
-  const handleSliderChange = (value: number) => {
-    setSliderValue(value);
-    console.log('Slider value updated:', value);
+  const handleDropdownChange = (selectedOption: OptionType | null | void) => {
+    if (selectedOption?.value) {
+      setSliderValue(selectedOption?.value);
+    }
   };
 
   return (
@@ -378,11 +382,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                   {...getCheckboxConditions(allNodes)}
                 />
               )}
-              <SliderSelection
-                loading={loading}
-                graphType={graphType}
-                handleChange={handleSliderChange}
-                sliderValue={sliderValue}
+              <DropdownComponent
+                onSelect={handleDropdownChange}
+                options={graph_chunk_limit ?? ['']}
+                placeholder='Select Chunk Limit'
+                defaultValue={GRAPH_CHUNK_LIMIT}
+                view='GraphView'
+                isDisabled={loading}
+                label='Chunk Limit'
+                helpText='Chunk limit used for graph visualization'
+                size='small'
               />
             </>
           </Flex>
