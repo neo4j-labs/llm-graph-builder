@@ -974,8 +974,8 @@ async def fetch_chunktext(
        gc.collect()
 
 
-@app.post("/backend_connection_configuation")
-async def backend_connection_configuation():
+@app.post("/backend_connection_configuration")
+async def backend_connection_configuration():
     try:
         uri = os.getenv('NEO4J_URI')
         username= os.getenv('NEO4J_USERNAME')
