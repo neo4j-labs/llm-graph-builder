@@ -441,7 +441,7 @@ async def graph_query(
     userName: str = Form(),
     password: str = Form(),
     document_names: str = Form(None),
-    chunksPerDocument:str = Form(),
+    chunksPerDocument:str = Form(None),
 ):
     try:
         start = time.time()
