@@ -308,6 +308,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
   logging.info(f'Time taken database connection: {elapsed_create_connection:.2f} seconds')
   uri_latency["create_connection"] = f'{elapsed_create_connection:.2f}'
   graphDb_data_Access = graphDBdataAccess(graph)
+  create_chunk_vector_index(graph)
   start_get_chunkId_chunkDoc_list = time.time()
   total_chunks, chunkId_chunkDoc_list = get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition)
   end_get_chunkId_chunkDoc_list = time.time()
@@ -457,7 +458,7 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password,
     graph = create_graph_database_connection(uri, userName, password, database)
   
   start_update_embedding = time.time()
-  update_embedding_create_vector_index( graph, chunkId_chunkDoc_list, file_name)
+  create_chunk_embeddings( graph, chunkId_chunkDoc_list, file_name)
   end_update_embedding = time.time()
   elapsed_update_embedding = end_update_embedding - start_update_embedding
   logging.info(f'Time taken to update embedding in chunk node: {elapsed_update_embedding:.2f} seconds')
