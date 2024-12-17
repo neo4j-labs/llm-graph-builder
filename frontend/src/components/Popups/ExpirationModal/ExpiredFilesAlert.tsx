@@ -6,6 +6,7 @@ import { FC } from 'react';
 import BellImage from '../../../assets/images/Stopwatch-blue.svg';
 import AlertIcon from '../../Layout/AlertIcon';
 import { isExpired } from '../../../utils/Utils';
+import { EXPIRATION_DAYS } from '../../../utils/Constants';
 
 const ExpiredFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }) => {
   return (
@@ -20,7 +21,7 @@ const ExpiredFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }
           <Typography variant='h3'>Document Expiration Notice</Typography>
           <Typography variant='body-medium'>
             One or more of your selected documents are expired as per the expiration policy we are storing documents for
-            only 3 days . Please delete and reupload the documents.
+            only {EXPIRATION_DAYS} days . Please delete and reupload the documents.
           </Typography>
           <List className='max-h-80 overflow-y-auto'>
             {Files.map((f, i) => {
