@@ -180,7 +180,7 @@ def create_chunk_vector_index(graph):
                                     graph=graph,
                                     node_label="Chunk", 
                                     embedding_node_property="embedding",
-                                    index_name="vector_index"
+                                    index_name="vector"
                                     )
             vector_store.create_new_index()
             logging.info(f"Index created successfully. Time taken: {time.time() - start_time:.2f} seconds")
