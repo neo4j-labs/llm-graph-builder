@@ -135,14 +135,17 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const graphApi = async (mode?: string) => {
     try {
       const result = await fetchData();
-      if (result && result.data.data.nodes.length > 0) {
-        const neoNodes = result.data.data.nodes;
+      // Check for valid result data
+      if (result?.data?.status === 'Success' && result.data.data.nodes.length > 0) {
+        const { nodes: neoNodes, relationships: neoRels } = result.data.data;
+        // Create a set of valid node IDs
         const nodeIds = new Set(neoNodes.map((node: any) => node.element_id));
-        const neoRels = result.data.data.relationships
-          .map((f: Relationship) => f)
-          .filter((rel: any) => nodeIds.has(rel.end_node_element_id) && nodeIds.has(rel.start_node_element_id));
-        const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels);
-
+        // Filter relationships to include only those with valid node IDs
+        const filteredRels = neoRels.filter(
+          (rel: any) => nodeIds.has(rel.start_node_element_id) && nodeIds.has(rel.end_node_element_id)
+        );
+        // Process graph data
+        const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, filteredRels);
         if (mode === 'refreshMode') {
           initGraph(graphType, finalNodes, finalRels, schemeVal);
         } else {
@@ -151,20 +154,32 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           setNewScheme(schemeVal);
           setLoading(false);
         }
+        // Update state
         setAllNodes(finalNodes);
         setAllRelationships(finalRels);
         setScheme(schemeVal);
         setDisableRefresh(false);
       } else {
-        setLoading(false);
-        setStatus('danger');
-        setStatusMessage(`No Nodes and Relations for the ${inspectedName} file`);
+        handleEmptyResult(result);
       }
     } catch (error: any) {
-      setLoading(false);
-      setStatus('danger');
-      setStatusMessage(error.message);
+      handleError(error);
     }
+  };
+  // Helper function to handle empty result cases
+  const handleEmptyResult = (result: any) => {
+    setLoading(false);
+    setStatus('danger');
+    const message = viewPoint === 'tableView'
+      ? `No Nodes and Relations for the ${inspectedName} file`
+      : result?.data?.message || 'An error occurred';
+    setStatusMessage(message);
+  };
+  // Helper function to handle errors
+  const handleError = (error: any) => {
+    setLoading(false);
+    setStatus('danger');
+    setStatusMessage(error.message || 'An unexpected error occurred');
   };
 
   useEffect(() => {

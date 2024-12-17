@@ -20,9 +20,11 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   const isLargeDesktop = useMediaQuery(`(min-width:1440px )`);
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);
-    const existingModel = localStorage.getItem('selectedModel');
-    if (existingModel != selectedOption?.value) {
-      localStorage.setItem('selectedModel', selectedOption?.value ?? '');
+    if (view === 'ContentView') {
+      const existingModel = localStorage.getItem('selectedModel');
+      if (existingModel != selectedOption?.value) {
+        localStorage.setItem('selectedModel', selectedOption?.value ?? '');
+      }
     }
   };
   const allOptions = useMemo(() => options, [options]);
@@ -52,7 +54,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
                   <span>{label}</span>
                 ),
                 value,
-                isDisabled: !isModelSupported,
+                isDisabled: view === 'ContentView' ? !isModelSupported : isDisabled
               };
             }),
             placeholder: placeholder || 'Select an option',
