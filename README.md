@@ -36,16 +36,15 @@ EX:
 ```env
 VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
 ```
-According to the environment, we are configuring the models which indicated by VITE_LLM_MODELS_PROD variable we can configure models based on our needs.
-EX:
-```env
-VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
-```
 
 if you only want OpenAI:
 ```env
 VITE_LLM_MODELS_PROD="diffbot,openai-gpt-3.5,openai-gpt-4o"
 VITE_LLM_MODELS_PROD="diffbot,openai-gpt-3.5,openai-gpt-4o"
+```
+
+Backend ENV
+```env
 OPENAI_API_KEY="your-openai-key"
 ```
 
@@ -53,8 +52,12 @@ if you only want Diffbot:
 ```env
 VITE_LLM_MODELS_PROD="diffbot"
 VITE_LLM_MODELS_PROD="diffbot"
-DIFFBOT_API_KEY="your-diffbot-key"
 ```
+
+Backend ENV
+```env
+DIFFBOT_API_KEY="your-diffbot-key"
+``
 
 You can then run Docker Compose to build and start all components:
 ```bash
