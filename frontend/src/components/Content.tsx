@@ -35,6 +35,7 @@ import { useMessageContext } from '../context/UserMessages';
 import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
 import { getChunkText } from '../services/getChunkText';
 import ChunkPopUp from './Popups/ChunkPopUp';
+import { isExpired } from '../utils/Utils';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -55,8 +56,10 @@ const Content: React.FC<ContentProps> = ({
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [documentName, setDocumentName] = useState<string>('');
-  const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser } = useCredentials();
+  const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser, isGCSActive } =
+    useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
+  const [showExpirationModal, setshowExpirationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [retryFile, setRetryFile] = useState<string>('');
   const [retryLoading, setRetryLoading] = useState<boolean>(false);
@@ -662,7 +665,8 @@ const Content: React.FC<ContentProps> = ({
   const onClickHandler = () => {
     const selectedRows = childRef.current?.getSelectedRows();
     if (selectedRows?.length) {
-      let selectedLargeFiles: CustomFile[] = [];
+      const selectedLargeFiles: CustomFile[] = [];
+      const expiredFiles: CustomFile[] = [];
       for (let index = 0; index < selectedRows.length; index++) {
         const parsedData: CustomFile = selectedRows[index];
         if (
@@ -673,9 +677,18 @@ const Content: React.FC<ContentProps> = ({
         ) {
           selectedLargeFiles.push(parsedData);
         }
+        if (
+          parsedData.fileSource === 'local file' &&
+          (parsedData.status === 'New' || parsedData.status == 'Ready to Reprocess') &&
+          isExpired(parsedData?.createdAt as Date)
+        ) {
+          expiredFiles.push(parsedData);
+        }
       }
       if (selectedLargeFiles.length) {
         setshowConfirmationModal(true);
+      } else if (expiredFiles.length && isGCSActive) {
+        setshowExpirationModal(true);
       } else {
         handleGenerateGraph(selectedRows.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess'));
       }
@@ -690,6 +703,21 @@ const Content: React.FC<ContentProps> = ({
         }
         return false;
       });
+      const expiredFiles = filesData.filter((f) => {
+        console.log(
+          f.fileSource === 'local file'
+            ? { isExpired: isExpired(f?.createdAt as Date), name: f.name, createdAt: f.createdAt }
+            : 'Not Local File'
+        );
+        if (
+          f.fileSource === 'local file' &&
+          (f.status === 'New' || f.status == 'Ready to Reprocess') &&
+          isExpired(f?.createdAt as Date)
+        ) {
+          return true;
+        }
+        return false;
+      });
       const selectAllNewFiles = filesData.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess');
       const stringified = selectAllNewFiles.reduce((accu, f) => {
         const key = f.id;
@@ -697,9 +725,12 @@ const Content: React.FC<ContentProps> = ({
         accu[key] = true;
         return accu;
       }, {});
+      console.log(expiredFiles);
       setRowSelection(stringified);
       if (largefiles.length) {
         setshowConfirmationModal(true);
+      } else if (expiredFiles.length && isGCSActive) {
+        setshowExpirationModal(true);
       } else {
         handleGenerateGraph(filesData.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess'));
       }
@@ -726,6 +757,19 @@ const Content: React.FC<ContentProps> = ({
             onClose={() => setshowConfirmationModal(false)}
             loading={extractLoading}
             selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
+          ></ConfirmationDialog>
+        </Suspense>
+      )}
+      {showExpirationModal && filesForProcessing.length && (
+        <Suspense fallback={<FallBackDialog />}>
+          <ConfirmationDialog
+            open={showExpirationModal}
+            largeFiles={filesForProcessing}
+            extractHandler={handleGenerateGraph}
+            onClose={() => setshowExpirationModal(false)}
+            loading={extractLoading}
+            selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
+            isLargeDocumentAlert={false}
           ></ConfirmationDialog>
         </Suspense>
       )}

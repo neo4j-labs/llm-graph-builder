@@ -34,6 +34,7 @@ import {
   getFileSourceStatus,
   isProcessingFileValid,
   capitalizeWithUnderscore,
+  getParsedDate,
 } from '../utils/Utils';
 import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, ChildRef } from '../types';
 import { useCredentials } from '../context/UserCredentials';
@@ -763,6 +764,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   entityEntityRelCount: item.entityEntityRelCount ?? 0,
                   communityNodeCount: item.communityNodeCount ?? 0,
                   communityRelCount: item.communityRelCount ?? 0,
+                  createdAt: item.createdAt != undefined ? getParsedDate(item?.createdAt) : undefined,
                 });
               }
             });
@@ -783,6 +785,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         }
         setIsLoading(false);
       } catch (error: any) {
+        console.log(error);
         if (error instanceof Error) {
           showErrorToast(error.message);
         }
