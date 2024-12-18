@@ -1,4 +1,4 @@
-import { Drawer, Flex, StatusIndicator, Typography } from '@neo4j-ndl/react';
+import { Drawer, Flex, StatusIndicator, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import DropZone from '../DataSources/Local/DropZone';
 import React, { useMemo, Suspense, lazy } from 'react';
 import S3Component from '../DataSources/AWS/S3Bucket';
@@ -25,6 +25,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
 }) => {
   const { closeAlert, alertState } = useAlertContext();
   const { isReadOnlyUser, isBackendConnected } = useCredentials();
+  const largedesktops = useMediaQuery(`(min-width:1440px )`);
 
   const isYoutubeOnlyCheck = useMemo(
     () => APP_SOURCES?.includes('youtube') && !APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('web'),
@@ -40,7 +41,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
   );
 
   return (
-    <div className='flex min-h-[calc(-58px+100vh)] relative'>
+    <div className={`flex relative ${!largedesktops ? 'w-0 h-0' : 'min-h-[calc(-58px+100vh)]'}`}>
       <Drawer
         isExpanded={isExpanded}
         position='left'

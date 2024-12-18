@@ -970,26 +970,28 @@ async def fetch_chunktext(
        gc.collect()
 
 
-@app.post("/backend_connection_configuation")
-async def backend_connection_configuation():
+@app.post("/backend_connection_configuration")
+async def backend_connection_configuration():
     try:
-        graph = Neo4jGraph()
-        logging.info(f'login connection status of object: {graph}')
-        if graph is not None:
-            graph_connection = True
-            isURI = os.getenv('NEO4J_URI')
-            isUsername= os.getenv('NEO4J_USERNAME')
-            isDatabase= os.getenv('NEO4J_DATABASE')
-            isPassword= os.getenv('NEO4J_PASSWORD')
-            encoded_password = encode_password(isPassword)
-            graphDb_data_Access = graphDBdataAccess(graph)
-            result = graphDb_data_Access.connection_check_and_get_vector_dimensions(isDatabase)
-            result["graph_connection"] = graph_connection
-            result["uri"] = isURI
-            result["user_name"] = isUsername
-            result["database"] = isDatabase
-            result["password"] = encoded_password
-            return create_api_response('Success',message=f"Backend connection successful",data=result)
+        uri = os.getenv('NEO4J_URI')
+        username= os.getenv('NEO4J_USERNAME')
+        database= os.getenv('NEO4J_DATABASE')
+        password= os.getenv('NEO4J_PASSWORD')
+        if all([uri, username, database, password]):
+            print(f'uri:{uri}, usrName:{username}, database :{database}, password: {password}')
+            graph = Neo4jGraph()
+            logging.info(f'login connection status of object: {graph}')
+            if graph is not None:
+                graph_connection = True        
+                encoded_password = encode_password(password)
+                graphDb_data_Access = graphDBdataAccess(graph)
+                result = graphDb_data_Access.connection_check_and_get_vector_dimensions(database)
+                result["graph_connection"] = graph_connection
+                result["uri"] = uri
+                result["user_name"] = username
+                result["database"] = database
+                result["password"] = encoded_password
+                return create_api_response('Success',message=f"Backend connection successful",data=result)
         else:
             graph_connection = False
             return create_api_response('Success',message=f"Backend connection is not successful",data=graph_connection)

@@ -11,6 +11,12 @@ class sourceNode:
     gcsBucketFolder:str=None
     gcsProjectId:str=None
     awsAccessKeyId:str=None
+    chunkNodeCount:int=None
+    chunkRelCount:int=None
+    entityNodeCount:int=None
+    entityEntityRelCount:int=None
+    communityNodeCount:int=None
+    communityRelCount:int=None
     node_count:int=None
     relationship_count:str=None
     model:str=None

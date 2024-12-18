@@ -17,6 +17,7 @@ nltk.download('punkt')
 load_dotenv()
 
 EMBEDDING_MODEL = os.getenv("RAGAS_EMBEDDING_MODEL")
+logging.info(f"Loading embedding model '{EMBEDDING_MODEL}' for ragas evaluation")
 EMBEDDING_FUNCTION, _ = load_embedding_model(EMBEDDING_MODEL)
 
 def get_ragas_metrics(question: str, context: list, answer: list, model: str):

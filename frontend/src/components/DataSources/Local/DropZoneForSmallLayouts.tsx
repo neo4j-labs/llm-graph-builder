@@ -141,6 +141,7 @@ export default function DropZoneForSmallLayouts() {
       'application/vnd.ms-powerpoint': ['.pptx'],
       'application/vnd.ms-excel': ['.xls'],
       'text/markdown': ['.md'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':['.xlsx']
     },
     onDrop: (f: Partial<globalThis.File>[]) => {
       onDropHandler(f);
