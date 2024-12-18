@@ -89,7 +89,6 @@ VITE_CHAT_MODES=""
 If however you want to specify the only vector mode or only graph mode you can do that by specifying the mode in the env:
 ```env
 VITE_CHAT_MODES="vector,graph"
-VITE_CHAT_MODES="vector,graph"
 ```
 
 #### Running Backend and Frontend separately (dev environment)
