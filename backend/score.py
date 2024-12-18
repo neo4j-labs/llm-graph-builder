@@ -571,6 +571,8 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
         uri = url
         if " " in url:
             uri= url.replace(" ","+")
+        graph = create_graph_database_connection(uri, userName, decoded_password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
         while True:
             try:
                 if await request.is_disconnected():
@@ -579,8 +581,6 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                 # get the current status of document node
                 
                 else:
-                    graph = create_graph_database_connection(uri, userName, decoded_password, database)
-                    graphDb_data_Access = graphDBdataAccess(graph)
                     result = graphDb_data_Access.get_current_status_document_node(file_name)
                     if len(result) > 0:
                         status = json.dumps({'fileName':file_name, 
@@ -601,6 +601,7 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                         'communityRelCount' : result[0]['communityRelCount']
                         })
                     yield status
+                    await asyncio.sleep(1)
             except asyncio.CancelledError:
                 logging.info("SSE Connection cancelled")
     
