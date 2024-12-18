@@ -93,11 +93,11 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
                   </ul>
                 </li>
               ))
-            : sortedLabels.map((label, index) => {
+            : sortedLabels.map((label) => {
                 const entity = groupedEntities[label == 'undefined' ? 'Entity' : label];
                 return (
                   <li
-                    key={index}
+                    key={label}
                     className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%)] overflow-hidden'
                   >
                     <GraphLabel type='node' className='legend' color={`${entity.color}`} isSelected={false}>

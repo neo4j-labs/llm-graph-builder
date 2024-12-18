@@ -111,6 +111,7 @@ function ConfirmationDialog({
             onClose();
           }}
           size='large'
+          isDisabled={!isLargeDocumentAlert}
         >
           Continue
         </Button>

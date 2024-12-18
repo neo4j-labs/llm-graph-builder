@@ -141,8 +141,8 @@ export default function DeletePopUpForOrphanNodes({
         cell: (info) => {
           return (
             <Flex>
-              {info.getValue().map((l, index) => (
-                <Legend key={index} title={l} bgColor={calcWordColor(l)} type='node'></Legend>
+              {info.getValue().map((l) => (
+                <Legend key={l} title={l} bgColor={calcWordColor(l)} type='node'></Legend>
               ))}
             </Flex>
           );

@@ -24,9 +24,9 @@ const ExpiredFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }
             only {EXPIRATION_DAYS} days . Please delete and reupload the documents.
           </Typography>
           <List className='max-h-80 overflow-y-auto'>
-            {Files.map((f, i) => {
+            {Files.map((f) => {
               return (
-                <ListItem key={i} disablePadding>
+                <ListItem key={f.name} disablePadding>
                   <ListItemButton role={undefined} dense>
                     <ListItemIcon>
                       <Checkbox
