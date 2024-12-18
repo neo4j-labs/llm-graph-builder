@@ -55,7 +55,7 @@ VITE_LLM_MODELS_PROD="diffbot"
 Backend ENV
 ```env
 DIFFBOT_API_KEY="your-diffbot-key"
-``
+```
 
 You can then run Docker Compose to build and start all components:
 ```bash
