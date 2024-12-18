@@ -123,7 +123,7 @@ Alternatively, you can run the backend and frontend separately:
 To deploy the app and packages on Google Cloud Platform, run the following command on google cloud run:
 ```bash
 # Frontend deploy 
-gcloud run deploy dev-frontend --set-env-vars "VITE_BACKEND_API_URL=" --set-env-vars "VITE_FRONTEND_HOSTNAME=hostname.us-central1.run.app" --set-env-vars "VITE_SEGMENT_API_URL=https://cdn.segment.com/v1/projects/4SGwdwzuDm5WkFvQtz7D6ATQlo14yjmW/settings"
+gcloud run deploy dev-frontend 
 source location current directory > Frontend
 region : 32 [us-central 1]
 Allow unauthenticated request : Yes
