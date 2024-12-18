@@ -40,7 +40,6 @@ VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
 if you only want OpenAI:
 ```env
 VITE_LLM_MODELS_PROD="diffbot,openai-gpt-3.5,openai-gpt-4o"
-VITE_LLM_MODELS_PROD="diffbot,openai-gpt-3.5,openai-gpt-4o"
 ```
 
 Backend ENV
@@ -50,7 +49,6 @@ OPENAI_API_KEY="your-openai-key"
 
 if you only want Diffbot:
 ```env
-VITE_LLM_MODELS_PROD="diffbot"
 VITE_LLM_MODELS_PROD="diffbot"
 ```
 
