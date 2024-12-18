@@ -39,10 +39,11 @@ export interface CustomFile extends CustomFileBase {
   id: string;
 }
 
-export interface OptionType {
-  readonly value: string;
-  readonly label: string;
-}
+export type OptionType = {
+  label: string | JSX.Element;
+  value: string;
+  isDisabled?: boolean;
+};
 
 export type UserCredentials = {
   uri: string;
@@ -918,3 +919,19 @@ export interface GraphViewHandlerProps {
 export interface ChatProps {
   chatMessages: Messages[];
 }
+
+export type DropdownComponentProps = {
+  options: OptionType[];
+  placeholder: string;
+  defaultValue: OptionType;
+  value?: OptionType;
+  onChange: (selectedOption: OptionType | null) => void;
+  label: string;
+  helpText: string | JSX.Element;
+  size: 'small' | 'medium' | 'large';
+  isDisabled: boolean;
+  children?: React.ReactNode;
+  mapOptions?: (option: OptionType) => OptionType;
+  customTooltip?: (option: OptionType) => JSX.Element | null;
+  view: string;
+};

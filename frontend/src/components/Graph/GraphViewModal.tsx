@@ -63,7 +63,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
   const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
   const [mode, setMode] = useState<boolean>(false);
-  const [sliderValue, setSliderValue] = useState<string>(GRAPH_CHUNK_LIMIT);
+  const [dropdownValue, setDropdownValue] = useState<string>(GRAPH_CHUNK_LIMIT);
 
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
@@ -122,20 +122,19 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             userCredentials as UserCredentials,
             graphQuery,
             selectedRows?.map((f) => f.name),
-            sliderValue
+            dropdownValue
           )
-          : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? ''], sliderValue);
+          : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? ''], dropdownValue);
       return nodeRelationshipData;
     } catch (error: any) {
       console.log(error);
     }
-  }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials, sliderValue]);
+  }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials, dropdownValue]);
 
   // Api call to get the nodes and relations
   const graphApi = async (mode?: string) => {
     try {
       const result = await fetchData();
-      // Check for valid result data
       if (result?.data?.status === 'Success' && result.data.data.nodes.length > 0) {
         const { nodes: neoNodes, relationships: neoRels } = result.data.data;
         // Create a set of valid node IDs
@@ -154,7 +153,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           setNewScheme(schemeVal);
           setLoading(false);
         }
-        // Update state
         setAllNodes(finalNodes);
         setAllRelationships(finalRels);
         setScheme(schemeVal);
@@ -166,7 +164,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       handleError(error);
     }
   };
-  // Helper function to handle empty result cases
+
   const handleEmptyResult = (result: any) => {
     setLoading(false);
     setStatus('danger');
@@ -175,7 +173,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       : result?.data?.message || 'An error occurred';
     setStatusMessage(message);
   };
-  // Helper function to handle errors
+
   const handleError = (error: any) => {
     setLoading(false);
     setStatus('danger');
@@ -187,7 +185,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setLoading(true);
       setGraphType([]);
       if (viewPoint !== graphLabels.chatInfoView) {
-        graphApi();
+        graphApi('normalMode');
       } else {
         const { finalNodes, finalRels, schemeVal } = processGraphData(nodeValues ?? [], relationshipValues ?? []);
         setAllNodes(finalNodes);
@@ -199,7 +197,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         setLoading(false);
       }
     }
-  }, [open, sliderValue]);
+  }, [open,dropdownValue]);
 
   useEffect(() => {
     if (debouncedQuery) {
@@ -338,7 +336,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setAllRelationships([]);
     setSearchQuery('');
     setSelected(undefined);
-    setSliderValue(GRAPH_CHUNK_LIMIT);
+    setDropdownValue(GRAPH_CHUNK_LIMIT);
   };
 
   const mouseEventCallbacks = {
@@ -356,10 +354,13 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     onDrag: true,
   };
 
+  // The set the chunk limit for graph viz
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     setStatus('unknown');
     if (selectedOption?.value) {
-      setSliderValue(selectedOption?.value);
+      setDropdownValue(selectedOption?.value);
+      // setLoading(true);
+      // graphApi('chunkMode');
     }
   };
 
@@ -391,10 +392,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 />
               )}
               <DropdownComponent
-                onSelect={handleDropdownChange}
-                options={graph_chunk_limit ?? ['']}
-                placeholder='Select Chunk Limit'
-                defaultValue={GRAPH_CHUNK_LIMIT}
+                onChange={(selectedOption) => handleDropdownChange(selectedOption as OptionType)}
+                options={graph_chunk_limit.map((value) => ({
+                  label: String(value),
+                  value: String(value),
+                }))}
+                placeholder="Select Chunk Limit"
+                defaultValue={
+                  { label: String(GRAPH_CHUNK_LIMIT), value: String(GRAPH_CHUNK_LIMIT) }
+                }
                 view='GraphView'
                 isDisabled={loading}
                 label='Chunk Limit'

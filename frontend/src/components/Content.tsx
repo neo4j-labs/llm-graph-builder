@@ -15,6 +15,7 @@ import {
   chatModeLables,
   largeFileSize,
   llms,
+  prodllms,
   RETRY_OPIONS,
   tooltips,
 } from '../utils/Constants';
@@ -880,15 +881,25 @@ const Content: React.FC<ContentProps> = ({
         >
           <div>
             <DropdownComponent
-              onSelect={handleDropdownChange}
-              options={llms ?? ['']}
-              placeholder='Select LLM Model'
-              defaultValue={model}
-              view='ContentView'
+              onChange={(selectedOption) => handleDropdownChange(selectedOption as OptionType)}
+              options={(llms ?? ['']).map((value) => ({
+                label: String(value),
+                value: String(value),
+                isDisabled: process.env.VITE_ENV === 'PROD' && !prodllms.includes(value),
+              }))}
+              placeholder="Select LLM Model"
+              defaultValue={{ label: String(model), value: String(model) }
+              }
+              view="ContentView"
               isDisabled={false}
-              label='LLM Models'
-              helpText='LLM Model used for Extraction & Chat'
-              size='medium'
+              label="LLM Models"
+              helpText="LLM Model used for Extraction & Chat"
+              size="medium"
+              customTooltip={(option: OptionType) =>
+                process.env.VITE_ENV === 'PROD' && !prodllms.includes(option.value)
+                  ? <div>{'This model is only available in the development environment.'}</div>
+                  : null
+              }
             />
           </div>
           <Flex flexDirection='row' gap='4' className='self-end mb-2.5' flexWrap='wrap'>
