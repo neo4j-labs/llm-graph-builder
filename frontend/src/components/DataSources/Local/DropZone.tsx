@@ -40,6 +40,7 @@ const DropZone: FunctionComponent = () => {
         entityEntityRelCount: 0,
         communityNodeCount: 0,
         communityRelCount: 0,
+        createdAt: new Date(),
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
@@ -186,6 +187,7 @@ const DropZone: FunctionComponent = () => {
                 ...curfile,
                 status: 'New',
                 uploadProgress: 100,
+                createdAt: new Date(),
               };
             }
             return curfile;
@@ -241,7 +243,7 @@ const DropZone: FunctionComponent = () => {
             'application/vnd.ms-powerpoint': ['.pptx'],
             'application/vnd.ms-excel': ['.xls'],
             'text/markdown': ['.md'],
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':['.xlsx']
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
           },
           onDrop: (f: Partial<globalThis.File>[]) => {
             onDropHandler(f);
