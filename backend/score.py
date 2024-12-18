@@ -972,6 +972,7 @@ async def backend_connection_configuration():
         username= os.getenv('NEO4J_USERNAME')
         database= os.getenv('NEO4J_DATABASE')
         password= os.getenv('NEO4J_PASSWORD')
+        gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
         if all([uri, username, database, password]):
             print(f'uri:{uri}, usrName:{username}, database :{database}, password: {password}')
             graph = Neo4jGraph()
@@ -986,6 +987,7 @@ async def backend_connection_configuration():
                 result["user_name"] = username
                 result["database"] = database
                 result["password"] = encoded_password
+                result['gcs_file_cache'] = gcs_file_cache
                 return create_api_response('Success',message=f"Backend connection successful",data=result)
         else:
             graph_connection = False
