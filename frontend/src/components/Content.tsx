@@ -56,7 +56,8 @@ const Content: React.FC<ContentProps> = ({
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [documentName, setDocumentName] = useState<string>('');
-  const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser } = useCredentials();
+  const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser, isGCSActive } =
+    useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [showExpirationModal, setshowExpirationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
@@ -674,15 +675,6 @@ const Content: React.FC<ContentProps> = ({
         ) {
           selectedLargeFiles.push(parsedData);
         }
-        console.log(
-          parsedData.fileSource === 'local file'
-            ? {
-                isExpired: isExpired(parsedData?.createdAt as Date),
-                name: parsedData.name,
-                createdAt: parsedData.createdAt,
-              }
-            : 'Not Local File'
-        );
         if (
           parsedData.fileSource === 'local file' &&
           (parsedData.status === 'New' || parsedData.status == 'Ready to Reprocess') &&
@@ -691,10 +683,9 @@ const Content: React.FC<ContentProps> = ({
           expiredFiles.push(parsedData);
         }
       }
-      console.log(expiredFiles);
       if (selectedLargeFiles.length) {
         setshowConfirmationModal(true);
-      } else if (expiredFiles.length) {
+      } else if (expiredFiles.length && isGCSActive) {
         setshowExpirationModal(true);
       } else {
         handleGenerateGraph(selectedRows.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess'));
@@ -736,7 +727,7 @@ const Content: React.FC<ContentProps> = ({
       setRowSelection(stringified);
       if (largefiles.length) {
         setshowConfirmationModal(true);
-      } else if (expiredFiles.length) {
+      } else if (expiredFiles.length && isGCSActive) {
         setshowExpirationModal(true);
       } else {
         handleGenerateGraph(filesData.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess'));

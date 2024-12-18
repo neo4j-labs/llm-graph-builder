@@ -524,13 +524,10 @@ export function getNodes<Type extends Entity | ExtendedNode>(nodesData: Array<Ty
   });
 }
 export function getParsedDate(neo4jdate: filedate) {
-  console.log('input date', neo4jdate);
   const { _Date__year, _Date__month, _Date__day } = neo4jdate._DateTime__date;
   const { _Time__hour, _Time__minute, _Time__second } = neo4jdate._DateTime__time;
-  console.log(`${_Date__month}/${_Date__day}/${_Date__year}`);
   const currentdate = new Date(`${_Date__month}/${_Date__day}/${_Date__year}`);
   currentdate.setHours(_Time__hour, _Time__minute, _Time__second);
-  console.log('converted date', currentdate.toLocaleDateString());
   return currentdate;
 }
 

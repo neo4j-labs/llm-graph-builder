@@ -4,6 +4,7 @@ import LargeFilesAlert from './LargeFilesAlert';
 import { memo, useEffect, useState } from 'react';
 import { useFileContext } from '../../../context/UsersFiles';
 import ExpiredFilesAlert from '../ExpirationModal/ExpiredFilesAlert';
+import { isExpired } from '../../../utils/Utils';
 
 function ConfirmationDialog({
   largeFiles,
@@ -111,7 +112,9 @@ function ConfirmationDialog({
             onClose();
           }}
           size='large'
-          isDisabled={!isLargeDocumentAlert}
+          isDisabled={largeFiles.some(
+            (f) => f.createdAt != undefined && checked.includes(f.id) && isExpired(f?.createdAt as Date)
+          )}
         >
           Continue
         </Button>
