@@ -6,6 +6,7 @@ import type { Node, Relationship } from '@neo4j-nvl/base';
 import { NonOAuthError } from '@react-oauth/google';
 import { BannerType } from '@neo4j-ndl/react';
 import Queue from './utils/Queue';
+import FileTable from './components/FileTable';
 
 export interface CustomFileBase extends Partial<globalThis.File> {
   processingTotalTime: number | string;
@@ -34,9 +35,15 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   entityEntityRelCount: number;
   communityNodeCount: number;
   communityRelCount: number;
+  createdAt?: Date;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
+}
+
+export interface OptionTypeVal {
+  readonly value: string;
+  readonly label: string;
 }
 
 export type OptionType = {
@@ -52,7 +59,7 @@ export type UserCredentials = {
   database: string;
 } & { [key: string]: any };
 
-export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount'> {
+export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount' | 'createdAt'> {
   fileName: string;
   fileSize: number;
   fileType: string;
@@ -66,6 +73,7 @@ export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount'> {
   processed_chunk?: number;
   total_chunks?: number;
   retry_condition?: string;
+  createdAt: filedate;
 }
 
 export type ExtractParams = Pick<CustomFile, 'wikiQuery' | 'model' | 'sourceUrl' | 'language' | 'accessToken'> & {
@@ -578,7 +586,7 @@ export interface UploadResponse extends Partial<commonserverresponse> {
   data: uploadData;
 }
 export interface LargefilesProps {
-  largeFiles: CustomFile[];
+  Files: CustomFile[];
   handleToggle: (ischecked: boolean, id: string) => void;
   checked: string[];
 }
@@ -759,6 +767,8 @@ export interface ContextProps {
   setErrorMessage: Dispatch<SetStateAction<string>>;
   showDisconnectButton: boolean;
   setShowDisconnectButton: Dispatch<SetStateAction<boolean>>;
+  isGCSActive: boolean;
+  setIsGCSActive: Dispatch<SetStateAction<boolean>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];
@@ -843,16 +853,16 @@ export interface FileContextType {
   setModel: Dispatch<SetStateAction<string>>;
   graphType: string;
   setGraphType: Dispatch<SetStateAction<string>>;
-  selectedNodes: readonly OptionType[];
-  setSelectedNodes: Dispatch<SetStateAction<readonly OptionType[]>>;
-  selectedRels: readonly OptionType[];
-  setSelectedRels: Dispatch<SetStateAction<readonly OptionType[]>>;
+  selectedNodes: readonly OptionTypeVal[];
+  setSelectedNodes: Dispatch<SetStateAction<readonly OptionTypeVal[]>>;
+  selectedRels: readonly OptionTypeVal[];
+  setSelectedRels: Dispatch<SetStateAction<readonly OptionTypeVal[]>>;
   rowSelection: Record<string, boolean>;
   setRowSelection: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   selectedRows: string[];
   setSelectedRows: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedSchemas: readonly OptionType[];
-  setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
+  selectedSchemas: readonly OptionTypeVal[];
+  setSelectedSchemas: Dispatch<SetStateAction<readonly OptionTypeVal[]>>;
   chatModes: string[];
   setchatModes: Dispatch<SetStateAction<string[]>>;
   isSchema: boolean;
@@ -935,3 +945,20 @@ export type DropdownComponentProps = {
   customTooltip?: (option: OptionType) => JSX.Element | null;
   view: string;
 };
+export interface filedate {
+  _DateTime__date: {
+    _Date__ordinal: number;
+    _Date__year: number;
+    _Date__month: number;
+    _Date__day: number;
+  };
+  _DateTime__time: {
+    _Time__ticks: number;
+    _Time__hour: number;
+    _Time__minute: number;
+    _Time__second: number;
+    _Time__nanosecond: number;
+    _Time__tzinfo: null;
+  };
+}
+export type FileTableHandle = React.ElementRef<typeof FileTable>;

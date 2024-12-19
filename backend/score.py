@@ -18,24 +18,19 @@ from sse_starlette.sse import EventSourceResponse
 from src.communities import create_communities
 from src.neighbours import get_neighbour_nodes
 import json
-from typing import List, Mapping, Union
+from typing import List
 from starlette.middleware.sessions import SessionMiddleware
-import google_auth_oauthlib.flow
 from google.oauth2.credentials import Credentials
 import os
 from src.logger import CustomLogger
 from datetime import datetime, timezone
 import time
 import gc
-from Secweb import SecWeb
-from Secweb.StrictTransportSecurity import HSTS
-from Secweb.ContentSecurityPolicy import ContentSecurityPolicy
 from Secweb.XContentTypeOptions import XContentTypeOptions
 from Secweb.XFrameOptions import XFrame
 from fastapi.middleware.gzip import GZipMiddleware
 from src.ragas_eval import *
-from starlette.types import ASGIApp, Message, Receive, Scope, Send
-import gzip
+from starlette.types import ASGIApp, Receive, Scope, Send
 from langchain_neo4j import Neo4jGraph
 
 logger = CustomLogger()
@@ -495,11 +490,13 @@ async def connect(uri=Form(), userName=Form(), password=Form(), database=Form())
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database)
+        gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'connect','db_url':uri, 'userName':userName, 'database':database,'status':result, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         result['elapsed_api_time'] = f'{elapsed_time:.2f}'
+        result['gcs_file_cache'] = gcs_file_cache
         return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
@@ -977,6 +974,7 @@ async def backend_connection_configuration():
         username= os.getenv('NEO4J_USERNAME')
         database= os.getenv('NEO4J_DATABASE')
         password= os.getenv('NEO4J_PASSWORD')
+        gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
         if all([uri, username, database, password]):
             print(f'uri:{uri}, usrName:{username}, database :{database}, password: {password}')
             graph = Neo4jGraph()
@@ -991,6 +989,7 @@ async def backend_connection_configuration():
                 result["user_name"] = username
                 result["database"] = database
                 result["password"] = encoded_password
+                result['gcs_file_cache'] = gcs_file_cache
                 return create_api_response('Success',message=f"Backend connection successful",data=result)
         else:
             graph_connection = False

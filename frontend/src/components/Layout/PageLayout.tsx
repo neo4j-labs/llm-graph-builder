@@ -61,6 +61,7 @@ const PageLayout: React.FC = () => {
     setErrorMessage,
     setShowDisconnectButton,
     showDisconnectButton,
+    setIsGCSActive,
   } = useCredentials();
   const { cancel } = useSpeechSynthesis();
 
@@ -97,6 +98,7 @@ const PageLayout: React.FC = () => {
             });
             setGdsActive(parsedConnection.isgdsActive);
             setIsReadOnlyUser(parsedConnection.isReadOnlyUser);
+            setIsGCSActive(parsedConnection.isGCSActive);
           } else {
             console.error('Invalid parsed session data:', parsedConnection);
           }
@@ -105,7 +107,8 @@ const PageLayout: React.FC = () => {
         }
       };
       // To update credentials if environment values differ
-      const updateSessionIfNeeded = (envCredentials: UserCredentials, storedSession: string) => {
+
+      const updateSessionIfNeeded = (envCredentials: any, storedSession: string) => {
         try {
           const storedCredentials = JSON.parse(storedSession);
           const isDiffCreds =
@@ -115,6 +118,7 @@ const PageLayout: React.FC = () => {
             envCredentials.database !== storedCredentials.database;
           if (isDiffCreds) {
             setUserCredentials(envCredentials);
+            setIsGCSActive(envCredentials.isGCSActive ?? false);
             localStorage.setItem(
               'neo4j.connection',
               JSON.stringify({
@@ -147,7 +151,9 @@ const PageLayout: React.FC = () => {
           database: connectionData.data.database,
           isReadonlyUser: !connectionData.data.write_access,
           isgdsActive: connectionData.data.gds_status,
+          isGCSActive: connectionData?.data?.gcs_file_cache === 'True',
         };
+        setIsGCSActive(connectionData?.data?.gcs_file_cache === 'True');
         if (session) {
           const updated = updateSessionIfNeeded(envCredentials, session);
           if (!updated) {
@@ -168,6 +174,7 @@ const PageLayout: React.FC = () => {
               userDbVectorIndex: 384,
               isReadOnlyUser: envCredentials.isReadonlyUser,
               isgdsActive: envCredentials.isgdsActive,
+              isGCSActive: envCredentials.isGCSActive,
             })
           );
           setConnectionStatus(true);

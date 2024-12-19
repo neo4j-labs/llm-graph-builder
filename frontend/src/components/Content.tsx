@@ -4,7 +4,15 @@ import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { extractAPI } from '../utils/FileAPI';
-import { BannerAlertProps, ChildRef, ContentProps, CustomFile, OptionType, UserCredentials, chunkdata } from '../types';
+import {
+  BannerAlertProps,
+  ContentProps,
+  CustomFile,
+  OptionType,
+  UserCredentials,
+  chunkdata,
+  FileTableHandle,
+} from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
@@ -36,6 +44,7 @@ import { useMessageContext } from '../context/UserMessages';
 import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
 import { getChunkText } from '../services/getChunkText';
 import ChunkPopUp from './Popups/ChunkPopUp';
+import { isExpired, isFileReadyToProcess } from '../utils/Utils';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -56,8 +65,10 @@ const Content: React.FC<ContentProps> = ({
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [documentName, setDocumentName] = useState<string>('');
-  const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser } = useCredentials();
+  const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser, isGCSActive } =
+    useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
+  const [showExpirationModal, setshowExpirationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [retryFile, setRetryFile] = useState<string>('');
   const [retryLoading, setRetryLoading] = useState<boolean>(false);
@@ -105,7 +116,7 @@ const Content: React.FC<ContentProps> = ({
       showErrorToast(`${fileName} Failed to process`);
     }
   );
-  const childRef = useRef<ChildRef>(null);
+  const childRef = useRef<FileTableHandle>(null);
 
   const incrementPage = async () => {
     setCurrentPage((prev) => prev + 1);
@@ -660,35 +671,25 @@ const Content: React.FC<ContentProps> = ({
   const onClickHandler = () => {
     const selectedRows = childRef.current?.getSelectedRows();
     if (selectedRows?.length) {
-      let selectedLargeFiles: CustomFile[] = [];
-      for (let index = 0; index < selectedRows.length; index++) {
-        const parsedData: CustomFile = selectedRows[index];
-        if (
-          parsedData.fileSource === 'local file' &&
-          typeof parsedData.size === 'number' &&
-          (parsedData.status === 'New' || parsedData.status == 'Ready to Reprocess') &&
-          parsedData.size > largeFileSize
-        ) {
-          selectedLargeFiles.push(parsedData);
-        }
-      }
-      if (selectedLargeFiles.length) {
+      const expiredFilesExists = selectedRows.some(
+        (c) => isFileReadyToProcess(c, true) && isExpired(c?.createdAt as Date)
+      );
+      const largeFileExists = selectedRows.some(
+        (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
+      );
+      if (expiredFilesExists) {
         setshowConfirmationModal(true);
+      } else if (largeFileExists && isGCSActive) {
+        setshowExpirationModal(true);
       } else {
-        handleGenerateGraph(selectedRows.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess'));
+        handleGenerateGraph(selectedRows.filter((f) => isFileReadyToProcess(f, false)));
       }
     } else if (filesData.length) {
-      const largefiles = filesData.filter((f) => {
-        if (
-          typeof f.size === 'number' &&
-          (f.status === 'New' || f.status == 'Ready to Reprocess') &&
-          f.size > largeFileSize
-        ) {
-          return true;
-        }
-        return false;
-      });
-      const selectAllNewFiles = filesData.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess');
+      const expiredFileExists = filesData.some((c) => isFileReadyToProcess(c, true) && isExpired(c.createdAt as Date));
+      const largeFileExists = filesData.some(
+        (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
+      );
+      const selectAllNewFiles = filesData.filter((f) => isFileReadyToProcess(f, false));
       const stringified = selectAllNewFiles.reduce((accu, f) => {
         const key = f.id;
         // @ts-ignore
@@ -696,10 +697,12 @@ const Content: React.FC<ContentProps> = ({
         return accu;
       }, {});
       setRowSelection(stringified);
-      if (largefiles.length) {
+      if (largeFileExists) {
         setshowConfirmationModal(true);
+      } else if (expiredFileExists && isGCSActive) {
+        setshowExpirationModal(true);
       } else {
-        handleGenerateGraph(filesData.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess'));
+        handleGenerateGraph(filesData.filter((f) => isFileReadyToProcess(f, false)));
       }
     }
   };
@@ -743,6 +746,19 @@ const Content: React.FC<ContentProps> = ({
             onClose={() => setshowConfirmationModal(false)}
             loading={extractLoading}
             selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
+          ></ConfirmationDialog>
+        </Suspense>
+      )}
+      {showExpirationModal && filesForProcessing.length && (
+        <Suspense fallback={<FallBackDialog />}>
+          <ConfirmationDialog
+            open={showExpirationModal}
+            largeFiles={filesForProcessing}
+            extractHandler={handleGenerateGraph}
+            onClose={() => setshowExpirationModal(false)}
+            loading={extractLoading}
+            selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
+            isLargeDocumentAlert={false}
           ></ConfirmationDialog>
         </Suspense>
       )}

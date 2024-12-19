@@ -11,7 +11,16 @@ import {
   Checkbox,
   useMediaQuery,
 } from '@neo4j-ndl/react';
-import { forwardRef, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useContext,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  ForwardRefRenderFunction,
+} from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -34,6 +43,7 @@ import {
   getFileSourceStatus,
   isProcessingFileValid,
   capitalizeWithUnderscore,
+  getParsedDate,
 } from '../utils/Utils';
 import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, ChildRef } from '../types';
 import { useCredentials } from '../context/UserCredentials';
@@ -58,7 +68,7 @@ import BreakDownPopOver from './BreakDownPopOver';
 
 let onlyfortheFirstRender = true;
 
-const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
+const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, ref) => {
   const { connectionStatus, setConnectionStatus, onInspect, onRetry, onChunkView } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
@@ -763,6 +773,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   entityEntityRelCount: item.entityEntityRelCount ?? 0,
                   communityNodeCount: item.communityNodeCount ?? 0,
                   communityRelCount: item.communityRelCount ?? 0,
+                  createdAt: item.createdAt != undefined ? getParsedDate(item?.createdAt) : undefined,
                 });
               }
             });
@@ -783,6 +794,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         }
         setIsLoading(false);
       } catch (error: any) {
+        console.log(error);
         if (error instanceof Error) {
           showErrorToast(error.message);
         }
@@ -1031,6 +1043,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       ) : null}
     </>
   );
-});
+};
 
-export default FileTable;
+export default forwardRef(FileTable);

@@ -2,33 +2,13 @@ import { Checkbox, Flex, Typography } from '@neo4j-ndl/react';
 import { DocumentTextIconOutline } from '@neo4j-ndl/react/icons';
 import { LargefilesProps } from '../../../types';
 import { List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
-import { FC, useContext, useMemo } from 'react';
-import { chunkSize } from '../../../utils/Constants';
+import { FC } from 'react';
 import BellImage from '../../../assets/images/Stopwatch-blue.svg';
 import AlertIcon from '../../Layout/AlertIcon';
-import wikipedialogo from '../../../assets/images/wikipedia.svg';
-import wikipediadark from '../../../assets/images/wikipedia-darkmode.svg';
-import youtubelogo from '../../../assets/images/youtube.svg';
-import weblogo from '../../../assets/images/web.svg';
-import webdarkmode from '../../../assets/images/web-darkmode.svg';
-import gcslogo from '../../../assets/images/gcs.webp';
-import s3logo from '../../../assets/images/s3logo.png';
-import { calculateProcessingTime } from '../../../utils/Utils';
-import { ThemeWrapperContext } from '../../../context/ThemeWrapper';
+import { isExpired } from '../../../utils/Utils';
+import { EXPIRATION_DAYS } from '../../../utils/Constants';
 
-const LargeFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }) => {
-  const { colorMode } = useContext(ThemeWrapperContext);
-
-  const imageIcon: Record<string, string> = useMemo(
-    () => ({
-      Wikipedia: colorMode === 'dark' ? wikipedialogo : wikipediadark,
-      'gcs bucket': gcslogo,
-      youtube: youtubelogo,
-      's3 bucket': s3logo,
-      'web-url': colorMode === 'light' ? weblogo : webdarkmode,
-    }),
-    [colorMode]
-  );
+const ExpiredFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }) => {
   return (
     <div className='n-bg-palette-neutral-bg-weak p-4'>
       <div className='flex flex-row pb-6 items-center mb-2'>
@@ -38,16 +18,15 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }) 
           alt='alert icon'
         />
         <div className='flex flex-col'>
-          <Typography variant='h3'>Large Document Notice</Typography>
+          <Typography variant='h3'>Document Expiration Notice</Typography>
           <Typography variant='body-medium'>
-            One or more of your selected documents are large and may take extra time to process. Please review the
-            estimated times below
+            One or more of your selected documents are expired as per the expiration policy we are storing documents for
+            only {EXPIRATION_DAYS} days . Please delete and reupload the documents.
           </Typography>
           <List className='max-h-80 overflow-y-auto'>
-            {Files.map((f, i) => {
-              const { minutes, seconds } = calculateProcessingTime(f.size as number, 0.2);
+            {Files.map((f) => {
               return (
-                <ListItem key={i} disablePadding>
+                <ListItem key={f.name} disablePadding>
                   <ListItemButton role={undefined} dense>
                     <ListItemIcon>
                       <Checkbox
@@ -64,24 +43,15 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }) 
                       />
                     </ListItemIcon>
                     <ListItemAvatar>
-                      {imageIcon[f.fileSource] ? (
-                        <img width={20} height={20} src={imageIcon[f.fileSource]}></img>
-                      ) : (
-                        <DocumentTextIconOutline className='n-size-token-7 mr-2' />
-                      )}
+                      <DocumentTextIconOutline className='n-size-token-7 mr-2' />
                     </ListItemAvatar>
                     <ListItemText
                       primary={
                         <Flex flexDirection='row'>
                           <span className='word-break'>
                             {f.name} - {Math.floor((f?.size as number) / 1000)?.toFixed(2)}KB
-                            {f.fileSource === 'local file' && minutes === 0 && typeof f.size === 'number'
-                              ? `- ${seconds} Sec `
-                              : f.fileSource === 'local file'
-                              ? `- ${minutes} Min`
-                              : ''}
                           </span>
-                          {typeof f.size === 'number' && f.size > chunkSize ? (
+                          {f.createdAt != undefined && isExpired(f.createdAt) ? (
                             <span>
                               <AlertIcon />
                             </span>
@@ -101,4 +71,4 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }) 
     </div>
   );
 };
-export default LargeFilesAlert;
+export default ExpiredFilesAlert;

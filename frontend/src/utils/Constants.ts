@@ -1,5 +1,5 @@
 import { NvlOptions } from '@neo4j-nvl/base';
-import { GraphType, OptionType } from '../types';
+import { GraphType, OptionTypeVal } from '../types';
 import { getDateTime, getDescriptionForChatMode } from './Utils';
 import chatbotmessages from '../assets/ChatbotMessages.json';
 
@@ -270,7 +270,7 @@ export const queryMap: {
 };
 
 // export const graphQuery: string = queryMap.DocChunkEntities;
-export const graphView: OptionType[] = [
+export const graphView: OptionTypeVal[] = [
   { label: 'Lexical Graph', value: queryMap.DocChunks },
   { label: 'Entity Graph', value: queryMap.Entities },
   { label: 'Knowledge Graph', value: queryMap.DocChunkEntities },
@@ -347,3 +347,4 @@ export const graph_chunk_limit = [
         '175',
         '200',
       ];
+export const EXPIRATION_DAYS = 3;
