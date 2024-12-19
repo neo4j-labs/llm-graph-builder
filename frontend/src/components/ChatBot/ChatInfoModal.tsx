@@ -24,17 +24,12 @@ import ChunkInfo from './ChunkInfo';
 import EntitiesInfo from './EntitiesInfo';
 import SourcesInfo from './SourcesInfo';
 import CommunitiesInfo from './CommunitiesInfo';
-import {
-  chatModeLables,
-  chatModeReadableLables,
-  mergeNestedObjects,
-  supportedLLmsForRagas,
-} from '../../utils/Constants';
+import { chatModeLables, chatModeReadableLables, supportedLLmsForRagas } from '../../utils/Constants';
 import { Relationship } from '@neo4j-nvl/base';
 import { getChatMetrics } from '../../services/GetRagasMetric';
 import MetricsTab from './MetricsTab';
 import { Stack } from '@mui/material';
-import { capitalizeWithUnderscore, getNodes } from '../../utils/Utils';
+import { capitalizeWithUnderscore, getNodes, mergeNestedObjects } from '../../utils/Utils';
 import MultiModeMetrics from './MultiModeMetrics';
 import getAdditionalMetrics from '../../services/AdditionalMetrics';
 import { withVisibility } from '../../HOC/withVisibility';

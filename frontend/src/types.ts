@@ -41,10 +41,16 @@ export interface CustomFile extends CustomFileBase {
   id: string;
 }
 
-export interface OptionType {
+export interface OptionTypeVal {
   readonly value: string;
   readonly label: string;
 }
+
+export type OptionType = {
+  label: string | JSX.Element;
+  value: string;
+  isDisabled?: boolean;
+};
 
 export type UserCredentials = {
   uri: string;
@@ -706,6 +712,9 @@ export interface ReusableDropdownProps extends DropdownProps {
   view?: 'ContentView' | 'GraphView';
   isDisabled: boolean;
   value?: OptionType;
+  label?: string;
+  helpText?: string;
+  size?: 'small' | 'medium' | 'large';
 }
 export interface ChildRef {
   getSelectedRows: () => CustomFile[];
@@ -844,16 +853,16 @@ export interface FileContextType {
   setModel: Dispatch<SetStateAction<string>>;
   graphType: string;
   setGraphType: Dispatch<SetStateAction<string>>;
-  selectedNodes: readonly OptionType[];
-  setSelectedNodes: Dispatch<SetStateAction<readonly OptionType[]>>;
-  selectedRels: readonly OptionType[];
-  setSelectedRels: Dispatch<SetStateAction<readonly OptionType[]>>;
+  selectedNodes: readonly OptionTypeVal[];
+  setSelectedNodes: Dispatch<SetStateAction<readonly OptionTypeVal[]>>;
+  selectedRels: readonly OptionTypeVal[];
+  setSelectedRels: Dispatch<SetStateAction<readonly OptionTypeVal[]>>;
   rowSelection: Record<string, boolean>;
   setRowSelection: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   selectedRows: string[];
   setSelectedRows: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedSchemas: readonly OptionType[];
-  setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
+  selectedSchemas: readonly OptionTypeVal[];
+  setSelectedSchemas: Dispatch<SetStateAction<readonly OptionTypeVal[]>>;
   chatModes: string[];
   setchatModes: Dispatch<SetStateAction<string[]>>;
   isSchema: boolean;
@@ -921,6 +930,21 @@ export interface ChatProps {
   chatMessages: Messages[];
 }
 
+export type DropdownComponentProps = {
+  options: OptionType[];
+  placeholder: string;
+  defaultValue: OptionType;
+  value?: OptionType;
+  onChange: (selectedOption: OptionType | null) => void;
+  label: string;
+  helpText: string | JSX.Element;
+  size: 'small' | 'medium' | 'large';
+  isDisabled: boolean;
+  children?: React.ReactNode;
+  mapOptions?: (option: OptionType) => OptionType;
+  customTooltip?: (option: OptionType) => JSX.Element | null;
+  view: string;
+};
 export interface filedate {
   _DateTime__date: {
     _Date__ordinal: number;

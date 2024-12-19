@@ -11,7 +11,7 @@ const CheckboxSelection: React.FC<CheckboxSectionProps> = ({
   isDocChunk,
   isEntity,
 }) => (
-  <div className='flex gap-5 mt-2 justify-between'>
+  <div className='flex gap-5 justify-between'>
     <div className='flex gap-5'>
       {isDocChunk && (
         <Checkbox

@@ -8,6 +8,7 @@ import {
   filedate,
   GraphType,
   Messages,
+  OptionTypeVal,
   Scheme,
   SourceNode,
   UserCredentials,
@@ -21,6 +22,7 @@ import youtubelightlogo from '../assets/images/youtube-lightmode.svg';
 import s3logo from '../assets/images/s3logo.png';
 import gcslogo from '../assets/images/gcs.webp';
 import { chatModeLables, EXPIRATION_DAYS } from './Constants';
+import schemaExamples from '../assets/schemas.json';
 
 // Get the Url
 export const url = () => {
@@ -396,7 +398,7 @@ export const isFileCompleted = (waitingFile: CustomFile, item: SourceNode) =>
   waitingFile && item.status === 'Completed';
 
 export const calculateProcessedCount = (prev: number, batchSize: number) =>
-  (prev === batchSize ? batchSize - 1 : prev + 1);
+  prev === batchSize ? batchSize - 1 : prev + 1;
 
 export const isProcessingFileValid = (item: SourceNode, userCredentials: UserCredentials) => {
   return item.status === 'Processing' && item.fileName != undefined && userCredentials && userCredentials.database;
@@ -523,6 +525,43 @@ export function getNodes<Type extends Entity | ExtendedNode>(nodesData: Array<Ty
     return n;
   });
 }
+
+export const getDefaultSchemaExamples = () =>
+  schemaExamples.reduce((accu: OptionTypeVal[], example) => {
+    const examplevalues: OptionTypeVal = {
+      label: example.schema,
+      value: JSON.stringify({
+        nodelabels: example.labels,
+        relationshipTypes: example.relationshipTypes,
+      }),
+    };
+    accu.push(examplevalues);
+    return accu;
+  }, []);
+
+export function getStoredSchema() {
+  const storedSchemas = localStorage.getItem('selectedSchemas');
+  if (storedSchemas) {
+    const parsedSchemas = JSON.parse(storedSchemas);
+    return parsedSchemas.selectedOptions;
+  }
+  return [];
+}
+
+export function mergeNestedObjects(objects: Record<string, Record<string, number>>[]) {
+  return objects.reduce((merged, obj) => {
+    for (const key in obj) {
+      if (!merged[key]) {
+        merged[key] = {};
+      }
+      for (const innerKey in obj[key]) {
+        merged[key][innerKey] = obj[key][innerKey];
+      }
+    }
+    return merged;
+  }, {});
+}
+
 export function getParsedDate(neo4jdate: filedate) {
   const { _Date__year, _Date__month, _Date__day } = neo4jdate._DateTime__date;
   const { _Time__hour, _Time__minute, _Time__second } = neo4jdate._DateTime__time;
