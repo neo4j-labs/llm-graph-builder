@@ -520,5 +520,5 @@ class graphDBdataAccess:
                     "nodeCount" : nodeCount,
                     "relationshipCount" : relationshipCount
                     }
-            
+          
         return response

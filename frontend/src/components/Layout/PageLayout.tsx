@@ -107,7 +107,6 @@ const PageLayout: React.FC = () => {
         }
       };
       // To update credentials if environment values differ
-
       const updateSessionIfNeeded = (envCredentials: any, storedSession: string) => {
         try {
           const storedCredentials = JSON.parse(storedSession);

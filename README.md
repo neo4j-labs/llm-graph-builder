@@ -31,29 +31,12 @@ If you are using Neo4j Desktop, you will not be able to use the docker-compose b
 ### Local deployment
 #### Running through docker-compose
 By default only OpenAI and Diffbot are enabled since Gemini requires extra GCP configurations.
-Accoroding to enviornment we are configuring the models which is indicated by VITE_LLM_MODELS_PROD variable we can configure model based on our need.
+According to enviornment we are configuring the models which is indicated by VITE_LLM_MODELS_PROD variable we can configure model based on our need.
 EX:
 ```env
 VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
 ```
-According to the environment, we are configuring the models which indicated by VITE_LLM_MODELS_PROD variable we can configure models based on our needs.
-EX:
-```env
-VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
-```
-
-if you only want OpenAI:
-```env
-VITE_LLM_MODELS_PROD="diffbot,openai-gpt-3.5,openai-gpt-4o"
-VITE_LLM_MODELS_PROD="diffbot,openai-gpt-3.5,openai-gpt-4o"
 OPENAI_API_KEY="your-openai-key"
-```
-
-if you only want Diffbot:
-```env
-VITE_LLM_MODELS_PROD="diffbot"
-VITE_LLM_MODELS_PROD="diffbot"
-DIFFBOT_API_KEY="your-diffbot-key"
 ```
 
 You can then run Docker Compose to build and start all components:
@@ -79,7 +62,7 @@ You can of course combine all (local, youtube, wikipedia, s3 and gcs) or remove 
 ### Chat Modes
 
 By default,all of the chat modes will be available: vector, graph_vector, graph, fulltext, graph_vector_fulltext , entity_vector and global_vector.
-By default,all of the chat modes will be available: vector, graph_vector, graph, fulltext, graph_vector_fulltext , entity_vector and global_vector.
+
 If none of the mode is mentioned in the chat modes variable all modes will be available:
 ```env
 VITE_CHAT_MODES=""
@@ -123,7 +106,7 @@ Alternatively, you can run the backend and frontend separately:
 To deploy the app and packages on Google Cloud Platform, run the following command on google cloud run:
 ```bash
 # Frontend deploy 
-gcloud run deploy dev-frontend --set-env-vars "VITE_BACKEND_API_URL=" --set-env-vars "VITE_FRONTEND_HOSTNAME=hostname.us-central1.run.app" --set-env-vars "VITE_SEGMENT_API_URL=https://cdn.segment.com/v1/projects/4SGwdwzuDm5WkFvQtz7D6ATQlo14yjmW/settings"
+gcloud run deploy dev-frontend 
 source location current directory > Frontend
 region : 32 [us-central 1]
 Allow unauthenticated request : Yes
