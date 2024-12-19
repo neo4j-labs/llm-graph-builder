@@ -18,7 +18,7 @@ from sse_starlette.sse import EventSourceResponse
 from src.communities import create_communities
 from src.neighbours import get_neighbour_nodes
 import json
-from typing import List, Mapping, Union
+from typing import List
 from starlette.middleware.sessions import SessionMiddleware
 from google.oauth2.credentials import Credentials
 import os
@@ -30,8 +30,7 @@ from Secweb.XContentTypeOptions import XContentTypeOptions
 from Secweb.XFrameOptions import XFrame
 from fastapi.middleware.gzip import GZipMiddleware
 from src.ragas_eval import *
-from starlette.types import ASGIApp, Message, Receive, Scope, Send
-import gzip
+from starlette.types import ASGIApp, Receive, Scope, Send
 from langchain_neo4j import Neo4jGraph
 from src.entities.source_node import sourceNode
 
@@ -598,8 +597,6 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
                 # get the current status of document node
                 
                 else:
-                    graph = create_graph_database_connection(uri, userName, decoded_password, database)
-                    graphDb_data_Access = graphDBdataAccess(graph)
                     result = graphDb_data_Access.get_current_status_document_node(file_name)
                     print(f'Result of document status in SSE : {result}')
                     if len(result) > 0:
@@ -904,10 +901,9 @@ async def fetch_chunktext(
        gc.collect()
 
 
-@app.post("/backend_connection_configuation")
-async def backend_connection_configuation():
+@app.post("/backend_connection_configuration")
+async def backend_connection_configuration():
     try:
-        start = time.time()
         uri = os.getenv('NEO4J_URI')
         username= os.getenv('NEO4J_USERNAME')
         database= os.getenv('NEO4J_DATABASE')
@@ -928,11 +924,6 @@ async def backend_connection_configuation():
                 result["database"] = database
                 result["password"] = encoded_password
                 result['gcs_file_cache'] = gcs_file_cache
-                end = time.time()
-                elapsed_time = end - start
-                result['api_name'] = 'backend_connection_configuration'
-                result['elapsed_api_time'] = f'{elapsed_time:.2f}'
-                logger.log_struct(result, "INFO")
                 return create_api_response('Success',message=f"Backend connection successful",data=result)
         else:
             graph_connection = False

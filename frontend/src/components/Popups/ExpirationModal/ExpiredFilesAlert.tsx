@@ -7,7 +7,6 @@ import BellImage from '../../../assets/images/Stopwatch-blue.svg';
 import AlertIcon from '../../Layout/AlertIcon';
 import { isExpired } from '../../../utils/Utils';
 import { EXPIRATION_DAYS } from '../../../utils/Constants';
-import { IconWithToolTip } from '../../UI/IconButtonToolTip';
 
 const ExpiredFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }) => {
   return (
@@ -32,8 +31,14 @@ const ExpiredFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }
                     <ListItemIcon>
                       <Checkbox
                         ariaLabel='selection checkbox'
-                        isChecked={checked.includes(f.id)}
-                        onChange={(e) => handleToggle(e.target.checked, f.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            handleToggle(true, f.id);
+                          } else {
+                            handleToggle(false, f.id);
+                          }
+                        }}
+                        isChecked={checked.indexOf(f.id) !== -1}
                         htmlAttributes={{ tabIndex: -1 }}
                       />
                     </ListItemIcon>
@@ -48,9 +53,7 @@ const ExpiredFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }
                           </span>
                           {f.createdAt != undefined && isExpired(f.createdAt) ? (
                             <span>
-                              <IconWithToolTip label={'expired'} text={'File has expired'} placement='top'>
-                                <AlertIcon />
-                              </IconWithToolTip>
+                              <AlertIcon />
                             </span>
                           ) : (
                             <></>

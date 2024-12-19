@@ -130,8 +130,20 @@ const PageLayout: React.FC = () => {
             btoa(envCredentials.password) !== storedCredentials.password ||
             envCredentials.database !== storedCredentials.database;
           if (isDiffCreds) {
-            setUserCredentialsLocally(envCredentials);
-            setClearHistoryData(true);
+            setUserCredentials(envCredentials);
+            setIsGCSActive(envCredentials.isGCSActive ?? false);
+            localStorage.setItem(
+              'neo4j.connection',
+              JSON.stringify({
+                uri: envCredentials.uri,
+                user: envCredentials.userName,
+                password: btoa(envCredentials.password),
+                database: envCredentials.database,
+                userDbVectorIndex: 384,
+                isReadOnlyUser: envCredentials.isReadonlyUser,
+                isgdsActive: envCredentials.isgdsActive,
+              })
+            );
             return true;
           }
           return false;
@@ -145,38 +157,41 @@ const PageLayout: React.FC = () => {
       try {
         backendApiResponse = await envConnectionAPI();
         const connectionData = backendApiResponse.data;
-        if (connectionData.data && connectionData.status === 'Success') {
-          const envCredentials = {
-            uri: connectionData.data.uri,
-            password: atob(connectionData.data.password),
-            userName: connectionData.data.user_name,
-            database: connectionData.data.database,
-            isReadonlyUser: !connectionData.data.write_access,
-            isgdsActive: connectionData.data.gds_status,
-            isGCSActive: connectionData?.data?.gcs_file_cache === 'True',
-          };
-          setIsGCSActive(envCredentials.isGCSActive);
-          if (session) {
-            const updated = updateSessionIfNeeded(envCredentials, session);
-            if (!updated) {
-              parseSessionAndSetCredentials(session);
-            }
-            setConnectionStatus(Boolean(connectionData.data.graph_connection));
-            setIsBackendConnected(true);
-          } else {
-            setUserCredentialsLocally(envCredentials);
-            setConnectionStatus(true);
+        const envCredentials = {
+          uri: connectionData.data.uri,
+          password: atob(connectionData.data.password),
+          userName: connectionData.data.user_name,
+          database: connectionData.data.database,
+          isReadonlyUser: !connectionData.data.write_access,
+          isgdsActive: connectionData.data.gds_status,
+          isGCSActive: connectionData?.data?.gcs_file_cache === 'True',
+        };
+        setIsGCSActive(connectionData?.data?.gcs_file_cache === 'True');
+        if (session) {
+          const updated = updateSessionIfNeeded(envCredentials, session);
+          if (!updated) {
+            setUserCredentialsFromSession(session); // Use stored session if no update is needed
           }
           handleDisconnectButtonState(false);
         } else {
-          if (session) {
-            parseSessionAndSetCredentials(session);
-            setConnectionStatus(true);
-          } else {
-            setErrorMessage(backendApiResponse?.data?.error);
-            setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-          }
-          handleDisconnectButtonState(true);
+          setUserCredentials(envCredentials);
+          localStorage.setItem(
+            'neo4j.connection',
+            JSON.stringify({
+              uri: envCredentials.uri,
+              user: envCredentials.userName,
+              password: btoa(envCredentials.password),
+              database: envCredentials.database,
+              userDbVectorIndex: 384,
+              isReadOnlyUser: envCredentials.isReadonlyUser,
+              isgdsActive: envCredentials.isgdsActive,
+              isGCSActive: envCredentials.isGCSActive,
+            })
+          );
+          setConnectionStatus(true);
+          setGdsActive(envCredentials.isgdsActive);
+          setIsReadOnlyUser(envCredentials.isReadonlyUser);
+          handleDisconnectButtonState(false);
         }
       } catch (error) {
         console.error('Error during backend API call:', error);
@@ -229,24 +244,17 @@ const PageLayout: React.FC = () => {
   };
 
   return (
-    <div style={{ maxHeight: 'calc(100vh - 58px)' }} className='flex overflow-hidden'>
-      <SideNav
-        toggles3Modal={toggleS3Modal}
-        toggleGCSModal={toggleGCSModal}
-        toggleGenericModal={toggleGenericModal}
-        isExpanded={isLeftExpanded}
-        position='left'
-        toggleDrawer={toggleLeftDrawer}
-      />
-      <DrawerDropzone
-        shows3Modal={shows3Modal}
-        showGCSModal={showGCSModal}
-        showGenericModal={showGenericModal}
-        toggleGCSModal={toggleGCSModal}
-        toggleGenericModal={toggleGenericModal}
-        toggleS3Modal={toggleS3Modal}
-        isExpanded={isLeftExpanded}
-      />
+    <>
+      <Suspense fallback={<FallBackDialog />}>
+        <ConnectionModal
+          open={openConnection.openPopUp}
+          setOpenConnection={setOpenConnection}
+          setConnectionStatus={setConnectionStatus}
+          isVectorIndexMatch={openConnection.vectorIndexMisMatch}
+          chunksExistsWithoutEmbedding={openConnection.chunksExists}
+          chunksExistsWithDifferentEmbedding={openConnection.chunksExistsWithDifferentDimension}
+        />
+      </Suspense>
       <SchemaFromTextDialog
         open={showTextFromSchemaDialog.show}
         onClose={() => {
@@ -291,6 +299,8 @@ const PageLayout: React.FC = () => {
             openTextSchema={() => {
               setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
             }}
+            isSchema={isSchema}
+            setIsSchema={setIsSchema}
             showEnhancementDialog={showEnhancementDialog}
             toggleEnhancementDialog={toggleEnhancementDialog}
             setOpenConnection={setOpenConnection}
@@ -349,6 +359,8 @@ const PageLayout: React.FC = () => {
               openTextSchema={() => {
                 setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
               }}
+              isSchema={isSchema}
+              setIsSchema={setIsSchema}
               showEnhancementDialog={showEnhancementDialog}
               toggleEnhancementDialog={toggleEnhancementDialog}
               setOpenConnection={setOpenConnection}

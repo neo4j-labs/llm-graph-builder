@@ -5,12 +5,22 @@ import {
   Entity,
   ExtendedNode,
   ExtendedRelationship,
+  filedate,
   GraphType,
   Messages,
   Scheme,
   SourceNode,
   UserCredentials,
 } from '../types';
+import Wikipediadarkmode from '../assets/images/wikipedia-darkmode.svg';
+import Wikipediadlogo from '../assets/images/wikipedia.svg';
+import webdarklogo from '../assets/images/web-darkmode.svg';
+import weblogo from '../assets/images/web.svg';
+import youtubedarklogo from '../assets/images/youtube-darkmode.svg';
+import youtubelightlogo from '../assets/images/youtube-lightmode.svg';
+import s3logo from '../assets/images/s3logo.png';
+import gcslogo from '../assets/images/gcs.webp';
+import { chatModeLables, EXPIRATION_DAYS } from './Constants';
 
 // Get the Url
 export const url = () => {
@@ -531,7 +541,7 @@ export function isExpired(itemdate: Date) {
 
 export function isFileReadyToProcess(file: CustomFile, withLocalCheck: boolean) {
   if (withLocalCheck) {
-    return file.fileSource === 'local file' && (file.status === 'New');
+    return file.fileSource === 'local file' && (file.status === 'New' || file.status == 'Ready to Reprocess');
   }
   return file.status === 'New' || file.status == 'Ready to Reprocess';
 }

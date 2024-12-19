@@ -1,3 +1,5 @@
+import { Drawer, Flex, StatusIndicator, Typography, useMediaQuery } from '@neo4j-ndl/react';
+import DropZone from '../DataSources/Local/DropZone';
 import React, { useMemo, Suspense, lazy } from 'react';
 import { Drawer, Flex, StatusIndicator, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import DropZone from '../DataSources/Local/DropZone';
@@ -23,11 +25,12 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
   showGenericModal,
 }) => {
   const { closeAlert, alertState } = useAlertContext();
-  const { isReadOnlyUser, isBackendConnected, connectionStatus } = useCredentials();
-  const isLargeDesktop = useMediaQuery('(min-width:1440px)');
-  const isYoutubeOnly = useMemo(
-    () => APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('web'),
-    []
+  const { isReadOnlyUser, isBackendConnected } = useCredentials();
+  const largedesktops = useMediaQuery(`(min-width:1440px )`);
+
+  const isYoutubeOnlyCheck = useMemo(
+    () => APP_SOURCES?.includes('youtube') && !APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('web'),
+    [APP_SOURCES]
   );
   const isWikipediaOnly = useMemo(
     () => APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('web'),
@@ -41,7 +44,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
     return null;
   }
   return (
-    <div className='flex relative min-h-[calc(-58px+100vh)]'>
+    <div className={`flex relative ${!largedesktops ? 'w-0 h-0' : 'min-h-[calc(-58px+100vh)]'}`}>
       <Drawer
         isExpanded={isExpanded}
         position='left'

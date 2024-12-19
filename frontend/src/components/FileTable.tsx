@@ -43,6 +43,8 @@ import {
   calculateProcessedCount,
   getFileSourceStatus,
   isProcessingFileValid,
+  capitalizeWithUnderscore,
+  getParsedDate,
 } from '../utils/Utils';
 import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, ChildRef } from '../types';
 import { useCredentials } from '../context/UserCredentials';
@@ -63,8 +65,9 @@ import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
 let onlyfortheFirstRender = true;
-const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
-  const { isExpanded, connectionStatus, setConnectionStatus, onInspect, onRetry, onChunkView } = props;
+
+const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, ref) => {
+  const { connectionStatus, setConnectionStatus, onInspect, onRetry, onChunkView } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
   const { userCredentials, isReadOnlyUser } = useCredentials();
@@ -76,6 +79,10 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
   const [fileSourceFilter, setFileSourceFilter] = useState<string>('');
   const [llmtypeFilter, setLLmtypeFilter] = useState<string>('');
   const skipPageResetRef = useRef<boolean>(false);
+  const [_, copy] = useCopyToClipboard();
+  const { colorMode } = useContext(ThemeWrapperContext);
+  const [copyRow, setCopyRow] = useState<boolean>(false);
+  const largedesktops = useMediaQuery(`(min-width:1440px )`);
 
   const tableRef = useRef(null);
 
@@ -754,6 +761,13 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
                   access_token: item?.access_token ?? '',
                   retryOption: item.retry_condition ?? '',
                   retryOptionStatus: false,
+                  chunkNodeCount: item.chunkNodeCount ?? 0,
+                  chunkRelCount: item.chunkRelCount ?? 0,
+                  entityNodeCount: item.entityNodeCount ?? 0,
+                  entityEntityRelCount: item.entityEntityRelCount ?? 0,
+                  communityNodeCount: item.communityNodeCount ?? 0,
+                  communityRelCount: item.communityRelCount ?? 0,
+                  createdAt: item.createdAt != undefined ? getParsedDate(item?.createdAt) : undefined,
                 });
               }
             });
@@ -774,6 +788,7 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
         }
         setIsLoading(false);
       } catch (error: any) {
+        console.log(error);
         if (error instanceof Error) {
           showErrorToast(error.message);
         }
@@ -992,8 +1007,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     }
   }, []);
 
-  const classNameCheck = isExpanded ? 'fileTableWithExpansion' : `filetable`;
-
   useEffect(() => {
     setSelectedRows(table.getSelectedRowModel().rows.map((i) => i.id));
   }, [table.getSelectedRowModel()]);
@@ -1002,47 +1015,51 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
     <>
       {filesData ? (
         <>
-          <div className={`${isExpanded ? 'w-[calc(100%-64px)]' : 'mx-auto w-[calc(100%-100px)]'}`}>
-            <DataGrid
-              ref={tableRef}
-              isResizable={true}
-              tableInstance={table}
-              styling={{
-                borderStyle: 'all-sides',
-                hasZebraStriping: true,
-                headerStyle: 'clean',
-              }}
-              isLoading={isLoading}
-              rootProps={{
-                className: classNameCheck,
-              }}
-              components={{
-                Body: (props) => <DataGridComponents.Body {...props} />,
-                PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
-                  return (
-                    <DataGridComponents.PaginationNumericButton
-                      {...restProps}
-                      isSelected={isSelected}
-                      innerProps={{
-                        ...innerProps,
-                        style: {
-                          ...(isSelected && {
-                            backgroundSize: '200% auto',
-                            borderRadius: '10px',
-                          }),
-                        },
-                      }}
-                    />
-                  );
-                },
-              }}
-              isKeyboardNavigable={false}
-            />
-          </div>
+          <DataGrid
+            ref={tableRef}
+            isResizable={true}
+            tableInstance={table}
+            styling={{
+              borderStyle: 'all-sides',
+              hasZebraStriping: true,
+              headerStyle: 'clean',
+            }}
+            isLoading={isLoading}
+            rootProps={{
+              className: `absolute h-[67%] left-10 filetable ${!largedesktops ? 'top-[17%]' : 'top-[14%]'}`,
+            }}
+            components={{
+              Body: () => (
+                <DataGridComponents.Body
+                  innerProps={{
+                    className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
+                  }}
+                />
+              ),
+              PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
+                return (
+                  <DataGridComponents.PaginationNumericButton
+                    {...restProps}
+                    isSelected={isSelected}
+                    innerProps={{
+                      ...innerProps,
+                      style: {
+                        ...(isSelected && {
+                          backgroundSize: '200% auto',
+                          borderRadius: '10px',
+                        }),
+                      },
+                    }}
+                  />
+                );
+              },
+            }}
+            isKeyboardNavigable={false}
+          />
         </>
       ) : null}
     </>
   );
 };
 
-export default FileTable;
+export default forwardRef(FileTable);

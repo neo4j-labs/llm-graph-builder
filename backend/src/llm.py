@@ -191,7 +191,7 @@ async def get_graph_document_list(
     return graph_document_list
 
 
-async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, additional_instructions=None):
+async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship):
     try:
         llm, model_name = get_llm(model)
         combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
@@ -206,7 +206,7 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
             allowedRelationship = allowedRelationship.split(',')
             
         graph_document_list = await get_graph_document_list(
-            llm, combined_chunk_document_list, allowedNodes, allowedRelationship, additional_instructions
+            llm, combined_chunk_document_list, allowedNodes, allowedRelationship
         )
         return graph_document_list
     except Exception as e:

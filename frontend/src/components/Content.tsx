@@ -6,13 +6,12 @@ import { useFileContext } from '../context/UsersFiles';
 import { extractAPI } from '../utils/FileAPI';
 import {
   BannerAlertProps,
-  ChildRef,
   ContentProps,
   CustomFile,
   OptionType,
   UserCredentials,
   chunkdata,
-  connectionState,
+  FileTableHandle,
 } from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
@@ -38,13 +37,14 @@ import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingC
 import { getChunkText } from '../services/getChunkText';
 import ChunkPopUp from './Popups/ChunkPopUp';
 import { isExpired, isFileReadyToProcess } from '../utils/Utils';
-import { useHasSelections } from '../hooks/useHasSelections';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
 let afterFirstRender = false;
 
 const Content: React.FC<ContentProps> = ({
+  isSchema,
+  setIsSchema,
   showEnhancementDialog,
   toggleEnhancementDialog,
 }) => {
@@ -54,16 +54,8 @@ const Content: React.FC<ContentProps> = ({
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [documentName, setDocumentName] = useState<string>('');
-  const {
-    setUserCredentials,
-    userCredentials,
-    connectionStatus,
-    setConnectionStatus,
-    isGdsActive,
-    setGdsActive,
-    setIsReadOnlyUser,
-    isReadOnlyUser,
-  } = useCredentials();
+  const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser, isGCSActive } =
+    useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [showExpirationModal, setshowExpirationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
@@ -115,8 +107,9 @@ const Content: React.FC<ContentProps> = ({
       showErrorToast(`${fileName} Failed to process`);
     }
   );
-  const childRef = useRef<ChildRef>(null);
-  const incrementPage = () => {
+  const childRef = useRef<FileTableHandle>(null);
+
+  const incrementPage = async () => {
     setCurrentPage((prev) => prev + 1);
   };
   const decrementPage = () => {
@@ -736,22 +729,20 @@ const Content: React.FC<ContentProps> = ({
     const selectedRows = childRef.current?.getSelectedRows();
     if (selectedRows?.length) {
       const expiredFilesExists = selectedRows.some(
-        (c) => c.status !==  'Ready to Reprocess' && isExpired(c?.createdAt as Date ?? new Date())
+        (c) => isFileReadyToProcess(c, true) && isExpired(c?.createdAt as Date)
       );
       const largeFileExists = selectedRows.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
       );
       if (expiredFilesExists) {
-        setshowExpirationModal(true);
-      } else if (largeFileExists && isGCSActive) {
         setshowConfirmationModal(true);
+      } else if (largeFileExists && isGCSActive) {
+        setshowExpirationModal(true);
       } else {
-        handleGenerateGraph(selectedRows.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess'));
+        handleGenerateGraph(selectedRows.filter((f) => isFileReadyToProcess(f, false)));
       }
     } else if (filesData.length) {
-      const expiredFileExists = filesData.some(
-        (c) => isExpired(c?.createdAt as Date)
-      );
+      const expiredFileExists = filesData.some((c) => isFileReadyToProcess(c, true) && isExpired(c.createdAt as Date));
       const largeFileExists = filesData.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
       );
@@ -768,7 +759,7 @@ const Content: React.FC<ContentProps> = ({
       } else if (expiredFileExists && isGCSActive) {
         setshowExpirationModal(true);
       } else {
-        handleGenerateGraph(filesData.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess'));
+        handleGenerateGraph(filesData.filter((f) => isFileReadyToProcess(f, false)));
       }
     }
   };
@@ -829,6 +820,19 @@ const Content: React.FC<ContentProps> = ({
           ></ConfirmationDialog>
         </Suspense>
       )}
+      {showExpirationModal && filesForProcessing.length && (
+        <Suspense fallback={<FallBackDialog />}>
+          <ConfirmationDialog
+            open={showExpirationModal}
+            largeFiles={filesForProcessing}
+            extractHandler={handleGenerateGraph}
+            onClose={() => setshowExpirationModal(false)}
+            loading={extractLoading}
+            selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
+            isLargeDocumentAlert={false}
+          ></ConfirmationDialog>
+        </Suspense>
+      )}
       {showDeletePopUp && (
         <DeletePopUp
           open={showDeletePopUp}
@@ -850,9 +854,6 @@ const Content: React.FC<ContentProps> = ({
           currentPage={currentPage}
           totalPageCount={totalPageCount}
         ></ChunkPopUp>
-      )}
-      {showEnhancementDialog && (
-        <GraphEnhancementDialog open={showEnhancementDialog} onClose={toggleEnhancementDialog}></GraphEnhancementDialog>
       )}
       {showEnhancementDialog && (
         <GraphEnhancementDialog open={showEnhancementDialog} onClose={toggleEnhancementDialog}></GraphEnhancementDialog>

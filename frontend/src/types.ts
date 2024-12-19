@@ -5,6 +5,8 @@ import { OverridableStringUnion } from '@mui/types';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import { NonOAuthError } from '@react-oauth/google';
 import { BannerType } from '@neo4j-ndl/react';
+import Queue from './utils/Queue';
+import FileTable from './components/FileTable';
 
 export interface CustomFileBase extends Partial<globalThis.File> {
   processingTotalTime: number | string;
@@ -27,6 +29,13 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   checked?: boolean;
   retryOptionStatus: boolean;
   retryOption: string;
+  chunkNodeCount: number;
+  chunkRelCount: number;
+  entityNodeCount: number;
+  entityEntityRelCount: number;
+  communityNodeCount: number;
+  communityRelCount: number;
+  createdAt?: Date;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
@@ -44,7 +53,7 @@ export type UserCredentials = {
   database: string;
 } & { [key: string]: any };
 
-export interface SourceNode extends Omit<CustomFileBase, 'relationshipCount'> {
+export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount' | 'createdAt'> {
   fileName: string;
   fileSize: number;
   fileType: string;
@@ -58,6 +67,7 @@ export interface SourceNode extends Omit<CustomFileBase, 'relationshipCount'> {
   processed_chunk?: number;
   total_chunks?: number;
   retry_condition?: string;
+  createdAt: filedate;
 }
 
 export type ExtractParams = Pick<CustomFile, 'wiki_query' | 'model' | 'source_url' | 'language' | 'access_token'> & {
@@ -725,6 +735,14 @@ export interface ContextProps {
   setUserCredentials: (UserCredentials: UserCredentials) => void;
   connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
+  isBackendConnected: boolean;
+  setIsBackendConnected: Dispatch<SetStateAction<boolean>>;
+  errorMessage: string;
+  setErrorMessage: Dispatch<SetStateAction<string>>;
+  showDisconnectButton: boolean;
+  setShowDisconnectButton: Dispatch<SetStateAction<boolean>>;
+  isGCSActive: boolean;
+  setIsGCSActive: Dispatch<SetStateAction<boolean>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];
@@ -733,11 +751,6 @@ export interface MessageContextType {
   setClearHistoryData: Dispatch<SetStateAction<boolean>>;
   isDeleteChatLoading: boolean;
   setIsDeleteChatLoading: Dispatch<SetStateAction<boolean>>;
-}
-
-export interface GraphContextType {
-  loadingGraph: boolean;
-  setLoadingGraph: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface GraphContextType {

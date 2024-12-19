@@ -10,6 +10,16 @@ export const UserConnection = createContext<ContextProps>({
   setUserCredentials: () => null,
   connectionStatus: false,
   setConnectionStatus: () => null,
+  isReadOnlyUser: false,
+  setIsReadOnlyUser: () => null,
+  isBackendConnected: false,
+  setIsBackendConnected: () => null,
+  errorMessage: '',
+  setErrorMessage: () => null,
+  showDisconnectButton: false,
+  setShowDisconnectButton: () => null,
+  isGCSActive: false,
+  setIsGCSActive: () => null,
 });
 export const useCredentials = () => {
   const userCredentials = useContext(UserConnection);
@@ -17,12 +27,29 @@ export const useCredentials = () => {
 };
 const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
   const [userCredentials, setUserCredentials] = useState<UserCredentials | null>(null);
-  const [connectionStatus, setConnectionStatus] = useReducer((state) => !state, false);
+  const [isGdsActive, setGdsActive] = useState<boolean>(false);
+  const [isReadOnlyUser, setIsReadOnlyUser] = useState<boolean>(false);
+  const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
+  const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [showDisconnectButton, setShowDisconnectButton] = useState<boolean>(false);
+  const [isGCSActive, setIsGCSActive] = useState<boolean>(false);
+
   const value = {
     userCredentials,
     setUserCredentials,
     connectionStatus,
     setConnectionStatus,
+    isReadOnlyUser,
+    setIsReadOnlyUser,
+    isBackendConnected,
+    setIsBackendConnected,
+    errorMessage,
+    setErrorMessage,
+    showDisconnectButton,
+    setShowDisconnectButton,
+    isGCSActive,
+    setIsGCSActive,
   };
 
   return <UserConnection.Provider value={value}>{props.children}</UserConnection.Provider>;

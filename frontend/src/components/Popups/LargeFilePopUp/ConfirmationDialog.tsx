@@ -13,7 +13,7 @@ function ConfirmationDialog({
   loading,
   extractHandler,
   selectedRows,
-  isLargeDocumentAlert = false,
+  isLargeDocumentAlert = true,
 }: {
   largeFiles: CustomFile[];
   open: boolean;
