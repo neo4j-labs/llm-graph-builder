@@ -281,7 +281,7 @@ class graphDBdataAccess:
                 logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
                 delete_uploaded_local_file(merged_file_path,file_name)
         query_to_delete_document=""" 
-           MATCH (d:Document) where d.fileName in $filename_list and d.fileSource in $source_types_list
+           MATCH (d:Document) where d.fileName in $filename_list and coalesce(d.fileSource, "None") IN $source_types_list
             with collect(d) as documents 
             unwind documents as d
             optional match (d)<-[:PART_OF]-(c:Chunk) 
@@ -290,7 +290,7 @@ class graphDBdataAccess:
             """
         query_to_delete_document_and_entities="""
             MATCH (d:Document)
-            WHERE d.fileName IN $filename_list AND d.fileSource IN $source_types_list
+            WHERE d.fileName IN $filename_list AND coalesce(d.fileSource, "None") IN $source_types_list
             WITH COLLECT(d) AS documents
             UNWIND documents AS d
             OPTIONAL MATCH (d)<-[:PART_OF]-(c:Chunk)
