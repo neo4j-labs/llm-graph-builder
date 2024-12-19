@@ -6,6 +6,7 @@ import type { Node, Relationship } from '@neo4j-nvl/base';
 import { NonOAuthError } from '@react-oauth/google';
 import { BannerType } from '@neo4j-ndl/react';
 import Queue from './utils/Queue';
+import FileTable from './components/FileTable';
 
 export interface CustomFileBase extends Partial<globalThis.File> {
   processingTotalTime: number | string;
@@ -936,3 +937,4 @@ export interface filedate {
     _Time__tzinfo: null;
   };
 }
+export type FileTableHandle = React.ElementRef<typeof FileTable>;

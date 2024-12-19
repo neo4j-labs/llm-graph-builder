@@ -11,7 +11,16 @@ import {
   Checkbox,
   useMediaQuery,
 } from '@neo4j-ndl/react';
-import { forwardRef, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useContext,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  ForwardRefRenderFunction,
+} from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -59,7 +68,7 @@ import BreakDownPopOver from './BreakDownPopOver';
 
 let onlyfortheFirstRender = true;
 
-const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
+const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, ref) => {
   const { connectionStatus, setConnectionStatus, onInspect, onRetry, onChunkView } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
@@ -1034,6 +1043,6 @@ const FileTable = forwardRef<ChildRef, FileTableProps>((props, ref) => {
       ) : null}
     </>
   );
-});
+};
 
-export default FileTable;
+export default forwardRef(FileTable);
