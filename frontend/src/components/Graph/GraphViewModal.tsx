@@ -18,8 +18,6 @@ import type { Node, Relationship } from '@neo4j-nvl/base';
 import {
   ArrowPathIconOutline,
   FitToScreenIcon,
-  InformationCircleIconOutline,
-  // InformationCircleIconOutline,
   MagnifyingGlassMinusIconOutline,
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
@@ -34,7 +32,6 @@ import CheckboxSelection from './CheckboxSelection';
 import ResultOverview from './ResultOverview';
 import { ResizePanelDetails } from './ResizePanel';
 import GraphPropertiesPanel from './GraphPropertiesPanel';
-import SliderSelection from '../../utils/Slider';
 import DropdownComponent from '../Dropdown';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({

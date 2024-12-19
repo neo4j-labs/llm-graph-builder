@@ -3,7 +3,7 @@ import {
   CustomFile,
   FileContextProviderProps,
   FileContextType,
-  OptionType,
+  OptionTypeVal,
   showTextFromSchemaDialogType,
 } from '../types';
 import { chatModeLables, llms, PRODMODLES } from '../utils/Constants';
@@ -28,9 +28,9 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   );
   const [model, setModel] = useState<string>(isProdDefaultModel ? selectedModel : isProdEnv ? PRODMODLES[0] : llms[0]);
   const [graphType, setGraphType] = useState<string>('Knowledge Graph Entities');
-  const [selectedNodes, setSelectedNodes] = useState<readonly OptionType[]>([]);
-  const [selectedRels, setSelectedRels] = useState<readonly OptionType[]>([]);
-  const [selectedSchemas, setSelectedSchemas] = useState<readonly OptionType[]>(getStoredSchema);
+  const [selectedNodes, setSelectedNodes] = useState<readonly OptionTypeVal[]>([]);
+  const [selectedRels, setSelectedRels] = useState<readonly OptionTypeVal[]>([]);
+  const [selectedSchemas, setSelectedSchemas] = useState<readonly OptionTypeVal[]>(getStoredSchema);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [chatModes, setchatModes] = useState<string[]>([chatModeLables['graph+vector+fulltext']]);
