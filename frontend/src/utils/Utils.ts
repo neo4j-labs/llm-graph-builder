@@ -538,3 +538,10 @@ export function isExpired(itemdate: Date) {
   const daysdifference = timedifference / (1000 * 3600 * 24);
   return daysdifference > EXPIRATION_DAYS;
 }
+
+export function isFileReadyToProcess(file: CustomFile, withLocalCheck: boolean) {
+  if (withLocalCheck) {
+    return file.fileSource === 'local file' && (file.status === 'New' || file.status == 'Ready to Reprocess');
+  }
+  return file.status === 'New' || file.status == 'Ready to Reprocess';
+}
