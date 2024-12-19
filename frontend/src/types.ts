@@ -6,6 +6,7 @@ import type { Node, Relationship } from '@neo4j-nvl/base';
 import { NonOAuthError } from '@react-oauth/google';
 import { BannerType } from '@neo4j-ndl/react';
 import Queue from './utils/Queue';
+import FileTable from './components/FileTable';
 
 export interface CustomFileBase extends Partial<globalThis.File> {
   processingTotalTime: number | string;
@@ -34,6 +35,7 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   entityEntityRelCount: number;
   communityNodeCount: number;
   communityRelCount: number;
+  createdAt?: Date;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
@@ -51,7 +53,7 @@ export type UserCredentials = {
   database: string;
 } & { [key: string]: any };
 
-export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount'> {
+export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount' | 'createdAt'> {
   fileName: string;
   fileSize: number;
   fileType: string;
@@ -65,6 +67,7 @@ export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount'> {
   processed_chunk?: number;
   total_chunks?: number;
   retry_condition?: string;
+  createdAt: filedate;
 }
 
 export type ExtractParams = Pick<CustomFile, 'wikiQuery' | 'model' | 'sourceUrl' | 'language' | 'accessToken'> & {
@@ -143,8 +146,6 @@ export interface DrawerProps {
 }
 
 export interface ContentProps {
-  isLeftExpanded: boolean;
-  isRightExpanded: boolean;
   showChatBot: boolean;
   openChatBot: () => void;
   openTextSchema: () => void;
@@ -158,7 +159,6 @@ export interface ContentProps {
 }
 
 export interface FileTableProps {
-  isExpanded: boolean;
   connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
   onInspect: (id: string) => void;
@@ -580,7 +580,7 @@ export interface UploadResponse extends Partial<commonserverresponse> {
   data: uploadData;
 }
 export interface LargefilesProps {
-  largeFiles: CustomFile[];
+  Files: CustomFile[];
   handleToggle: (ischecked: boolean, id: string) => void;
   checked: string[];
 }
@@ -758,6 +758,8 @@ export interface ContextProps {
   setErrorMessage: Dispatch<SetStateAction<string>>;
   showDisconnectButton: boolean;
   setShowDisconnectButton: Dispatch<SetStateAction<boolean>>;
+  isGCSActive: boolean;
+  setIsGCSActive: Dispatch<SetStateAction<boolean>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];
@@ -766,11 +768,6 @@ export interface MessageContextType {
   setClearHistoryData: Dispatch<SetStateAction<boolean>>;
   isDeleteChatLoading: boolean;
   setIsDeleteChatLoading: Dispatch<SetStateAction<boolean>>;
-}
-
-export interface GraphContextType {
-  loadingGraph: boolean;
-  setLoadingGraph: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface GraphContextType {
@@ -923,3 +920,21 @@ export interface GraphViewHandlerProps {
 export interface ChatProps {
   chatMessages: Messages[];
 }
+
+export interface filedate {
+  _DateTime__date: {
+    _Date__ordinal: number;
+    _Date__year: number;
+    _Date__month: number;
+    _Date__day: number;
+  };
+  _DateTime__time: {
+    _Time__ticks: number;
+    _Time__hour: number;
+    _Time__minute: number;
+    _Time__second: number;
+    _Time__nanosecond: number;
+    _Time__tzinfo: null;
+  };
+}
+export type FileTableHandle = React.ElementRef<typeof FileTable>;

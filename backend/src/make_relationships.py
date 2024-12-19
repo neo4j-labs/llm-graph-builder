@@ -6,6 +6,7 @@ from typing import List
 import os
 import hashlib
 import time
+from langchain_neo4j import Neo4jVector
 
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
@@ -39,7 +40,7 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
         graph.query(unwind_query, params={"batch_data": batch_data})
 
     
-def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name):
+def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name):
     #create embedding
     isEmbedding = os.getenv('IS_EMBEDDING')
     # embedding_model = os.getenv('EMBEDDING_MODEL')
@@ -58,35 +59,6 @@ def update_embedding_create_vector_index(graph, chunkId_chunkDoc_list, file_name
                 "chunkId": row['chunk_id'],
                 "embeddings": embeddings_arr
             })
-            # graph.query("""MATCH (d:Document {fileName : $fileName})
-            #                MERGE (c:Chunk {id:$chunkId}) SET c.embedding = $embeddings 
-            #                MERGE (c)-[:PART_OF]->(d)
-            #             """,
-            #             {
-            #                 "fileName" : file_name,
-            #                 "chunkId": row['chunk_id'],
-            #                 "embeddings" : embeddings_arr
-            #             }
-            #             )
-            logging.info('create vector index on chunk embedding')
-            # result = graph.query("SHOW INDEXES YIELD * WHERE labelsOrTypes = ['Chunk'] and name = 'vector'")
-            vector_index = graph.query("SHOW INDEXES YIELD * WHERE labelsOrTypes = ['Chunk'] and type = 'VECTOR' AND name = 'vector' return options")
-            # if result:
-            #     logging.info(f"vector index dropped for 'Chunk'")
-            #     graph.query("DROP INDEX vector IF EXISTS;")
-
-            if len(vector_index) == 0:
-                logging.info(f'vector index is not exist, will create in next query')
-                graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
-                                OPTIONS {indexConfig: {
-                                `vector.dimensions`: $dimensions,
-                                `vector.similarity_function`: 'cosine'
-                                }}
-                            """,
-                            {
-                                "dimensions" : dimension
-                            }
-                            )
     
     query_to_create_embedding = """
         UNWIND $data AS row
@@ -186,3 +158,26 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
     graph.query(query_to_create_NEXT_CHUNK_relation, params={"relationships": relationships})   
     
     return lst_chunks_including_hash
+
+
+def create_chunk_vector_index(graph):
+    start_time = time.time()
+    try:
+        vector_index = graph.query("SHOW INDEXES YIELD * WHERE labelsOrTypes = ['Chunk'] and type = 'VECTOR' AND name = 'vector' return options")
+
+        if not vector_index:
+            vector_store = Neo4jVector(embedding=EMBEDDING_FUNCTION,
+                                    graph=graph,
+                                    node_label="Chunk", 
+                                    embedding_node_property="embedding",
+                                    index_name="vector"
+                                    )
+            vector_store.create_new_index()
+            logging.info(f"Index created successfully. Time taken: {time.time() - start_time:.2f} seconds")
+        else:
+            logging.info(f"Index already exist,Skipping creation. Time taken: {time.time() - start_time:.2f} seconds")
+    except Exception as e:
+        if "EquivalentSchemaRuleAlreadyExists" in str(e):
+            logging.info("Vector index already exists, skipping creation.")
+        else:
+            raise

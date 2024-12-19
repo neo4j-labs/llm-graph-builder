@@ -5,6 +5,7 @@ import {
   Entity,
   ExtendedNode,
   ExtendedRelationship,
+  filedate,
   GraphType,
   Messages,
   Scheme,
@@ -19,7 +20,7 @@ import youtubedarklogo from '../assets/images/youtube-darkmode.svg';
 import youtubelightlogo from '../assets/images/youtube-lightmode.svg';
 import s3logo from '../assets/images/s3logo.png';
 import gcslogo from '../assets/images/gcs.webp';
-import { chatModeLables } from './Constants';
+import { chatModeLables, EXPIRATION_DAYS } from './Constants';
 
 // Get the Url
 export const url = () => {
@@ -521,4 +522,25 @@ export function getNodes<Type extends Entity | ExtendedNode>(nodesData: Array<Ty
     }
     return n;
   });
+}
+export function getParsedDate(neo4jdate: filedate) {
+  const { _Date__year, _Date__month, _Date__day } = neo4jdate._DateTime__date;
+  const { _Time__hour, _Time__minute, _Time__second } = neo4jdate._DateTime__time;
+  const currentdate = new Date(`${_Date__month}/${_Date__day}/${_Date__year}`);
+  currentdate.setHours(_Time__hour, _Time__minute, _Time__second);
+  return currentdate;
+}
+
+export function isExpired(itemdate: Date) {
+  const currentDate = new Date();
+  const timedifference = currentDate.getTime() - itemdate.getTime();
+  const daysdifference = timedifference / (1000 * 3600 * 24);
+  return daysdifference > EXPIRATION_DAYS;
+}
+
+export function isFileReadyToProcess(file: CustomFile, withLocalCheck: boolean) {
+  if (withLocalCheck) {
+    return file.fileSource === 'local file' && (file.status === 'New' || file.status == 'Ready to Reprocess');
+  }
+  return file.status === 'New' || file.status == 'Ready to Reprocess';
 }

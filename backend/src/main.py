@@ -56,6 +56,12 @@ def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id,
         obj_source_node.url = str(source_url+file_name)
         obj_source_node.awsAccessKeyId = aws_access_key_id
         obj_source_node.created_at = datetime.now()
+        obj_source_node.chunkNodeCount=0
+        obj_source_node.chunkRelCount=0
+        obj_source_node.entityNodeCount=0
+        obj_source_node.entityEntityRelCount=0
+        obj_source_node.communityNodeCount=0
+        obj_source_node.communityRelCount=0
         try:
           graphDb_data_Access = graphDBdataAccess(graph)
           graphDb_data_Access.create_source_node(obj_source_node)
@@ -88,6 +94,12 @@ def create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_na
       obj_source_node.gcsProjectId = file_metadata['gcsProjectId']
       obj_source_node.created_at = datetime.now()
       obj_source_node.access_token = credentials.token
+      obj_source_node.chunkNodeCount=0
+      obj_source_node.chunkRelCount=0
+      obj_source_node.entityNodeCount=0
+      obj_source_node.entityEntityRelCount=0
+      obj_source_node.communityNodeCount=0
+      obj_source_node.communityRelCount=0
     
       try:
           graphDb_data_Access = graphDBdataAccess(graph)
@@ -119,7 +131,12 @@ def create_source_node_graph_web_url(graph, model, source_url, source_type):
     obj_source_node.file_name = pages[0].metadata['title']
     obj_source_node.language = pages[0].metadata['language'] 
     obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
-    
+    obj_source_node.chunkNodeCount=0
+    obj_source_node.chunkRelCount=0
+    obj_source_node.entityNodeCount=0
+    obj_source_node.entityEntityRelCount=0
+    obj_source_node.communityNodeCount=0
+    obj_source_node.communityRelCount=0
     graphDb_data_Access = graphDBdataAccess(graph)
     graphDb_data_Access.create_source_node(obj_source_node)
     lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Success'})
@@ -138,6 +155,12 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     obj_source_node.model = model
     obj_source_node.url = youtube_url
     obj_source_node.created_at = datetime.now()
+    obj_source_node.chunkNodeCount=0
+    obj_source_node.chunkRelCount=0
+    obj_source_node.entityNodeCount=0
+    obj_source_node.entityEntityRelCount=0
+    obj_source_node.communityNodeCount=0
+    obj_source_node.communityRelCount=0
     match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
     logging.info(f"match value: {match}")
     video_id = parse_qs(urlparse(youtube_url).query).get('v')
@@ -180,6 +203,12 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
       obj_source_node.url = urllib.parse.unquote(pages[0].metadata['source'])
       obj_source_node.created_at = datetime.now()
       obj_source_node.language = language
+      obj_source_node.chunkNodeCount=0
+      obj_source_node.chunkRelCount=0
+      obj_source_node.entityNodeCount=0
+      obj_source_node.entityEntityRelCount=0
+      obj_source_node.communityNodeCount=0
+      obj_source_node.communityRelCount=0
       graphDb_data_Access = graphDBdataAccess(graph)
       graphDb_data_Access.create_source_node(obj_source_node)
       success_count+=1
@@ -279,6 +308,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
   logging.info(f'Time taken database connection: {elapsed_create_connection:.2f} seconds')
   uri_latency["create_connection"] = f'{elapsed_create_connection:.2f}'
   graphDb_data_Access = graphDBdataAccess(graph)
+  create_chunk_vector_index(graph)
   start_get_chunkId_chunkDoc_list = time.time()
   total_chunks, chunkId_chunkDoc_list = get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition)
   end_get_chunkId_chunkDoc_list = time.time()
@@ -428,7 +458,7 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password,
     graph = create_graph_database_connection(uri, userName, password, database)
   
   start_update_embedding = time.time()
-  update_embedding_create_vector_index( graph, chunkId_chunkDoc_list, file_name)
+  create_chunk_embeddings( graph, chunkId_chunkDoc_list, file_name)
   end_update_embedding = time.time()
   elapsed_update_embedding = end_update_embedding - start_update_embedding
   logging.info(f'Time taken to update embedding in chunk node: {elapsed_update_embedding:.2f} seconds')
@@ -618,6 +648,12 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
       obj_source_node.file_source = 'local file'
       obj_source_node.model = model
       obj_source_node.created_at = datetime.now()
+      obj_source_node.chunkNodeCount=0
+      obj_source_node.chunkRelCount=0
+      obj_source_node.entityNodeCount=0
+      obj_source_node.entityEntityRelCount=0
+      obj_source_node.communityNodeCount=0
+      obj_source_node.communityRelCount=0
       graphDb_data_Access = graphDBdataAccess(graph)
         
       graphDb_data_Access.create_source_node(obj_source_node)

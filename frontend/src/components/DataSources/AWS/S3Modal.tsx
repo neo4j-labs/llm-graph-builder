@@ -54,7 +54,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       localStorage.setItem('accesskey', accessKey);
     }
     if (accessKey.length) {
-      localStorage.setItem('secretkey', secretKey);
+      localStorage.setItem('secretkey', btoa(secretKey));
     }
     if (isValid && accessKey.trim() != '' && secretKey.trim() != '') {
       try {

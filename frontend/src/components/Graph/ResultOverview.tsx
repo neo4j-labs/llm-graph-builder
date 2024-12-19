@@ -144,10 +144,10 @@ const ResultOverview: React.FunctionComponent<OverViewProps> = ({
           </Flex>
           <div className='flex gap-2 flex-wrap ml-2'>
             <ShowAll initiallyShown={RESULT_STEP_SIZE}>
-              {nodeCheck.map((nodeLabel, index) => (
+              {nodeCheck.map((nodeLabel) => (
                 <LegendsChip
                   type='node'
-                  key={index}
+                  key={nodeLabel}
                   label={nodeLabel}
                   scheme={newScheme}
                   count={nodeCount(nodes, nodeLabel)}

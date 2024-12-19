@@ -21,7 +21,7 @@ const connectAPI = async (connectionURI: string, username: string, password: str
 
 const envConnectionAPI = async () => {
   try {
-    const conectionUrl = `/backend_connection_configuation`;
+    const conectionUrl = `/backend_connection_configuration`;
     const response = await api.post(conectionUrl);
     return response;
   } catch (error) {

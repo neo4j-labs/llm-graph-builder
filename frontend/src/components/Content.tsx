@@ -4,7 +4,15 @@ import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { extractAPI } from '../utils/FileAPI';
-import { BannerAlertProps, ChildRef, ContentProps, CustomFile, OptionType, UserCredentials, chunkdata } from '../types';
+import {
+  BannerAlertProps,
+  ContentProps,
+  CustomFile,
+  OptionType,
+  UserCredentials,
+  chunkdata,
+  FileTableHandle,
+} from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
@@ -35,14 +43,13 @@ import { useMessageContext } from '../context/UserMessages';
 import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
 import { getChunkText } from '../services/getChunkText';
 import ChunkPopUp from './Popups/ChunkPopUp';
+import { isExpired, isFileReadyToProcess } from '../utils/Utils';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
 let afterFirstRender = false;
 
 const Content: React.FC<ContentProps> = ({
-  isLeftExpanded,
-  isRightExpanded,
   isSchema,
   setIsSchema,
   showEnhancementDialog,
@@ -57,8 +64,10 @@ const Content: React.FC<ContentProps> = ({
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [documentName, setDocumentName] = useState<string>('');
-  const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser } = useCredentials();
+  const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser, isGCSActive } =
+    useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
+  const [showExpirationModal, setshowExpirationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [retryFile, setRetryFile] = useState<string>('');
   const [retryLoading, setRetryLoading] = useState<boolean>(false);
@@ -106,7 +115,7 @@ const Content: React.FC<ContentProps> = ({
       showErrorToast(`${fileName} Failed to process`);
     }
   );
-  const childRef = useRef<ChildRef>(null);
+  const childRef = useRef<FileTableHandle>(null);
 
   const incrementPage = async () => {
     setCurrentPage((prev) => prev + 1);
@@ -267,7 +276,7 @@ const Content: React.FC<ContentProps> = ({
         fileItem.retryOption ?? '',
         fileItem.sourceUrl,
         localStorage.getItem('accesskey'),
-        localStorage.getItem('secretkey'),
+        atob(localStorage.getItem('secretkey') ?? ''),
         fileItem.name ?? '',
         fileItem.gcsBucket ?? '',
         fileItem.gcsBucketFolder ?? '',
@@ -520,15 +529,6 @@ const Content: React.FC<ContentProps> = ({
     window.open(replacedUrl, '_blank');
   };
 
-  const classNameCheck =
-    isLeftExpanded && isRightExpanded
-      ? 'contentWithExpansion'
-      : isRightExpanded
-      ? 'contentWithChatBot'
-      : !isLeftExpanded && !isRightExpanded
-      ? 'w-[calc(100%-128px)]'
-      : 'contentWithDropzoneExpansion';
-
   const handleGraphView = () => {
     setOpenGraphView(true);
     setViewPoint('showGraphView');
@@ -671,35 +671,25 @@ const Content: React.FC<ContentProps> = ({
   const onClickHandler = () => {
     const selectedRows = childRef.current?.getSelectedRows();
     if (selectedRows?.length) {
-      let selectedLargeFiles: CustomFile[] = [];
-      for (let index = 0; index < selectedRows.length; index++) {
-        const parsedData: CustomFile = selectedRows[index];
-        if (
-          parsedData.fileSource === 'local file' &&
-          typeof parsedData.size === 'number' &&
-          (parsedData.status === 'New' || parsedData.status == 'Ready to Reprocess') &&
-          parsedData.size > largeFileSize
-        ) {
-          selectedLargeFiles.push(parsedData);
-        }
-      }
-      if (selectedLargeFiles.length) {
+      const expiredFilesExists = selectedRows.some(
+        (c) => isFileReadyToProcess(c, true) && isExpired(c?.createdAt as Date)
+      );
+      const largeFileExists = selectedRows.some(
+        (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
+      );
+      if (expiredFilesExists) {
         setshowConfirmationModal(true);
+      } else if (largeFileExists && isGCSActive) {
+        setshowExpirationModal(true);
       } else {
-        handleGenerateGraph(selectedRows.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess'));
+        handleGenerateGraph(selectedRows.filter((f) => isFileReadyToProcess(f, false)));
       }
     } else if (filesData.length) {
-      const largefiles = filesData.filter((f) => {
-        if (
-          typeof f.size === 'number' &&
-          (f.status === 'New' || f.status == 'Ready to Reprocess') &&
-          f.size > largeFileSize
-        ) {
-          return true;
-        }
-        return false;
-      });
-      const selectAllNewFiles = filesData.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess');
+      const expiredFileExists = filesData.some((c) => isFileReadyToProcess(c, true) && isExpired(c.createdAt as Date));
+      const largeFileExists = filesData.some(
+        (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
+      );
+      const selectAllNewFiles = filesData.filter((f) => isFileReadyToProcess(f, false));
       const stringified = selectAllNewFiles.reduce((accu, f) => {
         const key = f.id;
         // @ts-ignore
@@ -707,10 +697,12 @@ const Content: React.FC<ContentProps> = ({
         return accu;
       }, {});
       setRowSelection(stringified);
-      if (largefiles.length) {
+      if (largeFileExists) {
         setshowConfirmationModal(true);
+      } else if (expiredFileExists && isGCSActive) {
+        setshowExpirationModal(true);
       } else {
-        handleGenerateGraph(filesData.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess'));
+        handleGenerateGraph(filesData.filter((f) => isFileReadyToProcess(f, false)));
       }
     }
   };
@@ -757,6 +749,19 @@ const Content: React.FC<ContentProps> = ({
           ></ConfirmationDialog>
         </Suspense>
       )}
+      {showExpirationModal && filesForProcessing.length && (
+        <Suspense fallback={<FallBackDialog />}>
+          <ConfirmationDialog
+            open={showExpirationModal}
+            largeFiles={filesForProcessing}
+            extractHandler={handleGenerateGraph}
+            onClose={() => setshowExpirationModal(false)}
+            loading={extractLoading}
+            selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
+            isLargeDocumentAlert={false}
+          ></ConfirmationDialog>
+        </Suspense>
+      )}
       {showDeletePopUp && (
         <DeletePopUp
           open={showDeletePopUp}
@@ -782,8 +787,21 @@ const Content: React.FC<ContentProps> = ({
       {showEnhancementDialog && (
         <GraphEnhancementDialog open={showEnhancementDialog} onClose={toggleEnhancementDialog}></GraphEnhancementDialog>
       )}
-      <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
-        <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row' flexWrap='wrap'>
+      <GraphViewModal
+        inspectedName={inspectedName}
+        open={openGraphView}
+        setGraphViewOpen={setOpenGraphView}
+        viewPoint={viewPoint}
+        selectedRows={childRef.current?.getSelectedRows()}
+      />
+      <div className={`n-bg-palette-neutral-bg-default main-content-wrapper`}>
+        <Flex
+          className='w-full absolute top-0'
+          alignItems='center'
+          justifyContent='space-between'
+          flexDirection='row'
+          flexWrap='wrap'
+        >
           <div className='connectionstatus__container'>
             <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
             <Typography variant='body-medium'>
@@ -847,7 +865,6 @@ const Content: React.FC<ContentProps> = ({
           </div>
         </Flex>
         <FileTable
-          isExpanded={isLeftExpanded && isRightExpanded}
           connectionStatus={connectionStatus}
           setConnectionStatus={setConnectionStatus}
           onInspect={(name) => {
@@ -874,21 +891,21 @@ const Content: React.FC<ContentProps> = ({
           handleGenerateGraph={processWaitingFilesOnRefresh}
         ></FileTable>
         <Flex
-          className={`${
-            !isLeftExpanded && !isRightExpanded ? 'w-[calc(100%-128px)]' : 'w-full'
-          } p-2.5 absolute bottom-4 mt-1.5 self-start`}
+          className={`p-2.5  mt-1.5 absolute bottom-0 w-full`}
           justifyContent='space-between'
           flexDirection={isTablet ? 'column' : 'row'}
         >
-          <DropdownComponent
-            onSelect={handleDropdownChange}
-            options={llms ?? ['']}
-            placeholder='Select LLM Model'
-            defaultValue={model}
-            view='ContentView'
-            isDisabled={false}
-          />
-          <Flex flexDirection='row' gap='4' className='self-end' flexWrap='wrap'>
+          <div>
+            <DropdownComponent
+              onSelect={handleDropdownChange}
+              options={llms ?? ['']}
+              placeholder='Select LLM Model'
+              defaultValue={model}
+              view='ContentView'
+              isDisabled={false}
+            />
+          </div>
+          <Flex flexDirection='row' gap='4' className='self-end mb-2.5' flexWrap='wrap'>
             <ButtonWithToolTip
               text={tooltips.generateGraph}
               placement='top'
@@ -940,13 +957,6 @@ const Content: React.FC<ContentProps> = ({
           </Flex>
         </Flex>
       </div>
-      <GraphViewModal
-        inspectedName={inspectedName}
-        open={openGraphView}
-        setGraphViewOpen={setOpenGraphView}
-        viewPoint={viewPoint}
-        selectedRows={childRef.current?.getSelectedRows()}
-      />
     </>
   );
 };

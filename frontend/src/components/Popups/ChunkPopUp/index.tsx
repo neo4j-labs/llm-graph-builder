@@ -58,8 +58,8 @@ const ChunkPopUp = ({
           <Loader title='loading...'></Loader>
         ) : (
           <ol className='max-h-80 overflow-y-auto flex flex-col gap-4'>
-            {sortedChunksData.map((c, idx) => (
-              <li key={`${idx}${c.position}`} className='flex flex-row gap-1'>
+            {sortedChunksData.map((c) => (
+              <li key={`${c.position}`} className='flex flex-row gap-1'>
                 <Flex flexDirection='column' gap='2'>
                   <Flex flexDirection='row'>
                     <Typography variant='label'>Position :</Typography>

@@ -393,7 +393,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                     <Typography variant='body-medium'>
                       Currently ragas evaluation works on{' '}
                       {supportedLLmsForRagas.map((s, idx) => (
-                        <span className='font-bold'>
+                        <span className='font-bold' key={s}>
                           {capitalizeWithUnderscore(s) + (idx != supportedLLmsForRagas.length - 1 ? ',' : '')}
                         </span>
                       ))}

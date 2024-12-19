@@ -21,9 +21,9 @@ export default function CustomMenu({
 }) {
   return (
     <Menu isOpen={open} anchorRef={anchorOrigin} className='custom-menu' isRoot={isRoot} onClose={closeHandler}>
-      {items?.map((i, idx) => (
+      {items?.map((i) => (
         <Menu.Item
-          key={`${idx}${i.title}`}
+          key={`${i.title}`}
           title={i.title}
           onClick={i.onClick}
           isDisabled={i.disabledCondition}
