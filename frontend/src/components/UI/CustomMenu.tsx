@@ -19,7 +19,6 @@ export default function CustomMenu({
   anchorOrigin: React.RefObject<HTMLElement | null>;
   isRoot?: boolean;
 }) {
-  console.log()
   return (
     <Menu isOpen={open} anchorRef={anchorOrigin} className='custom-menu' isRoot={isRoot} onClose={closeHandler}>
       {items?.map((i, index) => (
