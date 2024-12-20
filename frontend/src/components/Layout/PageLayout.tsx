@@ -144,43 +144,48 @@ const PageLayout: React.FC = () => {
       try {
         backendApiResponse = await envConnectionAPI();
         const connectionData = backendApiResponse.data;
-        const envCredentials = {
-          uri: connectionData.data.uri,
-          password: atob(connectionData.data.password),
-          userName: connectionData.data.user_name,
-          database: connectionData.data.database,
-          isReadonlyUser: !connectionData.data.write_access,
-          isgdsActive: connectionData.data.gds_status,
-          isGCSActive: connectionData?.data?.gcs_file_cache === 'True',
-        };
-        setIsGCSActive(connectionData?.data?.gcs_file_cache === 'True');
-        if (session) {
-          const updated = updateSessionIfNeeded(envCredentials, session);
-          if (!updated) {
-            setUserCredentialsFromSession(session); // Use stored session if no update is needed
+        if (connectionData.data) {
+          const envCredentials = {
+            uri: connectionData.data.uri,
+            password: atob(connectionData.data.password),
+            userName: connectionData.data.user_name,
+            database: connectionData.data.database,
+            isReadonlyUser: !connectionData.data.write_access,
+            isgdsActive: connectionData.data.gds_status,
+            isGCSActive: connectionData?.data?.gcs_file_cache === 'True',
+          };
+          setIsGCSActive(connectionData?.data?.gcs_file_cache === 'True');
+          if (session) {
+            const updated = updateSessionIfNeeded(envCredentials, session);
+            if (!updated) {
+              setUserCredentialsFromSession(session); // Use stored session if no update is needed
+            }
+            setConnectionStatus(Boolean(connectionData.data.graph_connection));
+            setIsBackendConnected(true);
+            handleDisconnectButtonState(false);
+          } else {
+            setUserCredentials(envCredentials);
+            localStorage.setItem(
+              'neo4j.connection',
+              JSON.stringify({
+                uri: envCredentials.uri,
+                user: envCredentials.userName,
+                password: btoa(envCredentials.password),
+                database: envCredentials.database,
+                userDbVectorIndex: 384,
+                isReadOnlyUser: envCredentials.isReadonlyUser,
+                isgdsActive: envCredentials.isgdsActive,
+                isGCSActive: envCredentials.isGCSActive,
+              })
+            );
+            setConnectionStatus(true);
+            setGdsActive(envCredentials.isgdsActive);
+            setIsReadOnlyUser(envCredentials.isReadonlyUser);
+            handleDisconnectButtonState(false);
           }
-          setConnectionStatus(Boolean(connectionData.data.graph_connection));
-          setIsBackendConnected(true);
-          handleDisconnectButtonState(false);
         } else {
-          setUserCredentials(envCredentials);
-          localStorage.setItem(
-            'neo4j.connection',
-            JSON.stringify({
-              uri: envCredentials.uri,
-              user: envCredentials.userName,
-              password: btoa(envCredentials.password),
-              database: envCredentials.database,
-              userDbVectorIndex: 384,
-              isReadOnlyUser: envCredentials.isReadonlyUser,
-              isgdsActive: envCredentials.isgdsActive,
-              isGCSActive: envCredentials.isGCSActive,
-            })
-          );
-          setConnectionStatus(true);
-          setGdsActive(envCredentials.isgdsActive);
-          setIsReadOnlyUser(envCredentials.isReadonlyUser);
-          handleDisconnectButtonState(false);
+          setErrorMessage(backendApiResponse?.data?.error);
+          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
         }
       } catch (error) {
         console.error('Error during backend API call:', error);

@@ -337,14 +337,5 @@ export const metricsinfo: Record<string, string> = {
 };
 
 export const GRAPH_CHUNK_LIMIT = '50';
-export const graph_chunk_limit = [
-        '25',
-        '50',
-        '75',
-        '100',
-        '125',
-        '150',
-        '175',
-        '200',
-      ];
+export const graph_chunk_limit = ['25', '50', '75', '100', '125', '150', '175', '200'];
 export const EXPIRATION_DAYS = 3;

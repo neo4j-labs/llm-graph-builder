@@ -218,7 +218,7 @@ const Content: React.FC<ContentProps> = ({
     }
     toggleChunksLoading();
   };
-  
+
   const extractData = async (uid: string, isselectedRows = false, filesTobeProcess: CustomFile[]) => {
     if (!isselectedRows) {
       const fileItem = filesData.find((f) => f.id == uid);
@@ -522,8 +522,9 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -560,12 +561,12 @@ const Content: React.FC<ContentProps> = ({
         return prev.map((f) => {
           return f.name === filename
             ? {
-              ...f,
-              status: 'Ready to Reprocess',
-              processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-              nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-              relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
-            }
+                ...f,
+                status: 'Ready to Reprocess',
+                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                nodesCount: isStartFromBegining ? 0 : f.nodesCount,
+                relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
+              }
             : f;
         });
       });
@@ -903,18 +904,17 @@ const Content: React.FC<ContentProps> = ({
                 value: String(value),
                 isDisabled: process.env.VITE_ENV === 'PROD' && !prodllms.includes(value),
               }))}
-              placeholder="Select LLM Model"
-              defaultValue={{ label: String(model), value: String(model) }
-              }
-              view="ContentView"
+              placeholder='Select LLM Model'
+              defaultValue={{ label: String(model), value: String(model) }}
+              view='ContentView'
               isDisabled={false}
-              label="LLM Models"
-              helpText="LLM Model used for Extraction & Chat"
-              size="medium"
+              label='LLM Models'
+              helpText='LLM Model used for Extraction & Chat'
+              size='medium'
               customTooltip={(option: OptionType) =>
-                process.env.VITE_ENV === 'PROD' && !prodllms.includes(option.value)
-                  ? <div>{'This model is only available in the development environment.'}</div>
-                  : null
+                (process.env.VITE_ENV === 'PROD' && !prodllms.includes(option.value) ? (
+                  <div>{'This model is only available in the development environment.'}</div>
+                ) : null)
               }
             />
           </div>

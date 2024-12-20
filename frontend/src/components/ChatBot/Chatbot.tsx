@@ -251,7 +251,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             } else {
               setListMessages((prev) =>
                 prev.map((msg) =>
-                  msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg
+                  (msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg)
                 )
               );
             }
@@ -266,7 +266,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             } else {
               setListMessages((prev) =>
                 prev.map((msg) =>
-                  msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg
+                  (msg.id === chatbotMessageId ? { ...msg, modes: { ...msg.modes, [mode]: responseMode } } : msg)
                 )
               );
             }
@@ -275,7 +275,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           console.error(`API call failed for mode ${mode}:`, result.reason);
           setListMessages((prev) =>
             prev.map((msg) =>
-              msg.id === chatbotMessageId
+              (msg.id === chatbotMessageId
                 ? {
                     ...msg,
                     modes: {
@@ -283,7 +283,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                       [mode]: { message: 'Failed to fetch response for this mode.', error: result.reason },
                     },
                   }
-                : msg
+                : msg)
             )
           );
         }
@@ -296,7 +296,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       if (error instanceof Error) {
         setListMessages((prev) =>
           prev.map((msg) =>
-            msg.id === chatbotMessageId
+            (msg.id === chatbotMessageId
               ? {
                   ...msg,
                   isLoading: false,
@@ -308,7 +308,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                     },
                   },
                 }
-              : msg
+              : msg)
           )
         );
       }

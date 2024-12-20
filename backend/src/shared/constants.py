@@ -68,7 +68,7 @@ CALL {{
   UNWIND paths AS path 
   UNWIND nodes(path) AS node 
   WITH distinct node 
-  RETURN collect(node {{.*, labels:labels(node), elementId:elementId(node), embedding:null, text:null}} ) AS nodes 
+ RETURN collect(node /* {{.*, labels:labels(node), elementId:elementId(node), embedding:null, text:null}} */) AS nodes
 }}
 
 CALL {{

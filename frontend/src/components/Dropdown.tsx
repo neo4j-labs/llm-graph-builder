@@ -22,13 +22,11 @@ const DropdownComponent: React.FC<DropdownComponentProps> = ({
   const dropdownOptions = options.map((option) => {
     const mappedOption = mapOptions ? mapOptions(option) : option;
     const labelText =
-      typeof mappedOption.label === 'string'
-        ? capitalizeWithUnderscore(mappedOption.label)
-        : mappedOption.label;
+      typeof mappedOption.label === 'string' ? capitalizeWithUnderscore(mappedOption.label) : mappedOption.label;
     const tooltipContent = customTooltip?.(mappedOption);
     return {
       label: tooltipContent ? (
-        <Tooltip type="simple" placement={isLargeDesktop ? 'left' : 'right'}>
+        <Tooltip type='simple' placement={isLargeDesktop ? 'left' : 'right'}>
           <Tooltip.Trigger>
             <span>{labelText}</span>
           </Tooltip.Trigger>
@@ -59,12 +57,12 @@ const DropdownComponent: React.FC<DropdownComponentProps> = ({
           placeholder: placeholder || 'Select an option',
           defaultValue: defaultValue
             ? {
-              label:
-                typeof defaultValue.label === 'string'
-                  ? capitalizeWithUnderscore(defaultValue.label)
-                  : String(defaultValue.label),
-              value: defaultValue.value,
-            }
+                label:
+                  typeof defaultValue.label === 'string'
+                    ? capitalizeWithUnderscore(defaultValue.label)
+                    : String(defaultValue.label),
+                value: defaultValue.value,
+              }
             : undefined,
           menuPlacement: 'auto',
           isDisabled,

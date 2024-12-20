@@ -66,10 +66,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-        ? queryMap.DocChunks
-        : graphType.includes('Entities')
-          ? queryMap.Entities
-          : '';
+      ? queryMap.DocChunks
+      : graphType.includes('Entities')
+      ? queryMap.Entities
+      : '';
 
   // fit graph to original position
   const handleZoomToFit = () => {
@@ -116,11 +116,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
-            userCredentials as UserCredentials,
-            graphQuery,
-            selectedRows?.map((f) => f.name),
-            dropdownValue
-          )
+              userCredentials as UserCredentials,
+              graphQuery,
+              selectedRows?.map((f) => f.name),
+              dropdownValue
+            )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? ''], dropdownValue);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -165,9 +165,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const handleEmptyResult = (result: any) => {
     setLoading(false);
     setStatus('danger');
-    const message = viewPoint === 'tableView'
-      ? `No Nodes and Relations for the ${inspectedName} file`
-      : result?.data?.message || 'An error occurred';
+    const message =
+      viewPoint === 'tableView'
+        ? `No Nodes and Relations for the ${inspectedName} file`
+        : result?.data?.message || 'An error occurred';
     setStatusMessage(message);
   };
 
@@ -194,7 +195,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         setLoading(false);
       }
     }
-  }, [open,dropdownValue]);
+  }, [open, dropdownValue]);
 
   useEffect(() => {
     if (debouncedQuery) {
@@ -394,10 +395,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                   label: String(value),
                   value: String(value),
                 }))}
-                placeholder="Select Chunk Limit"
-                defaultValue={
-                  { label: String(GRAPH_CHUNK_LIMIT), value: String(GRAPH_CHUNK_LIMIT) }
-                }
+                placeholder='Select Chunk Limit'
+                defaultValue={{ label: String(GRAPH_CHUNK_LIMIT), value: String(GRAPH_CHUNK_LIMIT) }}
                 view='GraphView'
                 isDisabled={loading}
                 label='Chunk Limit'

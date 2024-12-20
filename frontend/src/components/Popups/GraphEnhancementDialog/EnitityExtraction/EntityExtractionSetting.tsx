@@ -63,7 +63,10 @@ export default function EntityExtractionSetting({
     });
     localStorage.setItem('isSchema', JSON.stringify(false));
   };
-  const onChangeSchema = (selectedOptions: OnChangeValue<OptionTypeVal, true>, actionMeta: ActionMeta<OptionTypeVal>) => {
+  const onChangeSchema = (
+    selectedOptions: OnChangeValue<OptionTypeVal, true>,
+    actionMeta: ActionMeta<OptionTypeVal>
+  ) => {
     if (actionMeta.action === 'remove-value') {
       const removedSchema: schema = JSON.parse(actionMeta.removedValue.value);
       const { nodelabels, relationshipTypes } = removedSchema;
@@ -126,7 +129,10 @@ export default function EntityExtractionSetting({
     });
     setIsSchema(true);
   };
-  const onChangenodes = (selectedOptions: OnChangeValue<OptionTypeVal, true>, actionMeta: ActionMeta<OptionTypeVal>) => {
+  const onChangenodes = (
+    selectedOptions: OnChangeValue<OptionTypeVal, true>,
+    actionMeta: ActionMeta<OptionTypeVal>
+  ) => {
     if (actionMeta.action === 'clear') {
       localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
       localStorage.setItem('isSchema', JSON.stringify(false));
