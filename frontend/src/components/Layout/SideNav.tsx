@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Dialog, SideNavigation, TextLink, Tooltip, useMediaQuery } from '@neo4j-ndl/react';
 import {
   ArrowRightIconOutline,
@@ -43,7 +43,7 @@ const SideNav: React.FC<SideNavProps> = ({
 }) => {
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const { setMessages, isDeleteChatLoading } = useMessageContext();
+  const { setMessages, isDeleteChatLoading,setClearHistoryData } = useMessageContext();
   const [showChatMode, setshowChatMode] = useState<boolean>(false);
   const largedesktops = useMediaQuery(`(min-width:1440px )`);
   const { connectionStatus, isReadOnlyUser } = useCredentials();
@@ -76,6 +76,27 @@ const SideNav: React.FC<SideNavProps> = ({
       toggleDrawer();
     }
   };
+
+    useEffect(() => {
+      if (clearHistoryData) {
+        const currentDateTime = new Date();
+        setMessages([
+          {
+            datetime: `${currentDateTime.toLocaleDateString()} ${currentDateTime.toLocaleTimeString()}`,
+            id: 2,
+            modes: {
+              'graph+vector+fulltext': {
+                message:
+                  'Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
+              },
+            },
+            user: 'chatbot',
+            currentMode: 'graph+vector+fulltext',
+          },
+        ]);
+        setClearHistoryData(false);
+      }
+    }, [clearHistoryData, setMessages]);
 
   return (
     <div style={{ height: 'calc(100vh - 58px)', minHeight: '200px', display: 'flex' }}>
