@@ -8,6 +8,7 @@ import {
   ExtendedRelationship,
   GraphType,
   GraphViewModalProps,
+  OptionType,
   Scheme,
   UserCredentials,
 } from '../../types';
@@ -17,7 +18,6 @@ import type { Node, Relationship } from '@neo4j-nvl/base';
 import {
   ArrowPathIconOutline,
   FitToScreenIcon,
-  InformationCircleIconOutline,
   MagnifyingGlassMinusIconOutline,
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
@@ -26,12 +26,13 @@ import { filterData, getCheckboxConditions, graphTypeFromNodes, processGraphData
 import { useCredentials } from '../../context/UserCredentials';
 
 import { graphQueryAPI } from '../../services/GraphQuery';
-import { graphLabels, nvlOptions, queryMap } from '../../utils/Constants';
+import { graph_chunk_limit, GRAPH_CHUNK_LIMIT, graphLabels, nvlOptions, queryMap } from '../../utils/Constants';
 import CheckboxSelection from './CheckboxSelection';
 
 import ResultOverview from './ResultOverview';
 import { ResizePanelDetails } from './ResizePanel';
 import GraphPropertiesPanel from './GraphPropertiesPanel';
+import DropdownComponent from '../Dropdown';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -59,6 +60,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
   const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
   const [mode, setMode] = useState<boolean>(false);
+  const [dropdownValue, setDropdownValue] = useState<string>(GRAPH_CHUNK_LIMIT);
 
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
@@ -116,27 +118,30 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           ? await graphQueryAPI(
               userCredentials as UserCredentials,
               graphQuery,
-              selectedRows?.map((f) => f.name)
+              selectedRows?.map((f) => f.name),
+              dropdownValue
             )
-          : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
+          : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? ''], dropdownValue);
       return nodeRelationshipData;
     } catch (error: any) {
       console.log(error);
     }
-  }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials]);
+  }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials, dropdownValue]);
 
   // Api call to get the nodes and relations
   const graphApi = async (mode?: string) => {
     try {
       const result = await fetchData();
-      if (result && result.data.data.nodes.length > 0) {
-        const neoNodes = result.data.data.nodes;
+      if (result?.data?.status === 'Success' && result.data.data.nodes.length > 0) {
+        const { nodes: neoNodes, relationships: neoRels } = result.data.data;
+        // Create a set of valid node IDs
         const nodeIds = new Set(neoNodes.map((node: any) => node.element_id));
-        const neoRels = result.data.data.relationships
-          .map((f: Relationship) => f)
-          .filter((rel: any) => nodeIds.has(rel.end_node_element_id) && nodeIds.has(rel.start_node_element_id));
-        const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels);
-
+        // Filter relationships to include only those with valid node IDs
+        const filteredRels = neoRels.filter(
+          (rel: any) => nodeIds.has(rel.start_node_element_id) && nodeIds.has(rel.end_node_element_id)
+        );
+        // Process graph data
+        const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, filteredRels);
         if (mode === 'refreshMode') {
           initGraph(graphType, finalNodes, finalRels, schemeVal);
         } else {
@@ -150,15 +155,27 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         setScheme(schemeVal);
         setDisableRefresh(false);
       } else {
-        setLoading(false);
-        setStatus('danger');
-        setStatusMessage(`No Nodes and Relations for the ${inspectedName} file`);
+        handleEmptyResult(result);
       }
     } catch (error: any) {
-      setLoading(false);
-      setStatus('danger');
-      setStatusMessage(error.message);
+      handleError(error);
     }
+  };
+
+  const handleEmptyResult = (result: any) => {
+    setLoading(false);
+    setStatus('danger');
+    const message =
+      viewPoint === 'tableView'
+        ? `No Nodes and Relations for the ${inspectedName} file`
+        : result?.data?.message || 'An error occurred';
+    setStatusMessage(message);
+  };
+
+  const handleError = (error: any) => {
+    setLoading(false);
+    setStatus('danger');
+    setStatusMessage(error.message || 'An unexpected error occurred');
   };
 
   useEffect(() => {
@@ -166,7 +183,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setLoading(true);
       setGraphType([]);
       if (viewPoint !== graphLabels.chatInfoView) {
-        graphApi();
+        graphApi('normalMode');
       } else {
         const { finalNodes, finalRels, schemeVal } = processGraphData(nodeValues ?? [], relationshipValues ?? []);
         setAllNodes(finalNodes);
@@ -178,7 +195,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         setLoading(false);
       }
     }
-  }, [open]);
+  }, [open, dropdownValue]);
 
   useEffect(() => {
     if (debouncedQuery) {
@@ -317,6 +334,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setAllRelationships([]);
     setSearchQuery('');
     setSelected(undefined);
+    setDropdownValue(GRAPH_CHUNK_LIMIT);
   };
 
   const mouseEventCallbacks = {
@@ -332,6 +350,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     onPan: true,
     onZoom: true,
     onDrag: true,
+  };
+
+  // The set the chunk limit for graph viz
+  const handleDropdownChange = (selectedOption: OptionType | null | void) => {
+    setStatus('unknown');
+    if (selectedOption?.value) {
+      setDropdownValue(selectedOption?.value);
+      // setLoading(true);
+      // graphApi('chunkMode');
+    }
   };
 
   return (
@@ -351,23 +379,31 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       >
         <Dialog.Header htmlAttributes={{ id: 'graph-title' }}>
           {headerTitle}
-          {viewPoint !== graphLabels.chatInfoView && (
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span>
-                <InformationCircleIconOutline className='n-size-token-6' />
-              </span>
-              <span className='n-body-small ml-1'>{graphLabels.chunksInfo}</span>
-            </div>
-          )}
-          <Flex className='w-full' alignItems='center' flexDirection='row'>
-            {checkBoxView && (
-              <CheckboxSelection
-                graphType={graphType}
-                loading={loading}
-                handleChange={handleCheckboxChange}
-                {...getCheckboxConditions(allNodes)}
+          <Flex className='w-full' alignItems='center' flexDirection='row' justifyContent='space-between'>
+            <>
+              {checkBoxView && (
+                <CheckboxSelection
+                  graphType={graphType}
+                  loading={loading}
+                  handleChange={handleCheckboxChange}
+                  {...getCheckboxConditions(allNodes)}
+                />
+              )}
+              <DropdownComponent
+                onChange={(selectedOption) => handleDropdownChange(selectedOption as OptionType)}
+                options={graph_chunk_limit.map((value) => ({
+                  label: String(value),
+                  value: String(value),
+                }))}
+                placeholder='Select Chunk Limit'
+                defaultValue={{ label: String(GRAPH_CHUNK_LIMIT), value: String(GRAPH_CHUNK_LIMIT) }}
+                view='GraphView'
+                isDisabled={loading}
+                label='Chunk Limit'
+                helpText='Chunk limit used for graph visualization'
+                size='small'
               />
-            )}
+            </>
           </Flex>
         </Dialog.Header>
         <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border border-palette-neutral-border-weak'>

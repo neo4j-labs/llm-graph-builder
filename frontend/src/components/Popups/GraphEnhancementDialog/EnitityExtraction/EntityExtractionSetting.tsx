@@ -1,14 +1,15 @@
 import { MouseEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
-import { appLabels, buttonCaptions, getDefaultSchemaExamples, tooltips } from '../../../../utils/Constants';
+import { appLabels, buttonCaptions, tooltips } from '../../../../utils/Constants';
 import { Select, Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { OnChangeValue, ActionMeta } from 'react-select';
-import { OptionType, schema, UserCredentials } from '../../../../types';
+import { OptionTypeVal, schema, UserCredentials } from '../../../../types';
 import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
 import { tokens } from '@neo4j-ndl/base';
 import { showNormalToast } from '../../../../utils/toasts';
+import { getDefaultSchemaExamples } from '../../../../utils/Utils';
 
 export default function EntityExtractionSetting({
   view,
@@ -62,7 +63,10 @@ export default function EntityExtractionSetting({
     });
     localStorage.setItem('isSchema', JSON.stringify(false));
   };
-  const onChangeSchema = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
+  const onChangeSchema = (
+    selectedOptions: OnChangeValue<OptionTypeVal, true>,
+    actionMeta: ActionMeta<OptionTypeVal>
+  ) => {
     if (actionMeta.action === 'remove-value') {
       const removedSchema: schema = JSON.parse(actionMeta.removedValue.value);
       const { nodelabels, relationshipTypes } = removedSchema;
@@ -80,12 +84,12 @@ export default function EntityExtractionSetting({
     );
     const nodesFromSchema = selectedOptions.map((s) => JSON.parse(s.value).nodelabels).flat();
     const relationsFromSchema = selectedOptions.map((s) => JSON.parse(s.value).relationshipTypes).flat();
-    let nodeOptionsFromSchema: OptionType[] = [];
+    let nodeOptionsFromSchema: OptionTypeVal[] = [];
     for (let index = 0; index < nodesFromSchema.length; index++) {
       const n = nodesFromSchema[index];
       nodeOptionsFromSchema.push({ label: n, value: n });
     }
-    let relationshipOptionsFromSchema: OptionType[] = [];
+    let relationshipOptionsFromSchema: OptionTypeVal[] = [];
     for (let index = 0; index < relationsFromSchema.length; index++) {
       const r = relationsFromSchema[index];
       relationshipOptionsFromSchema.push({ label: r, value: r });
@@ -125,7 +129,10 @@ export default function EntityExtractionSetting({
     });
     setIsSchema(true);
   };
-  const onChangenodes = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
+  const onChangenodes = (
+    selectedOptions: OnChangeValue<OptionTypeVal, true>,
+    actionMeta: ActionMeta<OptionTypeVal>
+  ) => {
     if (actionMeta.action === 'clear') {
       localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
       localStorage.setItem('isSchema', JSON.stringify(false));
@@ -135,7 +142,7 @@ export default function EntityExtractionSetting({
     localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions }));
     localStorage.setItem('isSchema', JSON.stringify(true));
   };
-  const onChangerels = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
+  const onChangerels = (selectedOptions: OnChangeValue<OptionTypeVal, true>, actionMeta: ActionMeta<OptionTypeVal>) => {
     if (actionMeta.action === 'clear') {
       localStorage.setItem(
         'selectedRelationshipLabels',
@@ -146,8 +153,8 @@ export default function EntityExtractionSetting({
     setIsSchema(true);
     localStorage.setItem('selectedRelationshipLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions }));
   };
-  const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>([]);
-  const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
+  const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionTypeVal[]>([]);
+  const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionTypeVal[]>([]);
   const defaultExamples = useMemo(() => getDefaultSchemaExamples(), []);
 
   useEffect(() => {

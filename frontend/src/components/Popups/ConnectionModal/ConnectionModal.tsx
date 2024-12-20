@@ -126,7 +126,7 @@ export default function ConnectionModal({
 
   useEffect(() => {
     if (errorMessage) {
-      setMessage({ type: 'danger', content: errorMessage });
+      setMessage({ type: 'warning', content: errorMessage });
     }
   }, [errorMessage]);
 

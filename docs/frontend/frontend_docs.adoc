@@ -554,6 +554,7 @@ This API is used to view graph for a particular file.
 * `password`= Neo4j db password, 
 * `query_type`= Neo4j database name
 * `document_names` = File name for which user wants to view graph
+* `chunksPerDocument` = Chunk limit per document
 
 === SSE event to update processing status
 ----

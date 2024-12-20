@@ -1,8 +1,7 @@
 import { NvlOptions } from '@neo4j-nvl/base';
-import { GraphType, OptionType } from '../types';
+import { GraphType, OptionTypeVal } from '../types';
 import { getDateTime, getDescriptionForChatMode } from './Utils';
 import chatbotmessages from '../assets/ChatbotMessages.json';
-import schemaExamples from '../assets/schemas.json';
 
 export const APP_SOURCES =
   process.env.VITE_REACT_APP_SOURCES !== ''
@@ -271,7 +270,7 @@ export const queryMap: {
 };
 
 // export const graphQuery: string = queryMap.DocChunkEntities;
-export const graphView: OptionType[] = [
+export const graphView: OptionTypeVal[] = [
   { label: 'Lexical Graph', value: queryMap.DocChunks },
   { label: 'Entity Graph', value: queryMap.Entities },
   { label: 'Knowledge Graph', value: queryMap.DocChunkEntities },
@@ -328,39 +327,7 @@ export const LLMDropdownLabel = {
   disabledModels: 'Disabled models are available in the development version. Access more models in our ',
   devEnv: 'development environment',
 };
-export const getDefaultSchemaExamples = () =>
-  schemaExamples.reduce((accu: OptionType[], example) => {
-    const examplevalues: OptionType = {
-      label: example.schema,
-      value: JSON.stringify({
-        nodelabels: example.labels,
-        relationshipTypes: example.relationshipTypes,
-      }),
-    };
-    accu.push(examplevalues);
-    return accu;
-  }, []);
-export function mergeNestedObjects(objects: Record<string, Record<string, number>>[]) {
-  return objects.reduce((merged, obj) => {
-    for (const key in obj) {
-      if (!merged[key]) {
-        merged[key] = {};
-      }
-      for (const innerKey in obj[key]) {
-        merged[key][innerKey] = obj[key][innerKey];
-      }
-    }
-    return merged;
-  }, {});
-}
-export function getStoredSchema() {
-  const storedSchemas = localStorage.getItem('selectedSchemas');
-  if (storedSchemas) {
-    const parsedSchemas = JSON.parse(storedSchemas);
-    return parsedSchemas.selectedOptions;
-  }
-  return [];
-}
+
 export const metricsinfo: Record<string, string> = {
   faithfulness: 'Determines How accurately the answer reflects the provided information',
   answer_relevancy: "Determines How well the answer addresses the user's question.",
@@ -368,4 +335,7 @@ export const metricsinfo: Record<string, string> = {
   semantic_score: 'Determines How well the generated answer understands the meaning of the reference answer.',
   context_entity_recall: 'Determines the recall of entities present in both generated answer and retrieved contexts',
 };
+
+export const GRAPH_CHUNK_LIMIT = '50';
+export const graph_chunk_limit = ['25', '50', '75', '100', '125', '150', '175', '200'];
 export const EXPIRATION_DAYS = 3;
