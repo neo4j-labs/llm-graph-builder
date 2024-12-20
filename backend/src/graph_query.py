@@ -201,7 +201,7 @@ def get_graph_results(uri, username, password,database,document_names):
     try:
         logging.info(f"Starting graph query process")
         driver = get_graphDB_driver(uri, username, password,database)  
-        document_names= list(map(str.strip, json.loads(document_names)))
+        document_names= list(map(str, json.loads(document_names)))
         query = GRAPH_QUERY.format(graph_chunk_limit=GRAPH_CHUNK_LIMIT)
         records, summary , keys = execute_query(driver, query.strip(), document_names)
         document_nodes = extract_node_elements(records)

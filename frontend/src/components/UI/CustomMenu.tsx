@@ -21,15 +21,15 @@ export default function CustomMenu({
 }) {
   return (
     <Menu isOpen={open} anchorRef={anchorOrigin} className='custom-menu' isRoot={isRoot} onClose={closeHandler}>
-      {items?.map((i) => (
-        <Menu.Item
-          key={`${i.title}`}
-          title={i.title}
-          onClick={i.onClick}
-          isDisabled={i.disabledCondition}
-          className={i.isSelected ? i.selectedClassName : ''}
-          description={i.description}
-        />
+      {items?.map((i, index) => (
+      <Menu.Item
+        key={`${i.title}-${index}`}
+        title={i.title}
+        onClick={i.onClick}
+        isDisabled={i.disabledCondition}
+        className={i.isSelected ? i.selectedClassName : ''}
+        description={i.description}
+      />
       ))}
     </Menu>
   );
