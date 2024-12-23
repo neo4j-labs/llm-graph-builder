@@ -19,18 +19,17 @@ export default function CustomMenu({
   anchorOrigin: React.RefObject<HTMLElement | null>;
   isRoot?: boolean;
 }) {
-  console.log()
   return (
     <Menu isOpen={open} anchorRef={anchorOrigin} className='custom-menu' isRoot={isRoot} onClose={closeHandler}>
-      {items?.map((i, index) => (
-      <Menu.Item
-        key={`${i.title}-${index}`}
-        title={i.title}
-        onClick={i.onClick}
-        isDisabled={i.disabledCondition}
-        className={i.isSelected ? i.selectedClassName : ''}
-        description={i.description}
-      />
+      {items?.map((i) => (
+        <Menu.Item
+          key={i.id}
+          title={i.title}
+          onClick={i.onClick}
+          isDisabled={i.disabledCondition}
+          className={i.isSelected ? i.selectedClassName : ''}
+          description={i.description}
+        />
       ))}
     </Menu>
   );

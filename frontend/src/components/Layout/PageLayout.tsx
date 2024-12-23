@@ -196,7 +196,7 @@ const PageLayout: React.FC = () => {
       }
     }
     initializeConnection();
-   }, []);
+  }, []);
 
   const deleteOnClick = async () => {
     try {
@@ -260,8 +260,9 @@ const PageLayout: React.FC = () => {
       ></SchemaFromTextDialog>
       {largedesktops ? (
         <div
-          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${!isRightExpanded ? 'drawerchatbotclosed' : ''
-            } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
+          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${
+            !isRightExpanded ? 'drawerchatbotclosed' : ''
+          } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
         >
           <SideNav
             toggles3Modal={toggleS3Modal}
