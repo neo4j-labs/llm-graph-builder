@@ -377,64 +377,132 @@ VECTOR_GRAPH_SEARCH_ENTITY_QUERY = """
     END AS paths, e
 """
 
+# VECTOR_GRAPH_SEARCH_QUERY_SUFFIX = """
+#     WITH apoc.coll.toSet(apoc.coll.flatten(collect(DISTINCT paths))) AS paths, 
+#          collect(DISTINCT e) AS entities
+
+#     // De-duplicate nodes and relationships across chunks
+#     RETURN 
+#         collect {
+#             UNWIND paths AS p 
+#             UNWIND relationships(p) AS r 
+#             RETURN DISTINCT r
+#         } AS rels,
+#         collect {
+#             UNWIND paths AS p 
+#             UNWIND nodes(p) AS n 
+#             RETURN DISTINCT n
+#         } AS nodes, 
+#         entities
+# }
+
+# // Generate metadata and text components for chunks, nodes, and relationships
+# WITH d, avg_score,
+#      [c IN chunks | c.chunk.text] AS texts, 
+#      [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails,
+#      [n IN nodes | elementId(n)] AS entityIds,
+#      [r IN rels | elementId(r)] AS relIds,
+#      apoc.coll.sort([
+#          n IN nodes | 
+#          coalesce(apoc.coll.removeAll(labels(n), ['__Entity__'])[0], "") + ":" + 
+#          n.id + 
+#          (CASE WHEN n.description IS NOT NULL THEN " (" + n.description + ")" ELSE "" END)
+#      ]) AS nodeTexts,
+#      apoc.coll.sort([
+#          r IN rels | 
+#          coalesce(apoc.coll.removeAll(labels(startNode(r)), ['__Entity__'])[0], "") + ":" + 
+#          startNode(r).id + " " + type(r) + " " + 
+#          coalesce(apoc.coll.removeAll(labels(endNode(r)), ['__Entity__'])[0], "") + ":" + endNode(r).id
+#      ]) AS relTexts,
+#      entities
+
+# // Combine texts into response text
+# WITH d, avg_score, chunkdetails, entityIds, relIds,
+#      "Text Content:\n" + apoc.text.join(texts, "\n----\n") +
+#      "\n----\nEntities:\n" + apoc.text.join(nodeTexts, "\n") +
+#      "\n----\nRelationships:\n" + apoc.text.join(relTexts, "\n") AS text, 
+#      entities
+
+# RETURN 
+#     text, 
+#     avg_score AS score, 
+#     {
+#         length: size(text), 
+#         source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), 
+#         chunkdetails: chunkdetails, 
+#         entities : {
+#             entityids: entityIds, 
+#             relationshipids: relIds
+#         }
+#     } AS metadata
+# """
 VECTOR_GRAPH_SEARCH_QUERY_SUFFIX = """
-    WITH apoc.coll.toSet(apoc.coll.flatten(collect(DISTINCT paths))) AS paths, 
-         collect(DISTINCT e) AS entities
-
-    // De-duplicate nodes and relationships across chunks
-    RETURN 
-        collect {
-            UNWIND paths AS p 
-            UNWIND relationships(p) AS r 
-            RETURN DISTINCT r
-        } AS rels,
-        collect {
-            UNWIND paths AS p 
-            UNWIND nodes(p) AS n 
-            RETURN DISTINCT n
-        } AS nodes, 
-        entities
+   WITH apoc.coll.toSet(apoc.coll.flatten(collect(DISTINCT paths))) AS paths,
+        collect(DISTINCT e) AS entities
+   // De-duplicate nodes and relationships across chunks
+   RETURN
+       collect {
+           UNWIND paths AS p
+           UNWIND relationships(p) AS r
+           RETURN DISTINCT r
+       } AS rels,
+       collect {
+           UNWIND paths AS p
+           UNWIND nodes(p) AS n
+           RETURN DISTINCT n
+       } AS nodes,
+       entities
 }
-
 // Generate metadata and text components for chunks, nodes, and relationships
 WITH d, avg_score,
-     [c IN chunks | c.chunk.text] AS texts, 
-     [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails,
-     [n IN nodes | elementId(n)] AS entityIds,
-     [r IN rels | elementId(r)] AS relIds,
-     apoc.coll.sort([
-         n IN nodes | 
-         coalesce(apoc.coll.removeAll(labels(n), ['__Entity__'])[0], "") + ":" + 
-         n.id + 
-         (CASE WHEN n.description IS NOT NULL THEN " (" + n.description + ")" ELSE "" END)
-     ]) AS nodeTexts,
-     apoc.coll.sort([
-         r IN rels | 
-         coalesce(apoc.coll.removeAll(labels(startNode(r)), ['__Entity__'])[0], "") + ":" + 
-         startNode(r).id + " " + type(r) + " " + 
-         coalesce(apoc.coll.removeAll(labels(endNode(r)), ['__Entity__'])[0], "") + ":" + endNode(r).id
-     ]) AS relTexts,
-     entities
-
+    [c IN chunks | c.chunk.text] AS texts,
+    [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails,
+    [n IN nodes | elementId(n)] AS entityIds,
+    [r IN rels | elementId(r)] AS relIds,
+    apoc.coll.sort([
+        n IN nodes |
+        coalesce(apoc.coll.removeAll(labels(n), ['__Entity__'])[0], "") + ":" +
+        coalesce(
+            n.id,
+            n[head([k IN keys(n) WHERE k =~ "(?i)(name|title|id|description)$"])],
+            ""
+        ) +
+        (CASE WHEN n.description IS NOT NULL THEN " (" + n.description + ")" ELSE "" END)
+    ]) AS nodeTexts,
+    apoc.coll.sort([
+        r IN rels |
+        coalesce(apoc.coll.removeAll(labels(startNode(r)), ['__Entity__'])[0], "") + ":" +
+        coalesce(
+            startNode(r).id,
+            startNode(r)[head([k IN keys(startNode(r)) WHERE k =~ "(?i)(name|title|id|description)$"])],
+            ""
+        ) + " " + type(r) + " " +
+        coalesce(apoc.coll.removeAll(labels(endNode(r)), ['__Entity__'])[0], "") + ":" +
+        coalesce(
+            endNode(r).id,
+            endNode(r)[head([k IN keys(endNode(r)) WHERE k =~ "(?i)(name|title|id|description)$"])],
+            ""
+        )
+    ]) AS relTexts,
+    entities
 // Combine texts into response text
 WITH d, avg_score, chunkdetails, entityIds, relIds,
-     "Text Content:\n" + apoc.text.join(texts, "\n----\n") +
-     "\n----\nEntities:\n" + apoc.text.join(nodeTexts, "\n") +
-     "\n----\nRelationships:\n" + apoc.text.join(relTexts, "\n") AS text, 
-     entities
-
-RETURN 
-    text, 
-    avg_score AS score, 
-    {
-        length: size(text), 
-        source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), 
-        chunkdetails: chunkdetails, 
-        entities : {
-            entityids: entityIds, 
-            relationshipids: relIds
-        }
-    } AS metadata
+    "Text Content:\n" + apoc.text.join(texts, "\n----\n") +
+    "\n----\nEntities:\n" + apoc.text.join(nodeTexts, "\n") +
+    "\n----\nRelationships:\n" + apoc.text.join(relTexts, "\n") AS text,
+    entities
+RETURN
+   text,
+   avg_score AS score,
+   {
+       length: size(text),
+       source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName),
+       chunkdetails: chunkdetails,
+       entities : {
+           entityids: entityIds,
+           relationshipids: relIds
+       }
+   } AS metadata
 """
 
 VECTOR_GRAPH_SEARCH_QUERY = VECTOR_GRAPH_SEARCH_QUERY_PREFIX+ VECTOR_GRAPH_SEARCH_ENTITY_QUERY.format(
