@@ -24,6 +24,7 @@ import {
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { filterData, getCheckboxConditions, graphTypeFromNodes, processGraphData } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
+import { useGraphConnection } from '../../context/GraphWrapper';
 
 import { graphQueryAPI } from '../../services/GraphQuery';
 import { graphLabels, nvlOptions, queryMap } from '../../utils/Constants';
@@ -32,6 +33,7 @@ import CheckboxSelection from './CheckboxSelection';
 import ResultOverview from './ResultOverview';
 import { ResizePanelDetails } from './ResizePanel';
 import GraphPropertiesPanel from './GraphPropertiesPanel';
+
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -47,7 +49,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [relationships, setRelationships] = useState<ExtendedRelationship[]>([]);
   const [allNodes, setAllNodes] = useState<ExtendedNode[]>([]);
   const [allRelationships, setAllRelationships] = useState<Relationship[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<'unknown' | 'success' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { userCredentials } = useCredentials();
@@ -59,15 +60,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
   const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
   const [mode, setMode] = useState<boolean>(false);
+  const { graphLoading, setGraphLoading } = useGraphConnection();
 
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-      ? queryMap.DocChunks
-      : graphType.includes('Entities')
-      ? queryMap.Entities
-      : '';
+        ? queryMap.DocChunks
+        : graphType.includes('Entities')
+          ? queryMap.Entities
+          : '';
 
   // fit graph to original position
   const handleZoomToFit = () => {
@@ -114,10 +116,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
-              userCredentials as UserCredentials,
-              graphQuery,
-              selectedRows?.map((f) => f.name)
-            )
+            userCredentials as UserCredentials,
+            graphQuery,
+            selectedRows?.map((f) => f.name)
+          )
           : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
@@ -143,19 +145,19 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           setNodes(finalNodes);
           setRelationships(finalRels);
           setNewScheme(schemeVal);
-          setLoading(false);
+          setGraphLoading(false);
         }
         setAllNodes(finalNodes);
         setAllRelationships(finalRels);
         setScheme(schemeVal);
         setDisableRefresh(false);
       } else {
-        setLoading(false);
+        setGraphLoading(false);
         setStatus('danger');
         setStatusMessage(`No Nodes and Relations for the ${inspectedName} file`);
       }
     } catch (error: any) {
-      setLoading(false);
+      setGraphLoading(false);
       setStatus('danger');
       setStatusMessage(error.message);
     }
@@ -163,7 +165,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
   useEffect(() => {
     if (open) {
-      setLoading(true);
+      setGraphLoading(true);
       setGraphType([]);
       if (viewPoint !== graphLabels.chatInfoView) {
         graphApi();
@@ -175,7 +177,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         setNodes(finalNodes);
         setRelationships(finalRels);
         setNewScheme(schemeVal);
-        setLoading(false);
+        setGraphLoading(false);
       }
     }
   }, [open]);
@@ -363,7 +365,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             {checkBoxView && (
               <CheckboxSelection
                 graphType={graphType}
-                loading={loading}
+                loading={graphLoading}
                 handleChange={handleCheckboxChange}
                 {...getCheckboxConditions(allNodes)}
               />
@@ -372,7 +374,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         </Dialog.Header>
         <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border border-palette-neutral-border-weak'>
           <div className='bg-white relative w-full h-full max-h-full'>
-            {loading ? (
+            {graphLoading ? (
               <div className='my-40 flex items-center justify-center'>
                 <LoadingSpinner size='large' />
               </div>
