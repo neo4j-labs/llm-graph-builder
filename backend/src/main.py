@@ -122,14 +122,21 @@ def create_source_node_graph_web_url(graph, model, source_url, source_type):
       failed_count+=1
       message = f"Unable to read data for given url : {source_url}"
       raise Exception(message)
+    try:
+      title = pages[0].metadata['title']
+      language = pages[0].metadata['language']
+    except:
+      title = last_url_segment(source_url)
+      language = "N/A"
+
     obj_source_node = sourceNode()
     obj_source_node.file_type = 'text'
     obj_source_node.file_source = source_type
     obj_source_node.model = model
     obj_source_node.url = urllib.parse.unquote(source_url)
     obj_source_node.created_at = datetime.now()
-    obj_source_node.file_name = pages[0].metadata['title']
-    obj_source_node.language = pages[0].metadata['language'] 
+    obj_source_node.file_name = title
+    obj_source_node.language = language
     obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
     obj_source_node.chunkNodeCount=0
     obj_source_node.chunkRelCount=0
