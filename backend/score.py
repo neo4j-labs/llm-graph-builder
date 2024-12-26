@@ -860,16 +860,6 @@ async def fetch_chunktext(
    page_no: int = Form(1)
 ):
    try:
-       payload_json_obj = {
-           'api_name': 'fetch_chunktext',
-           'db_url': uri,
-           'userName': userName,
-           'database': database,
-           'document_name': document_name,
-           'page_no': page_no,
-           'logging_time': formatted_time(datetime.now(timezone.utc))
-       }
-       logger.log_struct(payload_json_obj, "INFO")
        start = time.time()
        result = await asyncio.to_thread(
            get_chunktext_results,
@@ -907,19 +897,33 @@ async def fetch_chunktext(
 @app.post("/backend_connection_configuation")
 async def backend_connection_configuation():
     try:
-        graph = Neo4jGraph()
-        logging.info(f'login connection status of object: {graph}')
-        if graph is not None:
-            graph_connection = True
-            isURI = os.getenv('NEO4J_URI')
-            isUsername= os.getenv('NEO4J_USERNAME')
-            isDatabase= os.getenv('NEO4J_DATABASE')
-            isPassword= os.getenv('NEO4J_PASSWORD')
-            encoded_password = encode_password(isPassword)
-            graphDb_data_Access = graphDBdataAccess(graph)
-            gds_status = graphDb_data_Access.check_gds_version()
-            write_access = graphDb_data_Access.check_account_access(database=isDatabase)
-            return create_api_response('Success',message=f"Backend connection successful",data={'graph_connection':graph_connection,'uri':isURI,'user_name':isUsername,'database':isDatabase,'password':encoded_password,'gds_status':gds_status,'write_access':write_access})
+        start = time.time()
+        uri = os.getenv('NEO4J_URI')
+        username= os.getenv('NEO4J_USERNAME')
+        database= os.getenv('NEO4J_DATABASE')
+        password= os.getenv('NEO4J_PASSWORD')
+        gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
+        if all([uri, username, database, password]):
+            print(f'uri:{uri}, usrName:{username}, database :{database}, password: {password}')
+            graph = Neo4jGraph()
+            logging.info(f'login connection status of object: {graph}')
+            if graph is not None:
+                graph_connection = True        
+                encoded_password = encode_password(password)
+                graphDb_data_Access = graphDBdataAccess(graph)
+                result = graphDb_data_Access.connection_check_and_get_vector_dimensions(database)
+                result["graph_connection"] = graph_connection
+                result["uri"] = uri
+                result["user_name"] = username
+                result["database"] = database
+                result["password"] = encoded_password
+                result['gcs_file_cache'] = gcs_file_cache
+                end = time.time()
+                elapsed_time = end - start
+                result['api_name'] = 'backend_connection_configuration'
+                result['elapsed_api_time'] = f'{elapsed_time:.2f}'
+                logger.log_struct(result, "INFO")
+                return create_api_response('Success',message=f"Backend connection successful",data=result)
         else:
             graph_connection = False
             return create_api_response('Success',message=f"Backend connection is not successful",data=graph_connection)
