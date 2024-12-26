@@ -619,6 +619,7 @@ export interface SettingsModalProps {
   onClear?: () => void;
 }
 export interface Menuitems {
+  id: string;
   title: string | JSX.Element;
   onClick: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   disabledCondition: boolean;

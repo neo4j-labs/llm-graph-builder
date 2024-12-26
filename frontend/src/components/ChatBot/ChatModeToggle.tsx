@@ -38,7 +38,7 @@ export default function ChatModeToggle({
       : AvailableModes?.filter((m) => !m.mode.includes(chatModeLables['global search+vector+fulltext']));
   }, [isGdsActive, isCommunityAllowed]);
   const menuItems = useMemo(() => {
-    return memoizedChatModes?.map((m) => {
+    return memoizedChatModes?.map((m, index) => {
       const handleModeChange = () => {
         if (chatModes.includes(m.mode)) {
           if (chatModes.length === 1) {
@@ -50,6 +50,7 @@ export default function ChatModeToggle({
         }
       };
       return {
+        id: m.mode || `menu-item -${index}`,
         title: (
           <div>
             <Typography variant='subheading-small'>
