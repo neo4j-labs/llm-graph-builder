@@ -306,6 +306,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
      status and model as attributes.
   """
   uri_latency = {}
+  response = {}  
   start_time = datetime.now()
   processing_source_start_time = time.time()
   start_create_connection = time.time()
@@ -439,7 +440,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
         uri_latency["Per_entity_latency"] = 'N/A'
       else:  
         uri_latency["Per_entity_latency"] = f'{int(processing_source_func)/node_count}/s'
-      response = {}  
+      
       response["fileName"] = file_name
       response["nodeCount"] = node_count
       response["relationshipCount"] = rel_count
@@ -449,8 +450,9 @@ async def processing_source(uri, userName, password, database, model, file_name,
       response["success_count"] = 1
       
       return uri_latency, response
-    else:
-      logging.info('File does not process because it\'s already in Processing status')
+    else:      
+      logging.info("File does not process because its already in Processing status")
+      return uri_latency,response
   else:
     error_message = "Unable to get the status of document node."
     logging.error(error_message)
@@ -458,6 +460,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
 
 async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password, database,file_name,model,allowedNodes,allowedRelationship, node_count, rel_count):
   #create vector index and update chunk node with embedding
+  latency_processing_chunk = {}
   if graph is not None:
     if graph._driver._closed:
       graph = create_graph_database_connection(uri, userName, password, database)
@@ -469,7 +472,7 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password,
   end_update_embedding = time.time()
   elapsed_update_embedding = end_update_embedding - start_update_embedding
   logging.info(f'Time taken to update embedding in chunk node: {elapsed_update_embedding:.2f} seconds')
-  latency_processing_chunk = {"update_embedding" : f'{elapsed_update_embedding:.2f}'} 
+  latency_processing_chunk["update_embedding"] = f'{elapsed_update_embedding:.2f}'
   logging.info("Get graph document list from models")
   
   start_entity_extraction = time.time()

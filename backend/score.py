@@ -921,16 +921,6 @@ async def fetch_chunktext(
    page_no: int = Form(1)
 ):
    try:
-       payload_json_obj = {
-           'api_name': 'fetch_chunktext',
-           'db_url': uri,
-           'userName': userName,
-           'database': database,
-           'document_name': document_name,
-           'page_no': page_no,
-           'logging_time': formatted_time(datetime.now(timezone.utc))
-       }
-       logger.log_struct(payload_json_obj, "INFO")
        start = time.time()
        result = await asyncio.to_thread(
            get_chunktext_results,
@@ -968,6 +958,7 @@ async def fetch_chunktext(
 @app.post("/backend_connection_configuration")
 async def backend_connection_configuration():
     try:
+        start = time.time()
         uri = os.getenv('NEO4J_URI')
         username= os.getenv('NEO4J_USERNAME')
         database= os.getenv('NEO4J_DATABASE')
@@ -988,6 +979,11 @@ async def backend_connection_configuration():
                 result["database"] = database
                 result["password"] = encoded_password
                 result['gcs_file_cache'] = gcs_file_cache
+                end = time.time()
+                elapsed_time = end - start
+                result['api_name'] = 'backend_connection_configuration'
+                result['elapsed_api_time'] = f'{elapsed_time:.2f}'
+                logger.log_struct(result, "INFO")
                 return create_api_response('Success',message=f"Backend connection successful",data=result)
         else:
             graph_connection = False
