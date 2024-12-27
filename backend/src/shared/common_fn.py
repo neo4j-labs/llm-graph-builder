@@ -10,6 +10,8 @@ from typing import List
 import re
 import os
 from pathlib import Path
+from urllib.parse import urlparse
+
 
 def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
     language=''
@@ -127,3 +129,9 @@ def create_gcs_bucket_folder_name_hashed(uri, file_name):
 def formatted_time(current_time):
   formatted_time = current_time.strftime('%Y-%m-%d %H:%M:%S %Z')
   return formatted_time
+
+def last_url_segment(url):
+  parsed_url = urlparse(url)
+  path = parsed_url.path.strip("/")  # Remove leading and trailing slashes
+  last_url_segment = path.split("/")[-1] if path else parsed_url.netloc.split(".")[0]
+  return last_url_segment

@@ -83,7 +83,7 @@ const Content: React.FC<ContentProps> = ({
     alertType: 'neutral',
     alertMessage: '',
   });
-  const { setClearHistoryData } = useMessageContext();
+  const { setMessages } = useMessageContext();
   const {
     filesData,
     setFilesData,
@@ -217,7 +217,7 @@ const Content: React.FC<ContentProps> = ({
     }
     toggleChunksLoading();
   };
-  
+
   const extractData = async (uid: string, isselectedRows = false, filesTobeProcess: CustomFile[]) => {
     if (!isselectedRows) {
       const fileItem = filesData.find((f) => f.id == uid);
@@ -536,6 +536,7 @@ const Content: React.FC<ContentProps> = ({
 
   const disconnect = () => {
     queue.clear();
+    const date = new Date();
     setProcessedCount(0);
     setConnectionStatus(false);
     localStorage.removeItem('password');
@@ -543,7 +544,20 @@ const Content: React.FC<ContentProps> = ({
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
-    setClearHistoryData(true);
+    setMessages([
+      {
+        datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
+        id: 2,
+        modes: {
+          'graph+vector+fulltext': {
+            message:
+              ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
+          },
+        },
+        user: 'chatbot',
+        currentMode: 'graph+vector+fulltext',
+      },
+    ]);
     setchatModes([chatModeLables['graph+vector+fulltext']]);
   };
 

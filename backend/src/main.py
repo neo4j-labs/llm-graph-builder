@@ -122,14 +122,21 @@ def create_source_node_graph_web_url(graph, model, source_url, source_type):
       failed_count+=1
       message = f"Unable to read data for given url : {source_url}"
       raise Exception(message)
+    try:
+      title = pages[0].metadata['title']
+      language = pages[0].metadata['language']
+    except:
+      title = last_url_segment(source_url)
+      language = "N/A"
+
     obj_source_node = sourceNode()
     obj_source_node.file_type = 'text'
     obj_source_node.file_source = source_type
     obj_source_node.model = model
     obj_source_node.url = urllib.parse.unquote(source_url)
     obj_source_node.created_at = datetime.now()
-    obj_source_node.file_name = pages[0].metadata['title']
-    obj_source_node.language = pages[0].metadata['language'] 
+    obj_source_node.file_name = title
+    obj_source_node.language = language
     obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
     obj_source_node.chunkNodeCount=0
     obj_source_node.chunkRelCount=0
@@ -299,6 +306,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
      status and model as attributes.
   """
   uri_latency = {}
+  response = {}  
   start_time = datetime.now()
   processing_source_start_time = time.time()
   start_create_connection = time.time()
@@ -432,7 +440,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
         uri_latency["Per_entity_latency"] = 'N/A'
       else:  
         uri_latency["Per_entity_latency"] = f'{int(processing_source_func)/node_count}/s'
-      response = {}  
+      
       response["fileName"] = file_name
       response["nodeCount"] = node_count
       response["relationshipCount"] = rel_count
@@ -442,8 +450,9 @@ async def processing_source(uri, userName, password, database, model, file_name,
       response["success_count"] = 1
       
       return uri_latency, response
-    else:
-      logging.info('File does not process because it\'s already in Processing status')
+    else:      
+      logging.info("File does not process because its already in Processing status")
+      return uri_latency,response
   else:
     error_message = "Unable to get the status of document node."
     logging.error(error_message)
@@ -451,6 +460,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
 
 async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password, database,file_name,model,allowedNodes,allowedRelationship, node_count, rel_count):
   #create vector index and update chunk node with embedding
+  latency_processing_chunk = {}
   if graph is not None:
     if graph._driver._closed:
       graph = create_graph_database_connection(uri, userName, password, database)
@@ -462,7 +472,7 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password,
   end_update_embedding = time.time()
   elapsed_update_embedding = end_update_embedding - start_update_embedding
   logging.info(f'Time taken to update embedding in chunk node: {elapsed_update_embedding:.2f} seconds')
-  latency_processing_chunk = {"update_embedding" : f'{elapsed_update_embedding:.2f}'} 
+  latency_processing_chunk["update_embedding"] = f'{elapsed_update_embedding:.2f}'
   logging.info("Get graph document list from models")
   
   start_entity_extraction = time.time()
