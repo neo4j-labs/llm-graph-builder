@@ -76,8 +76,6 @@ class CustomGZipMiddleware:
         )
         await gzip_middleware(scope, receive, send)
 app = FastAPI()
-# SecWeb(app=app, Option={'referrer': False, 'xframe': False})
-# app.add_middleware(ContentSecurityPolicy, Option={'default-src': ["'self'"], 'base-uri': ["'self'"], 'block-all-mixed-content': []}, script_nonce=False, style_nonce=False, report_only=False)
 app.add_middleware(XContentTypeOptions)
 app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
 app.add_middleware(CustomGZipMiddleware, minimum_size=1000, compresslevel=5,paths=["/sources_list","/url/scan","/extract","/chat_bot","/chunk_entities","/get_neighbours","/graph_query","/schema","/populate_graph_schema","/get_unconnected_nodes_list","/get_duplicate_nodes","/fetch_chunktext"])
@@ -99,7 +97,6 @@ app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
 
 @app.post("/url/scan")
 async def create_source_knowledge_graph_url(
-    request: Request,
     uri=Form(),
     userName=Form(),
     password=Form(),
@@ -172,7 +169,6 @@ async def extract_knowledge_graph_from_file(
     aws_access_key_id=Form(None),
     aws_secret_access_key=Form(None),
     wiki_query=Form(None),
-    max_sources=Form(None),
     gcs_project_id=Form(None),
     gcs_bucket_name=Form(None),
     gcs_bucket_folder=Form(None),
@@ -345,7 +341,7 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name': api_name, 'db_url': uri, 'userName':userName, 'database':database, 'tasks':tasks, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
-        # logger.log_struct(json_obj)
+        logger.log_struct(json_obj)
         return create_api_response('Success', data=count_response, message='All tasks completed successfully')
     
     except Exception as e:
@@ -615,8 +611,7 @@ async def delete_document_and_entities(uri=Form(),
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
-        result, files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filenames, source_types, deleteEntities, MERGED_DIR, uri)
-        # entities_count = result[0]['deletedEntities'] if 'deletedEntities' in result[0] else 0
+        files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filenames, source_types, deleteEntities, MERGED_DIR, uri)
         message = f"Deleted {files_list_size} documents with entities from database"
         end = time.time()
         elapsed_time = end - start

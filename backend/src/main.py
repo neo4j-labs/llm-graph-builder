@@ -70,7 +70,6 @@ def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id,
 
         except Exception as e:
           failed_count+=1
-          # error_message = str(e)
           lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Failed'})
     return lst_file_name,success_count,failed_count
 
@@ -170,7 +169,6 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     obj_source_node.communityRelCount=0
     match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
     logging.info(f"match value: {match}")
-    video_id = parse_qs(urlparse(youtube_url).query).get('v')
     obj_source_node.file_name = match.group(1)
     transcript= get_youtube_combined_transcript(match.group(1))
     logging.info(f"Youtube transcript : {transcript}")
@@ -192,7 +190,6 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
     success_count=0
     failed_count=0
     lst_file_name=[]
-    #queries_list =  wiki_query.split(',')
     wiki_query_id, language = check_url_source(source_type=source_type, wiki_query=wiki_query)
     logging.info(f"Creating source node for {wiki_query_id.strip()}, {language}")
     pages = WikipediaLoader(query=wiki_query_id.strip(), lang=language, load_max_docs=1, load_all_available_meta=True).load()
@@ -354,7 +351,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
       
       start_update_source_node = time.time()
       graphDb_data_Access.update_source_node(obj_source_node)
-      count_response = graphDb_data_Access.update_node_relationship_count(file_name)
+      graphDb_data_Access.update_node_relationship_count(file_name)
       end_update_source_node = time.time()
       elapsed_update_source_node = end_update_source_node - start_update_source_node
       logging.info(f'Time taken to update the document source node: {elapsed_update_source_node:.2f} seconds')
@@ -403,7 +400,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
             obj_source_node.node_count = node_count
             obj_source_node.relationship_count = rel_count
           graphDb_data_Access.update_source_node(obj_source_node)
-          count_response = graphDb_data_Access.update_node_relationship_count(file_name)
+          graphDb_data_Access.update_node_relationship_count(file_name)
       
       result = graphDb_data_Access.get_current_status_document_node(file_name)
       is_cancelled_status = result[0]['is_cancelled']
@@ -419,7 +416,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
       obj_source_node.processing_time = processed_time
 
       graphDb_data_Access.update_source_node(obj_source_node)
-      count_response = graphDb_data_Access.update_node_relationship_count(file_name)
+      graphDb_data_Access.update_node_relationship_count(file_name)
       logging.info('Updated the nodeCount and relCount properties in Document node')
       logging.info(f'file:{file_name} extraction has been completed')
 
