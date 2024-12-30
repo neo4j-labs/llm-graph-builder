@@ -944,4 +944,14 @@ export type FileTableHandle = React.ElementRef<typeof FileTable>;
 export interface GraphContextProps {
   graphLoading: boolean;
   setGraphLoading: Dispatch<SetStateAction<boolean>>;
+  openGraphView: boolean;
+  inspectedName?: string;
+  setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
+  viewMode: 'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView';
+  setViewMode: Dispatch<SetStateAction<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>>;
+  nodeValues?: ExtendedNode[];
+  relationshipValues?: ExtendedRelationship[];
+  selectedRows?: CustomFile[] | undefined;
+  graphType: GraphType[];
+  setGraphType: Dispatch<SetStateAction<GraphType[]>>;
 }

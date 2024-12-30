@@ -13,6 +13,7 @@ import { chatModeLables } from '../../utils/Constants';
 import { useCredentials } from '../../context/UserCredentials';
 import GraphViewModal from '../Graph/GraphViewModal';
 import { handleGraphNodeClick } from './chatInfo';
+import { useGraphConnection } from '../../context/GraphWrapper';
 
 const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   const themeUtils = useContext(ThemeWrapperContext);
@@ -21,18 +22,18 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
-  const [loadingGraphView, setLoadingGraphView] = useState(false);
+  const { setGraphLoading } = useGraphConnection();
 
   const handleChunkClick = (elementId: string, viewMode: string) => {
+    setOpenGraphView(true);
     handleGraphNodeClick(
       userCredentials as UserCredentials,
       elementId,
       viewMode,
       setNeoNodes,
       setNeoRels,
-      setOpenGraphView,
       setViewPoint,
-      setLoadingGraphView
+      setGraphLoading
     );
   };
 
@@ -71,7 +72,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                     </div>
                     <div>
                       <TextLink
-                        className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
+                        // className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                         htmlAttributes={{
                           onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
                         }}
@@ -101,7 +102,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                           <div>
                             <TextLink
                               as='small'
-                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
+                              // className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               htmlAttributes={{
                                 onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
                               }}
@@ -125,7 +126,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                           <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                           <div>
                             <TextLink
-                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
+                              // className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               htmlAttributes={{
                                 onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
                               }}
@@ -149,7 +150,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                           <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                           <div>
                             <TextLink
-                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
+                              // className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               htmlAttributes={{
                                 onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
                               }}
@@ -173,7 +174,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                           <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                           <div>
                             <TextLink
-                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
+                              // className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               htmlAttributes={{
                                 onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
                               }}
@@ -201,7 +202,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                           <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                           <div>
                             <TextLink
-                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
+                              // className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               htmlAttributes={{
                                 onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
                               }}
@@ -234,7 +235,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                         </Typography>
                         <div>
                           <TextLink
-                            className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
+                            // className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                             htmlAttributes={{
                               onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
                             }}

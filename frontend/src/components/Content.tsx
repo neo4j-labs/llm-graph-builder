@@ -521,9 +521,8 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
-      userCredentials?.port ?? '7687'
-    }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
+      }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -532,6 +531,13 @@ const Content: React.FC<ContentProps> = ({
   const handleGraphView = () => {
     setOpenGraphView(true);
     setViewPoint('showGraphView');
+  };
+
+
+  const handleTableView = (name: string) => {
+    setOpenGraphView(true);
+    setInspectedName(name);
+    setViewPoint('tableView');
   };
 
   const disconnect = () => {
@@ -574,12 +580,12 @@ const Content: React.FC<ContentProps> = ({
         return prev.map((f) => {
           return f.name === filename
             ? {
-                ...f,
-                status: 'Ready to Reprocess',
-                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-                nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-                relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
-              }
+              ...f,
+              status: 'Ready to Reprocess',
+              processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+              nodesCount: isStartFromBegining ? 0 : f.nodesCount,
+              relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
+            }
             : f;
         });
       });
@@ -882,9 +888,7 @@ const Content: React.FC<ContentProps> = ({
           connectionStatus={connectionStatus}
           setConnectionStatus={setConnectionStatus}
           onInspect={(name) => {
-            setInspectedName(name);
-            setOpenGraphView(true);
-            setViewPoint('tableView');
+            handleTableView(name);
           }}
           onRetry={(id) => {
             setRetryFile(id);

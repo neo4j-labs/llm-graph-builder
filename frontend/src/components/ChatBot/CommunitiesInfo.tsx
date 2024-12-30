@@ -6,6 +6,7 @@ import { chatModeLables } from '../../utils/Constants';
 import { useCredentials } from '../../context/UserCredentials';
 import GraphViewModal from '../Graph/GraphViewModal';
 import { handleGraphNodeClick } from './chatInfo';
+import { useGraphConnection } from '../../context/GraphWrapper';
 
 const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) => {
   const { userCredentials } = useCredentials();
@@ -13,18 +14,18 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
-  const [loadingGraphView, setLoadingGraphView] = useState(false);
+    const { graphLoading, setGraphLoading } = useGraphConnection();
 
   const handleCommunityClick = (elementId: string, viewMode: string) => {
+    setOpenGraphView(true);
     handleGraphNodeClick(
       userCredentials as UserCredentials,
       elementId,
       viewMode,
       setNeoNodes,
       setNeoRels,
-      setOpenGraphView,
       setViewPoint,
-      setLoadingGraphView
+      setGraphLoading
     );
   };
 
@@ -42,7 +43,7 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
                 <div>
                   <Flex flexDirection='row' gap='2'>
                     <TextLink
-                      className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
+                      // className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                       htmlAttributes={{
                         onClick: () => handleCommunityClick(community.element_id, 'chatInfoView'),
                       }}

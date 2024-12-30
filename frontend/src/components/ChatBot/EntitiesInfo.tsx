@@ -7,6 +7,7 @@ import { parseEntity } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 import GraphViewModal from '../Graph/GraphViewModal';
 import { handleGraphNodeClick } from './chatInfo';
+import { useGraphConnection } from '../../context/GraphWrapper';
 
 const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, infoEntities }) => {
   const { userCredentials } = useCredentials();
@@ -14,7 +15,7 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
-  const [loadingGraphView, setLoadingGraphView] = useState(false);
+  const { graphLoading, setGraphLoading } = useGraphConnection();
 
   const groupedEntities = useMemo<{ [key: string]: GroupedEntity }>(() => {
     const items = infoEntities.reduce((acc, entity) => {
@@ -44,15 +45,15 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
   }, [labelCounts]);
 
   const handleEntityClick = (elementId: string, viewMode: string) => {
+    setOpenGraphView(true);
     handleGraphNodeClick(
       userCredentials as UserCredentials,
       elementId,
       viewMode,
       setNeoNodes,
       setNeoRels,
-      setOpenGraphView,
       setViewPoint,
-      setLoadingGraphView
+      setGraphLoading
     );
   };
 
@@ -67,71 +68,69 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
         <ul className='list-none p-4 max-h-80 overflow-auto'>
           {mode == 'graph'
             ? graphonly_entities.map((label, index) => (
-                <li
-                  key={index}
-                  className={`flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%] overflow-hidden ${
-                    loadingGraphView ? 'cursor-wait' : 'cursor-pointer'
-                  }`}
-                >
-                  <ul className='list-inside'>
-                    {Object.keys(label).map((key) => (
-                      <li key={key} className='flex items-center'>
-                        <GraphLabel type='node' color={calcWordColor(key)} className='mr-2 mt-2 ' isSelected={false}>
-                          {key}
-                        </GraphLabel>
-                        <Typography
-                          variant='body-medium'
-                          className='ml-2 text-ellipsis whitespace-nowrap overflow-hidden'
-                        >
-                          {
-                            // @ts-ignore
-                            label[key].id ?? label[key]
-                          }
-                        </Typography>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))
+              <li
+                key={index}
+                className={'flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%] overflow-hidden'}
+              >
+                <ul className='list-inside'>
+                  {Object.keys(label).map((key) => (
+                    <li key={key} className='flex items-center'>
+                      <GraphLabel type='node' color={calcWordColor(key)} className='mr-2 mt-2 ' isSelected={false}>
+                        {key}
+                      </GraphLabel>
+                      <Typography
+                        variant='body-medium'
+                        className='ml-2 text-ellipsis whitespace-nowrap overflow-hidden'
+                      >
+                        {
+                          // @ts-ignore
+                          label[key].id ?? label[key]
+                        }
+                      </Typography>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))
             : sortedLabels.map((label) => {
-                const entity = groupedEntities[label == 'undefined' ? 'Entity' : label];
-                return (
-                  <li
-                    key={label}
-                    className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%)] overflow-hidden'
+              const entity = groupedEntities[label == 'undefined' ? 'Entity' : label];
+              return (
+                <li
+                  key={label}
+                  className='flex items-center mb-2 text-ellipsis whitespace-nowrap max-w-[100%)] overflow-hidden'
+                >
+                  <GraphLabel type='node' className='legend' color={`${entity.color}`} isSelected={false}>
+                    {label === '__Community__' ? graphLabels.community : label} ({labelCounts[label]})
+                  </GraphLabel>
+                  <Typography
+                    variant='body-medium'
+                    className='ml-2 text-ellipsis whitespace-nowrap max-w-[calc(100%-120px)] overflow-hidden'
                   >
-                    <GraphLabel type='node' className='legend' color={`${entity.color}`} isSelected={false}>
-                      {label === '__Community__' ? graphLabels.community : label} ({labelCounts[label]})
-                    </GraphLabel>
-                    <Typography
-                      variant='body-medium'
-                      className='ml-2 text-ellipsis whitespace-nowrap max-w-[calc(100%-120px)] overflow-hidden'
-                    >
-                      {Array.from(entity.texts)
-                        .slice(0, 3)
-                        .map((text, idx) => {
-                          const matchingEntity = infoEntities.find(
-                            (e) => e.labels.includes(label) && parseEntity(e).text === text
-                          );
-                          const textId = matchingEntity?.element_id;
-                          return (
-                            <span key={idx}>
-                              <TextLink
-                                htmlAttributes={{
-                                  onClick: () => handleEntityClick(textId!, 'chatInfoView'),
-                                }}
-                                className={loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}
-                              >
-                                {text}
-                              </TextLink>
-                              {Array.from(entity.texts).length > 1 ? ',' : ''}
-                            </span>
-                          );
-                        })}
-                    </Typography>
-                  </li>
-                );
-              })}
+                    {Array.from(entity.texts)
+                      .slice(0, 3)
+                      .map((text, idx) => {
+                        const matchingEntity = infoEntities.find(
+                          (e) => e.labels.includes(label) && parseEntity(e).text === text
+                        );
+                        const textId = matchingEntity?.element_id;
+                        return (
+                          <span key={idx}>
+                            <TextLink
+                              htmlAttributes={{
+                                onClick: () => handleEntityClick(textId!, 'chatInfoView'),
+                              }}
+                              // className={loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}
+                            >
+                              {text}
+                            </TextLink>
+                            {Array.from(entity.texts).length > 1 ? ',' : ''}
+                          </span>
+                        );
+                      })}
+                  </Typography>
+                </li>
+              );
+            })}
         </ul>
       ) : (
         <Typography variant='h6' className='text-center'>

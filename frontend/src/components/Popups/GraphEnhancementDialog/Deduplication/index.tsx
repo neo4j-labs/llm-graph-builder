@@ -31,6 +31,7 @@ import { tokens } from '@neo4j-ndl/base';
 import GraphViewModal from '../../../Graph/GraphViewModal';
 import { handleGraphNodeClick } from '../../../ChatBot/chatInfo';
 import { ThemeWrapperContext } from '../../../../context/ThemeWrapper';
+import { useGraphConnection } from '../../../../context/GraphWrapper';
 
 export default function DeduplicationTab() {
   const { breakpoints } = tokens;
@@ -48,6 +49,7 @@ export default function DeduplicationTab() {
   const [viewPoint, setViewPoint] = useState('');
   const [nodesCount, setNodesCount] = useState<number>(0);
   const { colorMode } = useContext(ThemeWrapperContext);
+  const { setGraphLoading } = useGraphConnection();
 
   const fetchDuplicateNodes = useCallback(async () => {
     try {
@@ -104,25 +106,26 @@ export default function DeduplicationTab() {
   const onRemove = (nodeid: string, similarNodeId: string) => {
     setDuplicateNodes((prev) => {
       return prev.map((d) =>
-        (d.e.elementId === nodeid
-          ? {
-              ...d,
-              similar: d.similar.filter((n) => n.elementId != similarNodeId),
-            }
-          : d)
+      (d.e.elementId === nodeid
+        ? {
+          ...d,
+          similar: d.similar.filter((n) => n.elementId != similarNodeId),
+        }
+        : d)
       );
     });
   };
 
   const handleDuplicateNodeClick = (elementId: string, viewMode: string) => {
+    setOpenGraphView(true);
     handleGraphNodeClick(
       userCredentials as UserCredentials,
       elementId,
       viewMode,
       setNeoNodes,
       setNeoRels,
-      setOpenGraphView,
-      setViewPoint
+      setViewPoint,
+      setGraphLoading
     );
   };
 
@@ -267,8 +270,8 @@ export default function DeduplicationTab() {
   const selectedFilesCheck = mergeAPIloading
     ? 'Merging...'
     : table.getSelectedRowModel().rows.length
-    ? `Merge Duplicate Nodes (${table.getSelectedRowModel().rows.length})`
-    : 'Select Node(s) to Merge';
+      ? `Merge Duplicate Nodes (${table.getSelectedRowModel().rows.length})`
+      : 'Select Node(s) to Merge';
   return (
     <>
       <div>
@@ -341,12 +344,12 @@ export default function DeduplicationTab() {
               isLoading
                 ? 'Fetching Duplicate Nodes'
                 : !isLoading && !duplicateNodes.length
-                ? 'No Nodes Found'
-                : !table.getSelectedRowModel().rows.length
-                ? 'No Nodes Selected'
-                : mergeAPIloading
-                ? 'Merging'
-                : `Merge Selected Nodes (${table.getSelectedRowModel().rows.length})`
+                  ? 'No Nodes Found'
+                  : !table.getSelectedRowModel().rows.length
+                    ? 'No Nodes Selected'
+                    : mergeAPIloading
+                      ? 'Merging'
+                      : `Merge Selected Nodes (${table.getSelectedRowModel().rows.length})`
             }
             label='Merge Duplicate Node Button'
             disabled={!table.getSelectedRowModel().rows.length}

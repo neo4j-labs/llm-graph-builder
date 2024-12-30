@@ -5,17 +5,20 @@ import { FileContextProvider } from '../context/UsersFiles';
 import UserCredentialsWrapper from '../context/UserCredentials';
 import AlertContextWrapper from '../context/Alert';
 import { MessageContextWrapper } from '../context/UserMessages';
+import GraphWrapper from '../context/GraphWrapper';
 
 const QuickStarter: React.FunctionComponent = () => {
   return (
     <UserCredentialsWrapper>
       <FileContextProvider>
-        <MessageContextWrapper>
-          <AlertContextWrapper>
-            <Header />
-            <PageLayout />
-          </AlertContextWrapper>
-        </MessageContextWrapper>
+        <GraphWrapper>
+          <MessageContextWrapper>
+            <AlertContextWrapper>
+              <Header />
+              <PageLayout />
+            </AlertContextWrapper>
+          </MessageContextWrapper>
+        </GraphWrapper>
       </FileContextProvider>
     </UserCredentialsWrapper>
   );

@@ -141,6 +141,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
         if (mode === 'refreshMode') {
           initGraph(graphType, finalNodes, finalRels, schemeVal);
+          setGraphLoading(false);
         } else {
           setNodes(finalNodes);
           setRelationships(finalRels);

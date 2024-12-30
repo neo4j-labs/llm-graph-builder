@@ -8,13 +8,9 @@ export const handleGraphNodeClick = async (
   viewMode: string,
   setNeoNodes: React.Dispatch<React.SetStateAction<NeoNode[]>>,
   setNeoRels: React.Dispatch<React.SetStateAction<NeoRelationship[]>>,
-  setOpenGraphView: React.Dispatch<React.SetStateAction<boolean>>,
   setViewPoint: React.Dispatch<React.SetStateAction<string>>,
-  setLoadingGraphView?: React.Dispatch<React.SetStateAction<boolean>>
+  setGraphLoading:React.Dispatch<React.SetStateAction<boolean>>,
 ) => {
-  if (setLoadingGraphView) {
-    setLoadingGraphView(true);
-  }
   try {
     const result = await getNeighbors(userCredentials, elementId);
     if (result && result.data.data.nodes.length > 0) {
@@ -28,7 +24,7 @@ export const handleGraphNodeClick = async (
       );
       setNeoNodes(nodes);
       setNeoRels(relationships);
-      setOpenGraphView(true);
+      setGraphLoading(false);
       setViewPoint('chatInfoView');
     } else {
       showNormalToast('No nodes or relationships found for the selected node.');
@@ -36,8 +32,6 @@ export const handleGraphNodeClick = async (
   } catch (error: any) {
     console.error('Error fetching neighbors:', error);
   } finally {
-    if (setLoadingGraphView) {
-      setLoadingGraphView(false);
-    }
+    setGraphLoading(false);
   }
 };

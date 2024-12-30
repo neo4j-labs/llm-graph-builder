@@ -22,6 +22,7 @@ import { tokens } from '@neo4j-ndl/base';
 import GraphViewModal from '../../../Graph/GraphViewModal';
 import { handleGraphNodeClick } from '../../../ChatBot/chatInfo';
 import { ThemeWrapperContext } from '../../../../context/ThemeWrapper';
+import { useGraphConnection } from '../../../../context/GraphWrapper';
 
 export default function DeletePopUpForOrphanNodes({
   deleteHandler,
@@ -44,6 +45,7 @@ export default function DeletePopUpForOrphanNodes({
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
   const { colorMode } = useContext(ThemeWrapperContext);
+    const { setGraphLoading } = useGraphConnection();
 
   const fetchOrphanNodes = useCallback(async () => {
     try {
@@ -78,14 +80,15 @@ export default function DeletePopUpForOrphanNodes({
   const columnHelper = createColumnHelper<orphanNodeProps>();
 
   const handleOrphanNodeClick = (elementId: string, viewMode: string) => {
+    setOpenGraphView(true);
     handleGraphNodeClick(
       userCredentials as UserCredentials,
       elementId,
       viewMode,
       setNeoNodes,
       setNeoRels,
-      setOpenGraphView,
-      setViewPoint
+      setViewPoint,
+      setGraphLoading
     );
   };
 
