@@ -41,8 +41,15 @@ export default function ConnectionModal({
   const [username, setUsername] = useState<string>(initialusername ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
-  const { setUserCredentials, userCredentials, setGdsActive, setIsReadOnlyUser, errorMessage, setIsGCSActive } =
-    useCredentials();
+  const {
+    setUserCredentials,
+    userCredentials,
+    setGdsActive,
+    setIsReadOnlyUser,
+    errorMessage,
+    setIsGCSActive,
+    setShowDisconnectButton,
+  } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [userDbVectorIndex, setUserDbVectorIndex] = useState<number | undefined>(initialuserdbvectorindex ?? undefined);
@@ -126,7 +133,7 @@ export default function ConnectionModal({
 
   useEffect(() => {
     if (errorMessage) {
-      setMessage({ type: 'danger', content: errorMessage });
+      setMessage({ type: 'warning', content: errorMessage });
     }
   }, [errorMessage]);
 
@@ -241,6 +248,7 @@ export default function ConnectionModal({
           !response.data.data.chunks_exists
         ) {
           setConnectionStatus(true);
+          setShowDisconnectButton(true);
           setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
           setMessage({
             type: 'success',
