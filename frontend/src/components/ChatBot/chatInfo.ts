@@ -8,7 +8,6 @@ export const handleGraphNodeClick = async (
   viewMode: string,
   setNeoNodes: React.Dispatch<React.SetStateAction<NeoNode[]>>,
   setNeoRels: React.Dispatch<React.SetStateAction<NeoRelationship[]>>,
-  setViewPoint: React.Dispatch<React.SetStateAction<string>>,
   setGraphLoading:React.Dispatch<React.SetStateAction<boolean>>,
 ) => {
   try {
@@ -25,7 +24,6 @@ export const handleGraphNodeClick = async (
       setNeoNodes(nodes);
       setNeoRels(relationships);
       setGraphLoading(false);
-      setViewPoint('chatInfoView');
     } else {
       showNormalToast('No nodes or relationships found for the selected node.');
     }

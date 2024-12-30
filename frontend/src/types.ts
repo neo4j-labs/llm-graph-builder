@@ -947,8 +947,8 @@ export interface GraphContextProps {
   openGraphView: boolean;
   inspectedName?: string;
   setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
-  viewMode: 'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView';
-  setViewMode: Dispatch<SetStateAction<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>>;
+  viewPoint: 'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'| 'Chunk';
+  setViewPoint: Dispatch<SetStateAction<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'|'Chunk'>>;
   nodeValues?: ExtendedNode[];
   relationshipValues?: ExtendedRelationship[];
   selectedRows?: CustomFile[] | undefined;

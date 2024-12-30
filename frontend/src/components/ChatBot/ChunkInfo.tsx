@@ -21,10 +21,10 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   const [neoNodes, setNeoNodes] = useState<any[]>([]);
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
-  const [viewPoint, setViewPoint] = useState('');
-  const { setGraphLoading } = useGraphConnection();
+  const { setGraphLoading,setViewPoint, viewPoint } = useGraphConnection();
 
   const handleChunkClick = (elementId: string, viewMode: string) => {
+    setViewPoint('Chunk');
     setOpenGraphView(true);
     handleGraphNodeClick(
       userCredentials as UserCredentials,
@@ -32,7 +32,6 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
       viewMode,
       setNeoNodes,
       setNeoRels,
-      setViewPoint,
       setGraphLoading
     );
   };

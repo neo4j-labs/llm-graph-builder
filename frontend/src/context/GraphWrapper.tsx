@@ -9,8 +9,8 @@ export const GraphConnection = createContext<GraphContextProps>({
     setGraphLoading: () => null,
     openGraphView: false,
     setGraphViewOpen: () => null,
-    viewMode: 'tableView',
-    setViewMode: () => null,
+    viewPoint: 'tableView',
+    setViewPoint: () => null,
     graphType: [],
     setGraphType: () => null
 });
@@ -20,18 +20,17 @@ export const useGraphConnection = () => useContext(GraphConnection);
 const GraphWrapper: FC<GraphProps> = ({ children }) => {
     const [graphLoading, setGraphLoading] = useState<boolean>(false);
     const [openGraphView, setGraphViewOpen] = useState<boolean>(false);
-    const [viewMode, setViewMode] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>('tableView');
+    const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'|'Chunk'>('tableView');
     const [graphType, setGraphType] = useState<GraphType[]>([]);
     const graphContextValue = {
         graphLoading,
         setGraphLoading,
         openGraphView,
         setGraphViewOpen,
-        viewMode,
-        setViewMode,
+        viewPoint,
+        setViewPoint,
         graphType,
         setGraphType
-
     };
     return (
         <GraphConnection.Provider value={graphContextValue}>

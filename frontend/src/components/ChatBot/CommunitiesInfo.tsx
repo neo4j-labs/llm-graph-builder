@@ -13,10 +13,10 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
   const [neoNodes, setNeoNodes] = useState<any[]>([]);
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
-  const [viewPoint, setViewPoint] = useState('');
-    const { graphLoading, setGraphLoading } = useGraphConnection();
+  const { graphLoading, setGraphLoading, viewPoint, setViewPoint } = useGraphConnection();
 
   const handleCommunityClick = (elementId: string, viewMode: string) => {
+    setViewPoint('Chunk');
     setOpenGraphView(true);
     handleGraphNodeClick(
       userCredentials as UserCredentials,
@@ -24,7 +24,6 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
       viewMode,
       setNeoNodes,
       setNeoRels,
-      setViewPoint,
       setGraphLoading
     );
   };

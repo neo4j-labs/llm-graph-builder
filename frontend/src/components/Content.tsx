@@ -44,6 +44,7 @@ import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingC
 import { getChunkText } from '../services/getChunkText';
 import ChunkPopUp from './Popups/ChunkPopUp';
 import { isExpired, isFileReadyToProcess } from '../utils/Utils';
+import { useGraphConnection } from '../context/GraphWrapper';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -100,11 +101,9 @@ const Content: React.FC<ContentProps> = ({
     setchatModes,
     model,
   } = useFileContext();
-  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>(
-    'tableView'
-  );
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
+  const {setViewPoint, viewPoint}= useGraphConnection();
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {

@@ -43,9 +43,8 @@ export default function DeletePopUpForOrphanNodes({
   const [neoNodes, setNeoNodes] = useState<any[]>([]);
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
-  const [viewPoint, setViewPoint] = useState('');
   const { colorMode } = useContext(ThemeWrapperContext);
-    const { setGraphLoading } = useGraphConnection();
+    const { setGraphLoading,setViewPoint, viewPoint} = useGraphConnection();
 
   const fetchOrphanNodes = useCallback(async () => {
     try {
@@ -80,6 +79,7 @@ export default function DeletePopUpForOrphanNodes({
   const columnHelper = createColumnHelper<orphanNodeProps>();
 
   const handleOrphanNodeClick = (elementId: string, viewMode: string) => {
+    setViewPoint('chatInfoView');
     setOpenGraphView(true);
     handleGraphNodeClick(
       userCredentials as UserCredentials,
@@ -87,7 +87,6 @@ export default function DeletePopUpForOrphanNodes({
       viewMode,
       setNeoNodes,
       setNeoRels,
-      setViewPoint,
       setGraphLoading
     );
   };

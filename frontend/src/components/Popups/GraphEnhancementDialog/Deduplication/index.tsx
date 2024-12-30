@@ -46,10 +46,9 @@ export default function DeduplicationTab() {
   const [neoNodes, setNeoNodes] = useState<any[]>([]);
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
-  const [viewPoint, setViewPoint] = useState('');
   const [nodesCount, setNodesCount] = useState<number>(0);
   const { colorMode } = useContext(ThemeWrapperContext);
-  const { setGraphLoading } = useGraphConnection();
+  const { setGraphLoading, setViewPoint, viewPoint } = useGraphConnection();
 
   const fetchDuplicateNodes = useCallback(async () => {
     try {
@@ -117,6 +116,7 @@ export default function DeduplicationTab() {
   };
 
   const handleDuplicateNodeClick = (elementId: string, viewMode: string) => {
+    setViewPoint('chatInfoView');
     setOpenGraphView(true);
     handleGraphNodeClick(
       userCredentials as UserCredentials,
@@ -124,7 +124,6 @@ export default function DeduplicationTab() {
       viewMode,
       setNeoNodes,
       setNeoRels,
-      setViewPoint,
       setGraphLoading
     );
   };

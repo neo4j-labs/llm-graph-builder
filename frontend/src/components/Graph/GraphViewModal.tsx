@@ -168,7 +168,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     if (open) {
       setGraphLoading(true);
       setGraphType([]);
-      if (viewPoint !== graphLabels.chatInfoView) {
+      if (viewPoint === 'showGraphView' || viewPoint === 'tableView') {
         graphApi();
       } else {
         const { finalNodes, finalRels, schemeVal } = processGraphData(nodeValues ?? [], relationshipValues ?? []);
@@ -182,6 +182,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       }
     }
   }, [open]);
+
+  console.log('nodes', nodes);
 
   useEffect(() => {
     if (debouncedQuery) {

@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { Button } from '@neo4j-ndl/react';
 import GraphViewModal from './GraphViewModal';
 import { GraphViewButtonProps } from '../../types';
+import { useGraphConnection } from '../../context/GraphWrapper';
 
 const GraphViewButton: React.FC<GraphViewButtonProps> = ({ nodeValues, relationshipValues, fill, label }) => {
   const [openGraphView, setOpenGraphView] = useState(false);
-  const [viewPoint, setViewPoint] = useState('');
+  const { setViewPoint, viewPoint } = useGraphConnection();
 
   const handleGraphViewClick = () => {
     setOpenGraphView(true);

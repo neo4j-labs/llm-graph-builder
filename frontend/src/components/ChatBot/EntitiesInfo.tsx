@@ -14,8 +14,7 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
   const [neoNodes, setNeoNodes] = useState<any[]>([]);
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
-  const [viewPoint, setViewPoint] = useState('');
-  const { graphLoading, setGraphLoading } = useGraphConnection();
+  const { graphLoading, setGraphLoading, viewPoint, setViewPoint } = useGraphConnection();
 
   const groupedEntities = useMemo<{ [key: string]: GroupedEntity }>(() => {
     const items = infoEntities.reduce((acc, entity) => {
@@ -45,6 +44,7 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
   }, [labelCounts]);
 
   const handleEntityClick = (elementId: string, viewMode: string) => {
+    setViewPoint('Chunk');
     setOpenGraphView(true);
     handleGraphNodeClick(
       userCredentials as UserCredentials,
@@ -52,7 +52,6 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
       viewMode,
       setNeoNodes,
       setNeoRels,
-      setViewPoint,
       setGraphLoading
     );
   };
