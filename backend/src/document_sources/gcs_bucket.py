@@ -47,7 +47,7 @@ def load_pdf(file_path):
 def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token=None):
   nltk.download('punkt')
   nltk.download('averaged_perceptron_tagger')
-  if gcs_bucket_folder is not None:
+  if gcs_bucket_folder is not None and gcs_bucket_folder.strip()!="":
     if gcs_bucket_folder.endswith('/'):
       blob_name = gcs_bucket_folder+gcs_blob_filename
     else:

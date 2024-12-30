@@ -30,6 +30,7 @@ import sys
 import shutil
 import urllib.parse
 import json
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 
 warnings.filterwarnings("ignore")
 load_dotenv()
@@ -556,7 +557,7 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition):
           return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
         
         else:
-          raise Exception(f"All chunks of file are alreday processed. If you want to re-process, Please start from begnning")    
+          raise LLMGraphBuilderException(f"All chunks of file are already processed. If you want to re-process, Please start from begnning")    
       
       else:
         logging.info(f"Retry : start_from_beginning with chunks {len(chunkId_chunkDoc_list)}")    
