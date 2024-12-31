@@ -267,11 +267,11 @@ class graphDBdataAccess:
         return self.execute_query(query, param)
     
     def delete_file_from_graph(self, filenames, source_types, deleteEntities:str, merged_dir:str, uri):
-        # filename_list = filenames.split(',')
+        
         filename_list= list(map(str.strip, json.loads(filenames)))
         source_types_list= list(map(str.strip, json.loads(source_types)))
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-        # source_types_list = source_types.split(',')
+        
         for (file_name,source_type) in zip(filename_list, source_types_list):
             merged_file_path = os.path.join(merged_dir, file_name)
             if source_type == 'local file' and gcs_file_cache == 'True':
@@ -326,7 +326,7 @@ class graphDBdataAccess:
         else :
             result = self.execute_query(query_to_delete_document, param)    
             logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' with their entities from database")
-        return result, len(filename_list)
+        return len(filename_list)
     
     def list_unconnected_nodes(self):
         query = """
