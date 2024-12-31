@@ -390,7 +390,7 @@ def get_neo4j_retriever(graph, document_names,chat_mode_settings, score_threshol
         neo_db = initialize_neo4j_vector(graph, chat_mode_settings)
         # document_names= list(map(str.strip, json.loads(document_names)))
         search_k = chat_mode_settings["top_k"]
-        ef_ratio = os.getenv('EFFECTIVE_SEARCH_RATIO',2)
+        ef_ratio = int(os.getenv("EFFECTIVE_SEARCH_RATIO", "2")) if os.getenv("EFFECTIVE_SEARCH_RATIO", "2").isdigit() else 2
         retriever = create_retriever(neo_db, document_names,chat_mode_settings, search_k, score_threshold,ef_ratio)
         return retriever
     except Exception as e:
