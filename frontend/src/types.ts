@@ -64,7 +64,6 @@ export type ExtractParams = Pick<CustomFile, 'wiki_query' | 'model' | 'source_ur
   file?: File;
   aws_access_key_id?: string | null;
   aws_secret_access_key?: string | null;
-  max_sources?: number;
   gcs_bucket_name?: string;
   gcs_bucket_folder?: string;
   gcs_blob_filename?: string;
