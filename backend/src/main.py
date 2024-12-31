@@ -30,6 +30,7 @@ import sys
 import shutil
 import urllib.parse
 import json
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 
 warnings.filterwarnings("ignore")
 from pathlib import Path
@@ -567,9 +568,19 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition):
       if starting_chunk[0]["position"] < len(chunkId_chunkDoc_list):
         return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
       
-      elif starting_chunk[0]["position"] == len(chunkId_chunkDoc_list):
-        starting_chunk = graph.query(QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY, params={"filename":file_name})
-        return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
+      if retry_condition ==  START_FROM_LAST_PROCESSED_POSITION:
+        logging.info(f"Retry : start_from_last_processed_position")
+        starting_chunk = graph.query(QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION, params={"filename":file_name})
+        
+        if starting_chunk and starting_chunk[0]["position"] < len(chunkId_chunkDoc_list):
+          return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
+        
+        elif starting_chunk and starting_chunk[0]["position"] == len(chunkId_chunkDoc_list):
+          starting_chunk = graph.query(QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY, params={"filename":file_name})
+          return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
+        
+        else:
+          raise LLMGraphBuilderException(f"All chunks of file {file_name} are already processed. If you want to re-process, Please start from begnning")    
       
       else:
         raise Exception(f"All chunks of {file_name} are alreday processed. If you want to re-process, Please start from begnning")    

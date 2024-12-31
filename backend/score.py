@@ -33,6 +33,7 @@ from src.ragas_eval import *
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 import gzip
 from langchain_neo4j import Neo4jGraph
+from src.entities.source_node import sourceNode
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
@@ -277,6 +278,15 @@ async def extract_knowledge_graph_from_file(
         result.update(uri_latency)
         logging.info(f"extraction completed in {extract_api_time:.2f} seconds for file name {file_name}")
         return create_api_response('Success', data=result, file_source= source_type)
+    except LLMGraphBuilderException as app_exp:
+        job_status="Completed"
+        obj_source_node = sourceNode()
+        obj_source_node.file_name = file_name
+        obj_source_node.status = job_status
+        obj_source_node.error_message = str(app_exp)
+        obj_source_node.retry_condition = retry_condition
+        graphDb_data_Access.update_source_node(obj_source_node)
+        return create_api_response("Success", data={"message": str(app_exp)}, file_name=file_name)
     except Exception as e:
         message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content "
         error_message = str(e)
