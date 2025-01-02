@@ -832,13 +832,17 @@ async def retry_processing(uri=Form(), userName=Form(), password=Form(), databas
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
-        await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
+        chunks =  graph.query(QUERY_TO_GET_CHUNKS, params={"filename":file_name})
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'retry_processing', 'db_url':uri, 'userName':userName, 'database':database, 'file_name':file_name,'retry_condition':retry_condition,
                             'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
-        return create_api_response('Success',message=f"Status set to Ready to Reprocess for filename : {file_name}")
+        if chunks[0]['text'] is None or chunks[0]['text']=="" or not chunks :
+            return create_api_response('Success',message=f"Chunks are not created for the {file_name}.",data=chunks)
+        else:
+            await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
+            return create_api_response('Success',message=f"Status set to Ready to Reprocess for filename : {file_name}")
     except Exception as e:
         job_status = "Failed"
         message="Unable to set status to Retry"
@@ -1002,38 +1006,6 @@ async def backend_connection_configuration():
         error_message = str(e)
         logging.exception(f'{error_message}')
         return create_api_response(job_status, message=message, error=error_message.rstrip('.') + ', or fill from the login dialog.', data=graph_connection)
-    finally:
-        gc.collect()    
-
-@app.post("/is_reprocess_file_chunks_available")
-async def is_reprocess_file_chunks_available(uri: str = Form(), database: str = Form(), userName: str = Form(), password: str = Form(), file_name: str = Form()):
-    try:
-        start = time.time()
-        graph = create_graph_database_connection(uri, userName, password, database)
-        chunks =  graph.query(QUERY_TO_GET_CHUNKS, params={"filename":file_name})
-        
-        end = time.time()
-        elapsed_time = end - start
-        json_obj = {
-            'api_name': 'is_reprocess_file_chunks_available',
-            'db_url': uri,
-            'userName': userName,
-            'database': database,
-            'filename': file_name,
-            'logging_time': formatted_time(datetime.now(timezone.utc)),
-            'elapsed_api_time': f'{elapsed_time:.2f}'
-        }
-        logger.log_struct(json_obj, "INFO")
-        if chunks[0]['text'] is None or chunks[0]['text']=="" or not chunks :
-            return create_api_response('Success',message=f"Chunks are not created for the {file_name}.",data=chunks[0]['text'])
-        else:
-            return create_api_response('Success',message=f"Chunks text data available for the {file_name}.",data=chunks[0]['text'])
-    except Exception as e:
-        job_status = "Failed"
-        message="Unable to get the chunk data from the DB"
-        error_message = str(e)
-        logging.exception(f'{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
     finally:
         gc.collect()
         
