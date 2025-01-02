@@ -264,18 +264,22 @@ class graphDBdataAccess:
             else:
                 logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
                 delete_uploaded_local_file(merged_file_path,file_name)
-        query_to_delete_document=""" 
-           MATCH (d:Document) where d.fileName in $filename_list and coalesce(d.fileSource, "None") IN $source_types_list
-            with collect(d) as documents 
-            unwind documents as d
-            optional match (d)<-[:PART_OF]-(c:Chunk) 
-            detach delete c, d
-            return count(*) as deletedChunks
-            """
-        query_to_delete_document_and_entities="""
+                
+        query_to_delete_document="""
             MATCH (d:Document)
             WHERE d.fileName IN $filename_list AND coalesce(d.fileSource, "None") IN $source_types_list
             WITH COLLECT(d) AS documents
+            CALL (documents) {
+            UNWIND documents AS d
+            optional match (d)<-[:PART_OF]-(c:Chunk) 
+            detach delete c, d
+            } IN TRANSACTIONS OF 1 ROWS
+            """
+        query_to_delete_document_and_entities = """
+            MATCH (d:Document)
+            WHERE d.fileName IN $filename_list AND coalesce(d.fileSource, "None") IN $source_types_list
+            WITH COLLECT(d) AS documents
+            CALL (documents) {
             UNWIND documents AS d
             MATCH (d)<-[:PART_OF]-(c:Chunk)
             WITH d, c, documents
@@ -284,8 +288,12 @@ class graphDBdataAccess:
                 MATCH (e)<-[:HAS_ENTITY]-(c2)-[:PART_OF]->(d2:Document)
                 WHERE NOT d2 IN documents
                 }
-            DETACH DELETE c, e, d
-            """  
+            WITH d, COLLECT(c) AS chunks, COLLECT(e) AS entities
+            FOREACH (chunk IN chunks | DETACH DELETE chunk)
+            FOREACH (entity IN entities | DETACH DELETE entity)
+            DETACH DELETE d
+            } IN TRANSACTIONS OF 1 ROWS
+            """
         query_to_delete_communities = """
             MATCH (c:`__Community__`) 
             WHERE NOT EXISTS { ()-[:IN_COMMUNITY]->(c) } AND c.level = 0 

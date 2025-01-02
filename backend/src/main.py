@@ -78,7 +78,7 @@ def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id,
     for file_info in files_info:
         file_name=file_info['file_key'] 
         obj_source_node = sourceNode()
-        obj_source_node.file_name = file_name.split('/')[-1]
+        obj_source_node.file_name = file_name.split('/')[-1].strip() if isinstance(file_name.split('/')[-1], str) else file_name.split('/')[-1]
         obj_source_node.file_type = 'pdf'
         obj_source_node.file_size = file_info['file_size_bytes']
         obj_source_node.file_source = source_type
@@ -112,7 +112,7 @@ def create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_na
     lst_file_metadata= get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, credentials)
     for file_metadata in lst_file_metadata :
       obj_source_node = sourceNode()
-      obj_source_node.file_name = file_metadata['fileName']
+      obj_source_node.file_name = file_metadata['fileName'].strip() if isinstance(file_metadata['fileName'], str) else file_metadata['fileName']
       obj_source_node.file_size = file_metadata['fileSize']
       obj_source_node.url = file_metadata['url']
       obj_source_node.file_source = source_type
@@ -164,7 +164,7 @@ def create_source_node_graph_web_url(graph, model, source_url, source_type):
     obj_source_node.model = model
     obj_source_node.url = urllib.parse.unquote(source_url)
     obj_source_node.created_at = datetime.now()
-    obj_source_node.file_name = title
+    obj_source_node.file_name = title.strip() if isinstance(title, str) else title
     obj_source_node.language = language
     obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
     obj_source_node.chunkNodeCount=0
@@ -364,7 +364,7 @@ def processing_source(uri, userName, password, database, model, file_name, pages
     if result[0]['Status'] != 'Processing':      
       obj_source_node = sourceNode()
       status = "Processing"
-      obj_source_node.file_name = file_name
+      obj_source_node.file_name = file_name.strip() if isinstance(file_name, str) else file_name
       obj_source_node.status = status
       obj_source_node.total_chunks = total_chunks
       obj_source_node.model = model
@@ -433,7 +433,7 @@ def processing_source(uri, userName, password, database, model, file_name, pages
       end_time = datetime.now()
       processed_time = end_time - start_time
       obj_source_node = sourceNode()
-      obj_source_node.file_name = file_name
+      obj_source_node.file_name = file_name.strip() if isinstance(file_name, str) else file_name
       obj_source_node.status = job_status
       obj_source_node.processing_time = processed_time
 
@@ -676,7 +676,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
       logging.info("File merged successfully")
       file_extension = originalname.split('.')[-1]
       obj_source_node = sourceNode()
-      obj_source_node.file_name = originalname
+      obj_source_node.file_name = originalname.strip() if isinstance(originalname, str) else originalname
       obj_source_node.file_type = file_extension
       obj_source_node.file_size = file_size
       obj_source_node.file_source = 'local file'
@@ -719,7 +719,7 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
   
   for (file_name,source_type) in zip(filename_list, source_types_list):
       obj_source_node = sourceNode()
-      obj_source_node.file_name = file_name
+      obj_source_node.file_name = file_name.strip() if isinstance(file_name, str) else file_name
       obj_source_node.is_cancelled = True
       obj_source_node.status = 'Cancelled'
       obj_source_node.updated_at = datetime.now()
@@ -754,7 +754,7 @@ def set_status_retry(graph, file_name, retry_condition):
     graphDb_data_Access = graphDBdataAccess(graph)
     obj_source_node = sourceNode()
     status = "Ready to Reprocess"
-    obj_source_node.file_name = file_name
+    obj_source_node.file_name = file_name.strip() if isinstance(file_name, str) else file_name
     obj_source_node.status = status
     obj_source_node.retry_condition = retry_condition
     obj_source_node.is_cancelled = False
