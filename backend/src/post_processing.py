@@ -4,6 +4,10 @@ import time
 from langchain_neo4j import Neo4jGraph
 import os
 from src.shared.common_fn import load_embedding_model
+from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from src.shared.constants import GRAPH_CLEANUP_PROMPT
+from src.llm import get_llm
 
 DROP_INDEX_QUERY = "DROP INDEX entities IF EXISTS;"
 LABELS_QUERY = "CALL db.labels()"
@@ -188,3 +192,59 @@ def update_embeddings(rows, graph):
       CALL db.create.setNodeVectorProperty(e, "embedding", row.embedding)
       """  
     return graph.query(query,params={'rows':rows})          
+
+def graph_cleanup(graph):
+    nodes_and_relations = graph.query("""call apoc.meta.data() yield property, count, elementType, label
+                    where elementType IN ['node','relationship'] and 
+                    not label in ['__Entity__','Chunk','__Community__','Document','PART_OF','HAS_ENTITY','SIMILAR','HAS_COMMUNITY','PARENT_COMMUNITY','NEXT_CHUNK']
+                    with elementType, property, label
+                    return elementType, collect(DISTINCT label) as types""")
+    
+    node_labels = []
+    relation_labels = []
+    for r in nodes_and_relations :
+        if r['elementType'] == 'node':
+            node_labels.extend(r['types'])
+        else:
+            relation_labels.extend(r['types'])
+    
+    parser = JsonOutputParser()
+    prompt = ChatPromptTemplate(messages=[("system",GRAPH_CLEANUP_PROMPT),("human", "{input}")],
+                                            partial_variables={"format_instructions": parser.get_format_instructions()})
+
+    chain = prompt | get_llm('openai_gpt_4o') | parser
+    nodes_dict = chain.invoke({'input':node_labels})
+    relation_dict = chain.invoke({'input':relation_labels})  
+    
+    node_match = {}
+    relation_match = {}
+    for new_label , values in nodes_dict.items() :
+        for old_label in values:
+            if new_label != old_label:
+                node_match[old_label]=new_label
+            
+    for new_label , values in relation_dict.items() :
+        for old_label in values:
+            if new_label != old_label:
+                relation_match[old_label]=new_label 
+    
+    #update node labels in graph
+    for old_label, new_label in node_match.items():
+        graph.query("""MATCH (n:$($label))
+                    SET n:$($new_label)
+                    REMOVE n:$($label)
+                    """,
+                    params={'label':old_label, 'new_label':new_label})  
+    
+    #update relation types in graph
+    for old_label, new_label in relation_match.items():
+        graph.query("""MATCH (n)-[r:$($label)]->(m)
+                    CALL (r) {
+                        CREATE (n)-[r2:$($new_label)]->(m)
+                        WITH r
+                        DELETE r 
+                        }
+                    """,
+                    params={'label':old_label, 'new_label':new_label})                          
+    
+    

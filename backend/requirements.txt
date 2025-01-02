@@ -16,7 +16,7 @@ langchain-anthropic==0.3.0
 langchain-fireworks==0.2.5
 langchain-community==0.3.8
 langchain-core==0.3.21
-langchain-experimental==0.3.3
+langchain-experimental==0.3.4
 langchain-google-vertexai==2.0.7
 langchain-groq==0.2.1
 langchain-openai==0.2.9
