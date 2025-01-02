@@ -20,17 +20,21 @@ export default function PostProcessingCheckList() {
           </Flex>
           <Flex justifyContent='space-between' flexDirection='column' gap='6'>
             {POST_PROCESSING_JOBS.map((job, idx) => {
-              const isGraphCleanupDisabled = job.title === 'graph_cleanup'
-                ? !(isSchema && selectedNodes.length === 0 && selectedRels.length === 0)
-                : false;
-              const isDisabled = job.title === 'enable_communities'
-                ? !isGdsActive
-                : job.title === 'graph_cleanup'
+              const isGraphCleanupDisabled =
+                job.title === 'graph_cleanup'
+                  ? !(isSchema && selectedNodes.length === 0 && selectedRels.length === 0)
+                  : false;
+              const isDisabled =
+                job.title === 'enable_communities'
+                  ? !isGdsActive
+                  : job.title === 'graph_cleanup'
                   ? isGraphCleanupDisabled
                   : false;
-              const isChecked = job.title === 'graph_cleanup'
-                ? !isGraphCleanupDisabled && postProcessingTasks.includes(job.title)
-                : job.title === 'enable_communities' ? isGdsActive && postProcessingTasks.includes(job.title)
+              const isChecked =
+                job.title === 'graph_cleanup'
+                  ? !isGraphCleanupDisabled && postProcessingTasks.includes(job.title)
+                  : job.title === 'enable_communities'
+                  ? isGdsActive && postProcessingTasks.includes(job.title)
                   : postProcessingTasks.includes(job.title);
               return (
                 <Flex key={`${job.title}${idx}`}>

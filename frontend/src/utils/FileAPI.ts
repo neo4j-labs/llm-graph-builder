@@ -36,7 +36,8 @@ export const extractAPI = async (
   allowedRelationship?: string[],
   gcs_project_id?: string,
   language?: string,
-  access_token?: string
+  access_token?: string,
+  additional_instructions?: string
 ): Promise<any> => {
   const urlExtract = `${url()}/extract`;
   const method: Method = 'post';
@@ -53,6 +54,7 @@ export const extractAPI = async (
       allowedNodes,
       allowedRelationship,
       retry_condition,
+      additional_instructions,
     };
   } else if (source_type === 'Wikipedia') {
     additionalParams = {
@@ -64,6 +66,7 @@ export const extractAPI = async (
       allowedRelationship,
       language,
       retry_condition,
+      additional_instructions,
     };
   } else if (source_type === 'gcs bucket') {
     additionalParams = {
@@ -78,6 +81,7 @@ export const extractAPI = async (
       gcs_project_id,
       access_token,
       retry_condition,
+      additional_instructions,
     };
   } else if (source_type === 'youtube') {
     additionalParams = {
@@ -88,6 +92,7 @@ export const extractAPI = async (
       allowedNodes,
       allowedRelationship,
       retry_condition,
+      additional_instructions,
     };
   } else if (source_type === 'web-url') {
     additionalParams = {
@@ -98,6 +103,7 @@ export const extractAPI = async (
       allowedNodes,
       allowedRelationship,
       retry_condition,
+      additional_instructions,
     };
   } else {
     additionalParams = {
@@ -107,6 +113,7 @@ export const extractAPI = async (
       allowedNodes,
       allowedRelationship,
       retry_condition,
+      additional_instructions,
     };
   }
   const response = await apiCall(urlExtract, method, commonParams, additionalParams);

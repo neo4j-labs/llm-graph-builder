@@ -99,6 +99,7 @@ const Content: React.FC<ContentProps> = ({
     setProcessedCount,
     setchatModes,
     model,
+    additionalInstructions,
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>(
     'tableView'
@@ -284,7 +285,8 @@ const Content: React.FC<ContentProps> = ({
         selectedRels.map((t) => t.value),
         fileItem.googleProjectId,
         fileItem.language,
-        fileItem.accessToken
+        fileItem.accessToken,
+        additionalInstructions
       );
 
       if (apiResponse?.status === 'Failed') {
