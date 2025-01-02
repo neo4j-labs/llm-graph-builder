@@ -261,7 +261,8 @@ class graphDBdataAccess:
                 d.entityNodeCount AS entityNodeCount,
                 d.entityEntityRelCount AS entityEntityRelCount,
                 d.communityNodeCount AS communityNodeCount,
-                d.communityRelCount AS communityRelCount
+                d.communityRelCount AS communityRelCount,
+                d.createdAt AS created_time
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
