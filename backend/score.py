@@ -159,7 +159,7 @@ async def create_source_knowledge_graph_url(
     except Exception as e:
         error_message = str(e)
         message = f" Unable to create source node for source type: {source_type} and source: {source}"
-        json_obj = {'error_message':error_message, 'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+        json_obj = {'error_message':error_message, 'status':'Failed','db_url':uri, 'userName':userName, 'database':database,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(json_obj, "ERROR")
         logging.exception(f'Exception Stack trace:')
         return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=source_type)
@@ -287,6 +287,7 @@ async def extract_knowledge_graph_from_file(
         message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content "
         error_message = str(e)
         graphDb_data_Access.update_exception_db(file_name,error_message, retry_condition)
+        node_detail = graphDb_data_Access.get_current_status_document_node(file_name)
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
         if source_type == 'local file':
             if gcs_file_cache == 'True':
@@ -297,7 +298,8 @@ async def extract_knowledge_graph_from_file(
             else:
                 logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
                 delete_uploaded_local_file(merged_file_path,file_name)
-        json_obj = {'message':message,'error_message':error_message, 'file_name': file_name,'status':'Failed','db_url':uri,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+        json_obj = {'message':message,'file_created_at':node_detail[0]['created_time'],'error_message':error_message, 'file_name': file_name,'status':'Failed',
+                    'db_url':uri, 'userName':userName, 'database':database,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(json_obj, "ERROR")
         logging.exception(f'File Failed in extraction: {json_obj}')
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = file_name)
@@ -839,13 +841,17 @@ async def drop_create_vector_index(uri=Form(), userName=Form(), password=Form(),
 async def retry_processing(uri=Form(), userName=Form(), password=Form(), database=Form(), file_name=Form(), retry_condition=Form()):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
-        await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
+        chunks =  graph.query(QUERY_TO_GET_CHUNKS, params={"filename":file_name})
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'retry_processing', 'db_url':uri, 'userName':userName, 'database':database, 'file_name':file_name,'retry_condition':retry_condition,
                             'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
-        return create_api_response('Success',message=f"Status set to Ready to Reprocess for filename : {file_name}")
+        if chunks[0]['text'] is None or chunks[0]['text']=="" or not chunks :
+            return create_api_response('Success',message=f"Chunks are not created for the {file_name}.",data=chunks)
+        else:
+            await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
+            return create_api_response('Success',message=f"Status set to Ready to Reprocess for filename : {file_name}")
     except Exception as e:
         job_status = "Failed"
         message="Unable to set status to Retry"
@@ -940,7 +946,7 @@ async def backend_connection_configuation():
         logging.exception(f'{error_message}')
         return create_api_response(job_status, message=message, error=error_message.rstrip('.') + ', or fill from the login dialog.', data=graph_connection)
     finally:
-        gc.collect()    
-
+        gc.collect()
+        
 if __name__ == "__main__":
     uvicorn.run(app)
