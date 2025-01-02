@@ -124,6 +124,8 @@ def create_source_node_graph_web_url(graph, model, source_url, source_type):
       raise Exception(message)
     try:
       title = pages[0].metadata['title']
+      if not title:
+        title = last_url_segment(source_url)
       language = pages[0].metadata['language']
     except:
       title = last_url_segment(source_url)
