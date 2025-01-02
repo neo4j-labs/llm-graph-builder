@@ -280,18 +280,22 @@ class graphDBdataAccess:
             else:
                 logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
                 delete_uploaded_local_file(merged_file_path,file_name)
-        query_to_delete_document=""" 
-           MATCH (d:Document) where d.fileName in $filename_list and coalesce(d.fileSource, "None") IN $source_types_list
-            with collect(d) as documents 
-            unwind documents as d
-            optional match (d)<-[:PART_OF]-(c:Chunk) 
-            detach delete c, d
-            return count(*) as deletedChunks
-            """
-        query_to_delete_document_and_entities="""
+                
+        query_to_delete_document="""
             MATCH (d:Document)
             WHERE d.fileName IN $filename_list AND coalesce(d.fileSource, "None") IN $source_types_list
             WITH COLLECT(d) AS documents
+            CALL (documents) {
+            UNWIND documents AS d
+            optional match (d)<-[:PART_OF]-(c:Chunk) 
+            detach delete c, d
+            } IN TRANSACTIONS OF 1 ROWS
+            """
+        query_to_delete_document_and_entities = """
+            MATCH (d:Document)
+            WHERE d.fileName IN $filename_list AND coalesce(d.fileSource, "None") IN $source_types_list
+            WITH COLLECT(d) AS documents
+            CALL (documents) {
             UNWIND documents AS d
             OPTIONAL MATCH (d)<-[:PART_OF]-(c:Chunk)
             OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e)
@@ -304,7 +308,8 @@ class graphDBdataAccess:
             FOREACH (chunk IN chunks | DETACH DELETE chunk)
             FOREACH (entity IN entities | DETACH DELETE entity)
             DETACH DELETE d
-            """  
+            } IN TRANSACTIONS OF 1 ROWS
+            """
         query_to_delete_communities = """
             MATCH (c:`__Community__`)
             WHERE c.level = 0 AND NOT EXISTS { ()-[:IN_COMMUNITY]->(c) }
