@@ -149,7 +149,7 @@ export interface ContentProps {
   showChatBot: boolean;
   openChatBot: () => void;
   openTextSchema: () => void;
-  isSchema?: boolean;
+  isSchema: boolean;
   setIsSchema: Dispatch<SetStateAction<boolean>>;
   showEnhancementDialog: boolean;
   toggleEnhancementDialog: () => void;

@@ -100,6 +100,7 @@ const Content: React.FC<ContentProps> = ({
     setchatModes,
     model,
     additionalInstructions,
+    setAdditionalInstructions,
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>(
     'tableView'
@@ -136,10 +137,20 @@ const Content: React.FC<ContentProps> = ({
     }
     if (processedCount === 1 && queue.isEmpty()) {
       (async () => {
-        showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
+        showNormalToast(
+          <PostProcessingToast
+            isGdsActive={isGdsActive}
+            postProcessingTasks={postProcessingTasks}
+            isSchema={isSchema}
+          />
+        );
         try {
           const payload = isGdsActive
-            ? postProcessingTasks
+            ? isSchema
+              ? postProcessingTasks.filter((task) => task !== 'graph_cleanup')
+              : postProcessingTasks
+            : isSchema
+            ? postProcessingTasks.filter((task) => task !== 'graph_cleanup' && task !== 'enable_communities')
             : postProcessingTasks.filter((task) => task !== 'enable_communities');
           const response = await postProcessing(userCredentials as UserCredentials, payload);
           if (response.data.status === 'Success') {
@@ -376,7 +387,9 @@ const Content: React.FC<ContentProps> = ({
 
   const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
     if (!remainingFiles.length) {
-      showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
+      showNormalToast(
+        <PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} isSchema={isSchema} />
+      );
       try {
         const response = await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
         if (response.data.status === 'Success') {
@@ -549,6 +562,8 @@ const Content: React.FC<ContentProps> = ({
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
+    localStorage.removeItem('instructions');
+    setAdditionalInstructions('');
     setMessages([
       {
         datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
