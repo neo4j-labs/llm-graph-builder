@@ -527,8 +527,9 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -573,23 +574,30 @@ const Content: React.FC<ContentProps> = ({
       setRetryLoading(false);
       if (response.data.status === 'Failure') {
         throw new Error(response.data.error);
-      }
-      const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption === RETRY_OPIONS[1];
-      setFilesData((prev) => {
-        return prev.map((f) => {
-          return f.name === filename
-            ? {
-              ...f,
-              status: 'Ready to Reprocess',
-              processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-              nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-              relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
-            }
-            : f;
+      } else if (
+        response.data.status === 'Success' &&
+        response.data?.message != undefined &&
+        (response.data?.message as string).includes('Chunks are not created')
+      ) {
+        showNormalToast(response.data.message as string);
+      } else {
+        const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption === RETRY_OPIONS[1];
+        setFilesData((prev) => {
+          return prev.map((f) => {
+            return f.name === filename
+              ? {
+                  ...f,
+                  status: 'Ready to Reprocess',
+                  processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                  nodesCount: isStartFromBegining ? 0 : f.nodesCount,
+                  relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
+                }
+              : f;
+          });
         });
-      });
-      showSuccessToast(response.data.message as string);
-      retryOnclose();
+        showSuccessToast(response.data.message as string);
+        retryOnclose();
+      }
     } catch (error) {
       setRetryLoading(false);
       if (error instanceof Error) {
