@@ -839,7 +839,7 @@ async def retry_processing(uri=Form(), userName=Form(), password=Form(), databas
                             'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         if chunks[0]['text'] is None or chunks[0]['text']=="" or not chunks :
-            return create_api_response('Success',message=f"Chunks are not created for the {file_name}.",data=chunks)
+            return create_api_response('Success',message=f"Chunks are not created for the file{file_name}. Please upload again the file to re-process.",data=chunks)
         else:
             await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
             return create_api_response('Success',message=f"Status set to Ready to Reprocess for filename : {file_name}")
