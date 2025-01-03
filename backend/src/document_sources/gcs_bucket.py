@@ -47,7 +47,7 @@ def load_pdf(file_path):
 def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token=None):
   nltk.download('punkt')
   nltk.download('averaged_perceptron_tagger')
-  if gcs_bucket_folder is not None:
+  if gcs_bucket_folder is not None and gcs_bucket_folder.strip()!="":
     if gcs_bucket_folder.endswith('/'):
       blob_name = gcs_bucket_folder+gcs_blob_filename
     else:
@@ -123,7 +123,6 @@ def merge_file_gcs(bucket_name, original_file_name: str, folder_name_sha1_hashed
       logging.info('save the merged file from chunks in gcs')
       file_io = io.BytesIO(merged_file)
       blob.upload_from_file(file_io)
-      # pdf_reader = PdfReader(file_io)
       file_size = len(merged_file)
       
       return file_size

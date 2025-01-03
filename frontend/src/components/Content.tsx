@@ -288,11 +288,14 @@ const Content: React.FC<ContentProps> = ({
         fileItem.accessToken,
         additionalInstructions
       );
-
       if (apiResponse?.status === 'Failed') {
         let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
         throw new Error(JSON.stringify(errorobj));
       } else if (fileItem.size != undefined && fileItem.size < largeFileSize) {
+        if (apiResponse.data.message) {
+          const apiRes = apiResponse.data.message;
+          showSuccessToast(apiRes);
+        }
         setFilesData((prevfiles) => {
           return prevfiles.map((curfile) => {
             if (curfile.name == apiResponse?.data?.fileName) {
@@ -570,23 +573,30 @@ const Content: React.FC<ContentProps> = ({
       setRetryLoading(false);
       if (response.data.status === 'Failure') {
         throw new Error(response.data.error);
-      }
-      const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption === RETRY_OPIONS[1];
-      setFilesData((prev) => {
-        return prev.map((f) => {
-          return f.name === filename
-            ? {
-                ...f,
-                status: 'Ready to Reprocess',
-                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-                nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-                relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
-              }
-            : f;
+      } else if (
+        response.data.status === 'Success' &&
+        response.data?.message != undefined &&
+        (response.data?.message as string).includes('Chunks are not created')
+      ) {
+        showNormalToast(response.data.message as string);
+      } else {
+        const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption === RETRY_OPIONS[1];
+        setFilesData((prev) => {
+          return prev.map((f) => {
+            return f.name === filename
+              ? {
+                  ...f,
+                  status: 'Ready to Reprocess',
+                  processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                  nodesCount: isStartFromBegining ? 0 : f.nodesCount,
+                  relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
+                }
+              : f;
+          });
         });
-      });
-      showSuccessToast(response.data.message as string);
-      retryOnclose();
+        showSuccessToast(response.data.message as string);
+        retryOnclose();
+      }
     } catch (error) {
       setRetryLoading(false);
       if (error instanceof Error) {
