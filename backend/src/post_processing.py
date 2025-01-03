@@ -8,6 +8,7 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from src.shared.constants import GRAPH_CLEANUP_PROMPT
 from src.llm import get_llm
+from src.main import get_labels_and_relationtypes
 
 DROP_INDEX_QUERY = "DROP INDEX entities IF EXISTS;"
 LABELS_QUERY = "CALL db.labels()"
@@ -194,19 +195,25 @@ def update_embeddings(rows, graph):
     return graph.query(query,params={'rows':rows})          
 
 def graph_cleanup(graph):
-    nodes_and_relations = graph.query("""call apoc.meta.data() yield property, count, elementType, label
-                    where elementType IN ['node','relationship'] and 
-                    not label in ['__Entity__','Chunk','__Community__','Document','PART_OF','HAS_ENTITY','SIMILAR','HAS_COMMUNITY','PARENT_COMMUNITY','NEXT_CHUNK']
-                    with elementType, property, label
-                    return elementType, collect(DISTINCT label) as types""")
+    # nodes_and_relations = graph.query("""call apoc.meta.data() yield property, count, elementType, label
+    #         where elementType IN ['node','relationship'] and 
+    #         not label in ['__Entity__','Chunk','__Community__','Document','PART_OF','HAS_ENTITY','SIMILAR','HAS_COMMUNITY','PARENT_COMMUNITY','NEXT_CHUNK']
+    #         with elementType, property, label
+    #         return elementType, collect(DISTINCT label) as types""")
     
+    nodes_and_relations = get_labels_and_relationtypes(graph)
+    
+    print(f"nodes_and_relations = {nodes_and_relations}")
     node_labels = []
     relation_labels = []
-    for r in nodes_and_relations :
-        if r['elementType'] == 'node':
-            node_labels.extend(r['types'])
-        else:
-            relation_labels.extend(r['types'])
+    # for r in nodes_and_relations :
+    #     if r['elementType'] == 'node':
+    #         node_labels.extend(r['types'])
+    #     else:
+    #         relation_labels.extend(r['types']) 
+    
+    node_labels.extend(nodes_and_relations[0]['labels'])
+    relation_labels.extend(nodes_and_relations[0]['relationshipTypes'])
     
     parser = JsonOutputParser()
     prompt = ChatPromptTemplate(messages=[("system",GRAPH_CLEANUP_PROMPT),("human", "{input}")],
