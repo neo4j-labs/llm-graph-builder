@@ -577,6 +577,7 @@ const Content: React.FC<ContentProps> = ({
         (response.data?.message as string).includes('Chunks are not created')
       ) {
         showNormalToast(response.data.message as string);
+        retryOnclose()
       } else {
         const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption === RETRY_OPIONS[1];
         setFilesData((prev) => {
