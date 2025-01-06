@@ -338,6 +338,11 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             await asyncio.to_thread(create_entity_embedding, graph)
             api_name = 'post_processing/create_entity_embedding'
             logging.info(f'Entity Embeddings created')
+
+        if "graph_cleanup" in tasks :
+            await asyncio.to_thread(graph_cleanup, graph)
+            api_name = 'post_processing/graph_cleanup'
+            logging.info(f'Updated nodes and relationship labels')
             
         if "enable_communities" in tasks:
             api_name = 'create_communities'
@@ -352,10 +357,6 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
                 count_response = [{"filename": filename, **counts} for filename, counts in count_response.items()]
                 logging.info(f'Updated source node with community related counts')
         
-        if "graph_cleanup" in tasks :
-            await asyncio.to_thread(graph_cleanup, graph)
-            api_name = 'post_processing/graph_cleanup'
-            logging.info(f'Updated nodes and relationship labels')
         
         end = time.time()
         elapsed_time = end - start
