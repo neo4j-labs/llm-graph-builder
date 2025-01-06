@@ -30,6 +30,7 @@ import sys
 import shutil
 import urllib.parse
 import json
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 
 warnings.filterwarnings("ignore")
 load_dotenv()
@@ -48,7 +49,7 @@ def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id,
     for file_info in files_info:
         file_name=file_info['file_key'] 
         obj_source_node = sourceNode()
-        obj_source_node.file_name = file_name.split('/')[-1]
+        obj_source_node.file_name = file_name.split('/')[-1].strip() if isinstance(file_name.split('/')[-1], str) else file_name.split('/')[-1]
         obj_source_node.file_type = 'pdf'
         obj_source_node.file_size = file_info['file_size_bytes']
         obj_source_node.file_source = source_type
@@ -70,7 +71,6 @@ def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id,
 
         except Exception as e:
           failed_count+=1
-          # error_message = str(e)
           lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Failed'})
     return lst_file_name,success_count,failed_count
 
@@ -83,7 +83,7 @@ def create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_na
     lst_file_metadata= get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, credentials)
     for file_metadata in lst_file_metadata :
       obj_source_node = sourceNode()
-      obj_source_node.file_name = file_metadata['fileName']
+      obj_source_node.file_name = file_metadata['fileName'].strip() if isinstance(file_metadata['fileName'], str) else file_metadata['fileName']
       obj_source_node.file_size = file_metadata['fileSize']
       obj_source_node.url = file_metadata['url']
       obj_source_node.file_source = source_type
@@ -124,6 +124,8 @@ def create_source_node_graph_web_url(graph, model, source_url, source_type):
       raise Exception(message)
     try:
       title = pages[0].metadata['title']
+      if not title:
+        title = last_url_segment(source_url)
       language = pages[0].metadata['language']
     except:
       title = last_url_segment(source_url)
@@ -135,7 +137,7 @@ def create_source_node_graph_web_url(graph, model, source_url, source_type):
     obj_source_node.model = model
     obj_source_node.url = urllib.parse.unquote(source_url)
     obj_source_node.created_at = datetime.now()
-    obj_source_node.file_name = title
+    obj_source_node.file_name = title.strip() if isinstance(title, str) else title
     obj_source_node.language = language
     obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
     obj_source_node.chunkNodeCount=0
@@ -170,7 +172,6 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     obj_source_node.communityRelCount=0
     match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
     logging.info(f"match value: {match}")
-    video_id = parse_qs(urlparse(youtube_url).query).get('v')
     obj_source_node.file_name = match.group(1)
     transcript= get_youtube_combined_transcript(match.group(1))
     logging.info(f"Youtube transcript : {transcript}")
@@ -192,7 +193,6 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
     success_count=0
     failed_count=0
     lst_file_name=[]
-    #queries_list =  wiki_query.split(',')
     wiki_query_id, language = check_url_source(source_type=source_type, wiki_query=wiki_query)
     logging.info(f"Creating source node for {wiki_query_id.strip()}, {language}")
     pages = WikipediaLoader(query=wiki_query_id.strip(), lang=language, load_max_docs=1, load_all_available_meta=True).load()
@@ -340,7 +340,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
     if result[0]['Status'] != 'Processing':      
       obj_source_node = sourceNode()
       status = "Processing"
-      obj_source_node.file_name = file_name
+      obj_source_node.file_name = file_name.strip() if isinstance(file_name, str) else file_name
       obj_source_node.status = status
       obj_source_node.total_chunks = total_chunks
       obj_source_node.model = model
@@ -354,7 +354,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
       
       start_update_source_node = time.time()
       graphDb_data_Access.update_source_node(obj_source_node)
-      count_response = graphDb_data_Access.update_node_relationship_count(file_name)
+      graphDb_data_Access.update_node_relationship_count(file_name)
       end_update_source_node = time.time()
       elapsed_update_source_node = end_update_source_node - start_update_source_node
       logging.info(f'Time taken to update the document source node: {elapsed_update_source_node:.2f} seconds')
@@ -403,7 +403,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
             obj_source_node.node_count = node_count
             obj_source_node.relationship_count = rel_count
           graphDb_data_Access.update_source_node(obj_source_node)
-          count_response = graphDb_data_Access.update_node_relationship_count(file_name)
+          graphDb_data_Access.update_node_relationship_count(file_name)
       
       result = graphDb_data_Access.get_current_status_document_node(file_name)
       is_cancelled_status = result[0]['is_cancelled']
@@ -414,12 +414,12 @@ async def processing_source(uri, userName, password, database, model, file_name,
       end_time = datetime.now()
       processed_time = end_time - start_time
       obj_source_node = sourceNode()
-      obj_source_node.file_name = file_name
+      obj_source_node.file_name = file_name.strip() if isinstance(file_name, str) else file_name
       obj_source_node.status = job_status
       obj_source_node.processing_time = processed_time
 
       graphDb_data_Access.update_source_node(obj_source_node)
-      count_response = graphDb_data_Access.update_node_relationship_count(file_name)
+      graphDb_data_Access.update_node_relationship_count(file_name)
       logging.info('Updated the nodeCount and relCount properties in Document node')
       logging.info(f'file:{file_name} extraction has been completed')
 
@@ -556,7 +556,7 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition):
           return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
         
         else:
-          raise Exception(f"All chunks of file are alreday processed. If you want to re-process, Please start from begnning")    
+          raise LLMGraphBuilderException(f"All chunks of file {file_name} are already processed. If you want to re-process, Please start from begnning")    
       
       else:
         logging.info(f"Retry : start_from_beginning with chunks {len(chunkId_chunkDoc_list)}")    
@@ -652,7 +652,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
       logging.info("File merged successfully")
       file_extension = originalname.split('.')[-1]
       obj_source_node = sourceNode()
-      obj_source_node.file_name = originalname
+      obj_source_node.file_name = originalname.strip() if isinstance(originalname, str) else originalname
       obj_source_node.file_type = file_extension
       obj_source_node.file_size = file_size
       obj_source_node.file_source = 'local file'
@@ -695,7 +695,7 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
   
   for (file_name,source_type) in zip(filename_list, source_types_list):
       obj_source_node = sourceNode()
-      obj_source_node.file_name = file_name
+      obj_source_node.file_name = file_name.strip() if isinstance(file_name, str) else file_name
       obj_source_node.is_cancelled = True
       obj_source_node.status = 'Cancelled'
       obj_source_node.updated_at = datetime.now()
@@ -730,7 +730,7 @@ def set_status_retry(graph, file_name, retry_condition):
     graphDb_data_Access = graphDBdataAccess(graph)
     obj_source_node = sourceNode()
     status = "Ready to Reprocess"
-    obj_source_node.file_name = file_name
+    obj_source_node.file_name = file_name.strip() if isinstance(file_name, str) else file_name
     obj_source_node.status = status
     obj_source_node.retry_condition = retry_condition
     obj_source_node.is_cancelled = False

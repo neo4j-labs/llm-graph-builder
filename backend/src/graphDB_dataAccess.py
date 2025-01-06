@@ -261,17 +261,18 @@ class graphDBdataAccess:
                 d.entityNodeCount AS entityNodeCount,
                 d.entityEntityRelCount AS entityEntityRelCount,
                 d.communityNodeCount AS communityNodeCount,
-                d.communityRelCount AS communityRelCount
+                d.communityRelCount AS communityRelCount,
+                d.createdAt AS created_time
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
     
     def delete_file_from_graph(self, filenames, source_types, deleteEntities:str, merged_dir:str, uri):
-        # filename_list = filenames.split(',')
+        
         filename_list= list(map(str.strip, json.loads(filenames)))
         source_types_list= list(map(str.strip, json.loads(source_types)))
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-        # source_types_list = source_types.split(',')
+        
         for (file_name,source_type) in zip(filename_list, source_types_list):
             merged_file_path = os.path.join(merged_dir, file_name)
             if source_type == 'local file' and gcs_file_cache == 'True':
@@ -280,18 +281,22 @@ class graphDBdataAccess:
             else:
                 logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
                 delete_uploaded_local_file(merged_file_path,file_name)
-        query_to_delete_document=""" 
-           MATCH (d:Document) where d.fileName in $filename_list and coalesce(d.fileSource, "None") IN $source_types_list
-            with collect(d) as documents 
-            unwind documents as d
-            optional match (d)<-[:PART_OF]-(c:Chunk) 
-            detach delete c, d
-            return count(*) as deletedChunks
-            """
-        query_to_delete_document_and_entities="""
+                
+        query_to_delete_document="""
             MATCH (d:Document)
             WHERE d.fileName IN $filename_list AND coalesce(d.fileSource, "None") IN $source_types_list
             WITH COLLECT(d) AS documents
+            CALL (documents) {
+            UNWIND documents AS d
+            optional match (d)<-[:PART_OF]-(c:Chunk) 
+            detach delete c, d
+            } IN TRANSACTIONS OF 1 ROWS
+            """
+        query_to_delete_document_and_entities = """
+            MATCH (d:Document)
+            WHERE d.fileName IN $filename_list AND coalesce(d.fileSource, "None") IN $source_types_list
+            WITH COLLECT(d) AS documents
+            CALL (documents) {
             UNWIND documents AS d
             OPTIONAL MATCH (d)<-[:PART_OF]-(c:Chunk)
             OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e)
@@ -304,7 +309,8 @@ class graphDBdataAccess:
             FOREACH (chunk IN chunks | DETACH DELETE chunk)
             FOREACH (entity IN entities | DETACH DELETE entity)
             DETACH DELETE d
-            """  
+            } IN TRANSACTIONS OF 1 ROWS
+            """
         query_to_delete_communities = """
             MATCH (c:`__Community__`)
             WHERE c.level = 0 AND NOT EXISTS { ()-[:IN_COMMUNITY]->(c) }
@@ -326,7 +332,7 @@ class graphDBdataAccess:
         else :
             result = self.execute_query(query_to_delete_document, param)    
             logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' with their entities from database")
-        return result, len(filename_list)
+        return len(filename_list)
     
     def list_unconnected_nodes(self):
         query = """
