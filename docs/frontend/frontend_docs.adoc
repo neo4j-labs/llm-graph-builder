@@ -360,7 +360,7 @@ Followed best practices for optimizing performance and security of the deployed 
 
 == 10. API Reference
 -----
-POST /connect
+1) POST /connect
 -----
 
 Neo4j database connection on frontend is done with this API.
@@ -374,7 +374,7 @@ Neo4j database connection on frontend is done with this API.
 
 === Upload Files from Local
 ----
-POST /upload
+2) POST /upload
 ----
 
 The upload endpoint is designed to handle the uploading of large files by breaking them into smaller chunks. This method ensures that large files can be uploaded efficiently without overloading the server.
@@ -394,7 +394,7 @@ The upload endpoint is designed to handle the uploading of large files by breaki
 
 === User Defined Schema
 ----
-POST /schema
+3) POST /schema
 ----
 
 User can set schema for graph generation (i.e. Nodes and relationship labels) in settings panel or get existing db schema through this API. 
@@ -586,6 +586,23 @@ This API is used to view graph for a particular file.
 * `query_type`= Neo4j database name
 * `document_names` = File name for which user wants to view graph
 
+....
+
+=== Get neighbour nodes 
+----
+POST /get_neighbours
+----
+
+This API is used to retrive the neighbor nodes of the given element id of the node.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `elementId` = Element id of the node to retrive its neighbours
+
 === SSE event to update processing status
 ----
 GET /update_extract_status 
@@ -662,6 +679,93 @@ The API is used to delete unconnected entities from database.
 * `password`= Neo4j db password, 
 * `database`= Neo4j database name,
 * `unconnected_entities_list`=selected entities list to delete of unconnected entities.
+
+....
+
+=== Get the list of orphan nodes
+----
+POST /get_unconnected_nodes_list
+----
+
+The API retrieves a list of nodes in the graph database that are not connected to any other nodes.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+
+=== Get duplicate nodes
+----
+POST /get_duplicate_nodes
+----
+
+The API is used to fetch duplicate entities from database.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+
+....
+
+
+=== Merge duplicate nodes
+----
+POST /merge_duplicate_nodes
+----
+
+The API is used to merge duplicate entities from database selected by user.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `duplicate_nodes_list`= selected entities list to merge of with similar entities.
+
+....
+=== Drop and create vector index
+----
+POST /drop_create_vector_index
+----
+
+The API is used to drop and create the vector index when vector index dimesion are different.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `isVectorIndexExist`= True or False based on whether vector index exist in database,
+
+=== Reprocessing of sources
+----
+POST /retry_processing
+----
+ 
+This API is used to Ready to Reprocess cancelled, completed or failed file sources.
+Users have 3 options to Ready to Reprocess files:
+ 
+* Start from begnning - In this condition file will be processed from the begnning i.e. 1st chunk again.
+* Delete entities and start from begnning - If the file source is already processed and have any existing nodes and relations then those will be deleted and file will be reprocessed from the 1st chunk.
+* Start from last processed postion - Cancelled or failed files will be processed from the last successfully processed chunk position. This option is not available for completed files.
+ 
+Ones the status is set to 'Ready to Reprocess', user can again click on Generate graph to process the file for knowledge graph creation.
+ 
+**API Parameters :**
+ 
+* `uri`=Neo4j uri,
+* `userName`= Neo4j db username,
+* `password`= Neo4j db password,
+* `database`= Neo4j database name,
+* `file_name`= Name of the file which user want to Ready to Reprocess.
+* `retry_condition` = One of the above 3 conditions which is selected for reprocessing.
 
 
 == 11. Conclusion: 
