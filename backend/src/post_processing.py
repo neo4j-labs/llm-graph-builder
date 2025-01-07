@@ -225,8 +225,8 @@ def graph_cleanup(graph):
             if new_label != old_label:
                 relation_match[old_label]=new_label 
 
-    logging.info("updated node labels : ",node_match)   
-    logging.info("updated relationship labels : ",relation_match) 
+    logging.info(f"updated node labels : {node_match}")   
+    logging.info(f"updated relationship labels : {relation_match}") 
 
     # Update node labels in graph
     for old_label, new_label in node_match.items():
