@@ -196,7 +196,7 @@ def update_embeddings(rows, graph):
 
 def graph_cleanup(graph):
     nodes_and_relations = get_labels_and_relationtypes(graph)
-    logging.info("nodes_and_relations in existing graph : ",nodes_and_relations)
+    logging.info(f"nodes_and_relations in existing graph : {nodes_and_relations}")
     node_labels = []
     relation_labels = []
     
