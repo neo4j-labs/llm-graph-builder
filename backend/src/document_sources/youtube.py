@@ -1,4 +1,5 @@
 from langchain.docstore.document import Document
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from youtube_transcript_api import YouTubeTranscriptApi 
 import logging
 from urllib.parse import urlparse,parse_qs
@@ -16,7 +17,7 @@ def get_youtube_transcript(youtube_id):
     return transcript_pieces
   except Exception as e:
     message = f"Youtube transcript is not available for youtube Id: {youtube_id}"
-    raise Exception(message)
+    raise LLMGraphBuilderException(message)
   
 def get_youtube_combined_transcript(youtube_id):
   try:
@@ -27,7 +28,7 @@ def get_youtube_combined_transcript(youtube_id):
     return transcript
   except Exception as e:
     message = f"Youtube transcript is not available for youtube Id: {youtube_id}"
-    raise Exception(message)
+    raise LLMGraphBuilderException(message)
 
 
 def create_youtube_url(url):
@@ -63,7 +64,7 @@ def get_documents_from_youtube(url):
     except Exception as e:
       error_message = str(e)
       logging.exception(f'Exception in reading transcript from youtube:{error_message}')
-      raise Exception(error_message)  
+      raise LLMGraphBuilderException(error_message)  
 
 def get_calculated_timestamps(chunks, youtube_id):
   logging.info('Calculating timestamps for chunks')

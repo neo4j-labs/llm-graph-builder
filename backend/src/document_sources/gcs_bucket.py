@@ -6,6 +6,7 @@ from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_core.documents import Document
 from PyPDF2 import PdfReader
 import io
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from google.oauth2.credentials import Credentials
 import time
 import nltk
@@ -34,12 +35,12 @@ def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder
         file_name=''
         message=f" Bucket:{gcs_bucket_name} does not exist in Project:{gcs_project_id}. Please provide valid GCS bucket name"
         logging.info(f"Bucket : {gcs_bucket_name} does not exist in project : {gcs_project_id}")
-        raise Exception(message)
+        raise LLMGraphBuilderException(message)
     except Exception as e:
       error_message = str(e)
       logging.error(f"Unable to create source node for gcs bucket file {file_name}")
       logging.exception(f'Exception Stack trace: {error_message}')
-      raise Exception(error_message)
+      raise LLMGraphBuilderException(error_message)
 
 def load_pdf(file_path):
     return PyMuPDFLoader(file_path)
@@ -66,7 +67,7 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
         loader = GCSFileLoader(project_name=gcs_project_id, bucket=gcs_bucket_name, blob=blob_name, loader_func=load_document_content)
         pages = loader.load() 
     else :
-      raise Exception('File does not exist, Please re-upload the file and try again.')
+      raise LLMGraphBuilderException('File does not exist, Please re-upload the file and try again.')
   else:
     creds= Credentials(access_token)
     storage_client = storage.Client(project=gcs_project_id, credentials=creds)
@@ -83,7 +84,7 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
             text += page.extract_text()
       pages = [Document(page_content = text)]
     else:
-      raise Exception(f'File Not Found in GCS bucket - {gcs_bucket_name}')
+      raise LLMGraphBuilderException(f'File Not Found in GCS bucket - {gcs_bucket_name}')
   return gcs_blob_filename, pages
 
 def upload_file_to_gcs(file_chunk, chunk_number, original_file_name, bucket_name, folder_name_sha1_hashed):

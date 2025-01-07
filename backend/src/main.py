@@ -1,5 +1,5 @@
 from langchain_neo4j import Neo4jGraph
-from src.shared.constants import (BUCKET_UPLOAD, PROJECT_ID, QUERY_TO_GET_CHUNKS, 
+from src.shared.constants import (BUCKET_UPLOAD,BUCKET_FAILED_FILE, PROJECT_ID, QUERY_TO_GET_CHUNKS, 
                                   QUERY_TO_DELETE_EXISTING_ENTITIES, 
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION,
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY,
@@ -41,7 +41,7 @@ def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id,
     lst_file_name = []
     files_info = get_s3_files_info(source_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
     if len(files_info)==0:
-      raise Exception('No pdf files found.')
+      raise LLMGraphBuilderException('No pdf files found.')
     logging.info(f'files info : {files_info}')
     success_count=0
     failed_count=0
@@ -121,7 +121,7 @@ def create_source_node_graph_web_url(graph, model, source_url, source_type):
     if pages==None or len(pages)==0:
       failed_count+=1
       message = f"Unable to read data for given url : {source_url}"
-      raise Exception(message)
+      raise LLMGraphBuilderException(message)
     try:
       title = pages[0].metadata['title']
       if not title:
@@ -177,8 +177,7 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     logging.info(f"Youtube transcript : {transcript}")
     if transcript==None or len(transcript)==0:
       message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
-      logging.info(f"Youtube transcript is not available for : {obj_source_node.file_name}")
-      raise Exception(message)
+      raise LLMGraphBuilderException(message)
     else:  
       obj_source_node.file_size = sys.getsizeof(transcript)
     
@@ -199,7 +198,7 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
     if pages==None or len(pages)==0:
       failed_count+=1
       message = f"Unable to read data for given Wikipedia url : {wiki_query}"
-      raise Exception(message)
+      raise LLMGraphBuilderException(message)
     else:
       obj_source_node = sourceNode()
       obj_source_node.file_name = wiki_query_id.strip()
@@ -233,7 +232,7 @@ async def extract_graph_from_file_local_file(uri, userName, password, database, 
     else:
       file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,fileName)
     if pages==None or len(pages)==0:
-      raise Exception(f'File content is not available for file : {file_name}')
+      raise LLMGraphBuilderException(f'File content is not available for file : {file_name}')
     return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship, True, merged_file_path)
   else:
     return await processing_source(uri, userName, password, database, model, fileName, [], allowedNodes, allowedRelationship, True, merged_file_path, retry_condition)
@@ -241,13 +240,13 @@ async def extract_graph_from_file_local_file(uri, userName, password, database, 
 async def extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition):
   if not retry_condition:
     if(aws_access_key_id==None or aws_secret_access_key==None):
-      raise Exception('Please provide AWS access and secret keys')
+      raise LLMGraphBuilderException('Please provide AWS access and secret keys')
     else:
       logging.info("Insert in S3 Block")
       file_name, pages = get_documents_from_s3(source_url, aws_access_key_id, aws_secret_access_key)
 
     if pages==None or len(pages)==0:
-      raise Exception(f'File content is not available for file : {file_name}')
+      raise LLMGraphBuilderException(f'File content is not available for file : {file_name}')
     return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship)
   else:
     return await processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, retry_condition=retry_condition)
@@ -256,7 +255,7 @@ async def extract_graph_from_web_page(uri, userName, password, database, model, 
   if not retry_condition:
     file_name, pages = get_documents_from_web_page(source_url)
     if pages==None or len(pages)==0:
-      raise Exception(f'Content is not available for given URL : {file_name}')
+      raise LLMGraphBuilderException(f'Content is not available for given URL : {file_name}')
     return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship)
   else:
     return await processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, retry_condition=retry_condition)
@@ -266,7 +265,7 @@ async def extract_graph_from_file_youtube(uri, userName, password, database, mod
     file_name, pages = get_documents_from_youtube(source_url)
 
     if pages==None or len(pages)==0:
-      raise Exception(f'Youtube transcript is not available for file : {file_name}')
+      raise LLMGraphBuilderException(f'Youtube transcript is not available for file : {file_name}')
     return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship)
   else:
      return await processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, retry_condition=retry_condition)
@@ -275,7 +274,7 @@ async def extract_graph_from_file_Wikipedia(uri, userName, password, database, m
   if not retry_condition:
     file_name, pages = get_documents_from_Wikipedia(wiki_query, language)
     if pages==None or len(pages)==0:
-      raise Exception(f'Wikipedia page is not available for file : {file_name}')
+      raise LLMGraphBuilderException(f'Wikipedia page is not available for file : {file_name}')
     return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship)
   else:
     return await processing_source(uri, userName, password, database, model, file_name,[], allowedNodes, allowedRelationship, retry_condition=retry_condition)
@@ -284,7 +283,7 @@ async def extract_graph_from_file_gcs(uri, userName, password, database, model, 
   if not retry_condition:
     file_name, pages = get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token)
     if pages==None or len(pages)==0:
-      raise Exception(f'File content is not available for file : {file_name}')
+      raise LLMGraphBuilderException(f'File content is not available for file : {file_name}')
     return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship)
   else:
     return await processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, retry_condition=retry_condition)
@@ -456,7 +455,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
   else:
     error_message = "Unable to get the status of document node."
     logging.error(error_message)
-    raise Exception(error_message)
+    raise LLMGraphBuilderException(error_message)
 
 async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password, database,file_name,model,allowedNodes,allowedRelationship, node_count, rel_count):
   #create vector index and update chunk node with embedding
@@ -538,7 +537,7 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition):
     chunks =  graph.query(QUERY_TO_GET_CHUNKS, params={"filename":file_name})
     
     if chunks[0]['text'] is None or chunks[0]['text']=="" or not chunks :
-      raise Exception(f"Chunks are not created for {file_name}. Please re-upload file and try again.")    
+      raise LLMGraphBuilderException(f"Chunks are not created for {file_name}. Please re-upload file and try again.")    
     else:
       for chunk in chunks:
         chunk_doc = Document(page_content=chunk['text'], metadata={'id':chunk['id'], 'position':chunk['position']})
@@ -742,3 +741,15 @@ def set_status_retry(graph, file_name, retry_condition):
         obj_source_node.relationship_count=0
     logging.info(obj_source_node)
     graphDb_data_Access.update_source_node(obj_source_node)
+
+def failed_file_process(uri,file_name, merged_file_path, source_type):
+  gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
+  if source_type == 'local file':
+    if gcs_file_cache == 'True':
+        folder_name = create_gcs_bucket_folder_name_hashed(uri,file_name)
+        copy_failed_file(BUCKET_UPLOAD, BUCKET_FAILED_FILE, folder_name, file_name)
+        time.sleep(5)
+        delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
+    else:
+        logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+        delete_uploaded_local_file(merged_file_path,file_name)
