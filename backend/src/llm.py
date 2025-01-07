@@ -13,6 +13,7 @@ from langchain_aws import ChatBedrock
 from langchain_community.chat_models import ChatOllama
 import boto3
 import google.auth
+from src.shared.constants import ADDITIONAL_INSTRUCTIONS
 
 def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""
@@ -160,7 +161,7 @@ def get_chunk_id_as_doc_metadata(chunkId_chunkDoc_list):
       
 
 async def get_graph_document_list(
-    llm, combined_chunk_document_list, allowedNodes, allowedRelationship
+    llm, combined_chunk_document_list, allowedNodes, allowedRelationship, additional_instructions=None
 ):
     futures = []
     graph_document_list = []
@@ -180,6 +181,7 @@ async def get_graph_document_list(
             allowed_nodes=allowedNodes,
             allowed_relationships=allowedRelationship,
             ignore_tool_usage=True,
+            additional_instructions=ADDITIONAL_INSTRUCTIONS+ (additional_instructions if additional_instructions else "")
         )
     
     if isinstance(llm,DiffbotGraphTransformer):
@@ -189,7 +191,7 @@ async def get_graph_document_list(
     return graph_document_list
 
 
-async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship):
+async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, additional_instructions=None):
     try:
         llm, model_name = get_llm(model)
         combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
@@ -204,7 +206,7 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
             allowedRelationship = allowedRelationship.split(',')
             
         graph_document_list = await get_graph_document_list(
-            llm, combined_chunk_document_list, allowedNodes, allowedRelationship
+            llm, combined_chunk_document_list, allowedNodes, allowedRelationship, additional_instructions
         )
         return graph_document_list
     except Exception as e:

@@ -176,6 +176,10 @@ export const buttonCaptions = {
   clearSettings: 'Clear Schema',
   ask: 'Ask',
   applyGraphSchema: 'Apply',
+  provideAdditionalInstructions: 'Provide Additional Instructions for Entity Extractions',
+  analyzeInstructions: 'Analyze Instructions',
+  helpInstructions:
+    'Provide specific instructions for entity extraction, such as focusing on key topics or excluding non-entity data like dates or revenues.',
 };
 
 export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
@@ -203,6 +207,10 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
   {
     title: 'enable_communities',
     description: 'Enable community creation across entities to use GraphRAG capabilities both local and global search.',
+  },
+  {
+    title: 'graph_cleanup',
+    description: 'consolidate node-labels and rel-types and then update the graph ',
   },
 ];
 export const RETRY_OPIONS = [
