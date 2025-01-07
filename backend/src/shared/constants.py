@@ -750,3 +750,31 @@ QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY = """
 START_FROM_BEGINNING  = "start_from_beginning"     
 DELETE_ENTITIES_AND_START_FROM_BEGINNING = "delete_entities_and_start_from_beginning"
 START_FROM_LAST_PROCESSED_POSITION = "start_from_last_processed_position"                                                    
+
+GRAPH_CLEANUP_PROMPT = """Please consolidate the following list of types into a smaller set of more general, semantically 
+related types. The consolidated types must be drawn from the original list; do not introduce new types.  
+Return a JSON object representing the mapping of original types to consolidated types. Every key is the consolidated type
+and value is list of the original types that were merged into the consolidated type. Prioritize using the most generic and 
+repeated term when merging. If a type doesn't merge with any other type, it should still be included in the output, 
+mapped to itself.
+
+**Input:** A list of strings representing the types to be consolidated. These types may represent either node 
+labels or relationship labels Your algorithm should do appropriate groupings based on semantic similarity.
+
+Example 1:
+Input: 
+[ "Person", "Human", "People", "Company", "Organization", "Product"]
+Output :
+[Person": ["Person", "Human", "People"], Organization": ["Company", "Organization"], Product": ["Product"]]
+
+Example 2:
+Input :
+["CREATED_FOR", "CREATED_TO", "CREATED", "PLACE", "LOCATION", "VENUE"]
+Output:
+["CREATED": ["CREATED_FOR", "CREATED_TO", "CREATED"],"PLACE": ["PLACE", "LOCATION", "VENUE"]]
+"""
+
+ADDITIONAL_INSTRUCTIONS = """Your goal is to identify and categorize entities while ensuring that specific data 
+types such as dates, numbers, revenues, and other non-entity information are not extracted as separate nodes.
+Instead, treat these as properties associated with the relevant entities."""
+

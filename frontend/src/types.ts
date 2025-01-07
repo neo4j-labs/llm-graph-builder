@@ -73,6 +73,7 @@ export type ExtractParams = Pick<CustomFile, 'wiki_query' | 'model' | 'source_ur
   allowedRelationship?: string[];
   gcs_project_id?: string;
   retry_condition: string;
+  additional_instructions?: string;
 } & { [key: string]: any };
 
 export type UploadParams = {
@@ -138,7 +139,7 @@ export interface ContentProps {
   showChatBot: boolean;
   openChatBot: () => void;
   openTextSchema: () => void;
-  isSchema?: boolean;
+  isSchema: boolean;
   setIsSchema: Dispatch<SetStateAction<boolean>>;
   showEnhancementDialog: boolean;
   toggleEnhancementDialog: () => void;
@@ -839,6 +840,8 @@ export interface FileContextType {
   setProcessedCount: Dispatch<SetStateAction<number>>;
   postProcessingVal: boolean;
   setPostProcessingVal: Dispatch<SetStateAction<boolean>>;
+  additionalInstructions: string;
+  setAdditionalInstructions: Dispatch<SetStateAction<string>>;
 }
 export declare type Side = 'top' | 'right' | 'bottom' | 'left';
 

@@ -96,6 +96,8 @@ const Content: React.FC<ContentProps> = ({
     setProcessedCount,
     setchatModes,
     model,
+    additionalInstructions,
+    setAdditionalInstructions,
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>(
     'tableView'
@@ -167,12 +169,55 @@ const Content: React.FC<ContentProps> = ({
     }
     if (processedCount === 1 && queue.isEmpty()) {
       (async () => {
-        showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
-        const payload = isGdsActive
-          ? postProcessingTasks
-          : postProcessingTasks.filter((task) => task !== 'enable_communities');
-        await postProcessing(userCredentials as UserCredentials, payload);
-        showSuccessToast('All Q&A functionality is available now.');
+        showNormalToast(
+          <PostProcessingToast
+            isGdsActive={isGdsActive}
+            postProcessingTasks={postProcessingTasks}
+            isSchema={isSchema}
+          />
+        );
+        try {
+          const payload = isGdsActive
+            ? isSchema
+              ? postProcessingTasks.filter((task) => task !== 'graph_cleanup')
+              : postProcessingTasks
+            : isSchema
+            ? postProcessingTasks.filter((task) => task !== 'graph_cleanup' && task !== 'enable_communities')
+            : postProcessingTasks.filter((task) => task !== 'enable_communities');
+          const response = await postProcessing(userCredentials as UserCredentials, payload);
+          if (response.data.status === 'Success') {
+            const communityfiles = response.data?.data;
+            if (Array.isArray(communityfiles) && communityfiles.length) {
+              communityfiles?.forEach((c: any) => {
+                setFilesData((prev) => {
+                  return prev.map((f) => {
+                    if (f.name === c.filename) {
+                      return {
+                        ...f,
+                        chunkNodeCount: c.chunkNodeCount ?? 0,
+                        entityNodeCount: c.entityNodeCount ?? 0,
+                        communityNodeCount: c.communityNodeCount ?? 0,
+                        chunkRelCount: c.chunkRelCount ?? 0,
+                        entityEntityRelCount: c.entityEntityRelCount ?? 0,
+                        communityRelCount: c.communityRelCount ?? 0,
+                        nodesCount: c.nodeCount,
+                        relationshipsCount: c.relationshipCount,
+                      };
+                    }
+                    return f;
+                  });
+                });
+              });
+            }
+            showSuccessToast('All Q&A functionality is available now.');
+          } else {
+            throw new Error(response.data.error);
+          }
+        } catch (error) {
+          if (error instanceof Error) {
+            showSuccessToast(error.message);
+          }
+        }
       })();
     }
   }, [processedCount, userCredentials, queue, isReadOnlyUser, isGdsActive]);
@@ -325,7 +370,8 @@ const Content: React.FC<ContentProps> = ({
         selectedRels.map((t) => t.value),
         fileItem.googleProjectId,
         fileItem.language,
-        fileItem.accessToken
+        fileItem.accessToken,
+        additionalInstructions
       );
       if (apiResponse?.status === 'Failed') {
         let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
@@ -413,7 +459,47 @@ const Content: React.FC<ContentProps> = ({
     return data;
   };
 
-  const addFilesToQueue = (remainingFiles: CustomFile[]) => {
+  const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
+    if (!remainingFiles.length) {
+      showNormalToast(
+        <PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} isSchema={isSchema} />
+      );
+      try {
+        const response = await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+        if (response.data.status === 'Success') {
+          const communityfiles = response.data?.data;
+          if (Array.isArray(communityfiles) && communityfiles.length) {
+            communityfiles?.forEach((c: any) => {
+              setFilesData((prev) => {
+                return prev.map((f) => {
+                  if (f.name === c.filename) {
+                    return {
+                      ...f,
+                      chunkNodeCount: c.chunkNodeCount ?? 0,
+                      entityNodeCount: c.entityNodeCount ?? 0,
+                      communityNodeCount: c.communityNodeCount ?? 0,
+                      chunkRelCount: c.chunkRelCount ?? 0,
+                      entityEntityRelCount: c.entityEntityRelCount ?? 0,
+                      communityRelCount: c.communityRelCount ?? 0,
+                      nodesCount: c.nodeCount,
+                      relationshipsCount: c.relationshipCount,
+                    };
+                  }
+                  return f;
+                });
+              });
+            });
+          }
+          showSuccessToast('All Q&A functionality is available now.');
+        } else {
+          throw new Error(response.data.error);
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          showSuccessToast(error.message);
+        }
+      }
+    }
     for (let index = 0; index < remainingFiles.length; index++) {
       const f = remainingFiles[index];
       setFilesData((prev) =>
@@ -550,6 +636,8 @@ const Content: React.FC<ContentProps> = ({
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
+    localStorage.removeItem('instructions');
+    setAdditionalInstructions('');
     setMessages([
       {
         datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
@@ -866,7 +954,7 @@ const Content: React.FC<ContentProps> = ({
                 <div>
                   {isSchema ? (
                     <span className='n-body-small'>
-                      {(!selectedNodes.length || !selectedNodes.length) && 'Empty'} Graph Schema configured
+                      {(!selectedNodes.length || !selectedRels.length) && 'Empty'} Graph Schema configured
                       {selectedNodes.length || selectedRels.length
                         ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)`
                         : ''}

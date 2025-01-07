@@ -13,7 +13,7 @@ from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.graph_query import get_graph_results,get_chunktext_results
 from src.chunkid_entities import get_entities_from_chunkids
-from src.post_processing import create_vector_fulltext_indexes, create_entity_embedding
+from src.post_processing import create_vector_fulltext_indexes, create_entity_embedding, graph_cleanup
 from sse_starlette.sse import EventSourceResponse
 from src.communities import create_communities
 from src.neighbours import get_neighbour_nodes
@@ -187,7 +187,8 @@ async def extract_knowledge_graph_from_file(
     allowedRelationship=Form(None),
     language=Form(None),
     access_token=Form(None),
-    retry_condition=Form(None)
+    retry_condition=Form(None),
+    additional_instructions=Form(None)
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
@@ -210,28 +211,22 @@ async def extract_knowledge_graph_from_file(
         if source_type == 'local file':
             merged_file_path = os.path.join(MERGED_DIR,file_name)
             logging.info(f'File path:{merged_file_path}')
-            result = await asyncio.to_thread(
-                extract_graph_from_file_local_file, uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, retry_condition)
+            uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, retry_condition, additional_instructions)
 
         elif source_type == 's3 bucket' and source_url:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_s3, uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition)
+            uri_latency, result = await extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition, additional_instructions)
         
         elif source_type == 'web-url':
-            result = await asyncio.to_thread(
-                extract_graph_from_web_page, uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
+            uri_latency, result = await extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition, additional_instructions)
 
         elif source_type == 'youtube' and source_url:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_youtube, uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition)
+            uri_latency, result = await extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition, additional_instructions)
 
         elif source_type == 'Wikipedia' and wiki_query:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_Wikipedia, uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, retry_condition)
+            uri_latency, result = await extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, retry_condition, additional_instructions)
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
-            result = await asyncio.to_thread(
-                extract_graph_from_file_gcs, uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, retry_condition)
+            uri_latency, result = await extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, retry_condition, additional_instructions)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
     
@@ -350,10 +345,15 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             await asyncio.to_thread(create_entity_embedding, graph)
             api_name = 'post_processing/create_entity_embedding'
             logging.info(f'Entity Embeddings created')
+
+        if "graph_cleanup" in tasks :
+            await asyncio.to_thread(graph_cleanup, graph)
+            api_name = 'post_processing/graph_cleanup'
+            logging.info(f'Updated nodes and relationship labels')
             
         if "enable_communities" in tasks:
             api_name = 'create_communities'
-            await asyncio.to_thread(create_communities, uri, userName, password, database)
+            await asyncio.to_thread(create_communities, uri, userName, password, database)  
             
             logging.info(f'created communities')
             graph = create_graph_database_connection(uri, userName, password, database)   
@@ -363,6 +363,8 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             if count_response:
                 count_response = [{"filename": filename, **counts} for filename, counts in count_response.items()]
                 logging.info(f'Updated source node with community related counts')
+        
+        
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name': api_name, 'db_url': uri, 'userName':userName, 'database':database, 'tasks':tasks, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
