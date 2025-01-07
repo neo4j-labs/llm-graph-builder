@@ -16,17 +16,20 @@ This document provides a comprehensive guide for developers on how we build a Re
 == Folders
 
     .
+    ├── API 
+    ├── Assets
     ├── Components 
     |    ├─ ChatBot
+    |    |   ├─ Chatbot
     |    |   ├─ ChatInfoModal
-    |    |   ├─ ChatModeToggle
-    |    |   ├─ ExpandedChatButtonContainer
     |    |   ├─ ChatModesSwitch
+    |    |   ├─ ChatModeToggle
     |    |   ├─ ChatOnlyComponent
     |    |   ├─ ChatInfo
     |    |   ├─ CommonChatActions
     |    |   ├─ CommunitiesInfo
     |    |   ├─ EntitiesInfo
+    |    |   ├─ ExpandedChatButtonContainer
     |    |   ├─ MetricsCheckbox
     |    |   ├─ MetricsTab
     |    |   ├─ MultiModeMetrics
@@ -64,12 +67,15 @@ This document provides a comprehensive guide for developers on how we build a Re
     |    ├─ UI
     |    |   ├─ Alert
     |    |   ├─ ButtonWithTooltip
+    |    |   |─ BreakDownPopOver
     |    |   ├─ CustomButton
     |    |   ├─ CustomCheckBox
     |    |   ├─ CustomMenu
+    |    |   ├─ CustomPopOver
     |    |   ├─ CustomProgressBar
     |    |   ├─ DatabaseIcon
     |    |   ├─ DatabaseStatusIcon
+    |    |   ├─ Dropdown
     |    |   ├─ ErrorBoundary
     |    |   ├─ FallBackDialog
     |    |   ├─ HoverableLink
@@ -86,7 +92,6 @@ This document provides a comprehensive guide for developers on how we build a Re
     |    |   ├─ GenericSourceButton
     |    |   ├─ GenericSourceModal
     |    ├─ Content
-    |    ├─ Dropdown
     |    ├─ FileTable
     |    ├─ QuickStarter
     ├── HOC
@@ -103,6 +108,9 @@ This document provides a comprehensive guide for developers on how we build a Re
     |    ├─ UserCredentials
     |    ├─ UserMessages
     |    ├─ UserFiles
+    ├── HOC
+    |    ├─ CustomModal
+    |    ├─ WithVisibility
     ├── Hooks
     |    ├─ useSourceInput
     |    ├─ useSpeech
@@ -141,6 +149,12 @@ Created a connection modal by adding details including protocol, URI, database n
 image::images/ConnectionModal.jpg[NoConnection, 600]
  
      * After connection:
+       * ** Aura DS Connection **
+
+image::images/NoFiles.jpg[Connection, 600]
+
+
+       * ** Aura DB connection **
 
 image::images/NoFiles.jpg[Connection, 600]
 
@@ -192,16 +206,24 @@ image::images/GenerateGraph.jpg[Generate Graph, 600]
 
 
 == 5.	Graph Generation: 
-* Created a component for generating graphs based on the files in the table, to extract nodes and relationships. When the user clicks on the Preview Graph or on the Table View icon the user can see that the graph model holds three options for viewing: Lexical Graph, Entity Graph and Knowledge Graph.  We utilized Neo4j's graph library to visualize the extracted nodes and relationships in the form of a graph query API: ***/graph_query***. There are options for customizing the graph visualization such as layout algorithms [zoom in, zoom out, fit, refresh], node styling, relationship types.
+
+* ***/graph_query:*** 
+     *** Created a component for generating graphs based on the files in the table, to extract nodes and relationships. When the user clicks on the Preview Graph or on the Table View icon the user can see that the graph model holds three options for viewing: Lexical Graph, Entity Graph and Knowledge Graph.  We utilized Neo4j's graph library to visualize the extracted nodes and relationships in the form of a graph query API: ***/graph_query***. There are options for customizing the graph visualization such as layout algorithms [zoom in, zoom out, fit, refresh], node styling, relationship types.
 
 image::images/KnowledgeGraph.jpg[Knowledge Graph, 600]
 image::images/EntityGraph.jpg[Entity Graph, 600]
 image::images/EntityGraph.jpg[Entity Graph, 600]
 
+* ***/get_neighbours:*** 
+     ** This API is used to retrive the neighbor nodes of the given element id of the node.
+
 == 6.	Chatbot: 
 * Created a Chatbot Component which has state variables to manage user input and chat messages. Once the user asks the question and clicks on the Ask button API: ***/chatbot*** is triggered to send user input to the backend and receive the response. The chat also has options for users to see more details about the chat, text to speech and copy the response.
 
 image::images/ChatResponse.jpg[ChatResponse, 600]
+
+* ***/clear_chat_bot:*** 
+     ** to clear the chat history which is saved in Neo4j DB.
 
 * ***/chunk_entities:*** 
 
@@ -219,7 +241,16 @@ image::images/EntitiesInfo.jpg[EntitiesInfo, 600]
 
 image::images/ChunksInfo.jpg[ChunksInfo, 600]
 
-* There are three modes ***Vector***, ***Graph***, ***Graph+Vector*** that can be provided to the chat to retrieve the answers.
+* ***/metric:*** 
+ ** The API responsible for a evaluating chatbot responses on the basis of different metrics such as faithfulness and answer relevancy. This utilises RAGAS library to calculate these metrics.
+
+* ***/additional_metrics:*** 
+ ** The API responsible for a evaluating chatbot responses on the basis of different metrics such as context entity recall, semantic score, rouge score. This reuqire additional ground truth to be supplied by user. This utilises RAGAS library to calculate these metrics.
+
+
+
+* There are three modes ***Vector***, ***Fulltext***, ***Graph+Vector+Fulltext***, ***Entity search+Vector***, ***Graph+Vector+Fulltext*** that can be provided to the chat to retrieve the answers.
+* There are one more mode ***Global search+Vector+Fulltext*** that can be provided to the chat to retrieve the answers if aura instance is ***GDS***.
 
 image::images/ChatModes.jpg[ChatModes, 600]
 
@@ -329,7 +360,7 @@ Followed best practices for optimizing performance and security of the deployed 
 
 == 10. API Reference
 -----
-POST /connect
+1) POST /connect
 -----
 
 Neo4j database connection on frontend is done with this API.
@@ -343,7 +374,7 @@ Neo4j database connection on frontend is done with this API.
 
 === Upload Files from Local
 ----
-POST /upload
+2) POST /upload
 ----
 
 The upload endpoint is designed to handle the uploading of large files by breaking them into smaller chunks. This method ensures that large files can be uploaded efficiently without overloading the server.
@@ -363,7 +394,7 @@ The upload endpoint is designed to handle the uploading of large files by breaki
 
 === User Defined Schema
 ----
-POST /schema
+3) POST /schema
 ----
 
 User can set schema for graph generation (i.e. Nodes and relationship labels) in settings panel or get existing db schema through this API. 
@@ -555,6 +586,23 @@ This API is used to view graph for a particular file.
 * `query_type`= Neo4j database name
 * `document_names` = File name for which user wants to view graph
 
+....
+
+=== Get neighbour nodes 
+----
+POST /get_neighbours
+----
+
+This API is used to retrive the neighbor nodes of the given element id of the node.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `elementId` = Element id of the node to retrive its neighbours
+
 === SSE event to update processing status
 ----
 GET /update_extract_status 
@@ -631,6 +679,93 @@ The API is used to delete unconnected entities from database.
 * `password`= Neo4j db password, 
 * `database`= Neo4j database name,
 * `unconnected_entities_list`=selected entities list to delete of unconnected entities.
+
+....
+
+=== Get the list of orphan nodes
+----
+POST /get_unconnected_nodes_list
+----
+
+The API retrieves a list of nodes in the graph database that are not connected to any other nodes.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+
+=== Get duplicate nodes
+----
+POST /get_duplicate_nodes
+----
+
+The API is used to fetch duplicate entities from database.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+
+....
+
+
+=== Merge duplicate nodes
+----
+POST /merge_duplicate_nodes
+----
+
+The API is used to merge duplicate entities from database selected by user.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `duplicate_nodes_list`= selected entities list to merge of with similar entities.
+
+....
+=== Drop and create vector index
+----
+POST /drop_create_vector_index
+----
+
+The API is used to drop and create the vector index when vector index dimesion are different.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `isVectorIndexExist`= True or False based on whether vector index exist in database,
+
+=== Reprocessing of sources
+----
+POST /retry_processing
+----
+ 
+This API is used to Ready to Reprocess cancelled, completed or failed file sources.
+Users have 3 options to Ready to Reprocess files:
+ 
+* Start from begnning - In this condition file will be processed from the begnning i.e. 1st chunk again.
+* Delete entities and start from begnning - If the file source is already processed and have any existing nodes and relations then those will be deleted and file will be reprocessed from the 1st chunk.
+* Start from last processed postion - Cancelled or failed files will be processed from the last successfully processed chunk position. This option is not available for completed files.
+ 
+Ones the status is set to 'Ready to Reprocess', user can again click on Generate graph to process the file for knowledge graph creation.
+ 
+**API Parameters :**
+ 
+* `uri`=Neo4j uri,
+* `userName`= Neo4j db username,
+* `password`= Neo4j db password,
+* `database`= Neo4j database name,
+* `file_name`= Name of the file which user want to Ready to Reprocess.
+* `retry_condition` = One of the above 3 conditions which is selected for reprocessing.
 
 
 == 11. Conclusion: 
