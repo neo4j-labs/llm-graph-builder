@@ -7,7 +7,7 @@ import { useCredentials } from '../../../../context/UserCredentials';
 export default function PostProcessingCheckList() {
   const { breakpoints } = tokens;
   const tablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
-  const { postProcessingTasks, setPostProcessingTasks, selectedNodes, selectedRels, isSchema } = useFileContext();
+  const { postProcessingTasks, setPostProcessingTasks, selectedNodes, selectedRels } = useFileContext();
   const { isGdsActive } = useCredentials();
   return (
     <Flex gap={tablet ? '6' : '8'}>
@@ -22,7 +22,7 @@ export default function PostProcessingCheckList() {
             {POST_PROCESSING_JOBS.map((job, idx) => {
               const isGraphCleanupDisabled =
                 job.title === 'graph_cleanup'
-                  ? !(isSchema && selectedNodes.length === 0 && selectedRels.length === 0)
+                  ? !(selectedNodes.length === 0 && selectedRels.length === 0)
                   : false;
               const isDisabled =
                 job.title === 'enable_communities'

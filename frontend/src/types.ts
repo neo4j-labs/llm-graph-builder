@@ -149,8 +149,6 @@ export interface ContentProps {
   showChatBot: boolean;
   openChatBot: () => void;
   openTextSchema: () => void;
-  isSchema: boolean;
-  setIsSchema: Dispatch<SetStateAction<boolean>>;
   showEnhancementDialog: boolean;
   toggleEnhancementDialog: () => void;
   setOpenConnection: Dispatch<SetStateAction<connectionState>>;
@@ -857,8 +855,6 @@ export interface FileContextType {
   setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
   chatModes: string[];
   setchatModes: Dispatch<SetStateAction<string[]>>;
-  isSchema: boolean;
-  setIsSchema: React.Dispatch<React.SetStateAction<boolean>>;
   showTextFromSchemaDialog: showTextFromSchemaDialogType;
   setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
   postProcessingTasks: string[];
