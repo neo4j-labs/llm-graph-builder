@@ -376,7 +376,7 @@ image::images/LightMode.jpg[LightMode, 600]
 
 * ***Chat Only Mode***
 
-User can also use the chat only feature by navigating to the url at: [Chat-Only](https://llm-graph-builder.neo4jlabs.com/chat-only) to ask questions related to documents which have been completely processed. User is required to pass the login credentials to connect to the database.
+User can also use the chat only feature by navigating to the url at: https://llm-graph-builder.neo4jlabs.com/chat-only to ask questions related to documents which have been completely processed. User is required to pass the login credentials to connect to the database.
 
 == 9. File Table Options: 
 User can explore various features available for files in the table, including sorting, filtering, viewing as a graph, examining nodes and relationships, copying file details, and accessing chunks related to the file.
