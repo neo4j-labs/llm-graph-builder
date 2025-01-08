@@ -50,8 +50,6 @@ const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/Confirmati
 let afterFirstRender = false;
 
 const Content: React.FC<ContentProps> = ({
-  isSchema,
-  setIsSchema,
   showEnhancementDialog,
   toggleEnhancementDialog,
   setOpenConnection,
@@ -141,17 +139,17 @@ const Content: React.FC<ContentProps> = ({
           <PostProcessingToast
             isGdsActive={isGdsActive}
             postProcessingTasks={postProcessingTasks}
-            isSchema={isSchema}
+            isSchema={selectedNodes.length > 0 || selectedRels.length > 0}
           />
         );
         try {
           const payload = isGdsActive
-            ? isSchema
+            ? selectedNodes.length > 0 || selectedRels.length > 0
               ? postProcessingTasks.filter((task) => task !== 'graph_cleanup')
               : postProcessingTasks
-            : isSchema
-            ? postProcessingTasks.filter((task) => task !== 'graph_cleanup' && task !== 'enable_communities')
-            : postProcessingTasks.filter((task) => task !== 'enable_communities');
+            : selectedNodes.length > 0 || selectedRels.length > 0
+              ? postProcessingTasks.filter((task) => task !== 'graph_cleanup' && task !== 'enable_communities')
+              : postProcessingTasks.filter((task) => task !== 'enable_communities');
           const response = await postProcessing(userCredentials as UserCredentials, payload);
           if (response.data.status === 'Success') {
             const communityfiles = response.data?.data;
@@ -196,13 +194,6 @@ const Content: React.FC<ContentProps> = ({
     }
     afterFirstRender = true;
   }, [queue.items.length, userCredentials]);
-
-  useEffect(() => {
-    const storedSchema = localStorage.getItem('isSchema');
-    if (storedSchema !== null) {
-      setIsSchema(JSON.parse(storedSchema));
-    }
-  }, [isSchema]);
 
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
@@ -388,7 +379,7 @@ const Content: React.FC<ContentProps> = ({
   const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
     if (!remainingFiles.length) {
       showNormalToast(
-        <PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} isSchema={isSchema} />
+        <PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} isSchema={selectedNodes.length > 0 || selectedRels.length > 0} />
       );
       try {
         const response = await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
@@ -539,9 +530,8 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
-      userCredentials?.port ?? '7687'
-    }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
+      }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -601,12 +591,12 @@ const Content: React.FC<ContentProps> = ({
           return prev.map((f) => {
             return f.name === filename
               ? {
-                  ...f,
-                  status: 'Ready to Reprocess',
-                  processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-                  nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-                  relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
-                }
+                ...f,
+                status: 'Ready to Reprocess',
+                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                nodesCount: isStartFromBegining ? 0 : f.nodesCount,
+                relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
+              }
               : f;
           });
         });
@@ -714,20 +704,22 @@ const Content: React.FC<ContentProps> = ({
     const selectedRows = childRef.current?.getSelectedRows();
     if (selectedRows?.length) {
       const expiredFilesExists = selectedRows.some(
-        (c) => isFileReadyToProcess(c, true) && isExpired(c?.createdAt as Date)
+        (c) => c.status !==  'Ready to Reprocess' && isExpired(c?.createdAt as Date)
       );
       const largeFileExists = selectedRows.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
       );
       if (expiredFilesExists) {
-        setshowConfirmationModal(true);
-      } else if (largeFileExists && isGCSActive) {
         setshowExpirationModal(true);
+      } else if (largeFileExists && isGCSActive) {
+        setshowConfirmationModal(true);
       } else {
         handleGenerateGraph(selectedRows.filter((f) => isFileReadyToProcess(f, false)));
       }
     } else if (filesData.length) {
-      const expiredFileExists = filesData.some((c) => isFileReadyToProcess(c, true) && isExpired(c.createdAt as Date));
+      const expiredFileExists = filesData.some(
+        (c) => isExpired(c.createdAt as Date)
+      );
       const largeFileExists = filesData.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
       );
@@ -744,7 +736,7 @@ const Content: React.FC<ContentProps> = ({
       } else if (expiredFileExists && isGCSActive) {
         setshowExpirationModal(true);
       } else {
-        handleGenerateGraph(filesData.filter((f) => isFileReadyToProcess(f, false)));
+        handleGenerateGraph(filesData.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess'));
       }
     }
   };
@@ -788,6 +780,7 @@ const Content: React.FC<ContentProps> = ({
             onClose={() => setshowConfirmationModal(false)}
             loading={extractLoading}
             selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
+            isLargeDocumentAlert={true}
           ></ConfirmationDialog>
         </Suspense>
       )}
@@ -854,16 +847,14 @@ const Content: React.FC<ContentProps> = ({
               />
               <div className='pt-1 flex gap-1 items-center'>
                 <div>
-                  {!isSchema ? (
+                  {selectedNodes.length === 0 || selectedRels.length === 0 ? (
                     <StatusIndicator type='danger' />
-                  ) : selectedNodes.length || selectedRels.length ? (
-                    <StatusIndicator type='success' />
-                  ) : (
-                    <StatusIndicator type='warning' />
-                  )}
+                  ) :
+                    (<StatusIndicator type='success' />
+                    )}
                 </div>
                 <div>
-                  {isSchema ? (
+                  {selectedNodes.length > 0 || selectedRels.length > 0 ? (
                     <span className='n-body-small'>
                       {(!selectedNodes.length || !selectedRels.length) && 'Empty'} Graph Schema configured
                       {selectedNodes.length || selectedRels.length
