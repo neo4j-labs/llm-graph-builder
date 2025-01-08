@@ -37,6 +37,8 @@ import { useMessageContext } from '../context/UserMessages';
 import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
 import { getChunkText } from '../services/getChunkText';
 import ChunkPopUp from './Popups/ChunkPopUp';
+import { isExpired, isFileReadyToProcess } from '../utils/Utils';
+import { useHasSelections } from '../hooks/useHasSelections';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -102,7 +104,7 @@ const Content: React.FC<ContentProps> = ({
   );
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
-  const [searchParams] = useSearchParams();
+    const hasSelections = useHasSelections(selectedNodes, selectedRels);
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
@@ -171,16 +173,16 @@ const Content: React.FC<ContentProps> = ({
           <PostProcessingToast
             isGdsActive={isGdsActive}
             postProcessingTasks={postProcessingTasks}
-            isSchema={selectedNodes.length > 0 || selectedRels.length > 0}
+            isSchema={hasSelections}
           />
         );
         try {
           const payload = isGdsActive
-            ? selectedNodes.length > 0 || selectedRels.length > 0
-              ? postProcessingTasks.filter((task) => task !== 'graph_cleanup')
+            ? hasSelections
+              ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation')
               : postProcessingTasks
-            : selectedNodes.length > 0 || selectedRels.length > 0
-              ? postProcessingTasks.filter((task) => task !== 'graph_cleanup' && task !== 'enable_communities')
+            : hasSelections
+              ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities')
               : postProcessingTasks.filter((task) => task !== 'enable_communities');
           const response = await postProcessing(userCredentials as UserCredentials, payload);
           if (response.data.status === 'Success') {
@@ -409,7 +411,7 @@ const Content: React.FC<ContentProps> = ({
   const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
     if (!remainingFiles.length) {
       showNormalToast(
-        <PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} isSchema={selectedNodes.length > 0 || selectedRels.length > 0} />
+        <PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} isSchema={hasSelections} />
       );
       try {
         const response = await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
@@ -734,7 +736,7 @@ const Content: React.FC<ContentProps> = ({
     const selectedRows = childRef.current?.getSelectedRows();
     if (selectedRows?.length) {
       const expiredFilesExists = selectedRows.some(
-        (c) => c.status !==  'Ready to Reprocess' && isExpired(c?.createdAt as Date)
+        (c) => c.status !==  'Ready to Reprocess' && isExpired(c?.createdAt as Date ?? new Date())
       );
       const largeFileExists = selectedRows.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
@@ -748,7 +750,7 @@ const Content: React.FC<ContentProps> = ({
       }
     } else if (filesData.length) {
       const expiredFileExists = filesData.some(
-        (c) => isExpired(c.createdAt as Date)
+        (c) => isExpired(c?.createdAt as Date)
       );
       const largeFileExists = filesData.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
@@ -880,17 +882,17 @@ const Content: React.FC<ContentProps> = ({
               />
               <div className='pt-1 flex gap-1 items-center'>
                 <div>
-                  {selectedNodes.length === 0 || selectedRels.length === 0 ? (
+                  {!hasSelections ? (
                     <StatusIndicator type='danger' />
                   ) :
                     (<StatusIndicator type='success' />
                     )}
                 </div>
                 <div>
-                  {selectedNodes.length > 0 || selectedRels.length > 0 ? (
+                  {hasSelections? (
                     <span className='n-body-small'>
-                      {(!selectedNodes.length || !selectedRels.length) && 'Empty'} Graph Schema configured
-                      {selectedNodes.length || selectedRels.length
+                      {(hasSelections)} Graph Schema configured
+                      {hasSelections
                         ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)`
                         : ''}
                     </span>

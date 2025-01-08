@@ -19,12 +19,15 @@ export const llms =
         'openai_gpt_4o_mini',
         'gemini_1.5_pro',
         'gemini_1.5_flash',
+        'gemini_2.0_flash',
+        'diffbot',
         'azure_ai_gpt_35',
         'azure_ai_gpt_4o',
         'ollama_llama3',
         'groq_llama3_70b',
         'anthropic_claude_3_5_sonnet',
         'fireworks_llama_v3p2_90b',
+        'fireworks_qwen72b_instruct',
         'bedrock_claude_3_5_sonnet',
       ];
 
@@ -184,7 +187,7 @@ export const buttonCaptions = {
   provideAdditionalInstructions: 'Provide Additional Instructions for Entity Extractions',
   analyzeInstructions: 'Analyze Instructions',
   helpInstructions:
-    'Provide specific instructions for entity extraction, such as focusing on key topics or excluding non-entity data like dates or revenues.',
+    'Provide specific instructions for entity extraction, such as focusing on the key topics.',
 };
 
 export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
@@ -214,8 +217,8 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
     description: 'Enable community creation across entities to use GraphRAG capabilities both local and global search.',
   },
   {
-    title: 'graph_cleanup',
-    description: 'consolidate node-labels and rel-types and then update the graph ',
+    title: 'graph_schema_consolidation',
+    description: 'This option uses the LLM for large graph schemas to consolidate many node labels and relationship types into fewer, more relevant ones and apply it to the extracted and existing graph',
   },
 ];
 export const RETRY_OPIONS = [

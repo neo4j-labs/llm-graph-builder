@@ -13,7 +13,7 @@ from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.graph_query import get_graph_results,get_chunktext_results
 from src.chunkid_entities import get_entities_from_chunkids
-from src.post_processing import create_vector_fulltext_indexes, create_entity_embedding, graph_cleanup
+from src.post_processing import create_vector_fulltext_indexes, create_entity_embedding, graph_schema_consolidation
 from sse_starlette.sse import EventSourceResponse
 from src.communities import create_communities
 from src.neighbours import get_neighbour_nodes
@@ -346,9 +346,9 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             api_name = 'post_processing/create_entity_embedding'
             logging.info(f'Entity Embeddings created')
 
-        if "graph_cleanup" in tasks :
-            await asyncio.to_thread(graph_cleanup, graph)
-            api_name = 'post_processing/graph_cleanup'
+        if "graph_schema_consolidation" in tasks :
+            await asyncio.to_thread(graph_schema_consolidation, graph)
+            api_name = 'post_processing/graph_schema_consolidation'
             logging.info(f'Updated nodes and relationship labels')
             
         if "enable_communities" in tasks:

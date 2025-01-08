@@ -9,6 +9,7 @@ import { OptionType, schema, UserCredentials } from '../../../../types';
 import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
 import { tokens } from '@neo4j-ndl/base';
 import { showNormalToast } from '../../../../utils/toasts';
+import { useHasSelections } from '../../../../hooks/useHasSelections';
 
 export default function EntityExtractionSetting({
   view,
@@ -39,6 +40,7 @@ export default function EntityExtractionSetting({
   const { userCredentials } = useCredentials();
   const [loading, setLoading] = useState<boolean>(false);
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
+  const hasSelections = useHasSelections(selectedNodes, selectedRels);
   const removeNodesAndRels = (nodelabels: string[], relationshipTypes: string[]) => {
     const labelsToRemoveSet = new Set(nodelabels);
     const relationshipLabelsToremoveSet = new Set(relationshipTypes);
@@ -360,7 +362,7 @@ export default function EntityExtractionSetting({
                 placement='top'
                 onClick={handleClear}
                 label='Clear Graph Settings'
-                disabled={selectedNodes.length === 0 || selectedRels.length === 0}
+                disabled={!hasSelections}
               >
                 {buttonCaptions.clearSettings}
               </ButtonWithToolTip>
@@ -370,7 +372,7 @@ export default function EntityExtractionSetting({
               placement='top'
               onClick={handleApply}
               label='Apply Graph Settings'
-              disabled={selectedNodes.length === 0 || selectedRels.length === 0}
+              disabled={!hasSelections}
             >
               {buttonCaptions.applyGraphSchema}
             </ButtonWithToolTip>
