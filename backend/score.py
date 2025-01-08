@@ -260,8 +260,6 @@ async def extract_knowledge_graph_from_file(
             result['gcs_bucket_folder'] = gcs_bucket_folder
             result['gcs_blob_filename'] = gcs_blob_filename
             result['gcs_project_id'] = gcs_project_id
-            result['allowedNodes'] = allowedNodes
-            result['allowedRelationship'] = allowedRelationship
             result['language'] = language
             result['retry_condition'] = retry_condition
         logger.log_struct(result, "INFO")
@@ -498,7 +496,7 @@ async def connect(uri=Form(), userName=Form(), password=Form(), database=Form())
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'connect','db_url':uri, 'userName':userName, 'database':database,'status':result, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        json_obj = {'api_name':'connect','db_url':uri, 'userName':userName, 'database':database, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         result['elapsed_api_time'] = f'{elapsed_time:.2f}'
         result['gcs_file_cache'] = gcs_file_cache
