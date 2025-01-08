@@ -160,7 +160,7 @@ image::images/ReadOnlyUser.jpg[ReadOnlyUser, 600]
 
      * **User not connected**
 
-image::images/NoFiles.jpg[User not Connection, 600]
+image::images/NoConnection.jpg[User not Connection, 600]
 
 
 == 3.	File Source integration: 
@@ -169,7 +169,7 @@ The Api’s are as follows:
 
 * ***/source_list:***  to fetch the list of files in the DB
 
-image::images/WithFiles.jpg[Connected, 600]
+image::images/WithData.jpg[Connected, 600]
 
 * ***/upload:***  to upload files from Local
 
@@ -309,7 +309,7 @@ Users can now set their own Schema for nodes and relations or can already be an 
 
 * ***Entity Extraction Settings:*** 
 
-image::images/PredefinedSchema.jpg[PredefinedSchema, 600]
+image::images/GraphEnhancements.jpg[GraphEnhancements, 600]
 
 * ***/schema:*** 
   ** to fetch the existing schema that already exists in the db.
