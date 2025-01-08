@@ -16,17 +16,20 @@ This document provides a comprehensive guide for developers on how we build a Re
 == Folders
 
     .
+    ├── API 
+    ├── Assets
     ├── Components 
     |    ├─ ChatBot
+    |    |   ├─ Chatbot
     |    |   ├─ ChatInfoModal
-    |    |   ├─ ChatModeToggle
-    |    |   ├─ ExpandedChatButtonContainer
     |    |   ├─ ChatModesSwitch
+    |    |   ├─ ChatModeToggle
     |    |   ├─ ChatOnlyComponent
     |    |   ├─ ChatInfo
     |    |   ├─ CommonChatActions
     |    |   ├─ CommunitiesInfo
     |    |   ├─ EntitiesInfo
+    |    |   ├─ ExpandedChatButtonContainer
     |    |   ├─ MetricsCheckbox
     |    |   ├─ MetricsTab
     |    |   ├─ MultiModeMetrics
@@ -64,12 +67,15 @@ This document provides a comprehensive guide for developers on how we build a Re
     |    ├─ UI
     |    |   ├─ Alert
     |    |   ├─ ButtonWithTooltip
+    |    |   |─ BreakDownPopOver
     |    |   ├─ CustomButton
     |    |   ├─ CustomCheckBox
     |    |   ├─ CustomMenu
+    |    |   ├─ CustomPopOver
     |    |   ├─ CustomProgressBar
     |    |   ├─ DatabaseIcon
     |    |   ├─ DatabaseStatusIcon
+    |    |   ├─ Dropdown
     |    |   ├─ ErrorBoundary
     |    |   ├─ FallBackDialog
     |    |   ├─ HoverableLink
@@ -86,7 +92,6 @@ This document provides a comprehensive guide for developers on how we build a Re
     |    |   ├─ GenericSourceButton
     |    |   ├─ GenericSourceModal
     |    ├─ Content
-    |    ├─ Dropdown
     |    ├─ FileTable
     |    ├─ QuickStarter
     ├── HOC
@@ -103,6 +108,9 @@ This document provides a comprehensive guide for developers on how we build a Re
     |    ├─ UserCredentials
     |    ├─ UserMessages
     |    ├─ UserFiles
+    ├── HOC
+    |    ├─ CustomModal
+    |    ├─ WithVisibility
     ├── Hooks
     |    ├─ useSourceInput
     |    ├─ useSpeech
@@ -136,72 +144,123 @@ Created a connection modal by adding details including protocol, URI, database n
 * If GDS Connection is there icon is scientific molecule >  Graph enhancement model > Post processing jobs > gives user the leverage to check and uncheck the communities checkbox.
 * If AURA DB > icon is database icon > Graph enhancement model > Post processing jobs > communities checkbox is disabled.
 
-* Before Connection :
-
 image::images/ConnectionModal.jpg[NoConnection, 600]
  
-     * After connection:
+       * ** Aura DS Connection **
 
-image::images/NoFiles.jpg[Connection, 600]
+image::images/GraphDBConnection.jpg[Connection, 600]
+
+       * ** Aura DB connection **
+
+image::images/AuraDBConnection.jpg[Connection, 600]
+
+     * **ReadOnly User**
+
+image::images/ReadOnlyUser.jpg[ReadOnlyUser, 600]
+
+     * **User not connected**
+
+image::images/NoConnection.jpg[User not Connection, 600]
 
 
 == 3.	File Source integration: 
 Implemented various file source integrations including drag-and-drop, web sources search that includes YouTube video, Wikipedia link, Amazon S3 file access, and Google Cloud Storage (GCS) file access. This allows users to upload PDF files from local storage or directly from the integrated sources. 
 The Api’s are as follows:
 
-* ***/source_list:*** 
-  ** to fetch the list of files in the DB
+* ***/source_list:***  to fetch the list of files in the DB
 
-image::images/WithFiles.jpg[Connected, 600]
+image::images/WithData.jpg[Connected, 600]
 
-* ***/upload:***
-  ** to upload files from Local
+* ***/upload:***  to upload files from Local
 
 image::images/UploadLocalFile.jpg[Local File, 600]
-          
-          
-  ** status 'Uploading' while file is get uploaded.
 
-image::images/UploadingStatus.jpg[Upload Status, 600]
-
-
-* ***/url/scan:*** 
-  ** to scan the link or sources of YouTube, Wikipedia, and Web Sources
+* ***/url/scan:***  to scan the link or sources of YouTube, Wikipedia, and Web Sources
 
 image::images/WebSources.jpg[WebSources, 600]
           
-* ***/url/scan:*** 
-  ** to scan the files of S3 and GCS.
-     *** Add the respective Bucket URL, access key and secret key to access ***S3 files***.
+* ***/url/scan:***  to scan the files of S3 and GCS.
+
+1) Add the respective Bucket URL, access key and secret key to access S3 files.
 
 image::images/S3BucketScan.jpg[S3 scan, 600]
-                                             
-                                             **** Add the respective Project ID, Bucket name, and folder to access ***GCS files***. User gets a redirect to the authentication page to authenticate their google account.
+
+2) Add the respective Project ID, Bucket name, and folder to access GCS files.
 
 image::images/GCSbucketFiles.jpg[GCS scan, 600]
+
+3) User gets a redirect to the authentication page to authenticate their google account.
 
 image::images/Gcloud_auth.jpg[auth login scan, 600]
 
 
 == 4.	File Source Extraction: 
-* ***/extract*** 
-  ** to fetch the number of nodes and relationships created.
+* ***/extract*** to fetch the number of nodes and relationships created.
    *** During Extraction the selected files or all files in ‘New’ state go into ‘Processing’ state and then ‘Completed’ state if there are no failures.
 
 image::images/GenerateGraph.jpg[Generate Graph, 600]
 
+1) A file with status Completed has an option to be Reprocess with the following options : 
+
+image::images/CompletedReadyToReprocess.jpg[CompletedReadyToReprocess, 600]
+
+2) A file with status Failed/ Cancelled has an option to be Reprocess with the following options :
+
+image::images/FailedReadyToReprocess.jpg[FailedReadyToReprocess, 600]
 
 == 5.	Graph Generation: 
-* Created a component for generating graphs based on the files in the table, to extract nodes and relationships. When the user clicks on the Preview Graph or on the Table View icon the user can see that the graph model holds three options for viewing: Lexical Graph, Entity Graph and Knowledge Graph.  We utilized Neo4j's graph library to visualize the extracted nodes and relationships in the form of a graph query API: ***/graph_query***. There are options for customizing the graph visualization such as layout algorithms [zoom in, zoom out, fit, refresh], node styling, relationship types.
 
-image::images/KnowledgeGraph.jpg[Knowledge Graph, 600]
-image::images/EntityGraph.jpg[Entity Graph, 600]
-image::images/EntityGraph.jpg[Entity Graph, 600]
+* ***/graph_query:*** 
+     *** Created a component for generating graphs based on the files in the table, to extract nodes and relationships. When the user clicks on the Preview Graph or on the Table View icon the user can see that the graph model holds three options for viewing: Lexical Graph, Entity Graph and Knowledge Graph.  We utilized Neo4j's graph library to visualize the extracted nodes and relationships in the form of a graph query API: ***/graph_query***. There are options for customizing the graph visualization such as layout algorithms [zoom in, zoom out, fit, refresh], node styling, relationship types.
+
+     * **Preview Graph**
+
+image::images/AllFilesGraph.jpg[AllFiles Graph, 600]
+
+     * **File Graph**
+
+image::images/SingleFileQuery.jpg[Single File Graph, 600]
+
+     * **Graph Types**
+
+1) Document & Chunk
+
+image::images/DocChunkGraph.jpg[Knowledge Graph, 600]
+
+2) Entities
+
+image::images/EntitiesGraph.jpg[Entity Graph, 600]
+
+3) Communities
+
+image::images/CommunitiesGraph.jpg[Community Graph, 600]
+
+* ***/get_neighbours:*** 
+     ** This API is used to retrive the neighbor nodes of the given element id of the node.
+
+image::images/NeighbourNodeDisconnected.jpg[Neighbourhood Graph, 600]
 
 == 6.	Chatbot: 
-* Created a Chatbot Component which has state variables to manage user input and chat messages. Once the user asks the question and clicks on the Ask button API: ***/chatbot*** is triggered to send user input to the backend and receive the response. The chat also has options for users to see more details about the chat, text to speech and copy the response.
+Created a Chatbot Component which has state variables to manage user input and chat messages. Once the user asks the question and clicks on the Ask button API: ***/chatbot*** is triggered to send user input to the backend and receive the response. The chat also has options for users to see more details about the chat, text to speech and copy the response.
 
-image::images/ChatResponse.jpg[ChatResponse, 600]
+     * **Chat Drawer View**
+
+image::images/ChatBotSideView.jpg[ChatBotSideView, 600]
+
+     * **Chat Modal View**
+
+image::images/ChatBotModalView.jpg[ChatBotModalView, 600]
+
+     * **Chat Pop out View**
+
+image::images/ChatBotNewURL.jpg[ChatBotNewURL, 600]
+
+
+* ***/clear_chat_bot:*** 
+     ** to clear the chat history which is saved in Neo4j DB.
+
+image::images/ClearChatHistory.jpg[ClearChatHistory, 600]
+
 
 * ***/chunk_entities:*** 
 
@@ -209,7 +268,7 @@ image::images/ChatResponse.jpg[ChatResponse, 600]
 
 ***Sources***
 
-image::images/ChatInfoModal.jpg[ChatInfoModal, 600]
+image::images/Sources.jpg[Sources, 600]
 
 ***Entities***
 
@@ -219,30 +278,43 @@ image::images/EntitiesInfo.jpg[EntitiesInfo, 600]
 
 image::images/ChunksInfo.jpg[ChunksInfo, 600]
 
-* There are three modes ***Vector***, ***Graph***, ***Graph+Vector*** that can be provided to the chat to retrieve the answers.
+* ***/metric:*** 
+ ** The API responsible for a evaluating chatbot responses on the basis of different metrics such as faithfulness and answer relevancy. This utilises RAGAS library to calculate these metrics.
 
-image::images/ChatModes.jpg[ChatModes, 600]
+image::images/MetricEval.jpg[MetricEval, 600]
 
-      •	In Vector mode, we only get the sources and chunks . 
+* ***/additional_metrics:*** 
+ ** The API responsible for a evaluating chatbot responses on the basis of different metrics such as context entity recall, semantic score, rouge score. This reuqire additional ground truth to be supplied by user. This utilises RAGAS library to calculate these metrics.
 
-image::images/VectorMode.jpg[VectorMode, 600]
+image::images/AdditionalMetricEval.jpg[AdditionalMetricEval, 600]
 
-      •	Graph Mode: Cypher query and Entities [DEV]
 
-image::images/GraphModeDetails.png[GraphMode, 600]
-image::images/GraphModeQuery.png[GraphMode, 600]
+***Chat Modes***
 
-      •	Graph+Vector Mode: Sources, Chunks and Entities
+* There are five modes ***Vector***, ***Fulltext***, ***Graph+Vector+Fulltext***, ***Entity search+Vector***, ***Graph+Vector+Fulltext*** that can be provided to the chat to retrieve the answers in ***Production*** environment.
+* There is one more mode ***Graph*** that can be provided to the chat to retrieve the answers in ***Development*** environment.
+* There is one more mode ***Global search+Vector+Fulltext*** that can be provided to the chat to retrieve the answers if aura instance is ***GDS***.
 
-image::images/GraphVectorMode.jpg[GraphVectorMode, 600]
+1) In Production Environment
 
-== 6.	Graph Enhancement Settings: 
+image::images/ChatModesProd.jpg[ChatModesProd, 600]
+
+2) In Development Environment
+
+image::images/ChatModesDev.jpg[ChatModesDev, 600]
+
+
+== 7.	Graph Enhancement Settings: 
 Users can now set their own Schema for nodes and relations or can already be an existing schema.
- 
+
+* ***Entity Extraction Settings:*** 
+
+image::images/GraphEnhancements.jpg[GraphEnhancements, 600]
+
 * ***/schema:*** 
   ** to fetch the existing schema that already exists in the db.
 
-image::images/PredefinedSchema.jpg[PredefinedSchema, 600]
+image::images/Schema.jpg[PredefinedSchema, 600]
 
 * ***/populate_graph_schema:*** 
   ** to fetch the schema from user entered document text
@@ -254,7 +326,28 @@ image::images/UserDefinedSchema.jpg[UserDefinedSchema, 600]
 
 image::images/DeleteOrphanNodes.jpg[DeleteOrphanNodes, 600]
 
-== 7.     Settings: 
+* ***/merge_duplicate_nodes:***
+
+1) to merge the duplicate entities.
+
+image::images/MergeDuplicateEntities.jpg[MergeDuplicateEntities, 600]
+
+2) to get duplicate entities
+
+image::images/GetDuplicateNodes.jpg[GetDuplicateNodes, 600]
+
+* ***/post_processing :***
+  to fine-tune the knowledge graph for improved performance and deeper analysis
+
+1) When GDS instance 
+
+image::images/PostProcessingDB.jpg[PostProcessingDB, 600]
+
+2) When Aura DB instance 
+
+image::images/PostProcessingDB.jpg[PostProcessingDB, 600]
+
+== 8.     Application Options: 
 
 * ***LLM Model***
 
@@ -262,26 +355,59 @@ User can select desired LLM models
 
 image::images/Dropdown.jpg[Dropdown, 600]
 
-* ***Dark/Light Mode***
+* ***Documentation***: User can navigate to the application overview : https://neo4j.com/labs/genai-ecosystem/llm-graph-builder/
 
-User can choose the application view : both in dark and light mode
+image::images/LLMGraphBuilderDocumentation.jpg[LLMGraphBuilderDocumentation, 600]
+
+* ***GitHub Issues***: User can navigate to the gitHub issues which are in developers bucket list : https://github.com/neo4j-labs/llm-graph-builder/issues
+
+image::images/GitHubIssues.jpg[GitHubIssues, 600]
+
+
+* ***Dark/Light Mode***: User can choose the application view : both in dark and light mode
+
+1) Dark
 
 image::images/DarkMode.jpg[DarkMode, 600]
 
+2) Light
 
 image::images/LightMode.jpg[LightMode, 600]
 
-* ***Delete Files***
-
-User can delete all number/selected files from the table.
-
-image::images/DeleteFiles.jpg[DeleteFiles, 600]
-
 * ***Chat Only Mode***
 
-User can also use the chat only feature by navigating to the url https://dev-frontend-dcavk67s4a-uc.a.run.app/chat-only to ask questions related to documents which have been completely processed. User is required to pass the login credentials to connect to the database.
+User can also use the chat only feature by navigating to the url at: https://llm-graph-builder.neo4jlabs.com/chat-only to ask questions related to documents which have been completely processed. User is required to pass the login credentials to connect to the database.
 
-== 8. Interface Design: 
+== 9. File Table Options: 
+User can explore various features available for files in the table, including sorting, filtering, viewing as a graph, examining nodes and relationships, copying file details, and accessing chunks related to the file.
+
+***File Status***
+
+image::images/FileStatus.jpg[FileStatus, 600]
+
+***File Nodes***
+
+image::images/FileNodes.jpg[FileNodes, 600]
+
+***File Relationships***
+
+image::images/FileRelationships.jpg[FileRelationships, 600]
+
+***File Actions***
+
+** ***Graph View***
+
+image::images/GraphActions.jpg[GraphActions, 600]
+
+   ** ***Copy File Data***
+
+image::images/CopyFileData.jpg[CopyFileData, 600]
+
+   ** ***Text Chunks***
+
+image::images/TextChunks.jpg[TextChunks, 600]
+
+== 10. Interface Design: 
 Designed a user-friendly interface that guides users through the process of connecting to Neo4j Aura, accessing file sources, uploading PDF files, and generating graphs.
 
 * ***Components:*** @neo4j-ndl/react
@@ -290,7 +416,7 @@ Designed a user-friendly interface that guides users through the process of conn
 * ***NVL:*** @neo4j-nvl/core
 * ***CSS:*** Inline styling, tailwind CSS
 
-== 9. Deployment: 
+== 11. Deployment: 
 Followed best practices for optimizing performance and security of the deployed application.
 
 * ***Local Deployment:***
@@ -303,21 +429,19 @@ Followed best practices for optimizing performance and security of the deployed 
 
 [source,indent=0]
 ----
- * LLM_MODELS="diffbot,openai-gpt-3.5,openai-gpt-4o"
- * REACT_APP_SOURCES="local,youtube,wiki,s3,gcs,web"
- * GOOGLE_CLIENT_ID="xxxx"  [For Google GCS integration]
- * CHAT_MODES="vector,graph+vector"
- * CHUNK_SIZE=5242880
- * TIME_PER_BYTE=2
- * TIME_PER_PAGE=50
- * TIME_PER_CHUNK=4
- * LARGE_FILE_SIZE=5242880
- * ENV="PROD"/ ‘DEV’
- * NEO4J_USER_AGENT="LLM-Graph-Builder/v0.2-dev"
- * BACKEND_API_URL=
- * BLOOM_URL=
- * NPM_TOKEN=
- * BACKEND_PROCESSING_URL=
+ * VITE_LLM_MODELS=""
+ * VITE_REACT_APP_SOURCES=""
+ * VITE_GOOGLE_CLIENT_ID="xxxx"  [For Google GCS integration]
+ * VITE_CHAT_MODES=""
+ * VITE_CHUNK_SIZE=5242880
+ * VITE_TIME_PER_PAGE=50
+ * VITE_LARGE_FILE_SIZE=5242880
+ * VITE_ENV="PROD"/ ‘DEV’
+ * VITE_BACKEND_API_URL=
+ * VITE_BLOOM_URL=
+ * VITE_BACKEND_PROCESSING_URL=
+ * VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
+ * VITE_BATCH_SIZE=2
 ----
 * ***Cloud Deployment:***
   ** To deploy the app install the gcloud cli , run the following command in the terminal specifically from frontend root folder.
@@ -327,7 +451,9 @@ Followed best practices for optimizing performance and security of the deployed 
     *** Allow unauthenticated request : Yes
 
 
-== 10. API Reference
+== 12. API Reference
+
+=== 1) Connection Modal 
 -----
 POST /connect
 -----
@@ -341,7 +467,15 @@ Neo4j database connection on frontend is done with this API.
 * `password`= Neo4j db password, 
 * `database`= Neo4j database name
 
-=== Upload Files from Local
+=== 2) Backend Database connection 
+----
+POST /backend_connection_configuation
+----
+
+The API responsible for create the connection obj from Neo4j DB based on environment variable and return the status for show/hide login dialog on UI 
+
+
+=== 3) Upload Files from Local
 ----
 POST /upload
 ----
@@ -361,7 +495,7 @@ The upload endpoint is designed to handle the uploading of large files by breaki
 * `database`= Neo4j database name
 
 
-=== User Defined Schema
+=== 4) User Defined Schema
 ----
 POST /schema
 ----
@@ -375,7 +509,7 @@ User can set schema for graph generation (i.e. Nodes and relationship labels) in
 * `password`= Neo4j db password, 
 * `database`= Neo4j database name
 
-=== Graph schema from Input Text
+=== 5) Graph schema from Input Text
 ----
 POST /populate_graph_schema
 ----
@@ -388,7 +522,7 @@ The API is used to populate a graph schema based on the provided input text, mod
 * `model`=The model to be used for populating the graph schema.
 * `is_schema_description_checked`=A flag indicating whether the schema description should be considered.
 
-=== Unstructured Sources
+=== 6) Unstructured Sources
 ----
 POST /url/scan 
 ----
@@ -414,7 +548,7 @@ Create Document node for other sources - s3 bucket, gcs bucket, wikipedia, youtu
 * `access_token`=Form(None)
 
 
-=== Extration of Nodes and Relations from Data
+=== 7) Extration of Nodes and Relations from Data
 ----
 POST /extract
 ----
@@ -456,7 +590,7 @@ allowedNodes=Node labels passed from settings panel,
 * `allowedRelationship`=Relationship labels passed from settings panel,
 * `language`=Language in which wikipedia content will be extracted
      
-=== Get list of sources
+=== 8) Get list of sources
 ----
 GET /sources_list
 ----
@@ -471,7 +605,7 @@ List all sources (Document nodes) present in Neo4j graph database.
 * `database`= Neo4j database name
 
 
-=== Post processing after graph generation
+=== 9) Post processing after graph generation
 ----
 POST /post_processing :
 ----
@@ -486,7 +620,7 @@ This API is called at the end of processing of whole document to get create k-ne
 * `database`= Neo4j database name
 * `tasks`= List of tasks to perform
 
-=== Chat with Data
+=== 10) Chat with Data
 ----
 POST /chat_bot
 ----
@@ -509,7 +643,7 @@ The API responsible for a chatbot system designed to leverage multiple AI models
 * `question`= User query for the chatbot
 * `session_id`= Session ID used to maintain the history of chats during the user's connection
 
-=== Get entities from chunks
+=== 11) Get entities from chunks
 ----
 POST/chunk_entities
 ----
@@ -525,7 +659,7 @@ This API is used to  get the entities and relations associated with a particular
 * `chunk_ids` = Chunk ids of document
 
 
-=== Clear chat history
+=== 12) Clear chat history
 ----
 POST /clear_chat_bot
 ----
@@ -540,7 +674,7 @@ This API is used to clear the chat history which is saved in Neo4j DB.
 * `database`= Neo4j database name,
 * `session_id` = User session id for QA chat
 
-=== View graph for a file
+=== 13) View graph for a file
 ----
 POST /graph_query
 ----
@@ -555,7 +689,22 @@ This API is used to view graph for a particular file.
 * `query_type`= Neo4j database name
 * `document_names` = File name for which user wants to view graph
 
-=== SSE event to update processing status
+=== 14) Get neighbour nodes 
+----
+POST /get_neighbours
+----
+
+This API is used to retrive the neighbor nodes of the given element id of the node.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `elementId` = Element id of the node to retrive its neighbours
+
+=== 15) SSE event to update processing status
 ----
 GET /update_extract_status 
 ----
@@ -584,7 +733,7 @@ The API gives the extraction status of a specified file. It uses Server-Sent Eve
 * `password`= Neo4j db password, 
 * `database`= Neo4j database name
 
-=== Delete selected documents
+=== 16) Delete selected documents
 ----
 POST /delete_document_and_entities
 ----
@@ -601,7 +750,7 @@ Deleteion of nodes and relations for multiple files is done through this API. Us
 * `source_types`= Document sources(Wikipedia, youtube, etc.),
 * `deleteEntities`= Boolean value to check entities deletion is requested or not
 
-=== Cancel processing job
+=== 17) Cancel processing job
 ----
 POST/cancelled_job
 ----
@@ -617,7 +766,7 @@ This API is responsible for cancelling an in process job.
 * `filenames`= Name of the file whose processing need to be stopped, 
 * `source_types`= Source of the file
 
-=== Deletion of orpahn nodes
+=== 18) Deletion of orpahn nodes
 ----
 POST /delete_unconnected_nodes
 ----
@@ -632,12 +781,94 @@ The API is used to delete unconnected entities from database.
 * `database`= Neo4j database name,
 * `unconnected_entities_list`=selected entities list to delete of unconnected entities.
 
+=== 19) Get the list of orphan nodes
+----
+POST /get_unconnected_nodes_list
+----
 
-== 11. Conclusion: 
+The API retrieves a list of nodes in the graph database that are not connected to any other nodes.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+
+=== 20) Get duplicate nodes
+----
+POST /get_duplicate_nodes
+----
+
+The API is used to fetch duplicate entities from database.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+
+
+=== 21) Merge duplicate nodes
+----
+POST /merge_duplicate_nodes
+----
+
+The API is used to merge duplicate entities from database selected by user.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `duplicate_nodes_list`= selected entities list to merge of with similar entities.
+
+=== 22) Drop and create vector index
+----
+POST /drop_create_vector_index
+----
+
+The API is used to drop and create the vector index when vector index dimesion are different.
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name,
+* `isVectorIndexExist`= True or False based on whether vector index exist in database,
+
+=== 23) Reprocessing of sources
+----
+POST /retry_processing
+----
+ 
+This API is used to Ready to Reprocess cancelled, completed or failed file sources.
+Users have 3 options to Ready to Reprocess files:
+ 
+* Start from begnning - In this condition file will be processed from the begnning i.e. 1st chunk again.
+* Delete entities and start from begnning - If the file source is already processed and have any existing nodes and relations then those will be deleted and file will be reprocessed from the 1st chunk.
+* Start from last processed postion - Cancelled or failed files will be processed from the last successfully processed chunk position. This option is not available for completed files.
+ 
+Ones the status is set to 'Ready to Reprocess', user can again click on Generate graph to process the file for knowledge graph creation.
+ 
+**API Parameters :**
+ 
+* `uri`=Neo4j uri,
+* `userName`= Neo4j db username,
+* `password`= Neo4j db password,
+* `database`= Neo4j database name,
+* `file_name`= Name of the file which user want to Ready to Reprocess.
+* `retry_condition` = One of the above 3 conditions which is selected for reprocessing.
+
+
+== 13. Conclusion: 
 In conclusion, this technical document outlines the process of building a React application with Neo4j Aura integration for graph database functionalities.
 
 
-== 12. Referral Links: 
+== 14. Referral Links: 
 * Dev env : https://dev-frontend-dcavk67s4a-uc.a.run.app/
 * Staging env: https://staging-frontend-dcavk67s4a-uc.a.run.app/
 * Prod env:  https://prod-frontend-dcavk67s4a-uc.a.run.app/
