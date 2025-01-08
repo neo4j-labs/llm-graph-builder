@@ -43,8 +43,6 @@ const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/Confirmati
 let afterFirstRender = false;
 
 const Content: React.FC<ContentProps> = ({
-  isSchema,
-  setIsSchema,
   showEnhancementDialog,
   toggleEnhancementDialog,
 }) => {
@@ -173,17 +171,17 @@ const Content: React.FC<ContentProps> = ({
           <PostProcessingToast
             isGdsActive={isGdsActive}
             postProcessingTasks={postProcessingTasks}
-            isSchema={isSchema}
+            isSchema={selectedNodes.length > 0 || selectedRels.length > 0}
           />
         );
         try {
           const payload = isGdsActive
-            ? isSchema
+            ? selectedNodes.length > 0 || selectedRels.length > 0
               ? postProcessingTasks.filter((task) => task !== 'graph_cleanup')
               : postProcessingTasks
-            : isSchema
-            ? postProcessingTasks.filter((task) => task !== 'graph_cleanup' && task !== 'enable_communities')
-            : postProcessingTasks.filter((task) => task !== 'enable_communities');
+            : selectedNodes.length > 0 || selectedRels.length > 0
+              ? postProcessingTasks.filter((task) => task !== 'graph_cleanup' && task !== 'enable_communities')
+              : postProcessingTasks.filter((task) => task !== 'enable_communities');
           const response = await postProcessing(userCredentials as UserCredentials, payload);
           if (response.data.status === 'Success') {
             const communityfiles = response.data?.data;
@@ -228,57 +226,6 @@ const Content: React.FC<ContentProps> = ({
     }
     afterFirstRender = true;
   }, [queue.items.length, userCredentials]);
-
-  useEffect(() => {
-    const storedSchema = localStorage.getItem('isSchema');
-    if (storedSchema !== null) {
-      setIsSchema(JSON.parse(storedSchema));
-    }
-  }, [isSchema]);
-
-  useEffect(() => {
-    const connection = localStorage.getItem('neo4j.connection');
-    if (connection != null) {
-      (async () => {
-        const parsedData = JSON.parse(connection);
-        console.log(parsedData.uri);
-        const response = await connectAPI(parsedData.uri, parsedData.user, parsedData.password, parsedData.database);
-        if (response?.data?.status === 'Success') {
-          localStorage.setItem(
-            'neo4j.connection',
-            JSON.stringify({
-              ...parsedData,
-              userDbVectorIndex: response.data.data.db_vector_dimension,
-            })
-          );
-          if (
-            (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
-              response.data.data.db_vector_dimension == 0) &&
-            !response.data.data.chunks_exists
-          ) {
-            setConnectionStatus(true);
-            setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
-          } else {
-            setOpenConnection({
-              openPopUp: true,
-              chunksExists: response.data.data.chunks_exists as boolean,
-              vectorIndexMisMatch:
-                response.data.data.db_vector_dimension > 0 &&
-                response.data.data.db_vector_dimension != response.data.data.application_dimension,
-              chunksExistsWithDifferentDimension:
-                response.data.data.db_vector_dimension > 0 &&
-                response.data.data.db_vector_dimension != response.data.data.application_dimension &&
-                (response.data.data.chunks_exists ?? true),
-            });
-            setConnectionStatus(false);
-          }
-        } else {
-          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-          setConnectionStatus(false);
-        }
-      })();
-    }
-  }, []);
 
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
@@ -462,7 +409,7 @@ const Content: React.FC<ContentProps> = ({
   const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
     if (!remainingFiles.length) {
       showNormalToast(
-        <PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} isSchema={isSchema} />
+        <PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} isSchema={selectedNodes.length > 0 || selectedRels.length > 0} />
       );
       try {
         const response = await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
@@ -613,9 +560,8 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
-      userCredentials?.port ?? '7687'
-    }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
+      }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -675,12 +621,12 @@ const Content: React.FC<ContentProps> = ({
           return prev.map((f) => {
             return f.name === filename
               ? {
-                  ...f,
-                  status: 'Ready to Reprocess',
-                  processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-                  nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-                  relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
-                }
+                ...f,
+                status: 'Ready to Reprocess',
+                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                nodesCount: isStartFromBegining ? 0 : f.nodesCount,
+                relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
+              }
               : f;
           });
         });
@@ -787,37 +733,27 @@ const Content: React.FC<ContentProps> = ({
   const onClickHandler = () => {
     const selectedRows = childRef.current?.getSelectedRows();
     if (selectedRows?.length) {
-      let selectedLargeFiles: CustomFile[] = [];
-      for (let index = 0; index < selectedRows.length; index++) {
-        const parsedData: CustomFile = selectedRows[index];
-        if (
-          parsedData.fileSource === 'local file' &&
-          typeof parsedData.size === 'number' &&
-          (parsedData.status === 'New' || parsedData.status == 'Ready to Reprocess') &&
-          parsedData.size > largeFileSize
-        ) {
-          selectedLargeFiles.push(parsedData);
-        }
-      }
-      if (selectedLargeFiles.length) {
-        setshowConfirmationModal(true);
-      } else if (largeFileExists && isGCSActive) {
+      const expiredFilesExists = selectedRows.some(
+        (c) => c.status !==  'Ready to Reprocess' && isExpired(c?.createdAt as Date)
+      );
+      const largeFileExists = selectedRows.some(
+        (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
+      );
+      if (expiredFilesExists) {
         setshowExpirationModal(true);
+      } else if (largeFileExists && isGCSActive) {
+        setshowConfirmationModal(true);
       } else {
         handleGenerateGraph(selectedRows.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess'));
       }
     } else if (filesData.length) {
-      const largefiles = filesData.filter((f) => {
-        if (
-          typeof f.size === 'number' &&
-          (f.status === 'New' || f.status == 'Ready to Reprocess') &&
-          f.size > largeFileSize
-        ) {
-          return true;
-        }
-        return false;
-      });
-      const selectAllNewFiles = filesData.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess');
+      const expiredFileExists = filesData.some(
+        (c) => isExpired(c.createdAt as Date)
+      );
+      const largeFileExists = filesData.some(
+        (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
+      );
+      const selectAllNewFiles = filesData.filter((f) => isFileReadyToProcess(f, false));
       const stringified = selectAllNewFiles.reduce((accu, f) => {
         const key = f.id;
         // @ts-ignore
@@ -874,6 +810,7 @@ const Content: React.FC<ContentProps> = ({
             onClose={() => setshowConfirmationModal(false)}
             loading={extractLoading}
             selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
+            isLargeDocumentAlert={true}
           ></ConfirmationDialog>
         </Suspense>
       )}
@@ -943,16 +880,14 @@ const Content: React.FC<ContentProps> = ({
               />
               <div className='pt-1 flex gap-1 items-center'>
                 <div>
-                  {!isSchema ? (
+                  {selectedNodes.length === 0 || selectedRels.length === 0 ? (
                     <StatusIndicator type='danger' />
-                  ) : selectedNodes.length || selectedRels.length ? (
-                    <StatusIndicator type='success' />
-                  ) : (
-                    <StatusIndicator type='warning' />
-                  )}
+                  ) :
+                    (<StatusIndicator type='success' />
+                    )}
                 </div>
                 <div>
-                  {isSchema ? (
+                  {selectedNodes.length > 0 || selectedRels.length > 0 ? (
                     <span className='n-body-small'>
                       {(!selectedNodes.length || !selectedRels.length) && 'Empty'} Graph Schema configured
                       {selectedNodes.length || selectedRels.length
