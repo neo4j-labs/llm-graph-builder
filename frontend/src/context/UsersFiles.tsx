@@ -43,7 +43,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     'enable_hybrid_search_and_fulltext_search_in_bloom',
     'materialize_entity_similarities',
     'enable_communities',
-    'graph_cleanup',
+    'graph_schema_consolidation',
   ]);
   const [processedCount, setProcessedCount] = useState<number>(0);
   const [postProcessingVal, setPostProcessingVal] = useState<boolean>(false);
