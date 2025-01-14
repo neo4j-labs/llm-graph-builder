@@ -914,3 +914,25 @@ export interface GraphViewHandlerProps {
 export interface ChatProps {
   chatMessages: Messages[];
 }
+
+export interface filedate {
+  _DateTime__date: {
+    _Date__ordinal: number;
+    _Date__year: number;
+    _Date__month: number;
+    _Date__day: number;
+  };
+  _DateTime__time: {
+    _Time__ticks: number;
+    _Time__hour: number;
+    _Time__minute: number;
+    _Time__second: number;
+    _Time__nanosecond: number;
+    _Time__tzinfo: null;
+  };
+}
+export type FileTableHandle = React.ElementRef<typeof FileTable>;
+
+export interface VisibilityProps {
+  isVisible: boolean;
+}
