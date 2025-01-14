@@ -52,7 +52,7 @@ const PageLayout: React.FC = () => {
   };
 
   const { messages, setClearHistoryData, clearHistoryData, setMessages, setIsDeleteChatLoading } = useMessageContext();
-  const { isSchema, setIsSchema, setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
+  const { setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
   const {
     setConnectionStatus,
     setGdsActive,
@@ -289,8 +289,6 @@ const PageLayout: React.FC = () => {
             openTextSchema={() => {
               setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
             }}
-            isSchema={isSchema}
-            setIsSchema={setIsSchema}
             showEnhancementDialog={showEnhancementDialog}
             toggleEnhancementDialog={toggleEnhancementDialog}
             setOpenConnection={setOpenConnection}
@@ -349,8 +347,6 @@ const PageLayout: React.FC = () => {
               openTextSchema={() => {
                 setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
               }}
-              isSchema={isSchema}
-              setIsSchema={setIsSchema}
               showEnhancementDialog={showEnhancementDialog}
               toggleEnhancementDialog={toggleEnhancementDialog}
               setOpenConnection={setOpenConnection}

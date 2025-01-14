@@ -10,6 +10,7 @@ import { useFileContext } from '../../../context/UsersFiles';
 import DeduplicationTab from './Deduplication';
 import { tokens } from '@neo4j-ndl/base';
 import PostProcessingCheckList from './PostProcessingCheckList';
+import AdditionalInstructionsText from './AdditionalInstructions';
 
 export default function GraphEnhancementDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { breakpoints } = tokens;
@@ -68,7 +69,7 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
                   <Tabs.Tab
                     tabId={0}
                     htmlAttributes={{
-                      'aria-label': 'Database',
+                      'aria-label': 'Entity Extraction Settings',
                     }}
                   >
                     Entity Extraction Settings
@@ -76,7 +77,7 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
                   <Tabs.Tab
                     tabId={1}
                     htmlAttributes={{
-                      'aria-label': 'Add database',
+                      'aria-label': 'Disconnected Nodes',
                     }}
                   >
                     Disconnected Nodes
@@ -92,10 +93,18 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
                   <Tabs.Tab
                     tabId={3}
                     htmlAttributes={{
-                      'aria-label': 'Duplication Nodes',
+                      'aria-label': 'Post Processing Jobs',
                     }}
                   >
                     Post Processing Jobs
+                  </Tabs.Tab>
+                  <Tabs.Tab
+                    tabId={4}
+                    htmlAttributes={{
+                      'aria-label': 'Additinal Instructions',
+                    }}
+                  >
+                    Additional Instructions
                   </Tabs.Tab>
                 </Tabs>
               </Flex>
@@ -124,6 +133,9 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={3}>
           <PostProcessingCheckList />
+        </Tabs.TabPanel>
+        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={4}>
+          <AdditionalInstructionsText closeEnhanceGraphSchemaDialog={onClose} />
         </Tabs.TabPanel>
       </Dialog.Content>
     </Dialog>

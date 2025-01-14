@@ -12,13 +12,13 @@ const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () =>
   const [loading, setloading] = useState<boolean>(false);
   const { setSelectedNodes, setSelectedRels } = useFileContext();
   const { userCredentials } = useCredentials();
-  const [isSchema, setIsSchema] = useState<boolean>(false);
+  const [isSchemaText, setIsSchemaText] = useState<boolean>(false);
   const { model } = useFileContext();
 
   const clickHandler = useCallback(async () => {
     try {
       setloading(true);
-      const response = await getNodeLabelsAndRelTypesFromText(model, userText, isSchema);
+      const response = await getNodeLabelsAndRelTypesFromText(model, userText, isSchemaText);
       setloading(false);
       if (response.data.status === 'Success') {
         if (response.data?.data?.labels.length) {
@@ -75,12 +75,12 @@ const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () =>
       }
       onClose();
       setUserText('');
-      setIsSchema(false);
+      setIsSchemaText(false);
     } catch (error) {
       setloading(false);
       console.log(error);
     }
-  }, [userCredentials, userText, isSchema]);
+  }, [userCredentials, userText, isSchemaText]);
 
   return (
     <Dialog
@@ -88,7 +88,7 @@ const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () =>
       isOpen={open}
       onClose={() => {
         setloading(false);
-        setIsSchema(false);
+        setIsSchemaText(false);
         setUserText('');
         onClose();
       }}
@@ -115,9 +115,9 @@ const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () =>
           <Checkbox
             label='Text is schema description'
             onChange={(e) => {
-              setIsSchema(e.target.checked);
+              setIsSchemaText(e.target.checked);
             }}
-            isChecked={isSchema}
+            isChecked={isSchemaText}
           />
           <ButtonWithToolTip
             placement='top'

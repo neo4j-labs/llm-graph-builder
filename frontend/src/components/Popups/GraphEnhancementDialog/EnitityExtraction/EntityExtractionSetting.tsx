@@ -9,6 +9,7 @@ import { OptionType, schema, UserCredentials } from '../../../../types';
 import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
 import { tokens } from '@neo4j-ndl/base';
 import { showNormalToast } from '../../../../utils/toasts';
+import { useHasSelections } from '../../../../hooks/useHasSelections';
 
 export default function EntityExtractionSetting({
   view,
@@ -35,12 +36,11 @@ export default function EntityExtractionSetting({
     selectedRels,
     selectedSchemas,
     setSelectedSchemas,
-    isSchema,
-    setIsSchema,
   } = useFileContext();
   const { userCredentials } = useCredentials();
   const [loading, setLoading] = useState<boolean>(false);
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
+  const hasSelections = useHasSelections(selectedNodes, selectedRels);
   const removeNodesAndRels = (nodelabels: string[], relationshipTypes: string[]) => {
     const labelsToRemoveSet = new Set(nodelabels);
     const relationshipLabelsToremoveSet = new Set(relationshipTypes);
@@ -60,7 +60,6 @@ export default function EntityExtractionSetting({
       );
       return filteredrels;
     });
-    localStorage.setItem('isSchema', JSON.stringify(false));
   };
   const onChangeSchema = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
     if (actionMeta.action === 'remove-value') {
@@ -120,20 +119,15 @@ export default function EntityExtractionSetting({
         'selectedRelationshipLabels',
         JSON.stringify({ db: userCredentials?.uri, selectedOptions: updatedOptions })
       );
-      localStorage.setItem('isSchema', JSON.stringify(true));
       return updatedOptions;
     });
-    setIsSchema(true);
   };
   const onChangenodes = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
     if (actionMeta.action === 'clear') {
       localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
-      localStorage.setItem('isSchema', JSON.stringify(false));
     }
     setSelectedNodes(selectedOptions);
-    setIsSchema(true);
     localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions }));
-    localStorage.setItem('isSchema', JSON.stringify(true));
   };
   const onChangerels = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
     if (actionMeta.action === 'clear') {
@@ -143,7 +137,6 @@ export default function EntityExtractionSetting({
       );
     }
     setSelectedRels(selectedOptions);
-    setIsSchema(true);
     localStorage.setItem('selectedRelationshipLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions }));
   };
   const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>([]);
@@ -190,8 +183,6 @@ export default function EntityExtractionSetting({
           }
         };
         getOptions();
-        setIsSchema(true);
-        localStorage.setItem('isSchema', JSON.stringify(true));
       }
     }
   }, [userCredentials, open]);
@@ -200,8 +191,6 @@ export default function EntityExtractionSetting({
     setSelectedSchemas([]);
     setSelectedNodes(nodeLabelOptions);
     setSelectedRels(relationshipTypeOptions);
-    setIsSchema(true);
-    localStorage.setItem('isSchema', JSON.stringify(true));
     localStorage.setItem(
       'selectedNodeLabels',
       JSON.stringify({ db: userCredentials?.uri, selectedOptions: nodeLabelOptions })
@@ -213,11 +202,9 @@ export default function EntityExtractionSetting({
   }, [nodeLabelOptions, relationshipTypeOptions]);
 
   const handleClear = () => {
-    setIsSchema(false);
     setSelectedNodes([]);
     setSelectedRels([]);
     setSelectedSchemas([]);
-    localStorage.setItem('isSchema', JSON.stringify(false));
     localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
     localStorage.setItem(
       'selectedRelationshipLabels',
@@ -230,8 +217,6 @@ export default function EntityExtractionSetting({
     }
   };
   const handleApply = () => {
-    setIsSchema(true);
-    localStorage.setItem('isSchema', JSON.stringify(true));
     showNormalToast(`Successfully Applied the Schema settings`);
     if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
       closeEnhanceGraphSchemaDialog();
@@ -363,7 +348,7 @@ export default function EntityExtractionSetting({
                 placement='top'
                 onClick={handleClear}
                 label='Clear Graph Settings'
-                disabled={!isSchema}
+                disabled={!hasSelections}
               >
                 {buttonCaptions.clearSettings}
               </ButtonWithToolTip>
@@ -373,7 +358,7 @@ export default function EntityExtractionSetting({
               placement='top'
               onClick={handleApply}
               label='Apply Graph Settings'
-              disabled={!isSchema}
+              disabled={!hasSelections}
             >
               {buttonCaptions.applyGraphSchema}
             </ButtonWithToolTip>

@@ -831,45 +831,30 @@ START_FROM_BEGINNING  = "start_from_beginning"
 DELETE_ENTITIES_AND_START_FROM_BEGINNING = "delete_entities_and_start_from_beginning"
 START_FROM_LAST_PROCESSED_POSITION = "start_from_last_processed_position"                                                    
 
-PROMPT_TO_ALL_LLMs = """
-"# Knowledge Graph Instructions for LLMs\n"
-    "## 1. Overview\n"
-    "You are a top-tier algorithm designed for extracting information in structured "
-    "formats to build a knowledge graph.\n"
-    "Try to capture as much information from the text as possible without "
-    "sacrificing accuracy. Do not add any information that is not explicitly "
-    "mentioned in the text.\n"
-    "- **Nodes** represent entities and concepts.\n"
-    "- The aim is to achieve simplicity and clarity in the knowledge graph, making it\n"
-    "accessible for a vast audience.\n"
-    "## 2. Labeling Nodes\n"
-    "- **Consistency**: Ensure you use available types for node labels.\n"
-    "Ensure you use basic or elementary types for node labels.\n"
-    "- For example, when you identify an entity representing a person, "
-    "always label it as **'person'**. Avoid using more specific terms "
-    "like 'mathematician' or 'scientist'."
-    "- **Node IDs**: Never utilize integers as node IDs. Node IDs should be "
-    "names or human-readable identifiers found in the text.\n"
-    "- **Relationships** represent connections between entities or concepts.\n"
-    "Ensure consistency and generality in relationship types when constructing "
-    "knowledge graphs. Instead of using specific and momentary types "
-    "such as 'BECAME_PROFESSOR', use more general and timeless relationship types "
-    "like 'PROFESSOR'. Make sure to use general and timeless relationship types!\n"
-    "## 3. Coreference Resolution\n"
-    "- **Maintain Entity Consistency**: When extracting entities, it's vital to "
-    "ensure consistency.\n"
-    'If an entity, such as "John Doe", is mentioned multiple times in the text '
-    'but is referred to by different names or pronouns (e.g., "Joe", "he"),'
-    "always use the most complete identifier for that entity throughout the "
-    'knowledge graph. In this example, use "John Doe" as the entity ID.\n'
-    "Remember, the knowledge graph should be coherent and easily understandable, "
-    "so maintaining consistency in entity references is crucial.\n"
-    "## 4. Node Properties\n"
-    "- Dates, URLs, Time, and Numerical Values: Instead of creating separate nodes for 
-    these elements, represent them as properties of existing nodes."
-    "- Example: Instead of creating a node labeled "2023-03-15" and connecting it to another node 
-    with the relationship "BORN_ON", add a property called "born_on" to the person node with the 
-    value "2023-03-15"."
-    "## 5. Strict Compliance\n"
-    "Adhere to the rules strictly. Non-compliance will result in termination."
-    """
+GRAPH_CLEANUP_PROMPT = """Please consolidate the following list of types into a smaller set of more general, semantically 
+related types. The consolidated types must be drawn from the original list; do not introduce new types.  
+Return a JSON object representing the mapping of original types to consolidated types. Every key is the consolidated type
+and value is list of the original types that were merged into the consolidated type. Prioritize using the most generic and 
+repeated term when merging. If a type doesn't merge with any other type, it should still be included in the output, 
+mapped to itself.
+
+**Input:** A list of strings representing the types to be consolidated. These types may represent either node 
+labels or relationship labels Your algorithm should do appropriate groupings based on semantic similarity.
+
+Example 1:
+Input: 
+[ "Person", "Human", "People", "Company", "Organization", "Product"]
+Output :
+[Person": ["Person", "Human", "People"], Organization": ["Company", "Organization"], Product": ["Product"]]
+
+Example 2:
+Input :
+["CREATED_FOR", "CREATED_TO", "CREATED", "PLACE", "LOCATION", "VENUE"]
+Output:
+["CREATED": ["CREATED_FOR", "CREATED_TO", "CREATED"],"PLACE": ["PLACE", "LOCATION", "VENUE"]]
+"""
+
+ADDITIONAL_INSTRUCTIONS = """Your goal is to identify and categorize entities while ensuring that specific data 
+types such as dates, numbers, revenues, and other non-entity information are not extracted as separate nodes.
+Instead, treat these as properties associated with the relevant entities."""
+
