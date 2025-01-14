@@ -1,5 +1,6 @@
 from langchain_community.document_loaders import S3DirectoryLoader
 import logging
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 import boto3
 import os
 from urllib.parse import urlparse
@@ -74,4 +75,4 @@ def get_documents_from_s3(s3_url, aws_access_key_id, aws_secret_access_key):
     except Exception as e:
       error_message = str(e)
       logging.exception(f'Exception in reading content from S3:{error_message}')
-      raise Exception(error_message)    
+      raise LLMGraphBuilderException(error_message)    

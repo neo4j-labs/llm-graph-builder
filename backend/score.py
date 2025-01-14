@@ -155,7 +155,14 @@ async def create_source_knowledge_graph_url(
                             'gcs_project_id':gcs_project_id, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(json_obj, "INFO")
         result ={'elapsed_api_time' : f'{elapsed_time:.2f}'}
-        return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name,data=result)    
+        return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name,data=result)
+    except LLMGraphBuilderException as e:
+        error_message = str(e)
+        message = f" Unable to create source node for source type: {source_type} and source: {source}"
+        # Set the status "Success" becuase we are treating these error already handled by application as like custom errors.
+        json_obj = {'error_message':error_message, 'status':'Success','db_url':uri, 'userName':userName, 'database':database,'success_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=source_type)
     except Exception as e:
         error_message = str(e)
         message = f" Unable to create source node for source type: {source_type} and source: {source}"
@@ -261,42 +268,32 @@ async def extract_knowledge_graph_from_file(
             result['gcs_bucket_folder'] = gcs_bucket_folder
             result['gcs_blob_filename'] = gcs_blob_filename
             result['gcs_project_id'] = gcs_project_id
-            result['allowedNodes'] = allowedNodes
-            result['allowedRelationship'] = allowedRelationship
             result['language'] = language
             result['retry_condition'] = retry_condition
         logger.log_struct(result, "INFO")
         result.update(uri_latency)
         logging.info(f"extraction completed in {extract_api_time:.2f} seconds for file name {file_name}")
         return create_api_response('Success', data=result, file_source= source_type)
-    except LLMGraphBuilderException as app_exp:
-        job_status="Completed"
-        obj_source_node = sourceNode()
-        obj_source_node.file_name = file_name
-        obj_source_node.status = job_status
-        obj_source_node.error_message = str(app_exp)
-        obj_source_node.retry_condition = retry_condition
-        graphDb_data_Access.update_source_node(obj_source_node)
-        return create_api_response("Success", data={"message": str(app_exp)}, file_name=file_name)
+    except LLMGraphBuilderException as e:
+        error_message = str(e)
+        graphDb_data_Access.update_exception_db(file_name,error_message, retry_condition)
+        failed_file_process(uri,file_name, merged_file_path, source_type)
+        node_detail = graphDb_data_Access.get_current_status_document_node(file_name)
+        # Set the status "Completed" in logging becuase we are treating these error already handled by application as like custom errors.
+        json_obj = {'api_name':'extract','message':error_message,'file_created_at':node_detail[0]['created_time'],'error_message':error_message, 'file_name': file_name,'status':'Completed',
+                    'db_url':uri, 'userName':userName, 'database':database,'success_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response("Failed", message = error_message, error=error_message, file_name=file_name)
     except Exception as e:
         message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content "
         error_message = str(e)
         graphDb_data_Access.update_exception_db(file_name,error_message, retry_condition)
+        failed_file_process(uri,file_name, merged_file_path, source_type)
         node_detail = graphDb_data_Access.get_current_status_document_node(file_name)
-        gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-        if source_type == 'local file':
-            if gcs_file_cache == 'True':
-                folder_name = create_gcs_bucket_folder_name_hashed(uri,file_name)
-                copy_failed_file(BUCKET_UPLOAD, BUCKET_FAILED_FILE, folder_name, file_name)
-                time.sleep(5)
-                delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
-            else:
-                logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
-                delete_uploaded_local_file(merged_file_path,file_name)
-        json_obj = {'message':message,'file_created_at':node_detail[0]['created_time'],'error_message':error_message, 'file_name': file_name,'status':'Failed',
+        
+        json_obj = {'api_name':'extract','message':message,'file_created_at':node_detail[0]['created_time'],'error_message':error_message, 'file_name': file_name,'status':'Failed',
                     'db_url':uri, 'userName':userName, 'database':database,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc))}
         logger.log_struct(json_obj, "ERROR")
-        logging.exception(f'File Failed in extraction: {json_obj}')
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = file_name)
     finally:
         gc.collect()
@@ -514,7 +511,7 @@ async def connect(uri=Form(), userName=Form(), password=Form(), database=Form())
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'connect','db_url':uri, 'userName':userName, 'database':database,'status':result, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        json_obj = {'api_name':'connect','db_url':uri, 'userName':userName, 'database':database, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         result['elapsed_api_time'] = f'{elapsed_time:.2f}'
         result['gcs_file_cache'] = gcs_file_cache
