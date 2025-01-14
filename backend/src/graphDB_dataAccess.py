@@ -150,24 +150,33 @@ class graphDBdataAccess:
             logging.info("Vector index does not exist, So KNN graph not update")
 
     def check_account_access(self, database):
-        query = """
-        SHOW USER PRIVILEGES 
-        YIELD * 
-        WHERE graph = $database AND action IN ['read'] 
-        RETURN COUNT(*) AS readAccessCount
-        """
         try:
-            logging.info(f"Checking access for database: {database}")
+            query_dbms_componenet = "call dbms.components() yield edition"
+            result_dbms_componenet = self.graph.query(query_dbms_componenet)
 
-            result = self.graph.query(query, params={"database": database})
-            read_access_count = result[0]["readAccessCount"] if result else 0
+            if  result_dbms_componenet[0]["edition"] == "enterprise":
+                query = """
+                SHOW USER PRIVILEGES 
+                YIELD * 
+                WHERE graph = $database AND action IN ['read'] 
+                RETURN COUNT(*) AS readAccessCount
+                """
+            
+                logging.info(f"Checking access for database: {database}")
 
-            logging.info(f"Read access count: {read_access_count}")
+                result = self.graph.query(query, params={"database": database})
+                read_access_count = result[0]["readAccessCount"] if result else 0
 
-            if read_access_count > 0:
-                logging.info("The account has read access.")
-                return False
+                logging.info(f"Read access count: {read_access_count}")
+
+                if read_access_count > 0:
+                    logging.info("The account has read access.")
+                    return False
+                else:
+                    logging.info("The account has write access.")
+                    return True
             else:
+                #Community version have no roles to execute admin command, so assuming write access as TRUE
                 logging.info("The account has write access.")
                 return True
 
