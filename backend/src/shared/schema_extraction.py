@@ -1,5 +1,4 @@
 from typing import List
-#from langchain_core.pydantic_v1 import BaseModel, Field
 from pydantic.v1 import BaseModel, Field
 from src.llm import get_llm
 from langchain_core.prompts import ChatPromptTemplate

@@ -44,14 +44,13 @@ import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingC
 import { getChunkText } from '../services/getChunkText';
 import ChunkPopUp from './Popups/ChunkPopUp';
 import { isExpired, isFileReadyToProcess } from '../utils/Utils';
+import { useHasSelections } from '../hooks/useHasSelections';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
 let afterFirstRender = false;
 
 const Content: React.FC<ContentProps> = ({
-  isSchema,
-  setIsSchema,
   showEnhancementDialog,
   toggleEnhancementDialog,
   setOpenConnection,
@@ -83,7 +82,7 @@ const Content: React.FC<ContentProps> = ({
     alertType: 'neutral',
     alertMessage: '',
   });
-  const { setClearHistoryData } = useMessageContext();
+  const { setMessages } = useMessageContext();
   const {
     filesData,
     setFilesData,
@@ -99,12 +98,15 @@ const Content: React.FC<ContentProps> = ({
     setProcessedCount,
     setchatModes,
     model,
+    additionalInstructions,
+    setAdditionalInstructions,
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>(
     'tableView'
   );
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
+    const hasSelections = useHasSelections(selectedNodes, selectedRels);
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
@@ -135,11 +137,21 @@ const Content: React.FC<ContentProps> = ({
     }
     if (processedCount === 1 && queue.isEmpty()) {
       (async () => {
-        showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
+        showNormalToast(
+          <PostProcessingToast
+            isGdsActive={isGdsActive}
+            postProcessingTasks={postProcessingTasks}
+            isSchema={hasSelections}
+          />
+        );
         try {
           const payload = isGdsActive
-            ? postProcessingTasks
-            : postProcessingTasks.filter((task) => task !== 'enable_communities');
+            ? hasSelections
+              ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation')
+              : postProcessingTasks
+            : hasSelections
+              ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities')
+              : postProcessingTasks.filter((task) => task !== 'enable_communities');
           const response = await postProcessing(userCredentials as UserCredentials, payload);
           if (response.data.status === 'Success') {
             const communityfiles = response.data?.data;
@@ -185,13 +197,6 @@ const Content: React.FC<ContentProps> = ({
     afterFirstRender = true;
   }, [queue.items.length, userCredentials]);
 
-  useEffect(() => {
-    const storedSchema = localStorage.getItem('isSchema');
-    if (storedSchema !== null) {
-      setIsSchema(JSON.parse(storedSchema));
-    }
-  }, [isSchema]);
-
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
       setModel(selectedOption?.value);
@@ -217,7 +222,7 @@ const Content: React.FC<ContentProps> = ({
     }
     toggleChunksLoading();
   };
-  
+
   const extractData = async (uid: string, isselectedRows = false, filesTobeProcess: CustomFile[]) => {
     if (!isselectedRows) {
       const fileItem = filesData.find((f) => f.id == uid);
@@ -284,13 +289,17 @@ const Content: React.FC<ContentProps> = ({
         selectedRels.map((t) => t.value),
         fileItem.googleProjectId,
         fileItem.language,
-        fileItem.accessToken
+        fileItem.accessToken,
+        additionalInstructions
       );
-
       if (apiResponse?.status === 'Failed') {
         let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
         throw new Error(JSON.stringify(errorobj));
       } else if (fileItem.size != undefined && fileItem.size < largeFileSize) {
+        if (apiResponse.data.message) {
+          const apiRes = apiResponse.data.message;
+          showSuccessToast(apiRes);
+        }
         setFilesData((prevfiles) => {
           return prevfiles.map((curfile) => {
             if (curfile.name == apiResponse?.data?.fileName) {
@@ -371,7 +380,9 @@ const Content: React.FC<ContentProps> = ({
 
   const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
     if (!remainingFiles.length) {
-      showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
+      showNormalToast(
+        <PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} isSchema={hasSelections} />
+      );
       try {
         const response = await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
         if (response.data.status === 'Success') {
@@ -521,9 +532,8 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
-      userCredentials?.port ?? '7687'
-    }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
+      }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -536,6 +546,7 @@ const Content: React.FC<ContentProps> = ({
 
   const disconnect = () => {
     queue.clear();
+    const date = new Date();
     setProcessedCount(0);
     setConnectionStatus(false);
     localStorage.removeItem('password');
@@ -543,7 +554,22 @@ const Content: React.FC<ContentProps> = ({
     setUserCredentials({ uri: '', password: '', userName: '', database: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
-    setClearHistoryData(true);
+    localStorage.removeItem('instructions');
+    setAdditionalInstructions('');
+    setMessages([
+      {
+        datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
+        id: 2,
+        modes: {
+          'graph+vector+fulltext': {
+            message:
+              ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
+          },
+        },
+        user: 'chatbot',
+        currentMode: 'graph+vector+fulltext',
+      },
+    ]);
     setchatModes([chatModeLables['graph+vector+fulltext']]);
   };
 
@@ -554,23 +580,31 @@ const Content: React.FC<ContentProps> = ({
       setRetryLoading(false);
       if (response.data.status === 'Failure') {
         throw new Error(response.data.error);
-      }
-      const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption === RETRY_OPIONS[1];
-      setFilesData((prev) => {
-        return prev.map((f) => {
-          return f.name === filename
-            ? {
+      } else if (
+        response.data.status === 'Success' &&
+        response.data?.message != undefined &&
+        (response.data?.message as string).includes('Chunks are not created')
+      ) {
+        showNormalToast(response.data.message as string);
+        retryOnclose()
+      } else {
+        const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption === RETRY_OPIONS[1];
+        setFilesData((prev) => {
+          return prev.map((f) => {
+            return f.name === filename
+              ? {
                 ...f,
                 status: 'Ready to Reprocess',
                 processingProgress: isStartFromBegining ? 0 : f.processingProgress,
                 nodesCount: isStartFromBegining ? 0 : f.nodesCount,
                 relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
               }
-            : f;
+              : f;
+          });
         });
-      });
-      showSuccessToast(response.data.message as string);
-      retryOnclose();
+        showSuccessToast(response.data.message as string);
+        retryOnclose();
+      }
     } catch (error) {
       setRetryLoading(false);
       if (error instanceof Error) {
@@ -672,12 +706,14 @@ const Content: React.FC<ContentProps> = ({
     const selectedRows = childRef.current?.getSelectedRows();
     if (selectedRows?.length) {
       const expiredFilesExists = selectedRows.some(
-        (c) => isFileReadyToProcess(c, true) && isExpired(c?.createdAt as Date)
+        (c) => c.status !==  'Ready to Reprocess' && isExpired(c?.createdAt as Date ?? new Date())
       );
       const largeFileExists = selectedRows.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
       );
       if (expiredFilesExists) {
+        setshowExpirationModal(true);
+      } else if (largeFileExists && isGCSActive) {
         setshowConfirmationModal(true);
       } else if (largeFileExists && isGCSActive) {
         setshowExpirationModal(true);
@@ -685,7 +721,9 @@ const Content: React.FC<ContentProps> = ({
         handleGenerateGraph(selectedRows.filter((f) => isFileReadyToProcess(f, false)));
       }
     } else if (filesData.length) {
-      const expiredFileExists = filesData.some((c) => isFileReadyToProcess(c, true) && isExpired(c.createdAt as Date));
+      const expiredFileExists = filesData.some(
+        (c) => isExpired(c?.createdAt as Date)
+      );
       const largeFileExists = filesData.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
       );
@@ -746,6 +784,20 @@ const Content: React.FC<ContentProps> = ({
             onClose={() => setshowConfirmationModal(false)}
             loading={extractLoading}
             selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
+            isLargeDocumentAlert={true}
+          ></ConfirmationDialog>
+        </Suspense>
+      )}
+      {showExpirationModal && filesForProcessing.length && (
+        <Suspense fallback={<FallBackDialog />}>
+          <ConfirmationDialog
+            open={showExpirationModal}
+            largeFiles={filesForProcessing}
+            extractHandler={handleGenerateGraph}
+            onClose={() => setshowExpirationModal(false)}
+            loading={extractLoading}
+            selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
+            isLargeDocumentAlert={false}
           ></ConfirmationDialog>
         </Suspense>
       )}
@@ -812,19 +864,17 @@ const Content: React.FC<ContentProps> = ({
               />
               <div className='pt-1 flex gap-1 items-center'>
                 <div>
-                  {!isSchema ? (
+                  {!hasSelections ? (
                     <StatusIndicator type='danger' />
-                  ) : selectedNodes.length || selectedRels.length ? (
-                    <StatusIndicator type='success' />
-                  ) : (
-                    <StatusIndicator type='warning' />
-                  )}
+                  ) :
+                    (<StatusIndicator type='success' />
+                    )}
                 </div>
                 <div>
-                  {isSchema ? (
+                  {hasSelections? (
                     <span className='n-body-small'>
-                      {(!selectedNodes.length || !selectedNodes.length) && 'Empty'} Graph Schema configured
-                      {selectedNodes.length || selectedRels.length
+                      {(hasSelections)} Graph Schema configured
+                      {hasSelections
                         ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)`
                         : ''}
                     </span>

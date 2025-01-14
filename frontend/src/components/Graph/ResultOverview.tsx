@@ -135,7 +135,6 @@ const ResultOverview: React.FunctionComponent<OverViewProps> = ({
                     <MagnifyingGlassIconOutline className='n-size-token-7' />
                   </IconButton>
                 }
-                
               />
             </div>
             <Typography variant='subheading-small'>

@@ -7,7 +7,7 @@ import { useCredentials } from '../../../../context/UserCredentials';
 export default function PostProcessingCheckList() {
   const { breakpoints } = tokens;
   const tablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
-  const { postProcessingTasks, setPostProcessingTasks } = useFileContext();
+  const { postProcessingTasks, setPostProcessingTasks, selectedNodes, selectedRels } = useFileContext();
   const { isGdsActive } = useCredentials();
   return (
     <Flex gap={tablet ? '6' : '8'}>
@@ -20,7 +20,22 @@ export default function PostProcessingCheckList() {
           </Flex>
           <Flex justifyContent='space-between' flexDirection='column' gap='6'>
             {POST_PROCESSING_JOBS.map((job, idx) => {
-              const isCreateCommunities = job.title === 'enable_communities';
+              const isGraphCleanupDisabled =
+                job.title === 'graph_schema_consolidation'
+                  ? !(selectedNodes.length === 0 && selectedRels.length === 0)
+                  : false;
+              const isDisabled =
+                job.title === 'enable_communities'
+                  ? !isGdsActive
+                  : job.title === 'graph_schema_consolidation'
+                  ? isGraphCleanupDisabled
+                  : false;
+              const isChecked =
+                job.title === 'graph_schema_consolidation'
+                  ? !isGraphCleanupDisabled && postProcessingTasks.includes(job.title)
+                  : job.title === 'enable_communities'
+                  ? isGdsActive && postProcessingTasks.includes(job.title)
+                  : postProcessingTasks.includes(job.title);
               return (
                 <Flex key={`${job.title}${idx}`}>
                   <Checkbox
@@ -32,11 +47,7 @@ export default function PostProcessingCheckList() {
                           .join(' ')}
                       </Typography>
                     }
-                    isChecked={
-                      isCreateCommunities
-                        ? isGdsActive && postProcessingTasks.includes(job.title)
-                        : postProcessingTasks.includes(job.title)
-                    }
+                    isChecked={isChecked}
                     onChange={(e) => {
                       if (e.target.checked) {
                         setPostProcessingTasks((prev) => [...prev, job.title]);
@@ -44,8 +55,8 @@ export default function PostProcessingCheckList() {
                         setPostProcessingTasks((prev) => prev.filter((s) => s !== job.title));
                       }
                     }}
-                    isDisabled={isCreateCommunities && !isGdsActive}
-                    ariaLabel='checkbox-postProcessing'
+                    isDisabled={isDisabled}
+                    ariaLabel={`checkbox-${job.title}`}
                   />
                   <Typography variant={tablet ? 'body-small' : 'body-medium'}>{job.description}</Typography>
                 </Flex>

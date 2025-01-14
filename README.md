@@ -35,10 +35,6 @@ According to enviornment we are configuring the models which is indicated by VIT
 EX:
 ```env
 VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
-```
-OPENAI_API_KEY="your-openai-key"
-```
-
 You can then run Docker Compose to build and start all components:
 ```bash
 docker-compose up --build
@@ -71,7 +67,6 @@ VITE_CHAT_MODES=""
 If however you want to specify the only vector mode or only graph mode you can do that by specifying the mode in the env:
 ```env
 VITE_CHAT_MODES="vector,graph"
-VITE_CHAT_MODES="vector,graph"
 ```
 
 #### Running Backend and Frontend separately (dev environment)
@@ -88,7 +83,7 @@ Alternatively, you can run the backend and frontend separately:
     ```
 
 - For the backend:
-1. Create the backend/.env file by copy/pasting the backend/example.env. To streamline the initial setup and testing of the application, you can preconfigure user credentials directly within the .env file. This bypasses the login dialog and allows you to immediately connect with a predefined user.
+1. Create the backend/.env file by copy/pasting the backend/example.env. To streamline the initial setup and testing of the application, you can preconfigure user credentials directly within the backend .env file. This bypasses the login dialog and allows you to immediately connect with a predefined user.
    - **NEO4J_URI**:
    - **NEO4J_USERNAME**:
    - **NEO4J_PASSWORD**:
@@ -122,6 +117,8 @@ Allow unauthenticated request : Yes
 ## ENV
 | Env Variable Name       | Mandatory/Optional | Default Value | Description                                                                                      |
 |-------------------------|--------------------|---------------|--------------------------------------------------------------------------------------------------|
+|                                                                                                                                                                 |
+| **BACKEND ENV** 
 | EMBEDDING_MODEL         | Optional           | all-MiniLM-L6-v2 | Model for generating the text embedding (all-MiniLM-L6-v2 , openai , vertexai)                |
 | IS_EMBEDDING            | Optional           | true          | Flag to enable text embedding                                                                    |
 | KNN_MIN_SCORE           | Optional           | 0.94          | Minimum score for KNN algorithm                                                                  |
@@ -135,7 +132,13 @@ Allow unauthenticated request : Yes
 | LANGCHAIN_API_KEY       | Optional           |               | API key for Langchain                                                                             |
 | LANGCHAIN_PROJECT       | Optional           |               | Project for Langchain                                                                             |
 | LANGCHAIN_TRACING_V2    | Optional           | true          | Flag to enable Langchain tracing                                                                  |
+| GCS_FILE_CACHE          | Optional           | False         | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
 | LANGCHAIN_ENDPOINT      | Optional           | https://api.smith.langchain.com | Endpoint for Langchain API                                                            |
+| ENTITY_EMBEDDING        | Optional           | False         | If set to True, It will add embeddings for each entity in database |
+| LLM_MODEL_CONFIG_ollama_<model_name>         | Optional      |               | Set ollama config as - model_name,model_local_url for local deployments |
+| RAGAS_EMBEDDING_MODEL         | Optional      | openai              | embedding model used by ragas evaluation framework                               |
+|                                                                                                                                                                        |
+| **FRONTEND ENV** 
 | VITE_BACKEND_API_URL         | Optional           | http://localhost:8000 | URL for backend API                                                                       |
 | VITE_BLOOM_URL               | Optional           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
 | VITE_REACT_APP_SOURCES       | Mandatory          | local,youtube,wiki,s3 | List of input sources that will be available                                               |
@@ -146,10 +149,6 @@ Allow unauthenticated request : Yes
 | VITE_GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
 | VITE_LLM_MODELS_PROD         | Optional      | openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash | To Distinguish models based on the Enviornment PROD or DEV 
 | VITE_LLM_MODELS              | Optional | 'diffbot,openai_gpt_3.5,openai_gpt_4o,openai_gpt_4o_mini,gemini_1.5_pro,gemini_1.5_flash,azure_ai_gpt_35,azure_ai_gpt_4o,ollama_llama3,groq_llama3_70b,anthropic_claude_3_5_sonnet' | Supported Models For the application
-| GCS_FILE_CACHE          | Optional           | False         | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
-| ENTITY_EMBEDDING        | Optional           | False         | If set to True, It will add embeddings for each entity in database |
-| LLM_MODEL_CONFIG_ollama_<model_name>         | Optional      |               | Set ollama config as - model_name,model_local_url for local deployments |
-| RAGAS_EMBEDDING_MODEL         | Optional      | openai              | embedding model used by ragas evaluation framework                               |
 
 ## LLMs Supported 
 1. OpenAI

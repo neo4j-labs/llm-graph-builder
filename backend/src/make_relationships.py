@@ -16,7 +16,7 @@ EMBEDDING_FUNCTION , EMBEDDING_DIMENSION = load_embedding_model(EMBEDDING_MODEL)
 def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_documents_chunk_chunk_Id : list):
     batch_data = []
     logging.info("Create HAS_ENTITY relationship between chunks and entities")
-    chunk_node_id_set = 'id:"{}"'
+    
     for graph_doc_chunk_id in graph_documents_chunk_chunk_Id:
         for node in graph_doc_chunk_id['graph_doc'].nodes:
             query_data={
@@ -25,10 +25,6 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
                 'node_id': node.id
             }
             batch_data.append(query_data)
-            #node_id = node.id
-            #Below query is also unable to change as parametrize because we can't make parameter of Label or node type
-            #https://neo4j.com/docs/cypher-manual/current/syntax/parameters/
-            #graph.query('MATCH(c:Chunk {'+chunk_node_id_set.format(graph_doc_chunk_id['chunk_id'])+'}) MERGE (n:'+ node.type +'{ id: "'+node_id+'"}) MERGE (c)-[:HAS_ENTITY]->(n)')
           
     if batch_data:
         unwind_query = """
@@ -41,19 +37,15 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
 
     
 def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name):
-    #create embedding
     isEmbedding = os.getenv('IS_EMBEDDING')
-    # embedding_model = os.getenv('EMBEDDING_MODEL')
     
     embeddings, dimension = EMBEDDING_FUNCTION , EMBEDDING_DIMENSION
     logging.info(f'embedding model:{embeddings} and dimesion:{dimension}')
     data_for_query = []
     logging.info(f"update embedding and vector index for chunks")
     for row in chunkId_chunkDoc_list:
-        # for graph_document in row['graph_doc']:
         if isEmbedding.upper() == "TRUE":
             embeddings_arr = embeddings.embed_query(row['chunk_doc'].page_content)
-            # logging.info(f'Embedding list {embeddings_arr}')
                                     
             data_for_query.append({
                 "chunkId": row['chunk_id'],
@@ -82,7 +74,6 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
         current_chunk_id = page_content_sha1.hexdigest()
         position = i + 1 
         if i>0:
-            #offset += len(tiktoken.encoding_for_model("gpt2").encode(chunk.page_content))
             offset += len(chunks[i-1].page_content)
         if i == 0:
             firstChunk = True

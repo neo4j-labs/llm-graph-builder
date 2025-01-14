@@ -36,6 +36,7 @@ const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showDisconnectButton, setShowDisconnectButton] = useState<boolean>(false);
   const [isGCSActive, setIsGCSActive] = useState<boolean>(false);
+
   const value = {
     userCredentials,
     setUserCredentials,

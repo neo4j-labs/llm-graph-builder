@@ -52,7 +52,7 @@ const PageLayout: React.FC = () => {
   };
 
   const { messages, setClearHistoryData, clearHistoryData, setMessages, setIsDeleteChatLoading } = useMessageContext();
-  const { isSchema, setIsSchema, setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
+  const { setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
   const {
     setConnectionStatus,
     setGdsActive,
@@ -80,8 +80,26 @@ const PageLayout: React.FC = () => {
         setShowDisconnectButton(isModalOpen);
         localStorage.setItem('disconnectButtonState', isModalOpen ? 'true' : 'false');
       };
-      // To parse and set user credentials from session
-      const setUserCredentialsFromSession = (neo4jConnection: string) => {
+      const setUserCredentialsLocally = (credentials: any) => {
+        setUserCredentials(credentials);
+        setIsGCSActive(credentials.isGCSActive ?? false);
+        setGdsActive(credentials.isgdsActive);
+        setIsReadOnlyUser(credentials.isReadonlyUser);
+        localStorage.setItem(
+          'neo4j.connection',
+          JSON.stringify({
+            uri: credentials.uri,
+            user: credentials.userName,
+            password: btoa(credentials.password),
+            database: credentials.database,
+            userDbVectorIndex: 384,
+            isReadOnlyUser: credentials.isReadonlyUser,
+            isgdsActive: credentials.isgdsActive,
+            isGCSActive: credentials.isGCSActive,
+          })
+        );
+      };
+      const parseSessionAndSetCredentials = (neo4jConnection: string) => {
         if (!neo4jConnection) {
           console.error('Invalid session data:', neo4jConnection);
           setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
@@ -116,20 +134,8 @@ const PageLayout: React.FC = () => {
             btoa(envCredentials.password) !== storedCredentials.password ||
             envCredentials.database !== storedCredentials.database;
           if (isDiffCreds) {
-            setUserCredentials(envCredentials);
-            setIsGCSActive(envCredentials.isGCSActive ?? false);
-            localStorage.setItem(
-              'neo4j.connection',
-              JSON.stringify({
-                uri: envCredentials.uri,
-                user: envCredentials.userName,
-                password: btoa(envCredentials.password),
-                database: envCredentials.database,
-                userDbVectorIndex: 384,
-                isReadOnlyUser: envCredentials.isReadonlyUser,
-                isgdsActive: envCredentials.isgdsActive,
-              })
-            );
+            setUserCredentialsLocally(envCredentials);
+            setClearHistoryData(true);
             return true;
           }
           return false;
@@ -143,48 +149,43 @@ const PageLayout: React.FC = () => {
       try {
         backendApiResponse = await envConnectionAPI();
         const connectionData = backendApiResponse.data;
-        const envCredentials = {
-          uri: connectionData.data.uri,
-          password: atob(connectionData.data.password),
-          userName: connectionData.data.user_name,
-          database: connectionData.data.database,
-          isReadonlyUser: !connectionData.data.write_access,
-          isgdsActive: connectionData.data.gds_status,
-          isGCSActive: connectionData?.data?.gcs_file_cache === 'True',
-        };
-        setIsGCSActive(connectionData?.data?.gcs_file_cache === 'True');
-        if (session) {
-          const updated = updateSessionIfNeeded(envCredentials, session);
-          if (!updated) {
-            setUserCredentialsFromSession(session); // Use stored session if no update is needed
+        if (connectionData.data && connectionData.status === 'Success') {
+          const envCredentials = {
+            uri: connectionData.data.uri,
+            password: atob(connectionData.data.password),
+            userName: connectionData.data.user_name,
+            database: connectionData.data.database,
+            isReadonlyUser: !connectionData.data.write_access,
+            isgdsActive: connectionData.data.gds_status,
+            isGCSActive: connectionData?.data?.gcs_file_cache === 'True',
+          };
+          setIsGCSActive(envCredentials.isGCSActive);
+          if (session) {
+            const updated = updateSessionIfNeeded(envCredentials, session);
+            if (!updated) {
+              parseSessionAndSetCredentials(session);
+            }
+            setConnectionStatus(Boolean(connectionData.data.graph_connection));
+            setIsBackendConnected(true);
+          } else {
+            setUserCredentialsLocally(envCredentials);
+            setConnectionStatus(true);
           }
-          setConnectionStatus(Boolean(connectionData.data.graph_connection));
-          setIsBackendConnected(true);
           handleDisconnectButtonState(false);
         } else {
-          setUserCredentials(envCredentials);
-          localStorage.setItem(
-            'neo4j.connection',
-            JSON.stringify({
-              uri: envCredentials.uri,
-              user: envCredentials.userName,
-              password: btoa(envCredentials.password),
-              database: envCredentials.database,
-              userDbVectorIndex: 384,
-              isReadOnlyUser: envCredentials.isReadonlyUser,
-              isgdsActive: envCredentials.isgdsActive,
-              isGCSActive: envCredentials.isGCSActive,
-            })
-          );
-          setConnectionStatus(true);
-          setGdsActive(envCredentials.isgdsActive);
-          setIsReadOnlyUser(envCredentials.isReadonlyUser);
-          handleDisconnectButtonState(false);
+          if (session) {
+            parseSessionAndSetCredentials(session);
+            setConnectionStatus(true);
+          } else {
+            setErrorMessage(backendApiResponse?.data?.error);
+            setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+          }
+          handleDisconnectButtonState(true);
         }
       } catch (error) {
         console.error('Error during backend API call:', error);
         if (session) {
-          setUserCredentialsFromSession(session);
+          parseSessionAndSetCredentials(session);
           setConnectionStatus(true);
         } else {
           setErrorMessage(backendApiResponse?.data?.error);
@@ -287,8 +288,6 @@ const PageLayout: React.FC = () => {
             openTextSchema={() => {
               setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
             }}
-            isSchema={isSchema}
-            setIsSchema={setIsSchema}
             showEnhancementDialog={showEnhancementDialog}
             toggleEnhancementDialog={toggleEnhancementDialog}
             setOpenConnection={setOpenConnection}
@@ -347,8 +346,6 @@ const PageLayout: React.FC = () => {
               openTextSchema={() => {
                 setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
               }}
-              isSchema={isSchema}
-              setIsSchema={setIsSchema}
               showEnhancementDialog={showEnhancementDialog}
               toggleEnhancementDialog={toggleEnhancementDialog}
               setOpenConnection={setOpenConnection}
