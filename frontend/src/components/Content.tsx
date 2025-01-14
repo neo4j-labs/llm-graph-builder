@@ -715,6 +715,8 @@ const Content: React.FC<ContentProps> = ({
         setshowExpirationModal(true);
       } else if (largeFileExists && isGCSActive) {
         setshowConfirmationModal(true);
+      } else if (largeFileExists && isGCSActive) {
+        setshowExpirationModal(true);
       } else {
         handleGenerateGraph(selectedRows.filter((f) => isFileReadyToProcess(f, false)));
       }
@@ -738,7 +740,7 @@ const Content: React.FC<ContentProps> = ({
       } else if (expiredFileExists && isGCSActive) {
         setshowExpirationModal(true);
       } else {
-        handleGenerateGraph(filesData.filter((f) => f.status === 'New' || f.status === 'Ready to Reprocess'));
+        handleGenerateGraph(filesData.filter((f) => isFileReadyToProcess(f, false)));
       }
     }
   };
@@ -783,6 +785,19 @@ const Content: React.FC<ContentProps> = ({
             loading={extractLoading}
             selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
             isLargeDocumentAlert={true}
+          ></ConfirmationDialog>
+        </Suspense>
+      )}
+      {showExpirationModal && filesForProcessing.length && (
+        <Suspense fallback={<FallBackDialog />}>
+          <ConfirmationDialog
+            open={showExpirationModal}
+            largeFiles={filesForProcessing}
+            extractHandler={handleGenerateGraph}
+            onClose={() => setshowExpirationModal(false)}
+            loading={extractLoading}
+            selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
+            isLargeDocumentAlert={false}
           ></ConfirmationDialog>
         </Suspense>
       )}

@@ -37,7 +37,6 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
 
     
 def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name):
-    
     isEmbedding = os.getenv('IS_EMBEDDING')
     
     embeddings, dimension = EMBEDDING_FUNCTION , EMBEDDING_DIMENSION
